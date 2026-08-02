@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T023",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Roland- und Wal-Spielweg als Produkt-Vertikalschnitt integrieren",
+  "state": "planned",
+  "goal": "Roland-Piano und Buckelwal als wiederherstellbare Setups beziehungsweise kompatible Szenen mit MIDI- und Audiotelemetrie, sichtbarer Velocity/Sustain/Pitch-Bend-Semantik, Looper und clickfreien Übergängen integrieren.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T021",
+    "AUDIO-CONTROL-PLANE-V1-T015"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 23
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "roland-binding",
+      "assertion": "Roland MIDI und optional USB-Audio werden über stabile Geräteidentität gebunden; fehlende oder mehrdeutige Ports blockieren.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "gesture-visibility",
+      "assertion": "Noten, Velocity, Sustain und Pitch Bend werden live sichtbar, ohne MIDI-Inhalte dauerhaft zu protokollieren.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "scene-transition",
+      "assertion": "Piano/Wal-Übergänge sind vorgewärmt, clickfrei oder explizit blockiert; Rückkehr hinterlässt keine Quantum- oder Routingdrift.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "looper-bounds",
+      "assertion": "Looper besitzt Zeit-, Speicher-, Prozess-, Stop- und Recoverygrenzen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "physical-acceptance",
+      "assertion": "Livefreigabe erfordert T016 sowie gemessene Latenz und XRun-Dauerprüfung.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "midi",
+    "audio",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

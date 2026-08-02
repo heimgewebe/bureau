@@ -67,8 +67,7 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "current_blockers": [
-      "missing canonical Bureau task binding",
-      "Codex review settled pending until T126 resolves the workflow-token visibility contract"
+      "The fresh client snapshot proves only that the 177 connected tool names and count match the runtime. It does not bind input schemas. The connected grabowski_task_start input schema still omits force_new_reason, operation_identity, supersedes_receipt_sha256 and supersedes_task_id."
     ],
     "does_not_establish": [
       "immediate queue admission",
@@ -76,8 +75,104 @@
       "permission to change a moved PR head",
       "permission to bypass review settlement",
       "permission to use paid review capacity",
-      "permission to overlap foreign Grabowski work"
+      "permission to overlap foreign Grabowski work",
+      "completion of T129 before a fresh connected connector-schema readback",
+      "permission to fabricate or infer a client snapshot",
+      "need for another Grabowski code or runtime deployment",
+      "input-schema parity from the matched 177-tool name snapshot",
+      "completion of T129 before a schema-bearing connector readback"
     ],
+    "next_action": "Obtain or add a schema-bearing connector snapshot for the exact connected grabowski_task_start inputSchema, then run the PR #536 connector probe against runtime release 5d2a845b68fa-srcset7cfca08cf843-locke6664d600b6c-contract5d1484d08302. Terminalize only if all four required properties are present and normalized schema fingerprints match; do not treat the green name hash as schema evidence.",
+    "operator_intake": {
+      "candidate_id": "candidate-152368530021c11fadf89d31",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-31T16:13:06.411612Z",
+      "event_id": 1871,
+      "request_sha256": "2c534c8aa67139647ec81eaa5815c24ac260b1468981e8be357218cb2734d1fa",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pull-request",
+        "locator": "github-pr:heimgewebe/grabowski#536@1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c",
+        "observed_at": "2026-07-31T16:13:06.395545Z",
+        "sha256": "75a9598f8a9dc651349f9a4310142818b84d9d68d56d0cca0562c4d3c8147151"
+      }
+    },
+    "partial_completion": {
+      "connector_readback": {
+        "name_snapshot": {
+          "age_seconds_at_observation": 27,
+          "created_at_unix": 1785655409,
+          "does_not_establish": [
+            "input-schema parity",
+            "presence of the four retry fields in the connected grabowski_task_start schema",
+            "platform-enforced client snapshot identity"
+          ],
+          "expires_at_unix": 1785659009,
+          "fresh_at_observation": true,
+          "matched": true,
+          "names_sha256": "cb3cd4bbc3354b8209f777343530bdb81818683ceff54ad89fa6ff3f2c703b63",
+          "observable_at_observation": true,
+          "observed_at_unix": 1785655436,
+          "receipt_sha256": "168e3af270c59e2366af14ee1b35dbce026686113888481f77baa91f9607d046",
+          "state": "matched",
+          "tool_count": 177,
+          "verification_model": "client-declared-server-compared-v1"
+        },
+        "projection_disambiguation": {
+          "grabowski_contract_drift_connector_snapshot_observable": false,
+          "grabowski_status_client_snapshot_observable": true,
+          "meaning": "The status snapshot observes name/count parity; the contract-drift path has no schema-bearing connector snapshot. These projections are not equivalent."
+        },
+        "schema_readback": {
+          "client_snapshot_scope": "src/grabowski_client_snapshot.py validates observed_tool_count and observed_names_sha256 only",
+          "missing_required_properties": [
+            "force_new_reason",
+            "operation_identity",
+            "supersedes_receipt_sha256",
+            "supersedes_task_id"
+          ],
+          "runtime_probe_capability": "tools/connector_probe.py accepts a schema-bearing observed file and compares normalized inputSchema fingerprints",
+          "schema_match": false,
+          "source": "fresh connected tool-catalog discovery in the current operator session",
+          "tool": "grabowski_task_start"
+        }
+      },
+      "dependency": {
+        "bureau_merge_commit": "4a85b9c5cf70be68855f4802833165034eba09de",
+        "bureau_pull_request": 1360,
+        "state": "verified",
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T126"
+      },
+      "runtime": {
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "healthy": true,
+        "release_id": "5d2a845b68fa-srcset7cfca08cf843-locke6664d600b6c-contract5d1484d08302",
+        "repo_head": "5d2a845b68fab2d89dbf4a743bdfb210deb0d2c9",
+        "source_pr_merge_is_ancestor": true
+      },
+      "source_pull_request": {
+        "canonical_bureau_binding": "Bureau-Task: GRABOWSKI-OPERATOR-SURFACE-V1-T129",
+        "canonical_bureau_binding_count": 1,
+        "changed_paths": [
+          "tests/test_control_plane.py",
+          "tools/connector_probe.py"
+        ],
+        "final_head_sha": "8094ad2bf20483a27c6bd8e5d561070dba0802f5",
+        "merge_commit": "a1cde3e777b0272008a03ec9dc148e74b1d08cfd",
+        "merged_at": "2026-07-31T23:59:42Z",
+        "number": 536,
+        "repository": "heimgewebe/grabowski",
+        "required_checks": "terminal success",
+        "state": "merged"
+      }
+    },
     "source_pull_request": {
       "base_sha": "0d8ae76d20b58ac17226df22f44a5527e5f96c62",
       "branch": "fix/task-start-schema-sentinel-v1",
@@ -90,36 +185,17 @@
       "number": 536,
       "open_review_threads": 0,
       "repository": "heimgewebe/grabowski",
-      "validate_conclusion": "success",
-      "validate_run": 30643297017,
-      "self_review_marker": "self-review:v2",
       "retry_schema_sentinel_fields": [
         "force_new_reason",
         "operation_identity",
         "supersedes_receipt_sha256",
         "supersedes_task_id"
-      ]
+      ],
+      "self_review_marker": "self-review:v2",
+      "validate_conclusion": "success",
+      "validate_run": 30643297017
     },
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-152368530021c11fadf89d31",
-      "event_id": 1871,
-      "event_created_at": "2026-07-31T16:13:06.411612Z",
-      "request_sha256": "2c534c8aa67139647ec81eaa5815c24ac260b1468981e8be357218cb2734d1fa",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "github-pull-request",
-        "locator": "github-pr:heimgewebe/grabowski#536@1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c",
-        "observed_at": "2026-07-31T16:13:06.395545Z",
-        "sha256": "75a9598f8a9dc651349f9a4310142818b84d9d68d56d0cca0562c4d3c8147151"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+    "updated_at": "2026-08-02T07:18:48Z"
   },
   "priority": {
     "lane": "next",
@@ -138,6 +214,6 @@
     "strategy": "Vor dem Merge kann die Taskbindung aus dem PR-Text entfernt und der Registrierungs-PR revertiert werden. Nach dem Merge wird keine Historie umgeschrieben; bei fehlerhaftem Deployment wird auf die zuvor manifestgebundene Runtime zurückgeschaltet und der Task mit exaktem Fehler- und Recovery-Receipt offen gehalten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "blocked",
   "title": "PR #536 revisionsgebunden binden und abschließen"
 }

@@ -6,7 +6,7 @@
   "state": "planned",
   "goal": "Nach vollständiger Reconciliation nur veraltete hausKI-audio-Laufzeit- und Aktivierungspfade schließen, ohne Repository oder Worktrees zu entfernen.",
   "depends_on": [
-    "AUDIO-CONTROL-PLANE-V1-T010",
+    "AUDIO-CONTROL-PLANE-V1-T027",
     "AUDIO-CONTROL-PLANE-V1-T011"
   ],
   "priority": {
@@ -101,6 +101,7 @@
       "Repository-Archivierung",
       "Worktree-Cleanup",
       "Löschfreigabe für Medien oder Assets"
-    ]
+    ],
+    "dependency_reconciled_at": "2026-08-02T08:04:00+02:00"
   }
 }

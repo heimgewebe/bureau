@@ -49,7 +49,7 @@
     }
   ],
   "depends_on": [
-    "AUDIO-CONTROL-PLANE-V1-T008"
+    "AUDIO-CONTROL-PLANE-V1-T026"
   ],
   "execution": {
     "approval": {
@@ -106,7 +106,14 @@
       ]
     },
     "registered_at": "2026-07-29",
-    "source": "Liveinbetriebnahme der lokalen Audiozentrale auf dem Heim-PC"
+    "source": "Liveinbetriebnahme der lokalen Audiozentrale auf dem Heim-PC",
+    "dependency_reconciled_at": "2026-08-02T07:46:00+02:00",
+    "dependency_reason": "Desktopinstallation ist Teil des gemessenen App-Shell- und Packagingvertrags, nicht von der stornierten Legacy-UI-Umbrella T008 abhängig.",
+    "superseded_at": "2026-08-02T08:04:00+02:00",
+    "superseded_by": [
+      "AUDIO-CONTROL-PLANE-V1-T026"
+    ],
+    "supersession_reason": "Der revisionsgebundene Audiozentrale-v2-Plan zerlegt diesen früheren Umbrella-Scope in kleinere Produkt-, Telemetrie-, Recovery- und physische Abnahmetasks. Der alte Task darf keine zweite Sequenzierungswahrheit erzeugen."
   },
   "priority": {
     "lane": "next",
@@ -127,6 +134,6 @@
     "strategy": "Den Repositorydiff zurücknehmen. Eine spätere Hostinstallation muss über den installer-eigenen Uninstall- und Readbackpfad nur exakt gebundene Audiozentrale-Dateien entfernen; fremde oder driftende Dateien bleiben erhalten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Audiozentrale-Desktopinstallation revisionsgebunden liefern"
 }

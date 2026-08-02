@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T019",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audiozentrale-v2-Objektmodell und Migrationsvertrag liefern",
+  "state": "planned",
+  "goal": "Setup, Signalbahn, Modul, Verknüpfung, Szene und Take als maschinenlesbares, versions- und migrationsfähiges Produktmodell definieren und die heutige Fünferoberfläche ohne zweite Zustandswahrheit auf Jetzt, Setups, Bibliothek und System abbilden.",
+  "depends_on": [],
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "schema-contract",
+      "assertion": "Versionierte JSON-Schemata und gültige/ungültige Fixtures definieren Identitäten, erlaubte Zustände, Referenzen, Wahrheitsebenen und Migrationen fail-closed.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "single-active-setup",
+      "assertion": "Höchstens ein Setup ist wirkungsfähig; Entwürfe und Vorlagen können keinen laufenden Zustand vortäuschen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "migration-map",
+      "assertion": "Übersicht, Hören, Spielen, Aufnehmen und System besitzen eine vollständige, getestete Abbildung auf die vier Zielorte; die vier Wahrheitsebenen bleiben orthogonal zu drei Darstellungstiefen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-daw-no-free-graph",
+      "assertion": "Take bleibt unveränderlich; Timeline, Comping, freie Ports, Skripte und beliebige Routingzyklen sind nicht Teil des Vertrags.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "exact-head",
+      "assertion": "Diff, Self-Review, Volltests und CI sind an denselben veröffentlichten Head gebunden.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "schema-design",
+    "frontend"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

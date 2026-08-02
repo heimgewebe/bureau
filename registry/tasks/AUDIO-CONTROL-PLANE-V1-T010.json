@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T010",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audio-Wartung und Recovery live validieren",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Die in T009 implementierten Wartungs- und Recoverypfade kontrolliert am Heim-PC prüfen, ohne produktive Medien zu löschen.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T009"
@@ -92,6 +92,11 @@
     "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
     "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
     "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
-    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc"
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "superseded_at": "2026-08-02T08:04:00+02:00",
+    "superseded_by": [
+      "AUDIO-CONTROL-PLANE-V1-T027"
+    ],
+    "supersession_reason": "Der revisionsgebundene Audiozentrale-v2-Plan zerlegt diesen früheren Umbrella-Scope in kleinere Produkt-, Telemetrie-, Recovery- und physische Abnahmetasks. Der alte Task darf keine zweite Sequenzierungswahrheit erzeugen."
   }
 }

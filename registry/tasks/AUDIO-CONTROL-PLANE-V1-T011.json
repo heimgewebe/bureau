@@ -6,7 +6,7 @@
   "state": "planned",
   "goal": "hausKI-audio und frühere EasyEffects-/Audio-Pläne vollständig inventarisieren und jeden Eintrag deterministisch übernehmen, verwerfen oder offen binden.",
   "depends_on": [
-    "AUDIO-CONTROL-PLANE-V1-T009",
+    "AUDIO-CONTROL-PLANE-V1-T026",
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041",
     "WGX-JUSTFILE-INTEGRITY-V1-T005"
   ],
@@ -109,6 +109,7 @@
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041": "later",
       "WGX-JUSTFILE-INTEGRITY-V1-T005": "later",
       "coordination": "repo.hauski-audio write claims serialize execution; T011 starts only after both terminal heads and complete deltas are bound"
-    }
+    },
+    "dependency_reconciled_at": "2026-08-02T08:04:00+02:00"
   }
 }

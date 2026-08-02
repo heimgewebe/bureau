@@ -1,0 +1,170 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein deterministischer Reproducer bindet den ersten fehlgeschlagenen Cutover auf Grabowski-Commit 87038eec83fd0dfb53938d7734e95fa5fa8e9ee2 und Receipt 78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e: Nach 4446 bestandenen Tests blockiert genau ein eigener Statusaufruf den Deployment-Admission-Drain; derselbe revisionsidentische Cutover ohne Polling endet erfolgreich mit Receipt d541ecee8c64dcb52c67a3dd1090c5cbad020417f4247580ec5321ddccbdf700.",
+      "evidence_type": "object",
+      "id": "incident-baseline"
+    },
+    {
+      "assertion": "Eine nicht drain-relevante Beobachtung ist nur mit serverseitig erzeugter und validierter Identität zulässig, die mindestens den exakten Deployment-Job, Zielcommit oder Release, eine kleine Read-only-Operationsallowlist, die anfragende Sitzung und eine kurze Ablaufzeit bindet. Caller-kontrollierte Flags, bloße Toolnamen, Prozessumgebungen oder generische Read-only-Klassifikation begründen keine Ausnahme.",
+      "evidence_type": "object",
+      "id": "narrow-observer-identity"
+    },
+    {
+      "assertion": "Mutierende, fremde, ungebundene, abgelaufene, wiederverwendete, verschachtelte oder nicht allowlistete Aufrufe erhöhen weiterhin die aktive Deployment-Admission-Zahl beziehungsweise blockieren den Drain vor Runtime-Wirkung. Negative Tests belegen insbesondere, dass Statusaufrufe zu einem anderen Job und beliebige Grabowski-Leseoperationen nicht ausgenommen werden.",
+      "evidence_type": "object",
+      "id": "foreign-effects-still-block"
+    },
+    {
+      "assertion": "Nebenläufigkeitstests decken Beobachtungsstart vor, während und nach Drain-Beginn, Abschluss während des Cutovers sowie Job-, Release-, Marker- und Watchdogwechsel ab. Es gibt kein Zeitfenster, in dem neue normale Arbeit aufgenommen wird, Zähler verloren gehen oder ein Beobachtungsnachweis nach Jobende Autorität behält.",
+      "evidence_type": "object",
+      "id": "race-safe-drain"
+    },
+    {
+      "assertion": "Der bestehende Deployment-Admission-Vertrag in grabowski_operator.py mit seinem aktiven Toolzähler, Marker und drain-neutralen serverseitigen Statuspfad bleibt die einzige Runtime-Autorität für Drain und aktive Aufrufe. Die Lösung führt keine zweite persistente Aktivitätszählung, keine globale Bypassliste und keine vom Deployment-Job oder Receipt losgelöste Beobachterwahrheit ein.",
+      "evidence_type": "boolean",
+      "id": "single-deployment-admission-truth"
+    },
+    {
+      "assertion": "Der laufende Deployment-Job kann über eine typisierte, jobgebundene Statusoberfläche wiederholt beobachtet werden, ohne seinen eigenen Admission-Drain zu blockieren. Die Antwort bleibt receipt-, job-, release- und sitzungsgebunden und behauptet keine erfolgreiche Mutation vor dem abschließenden Runtime-Readback.",
+      "evidence_type": "object",
+      "id": "observable-without-interference"
+    },
+    {
+      "assertion": "Component-Watchdog und Admission-Recovery erkennen den engen Observervertrag konsistent, behandeln fehlende oder driftende Bindungen fail-closed und können weder Marker noch Zähler durch eine zweite Wahrheit ersetzen. Restart und Recovery erhalten die Job- und Ablaufbindung oder verwerfen sie.",
+      "evidence_type": "object",
+      "id": "watchdog-and-recovery-consistency"
+    },
+    {
+      "assertion": "Gezielte positive und negative Tests in Operator-, Self-Deploy-, Dual-Deploy-, Watchdog- und Recovery-Pfaden sowie die vollständige Grabowski-Validierung und GitHub-CI sind auf dem exakten Implementierungs-Head grün. Ein getrennter adversarialer Self-Review findet keine offenen hohen oder kritischen Befunde.",
+      "evidence_type": "object",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Nach Merge und separat autorisiertem Runtime-Deployment wird ein revisionsgebundener Test-Cutover mit aktiver jobgebundener Statusbeobachtung erfolgreich abgeschlossen; parallel gestartete ungebundene Kontrollaufrufe bleiben nachweislich drain-relevant. Merge-, Deployment- und Live-Test-Receipts werden im Task verankert.",
+      "evidence_type": "object",
+      "id": "live-cutover-proof"
+    },
+    {
+      "assertion": "Die Änderung erweitert weder allgemeine Tool-, Repository-, Lease-, Merge- noch Deploymentautorität. Bei fehlender, widersprüchlicher oder driftender Beobachterbindung fällt der Pfad auf die bisherige vollständige Drain-Relevanz zurück.",
+      "evidence_type": "boolean",
+      "id": "no-authority-expansion"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Task behebt einen revisionsgebunden reproduzierten Selbstblocker im Runtime-Deployment. Zulässig ist nur eine serverseitig erzeugte, eng job-, revisions-, operations- und zeitgebundene Beobachtungsidentität. Generische Read-only-, Client-Flag-, Toolnamen- oder Umgebungs-Ausnahmen sind ausgeschlossen. Runtime-Aktivierung benötigt weiterhin einen separaten runtime_mutation-Vertrag.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_operator.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_self_deploy.py",
+      "path:/home/alex/repos/grabowski/tools/run_scheduled_deploy.py",
+      "path:/home/alex/repos/grabowski/tools/deploy_runtime_dual.py",
+      "path:/home/alex/repos/grabowski/tools/component_watchdog.py",
+      "path:/home/alex/repos/grabowski/tools/watchdog_admission_recovery.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_self_deploy.py",
+      "path:/home/alex/repos/grabowski/tests/test_dual_service_deploy.py",
+      "path:/home/alex/repos/grabowski/tests/test_component_watchdog.py",
+      "path:/home/alex/repos/grabowski/docs/runtime-deployment-admission-drain-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Grabowski-Runtime-Deploymentpfad so härten, dass eine eng serverseitig authentisierte, exakt job-, operations-, revisions- und zeitgebundene Read-only-Beobachtung des laufenden Deployments den eigenen Deployment-Admission-Drain nicht als aktiver Toolaufruf blockiert. Alle mutierenden, fremden, ungebundenen, abgelaufenen oder nicht explizit zugelassenen Aufrufe bleiben vollständig drain-relevant und fail-closed.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T131",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "correction_history": [
+      {
+        "decision": "closed-superseded",
+        "pull_request": 1369,
+        "reason": "Die erste Fassung war gegenüber dem parallel erzeugten Sicherheitsvertrag schwächer."
+      },
+      {
+        "decision": "closed-blocking-review-finding",
+        "pull_request": 1371,
+        "reason": "Die zweite Fassung band fälschlich grabowski_work_admission.py statt des tatsächlichen Deployment-Admission-Zählers und Statuspfads in grabowski_operator.py."
+      }
+    ],
+    "design_constraints": [
+      "keine generische Read-only-Ausnahme",
+      "keine caller-kontrollierte Bypass-Markierung",
+      "keine zweite Deployment-Admission-Wahrheit",
+      "fail-closed bei Identitäts-, Job-, Operations- oder Revisionsdrift",
+      "separate Runtime-Mutationsautorität bleibt erforderlich"
+    ],
+    "does_not_establish": [
+      "dass die genaue technische Lösung bereits feststeht",
+      "Task-Readiness oder Queue-Wahrheit",
+      "Merge- oder Deploymentautorität",
+      "dass jeder Statusaufruf drain-neutral sein darf"
+    ],
+    "implementation_evidence": {
+      "deployment_admission_and_job_status_path": "src/grabowski_operator.py",
+      "deployment_admission_and_job_status_sha256": "58b83e90d4f73affe35f2d37813ecf797e7b895da80d317bcc20951d03b0e934",
+      "rejected_unrelated_path": "src/grabowski_work_admission.py",
+      "rejected_unrelated_path_sha256": "9ffb4c1169259168341d6e8282cb0d017f5adfdac6a380fed93fa2e98d04ea57",
+      "reviewed_grabowski_runtime_head": "5d2a845b68fab2d89dbf4a743bdfb210deb0d2c9"
+    },
+    "source": {
+      "failed_job": "grabowski-job-5ba128e4a48e",
+      "failed_receipt_sha256": "78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e",
+      "kind": "runtime-deploy-incident",
+      "observed_at": "2026-08-02T06:19:41Z",
+      "successful_receipt_sha256": "d541ecee8c64dcb52c67a3dd1090c5cbad020417f4247580ec5321ddccbdf700",
+      "successful_retry_job": "grabowski-job-6ae99e6e556b",
+      "target_commit": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-18ae81b3bdf4bd9f7edc407c",
+      "event_id": 2066,
+      "event_created_at": "2026-08-02T06:31:24.889712Z",
+      "request_sha256": "696f48e80cbdb1c4348ccdbb3f262955d6f30c94b9e541ab2c7bb3150a3b40f9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-deploy-incident",
+        "locator": "grabowski-job-5ba128e4a48e/finalization.json",
+        "observed_at": "2026-08-02T06:19:41Z",
+        "sha256": "78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 71
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "deployment",
+    "concurrency",
+    "security"
+  ],
+  "rollback": {
+    "strategy": "Die eng gebundene Beobachterausnahme vollständig revertieren und Statusaufrufe wieder wie bisher als drain-relevant behandeln. Deployments können bis zur Korrektur mit einem dokumentierten beobachtungsfreien Drain-Fenster durchgeführt werden; keine generische Bypass- oder Read-only-Ausnahme wird als Fallback aktiviert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Deployment-Beobachtung vom Admission-Drain entkoppeln"
+}

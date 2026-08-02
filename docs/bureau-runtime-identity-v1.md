@@ -20,6 +20,8 @@ Every `--json` response against a complete Bureau project is returned as an iden
 
 Temporary fixture or archive Registries retain their legacy JSON shape for compatibility, but dictionary results still carry `runtime_identity`. They are marked `unmanaged-registry` and establish no production-runtime claim. `--json-envelope` forces the envelope explicitly.
 
+Pre-effect approval refusals obey the same JSON contract. With `--json`, Bureau returns `status: approval-required`, `code: approval-required`, a bounded approval decision and explicit `effect_started: false`, `ambiguity: false` and `required_readback: []`. The human-readable stderr form remains only for non-JSON callers. This prevents adapters from misclassifying a denied `runtime_mutation` claim as malformed Bureau output while preserving the `break_glass` gate.
+
 The identity binds:
 
 - imported module path and SHA-256;

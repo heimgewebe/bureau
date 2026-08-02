@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf einem exakten frischen origin/main werden beide beobachteten Fehler getrennt reproduziert und gebunden: der OCI-Proof-Mirror verweist auf eine ungültige oder nicht mehr aktuelle Abstammungswahrheit, und der Make-Testpfad verwendet eine von tools/py abweichende Python-/Abhängigkeitsumgebung. Ein später veränderter Zustand wird neu gemessen statt aus PR #1667 übernommen.",
+      "evidence_type": "object",
+      "id": "fresh-main-reproduction"
+    },
+    {
+      "assertion": "Alle Python-basierten Agenten- und Vertragsprüfungen im vollständigen Make-Pfad verwenden eine einzige repo-kanonische, lockgebundene tools/py-Umgebung mit unterstützter Python-Version und PyYAML; direkte Teilaufrufe und make validate liefern dieselbe Testsemantik.",
+      "evidence_type": "object",
+      "id": "canonical-python-runtime"
+    },
+    {
+      "assertion": "Der OCI-Proof-Mirror besitzt einen dokumentierten, maschinengeprüften Vertrag für Quellcommit, Abstammung, Artefakthash und Aktualisierung. Ein veralteter, fremder oder nicht erreichbarer Quellcommit scheitert verständlich vor einer irreführenden Vollvalidierung; der Validator wird nicht durch bloßes Entfernen der Abstammungsprüfung geschwächt.",
+      "evidence_type": "object",
+      "id": "oci-provenance-contract"
+    },
+    {
+      "assertion": "Automatisierte Negativtests decken mindestens fehlendes uv, Lock- oder Interpreterdrift, fehlende gebundene Python-Abhängigkeiten, manipulierte OCI-Lockdaten und einen Quellcommit außerhalb der erlaubten Abstammung ab; jeder Fall scheitert deterministisch ohne Netz- oder Hostzufall.",
+      "evidence_type": "object",
+      "id": "negative-environment-tests"
+    },
+    {
+      "assertion": "Auf dem exakten finalen Head laufen make validate sowie die relevanten direkten Teilprüfungen grün. CI und lokaler Operatorpfad benutzen denselben dokumentierten Vertrag oder weisen verbliebene Unterschiede ausdrücklich und testbar aus.",
+      "evidence_type": "object",
+      "id": "full-validation-convergence"
+    },
+    {
+      "assertion": "Der Reparatur-PR enthält keine Kartenobjekt- oder sonstige Produktänderung. Vor Merge liegen exakte Base-, Head- und Diffbindung, Self- oder Fremdreview nach geltender Satzung, grüne Pflichtchecks und ein Rückbaupfad vor; nach Merge wird main erneut mit dem vollständigen Validierungspfad geprüft.",
+      "evidence_type": "object",
+      "id": "scope-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangte am 2. August 2026 im laufenden Weltgewebe-Auftrag ausdrücklich die Umsetzung sowie die Registrierung aller sinnvollen nicht unmittelbar behobenen Punkte. Diese Task-Registrierung autorisiert die spätere isolierte Repositoryreparatur, aber keine Hostpaket-, Produktions- oder fremde Worktree-Mutation; vor Wirkung sind Livezustand, Nichtüberlappung, Rückbau, Review und grüne Prüfungen erneut zu belegen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den auf aktuellem Weltgewebe-main reproduzierbaren Drift im vollständigen lokalen Validierungspfad beseitigen, ohne Prüfungen abzuschwächen: Agententests verwenden die kanonische tools/py-uv-Umgebung mit gebundener Python- und Abhängigkeitsversion, und der OCI-Proof-Mirror ist an eine gültige aktuelle Abstammungs- und Provenienzwahrheit gebunden, sodass make validate auf einem exakten sauberen Head deterministisch grün oder mit einer präzisen Vorbedingung fail-closed endet.",
+  "id": "WELTGEWEBE-OS-V1-T063",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current root cause after future main changes",
+      "automatic implementation",
+      "task readiness",
+      "queue truth",
+      "claim or dispatch authority",
+      "permission to weaken validation",
+      "permission to mutate host packages or foreign worktrees"
+    ],
+    "observed_failures": {
+      "canonical_project": "tools/py",
+      "canonical_project_min_python": "3.11",
+      "canonical_uv_agent_tests": "pass",
+      "oci_source_commit": "c77025cd6cffe117378ac82d983038083c680cf0",
+      "oci_source_is_origin_main_ancestor": false,
+      "system_python": "3.10"
+    },
+    "registered_at": "2026-08-02",
+    "source": "operator_followup_from_weltgewebe_pr_1667",
+    "source_diff_sha256": "32731f02e4c509408d107d8f79af1600fb8b16489eaecd887b49c0beb898bc1c",
+    "source_head": "d2406d67167b56a2b08075f348f3ff7227b17cde",
+    "source_pr": "heimgewebe/weltgewebe#1667",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-fd7a69ab59b05320fb7dd804",
+      "event_id": 2142,
+      "event_created_at": "2026-08-02T14:49:22.030652Z",
+      "request_sha256": "b319ff3c7c3bc14450d353877a3eb3f20238608968f393c89c9a0de4d8180f91",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "github:heimgewebe/weltgewebe#1667@d2406d67167b56a2b08075f348f3ff7227b17cde",
+        "observed_at": "2026-08-02T14:43:12Z",
+        "sha256": "32731f02e4c509408d107d8f79af1600fb8b16489eaecd887b49c0beb898bc1c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "python",
+    "uv",
+    "ci",
+    "supply-chain",
+    "provenance",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Lösungswahl müssen aktuelles origin/main, Makefile, tools/py-Lock, OCI-Proof-Mirror-Lock und -Generator, CI-Workflows sowie parallele Weltgewebe-Arbeiten live gelesen werden; RepoGround ergänzt Aufruf- und Abhängigkeitsbeziehungen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Lokale Validierungswahrheit von Weltgewebe reparieren"
+}

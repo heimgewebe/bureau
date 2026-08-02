@@ -58,6 +58,54 @@ def test_command_effect_scope_is_explicit_and_fails_closed() -> None:
     )
 
 
+def test_claim_intent_is_coordination_state_mutation() -> None:
+    assert bureau_cli._command_mutates(
+        bureau_cli.parser().parse_args(["claim-intent", "--worker", "test-worker"])
+    )
+    assert (
+        effect_scope.classify_command_effect_scope("claim-intent", mutates=True)
+        == "coordination_state_mutation"
+    )
+
+
+def test_canonical_claim_intent_uses_writable_coordination_store(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory()
+    state_root = tmp_path / "coordination-state"
+    identity = canonical_runtime_identity(registry_root)
+
+    class FakeDispatcher:
+        def __init__(self, registry, store, adapter_registry, enforce_runtime_gate=True):
+            self.store = store
+
+        def claim_intent(self, worker, capabilities, kind, **kwargs):
+            return {
+                "status": "claim-intent",
+                "state_db": str(self.store.path),
+                "store_type": type(self.store).__name__,
+            }
+
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
+    monkeypatch.setattr(bureau_cli, "Dispatcher", FakeDispatcher)
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+    result = bureau_cli.main(
+        [
+            "--root", str(registry_root),
+            "--state-root", str(state_root),
+            "--json", "claim-intent",
+            "--worker", "test-worker",
+        ]
+    )
+    assert result == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "claim-intent"
+    assert value["result"]["store_type"] == "StateStore"
+    assert value["result"]["state_db"] == str(state_root / "bureau.sqlite3")
+    assert value["runtime_identity"]["command_effect_scope"] == "coordination_state_mutation"
+    assert (state_root / "bureau.sqlite3").is_file()
+
+
 def test_canonical_coordination_binding_requires_separate_absolute_state_root(
     tmp_path: Path,
 ) -> None:

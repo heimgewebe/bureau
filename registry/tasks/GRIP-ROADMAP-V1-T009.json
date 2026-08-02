@@ -3,14 +3,16 @@
   "initiative": "GRIP-ROADMAP-V1",
   "claims": [
     {
-      "resource": "repo.grabowski",
+      "resource": "component.grabowski.captain-preflight",
       "mode": "write",
       "isolation": "worktree"
     }
   ],
   "execution": {
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_grip_orchestration.py",
+      "path:/home/alex/repos/grabowski/tests/test_grips.py"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",

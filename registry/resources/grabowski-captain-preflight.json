@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.grabowski.captain-preflight",
+  "type": "component",
+  "parent": "repo.grabowski",
+  "path": "/home/alex/repos/grabowski/src/grabowski_grips.py",
+  "grabowski_key": "component:grabowski-captain-preflight"
+}

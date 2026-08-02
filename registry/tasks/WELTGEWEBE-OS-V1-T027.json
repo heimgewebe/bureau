@@ -64,6 +64,67 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/weltgewebe#1540",
+      "implementation_head": "fd3b86b6421669e3440dfd67ed45502f2a818268",
+      "merge_commit": "230d26e9d63892d053bd7243a3d2a30847fa07ee",
+      "merged_at": "2026-07-22T16:17:55Z",
+      "pr_diff_sha256": "74ee3f9334ab1791ac1948403053a8d46ed058ddcfa12ab1688bd07098c68845",
+      "current_main": "e7d2afe4172562098713a53e694947bc091e9751",
+      "current_main_descends_from_merge": true
+    },
+    "test_evidence": {
+      "current_main_focused_test": {
+        "command": "python3 -m pytest -q scripts/ci/tests/test_observability_compose_contract.py",
+        "result": "4 passed",
+        "revision": "e7d2afe4172562098713a53e694947bc091e9751"
+      },
+      "required_ci": "PASS on implementation head",
+      "hermetic_runtime_proof": {
+        "source": "heimgewebe/weltgewebe#1540",
+        "target": "http://weltgewebe-api:8080/metrics",
+        "target_state": "up",
+        "query": "weltgewebe_t027_proof",
+        "value": 1
+      },
+      "public_boundary_live_readback": {
+        "https://weltgewebe.net/api/metrics": {
+          "http_status": 404,
+          "content_type": "",
+          "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "prometheus_payload": false
+        },
+        "https://api.weltgewebe.net/metrics": {
+          "http_status": 404,
+          "content_type": "",
+          "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "prometheus_payload": false
+        }
+      }
+    },
+    "validation": [
+      "Weltgewebe PR #1540 merged with successful required CI and no unresolved review threads.",
+      "Current Weltgewebe main descends from the merge and the focused observability Compose contract still passes.",
+      "Both public metrics URLs were read live and exposed no Prometheus/OpenMetrics payload."
+    ],
+    "verified_acceptance": {
+      "prometheus-config-loaded": "The supported Compose overlay injects the Prometheus configuration as inline config content and mounts it at /etc/prometheus/prometheus.yml.",
+      "internal-scrape-reachable": "The merged hermetic proof observed target http://weltgewebe-api:8080/metrics as up while the API port remained unpublished.",
+      "hermetic-integration-proof": "The merged proof queried weltgewebe_t027_proof with value 1; current-main regression coverage fails closed on missing config, wrong target, API publication, or non-loopback observability bindings.",
+      "public-boundary-preserved": "Fresh live reads of weltgewebe.net/api/metrics and api.weltgewebe.net/metrics exposed no Prometheus or OpenMetrics payload."
+    },
+    "outcome": "Implemented through Weltgewebe PR #1540 and reverified against current main and the live public metrics boundary.",
+    "does_not_establish": [
+      "that optional local observability services are continuously running in production",
+      "that every future Weltgewebe commit preserves the contract without the regression tests passing",
+      "a public or unauthenticated Prometheus endpoint"
+    ],
+    "verification": {
+      "scope_sha256": "749b37752d28daaf24a4ef95366533efaef61e2dcb9b254cc9a6f9b77fe5e5d5",
+      "current_main_checked_at_utc": "2026-08-02T01:00:56.023466Z",
+      "task_sha256": "7ea4540279c21a43929896a86cfbdfb885ebabdc793e076d175c84bbd67d21a7",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
     }
   },
   "priority": {
@@ -80,6 +141,6 @@
     "deployment"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Prometheus-/Observability-Compose-Vertrag funktionsfähig und hermetisch machen"
 }

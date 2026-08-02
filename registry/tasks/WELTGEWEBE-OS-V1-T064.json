@@ -1,0 +1,140 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor Implementierung werden auf einem exakten aktuellen Head die kanonischen Erzeugungs-, Spannungs-, Auflösungs- und Löschereignisse von Fäden sowie Kartenstil-Neuladen, Filterung und Overlay-Lebenszyklus inventarisiert. Die Animation reagiert ausschließlich auf belegte Zustandsübergänge und leitet keine fachliche Wahrheit aus bloßen Renderdifferenzen ab.",
+      "evidence_type": "object",
+      "id": "live-event-contract"
+    },
+    {
+      "assertion": "Beim neuen Spannen wird die sichtbare Fadenstrecke einmalig vom kanonischen Ursprung zum Ziel aufgebaut; Dauer, Kurve und Abschluss sind begrenzt, deterministisch und enden exakt im normalen statischen Fadenzustand, ohne die gespeicherte Geometrie oder MapLibre-Quellen zu verfälschen.",
+      "evidence_type": "object",
+      "id": "directional-thread-create"
+    },
+    {
+      "assertion": "Beim Auflösen oder Entfernen zieht sich der Faden einmalig entlang seiner vorhandenen Geometrie zurück oder verschwindet gerichtet. Nach Abschluss verbleiben weder verwaiste Features, Timer, Listener noch Animationsklassen; Style-Reload, Navigation und Abbruch räumen laufende Effekte vollständig auf.",
+      "evidence_type": "object",
+      "id": "directional-thread-release"
+    },
+    {
+      "assertion": "Eine Garnrollenreaktion bleibt optional, kurz und an dasselbe Fadenereignis gekoppelt. Sie erhält die realistische Draufsicht, verändert niemals MapLibres äußeren Positions-Transform und besitzt keine Leerlaufrotation, Pulsierung oder dauerhafte Bewegung.",
+      "evidence_type": "object",
+      "id": "top-view-spool-response"
+    },
+    {
+      "assertion": "Bei prefers-reduced-motion werden alle Wachstums-, Rückzugs- und Garnrollenbewegungen ohne Zwischenanimation unmittelbar in den kanonischen Endzustand überführt. Fokus, Auswahl, aria-Zustände, 44×44-Pixel-Touchziele und Kartenbedienung bleiben unverändert verständlich.",
+      "evidence_type": "object",
+      "id": "reduced-motion-and-accessibility"
+    },
+    {
+      "assertion": "Die Umsetzung führt keinen permanenten requestAnimationFrame- oder Timer-Loop ein. Gleichzeitige Ereignisse sind begrenzt, zusammengeführt oder deterministisch beendet; Messungen auf Desktop und iPad-nahem Touchprofil belegen stabile Karteninteraktion, Framezeiten, Speicher und Cleanup gegenüber der PR-#1667-Baseline.",
+      "evidence_type": "object",
+      "id": "bounded-performance"
+    },
+    {
+      "assertion": "Automatisierte Unit- und Browserprüfungen decken Erzeugen, Auflösen, Abbruch, schnelle Gegenereignisse, Zoom, Pan, Style-Reload, Filterung, reduzierte Bewegung und fehlende Daueraktivität ab. Chromium ist verpflichtend; echter WebKit-/Mobile-Safari-Nachweis wird über den in WELTGEWEBE-OS-V1-T060 wiederherzustellenden hermetischen Pfad geführt oder die Task bleibt bis zu einem gleichwertigen Beleg nicht terminal.",
+      "evidence_type": "object",
+      "id": "cross-browser-regression"
+    },
+    {
+      "assertion": "Der Implementierungs-PR bleibt auf die Bewegungsschicht begrenzt und verändert weder Faden-Fachsemantik noch Persistenz. Vor Merge liegen exakte Base-, Head- und Diffbindung, Performancevergleich, Review nach geltender Satzung und grüne Pflichtchecks vor; nach Merge wird der Produktionsstand auf fehlende Daueranimation und stabile Karteninteraktion zurückgelesen.",
+      "evidence_type": "object",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangte am 2. August 2026 ausdrücklich die immersive Überarbeitung der Garnrollen, Knoten und Fäden einschließlich ereignisbezogenem Fadenwachstum und optionaler synchroner Garnrollenreaktion. Die Umsetzung bleibt isoliert, kostenfrei und an Livezustand, Nichtüberlappung, reduzierte Bewegung, Performancebelege, Review und grüne Pflichtchecks gebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die in Weltgewebe-PR #1667 statisch vereinheitlichte textile Kartenobjektsprache um eine strikt ereignisbezogene Bewegungsschicht ergänzen: Fäden wachsen beim Spannen vom Ursprung zum Ziel, ziehen sich beim Auflösen entlang der Verbindung zurück, und die realistische Garnrolle in Draufsicht reagiert nur während dieses Vorgangs kurz, ohne Daueranimation, Kartenankerdrift oder spürbare Interaktions- und Leistungsverschlechterung.",
+  "id": "WELTGEWEBE-OS-V1-T064",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "design_constraints": {
+      "garnrolle_perspective": "realistic top-down only",
+      "idle_animation": false,
+      "maplibre_outer_transform_mutation": false,
+      "motion": "event-bound only"
+    },
+    "does_not_establish": [
+      "automatic implementation",
+      "task readiness",
+      "queue truth",
+      "claim or dispatch authority",
+      "permission for permanent animation",
+      "permission to change thread domain semantics",
+      "current WebKit availability"
+    ],
+    "registered_at": "2026-08-02",
+    "related_tasks": [
+      {
+        "relationship": "provides hermetic WebKit verification path",
+        "task_id": "WELTGEWEBE-OS-V1-T060"
+      }
+    ],
+    "source": "operator_followup_from_weltgewebe_pr_1667",
+    "source_diff_sha256": "32731f02e4c509408d107d8f79af1600fb8b16489eaecd887b49c0beb898bc1c",
+    "source_head": "d2406d67167b56a2b08075f348f3ff7227b17cde",
+    "source_pr": "heimgewebe/weltgewebe#1667",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-167d7573165eb59883234cbd",
+      "event_id": 2141,
+      "event_created_at": "2026-08-02T14:49:03.020255Z",
+      "request_sha256": "6adafeb3ede031223fce9599dfb9ab75b35910439f1b8b16df01fcc39cc2fd94",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "github:heimgewebe/weltgewebe#1667@d2406d67167b56a2b08075f348f3ff7227b17cde",
+        "observed_at": "2026-08-02T14:43:12Z",
+        "sha256": "32731f02e4c509408d107d8f79af1600fb8b16489eaecd887b49c0beb898bc1c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "svelte",
+    "maplibre",
+    "animation",
+    "performance",
+    "accessibility-review",
+    "browser-e2e",
+    "webkit",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Planung und Umsetzung müssen aktueller Kartenoverlay-Lebenszyklus, Fadenquellen, Ereignispfade, Marker- und Auswahlzustände, PR-#1667-Baseline, T060-WebKit-Pfad sowie parallele Kartenarbeiten live geprüft werden; RepoGround ergänzt Aufruf- und Abhängigkeitsbeziehungen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Ereignisbezogene Fadenbewegung und Garnrollenimpuls umsetzen"
+}

@@ -68,6 +68,15 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T126",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
+    "acceptance_evidence": {
+      "current-head-contract-preserved": "The live readback retained exact PR, head and diff binding and the regression suite retained actor, earliest-request, pagination, review-thread and unresolved-thread fail-closed tests.",
+      "eventual-consistency-bounded": "The workflow suite verifies bounded refresh inventory and trusted default-branch dispatch; request identity remains idempotent and no review request is posted by the observer workflow.",
+      "least-privilege-proof": "The operative workflow grants contents: read, issues: read, pull-requests: read and only statuses: write; it does not check out or execute pull-request code and has no broader write permission.",
+      "live-workflow-readback": "GitHub Actions run 30736161088 and commit-status ID 51497913011 prove settled/pass under the workflow token for PR #524 at the registered exact head and diff.",
+      "no-false-pending": "Current run 30736161088 returned request_present=true, completion_present=true, status=pass and published the exact success context instead of converting incomplete visibility into pending.",
+      "visibility-failure-taxonomy": "The current 59-test settlement/workflow suite covers bounded pagination, truncated review threads, malformed evaluator output, unsupported visibility states and explicit failure behavior.",
+      "workflow-token-reproducer": "The same bound PR #524 reproducer that failed in workflow run 30582186515 was dispatched through the real GITHUB_TOKEN path on current main; run 30736161088 observed both exact comments and completed successfully."
+    },
     "does_not_establish": [
       "dass issues:read allein die Ursache ist",
       "dass ein Nutzer-Token den Workflow-Token repräsentiert",
@@ -75,6 +84,14 @@
       "Erlaubnis zur Abschwächung des Codex- oder Captain-Gates",
       "Task-Readiness vor Veröffentlichung"
     ],
+    "implementation": {
+      "changed_path": ".github/workflows/codex-review-settlement.yml",
+      "fix": "Grant the settlement workflow read-only issue-comment visibility with issues: read while retaining contents: read, pull-requests: read and statuses: write.",
+      "merge_commit": "0d8ae76d20b58ac17226df22f44a5527e5f96c62",
+      "merged_at": "2026-07-31T13:20:47Z",
+      "pull_request": 529,
+      "repository": "heimgewebe/grabowski"
+    },
     "live_evidence": {
       "candidate_id": "candidate-26e2c93afd4e89341815db8d",
       "connected_user_observation": {
@@ -94,11 +111,16 @@
       "workflow_run": 30582186515
     },
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-26e2c93afd4e89341815db8d",
-      "event_id": 1799,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-30T23:13:42.323009Z",
+      "event_id": 1799,
       "request_sha256": "ef02542559781e25cc1ce6b96b6f137a6c7d3c89a33afd7b8bfe2158b38c7407",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [
           "source_content_identity"
@@ -108,14 +130,55 @@
         "locator": "chatgpt:grabowski-current-work-deploy-closeout:2026-07-31",
         "observed_at": "2026-07-30T23:13:42.308354Z",
         "sha256": null
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
-    "source": "Live-Befund während Abschluss und Deployment von Grabowski PR #524 am 31. Juli 2026"
+    "source": "Live-Befund während Abschluss und Deployment von Grabowski PR #524 am 31. Juli 2026",
+    "validation": {
+      "focused_tests": {
+        "command": "python3 -m unittest -v tests.test_codex_review_settlement tests.test_codex_review_settlement_workflow",
+        "grabowski_task_id": "6d1a2df792d148e694353668",
+        "result": "59 passed"
+      },
+      "live_workflow": {
+        "commit_status": {
+          "context": "Codex review settled",
+          "state": "success",
+          "status_id": 51497913011
+        },
+        "completion_comment_id": 5136265134,
+        "current_passing_run": 30736161088,
+        "current_run_conclusion": "success",
+        "current_run_event": "workflow_dispatch",
+        "diff_sha256": "5790d321bb9bdc947bc3d8f79d2129a7523c2a931a4b33ece0c81ab9b2938a94",
+        "head_sha": "d33b85cd72bf352e9b7eb32ddb6f3166b03d7b59",
+        "historical_failing_run": 30582186515,
+        "pull_request": 524,
+        "repository": "heimgewebe/grabowski",
+        "request_comment_id": 5136232961,
+        "workflow_observation": {
+          "completion_present": true,
+          "errors": [],
+          "request_present": true,
+          "status": "pass"
+        }
+      },
+      "source_head": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2"
+    },
+    "verification": {
+      "authority": "live_workflow_plus_current_head_tests",
+      "does_not_establish": [
+        "automatic review or merge authority",
+        "that every future GitHub visibility failure has the same cause",
+        "completion of dependent task GRABOWSKI-OPERATOR-SURFACE-V1-T129"
+      ],
+      "implementation_merge_commit": "0d8ae76d20b58ac17226df22f44a5527e5f96c62",
+      "workflow_run": 30736161088,
+      "workflow_status_id": 51497913011,
+      "task_sha256": "dc4ca5b80f2c91ac3d695ef25d19cefb9625d55499b348d826476764b26b7e53",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    },
+    "verification_note": "PR #529 supplied the missing read-only issues permission. On 2 August 2026 the historical PR #524 reproducer was rerun through the actual workflow token: both bound comments became visible, the evaluator returned pass, and the exact commit status became success. The focused current-head suite passed 59 tests.",
+    "verified_at": "2026-08-02T06:49:31Z"
   },
   "priority": {
     "lane": "next",
@@ -128,6 +191,6 @@
     "github"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Codex-Settlement gegen Workflow-Token-Sichtbarkeitslücken härten"
 }

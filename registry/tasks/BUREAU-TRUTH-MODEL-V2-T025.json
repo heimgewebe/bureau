@@ -1,0 +1,133 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein revisionsgebundener Reproducer zeigt, dass ein grüner oder laufender PR bei einem pfadfremden main-Commit erneut aktualisiert werden muss und dadurch seine vollständige Required-Check-Matrix neu startet; Zeit- und Check-Verbrauch werden gemessen.",
+      "id": "starvation-reproducer"
+    },
+    {
+      "assertion": "Der gewählte Integrationspfad prüft den tatsächlich zu mergenden Queue- oder Merge-Commit gegen alle bestehenden Required Checks. Alte grüne Checks eines vorherigen Base-Stands genügen nicht.",
+      "id": "final-integration-checks"
+    },
+    {
+      "assertion": "Mindestens zwei konfliktfreie Test-PRs können ohne manuelles Branch-Update revisionsgebunden seriell integriert werden; main-Fortschritt lässt keinen bereits qualifizierten PR unbegrenzt verhungern.",
+      "id": "automatic-serial-integration"
+    },
+    {
+      "assertion": "Branch Protection, Required Checks, Review-Verträge und exakte Head-/Merge-Commit-Bindung bleiben erhalten. Administrative Bypässe, Force-Pushes und das pauschale Abschalten der Integrationsprüfung sind ausgeschlossen.",
+      "id": "guards-preserved"
+    },
+    {
+      "assertion": "Konflikte, rote oder fehlende Checks, Queue-Abbruch und zwischenzeitlicher main-Fortschritt erzeugen maschinenlesbare, idempotent wiederaufnehmbare Zustände ohne fremde Branches oder Leases zu übernehmen.",
+      "id": "failure-and-recovery"
+    },
+    {
+      "assertion": "Konfigurationsprüfung, fokussierte Tests, vollständige Bureau-Validierung und eine kurze Betriebsdokumentation sind auf dem exakten finalen Head grün; Post-Merge-Readback belegt die aktive Wirkung.",
+      "id": "validation-and-docs"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.merge-gate"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "service.github_actions"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer ordnete am 2026-08-02 an, alle durchsatzmindernden Blockaden mit Priorität durchsatz1 abzuarbeiten. Pflichtchecks, exakter Head-Readback und Branch Protection dürfen nicht administrativ umgangen werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.github/grabowski-required-checks.json",
+      "path:/home/alex/repos/bureau/.github/workflows/validate.yml",
+      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-merge-group.yml",
+      "path:/home/alex/repos/bureau/docs/operations.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T025.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Ersetze die wiederholte Voll-CI nach jedem neuen main-Commit durch einen revisionsgebundenen Integrationspfad, der mehrere konfliktfreie Bureau-PRs seriell und ohne manuelle Branch-Update-Schleife integriert. Bevorzugt ist eine GitHub Merge Queue mit Required Checks auf dem finalen Queue-Merge-Commit; eine Alternative ist nur zulässig, wenn sie dieselbe Integrationssicherheit nachweislich erhält.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T025",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "dass GitHub Merge Queue im aktuellen Plan verfügbar oder korrekt konfiguriert ist",
+      "dass strict-up-to-date ohne Ersatz sicher entfallen kann",
+      "Mergebereitschaft eines künftigen Implementierungs-PRs"
+    ],
+    "friction_event": "4314cd33e82e4cdfa31a090369726805",
+    "observed_at": "2026-08-02T20:44:16Z",
+    "observed_failure_mode": {
+      "description": "PR #1401 musste zweimal auf einen wandernden main-Stand aktualisiert werden; jeder pfadfremde Fortschritt startete die vollständige Check-Matrix neu.",
+      "main_delta": {
+        "changed_paths": [
+          "docs/operations.md"
+        ],
+        "commit_count": 4,
+        "overlap_with_pr": []
+      },
+      "mitigations_already_applied": [
+        "repository allow_auto_merge=true",
+        "repository allow_update_branch=true",
+        "PR #1401 und #1399 Auto-Merge aktiviert"
+      ]
+    },
+    "source_merge_commit": "a9395c1d115285551233d12cbe70b89021780c21",
+    "source_pr": 1401,
+    "throughput_priority": "durchsatz1",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e2c22a0b8281d7165bbdd588",
+      "event_id": 2193,
+      "event_created_at": "2026-08-02T20:48:40.619706Z",
+      "request_sha256": "c06afffb48b903ed3c44d134a25f44b6cd1d6861fd6f62fc866610323a1d2be7",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-observation",
+        "locator": "friction:4314cd33e82e4cdfa31a090369726805;github:heimgewebe/bureau#1401",
+        "observed_at": "2026-08-02T20:44:16Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "bureau",
+    "testing",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Entferne oder deaktiviere ausschließlich die neue Merge-Queue- beziehungsweise Integrationskonfiguration über einen normalen Revert-PR. Auto-Merge und Update-Branch können separat zurückgesetzt werden; Required Checks und Branch Protection bleiben während des Rollbacks aktiv."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Merge-Queue gegen CI-Neustart-Verhungern einführen"
+}

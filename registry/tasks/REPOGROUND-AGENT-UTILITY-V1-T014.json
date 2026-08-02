@@ -89,6 +89,47 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "receipt_reconciliation": {
+      "schema_version": 1,
+      "basis": "RepoGround PR #1146 and the authoritative post-merge readback prove all five acceptance criteria on current main.",
+      "registry_base_commit": "de42cf9c36ab2e8f87dcf64fe188fd4f200cf2d5",
+      "source_task_blob_sha": "84a6de8b563191f011878976311415c25f47c6be",
+      "implementation_head": "bd06a6af56dce4e35dd01be97d9c525cdf1fb165",
+      "merged_pull_request": "heimgewebe/repoground#1146",
+      "merge_commit": "381314cfeb03052a9b31fc1718b902a19325620a",
+      "merged_at": "2026-08-02T04:50:18Z",
+      "local_full_suite": {
+        "grabowski_task_id": "01ab8eeaf75a4e1db7884b1e",
+        "result": "5126 passed, 12 skipped",
+        "terminalization_sha256": "bd6ed4cf379ffc87d0d17a21b80fe5fff37afcf00e24e86add34d053d24f0bef",
+        "outcome_receipt_sha256": "89d3f25e60b8eddd980d40c4cb475c54cfcb492684eb4de0ff48cdc5ee2e7734"
+      },
+      "focused_verification": {
+        "result": "85 passed",
+        "scope": "41 trust/context tests plus 44 existing governance/contract regressions"
+      },
+      "github_ci": {
+        "head": "bd06a6af56dce4e35dd01be97d9c525cdf1fb165",
+        "workflow_count": 10,
+        "result": "all successful"
+      },
+      "review": {
+        "kind": "revision-bound self-review",
+        "result": "pass",
+        "external_review": "Codex review unavailable because its usage quota was exhausted; no material review threads existed."
+      },
+      "reconciled_at": "2026-08-02T04:54:49Z",
+      "does_not_establish": [
+        "initiative completion",
+        "completion of dependent tasks",
+        "prompt-injection absence for every downstream agent",
+        "future correctness after unrelated changes"
+      ]
+    },
+    "verification": {
+      "task_sha256": "bfbf95219e3f386cedbd60febb5ec00d06e90228b9b53eea88ca7584b853ab98",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955"
     }
   },
   "priority": {
@@ -103,6 +144,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Repository-Anweisungen und Regeln als untrusted Evidence klassifizieren"
 }

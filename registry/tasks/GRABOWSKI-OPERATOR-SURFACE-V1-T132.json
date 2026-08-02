@@ -1,0 +1,145 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein deterministischer Test reproduziert die erfolgreiche Veröffentlichung von Bureau PR #1372: Das Bureau-Resultat enthält lease_release.released=true und beide exakten Ressourcen sind danach leasefrei, während der Adapter durch einen nachgelagerten zweiten release_resources-Aufruf fälschlich leases_released=false meldet. Der Reproducer ist an Adapter-Receipt adb25e10f01b4d2e47e52f6f9e6c2d5340d779485ed405e1908784558b6b6c53 gebunden.",
+      "evidence_type": "object",
+      "id": "incident-reproducer"
+    },
+    {
+      "assertion": "Der Bureau-Domänenkern beziehungsweise sein exaktes lease_release-Receipt bleibt die primäre Freigabeautorität. Der Adapter führt nach einem gültigen, vollständigen Domain-Release keinen zweiten ungebundenen Release aus und überschreibt dessen Ergebnis nicht.",
+      "evidence_type": "boolean",
+      "id": "single-release-authority"
+    },
+    {
+      "assertion": "Bei gültigem vollständigem eingebettetem Release-Receipt sind lease_release.released, leases_released, cleanup_incomplete und required_readback logisch konsistent. Erfolgreiche Freigabe liefert leases_released=true, kein cleanup_incomplete und keinen Lease-Readbackbedarf.",
+      "evidence_type": "object",
+      "id": "consistent-success-projection"
+    },
+    {
+      "assertion": "Fehlendes, malformedes, unvollständiges oder widersprüchliches Release-Receipt wird nicht als Erfolg projiziert. Der Adapter liefert stabilen Diagnosecode beziehungsweise cleanup_incomplete, benennt resource_leases als erforderlichen Readback und erhält mögliche Restleases.",
+      "evidence_type": "object",
+      "id": "fail-closed-uncertainty"
+    },
+    {
+      "assertion": "Negative Tests belegen, dass fremde, erneuerte, teilweise verbliebene oder owner-/metadata-driftende Leasezeilen niemals durch eine boolesche Projektion verdeckt oder generisch freigegeben werden.",
+      "evidence_type": "object",
+      "id": "owner-drift-negative-cases"
+    },
+    {
+      "assertion": "Ein idempotenter Replay eines vollständigen Publication-Receipts liefert konsistent leases_acquired=false und leases_released=true, ohne einen neuen Release-Effekt oder neue Auditzeile für Ressourcenfreigabe auszulösen.",
+      "evidence_type": "object",
+      "id": "idempotent-replay"
+    },
+    {
+      "assertion": "Business- und Freigaberegeln bleiben im Bureau-Domänenkern; der Grabowski-Adapter normalisiert ausschließlich Transport, Readback und kompakte Projektion. Es entsteht keine zweite Lease- oder Publication-Wahrheit.",
+      "evidence_type": "boolean",
+      "id": "adapter-domain-boundary"
+    },
+    {
+      "assertion": "Gezielte Tests für Erfolg, partielles Release, Domain-Release-Fehler, Adapter-Readback, Ambiguitätsreplay und idempotenten Replay sowie die vollständige Grabowski-Validierung und GitHub-CI sind auf dem exakten Implementierungs-Head grün. Ein getrennter Self-Review findet keine offenen hohen oder kritischen Befunde.",
+      "evidence_type": "object",
+      "id": "regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Änderung betrifft nur die Projektion und Reconciliation der bereits vertraglich gebundenen Bureau-Publikationsleases. Sie darf weder Lease-Autorität erweitern noch unklare Freigaben als Erfolg behandeln.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_intake.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_intake_adapter.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-operator-intake-adapter-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Rückgabevertrag von grabowski_bureau_task_publish so korrigieren, dass die vom Bureau-Domänenkern bereits exakt ausgeführte Lease-Freigabe nicht durch einen zweiten Adapter-Release in ein falsches top-level leases_released=false umgedeutet wird. Eingebettetes Release-Receipt, top-level Projektion und autoritativer Lease-Readback müssen widerspruchsfrei bleiben; echte Unsicherheit bleibt fail-closed und readbackpflichtig.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T132",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "consolidates_candidates": [
+      {
+        "candidate_id": "candidate-c931d920023fe8afb36ea0fc",
+        "event_id": 1821,
+        "source_sha256": "db0ded122e26cd998adefaa0f18234c1f0f4b8ce389565f82f6d74c541496782"
+      },
+      {
+        "candidate_id": "candidate-9a898876ab8c206c8969fbd4",
+        "event_id": 2081,
+        "source_sha256": "e5c4004f8a26e50418046564090e4876dcc541dae4a27de809fc9610bc624987"
+      },
+      {
+        "candidate_id": "candidate-7cc6320a6fcfac8c64d83929",
+        "event_id": 2088,
+        "source_sha256": "adb25e10f01b4d2e47e52f6f9e6c2d5340d779485ed405e1908784558b6b6c53"
+      }
+    ],
+    "does_not_establish": [
+      "dass Restleases bestanden",
+      "Task-Readiness oder Queue-Wahrheit",
+      "Merge- oder Deploymentautorität",
+      "eine neue Lease-Autorität im Adapter"
+    ],
+    "root_cause": {
+      "adapter_behavior": "grabowski_bureau_task_publish calls resources.release_resources again and derives leases_released from the now-empty second release result",
+      "adapter_path": "src/grabowski_bureau_intake.py",
+      "domain_behavior": "publish_task_proposal releases exact publication leases before returning a successful receipt",
+      "grabowski_main": "4b26996e608830d6fb7aa19f8dafc3b0d3e30ac3",
+      "observed_publication": {
+        "adapter_receipt_sha256": "adb25e10f01b4d2e47e52f6f9e6c2d5340d779485ed405e1908784558b6b6c53",
+        "proposal_id": "bae29b178e6288b4c0a4c1ba7997018e12cd5fac5fdd26bcdc79d20b7f80c25e",
+        "publication_receipt_sha256": "5ab6832c9e333072853625bb96494292b5947e94edb092f96fbabe678309db18",
+        "pull_request": 1372
+      }
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c931d920023fe8afb36ea0fc",
+      "event_id": 1821,
+      "event_created_at": "2026-07-31T04:36:47.011904Z",
+      "request_sha256": "9cbf767df30fa01254f0b3587be25fdf854a8b874383c7f29b764c08a84a90e2",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_audit",
+        "locator": "grabowski:bureau-publication:fefd1b6699035ef928f68a62aac36df3171382e6389c413d3f2842e25afb02dc",
+        "observed_at": "2026-07-31T04:36:46.995478Z",
+        "sha256": "db0ded122e26cd998adefaa0f18234c1f0f4b8ce389565f82f6d74c541496782"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 72
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau",
+    "leases"
+  ],
+  "rollback": {
+    "strategy": "Die Projektionsänderung revertieren und den bisherigen Adapterpfad wiederherstellen. Bis zur Korrektur gelten eingebettetes Bureau-Release-Receipt und direkter Lease-Readback als maßgebliche Diagnose; eine widersprüchliche top-level Boolesche Angabe darf nicht zur automatischen Bereinigung oder Erfolgsbehauptung verwendet werden."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Lease-Freigabe im Bureau-Publikationsadapter konsistent projizieren"
+}

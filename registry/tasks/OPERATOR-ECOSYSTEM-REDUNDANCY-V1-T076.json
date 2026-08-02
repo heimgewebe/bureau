@@ -44,8 +44,8 @@
   "claims": [
     {
       "isolation": "none",
-      "mode": "read",
-      "resource": "repo.grabowski"
+      "mode": "write",
+      "resource": "component.grabowski.runtime"
     }
   ],
   "depends_on": [],
@@ -83,9 +83,9 @@
       "source": "user"
     },
     "logical_claim_scope": {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "reason": "Der Bureau-Katalog kennt den kanonischen logischen Grabowski-Repositoryclaim. Die exakten Produzenten- und Verbraucherrevisionen werden in unabhängige, unveränderliche Quellklone unter dem bereits exklusiv geleasten T076-Statepfad materialisiert; dadurch bleiben fremde linked Worktrees und ihre Lebenszyklusentscheidungen unangetastet. Sämtliche Hosteffekte sind enger durch execution.grabowski_resources gebunden.",
+      "resource": "component.grabowski.runtime",
+      "mode": "write",
+      "reason": "Der kanonische logische Claim bindet ausschließlich die deployte Grabowski-Runtime über service:grabowski-mcp. Exakte Produzenten- und Verbraucherrevisionen werden in unabhängige Quellklone unter dem exklusiv geleasten T076-Statepfad materialisiert; fremde linked Worktrees und Repository-Lebenszyklen bleiben unangetastet.",
       "exact_effect_resources": [
         "path:/home/alex/.local/bin/reposkop",
         "path:/home/alex/.local/share/grabowski-mcp",
@@ -224,6 +224,20 @@
       "foreign_worktrees_touched": false,
       "claim_intent_invalidated": "BUR-RUN-20260802T061139Z-87c7b87337",
       "requires_new_break_glass_claim": true
+    },
+    "logical_claim_corrected_at": "2026-08-02T06:23:29.790969+00:00",
+    "logical_claim_correction": {
+      "schema_version": 1,
+      "previous_resource": "repo.grabowski",
+      "current_resource": "component.grabowski.runtime",
+      "current_grabowski_key": "service:grabowski-mcp",
+      "reason": "The live claim intent proved that the logical repo claim reintroduced repo:/home/alex/repos/grabowski after explicit repo resources were removed. A runtime component is the narrow authoritative scheduling surface.",
+      "invalidated_claim_intents": [
+        "BUR-RUN-20260802T061139Z-87c7b87337",
+        "BUR-RUN-20260802T061815Z-213ae3280e"
+      ],
+      "requires_new_break_glass_claim": true,
+      "foreign_worktrees_touched": false
     }
   },
   "priority": {

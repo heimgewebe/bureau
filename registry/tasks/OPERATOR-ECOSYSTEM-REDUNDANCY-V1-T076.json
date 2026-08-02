@@ -56,8 +56,6 @@
       "required_level": "break_glass"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/reposkop",
-      "repo:/home/alex/repos/grabowski",
       "path:/home/alex/.local/bin/reposkop",
       "path:/home/alex/.local/share/grabowski-mcp",
       "path:/home/alex/.local/share/grabowski-mcp-releases",
@@ -66,7 +64,7 @@
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski"
+    "working_repository": "/home/alex/.local/state/grabowski/reposkop-context"
   },
   "goal": "Rolle Reposkop 2.0.0 aus dem exakten gemergten Produzentencommit 6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487 und den exakten gemergten Grabowski-Verbrauchercommit d17674c0e3fedcd8cd17c3a739d3707748b06e9d atomar auf dem Heim-PC aus. Belege die kanonische Checkout-Identität durch echte v2-Artefakte, den receipt- und auditgebundenen Grabowski-Roundtrip, kontrollierte Fail-closed-Negativfälle, vollständige Runtimegesundheit und eine exakt gebundene Rückfallkante, ohne fremde Arbeit oder ungemergte Änderungen aufzunehmen.",
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
@@ -87,10 +85,8 @@
     "logical_claim_scope": {
       "resource": "repo.grabowski",
       "mode": "read",
-      "reason": "Der Bureau-Katalog kennt den kanonischen Grabowski-Repositoryclaim. Die zwei Quellrepositories werden ausschließlich revisionsgebunden gelesen; sämtliche Hosteffekte und Konfliktflächen werden enger durch execution.grabowski_resources als exakte Grabowski-Leases gebunden.",
+      "reason": "Der Bureau-Katalog kennt den kanonischen logischen Grabowski-Repositoryclaim. Die exakten Produzenten- und Verbraucherrevisionen werden in unabhängige, unveränderliche Quellklone unter dem bereits exklusiv geleasten T076-Statepfad materialisiert; dadurch bleiben fremde linked Worktrees und ihre Lebenszyklusentscheidungen unangetastet. Sämtliche Hosteffekte sind enger durch execution.grabowski_resources gebunden.",
       "exact_effect_resources": [
-        "repo:/home/alex/repos/reposkop",
-        "repo:/home/alex/repos/grabowski",
         "path:/home/alex/.local/bin/reposkop",
         "path:/home/alex/.local/share/grabowski-mcp",
         "path:/home/alex/.local/share/grabowski-mcp-releases",
@@ -100,8 +96,17 @@
       "does_not_authorize": [
         "breite Mutation des Grabowski-Repositories",
         "Mutation eines nicht explizit geleasten Hostpfads",
-        "Übernahme oder Bereinigung fremder Worktrees, Prozesse oder Leases"
-      ]
+        "Übernahme oder Bereinigung fremder Worktrees, Prozesse oder Leases",
+        "Lebenszyklusmutation, Retention, Archivierung oder Übernahme vorhandener Reposkop- oder Grabowski-Worktrees"
+      ],
+      "source_isolation": {
+        "schema_version": 1,
+        "state_root": "/home/alex/.local/state/grabowski/reposkop-context",
+        "reposkop_source_commit": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+        "grabowski_source_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
+        "materialization": "independent-clones-without-shared-git-common-dir",
+        "reason": "Broad read-only repository leases are rejected by the live work-admission guard while unrelated clean linked worktrees remain deliberately unclassified. Source isolation preserves those foreign checkouts instead of retaining, archiving or adopting them."
+      }
     },
     "producer": {
       "repository": "heimgewebe/reposkop",
@@ -200,6 +205,25 @@
         "foreign_dirty_states_touched": false,
         "foreign_processes_touched": false
       }
+    },
+    "resource_contract_corrected_at": "2026-08-02T06:14:39.203755+00:00",
+    "resource_contract_correction": {
+      "schema_version": 1,
+      "trigger": "worktree-convergence-required on broad read-only repository lease",
+      "removed_resources": [
+        "repo:/home/alex/repos/reposkop",
+        "repo:/home/alex/repos/grabowski"
+      ],
+      "preserved_effect_resources": [
+        "path:/home/alex/.local/bin/reposkop",
+        "path:/home/alex/.local/share/grabowski-mcp",
+        "path:/home/alex/.local/share/grabowski-mcp-releases",
+        "path:/home/alex/.local/state/grabowski/reposkop-context",
+        "service:grabowski-mcp"
+      ],
+      "foreign_worktrees_touched": false,
+      "claim_intent_invalidated": "BUR-RUN-20260802T061139Z-87c7b87337",
+      "requires_new_break_glass_claim": true
     }
   },
   "priority": {

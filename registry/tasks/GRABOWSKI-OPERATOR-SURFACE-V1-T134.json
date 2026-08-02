@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Terminale Runtime-Refresh-Leases automatisch freigeben",
+  "goal": "Schließe die Durchsatzlücke, bei der ein erfolgreich terminalisierter Bureau-Runtime-Refresh seine exakt ownergebundenen Grabowski-Pfadleasing-Zeilen bis zum TTL-Ende belegt und dadurch den unmittelbar folgenden Deploy blockiert. Implementiere einen receiptgebundenen Normal- und Recovery-Pfad, der nur unveränderte Leases eines eindeutig terminalen Runtime-Refresh freigibt; aktive oder unklare Deploys bleiben fail-closed geschützt.",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "sqlite",
+    "runtime-deployment",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer ordnete am 2026-08-02 an, durchsatzmindernde Blockaden mit Priorität durchsatz1 abzuarbeiten. Fremde aktive Leases, Deploys und Prozesse dürfen nicht übernommen oder forciert freigegeben werden."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_grips.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-lease-contract-v2.md"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "terminal-success-reproducer",
+      "assertion": "Ein hermetischer Reproducer erstellt einen Runtime-Refresh-Owner mit den fünf kanonischen Pfadleasing-Zeilen, bindet ein gültiges create-only Ergebnisreceipt mit status deployed und zeigt vor dem Fix, dass der nächste Deploy bis zum TTL-Ende blockiert bleibt."
+    },
+    {
+      "id": "normal-path-release",
+      "assertion": "Der normale Runtime-Refresh-Orchestrierungspfad gibt nach eindeutigem Erfolg und nach eindeutigem Vorwirkungsabbruch seine exakten unveränderten Leases idempotent frei. Ergebnisreceipt, Owner, Taskbindung, Zielcommit, Ressourcenliste und Lease-Snapshot werden vor der Freigabe revalidiert."
+    },
+    {
+      "id": "recovery-terminal-source",
+      "assertion": "Der obsolete-path-lease-Reconciler oder ein gleichwertiger typisierter Recovery-Pfad akzeptiert ein explizites Runtime-Refresh-Terminalformat. Er prüft Receipt-Digest, Schema, Status, Zielhash, Source- und Merge-Commit, Owner, unveränderte Lease-Zeilen und die kanonische Runtime-Refresh-State-Root; frei übergebene Statusbehauptungen genügen nicht."
+    },
+    {
+      "id": "ambiguous-outcome-protection",
+      "assertion": "Fehlendes, manipuliertes, widersprüchliches oder nichtterminales Receipt sowie Prozessverlust zwischen Wirkung und Ergebnis bleiben fail-closed. In unklaren Fällen werden Leases erhalten und eine begrenzte Recovery-Diagnose ausgegeben; Force-Release ist kein automatischer Fallback."
+    },
+    {
+      "id": "active-foreign-work-protection",
+      "assertion": "Ein parallel aktiver Deploy mit gleichem oder anderem Owner, erneuerte Lease-Zeitstempel, abweichende Metadaten oder nicht exakt passende Ressourcen werden niemals freigegeben. Negative Tests decken Fremdowner, Receipt-Replay, Ziel-Drift und Teilmengen ab."
+    },
+    {
+      "id": "next-deploy-throughput",
+      "assertion": "Nach einem terminalen gültigen Receipt kann der unmittelbar folgende Runtime-Refresh dieselben kanonischen Ressourcen innerhalb von zehn Sekunden ohne TTL-Wartezeit erwerben. Die Messung ist revisions- und receiptgebunden."
+    },
+    {
+      "id": "cross-repo-boundary",
+      "assertion": "Falls die verifizierbare Terminalquelle eine Änderung am Bureau-Receipt-Vertrag erfordert, wird dafür ein eigener exakt gescopter Bureau-Folgetask registriert; der Grabowski-Task erweitert seinen Repository-Scope nicht stillschweigend."
+    },
+    {
+      "id": "validation-and-deploy",
+      "assertion": "Fokussierte Lease-, Receipt-, Recovery-, Parallelitäts- und Manipulationstests sowie die vollständigen relevanten Grabowski-Gates sind auf dem exakten finalen Head grün. Nach Merge und Deploy belegt ein Live-Roundtrip Freigabe und sofortige Wiederakquise ohne fremde Lease-Mutation."
+    }
+  ],
+  "metadata": {
+    "throughput_priority": "durchsatz1",
+    "observed_at": "2026-08-02T21:02:25Z",
+    "live_observation": {
+      "terminal_runtime_status": {
+        "source_commit": "a9395c1d115285551233d12cbe70b89021780c21",
+        "status": "deployed",
+        "result_sha256": "1f901e7f01bb0017fb293bb95d8212adda430758ea22fe3ec62d5c203b14edcb"
+      },
+      "stale_lease_owner": "operator:chatgpt:bureau-backlog-burn-20260802-2139",
+      "blocked_next_target": "7a5ef99a4f0dc93679588d8b23afeaa1935f8f26",
+      "stale_path_lease_count": 5,
+      "recovery_surface_result": "rejected because runtime-refresh status/result is not an accepted terminal_source kind",
+      "force_release_used": false
+    },
+    "causal_boundary": {
+      "belegt": [
+        "der Runtime-Status wies a9395c1 als deployed aus",
+        "fünf zweck- und commitgebundene Pfadleasing-Zeilen desselben Owners blieben aktiv",
+        "die aktiven Zeilen blockierten den Lease-Erwerb für den nächsten Deploy",
+        "der bestehende Reconciler akzeptiert nur agent_workspace_close oder durable_task_outcome als terminal_source"
+      ],
+      "ungeklärt": [
+        "ob der primäre Fix im normalen Orchestrierungswrapper oder im Recovery-Reconciler liegen soll",
+        "ob der Bureau-Runtime-Receipt-Vertrag für eine sichere externe Verifikation erweitert werden muss"
+      ]
+    },
+    "does_not_establish": [
+      "dass jede lange Runtime-Lease veraltet ist",
+      "dass ein beliebiges status=deployed-Dokument Freigabeautorität besitzt",
+      "dass TTL-Verkürzung ein sicherer Ersatz für terminale Freigabe ist",
+      "Mergebereitschaft eines künftigen Implementierungs-PRs"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e2b83e6d88b3ccbf0cc65f11",
+      "event_id": 2215,
+      "event_created_at": "2026-08-02T21:17:37.658466Z",
+      "request_sha256": "17bdac0aeabab53ac047cb6d28eed42751c16130a4c9133e004843a2d3c134df",
+      "source": {
+        "kind": "operator-observation",
+        "locator": "runtime-refresh-result:1f901e7f01bb0017fb293bb95d8212adda430758ea22fe3ec62d5c203b14edcb;lease-owner:operator:chatgpt:bureau-backlog-burn-20260802-2139",
+        "observed_at": "2026-08-02T21:02:25Z",
+        "sha256": null,
+        "freshness": "unknown",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den neuen Runtime-Refresh-Terminalquellen-, Release- und Recovery-Vertrag über einen normalen PR. Bis zur erneuten Freigabe bleiben vorhandene Leases fail-closed erhalten; Force-Release oder TTL-Verkürzung werden nicht als Rollback eingesetzt."
+  }
+}

@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T006",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Gemeinsame Kreativlaufzeit repositoryseitig implementieren",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Roland, Buckelwal, Tierstimmen und Dauersong hinter einem gemeinsamen begrenzten Laufzeitvertrag implementieren, ohne eine Instanz zu starten.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T003",
@@ -112,6 +112,13 @@
       "biologische Realitätsnähe",
       "independent review of final PR6 head",
       "Live-End-to-End-Funktion"
-    ]
+    ],
+    "superseded_at": "2026-08-02T08:04:00+02:00",
+    "superseded_by": [
+      "AUDIO-CONTROL-PLANE-V1-T023",
+      "AUDIO-CONTROL-PLANE-V1-T024",
+      "AUDIO-CONTROL-PLANE-V1-T025"
+    ],
+    "supersession_reason": "Der revisionsgebundene Audiozentrale-v2-Plan zerlegt diesen früheren Umbrella-Scope in kleinere Produkt-, Telemetrie-, Recovery- und physische Abnahmetasks. Der alte Task darf keine zweite Sequenzierungswahrheit erzeugen."
   }
 }

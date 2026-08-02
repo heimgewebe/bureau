@@ -132,8 +132,8 @@
         "offline_demo_peak_dbfs": -21.41458310363333,
         "offline_realtime_factor": 4.781787822979419
       },
-      "task_sha256": "2e9db7cceda69faad018aaf51bb424a3995e76d1917b683f397269d7ef4a3198",
-      "plan_sha256": "63240b44ae09e6b29b0db54ebd25c179cb0fe3f3b52df193bfba7041b1b45c4d",
+      "task_sha256": "497caf62a51c5d7346207362cb7e2f6dfda21a5ecaaba482e05a8bbad43dcf88",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
       "current_implementation_commit": "0fb490acd39b4dfb50e7d33109c346536f873446",
       "source_snapshot_followup": {
         "pull_request": 14,
@@ -152,7 +152,24 @@
         "repository_tests": "236/236 pass",
         "audio_safety_gates": "pass",
         "compileall": "pass"
-      }
+      },
+      "plan_reconciliation": {
+        "reconciled_at": "2026-08-02T07:58:00+02:00",
+        "current_program_plan": {
+          "repository": "heimgewebe/audio",
+          "path": "docs/plans/audiozentrale-product-v2.md",
+          "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+          "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+        },
+        "focused_plan_preserved": {
+          "repository": "heimgewebe/audio",
+          "path": "docs/plans/buckelwal-continuous-voice-v1.md",
+          "commit": "2475eae1929c222469e78f8f4055e3a759fcf295",
+          "document_sha256": "579d1c0fc964753fbf5bc7e52c6d625b5d2500a99ee6e89d73d76ce309f031d3"
+        },
+        "reason": "T015 bleibt ein abgeschlossenes fokussiertes Teilprodukt unter dem neuen Audiozentrale-v2-Gesamtplan; seine ursprüngliche Implementierungs- und Testevidenz wird nicht umgedeutet."
+      },
+      "task_reconciliation_reason": "Only program-relationship metadata changed; original implementation acceptance and evidence remain unchanged."
     },
     "registry_truth": {
       "schema_version": 1,
@@ -199,7 +216,8 @@
     },
     "relationship_to_program": {
       "T006": "T015 ist ein verifiziertes fokussiertes Buckelwal-Teilprodukt, schließt aber nicht die gemeinsame Kreativlaufzeit für Roland, Tierstimmen und Dauersong.",
-      "T007": "T015 beweist keine physische Roland-/MOTU-Abnahme und keinen gestuften Gesamtrollout."
+      "T007": "T015 beweist keine physische Roland-/MOTU-Abnahme und keinen gestuften Gesamtrollout.",
+      "audiozentrale-v2": "T015 liefert das bereits verifizierte besondere Instrument für T023; es beweist weder Produktoberfläche, Livetelemetrie noch physische Abnahme."
     },
     "does_not_establish": [
       "biologische Modelltreue",

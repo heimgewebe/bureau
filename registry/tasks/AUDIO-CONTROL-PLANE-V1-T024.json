@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T024",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Typisierte interne Module und Verknüpfungen liefern",
+  "state": "planned",
+  "goal": "Einen kleinen internen DSP- und Modulationskern mit linearen typgeprüften Modulketten, stabilen Parametern, LFO, Hüllkurve, Envelope Follower, MIDI und Schrittfolge sowie sichtbarer Einflusszerlegung implementieren.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T022",
+    "AUDIO-CONTROL-PLANE-V1-T023"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 24
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "internal-only",
+      "assertion": "Bis zur kommerziellen v1 werden nur interne Module geladen; kein Pluginhost und kein generischer Kommandoendpunkt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "typed-links",
+      "assertion": "Verknüpfungen sind allowlistet und können weder Aufnahme, Transport, Ausgabeziel, Masterpegel noch Panic/Mute steuern.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "explainability",
+      "assertion": "Jeder bewegte Parameter zeigt Basiswert, Beiträge, Begrenzung und tatsächlich angewendeten Enginewert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "rt-contract",
+      "assertion": "Keine Allokation, blockierende I/O oder Protokollserialisierung im Audiocallback; Modullatenzen sind sichtbar.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "undo-boundary",
+      "assertion": "Kreative Strukturänderungen sind undo-fähig; geschehenes Audio, physische Handlungen und Sicherheitsaktionen werden nicht rückwirkend behauptet.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "dsp",
+    "audio",
+    "real-time"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

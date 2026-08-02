@@ -165,7 +165,10 @@
       "platform exposure of every MCP server tool",
       "resolution of the 177-versus-175 client discovery discrepancy",
       "successful host deployment",
-      "task claim or dispatch authority"
+      "task claim or dispatch authority",
+      "completion of OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T051",
+      "future active Grabowski runtime identity after unrelated deployments",
+      "deployment of Grabowski commits merged after the recorded live revalidation"
     ],
     "previous_blockade": {
       "classification": "operator-transport-unavailable",
@@ -299,7 +302,169 @@
       "removed_snapshot_count": 3,
       "reason": "Live runtime identities are execution evidence, not durable task authority. Prior values remain in Git history and PR review evidence.",
       "future_storage": "claim and cutover receipts only"
-    }
+    },
+    "verified_at": "2026-08-02T21:06:39Z",
+    "outcome": "Reposkop 2.0.0 und der typisierte Grabowski-v2-Verbraucher wurden im revisionsgebundenen Bureau-Lauf erfolgreich ausgerollt. Live-v2-Roundtrip und idempotenter Replay waren erfolgreich; vier Negativproben blieben fail-closed; Postflight und Rollbackkante waren grün.",
+    "validated_acceptance": {
+      "live-preflight-bound": {
+        "status": "PASS",
+        "evidence_sha256": "9ae5e1d2891f188fedf9d823eb6500eb9cb67b73d5d510569340ae309a30d538"
+      },
+      "producer-exact-deploy": {
+        "status": "PASS",
+        "source_commit": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+        "installed_sha256": "b7c7de70daf23671a56ffd5f73fcb55e16e4a1f680fbd14d660b4193fbb91aed",
+        "version": "reposkop 2.0.0",
+        "tests": "46/46 pass",
+        "evidence_sha256": "943a12c8889317c6dce6a58b1daf926f88fba632f75f8667eecfcab385651a09"
+      },
+      "consumer-target-or-successor-bound": {
+        "status": "PASS",
+        "target_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
+        "active_runtime_head": "f0fb6bdb0cada7d79ae22407429521c7b693024b",
+        "target_is_ancestor": true,
+        "target_module_sha256": "c1e46bd5b921834a89325fdffe4edba8f716369e6edca3401d230d736f3cfdae",
+        "active_module_sha256": "c1e46bd5b921834a89325fdffe4edba8f716369e6edca3401d230d736f3cfdae",
+        "deployment_manifest_module_sha256": "c1e46bd5b921834a89325fdffe4edba8f716369e6edca3401d230d736f3cfdae",
+        "runtime_mutated_by_closeout": false
+      },
+      "producer-live-v2-report": {
+        "status": "PASS",
+        "evidence_sha256": "943a12c8889317c6dce6a58b1daf926f88fba632f75f8667eecfcab385651a09"
+      },
+      "consumer-live-roundtrip": {
+        "status": "PASS",
+        "tool": "grabowski_reposkop_context",
+        "receipt_sha256": "fdcd947c7b987642c06de8ead7179ed8c0c26232279e120b4816d11fe5bd6ec6",
+        "replay": "same receipt",
+        "evidence_sha256": "964484b3b75236936cb89bc6dc685f95171393252badf80fa3860b63de21b347"
+      },
+      "negative-contract-fails-closed": {
+        "status": "PASS",
+        "cases": [
+          "v1-schema",
+          "digest-drift",
+          "purpose-drift",
+          "incomplete-observation"
+        ],
+        "receipt_effects": 0,
+        "evidence_sha256": "82c704d8769308c5e231200bc39054c6466c4cf81b66f3b83460e0262cf074ad"
+      },
+      "post-cutover-health-and-rollback": {
+        "status": "PASS",
+        "rollback_available": true,
+        "rollback_used": false,
+        "preimage_sha256": "cdc6450bbbb652458cc383ff1f82a96cbd9ccf18be791274b93ca8d4340527f3",
+        "evidence_sha256": "3acbe84e2aca0d9baaecc7fc2337696a8f3ce86f70ee3e5d46cd263531f50fe7"
+      },
+      "t051-boundary-preserved": {
+        "status": "PASS",
+        "t051_closed": false,
+        "evidence_sha256": "9ae5e1d2891f188fedf9d823eb6500eb9cb67b73d5d510569340ae309a30d538"
+      }
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "grabowski_bureau_cutover_and_live_revalidation",
+      "source_ref": "bureau-run:BUR-RUN-20260802T083103Z-d2bf539437",
+      "verified_at": "2026-08-02T21:06:39Z",
+      "run_id": "BUR-RUN-20260802T083103Z-d2bf539437",
+      "run_state": "succeeded",
+      "completion_status": "terminally_closed",
+      "completion_evidence_sha256": "9ae5e1d2891f188fedf9d823eb6500eb9cb67b73d5d510569340ae309a30d538",
+      "convergence_request_sha256": "4e9fcb84c22c909a78aa0355f5baba2e64230dbbcbb83a6367b7fbd44da255f2",
+      "convergence_receipt_sha256": "b1461a6de302b688c842ffc11a32b96743c6e5df2ab832a2af918ea1f2524266",
+      "chronik_event_id": "sha256:76061434e029d60ea4b049ea354ba39b6b82fcd09f4cab27c71d65014593c272",
+      "producer": {
+        "repository": "heimgewebe/reposkop",
+        "merge_commit": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+        "installed_sha256": "b7c7de70daf23671a56ffd5f73fcb55e16e4a1f680fbd14d660b4193fbb91aed",
+        "version": "reposkop 2.0.0"
+      },
+      "consumer": {
+        "repository": "heimgewebe/grabowski",
+        "target_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
+        "active_runtime_head_at_reconciliation": "f0fb6bdb0cada7d79ae22407429521c7b693024b",
+        "active_release": "/home/alex/.local/share/grabowski-mcp-releases/f0fb6bdb0cad-srcsetffd7d906722d-locke6664d600b6c-contract9f71da0e1467-attempt1",
+        "target_is_ancestor": true,
+        "module_sha256": "c1e46bd5b921834a89325fdffe4edba8f716369e6edca3401d230d736f3cfdae"
+      },
+      "connector_revalidation": {
+        "registered_tool_count": 177,
+        "expected_tool_count": 177,
+        "tool_names_sha256": "cb3cd4bbc3354b8209f777343530bdb81818683ceff54ad89fa6ff3f2c703b63",
+        "snapshot_receipt_sha256": "d03ed1caa8cc6692c67b3e175292d9b78a94ec117317a9d355d91809c31b3cc3",
+        "state": "matched"
+      },
+      "evidence_artifacts": {
+        "bureau-completion-evidence.json": "9ae5e1d2891f188fedf9d823eb6500eb9cb67b73d5d510569340ae309a30d538",
+        "convergence-request.json": "4e9fcb84c22c909a78aa0355f5baba2e64230dbbcbb83a6367b7fbd44da255f2",
+        "producer-live-evidence.json": "943a12c8889317c6dce6a58b1daf926f88fba632f75f8667eecfcab385651a09",
+        "consumer-roundtrip-evidence.json": "964484b3b75236936cb89bc6dc685f95171393252badf80fa3860b63de21b347",
+        "negative-contract-evidence.json": "82c704d8769308c5e231200bc39054c6466c4cf81b66f3b83460e0262cf074ad",
+        "postflight-health-evidence.json": "3acbe84e2aca0d9baaecc7fc2337696a8f3ce86f70ee3e5d46cd263531f50fe7",
+        "postflight-mcp-current-evidence.json": "5b2921add70f7822523758a00fbd400d429b4179dd20d3359b525d084134e5a9"
+      },
+      "live_revalidation": {
+        "reposkop_head": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+        "reposkop_remote_main": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+        "binary_sha256": "b7c7de70daf23671a56ffd5f73fcb55e16e4a1f680fbd14d660b4193fbb91aed",
+        "binary_version": "reposkop 2.0.0",
+        "grabowski_manifest_sha256": "57914228f2c78d2f77b83391d6a0ff5255c28aa380cb1efb0917f6c88d2662ee",
+        "active_runtime_head": "f0fb6bdb0cada7d79ae22407429521c7b693024b",
+        "consumer_module_sha256": "c1e46bd5b921834a89325fdffe4edba8f716369e6edca3401d230d736f3cfdae"
+      },
+      "task_sha256": "4490210b225bd663617aa1f7f752d99916675e8252d0fc539b6d603723ad77b8",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "bureau_run",
+          "authority": "bureau+grabowski",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+          "source_ref": "bureau-run:BUR-RUN-20260802T083103Z-d2bf539437",
+          "result": "succeeded",
+          "evidence_sha256": "9ae5e1d2891f188fedf9d823eb6500eb9cb67b73d5d510569340ae309a30d538"
+        },
+        {
+          "kind": "deployment_receipt",
+          "authority": "heim-pc",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+          "source_ref": "reposkop-v2-live-install",
+          "commit_sha": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+          "artifact_sha256": "b7c7de70daf23671a56ffd5f73fcb55e16e4a1f680fbd14d660b4193fbb91aed",
+          "result": "reposkop-2.0.0-current"
+        },
+        {
+          "kind": "mcp_roundtrip",
+          "authority": "grabowski-runtime",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+          "source_ref": "grabowski_reposkop_context",
+          "receipt_sha256": "fdcd947c7b987642c06de8ead7179ed8c0c26232279e120b4816d11fe5bd6ec6",
+          "result": "accepted-and-idempotently-replayed"
+        },
+        {
+          "kind": "negative_test_run",
+          "authority": "heim-pc",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+          "source_ref": "/home/alex/.local/state/grabowski/reposkop-context/t076-BUR-RUN-20260802T083103Z-d2bf539437/negative-contract-evidence.json",
+          "evidence_sha256": "82c704d8769308c5e231200bc39054c6466c4cf81b66f3b83460e0262cf074ad",
+          "result": "four-fail-closed-cases-pass"
+        },
+        {
+          "kind": "postflight",
+          "authority": "grabowski-runtime",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+          "source_ref": "/home/alex/.local/state/grabowski/reposkop-context/t076-BUR-RUN-20260802T083103Z-d2bf539437/postflight-health-evidence.json",
+          "evidence_sha256": "3acbe84e2aca0d9baaecc7fc2337696a8f3ce86f70ee3e5d46cd263531f50fe7",
+          "result": "healthy"
+        }
+      ]
+    },
+    "evidence_reconciled_at": "2026-08-02T21:06:39Z"
   },
   "priority": {
     "lane": "now",
@@ -319,6 +484,6 @@
     "strategy": "Vor dem ersten Effekt werden die exakte alte Reposkop-Dateiidentität, SHA-256 und Version sowie die aktive Grabowski-Release-/Manifestidentität gebunden. Eine bereits aktive, vollständig integre Grabowski-main-Nachfolgerrelease, die den Zielcommit als Vorfahr enthält und den Reposkop-v2-Verbraucher byteidentisch führt, wird nicht heruntergestuft und von T076 nicht mutiert. Bei einem Produzenten-, Verbraucher-, Audit-, Connector-, Doctor-, Runtime- oder Live-Roundtrip-Fehler werden keine weiteren Effekte ausgeführt. Falls Reposkop bereits mutiert wurde, wird ausschließlich auf die gebundene Reposkop-Vorgängeridentität zurückgeschaltet; falls T076 wider Erwarten die Runtime mutiert hat, wird auf deren gebundene Vorgängerrelease zurückgeschaltet. Neue v2-Receipts werden nicht umgeschrieben oder gelöscht, sondern als fehlgeschlagene Cutover-Evidenz erhalten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Reposkop 2.0 und Grabowski-Verbraucher atomar ausrollen"
 }

@@ -12,7 +12,8 @@
     "grabowski_resources": [
       "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
       "path:/home/alex/repos/grabowski/src/grabowski_grip_orchestration.py",
-      "path:/home/alex/repos/grabowski/tests/test_grips.py"
+      "path:/home/alex/repos/grabowski/tests/test_grips.py",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",

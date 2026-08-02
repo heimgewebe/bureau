@@ -1,0 +1,146 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die dokumentierte Stellwagen-Sättigung wird revisionsgebunden reproduziert: in den ersten drei Segmenten liegen 36/48, 40/48 und 34/48 Kontrollpunkte am kürzesten Lag 3, entsprechend 1.333,33 Hz, bei nur ungefähr 0,33 bis 0,36 Periodizität; diese Werte werden ausdrücklich nicht als belastbarer F0-Beleg behandelt.",
+      "evidence_type": "object",
+      "id": "reproduce-search-bound-saturation"
+    },
+    {
+      "assertion": "F0-Suchbereich, Voicing-Regel, Konfidenz, Suchranddiagnostik, Oktavfehlerbehandlung, Bandbreitenklassen, Featureverfügbarkeit, Aggregation und Erfolgsschwellen werden vor Auswertung der gesperrten externen Aufnahmen in einer revisions- und hashgebundenen Definition festgeschrieben.",
+      "evidence_type": "object",
+      "id": "preregister-evaluator-contract"
+    },
+    {
+      "assertion": "Ein reproduzierbarer Referenzkorpus aus synthetischen Grundtönen, bekannten Harmonischen, gepulsten Signalen, Rauschen, Schiffslärm-Mischungen und mindestens einem unabhängig annotierten Walruf prüft F0, Voicing, Suchrand- und Oktavfehler getrennt; Ground Truth und Erzeugung sind hashgebunden.",
+      "evidence_type": "object",
+      "id": "controlled-reference-corpus"
+    },
+    {
+      "assertion": "Unvoiced oder unsichere Frames werden nicht als exakter Grundton ausgegeben. Suchrandtreffer besitzen eine explizite Diagnose und können die F0-Distanz nicht still dominieren.",
+      "evidence_type": "object",
+      "id": "noise-aware-voicing"
+    },
+    {
+      "assertion": "Die 5-kHz-Samoa-Aufnahme wird als bandbegrenzte Schicht behandelt. Nicht beobachtbare Hochbandmerkmale werden nach einem vorab festgelegten Verfügbarkeitsvertrag als nicht verfügbar ausgewiesen statt nach Ergebnislage umgewichtet.",
+      "evidence_type": "object",
+      "id": "low-bandwidth-stratum"
+    },
+    {
+      "assertion": "Alaska, Stellwagen und Amerikanisch-Samoa bleiben gesperrte Testdaten. Weder Evaluatorparameter noch Engineparameter, Featuregewichte oder Freigabeschwellen werden aus ihren Ergebniswerten gewählt.",
+      "evidence_type": "object",
+      "id": "locked-external-test-only"
+    },
+    {
+      "assertion": "Ein kanonischer Bericht vergleicht alten und neuen Evaluator auf denselben unveränderten Segmenten, trennt unabhängige Aufnahmen von Segmenten und benennt, welche Aussagen stabil bleiben, schwächer werden oder zurückgezogen werden müssen.",
+      "evidence_type": "object",
+      "id": "old-new-sensitivity-report"
+    },
+    {
+      "assertion": "Definition, Referenzfixtures, Berichte und Testartefakte sind hashgebunden und byte-reproduzierbar; externe Dateien gelangen weiterhin weder in Modellbau noch Laufzeitauswahl oder Live-Engine.",
+      "evidence_type": "object",
+      "id": "determinism-and-isolation"
+    },
+    {
+      "assertion": "Fokussierte Negativtests, vollständiger Repositorycheck, revisionsgebundenes Self-Review und grüne Pflichtchecks bestehen. Offene methodische Grenzen werden explizit dokumentiert.",
+      "evidence_type": "object",
+      "id": "quality-gate"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T029"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Evaluator-, Test-, Fixture-, Bericht- und Dokumentationsänderungen. Keine physische Audioausgabe, kein Profilwechsel, keine Live-Routingwirkung und keine nachträgliche Veränderung der in T029 eingefrorenen Studienregeln oder Ergebnisse.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Den in Audio PR #43 und T029 belegten F0-Suchrandfehler unter Schiffslärm durch einen vorregistrierten, deterministischen, noise-robusten und bandbreitenbewussten F0-/Voicing-Evaluator beheben, ohne den gesperrten externen Satz für Parameter-, Featuregewicht- oder Schwellentuning zu verwenden.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T030",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Freigabe einer neuen Walengine",
+      "biologische Grundtonwahrheit ohne kontrollierte Referenz",
+      "nachträgliche Gültigkeit gelockerter T029-Schwellen",
+      "physische Klangqualität",
+      "Parameterlernen aus dem gesperrten externen Testsatz"
+    ],
+    "locked_test_sets": [
+      "assets/whale-sources/evaluation/manifest.json",
+      "assets/whale-sources/evaluation-v2/manifest.json"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-269040f93c99c2e672fd688a",
+      "event_id": 2127,
+      "event_created_at": "2026-08-02T12:54:22.732744Z",
+      "request_sha256": "2febd738ad7c429a8af078dadc648ab77b909a87bd824ed444b28b8f2c860438",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "exact-head-review-finding",
+        "locator": "github:heimgewebe/audio#43@7e188912b059610b98cc8af29498320d5fcccb9f;private-binding:/home/alex/.local/state/grabowski/operator-intake/audio-pr43-f0-boundary-source-v1.json",
+        "observed_at": "2026-08-02T12:54:22.715838Z",
+        "sha256": "a2ce71d6334846ecdd5385444df0b6a4aaf540fe58a51264106645e5752842a7"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-02T15:48:00+02:00",
+    "relationship_to_program": {
+      "T016": "T030 ersetzt weder die physische Klangabnahme noch das Nutzerurteil am Roland/MOTU/Focal-Pfad.",
+      "T029": "T030 verändert oder reinterpretiert die eingefrorene T029-Studie nicht, sondern liefert eine neue Evaluatorgeneration für spätere Studien."
+    },
+    "source_review": {
+      "finding": "Autokorrelations-Pitchtracker sättigt unter Stellwagen-Schiffslärm häufig am kürzesten Lag 3 und meldet 1.333,33 Hz bei niedriger Periodizität.",
+      "performance_merge_commit": "6d8196e14ef9bb72777027fbc4ba6faea24666cd",
+      "repository": "heimgewebe/audio",
+      "study_merge_commit": "704e2aff6ea9ed28fa45a43c0e183a99b4aedb49",
+      "study_pull_request": 43
+    },
+    "source_task": "AUDIO-CONTROL-PLANE-V1-T029"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "python",
+    "testing",
+    "audio-analysis",
+    "signal-analysis",
+    "statistics",
+    "reproducibility",
+    "provenance",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Evaluatoränderungen bleiben in einem isolierten Audio-Worktree. Bei verletzter External-Blindness, nicht reproduzierbaren Ergebnissen oder Regressionen werden nur task-eigene Commits beziehungsweise der Task-PR zurückgenommen; T029, PR #43 und die gesperrten Artefakte bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Buckelwal-Evaluator gegen F0-Suchrandsättigung härten"
+}

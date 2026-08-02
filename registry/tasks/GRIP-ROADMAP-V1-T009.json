@@ -16,7 +16,8 @@
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski"
+    "working_repository": "/home/alex/repos/grabowski",
+    "baseline_commit": "168d1c7e0fb715af3e765d481b155573dea2c571"
   },
   "required_capabilities": [
     "repository",

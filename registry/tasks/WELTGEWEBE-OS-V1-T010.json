@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T010",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Systemkatalog als Rollen- und Einstiegskarte für Weltgewebe OS ausrichten",
-  "state": "planned",
+  "state": "verified",
   "goal": "Weltgewebe OS, seine Zellen, Plattformkomponenten, Betreiberrollen, Datenwahrheiten und Einstiegspunkte im Systemkatalog registrieren.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T001"
@@ -58,6 +58,80 @@
   ],
   "metadata": {
     "registered_at": "2026-07-15T20:50:00Z",
-    "ecosystem_role": "system-discovery"
+    "ecosystem_role": "system-discovery",
+    "updated_at": "2026-08-02T20:56:00Z",
+    "verified_at": "2026-08-02T20:56:00Z",
+    "next_action": "No further Systemkatalog implementation is required for T010 while merge commit c4a913bd1c17e47e718af9388be085710d442bf9 and the bound artifact manifest remain valid.",
+    "does_not_establish": [
+      "live Lenskit or RepoGround runtime health",
+      "completion of the RepoGround cutover",
+      "deployment state",
+      "claim or dispatch authority",
+      "permission to mutate unrelated Bureau queue entries"
+    ],
+    "source_pull_request": {
+      "repository": "heimgewebe/systemkatalog",
+      "number": 162,
+      "base_sha": "71acf8618ffd633ab3cab4fef70cec0d9a1a6418",
+      "final_head_sha": "a304b18bf7a0c9b220cd688cfdf6b6dde0ae7d57",
+      "merge_commit": "c4a913bd1c17e47e718af9388be085710d442bf9",
+      "merged_at": "2026-08-02T20:00:06Z",
+      "required_checks": "terminal success",
+      "state": "merged"
+    },
+    "foundation_pull_request": {
+      "repository": "heimgewebe/systemkatalog",
+      "number": 156,
+      "merge_commit": "48cae2a54bd1c3709ef7a795da411aa87975d331",
+      "role": "initial Weltgewebe OS catalog alignment"
+    },
+    "completion": {
+      "state": "verified",
+      "verified_at": "2026-08-02T20:56:00Z",
+      "current_systemkatalog_head": "c4a913bd1c17e47e718af9388be085710d442bf9",
+      "acceptance_results": {
+        "role-catalog": true,
+        "truth-locations": true,
+        "entrypoints": true,
+        "no-shadow-status": true
+      },
+      "post_merge_tests": {
+        "unittest_count": 164,
+        "catalog_validation": "passed",
+        "ecosystem_map_validation": "passed",
+        "generated_projections": "current",
+        "artifact_manifest": "valid against origin/main"
+      },
+      "does_not_establish": [
+        "live runtime health",
+        "cutover completion",
+        "future source freshness"
+      ]
+    },
+    "verification_evidence": "docs/evidence/weltgewebe-os-v1-t010-closeout-20260802.json",
+    "verification_evidence_sha256": "691732d4d31f7b5415072016e8e662478a832287df56156e1f68d3d174642abe",
+    "receipt_sha256": "691732d4d31f7b5415072016e8e662478a832287df56156e1f68d3d174642abe",
+    "source_ref": "heimgewebe/systemkatalog#162; head a304b18bf7a0c9b220cd688cfdf6b6dde0ae7d57; merge c4a913bd1c17e47e718af9388be085710d442bf9; post-merge 164 tests and all catalog gates passed on 2026-08-02",
+    "verification": {
+      "authority": "merged_systemkatalog_main_plus_post_merge_validation",
+      "task_sha256": "7b7f65aa65b483b640a0cf523c1e65e9994e8318fc79e797eed2b213ed68b88f",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "evidence_sha256": "691732d4d31f7b5415072016e8e662478a832287df56156e1f68d3d174642abe",
+      "current_systemkatalog_head": "c4a913bd1c17e47e718af9388be085710d442bf9",
+      "source_pull_request_head": "a304b18bf7a0c9b220cd688cfdf6b6dde0ae7d57",
+      "source_pull_request_merge": "c4a913bd1c17e47e718af9388be085710d442bf9",
+      "acceptance_results": {
+        "role-catalog": true,
+        "truth-locations": true,
+        "entrypoints": true,
+        "no-shadow-status": true
+      },
+      "does_not_establish": [
+        "queue truth beyond removal of this terminal task",
+        "claim or dispatch authority",
+        "runtime health",
+        "future mutation authority"
+      ]
+    }
   }
 }

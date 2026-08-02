@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "kind": "bureau_task_verification_evidence",
+  "task_id": "WELTGEWEBE-OS-V1-T010",
+  "observed_at": "2026-08-02T20:56:00Z",
+  "decision": "verified",
+  "bureau_base": {
+    "repository": "heimgewebe/bureau",
+    "commit": "a9395c1d115285551233d12cbe70b89021780c21",
+    "task_state": "planned",
+    "queue_lane": "later"
+  },
+  "implementation": {
+    "repository": "heimgewebe/systemkatalog",
+    "foundation_pull_request": 156,
+    "foundation_merge_commit": "48cae2a54bd1c3709ef7a795da411aa87975d331",
+    "completion_pull_request": 162,
+    "base_commit": "71acf8618ffd633ab3cab4fef70cec0d9a1a6418",
+    "final_head": "a304b18bf7a0c9b220cd688cfdf6b6dde0ae7d57",
+    "merge_commit": "c4a913bd1c17e47e718af9388be085710d442bf9",
+    "merged_at": "2026-08-02T20:00:06Z",
+    "required_checks": [
+      "Analyze (actions)",
+      "Analyze (python)",
+      "CodeQL",
+      "Repository Contract",
+      "Secret Scan",
+      "Validate Ecosystem Map"
+    ],
+    "required_checks_conclusion": "success"
+  },
+  "acceptance": [
+    {
+      "id": "role-catalog",
+      "status": "passed",
+      "assertion": "Weltgewebe, Grabowski, Bureau, Chronik, Leitstand, Schauwerk, Commonworld, Lenskit and Konvergenzregelkreis have unique bounded roles.",
+      "evidence": [
+        "registry/ecosystem/nodes.json",
+        "registry/ecosystem/edges.json",
+        "scripts/tests/test_weltgewebe_os_catalog.py"
+      ],
+      "material_completion": "Lenskit is now explicit as concept:lenskit-legacy-role and bounded to RepoGround by a scope_boundary relation without truth ownership."
+    },
+    {
+      "id": "truth-locations",
+      "status": "passed",
+      "assertion": "Primary truths, projections and derived views remain machine-readably distinct.",
+      "evidence": [
+        "registry/ecosystem/authority-matrix.v1.json",
+        "registry/ecosystem/source-bindings.v1.json",
+        "registry/ecosystem/resilience.v1.json"
+      ]
+    },
+    {
+      "id": "entrypoints",
+      "status": "passed",
+      "assertion": "Product, operations, architecture and recovery entrypoints are discoverable.",
+      "evidence": [
+        "registry/ecosystem/nodes.json",
+        "rendered/system-catalog.md",
+        "rendered/ecosystem-registry-map.mmd"
+      ]
+    },
+    {
+      "id": "no-shadow-status",
+      "status": "passed",
+      "assertion": "Systemkatalog creates no second runtime or task-status model.",
+      "evidence": [
+        "scripts/tests/test_weltgewebe_os_catalog.py",
+        "scripts/validate_ecosystem_map.py"
+      ]
+    }
+  ],
+  "post_merge_verification": {
+    "current_main_head": "c4a913bd1c17e47e718af9388be085710d442bf9",
+    "commands": [
+      {
+        "command": "python3 scripts/validate_system_catalog.py",
+        "status": "passed",
+        "registry_systems": 44,
+        "registry_relations": 53,
+        "authority_domains": 20
+      },
+      {
+        "command": "python3 scripts/validate_ecosystem_map.py",
+        "status": "passed",
+        "projection": "non_authoritative_read_only",
+        "nodes": 44,
+        "edges": 53
+      },
+      {
+        "command": "python3 scripts/render_system_catalog.py --check",
+        "status": "passed"
+      },
+      {
+        "command": "python3 scripts/render_ecosystem_registry_map.py --check",
+        "status": "passed",
+        "nodes": 44,
+        "edges": 53
+      },
+      {
+        "command": "python3 scripts/write_ecosystem_map_artifact_manifest.py --check --durable-source-ref refs/remotes/origin/main",
+        "status": "passed",
+        "artifact_count": 6
+      },
+      {
+        "command": "python3 -m unittest discover -s scripts/tests -p test_*.py",
+        "status": "passed",
+        "tests": 164
+      }
+    ],
+    "artifact_manifest": {
+      "source_commit": "d79e75460b960f2295769f32454e406aad0cadc2",
+      "artifacts": {
+        "rendered/ecosystem-registry-map.mmd": "3939c4fe09fabe272546459b0e7148d5e454df065cfd675b0d81f8d33831a80f",
+        "rendered/system-catalog.md": "cc01259e44940b71a9dae9e4b422df950fc22198c06d4157e2ed05288ac2a1c6",
+        "registry/ecosystem/nodes.json": "b6da4f096a1ef40814306bd66301775e326cef020e7796f96c00ebfabce981f4",
+        "registry/ecosystem/edges.json": "2fed98f2292ff07d46395b8ab88787173c1477723ef69b88a07fece813d689cf",
+        "registry/ecosystem/authority-matrix.v1.json": "13d1163935c900763fef3b63b238eac0075089bb2fea4dd9130e9d36c105cdcd",
+        "registry/ecosystem/resilience.v1.json": "aa899d2f1ec2f7fe9ecc0a5e1de6993edb13f6be9df969099e68de46d1049052"
+      }
+    }
+  },
+  "does_not_establish": [
+    "live Lenskit or RepoGround runtime health",
+    "completion of the RepoGround cutover",
+    "deployment state",
+    "task or merge authority outside this exact closeout",
+    "future source freshness",
+    "permission to mutate unrelated Bureau queue entries"
+  ]
+}

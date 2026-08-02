@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .adapters import AdapterRegistry
+from .approval import ApprovalRequired
 from .core import (
     BureauError,
     Claim,
@@ -1305,6 +1306,12 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except RunStateConflict as exc:
         emit(exc.payload(), args.json)
+        return 2
+    except ApprovalRequired as exc:
+        if args.json:
+            emit(exc.payload(), True)
+        else:
+            print(f"bureau: {exc}", file=sys.stderr)
         return 2
     except StateError as exc:
         if getattr(args, "command", "").startswith("operator-"):

@@ -1,0 +1,115 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A SymbolInformation object with relationships omitted or relationships: [] produces no relationship record and no relationship_source_definition_missing or ambiguous degradation, even when that symbol has no occurrence definition.",
+      "id": "empty-is-no-evidence"
+    },
+    {
+      "assertion": "A non-list relationships value remains relationships_invalid; malformed relationship objects, targets and flags remain explicit degradations, and a non-empty relationship list without exactly one same-document source definition remains blocked.",
+      "id": "malformed-remains-fail-closed"
+    },
+    {
+      "assertion": "Valid non-empty relationships with one exact same-document definition retain deterministic relationship records, source ranges and supported relationship flags.",
+      "id": "valid-projection-unchanged"
+    },
+    {
+      "assertion": "Artifact ordering, deduplication, schema validity, provenance, consumer_enablement and default non-promotion remain unchanged except for removal of the false empty-list degradation.",
+      "id": "artifact-contract"
+    },
+    {
+      "assertion": "The minimal reproducer, focused SCIP adapter tests, full RepoGround tests, exact-head diff-bound self-review and GitHub CI are green before merge.",
+      "id": "revision-bound-delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "RPU-V1-T027"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly instructed Grabowski to implement the next safe RepoGround work. Scope is limited to one SCIP adapter behavior and its regression tests; no runtime, deployment or consumer-promotion effect is authorized.",
+      "required_level": "operator"
+    },
+    "baseline_commit": "6a6e9ae227976fb9b2b596ca0a944e9f7c5d2d93",
+    "grabowski_resources": [
+      "path:/home/alex/repos/repoground/merger/repoground/core/_scip_adapter_records.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_scip_adapter_hardening.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Treat an absent or empty SCIP SymbolInformation relationships collection as no relationship evidence to project, without requiring a source definition or degrading an otherwise healthy navigation artifact; preserve fail-closed degradation for malformed and non-empty relationship evidence.",
+  "id": "RPU-V1-T035",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "metadata": {
+    "does_not_establish": [
+      "SCIP index completeness",
+      "consumer enablement",
+      "default promotion",
+      "cross-repository symbol truth",
+      "completion of RPU initiative",
+      "completion of RepoGround T004"
+    ],
+    "publication_rebase": {
+      "bureau_commit": "3cc0591e25ed6a830a40832340990d8de4abf595",
+      "runtime_manifest_sha256": "a6393d35da8e9a87efb38aac704472d0bb9407ccb99a525e4e67b3371009955f",
+      "runtime_refresh_result_sha256": "64ba9575ed67cf49a4cdd4434fcd2909f823be14c7c4d66a6c1527506f3d390c"
+    },
+    "registered_at": "2026-08-02T14:56:00+02:00",
+    "scope_reason": "This follow-up is disjoint from the active Bureau T014 supply work and from RepoGround T004 monolith convergence. It corrects a bounded regression introduced by the optional SCIP adapter merged in RepoGround PR #1147.",
+    "source_candidate_id": "candidate-3afa664ff98d317bbb72466f",
+    "source_event_id": 2121,
+    "source_reproducer": {
+      "artifact_path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-c1ac7defd14f/stdout.log",
+      "artifact_sha256": "585d17ddc2ee5a31e2b861e5fff4fc3a0006da2266a248a970c7c37b163b0fa8",
+      "observed_result": "status=degraded with relationship_source_definition_missing for relationships: []",
+      "repository_commit": "6a6e9ae227976fb9b2b596ca0a944e9f7c5d2d93"
+    },
+    "source_request_sha256": "4184619b22b57746d7e315fbbde6811ee8aa5ba303b5b78823ab2c0f8f3bade8",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3afa664ff98d317bbb72466f",
+      "event_id": 2121,
+      "event_created_at": "2026-08-02T12:41:20.149310Z",
+      "request_sha256": "4184619b22b57746d7e315fbbde6811ee8aa5ba303b5b78823ab2c0f8f3bade8",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_reproducer",
+        "locator": "/home/alex/.local/state/grabowski/jobs/grabowski-job-c1ac7defd14f/stdout.log",
+        "observed_at": "2026-08-02T12:39:24Z",
+        "sha256": "585d17ddc2ee5a31e2b861e5fff4fc3a0006da2266a248a970c7c37b163b0fa8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revert the single relationship-list guard and its regression tests. This restores the previous conservative false degradation without changing SCIP schemas, consumer enablement, deployment or persisted artifacts."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "SCIP empty relationships must not cause false definition degradation"
+}

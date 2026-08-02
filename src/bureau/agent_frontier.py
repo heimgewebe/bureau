@@ -86,6 +86,15 @@ def default_scanner_latest() -> Path:
     return default_scanner_state_root() / "latest.json"
 
 
+def default_task_supply_report() -> Path:
+    return Path(
+        os.environ.get(
+            "BUREAU_TASK_SUPPLY_REPORT",
+            Path.home() / ".local/state/bureau-task-supply/latest-report.json",
+        )
+    ).expanduser()
+
+
 def default_closure_plan() -> Path:
     return Path(
         os.environ.get("BUREAU_CLOSURE_PLAN", Path.home() / ".local/state/bureau-closure/plan.json")
@@ -321,6 +330,74 @@ def load_optional_summary(path: Path | None) -> dict[str, Any]:
     return summary
 
 
+def load_task_supply_summary(path: Path | None) -> dict[str, Any]:
+    if path is None:
+        return {"available": False}
+    if not path.is_file():
+        return {"available": False, "path": str(path)}
+    value = load_json(path, None)
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") != 1
+        or value.get("kind") != "bureau_task_supply_report"
+    ):
+        return {
+            "available": False,
+            "path": str(path),
+            "invalid": True,
+            "reason": "schema-or-kind-invalid",
+        }
+    claimed_digest = value.get("report_sha256")
+    observed_digest = sha256_json(
+        {key: item for key, item in value.items() if key != "report_sha256"}
+    )
+    if claimed_digest != observed_digest:
+        return {
+            "available": False,
+            "path": str(path),
+            "invalid": True,
+            "reason": "report-digest-mismatch",
+            "claimed_report_sha256": claimed_digest,
+            "observed_report_sha256": observed_digest,
+        }
+    metrics = value.get("metrics")
+    compact_metrics = {}
+    if isinstance(metrics, dict):
+        compact_metrics = {
+            key: metrics[key]
+            for key in (
+                "raw_ready_count",
+                "normal_claimable_count",
+                "fallback_claimable_count",
+                "total_claimable_count",
+                "blocked_ready_count",
+                "floor",
+                "refill_target",
+                "shortage_to_target",
+                "proposal_count",
+                "blocked_proposal_count",
+            )
+            if key in metrics
+        }
+    return {
+        "available": True,
+        "path": str(path),
+        "status": value.get("status"),
+        "report_sha256": value.get("report_sha256"),
+        "metrics": compact_metrics,
+        "blockers": [
+            blocker
+            for blocker in value.get("blockers", [])
+            if isinstance(blocker, str)
+        ],
+        "publication_plan_sha256": (
+            value.get("publication_plan", {}).get("plan_sha256")
+            if isinstance(value.get("publication_plan"), dict)
+            else None
+        ),
+    }
+
+
 def score_closure_lane(lane: dict[str, Any], focus_repositories: tuple[str, ...]) -> dict[str, Any]:
     state = normalized_key(lane.get("state"))
     repo_name = normalize_text(lane.get("repo_name"))
@@ -415,6 +492,7 @@ def build_frontier_report(
     scanner_latest_path: Path | None = None,
     closure_plan_path: Path | None = None,
     closure_lanes_path: Path | None = None,
+    task_supply_report_path: Path | None = None,
     focus_repositories: tuple[str, ...] = DEFAULT_FOCUS_REPOSITORIES,
     limit: int = DEFAULT_FRONTIER_LIMIT,
     reject_limit: int = DEFAULT_REJECT_LIMIT,
@@ -453,6 +531,9 @@ def build_frontier_report(
     kinds = [item.get("candidate_kind") for item in assessments]
     statuses = [item.get("status") for item in assessments]
     scanner_summary = load_optional_summary(scanner_latest_path)
+    supply_summary = load_task_supply_summary(task_supply_report_path)
+    if supply_summary.get("available") or supply_summary.get("invalid"):
+        scanner_summary = {**scanner_summary, "task_supply": supply_summary}
     closure_summary = load_optional_summary(closure_plan_path)
     binding = load_closure_lane_assessments(
         closure_lanes_path,
@@ -479,6 +560,41 @@ def build_frontier_report(
                 "severity": severity,
                 "detail": "closure planner rejected lanes without canonical Bureau task binding",
                 "count": unbound,
+            }
+        )
+    supply_status = supply_summary.get("status")
+    if supply_summary.get("invalid"):
+        bottlenecks.append(
+            {
+                "kind": "claimable_task_supply_report_invalid",
+                "severity": "high",
+                "detail": "configured task-supply report failed schema or digest validation",
+                "path": supply_summary.get("path"),
+                "reason": supply_summary.get("reason"),
+            }
+        )
+    if supply_summary.get("available") and supply_status in {"blocked", "refill-proposed"}:
+        supply_metrics = supply_summary.get("metrics", {})
+        bottlenecks.append(
+            {
+                "kind": (
+                    "claimable_task_supply_blocked"
+                    if supply_status == "blocked"
+                    else "claimable_task_supply_below_floor"
+                ),
+                "severity": "high",
+                "detail": (
+                    "authoritative claimable supply is below its configured floor; "
+                    "fallback proposals remain non-authoritative until canonical publication"
+                ),
+                "normal_claimable_count": supply_metrics.get("normal_claimable_count"),
+                "fallback_claimable_count": supply_metrics.get("fallback_claimable_count"),
+                "total_claimable_count": supply_metrics.get("total_claimable_count"),
+                "floor": supply_metrics.get("floor"),
+                "refill_target": supply_metrics.get("refill_target"),
+                "proposal_count": supply_metrics.get("proposal_count"),
+                "blockers": supply_summary.get("blockers", []),
+                "publication_plan_sha256": supply_summary.get("publication_plan_sha256"),
             }
         )
     scanner_metrics = scanner_summary.get("metrics") if isinstance(scanner_summary, dict) else None
@@ -553,6 +669,15 @@ def next_action(selected: list[dict[str, Any]], bottlenecks: list[dict[str, Any]
         )
     if selected:
         return "review selected_frontier[0] and promote at most one bounded task this cycle"
+    if any(item.get("kind") == "claimable_task_supply_report_invalid" for item in bottlenecks):
+        return "regenerate and verify the revision-bound task-supply report before fallback work"
+    if any(item.get("kind") == "claimable_task_supply_blocked" for item in bottlenecks):
+        return "resolve the exact supply blockers before reviewing any fallback publication plan"
+    if any(item.get("kind") == "claimable_task_supply_below_floor" for item in bottlenecks):
+        return (
+            "review and canonically publish the bounded supply plan "
+            "before claiming fallback work"
+        )
     return "keep observing; no safe promotion candidate selected"
 
 
@@ -570,6 +695,7 @@ def run_frontier_cycle(
     scanner_latest_path: Path | None = None,
     closure_plan_path: Path | None = None,
     closure_lanes_file: Path | None = None,
+    task_supply_report_path: Path | None = None,
     registry_root: Path | None = None,
     state_root: Path | None = None,
     focus_repositories: tuple[str, ...] = DEFAULT_FOCUS_REPOSITORIES,
@@ -580,6 +706,7 @@ def run_frontier_cycle(
     selected_scanner_latest = scanner_latest_path or default_scanner_latest()
     selected_closure_plan = closure_plan_path or default_closure_plan()
     selected_lanes_file = closure_lanes_file or closure_lanes_path()
+    selected_supply_report = task_supply_report_path or default_task_supply_report()
     selected_registry_root = registry_root or Path.cwd()
     selected_state_root.mkdir(parents=True, exist_ok=True, mode=0o700)
     (selected_state_root / "runs").mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -602,6 +729,7 @@ def run_frontier_cycle(
             scanner_latest_path=selected_scanner_latest,
             closure_plan_path=selected_closure_plan,
             closure_lanes_path=selected_lanes_file,
+            task_supply_report_path=selected_supply_report,
             focus_repositories=focus_repositories,
             limit=limit,
         )
@@ -660,6 +788,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--scanner-latest", default=str(default_scanner_latest()))
     result.add_argument("--closure-plan", default=str(default_closure_plan()))
     result.add_argument("--closure-lanes", default=str(closure_lanes_path()))
+    result.add_argument("--task-supply-report", default=str(default_task_supply_report()))
     result.add_argument("--registry-root", default=".")
     result.add_argument("--state-root", default=str(default_state_root()))
     result.add_argument("--limit", type=int, default=DEFAULT_FRONTIER_LIMIT)
@@ -678,6 +807,7 @@ def main(argv: list[str] | None = None) -> int:
             scanner_latest_path=Path(args.scanner_latest).expanduser(),
             closure_plan_path=Path(args.closure_plan).expanduser(),
             closure_lanes_file=Path(args.closure_lanes).expanduser(),
+            task_supply_report_path=Path(args.task_supply_report).expanduser(),
             registry_root=Path(args.registry_root).expanduser(),
             state_root=Path(args.state_root).expanduser(),
             focus_repositories=focus,
@@ -712,6 +842,7 @@ def main(argv: list[str] | None = None) -> int:
         scanner_latest_path=Path(args.scanner_latest).expanduser(),
         closure_plan_path=Path(args.closure_plan).expanduser(),
         closure_lanes_path=Path(args.closure_lanes).expanduser(),
+        task_supply_report_path=Path(args.task_supply_report).expanduser(),
         focus_repositories=focus,
         limit=args.limit,
     )

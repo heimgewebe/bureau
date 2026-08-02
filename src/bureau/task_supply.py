@@ -848,6 +848,9 @@ def _load_frontier_snapshot(path: Path) -> list[Mapping[str, Any]]:
         else:
             for envelope_key in ("result", "payload", "data"):
                 envelope = value.get(envelope_key)
+                if envelope_key == "result" and isinstance(envelope, list):
+                    candidates = envelope
+                    break
                 if not isinstance(envelope, dict):
                     continue
                 for key in ("frontier", "items", "tasks"):

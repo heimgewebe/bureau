@@ -93,7 +93,81 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "completion": {
+      "state": "verified",
+      "verified_at": "2026-08-02T20:45:00Z",
+      "authority": "merged_implementation_plus_exact_head_ci_and_revision_bound_self_review",
+      "implementation": {
+        "repository": "heimgewebe/repoground",
+        "pull_request": 1149,
+        "base_sha": "d60334cc7715ca2057c95d314abcbdfdc65ab2d3",
+        "head_sha": "3b68d2f4789804e11849a51e001abefecfec73c1",
+        "merge_commit": "5548ca2d23a3d22ffe14fb1006363e4078e7c009",
+        "diff_sha256": "3f771d31ce89311bedcbe39459d075ba74365b6816100839c5ded77cf6e29cf9",
+        "changed_paths": [
+          "merger/repoground/core/_scip_adapter_records.py",
+          "merger/repoground/tests/test_scip_adapter_hardening.py"
+        ]
+      },
+      "validation": {
+        "focused_scip_tests": "24 passed",
+        "focused_hardening_tests": "6 passed",
+        "full_test_suite": "5167 passed, 12 skipped",
+        "ruff": "passed",
+        "git_diff_check": "passed",
+        "github_workflow_runs": {
+          "task-index": 30762848551,
+          "contracts-validate": 30762848780,
+          "ai-context guard": 30762848537,
+          "lint": 30762848565,
+          "CodeQL": 30762848569,
+          "test-suite": 30762848547
+        },
+        "github_workflow_conclusion": "all_success"
+      },
+      "review": {
+        "kind": "revision-bound self-review",
+        "result": "pass",
+        "open_findings": 0,
+        "comment_id": 5159919163,
+        "automatic_codex_review": "unavailable_due_to_usage_limit"
+      },
+      "acceptance_results": {
+        "empty-is-no-evidence": true,
+        "malformed-remains-fail-closed": true,
+        "valid-projection-unchanged": true,
+        "artifact-contract": true,
+        "revision-bound-delivery": true
+      },
+      "does_not_establish": [
+        "SCIP index completeness",
+        "consumer enablement",
+        "default promotion",
+        "cross-repository symbol truth",
+        "completion of RPU initiative",
+        "completion of RepoGround T004",
+        "future correctness after unrelated changes"
+      ]
+    },
+    "verification": {
+      "task_preverification_sha256": "e98e1e0f879395015c5ea1357556439d8a7387ce015c7d782bf93be42c33c7a0",
+      "queue_preverification_sha256": "b3cdbbe1e28d45f0828804c26a47cc17c06bab8f52a369ea2e8c6ce54f9985fd",
+      "implementation_head": "3b68d2f4789804e11849a51e001abefecfec73c1",
+      "implementation_merge_commit": "5548ca2d23a3d22ffe14fb1006363e4078e7c009",
+      "implementation_diff_sha256": "3f771d31ce89311bedcbe39459d075ba74365b6816100839c5ded77cf6e29cf9",
+      "source_pull_request": "heimgewebe/repoground#1149",
+      "review_result": "pass",
+      "ci_result": "all_success",
+      "does_not_establish": [
+        "queue truth before this closeout merge",
+        "claim or dispatch authority",
+        "permission to mutate unrelated resources"
+      ],
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db",
+      "task_sha256": "fe2f10165313ce7a57891f92a347d90f326fa69df60f76e0fcbfaa33119b079f"
+    },
+    "updated_at": "2026-08-02T20:45:00Z"
   },
   "priority": {
     "lane": "now",
@@ -110,6 +184,6 @@
     "strategy": "Revert the single relationship-list guard and its regression tests. This restores the previous conservative false degradation without changing SCIP schemas, consumer enablement, deployment or persisted artifacts."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "SCIP empty relationships must not cause false definition degradation"
 }

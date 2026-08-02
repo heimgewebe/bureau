@@ -76,6 +76,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "PostgreSQL-Integrationsproofs hermetisch und selbstprüfend machen"
 }

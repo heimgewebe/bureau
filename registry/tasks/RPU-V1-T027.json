@@ -3,7 +3,7 @@
   "id": "RPU-V1-T027",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "SCIP multilingual symbol relation adapter",
-  "state": "planned",
+  "state": "verified",
   "goal": "Normalize external SCIP definition/reference data into Lenskit evidence records without introducing a second bundle truth or trusting index completeness.",
   "depends_on": [
     "RPU-V1-T024"
@@ -86,6 +86,60 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "receipt_reconciliation": {
+      "schema_version": 1,
+      "basis": "RepoGround PR #1147 and the authoritative post-merge readback prove all three RPU-V1-T027 acceptance criteria on current main.",
+      "registry_base_commit": "4a85b9c5cf70be68855f4802833165034eba09de",
+      "source_task_blob_sha": "e6e6d3e2620be2737c1a5df5e2dc91dcbe2979d7",
+      "implementation_head": "91dd551c007be11b0d994ba8a098583344d31210",
+      "merged_pull_request": "heimgewebe/repoground#1147",
+      "merge_commit": "6a6e9ae227976fb9b2b596ca0a944e9f7c5d2d93",
+      "merged_at": "2026-08-02T06:11:00Z",
+      "github_full_suite": {
+        "workflow_run_id": 30735284928,
+        "result": "5319 passed, 17 skipped, 13 deselected",
+        "browser_tests": "success",
+        "release_candidate": "success",
+        "webui_js_tests": "success"
+      },
+      "github_ci": {
+        "head": "91dd551c007be11b0d994ba8a098583344d31210",
+        "workflow_group_count": 9,
+        "result": "all successful"
+      },
+      "review": {
+        "kind": "revision-bound self-review",
+        "result": "pass",
+        "fixed_findings": [
+          "complexity violations without raising the baseline",
+          "unspecified and boolean position encodings",
+          "cross-document relationship provenance",
+          "vacuous empty-goldset success",
+          "review eligibility from degraded evidence",
+          "malformed scalar metadata producing schema-invalid output",
+          "missing production reachability and public API binding"
+        ],
+        "external_review": "Codex review unavailable because its usage quota was exhausted; no material review threads existed."
+      },
+      "source_basis": {
+        "protocol": "SCIP",
+        "scope": "decoded SCIP Protobuf JSON Documents, Occurrences, SymbolRoles, position encodings and SymbolInformation relationships"
+      },
+      "reconciled_at": "2026-08-02T06:12:00Z",
+      "does_not_establish": [
+        "initiative completion",
+        "completion of dependent tasks",
+        "SCIP indexer correctness",
+        "index completeness",
+        "consumer enablement",
+        "default promotion",
+        "future correctness after unrelated changes"
+      ]
+    },
+    "verification": {
+      "task_sha256": "fc6d0c11201f3a65971867953f12f24468031723bc95f6cc591f3f278f03e411",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

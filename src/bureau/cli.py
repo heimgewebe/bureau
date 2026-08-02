@@ -551,7 +551,6 @@ _READ_ONLY_COMMANDS = frozenset(
         "source-promote-plan",
         "status",
         "github-observe",
-        "claim-intent",
         "claim-coordination-status",
         "status-projection",
         "what-now",

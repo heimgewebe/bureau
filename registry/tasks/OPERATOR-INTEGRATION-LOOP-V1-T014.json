@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T014",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Guarantee claimable task supply with bounded maintenance fallbacks",
-  "state": "ready",
+  "state": "verified",
   "goal": "Keep a configurable floor of authoritatively claimable Bureau work available. Prefer real product and infrastructure work; when the normal claimable frontier drops below the floor, replenish it with deterministic, bounded, canonically registered maintenance, care, audit, diagnosis, Registry-reconciliation, queue-reconciliation and error-investigation tasks without bypassing leases, capabilities, review or Registry truth.",
   "priority": {
     "lane": "next",
@@ -127,6 +127,17 @@
       "immediate claimability before merge and deployment",
       "permission to weaken fail-closed ownership checks",
       "safe mutation while canonical Registry remains read-only"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "c1ee3e876fbe1042cfc15b1d9bf1a8f5ad01814f80c5dd6f285f976cdae7629c",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "receipt_sha256": "b1b451e9b0f4f56e93753fa4e669404169e5d9ecb357c7600c97239b82533df8",
+      "run_id": "BUR-RUN-20260802T125059Z-167a4cf7eb",
+      "verified_at": "2026-08-02T12:51:32.961609Z",
+      "implementation_pull_request": 1379,
+      "implementation_head": "8772055de62e688a66151b4d10a9ca33739fc620",
+      "merge_commit": "a666529be8fb1c0c16b19e33bd766adf0ebfa6c3",
+      "runtime_release": "a666529be8fb-src34fd93658f70"
+    }
   }
 }

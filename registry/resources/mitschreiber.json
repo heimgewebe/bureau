@@ -5,7 +5,6 @@
   "parent": "repo",
   "path": "/home/alex/repos/mitschreiber",
   "github_slug": "heimgewebe/mitschreiber",
-  "grabowski_key": "repo:/home/alex/repos/mitschreiber",
   "metadata": {
     "role": "Repository for structured transcription contracts and Rust/Python integrations",
     "boundaries": [

@@ -103,7 +103,163 @@
       ]
     },
     "registered_from_open_pr": "heimgewebe/audio#43",
-    "scope_decision": "Die Studie ist kein Teil der bereits verifizierten T015-Engine-Lieferung, keine physische T016-Abnahme und kein T023-Produkt-Spielweg; sie benötigt deshalb eine eigene enge Aufgabe."
+    "scope_decision": "Die Studie ist kein Teil der bereits verifizierten T015-Engine-Lieferung, keine physische T016-Abnahme und kein T023-Produkt-Spielweg; sie benötigt deshalb eine eigene enge Aufgabe.",
+    "verification": {
+      "schema_version": 1,
+      "source": "github_pr_chain_and_offline_validation",
+      "source_ref": "github-pr:heimgewebe/audio#43+#47",
+      "verified_at": "2026-08-02T13:34:09.982444Z",
+      "task_sha256": "2d2422bd5655f80b279de6a5f7a3b2f7af689931958b305059869cd56764563f",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
+      "outcome": "verified_morph_no_engine_change",
+      "registration": {
+        "pull_request": 1380,
+        "merge_commit": "3cc0591e25ed6a830a40832340990d8de4abf595"
+      },
+      "study_pull_request": {
+        "repository": "heimgewebe/audio",
+        "number": 43,
+        "base_commit": "d6ccab393de05ad9ce86228ac14bfca12b785a08",
+        "reviewed_head": "7e188912b059610b98cc8af29498320d5fcccb9f",
+        "merge_commit": "704e2aff6ea9ed28fa45a43c0e183a99b4aedb49",
+        "merge_tree_matches_reviewed_head": true,
+        "diff_sha256": "2c67f3034d1f257c860f20ec345011590e3e9736eb50c373c65292b9c3f240b7",
+        "required_check": {
+          "name": "safety",
+          "run_id": 30748702850,
+          "job_id": 91498747969,
+          "result": "success"
+        }
+      },
+      "post_merge_measurement_hotfix": {
+        "repository": "heimgewebe/audio",
+        "pull_request": 47,
+        "base_commit": "704e2aff6ea9ed28fa45a43c0e183a99b4aedb49",
+        "reviewed_head": "1d6f718902a56bade93e919ef079ca2b48b74303",
+        "merge_commit": "1ccb304eb170e9274034cb6fcc106a22463ec9e9",
+        "diff_sha256": "b5677f40b6765edb1dea488d99b8f6b0c09bf956db99cc9cc316d751113bc84b",
+        "scope": "test_measurement_only",
+        "threshold_seconds": 0.65,
+        "threshold_changed": false,
+        "engine_or_study_artifacts_changed": false,
+        "required_check": {
+          "name": "safety",
+          "run_id": 30749578120,
+          "result": "success",
+          "watch_receipt_sha256": "dadc8ab6d2407783036ffb327dfd5b7c174d5c6227e30b95ed945e78a6b6f476"
+        },
+        "local_validation": {
+          "focused_organic_tests": "12/12 pass",
+          "repository_tests": "566/566 pass",
+          "compileall": "pass",
+          "finalization_receipt_sha256": "69f47634df4ab42260e9b3f3288f70ee9094b01a9408273f5b230a06dd12a190"
+        }
+      },
+      "final_main_validation": {
+        "commit": "1ccb304eb170e9274034cb6fcc106a22463ec9e9",
+        "run_id": 30749760624,
+        "job_id": 91501589106,
+        "result": "success",
+        "watch_receipt_sha256": "fc6578944ad51a1206e1cfd0861f203130e5456569e5877e2ce140ccb12f0b37"
+      },
+      "diagnosed_failed_main_run": {
+        "commit": "704e2aff6ea9ed28fa45a43c0e183a99b4aedb49",
+        "run_id": 30748935704,
+        "failed_test": "test_one_second_render_retains_realtime_headroom",
+        "observed_wall_seconds": 0.6863655660000063,
+        "required_less_than_seconds": 0.65,
+        "classification": "shared_runner_wall_clock_jitter_in_single_sample_probe",
+        "engine_regression_claimed": false
+      },
+      "artifact_bindings": {
+        "definition_sha256": "6266cafa0ed2ebb79081669963b704dc71632957964d46165b996e4de8dafeba",
+        "frozen_candidate_sha256": "5255f89c15c8f2ffb2e4c18634a67b1a82bd67bbe16715c6828fc017dd89485d",
+        "internal_report_sha256": "5b4af52b2ae861bfd88b76bf62bcf6432780915e9c8a1d84a88f4797592c5d32",
+        "external_report_sha256": "8a36d21e24d63314e32d7495cf94fc54069336441beb2f9c5f640d000778942f",
+        "external_manifest_sha256": "e42272161dd3864950b7b17f1cecce810b20ab83fec1a71ab763b10c9c07166f",
+        "external_notice_sha256": "3c3afe964782bfba9f36bbd9308ced31de6df858e29298bdb20aead7b0be082a",
+        "study_script_sha256": "20153bcfaae621a9071f15d2e5c9a38601ea7d99dd43978735e8b7081b4ac33a",
+        "external_builder_sha256": "4213caf798fd8f48a7e0bd6a1096eb94467152aaff906afe3d20b7b70036723c",
+        "organic_engine_sha256": "bbc841cf65b74080c5cfb35b447b035c2b272e0eff84995029ac3ab7b28f5c66",
+        "source_filter_engine_sha256": "3792999d5f63d0aa7d1a3a7fd5aa978699bef83c5c3ef6e03967eb9e7bbb2c83",
+        "live_noaa_pmel_page_sha256": "0ec8077785261fd170a0ca86954d4324acbf0cf8521900c2817c74ce9aa8bd0a"
+      },
+      "validated_acceptance": {
+        "component-matrix-bound": {
+          "status": "PASS",
+          "components": 10,
+          "base_variants": 22,
+          "qualified_components": 0,
+          "generated_combinations": 0
+        },
+        "balanced-family-evaluation": {
+          "status": "PASS",
+          "selection": "equal-weight leave-one-family-out",
+          "rules_frozen_before_results": true
+        },
+        "pre-freeze-before-external": {
+          "status": "PASS",
+          "selected_candidate": "morph",
+          "enabled_components": [],
+          "external_data_used_for_selection": false
+        },
+        "external-provenance-and-isolation": {
+          "status": "PASS",
+          "source": "NOAA PMEL",
+          "training_selection_external_disjoint": true,
+          "rights_and_attribution_live_readback": true
+        },
+        "contradictory-evidence-visible": {
+          "status": "PASS",
+          "external_result": "mixed",
+          "negative_cases_preserved": true,
+          "biological_similarity_claimed": false
+        },
+        "morph-no-change-decision": {
+          "status": "PASS",
+          "candidate": "morph",
+          "engine_change": false,
+          "organic_default_change": false,
+          "v5_1_release": false
+        },
+        "deterministic-reproduction": {
+          "status": "PASS",
+          "focused_tests": "pass",
+          "repository_tests": "566/566 pass",
+          "main_validation": "success"
+        },
+        "zero-live-effect": {
+          "status": "PASS",
+          "service": "audio-buckelwal-live-voice-v1.service",
+          "load_state": "not-found",
+          "active_state": "inactive",
+          "sub_state": "dead",
+          "physical_playback": false,
+          "routing_or_profile_effect": false
+        },
+        "revision-bound-pr-closeout": {
+          "status": "PASS",
+          "study_pr": 43,
+          "hotfix_pr": 47,
+          "expected_head_merges": true,
+          "final_main_validation": "success"
+        }
+      },
+      "followup": {
+        "candidate_id": "candidate-269040f93c99c2e672fd688a",
+        "event_id": 2127,
+        "title": "Buckelwal-Evaluator gegen F0-Suchrandsättigung härten",
+        "separate_from_frozen_study": true
+      },
+      "does_not_establish": [
+        "biological_model_fidelity",
+        "subjectively_convincing_whale_similarity",
+        "physical_Roland_or_MOTU_validation",
+        "production_engine_change",
+        "v5.1_release",
+        "future_correctness_after_unrelated_changes"
+      ]
+    }
   },
   "priority": {
     "lane": "later",
@@ -128,6 +284,6 @@
     "strategy": "Der spätere Mergecommit kann repositoryseitig revertiert werden. Die Aufgabe autorisiert keine produktive Audio-, Geräte-, Routing-, Profil- oder Dienstwirkung."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Buckelwal-Organic-Ablation und externe Generalisierung revisionsgebunden schließen"
 }

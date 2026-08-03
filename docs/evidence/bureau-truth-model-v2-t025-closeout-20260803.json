@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "kind": "bureau_task_verification_evidence",
+  "task_id": "BUREAU-TRUTH-MODEL-V2-T025",
+  "decision": "verified",
+  "observed_at": "2026-08-03T05:22:15Z",
+  "registry_base": {
+    "repository": "heimgewebe/bureau",
+    "commit": "b05ce187a26ffb33e21c59d32fc69a0c2ae32058",
+    "task_state": "ready",
+    "queue_lane": "next",
+    "task_sha256": "b7e6cc946d9a71a834721220f4e0432dd4b3973582ea2600b9e1ee42096f3404",
+    "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8"
+  },
+  "implementation": {
+    "ruleset": {
+      "id": 20228857,
+      "name": "Bureau main strict base-update guard",
+      "enforcement": "active",
+      "updated_at": "2026-08-03T02:49:06.445+02:00",
+      "required_status_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "strict_required_status_checks_policy": false,
+      "bypass_actors": [],
+      "merge_queue": {
+        "merge_method": "MERGE",
+        "max_entries_to_build": 5,
+        "min_entries_to_merge": 1,
+        "max_entries_to_merge": 1,
+        "min_entries_to_merge_wait_minutes": 0,
+        "grouping_strategy": "ALLGREEN",
+        "check_response_timeout_minutes": 60
+      }
+    },
+    "documentation": {
+      "pull_request": 1419,
+      "head": "c4b177acf164b152361ad0a932f8a4c0caa20ec5",
+      "merge_commit": "2eca025eaf25faee316124eee0129a7ed1f9ac22",
+      "path": "docs/merge-queue-operations.md",
+      "required_checks": "success"
+    },
+    "queue_probes": [
+      {
+        "probe": "b",
+        "pull_request": 1421,
+        "base": "2eca025eaf25faee316124eee0129a7ed1f9ac22",
+        "head": "7ccc96097c4a764090a6475070c2d5147f302c57",
+        "merge_commit": "b654cb10a2564de8e66f7d00e06dcf78c3aaa3e9",
+        "merge_parents": [
+          "2eca025eaf25faee316124eee0129a7ed1f9ac22",
+          "7ccc96097c4a764090a6475070c2d5147f302c57"
+        ],
+        "merge_group_runs": {
+          "validate": 30777547209,
+          "registry_preflight": 30777547189
+        },
+        "merge_group_checks": {
+          "validate (3.10)": "success",
+          "validate (3.12)": "success",
+          "registry-registration-preflight/freshness": "success"
+        }
+      },
+      {
+        "probe": "a",
+        "pull_request": 1420,
+        "base": "2eca025eaf25faee316124eee0129a7ed1f9ac22",
+        "head": "824e2393039eedbbaae2af1cd9cdbda95f9cf179",
+        "merge_commit": "d8aced4f3f7512c9e7f4ecaa57f95dcd74a38560",
+        "merge_parents": [
+          "b654cb10a2564de8e66f7d00e06dcf78c3aaa3e9",
+          "824e2393039eedbbaae2af1cd9cdbda95f9cf179"
+        ],
+        "merge_group_runs": {
+          "validate": 30777581479,
+          "registry_preflight": 30777581486
+        },
+        "merge_group_checks": {
+          "validate (3.10)": "success",
+          "validate (3.12)": "success",
+          "registry-registration-preflight/freshness": "success"
+        }
+      }
+    ]
+  },
+  "acceptance": {
+    "starvation-reproducer": {
+      "status": "passed",
+      "evidence": "Source PR #1401 required two server-side branch updates after path-disjoint main advances; the bound task metadata records four docs/operations.md-only commits and full check restarts."
+    },
+    "final-integration-checks": {
+      "status": "passed",
+      "evidence": "Both final merge-group commits b654cb10 and d8aced4f ran all three required contexts successfully on event merge_group."
+    },
+    "automatic-serial-integration": {
+      "status": "passed",
+      "evidence": "Both probes started from base 2eca025e; probe B merged first, and probe A merge commit has probe B merge commit as its first parent. Neither PR head was manually updated."
+    },
+    "guards-preserved": {
+      "status": "passed",
+      "evidence": "Live ruleset readback retains all three required checks, active enforcement, no bypass actors and serial max_entries_to_merge=1."
+    },
+    "failure-and-recovery": {
+      "status": "passed-with-boundary",
+      "evidence": "The merged runbook binds conflict, missing/red check, timeout and cancellation to blocked integration and exact-head re-read before re-enqueue; no administrative bypass or deliberate failing production probe was used."
+    },
+    "validation-and-docs": {
+      "status": "passed",
+      "evidence": "PR #1419 merged the operations runbook with green checks. On closeout main b05ce187, the immutable Bureau runtime is already current with lag 0 and the live merge-queue ruleset remains active."
+    }
+  },
+  "post_merge_readback": {
+    "main_commit": "b05ce187a26ffb33e21c59d32fc69a0c2ae32058",
+    "deployed_source_commit": "b05ce187a26ffb33e21c59d32fc69a0c2ae32058",
+    "deployed_manifest_sha256": "d53c62b54b8d83e5d36e2b094296f828a534a6e15e2bb3a79d81f8db1274483b",
+    "runtime_status": "already_current",
+    "runtime_lag_commits": 0,
+    "runtime_observation_sha256": "f33ef9498ef4a152e8ca6bbc201a69be4f0d3bd1592caca1e26f5e5771d25d34",
+    "ruleset_id": 20228857,
+    "ruleset_enforcement": "active"
+  },
+  "does_not_establish": [
+    "future merge-queue health",
+    "merge readiness of unrelated pull requests",
+    "completion of GRABOWSKI-OPERATOR-SURFACE-V1-T133 or T134",
+    "a synthetic red-check or conflict probe in production"
+  ],
+  "evidence_sha256": "1c15a88a3aa62660ff4e200127bb9a3c89de8be7942ccf90742d60b6990f182b"
+}

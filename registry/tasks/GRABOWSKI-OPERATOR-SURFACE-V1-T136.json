@@ -5,24 +5,28 @@
       "assertion": "Eine syntaktisch gültige MCP-Client-ID bleibt die vorrangige Scope-Bindung und wird unverändert als client_declared_meta ausgewiesen. Der Fallback darf explizite Client-Metadaten weder überschreiben noch mit anderen Sessions zusammenführen."
     },
     {
-      "id": "server-session-isolation",
-      "assertion": "Fehlt die Client-ID, erhält jede lebende MCP-Server-Session einen stabilen, zufälligen und nicht aus Nutzdaten abgeleiteten Scope der Art server_session. Wiederholte Aufrufe derselben Session teilen genau diesen Scope; verschiedene Sessions erhalten verschiedene Scopes und können ihre Single-use-Nachweise nicht gegenseitig verbrauchen."
+      "id": "stateful-session-isolation",
+      "assertion": "Wenn die HTTP-Runtime tatsächlich stateful ist und eine stabile weak-reference-fähige Server-Session bereitstellt, erhält jede lebende Session einen stabilen, zufälligen und nicht aus Nutzdaten abgeleiteten Scope der Art server_session. Wiederholte Aufrufe derselben Session teilen genau diesen Scope; verschiedene Sessions erhalten verschiedene Scopes."
     },
     {
-      "id": "fail-closed-fallback",
-      "assertion": "Fehlender Kontext, fehlende Session sowie nicht hash- oder weak-reference-fähige unbekannte SDK-Sessionobjekte bleiben im ausdrücklich nicht authentifizierten shared_unlabeled-Scope. Es wird keine instabile Request-ID als Sessionidentität verwendet und keine authentifizierte Client-Identität behauptet."
+      "id": "stateless-shared-pool",
+      "assertion": "In der produktiv aktiven Stateless-HTTP-Runtime bleibt der nicht authentifizierende Scope ausdrücklich shared_unlabeled. Mehrere exakte Challenges und Verifikationen dürfen dort gleichzeitig in einem begrenzten, gemeinsam gesperrten Pool bestehen, damit parallele regelkonforme Handshakes einander nicht mehr überschreiben und zwei Verifikationen genau zwei Mutationen zulassen. Eine Zuordnung eines Pool-Tokens zu einem bestimmten unlabeled-Aufrufer wird ausdrücklich nicht behauptet."
+    },
+    {
+      "id": "bounded-fail-closed-migration",
+      "assertion": "Der gemeinsame Stateless-Pool ist für ausstehende Challenges und verifizierte Nachweise fest begrenzt, verwirft abgelaufene oder runtime-fremde Einträge vor der nächsten Mutation und blockiert bei einem vollständig belegten lebenden Pool fail-closed. Bestehender gültiger Single-Slot-Zustand wird bei der nächsten Mutation verlustarm in das neue Zustandsformat migriert; ungültiger Zustand bleibt abgewiesen."
     },
     {
       "id": "single-use-contract-preserved",
-      "assertion": "Challenge, Ack, Runtime-Bindung, Werkzeugname, Argumenthash, genau einmaliger Verbrauch, Ablauf, Replay-Sperre und private Zustandsdateien behalten ihre bisherigen fail-closed-Verträge. Der Fix partitioniert nur den Client-Scope und schafft keine neue Mutationsausnahme."
+      "assertion": "Challenge, Ack, Runtime-Bindung, Werkzeugname, Argumenthash, genau einmaliger Verbrauch, Ablauf, Replay-Sperre, private Zustandsdateien und interprozessuale Serialisierung behalten ihre fail-closed-Verträge. Jede zugelassene Mutation verbraucht genau eine aktuelle Verifikation vor Wirkung."
     },
     {
       "id": "focused-regression-proof",
-      "assertion": "Ein isolierter Subprozess-Test belegt stabilen Replay-Scope innerhalb einer Session, Trennung zweier Sessions, Vorrang expliziter Client-Metadaten sowie fail-closed Rückfall bei fehlendem oder nicht weak-reference-fähigem Kontext. Bestehende Transport- und Operator-Gate-Tests bleiben grün."
+      "assertion": "Tests belegen stabilen und getrennten server_session-Scope bei wirklich stateful Sessions, ehrlichen Rückfall auf shared_unlabeled bei Stateless-HTTP, zwei koexistierende Handshakes, zwei verschiedene Verifikationen, genau zwei erfolgreiche zentrale Gate-Verbräuche, Ablehnung eines dritten Verbrauchs, parallele Prozesse, Poolgrenzen und Legacy-Migration. Bestehende Transport-, Operator-, Snapshot- und Repository-Verträge bleiben grün."
     },
     {
       "id": "exact-head-review-ci-deploy",
-      "assertion": "Der finale PR-Head erhält einen revisionsgebundenen Review und grüne Pflichtchecks. Nach Merge wird exakt der Merge-Commit deployed; Runtime-Identität und Integrität werden zurückgelesen. Ein Live-Nachweis zeigt getrennte Session-Scopes, erfolgreichen Challenge/Ack/Consume-Ablauf und abgewiesenen Replay, ohne Anwendungserfolg oder authentifizierte Client-Identität zu behaupten."
+      "assertion": "Der finale PR-Head erhält einen revisionsgebundenen methodisch getrennten Self-Review und grüne Pflichtchecks. Nach Merge wird exakt der Merge-Commit deployed; Runtime-Identität und Integrität werden zurückgelesen. Ein Live-Nachweis zeigt in der produktiven Stateless-Runtime mindestens zwei gleichzeitig bestehende Nachweise, zwei zugelassene Mutationen und den abgewiesenen dritten Verbrauch, ohne Anwendungserfolg oder authentifizierte Client-Identität zu behaupten."
     }
   ],
   "claims": [
@@ -36,26 +40,36 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Der Nutzer verlangte am 3. August 2026 die Umsetzung der nächsten Bureau-Aufgabe und dauerhaft gesicherten Grabowski-Transport. Der Live-Reentry zu WELTGEWEBE-OS-V1-T065 scheiterte mehrfach vor Wirkung, weil parallele unlabeled MCP-Sessions denselben Single-use-Scope teilen. Erlaubt ist ausschließlich der schmale Zwei-Pfade-Fix mit Review, CI, Merge und exaktem Deploy-Readback; fremde Checkouts, Leases und Prozesse bleiben unberührt.",
+      "note": "Der Nutzer verlangte am 3. August 2026 die Umsetzung des reproduzierten Grabowski-Transportblockers. Die ursprüngliche Zwei-Pfade-Annahme setzte eine requestübergreifend stabile MCP-Server-Session voraus; live ist die produktive HTTP-Runtime jedoch stateless. Mehrere bestätigte Begin/Ack-Abläufe wurden danach erneut vor Wirkung durch andere unlabeled-Aufrufe verbraucht. Erlaubt ist deshalb ausschließlich der eng gebundene Stateless-Pool-Fix mit optionaler echter Stateful-Session-Isolation, Review, CI, Merge, exaktem Deploy und Live-Readback; fremde Checkouts, Leases und Prozesse bleiben unberührt.",
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/transport-roundtrip-gate-v1.md",
+      "path:/home/alex/repos/grabowski/src/grabowski_runtime.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip.py",
       "path:/home/alex/repos/grabowski/tests/test_transport_session_scope_runtime.py"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Isoliere den Single-use-Transportnachweis für MCP-Clients ohne deklarierte Client-ID pro lebender Server-Session, damit parallele Operatoren Challenges und Verifikationen nicht mehr gegenseitig rotieren oder verbrauchen. Bewahre explizite Client-Metadaten, alle bestehenden fail-closed Transportverträge und den nicht authentifizierenden Charakter der Scope-Bindung.",
+  "goal": "Beseitige den reproduzierten Transportblocker für parallele MCP-Clients ohne deklarierte Client-ID. Nutze bei wirklich stateful HTTP-Sessions getrennte server_session-Scopes; bewahre in der produktiven Stateless-Runtime den ehrlichen shared_unlabeled-Scope, ersetze dort aber den überschreibbaren Einzel-Slot durch einen begrenzten, atomar konsumierten Mehrfach-Token-Pool. Bewahre explizite Client-Metadaten, alle bestehenden fail-closed Transportverträge und den nicht authentifizierenden Charakter der Scope-Bindung.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T136",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "registered_at": "2026-08-03",
+    "amended_at": "2026-08-03",
     "source": "live_transport_contention_during_t065_reentry",
+    "amendment_reason": "Die produktive FastMCP-Runtime setzt stateless_http=true. Ein stabiler server_session-Scope ist dort requestübergreifend nicht belegbar; zwei weitere Live-Nachweise wurden nach erfolgreichem Begin/Ack vor dem beabsichtigten Grabowski-Aufruf von parallelen unlabeled-Mutationen verbraucht.",
     "observed_runtime_head": "76431fc75f72ad1df742c94ff318d29489fd46bc",
     "observed_client_scope_kind": "shared_unlabeled",
     "observed_client_scope_sha256": "359a73c451b19391284a4d9dac23c2866d6363362a83472f74d0078620201629",
+    "observed_production_stateless_http": true,
+    "candidate_pr": "heimgewebe/grabowski#583",
+    "candidate_head": "e07931e47666f30d060d8f30fc72bd4e5af3a54c",
     "blocked_reentry_run": "BUR-RUN-20260803T112652Z-594b4414fc",
     "blocked_reentry_task": "WELTGEWEBE-OS-V1-T065",
     "evidence": {
@@ -65,10 +79,15 @@
         "Context.session"
       ],
       "failure_mode": "begin and ack succeed, but another parallel unlabeled MCP call consumes or replaces the shared verification before the intended mutation reaches the central gate",
-      "product_effect_on_failed_attempts": "none; central gate rejected before the pickup adapter executed"
+      "additional_live_reproductions": [
+        "grabowski_task_start was rejected after a fresh verified handshake because the shared verification had already been consumed",
+        "grabowski_terminal_run was rejected after a fresh verified handshake because the shared verification had already been consumed"
+      ],
+      "product_effect_on_failed_attempts": "none; central gate rejected before the intended adapter effect"
     },
     "does_not_establish": [
       "authenticated client identity",
+      "ownership of a pooled token by one unlabeled caller",
       "application-level mutation success",
       "absence of response loss",
       "permission to release foreign leases",
@@ -92,5 +111,5 @@
   ],
   "schema_version": 1,
   "state": "ready",
-  "title": "Unbeschriftete MCP-Sessions im Transport-Gate isolieren"
+  "title": "Unbeschriftete MCP-Transportnachweise parallelisierbar machen"
 }

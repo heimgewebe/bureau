@@ -36,7 +36,7 @@ jobs:
           MERGE_GROUP_HEAD_SHA: ${{ github.event.merge_group.head_sha }}
         run: |
           set -euo pipefail
-          registry_only=false
+          scope_kind=full
           base_sha=""
           head_sha=""
           if [[ "${EVENT_NAME}" == pull_request ]]; then
@@ -47,28 +47,34 @@ jobs:
             head_sha="${MERGE_GROUP_HEAD_SHA}"
           fi
           if [[ -n "${base_sha}" && -n "${head_sha}" ]]; then
-            mapfile -t changed_entries < <(git diff --name-status --diff-filter=ACMRTD "${base_sha}...${head_sha}")
-            if [[ ${#changed_entries[@]} -gt 0 ]]; then
-              registry_only=true
-              for changed_entry in "${changed_entries[@]}"; do
-                change_status="${changed_entry%%$'\t'*}"
-                changed_path="${changed_entry#*$'\t'}"
-                if [[ "${change_status}" != A && "${change_status}" != M ]]; then
-                  registry_only=false
-                  break
-                fi
-                if [[ ! "${changed_path}" =~ ^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\.json$ ]]; then
-                  registry_only=false
-                  break
-                fi
-              done
+            classifier_path="${RUNNER_TEMP}/bureau-validation-scope.py"
+            if git show "${base_sha}:src/bureau/validation_scope.py" \
+              > "${classifier_path}" 2>/dev/null; then
+              scope_kind="$(python "${classifier_path}" \
+                --base-sha "${base_sha}" \
+                --head-sha "${head_sha}")"
             fi
           fi
-          echo "registry_only=${registry_only}" >> "${GITHUB_OUTPUT}"
-      - run: python -m pip install -e '.[dev]'
+          case "${scope_kind}" in
+            full|task-only|queue-only) ;;
+            *)
+              echo "::error::Unknown validation scope: ${scope_kind}"
+              exit 1
+              ;;
+          esac
+          echo "scope_kind=${scope_kind}" >> "${GITHUB_OUTPUT}"
+      - name: Install full validation dependencies
+        if: steps.scope.outputs.scope_kind == 'full'
+        run: python -m pip install -e '.[dev]'
+      - name: Install Registry fast-path dependencies
+        if: steps.scope.outputs.scope_kind != 'full'
+        run: python -m pip install -e .
       - name: Validate code and repository contracts
-        if: steps.scope.outputs.registry_only != 'true'
+        if: steps.scope.outputs.scope_kind == 'full'
         run: make validate
-      - name: Validate Registry-only change
-        if: steps.scope.outputs.registry_only == 'true'
+      - name: Validate Registry task-only change
+        if: steps.scope.outputs.scope_kind == 'task-only'
+        run: PYTHONPATH=src python -m bureau.cli --root . --json check
+      - name: Validate Queue-only Registry change
+        if: steps.scope.outputs.scope_kind == 'queue-only'
         run: PYTHONPATH=src python -m bureau.cli --root . --json check

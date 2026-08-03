@@ -93,7 +93,66 @@
       "permission to release foreign leases",
       "completion of WELTGEWEBE-OS-V1-T065",
       "completion of OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T055"
-    ]
+    ],
+    "closeout": {
+      "verified_at": "2026-08-03T19:55:57Z",
+      "implementation_pr": "heimgewebe/grabowski#583",
+      "reviewed_head_sha": "e27b783dabd40bbba8dc0270e8dcedebef71d832",
+      "merge_commit_sha": "8c62972e407c86d6e1bfc1ff2c2a11a21f7575c7",
+      "merged_at": "2026-08-03T19:42:41Z",
+      "review": "methodically separated exact-head self-review; Codex quota unavailable and not claimed as completed external review",
+      "ci": {
+        "exact_head_required_checks": "success",
+        "python_3_10": "success",
+        "python_3_12": "success",
+        "repository_validation": "success",
+        "reproducible_deployment_staging": "success"
+      },
+      "deployment": {
+        "release_id": "8c62972e407c-srcset5ef314505cf7-locke6664d600b6c-contract50a83e35a563",
+        "repo_head": "8c62972e407c86d6e1bfc1ff2c2a11a21f7575c7",
+        "completion_status": "complete",
+        "integrity_valid": true,
+        "runtime_binding_sha256": "6eacfaa5d86f03b3712fd0babf6bdc8fa160532984ce363a75d360d08f886e63"
+      },
+      "live_stateless_pool_proof": {
+        "client_scope_kind": "shared_unlabeled",
+        "pool_mode": "bounded-shared-token-pool",
+        "pool_limits": {
+          "pending_challenges": 32,
+          "verified_receipts": 32
+        },
+        "coexisting_challenges": [
+          "1f88bdf404346f8c0acc9c313a72cfb48e645c1c4b8e7790fa2403952a13c180",
+          "2da567004cb7e5204f7d136c0fdfce1abb24647e874bb0611b0cca0ba20ab481"
+        ],
+        "exact_ack_verifications": [
+          "d2e2c11ce22aed7e57e4fcac045eeb483ad642f995e161a29539cd127dd8272d",
+          "7acb6964dcd66c2c197e17fdd666daaa2017b56e7e99499b87003eeb22fbadac"
+        ],
+        "simultaneous_verified_receipt_count": 2,
+        "distinct_consumptions": [
+          {
+            "receipt_sha256": "79f10254236d648aed23e020b9ba7a53a1eb2773f648aa6cf025729e8bffaf9d",
+            "tool_name": "grip_run"
+          },
+          {
+            "receipt_sha256": "f0ca82e5a31caf3b2d6af7a3599fa8a2011d30bd0e5865e57529cc087e1f3c25",
+            "tool_name": "grabowski_git_branch"
+          }
+        ],
+        "third_without_fresh_verification": "rejected before grabowski_resource_acquire effect",
+        "does_not_establish": [
+          "which unlabeled caller supplied or owned either consumed verification",
+          "application-level success beyond central gate admission",
+          "authenticated client identity"
+        ]
+      }
+    },
+    "verification": {
+      "task_sha256": "c4292dba81bd67e632b573c8868d72f449fec7216b79c68f8372f3cf733f8d84",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "now",
@@ -110,6 +169,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Unbeschriftete MCP-Transportnachweise parallelisierbar machen"
 }

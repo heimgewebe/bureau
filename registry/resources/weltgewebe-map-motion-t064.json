@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "component.weltgewebe.map-thread-motion-t064",
+  "type": "component",
+  "parent": "repo.weltgewebe",
+  "metadata": {
+    "purpose": "Exact coordination scope for WELTGEWEBE-OS-V1-T064 map thread motion, top-view spool response and their browser regression coverage.",
+    "canonical_paths": [
+      "apps/web/src/lib/map/overlay/",
+      "apps/web/src/routes/map/",
+      "apps/web/tests/"
+    ],
+    "source_task": "WELTGEWEBE-OS-V1-T064",
+    "does_not_establish": [
+      "repository-wide mutation authority",
+      "ownership of documentation, generated evidence or foreign Weltgewebe worktrees",
+      "scope outside the listed map implementation and browser-test paths"
+    ]
+  }
+}

@@ -47,7 +47,12 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta",
+      "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle.md",
+      "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle-inventory.md"
+    ]
   },
   "goal": "Den gemeinsamen Report-Lifecycle-Wahrheitsvertrag fail-closed und hermetisch härten: mehrdeutige Truth-Blöcke ablehnen, Validierung von impliziter Netzwerk- und Repositorymutation trennen, Frontmatter-Skalartypen strikt behandeln und fehlende Git-Provenienz als explizit unbekannten Zustand statt als scheinbar gültige Null-SHA modellieren.",
   "id": "WELTGEWEBE-OS-V1-T065",

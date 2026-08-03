@@ -14,7 +14,7 @@
   },
   "claims": [
     {
-      "resource": "repo.repoground",
+      "resource": "component.repoground.call-graph-producer",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -41,7 +41,7 @@
     "working_repository": "/home/alex/repos/repoground",
     "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
     "grabowski_resources": [
-      "component:repoground-evidence-call-graph-v1",
+      "component:repoground-call-graph-producer",
       "path:/home/alex/repos/.repoground-worktrees/repoground-evidence-call-graph-v1",
       "repo:/home/alex/repos/repoground:branch:feat/repoground-evidence-call-graph-v1",
       "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",

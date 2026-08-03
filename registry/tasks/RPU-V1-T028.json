@@ -1,44 +1,39 @@
 {
-  "schema_version": 1,
-  "id": "RPU-V1-T028",
-  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
-  "title": "Build, test and contract relation overlay",
-  "state": "ready",
-  "goal": "Add deterministic build-target, test-registration, schema-validation and artifact-flow relations as evidence sources stronger than filename convention alone.",
+  "acceptance": [
+    {
+      "assertion": "Build and package relations cite their originating manifest or workflow range.",
+      "id": "rpu-v1-t028-build"
+    },
+    {
+      "assertion": "Test relations distinguish explicit registration, import/reference evidence and naming heuristics.",
+      "id": "rpu-v1-t028-tests"
+    },
+    {
+      "assertion": "Schema and artifact producer/consumer relations preserve contract identity and do not imply runtime correctness.",
+      "id": "rpu-v1-t028-contracts"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.repoground.call-graph-producer"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.docs"
+    }
+  ],
   "depends_on": [
     "RPU-V1-T024"
   ],
-  "priority": {
-    "lane": "later",
-    "rank": 60
-  },
-  "claims": [
-    {
-      "resource": "component.repoground.call-graph-producer",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "component.bureau.registry",
-      "mode": "read",
-      "isolation": "none"
-    },
-    {
-      "resource": "component.bureau.docs",
-      "mode": "read",
-      "isolation": "none"
-    }
-  ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski",
-    "github"
-  ],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/repoground",
     "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
     "grabowski_resources": [
       "component:repoground-call-graph-producer",
@@ -46,36 +41,25 @@
       "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T028.json",
       "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
-    ]
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
   },
-  "acceptance": [
-    {
-      "id": "rpu-v1-t028-build",
-      "assertion": "Build and package relations cite their originating manifest or workflow range."
-    },
-    {
-      "id": "rpu-v1-t028-tests",
-      "assertion": "Test relations distinguish explicit registration, import/reference evidence and naming heuristics."
-    },
-    {
-      "id": "rpu-v1-t028-contracts",
-      "assertion": "Schema and artifact producer/consumer relations preserve contract identity and do not imply runtime correctness."
-    }
-  ],
+  "goal": "Add deterministic build-target, test-registration, schema-validation and artifact-flow relations as evidence sources stronger than filename convention alone.",
+  "id": "RPU-V1-T028",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "metadata": {
-    "registered_at": "2026-07-15T16:20:00Z",
-    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
     "architecture_axis": "evidence-graded coding context graph",
+    "implementation": {
+      "base_sha": "5548ca2d23a3d22ffe14fb1006363e4078e7c009",
+      "diff_sha256": "4f5e5482798a1b0ada316add188aa100793ea1dfb0903c3b0ce3721d009c18e3",
+      "merge_commit_sha": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+      "pull_request": 1150,
+      "repository": "heimgewebe/repoground",
+      "reviewed_head_sha": "1a3a9acf73a255358fe55fb02ecf71410f145a04"
+    },
     "lease_scope_migration": {
-      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
-      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
-      "source_claim_resource": "repo.bureau",
-      "rationale": "The relation-overlay work reads only its exact Bureau task, shared initiative truth and current plan; build, test and contract extraction effects remain in RepoGround.",
-      "effect_boundaries": [
-        "Exact Bureau task record",
-        "RepoBrief evidence-context initiative record",
-        "Current build-test-contract overlay plan"
-      ],
       "catalog_entry_sha256": "b8ec4f14f590d86901d4dee3b6361074981f5005c99309721170c4f2521d46c3",
       "does_not_establish": [
         "queue mutation",
@@ -84,20 +68,98 @@
         "merge or deployment authority",
         "verification authority",
         "safe mutation of terminal historical tasks"
-      ]
+      ],
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current build-test-contract overlay plan"
+      ],
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "rationale": "The relation-overlay work reads only its exact Bureau task, shared initiative truth and current plan; build, test and contract extraction effects remain in RepoGround.",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau"
     },
     "pickup_scope_note": {
       "decision": "component-and-worktree-path-only",
-      "reason": "The task mutates only component.repoground.call-graph-producer in its dedicated worktree. A broad RepoGround lease would serialize against unrelated retained and dirty historical worktrees.",
-      "exclusive_resources": [
-        "component:repoground-call-graph-producer",
-        "path:/home/alex/repos/.repoground-worktrees/repoground-evidence-call-graph-v1"
-      ],
       "does_not_establish": [
         "permission to modify other RepoGround components",
         "permission to mutate foreign worktrees",
         "repository-wide exclusivity"
-      ]
-    }
-  }
+      ],
+      "exclusive_resources": [
+        "component:repoground-call-graph-producer",
+        "path:/home/alex/repos/.repoground-worktrees/repoground-evidence-call-graph-v1"
+      ],
+      "reason": "The task mutates only component.repoground.call-graph-producer in its dedicated worktree. A broad RepoGround lease would serialize against unrelated retained and dirty historical worktrees."
+    },
+    "registered_at": "2026-07-15T16:20:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "diff_sha256": "4f5e5482798a1b0ada316add188aa100793ea1dfb0903c3b0ce3721d009c18e3",
+          "head_sha": "1a3a9acf73a255358fe55fb02ecf71410f145a04",
+          "kind": "pull_request",
+          "merge_commit_sha": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+          "number": 1150,
+          "repository": "heimgewebe/repoground",
+          "source_ref": "heimgewebe/repoground#1150",
+          "task_id": "RPU-V1-T028"
+        },
+        {
+          "authority": "bureau-run",
+          "kind": "implementation_run",
+          "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db",
+          "run_id": "BUR-RUN-20260803T103515Z-fb40be404c",
+          "source_ref": "BUR-RUN-20260803T103515Z-fb40be404c",
+          "state": "succeeded",
+          "task_id": "RPU-V1-T028",
+          "task_sha256": "0d39c7771f5ed76224b0618d287ccd4fc8ad8a84be0aaaca4fc0e2120a76d6fb"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
+    "validation": {
+      "focused": {
+        "adjacent_graph_regression": "215 passed; 10 skipped",
+        "anti_hallucination_contract_lint": "96 contracts; 0 errors; 0 deferrals",
+        "full_repoground_suite": "5377 passed; 12 skipped",
+        "new_tests": "27 passed",
+        "public_core_api_scip_and_anti_hallucination": "71 passed; 1 skipped",
+        "ruff": "PASS"
+      },
+      "github_checks": "All PR checks passed on exact head 1a3a9acf73a255358fe55fb02ecf71410f145a04 before merge.",
+      "review_findings": 0
+    },
+    "verification": {
+      "evidence_sha256": "6619624cef970488eb2f2362ff807b5911a837c317d686d6a558d28c8d1dccd2",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db",
+      "source": "task_bound_pr_ci_merge_and_successful_bureau_run_evidence",
+      "source_ref": "heimgewebe/repoground#1150@633568ce1e0880b729ff48e4ff77fd6ae69b351f;bureau-run:BUR-RUN-20260803T103515Z-fb40be404c",
+      "task_sha256": "ffc3265de342d76a644ae161f7c14979d1521f1a86c258481f2b922a69ff09bf",
+      "verified_at": "2026-08-03T12:33:18.258322Z"
+    },
+    "verification_note": "Acceptance closed after exact-head CI, deterministic relation evidence tests, exact merge and successful task-bound Bureau run.",
+    "verified_acceptance": {
+      "rpu-v1-t028-build": "PASS: build and package relations retain exact manifest or workflow source ranges.",
+      "rpu-v1-t028-contracts": "PASS: schema and artifact producer/consumer relations preserve contract identity and explicitly avoid runtime-correctness claims.",
+      "rpu-v1-t028-tests": "PASS: test relations distinguish explicit registration, import/reference evidence and naming heuristics."
+    },
+    "verified_at": "2026-08-03T12:33:18.258322Z"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Build, test and contract relation overlay"
 }

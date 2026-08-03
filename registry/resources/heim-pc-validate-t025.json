@@ -1,0 +1,18 @@
+{
+  "id": "component.heim-pc.validate-workflow",
+  "metadata": {
+    "canonical_paths": [
+      ".github/workflows/heim-pc-validate.yml"
+    ],
+    "does_not_establish": [
+      "repository-wide mutation authority",
+      "ownership of foreign Heim-PC worktrees",
+      "scope outside the listed path"
+    ],
+    "purpose": "Exact coordination scope for the Heim-PC validation workflow update bound to OPERATOR-INTEGRATION-LOOP-V1-T025.",
+    "source_task": "OPERATOR-INTEGRATION-LOOP-V1-T025"
+  },
+  "parent": "repo.heim-pc",
+  "schema_version": 1,
+  "type": "component"
+}

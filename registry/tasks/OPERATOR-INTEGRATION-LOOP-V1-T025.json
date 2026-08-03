@@ -19,7 +19,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.heim-pc",
+      "resource": "component.heim-pc.validate-workflow",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -34,7 +34,7 @@
       "note": "Nur das exakt gebundene Repository bearbeiten. Fremde Änderungen bleiben erhalten; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/heim-pc"
+      "path:/home/alex/repos/heim-pc/.github/workflows/heim-pc-validate.yml"
     ]
   },
   "metadata": {
@@ -69,6 +69,28 @@
         "claim success",
         "future resource availability",
         "merge readiness before fresh checks"
+      ]
+    },
+    "scope_refinement": {
+      "schema_version": 1,
+      "kind": "exact-path-work-admission",
+      "refined_at": "2026-08-03T02:48:00Z",
+      "component_resource": "component.heim-pc.validate-workflow",
+      "grabowski_resources": [
+        "path:/home/alex/repos/heim-pc/.github/workflows/heim-pc-validate.yml"
+      ],
+      "basis": "The bound closed PR #71 changes exactly .github/workflows/heim-pc-validate.yml. Broad repository admission is unnecessary and is blocked by unrelated foreign dirty Heim-PC worktrees, which remain untouched.",
+      "preserves": [
+        "repo.heim-pc ancestry through the component parent",
+        "worktree isolation",
+        "review-before-effect",
+        "all acceptance criteria and required capabilities"
+      ],
+      "does_not_establish": [
+        "permission to modify or clean foreign worktrees",
+        "permission to write outside the listed exact path",
+        "claim or dispatch success",
+        "merge readiness"
       ]
     }
   },

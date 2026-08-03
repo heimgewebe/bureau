@@ -3,8 +3,8 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer deployen und live verifizieren",
-  "state": "blocked",
-  "goal": "Deploye nach verifiziertem T063-Merge den exakten Leitstand-main-Commit über den kanonischen Releaseadapter und belege per Runtime-, HTTP- und Browser-Readback, dass Lifecycle, technische Freshness und Runtime-Gesundheit getrennt dargestellt werden.",
+  "state": "planned",
+  "goal": "Deploye den bereits in Leitstand main enthaltenen exakten Merge-Commit 9b276fdab1bc6806dbe034e46a6b5115f3aba931 über den kanonischen Releaseadapter und belege per Runtime-, HTTP- und Browser-Readback, dass Lifecycle, technische Freshness und Runtime-Gesundheit getrennt dargestellt werden. T063 bleibt wegen irreversibel fehlender historischer Pre-Merge-Receipts terminal cancelled und wird nicht rückwirkend als verifiziert behandelt.",
   "priority": {
     "lane": "next",
     "rank": 85
@@ -21,7 +21,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Authorizes only the exact T063 merge commit to be deployed through scripts/leitstand-release.py after fresh conflict, rollback and source-identity checks. Systemkatalog remains read-only and foreign work must not be interrupted or overridden."
+      "note": "Authorizes only exact Leitstand merge commit 9b276fdab1bc6806dbe034e46a6b5115f3aba931, already bound by verified T061 implementation evidence and the terminal T063 cancellation record, to be deployed through scripts/leitstand-release.py after fresh conflict, rollback and source-identity checks. T063 is not retroactively verified; Systemkatalog remains read-only and foreign work must not be interrupted or overridden."
     }
   },
   "claims": [
@@ -48,12 +48,12 @@
     "runtime"
   ],
   "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063"
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061"
   ],
   "acceptance": [
     {
       "id": "exact-merge-input",
-      "assertion": "The deployment input is the exact verified T063 merge commit on current main.",
+      "assertion": "The deployment input is exact Leitstand merge commit 9b276fdab1bc6806dbe034e46a6b5115f3aba931 from reviewed head 35569da58554af922fe2d13e564f035f2d06db4b, as bound by verified implementation task T061 and the authoritative T063 cancellation evidence; T063 is not reclassified as verified.",
       "evidence_type": "object"
     },
     {
@@ -79,10 +79,30 @@
   ],
   "metadata": {
     "does_not_establish": [
-      "T061_or_T063_verification",
+      "T063_verification",
       "deployment_readiness",
       "future_runtime_health",
       "permission_to_mutate_unrelated_services"
-    ]
+    ],
+    "dependency_convergence": {
+      "schema_version": 1,
+      "changed_at": "2026-08-03T13:28:45Z",
+      "former_dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
+      "former_dependency_state": "cancelled",
+      "current_dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+      "current_dependency_state": "verified",
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 190,
+      "reviewed_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+      "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "full_diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+      "reason": "T063 is terminal cancelled because its required historical pre-merge receipts cannot be recreated. T061 is verified and already binds the exact implementation merge contained in Leitstand main, so T062 must depend on that executable source truth rather than an impossible future T063 verification.",
+      "does_not_establish": [
+        "T063 verification",
+        "deployment completion",
+        "runtime health",
+        "deployment authority"
+      ]
+    }
   }
 }

@@ -148,6 +148,10 @@
           "authenticated client identity"
         ]
       }
+    },
+    "verification": {
+      "task_sha256": "c4292dba81bd67e632b573c8868d72f449fec7216b79c68f8372f3cf733f8d84",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },
   "priority": {

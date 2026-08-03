@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002B",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run a cost-bounded live baseline and RepoBrief preflight",
-  "state": "blocked",
+  "state": "superseded",
   "goal": "Prove the qualified Claude runner against the live provider with exactly one frozen baseline/treatment pair, a hard pre-dispatch spend ceiling, exact model and tool evidence, valid Lenskit receipts, immutable transcripts and separately measured snapshot-preparation and freshness latency before any 96-run benchmark dispatch.",
   "priority": {
     "lane": "next",
@@ -125,6 +125,9 @@
     },
     "stop_rule_applied": true,
     "next_action": "Do not retry RAB-V1-T002B. Qualify the integrated preflight implementation without provider use in RAB-V1-T002C, then require a separate reviewed authorization in RAB-V1-T002D for any new live pair.",
+    "superseded_at": "2026-08-03T11:28:00Z",
+    "superseded_by": "RAB-V1-T002C",
+    "supersession_reason": "The no-retry T002B attempt is permanently consumed and its prescribed replacement T002C is already verified with the integrated one-shot preflight orchestrator merged and validated. Keeping T002B blocked would preserve an executable-looking duplicate that must never run again.",
     "queue_reconciliation": {
       "state": "blocked-by-open-pr",
       "queue_file": "registry/queue.json",

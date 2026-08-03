@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Heim-PC-Renovate-Update aus PR #71 konfliktfrei neu aufsetzen",
   "goal": "Erzeuge für das weiterhin sinnvolle geschlossene Heim-PC-Update aus PR #71 einen frischen Ersatz-PR vom aktuellen origin/main, löse den beobachteten Mergekonflikt ohne fremde Änderungen zu verwerfen und validiere den exakten Ersatz-Head vollständig.",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 3
@@ -92,6 +92,69 @@
         "claim or dispatch success",
         "merge readiness"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "eb898af14172a3761de2b431425bbbcd73207891ef4142dab5c2c939b74f15a1",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "receipt_sha256": "d3b93a2dd0e259066559a8a003bb38a24d32af6013e2f9ad88775d3116daf52b",
+      "evidence_sha256": "a97210272422847209c53a8885ff567ad97d19dcc23d03fda1721bbb33bb724d",
+      "source": "bureau_succeeded_run_and_merged_pull_request",
+      "source_ref": "github-pr:heimgewebe/heim-pc#85@751da6498b69f08e1883201e83cddca712597d60:95b929fd2a8651daa5d703758139c812870cfc6e",
+      "run_id": "BUR-RUN-20260803T032231Z-3fddf9d33b",
+      "verified_at": "2026-08-03T03:31:44.795573Z",
+      "bureau_run_receipt": {
+        "schema_version": 1,
+        "run_id": "BUR-RUN-20260803T032231Z-3fddf9d33b",
+        "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T025",
+        "task_sha256": "eb898af14172a3761de2b431425bbbcd73207891ef4142dab5c2c939b74f15a1",
+        "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+        "envelope_sha256": "3dc717055f5c50ae05bebe3a9e68d3e50b8b80eac204213a100e9c5bd056d282",
+        "receipt_sha256": "d3b93a2dd0e259066559a8a003bb38a24d32af6013e2f9ad88775d3116daf52b",
+        "verified_at": "2026-08-03T03:31:44.795573Z",
+        "evidence": {
+          "source-readback": {
+            "repository": "heimgewebe/heim-pc",
+            "source_pr": 71,
+            "state": "CLOSED",
+            "merged": false,
+            "head": "835816a284ab76119411f378aa4aba7cd9f7e8c4"
+          },
+          "fresh-replacement": {
+            "repository": "heimgewebe/heim-pc",
+            "replacement_pr": 85,
+            "base": "455347645ba75771c4780ec3cc73c572ab6e68c4",
+            "head": "751da6498b69f08e1883201e83cddca712597d60",
+            "changed_files": [
+              ".github/workflows/heim-pc-validate.yml"
+            ],
+            "source_pr_reopened": false
+          },
+          "blocker-specific-proof": {
+            "exact_changed_path": ".github/workflows/heim-pc-validate.yml",
+            "required_checks": {
+              "heim-pc-validate/validate": "SUCCESS",
+              "wgx-guard/guard": "SUCCESS",
+              "wgx-smoke/smoke": "SUCCESS",
+              "CodeQL": "SUCCESS"
+            }
+          },
+          "fail-closed-merge": {
+            "head": "751da6498b69f08e1883201e83cddca712597d60",
+            "merge_commit": "95b929fd2a8651daa5d703758139c812870cfc6e",
+            "merged_at": "2026-08-03T03:29:35Z",
+            "current_head_checks_passed": true
+          },
+          "repository-closeout": {
+            "repository": "heimgewebe/heim-pc",
+            "replacement_pr": 85,
+            "state": "MERGED",
+            "final_head": "751da6498b69f08e1883201e83cddca712597d60",
+            "merge_commit": "95b929fd2a8651daa5d703758139c812870cfc6e"
+          }
+        },
+        "external": null
+      }
     }
   },
   "acceptance": [

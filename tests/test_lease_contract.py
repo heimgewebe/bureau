@@ -340,8 +340,9 @@ def test_registry_check_rejects_nonterminal_broad_scope(
             {
                 "schema_version": 1,
                 "id": "repo.bureau",
-                "type": "component",
+                "type": "git-repository",
                 "parent": "repo",
+                "path": "/home/alex/repos/bureau",
                 "grabowski_key": "repo:/home/alex/repos/bureau",
             }
         )

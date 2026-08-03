@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "repo.heim-pc-dashboard",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/heim-pc-dashboard-chatgpt-app",
+  "grabowski_key": "repo:/home/alex/repos/heim-pc-dashboard-chatgpt-app",
+  "metadata": {
+    "role": "Read-only Heim-PC dashboard for host, repository-portfolio and Bureau progress observability",
+    "boundaries": [
+      "local_repository_without_github_origin",
+      "read_only_runtime_surface",
+      "no_task_queue_claim_merge_or_deployment_authority",
+      "additional_repository_identities_remain_private"
+    ]
+  }
+}

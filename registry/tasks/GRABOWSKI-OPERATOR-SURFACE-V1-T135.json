@@ -1,0 +1,149 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Grabowski PR #576 trägt eine gültige Bureau-Taskbindung an GRABOWSKI-OPERATOR-SURFACE-V1-T135. Der exakte 20-Pfade-Scope stimmt mit dem finalen PR überein; zusätzliche Pfade, fremde Arbeit oder eine pauschale Konfliktumgehung sind nicht zulässig.",
+      "id": "canonical-pr-binding"
+    },
+    {
+      "assertion": "Jeder nicht read-only annotierte öffentliche MCP-Aufruf benötigt vor Ausführung eine frische, genau einmal verbrauchbare Roundtrip-Verifikation. Fehlende oder unbekannte readOnlyHint-Annotationen blockieren vor Wirkung; Ausnahmen sind explizit, minimal und durch Tests belegt.",
+      "id": "single-use-admission"
+    },
+    {
+      "assertion": "Challenge, Antwort und Verbrauch sind an Runtime-Release, Werkzeugkatalog, Instruktionsvertrag, Client-deklarierten Scope, Werkzeugname und SHA-256 der kanonischen Argumente gebunden. Jede Drift, Ablaufüberschreitung oder abweichende Argumentform blockiert.",
+      "id": "identity-and-argument-binding"
+    },
+    {
+      "assertion": "Replay, paralleler Doppelverbrauch, manipulierte oder öffentlich lesbare Zustandsdateien, Symlinks, Hardlinks und unvollständige atomare Publikation bleiben fail-closed. Ein Zwei-Prozess-Test lässt exakt einen Verbraucher zu.",
+      "id": "replay-concurrency-private-state"
+    },
+    {
+      "assertion": "Die bestehende Connector-Snapshot-Erneuerung nutzt denselben Roundtrip-Vertrag ohne neues öffentliches MCP-Werkzeug. Dokumentation und Receipts trennen deklarierte Client-Scope-Metadaten ausdrücklich von authentifizierter Client-Identität.",
+      "id": "connector-snapshot-integration"
+    },
+    {
+      "assertion": "Der finale PR-Head erhält einen aktuellen revisionsgebundenen Sicherheitsreview; der ältere PASS auf ce6ae4095c0263bb7ca23c51c1ca5cb6906be753 gilt nach späteren Commits nicht als Abschluss. Vollvalidierung, Python 3.10/3.12, CodeQL und Review-Gates sind auf dem exakten finalen Head grün.",
+      "id": "exact-head-review-and-ci"
+    },
+    {
+      "assertion": "PR #576 wird ausschließlich über die Repository-Merge-Queue integriert. Der exakte Merge-Commit wird gesund deployed; Runtime-Identität und Integrität werden zurückgelesen. Ein secretfreier Live-Roundtrip belegt Challenge, einmaligen Verbrauch, Replay-Ablehnung und einen klaren nachfolgenden Readback, ohne Mutationserfolg aus dem Transport allein abzuleiten.",
+      "id": "merge-deploy-live-readback"
+    },
+    {
+      "assertion": "Der Abschluss behauptet weder authentifizierte Plattform- oder Client-Identität noch Schutz gegen kompromittierten Same-UID-Code, garantierten Erfolg der nachfolgenden Mutation, Abwesenheit verlorener Antworten oder allgemeine Merge- und Deploy-Autorität.",
+      "id": "authority-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer ordnete am 3. August 2026 die Umsetzung der nächsten Aufgabe und zuvor die dauerhafte Sicherung des Grabowski-Transports an. PR #576 darf nur nach aktueller Exact-Head-Prüfung, grünen Pflichtchecks, Merge Queue, exaktem Deployment und Live-Readback integriert werden. Fremde Worktrees, Leases und Prozesse bleiben unberührt; keine Identitäts- oder Wirkungserfolge werden über die vorhandene Evidenz hinaus behauptet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/config/runtime-entrypoint.json",
+      "path:/home/alex/repos/grabowski/contracts/capability-catalog.v1.json",
+      "path:/home/alex/repos/grabowski/contracts/publication-profiles.v1.json",
+      "path:/home/alex/repos/grabowski/docs/connector-snapshot-handshake-v1.md",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/restart-watchdog.md",
+      "path:/home/alex/repos/grabowski/docs/transport-roundtrip-gate-v1.md",
+      "path:/home/alex/repos/grabowski/src/grabowski_client_snapshot.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_operator.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_client_snapshot.py",
+      "path:/home/alex/repos/grabowski/tests/test_deployment_admission_call_registry.py",
+      "path:/home/alex/repos/grabowski/tests/test_deployment_observer.py",
+      "path:/home/alex/repos/grabowski/tests/test_grips.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_repository_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Überführe den bereits offenen Grabowski-PR #576 in einen kanonisch taskgebundenen, revisionssicheren Abschluss. Vor genau einem mutierenden MCP-Aufruf muss eine frische, einmalig verbrauchbare Challenge-Antwort vorliegen, die Runtime-, Werkzeugkatalog-, Instruktions-, Client-Scope-, Werkzeugnamen- und kanonische Argumentidentität bindet. Fehlende Annotationen, Drift, Replay, Parallelverbrauch und unsichere private Zustandsdateien bleiben fail-closed. Der Abschluss darf weder authentifizierte Client-Identität noch den Erfolg der nachfolgenden Mutation behaupten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T135",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Mergebereitschaft vor aktuellem Exact-Head-Review",
+      "authentifizierte Client-Identität",
+      "Erfolg einer nachfolgenden Mutation",
+      "Abwesenheit von Antwortverlust nach Wirkung",
+      "Berechtigung zur Übernahme fremder Arbeit"
+    ],
+    "live_checks": {
+      "codeql": "success",
+      "pending_gate": "Codex review settled status context",
+      "validate_3_10": "success",
+      "validate_3_12": "success"
+    },
+    "observed_at": "2026-08-03T12:39:00Z",
+    "prior_review": {
+      "current_applicability": "stale because later commits changed the reviewed head",
+      "receipt_sha256": "cc9312019a9388a23d8ea56f9dc9a54781e6c766d0c7ee505c4583e92a160976",
+      "result": "PASS with no confirmed findings",
+      "reviewed_head_sha": "ce6ae4095c0263bb7ca23c51c1ca5cb6906be753"
+    },
+    "source_pr": {
+      "base_sha": "c4d7116d4db83f4b86bdcc9a11cfc41727240ae8",
+      "binding_status": "missing",
+      "branch": "fix/grabowski-transport-durability-v1",
+      "changed_file_count": 20,
+      "head_sha": "2b789bf822e5ea70d707c81796c9f382e6b8899e",
+      "merge_state": "UNSTABLE",
+      "number": 576,
+      "repository": "heimgewebe/grabowski"
+    },
+    "throughput_priority": "durchsatz1",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-11a082aa81e60c6d95bf3f1b",
+      "event_id": 2423,
+      "event_created_at": "2026-08-03T12:45:57.613237Z",
+      "request_sha256": "ec3279812c982c2e73c7234641f35d318d693d454bafc748e1e236950a0c2b52",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pull-request",
+        "locator": "github:heimgewebe/grabowski#576@2b789bf822e5ea70d707c81796c9f382e6b8899e",
+        "observed_at": "2026-08-03T12:39:00Z",
+        "sha256": "fd138e6f8daca6411853e634482ff4320024c5bb1e52e54526d6f1db2f7f3755"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "security",
+    "concurrency-testing",
+    "github",
+    "grabowski",
+    "runtime-deployment",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-use Roundtrip-Gate für mutierende MCP-Aufrufe integrieren"
+}

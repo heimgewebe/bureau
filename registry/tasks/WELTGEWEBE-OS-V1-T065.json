@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Parser akzeptiert genau einen zeilenverankerten `audit-report-truth.v1`-Block. Fehlende, verschachtelte, inline auftretende oder mehrfache Wahrheitsblöcke werden mit stabilen Fehlercodes fail-closed abgelehnt; Negativtests decken insbesondere einen gültigen ersten und widersprüchlichen zweiten Block ab.",
+      "evidence_type": "object",
+      "id": "single-truth-block"
+    },
+    {
+      "assertion": "Read-only-Validierung führt weder `git fetch` noch andere Netzwerk- oder Repositorymutationen aus. Flache oder unvollständige Historie wird als explizit nicht verfügbare Provenienz gemeldet; ein bewusst separater Vorbereitungsweg darf Historie beschaffen, aber nicht still aus dem Validator heraus.",
+      "evidence_type": "object",
+      "id": "hermetic-history-validation"
+    },
+    {
+      "assertion": "Pflichtfelder akzeptieren nur die vertraglich vorgesehenen Stringtypen. Boolesche, numerische, Listen-, Mapping- und Nullwerte erfüllen keine Textfeldpräsenz; unbekannte `status`- oder `lifecycle_state`-Werte deaktivieren keine Zustandsregeln, sondern erzeugen Findings.",
+      "evidence_type": "object",
+      "id": "strict-scalar-types"
+    },
+    {
+      "assertion": "Fehlende Git-Provenienz wird nicht als 40-stellige Null-SHA mit Epochzeit ausgegeben oder als positives Contractfeld akzeptiert. Generatoren und Validatoren verwenden einen typisierten unbekannten beziehungsweise nicht verfügbaren Zustand; positive Frische- oder Drifturteile erfordern eine echte auflösbare Revision.",
+      "evidence_type": "object",
+      "id": "typed-provenance-unavailable"
+    },
+    {
+      "assertion": "Alle Verbraucher des gemeinsamen Moduls werden inventarisiert und angepasst. Bestehende Lifecycle-, Inventory-, Truth-Contract- und CI-Tests bleiben grün; neue Negativtests beweisen Mehrfachblock-, Skalar-, Shallow-History-, Netzwerkfreiheits- und Null-SHA-Verhalten.",
+      "evidence_type": "object",
+      "id": "consumer-regression-safety"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head- und Diffbindung, ein methodisch getrennter Datenintegritätsreview und grüne Pflichtchecks vor. Nach Merge werden die generierten Lifecycle-Flächen auf `main` erneut reproduziert, damit Squash- oder Merge-Commitidentitäten keine stale Wahrheitsbindung hinterlassen.",
+      "evidence_type": "object",
+      "id": "revision-bound-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangte am 3. August 2026 ausdrücklich, alle sinnvollen nicht behobenen Befunde als Bureau-Folgetask zu registrieren. Die Umsetzung bleibt auf den bestehenden Report-Lifecycle-Wahrheitsvertrag begrenzt und benötigt vor Wirkung exakte Liveprüfung, Tests, Review und grüne Pflichtchecks.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den gemeinsamen Report-Lifecycle-Wahrheitsvertrag fail-closed und hermetisch härten: mehrdeutige Truth-Blöcke ablehnen, Validierung von impliziter Netzwerk- und Repositorymutation trennen, Frontmatter-Skalartypen strikt behandeln und fehlende Git-Provenienz als explizit unbekannten Zustand statt als scheinbar gültige Null-SHA modellieren.",
+  "id": "WELTGEWEBE-OS-V1-T065",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic implementation",
+      "queue truth",
+      "claim or dispatch authority",
+      "permission for network mutation during validation",
+      "permission to weaken truth-contract revision binding"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a60be4801c639ec84fbcbf22",
+      "event_id": 2362,
+      "event_created_at": "2026-08-03T07:31:41.022917Z",
+      "request_sha256": "8e85ede7f38485b333cbbec663a0ed44f8a0e3f5299f858c6f8c69033defe342",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-audit",
+        "locator": "github:heimgewebe/weltgewebe#1672@bcfde3308baa4bc362465abe1648d176478acbe9:pre-existing-report-lifecycle-audit",
+        "observed_at": "2026-08-03T07:31:41.003766Z",
+        "sha256": "6aa171aa50b6bf44dddc6c93032ec569ce697be298b5d6cbbc19c9349fa2ac77"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-03",
+    "related_tasks": [
+      {
+        "relationship": "follow-up from evidence-surface consolidation",
+        "task_id": "WELTGEWEBE-OS-V1-T053"
+      }
+    ],
+    "source": "operator_followup_from_weltgewebe_pr_1672",
+    "source_head": "cdb54f957da49d4ded34b568c72f6140acfb1f45",
+    "source_pr": "heimgewebe/weltgewebe#1672",
+    "source_sha256": "6aa171aa50b6bf44dddc6c93032ec569ce697be298b5d6cbbc19c9349fa2ac77"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "python",
+    "documentation-architecture",
+    "data-integrity",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Report-Lifecycle-Wahrheitsvertrag hermetisch härten"
+}

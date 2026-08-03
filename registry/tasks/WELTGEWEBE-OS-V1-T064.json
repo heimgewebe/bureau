@@ -143,6 +143,98 @@
         "apps/web/tests/edge-motion.spec.ts"
       ],
       "rationale": "Preserves all mandatory T064 acceptance while avoiding the active #1671 predecessor files; the spool response is optional by acceptance contract."
+    },
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1675,
+      "base_sha": "d206a09d63cfc05dbfad4f9e9e05c67d67229b26",
+      "reviewed_head_sha": "f988bc4bd11f6e848f5f0ab33aa81d6f3e73b89c",
+      "merge_commit_sha": "d5094a9256af3025502540d694b730878377d27a",
+      "diff_sha256": "847a0613f16bd392b304c927bd0f3b2e2f8337d013b35357eb39d1904016d1d6"
+    },
+    "validation": {
+      "github_checks": "passed on exact PR head before merge",
+      "review_findings": 0,
+      "unit_tests": "308 passed",
+      "svelte_check": "0 errors, 0 warnings",
+      "chromium_edge_motion": "6 passed",
+      "archive_regression": "3 passed after fix; pre-fix failure reproduced 3/3",
+      "webkit_post_merge": {
+        "result": "6 passed",
+        "duration_seconds": 20.5,
+        "merge_commit_sha": "d5094a9256af3025502540d694b730878377d27a",
+        "grabowski_task_id": "97e6fea105dc4a2cb25f5e52",
+        "lifecycle_receipt_sha256": "b2468059ebf6f757706085a20bf6ef1737c693746a157391f38612444c01593c",
+        "playwright_image": "mcr.microsoft.com/playwright@sha256:57b65fdc9ceabe0ef613124c7bbe2babcf9362c4d85e382fe3b03604e84b428a",
+        "node_version": "v22.13.0",
+        "node_archive_sha256": "9a33e89093a0d946c54781dcb3ccab4ccf7538a7135286528ca41ca055e9b38f",
+        "pnpm_version": "9.11.0"
+      },
+      "production": {
+        "provider": "vercel",
+        "deployment_id": "dpl_AHzjPmRZRWohrAxLMVqbSHFAT6Nm",
+        "target": "production",
+        "state": "READY",
+        "merge_commit_sha": "d5094a9256af3025502540d694b730878377d27a",
+        "rollback_candidate": true,
+        "map_http_status": 200
+      }
+    },
+    "verified_acceptance": {
+      "live-event-contract": "PASS: implementation and review bind motion only to canonical create, archive/delete and release paths; filter/projection changes do not synthesize domain events.",
+      "directional-thread-create": "PASS: unit and browser evidence cover bounded deterministic growth into the canonical static edge state.",
+      "directional-thread-release": "PASS: browser evidence covers directed release, style reload, canonical removal and cleanup without orphaned frame activity.",
+      "top-view-spool-response": "PASS by omission: the optional spool reaction is explicitly outside the implementation slice; no permanent spool motion or outer MapLibre transform change was introduced.",
+      "reduced-motion-and-accessibility": "PASS: Chromium and WebKit scenarios enter the canonical end state without RAF under reduced motion; the iPad-like touch scenario preserves interaction.",
+      "bounded-performance": "PASS: controller tests enforce one frame loop per edge and a hard active-motion bound; performance proof and iPad-like WebKit scenario are green.",
+      "cross-browser-regression": "PASS: 308 unit tests, six Chromium scenarios and six real WebKit scenarios on the exact merge commit are green.",
+      "proof-and-release": "PASS: exact base/head/diff review, green required checks, exact-head merge, exact-commit production deployment with rollback candidate, production /map HTTP 200 and post-merge WebKit readback are bound."
+    },
+    "verified_at": "2026-08-03T10:24:15Z",
+    "verification_note": "Acceptance closed only after exact-head CI and review, exact merge, exact-commit production deployment, production map health readback and a digest-pinned post-merge WebKit/iPad-like browser run.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T064",
+          "source_ref": "heimgewebe/weltgewebe#1675",
+          "repository": "heimgewebe/weltgewebe",
+          "number": 1675,
+          "head_sha": "f988bc4bd11f6e848f5f0ab33aa81d6f3e73b89c",
+          "merge_commit_sha": "d5094a9256af3025502540d694b730878377d27a",
+          "diff_sha256": "847a0613f16bd392b304c927bd0f3b2e2f8337d013b35357eb39d1904016d1d6"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski-task",
+          "task_id": "WELTGEWEBE-OS-V1-T064",
+          "source_ref": "97e6fea105dc4a2cb25f5e52",
+          "run_id": "97e6fea105dc4a2cb25f5e52",
+          "head_sha": "d5094a9256af3025502540d694b730878377d27a",
+          "receipt_sha256": "b2468059ebf6f757706085a20bf6ef1737c693746a157391f38612444c01593c"
+        },
+        {
+          "kind": "deployment",
+          "authority": "vercel",
+          "task_id": "WELTGEWEBE-OS-V1-T064",
+          "source_ref": "dpl_AHzjPmRZRWohrAxLMVqbSHFAT6Nm",
+          "head_sha": "d5094a9256af3025502540d694b730878377d27a",
+          "target": "production",
+          "state": "READY",
+          "rollback_candidate": true
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "883605884f97dde02624bbb9e99159903fd05bb34b59bb1cc22376e4e23eacb7",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "source": "task_bound_pr_ci_merge_deployment_and_webkit_evidence",
+      "source_ref": "heimgewebe/weltgewebe#1675@d5094a9256af3025502540d694b730878377d27a;vercel:dpl_AHzjPmRZRWohrAxLMVqbSHFAT6Nm;grabowski-task:97e6fea105dc4a2cb25f5e52",
+      "evidence_sha256": "f3c14ac0849379cfe9a3157d06d2a8971fa8f2ec33f1eac7e57d724569629676",
+      "verified_at": "2026-08-03T10:24:15Z"
     }
   },
   "priority": {
@@ -170,6 +262,6 @@
     "task_profile": "repo_change"
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Ereignisbezogene Fadenbewegung und Garnrollenimpuls umsetzen"
 }

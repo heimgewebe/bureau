@@ -1,0 +1,119 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine neue Resource `repo.heim-pc-dashboard` bindet exakt `/home/alex/repos/heim-pc-dashboard-chatgpt-app` als git-repository mit einem eindeutigen Grabowski-Key; ein GitHub-Slug wird nur gesetzt, wenn ein echter Origin belegt ist.",
+      "evidence_type": "object",
+      "id": "resource-registered"
+    },
+    {
+      "assertion": "Die vollständige Bureau-Registry-Validierung erkennt die neue Ressource; negative Tests lehnen Pfad-, ID-, Typ- und Grabowski-Key-Kollisionen ab.",
+      "evidence_type": "object",
+      "id": "resource-validation"
+    },
+    {
+      "assertion": "Ein neuer geplanter Folgetask wird revisionsgebunden veröffentlicht und claimt ausschließlich `repo.heim-pc-dashboard`; sein Ziel umfasst die gemessene 42.959-ms-Sammlerlaufzeit, die Trennung von not_applicable und echten PR-Quellenfehlern sowie den Erhalt von 71-Repo-Abdeckung und Datenschutz.",
+      "evidence_type": "object",
+      "id": "collector-task-published"
+    },
+    {
+      "assertion": "Dieser Vorläufer verändert weder Dashboard-Code noch dessen Dienst, History-Store oder Laufzeit; er schafft ausschließlich den fehlenden Bureau-Ressourcen- und Taskvertrag.",
+      "evidence_type": "object",
+      "id": "no-product-mutation"
+    },
+    {
+      "assertion": "Bureau bleibt Task- und Resource-Wahrheit; der Vorläufer führt keine neue Queue-, Claim-, Dispatch-, Merge- oder Deployment-Autorität ein.",
+      "evidence_type": "object",
+      "id": "no-second-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die neue Dashboard-Ressource, der eng gebundene Collector-Folgetask und erforderliche Registry-Vertragstests dürfen geändert werden. Dashboard-Produktcode und fremde Registry-Arbeit bleiben unangetastet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/resources/heim-pc-dashboard.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T029.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Registriere das lokale Heim-PC-Dashboard-Repository als enge kanonische Bureau-Ressource und veröffentliche anschließend einen revisionsgebundenen Collector-Optimierungstask mit genau diesem Repository-Claim. Erfinde keinen Claim auf ein fremdes Repository und ändere in diesem Vorläufer keinen Dashboard-Produktcode.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T028",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "candidate_id": "candidate-390df5db4ea13182bf140953",
+    "does_not_establish": [
+      "collector implementation",
+      "dashboard merge readiness",
+      "task readiness",
+      "queue or dispatch authority"
+    ],
+    "live_evidence": {
+      "additional_repositories": 65,
+      "commit_sources_ok": 71,
+      "focus_repositories": 6,
+      "last_collection_duration_ms": 42959,
+      "public_projection_identity_leaks": 0,
+      "pull_request_not_usable": 32,
+      "pull_request_sources_ok": 39,
+      "registry_main": "05c4b1779e193c21a15ab4b9a1d715ab3804e54b",
+      "tracked_repositories": 71
+    },
+    "registered_at": "2026-08-03T06:29:00Z",
+    "resource_gap": "Die eigentliche Collector-Optimierung darf erst nach einem exakten repo.*-Claim veröffentlicht werden.",
+    "source": "live-heim-pc-dashboard-v0.6.0-readback-and-registry-revalidation",
+    "source_commit": "a94d32fac4ee2aa9662bae64e6996e7c76de78b3",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-390df5db4ea13182bf140953",
+      "event_id": 2328,
+      "event_created_at": "2026-08-03T06:28:19.227666Z",
+      "request_sha256": "5bb35e95060620c0ac10f78d9a664754c2967da87e85246e7ff552dbce512bf1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "registry-revalidation",
+        "locator": "bureau-main:05c4b1779e193c21a15ab4b9a1d715ab3804e54b;candidate-event:2326",
+        "observed_at": "2026-08-03T06:29:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 29
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "git",
+    "github",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Revertiere die neue Dashboard-Ressource, den daran gebundenen noch nicht ausgeführten Collector-Folgetask und ausschließlich zugehörige Registry-Vertragstests gemeinsam. Dashboard v0.6.0 und seine Laufzeit bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Heim-PC-Dashboard als Bureau-Ressource binden"
+}

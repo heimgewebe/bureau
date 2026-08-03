@@ -45,7 +45,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.weltgewebe"
+      "resource": "component.weltgewebe.map-thread-motion-t064"
     }
   ],
   "depends_on": [],
@@ -57,7 +57,12 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/routes/map",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests"
+    ]
   },
   "goal": "Die in Weltgewebe-PR #1667 statisch vereinheitlichte textile Kartenobjektsprache um eine strikt ereignisbezogene Bewegungsschicht ergänzen: Fäden wachsen beim Spannen vom Ursprung zum Ziel, ziehen sich beim Auflösen entlang der Verbindung zurück, und die realistische Garnrolle in Draufsicht reagiert nur während dieses Vorgangs kurz, ohne Daueranimation, Kartenankerdrift oder spürbare Interaktions- und Leistungsverschlechterung.",
   "id": "WELTGEWEBE-OS-V1-T064",
@@ -106,6 +111,21 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "coordination_scope": {
+      "schema_version": 1,
+      "reason": "T064 only changes the map motion layer and its browser coverage; repository-wide exclusion would unnecessarily block disjoint documentation work such as T053.",
+      "resource": "component.weltgewebe.map-thread-motion-t064",
+      "grabowski_resources": [
+        "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay",
+        "path:/home/alex/repos/weltgewebe/apps/web/src/routes/map",
+        "path:/home/alex/repos/weltgewebe/apps/web/tests"
+      ],
+      "does_not_establish": [
+        "permission to edit domain persistence",
+        "permission to edit documentation or generated evidence",
+        "nonconflict outside the declared paths"
       ]
     }
   },

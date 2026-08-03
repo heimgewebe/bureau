@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "kind": "bureau_merge_queue_probe",
+  "task_id": "BUREAU-TRUTH-MODEL-V2-T025",
+  "probe_id": "b",
+  "baseline_commit": "2eca025eaf25faee316124eee0129a7ed1f9ac22",
+  "paired_probe": "a",
+  "changed_paths": [
+    "docs/evidence/bureau-truth-model-v2-t025-queue-probe-b.json"
+  ],
+  "expected_path_overlap": [],
+  "purpose": "Second of two conflict-free pull requests used to verify serial GitHub merge-queue integration on the final merge-group commits without manually updating either branch.",
+  "does_not_establish": [
+    "task completion before both queue probes are merged",
+    "future merge-queue health",
+    "permission to bypass required checks or branch protection"
+  ]
+}

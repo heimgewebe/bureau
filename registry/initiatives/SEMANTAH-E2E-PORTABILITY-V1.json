@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "SEMANTAH-E2E-PORTABILITY-V1",
   "title": "SemantAH E2E port portability",
-  "state": "completion-ready",
-  "commitment": "next",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Den Push-Index-E2E-Test von der festen Bindung an 127.0.0.1:8080 entkoppeln, ohne Prozessbereinigung oder Readiness-Nachweis abzuschwächen.",
   "completion": [
     "Der E2E-Test verwendet einen dynamisch freien Port oder einen expliziten Port-Override.",
@@ -68,6 +68,9 @@
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T009 completion",
         "permission to alter SemantAH, Weltgewebe or Systemkatalog runtime state"
       ]
+    },
+    "lifecycle": {
+      "completed_at": "2026-08-03T06:21:09.113602Z"
     }
   }
 }

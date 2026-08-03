@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Converge active RepoGround names and metadata without rewriting history",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 80
@@ -180,6 +180,119 @@
       "that no additional current consumer outside the declared scope contains a legacy identity",
       "permission to rewrite history or stable versioned fields",
       "merge or deployment authority beyond normal PR and CI gates"
-    ]
+    ],
+    "completed_at": "2026-08-03T15:40:13+02:00",
+    "implementation": {
+      "mode": "verified_existing_convergence_no_product_diff",
+      "bureau_base": "49b132601335814e225c11daf91a0bed67932753",
+      "product_repository_mutations": 0,
+      "reason": "All acceptance conditions are already satisfied on the current exact remote heads. Creating a new product diff would only rewrite valid compatibility or historical evidence.",
+      "coordination": {
+        "failed_pickup_run": "BUR-RUN-20260803T130927Z-12e05afc46",
+        "failure_class": "metarepo repository work admission blocked by unrelated stale worktree lifecycle state",
+        "compensation": "The only acquired Bureau coordination paths were released; no product lease, claim commit or workspace remained.",
+        "closure_path": "Evidence-only Registry closeout; no foreign checkout or lifecycle state was changed."
+      }
+    },
+    "legacy_occurrence_classification": {
+      "metarepo": {
+        "head": "f3524f9b040be957cfead5b80f7a683d0ea6df72",
+        "active_identity_findings": 0,
+        "classified_occurrences": [
+          {
+            "path": "scripts/fleet/check_docs_drift.sh",
+            "classification": "negative identity guard",
+            "detail": "Legacy tools/lenskit repository identities are matched only so active configuration fails closed."
+          },
+          {
+            "path": ".github/workflows/heimgewebe-command-dispatch.yml",
+            "classification": "rejected compatibility input",
+            "detail": "Legacy target names tools/lenskit are recognized only to reject them and direct callers to RepoGround."
+          }
+        ]
+      },
+      "systemkatalog": {
+        "head": "dfb8d7bf91c9f2f3ad8c1e729e92632f3554884b",
+        "active_identity_findings": 0,
+        "classified_occurrences": [
+          {
+            "path": "docs/reviews/primary-source-drift-2026-07-26.md",
+            "classification": "dated review history",
+            "detail": "The sentence records that RepoBrief was replaced by RepoGround; it is not active catalog identity."
+          }
+        ]
+      },
+      "repoground": {
+        "head": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+        "active_identity_findings": 0,
+        "classification_families": [
+          "versioned persisted schema and artifact kind identities retained for wire compatibility",
+          "legacy storage or service names used only for bounded migration, rejection or cleanup",
+          "negative tests and fixtures",
+          "historical changelog, blueprints and quoted prior names",
+          "stable fields retained until an explicit versioned migration exists"
+        ],
+        "contract": "docs/contracts/repoground-naming-hard-cut.v1.json",
+        "audit": {
+          "command": "scripts/ops/repoground-naming-audit --repo-root . --fail-on-active-alias",
+          "returncode": 0,
+          "active_aliases_zero": true,
+          "repository_alias_findings": 0,
+          "config_findings": 0,
+          "process_findings": 0,
+          "active_guidance_findings": 0,
+          "repoground_service": "active/running/enabled",
+          "rlens_service": "inactive/not-found/dead"
+        }
+      }
+    },
+    "validated_acceptance": {
+      "active-inventory": "PASS — every current legacy occurrence in the declared Metarepo and Systemkatalog consumer surfaces is classified; RepoGround’s bounded naming audit reports zero active aliases.",
+      "canonical-identity": "PASS — active repository, fleet, catalog, command and service identity is RepoGround on all three exact heads.",
+      "history-preserved": "PASS — no product file, archived evidence, completed task, receipt, commit or quoted historical name was rewritten.",
+      "contract-compatibility": "PASS — persisted repobrief.* and lenskit.* schema/kind identities and stable legacy fields remain versioned compatibility contracts; no unversioned rename was introduced.",
+      "consumer-proof": "PASS — all focused consumer, fleet and catalog validations passed on exact remote heads; RepoGround live naming audit passed."
+    },
+    "evidence": {
+      "observed_at": "2026-08-03T15:40:13+02:00",
+      "repositories": {
+        "metarepo": {
+          "head": "f3524f9b040be957cfead5b80f7a683d0ea6df72",
+          "head_equals_origin_main": true,
+          "tests": [
+            "pytest tests/test_repoground_consumer_registration.py -q: 3 passed",
+            "just fleet-check: PASS"
+          ]
+        },
+        "systemkatalog": {
+          "head": "dfb8d7bf91c9f2f3ad8c1e729e92632f3554884b",
+          "head_equals_origin_main": true,
+          "tests": [
+            "python3 -m unittest scripts.tests.test_repoground_catalog_identity: 6 passed",
+            "python3 scripts/validate_system_catalog.py: status valid; activeLegacyRooms=0"
+          ]
+        },
+        "repoground": {
+          "head": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+          "source": "git archive of exact origin/main commit; no checkout mutation",
+          "tests": [
+            "repoground-naming-audit --fail-on-active-alias: PASS"
+          ]
+        }
+      }
+    },
+    "known_residuals": [
+      "STORAGE-LIFECYCLE-V1-T011"
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_existing_repoground_identity_convergence",
+      "outcome": "RepoGround is the sole active identity across the declared current consumer surfaces. Historical and versioned compatibility names remain preserved by design; no product diff was necessary or safe."
+    },
+    "self_review": {
+      "verdict": "PASS",
+      "method": "Separate exact-head inventory, focused consumer tests, catalog validation, live naming audit and post-failure compensation readback.",
+      "tradeoff": "The closeout avoids unrelated Metarepo worktree cleanup; that hygiene risk is isolated in STORAGE-LIFECYCLE-V1-T011."
+    }
   }
 }

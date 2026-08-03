@@ -6,7 +6,7 @@
   "observed_at": "2026-08-03T05:22:15Z",
   "registry_base": {
     "repository": "heimgewebe/bureau",
-    "commit": "b05ce187a26ffb33e21c59d32fc69a0c2ae32058",
+    "commit": "ebbdf8fce374eca1079a0cc41c037f0b0a43e355",
     "task_state": "ready",
     "queue_lane": "next",
     "task_sha256": "b7e6cc946d9a71a834721220f4e0432dd4b3973582ea2600b9e1ee42096f3404",
@@ -108,18 +108,19 @@
     },
     "validation-and-docs": {
       "status": "passed",
-      "evidence": "PR #1419 merged the operations runbook with green checks. On closeout main b05ce187, the immutable Bureau runtime is already current with lag 0 and the live merge-queue ruleset remains active."
+      "evidence": "PR #1419 merged the operations runbook with green checks. On closeout base ebbdf8fc the live merge-queue ruleset remains active; the immutable Bureau registry runtime is two later registry-only commits behind and is recorded as a separate lifecycle state."
     }
   },
   "post_merge_readback": {
-    "main_commit": "b05ce187a26ffb33e21c59d32fc69a0c2ae32058",
+    "closeout_base_commit": "ebbdf8fce374eca1079a0cc41c037f0b0a43e355",
     "deployed_source_commit": "b05ce187a26ffb33e21c59d32fc69a0c2ae32058",
     "deployed_manifest_sha256": "d53c62b54b8d83e5d36e2b094296f828a534a6e15e2bb3a79d81f8db1274483b",
-    "runtime_status": "already_current",
-    "runtime_lag_commits": 0,
-    "runtime_observation_sha256": "f33ef9498ef4a152e8ca6bbc201a69be4f0d3bd1592caca1e26f5e5771d25d34",
+    "runtime_status": "candidate",
+    "runtime_lag_commits": 2,
+    "runtime_observation_sha256": "6940e42e7f312a4b96175f6c58b47fe508da5dbafb3a0a94c4cbde17a96a5b40",
     "ruleset_id": 20228857,
-    "ruleset_enforcement": "active"
+    "ruleset_enforcement": "active",
+    "interpretation": "The active GitHub merge-queue rule is external to the immutable Bureau registry runtime. The two-commit runtime lag is caused by later registry-only main advances and does not negate the live ruleset or the completed merge-group probes."
   },
   "does_not_establish": [
     "future merge-queue health",
@@ -127,5 +128,5 @@
     "completion of GRABOWSKI-OPERATOR-SURFACE-V1-T133 or T134",
     "a synthetic red-check or conflict probe in production"
   ],
-  "evidence_sha256": "1c15a88a3aa62660ff4e200127bb9a3c89de8be7942ccf90742d60b6990f182b"
+  "evidence_sha256": "d9766570801e312f5d319f6fb44c7feb71a3de8f285628400fcaf5a219f1f77a"
 }

@@ -293,6 +293,10 @@
       "verdict": "PASS",
       "method": "Separate exact-head inventory, focused consumer tests, catalog validation, live naming audit and post-failure compensation readback.",
       "tradeoff": "The closeout avoids unrelated Metarepo worktree cleanup; that hygiene risk is isolated in STORAGE-LIFECYCLE-V1-T011."
+    },
+    "verification": {
+      "task_sha256": "dc1adcc80b473427b3a106c62aaa6e9cf6915f2d5170bc6696adaa58b47141ba",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   }
 }

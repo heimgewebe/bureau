@@ -19,7 +19,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.grabowski",
+      "resource": "component.grabowski.task-reconcile",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -130,6 +130,33 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "scope_refinement": {
+      "schema_version": 1,
+      "kind": "exact-path-work-admission",
+      "refined_at": "2026-08-03T04:24:00Z",
+      "component_resource": "component.grabowski.task-reconcile",
+      "grabowski_resources": [
+        "path:/home/alex/repos/grabowski/src/grabowski_tasks.py",
+        "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+        "path:/home/alex/repos/grabowski/tests/test_tasks.py",
+        "path:/home/alex/repos/grabowski/tests/test_resources.py",
+        "path:/home/alex/repos/grabowski/docs/root-task-lifetime-v1.md",
+        "path:/home/alex/repos/grabowski/docs/task-attention-decisions-v1.md"
+      ],
+      "basis": "The canonical pickup reproduced repository work admission blocked by foreign and dirty Grabowski worktrees although T133 already publishes six exact paths. Broad repo.grabowski admission is unnecessary for this task.",
+      "preserves": [
+        "repo.grabowski ancestry through the component parent",
+        "worktree isolation",
+        "review-before-effect",
+        "all acceptance criteria and required capabilities"
+      ],
+      "does_not_establish": [
+        "permission to mutate or clean foreign worktrees",
+        "permission to write outside the listed exact paths",
+        "claim or dispatch success",
+        "merge readiness"
       ]
     }
   },

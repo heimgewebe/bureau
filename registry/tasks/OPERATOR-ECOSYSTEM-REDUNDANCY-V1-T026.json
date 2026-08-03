@@ -71,9 +71,7 @@
       "assertion": "Repository validation and affected consumer tests pass on exact reviewed heads with no broken links or missing fleet/catalog entries."
     }
   ],
-  "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025"
-  ],
+  "depends_on": [],
   "metadata": {
     "registered_at": "2026-07-17T22:25:00+02:00",
     "source_observation": "Current Metarepo and Systemkatalog active text still contains Lenskit/RepoBrief identity while RepoGround is published and Bureau active bindings now use repo.repoground.",
@@ -104,6 +102,27 @@
         "implementation completion",
         "task readiness",
         "permission to alter terminal history"
+      ]
+    },
+    "dependency_convergence": {
+      "changed_at": "2026-08-03T09:25:55Z",
+      "former_dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
+      "evidence": {
+        "t025_validated_acceptance": [
+          "exact-source",
+          "parallel-first",
+          "consumer-parity",
+          "rollback-proof",
+          "controlled-cutover"
+        ],
+        "t025_remaining_gate": "convergence-gate authoritative closure receipt only",
+        "t025_known_residual": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
+      },
+      "reason": "T026 is an explicitly recorded post-cutover residual and does not consume or establish the missing T025 authoritative convergence-closeout receipt.",
+      "does_not_establish": [
+        "completion of T025",
+        "future RepoGround runtime health",
+        "authority to alter T025 closeout evidence"
       ]
     }
   }

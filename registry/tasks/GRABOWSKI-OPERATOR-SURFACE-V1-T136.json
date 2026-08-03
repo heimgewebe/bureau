@@ -1,0 +1,96 @@
+{
+  "acceptance": [
+    {
+      "id": "declared-client-precedence",
+      "assertion": "Eine syntaktisch gültige MCP-Client-ID bleibt die vorrangige Scope-Bindung und wird unverändert als client_declared_meta ausgewiesen. Der Fallback darf explizite Client-Metadaten weder überschreiben noch mit anderen Sessions zusammenführen."
+    },
+    {
+      "id": "server-session-isolation",
+      "assertion": "Fehlt die Client-ID, erhält jede lebende MCP-Server-Session einen stabilen, zufälligen und nicht aus Nutzdaten abgeleiteten Scope der Art server_session. Wiederholte Aufrufe derselben Session teilen genau diesen Scope; verschiedene Sessions erhalten verschiedene Scopes und können ihre Single-use-Nachweise nicht gegenseitig verbrauchen."
+    },
+    {
+      "id": "fail-closed-fallback",
+      "assertion": "Fehlender Kontext, fehlende Session sowie nicht hash- oder weak-reference-fähige unbekannte SDK-Sessionobjekte bleiben im ausdrücklich nicht authentifizierten shared_unlabeled-Scope. Es wird keine instabile Request-ID als Sessionidentität verwendet und keine authentifizierte Client-Identität behauptet."
+    },
+    {
+      "id": "single-use-contract-preserved",
+      "assertion": "Challenge, Ack, Runtime-Bindung, Werkzeugname, Argumenthash, genau einmaliger Verbrauch, Ablauf, Replay-Sperre und private Zustandsdateien behalten ihre bisherigen fail-closed-Verträge. Der Fix partitioniert nur den Client-Scope und schafft keine neue Mutationsausnahme."
+    },
+    {
+      "id": "focused-regression-proof",
+      "assertion": "Ein isolierter Subprozess-Test belegt stabilen Replay-Scope innerhalb einer Session, Trennung zweier Sessions, Vorrang expliziter Client-Metadaten sowie fail-closed Rückfall bei fehlendem oder nicht weak-reference-fähigem Kontext. Bestehende Transport- und Operator-Gate-Tests bleiben grün."
+    },
+    {
+      "id": "exact-head-review-ci-deploy",
+      "assertion": "Der finale PR-Head erhält einen revisionsgebundenen Review und grüne Pflichtchecks. Nach Merge wird exakt der Merge-Commit deployed; Runtime-Identität und Integrität werden zurückgelesen. Ein Live-Nachweis zeigt getrennte Session-Scopes, erfolgreichen Challenge/Ack/Consume-Ablauf und abgewiesenen Replay, ohne Anwendungserfolg oder authentifizierte Client-Identität zu behaupten."
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.grabowski.transport-client-scope"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangte am 3. August 2026 die Umsetzung der nächsten Bureau-Aufgabe und dauerhaft gesicherten Grabowski-Transport. Der Live-Reentry zu WELTGEWEBE-OS-V1-T065 scheiterte mehrfach vor Wirkung, weil parallele unlabeled MCP-Sessions denselben Single-use-Scope teilen. Erlaubt ist ausschließlich der schmale Zwei-Pfade-Fix mit Review, CI, Merge und exaktem Deploy-Readback; fremde Checkouts, Leases und Prozesse bleiben unberührt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_runtime.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_session_scope_runtime.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Isoliere den Single-use-Transportnachweis für MCP-Clients ohne deklarierte Client-ID pro lebender Server-Session, damit parallele Operatoren Challenges und Verifikationen nicht mehr gegenseitig rotieren oder verbrauchen. Bewahre explizite Client-Metadaten, alle bestehenden fail-closed Transportverträge und den nicht authentifizierenden Charakter der Scope-Bindung.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T136",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "registered_at": "2026-08-03",
+    "source": "live_transport_contention_during_t065_reentry",
+    "observed_runtime_head": "76431fc75f72ad1df742c94ff318d29489fd46bc",
+    "observed_client_scope_kind": "shared_unlabeled",
+    "observed_client_scope_sha256": "359a73c451b19391284a4d9dac23c2866d6363362a83472f74d0078620201629",
+    "blocked_reentry_run": "BUR-RUN-20260803T112652Z-594b4414fc",
+    "blocked_reentry_task": "WELTGEWEBE-OS-V1-T065",
+    "evidence": {
+      "confirmed_code_path": "src/grabowski_mcp.py::_transport_roundtrip_client_scope",
+      "confirmed_sdk_fields": [
+        "Context.client_id",
+        "Context.session"
+      ],
+      "failure_mode": "begin and ack succeed, but another parallel unlabeled MCP call consumes or replaces the shared verification before the intended mutation reaches the central gate",
+      "product_effect_on_failed_attempts": "none; central gate rejected before the pickup adapter executed"
+    },
+    "does_not_establish": [
+      "authenticated client identity",
+      "application-level mutation success",
+      "absence of response loss",
+      "permission to release foreign leases",
+      "completion of WELTGEWEBE-OS-V1-T065",
+      "completion of OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T055"
+    ]
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "security",
+    "concurrency-testing",
+    "github",
+    "grabowski",
+    "runtime-deployment",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Unbeschriftete MCP-Sessions im Transport-Gate isolieren"
+}

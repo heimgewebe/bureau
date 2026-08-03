@@ -1,0 +1,139 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Unmittelbar vor jeder Checkout-Wirkung werden Branch, HEAD, origin/main, Ahead/Behind, Dirty-Pfade, vollständiger binärer Diff, lokale nur hier erreichbare Commits und bestehende Recovery-Refs frisch gelesen. Jede verbleibende einzigartige Information wird vor der Wirkung mit Pfad, SHA-256 und wiederherstellbarem Ref oder Patch außerhalb des Checkouts gesichert und zurückgelesen.",
+      "id": "preimage-and-unique-ref-preservation"
+    },
+    {
+      "assertion": "Die Normalisierung startet nur, wenn kein lebender Prozess den konventionellen Checkout als cwd oder Befehlsziel nutzt und keine aktive oder unklare Grabowski-Lease den Checkout, seine Branch oder einen Dirty-Pfad bindet. Fremde Prozesse und Leases werden weder beendet noch übernommen; bei Widerspruch bleibt der Task blockiert mit konkretem Readback.",
+      "id": "coordination-quiescent"
+    },
+    {
+      "assertion": "Der konventionelle Checkout endet sauber auf Branch main mit HEAD gleich frisch gefetchtem origin/main. Zulässig sind nur belegter Fast-Forward, Branch-Anheftung bei identischem Commit oder semantische Reproduktion bereits gesicherter gültiger Änderungen in einem getrennten geleasten Worktree; reset, stash, rebase, force-clean und stilles Verwerfen sind ausgeschlossen.",
+      "id": "lossless-current-main"
+    },
+    {
+      "assertion": "Immutable deploymentgebundene Registry-Snapshots bleiben die kanonische Lese- und Laufzeitwahrheit; Registry-Mutationen erfordern weiterhin einen expliziten sauberen aktuellen taskgebundenen Worktree. Ein Dirty- oder veralteter konventioneller Checkout wird als Hygienezustand mit nächster Aktion gemeldet, blockiert aber keine identitätsgebundenen Snapshot-Statements oder nicht überlappende saubere Worktrees. Explizit angegebene Dirty-Mutationsroots bleiben fail-closed.",
+      "id": "truth-workspace-separation"
+    },
+    {
+      "assertion": "Doctor, Runtime-Drift und Operator-Projektionen unterscheiden mindestens Remote-Tracking veraltet, Checkout hinter main, Checkout ahead, Dirty-Overlay, Laufzeitrelease veraltet und Registry-Snapshotidentität. Die Ausgaben vermischen diese Zustände nicht zu einem generischen Dirty-Blocker und nennen pro Zustand den zulässigen Reconciliation-Pfad.",
+      "id": "freshness-dirtiness-split"
+    },
+    {
+      "assertion": "Verknüpfte Worktrees werden nur über den vorhandenen reviewed, plan- und SHA-gebundenen Cleanup-Vertrag behandelt. Dirty, unklare, prozessgenutzte, geleaste, ungemergte, retained oder fremd besessene Worktrees bleiben erhalten und werden ownerbezogen sichtbar gemacht; es entsteht kein zweiter Cleanup-Daemon oder Wahrheitskanal.",
+      "id": "existing-cleanup-contract-only"
+    },
+    {
+      "assertion": "Hermetische Tests decken den Snapshot-ohne-Git-Fall, expliziten Dirty-Root, aktive Prozesse und Leases, einzigartige lokale Commits, regressiven Dirty-Overlay, veraltetes Remote-Tracking, idempotenten Replay und Cleanup-Grenzen ab. Auf dem exakten finalen Head sind Ruff, vollständige Bureau-Tests, Registry-Check und revisionsgebundenes Review grün; anschließend belegt ein Live-Readback sauberes main, aktuelle Runtime-Identität und unveränderte fremde Worktrees.",
+      "id": "regression-and-live-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.truth-model"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.worktree-admin"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 3. August 2026 ausdrücklich verlangt, Bureau auf Stand zu bringen und das wiederkehrende Dirty-Checkout-Problem dauerhaft zu lösen. Die Umsetzung darf weder fremde Prozesse oder Leases beenden noch Dirty-Bytes verwerfen, Sicherheitsgates absenken oder den konventionellen Checkout wieder zur Registry-Wahrheit machen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau",
+      "path:/home/alex/repos/bureau/tests",
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T027.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Normalisiere den konventionellen Checkout /home/alex/repos/bureau nach Ende aller ihn nutzenden Prozesse und Leases verlustfrei auf einen sauberen aktuellen main-Stand, ohne ihn wieder zur Laufzeit- oder Registry-Wahrheit zu machen. Bewahre verbleibende Dirty-Bytes und einzigartige Commits digestgebunden, klassifiziere sie gegen aktuelles origin/main, führe nur belegte Fast-Forward- oder semantische Reproduktionspfade aus und trenne in Doctor und Operator-Ausgaben Remote-Freshness, Checkout-Dirtiness, Laufzeitidentität und mutierenden Arbeitsworkspace. Ergänze einen begrenzten aufgeschobenen Reconciliation-Pfad, damit ein belegter Dirty-Hauptcheckout als konkrete Hygieneaufgabe sichtbar bleibt, aber kanonische Snapshot-Lesevorgänge und saubere taskgebundene Worktrees nicht pauschal blockiert.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T027",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "already_resolved": {
+      "deployed_main": "2d964209e336a3603a4aa265fe223115ea8e439c",
+      "effect": "The canonical immutable Registry snapshot identity reaches Dispatcher and is classified as canonical-snapshot-no-git instead of checkout-not-git.",
+      "implementation_head": "48a35d21916c248e8d376dd4f8c8eb21cf97a1c5",
+      "merge_commit": "cf4b5fe0f755c439641be5547431a1ef3c8d20f0",
+      "pull_request": "heimgewebe/bureau#1442"
+    },
+    "does_not_establish": [
+      "safe mutation of the currently active conventional checkout",
+      "permission to reset stash rebase force-clean or discard local bytes",
+      "permission to terminate foreign processes or release foreign leases",
+      "permission to delete dirty ambiguous retained or foreign-owned worktrees",
+      "permission to treat a dirty explicit mutation root as clean",
+      "task readiness queue mutation claim authority or automatic merge"
+    ],
+    "registered_from_live_audit": "2026-08-03",
+    "source_checkout": {
+      "branch": "feat/bureau-truth-model-v2-t021-close-cas",
+      "evidence_manifest": "/home/alex/.local/state/grabowski/recovery/bureau-main-dirty-20260803-a8dd6230.json",
+      "evidence_manifest_sha256": "3e44d281b8a506a944163f113ab3d535a89846baa650bd81728d3e804d4d0007",
+      "head": "a8dd6230ffac04d31e31464bbfbba4fff3c02923",
+      "observed_origin_main": "2d964209e336a3603a4aa265fe223115ea8e439c",
+      "path": "/home/alex/repos/bureau",
+      "preserved_dirty_patch": "/home/alex/.local/state/grabowski/recovery/bureau-main-dirty-20260803-a8dd6230.patch",
+      "preserved_dirty_patch_sha256": "06f4bc64aa57fcbb71bf4be20641f22dbd2dc6a58bae941cb8188e6d7561885d"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1c1aae09e1d97c4f77f8c584",
+      "event_id": 2379,
+      "event_created_at": "2026-08-03T08:40:41.458063Z",
+      "request_sha256": "ea8c05973d5137b62e8a93825580286603d64577ed8e7740f3b9f43b761d4dca",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-live-audit",
+        "locator": "/home/alex/.local/state/grabowski/recovery/bureau-main-dirty-20260803-a8dd6230.json",
+        "observed_at": "2026-08-03T08:35:53Z",
+        "sha256": "3e44d281b8a506a944163f113ab3d535a89846baa650bd81728d3e804d4d0007"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 27
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich neue Reconciliation-, Diagnose-, Test- und Dokumentationslogik. Bereits erzeugte Recovery-Patches und Refs bleiben erhalten. Ein normalisierter Checkout wird nicht rückwärts auf einen Dirty- oder veralteten Stand versetzt; bei postoperativem Fehler bleibt die immutable Registry-Snapshot-Wahrheit aktiv und der Checkout wird mit konkreter Evidenz erneut als Hygienezustand markiert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Konventionellen Bureau-Checkout verlustfrei normalisieren und semantisch entmachten"
+}

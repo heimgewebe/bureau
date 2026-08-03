@@ -4,17 +4,20 @@
   "type": "component",
   "parent": "repo.weltgewebe",
   "metadata": {
-    "purpose": "Exact coordination scope for WELTGEWEBE-OS-V1-T064 map thread motion, top-view spool response and their browser regression coverage.",
+    "purpose": "Exact coordination scope for the required WELTGEWEBE-OS-V1-T064 event-bound thread motion controller, untouched map-route integration and dedicated regression coverage. The optional spool reaction is deliberately omitted from this implementation slice.",
     "canonical_paths": [
-      "apps/web/src/lib/map/overlay/",
-      "apps/web/src/routes/map/",
-      "apps/web/tests/"
+      "apps/web/src/lib/map/overlay/edgeMotion.ts",
+      "apps/web/src/lib/map/overlay/edgeMotion.test.ts",
+      "apps/web/src/routes/map/+page.svelte",
+      "apps/web/tests/edge-motion.spec.ts"
     ],
     "source_task": "WELTGEWEBE-OS-V1-T064",
     "does_not_establish": [
       "repository-wide mutation authority",
+      "permission to modify existing edge, marker, layer or node overlay files",
+      "permission to implement the optional spool reaction in this slice",
       "ownership of documentation, generated evidence or foreign Weltgewebe worktrees",
-      "scope outside the listed map implementation and browser-test paths"
+      "scope outside the four listed files"
     ]
   }
 }

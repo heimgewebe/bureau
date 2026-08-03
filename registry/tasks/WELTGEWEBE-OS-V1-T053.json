@@ -124,7 +124,85 @@
         "a historical Bureau run for WELTGEWEBE-OS-V1-T053",
         "completion of WELTGEWEBE-OS-V1-T065",
         "runtime deployment outside the merged repository change"
-      ]
+      ],
+      "deployment_verification": {
+        "acceptance_ids": [
+          "consumer-inventory",
+          "single-authority",
+          "reduction",
+          "no-evidence-loss",
+          "cost-proof"
+        ],
+        "deployment": {
+          "api": {
+            "commit": "d206a09d63cfc05dbfad4f9e9e05c67d67229b26",
+            "status": 200,
+            "url": "https://weltgewebe.net/api/version"
+          },
+          "artifact_tree_declaration_verified": true,
+          "artifact_tree_sha256": "0ca607122e410167e515c0a99ee44286c8469c160e8e40f8fa20a9387dc84871",
+          "frontend": {
+            "commit": "d206a09d63cfc05dbfad4f9e9e05c67d67229b26",
+            "status": 200,
+            "url": "https://weltgewebe.net/_app/version.json"
+          },
+          "identity_verified": true,
+          "limitations": [
+            "artifact provenance is unattested",
+            "the public verifier does not reconstruct the deployed artifact tree"
+          ],
+          "previous_runtime_commit": "cdb54f957da49d4ded34b568c72f6140acfb1f45",
+          "receipt": {
+            "artifact_id": 8848630011,
+            "artifact_name": "production-live-d206a09d63cfc05dbfad4f9e9e05c67d67229b26",
+            "artifact_sha256": "f32094a11a82748dd293ad3b9ceed3402747aa0d2fa33f24e4a18c4d337448",
+            "workflow_run": 30794456599
+          },
+          "status": "consistency_pass_unattested",
+          "target": "https://weltgewebe.net",
+          "verified_at": "2026-08-03T07:54:41.180173+00:00",
+          "verified_runtime_commit": "d206a09d63cfc05dbfad4f9e9e05c67d67229b26"
+        },
+        "does_not_establish": [
+          "attested artifact provenance",
+          "completion of neighbouring Bureau tasks",
+          "absence of future documentation drift"
+        ],
+        "evidence_sha256": "cd3b4fa98ae0340d51d641dec6cbc2cc4a9499e524f290472efaac7d1b980cd8",
+        "function_check": {
+          "generator_check": "passed on exact main commit",
+          "production_reconciler_contract_tests": "passed",
+          "required_merge_gate": "passed",
+          "surface": "docs/_generated/report-lifecycle-inventory.md",
+          "web_e2e": "passed"
+        },
+        "implementation": {
+          "head_sha": "9d86043e8943d7007a864df8c3dc7580d408c243",
+          "merge_commit": "cdb54f957da49d4ded34b568c72f6140acfb1f45",
+          "merged_at": "2026-08-03T07:21:24Z",
+          "pull_request": 1672,
+          "repository": "heimgewebe/weltgewebe"
+        },
+        "kind": "weltgewebe.documentation_system_production_closeout",
+        "post_merge_correction": {
+          "changed_path": "docs/_generated/report-lifecycle-inventory.md",
+          "head_sha": "ef83885acb67c7935b78dae0361f83ddca9faeeb",
+          "merge_commit": "d206a09d63cfc05dbfad4f9e9e05c67d67229b26",
+          "merged_at": "2026-08-03T07:39:38Z",
+          "pull_request": 1673
+        },
+        "rollback": {
+          "basis": "immediate predecessor main commit with successful exact-main-live and production-reconciler checks",
+          "commit": "cdb54f957da49d4ded34b568c72f6140acfb1f45",
+          "status": "available-not-exercised",
+          "workflow_runs": [
+            30793350641,
+            30794316210
+          ]
+        },
+        "schema_version": 1,
+        "task_id": "WELTGEWEBE-OS-V1-T053"
+      }
     }
   },
   "priority": {

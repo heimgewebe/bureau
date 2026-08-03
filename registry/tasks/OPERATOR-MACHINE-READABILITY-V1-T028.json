@@ -95,6 +95,73 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1445,
+      "base_sha": "2d964209e336a3603a4aa265fe223115ea8e439c",
+      "reviewed_head_sha": "16ff7029c80212d9e51fa5ed43f9d4573e4c0863",
+      "merge_commit_sha": "558edbfa8b4aadafce16225e75e172160cd1ec75",
+      "diff_sha256": "7acad0754c7f23beb1f729cd6d26de536b42ff77eb6e462e178c1e31674c110f",
+      "resource_file_sha256": "dc5dd98dcf2fd63fe7ca60bf8bb8ea54bd6bd922f31fa2d910382374a0d080d4",
+      "followup_task_file_sha256": "1078819b3386e62b8c8215614e342be843fe418636c20b987c13838884fcae80"
+    },
+    "validation": {
+      "focused_contract_tests": "10 passed",
+      "ruff": "passed",
+      "local_registry_check": {
+        "valid": true,
+        "resources": 65,
+        "tasks": 899
+      },
+      "full_pytest": "passed",
+      "full_pytest_job": "grabowski-job-771d42b2e49d",
+      "full_pytest_receipt_sha256": "aff18cdf366a9ec8fc0cfbdbad25f3dcffdb88e3fe4cd7d4129390603c4ec7d7",
+      "github_checks": "passed",
+      "merge_group_validation": "passed"
+    },
+    "verified_acceptance": {
+      "resource-registered": "PASS: repo.heim-pc-dashboard is a git-repository bound to the exact local dashboard path and repo: key; no github_slug is present because no origin was evidenced.",
+      "resource-validation": "PASS: Registry validation is green and now rejects duplicate IDs, exact path collisions, repo-key/type collisions, duplicate Grabowski keys and repository key/path mismatches.",
+      "collector-task-published": "PASS: OPERATOR-MACHINE-READABILITY-V1-T029 is canonical, remains planned, depends on T028 and claims only repo.heim-pc-dashboard.",
+      "no-product-mutation": "PASS: PR #1445 changed only Bureau Registry, Registry validation and tests; no dashboard repository, service, history store or runtime was modified.",
+      "no-second-truth": "PASS: no Queue mutation or claim, dispatch, merge or deployment authority was added."
+    },
+    "verified_at": "2026-08-03T08:56:39Z",
+    "verification_note": "Acceptance closed only after exact-head local validation, GitHub CI, main-push freshness revalidation and green merge-group readback on merged PR #1445.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T028",
+          "source_ref": "heimgewebe/bureau#1445",
+          "repository": "heimgewebe/bureau",
+          "number": 1445,
+          "head_sha": "16ff7029c80212d9e51fa5ed43f9d4573e4c0863",
+          "merge_commit_sha": "558edbfa8b4aadafce16225e75e172160cd1ec75",
+          "diff_sha256": "7acad0754c7f23beb1f729cd6d26de536b42ff77eb6e462e178c1e31674c110f"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski-job",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T028",
+          "source_ref": "grabowski-job-771d42b2e49d",
+          "run_id": "grabowski-job-771d42b2e49d",
+          "head_sha": "16ff7029c80212d9e51fa5ed43f9d4573e4c0863",
+          "receipt_sha256": "aff18cdf366a9ec8fc0cfbdbad25f3dcffdb88e3fe4cd7d4129390603c4ec7d7"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "f6defc6ea76bf6d3bbfd91045c69db26a03bb7fb6cbbfdb6975643c88968e736",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "task_bound_pr_ci_and_merge_group_evidence",
+      "source_ref": "heimgewebe/bureau#1445@558edbfa8b4aadafce16225e75e172160cd1ec75",
+      "evidence_sha256": "a1fa7db71b78759e39ae6c93b4d03067bacf6236ae5012767507e1d9824cdedd",
+      "verified_at": "2026-08-03T08:56:39Z"
     }
   },
   "priority": {
@@ -114,6 +181,6 @@
     "strategy": "Revertiere die neue Dashboard-Ressource, den daran gebundenen noch nicht ausgeführten Collector-Folgetask und ausschließlich zugehörige Registry-Vertragstests gemeinsam. Dashboard v0.6.0 und seine Laufzeit bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Heim-PC-Dashboard als Bureau-Ressource binden"
 }

@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Converge active RepoGround names and metadata without rewriting history",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "next",
     "rank": 80
@@ -18,7 +18,12 @@
       "repo:/home/alex/repos/systemkatalog",
       "repo:/home/alex/repos/repoground",
       "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026.json"
-    ]
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Der Nutzer hat am 2026-08-03 die Umsetzung der nächsten RepoGround-Aufgabe ausdrücklich beauftragt. Effekte bleiben auf isolierte Worktrees, exakte Heads, Diff-Prüfung, relevante Tests und PR-/CI-Gates begrenzt."
+    }
   },
   "claims": [
     {
@@ -124,6 +129,57 @@
         "future RepoGround runtime health",
         "authority to alter T025 closeout evidence"
       ]
-    }
+    },
+    "readiness_verified_at": "2026-08-03T14:45:50+02:00",
+    "readiness_evidence": {
+      "bureau_base": "fbc8346da234ee5d8e3a68dbbdf36c41ecdd888d",
+      "operator_approval_source": "user-request:next-repoground-task:2026-08-03T14:15+02:00",
+      "repositories": {
+        "metarepo": {
+          "repository": "heimgewebe/metarepo",
+          "main": "f3524f9b040be957cfead5b80f7a683d0ea6df72",
+          "working_tree": "clean",
+          "open_pull_requests": 0,
+          "live_repository_lease": false,
+          "observed_legacy_surface": "only explicit rejection/guard paths for deprecated Lenskit/tools identity",
+          "tests": [
+            "tests/test_repoground_consumer_registration.py: 3 passed",
+            "just fleet-check: passed"
+          ]
+        },
+        "systemkatalog": {
+          "repository": "heimgewebe/systemkatalog",
+          "main": "dfb8d7bf91c9f2f3ad8c1e729e92632f3554884b",
+          "working_tree": "clean",
+          "open_pull_requests": 0,
+          "live_repository_lease": false,
+          "observed_legacy_surface": "archived evidence, negative tests and one dated review statement only",
+          "tests": [
+            "scripts.tests.test_repoground_catalog_identity: 6 passed",
+            "scripts/validate_system_catalog.py: status valid after canonical provenance tags were fetched"
+          ]
+        },
+        "repoground": {
+          "repository": "heimgewebe/repoground",
+          "origin_main": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+          "default_worktree": "clean and two commits behind; intentionally not mutated",
+          "open_pull_requests": 0,
+          "live_repository_lease": false,
+          "observed_contract": "docs/contracts/repoground-naming-hard-cut.v1.json declares RepoGround as the sole active identity and preserves versioned data contracts/history"
+        }
+      },
+      "bureau_runtime": {
+        "source_commit": "fbc8346da234ee5d8e3a68dbbdf36c41ecdd888d",
+        "lag_commits": 0,
+        "lifecycle_inconsistent_count": 0
+      },
+      "nonconflict": "No open PR or active Grabowski repository lease was observed for metarepo, systemkatalog or repoground."
+    },
+    "readiness_does_not_establish": [
+      "task completion",
+      "that no additional current consumer outside the declared scope contains a legacy identity",
+      "permission to rewrite history or stable versioned fields",
+      "merge or deployment authority beyond normal PR and CI gates"
+    ]
   }
 }

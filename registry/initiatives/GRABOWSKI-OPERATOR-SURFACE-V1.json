@@ -90,15 +90,15 @@
       ]
     },
     "lifecycle": {
-      "reconciled_at": "2026-08-03T12:20:57.320635Z",
-      "reconciled_from": "active",
-      "reconciled_to": "waiting"
+      "reconciled_at": "2026-08-03T12:56:44.118857Z",
+      "reconciled_from": "waiting",
+      "reconciled_to": "active"
     }
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "waiting",
+  "state": "active",
   "title": "Grabowski operator surface"
 }

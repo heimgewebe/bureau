@@ -43,7 +43,7 @@
     "grabowski_resources": [
       "component:repoground-call-graph-producer",
       "path:/home/alex/repos/.repoground-worktrees/repoground-evidence-call-graph-v1",
-      "repo:/home/alex/repos/repoground:branch:feat/repoground-evidence-call-graph-v1",
+      "repo:/home/alex/repos/repoground",
       "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T028.json",
       "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"

@@ -90,15 +90,27 @@
       ]
     },
     "lifecycle": {
-      "reconciled_at": "2026-08-02T21:46:38.454460Z",
-      "reconciled_from": "waiting",
-      "reconciled_to": "active"
+      "reconciled_at": "2026-08-03T12:08:11Z",
+      "reconciled_from": "active",
+      "reconciled_to": "waiting",
+      "reason": "Canonical what-now on Bureau source commit 17241c837ba22c99769311c45cee986c7912b9ac reports this initiative as the sole lifecycle mismatch and recommends waiting; no currently ready leaf in this initiative justifies active.",
+      "evidence": {
+        "bureau_source_commit": "17241c837ba22c99769311c45cee986c7912b9ac",
+        "what_now_recommended_state": "waiting",
+        "lifecycle_inconsistent_count": 1
+      },
+      "does_not_establish": [
+        "task completion",
+        "automatic dispatch",
+        "claim authority",
+        "merge or deployment authority"
+      ]
     }
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "active",
+  "state": "waiting",
   "title": "Grabowski operator surface"
 }

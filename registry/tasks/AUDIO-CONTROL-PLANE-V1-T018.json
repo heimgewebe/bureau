@@ -11,7 +11,7 @@
       "id": "no-timeout-only-fix"
     },
     {
-      "assertion": "Type=notify, NotifyAccess=main, der shell-freie gebundene ExecStart, ConditionUser=alex, Journalrate-Limits, Paket-Main-Unit-Prüfung und bestehende Autostartgrenzen bleiben erhalten; MOTU-, PipeWire-, MIDI- und Standard-Sink-/Source-Konfiguration werden nicht verändert.",
+      "assertion": "Der reproduzierte Prozessvertrag ist explizit festgelegt: Der Supervisor ist als Type=simple der systemd-Mainprozess, NotifyAccess=main und ConditionUser=alex bleiben gebunden; der ExecStart ist shell- und TCP-serverfrei. MOTU-, PipeWire-, MIDI- und Standard-Sink-/Source-Konfiguration werden nicht verändert.",
       "evidence_type": "object",
       "id": "preserve-existing-audio-contract"
     },
@@ -109,6 +109,146 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "acceptance_contract_revision": {
+      "schema_version": 1,
+      "revised_acceptance_id": "preserve-existing-audio-contract",
+      "previous_task_file_sha256": "357cd25b300bcc60db26ce986e31d178ebc4d6eaaab2dd5b4b8f9a9cb1077552",
+      "reason": "Die ursprüngliche Type=notify-Annahme war nach der reproduzierten FluidSynth-2.2.5-Prozesssemantik unzutreffend. Der verifizierte stdin-quit-Supervisor muss selbst der systemd-Mainprozess sein; Type=simple macht diese Eigentümerschaft explizit und erhält NotifyAccess=main als begrenzte Kompatibilitätsdirektive.",
+      "does_not_establish": [
+        "nachträgliche Lockerung des 15-Sekunden-Grenzwerts",
+        "Freigabe eines TCP-Servers",
+        "Änderung von Audio-Routing oder Profilen"
+      ]
+    },
+    "implementation": {
+      "repository": "heimgewebe/heim-pc",
+      "primary_pull_request": 86,
+      "primary_reviewed_head": "1e2cd8cc5efbb37509dd62a968b29225ff3814c7",
+      "primary_merge_commit": "3a5892576dd4579bf6dfce35f4b93aba354f6a34",
+      "followup_pull_request": 87,
+      "followup_reviewed_head": "bf43cfb92f83f0b39ddea484fe4bdb17dd5ad4c4",
+      "final_merge_commit": "885aa684758e2719e6247bb3ae397fdc9648df90",
+      "required_checks": {
+        "validate": "SUCCESS",
+        "guard": "SUCCESS",
+        "smoke": "SUCCESS",
+        "CodeQL": "SUCCESS",
+        "Analyze (python)": "SUCCESS",
+        "Analyze (actions)": "SUCCESS"
+      },
+      "repository_tests": "389 PASS",
+      "subtests": "25 PASS"
+    },
+    "deployment": {
+      "schema_version": 1,
+      "target": "host:heim-pc/fluidsynth.service",
+      "source_commit": "885aa684758e2719e6247bb3ae397fdc9648df90",
+      "installed_at": "2026-08-03T06:24:20.348322Z",
+      "receipt": "/var/lib/heim-pc/host-health/install-receipt.v3.json",
+      "receipt_kind": "heim_pc_host_health_remediation_install_receipt",
+      "receipt_schema_version": 3,
+      "transaction_committed": true,
+      "commit_point_reached": true,
+      "target_state_verified": true,
+      "receipt_publication_complete": true,
+      "source_blobs_reverified": true,
+      "mutable_worktree_source_bytes_used": false,
+      "supervisor_path": "/usr/local/libexec/heim-pc-fluidsynth-supervisor",
+      "supervisor_sha256": "a990446a11c71230665d1ba2f960d2ecd12650336c99c35929df8bd7bbe3dc7d",
+      "rollback": {
+        "config_backup": "/var/lib/heim-pc/host-health/install-backups/etc__heim-pc__host-health-remediation.v1.json.1634cfee97c09dce04f288b7320fee1b10f2931aac336ae836185df5c6887816.bak",
+        "unit_backup": "/var/lib/heim-pc/host-health/install-backups/etc__systemd__user__fluidsynth.service.d__zz-heim-pc-interactive-user.conf.81975af4bbb69ce519eecddaecac8deb7edcfbab8217b4c05da73d6f3d3a329d.bak",
+        "installer_preimage_contract": "exact-known-preimages-only"
+      }
+    },
+    "live_verification": {
+      "observed_at": "2026-08-03T06:38:07Z",
+      "service": {
+        "load_state": "loaded",
+        "active_state": "active",
+        "sub_state": "running",
+        "unit_file_state": "enabled",
+        "result": "success",
+        "nrestarts": 0,
+        "exec_main_status": 0
+      },
+      "process_chain": [
+        "/usr/bin/python3 /usr/local/libexec/heim-pc-fluidsynth-supervisor",
+        "/usr/bin/fluidsynth -q /usr/share/sounds/sf3/default-GM.sf3"
+      ],
+      "controlled_restart": {
+        "stop_started": "2026-08-03T08:27:01+02:00",
+        "new_start": "2026-08-03T08:27:02+02:00",
+        "ordered_quit_observed": true,
+        "cheers_observed": true,
+        "sigkill_observed_in_final_restart": false,
+        "duration_upper_bound_seconds": 1
+      },
+      "tcp_port_9800_listening": false,
+      "default_sink": "alsa_output.pci-0000_09_00.4.iec958-stereo",
+      "default_source": "alsa_output.pci-0000_09_00.4.iec958-stereo.monitor",
+      "observation_window_seconds": 660,
+      "observation_window_nrestarts": 0,
+      "limitations": [
+        "Die PR-gebundene Vorher-Nachher-Routingaussage nennt die erhaltene PipeWire-/ALSA-MIDI-Wirkung, veröffentlicht aber keinen separaten Topologiehash. Der aktuelle Default-Sink und die aktuelle Default-Source sind deshalb zusätzlich explizit gebunden.",
+        "Historische SIGKILL- und exit-126-Ereignisse vor dem finalen Merge bleiben im Journal erhalten und werden nicht als Current-Head-Fehler umgedeutet."
+      ]
+    },
+    "validated_acceptance": {
+      "reproduced-signal-contract": "PASS: FluidSynth 2.2.5 beendet sich über supervisorseitig geschriebenes stdin quit; das Journal zeigt quit und cheers.",
+      "no-timeout-only-fix": "PASS: der finale kontrollierte Restart stoppt und startet innerhalb einer Sekunde ohne SIGKILL; TimeoutStopSec bleibt 15s als Fehlergrenze.",
+      "preserve-existing-audio-contract": "PASS nach expliziter Vertragskorrektur: Type=simple bindet den Supervisor als Mainprozess; NotifyAccess=main, ConditionUser=alex, shell-/TCP-freier ExecStart und Routinggrenzen bleiben erhalten.",
+      "transactional-installer-and-rollback": "PASS: exakter Merge-Commit wurde blobgebunden, descriptor-relativ, fsync- und readback-verifiziert installiert; zwei konkrete Preimage-Backups sind gebunden.",
+      "shutdown-regression-matrix": "PASS: 389 Tests und 25 Subtests sowie validate/guard/smoke/CodeQL sind grün.",
+      "exact-head-review-and-ci": "PASS: PR 86 und Follow-up PR 87 sind gemergt; sämtliche beobachteten Pflichtchecks auf dem finalen PR-Head sind SUCCESS.",
+      "staged-live-readback": "PASS: service active/running, NRestarts=0, neuer Supervisorpfad aktiv, Port 9800 geschlossen und finaler Restart ohne SIGKILL.",
+      "post-observation-window": "PASS: nach dem finalen Restart blieb der Dienst über das beobachtete Fenster active/running mit NRestarts=0 und ohne neue Stop- oder Restartfehler."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "repository": "heimgewebe/heim-pc",
+          "pull_request": 86,
+          "head_sha": "1e2cd8cc5efbb37509dd62a968b29225ff3814c7",
+          "merge_commit": "3a5892576dd4579bf6dfce35f4b93aba354f6a34",
+          "source_ref": "github-pr:heimgewebe/heim-pc#86@1e2cd8cc5efbb37509dd62a968b29225ff3814c7:3a5892576dd4579bf6dfce35f4b93aba354f6a34",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T018"
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "repository": "heimgewebe/heim-pc",
+          "pull_request": 87,
+          "head_sha": "bf43cfb92f83f0b39ddea484fe4bdb17dd5ad4c4",
+          "merge_commit": "885aa684758e2719e6247bb3ae397fdc9648df90",
+          "source_ref": "github-pr:heimgewebe/heim-pc#87@bf43cfb92f83f0b39ddea484fe4bdb17dd5ad4c4:885aa684758e2719e6247bb3ae397fdc9648df90",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T018"
+        },
+        {
+          "kind": "host_install_receipt",
+          "authority": "heim-pc-root-installer",
+          "commit": "885aa684758e2719e6247bb3ae397fdc9648df90",
+          "source_ref": "file:/var/lib/heim-pc/host-health/install-receipt.v3.json@2026-08-03T06:24:20.348322Z",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T018"
+        },
+        {
+          "kind": "runtime_readback",
+          "authority": "systemd-user-and-kernel-sockets",
+          "commit": "885aa684758e2719e6247bb3ae397fdc9648df90",
+          "source_ref": "heim-pc:fluidsynth.service@2026-08-03T06:38:07Z",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T018"
+        }
+      ]
+    },
+    "verified_at": "2026-08-03T06:38:07Z",
+    "verification": {
+      "task_sha256": "03d33e231141bfa466f1cb3d71b26ae3b098d435358c8909956de7802f84afe3",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d"
     }
   },
   "priority": {
@@ -131,6 +271,6 @@
     "strategy": "Repositorydiff und PR zurücknehmen. Für eine bereits ausgerollte Änderung den installergebundenen Preimage- und Receipt-Pfad verwenden, user-systemd neu laden, nur fluidsynth.service kontrolliert neu starten und anschließend Unit-, Prozess-, Journal- und PipeWire-Readback gegen das exakte Vorabbild prüfen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "FluidSynth-Stop-Semantik begrenzen und live belegen"
 }

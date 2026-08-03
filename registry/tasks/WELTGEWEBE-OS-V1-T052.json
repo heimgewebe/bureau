@@ -25,7 +25,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.weltgewebe"
+      "resource": "component.weltgewebe.report-truth-contract"
     }
   ],
   "depends_on": [],
@@ -37,7 +37,20 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/contracts/audit-report-truth.schema.json",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/report_lifecycle_requirements.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle_inventory.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/validate_report_lifecycle.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_report_lifecycle_requirements.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle_inventory.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_validate_report_lifecycle.py",
+      "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle.md",
+      "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle-inventory.md"
+    ]
   },
   "goal": "Für alle generierten Prüfberichte einen einheitlichen maschinenlesbaren Wahrheitsvertrag einführen. Jeder Bericht nennt exakte Revision, Quellen, Abdeckung, Begrenzungen und Nicht-Aussagen; unvollständige oder heuristische Prüfungen dürfen kein positives Gesamtergebnis erzeugen.",
   "id": "WELTGEWEBE-OS-V1-T052",
@@ -120,6 +133,38 @@
         "safe_merge",
         "absence of path overlap before exact implementation inventory",
         "permission to mutate foreign worktrees or open pull requests"
+      ]
+    },
+    "scope_refinement": {
+      "schema_version": 1,
+      "kind": "exact-path-work-admission",
+      "refined_at": "2026-08-03T02:30:00Z",
+      "component_resource": "component.weltgewebe.report-truth-contract",
+      "grabowski_resources": [
+        "path:/home/alex/repos/weltgewebe/contracts/audit-report-truth.schema.json",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/report_lifecycle_requirements.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle_inventory.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/validate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_report_lifecycle_requirements.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle_inventory.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_validate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle.md",
+        "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle-inventory.md"
+      ],
+      "basis": "The task acceptance is implemented through the existing central report-lifecycle contract, inventory and validator. Broad repository admission is blocked by unrelated foreign dirty Weltgewebe worktrees, which remain untouched.",
+      "preserves": [
+        "repo.weltgewebe ancestry through the component parent",
+        "worktree isolation",
+        "review-before-effect",
+        "all acceptance criteria and required capabilities"
+      ],
+      "does_not_establish": [
+        "permission to modify or clean foreign worktrees",
+        "permission to write outside the listed exact paths",
+        "claim or dispatch success",
+        "merge readiness"
       ]
     }
   },

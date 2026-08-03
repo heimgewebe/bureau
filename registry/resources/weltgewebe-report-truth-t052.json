@@ -1,0 +1,28 @@
+{
+  "id": "component.weltgewebe.report-truth-contract",
+  "metadata": {
+    "canonical_paths": [
+      "contracts/audit-report-truth.schema.json",
+      "scripts/docmeta/report_lifecycle_requirements.py",
+      "scripts/docmeta/generate_report_lifecycle.py",
+      "scripts/docmeta/generate_report_lifecycle_inventory.py",
+      "scripts/docmeta/validate_report_lifecycle.py",
+      "scripts/docmeta/tests/test_report_lifecycle_requirements.py",
+      "scripts/docmeta/tests/test_generate_report_lifecycle.py",
+      "scripts/docmeta/tests/test_generate_report_lifecycle_inventory.py",
+      "scripts/docmeta/tests/test_validate_report_lifecycle.py",
+      "docs/_generated/report-lifecycle.md",
+      "docs/_generated/report-lifecycle-inventory.md"
+    ],
+    "does_not_establish": [
+      "repository-wide mutation authority",
+      "ownership of foreign Weltgewebe worktrees",
+      "scope outside the listed paths"
+    ],
+    "purpose": "Exact coordination scope for the report-truth contract, central lifecycle generators, validator, regression tests and generated inventories in WELTGEWEBE-OS-V1-T052.",
+    "source_task": "WELTGEWEBE-OS-V1-T052"
+  },
+  "parent": "repo.weltgewebe",
+  "schema_version": 1,
+  "type": "component"
+}

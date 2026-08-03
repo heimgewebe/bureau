@@ -19,7 +19,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.grabowski",
+      "resource": "component.grabowski.runtime",
       "mode": "write",
       "isolation": "worktree"
     }

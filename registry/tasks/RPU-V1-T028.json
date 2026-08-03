@@ -3,7 +3,7 @@
   "id": "RPU-V1-T028",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Build, test and contract relation overlay",
-  "state": "planned",
+  "state": "ready",
   "goal": "Add deterministic build-target, test-registration, schema-validation and artifact-flow relations as evidence sources stronger than filename convention alone.",
   "depends_on": [
     "RPU-V1-T024"
@@ -41,9 +41,9 @@
     "working_repository": "/home/alex/repos/repoground",
     "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
     "grabowski_resources": [
-      "component:repobrief-evidence-call-graph-v1",
-      "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
-      "repo:/home/alex/repos/repoground:branch:feat/repobrief-evidence-call-graph-v1",
+      "component:repoground-evidence-call-graph-v1",
+      "path:/home/alex/repos/.repoground-worktrees/repoground-evidence-call-graph-v1",
+      "repo:/home/alex/repos/repoground:branch:feat/repoground-evidence-call-graph-v1",
       "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T028.json",
       "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
@@ -71,7 +71,7 @@
       "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
       "source_broad_resource_key": "repo:/home/alex/repos/bureau",
       "source_claim_resource": "repo.bureau",
-      "rationale": "The relation-overlay work reads only its exact Bureau task, shared initiative truth and current plan; build, test and contract extraction effects remain in Lenskit.",
+      "rationale": "The relation-overlay work reads only its exact Bureau task, shared initiative truth and current plan; build, test and contract extraction effects remain in RepoGround.",
       "effect_boundaries": [
         "Exact Bureau task record",
         "RepoBrief evidence-context initiative record",

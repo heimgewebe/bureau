@@ -43,7 +43,6 @@
     "grabowski_resources": [
       "component:repoground-call-graph-producer",
       "path:/home/alex/repos/.repoground-worktrees/repoground-evidence-call-graph-v1",
-      "repo:/home/alex/repos/repoground",
       "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T028.json",
       "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
@@ -85,6 +84,19 @@
         "merge or deployment authority",
         "verification authority",
         "safe mutation of terminal historical tasks"
+      ]
+    },
+    "pickup_scope_note": {
+      "decision": "component-and-worktree-path-only",
+      "reason": "The task mutates only component.repoground.call-graph-producer in its dedicated worktree. A broad RepoGround lease would serialize against unrelated retained and dirty historical worktrees.",
+      "exclusive_resources": [
+        "component:repoground-call-graph-producer",
+        "path:/home/alex/repos/.repoground-worktrees/repoground-evidence-call-graph-v1"
+      ],
+      "does_not_establish": [
+        "permission to modify other RepoGround components",
+        "permission to mutate foreign worktrees",
+        "repository-wide exclusivity"
       ]
     }
   }

@@ -1,0 +1,172 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein hermetischer Reproducer übergibt einen branch-scoped Schlüssel repo:/absoluter/pfad:branch:name an den koordinierten Pickup und belegt den bisherigen Fehler: Der zusammengesetzte Schlüssel wird als Repository-Wurzel an Scope-Manifest-Normalisierung oder breite Repository-Zulassung weitergereicht und der Pickup scheitert erst nach vorbereiteter Claim-Absicht.",
+      "evidence_type": "object",
+      "id": "legacy-key-reproducer",
+      "verifier": "fokussierter Reproducer und Regressionstest"
+    },
+    {
+      "assertion": "Es existiert genau eine kanonische Behandlung: Unterstützte branch-scoped Schlüssel werden vor jeder Zustands- oder Lease-Wirkung in echte Repository-Wurzel und explizite Branch-Scope-Metadaten zerlegt; nicht unterstützte oder mehrdeutige Formen scheitern ebenso früh mit stabilem Diagnosecode und required_readback. Ein stiller Fallback auf breite Repository-Autorität ist verboten.",
+      "evidence_type": "object",
+      "id": "canonical-parse-or-early-reject",
+      "verifier": "Parser-, Fehlercode- und Effektfreiheits-Tests"
+    },
+    {
+      "assertion": "Für einen unterstützten Schlüssel bindet das Scope-Manifest Repository-Wurzel, Branch, Worktree, Basis- und Head-Commit, Effekte, Pfade, Komponenten und gemeinsame Gates revisionsgenau. Qualifier-Suffixe werden nie Teil eines Dateisystempfads und verleihen keine Rechte außerhalb des Manifests.",
+      "evidence_type": "object",
+      "id": "scope-manifest-binding",
+      "verifier": "Manifest-Goldset und negative Bindungstests"
+    },
+    {
+      "assertion": "Unverwandte fremde oder schmutzige Worktrees blockieren weiterhin echte breite Repository-Leases. Eng deklarierte Komponenten- und Worktree-Pfade werden dagegen nicht durch sachfremde Alt-Worktrees serialisiert. Kein Test benutzt Force-Release, Reset, Checkout-Übernahme oder Dirty-State-Bereinigung als Lösung.",
+      "evidence_type": "object",
+      "id": "foreign-dirty-protection",
+      "verifier": "Parallelitäts- und Fremd-Dirty-Negativtests"
+    },
+    {
+      "assertion": "Eine deterministische Prüfung inventarisiert alle aktiven, geplanten und bereiten Bureau-Tasks mit Legacy-Schlüsseln, unterscheidet sichere Migration, frühe Ablehnung und terminale Historie und liefert pro nicht migriertem Task einen handlungsfähigen Befund. Terminale historische Evidenz wird nicht umgeschrieben.",
+      "evidence_type": "object",
+      "id": "existing-task-audit",
+      "verifier": "Registry-Audit-Receipt gegen exakten Bureau-Commit"
+    },
+    {
+      "assertion": "Claim, Retry, Status und Release journalisieren dieselbe normalisierte Ressourcenidentität. Identische Wiederholung erzeugt weder einen zweiten Run noch einen zweiten Lease; Legacy-Journale werden nur über einen expliziten, getesteten Kompatibilitätsvertrag gelesen.",
+      "evidence_type": "object",
+      "id": "idempotent-journal-replay",
+      "verifier": "Idempotenz-, Retry- und Journal-Replay-Tests"
+    },
+    {
+      "assertion": "Relative Wurzeln, leere oder doppelte Branch-Qualifier, unbekannte Qualifier, Pfad-Traversal, Symlink- oder Repository-Identitätsdrift, Branch-/Worktree-Widerspruch und manipulierte Scope-Manifeste scheitern vor Wirkung und ohne fremde Lease-Mutation.",
+      "evidence_type": "object",
+      "id": "malformed-qualifier-protection",
+      "verifier": "parametrisierte Falsifikations- und Drift-Tests"
+    },
+    {
+      "assertion": "Fokussierte Pickup-, Nonconflict- und Resource-Tests sowie die vollständigen relevanten Grabowski-Gates sind auf dem exakten PR-Head grün. Nach Merge und Runtime-Deploy claimt ein live registrierter Legacy-Fixture-Task entweder erfolgreich mit kanonischer Scope-Bindung oder scheitert früh mit dem vereinbarten Code; keine unklare Zwischenwirkung bleibt zurück.",
+      "evidence_type": "object",
+      "id": "validation-deploy-live-readback",
+      "verifier": "CI-, Deployment- und Live-Roundtrip-Receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T127"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer beauftragte am 2026-08-03 die Umsetzung einer Bureau-Aufgabe. Beim revisionsgebundenen Pickup von RPU-V1-T028 wurde dieser systemische Blocker live reproduziert. Der Task darf nur Normalisierung, Frühdiagnose und Regressionstests ändern; Fremdleases, Dirty-Worktrees und breite Zulassungsgrenzen bleiben geschützt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_nonconflict.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Härte den koordinierten Bureau-Pickup so, dass Legacy-Ressourcenschlüssel der Form repo:/absoluter/pfad:branch:name entweder vor jeder Claim- oder Lease-Wirkung kanonisch in Repository-Wurzel und explizite Branch-Scope-Metadaten zerlegt oder mit einem stabilen, handlungsfähigen Diagnosecode abgelehnt werden. Breite Repository-Zulassung, Fremd-Dirty-Schutz, Journalbindung und Fail-Closed-Verhalten bleiben erhalten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T135",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass jeder branch-scoped Schlüssel sicher automatisch migrierbar ist",
+      "dass breite Repository-Leases entfallen dürfen",
+      "dass fremde Dirty-Worktrees bereinigt oder übernommen werden dürfen",
+      "Merge- oder Deployment-Bereitschaft eines künftigen Implementierungs-PRs"
+    ],
+    "duplicate_assessment": {
+      "advisory_similar_candidates": [
+        {
+          "candidate_id": "candidate-d47c9cd3034e51b51f04ccbc",
+          "score": 0.267176,
+          "title": "T134 broad repository claim defeats exact Grabowski path scope"
+        },
+        {
+          "candidate_id": "candidate-2de6283971e23a7c97ad2ff7",
+          "score": 0.2,
+          "title": "Make Bureau pickup blockers precise and support evidence-only closeout"
+        }
+      ],
+      "decision": "promote",
+      "exact_duplicates": []
+    },
+    "live_observation": {
+      "failure_boundary": "A branch-scoped repo resource was interpreted as a filesystem repository root during scope-manifest normalization and broad repository admission.",
+      "remaining_examples": [
+        "RPU-V1-T031",
+        "RPU-V1-T025",
+        "RPU-V1-T032",
+        "RPU-V1-T026",
+        "RPU-V1-T029",
+        "RPU-V1-T034",
+        "RSCG-V1-T001",
+        "RPU-V1-T027"
+      ],
+      "source_run": "BUR-RUN-20260803T103515Z-fb40be404c",
+      "source_task": "RPU-V1-T028",
+      "task_specific_repairs": [
+        {
+          "merge_commit": "497ffa235ccd65f40609da6be07750894dd1488f",
+          "pull_request": 1451,
+          "repository": "heimgewebe/bureau"
+        },
+        {
+          "merge_commit": "9b648ab8be142ef3daf6b8ee0b984d8a9aabdfbc",
+          "pull_request": 1453,
+          "repository": "heimgewebe/bureau"
+        }
+      ]
+    },
+    "observed_at": "2026-08-03T11:01:39Z",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-88e1148b2745c332392c69a3",
+      "event_id": 2413,
+      "event_created_at": "2026-08-03T11:05:32.531523Z",
+      "request_sha256": "8fdb72c1648d286e630c580aa5cbaff6bc23f19a47170d0823e7e7d149aeccca",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_observation",
+        "locator": "bureau-run:BUR-RUN-20260803T103515Z-fb40be404c",
+        "observed_at": "2026-08-03T11:01:39Z",
+        "sha256": "cb054a6cd4b854d090776be03a74a9cb204777206e96c09feee484d211e4198e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "throughput_priority": "durchsatz1"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 6
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "sqlite",
+    "grabowski",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich Parser-, Diagnose- und Teständerungen über einen normalen PR. Bis zur erneuten Freigabe bleiben mehrdeutige Legacy-Schlüssel fail-closed; breite Repository-Zulassung und Fremd-Dirty-Schutz werden nicht als Rollback gelockert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Branch-scoped Repo-Lease-Schlüssel vor Pickup normalisieren"
+}

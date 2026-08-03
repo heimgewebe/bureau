@@ -1,0 +1,141 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Settlement-Workflow, Repository-Ruleset, pr_review_gate und veröffentlichter Status stimmen darüber überein, ob externer Codex-Abschluss erforderlich oder optional ist.",
+      "evidence_type": "object",
+      "id": "policy-source-of-truth",
+      "verifier": "Policy-Kontrasttest plus Live-Ruleset-Readback"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Antrag mit vertrauenswürdig beobachtetem Kontingent-, Provider- oder Kapazitätsende erreicht bei optionalem externem Review einen begrenzten terminalen Diagnosezustand statt dauerhaftem pending.",
+      "evidence_type": "object",
+      "id": "bounded-provider-unavailable",
+      "verifier": "Evaluator- und Workflow-Tests für Quota, Usage-Limit und Provider-unavailable"
+    },
+    {
+      "assertion": "Self-Review oder Provider-Unverfügbarkeit werden niemals als externer Codex-PASS ausgegeben; Provenienz von Self-Review, optionaler Providerdiagnose und echtem Codex-Abschluss bleibt getrennt.",
+      "evidence_type": "object",
+      "id": "no-false-codex-pass",
+      "verifier": "Negativtests für Actor-, Head-, Diff- und Evidenztyp-Bindung"
+    },
+    {
+      "assertion": "Fehlender Antrag, laufender Abschluss, Sichtbarkeitslücke, Provider-Unverfügbarkeit und settled/pass erhalten unterschiedliche Statusbeschreibungen und stabile Fehlercodes.",
+      "evidence_type": "object",
+      "id": "status-message-taxonomy",
+      "verifier": "Status- und Beschreibungstests"
+    },
+    {
+      "assertion": "Ein optionaler Codex-Status kann den zusammengefassten Merge-State nicht irreführend blockieren, wenn alle tatsächlich vorgeschriebenen Checks und das revisionsgebundene Self-Review erfüllt sind.",
+      "evidence_type": "object",
+      "id": "merge-state-alignment",
+      "verifier": "Test-PR mit Live-Readback von Ruleset, Checks und Merge-State"
+    },
+    {
+      "assertion": "Die Lösung verlangt weder Kontingentkauf noch API-Schlüssel oder kostenpflichtige Providerkapazität und erzeugt keine automatische Review-, Merge- oder Branchschutz-Autorität.",
+      "evidence_type": "object",
+      "id": "no-paid-dependency",
+      "verifier": "Konfigurations-, Secret- und Berechtigungsdiff"
+    },
+    {
+      "assertion": "Gezielte Settlement-, Workflow-, Merge-Guard- und Review-Gate-Tests sowie die vollständige Repositoryvalidierung sind auf dem exakten PR-Head grün.",
+      "evidence_type": "object",
+      "id": "regression-suite",
+      "verifier": "CI plus lokaler Exact-Head-Testreceipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T126"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Status-Policy-Drift reparieren, ohne Exact-Head-Evidenz abzuschwächen oder kostenpflichtige Providerabhängigkeiten einzuführen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Statuskontext `Codex review settled` mit der kanonischen risikoskalierten Self-Review-Policy und den tatsächlich erzwungenen Repository-Rulesets in Einklang bringen: Ein korrekt sichtbares Kontingent-, Provider- oder Kapazitätsende darf bei optionalem externem Review weder als Codex-PASS gelten noch unbegrenzt als mergeblockierendes `pending` stehenbleiben.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T137",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Codex review PASS",
+      "quota purchase authority",
+      "provider outage root cause",
+      "permission to weaken current-head or diff binding",
+      "permission to bypass actually required checks",
+      "automatic merge authority"
+    ],
+    "live_evidence": {
+      "codex_request_comment_id": 5171280618,
+      "codex_request_id": "c113410b1f510c00680fac957089710a",
+      "diff_sha256": "5e55ed54310476a77863df9ba7ab1cae51f652e56ca60710ff3cfe94d063d15f",
+      "head_sha": "582db4ca31287e96c3e54a53790d54ca2ed09c29",
+      "merge_commit": "2a2859cfe31b9f336f75760fb8260b255c65362c",
+      "observed_provider_outcome": "usage limit reached; no trusted Codex completion",
+      "observed_settlement_status": "pending with request_present=true and completion_present=false",
+      "pull_request": 587,
+      "repository": "heimgewebe/grabowski",
+      "repository_ruleset_id": 18801517,
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)"
+      ],
+      "required_checks_result": "success",
+      "self_review": "exact-head PASS"
+    },
+    "policy_conflict": {
+      "finding": "T029 und der aktive Ruleset behandeln externen Codex-Review als optional, während Settlement nach vollständig sichtbarem Usage-Limit-Ergebnis dauerhaft pending bleibt.",
+      "optional_review_policy_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T029",
+      "visibility_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T126"
+    },
+    "source": "Live-Abschluss von Grabowski PR #587 am 3. August 2026",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-80dae7c6504ac996a73e58e3",
+      "event_id": 2444,
+      "event_created_at": "2026-08-03T20:43:55.897451Z",
+      "request_sha256": "6ac9da106ba036cd9418801d9894602d8e6e95c8e649ee5adf6e8f1653e30e82",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-08-03T20:43:55.877762Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Optionales Codex-Settlement terminal und policy-konsistent machen"
+}

@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T029",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Dashboard-Portfolio-Sammler beschleunigen und PR-Quellen klassifizieren",
+  "state": "planned",
+  "goal": "Stabilisiere die bereits von 42.959 ms auf einstellige Sekunden beschleunigte 71-Repository-Sammlung, trenne erwartbar nicht anwendbare Pull-Request-Quellen von echten Ausfällen und erhalte Deduplizierung, Datenschutz und den read-only Dashboard-Vertrag.",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc-dashboard-chatgpt-app",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Nur Sammler-, Klassifikations-, Projektions- und zugehörige Testpfade des lokalen Dashboard-Repositories dürfen geändert werden. Bureau-, Queue-, Task- und fremde Repository-Zustände bleiben unangetastet."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/heim-pc-dashboard-chatgpt-app/lib/history.js",
+      "path:/home/alex/repos/heim-pc-dashboard-chatgpt-app/lib/portfolio.js",
+      "path:/home/alex/repos/heim-pc-dashboard-chatgpt-app/lib/presentation.js",
+      "path:/home/alex/repos/heim-pc-dashboard-chatgpt-app/test/history.test.js",
+      "path:/home/alex/repos/heim-pc-dashboard-chatgpt-app/test/portfolio.test.js",
+      "path:/home/alex/repos/heim-pc-dashboard-chatgpt-app/test/presentation.test.js"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc-dashboard",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T028"
+  ],
+  "required_capabilities": [
+    "repository",
+    "javascript",
+    "node",
+    "testing",
+    "git",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "source-taxonomy",
+      "assertion": "Pull-Request-Quellen werden mindestens in supported, not_applicable, unavailable und failed getrennt; ein Repository ohne belegten GitHub-Origin zählt nicht als Ausfall.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "performance-bound",
+      "assertion": "Ein revisionsgebundener Benchmark über dieselben 71 deduplizierten Repositories belegt gegenüber der 42.959-ms-Baseline mindestens 50 Prozent Reduktion; drei warme Vollsammlungen überschreiten jeweils 15.000 ms nicht.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "coverage-preserved",
+      "assertion": "Alle 71 Commitquellen bleiben lesbar; 6 Fokus-Repositories bleiben einzeln sichtbar und 65 zusätzliche Repositories ausschließlich aggregiert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "privacy-preserved",
+      "assertion": "Öffentliche Projektion und History enthalten keine lokalen Zusatzrepo-Pfade, GitHub-Namen, internen Pseudonyme, Task-IDs oder private Bureau-Zustände.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "dedup-preserved",
+      "assertion": "Commit-SHA- und Repository/PR-Nummer-Deduplizierung bleiben deterministisch; Worktree-Dubletten erhöhen keine Portfolio-Aktivität.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "validation-green",
+      "assertion": "Unit-Tests, Datenschutzprojektion, Vollsammler-Smoke und git diff --check bestehen auf dem exakten Commit; nach Deployment meldet Health die neue Version und der Dienst bleibt read-only.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-second-truth",
+      "assertion": "Dashboard und Sammler erzeugen keine neue Task-, Queue-, Claim-, Merge-, CI- oder Deployment-Wahrheit.",
+      "evidence_type": "object"
+    }
+  ],
+  "rollback": {
+    "strategy": "Revertiere Sammlerklassifikation, Performanceänderungen und zugehörige Tests gemeinsam auf den vorherigen Dashboard-Commit; History-Schema und gespeicherte Zusatzrepo-Identitäten dürfen nicht erweitert werden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-03T07:28:00Z",
+    "source": "OPERATOR-MACHINE-READABILITY-V1-T028",
+    "source_dashboard_commit": "1e353e41c546646a3db44b0db7cea405a7f5eccb",
+    "baseline": {
+      "tracked_repositories": 71,
+      "focus_repositories": 6,
+      "additional_repositories": 65,
+      "original_full_collection_ms": 42959,
+      "latest_observed_warm_collection_ms": 8779,
+      "commit_sources_ok": 71,
+      "pull_request_sources_ok": 39,
+      "pull_request_not_applicable_or_unavailable": 32
+    },
+    "does_not_establish": [
+      "implementation",
+      "task readiness",
+      "queue or dispatch authority",
+      "merge readiness",
+      "deployment completion"
+    ]
+  }
+}

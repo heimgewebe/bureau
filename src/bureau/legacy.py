@@ -381,6 +381,8 @@ class Registry:
         execution_modes = {"interactive-agent", "grabowski-task", "grabowski-operation", "manual"}
 
         github_slugs: dict[str, str] = {}
+        resource_paths: dict[str, Resource] = {}
+        grabowski_keys: dict[str, Resource] = {}
         for resource in self.resources.values():
             if not RESOURCE_RE.fullmatch(resource.id):
                 errors.append(f"invalid resource id {resource.id}")
@@ -399,6 +401,46 @@ class Registry:
                 "optional",
             }:
                 errors.append(f"resilience resource {resource.id} needs valid criticality")
+            if resource.path is not None:
+                normalized_path = os.path.normpath(resource.path)
+                duplicate_path = resource_paths.get(normalized_path)
+                if duplicate_path is not None:
+                    errors.append(
+                        f"resources {duplicate_path.id} ({duplicate_path.type}) and "
+                        f"{resource.id} ({resource.type}) share path {normalized_path}"
+                    )
+                else:
+                    resource_paths[normalized_path] = resource
+            if resource.grabowski_key is not None:
+                duplicate_key = grabowski_keys.get(resource.grabowski_key)
+                if duplicate_key is not None:
+                    errors.append(
+                        f"resources {duplicate_key.id} and {resource.id} share grabowski_key "
+                        f"{resource.grabowski_key}"
+                    )
+                else:
+                    grabowski_keys[resource.grabowski_key] = resource
+                if resource.grabowski_key.startswith("repo:") and resource.type != "git-repository":
+                    errors.append(
+                        f"resource {resource.id} has repo grabowski_key but is not a git-repository"
+                    )
+            if resource.type == "git-repository" and resource.path is not None:
+                if not os.path.isabs(resource.path):
+                    errors.append(f"git-repository resource {resource.id} path must be absolute")
+                elif resource.grabowski_key is not None:
+                    expected_key = f"repo:{os.path.normpath(resource.path)}"
+                    if resource.grabowski_key != expected_key:
+                        errors.append(
+                            f"git-repository resource {resource.id} grabowski_key must be {expected_key}"
+                        )
+            if (
+                resource.type == "git-repository"
+                and resource.grabowski_key is not None
+                and resource.path is None
+            ):
+                errors.append(
+                    f"git-repository resource {resource.id} with grabowski_key needs path"
+                )
             if resource.github_slug is not None:
                 if resource.type != "git-repository":
                     errors.append(

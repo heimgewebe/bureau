@@ -166,6 +166,59 @@
         "claim or dispatch success",
         "merge readiness"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "436fc3a273597dc49beafe95523d032029bf290253305e8b954eede87660660a",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "receipt_id": "pr-completion:heimgewebe/weltgewebe#1670:da7d474977e24467cff0a36e8d8439b46b92230e",
+      "receipt_sha256": "937af47c1c62ee815e35fea712cf47c201482f14a42c07d3ca65242143d81565",
+      "evidence_sha256": "8781f5b931bbe407c9faf023577c20e04906212a6fc63e168a636b5fdac51fda",
+      "source": "github_pull_request_and_bureau_run",
+      "source_ref": "github-pr:heimgewebe/weltgewebe#1670@da7d474977e24467cff0a36e8d8439b46b92230e:dc50ba193395acd72ffca8b61d880ac0d222b568",
+      "run_id": "BUR-RUN-20260803T025300Z-9965f343ee",
+      "verified_at": "2026-08-03T04:43:58Z",
+      "pr_completion": {
+        "kind": "bureau.pr_completion_receipt",
+        "schema_version": 2,
+        "task_id": "WELTGEWEBE-OS-V1-T052",
+        "outcome": "completed-by-merged-pr-and-succeeded-run",
+        "evidence": {
+          "kind": "weltgewebe.report_truth_contract_closeout_evidence",
+          "schema_version": 1,
+          "task_id": "WELTGEWEBE-OS-V1-T052",
+          "source": "github_pull_request_and_bureau_run",
+          "source_ref": "github-pr:heimgewebe/weltgewebe#1670@da7d474977e24467cff0a36e8d8439b46b92230e:dc50ba193395acd72ffca8b61d880ac0d222b568",
+          "repository": "heimgewebe/weltgewebe",
+          "pull_request": 1670,
+          "head_sha": "da7d474977e24467cff0a36e8d8439b46b92230e",
+          "merge_commit": "dc50ba193395acd72ffca8b61d880ac0d222b568",
+          "merged_at": "2026-08-03T04:33:36Z",
+          "bureau_run_id": "BUR-RUN-20260803T025300Z-9965f343ee",
+          "bureau_run_state": "succeeded",
+          "bureau_run_updated_at": "2026-08-03T04:35:09.292791Z",
+          "acceptance_ids": [
+            "report-contract",
+            "no-false-pass",
+            "revision-binding",
+            "migration",
+            "negative-tests"
+          ],
+          "required_checks": {
+            "Blocking doc validations": "PASS",
+            "Required merge gate": "PASS",
+            "Review evidence gate": "PASS"
+          },
+          "lease_closeout": "terminal-released-or-expired",
+          "does_not_establish": [
+            "runtime deployment outside the merged repository change",
+            "completion of dependent or neighbouring Bureau tasks"
+          ],
+          "evidence_sha256": "8781f5b931bbe407c9faf023577c20e04906212a6fc63e168a636b5fdac51fda"
+        },
+        "receipt_id": "pr-completion:heimgewebe/weltgewebe#1670:da7d474977e24467cff0a36e8d8439b46b92230e",
+        "receipt_sha256": "937af47c1c62ee815e35fea712cf47c201482f14a42c07d3ca65242143d81565"
+      }
     }
   },
   "priority": {
@@ -184,6 +237,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Abdeckung, Revision und Unsicherheit für Prüfberichte verpflichtend machen"
 }

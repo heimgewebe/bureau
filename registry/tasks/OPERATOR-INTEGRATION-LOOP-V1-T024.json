@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Plexer-Renovate-Update aus PR #83 reproduzierbar reparieren",
   "goal": "Erzeuge für das weiterhin sinnvolle geschlossene Plexer-Update aus PR #83 einen frischen Ersatz-PR vom aktuellen origin/main und belege reproduzierbare pnpm-Abhängigkeiten, Build- und Testartefakte auf dem exakten Ersatz-Head.",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 2
@@ -69,6 +69,98 @@
         "future resource availability",
         "merge readiness before fresh checks"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "4155db5c78fbd8c1f4985bd38176fe819fe3b0e56fe8601f8124287b7bad6bb6",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "receipt_sha256": "3490f3bfdbd6dcb074994bc1701849406c9b5029764248daf739fbbdffb1e65c",
+      "evidence_sha256": "df5e8aaeb8284907d437cc66211eea6fee7d55fc6cd5bb657aa0eec1a9b17b77",
+      "source": "bureau_succeeded_run_and_merged_pull_request",
+      "source_ref": "github-pr:heimgewebe/plexer#87@7671ee10fb5f0c744a1fa4790bb81a02bf79f3f9:43f637436d337d16dc9ddab84c552d72f27bed21",
+      "run_id": "BUR-RUN-20260803T015719Z-a152ca9ca1",
+      "verified_at": "2026-08-03T02:11:48.391070Z",
+      "bureau_run_receipt": {
+        "envelope_sha256": "2772d0bef2d0e5756687746a357d94c6fa04bcf005e67b402064e3e93d9e50b8",
+        "evidence": {
+          "blocker-specific-proof": {
+            "build": "PASS",
+            "diff_check": "PASS",
+            "frozen_install": "PASS",
+            "lockfile_changed": false,
+            "packages_installed": 421,
+            "pnpm_version": "9.15.9",
+            "test_suites": 11,
+            "tests_failed": 0,
+            "tests_passed": 147
+          },
+          "fail-closed-merge": {
+            "administrative_bypass": false,
+            "confirmed_findings": 0,
+            "head": "7671ee10fb5f0c744a1fa4790bb81a02bf79f3f9",
+            "mergeable": true,
+            "open_review_threads": 0,
+            "required_checks": {
+              "Analyze (actions)": "SUCCESS",
+              "Analyze (javascript-typescript)": "SUCCESS",
+              "Analyze (python)": "SUCCESS",
+              "CodeQL": "SUCCESS",
+              "build (20.x)": "SUCCESS",
+              "repo-root": "SUCCESS",
+              "templates": "SUCCESS"
+            }
+          },
+          "fresh-replacement": {
+            "base": "2f6c7daa850221c03d8cd9e3a9362b900b23522a",
+            "branch": "bureau/operator-integration-loop-v1-t024/a152ca9ca1",
+            "head": "7671ee10fb5f0c744a1fa4790bb81a02bf79f3f9",
+            "replacement_pr": 87,
+            "repository": "heimgewebe/plexer",
+            "source_pr_reopened": false
+          },
+          "repository-closeout": {
+            "final_head": "7671ee10fb5f0c744a1fa4790bb81a02bf79f3f9",
+            "merge_commit": "43f637436d337d16dc9ddab84c552d72f27bed21",
+            "merged_at": "2026-08-03T02:08:24Z",
+            "remaining_open_replacement_pr": false,
+            "replacement_pr": 87,
+            "state": "MERGED"
+          },
+          "source-readback": {
+            "head": "b17c6907b03aa7d0889258c4dbb00a39996b500f",
+            "merged": false,
+            "observed_change": "packageManager pnpm 9.15.0 to 9.15.9",
+            "repository": "heimgewebe/plexer",
+            "source_pr": 83,
+            "state": "CLOSED"
+          }
+        },
+        "external": null,
+        "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+        "receipt_sha256": "3490f3bfdbd6dcb074994bc1701849406c9b5029764248daf739fbbdffb1e65c",
+        "rlens_context_policy": {
+          "block_reason": null,
+          "does_not_establish": [
+            "actual_agent_reading",
+            "answer_correct",
+            "repo_understood",
+            "claims_true",
+            "runtime_correctness"
+          ],
+          "has_context_ref": false,
+          "mode": "opportunistic",
+          "requires_context": false,
+          "schema_version": 1,
+          "skip_reason": "not_required",
+          "status": "not_required",
+          "task_profile": null
+        },
+        "run_id": "BUR-RUN-20260803T015719Z-a152ca9ca1",
+        "schema_version": 1,
+        "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T024",
+        "task_sha256": "4155db5c78fbd8c1f4985bd38176fe819fe3b0e56fe8601f8124287b7bad6bb6",
+        "verified_at": "2026-08-03T02:11:48.391070Z"
+      }
     }
   },
   "acceptance": [

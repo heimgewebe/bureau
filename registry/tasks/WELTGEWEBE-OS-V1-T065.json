@@ -1,0 +1,120 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Bei mindestens zwei aktiven Webgemeindezentren bietet /antraege eine verständliche explizite Zentrumsauswahl; das gewählte Zentrum ist in der URL oder einem gleichwertig teilbaren kanonischen Navigationszustand enthalten und über Neuladen, Zurück/Vorwärts sowie Direktlink stabil.",
+      "evidence_type": "object",
+      "id": "explicit-center-selection"
+    },
+    {
+      "assertion": "Antragslisten, Filter, Detailnavigation und Antragstellung verwenden die gewählte webgemeindezentrum_id ausdrücklich. Kein Antrag wird anhand globaler Einzigartigkeit, Listenreihenfolge oder UI-Kontext geraten.",
+      "evidence_type": "object",
+      "id": "center-bound-list-and-create"
+    },
+    {
+      "assertion": "Eine optionale überörtliche Übersicht kennzeichnet das zuständige Zentrum pro Antrag eindeutig und erlaubt keine lokale Handlung ohne explizite Zentrumbindung; die Zentrumoberfläche bleibt der primäre örtliche Governance-Einstieg.",
+      "evidence_type": "object",
+      "id": "cross-center-overview-semantics"
+    },
+    {
+      "assertion": "GET-Einzelabrufe für Webgemeindezentren und Ortswebereien verwenden parameterisierte, indexgestützte SQL-Abfragen statt den gesamten aktiven Katalog in den Speicher zu laden. Listenfilter und Pagination werden soweit fachlich möglich in PostgreSQL ausgeführt; ein Mehrzentrum-Beleg zeigt, dass Leseaufwand und Antwortgröße nicht linear mit allen Zentren wachsen.",
+      "evidence_type": "object",
+      "id": "bounded-center-queries"
+    },
+    {
+      "assertion": "Unit-, API- und Browsertests mit mindestens zwei aktiven Zentren belegen Auswahl, URL-Roundtrip, Filterung, Antragstellung, sofortigen Zielwechsel ohne stale state, Tastaturbedienung und Mobilansicht.",
+      "evidence_type": "object",
+      "id": "two-center-behavior-proof"
+    },
+    {
+      "assertion": "Die Änderung erhöht keine blocking Routenbudgets, verschlechtert keine bestehenden Karten- oder Antragsreisen und wird auf exaktem Head mit vollständigem Diff, unabhängiger Prüfung, grünen Pflichtchecks und revisionsgebundenen Buildbelegen veröffentlicht.",
+      "evidence_type": "object",
+      "id": "performance-and-release-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 3. August 2026 verlangt, sinnvolle nicht im aktuellen PR behobene Folgearbeiten im Bureau zu registrieren. Die Registrierung autorisiert keine ungeprüfte Umsetzung und bleibt an Livezustand, isolierten Worktree, Tests, Review, CI und kostenfreie Ausführung gebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die globale Antragsansicht und die zugehörigen Einzelabrufe so erweitern, dass bei mehreren aktiven Ortswebereien und Webgemeindezentren Zentrum, Zuständigkeit, Navigation und Laufzeitkosten eindeutig bleiben: Auswahl und URL-Zustand benennen das Zentrum ausdrücklich, Listen und Antragstellung sind daran gebunden, und Einzelabrufe laden nicht den gesamten Zentrumskatalog.",
+  "id": "WELTGEWEBE-OS-V1-T065",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "deduplication": "Live-Suche im kanonischen Bureau-Registry-Stand a9950e5b8c2c fand keine Aufgabe für Mehrzentrum-Auswahl, Zentrum-URL-Bindung, zentrumsgefilterte globale Anträge oder katalogunabhängige Zentrum-Einzelabrufe. WELTGEWEBE-OS-V1-T059 und T061 betreffen Client-Chunk- und Routenbudget-Headroom und sind keine fachliche Dublette; T040 betrifft den allgemeinen Poolvertrag, nicht Zentrumabfragen oder Governance-Navigation.",
+    "does_not_establish": [
+      "automatic implementation",
+      "task readiness",
+      "queue truth",
+      "claim or dispatch authority",
+      "that PR #1671 is merged",
+      "permission to merge local governance across centers"
+    ],
+    "registered_at": "2026-08-03",
+    "source": "operator_followup_from_weltgewebe_pr_1671",
+    "source_head": "9006f6d5832fbd4b7f4fe63dca091f9e44bee8c6",
+    "source_pr": "heimgewebe/weltgewebe#1671",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ee32863f9be4ec4bde238cd3",
+      "event_id": 2325,
+      "event_created_at": "2026-08-03T06:12:29.439397Z",
+      "request_sha256": "9464509e6f37ee66cb4a44d6cb6c684bf61fbb78654ce07dfda2af1614a141c4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/weltgewebe#1671@9006f6d5832fbd4b7f4fe63dca091f9e44bee8c6",
+        "observed_at": "2026-08-03T06:12:29.421500Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 65
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "rust",
+    "postgresql",
+    "sql",
+    "svelte",
+    "typescript",
+    "browser-e2e",
+    "accessibility",
+    "performance",
+    "ci",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Änderungen sind aktueller Weltgewebe-Head, PR #1671 beziehungsweise dessen Mergezustand, aktive Zentren, Antragsmodell, SQL-Abfragepläne, URL-Verträge, Routenbudgets und parallele Arbeiten live zu prüfen; RepoGround ergänzt Navigations- und Aufrufbeziehungen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Globale Antragsansicht mehrzentrumfähig machen"
+}

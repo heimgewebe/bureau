@@ -27,8 +27,8 @@
     "registered_from_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
     "registered_at": "2026-07-25T09:23:59+02:00",
     "residue_path": "/home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build",
-    "current_classification": "durable-retain-active",
-    "current_policy": "fail-closed; retained under exact recovery-bound decision; automatic mutation unauthorized",
+    "current_classification": "not-reobserved; task superseded by T053 durable-retain decision",
+    "current_policy": "fail-closed; no new host mutation; follow the T053 recovery-bound retain and review contract",
     "does_not_establish": [
       "the residue is stale",
       "publisher ownership",
@@ -70,7 +70,7 @@
         "immutable-snapshot": "Satisfied by T053's exact repository, ref, tree and build snapshot binding plus the immutable checkout archive manifest.",
         "owner-provenance": "Publisher provenance remained unresolved; T053 therefore chose durable retention instead of inventing ownership or authorizing cleanup.",
         "live-safety": "T053 bound the decision to process checks, an empty exact lease set and an intact recovery ref; automatic mutation remains false.",
-        "bounded-disposition": "The source is durable-retain-active until the bounded review date. It was neither deleted, reset, quarantined nor adopted.",
+        "bounded-disposition": "T053 recorded durable retention through its bounded review date. It neither deleted, reset, quarantined nor adopted the source.",
         "publisher-readback": "A targeted Fleet run and the regular systemd Fleet watch both reported retained=1 and failed=0."
       },
       "does_not_establish": [

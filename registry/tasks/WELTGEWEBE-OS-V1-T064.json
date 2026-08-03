@@ -59,9 +59,10 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/weltgewebe",
     "grabowski_resources": [
-      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay",
-      "path:/home/alex/repos/weltgewebe/apps/web/src/routes/map",
-      "path:/home/alex/repos/weltgewebe/apps/web/tests"
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/routes/map/+page.svelte",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/edge-motion.spec.ts"
     ]
   },
   "goal": "Die in Weltgewebe-PR #1667 statisch vereinheitlichte textile Kartenobjektsprache um eine strikt ereignisbezogene Bewegungsschicht ergänzen: Fäden wachsen beim Spannen vom Ursprung zum Ziel, ziehen sich beim Auflösen entlang der Verbindung zurück, und die realistische Garnrolle in Draufsicht reagiert nur während dieses Vorgangs kurz, ohne Daueranimation, Kartenankerdrift oder spürbare Interaktions- und Leistungsverschlechterung.",
@@ -115,18 +116,33 @@
     },
     "coordination_scope": {
       "schema_version": 1,
-      "reason": "T064 only changes the map motion layer and its browser coverage; repository-wide exclusion would unnecessarily block disjoint documentation work such as T053.",
+      "reason": "The required thread grow/retract motion can be implemented through a new transient overlay controller plus the currently untouched map route and new tests. Existing PR #1671 overlay files and the optional spool reaction remain outside this slice, so parallel work stays file-disjoint without an override.",
       "resource": "component.weltgewebe.map-thread-motion-t064",
       "grabowski_resources": [
-        "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay",
-        "path:/home/alex/repos/weltgewebe/apps/web/src/routes/map",
-        "path:/home/alex/repos/weltgewebe/apps/web/tests"
+        "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.ts",
+        "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.test.ts",
+        "path:/home/alex/repos/weltgewebe/apps/web/src/routes/map/+page.svelte",
+        "path:/home/alex/repos/weltgewebe/apps/web/tests/edge-motion.spec.ts"
       ],
       "does_not_establish": [
+        "permission to edit existing edge, marker, layer or node overlay files",
+        "permission to implement the optional spool reaction in this slice",
         "permission to edit domain persistence",
         "permission to edit documentation or generated evidence",
-        "nonconflict outside the declared paths"
+        "nonconflict outside the four declared files"
       ]
+    },
+    "implementation_slice": {
+      "schema_version": 1,
+      "required_motion": "thread grow and directed retract only",
+      "optional_spool_response": "omitted",
+      "files": [
+        "apps/web/src/lib/map/overlay/edgeMotion.ts",
+        "apps/web/src/lib/map/overlay/edgeMotion.test.ts",
+        "apps/web/src/routes/map/+page.svelte",
+        "apps/web/tests/edge-motion.spec.ts"
+      ],
+      "rationale": "Preserves all mandatory T064 acceptance while avoiding the active #1671 predecessor files; the spool response is optional by acceptance contract."
     }
   },
   "priority": {

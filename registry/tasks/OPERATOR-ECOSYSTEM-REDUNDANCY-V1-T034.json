@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T034",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Gemeinsame SQLite-Migrationsprimitiven nach T062 extrahieren",
-  "state": "blocked",
+  "state": "planned",
   "goal": "Nach dem gemergten, deployten und live stabilisierten T062-Pfad die aktuell doppelt implementierten internen SQLite-Primitiven für Store-Verzeichnislock, read-only beziehungsweise immutable Inventur, Dateiidentitäts-Race-Erkennung, Integritäts- und Fingerprintprüfung, verifizierte Backup-Publikation sowie atomaren Migrations-Open in einen gemeinsamen getesteten Kern überführen. Store-spezifische Schemas, Validatoren, Migrationspläne und Recoverytexte bleiben bei Task- und Resource-Store. Kein Verhalten ändern und keine T062-Auslieferung mit diesem Refactoring koppeln.",
   "priority": {
     "lane": "next",
@@ -32,9 +32,7 @@
     "shell",
     "grabowski"
   ],
-  "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T062"
-  ],
+  "depends_on": [],
   "acceptance": [
     {
       "id": "post-stabilization-only",
@@ -59,6 +57,17 @@
     "source_pr": 298,
     "source_head": "eadc83d2e53818873498abad2e929d9febf834ee",
     "review_finding": "Task and resource stores duplicate substantial SQLite migration infrastructure; duplication is non-blocking for T062 but raises future drift risk.",
+    "dependency_convergence": {
+      "removed_dependency": "GRABOWSKI-OPERATOR-SURFACE-V1-T062",
+      "reason": "The sole post-stabilization precondition is fulfilled: T062 is verified after merge, deployment and stable live task/resource-store readbacks.",
+      "evidence": {
+        "task_state": "verified",
+        "merge_commit": "49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+        "deployed_at": "2026-07-19T18:26:10Z",
+        "verified_at": "2026-07-19T20:51:55+02:00",
+        "registry_truth_status": "satisfied"
+      }
+    },
     "does_not_establish": [
       "t062_merge_readiness",
       "deployment_authority",

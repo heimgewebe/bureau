@@ -7,8 +7,8 @@
   "goal": "Die Phasen 0 und 1 als gemeinsame read-only Wahrheits- und Messgrundlage einschließlich sicherer Hör-, Aufnahme- und Gerätebelege abschließen.",
   "depends_on": [],
   "priority": {
-    "lane": "now",
-    "rank": 1
+    "lane": "later",
+    "rank": 999
   },
   "execution": {
     "mode": "interactive-agent",

@@ -76,7 +76,14 @@ def test_canonical_claim_intent_uses_writable_coordination_store(
     identity = canonical_runtime_identity(registry_root)
 
     class FakeDispatcher:
-        def __init__(self, registry, store, adapter_registry, enforce_runtime_gate=True):
+        def __init__(
+            self,
+            registry,
+            store,
+            adapter_registry,
+            enforce_runtime_gate=True,
+            runtime_identity=None,
+        ):
             self.store = store
 
         def claim_intent(self, worker, capabilities, kind, **kwargs):
@@ -174,7 +181,14 @@ def test_canonical_claim_commit_uses_separate_state_store(
     identity = canonical_runtime_identity(registry_root)
 
     class FakeDispatcher:
-        def __init__(self, registry, store, adapter_registry, enforce_runtime_gate=True):
+        def __init__(
+            self,
+            registry,
+            store,
+            adapter_registry,
+            enforce_runtime_gate=True,
+            runtime_identity=None,
+        ):
             self.store = store
 
         def commit_claim_intent(self, intent, lease_binding, *, resource_db):

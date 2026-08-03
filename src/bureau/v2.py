@@ -3280,6 +3280,7 @@ class Dispatcher(legacy.Dispatcher):
         adapters: AdapterRegistry | None = None,
         open_pr_reservations_provider: Callable[[Registry], list[legacy.Reservation]] | None = None,
         enforce_runtime_gate: bool = False,
+        runtime_identity: dict[str, Any] | None = None,
     ):
         super().__init__(registry, store)
         self.registry = registry
@@ -3289,10 +3290,14 @@ class Dispatcher(legacy.Dispatcher):
             open_pr_reservations_provider or open_pull_request_reservations
         )
         self.enforce_runtime_gate = enforce_runtime_gate
+        self.runtime_identity = runtime_identity
 
     def _runtime_execution_truth(self) -> dict[str, Any]:
         report = runtime_drift_check(
-            self.registry.root, state_db=self.store.path, state_root=self.store.state_root
+            self.registry.root,
+            state_db=self.store.path,
+            state_root=self.store.state_root,
+            runtime_identity=self.runtime_identity,
         )
         return _runtime_execution_truth(report)
 

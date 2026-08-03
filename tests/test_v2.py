@@ -1325,6 +1325,76 @@ def test_runtime_drift_check_accepts_identity_bound_canonical_snapshot_without_g
     assert "checkout-not-git" not in codes
 
 
+def test_dispatcher_claim_uses_identity_bound_canonical_snapshot_without_git(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "canonical-claim.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        enforce_runtime_gate=True,
+        runtime_identity=_canonical_runtime_identity(root),
+    )
+
+    result = dispatcher.claim_next(
+        "canonical-runtime-worker",
+        ("repository",),
+        reconcile_first=False,
+    )
+    runtime_truth = result["runtime_truth"]
+    codes = {item["code"] for item in runtime_truth["findings"]}
+
+    assert result["status"] == "claimed"
+    assert runtime_truth["status"] == "not-applicable"
+    assert runtime_truth["runtime_status"] == "ok"
+    assert runtime_truth["execution_blocked"] is False
+    assert runtime_truth["drift_classification"] == "not-git"
+    assert "canonical-snapshot-no-git" in codes
+    assert "checkout-not-git" not in codes
+
+
+def test_cli_passes_runtime_identity_to_dispatcher(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    root = registry_factory(1)
+    captured: dict[str, object] = {}
+
+    class CapturingDispatcher:
+        def __init__(
+            self,
+            registry,
+            store,
+            adapters,
+            *,
+            enforce_runtime_gate,
+            runtime_identity,
+        ):
+            captured["registry_root"] = registry.root
+            captured["enforce_runtime_gate"] = enforce_runtime_gate
+            captured["runtime_identity"] = runtime_identity
+
+    monkeypatch.setattr(bureau_cli, "Dispatcher", CapturingDispatcher)
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(tmp_path / "cli-runtime-identity.sqlite3"),
+            "--json",
+            "status",
+        ]
+    )
+    capsys.readouterr()
+
+    assert result == 0
+    assert captured["registry_root"] == root.resolve()
+    assert captured["enforce_runtime_gate"] is True
+    assert captured["runtime_identity"] == bureau_cli._CLI_RUNTIME_IDENTITY
+
+
 def test_runtime_drift_check_rejects_non_git_root_when_canonical_identity_is_malformed(
     registry_factory, tmp_path
 ):

@@ -1050,7 +1050,13 @@ def main(argv: list[str] | None = None) -> int:
             else StateStore(state_path, state_root)
         )
         adapter_registry = adapters(args)
-        dispatcher = Dispatcher(registry, store, adapter_registry, enforce_runtime_gate=True)
+        dispatcher = Dispatcher(
+            registry,
+            store,
+            adapter_registry,
+            enforce_runtime_gate=True,
+            runtime_identity=_CLI_RUNTIME_IDENTITY,
+        )
         if args.command == "status":
             value = {
                 **registry.summary(),

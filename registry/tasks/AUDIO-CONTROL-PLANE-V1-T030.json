@@ -73,23 +73,67 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T030",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "metadata": {
+    "completion": {
+      "controlled_report_sha256": "e2a3e01c9ec04d10588f43b7f8b9b976f04183525be920b889952f54af1c9a30",
+      "definition_sha256": "c4dc3c5d579847d78799a95202616b6ce5a4cbf05941b681b7e4fc8378484045",
+      "preregistration_commits": [
+        "a8d15d16e17ee8196e76aca39d17d530001ec435",
+        "bfe237b4fa21a89a712ad49b4bde709ab46d6106"
+      ],
+      "schema_version": 1,
+      "sensitivity_report_sha256": "8fc32f5cd60fd435e5b16d68771d1c2d86812fefba4c9baa9a64931f5e274f71",
+      "status": "verified_noise_aware_whale_evaluator_v2_merged",
+      "validation": {
+        "legacy_stellwagen_voiced_lag_3_counts": "36/40/34 reproduced exactly",
+        "main_push_ci": "SUCCESS",
+        "physical_audio_effect": false,
+        "pr_ci": "SUCCESS",
+        "repository_tests": "579/579 PASS",
+        "source_archive_without_git": "byte-identical controlled and sensitivity reports",
+        "v2_voiced_search_boundary_hits": 0
+      }
+    },
     "does_not_establish": [
       "Freigabe einer neuen Walengine",
       "biologische Grundtonwahrheit ohne kontrollierte Referenz",
       "nachträgliche Gültigkeit gelockerter T029-Schwellen",
       "physische Klangqualität",
-      "Parameterlernen aus dem gesperrten externen Testsatz"
+      "Parameterlernen aus dem gesperrten externen Testsatz",
+      "neue Walengine freigegeben",
+      "biologische Grundtonwahrheit bewiesen",
+      "physische Klangqualität verifiziert",
+      "Alaska-Walruf als unvoiced oder nicht vorhanden klassifiziert",
+      "gesperrte externe Daten zum Parametertuning verwendet"
     ],
+    "implementation": {
+      "base_commit": "7f5de247683c394cc981f99ea2aa1c92f18b90f8",
+      "diff_sha256": "2f65b2fe507be99f02c84da3eda0c7499b2333d181a3677a5f3942120bb89cf3",
+      "local_full_test_receipt_sha256": "7c91dd20b38816aa73a6668ac194155ad32406b5bbc392f5395fb3e4727120da",
+      "main_ci_receipt_sha256": "005ce5b37d055e9009dfd66975f1302b0d470fd873fe317f11be881f0e4ea237",
+      "main_ci_run_id": 30787054425,
+      "merge_commit": "bf01a6cf9b09b205b6fa3c95679a170e1e4b6092",
+      "pr_ci_receipt_sha256": "b41d6e6cdc9383aa4d6321be08c68d6e4995522058ec9884e12d974dc24d73de",
+      "pr_ci_run_id": 30786838137,
+      "pr_url": "https://github.com/heimgewebe/audio/pull/51",
+      "pull_request": 51,
+      "repository": "heimgewebe/audio",
+      "reviewed_head": "734ed786ddd5568c82962008730f408e33e91333"
+    },
     "locked_test_sets": [
       "assets/whale-sources/evaluation/manifest.json",
       "assets/whale-sources/evaluation-v2/manifest.json"
     ],
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-269040f93c99c2e672fd688a",
-      "event_id": 2127,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-08-02T12:54:22.732744Z",
+      "event_id": 2127,
       "request_sha256": "2febd738ad7c429a8af078dadc648ab77b909a87bd824ed444b28b8f2c860438",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -97,14 +141,56 @@
         "locator": "github:heimgewebe/audio#43@7e188912b059610b98cc8af29498320d5fcccb9f;private-binding:/home/alex/.local/state/grabowski/operator-intake/audio-pr43-f0-boundary-source-v1.json",
         "observed_at": "2026-08-02T12:54:22.715838Z",
         "sha256": "a2ce71d6334846ecdd5385444df0b6a4aaf540fe58a51264106645e5752842a7"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
     "registered_at": "2026-08-02T15:48:00+02:00",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "content_sha256": "2f65b2fe507be99f02c84da3eda0c7499b2333d181a3677a5f3942120bb89cf3",
+          "head_sha": "734ed786ddd5568c82962008730f408e33e91333",
+          "kind": "github_pull_request",
+          "merge_commit": "bf01a6cf9b09b205b6fa3c95679a170e1e4b6092",
+          "pull_request": 51,
+          "repository": "heimgewebe/audio",
+          "source_ref": "github-pr:heimgewebe/audio#51@734ed786ddd5568c82962008730f408e33e91333:bf01a6cf9b09b205b6fa3c95679a170e1e4b6092",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T030",
+          "url": "https://github.com/heimgewebe/audio/pull/51"
+        },
+        {
+          "authority": "github-actions",
+          "head_sha": "bf01a6cf9b09b205b6fa3c95679a170e1e4b6092",
+          "kind": "github_workflow_run",
+          "receipt_sha256": "005ce5b37d055e9009dfd66975f1302b0d470fd873fe317f11be881f0e4ea237",
+          "repository": "heimgewebe/audio",
+          "source_ref": "github-actions:heimgewebe/audio/Validate#30787054425@bf01a6cf9b09b205b6fa3c95679a170e1e4b6092",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T030",
+          "workflow_run_id": 30787054425
+        },
+        {
+          "authority": "audio-repository",
+          "commit": "bf01a6cf9b09b205b6fa3c95679a170e1e4b6092",
+          "content_sha256": "8fc32f5cd60fd435e5b16d68771d1c2d86812fefba4c9baa9a64931f5e274f71",
+          "kind": "reproducibility_evidence",
+          "path": "assets/whale-sources/studies/evaluator-v2/sensitivity-report.json",
+          "repository": "heimgewebe/audio",
+          "source_ref": "git-archive:heimgewebe/audio@734ed786ddd5568c82962008730f408e33e91333",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T030"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "task_receipt",
+          "receipt_sha256": "7c91dd20b38816aa73a6668ac194155ad32406b5bbc392f5395fb3e4727120da",
+          "repository": "heimgewebe/audio",
+          "run_id": "local-full-check",
+          "source_ref": "grabowski-job:final-local-579-tests@734ed786ddd5568c82962008730f408e33e91333",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T030"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
     "relationship_to_program": {
       "T016": "T030 ersetzt weder die physische Klangabnahme noch das Nutzerurteil am Roland/MOTU/Focal-Pfad.",
       "T029": "T030 verändert oder reinterpretiert die eingefrorene T029-Studie nicht, sondern liefert eine neue Evaluatorgeneration für spätere Studien."
@@ -116,7 +202,23 @@
       "study_merge_commit": "704e2aff6ea9ed28fa45a43c0e183a99b4aedb49",
       "study_pull_request": 43
     },
-    "source_task": "AUDIO-CONTROL-PLANE-V1-T029"
+    "source_task": "AUDIO-CONTROL-PLANE-V1-T029",
+    "validated_acceptance": {
+      "controlled-reference-corpus": "PASS: deterministic tones, missing fundamental, pulse, noise, ship-noise mixture, boundary case and prior independent whale annotation all pass.",
+      "determinism-and-isolation": "PASS: reports reproduce byte-identically from git archive without .git; artifact SHA-256 values are bound.",
+      "locked-external-test-only": "PASS: locked manifests and audio bytes were unchanged and do not enter model building, runtime selection or live engine paths.",
+      "low-bandwidth-stratum": "PASS: American Samoa high-band ratio is unavailable and is neither imputed nor reweighted.",
+      "noise-aware-voicing": "PASS: uncertain and boundary frames are explicitly unvoiced; locked external evaluation reports zero voiced boundary hits.",
+      "old-new-sensitivity-report": "PASS: canonical segment- and recording-visible report reproduces legacy 36/40/34 and documents Alaska as fully boundary-ambiguous.",
+      "preregister-evaluator-contract": "PASS: definition was committed in a8d15d1 and refined on controlled data in bfe237b before the first external v2 evaluation.",
+      "quality-gate": "PASS: 579 repository tests, focused tests, Ruff, py_compile, compileall, diff check, PR CI and main push CI succeeded.",
+      "reproduce-search-bound-saturation": "PASS: legacy voiced lag-3 counts 36/40/34 reproduced exactly and explicitly treated as search-bound artifacts, not reliable F0."
+    },
+    "verification": {
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
+      "task_sha256": "013bcbef4049f94d77c36044c75e671f1e4d7b65af519260dac1d18e281215b7"
+    },
+    "verified_at": "2026-08-03T05:27:00Z"
   },
   "priority": {
     "lane": "next",
@@ -141,6 +243,6 @@
     "strategy": "Evaluatoränderungen bleiben in einem isolierten Audio-Worktree. Bei verletzter External-Blindness, nicht reproduzierbaren Ergebnissen oder Regressionen werden nur task-eigene Commits beziehungsweise der Task-PR zurückgenommen; T029, PR #43 und die gesperrten Artefakte bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Buckelwal-Evaluator gegen F0-Suchrandsättigung härten"
 }

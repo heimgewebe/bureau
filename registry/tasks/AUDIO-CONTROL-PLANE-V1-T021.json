@@ -1,64 +1,77 @@
 {
-  "schema_version": 1,
-  "id": "AUDIO-CONTROL-PLANE-V1-T021",
-  "initiative": "AUDIO-CONTROL-PLANE-V1",
-  "title": "Passive Audio- und MIDI-Livetelemetrie integrieren",
-  "state": "planned",
-  "goal": "Einen begrenzten, absturzisolierten Telemetriepfad für Peak, RMS, MIDI, Transport, CPU, XRuns und Geräteereignisse bauen, der reversible Beobachtungsknoten nutzen darf, aber keine produktiven Routen oder Defaults verändert.",
+  "acceptance": [
+    {
+      "assertion": "Langsame Systemwahrheit, Telemetrie und Darstellung besitzen getrennte Sequenz-, Frische- und Fehlersemantik.",
+      "evidence_type": "object",
+      "id": "separate-streams"
+    },
+    {
+      "assertion": "Queues sind begrenzt; alte Telemetrie darf verworfen werden, Befehle und Zustandsänderungen nicht.",
+      "evidence_type": "object",
+      "id": "bounded-backpressure"
+    },
+    {
+      "assertion": "Eigene Beobachtungsknoten und Links sind eindeutig identifiziert, reversibel und verändern keine Defaults oder produktiven Signalwege.",
+      "evidence_type": "object",
+      "id": "passive-pipewire"
+    },
+    {
+      "assertion": "Achtstündiger passiver Soak und einstündige Lastprobe verursachen keine der Anwendung zurechenbaren XRuns oder ungebremste Speicher-/CPU-Zunahme.",
+      "evidence_type": "object",
+      "id": "soak"
+    },
+    {
+      "assertion": "UI- oder Streamverlust beendet Audio nicht und wird sichtbar als stale/unavailable ausgewiesen.",
+      "evidence_type": "object",
+      "id": "degradation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T020"
   ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Einen begrenzten, absturzisolierten Telemetriepfad für Peak, RMS, MIDI, Transport, CPU, XRuns und Geräteereignisse bauen, der reversible Beobachtungsknoten nutzen darf, aber keine produktiven Routen oder Defaults verändert.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T021",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [],
+    "plan": {
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "repository": "heimgewebe/audio"
+    },
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "unblocked_at": "2026-08-03T15:03:53+02:00",
+    "unblocked_by": {
+      "merge_commit": "d6ccab393de05ad9ce86228ac14bfca12b785a08",
+      "source_ref": "heimgewebe/audio#46",
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T020"
+    }
+  },
   "priority": {
     "lane": "next",
     "rank": 21
   },
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/audio",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/audio"
-    ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
-    }
-  },
-  "claims": [
-    {
-      "resource": "repo.audio",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
-  "acceptance": [
-    {
-      "id": "separate-streams",
-      "assertion": "Langsame Systemwahrheit, Telemetrie und Darstellung besitzen getrennte Sequenz-, Frische- und Fehlersemantik.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "bounded-backpressure",
-      "assertion": "Queues sind begrenzt; alte Telemetrie darf verworfen werden, Befehle und Zustandsänderungen nicht.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "passive-pipewire",
-      "assertion": "Eigene Beobachtungsknoten und Links sind eindeutig identifiziert, reversibel und verändern keine Defaults oder produktiven Signalwege.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "soak",
-      "assertion": "Achtstündiger passiver Soak und einstündige Lastprobe verursachen keine der Anwendung zurechenbaren XRuns oder ungebremste Speicher-/CPU-Zunahme.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "degradation",
-      "assertion": "UI- oder Streamverlust beendet Audio nicht und wird sichtbar als stale/unavailable ausgewiesen.",
-      "evidence_type": "object"
-    }
-  ],
   "required_capabilities": [
     "repository",
     "git",
@@ -74,14 +87,7 @@
   "rollback": {
     "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
   },
-  "metadata": {
-    "registered_at": "2026-08-02T07:46:00+02:00",
-    "plan": {
-      "repository": "heimgewebe/audio",
-      "path": "docs/plans/audiozentrale-product-v2.md",
-      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
-      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
-    },
-    "does_not_establish": []
-  }
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Passive Audio- und MIDI-Livetelemetrie integrieren"
 }

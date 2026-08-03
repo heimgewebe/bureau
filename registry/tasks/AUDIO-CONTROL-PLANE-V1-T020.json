@@ -1,64 +1,215 @@
 {
-  "schema_version": 1,
-  "id": "AUDIO-CONTROL-PLANE-V1-T020",
-  "initiative": "AUDIO-CONTROL-PLANE-V1",
-  "title": "Read-only Produktoberfläche und Telemetrie-Replay bauen",
-  "state": "planned",
-  "goal": "Die bestehende Frontendbasis auf die vier Produktorte migrieren, progressive Inline- und Fokusansichten implementieren und deterministische Replaydaten für Pegel, MIDI, XRuns, Geräteverlust und Recovery darstellen, ohne echte Audioaktionen freizuschalten.",
+  "acceptance": [
+    {
+      "assertion": "Browser-Fallback und spätere App-Shell verwenden dasselbe gebaute Frontendpaket.",
+      "evidence_type": "object",
+      "id": "one-frontend"
+    },
+    {
+      "assertion": "Kompakt, inline erweitert und Fokus sind tastatur-, touch- und reduced-motion-tauglich; höchstens ein Fokus ist aktiv.",
+      "evidence_type": "object",
+      "id": "progressive-depth"
+    },
+    {
+      "assertion": "Beobachtet, konfiguriert, physisch offen und ausführbar bleiben in jeder Tiefe textlich unterscheidbar.",
+      "evidence_type": "object",
+      "id": "truth-visible"
+    },
+    {
+      "assertion": "Replaysequenzen sind schema- und hashgebunden, deterministisch und decken Normalbetrieb, Clip, XRun, Geräteverlust, stale Telemetrie und Recovery ab.",
+      "evidence_type": "object",
+      "id": "replay-deterministic"
+    },
+    {
+      "assertion": "Der Task verändert weder Defaults noch PipeWire-Routen, startet keine Aufnahme und aktiviert kein Instrument.",
+      "evidence_type": "object",
+      "id": "no-live-effect"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T019"
   ],
-  "priority": {
-    "lane": "next",
-    "rank": 20
-  },
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/audio",
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate.",
+      "required_level": "operator"
+    },
     "grabowski_resources": [
       "repo:/home/alex/repos/audio"
     ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
-    }
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
   },
-  "claims": [
-    {
-      "resource": "repo.audio",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
-  "acceptance": [
-    {
-      "id": "one-frontend",
-      "assertion": "Browser-Fallback und spätere App-Shell verwenden dasselbe gebaute Frontendpaket.",
-      "evidence_type": "object"
+  "goal": "Die bestehende Frontendbasis auf die vier Produktorte migrieren, progressive Inline- und Fokusansichten implementieren und deterministische Replaydaten für Pegel, MIDI, XRuns, Geräteverlust und Recovery darstellen, ohne echte Audioaktionen freizuschalten.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T020",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "physische Audioqualität oder subjektive Hörabnahme",
+      "Aufnahmefähigkeit mit MOTU M2 oder RØDE NT1-A",
+      "physische Roland-FP-30X-Abnahme",
+      "Abschluss von AUDIO-CONTROL-PLANE-V1-T021 oder späteren Phasen"
+    ],
+    "evidence_reconciled_at": "2026-08-03T15:03:53+02:00",
+    "outcome": "Audio PR #46 liefert die gemeinsame read-only Audiozentrale mit vier Produktorten, progressiven Darstellungstiefen und deterministischem, nicht autoritativem Telemetrie-Replay. Die nachgelagerten Deploykorrekturen PR #49 und #50 beseitigen die AF_NETLINK- und Marker-Migrationsblockaden. Der aktuelle Audio-main wurde vollständig mit 585/585 Tests geprüft; die lokale Laufzeit dient exakt diesen Main-Stand, und Health sowie Replay wurden live zurückgelesen.",
+    "plan": {
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "repository": "heimgewebe/audio"
     },
-    {
-      "id": "progressive-depth",
-      "assertion": "Kompakt, inline erweitert und Fokus sind tastatur-, touch- und reduced-motion-tauglich; höchstens ein Fokus ist aktiv.",
-      "evidence_type": "object"
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "base_sha": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+          "diff_sha256": "82b68d45209f7c9846d989ba3160cb40bff1f0a515620ca6d2189593b9640f1c",
+          "head_sha": "b16ae60f0f802638ae2db6f9f176c22fec14a922",
+          "kind": "pull_request",
+          "merge_commit_sha": "d6ccab393de05ad9ce86228ac14bfca12b785a08",
+          "number": 46,
+          "source_ref": "heimgewebe/audio#46",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T020"
+        },
+        {
+          "authority": "github_actions",
+          "commit_sha": "b16ae60f0f802638ae2db6f9f176c22fec14a922",
+          "kind": "test_run",
+          "result": "safety-success",
+          "source_ref": "github-actions:heimgewebe/audio#46:safety",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T020",
+          "workflow_run_id": 30745415922
+        },
+        {
+          "authority": "heim-pc",
+          "commit_sha": "67f345aedd059e60f5362e163b286b8a5a1fd57c",
+          "kind": "test_run",
+          "receipt_sha256": "b9db2fe22248630393312f7f744184d20e6657a85390dd9fd84993884172ad3e",
+          "result": "585-of-585-and-contracts-pass",
+          "source_ref": "grabowski-task:5d7cb5b0fc914e088ede9fab",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T020"
+        },
+        {
+          "authority": "heim-pc",
+          "commit_sha": "67f345aedd059e60f5362e163b286b8a5a1fd57c",
+          "kind": "deployment_receipt",
+          "result": "current-serving",
+          "source_ref": "audio-control-deploy:latest",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T020"
+        },
+        {
+          "authority": "heim-pc",
+          "catalog_sha256": "6e7e1d82107a17116ff9bc3412a47d764bc0f0ab7341ee9d03bc821f916bd55b",
+          "commit_sha": "67f345aedd059e60f5362e163b286b8a5a1fd57c",
+          "kind": "runtime_readback",
+          "result": "six-scenario-synthetic-replay-serving",
+          "source_ref": "http://127.0.0.1:8765/api/v1/replay",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T020"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
     },
-    {
-      "id": "truth-visible",
-      "assertion": "Beobachtet, konfiguriert, physisch offen und ausführbar bleiben in jeder Tiefe textlich unterscheidbar.",
-      "evidence_type": "object"
+    "unblocked_at": "2026-08-02T10:55:47+02:00",
+    "unblocked_by": {
+      "merge_commit": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+      "source_ref": "heimgewebe/audio#45",
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T019"
     },
-    {
-      "id": "replay-deterministic",
-      "assertion": "Replaysequenzen sind schema- und hashgebunden, deterministisch und decken Normalbetrieb, Clip, XRun, Geräteverlust, stale Telemetrie und Recovery ab.",
-      "evidence_type": "object"
+    "validated_acceptance": {
+      "no-live-effect": "PASS: Das Replay meldet authority=synthetic-replay und authoritative=false. Die Produktoberfläche enthält keine Audioaktionsaufrufe; der Abschluss veränderte weder PipeWire-Routen noch Defaults, Aufnahme oder Instrumentausgabe.",
+      "one-frontend": "PASS: Browser-Fallback und Produktoberfläche stammen aus demselben atomar veröffentlichten UI-Paket; der laufende Dienst liefert die statischen Dateien aus Release 67f345aedd059e60f5362e163b286b8a5a1fd57c.",
+      "progressive-depth": "PASS: Kompakt, erweitert und Fokus sind im Produktvertrag vollständig gebunden. Der revisionsgebundene Browser-Smoke von PR #46 prüfte Tastatur, Touchziele, Fokuswiederherstellung und reduzierte Bewegung; die aktuelle Vollsuite bleibt grün.",
+      "replay-deterministic": "PASS: Das Replay ist an Schema-, Katalog- und Produktmodell-Hashes gebunden und liefert 48 Frames für normal, clip, xrun, device-loss, stale-telemetry und recovery.",
+      "truth-visible": "PASS: observed, configured, physical-open und executable bleiben im maschinenlesbaren Produktmodell orthogonal und textlich unterscheidbar; der aktuelle Contract-Check meldet alle vier Ebenen."
     },
-    {
-      "id": "no-live-effect",
-      "assertion": "Der Task verändert weder Defaults noch PipeWire-Routen, startet keine Aufnahme und aktiviert kein Instrument.",
-      "evidence_type": "object"
-    }
-  ],
+    "verification": {
+      "base_commit": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+      "deployment": {
+        "deploy_service_result": "success",
+        "health_authority": "local-backend",
+        "health_status": "serving",
+        "readback_at": "2026-08-03T14:52:28+02:00",
+        "runtime_commit": "67f345aedd059e60f5362e163b286b8a5a1fd57c",
+        "runtime_contains_reviewed_head": true,
+        "service": "audio-control-ui-v1.service",
+        "service_state": "active-running",
+        "source_ref": "audio-control-deploy:latest",
+        "status": "current-serving",
+        "timer": "audio-control-deploy.timer",
+        "timer_state": "active-running"
+      },
+      "deployment_repairs": [
+        {
+          "head_commit": "cd10db66a250e3ca391f2ffd7c7e4c7ed912195d",
+          "merge_commit": "fe80b6679d0c1e5c0f9d5cf6fdb8da38202c3579",
+          "pull_request": 49,
+          "purpose": "AF_NETLINK ausschließlich für den Deploy-Dienst erlauben"
+        },
+        {
+          "head_commit": "e77a5f9f591c18e7caa906b2a89b44eaa7ad73cb",
+          "merge_commit": "7f5de247683c394cc981f99ea2aa1c92f18b90f8",
+          "pull_request": 50,
+          "purpose": "erweiterten Release-Marker sicher und atomar migrieren"
+        }
+      ],
+      "final_diff_bytes": 123587,
+      "final_diff_sha256": "82b68d45209f7c9846d989ba3160cb40bff1f0a515620ca6d2189593b9640f1c",
+      "github_required_check": {
+        "safety": "success",
+        "workflow_run_id": 30745415922
+      },
+      "local_validation": {
+        "audio_safety_contract": "pass",
+        "compileall": "pass",
+        "durable_task_id": "5d7cb5b0fc914e088ede9fab",
+        "product_model_contract": "pass",
+        "receipt_sha256": "b9db2fe22248630393312f7f744184d20e6657a85390dd9fd84993884172ad3e",
+        "repository_tests": "585/585 pass",
+        "telemetry_replay_contract": "pass",
+        "terminalization_sha256": "cbbe364ae55601673965800ac4fbb1e8ac2c2a7e34059e9569dbde43b1c11a0d"
+      },
+      "merge_commit": "d6ccab393de05ad9ce86228ac14bfca12b785a08",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
+      "pull_request": 46,
+      "replay_contract": {
+        "authoritative": false,
+        "authority": "synthetic-replay",
+        "catalog_sha256": "6e7e1d82107a17116ff9bc3412a47d764bc0f0ab7341ee9d03bc821f916bd55b",
+        "frame_count": 48,
+        "product_model_sha256": "87a36ce5cae399069adae5ad7b7b4fd015e2df5f71ed117dd950286d284e6d6f",
+        "scenario_ids": [
+          "normal",
+          "clip",
+          "xrun",
+          "device-loss",
+          "stale-telemetry",
+          "recovery"
+        ],
+        "schema_sha256": "35d57824c190a0fff810bcf0c31840328415618d218aafa98bf4871a921157fe"
+      },
+      "repository": "heimgewebe/audio",
+      "reviewed_head": "b16ae60f0f802638ae2db6f9f176c22fec14a922",
+      "source": "github_pull_request_exact_head_post_merge_tests_and_runtime_readback",
+      "source_ref": "github-pr:heimgewebe/audio#46;grabowski-task:5d7cb5b0fc914e088ede9fab;audio-control-deploy:latest",
+      "task_sha256": "e4e1b35461a71f32e5c70ccf58ab27a4ed4d3bae55d46686b757f118e7a618e1"
+    },
+    "verified_at": "2026-08-03T15:03:53+02:00"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
   "required_capabilities": [
     "repository",
     "git",
@@ -73,20 +224,7 @@
   "rollback": {
     "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
   },
-  "metadata": {
-    "registered_at": "2026-08-02T07:46:00+02:00",
-    "plan": {
-      "repository": "heimgewebe/audio",
-      "path": "docs/plans/audiozentrale-product-v2.md",
-      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
-      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
-    },
-    "does_not_establish": [],
-    "unblocked_at": "2026-08-02T10:55:47+02:00",
-    "unblocked_by": {
-      "task_id": "AUDIO-CONTROL-PLANE-V1-T019",
-      "merge_commit": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
-      "source_ref": "heimgewebe/audio#45"
-    }
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Read-only Produktoberfläche und Telemetrie-Replay bauen"
 }

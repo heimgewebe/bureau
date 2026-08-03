@@ -35,7 +35,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.weltgewebe"
+      "resource": "component.weltgewebe.report-truth-contract"
     }
   ],
   "depends_on": [],
@@ -49,7 +49,15 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/weltgewebe",
     "grabowski_resources": [
-      "path:/home/alex/repos/weltgewebe/scripts/docmeta",
+      "path:/home/alex/repos/weltgewebe/contracts/audit-report-truth.schema.json",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/report_lifecycle_requirements.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle_inventory.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/validate_report_lifecycle.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_report_lifecycle_requirements.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle_inventory.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_validate_report_lifecycle.py",
       "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle.md",
       "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle-inventory.md"
     ]
@@ -95,7 +103,40 @@
     "source": "operator_followup_from_weltgewebe_pr_1672",
     "source_head": "cdb54f957da49d4ded34b568c72f6140acfb1f45",
     "source_pr": "heimgewebe/weltgewebe#1672",
-    "source_sha256": "6aa171aa50b6bf44dddc6c93032ec569ce697be298b5d6cbbc19c9349fa2ac77"
+    "source_sha256": "6aa171aa50b6bf44dddc6c93032ec569ce697be298b5d6cbbc19c9349fa2ac77",
+    "scope_refinement": {
+      "schema_version": 1,
+      "kind": "exact-path-work-admission",
+      "refined_at": "2026-08-03T10:22:00Z",
+      "component_resource": "component.weltgewebe.report-truth-contract",
+      "reference_task": "WELTGEWEBE-OS-V1-T052",
+      "grabowski_resources": [
+        "path:/home/alex/repos/weltgewebe/contracts/audit-report-truth.schema.json",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/report_lifecycle_requirements.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/generate_report_lifecycle_inventory.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/validate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_report_lifecycle_requirements.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_generate_report_lifecycle_inventory.py",
+        "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_validate_report_lifecycle.py",
+        "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle.md",
+        "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle-inventory.md"
+      ],
+      "basis": "T065 extends the existing report-truth contract on the same central schema, generators, validator, tests and generated inventories. Repository-wide admission is unnecessary and blocked by unrelated foreign lifecycle state.",
+      "preserves": [
+        "worktree isolation",
+        "review-before-effect",
+        "all T065 acceptance criteria",
+        "existing task identity and queue position"
+      ],
+      "does_not_establish": [
+        "permission to modify foreign worktrees",
+        "scope outside the listed paths",
+        "task completion",
+        "merge readiness"
+      ]
+    }
   },
   "priority": {
     "lane": "next",

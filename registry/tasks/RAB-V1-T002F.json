@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "RAB-V1-T002F",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
-  "title": "Authorize and run one fresh live pair after contract hardening",
-  "state": "blocked",
+  "title": "Superseded live-pair attempt before executable hardening",
+  "state": "superseded",
   "goal": "After RAB-V1-T002E is merged and verified, prepare a new immutable pair and seek a separate reviewed authorization for exactly one baseline and one treatment process with no retry.",
   "priority": {
     "lane": "next",
@@ -270,6 +270,14 @@
       }
     },
     "state_reason": "The fresh one-shot authorization was consumed by an unambiguous launch. The preflight ledger then failed before any condition or provider intent because the current 259,820,344-byte Claude executable exceeds the runner hard limit of 67,108,864 bytes. No provider process, model response or cost occurred; no retry is permitted.",
-    "next_task": "RAB-V1-T002G"
+    "next_task": "RAB-V1-T002G",
+    "superseded_at": "2026-08-03T09:25:55Z",
+    "superseded_by": "RAB-V1-T002H",
+    "supersession_reason": "RAB-V1-T002G verified the executable-identity hardening required after the T002F path was defined. RAB-V1-T002H is the existing fresh, no-reuse successor bound to the post-T002G state and a separate authorization. Executing T002F now would bypass that stronger boundary and duplicate the intended live-pair stage.",
+    "does_not_establish": [
+      "provider-backed pair completion",
+      "authorization for RAB-V1-T002H",
+      "completion of RAB-V1-T002"
+    ]
   }
 }

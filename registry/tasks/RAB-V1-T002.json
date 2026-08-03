@@ -10,7 +10,7 @@
     "rank": 21
   },
   "depends_on": [
-    "RAB-V1-T002F"
+    "RAB-V1-T002H"
   ],
   "claims": [
     {
@@ -100,6 +100,12 @@
       "exactly one valid fresh baseline/treatment pair is completed without retry",
       "T002F evidence is verified in Bureau"
     ],
-    "benchmark_execution_status": "not_started"
+    "benchmark_execution_status": "not_started",
+    "dependency_convergence": {
+      "changed_at": "2026-08-03T09:25:55Z",
+      "former_dependency": "RAB-V1-T002F",
+      "current_dependency": "RAB-V1-T002H",
+      "reason": "T002H is the existing post-T002G fresh-pair successor; T002F is superseded and must not remain the aggregate benchmark gate."
+    }
   }
 }

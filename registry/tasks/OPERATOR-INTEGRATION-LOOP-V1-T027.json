@@ -6,8 +6,8 @@
   "goal": "Erzeuge für das weiterhin sinnvolle geschlossene Aussensensor-Update auf AJV ~8.20.0 aus PR #158 einen frischen Ersatz-PR vom aktuellen origin/main und belege Schema-, Laufzeit- und Artefaktkompatibilität auf dem exakten Ersatz-Head.",
   "state": "ready",
   "priority": {
-    "lane": "next",
-    "rank": 26
+    "lane": "now",
+    "rank": 3
   },
   "depends_on": [],
   "required_capabilities": [

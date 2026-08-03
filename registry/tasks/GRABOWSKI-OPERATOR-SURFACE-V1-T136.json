@@ -77,8 +77,8 @@
     ]
   },
   "priority": {
-    "lane": "next",
-    "rank": 2
+    "lane": "now",
+    "rank": 1
   },
   "required_capabilities": [
     "repository",

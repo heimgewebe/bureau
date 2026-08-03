@@ -6,8 +6,8 @@
   "goal": "Erzeuge für die weiterhin sinnvollen geschlossenen Contracts-Mirror-Updates aus PR #54 und #55 einen frischen Ersatzpfad vom aktuellen origin/main und belege Mirror-Synchronität, Vertragskonsistenz sowie frische CI für Python 3.14 und actions/cache v6.",
   "state": "ready",
   "priority": {
-    "lane": "next",
-    "rank": 25
+    "lane": "now",
+    "rank": 2
   },
   "depends_on": [],
   "required_capabilities": [

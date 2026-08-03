@@ -1,0 +1,115 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A deterministic, versioned manifest-v2 root points to bounded child indexes and leaf shard descriptors instead of embedding the complete shard directory; every node carries exact counts, content digests, path/version binding and canonical ordering, and the 100k schema-realistic fixture stays within the contract root and node transfer budgets.",
+      "evidence_type": "object",
+      "id": "hierarchical-manifest-v2"
+    },
+    {
+      "assertion": "A versioned aggregate-v2 root exposes bounded, demand-loadable geographic and digital summary segments without embedding the complete 100k aggregate; segment membership, totals and digests reconcile exactly with the generated catalogue and shard hierarchy.",
+      "evidence_type": "object",
+      "id": "hierarchical-aggregate-v2"
+    },
+    {
+      "assertion": "The catalogue runtime accepts the existing manifest-v1 and aggregate-v1 contract unchanged and supports manifest-v2 and aggregate-v2 through explicit version dispatch; search, map and digital navigation request only required hierarchy nodes and segments, reject unknown versions, and fail closed with bounded recovery when a node is missing, corrupt or digest-mismatched.",
+      "evidence_type": "object",
+      "id": "v1-v2-runtime-compatibility"
+    },
+    {
+      "assertion": "The current two-hex runtime and visible build-bound bootstrap remain the default delivery path. A machine-readable migration and rollback guard prevents v2 cutover or bootstrap removal until all deterministic, browser-budget and physical-device evidence gates are satisfied; this task does not claim the physical-device gate itself.",
+      "evidence_type": "object",
+      "id": "rollback-and-cutover-guard"
+    },
+    {
+      "assertion": "Schema-realistic deterministic 1k, 10k and 100k fixtures validate hierarchy integrity, old-manifest compatibility, rollback and exact transfer and request budgets. Public-browser tests prove demand-loaded search, map and digital flows on the exact implementation head without eager transfer of the complete manifest or aggregate.",
+      "evidence_type": "object",
+      "id": "scale-and-browser-evidence"
+    },
+    {
+      "assertion": "Canonical generators, contracts, source runtime assets, generated public pages, immutable release output, architecture documentation and evidence files agree on one exact versioned hierarchy contract and are regenerated deterministically.",
+      "evidence_type": "object",
+      "id": "generated-release-parity"
+    },
+    {
+      "assertion": "The exact published head passes focused JavaScript and Python tests, full repository validation, browser smoke, git diff checks, diff-bound self-review and all required GitHub checks; material review findings are resolved before merge. Runtime cutover, bootstrap removal and production deployment remain outside this task.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly requested implementation of the next Commonworld task through Grabowski on 2026-08-03. Work must use an isolated coordinated worktree and must not touch the foreign dirty canonical checkout.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Introduce a versioned, backward-compatible hierarchical Commonworld catalogue manifest and aggregate contract that can use deeper SHA-256 shard prefixes without transferring a flat directory of thousands of descriptors, while preserving the current two-hex runtime and build-bound bootstrap until the new path is fully proven.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T039",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "runtime cutover",
+      "bootstrap removal",
+      "backend introduction",
+      "PostGIS or PMTiles adoption",
+      "production deployment",
+      "physical iPad Safari performance approval",
+      "permission to modify the foreign dirty canonical checkout or its lifecycle"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-6779fc963ae8b8dd092b2af5",
+      "does_not_establish": [
+        "queue truth",
+        "task readiness before Registry publication",
+        "claim or dispatch authority"
+      ],
+      "event_id": 2321,
+      "request_sha256": "4b42f098ec8c2225613339260e5f663a18b781e109abe69270d739a8e3b41e92",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "merged-repository-evidence",
+        "locator": "github:heimgewebe/commonworld#183@606efe727904a414c406a1ed95345e4c3ca32b3a;path:docs/evidence/catalog-platform-scaling-v1.json",
+        "observed_at": "2026-08-03T07:50:25+02:00",
+        "sha256": "8b3216ba57f18fdb410138d6d16eb3d00f5c150ed52f08da12715c923b84fc17"
+      }
+    },
+    "queue_mutated": false,
+    "registered_at": "2026-08-03",
+    "source": "Merged Commonworld PR #183 scale evidence",
+    "source_main": "606efe727904a414c406a1ed95345e4c3ca32b3a",
+    "source_pull_request": 183,
+    "source_repository": "heimgewebe/commonworld"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 31
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "git",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Introduce a hierarchical catalogue manifest and aggregate before 100k scale"
+}

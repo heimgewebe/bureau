@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
-  "state": "planned",
+  "state": "superseded",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -27,14 +27,59 @@
     "registered_from_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
     "registered_at": "2026-07-25T09:23:59+02:00",
     "residue_path": "/home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build",
-    "current_classification": "unknown",
-    "current_policy": "fail-closed; untouched",
+    "current_classification": "durable-retain-active",
+    "current_policy": "fail-closed; retained under exact recovery-bound decision; automatic mutation unauthorized",
     "does_not_establish": [
       "the residue is stale",
       "publisher ownership",
       "permission to delete, reset, quarantine or adopt the residue",
       "absence of future process or lease references"
-    ]
+    ],
+    "supersession": {
+      "schema_version": 1,
+      "superseded_at": "2026-08-03T19:31:00+02:00",
+      "superseded_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053",
+      "reason": "T053 completed the same exact managed Grabowski source lifecycle decision after T012 was registered. It established a recovery-bound durable-retain decision and both targeted and scheduled Fleet readbacks, so executing T012 again would duplicate an already terminal operation and risk conflicting lifecycle evidence.",
+      "evidence": {
+        "repoground_pull_request": {
+          "repository": "heimgewebe/repoground",
+          "number": 1102,
+          "head_sha": "d7f33581c7db184d1db496b3e06199f43e187cbb",
+          "merge_commit_sha": "2afc2836fa1a49a593c7b57eda43086844e8fb2b"
+        },
+        "retain_decision": {
+          "path": "/home/alex/.local/state/repoground-publish/fleet/managed-build-retain-decisions/4125d91b5db044c3eb2dbd8719a976dd1c0524f20d14bdd218901c0cca8ea49d.json",
+          "file_sha256": "2dbd8342b5a019cf97f854d135bfd8afffde7d909c56e98875911750cd0d716c",
+          "decision_sha256": "a36ca47caf1a862ee4cb58fe8a6c84bae389e31a86007686dff7dd5f3c640518",
+          "review_after": "2026-08-24T12:00:00+02:00"
+        },
+        "recovery_manifest": {
+          "path": "/home/alex/.local/state/grabowski/checkout-archives/20260723T032909Z-a428cc9cd7b5/manifest.json",
+          "sha256": "e31ba7e409be0860021181f3cc8f98d2ea9f5b6f371e11e63e02d1fff2ff1d86"
+        },
+        "targeted_fleet_job": {
+          "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-e939ca6f0d78/finalization.json",
+          "sha256": "0982bfef62a881ac89b7c9136d8cd3b5dcb0f4a3d7ca8302c24745ea1a681772"
+        },
+        "scheduled_fleet_job": {
+          "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-9104a68b85c5/finalization.json",
+          "sha256": "e64a38418b66dacd078b9e67723368533010b0f2bc7b7df15cd0e73ff94a002c"
+        }
+      },
+      "acceptance_mapping": {
+        "immutable-snapshot": "Satisfied by T053's exact repository, ref, tree and build snapshot binding plus the immutable checkout archive manifest.",
+        "owner-provenance": "Publisher provenance remained unresolved; T053 therefore chose durable retention instead of inventing ownership or authorizing cleanup.",
+        "live-safety": "T053 bound the decision to process checks, an empty exact lease set and an intact recovery ref; automatic mutation remains false.",
+        "bounded-disposition": "The source is durable-retain-active until the bounded review date. It was neither deleted, reset, quarantined nor adopted.",
+        "publisher-readback": "A targeted Fleet run and the regular systemd Fleet watch both reported retained=1 and failed=0."
+      },
+      "does_not_establish": [
+        "a new live observation on 2026-08-03",
+        "permission to mutate the retained source",
+        "absence of future identity, process, lease or byte drift",
+        "completion of unrelated RepoGround tasks"
+      ]
+    }
   },
   "id": "REPOGROUND-AGENT-UTILITY-V1-T012",
   "title": "Unbekannten Grabowski-Buildrest eigentümergebunden entscheiden",

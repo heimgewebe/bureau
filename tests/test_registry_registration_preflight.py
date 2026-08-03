@@ -386,7 +386,7 @@ def test_merge_group_registry_preflight_is_separate_and_unprivileged():
     assert "github.event.pull_request" not in text
 
 
-def test_validate_workflow_has_merge_group_and_registry_only_fast_path():
+def test_validate_workflow_has_merge_group_and_registry_fast_paths():
     root = Path(__file__).resolve().parents[1]
     text = (root / ".github/workflows/validate.yml").read_text()
     required = [
@@ -396,18 +396,27 @@ def test_validate_workflow_has_merge_group_and_registry_only_fast_path():
         "Classify validation scope",
         "github.event.merge_group.base_sha",
         "github.event.merge_group.head_sha",
-        "git diff --name-status --diff-filter=ACMRTD",
-        "^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}",
-        "steps.scope.outputs.registry_only != 'true'",
+        "git show \"${base_sha}:src/bureau/validation_scope.py\"",
+        "classifier_path=\"${RUNNER_TEMP}/bureau-validation-scope.py\"",
+        "python \"${classifier_path}\"",
+        "scope_kind=full",
+        "full|task-only|queue-only",
+        "Install full validation dependencies",
+        "steps.scope.outputs.scope_kind == 'full'",
         "run: make validate",
-        "steps.scope.outputs.registry_only == 'true'",
+        "Install Registry fast-path dependencies",
+        "steps.scope.outputs.scope_kind != 'full'",
+        "Validate Registry task-only change",
+        "steps.scope.outputs.scope_kind == 'task-only'",
+        "Validate Queue-only Registry change",
+        "steps.scope.outputs.scope_kind == 'queue-only'",
         "python -m bureau.cli --root . --json check",
     ]
     missing = [token for token in required if token not in text]
     assert not missing
-    assert "registry_only=false" in text
-    assert "changed_entries[@]" in text
-    assert '"${change_status}" != A && "${change_status}" != M' in text
+    assert "--diff-filter=ACMRTD" not in text
+    assert "registry_only" not in text
+    assert "PYTHONPATH=src python -m bureau.validation_scope" not in text
 
 
 def test_invalid_declared_approval_contract_blocks_registration() -> None:

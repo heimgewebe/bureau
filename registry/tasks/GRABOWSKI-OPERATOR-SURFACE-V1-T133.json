@@ -19,7 +19,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.grabowski",
+      "resource": "component.grabowski.task-reconcile-t133",
       "mode": "write",
       "isolation": "worktree"
     }

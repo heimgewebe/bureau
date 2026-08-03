@@ -1,0 +1,23 @@
+{
+  "id": "component.grabowski.task-reconcile-t133",
+  "metadata": {
+    "canonical_paths": [
+      "docs/root-task-lifetime-v1.md",
+      "docs/task-attention-decisions-v1.md",
+      "src/grabowski_resources.py",
+      "src/grabowski_tasks.py",
+      "tests/test_resources.py",
+      "tests/test_tasks.py"
+    ],
+    "does_not_establish": [
+      "repository-wide mutation authority",
+      "ownership of foreign Grabowski worktrees",
+      "scope outside the listed paths"
+    ],
+    "purpose": "Exact coordination scope for the bounded, resumable global task reconcile work in GRABOWSKI-OPERATOR-SURFACE-V1-T133.",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T133"
+  },
+  "parent": "repo.grabowski",
+  "schema_version": 1,
+  "type": "component"
+}

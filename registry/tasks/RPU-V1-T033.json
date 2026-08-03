@@ -3,7 +3,7 @@
   "id": "RPU-V1-T033",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Establish a scoped Ruff formatting baseline for RepoGround call navigation",
-  "state": "ready",
+  "state": "verified",
   "goal": "Resolve the current pinned-Ruff formatter drift in RepoGround call navigation through one AST-neutral test-file formatting change, then make the exact five-file format gate explicit in CI without changing runtime behavior or upgrading Ruff.",
   "depends_on": [
     "RPU-V1-T029"
@@ -122,6 +122,117 @@
         "repository-wide formatting",
         "queue or unrelated Bureau registry mutations"
       ]
+    },
+    "verified_at": "2026-08-01T21:34:59Z",
+    "implementation_branch": "bureau/rpu-v1-t033/76d987b64c",
+    "implementation_base": "90255dd02c9a5e4b3718ecdbfa26241b1414c169",
+    "implementation_head": "e2a0071fc83100b6e8540923b7b2810905714fd0",
+    "implementation_pr": "heimgewebe/repoground#1144",
+    "implementation_pr_url": "https://github.com/heimgewebe/repoground/pull/1144",
+    "implementation_result_commit": "6aeb0f15595422ac323f0155b748f97edf6bf886",
+    "integration_method": "merge",
+    "changed_paths": [
+      ".github/workflows/lint.yml",
+      "config/workflow-control-plane.v1.json",
+      "merger/repoground/tests/test_call_navigation.py"
+    ],
+    "self_review": {
+      "authority": "github_pull_request_review",
+      "review_id": "PRR_kwDOP0INTM8AAAABIDyo6w",
+      "submitted_at": "2026-08-01T21:29:12Z",
+      "bound_head": "e2a0071fc83100b6e8540923b7b2810905714fd0",
+      "verdict": "PASS",
+      "open_code_findings": 0
+    },
+    "validation": [
+      "Pinned Ruff 0.15.13 formatting changed only merger/repoground/tests/test_call_navigation.py; the normalized AST SHA-256 remained fc281b278a1641dccbde35b8dcc216c6f4402f3babca0774368f0200c76c8513.",
+      "Focused call-navigation suite: 59 tests passed.",
+      "GitHub Actions on implementation head e2a0071fc83100b6e8540923b7b2810905714fd0: lint, test-suite, CodeQL, contracts-validate, ai-context guard and task-index completed successfully.",
+      "PR #1144 changed exactly the three authorized paths and was merged without a Ruff upgrade or runtime-code change.",
+      "Current RepoGround main 633568ce1e0880b729ff48e4ff77fd6ae69b351f is seven commits ahead of merge commit 6aeb0f15595422ac323f0155b748f97edf6bf886 with that merge commit as merge base."
+    ],
+    "completion_summary": "RepoGround PR #1144 removed the remaining pinned-Ruff formatting drift from the call-navigation tests, added an exact five-file format gate to the lint workflow, refreshed the workflow identity inventory and preserved the normalized Python AST. The implementation is merged and remains contained in current RepoGround main.",
+    "verified_acceptance": {
+      "rpu-v1-t033-pinned-formatter": "PR #1144 used pinned Ruff 0.15.13; exactly one of the five bound call-navigation files changed and the final lint workflow checks all five explicitly.",
+      "rpu-v1-t033-semantic-neutrality": "The normalized AST SHA-256 stayed fc281b278a1641dccbde35b8dcc216c6f4402f3babca0774368f0200c76c8513; 59 focused tests and the full GitHub test-suite passed.",
+      "rpu-v1-t033-review-scope": "The merged PR changed exactly .github/workflows/lint.yml, config/workflow-control-plane.v1.json and merger/repoground/tests/test_call_navigation.py; the self-review found no open code findings.",
+      "rpu-v1-t033-gate-contract": "The lint workflow now runs ruff format --check over the exact five task-bound files and the workflow-control-plane fingerprint records lint.yml as ab95a80831cf4fc066258d342bbac484ba57f1ffc35fe52185ec57797163b26d with 1808 bytes.",
+      "rpu-v1-t033-delivery": "PR #1144 merged at the reviewed head after successful lint, test-suite, CodeQL, contracts-validate, ai-context guard and task-index runs; the merge commit remains an ancestor of current main."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RPU-V1-T033",
+          "number": 1144,
+          "source_ref": "heimgewebe/repoground#1144",
+          "base_commit_sha": "90255dd02c9a5e4b3718ecdbfa26241b1414c169",
+          "head_commit_sha": "e2a0071fc83100b6e8540923b7b2810905714fd0",
+          "merge_commit_sha": "6aeb0f15595422ac323f0155b748f97edf6bf886",
+          "changed_paths": [
+            ".github/workflows/lint.yml",
+            "config/workflow-control-plane.v1.json",
+            "merger/repoground/tests/test_call_navigation.py"
+          ]
+        },
+        {
+          "kind": "self_review",
+          "authority": "github",
+          "task_id": "RPU-V1-T033",
+          "source_ref": "heimgewebe/repoground#1144",
+          "review_id": "PRR_kwDOP0INTM8AAAABIDyo6w",
+          "head_commit_sha": "e2a0071fc83100b6e8540923b7b2810905714fd0",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "github_actions",
+          "authority": "github",
+          "task_id": "RPU-V1-T033",
+          "head_commit_sha": "e2a0071fc83100b6e8540923b7b2810905714fd0",
+          "successful_runs": [
+            {
+              "name": "contracts-validate",
+              "run_id": 30719214639
+            },
+            {
+              "name": "ai-context guard",
+              "run_id": 30719214456
+            },
+            {
+              "name": "task-index",
+              "run_id": 30719214440
+            },
+            {
+              "name": "lint",
+              "run_id": 30719214458
+            },
+            {
+              "name": "CodeQL",
+              "run_id": 30719214453
+            },
+            {
+              "name": "test-suite",
+              "run_id": 30719214427
+            }
+          ]
+        },
+        {
+          "kind": "main_readback",
+          "authority": "github",
+          "task_id": "RPU-V1-T033",
+          "source_ref": "heimgewebe/repoground@633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+          "merge_commit_sha": "6aeb0f15595422ac323f0155b748f97edf6bf886",
+          "merge_commit_is_ancestor": true,
+          "main_ahead_by": 7
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "36eb6dcf152e62f501507937f19ffcbae602132d85c13f0be1a745985ae4523c",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

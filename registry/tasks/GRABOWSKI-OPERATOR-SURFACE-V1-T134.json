@@ -1,37 +1,51 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Terminale Runtime-Refresh-Leases automatisch freigeben",
-  "goal": "Schließe die Durchsatzlücke, bei der ein erfolgreich terminalisierter Bureau-Runtime-Refresh seine exakt ownergebundenen Grabowski-Pfadleasing-Zeilen bis zum TTL-Ende belegt und dadurch den unmittelbar folgenden Deploy blockiert. Implementiere einen receiptgebundenen Normal- und Recovery-Pfad, der nur unveränderte Leases eines eindeutig terminalen Runtime-Refresh freigibt; aktive oder unklare Deploys bleiben fail-closed geschützt.",
-  "state": "ready",
-  "priority": {
-    "lane": "next",
-    "rank": 3
-  },
-  "depends_on": [],
-  "required_capabilities": [
-    "repository",
-    "python",
-    "sqlite",
-    "runtime-deployment",
-    "grabowski"
+  "acceptance": [
+    {
+      "assertion": "Ein hermetischer Reproducer erstellt einen Runtime-Refresh-Owner mit den fünf kanonischen Pfadleasing-Zeilen, bindet ein gültiges create-only Ergebnisreceipt mit status deployed und zeigt vor dem Fix, dass der nächste Deploy bis zum TTL-Ende blockiert bleibt.",
+      "id": "terminal-success-reproducer"
+    },
+    {
+      "assertion": "Der normale Runtime-Refresh-Orchestrierungspfad gibt nach eindeutigem Erfolg und nach eindeutigem Vorwirkungsabbruch seine exakten unveränderten Leases idempotent frei. Ergebnisreceipt, Owner, Taskbindung, Zielcommit, Ressourcenliste und Lease-Snapshot werden vor der Freigabe revalidiert.",
+      "id": "normal-path-release"
+    },
+    {
+      "assertion": "Der obsolete-path-lease-Reconciler oder ein gleichwertiger typisierter Recovery-Pfad akzeptiert ein explizites Runtime-Refresh-Terminalformat. Er prüft Receipt-Digest, Schema, Status, Zielhash, Source- und Merge-Commit, Owner, unveränderte Lease-Zeilen und die kanonische Runtime-Refresh-State-Root; frei übergebene Statusbehauptungen genügen nicht.",
+      "id": "recovery-terminal-source"
+    },
+    {
+      "assertion": "Fehlendes, manipuliertes, widersprüchliches oder nichtterminales Receipt sowie Prozessverlust zwischen Wirkung und Ergebnis bleiben fail-closed. In unklaren Fällen werden Leases erhalten und eine begrenzte Recovery-Diagnose ausgegeben; Force-Release ist kein automatischer Fallback.",
+      "id": "ambiguous-outcome-protection"
+    },
+    {
+      "assertion": "Ein parallel aktiver Deploy mit gleichem oder anderem Owner, erneuerte Lease-Zeitstempel, abweichende Metadaten oder nicht exakt passende Ressourcen werden niemals freigegeben. Negative Tests decken Fremdowner, Receipt-Replay, Ziel-Drift und Teilmengen ab.",
+      "id": "active-foreign-work-protection"
+    },
+    {
+      "assertion": "Nach einem terminalen gültigen Receipt kann der unmittelbar folgende Runtime-Refresh dieselben kanonischen Ressourcen innerhalb von zehn Sekunden ohne TTL-Wartezeit erwerben. Die Messung ist revisions- und receiptgebunden.",
+      "id": "next-deploy-throughput"
+    },
+    {
+      "assertion": "Falls die verifizierbare Terminalquelle eine Änderung am Bureau-Receipt-Vertrag erfordert, wird dafür ein eigener exakt gescopter Bureau-Folgetask registriert; der Grabowski-Task erweitert seinen Repository-Scope nicht stillschweigend.",
+      "id": "cross-repo-boundary"
+    },
+    {
+      "assertion": "Fokussierte Lease-, Receipt-, Recovery-, Parallelitäts- und Manipulationstests sowie die vollständigen relevanten Grabowski-Gates sind auf dem exakten finalen Head grün. Nach Merge und Deploy belegt ein Live-Roundtrip Freigabe und sofortige Wiederakquise ohne fremde Lease-Mutation.",
+      "id": "validation-and-deploy"
+    }
   ],
   "claims": [
     {
-      "resource": "component.grabowski.runtime",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "component.grabowski.runtime"
     }
   ],
+  "depends_on": [],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski",
     "approval": {
-      "required_level": "operator",
       "action_class": "repository_mutation",
-      "note": "Der Nutzer ordnete am 2026-08-02 an, durchsatzmindernde Blockaden mit Priorität durchsatz1 abzuarbeiten. Fremde aktive Leases, Deploys und Prozesse dürfen nicht übernommen oder forciert freigegeben werden."
+      "note": "Der Nutzer ordnete am 2026-08-02 an, durchsatzmindernde Blockaden mit Priorität durchsatz1 abzuarbeiten. Fremde aktive Leases, Deploys und Prozesse dürfen nicht übernommen oder forciert freigegeben werden.",
+      "required_level": "operator"
     },
     "grabowski_resources": [
       "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
@@ -39,57 +53,15 @@
       "path:/home/alex/repos/grabowski/tests/test_resources.py",
       "path:/home/alex/repos/grabowski/tests/test_grips.py",
       "path:/home/alex/repos/grabowski/docs/bureau-lease-contract-v2.md"
-    ]
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
   },
-  "acceptance": [
-    {
-      "id": "terminal-success-reproducer",
-      "assertion": "Ein hermetischer Reproducer erstellt einen Runtime-Refresh-Owner mit den fünf kanonischen Pfadleasing-Zeilen, bindet ein gültiges create-only Ergebnisreceipt mit status deployed und zeigt vor dem Fix, dass der nächste Deploy bis zum TTL-Ende blockiert bleibt."
-    },
-    {
-      "id": "normal-path-release",
-      "assertion": "Der normale Runtime-Refresh-Orchestrierungspfad gibt nach eindeutigem Erfolg und nach eindeutigem Vorwirkungsabbruch seine exakten unveränderten Leases idempotent frei. Ergebnisreceipt, Owner, Taskbindung, Zielcommit, Ressourcenliste und Lease-Snapshot werden vor der Freigabe revalidiert."
-    },
-    {
-      "id": "recovery-terminal-source",
-      "assertion": "Der obsolete-path-lease-Reconciler oder ein gleichwertiger typisierter Recovery-Pfad akzeptiert ein explizites Runtime-Refresh-Terminalformat. Er prüft Receipt-Digest, Schema, Status, Zielhash, Source- und Merge-Commit, Owner, unveränderte Lease-Zeilen und die kanonische Runtime-Refresh-State-Root; frei übergebene Statusbehauptungen genügen nicht."
-    },
-    {
-      "id": "ambiguous-outcome-protection",
-      "assertion": "Fehlendes, manipuliertes, widersprüchliches oder nichtterminales Receipt sowie Prozessverlust zwischen Wirkung und Ergebnis bleiben fail-closed. In unklaren Fällen werden Leases erhalten und eine begrenzte Recovery-Diagnose ausgegeben; Force-Release ist kein automatischer Fallback."
-    },
-    {
-      "id": "active-foreign-work-protection",
-      "assertion": "Ein parallel aktiver Deploy mit gleichem oder anderem Owner, erneuerte Lease-Zeitstempel, abweichende Metadaten oder nicht exakt passende Ressourcen werden niemals freigegeben. Negative Tests decken Fremdowner, Receipt-Replay, Ziel-Drift und Teilmengen ab."
-    },
-    {
-      "id": "next-deploy-throughput",
-      "assertion": "Nach einem terminalen gültigen Receipt kann der unmittelbar folgende Runtime-Refresh dieselben kanonischen Ressourcen innerhalb von zehn Sekunden ohne TTL-Wartezeit erwerben. Die Messung ist revisions- und receiptgebunden."
-    },
-    {
-      "id": "cross-repo-boundary",
-      "assertion": "Falls die verifizierbare Terminalquelle eine Änderung am Bureau-Receipt-Vertrag erfordert, wird dafür ein eigener exakt gescopter Bureau-Folgetask registriert; der Grabowski-Task erweitert seinen Repository-Scope nicht stillschweigend."
-    },
-    {
-      "id": "validation-and-deploy",
-      "assertion": "Fokussierte Lease-, Receipt-, Recovery-, Parallelitäts- und Manipulationstests sowie die vollständigen relevanten Grabowski-Gates sind auf dem exakten finalen Head grün. Nach Merge und Deploy belegt ein Live-Roundtrip Freigabe und sofortige Wiederakquise ohne fremde Lease-Mutation."
-    }
-  ],
+  "goal": "Schließe die Durchsatzlücke, bei der ein erfolgreich terminalisierter Bureau-Runtime-Refresh seine exakt ownergebundenen Grabowski-Pfadleasing-Zeilen bis zum TTL-Ende belegt und dadurch den unmittelbar folgenden Deploy blockiert. Implementiere einen receiptgebundenen Normal- und Recovery-Pfad, der nur unveränderte Leases eines eindeutig terminalen Runtime-Refresh freigibt; aktive oder unklare Deploys bleiben fail-closed geschützt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "throughput_priority": "durchsatz1",
-    "observed_at": "2026-08-02T21:02:25Z",
-    "live_observation": {
-      "terminal_runtime_status": {
-        "source_commit": "a9395c1d115285551233d12cbe70b89021780c21",
-        "status": "deployed",
-        "result_sha256": "1f901e7f01bb0017fb293bb95d8212adda430758ea22fe3ec62d5c203b14edcb"
-      },
-      "stale_lease_owner": "operator:chatgpt:bureau-backlog-burn-20260802-2139",
-      "blocked_next_target": "7a5ef99a4f0dc93679588d8b23afeaa1935f8f26",
-      "stale_path_lease_count": 5,
-      "recovery_surface_result": "rejected because runtime-refresh status/result is not an accepted terminal_source kind",
-      "force_release_used": false
-    },
     "causal_boundary": {
       "belegt": [
         "der Runtime-Status wies a9395c1 als deployed aus",
@@ -108,30 +80,191 @@
       "dass TTL-Verkürzung ein sicherer Ersatz für terminale Freigabe ist",
       "Mergebereitschaft eines künftigen Implementierungs-PRs"
     ],
+    "implementation": {
+      "base_sha": "58ff5e4c037823b0ed517be286a43e1d4caf17c3",
+      "diff_sha256": "88997e5ea267c33a5851af5c7afc6357eb48408ff38d469bd3da1d943d019863",
+      "merge_commit_sha": "c4d7116d4db83f4b86bdcc9a11cfc41727240ae8",
+      "pull_request": 575,
+      "repository": "heimgewebe/grabowski",
+      "reviewed_head_sha": "90daaa96716d8beea738bea5ecfec5e564f0ea26"
+    },
+    "live_observation": {
+      "blocked_next_target": "7a5ef99a4f0dc93679588d8b23afeaa1935f8f26",
+      "force_release_used": false,
+      "recovery_surface_result": "rejected because runtime-refresh status/result is not an accepted terminal_source kind",
+      "stale_lease_owner": "operator:chatgpt:bureau-backlog-burn-20260802-2139",
+      "stale_path_lease_count": 5,
+      "terminal_runtime_status": {
+        "result_sha256": "1f901e7f01bb0017fb293bb95d8212adda430758ea22fe3ec62d5c203b14edcb",
+        "source_commit": "a9395c1d115285551233d12cbe70b89021780c21",
+        "status": "deployed"
+      }
+    },
+    "observed_at": "2026-08-02T21:02:25Z",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-e2b83e6d88b3ccbf0cc65f11",
-      "event_id": 2215,
-      "event_created_at": "2026-08-02T21:17:37.658466Z",
-      "request_sha256": "17bdac0aeabab53ac047cb6d28eed42751c16130a4c9133e004843a2d3c134df",
-      "source": {
-        "kind": "operator-observation",
-        "locator": "runtime-refresh-result:1f901e7f01bb0017fb293bb95d8212adda430758ea22fe3ec62d5c203b14edcb;lease-owner:operator:chatgpt:bureau-backlog-burn-20260802-2139",
-        "observed_at": "2026-08-02T21:02:25Z",
-        "sha256": null,
-        "freshness": "unknown",
-        "does_not_establish": [
-          "source_content_identity"
-        ]
-      },
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
-      ]
-    }
+      ],
+      "event_created_at": "2026-08-02T21:17:37.658466Z",
+      "event_id": 2215,
+      "request_sha256": "17bdac0aeabab53ac047cb6d28eed42751c16130a4c9133e004843a2d3c134df",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-observation",
+        "locator": "runtime-refresh-result:1f901e7f01bb0017fb293bb95d8212adda430758ea22fe3ec62d5c203b14edcb;lease-owner:operator:chatgpt:bureau-backlog-burn-20260802-2139",
+        "observed_at": "2026-08-02T21:02:25Z",
+        "sha256": null
+      }
+    },
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "diff_sha256": "88997e5ea267c33a5851af5c7afc6357eb48408ff38d469bd3da1d943d019863",
+          "head_sha": "90daaa96716d8beea738bea5ecfec5e564f0ea26",
+          "kind": "pull_request",
+          "merge_commit_sha": "c4d7116d4db83f4b86bdcc9a11cfc41727240ae8",
+          "number": 575,
+          "repository": "heimgewebe/grabowski",
+          "source_ref": "heimgewebe/grabowski#575",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+        },
+        {
+          "authority": "grabowski-task",
+          "head_sha": "90daaa96716d8beea738bea5ecfec5e564f0ea26",
+          "kind": "test_receipt",
+          "receipt_sha256": "12220cd735a3e8bb06231f319c054c45b9e47d7c4cb467f877146100da85fc9e",
+          "run_id": "5a3063a0ed2743d68094e015",
+          "source_ref": "5a3063a0ed2743d68094e015",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "head_sha": "c4d7116d4db83f4b86bdcc9a11cfc41727240ae8",
+          "integrity_valid": true,
+          "kind": "deployment",
+          "source_ref": "c4d7116d4db8-srcset67685bfc024f-locke6664d600b6c-contractc49ae84bd481-attempt2",
+          "state": "complete",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+        },
+        {
+          "authority": "grabowski-audit",
+          "kind": "runtime_release",
+          "owner_id": "operator:chatgpt-bureau-runtimepflege-d5a5805a-20260729",
+          "resource_keys": [
+            "path:/home/alex/.local/bin/bureau",
+            "path:/home/alex/.local/bin/bureau-runtime-refresh",
+            "path:/home/alex/.local/share/bureau",
+            "path:/home/alex/.local/state/bureau/runtime-refresh",
+            "path:/home/alex/.local/state/bureau/runtime-refresh/workspaces/d5a5805a19e5f536fa5a7ba4b30456c010d89ea2"
+          ],
+          "source_ref": "audit-record-sha256:5352d7dbc1171a05410b91aab0098e04d35a1bb520724aa7eb0df5878e925a86",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+        },
+        {
+          "authority": "grabowski-audit",
+          "kind": "runtime_reacquire",
+          "owner_id": "operator:chatgpt:throughput1:t134-roundtrip",
+          "resource_keys": [
+            "path:/home/alex/.local/bin/bureau",
+            "path:/home/alex/.local/bin/bureau-runtime-refresh",
+            "path:/home/alex/.local/share/bureau",
+            "path:/home/alex/.local/state/bureau/runtime-refresh",
+            "path:/home/alex/.local/state/bureau/runtime-refresh/workspaces/d5a5805a19e5f536fa5a7ba4b30456c010d89ea2"
+          ],
+          "source_ref": "audit-record-sha256:6132121d2a957a7bb86030d4430c2f9c40679d8a6fbe2d4d9423c1a3ef6f0306",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "throughput_priority": "durchsatz1",
+    "validation": {
+      "deployment": {
+        "audit_valid": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "healthy": true,
+        "kill_switch_engaged": false,
+        "release_id": "c4d7116d4db8-srcset67685bfc024f-locke6664d600b6c-contractc49ae84bd481-attempt2",
+        "repo_head": "c4d7116d4db83f4b86bdcc9a11cfc41727240ae8"
+      },
+      "focused": {
+        "contract_group": "78 passed; 29 subtests passed",
+        "resource_grip_matrix": "11 passed",
+        "resource_grip_suites": "445 passed; 141 subtests passed"
+      },
+      "full_validate": {
+        "grabowski_task_id": "5a3063a0ed2743d68094e015",
+        "lifecycle_receipt_sha256": "12220cd735a3e8bb06231f319c054c45b9e47d7c4cb467f877146100da85fc9e",
+        "result": "PASS",
+        "tests_passed": 4574,
+        "tests_skipped": 12
+      },
+      "github_checks": "validate 3.10/3.12, CodeQL and Codex settlement passed on the exact PR head before merge",
+      "live_roundtrip": {
+        "reacquire_audit_ref": "audit-record-sha256:6132121d2a957a7bb86030d4430c2f9c40679d8a6fbe2d4d9423c1a3ef6f0306",
+        "reacquire_owner": "operator:chatgpt:throughput1:t134-roundtrip",
+        "reacquire_release_audit_ref": "audit-record-sha256:babf813e6288ee90cef3c3ee8e5ba0ddda44e4efbb2e442c05554586589788e9",
+        "reacquire_timestamp": "2026-08-03T11:09:50.887203+00:00",
+        "release_audit_ref": "audit-record-sha256:5352d7dbc1171a05410b91aab0098e04d35a1bb520724aa7eb0df5878e925a86",
+        "release_timestamp": "2026-08-03T11:09:24.265904+00:00",
+        "resource_keys": [
+          "path:/home/alex/.local/bin/bureau",
+          "path:/home/alex/.local/bin/bureau-runtime-refresh",
+          "path:/home/alex/.local/share/bureau",
+          "path:/home/alex/.local/state/bureau/runtime-refresh",
+          "path:/home/alex/.local/state/bureau/runtime-refresh/workspaces/d5a5805a19e5f536fa5a7ba4b30456c010d89ea2"
+        ],
+        "result": "PASS: terminal receipt release completed and the same five canonical resources were acquired by the dedicated next-run owner without TTL wait; the exact acquisition call remains bounded below ten seconds by the merged regression test",
+        "terminal_owner": "operator:chatgpt-bureau-runtimepflege-d5a5805a-20260729"
+      },
+      "review_findings": 0
+    },
+    "verification": {
+      "evidence_sha256": "6d1c133f4f224344eb81eada17c20dcc397cacd2bb31fa4814209bfaf0c1774f",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "task_bound_pr_ci_merge_deployment_and_live_runtime_release_reacquire_evidence",
+      "source_ref": "heimgewebe/grabowski#575@c4d7116d4db83f4b86bdcc9a11cfc41727240ae8;grabowski-task:5a3063a0ed2743d68094e015;audit-record-sha256:5352d7dbc1171a05410b91aab0098e04d35a1bb520724aa7eb0df5878e925a86;audit-record-sha256:6132121d2a957a7bb86030d4430c2f9c40679d8a6fbe2d4d9423c1a3ef6f0306",
+      "task_sha256": "8a7b07e2aa514054b6114ca065cebb3308129ddc906ac7a61c7cf162662883ae",
+      "verified_at": "2026-08-03T11:32:45.828248Z"
+    },
+    "verification_note": "Acceptance closed after exact-head CI and review, exact merge, exact-commit healthy deployment, audit-chain terminal release and successful canonical five-resource reacquisition without foreign mutation.",
+    "verified_acceptance": {
+      "active-foreign-work-protection": "PASS: renewed, metadata-drifted and foreign-owner leases are retained; negative tests cover target drift, receipt tamper and owner replacement.",
+      "ambiguous-outcome-protection": "PASS: unclear, missing and tampered receipts retain leases and raise bounded fail-closed diagnostics; no force fallback exists.",
+      "cross-repo-boundary": "PASS: implementation remained in heimgewebe/grabowski; no Bureau receipt-contract change or extra task was required.",
+      "next-deploy-throughput": "PASS: the exact deployed runtime produced audit-bound terminal release and successful reacquisition of all five canonical resources; the regression test measures the acquisition call below ten seconds.",
+      "normal-path-release": "PASS: deployed and pre-effect terminal outcomes release only receipt-, owner-, target- and snapshot-bound unchanged rows; replay is idempotent.",
+      "recovery-terminal-source": "PASS: the typed runtime-refresh terminal source verifies state-root, observation/start/result digests, status, target, commits, owner and exact snapshots before release.",
+      "terminal-success-reproducer": "PASS: the merged hermetic fixture binds the five canonical runtime-refresh resources and reproduces the pre-fix retained-lease blockade.",
+      "validation-and-deploy": "PASS: exact-head review and CI, 4,574-test validation, focused lease/receipt/recovery tests, exact merge, exact-commit deployment health and live release/reacquire readback are bound."
+    },
+    "verified_at": "2026-08-03T11:32:45.828248Z"
   },
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "sqlite",
+    "runtime-deployment",
+    "grabowski"
+  ],
   "rollback": {
     "strategy": "Revertiere ausschließlich den neuen Runtime-Refresh-Terminalquellen-, Release- und Recovery-Vertrag über einen normalen PR. Bis zur erneuten Freigabe bleiben vorhandene Leases fail-closed erhalten; Force-Release oder TTL-Verkürzung werden nicht als Rollback eingesetzt."
-  }
+  },
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Terminale Runtime-Refresh-Leases automatisch freigeben"
 }

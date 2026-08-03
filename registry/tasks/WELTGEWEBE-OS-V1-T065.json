@@ -136,6 +136,78 @@
         "task completion",
         "merge readiness"
       ]
+    },
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1676,
+      "base_sha": "d5094a9256af3025502540d694b730878377d27a",
+      "reviewed_head_sha": "abd4a8ef28f18c61bb6b690de555a762fa6df422",
+      "merge_commit_sha": "8fdaa20a6a371607f5be9491e5f7737ef0037608",
+      "diff_sha256": "aa14f80a73a3c9f08a911821369539e9f9fe12759074537967566a94894c9f95"
+    },
+    "validation": {
+      "github_checks": "required merge gate and current-head repository checks passed before merge",
+      "review_findings": 0,
+      "exact_merge_verification": {
+        "result": "PASS",
+        "merge_commit_sha": "8fdaa20a6a371607f5be9491e5f7737ef0037608",
+        "grabowski_task_id": "6db73f54516745ecad2b1b89",
+        "lifecycle_receipt_sha256": "885da85a2b30cedd3b2574d4b155c995802a532031bc6e88dff469681551c825",
+        "terminalization_sha256": "af6257ed539187907c10500b87c3a042b9fe5f8840f81725370c1d08fd450517",
+        "checks": [
+          "python3 -m unittest discover -s scripts/docmeta/tests -p 'test_*.py'",
+          "python3 scripts/docmeta/validate_report_lifecycle.py --mode strict",
+          "python3 scripts/docmeta/generate_report_lifecycle.py --check",
+          "python3 scripts/docmeta/generate_report_lifecycle_inventory.py --check",
+          "git diff --check",
+          "clean checkout readback"
+        ]
+      }
+    },
+    "verified_acceptance": {
+      "single-truth-block": "PASS: der exakte PR-Head enthält den zeilenverankerten Ein-Block-Parser und die negativen Mehrfach-, Inline-, Verschachtelungs- und Abschlussfälle; Current-Head-CI und Exact-Merge-Test sind grün.",
+      "hermetic-history-validation": "PASS: der geprüfte Validatorpfad mutiert und fetcht nicht; unvollständige Historie wird typisiert als nicht verfügbar behandelt und durch Tests belegt.",
+      "strict-scalar-types": "PASS: boolesche, numerische, Listen-, Mapping- und Nullwerte erfüllen keine Textfeldpräsenz; unbekannte Zustandswerte erzeugen fail-closed Findings.",
+      "typed-provenance-unavailable": "PASS: Null-SHA und Epoch-Scheinprovenienz sind ausgeschlossen; positive Provenienz verlangt eine reale auflösbare Revision.",
+      "consumer-regression-safety": "PASS: gemeinsame Verbraucher, Generatoren, Validatoren und ihre Negativtests wurden auf dem exakten Merge-Commit reproduziert.",
+      "revision-bound-release": "PASS: Base, Head, Diff, getrennte Reviews, Pflichtchecks, Merge-Commit und Post-Merge-Reproduktion sind revisionsgebunden."
+    },
+    "verified_at": "2026-08-03T14:43:00Z",
+    "verification_note": "Acceptance closed from exact PR identity, green required checks, merged head and a clean exact-merge Grabowski regression run. No product deployment is required for this repository-internal DocMeta contract change.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T065",
+          "source_ref": "heimgewebe/weltgewebe#1676",
+          "repository": "heimgewebe/weltgewebe",
+          "number": 1676,
+          "head_sha": "abd4a8ef28f18c61bb6b690de555a762fa6df422",
+          "merge_commit_sha": "8fdaa20a6a371607f5be9491e5f7737ef0037608",
+          "diff_sha256": "aa14f80a73a3c9f08a911821369539e9f9fe12759074537967566a94894c9f95"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski-task",
+          "task_id": "WELTGEWEBE-OS-V1-T065",
+          "source_ref": "6db73f54516745ecad2b1b89",
+          "run_id": "6db73f54516745ecad2b1b89",
+          "head_sha": "8fdaa20a6a371607f5be9491e5f7737ef0037608",
+          "receipt_sha256": "885da85a2b30cedd3b2574d4b155c995802a532031bc6e88dff469681551c825",
+          "terminalization_sha256": "af6257ed539187907c10500b87c3a042b9fe5f8840f81725370c1d08fd450517"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "479124c4bcef6e30274f51b36af1414fd6c2c21cb93f46a2bda1e3abf9dca2c1",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "source": "task_bound_pr_ci_merge_and_exact_merge_test_evidence",
+      "source_ref": "heimgewebe/weltgewebe#1676@8fdaa20a6a371607f5be9491e5f7737ef0037608;grabowski-task:6db73f54516745ecad2b1b89",
+      "evidence_sha256": "24f4ef8a89d25a0cdf82f3d5b604497791764c8c3ab4506d8f7462f6ed6238dc",
+      "verified_at": "2026-08-03T14:43:00Z"
     }
   },
   "priority": {
@@ -153,6 +225,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Report-Lifecycle-Wahrheitsvertrag hermetisch härten"
 }

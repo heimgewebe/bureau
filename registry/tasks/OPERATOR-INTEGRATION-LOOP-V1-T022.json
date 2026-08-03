@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "semantAH-Renovate-Update aus PR #267 frisch reparieren",
   "goal": "Erzeuge für das weiterhin sinnvolle geschlossene semantAH-Update aus PR #267 einen frischen, aktuellen Ersatz-PR und behebe den historischen push-index-e2e- beziehungsweise Artefaktblocker ohne alte Checks wiederzuverwenden.",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 1
@@ -70,6 +70,120 @@
         "future resource availability",
         "merge readiness before fresh checks"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "2bac59764d8f130b75f2042fd4d529fa1fb3570ffeaf6a8d7ceac7833b1205dc",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "receipt_sha256": "6928a2327dc0e4c735f59be72dd769f051fcaa6e6a9882d9d7df1818d0c674f8",
+      "evidence_sha256": "e81c58cd49e463aa060d74de5c127b9819250a31e7ff7ec075eec4ee0210d4b4",
+      "source": "bureau_succeeded_run_and_merged_pull_request",
+      "source_ref": "github-pr:heimgewebe/semantAH#269@e378b9b73d7d955d0c483f86bf47af67124b6f63:73cc4a17554cb5427a7766936ffc396ebeb6a794",
+      "run_id": "BUR-RUN-20260803T003645Z-a5228a46f8",
+      "verified_at": "2026-08-03T01:56:40.646084Z",
+      "bureau_run_receipt": {
+        "envelope_sha256": "1dc2eca7eba518ff03185bb769693218997065b2251363bef0d045894c33480d",
+        "evidence": {
+          "blocker-specific-proof": {
+            "axum_version": "0.8.9",
+            "cargo_check_workspace_all_targets": "PASS",
+            "dependency_artifact": {
+              "cargo_tree_locked": "PASS",
+              "locked_axum_version": "0.8.9",
+              "path": "Cargo.lock"
+            },
+            "format_check": {
+              "path": "crates/embeddings/tests/ollama_mock.rs",
+              "result": "PRE_EXISTING_FAILURE_OUTSIDE_DIFF"
+            },
+            "git_diff_check": "PASS",
+            "obsolete_async_trait_annotation_removed": true,
+            "push_index_e2e": {
+              "github_job": 91575841315,
+              "local_job": "grabowski-job-dbc8ae8ce547",
+              "result": "PASS",
+              "tests_passed": 1
+            }
+          },
+          "fail-closed-merge": {
+            "exact_head": "e378b9b73d7d955d0c483f86bf47af67124b6f63",
+            "merge_commit": "73cc4a17554cb5427a7766936ffc396ebeb6a794",
+            "mergeable": true,
+            "merged_at": "2026-08-03T01:46:36Z",
+            "required_checks": [
+              "Analyze (actions)",
+              "Analyze (python)",
+              "Analyze (rust)",
+              "CodeQL",
+              "insights-daily-drift",
+              "push-index-e2e",
+              "repo-root",
+              "structure-check",
+              "templates"
+            ],
+            "required_checks_passed": 9,
+            "review_findings": 0
+          },
+          "fresh-replacement": {
+            "base": "44ae68c4a70dab7de38d8e24915171a35ced24e3",
+            "changed_files": [
+              "Cargo.toml",
+              "Cargo.lock",
+              "crates/embeddings/Cargo.toml",
+              "crates/indexd/src/api.rs"
+            ],
+            "fresh_branch": "bureau/operator-integration-loop-v1-t022/a5228a46f8",
+            "head": "e378b9b73d7d955d0c483f86bf47af67124b6f63",
+            "pr": 269
+          },
+          "repository-closeout": {
+            "blocked_replacement_pr_remaining": false,
+            "final_head": "e378b9b73d7d955d0c483f86bf47af67124b6f63",
+            "merge_commit": "73cc4a17554cb5427a7766936ffc396ebeb6a794",
+            "merged": true,
+            "pr": 269,
+            "remote_main": "73cc4a17554cb5427a7766936ffc396ebeb6a794",
+            "repository": "heimgewebe/semantAH",
+            "state": "closed"
+          },
+          "source-readback": {
+            "observed_at": "2026-08-03T01:51:29Z",
+            "predecessor": {
+              "head": "c5a4d940454dac1ece21e75fae7a08cc6b52c363",
+              "merged": false,
+              "pr": 267,
+              "state": "closed"
+            },
+            "repository": "heimgewebe/semantAH",
+            "reuse_of_predecessor_ci": false
+          }
+        },
+        "external": null,
+        "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+        "receipt_sha256": "6928a2327dc0e4c735f59be72dd769f051fcaa6e6a9882d9d7df1818d0c674f8",
+        "rlens_context_policy": {
+          "block_reason": null,
+          "does_not_establish": [
+            "actual_agent_reading",
+            "answer_correct",
+            "repo_understood",
+            "claims_true",
+            "runtime_correctness"
+          ],
+          "has_context_ref": false,
+          "mode": "opportunistic",
+          "requires_context": false,
+          "schema_version": 1,
+          "skip_reason": "not_required",
+          "status": "not_required",
+          "task_profile": null
+        },
+        "run_id": "BUR-RUN-20260803T003645Z-a5228a46f8",
+        "schema_version": 1,
+        "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T022",
+        "task_sha256": "2bac59764d8f130b75f2042fd4d529fa1fb3570ffeaf6a8d7ceac7833b1205dc",
+        "verified_at": "2026-08-03T01:56:40.646084Z"
+      }
     }
   },
   "acceptance": [

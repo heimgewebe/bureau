@@ -111,6 +111,31 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "b7e6cc946d9a71a834721220f4e0432dd4b3973582ea2600b9e1ee42096f3404",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "evidence_ref": "docs/evidence/bureau-truth-model-v2-t025-closeout-20260803.json",
+      "evidence_sha256": "d9766570801e312f5d319f6fb44c7feb71a3de8f285628400fcaf5a219f1f77a",
+      "receipt_sha256": "26c531b584cc24e51e0703a049faacee2eb723346d12f5c947d90ba76f29fad9",
+      "source": "github_ruleset_and_merge_group_runs",
+      "source_ref": "ruleset:heimgewebe/bureau#20228857; prs:1419,1420,1421",
+      "verified_at": "2026-08-03T05:22:15Z",
+      "receipt": {
+        "schema_version": 1,
+        "kind": "bureau.task_verification_receipt",
+        "task_id": "BUREAU-TRUTH-MODEL-V2-T025",
+        "outcome": "verified",
+        "task_sha256": "b7e6cc946d9a71a834721220f4e0432dd4b3973582ea2600b9e1ee42096f3404",
+        "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+        "evidence_ref": "docs/evidence/bureau-truth-model-v2-t025-closeout-20260803.json",
+        "evidence_sha256": "d9766570801e312f5d319f6fb44c7feb71a3de8f285628400fcaf5a219f1f77a",
+        "verified_at": "2026-08-03T05:22:15Z",
+        "source": "github_ruleset_and_merge_group_runs",
+        "source_ref": "ruleset:heimgewebe/bureau#20228857; prs:1419,1420,1421",
+        "receipt_sha256": "26c531b584cc24e51e0703a049faacee2eb723346d12f5c947d90ba76f29fad9"
+      }
     }
   },
   "priority": {
@@ -128,6 +153,6 @@
     "strategy": "Entferne oder deaktiviere ausschließlich die neue Merge-Queue- beziehungsweise Integrationskonfiguration über einen normalen Revert-PR. Auto-Merge und Update-Branch können separat zurückgesetzt werden; Required Checks und Branch Protection bleiben während des Rollbacks aktiv."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Merge-Queue gegen CI-Neustart-Verhungern einführen"
 }

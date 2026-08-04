@@ -43,7 +43,16 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/audio"
+      "path:/home/alex/repos/audio/Justfile",
+      "path:/home/alex/repos/audio/docs/audio-live-telemetry-v1.md",
+      "path:/home/alex/repos/audio/scripts/audio_control.py",
+      "path:/home/alex/repos/audio/scripts/audio_live_telemetry.py",
+      "path:/home/alex/repos/audio/scripts/audio_telemetry_soak.py",
+      "path:/home/alex/repos/audio/tests/test_audio_control.py",
+      "path:/home/alex/repos/audio/tests/test_audio_live_telemetry.py",
+      "path:/home/alex/repos/audio/ui/app.js",
+      "path:/home/alex/repos/audio/ui/index.html",
+      "path:/home/alex/repos/audio/ui/styles.css"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -53,6 +62,8 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T021",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "metadata": {
+    "admission_reconciled_at": "2026-08-04T07:19:00+02:00",
+    "admission_reconciled_reason": "T020 ist gemergt und T021 laut physischem Gate nicht blockiert; der Grabowski-Scope ist auf die konkret geplanten Telemetrie-, UI-, Test- und Dokumentationsdateien begrenzt, damit unabhängige fremde Dirty-Worktrees nicht überschrieben oder übernommen werden.",
     "does_not_establish": [],
     "plan": {
       "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
@@ -88,6 +99,6 @@
     "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Passive Audio- und MIDI-Livetelemetrie integrieren"
 }

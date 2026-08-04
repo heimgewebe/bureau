@@ -110,6 +110,39 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "supersession": {
+      "schema_version": 1,
+      "observed_at": "2026-08-04T07:27:06Z",
+      "base_commit": "e573ce243113a0c0b8f613d01cce307c325574de",
+      "disposition": "superseded",
+      "reason": "The requested Steuerboard-to-Reposkop rebuild and staged consumer cutover were delivered by later, narrower implementation and ecosystem tasks. Re-executing this broad task would duplicate shipped work and reopen obsolete repository identities.",
+      "superseded_by_tasks": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T010",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076"
+      ],
+      "implementation_evidence": [
+        {
+          "repository": "heimgewebe/reposkop",
+          "commit": "73e6eecb594b892a58f22ecf74d8a58e5f1e866f",
+          "role": "rebuild Steuerboard as read-only Reposkop"
+        },
+        {
+          "repository": "heimgewebe/reposkop",
+          "commit": "27d84a64b8e6e64581c0e55194c1faaaa1bbc1c8",
+          "role": "complete repository identity cutover"
+        },
+        {
+          "repository": "heimgewebe/reposkop",
+          "commit": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+          "role": "canonical checkout truth and consumer contracts"
+        }
+      ],
+      "does_not_establish": [
+        "that every future Reposkop improvement is complete",
+        "runtime correctness beyond cited task and commit evidence"
+      ]
     }
   },
   "priority": {
@@ -127,6 +160,6 @@
     "strategy": "Revert the Reposkop rebuild commits and consumer integrations independently. Keep the existing heimgewebe/steuerboard repository name and the fail-closed read-only release until the compatibility and consumer readbacks prove the staged cutover safe."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Rebuild Steuerboard as Reposkop coherence adapter"
 }

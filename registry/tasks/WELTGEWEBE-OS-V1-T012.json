@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T012",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Lenskit für Weltgewebe-OS-Änderungskontext härten",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Lenskit/RepoBrief für Call-Graph, Impact, Einstiegspunkte, verwandte Tests und inkrementellen Kontext großer Weltgewebe-OS-Änderungen härten.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T001"
@@ -59,6 +59,28 @@
   ],
   "metadata": {
     "registered_at": "2026-07-15T20:50:00Z",
-    "ecosystem_role": "code-context"
+    "ecosystem_role": "code-context",
+    "supersession": {
+      "schema_version": 1,
+      "observed_at": "2026-08-04T07:27:06Z",
+      "base_commit": "e573ce243113a0c0b8f613d01cce307c325574de",
+      "disposition": "superseded",
+      "reason": "The broad Lenskit/RepoBrief objective was split into verified RepoGround call-graph and Weltgewebe change-context tasks. The only material remaining axis, incremental bounded-parallel generation, is already owned by active task RPU-V1-T031.",
+      "superseded_by_tasks": [
+        "REPOGROUND-AGENT-UTILITY-V1-T003",
+        "RPU-V1-T023",
+        "RPU-V1-T031"
+      ],
+      "acceptance_mapping": {
+        "symbol-context": "RPU-V1-T023",
+        "test-context": "REPOGROUND-AGENT-UTILITY-V1-T003",
+        "operator-handoff": "REPOGROUND-AGENT-UTILITY-V1-T003",
+        "incremental": "RPU-V1-T031"
+      },
+      "does_not_establish": [
+        "completion of active RPU-V1-T031",
+        "general semantic completeness outside verified bounded scopes"
+      ]
+    }
   }
 }

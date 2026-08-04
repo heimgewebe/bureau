@@ -36,6 +36,26 @@ Each versioned service executes the existing manifest-validating Bureau launcher
 
 The launcher verifies the deployment manifest and managed runtime-tree digest, then imports the stage from the selected immutable release. Services do not execute Python directly and do not use source from `~/repos/bureau`, `~/.local/libexec/bureau_cycle`, a virtual-environment `site-packages` copy, or a `PYTHONPATH` override. The immutable digest covers `src/bureau`, `src/bureau_cycle`, and the versioned `ops/systemd` artifacts.
 
+## Fresh-profile state directories
+
+Each service declares its exact writable state directories through `StateDirectory=` and fixes
+their mode with `StateDirectoryMode=0700`. The user manager therefore creates the directories
+before applying the service sandbox and before `ExecStart` enters Python. The existing
+`ReadWritePaths=` entries remain exact and redundant by design: they preserve the visible
+least-privilege boundary and are checked against the declarative directories by
+`bureau cycle-deployment`.
+
+| Stage | Declarative state directories |
+|---|---|
+| discovery | `bureau-halfhour-operator` |
+| curator | `bureau-curator` |
+| operator | `bureau-operator` |
+| verifier | `bureau-verifier`, `bureau-cycle` |
+| closure | `bureau-closure` |
+
+No service receives write access to `%h`, `%h/.local`, or `%h/.local/state` as a whole. Existing
+state is not rewritten, and private user-unit file modes remain valid.
+
 ## Read-only provenance and drift audit
 
 `bureau cycle-deployment` compares:

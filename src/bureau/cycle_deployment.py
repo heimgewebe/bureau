@@ -24,6 +24,13 @@ STAGES = (
     ("verifier", "bureau-verifier-control", "bureau_cycle.verifier_runner"),
     ("closure", "bureau-closure-planner", "bureau.closure_runner"),
 )
+STATE_DIRECTORIES = {
+    "discovery": ("bureau-halfhour-operator",),
+    "curator": ("bureau-curator",),
+    "operator": ("bureau-operator",),
+    "verifier": ("bureau-verifier", "bureau-cycle"),
+    "closure": ("bureau-closure",),
+}
 SOURCES = (
     "src/bureau_cycle/__init__.py",
     "src/bureau_cycle/common.py",
@@ -172,7 +179,7 @@ def _finding(code: str, message: str, path: Path, stage: str) -> dict[str, str]:
     return {"code": code, "message": message, "path": str(path), "stage": stage}
 
 
-def _contract(path: Path, *, stage: str, kind: str, name: str) -> None:
+def _contract(path: Path, *, stage: str, kind: str, name: str) -> dict[str, Any]:
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
@@ -193,6 +200,37 @@ def _contract(path: Path, *, stage: str, kind: str, name: str) -> None:
                     f"{stage} service contains mutable source token {token}",
                     path,
                 )
+        directories = STATE_DIRECTORIES[stage]
+        expected_state_directory = "StateDirectory=" + " ".join(directories)
+        state_directory_lines = [
+            line for line in text.splitlines() if line.startswith("StateDirectory=")
+        ]
+        if state_directory_lines != [expected_state_directory]:
+            raise CycleDeploymentError(
+                "canonical-unit-state-directory",
+                f"{stage} service must contain exactly {expected_state_directory}",
+                path,
+            )
+        mode_lines = [
+            line for line in text.splitlines() if line.startswith("StateDirectoryMode=")
+        ]
+        if mode_lines != ["StateDirectoryMode=0700"]:
+            raise CycleDeploymentError(
+                "canonical-unit-state-directory-mode",
+                f"{stage} service must contain exactly StateDirectoryMode=0700",
+                path,
+            )
+        read_write_paths = tuple(f"%h/.local/state/{item}" for item in directories)
+        expected_read_write = "ReadWritePaths=" + " ".join(read_write_paths)
+        read_write_lines = [
+            line for line in text.splitlines() if line.startswith("ReadWritePaths=")
+        ]
+        if read_write_lines != [expected_read_write]:
+            raise CycleDeploymentError(
+                "canonical-unit-state-paths",
+                f"{stage} service must contain exactly {expected_read_write}",
+                path,
+            )
         required_address_families = (
             "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6"
             if stage == "closure"
@@ -217,7 +255,11 @@ def _contract(path: Path, *, stage: str, kind: str, name: str) -> None:
                 f"{stage} service is missing hardening: {', '.join(missing)}",
                 path,
             )
-        return
+        return {
+            "directories": list(directories),
+            "mode": "0700",
+            "read_write_paths": list(read_write_paths),
+        }
     if kind == "timer":
         expected = f"Unit={name}.service"
         lines = [line for line in text.splitlines() if line.startswith("Unit=")]
@@ -227,7 +269,7 @@ def _contract(path: Path, *, stage: str, kind: str, name: str) -> None:
                 f"{stage} timer must contain exactly {expected}",
                 path,
             )
-        return
+        return {}
     expected = f'exec "$HOME/.local/bin/bureau" cycle-run {stage} "$@"'
     if expected not in text.splitlines():
         raise CycleDeploymentError(
@@ -242,6 +284,7 @@ def _contract(path: Path, *, stage: str, kind: str, name: str) -> None:
                 f"{stage} shim contains mutable source token {token}",
                 path,
             )
+    return {}
 
 
 def _compare(
@@ -336,7 +379,7 @@ def audit_cycle_deployment(
                 "canonical compatibility shim is not executable",
                 shim,
             )
-        _contract(service, stage=stage, kind="service", name=name)
+        state_contract = _contract(service, stage=stage, kind="service", name=name)
         _contract(timer, stage=stage, kind="timer", name=name)
         _contract(shim, stage=stage, kind="shim", name=name)
         service_obs, service_findings = _compare(
@@ -351,6 +394,7 @@ def audit_cycle_deployment(
             {
                 "name": stage,
                 "module": module,
+                "state_contract": state_contract,
                 "service": service_obs,
                 "timer": timer_obs,
                 "compatibility_shim": shim_obs,

@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import bureau.cycle_deployment as cycle_deployment
 import bureau.cycle_stage as cycle_stage
 from bureau import cli as bureau_cli
 
@@ -39,6 +40,53 @@ def test_dispatches_exact_stage_callable_and_restores_argv(
     assert cycle_stage.run_stage(stage, ["--probe"]) == 17
     assert calls == [(module_name, callable_name, [module_name, "--probe"])]
     assert cycle_stage.sys.argv is previous_argv
+
+
+@pytest.mark.parametrize("stage", tuple(cycle_stage.STAGE_TARGETS))
+def test_fresh_profile_declarative_state_setup_reaches_entrypoint(
+    stage: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    state_base = tmp_path / "home/.local/state"
+    assert not state_base.exists()
+    name = next(
+        name
+        for item_stage, name, _module in cycle_deployment.STAGES
+        if item_stage == stage
+    )
+    service = (
+        Path(__file__).resolve().parents[1] / "ops/systemd" / f"{name}.service"
+    ).read_text(encoding="utf-8")
+    lines = service.splitlines()
+    state_line = next(line for line in lines if line.startswith("StateDirectory="))
+    mode_line = next(line for line in lines if line.startswith("StateDirectoryMode="))
+    declared = tuple(state_line.removeprefix("StateDirectory=").split())
+    assert declared == cycle_deployment.STATE_DIRECTORIES[stage]
+    mode = int(mode_line.removeprefix("StateDirectoryMode="), 8)
+    assert mode == 0o700
+    for directory in declared:
+        target = state_base / directory
+        target.mkdir(parents=True, mode=mode)
+        target.chmod(mode)
+
+    module_name, callable_name = cycle_stage.STAGE_TARGETS[stage]
+    entered: list[str] = []
+
+    def fake_import(name: str) -> SimpleNamespace:
+        assert name == module_name
+
+        def entrypoint() -> int:
+            for directory in declared:
+                target = state_base / directory
+                assert target.is_dir()
+                assert target.stat().st_mode & 0o777 == 0o700
+            entered.append(stage)
+            return 0
+
+        return SimpleNamespace(**{callable_name: entrypoint})
+
+    monkeypatch.setattr(cycle_stage.importlib, "import_module", fake_import)
+    assert cycle_stage.run_stage(stage) == 0
+    assert entered == [stage]
 
 
 def test_unknown_stage_is_rejected() -> None:

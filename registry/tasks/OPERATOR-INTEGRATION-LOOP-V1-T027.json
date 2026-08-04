@@ -89,7 +89,7 @@
       ]
     },
     "verification": {
-      "task_sha256": "b39931ad552c75f07dc1d98dde18bdc397ef8b23801c0c8c5d1aa73dd12ec416",
+      "task_sha256": "ce05b301fada65be5a24a3f42fa71bc86ef17058421f5a9f552d56f063523479",
       "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },

@@ -95,27 +95,70 @@
       "automatic merge authority",
       "automatic deployment authority"
     ],
-    "verified_at": "2026-08-04T22:10:00Z",
-    "completion_summary": "Grabowski PR #613 bound transport verification to the exact target and argument digest, passed required CI, merged as 6a6e4d2756c92d99251e141cd5483b04613c54f5, was deployed as the matching runtime release, and passed the live wrong-target/non-consumption/intended-target/replay proof.",
-    "closeout": {
-      "bureau_closeout_owner": "operator:automation:bureau-shard0-closeout-t139-t021-20260805",
-      "source_run_id": "BUR-RUN-20260804T212041Z-4cb4c3cf2e",
-      "source_run_state": "succeeded",
-      "source_run_updated_at": "2026-08-04T21:36:02.129225Z",
-      "source_run_task_sha256": "ede934fb51ea09bd184f061a2d50a153802996a8af8c1df26663b85091604249",
-      "registry_base_commit": "de042c9f71e8a4fb2440f7ab66f849beb8368e69",
-      "stale_queue_entry_removed": true,
-      "repository": "heimgewebe/grabowski",
-      "pull_request": 613,
-      "reviewed_head": "b7538b1d2328e9488067df7f3e44b3535301ab5f",
-      "merge_commit": "6a6e4d2756c92d99251e141cd5483b04613c54f5",
-      "runtime_release": "6a6e4d2756c9-srcset4b83673cd051-locke6664d600b6c-contract430e895a652f",
-      "evidence_path": "/home/alex/.local/state/bureau/t139-completion-evidence-20260804.json",
-      "evidence_sha256": "70c1aae27a197976e457699794075caac389b353077fafb5ce4f464f8a0634da"
-    },
-    "verification": {
-      "task_sha256": "7a0c53aa13ecc8242707d418c41b6f0eaf0facc9be1f91b37a83f881ffc42311",
-      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    "partial_delivery": {
+      "recorded_at": "2026-08-04T22:57:00Z",
+      "source_merge": "heimgewebe/bureau#1529",
+      "source_merge_commit": "56296a7487b03ab8fef99a6f1e32c46bf3a3a61e",
+      "implementation_pull_request": 613,
+      "implementation_head": "b7538b1d2328e9488067df7f3e44b3535301ab5f",
+      "implementation_merge_commit": "6a6e4d2756c92d99251e141cd5483b04613c54f5",
+      "observed_runtime_head": "7d702c8a3ebf3514bcb19fa4fd55e192e4ff9c06",
+      "observed_transport": {
+        "state": "verified",
+        "mutation_intent_bound": true,
+        "client_scope_kind": "shared_unlabeled",
+        "pool_mode": "bounded-shared-token-pool"
+      },
+      "satisfied_scope": [
+        "exact target tool and canonical argument digest binding",
+        "wrong-target non-consumption",
+        "single-use replay rejection"
+      ],
+      "remaining_acceptance_blockers": [
+        {
+          "acceptance_id": "exact-intent-binding",
+          "reason": "Current runtime still reports client_scope_kind shared_unlabeled and explicitly does not establish ownership of a pooled verification by an individual caller or session."
+        },
+        {
+          "acceptance_id": "atomic-ack-consume",
+          "reason": "No identity-separated proof establishes that a foreign same-intent invocation cannot consume the acknowledged verification before the intended target call."
+        },
+        {
+          "acceptance_id": "parallel-nonconsumption",
+          "reason": "No deterministic two-client proof with distinct stable connector identities is recorded."
+        }
+      ],
+      "related_followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T142",
+      "supersedes_invalid_closeout": {
+        "verified_at": "2026-08-04T22:10:00Z",
+        "completion_summary": "Grabowski PR #613 bound transport verification to the exact target and argument digest, passed required CI, merged as 6a6e4d2756c92d99251e141cd5483b04613c54f5, was deployed as the matching runtime release, and passed the live wrong-target/non-consumption/intended-target/replay proof.",
+        "closeout": {
+          "bureau_closeout_owner": "operator:automation:bureau-shard0-closeout-t139-t021-20260805",
+          "source_run_id": "BUR-RUN-20260804T212041Z-4cb4c3cf2e",
+          "source_run_state": "succeeded",
+          "source_run_updated_at": "2026-08-04T21:36:02.129225Z",
+          "source_run_task_sha256": "ede934fb51ea09bd184f061a2d50a153802996a8af8c1df26663b85091604249",
+          "registry_base_commit": "de042c9f71e8a4fb2440f7ab66f849beb8368e69",
+          "stale_queue_entry_removed": true,
+          "repository": "heimgewebe/grabowski",
+          "pull_request": 613,
+          "reviewed_head": "b7538b1d2328e9488067df7f3e44b3535301ab5f",
+          "merge_commit": "6a6e4d2756c92d99251e141cd5483b04613c54f5",
+          "runtime_release": "6a6e4d2756c9-srcset4b83673cd051-locke6664d600b6c-contract430e895a652f",
+          "evidence_path": "/home/alex/.local/state/bureau/t139-completion-evidence-20260804.json",
+          "evidence_sha256": "70c1aae27a197976e457699794075caac389b353077fafb5ce4f464f8a0634da"
+        },
+        "verification": {
+          "task_sha256": "7a0c53aa13ecc8242707d418c41b6f0eaf0facc9be1f91b37a83f881ffc42311",
+          "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+        }
+      },
+      "does_not_establish": [
+        "task verification",
+        "acceptance-criteria migration",
+        "permission to weaken caller or session isolation",
+        "completion of T142"
+      ]
     }
   },
   "priority": {
@@ -129,6 +172,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "verified",
+  "state": "ready",
   "title": "Transport-Verifikationen atomar an Zielaufrufe binden"
 }

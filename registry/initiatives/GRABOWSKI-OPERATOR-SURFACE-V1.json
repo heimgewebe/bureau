@@ -90,15 +90,34 @@
       ]
     },
     "lifecycle": {
-      "reconciled_at": "2026-08-04T02:34:11.242236Z",
-      "reconciled_from": "active",
-      "reconciled_to": "waiting"
+      "reconciled_at": "2026-08-04T05:22:18Z",
+      "reconciled_from": "waiting",
+      "reconciled_to": "active"
+    },
+    "lifecycle_reconciled_20260804_t137_activation": {
+      "from_state": "waiting",
+      "to_state": "active",
+      "reason": "T137 is now ready and ranked first in the now queue. Leaving the initiative waiting would make normal coordinated pickup fail closed despite the explicit task-level prioritization.",
+      "evidence": {
+        "bureau_source_commit": "a01c7bb811c4f3e4bb92ad6ab468c6f7a8a18519",
+        "task": "GRABOWSKI-OPERATOR-SURFACE-V1-T137",
+        "task_state": "ready",
+        "queue_lane": "now",
+        "queue_rank": 1,
+        "prior_claim_result": "claim-intent-no-eligible-task"
+      },
+      "does_not_establish": [
+        "task claimability without all remaining dispatcher gates",
+        "automatic dispatch",
+        "merge or deployment authority",
+        "completion of other initiative tasks"
+      ]
     }
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "waiting",
+  "state": "active",
   "title": "Grabowski operator surface"
 }

@@ -123,11 +123,21 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "queue_activation": {
+      "activated_at": "2026-08-04T05:22:18Z",
+      "source_commit": "a01c7bb811c4f3e4bb92ad6ab468c6f7a8a18519",
+      "reason": "Fresh canonical pickup found no eligible Grabowski task while T137 was planned in next and its dependency T126 was verified; the user requested the next Grabowski improvement task.",
+      "does_not_establish": [
+        "automatic claim or dispatch authority",
+        "merge or deployment authority",
+        "permission to weaken current-head or review gates"
+      ]
     }
   },
   "priority": {
-    "lane": "next",
-    "rank": 24
+    "lane": "now",
+    "rank": 1
   },
   "required_capabilities": [
     "repository",
@@ -136,6 +146,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Optionales Codex-Settlement terminal und policy-konsistent machen"
 }

@@ -102,6 +102,23 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "dependency_reconciliation": {
+      "reconciled_at": "2026-08-04T22:34:00Z",
+      "source_registry_commit": "4a1b9b573f29ed2097650c59f68e8cc6d776ba35",
+      "from_state": "blocked",
+      "to_state": "ready",
+      "dependency_states": {
+        "REPOGROUND-AGENT-UTILITY-V1-T001": "verified"
+      },
+      "reason": "Every declared dependency is terminal and the task defines no independent current blocker.",
+      "does_not_establish": [
+        "queue placement",
+        "claim success",
+        "capability availability",
+        "resource availability",
+        "implementation completion"
+      ]
     }
   },
   "priority": {
@@ -120,6 +137,6 @@
     "strategy": "Die optionale Receipt-Erzeugung und Vergleichsschicht deaktivieren oder entfernen; bestehende Agent-Consumption-Deklarationen und ihre negative Semantik bleiben unverändert nutzbar."
   },
   "schema_version": 1,
-  "state": "blocked",
+  "state": "ready",
   "title": "Agent-Consumption-Angaben an beobachtete Tool-Lese-Receipts binden"
 }

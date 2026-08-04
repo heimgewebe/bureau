@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T007",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Chronik als Ereignis- und Wirkungsverlauf anbinden",
-  "state": "blocked",
+  "state": "ready",
   "goal": "Chronik als append-only Projektion für versionierte Domain-, Deployment-, Föderations- und Grabowski-Receipts anbinden, ohne die jeweilige Primärwahrheit zu ersetzen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T002"
@@ -59,6 +59,23 @@
   ],
   "metadata": {
     "registered_at": "2026-07-15T20:50:00Z",
-    "ecosystem_role": "history-projection"
+    "ecosystem_role": "history-projection",
+    "dependency_reconciliation": {
+      "reconciled_at": "2026-08-04T22:34:00Z",
+      "source_registry_commit": "4a1b9b573f29ed2097650c59f68e8cc6d776ba35",
+      "from_state": "blocked",
+      "to_state": "ready",
+      "dependency_states": {
+        "WELTGEWEBE-OS-V1-T002": "verified"
+      },
+      "reason": "Every declared dependency is terminal and the task defines no independent current blocker.",
+      "does_not_establish": [
+        "queue placement",
+        "claim success",
+        "capability availability",
+        "resource availability",
+        "implementation completion"
+      ]
+    }
   }
 }

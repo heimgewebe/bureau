@@ -66,168 +66,44 @@
   "metadata": {
     "registered_at": "2026-07-15T22:40:00Z",
     "historical_initiative_id_retained": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
-    "current_assessment": {
-      "observed_at": "2026-08-01T23:55:00+02:00",
-      "repoground_main": "6aeb0f15595422ac323f0155b748f97edf6bf886",
-      "open_repoground_pull_requests": 0,
-      "producer_path": "merger/repoground/architecture/call_graph.py",
-      "producer_lines": 1733,
-      "visitor_span_lines": 897,
-      "resolver_span_lines": 359,
-      "ruff_c901_findings": 0,
-      "mutable_handoff": "_ModuleState.calls: list[dict[str, Any]]",
-      "prototype_diff": {
-        "files": 1,
-        "insertions": 29,
-        "deletions": 19
-      },
-      "prototype_focused_tests": {
-        "passed": 93,
-        "failed": 0
-      },
-      "goldset_before": {
-        "call_count": 16,
-        "skipped_files_count": 0,
-        "sha256": "647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae"
-      },
-      "goldset_after": {
-        "call_count": 16,
-        "skipped_files_count": 0,
-        "sha256": "647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae"
-      }
-    },
-    "fine_grained_execution_scope": {
-      "component_resource": "component.repoground.call-graph-producer",
-      "decision": "component-and-exact-paths",
-      "exact_paths": [
-        "/home/alex/repos/repoground/merger/repoground/architecture/call_graph.py",
-        "/home/alex/repos/repoground/merger/repoground/tests/test_python_call_graph.py"
-      ],
-      "does_not_authorize": [
-        "public call-graph artifact changes",
-        "resolution-rule changes",
-        "schema or version changes",
-        "dependency upgrades",
-        "repository-wide refactors",
-        "queue or unrelated Bureau mutations"
+    "verified_at": "2026-08-04T05:10:00Z",
+    "completion_summary": "RepoGround PR #1145 replaced the mutable raw-call dictionary handoff with a frozen slotted typed record, preserved the exact public call-graph goldset and merged after revision-bound review and green CI.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1145,
+      "base_commit": "6aeb0f15595422ac323f0155b748f97edf6bf886",
+      "head_commit": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
+      "merge_commit": "4ce9e1d8ea1849ce298180004f197d48f9e8a162",
+      "current_main": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+      "changed_paths": [
+        "merger/repoground/architecture/call_graph.py",
+        "merger/repoground/tests/test_python_call_graph.py"
       ]
     },
-    "scope_revision_reason": "The 2026-07-15 Lenskit-wide task was remeasured on current RepoGround main. No C901 producer finding remains; the smallest still-valid decomposition is the mutable raw-call dictionary boundary.",
-    "does_not_establish": [
-      "semantic improvement",
-      "higher S1 recall",
-      "performance improvement",
-      "permission to change files outside the exact two-path scope",
-      "merge readiness before fresh CI and review"
-    ],
-    "verified_at": "2026-08-04T05:10:00Z",
-    "implementation_branch": "bureau/rpu-v1-t030/142b827b53",
-    "implementation_base": "6aeb0f15595422ac323f0155b748f97edf6bf886",
-    "implementation_head": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
-    "implementation_pr": "heimgewebe/repoground#1145",
-    "implementation_pr_url": "https://github.com/heimgewebe/repoground/pull/1145",
-    "implementation_result_commit": "4ce9e1d8ea1849ce298180004f197d48f9e8a162",
-    "integration_method": "merge",
-    "changed_paths": [
-      "merger/repoground/architecture/call_graph.py",
-      "merger/repoground/tests/test_python_call_graph.py"
-    ],
-    "self_review": {
-      "authority": "github_pull_request_review",
+    "review": {
       "review_id": "PRR_kwDOP0INTM8AAAABID5jSQ",
-      "submitted_at": "2026-08-01T22:26:56Z",
       "bound_head": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
       "verdict": "PASS",
-      "open_code_findings": 0
+      "open_findings": 0
     },
-    "validation": [
-      "Focused Python call-graph suite passed 94 tests on implementation head 1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803.",
-      "The unchanged goldset emitted 16 calls, zero skipped files and SHA-256 647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae.",
-      "GitHub Actions task-index, Python Call Graph Goldset, contracts-validate, ai-context guard, lint, CodeQL and test-suite completed successfully on the implementation head.",
-      "PR #1145 changed exactly the two authorized paths and merged at the reviewed head.",
-      "RepoGround main 633568ce1e0880b729ff48e4ff77fd6ae69b351f contains merge commit 4ce9e1d8ea1849ce298180004f197d48f9e8a162 as an ancestor and is six commits ahead."
-    ],
-    "completion_summary": "RepoGround PR #1145 replaced the mutable raw-call dictionary handoff with a frozen slotted typed record, preserved the exact public call-graph goldset and merged after revision-bound review and green CI.",
-    "verified_acceptance": {
-      "rpu-v1-t030-typed-handoff": "The collector and resolver now exchange the frozen, slotted _RawCall record; the focused regression proves immutability.",
-      "rpu-v1-t030-artifact-parity": "The canonical goldset remained 16 calls, zero skipped files and SHA-256 647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae.",
-      "rpu-v1-t030-focused-contract": "The focused suite passed 94 tests and the public JSON-compatible artifact shape remained unchanged.",
-      "rpu-v1-t030-maintainability": "PR #1145 changed exactly call_graph.py and test_python_call_graph.py; Ruff and C901 gates passed.",
-      "rpu-v1-t030-delivery": "The exact reviewed head passed the relevant GitHub Actions, merged, and remains contained in current main."
-    },
-    "registry_truth": {
-      "schema_version": 1,
-      "status": "satisfied",
-      "evidence": [
-        {
-          "kind": "pull_request",
-          "authority": "github",
-          "task_id": "RPU-V1-T030",
-          "number": 1145,
-          "source_ref": "heimgewebe/repoground#1145",
-          "base_commit_sha": "6aeb0f15595422ac323f0155b748f97edf6bf886",
-          "head_commit_sha": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
-          "merge_commit_sha": "4ce9e1d8ea1849ce298180004f197d48f9e8a162",
-          "changed_paths": [
-            "merger/repoground/architecture/call_graph.py",
-            "merger/repoground/tests/test_python_call_graph.py"
-          ]
-        },
-        {
-          "kind": "self_review",
-          "authority": "github",
-          "task_id": "RPU-V1-T030",
-          "source_ref": "heimgewebe/repoground#1145",
-          "review_id": "PRR_kwDOP0INTM8AAAABID5jSQ",
-          "head_commit_sha": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
-          "verdict": "PASS"
-        },
-        {
-          "kind": "github_actions",
-          "authority": "github",
-          "task_id": "RPU-V1-T030",
-          "head_commit_sha": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
-          "successful_runs": [
-            {
-              "name": "task-index",
-              "run_id": 30721268653
-            },
-            {
-              "name": "Python Call Graph Goldset",
-              "run_id": 30721268633
-            },
-            {
-              "name": "contracts-validate",
-              "run_id": 30721268797
-            },
-            {
-              "name": "ai-context guard",
-              "run_id": 30721268618
-            },
-            {
-              "name": "lint",
-              "run_id": 30721268615
-            },
-            {
-              "name": "CodeQL",
-              "run_id": 30721268632
-            },
-            {
-              "name": "test-suite",
-              "run_id": 30721268620
-            }
-          ]
-        },
-        {
-          "kind": "main_readback",
-          "authority": "github",
-          "task_id": "RPU-V1-T030",
-          "source_ref": "heimgewebe/repoground@633568ce1e0880b729ff48e4ff77fd6ae69b351f",
-          "merge_commit_sha": "4ce9e1d8ea1849ce298180004f197d48f9e8a162",
-          "merge_commit_is_ancestor": true,
-          "main_ahead_by": 6
-        }
+    "validation": {
+      "focused_tests_passed": 94,
+      "goldset_call_count": 16,
+      "goldset_skipped_files": 0,
+      "goldset_sha256": "647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae",
+      "successful_workflow_run_ids": [
+        30721268653,
+        30721268633,
+        30721268797,
+        30721268618,
+        30721268615,
+        30721268632,
+        30721268620
       ]
+    },
+    "verification": {
+      "task_sha256": "db03b63178e1d64cceb078af9888f5ed8f14b16b633bd7498751314632396efc",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

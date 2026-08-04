@@ -91,6 +91,66 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "closeout": {
+      "ci": {
+        "all_required_checks_green": true,
+        "checks": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "CodeQL / Analyze (python)",
+          "CodeQL / Analyze (actions)",
+          "CodeQL",
+          "Codex review settled"
+        ],
+        "github_status_check_rollup_count": 7
+      },
+      "does_not_establish": [
+        "completion of dependent T017",
+        "permission to alter foreign work",
+        "new claim or deployment authority",
+        "future runtime health"
+      ],
+      "implementation_pr": "heimgewebe/grabowski#606",
+      "merge_commit_sha": "d9c9c1b2964ccbd567928bea2e6706d9f863df7b",
+      "merged_at": "2026-08-04T15:42:24Z",
+      "reviewed_head_sha": "3ccafda93169a4dbd9fa2309fe203e7bc8db9124",
+      "runtime": {
+        "audit_valid": true,
+        "audit_writable": true,
+        "completion_status": "complete",
+        "grabowski_bureau_pickup_sha256": "b5dcb9aa5e931d19020afff15125e2d378ea8e5f2d075bfc3ec05e97de6f4d4b",
+        "integrity_valid": true,
+        "kill_switch_engaged": false,
+        "observed_at": "2026-08-04T20:47:00Z",
+        "release_id": "475e5c43f643-srcset531c0be18178-locke6664d600b6c-contract08fc7a08ddf0",
+        "repo_head": "475e5c43f6437e9ddc4ebaa1d764387183218571",
+        "t141_code_present": true,
+        "transport_compatibility_revert_active": true
+      },
+      "scope": {
+        "acceptance_claims_dependencies_priority_changed": false,
+        "changed_paths": [
+          "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T141.json"
+        ]
+      },
+      "transport": {
+        "connector_snapshot_state": "matched",
+        "does_not_establish": [
+          "authenticated client identity",
+          "future transport stability",
+          "authority beyond this closeout"
+        ],
+        "observed_tool_count": 184,
+        "roundtrip_verified": true,
+        "runtime_tool_count": 184,
+        "verification_receipt_sha256": "4b434d9d6cfb80573dff63bf75c51aa6019811ddd922e6fdd7a36c02c998a42e"
+      },
+      "verified_at": "2026-08-04T21:00:30Z"
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "a41d07a02f779647e643b682e6747095f8669265e0281a34f961fb7ab71fdf0b"
     }
   },
   "priority": {
@@ -104,6 +164,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Bureau-Hostressourcen mit Grabowski-Leasetypen ausrichten"
 }

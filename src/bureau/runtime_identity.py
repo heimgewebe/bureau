@@ -28,6 +28,22 @@ def _sha256(path: Path) -> str | None:
 
 
 MANAGED_PACKAGES = ("bureau", "bureau_cycle")
+SCHEDULER_NAMES = (
+    "bureau-halfhour-operator",
+    "bureau-curator",
+    "bureau-operator-control",
+    "bureau-verifier-control",
+    "bureau-closure-planner",
+)
+
+
+def _scheduler_fragment_paths(root: Path) -> list[Path]:
+    systemd = root / "ops/systemd"
+    return [
+        *(systemd / f"{name}.service" for name in SCHEDULER_NAMES),
+        *(systemd / f"{name}.timer" for name in SCHEDULER_NAMES),
+        *(systemd / "libexec" / name for name in SCHEDULER_NAMES),
+    ]
 
 
 def _package_tree_sha256(root: Path) -> str | None:
@@ -45,7 +61,7 @@ def _package_tree_sha256(root: Path) -> str | None:
     paths = [
         pyproject,
         *(path for package in packages for path in sorted(package.rglob("*.py"))),
-        *(path for path in sorted(systemd.rglob("*")) if path.is_file()),
+        *_scheduler_fragment_paths(root),
     ]
     digest = hashlib.sha256()
     try:

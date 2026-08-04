@@ -133,6 +133,61 @@
         "merge or deployment authority",
         "permission to weaken current-head or review gates"
       ]
+    },
+    "verified_at": "2026-08-04T11:23:00Z",
+    "outcome": "Grabowski PR #601 completed the terminal settlement contract on top of the earlier T137 implementation: optional provider diagnostics remain non-authoritative, required paths stay fail-closed, status/exit/GitHub-state tuples are canonical, and the merged revision is the active Grabowski runtime.",
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout",
+      "verified_at": "2026-08-04T11:23:00Z",
+      "task_sha256": "0aeca97a6f591776f180327b4ad89b5dfca0189075a4ab134243cbf5544e1b99",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "predecessor_pull_requests": [
+          593,
+          597
+        ],
+        "final_pull_request": 601,
+        "final_head": "cd1b1e490303b7c5ede52b72ea3ef2c01289806f",
+        "merge_commit": "982d1c2a89a4d30f9130ffe0fccdcac34e2baa67",
+        "required_ci": {
+          "workflow": "validate",
+          "run_id": 30900633602,
+          "conclusion": "success"
+        },
+        "validation": {
+          "targeted_tests": 78,
+          "full_tests_passed": 4715,
+          "full_tests_skipped": 12,
+          "final_head_receipt_sha256": "49a6aeb97c9064f25f7898b0fae5fb918bc6d0d92a391516b8e7c6c2901e5fb5"
+        }
+      },
+      "runtime": {
+        "release_id": "982d1c2a89a4-srcsetc4dfc3d8804e-locke6664d600b6c-contract50a83e35a563",
+        "repo_head": "982d1c2a89a4d30f9130ffe0fccdcac34e2baa67",
+        "merge_equals_active_runtime_head": true,
+        "runtime_integrity_valid": true,
+        "audit_writable": true,
+        "kill_switch_engaged": false
+      },
+      "validated_acceptance": {
+        "policy-source-of-truth": "PASS — evaluator, workflow and merge consumers use one canonical settlement tuple; the active ruleset still requires only the actual mandatory validation checks.",
+        "bounded-provider-unavailable": "PASS — trusted optional quota/account/environment diagnostics terminate as bounded diagnostics instead of remaining indefinitely pending.",
+        "no-false-codex-pass": "PASS — provider diagnostics remain review_performed=false and settled=false and never claim Codex PASS or merge authority.",
+        "status-message-taxonomy": "PASS — pass, pending and block have distinct stable codes, exit codes, GitHub states and bounded descriptions.",
+        "merge-state-alignment": "PASS — optional external review no longer distorts the aggregate merge state when mandatory checks and exact-head self-review pass.",
+        "no-paid-dependency": "PASS — no quota purchase, API key, paid provider call or new merge/branch-protection authority was introduced.",
+        "regression-suite": "PASS — targeted contract tests, full validation and exact-head GitHub CI passed on cd1b1e490303b7c5ede52b72ea3ef2c01289806f."
+      },
+      "does_not_establish": [
+        "Codex review PASS for a provider-unavailable request",
+        "provider outage root cause",
+        "future provider availability",
+        "automatic merge authority",
+        "branch-protection bypass",
+        "permission to weaken current-head or diff binding"
+      ]
     }
   },
   "priority": {
@@ -146,6 +201,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Optionales Codex-Settlement terminal und policy-konsistent machen"
 }

@@ -88,6 +88,85 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-08-04T11:23:00Z",
+    "outcome": "The general ntfy alert outbox, producer bindings and shared fail-closed dispatcher are merged, packaged in the active runtime and live-attested by a secret-safe synthetic recovery alert with an append-only HTTP-200 acknowledgement.",
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout",
+      "verified_at": "2026-08-04T11:23:00Z",
+      "task_sha256": "8570977e12ee0177b7df720ad740128cda9424448accda47c28f2aac22c39a9d",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "product_pull_request": 469,
+        "product_head": "67c6b057e6639bbe7f9356c8d9f1f6af49da8d80",
+        "product_merge_commit": "8760ebc068e2cdfe2efed38941f8acde6ee6f04d",
+        "product_ci": {
+          "workflow": "validate",
+          "run_id": 30193673900,
+          "conclusion": "success"
+        },
+        "runtime_packaging_pull_request": 580,
+        "runtime_packaging_head": "ed308010ecc843caa679bfc4832d2ec15df221b4",
+        "runtime_packaging_merge_commit": "dc4807b94872d47aebee380b669f46cdf0b49afc",
+        "runtime_packaging_ci": {
+          "workflow": "validate",
+          "run_id": 30840179968,
+          "conclusion": "success"
+        },
+        "product_validation": {
+          "focused_tests_passed": 120,
+          "full_tests_passed": 3515,
+          "full_tests_skipped": 7,
+          "validation_receipt_sha256": "a1799ab4e4ba0bde99558851f8f4d55a99436a436b440caf34517c478fda6405"
+        }
+      },
+      "runtime": {
+        "release_id": "982d1c2a89a4-srcsetc4dfc3d8804e-locke6664d600b6c-contract50a83e35a563",
+        "repo_head": "982d1c2a89a4d30f9130ffe0fccdcac34e2baa67",
+        "product_merge_is_ancestor": true,
+        "packaging_merge_is_ancestor": true,
+        "runtime_integrity_valid": true,
+        "audit_writable": true,
+        "kill_switch_engaged": false
+      },
+      "live_transport_attestation": {
+        "alert_id": "e598be66581f97a023d666aef6ae3037",
+        "correlation_id": "7d1891d771b9f7ec51a0f6972761609e",
+        "event_class": "recovery",
+        "producer": "grabowski-deploy-attest",
+        "subject": "runtime-deploy",
+        "fields": {
+          "operation": "t055-ntfy-synthetic",
+          "outcome": "deployed"
+        },
+        "created_at": "2026-08-03T18:39:26.445384Z",
+        "receipt_sha256": "3dbf9cf13d82fce958f3c708901266a915a6bc652e5077e28ce83c36d54a5ef6",
+        "receipt_file_sha256": "44fe23713b1e0ebfe0c636e803ce08788ea89795bff0dd8e80327539e99397e9",
+        "receipt_mode": "0600",
+        "acknowledged_at": "2026-08-03T18:39:26.769376Z",
+        "http_status": 200,
+        "ack_sha256": "727d27c9ba47fd8d9e0a51c4dbc15901e9613ade38854d22c750271eb53d5d88",
+        "ack_file_sha256": "cc755358e9fa19a9a77fae6ea28a6360a0c4fabed438ba2eefd7acf07a872e47",
+        "ack_mode": "0600",
+        "append_only_pair_present": true
+      },
+      "validated_acceptance": {
+        "separate-evidence-bound-outbox": "PASS — private create-only alert and acknowledgement receipts have deterministic identities, bounded redacted fields, self-hashes and explicit non-claims; terminal job receipts remain separate.",
+        "authoritative-producer-bindings": "PASS — owner decisions, obligation closure and recovery adapters are transition-bound and isolate alert failures from the primary result or exception.",
+        "shared-fail-closed-dispatch": "PASS — terminal notifications and general alerts are independent queues under one lock; malformed alerts block and acknowledgements require HTTP 2xx.",
+        "tests-review-ci-deploy": "PASS — implementation and packaging PRs are merged, both exact-head validate workflows passed, both merge commits are ancestors of the active integrity-valid runtime.",
+        "live-transport-attestation": "PASS — the deployed synthetic T055 recovery alert received a hash-bound append-only HTTP-200 acknowledgement; device reception and user_seen remain unclaimed."
+      },
+      "does_not_establish": [
+        "owner-device reception",
+        "user_seen truth",
+        "future transport availability",
+        "universal end-to-end delivery",
+        "primary operation success",
+        "authorization to retry or mutate"
+      ]
     }
   },
   "priority": {
@@ -107,6 +186,6 @@
     "strategy": "Revert the exact Grabowski implementation PR and redeploy the immediately previous commit-bound runtime. Preserve terminal notification receipts, general alert receipts and acknowledgements as inert append-only evidence; do not relabel, delete or acknowledge queued records during rollback."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Bind general ntfy alert producers and attest delivery"
 }

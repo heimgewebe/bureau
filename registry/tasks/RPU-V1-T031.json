@@ -186,11 +186,12 @@
       "live_missing_lease_count": 9
     },
     "deployment": {
-      "required": false,
-      "reason": "The task changes RepoGround library, tests, benchmark and proof artifacts only; its acceptance contract requires merge and remote-main readback, not a separately installed runtime."
+      "product_runtime_required": false,
+      "bureau_registry_publication_required": true,
+      "reason": "RepoGround itself requires no separate runtime deployment for this task; the Bureau closeout changes registry/** and therefore requires publication of the exact Bureau merge commit before final live verification."
     },
     "verification": {
-      "task_sha256": "a0051b1ef523edd732cefa6db920ca9b90b672b547d13d8edbfe23530532512a",
+      "task_sha256": "9b6ca4018d0388fe00bfe5d8234e9146fc247de720bb6c323863bc1501bf214a",
       "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }

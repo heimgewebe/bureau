@@ -23,7 +23,7 @@
     ],
     "approval": {
       "action_class": "read_only_observation",
-      "required_level": "reviewed_plan",
+      "required_level": "none",
       "note": "Nur die versionierten passiven Harness-Befehle aus dem gemergten Audio-Commit dürfen laufen. Der Task hält den Audio-Host zur Messreinheit exklusiv, ändert aber keine Defaults, Routen, Profile, Pegel, Links oder Geräte. Jeder Bericht benötigt frische Vor- und Nachreadbacks."
     }
   },

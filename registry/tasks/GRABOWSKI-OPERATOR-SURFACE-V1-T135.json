@@ -129,6 +129,54 @@
         "permission to acquire overlapping leased paths",
         "that the two-path correction is already correct or mergeable"
       ]
+    },
+    "closeout": {
+      "verified_at": "2026-08-04T02:42:26Z",
+      "source_run": "BUR-RUN-20260803T132723Z-5e1701eef0",
+      "implementation_pr": "heimgewebe/grabowski#581",
+      "reviewed_head_sha": "70ef5e03507acc35b2e63c956ce0cf3337a9de64",
+      "merge_commit_sha": "a7a887820da891bea3830986791a58a6b8794ed0",
+      "merged_at": "2026-08-03T15:48:11Z",
+      "run_state": "succeeded",
+      "ci": {
+        "validate (3.10)": "success",
+        "validate (3.12)": "success",
+        "CodeQL": "success",
+        "exact_head_security_review": "PASS, 0 confirmed findings"
+      },
+      "deployment": {
+        "runtime_head": "bebb00ef56d83a1ac5556f209bc62d8bca0dadd3",
+        "runtime_release": "bebb00ef56d8-srcset200418a78c15-locke6664d600b6c-contract50a83e35a563",
+        "implementation_merge_is_ancestor": true,
+        "deployment_job": "grabowski-job-da4d32b59b91",
+        "deployment_receipt_sha256": "63d6af2d73cceca37de1b6efb2d1138f33a3411c2c7359930aa51bebbf7c2494",
+        "deployment_payload_sha256": "34a737546769c14d34fdf6f2cc8c181001b2f9eb1265d5d8e30f01ff2f965d2e",
+        "runtime_integrity_valid": true,
+        "tool_contract_matches": true,
+        "connector_snapshot_fresh_and_matched": true
+      },
+      "live_readback": {
+        "marker_bound_observer": "grabowski_job_status remained readable during the active deployment admission drain",
+        "challenge_receipt_sha256": "6e4b228ba2f89c7f8333ba519efa58f02bce9e0a9de7a9209d977bd361bda299",
+        "verification_receipt_sha256": "e77dabf083f20b960f87525c8f33db5d0b7af3e1de796d7177a74f582b87e388",
+        "single_use_consumption": "the first mutating invocation consumed the verification before argument-schema rejection; an immediate second invocation was rejected for missing fresh verification",
+        "separate_target_readback": "BUR-RUN-20260803T132723Z-5e1701eef0 remained succeeded"
+      },
+      "stale_projection_resolution": {
+        "cause": "the authoritative run and deployed implementation were terminal, while the Registry task remained ready and queued",
+        "goal_acceptance_claims_dependencies_changed": false
+      },
+      "does_not_establish": [
+        "authenticated platform or client identity",
+        "successful application mutation from the transport-only single-use proof",
+        "absence of response loss after an effect",
+        "retroactive Bureau binding of Grabowski PR #576",
+        "generic authority to close unrelated tasks"
+      ]
+    },
+    "verification": {
+      "task_sha256": "c43bb1713e5e4c5da799e3b9262e3fbe3fe8d949667f36bcccca481084e78228",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },
   "priority": {
@@ -146,6 +194,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Markergebundenen Observer-Bypass an readOnlyHint binden"
 }

@@ -128,6 +128,64 @@
         "Produktcode- oder Produktionsabhängigkeitsänderungen",
         "Merge ohne Tests, Review und grüne GitHub-CI"
       ]
+    },
+    "verified_at": "2026-08-04T14:37:45Z",
+    "outcome": "RepoGround PR #1141 updated exactly the five approved test-tooling files to pytest 9.1.1, passed all pull-request workflows, and merged as a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9. Bureau PR #1318 already removed the task from the active queue but failed to persist the terminal task state; this repair closes that contradictory taskgraph truth.",
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout_repair",
+      "verified_at": "2026-08-04T14:37:45Z",
+      "implementation": {
+        "repository": "heimgewebe/repoground",
+        "pull_request": 1141,
+        "url": "https://github.com/heimgewebe/repoground/pull/1141",
+        "implementation_head": "0e791f7fd5880b07923bc0e39e5d5a0c0ad57f1a",
+        "merge_commit": "a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9",
+        "merged_at": "2026-08-01T12:08:43Z",
+        "changed_files": 5,
+        "required_checks_green": true
+      },
+      "prior_queue_closeout": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1318,
+        "merge_commit": "7243b5a45ca76a2876fe4deda9ac4752ddc562ec",
+        "merged_at": "2026-08-01T13:13:48Z",
+        "effect": "removed T022 from queue.now",
+        "defect": "task state remained ready despite the closeout asserting verified truth"
+      },
+      "validation": [
+        "All 17 pull-request workflow runs returned completed/success on exact head 0e791f7fd5880b07923bc0e39e5d5a0c0ad57f1a.",
+        "The merged diff changed exactly requirements-dev.txt, requirements-browser.txt, both generated lockfiles and scripts/ci/check_browser_gate_environment.py.",
+        "The PR self-review recorded 5266 passing tests, 3/3 browser contract tests, reproducible lock generation, compatible hash installations, Ruff and git diff --check."
+      ],
+      "validated_acceptance": {
+        "exact-version-scope": "PASS — both direct pytest pins and both generated locks bind 9.1.1; no other package version changed.",
+        "runtime-boundary": "PASS — no production dependency or product-code file changed.",
+        "browser-version-contract": "PASS — the browser gate expects pytest 9.1.1 while all other browser pins remain unchanged.",
+        "test-compatibility": "PASS — exact-head GitHub test-suite and all other PR workflows completed successfully.",
+        "static-quality": "PASS — PR evidence records Ruff and git diff --check as successful.",
+        "delivery": "PASS — diff, self-review, CI, merge commit and prior queue closeout are revision-bound."
+      },
+      "does_not_establish": [
+        "new RepoGround product work",
+        "permission to alter queue priority",
+        "runtime deployment requirement",
+        "authority over historical foreign worktrees"
+      ],
+      "task_sha256": "dd94501918814443fc46921fbcc3c18aa6041978a60cca49763244f3e76067ab",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "full_validation": {
+        "job_id": "45570ace0b98",
+        "finalization_receipt_sha256": "204470a8f7da828e092f502de7d24b9befe4a1836621c70fb14fcb3b25239acb",
+        "tests": 1111,
+        "subtests": 18,
+        "ruff": "PASS",
+        "registry_valid": true,
+        "systemkatalog_valid": true,
+        "sqlite_integrity": "ok",
+        "broad_bureau_scope_findings": []
+      },
+      "repair_validation_note": "The first full validation correctly rejected the terminal transition until task_sha256 and plan_sha256 were bound. After adding those canonical bindings, the complete validation passed."
     }
   },
   "priority": {
@@ -141,6 +199,6 @@
     "github"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "RepoGround-Testwerkzeug pytest auf 9.1.1 aktualisieren"
 }

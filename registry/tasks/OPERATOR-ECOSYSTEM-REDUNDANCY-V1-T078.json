@@ -1,0 +1,119 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Every affected GitHub reader binds the requested repository, pull-request number, commit SHA, workflow-run ID and job ID to matching identity fields in the returned payload before accepting content.",
+      "id": "request-response-identity-binding"
+    },
+    {
+      "assertion": "Missing or contradictory target identity yields a stable fail-closed result before review settlement, CI classification, merge readiness or downstream mutation; the mismatch remains visible in diagnostics.",
+      "id": "mismatch-fails-closed"
+    },
+    {
+      "assertion": "Pagination, redirects, cached connector responses and retries cannot silently substitute another PR, run or job; each page or followed response retains the original target binding.",
+      "id": "pagination-redirect-cache-safety"
+    },
+    {
+      "assertion": "Regression tests reproduce the observed PR #580 versus PR #546 target confusion and contradictory workflow-job log readbacks, and prove that cross-target data is rejected rather than normalized.",
+      "id": "regression-evidence"
+    },
+    {
+      "assertion": "Focused read-surface, review-gate and workflow-readback tests plus full Grabowski repository validation pass on one exact reviewed PR head.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly ordered implementation with @grabowski. Scope is limited to target-identity validation, fail-closed readback handling, regression tests and documentation; connector-vendor changes, secret access, foreign-work override, merge and deployment remain separately gated.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_read_surface.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_operator.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/tests/test_read_surface.py",
+      "path:/home/alex/repos/grabowski/tests/test_pr_review_gate_target_matrix.py",
+      "path:/home/alex/repos/grabowski/tests/test_github_readback_identity.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Harden Grabowski GitHub and workflow readbacks so every accepted payload is bound to the explicitly requested repository, pull request, commit, workflow run and job identity; mismatched, stale or cross-target data must fail closed before it can affect review, CI or merge decisions.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T078",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "connector_vendor_root_cause",
+      "conversation_or credential exposure",
+      "truth of any mismatched historical payload",
+      "automatic claim or dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ],
+    "finding": "During PR #580 optimization, one review-thread readback returned material associated with PR #546 and a generic workflow-job log readback contradicted the direct job-bound log. The transport-intent gate that blocked follow-up registration was subsequently fixed by merged PRs #595 and #604 and is live in runtime ae8c8a97209cb3d4e5a62bc47b8b57c23d85ee48.",
+    "observed_at": "2026-08-03T18:00:00Z",
+    "observed_runtime_commit": "ae8c8a97209cb3d4e5a62bc47b8b57c23d85ee48",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-91a3c117121fd071cf4d968b",
+      "event_id": 2504,
+      "event_created_at": "2026-08-04T15:09:32.930947Z",
+      "request_sha256": "51259a6aeeef82c1ea34a9d0a04db9fb4e3f9c69ad4ce6e4e5183f8617b06ef3",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-observation",
+        "locator": "github:heimgewebe/grabowski/pull/580",
+        "observed_at": "2026-08-04T15:05:30Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-04",
+    "source": "operator_readback_target_confusion",
+    "source_candidate": "candidate-91a3c117121fd071cf4d968b",
+    "source_event_id": 2504,
+    "transport_fixes": [
+      {
+        "merge_commit": "68885b3bc08d2197a10b324d17e866f97046a622",
+        "pull_request": 595
+      },
+      {
+        "merge_commit": "bcda87be8d5c7544f3e77a80b06f24c19f82ffbf",
+        "pull_request": 604
+      }
+    ]
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 790
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Revert only the exact readback-identity hardening commit. Preserve mismatch diagnostics and test fixtures; do not restore acceptance of cross-target or identity-free payloads without a separately reviewed contract change."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bind GitHub readbacks to requested identities"
+}

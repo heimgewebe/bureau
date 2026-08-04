@@ -3,7 +3,7 @@
   "id": "RPU-V1-T031",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Incremental and bounded-parallel call-graph generation",
-  "state": "ready",
+  "state": "verified",
   "goal": "Avoid unconditional full-repository parsing by adding hash-bound file reuse and bounded parallel parsing while proving equivalence to a clean full rebuild.",
   "depends_on": [
     "RPU-V1-T029",
@@ -115,6 +115,84 @@
         "bypassing path or component lease conflicts",
         "treating an isolated worktree as repository-wide authority"
       ]
+    },
+    "verified_at": "2026-08-04T13:11:05Z",
+    "completion_summary": "RepoGround PR #1151 implemented hash-bound file reuse and bounded parallel Python call-graph parsing, preserved canonical results, passed exact-head review and all visible CI gates, merged to main, and the bound Bureau run completed successfully with its leases absent.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1151,
+      "base_commit": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+      "head_commit": "7cf9233b83a874e375d2377b1a46c6ecfc1f4a04",
+      "merge_commit": "165cada0a164565e84cf7f45176f623b94ecc9c5",
+      "current_main": "165cada0a164565e84cf7f45176f623b94ecc9c5",
+      "changed_paths": [
+        "merger/repoground/architecture/call_graph.py",
+        "merger/repoground/tests/test_python_call_graph.py",
+        "merger/repoground/scripts/bench_call_graph_build.py",
+        "docs/proofs/repoground-call-graph-incremental-parallel-v1-proof.md",
+        "docs/proofs/repoground-call-graph-incremental-parallel-v1.measurement.json"
+      ]
+    },
+    "review": {
+      "review_id": "PRR_kwDOP0INTM8AAAABITP4ng",
+      "bound_head": "7cf9233b83a874e375d2377b1a46c6ecfc1f4a04",
+      "verdict": "PASS",
+      "open_findings": 0,
+      "open_threads": 0
+    },
+    "validation": {
+      "full_tests_passed": 5387,
+      "full_tests_skipped": 12,
+      "focused_tests_passed": 58,
+      "focused_tests_skipped": 10,
+      "publication_boundary_tests_passed": 115,
+      "publication_boundary_tests_skipped": 10,
+      "goldset_agent_effect_tests_passed": 95,
+      "goldset_agent_effect_tests_skipped": 10,
+      "canonical_result_sha256": "c12547d4e4dad664f0eb0d8cbf3b8b063ea29db4ded8aa09e6653a94511a1295",
+      "measurement_sha256": "5e5ec7e9518b5d55116485dd8980e9441edf970bfc300b83dfb96c1376f2b283",
+      "successful_workflow_run_ids": [
+        30890412986,
+        30890412183,
+        30890412349,
+        30890410478,
+        30890410565,
+        30890410422,
+        30890410236,
+        30890410205
+      ]
+    },
+    "benchmark": {
+      "corpus_python_files": 702,
+      "corpus_bytes": 8853965,
+      "repetitions": 3,
+      "cold_serial_median_ms": 16006.58,
+      "cold_parallel_median_ms": 10267.54,
+      "cold_parallel_speedup": 1.56,
+      "warm_unchanged_median_ms": 4341.36,
+      "warm_unchanged_speedup": 3.69,
+      "single_file_delta_median_ms": 5491.76,
+      "single_file_delta_speedup": 2.91
+    },
+    "run": {
+      "run_id": "BUR-RUN-20260804T062104Z-4e825c0891",
+      "worker_id": "chatgpt-repoground-rpu-v1-t031-20260804",
+      "state": "succeeded",
+      "updated_at": "2026-08-04T10:37:45.913955Z",
+      "workspace_path": "/home/alex/repos/.bureau-worktrees/BUR-RUN-20260804T062104Z-4e825c0891",
+      "workspace_branch": "bureau/rpu-v1-t031/4e825c0891",
+      "workspace_clean": true,
+      "leases_status": "terminal-released-or-expired",
+      "live_missing_lease_count": 9
+    },
+    "deployment": {
+      "product_runtime_required": false,
+      "bureau_registry_publication_required": true,
+      "reason": "RepoGround itself requires no separate runtime deployment for this task; the Bureau closeout changes registry/** and therefore requires publication of the exact Bureau merge commit before final live verification."
+    },
+    "verification": {
+      "task_sha256": "9b6ca4018d0388fe00bfe5d8234e9146fc247de720bb6c323863bc1501bf214a",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

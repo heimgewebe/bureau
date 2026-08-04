@@ -76,7 +76,109 @@
       "permission to alter foreign work",
       "automatic merge authority",
       "automatic deployment authority"
-    ]
+    ],
+    "closeout": {
+      "verified_at": "2026-08-04T03:39:01Z",
+      "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T138",
+      "preimage_sha256": "5f4d421e5704a1d50b07ca859d1f288e172e485f9e1db87a62d302b0f7546700",
+      "plan": {
+        "schema_version": 1,
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T138",
+        "action": "terminalize-completed-task",
+        "expected_preimage_sha256": "5f4d421e5704a1d50b07ca859d1f288e172e485f9e1db87a62d302b0f7546700",
+        "expected_state": "planned",
+        "target_state": "verified",
+        "evidence_bindings": {
+          "t135_completion_receipt_sha256": "078fc7aa1396f43dab60b9caecf51ed5761c1209dd0ab1028a744f1e5626f945",
+          "implementation_pr": "heimgewebe/bureau#1479",
+          "reviewed_head_sha": "3ec41fedd3832497c50018cc7945e91e3bf94a60",
+          "merge_commit_sha": "16f31177d93368a44f48c82456287b5dd77cbf17",
+          "runtime_source_commit": "2d70654bff61cf246386a86271e1e3aea82a3f00",
+          "runtime_refresh_result_sha256": "2be46a47c5291e79a40ebc13bb0d50ef751f9de5eb20af0371ddb6c2c77070ef",
+          "runtime_manifest_sha256": "6935e9fcffa3bb5003c121a8d6ab00e0b0f7df7e29c73974572c22a6ebf230fc"
+        },
+        "boundaries": [
+          "no queue mutation",
+          "no initiative mutation",
+          "no claim or merge authority",
+          "no foreign task mutation"
+        ]
+      },
+      "plan_sha256": "6d2b7ec05f30f1f567437ed23daf8b0bf2987a1b17f20c630d42fbac9f866171",
+      "stale_run_closeout": {
+        "run_id": "BUR-RUN-20260803T132723Z-5e1701eef0",
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T135",
+        "completion_receipt_sha256": "078fc7aa1396f43dab60b9caecf51ed5761c1209dd0ab1028a744f1e5626f945",
+        "verified_at": "2026-08-04T02:26:51.950569Z",
+        "active_run_leases": 0
+      },
+      "implementation": {
+        "pull_request": "heimgewebe/bureau#1479",
+        "reviewed_head_sha": "3ec41fedd3832497c50018cc7945e91e3bf94a60",
+        "merge_group_sha": "0b776f1a959c350418b09ae1218e4a6e3c587bb3",
+        "merge_commit_sha": "16f31177d93368a44f48c82456287b5dd77cbf17",
+        "merged_at": "2026-08-04T03:12:20Z",
+        "changed_files": 2,
+        "functional_transition": "GRABOWSKI-OPERATOR-SURFACE-V1 active -> waiting",
+        "foreign_registry_mutations": 0
+      },
+      "validation": {
+        "local_exact_head": "3ec41fedd3832497c50018cc7945e91e3bf94a60",
+        "pytest": "1069 passed, 18 subtests passed",
+        "ruff": "success",
+        "system_catalog_boundary": "success",
+        "registry_check": "valid",
+        "broad_bureau_scope_findings": [],
+        "github_workflow_run": 30873275033,
+        "github_checks": {
+          "validate (3.10)": "success",
+          "validate (3.12)": "success"
+        },
+        "self_review": "PASS, 0 confirmed findings"
+      },
+      "deployment": {
+        "source_commit": "2d70654bff61cf246386a86271e1e3aea82a3f00",
+        "release_id": "2d70654bff61-src812011d784b5",
+        "refresh_result_sha256": "2be46a47c5291e79a40ebc13bb0d50ef751f9de5eb20af0371ddb6c2c77070ef",
+        "manifest_sha256": "6935e9fcffa3bb5003c121a8d6ab00e0b0f7df7e29c73974572c22a6ebf230fc",
+        "registry_tree_sha256": "8f89e6d39ceff20a76cd11e68aa0adfb91eb8a4f7924681cf47aeefe63f852ed",
+        "package_tree_sha256": "812011d784b5cf415b7eefa03a8359a9ff99e09b7fb4a8918a882b73314d8c88",
+        "runtime_identity_valid": true,
+        "registry_check_valid": true
+      },
+      "live_readback": {
+        "state_integrity": "ok",
+        "foreign_key_errors": [],
+        "lifecycle_inconsistent_count": 0,
+        "health_blocks_normal_claim": false,
+        "lifecycle_mismatch": false,
+        "repair_task_required": false,
+        "repair_task_candidate_count": 0,
+        "selected_task_id": null,
+        "ranked_eligible_count": 0
+      },
+      "lease_cleanup": {
+        "release_grip_receipt_sha256": "3c8b8118661c3473515d21fc6e7d01ca1a22428927362704473e08ad2811c40e",
+        "lease_release_receipt_sha256": "e25c69f8a83d66c60abbc361d9ed1a04f7d1c8734ed8328ec9e2a47626072384",
+        "released": 5,
+        "retained": 0
+      },
+      "does_not_establish": [
+        "claim authority for another task",
+        "permission to wake a waiting initiative",
+        "merge or deployment authority beyond the cited actions",
+        "generic permission to terminalize unrelated tasks",
+        "future runtime health"
+      ]
+    },
+    "verification": {
+      "authority": "chatgpt_operator",
+      "task_sha256": "1c04488113530eabf685a35f93b73d589ace0cbb2c7eb53b0a61ccde3e71334f",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "merge_commit": "16f31177d93368a44f48c82456287b5dd77cbf17",
+      "runtime_head": "2d70654bff61cf246386a86271e1e3aea82a3f00",
+      "deployment_receipt_sha256": "2be46a47c5291e79a40ebc13bb0d50ef751f9de5eb20af0371ddb6c2c77070ef"
+    }
   },
   "priority": {
     "lane": "now",
@@ -92,6 +194,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Grabowski-Initiative nach T135 kanonisch auf waiting setzen"
 }

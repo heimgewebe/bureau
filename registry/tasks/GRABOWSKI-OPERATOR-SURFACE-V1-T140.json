@@ -87,16 +87,17 @@
       "55dd0145175d3ae6708085d3ee65a07895f2dc3bc3bb46f6c9a96e020436d770",
       "a42d02845497193a2e85d637a51a85b81772fbf8f2c5abd647345cec34fd8a69"
     ],
-    "registered_at": "2026-08-04",
-    "registry_base_head": "f1baba9f1ab81105d1e592eb3dd3352d942d0f65",
-    "source": "Live-Audit der vier orphaned Checkout-Bindungen am 4. August 2026",
-    "source_snapshot_sha256": "44deb224bd9016272a71e47f462050a749bd0f521d1113a515c50921b28a8c48",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-8676c3e39448b85e9b87b626",
-      "event_id": 2480,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-08-04T10:34:34.084605Z",
+      "event_id": 2480,
       "request_sha256": "5d84442700948d9ce538091f6559b26c75d0a1d12c58225caf889ca95901870f",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -104,13 +105,68 @@
         "locator": "grabowski://checkout-binding-reconciliation/44deb224bd9016272a71e47f462050a749bd0f521d1113a515c50921b28a8c48",
         "observed_at": "2026-08-04T10:21:00Z",
         "sha256": "44deb224bd9016272a71e47f462050a749bd0f521d1113a515c50921b28a8c48"
-      },
+      }
+    },
+    "outcome": "Grabowski PR #605 implemented the receipt-bound two-phase terminal checkout reconciliation, passed exact-head validation and merged; the merged revision is contained in the current integrity-valid Grabowski runtime. PR #614 subsequently hardened the same path against broken-symlink identity ambiguity.",
+    "registered_at": "2026-08-04",
+    "registry_base_head": "f1baba9f1ab81105d1e592eb3dd3352d942d0f65",
+    "source": "Live-Audit der vier orphaned Checkout-Bindungen am 4. August 2026",
+    "source_snapshot_sha256": "44deb224bd9016272a71e47f462050a749bd0f521d1113a515c50921b28a8c48",
+    "verification": {
       "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+        "terminality of any historical source without source-specific evidence",
+        "archive or cleanup authority",
+        "branch or ref deletion authority",
+        "permission to weaken T095 or T096 fail-closed boundaries"
+      ],
+      "hardening": {
+        "head": "0d0fd63bb7f20ceae3132edc579ca0c37387db96",
+        "merge_commit": "7d702c8a3ebf3514bcb19fa4fd55e192e4ff9c06",
+        "pull_request": 614,
+        "required_ci_run_id": 30956681144
+      },
+      "implementation": {
+        "head": "2b6ca993202877f275bb07088edc2054b15c07f4",
+        "merge_commit": "ae8c8a97209cb3d4e5a62bc47b8b57c23d85ee48",
+        "pull_request": 605,
+        "repository": "heimgewebe/grabowski",
+        "required_ci": {
+          "conclusion": "success",
+          "run_id": 30918383017,
+          "workflow": "validate"
+        },
+        "validation": {
+          "full_tests_passed": 4744,
+          "full_tests_skipped": 12,
+          "lifecycle_receipt_sha256": "1b2102d9ff26928684939060302a38a6439132bc6117e7156f6caeeed865c81e"
+        }
+      },
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "runtime": {
+        "audit_writable": true,
+        "contains_implementation_merge": true,
+        "kill_switch_engaged": false,
+        "release_id": "7d702c8a3ebf-srcset9db9077725db-locke6664d600b6c-contract430e895a652f",
+        "repo_head": "7d702c8a3ebf3514bcb19fa4fd55e192e4ff9c06",
+        "runtime_integrity_valid": true
+      },
+      "source": "operator_closeout",
+      "status": "verified",
+      "task_sha256": "b431aef18ba8212f88a43ee62c4c01c10a0e7789f626b8f106fe31bf07febfbc",
+      "validated_acceptance": {
+        "audited-readback": "PASS",
+        "cas-and-idempotency": "PASS",
+        "evidence-state-only": "PASS",
+        "exact-identity-binding": "PASS",
+        "fresh-conflict-readback": "PASS",
+        "immutable-source-terminality": "PASS",
+        "preserve-t095-t096-boundary": "PASS",
+        "source-kind-regressions": "PASS",
+        "two-phase-preview-apply": "PASS"
+      },
+      "verified_at": "2026-08-04T23:27:00Z"
+    },
+    "verified_at": "2026-08-04T23:27:00Z"
   },
   "priority": {
     "lane": "next",
@@ -128,6 +184,6 @@
     "strategy": "Den neuen mutierenden Reconciliation-Pfad vollständig revertieren. T095/T096 bleiben als rein read-only, fail-closed Projektion bestehen; orphaned Bindungen werden bis zu einer korrigierten, erneut reviewten Lösung weiterhin nur blockierend angezeigt."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Verschwundene managed Checkouts receiptgebunden abschließen"
 }

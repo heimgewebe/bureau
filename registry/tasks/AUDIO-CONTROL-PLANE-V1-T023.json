@@ -10,7 +10,7 @@
     "AUDIO-CONTROL-PLANE-V1-T015"
   ],
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 23
   },
   "execution": {
@@ -83,6 +83,19 @@
       "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
       "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
     },
-    "does_not_establish": []
+    "does_not_establish": [],
+    "priority_reconciliation": {
+      "schema_version": 1,
+      "observed_at": "2026-08-04T07:27:06Z",
+      "base_commit": "e573ce243113a0c0b8f613d01cce307c325574de",
+      "from_lane": "next",
+      "to_lane": "later",
+      "reason": "Roland and whale integration remains valid, but follows passive telemetry T021 and physical acceptance T016; it is not next-lane work while those gates are unresolved.",
+      "does_not_establish": [
+        "task cancellation",
+        "acceptance completion",
+        "permission to bypass dependencies or live gates"
+      ]
+    }
   }
 }

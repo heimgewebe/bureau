@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A deterministic fixture or scripted two-branch reproduction identifies the exact generated paths and lifecycle transitions that currently produce rename/delete or content conflicts when independently built Commonworld branches are combined; the evidence distinguishes semantic source conflicts from regenerable output conflicts.",
+      "evidence_type": "object",
+      "id": "reproducible-conflict-model"
+    },
+    {
+      "assertion": "The implemented release lifecycle allows a clean feature branch to absorb a concurrently advanced main branch and regenerate one canonical current release without unresolved generated-file conflicts, force-push, manual selection among hash-named release directories or silent loss of source changes. Any custom merge rule is constrained by verified source and build digests and must fail closed on semantic drift.",
+      "evidence_type": "object",
+      "id": "conflict-resistant-release-lifecycle"
+    },
+    {
+      "assertion": "Historical release retention, current release selection, page-build manifests, asset hashes, GitHub Pages compatibility and exact production-readback bindings remain deterministic and documented; rollback restores source, release metadata and retained artifacts as one coherent unit.",
+      "evidence_type": "object",
+      "id": "deterministic-retention-and-readback"
+    },
+    {
+      "assertion": "Delivery benchmark and public browser-smoke evidence are regenerated or invalidated by an explicit current-head contract. Stale evidence cannot pass validation, while normal branch synchronization does not require temporary one-shot workflows or ad hoc helper commits.",
+      "evidence_type": "object",
+      "id": "fresh-evidence-contract"
+    },
+    {
+      "assertion": "Focused conflict-reproduction tests, deterministic build, full make validate, browser smoke, diff-bound self-review and all required GitHub checks pass on the exact proposed head. The closeout reports repository-size, PR-diff and merge-conflict effects and records any remaining trade-off rather than claiming conflict freedom beyond the covered lifecycle.",
+      "evidence_type": "object",
+      "id": "regression-and-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The task may change source, build, release-retention and CI contracts only in an isolated worktree; it may not rewrite shared branch history or weaken exact-release verification.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Eliminate the recurring mass merge conflicts caused when Commonworld feature branches and current main independently regenerate hash-named public release snapshots and delivery evidence, while preserving deterministic builds, exact release readback, retained historical releases and fail-closed evidence freshness.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T040",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that every future source conflict is regenerable",
+      "permission to use merge drivers that discard semantic changes",
+      "permission to force-push shared branches",
+      "automatic merge, deployment or production-verification authority"
+    ],
+    "observed_conflict_class": "generated hash-named release snapshots, page-build manifests and delivery evidence diverged independently across main and the feature branch",
+    "repair_evidence": {
+      "full_validation_receipt_sha256": "c2250e99d4ce02233b5c6383fb3ac4d9c79ed27fed9cf5aefcdd5dde4a05e886",
+      "rebuilt_release_id": "b6c3d810dba38df0f534",
+      "repaired_head": "3a9551466f760e322518f3bc2392a9cb22a4b9cc"
+    },
+    "source": "Commonworld PR #186 conflict repair on 2026-08-04",
+    "source_candidate_id": "candidate-793af3e560683fd3c392a04a",
+    "source_event_id": 2483,
+    "source_locator": "github:heimgewebe/commonworld#186@3a9551466f760e322518f3bc2392a9cb22a4b9cc",
+    "source_sha256": "c2250e99d4ce02233b5c6383fb3ac4d9c79ed27fed9cf5aefcdd5dde4a05e886",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-793af3e560683fd3c392a04a",
+      "event_id": 2483,
+      "event_created_at": "2026-08-04T11:16:59.326317Z",
+      "request_sha256": "31d1489ca80e0d3ec063941e4c2e8fc637f4effb45a7245423a0c5ed90340623",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "implementation-closeout",
+        "locator": "github:heimgewebe/commonworld#186@3a9551466f760e322518f3bc2392a9cb22a4b9cc;validation-receipt:c2250e99d4ce02233b5c6383fb3ac4d9c79ed27fed9cf5aefcdd5dde4a05e886",
+        "observed_at": "2026-08-04T11:08:00Z",
+        "sha256": "c2250e99d4ce02233b5c6383fb3ac4d9c79ed27fed9cf5aefcdd5dde4a05e886"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "build-system",
+    "ci",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "If the new lifecycle weakens release retention, deterministic readback or deployment compatibility, revert its source, CI and generated-manifest changes together and restore the previous release-generation contract; retain the conflict reproduction as a regression test for a revised design."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make generated release snapshots conflict-resistant"
+}

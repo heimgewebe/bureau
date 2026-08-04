@@ -48,7 +48,15 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/proofs/transport-roundtrip-v3-t139-20260804.md",
+      "path:/home/alex/repos/grabowski/docs/transport-roundtrip-v3.md",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip_intent_replacement.py"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",

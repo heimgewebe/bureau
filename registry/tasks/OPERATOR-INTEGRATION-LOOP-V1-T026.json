@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Contracts-Mirror-Updates aus PR #54 und #55 synchron reparieren",
   "goal": "Erzeuge für die weiterhin sinnvollen geschlossenen Contracts-Mirror-Updates aus PR #54 und #55 einen frischen Ersatzpfad vom aktuellen origin/main und belege Mirror-Synchronität, Vertragskonsistenz sowie frische CI für Python 3.14 und actions/cache v6.",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 2
@@ -65,6 +65,45 @@
         "automatische Queueaufnahme",
         "Berechtigung zu administrativen Merge-Bypässen"
       ]
+    },
+    "closeout": {
+      "verified_at": "2026-08-04T00:20:15.551415Z",
+      "source_run": "BUR-RUN-20260803T021533Z-84ea9d4d86",
+      "implementation_pr": "heimgewebe/contracts-mirror#57",
+      "reviewed_head_sha": "9e4759161b119bb38a0a7a63428aba14bbb38fe0",
+      "merge_commit_sha": "968518ebbef3b36c008320d701c87473aa012a88",
+      "merged_at": "2026-08-03T02:41:18Z",
+      "run_state": "succeeded",
+      "ci": {
+        "ai-context guard": "success",
+        "contracts-validate": "success",
+        "CodeQL": "success"
+      },
+      "repository_readback": {
+        "origin_main": "968518ebbef3b36c008320d701c87473aa012a88",
+        "working_tree_clean": true
+      },
+      "stale_projection_resolution": {
+        "cause": "priority-only task revision after successful terminal run",
+        "previous_priority": {
+          "lane": "next",
+          "rank": 25
+        },
+        "current_priority": {
+          "lane": "now",
+          "rank": 2
+        },
+        "goal_acceptance_claims_dependencies_changed": false
+      },
+      "does_not_establish": [
+        "generic permission to rebind stale terminal overlays",
+        "completion of OPERATOR-INTEGRATION-LOOP-V1-T027",
+        "claimability of unrelated tasks"
+      ]
+    },
+    "verification": {
+      "task_sha256": "731864d541df28893c213bbc8c10f0d689904adfb78afa6ccc001e158bfecc52",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },
   "acceptance": [

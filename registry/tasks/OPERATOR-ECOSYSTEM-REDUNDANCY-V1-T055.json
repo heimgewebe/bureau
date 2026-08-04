@@ -95,6 +95,8 @@
       "status": "verified",
       "source": "operator_closeout",
       "verified_at": "2026-08-04T11:23:00Z",
+      "task_sha256": "8570977e12ee0177b7df720ad740128cda9424448accda47c28f2aac22c39a9d",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
       "implementation": {
         "repository": "heimgewebe/grabowski",
         "product_pull_request": 469,

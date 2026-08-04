@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "component.audio.live-telemetry-v1",
+  "type": "component",
+  "parent": "repo.audio",
+  "path": "/home/alex/repos/audio/.audio-scopes/live-telemetry-v1",
+  "grabowski_key": "component:audio-live-telemetry-v1",
+  "metadata": {
+    "role": "Bureau coordination identity for the bounded passive audio and MIDI live telemetry slice; exact writable files remain separately leased through execution.grabowski_resources."
+  }
+}

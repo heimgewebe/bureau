@@ -3,7 +3,7 @@
   "id": "RPU-V1-T031",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Incremental and bounded-parallel call-graph generation",
-  "state": "planned",
+  "state": "ready",
   "goal": "Avoid unconditional full-repository parsing by adding hash-bound file reuse and bounded parallel parsing while proving equivalence to a clean full rebuild.",
   "depends_on": [
     "RPU-V1-T029",
@@ -27,6 +27,9 @@
   ],
   "required_capabilities": [
     "repository",
+    "python",
+    "testing",
+    "continuous-integration",
     "shell",
     "grabowski",
     "github"
@@ -35,11 +38,10 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
-    "baseline_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+    "baseline_commit": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
     "grabowski_resources": [
-      "component:feat/repobrief-call-graph-incremental-parallel-v1",
-      "path:/home/alex/repos/.lenskit-worktrees/repobrief-call-graph-incremental-parallel-v1",
-      "repo:/home/alex/repos/repoground:branch:feat/repobrief-call-graph-incremental-parallel-v1",
+      "component:repoground-call-graph-incremental-parallel-v1",
+      "repo:/home/alex/repos/repoground",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T031.json"
     ]
   },
@@ -74,7 +76,23 @@
     "bureau_always_open_scope": {
       "claim_resource": "component.bureau.registry",
       "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T031.json",
-      "reason": "Keep Bureau intake and unrelated registry writes available while Lenskit implementation runs in an isolated worktree."
+      "reason": "Keep Bureau intake and unrelated registry writes available while RepoGround implementation runs in an isolated worktree."
+    },
+    "activated_at": "2026-08-04T05:12:00Z",
+    "activation_reason": "Dependencies RPU-V1-T029 and RPU-V1-T030 are verified; live RepoGround main still reparses every Python file serially in extract_python_calls.",
+    "current_assessment": {
+      "observed_at": "2026-08-04T05:12:00Z",
+      "repoground_main": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+      "producer_path": "merger/repoground/architecture/call_graph.py",
+      "producer_function": "extract_python_calls",
+      "current_behavior": [
+        "Walks the complete repository with os.walk for every build.",
+        "Reads and ast.parse-compiles every Python file serially.",
+        "Has no file-content cache or producer-version binding.",
+        "Has no bounded worker setting or deterministic parallel fallback."
+      ],
+      "dependency_RPU_V1_T029": "verified",
+      "dependency_RPU_V1_T030": "verified"
     }
   }
 }

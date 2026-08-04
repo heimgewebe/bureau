@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Heimserver PR #44 revisionsgebunden mergen",
-  "state": "blocked",
+  "state": "cancelled",
   "goal": "Merge Heimserver PR #44 ausschließlich nach tatsächlich ausgeführter grüner GitHub-CI auf dem exakten bereits geprüften Head 7e7d01ec610fbe872917b1ac65916103fed9fbc9 und belege anschließend den neuen main-Stand; ein Job ohne Schritte oder ein Billing-Fehler ist keine grüne CI.",
   "priority": {
     "lane": "next",
@@ -61,7 +61,13 @@
     }
   ],
   "metadata": {
-    "blocker": {
+    "does_not_establish": [
+      "contract-compliant T060 execution",
+      "T060 verification",
+      "reviewed-head equivalence",
+      "retroactive merge authority"
+    ],
+    "superseded_blocker": {
       "kind": "github_billing",
       "run_id": 30210822388,
       "attempt": 2,
@@ -69,11 +75,106 @@
       "observed_at": "2026-07-26T20:15:50Z",
       "message": "The job was not started because recent account payments have failed or your spending limit needs to be increased."
     },
-    "does_not_establish": [
-      "billing_resolution",
-      "green_ci",
-      "merge_readiness",
-      "merge_authority"
-    ]
+    "observed_merge": {
+      "observed_at": "2026-08-04T23:44:16Z",
+      "repository": "heimgewebe/heimserver",
+      "pull_request": 44,
+      "expected_reviewed_head_sha": "7e7d01ec610fbe872917b1ac65916103fed9fbc9",
+      "actual_merged_head_sha": "fd787aec301a572bbab0feb3fa4db7a953752ae4",
+      "merge_commit_sha": "f858c3fbdd2ca88205a7e911c625e8a5433623f7",
+      "merged_at": "2026-07-27T05:42:24Z",
+      "required_check": {
+        "workflow": "CI",
+        "name": "repository-contracts",
+        "run_id": 30239904743,
+        "job_id": 89894770227,
+        "conclusion": "success"
+      },
+      "head_matches_expected": false
+    },
+    "process_deviation": {
+      "status": "reconciled-by-cancellation",
+      "description": "Heimserver PR #44 ist bereits von fd787aec301a572bbab0feb3fa4db7a953752ae4 gemergt. Die zuvor beobachtete Billing-Sperre ist durch eine tatsächlich ausgeführte grüne repository-contracts-CI widerlegt. Der gemergte Head entspricht jedoch nicht dem revisionsgebunden erwarteten Head 7e7d01ec610fbe872917b1ac65916103fed9fbc9. Die fehlende exakte Pre-Merge-Identität und ein match-head Merge dieses erwarteten Heads können nach dem bereits erfolgten Merge nicht rückwirkend hergestellt werden.",
+      "consequence": "T060 ist terminal cancelled. Der historische Billing-Blocker ist superseded; die revisionsgebundene Akzeptanz bleibt ausdrücklich nicht erfüllt."
+    },
+    "observed_acceptance": {
+      "exact-pr-identity": {
+        "status": "FAIL",
+        "expected_head_sha": "7e7d01ec610fbe872917b1ac65916103fed9fbc9",
+        "actual_merged_head_sha": "fd787aec301a572bbab0feb3fa4db7a953752ae4",
+        "does_not_establish": [
+          "matching reviewed revision",
+          "T060 verification"
+        ]
+      },
+      "ci-actually-executed": {
+        "status": "PASS_FOR_ACTUAL_HEAD_ONLY",
+        "head_sha": "fd787aec301a572bbab0feb3fa4db7a953752ae4",
+        "workflow": "CI",
+        "check": "repository-contracts",
+        "run_id": 30239904743,
+        "job_id": 89894770227,
+        "conclusion": "success",
+        "does_not_establish": [
+          "green CI on the expected head",
+          "T060 verification"
+        ]
+      },
+      "review-and-diff-bound": {
+        "status": "NOT_ESTABLISHED",
+        "missing": [
+          "immutable pre-merge diff artifact bound to the actual merged head",
+          "complete review-resolution receipt bound to the actual merged head"
+        ]
+      },
+      "atomic-merge": {
+        "status": "NOT_ESTABLISHED",
+        "missing": [
+          "match-head dispatch for the expected head",
+          "independent merge-lease acquisition and release receipts"
+        ]
+      },
+      "post-merge-readback": {
+        "status": "PARTIAL",
+        "pull_request_state": "merged",
+        "merge_commit_sha": "f858c3fbdd2ca88205a7e911c625e8a5433623f7",
+        "actual_merged_head_sha": "fd787aec301a572bbab0feb3fa4db7a953752ae4",
+        "missing": [
+          "expected-head match"
+        ]
+      }
+    },
+    "cancellation": {
+      "authority": "bureau-blocker-research-lane",
+      "cancelled_at": "2026-08-04T23:49:56Z",
+      "classification": "irreversible_precondition_loss_after_different_head_merge",
+      "reason": "The only target PR was already merged from fd787aec301a572bbab0feb3fa4db7a953752ae4, not the frozen reviewed head 7e7d01ec610fbe872917b1ac65916103fed9fbc9. The Billing failure is no longer current because CI later executed successfully, but the exact-head precondition and match-head merge cannot be recreated after merge. Keeping T060 blocked would preserve no executable path.",
+      "primary_evidence": {
+        "repository": "heimgewebe/heimserver",
+        "pull_request": 44,
+        "expected_head_sha": "7e7d01ec610fbe872917b1ac65916103fed9fbc9",
+        "actual_merged_head_sha": "fd787aec301a572bbab0feb3fa4db7a953752ae4",
+        "merge_commit_sha": "f858c3fbdd2ca88205a7e911c625e8a5433623f7",
+        "merged_at": "2026-07-27T05:42:24Z",
+        "required_check_run_id": 30239904743,
+        "required_check_job_id": 89894770227,
+        "required_check_conclusion": "success"
+      },
+      "irrecoverable_missing_preconditions": [
+        "pre-merge identity revalidation proving PR #44 open on exact head 7e7d01ec610fbe872917b1ac65916103fed9fbc9",
+        "complete canonical diff and review evidence bound to that exact head before merge",
+        "match-head merge dispatch for that exact head",
+        "independent merge-lease acquisition and unchanged release receipts"
+      ],
+      "acceptance_disposition": "not_verified_and_not_retroactively_satisfied",
+      "net_nonterminal_delta": -1,
+      "does_not_establish": [
+        "contract-compliant T060 execution",
+        "T060 verification",
+        "retroactive exact-head merge",
+        "retroactive review and diff delivery",
+        "retroactive merge-lease evidence"
+      ]
+    }
   }
 }

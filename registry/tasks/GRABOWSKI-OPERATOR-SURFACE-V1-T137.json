@@ -140,6 +140,8 @@
       "status": "verified",
       "source": "operator_closeout",
       "verified_at": "2026-08-04T11:23:00Z",
+      "task_sha256": "0aeca97a6f591776f180327b4ad89b5dfca0189075a4ab134243cbf5544e1b99",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
       "implementation": {
         "repository": "heimgewebe/grabowski",
         "predecessor_pull_requests": [

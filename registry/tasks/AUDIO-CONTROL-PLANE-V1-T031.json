@@ -1,0 +1,144 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Lauf bindet Audio-main einschließlich PR #55 und Korrektur-PR #56, den exakten Harness-Hash, Hostidentität, Startzeit und unveränderte passive Sicherheitsgrenze.",
+      "evidence_type": "object",
+      "id": "source-binding"
+    },
+    {
+      "assertion": "Der reale passive Lauf erreicht mindestens 28.800 Sekunden, erzeugt einen hashgebundenen live-observed Report und endet ohne Collector- oder Shutdown-Timeout.",
+      "evidence_type": "object",
+      "id": "eight-hour-soak"
+    },
+    {
+      "assertion": "Die reale Lastprobe erreicht mindestens 3.600 Sekunden bei 0,25 Sekunden Zyklus und Lastfaktor 8; Report und tatsächlich ausgeführte Snapshot-Lesezahl sind hashgebunden.",
+      "evidence_type": "object",
+      "id": "one-hour-load"
+    },
+    {
+      "assertion": "Beide Reports bestehen Queue-, Speicher-, CPU-, Dienstüberlebens- und Lastprüfungen; kein ungebremster Trend oder unvollständiger Lauf wird als bestanden gewertet.",
+      "evidence_type": "object",
+      "id": "resource-bounds"
+    },
+    {
+      "assertion": "Ein lesbarer globaler XRun-Zähler bleibt in beiden Läufen exakt unverändert; fehlende Zähler oder positive Deltas gelten ausdrücklich nicht als sauberer Beleg.",
+      "evidence_type": "object",
+      "id": "xrun-truth"
+    },
+    {
+      "assertion": "Vorher-/Nachher-Readback zeigt keine Änderung an Defaults, Routen, Profilen, Lautstärken, Links oder aktiven produktiven Signalwegen; es bleibt kein Harnessprozess zurück.",
+      "evidence_type": "object",
+      "id": "no-audio-effect"
+    },
+    {
+      "assertion": "Der Abschlussbeleg referenziert AUDIO-CONTROL-PLANE-V1-T021 und liefert genau dessen bislang fehlenden Akzeptanzpunkt soak, ohne die bereits gemergte Implementierung erneut zu verändern.",
+      "evidence_type": "object",
+      "id": "t021-continuation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "read",
+      "resource": "component.audio.live-telemetry-v1"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T020"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "read_only_observation",
+      "note": "Nur passive Beobachtung. Keine Audio-, Routing-, Default-, Profil-, Lautstärke-, Link- oder Geräteänderung. Beide Läufe bleiben Vordergrundprozesse mit festem Zeitlimit, Stop-Pfad und hashgebundenem Report.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/audio/Justfile",
+      "path:/home/alex/repos/audio/scripts/audio_telemetry_soak.py",
+      "host:heim-pc",
+      "service:pipewire"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Die auf Audio-main gemergte passive Live-Telemetrie auf dem realen Heim-PC mit dem versionsgebundenen Harness acht Stunden passiv und eine Stunde unter definierter Snapshot-Last beobachten, Reports hashbinden und nur bei vollständiger Laufzeit, mindestens einem live beobachteten Strom, null globalem XRun-Zuwachs sowie begrenzter Speicher- und CPU-Entwicklung als bestanden werten.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T031",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "current_blocker": {
+      "acceptance_id": "soak",
+      "reason": "Repositorycode und Kurztests sind belegt; reale 8-Stunden- und 1-Stunden-Reports wurden nicht ausgeführt und dürfen nicht interpoliert werden.",
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T021"
+    },
+    "does_not_establish": [
+      "erfolgreichen achtstündigen Soak ohne vollständigen Report",
+      "erfolgreiche einstündige Lastprobe ohne vollständigen Report",
+      "XRun-Freiheit bei fehlendem oder positivem Zähler",
+      "Freigabe irgendeiner Audio- oder Routingwirkung"
+    ],
+    "implementation_source": {
+      "delivery": {
+        "merge_commit": "d2f9410a2468417ccbdc6f84389bad19deedbe6f",
+        "pull_request": 55
+      },
+      "local_verification": {
+        "focused_tests": 122,
+        "full_check_receipt_sha256": "41488d52bcca08a8326026aa7a7e7c933bbb82a265c75ce2256b700d7ebfa463",
+        "full_tests": 649
+      },
+      "repository": "heimgewebe/audio",
+      "review_hardening": {
+        "merge_commit": "230052d6f10760632a90a63dd94ab602f5de3415",
+        "pull_request": 56,
+        "reviewed_head": "45956b3f954f3f39cfa42d8528b7f65b7196579f"
+      },
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T021"
+    },
+    "registered_at": "2026-08-04T18:12:00+02:00",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-30646157e293fd2a0d270009",
+      "event_id": 2521,
+      "event_created_at": "2026-08-04T16:19:30.735941Z",
+      "request_sha256": "ab90d4ca787ca234df4233e5a45262ca0143810938caba3d8f1f549aab1189ff",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "bureau-acceptance-gap",
+        "locator": "bureau:AUDIO-CONTROL-PLANE-V1-T021#acceptance:soak",
+        "observed_at": "2026-08-04T18:17:00+02:00",
+        "sha256": "7e599ff26a31335a8eba33354ffba2d730dae8ef0c524186a641bc9e918b7b87"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "grabowski",
+    "bureau",
+    "testing",
+    "runtime-observability",
+    "pipewire",
+    "audio",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Den laufenden Harnessprozess kontrolliert beenden, Kindprozesse und Telemetriethreads readbacken und ausschließlich unvollständige Reportdateien als nicht beweisend markieren. Da der Task nur beobachtet, werden keine Audio-, Routing- oder Gerätezustände zurückgesetzt oder erfunden."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Live-Telemetrie über acht Stunden und unter einstündiger Last belegen"
+}

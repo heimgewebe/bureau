@@ -1,0 +1,99 @@
+{
+  "acceptance": [
+    {
+      "id": "cross-invocation-stability",
+      "assertion": "Ein echter Connector kann Begin, Acknowledge und die exakt gebundene Zielmutation in drei getrennten MCP-Aufrufen ausführen; alle drei Aufrufe verwenden nachweislich dieselbe revisions- und serverinstanzgebundene Aufruferidentität."
+    },
+    {
+      "id": "cross-client-isolation",
+      "assertion": "Zwei gleichzeitig verbundene Connectoren erhalten unterschiedliche Identitäten; keiner kann Challenge, Verifikation oder Zielmutation des anderen bestätigen, konsumieren, ersetzen oder entwerten."
+    },
+    {
+      "id": "no-object-identity-authority",
+      "assertion": "Python-Objektidentität, Weakref-Lebensdauer und pro Aufruf neu erzeugte FastMCP-Wrapper sind keine Autoritätsquelle. Fehlt eine stabile transport- oder protokollgebundene Identität, scheitert Mutation vor dem Handshake fail-closed."
+    },
+    {
+      "id": "exact-intent-only",
+      "assertion": "Jede erzeugbare Challenge und Verifikation ist zwingend an exaktes Werkzeug und kanonischen Argumentdigest gebunden; der Core-Pfad akzeptiert keine ungebundene mutation_intent=None-Autorität."
+    },
+    {
+      "id": "readonly-independent",
+      "assertion": "Read-only-Werkzeuge bleiben ohne Transportverifikation nutzbar und verändern weder Challenge- noch Verifikationszustände."
+    },
+    {
+      "id": "deployed-network-proof",
+      "assertion": "Ein revisionsgebundener Integrationstest gegen eine deployte Runtime belegt mindestens: drei getrennte Aufrufe desselben Connectors erfolgreich, fremder Connector abgewiesen, Replay abgewiesen, Runtime-Neustart abgewiesen und fehlende stabile Identität abgewiesen."
+    },
+    {
+      "id": "compatibility-boundary",
+      "assertion": "Migration und Connector-Kompatibilitätsgrenze sind dokumentiert. Bestehende schema-v3-Zustände mit objektgebundenen Scopes autorisieren nach der Umstellung keine Mutation."
+    },
+    {
+      "id": "no-authority-regression",
+      "assertion": "Lease-, Review-, Merge-, Deployment-, Recovery- und Kill-Switch-Grenzen bleiben unverändert; insbesondere entsteht kein globaler oder nur durch identische Zielargumente teilbarer Tokenpool."
+    }
+  ],
+  "claims": [],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T139"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Transportidentität, Gate, Tests und revisionsgebundene Nachweise ändern. Keine globale Freigabe und keine Abschwächung bestehender Schutzgrenzen."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/docs/proofs/transport-connector-session-v1-t142.md",
+      "path:/home/alex/repos/grabowski/docs/transport-roundtrip-v3.md",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip_intent_replacement.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die Transportverifikation über getrennte MCP-Aufrufe eines realen Connectors stabil und fremdverbrauchssicher machen. Die in T139 eingeführte Weakref-Bindung an das jeweilige FastMCP-Sessionobjekt wird durch einen expliziten stabilen Connector-Sitzungsvertrag oder einen gleichwertig starken protokollgebundenen Identitätsanker ersetzt. Fehlt ein solcher Anker, bleibt jede Mutation geschlossen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T142",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "registered_at": "2026-08-04",
+    "source": "Live-Regressionstest nach Deployment von Grabowski PR #607",
+    "live_evidence": {
+      "deployed_repository_revision": "cb5ba94b772d21e113abd7e2bc2ddfc391c5a1c0",
+      "source_pr": 607,
+      "begin_scope_sha256": "0e3a7709874695499c4f61170e50bc1bf836408b6bb46db896c49496322322f7",
+      "begin_challenge_receipt_sha256": "e6bceea96d13eab1a080578dc522727edac0e48ae795839348236b0abbc6aa85",
+      "ack_error": "transport challenge is missing; begin a new handshake",
+      "subsequent_scope_sha256": "c6573283b3ac05bf2b0f43ffb3d0cf2ec4bcca9ecfd30a0e51e743c91e26f36a",
+      "observed_runtime_state_schema_version": 3,
+      "observed_scope_kind": "caller_session",
+      "root_cause_evidence": "FastMCP Context exposes request_context.session but no stable public session_id; current fallback derives authority from weak-reference-bound Python object identity, while the connector presents different session objects across separate tool invocations.",
+      "source_pr_declared_limit": "Noch kein echter Netzwerkversuch mit zwei externen MCP-Clients gegen eine deployte T139-Runtime."
+    },
+    "does_not_establish": [
+      "permission to reuse a global client snapshot as authentication",
+      "permission to accept client_id alone without a session boundary",
+      "permission to scan and consume foreign scope files by matching arguments",
+      "automatic merge authority",
+      "automatic deployment authority"
+    ]
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Connector-Sitzungsbindung über getrennte MCP-Aufrufe stabilisieren"
+}

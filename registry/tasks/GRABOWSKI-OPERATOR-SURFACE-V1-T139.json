@@ -33,13 +33,7 @@
       "id": "measured-regression-proof"
     }
   ],
-  "claims": [
-    {
-      "isolation": "worktree",
-      "mode": "write",
-      "resource": "repo.grabowski"
-    }
-  ],
+  "claims": [],
   "depends_on": [],
   "execution": {
     "approval": {
@@ -68,6 +62,18 @@
   "metadata": {
     "registered_at": "2026-08-04",
     "source": "Live-Operatorbefund während Commonworld-Katalog-PR #185",
+    "resource_contract": {
+      "schema_version": 1,
+      "broad_bureau_claim_removed": true,
+      "authority": "execution.grabowski_resources",
+      "reason": "Die zusätzliche Repo-Lease blockierte trotz exakter Pfadressourcen jede parallele Grabowski-Arbeit. Der Pickup wird vollständig durch die neun exakten, konfliktgeprüften Pfadleasing-Ressourcen koordiniert.",
+      "does_not_establish": [
+        "permission to overlap exact paths",
+        "permission to bypass worktree isolation",
+        "merge authority",
+        "deployment authority"
+      ]
+    },
     "live_evidence": {
       "repository": "heimgewebe/commonworld",
       "base_sha": "f03f5eead4a9da7e4d59a9c7925ce8aa3ab2492d",

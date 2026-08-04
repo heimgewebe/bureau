@@ -63,7 +63,6 @@
       "GRABOWSKI-OPERATOR-SURFACE-V1-T120"
     ],
     "next": [
-      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T055",
       "AUDIO-CONTROL-PLANE-V1-T021",
       "WELTGEWEBE-PR-MAINTENANCE-V2-T006",
       "WELTGEWEBE-OS-V1-T051",
@@ -78,9 +77,7 @@
       "WELTGEWEBE-OS-V1-T043",
       "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011"
     ],
-    "now": [
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T137"
-    ]
+    "now": []
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

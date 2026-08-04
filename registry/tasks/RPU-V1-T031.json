@@ -15,7 +15,7 @@
   },
   "claims": [
     {
-      "resource": "repo.repoground",
+      "resource": "component.repoground.call-graph-incremental-parallel-v1",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -41,7 +41,11 @@
     "baseline_commit": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
     "grabowski_resources": [
       "component:repoground-call-graph-incremental-parallel-v1",
-      "repo:/home/alex/repos/repoground",
+      "path:/home/alex/repos/repoground/merger/repoground/architecture/call_graph.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_python_call_graph.py",
+      "path:/home/alex/repos/repoground/merger/repoground/scripts/bench_call_graph_build.py",
+      "path:/home/alex/repos/repoground/docs/proofs/repoground-call-graph-incremental-parallel-v1-proof.md",
+      "path:/home/alex/repos/repoground/docs/proofs/repoground-call-graph-incremental-parallel-v1.measurement.json",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T031.json"
     ]
   },
@@ -93,6 +97,24 @@
       ],
       "dependency_RPU_V1_T029": "verified",
       "dependency_RPU_V1_T030": "verified"
+    },
+    "admission_refinement": {
+      "observed_at": "2026-08-04T06:01:00Z",
+      "checkout_inventory_sha256": "de7e5a7eee418d08adf2d8aa469c4ccf58b09596943f05d523f53f860091b60b",
+      "broad_repo_admission_blocked_by": [
+        "binding-reconciliation-blocking",
+        "dirty-worktree",
+        "foreign-lifecycle-owner",
+        "foreign-retained-worktree",
+        "worktree-convergence-required"
+      ],
+      "decision": "Replace the overbroad repository lease with exact implementation paths and the dedicated call-graph component resource. Existing foreign dirty, retained and archived worktrees remain untouched.",
+      "does_not_authorize": [
+        "modifying or deleting foreign worktrees",
+        "changing files outside the listed implementation and proof paths",
+        "bypassing path or component lease conflicts",
+        "treating an isolated worktree as repository-wide authority"
+      ]
     }
   }
 }

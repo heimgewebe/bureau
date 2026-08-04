@@ -30,7 +30,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.audio"
+      "resource": "component.audio.live-telemetry-v1"
     }
   ],
   "depends_on": [
@@ -62,8 +62,8 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T021",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "metadata": {
-    "admission_reconciled_at": "2026-08-04T07:19:00+02:00",
-    "admission_reconciled_reason": "T020 ist gemergt und T021 laut physischem Gate nicht blockiert; der Grabowski-Scope ist auf die konkret geplanten Telemetrie-, UI-, Test- und Dokumentationsdateien begrenzt, damit unabhängige fremde Dirty-Worktrees nicht überschrieben oder übernommen werden.",
+    "admission_reconciled_at": "2026-08-04T08:17:00+02:00",
+    "admission_reconciled_reason": "T021 verwendet einen eigenen Bureau-Komponentenclaim zur Doppelarbeitsvermeidung und getrennte exakte Grabowski-Dateileases; der frühere repo.audio-Claim erzwang trotz disjunktem Dateiscope eine globale Repository-Admission gegen unabhängige fremde Dirty-Worktrees.",
     "does_not_establish": [],
     "plan": {
       "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",

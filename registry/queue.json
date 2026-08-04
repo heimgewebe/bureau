@@ -78,10 +78,11 @@
       "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011",
       "AUDIO-CONTROL-PLANE-V1-T021",
       "AUDIO-CONTROL-PLANE-V1-T022",
-      "AUDIO-CONTROL-PLANE-V1-T023",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T137"
+      "AUDIO-CONTROL-PLANE-V1-T023"
     ],
-    "now": []
+    "now": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T137"
+    ]
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

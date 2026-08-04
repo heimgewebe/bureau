@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Bureau read-only curator before hourly operator
+
+[Timer]
+OnCalendar=*-*-* *:45:00
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=false
+Unit=bureau-curator.service
+
+[Install]
+WantedBy=timers.target

@@ -49,3 +49,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.ruff.lint.per-file-ignores]
 "src/bureau/github_observer.py" = ["E501"]
 "src/bureau/legacy.py" = ["E501", "RUF005", "SIM105", "SIM118", "UP022"]
+# Imported verbatim from the active scheduler deployment; preserve behavior until separately reformatted.
+"src/bureau_cycle/curator_runner.py" = ["E401", "E501", "I001"]
+"src/bureau_cycle/operator_runner.py" = ["E501", "F401"]
+"src/bureau_cycle/verifier_runner.py" = ["E501", "UP022", "UP034"]

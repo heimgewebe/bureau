@@ -1,0 +1,19 @@
+[Unit]
+Description=Bureau closure inventory and lane planner
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bureau cycle-run closure
+TimeoutStartSec=3min
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau-closure
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+SystemCallArchitectures=native

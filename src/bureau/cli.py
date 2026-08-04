@@ -158,6 +158,16 @@ def parser() -> argparse.ArgumentParser:
     sub = result.add_subparsers(dest="command", required=True)
     sub.add_parser("check")
     sub.add_parser("runtime-identity")
+    cycle_run = sub.add_parser("cycle-run")
+    cycle_run.add_argument(
+        "stage", choices=("discovery", "curator", "operator", "verifier", "closure")
+    )
+    cycle_run.add_argument("stage_args", nargs=argparse.REMAINDER)
+    cycle_deployment = sub.add_parser("cycle-deployment")
+    cycle_deployment.add_argument("--manifest", type=Path)
+    cycle_deployment.add_argument("--canonical-root", type=Path)
+    cycle_deployment.add_argument("--unit-root", type=Path)
+    cycle_deployment.add_argument("--shim-root", type=Path)
     sub.add_parser("status")
     doctor = sub.add_parser("doctor")
     doctor_mode = doctor.add_mutually_exclusive_group()
@@ -528,6 +538,7 @@ _READ_ONLY_COMMANDS = frozenset(
     {
         "check",
         "conflicts",
+        "cycle-deployment",
         "explain-next",
         "frontier",
         "runtime-identity",
@@ -587,9 +598,7 @@ def _command_mutates(args: argparse.Namespace) -> bool:
 
 
 def _command_effect_scope(args: argparse.Namespace) -> str:
-    return classify_command_effect_scope(
-        args.command, mutates=_command_mutates(args)
-    )
+    return classify_command_effect_scope(args.command, mutates=_command_mutates(args))
 
 
 def _canonical_coordination_state_binding(
@@ -641,6 +650,72 @@ def main(argv: list[str] | None = None) -> int:
                 args.json,
             )
             return 2
+        if args.command == "cycle-run":
+            module_value = _CLI_RUNTIME_IDENTITY.get("module")
+            manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")
+            registry_value = _CLI_RUNTIME_IDENTITY.get("registry")
+            module_identity = module_value if isinstance(module_value, dict) else {}
+            manifest_identity = manifest_value if isinstance(manifest_value, dict) else {}
+            registry_identity = registry_value if isinstance(registry_value, dict) else {}
+            canonical_value = manifest_identity.get("canonical_registry")
+            canonical_registry = canonical_value if isinstance(canonical_value, dict) else {}
+            if (
+                module_identity.get("source_kind") != "immutable-release"
+                or manifest_identity.get("valid") is not True
+                or canonical_registry.get("valid") is not True
+                or _CLI_RUNTIME_IDENTITY.get("registry_selection") != "canonical-runtime-default"
+                or registry_identity.get("root") != canonical_registry.get("root")
+                or str(root) != canonical_registry.get("root")
+            ):
+                emit(
+                    {
+                        "schema_version": 1,
+                        "status": "immutable-runtime-required",
+                        "reason_codes": ["cycle-stage-outside-manifest-release"],
+                        "does_not_establish": ["scheduler_execution", "safe_retry"],
+                    },
+                    args.json,
+                )
+                return 2
+            from .cycle_stage import run_stage
+
+            return run_stage(args.stage, args.stage_args)
+        if args.command == "cycle-deployment":
+            from .cycle_deployment import (
+                CycleDeploymentError,
+                audit_cycle_deployment,
+            )
+
+            manifest_path = (
+                args.manifest
+                or Path(
+                    os.environ.get(
+                        "BUREAU_RUNTIME_MANIFEST",
+                        "~/.local/share/bureau/deployment-manifest.json",
+                    )
+                ).expanduser()
+            )
+            try:
+                value = audit_cycle_deployment(
+                    manifest_path=manifest_path,
+                    canonical_root=args.canonical_root,
+                    unit_root=args.unit_root or Path("~/.config/systemd/user").expanduser(),
+                    shim_root=args.shim_root or Path("~/.local/libexec").expanduser(),
+                )
+            except CycleDeploymentError as exc:
+                value = {
+                    "schema_version": 1,
+                    "kind": "bureau_cycle_deployment_audit",
+                    "status": "invalid",
+                    "activatable": False,
+                    "read_only": True,
+                    "self_heal": False,
+                    "findings": [exc.finding()],
+                }
+                emit(value, args.json)
+                return 2
+            emit(value, args.json)
+            return 0 if value["status"] == "ok" else 1
         if args.command in {"live-register", "operator-candidate-record"}:
             append_registry = (
                 Registry.load(root)
@@ -680,8 +755,7 @@ def main(argv: list[str] | None = None) -> int:
         _CLI_RUNTIME_IDENTITY["command_effect_scope"] = effect_scope
         canonical_snapshot_selected = (
             registry_selection == "canonical-runtime-default"
-            or _CLI_RUNTIME_IDENTITY.get("registry", {}).get("role")
-            == "canonical-runtime-snapshot"
+            or _CLI_RUNTIME_IDENTITY.get("registry", {}).get("role") == "canonical-runtime-snapshot"
         )
         coordination_binding: dict[str, Any] | None = None
         if (

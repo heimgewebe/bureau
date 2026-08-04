@@ -127,6 +127,18 @@ Removal of any old command is allowed only when all of these are true:
 5. tests cover the canonical replacement;
 6. a Bureau task explicitly authorises removal.
 
+## T017 canonical scheduler additions
+
+`OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017` adds the read-only `bureau cycle-deployment` subcommand and the manifest-bound internal `bureau cycle-run <stage>` dispatcher; it versions these scheduler units without authorising activation:
+
+- `bureau-halfhour-operator.service` and `bureau-halfhour-operator.timer`
+- `bureau-curator.service` and `bureau-curator.timer`
+- `bureau-operator-control.service` and `bureau-operator-control.timer`
+- `bureau-verifier-control.service` and `bureau-verifier-control.timer`
+- `bureau-closure-planner.service` and `bureau-closure-planner.timer`
+
+The historical `bureau-halfhour-operator` name remains the compatibility-stable discovery name. The versioned `ops/systemd/libexec/*` files are rollback shims; they delegate to the manifest-validating Bureau launcher and never restore mutable `PYTHONPATH` source ownership. No additional packaged console script is introduced.
+
 ## Decision for now
 
 The T014-authorized Cabinet-to-Systemkatalog identity migration removes the old Cabinet command aliases; all unrelated command names remain frozen.

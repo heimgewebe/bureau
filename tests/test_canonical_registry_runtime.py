@@ -13,6 +13,7 @@ import pytest
 from runtime_approval import write_runtime_approval_intent
 
 from bureau import cli as bureau_cli
+from bureau.cycle_deployment import STAGES
 from bureau.read_only_state import ReadOnlyStateStore
 
 
@@ -31,6 +32,8 @@ def make_installable_source(tmp_path: Path) -> Path:
     source.mkdir()
     project_root = Path(__file__).resolve().parents[1]
     shutil.copytree(project_root / "src/bureau", source / "src/bureau")
+    shutil.copytree(project_root / "src/bureau_cycle", source / "src/bureau_cycle")
+    shutil.copytree(project_root / "ops/systemd", source / "ops/systemd")
     shutil.copytree(project_root / "registry", source / "registry")
     shutil.copytree(project_root / "schemas", source / "schemas")
     shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
@@ -266,6 +269,59 @@ def test_runtime_release_excludes_unmanaged_package_artifacts(tmp_path: Path) ->
     files = [path for path in package.rglob("*") if path.is_file()]
     assert files
     assert all(path.suffix == ".py" for path in files)
+
+
+def test_runtime_release_contains_cycle_scheduler_package(tmp_path: Path) -> None:
+    source = make_installable_source(tmp_path)
+    _launcher, prefix, _receipt = install_runtime(tmp_path, source)
+    manifest = json.loads((prefix / "deployment-manifest.json").read_text(encoding="utf-8"))
+    release = Path(manifest["immutable_release_path"])
+    package = release / "src/bureau_cycle"
+
+    assert package.is_dir()
+    assert (package / "__init__.py").is_file()
+    assert (package / "discovery_runner.py").is_file()
+    assert (package / "verifier_runner.py").is_file()
+
+
+def test_deployed_launcher_runs_cycle_deployment_audit_from_immutable_release(
+    tmp_path: Path,
+) -> None:
+    source = make_installable_source(tmp_path)
+    launcher, prefix, _receipt = install_runtime(tmp_path, source)
+    manifest = json.loads((prefix / "deployment-manifest.json").read_text(encoding="utf-8"))
+    release = Path(manifest["immutable_release_path"])
+    units = tmp_path / "units"
+    shims = tmp_path / "shims"
+    units.mkdir()
+    shims.mkdir()
+    for _stage, name, _module in STAGES:
+        shutil.copy2(release / "ops/systemd" / f"{name}.service", units / f"{name}.service")
+        shutil.copy2(release / "ops/systemd" / f"{name}.timer", units / f"{name}.timer")
+        shutil.copy2(release / "ops/systemd/libexec" / name, shims / name)
+
+    completed = subprocess.run(
+        [
+            str(launcher),
+            "--json",
+            "cycle-deployment",
+            "--unit-root",
+            str(units),
+            "--shim-root",
+            str(shims),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    payload = json.loads(completed.stdout)
+    result = payload["result"]
+
+    assert result["status"] == "ok"
+    assert result["read_only"] is True
+    assert result["self_heal"] is False
+    assert result["release_identity"]["matches"] is True
+    assert payload["runtime_identity"]["module"]["source_kind"] == "immutable-release"
 
 
 def test_installer_rejects_existing_release_with_unmanaged_entry(tmp_path: Path) -> None:

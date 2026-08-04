@@ -1,0 +1,19 @@
+[Unit]
+Description=Bureau read-only discovery curator
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bureau cycle-run curator
+TimeoutStartSec=2min
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau-curator
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+SystemCallArchitectures=native

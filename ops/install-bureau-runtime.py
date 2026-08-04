@@ -65,17 +65,42 @@ def git(source: Path, *arguments: str) -> str:
     return completed.stdout.rstrip("\n")
 
 
+MANAGED_PACKAGES = ("bureau", "bureau_cycle")
+SCHEDULER_NAMES = (
+    "bureau-halfhour-operator",
+    "bureau-curator",
+    "bureau-operator-control",
+    "bureau-verifier-control",
+    "bureau-closure-planner",
+)
+
+
+def scheduler_fragment_paths(root: Path) -> list[Path]:
+    systemd = root / "ops/systemd"
+    return [
+        *(systemd / f"{name}.service" for name in SCHEDULER_NAMES),
+        *(systemd / f"{name}.timer" for name in SCHEDULER_NAMES),
+        *(systemd / "libexec" / name for name in SCHEDULER_NAMES),
+    ]
+
+
 def package_source_paths(root: Path) -> list[Path]:
     pyproject = root / "pyproject.toml"
-    package = root / "src/bureau"
+    packages = [root / "src" / name for name in MANAGED_PACKAGES]
+    systemd = root / "ops/systemd"
     if (
         pyproject.is_symlink()
         or not pyproject.is_file()
-        or package.is_symlink()
-        or not package.is_dir()
+        or systemd.is_symlink()
+        or not systemd.is_dir()
+        or any(package.is_symlink() or not package.is_dir() for package in packages)
     ):
         raise SystemExit(f"invalid Bureau package tree: {root}")
-    paths = [pyproject, *sorted(package.rglob("*.py"))]
+    paths = [
+        pyproject,
+        *(path for package in packages for path in sorted(package.rglob("*.py"))),
+        *scheduler_fragment_paths(root),
+    ]
     for path in paths:
         if path.is_symlink() or not path.is_file():
             raise SystemExit(f"package tree contains non-regular input: {path}")
@@ -89,6 +114,7 @@ def package_tree_sha256(root: Path) -> str:
         content = path.read_bytes()
         digest.update(len(relative).to_bytes(4, "big"))
         digest.update(relative)
+        digest.update(b"x" if path.stat().st_mode & 0o111 else b"-")
         digest.update(len(content).to_bytes(8, "big"))
         digest.update(content)
     return digest.hexdigest()
@@ -103,22 +129,26 @@ def copy_managed_package(source: Path, destination: Path) -> None:
 
 
 def validate_managed_release_tree(root: Path) -> None:
-    package = root / "src/bureau"
+    managed_roots = [
+        *(root / "src" / name for name in MANAGED_PACKAGES),
+        root / "ops/systemd",
+    ]
     expected = {path.resolve() for path in package_source_paths(root)}
-    for entry in sorted(package.rglob("*")):
-        try:
-            linked = entry.lstat()
-            resolved = entry.resolve(strict=True)
-        except OSError as exc:
-            raise SystemExit(
-                f"immutable release contains unavailable entry: {entry}: {type(exc).__name__}"
-            ) from None
-        if entry.is_symlink() or resolved != entry or not resolved.is_relative_to(root):
-            raise SystemExit(f"immutable release contains unsafe entry: {entry}")
-        if stat.S_ISDIR(linked.st_mode):
-            continue
-        if not stat.S_ISREG(linked.st_mode) or resolved not in expected:
-            raise SystemExit(f"immutable release contains unmanaged entry: {entry}")
+    for package in managed_roots:
+        for entry in sorted(package.rglob("*")):
+            try:
+                linked = entry.lstat()
+                resolved = entry.resolve(strict=True)
+            except OSError as exc:
+                raise SystemExit(
+                    f"immutable release contains unavailable entry: {entry}: {type(exc).__name__}"
+                ) from None
+            if entry.is_symlink() or resolved != entry or not resolved.is_relative_to(root):
+                raise SystemExit(f"immutable release contains unsafe entry: {entry}")
+            if stat.S_ISDIR(linked.st_mode):
+                continue
+            if not stat.S_ISREG(linked.st_mode) or resolved not in expected:
+                raise SystemExit(f"immutable release contains unmanaged entry: {entry}")
 
 
 def tracked_paths(source: Path) -> list[Path]:
@@ -260,17 +290,33 @@ try:
 except ValueError:
     raise SystemExit("bureau runtime module escaped immutable release")
 pyproject = release / "pyproject.toml"
-package = release / "src/bureau"
-if pyproject.is_symlink() or not pyproject.is_file() or not package.is_dir():
+packages = [release / "src/bureau", release / "src/bureau_cycle"]
+systemd = release / "ops/systemd"
+if (
+    pyproject.is_symlink()
+    or not pyproject.is_file()
+    or systemd.is_symlink()
+    or not systemd.is_dir()
+    or any(package.is_symlink() or not package.is_dir() for package in packages)
+):
     raise SystemExit("bureau runtime package tree is incomplete")
 digest = hashlib.sha256()
-for path in [pyproject, *sorted(package.rglob("*.py"))]:
+scheduler_names = {SCHEDULER_NAMES!r}
+paths = [
+    pyproject,
+    *(path for package in packages for path in sorted(package.rglob("*.py"))),
+    *(systemd / (name + ".service") for name in scheduler_names),
+    *(systemd / (name + ".timer") for name in scheduler_names),
+    *(systemd / "libexec" / name for name in scheduler_names),
+]
+for path in paths:
     if path.is_symlink() or not path.is_file():
         raise SystemExit("bureau runtime package tree contains a non-regular file")
     relative = path.relative_to(release).as_posix().encode()
     content = path.read_bytes()
     digest.update(len(relative).to_bytes(4, "big"))
     digest.update(relative)
+    digest.update(b"x" if path.stat().st_mode & 0o111 else b"-")
     digest.update(len(content).to_bytes(8, "big"))
     digest.update(content)
 if digest.hexdigest() != expected_tree_sha256:
@@ -472,7 +518,7 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit("copied Bureau package tree digest mismatch")
         for path in sorted(temporary.rglob("*"), reverse=True):
             if path.is_file():
-                path.chmod(0o444)
+                path.chmod(0o555 if path.stat().st_mode & 0o111 else 0o444)
             elif path.is_dir():
                 path.chmod(0o555)
         temporary.chmod(0o555)

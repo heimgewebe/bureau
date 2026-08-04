@@ -13,6 +13,7 @@ from runtime_approval import write_runtime_approval_intent
 
 from bureau import cli as bureau_cli
 from bureau.runtime_identity import (
+    SCHEDULER_NAMES,
     _package_tree_sha256,
     bureau_runtime_identity,
     require_mutation_compatible,
@@ -29,6 +30,18 @@ def git(root: Path, *args: str) -> str:
     return completed.stdout.strip()
 
 
+def write_scheduler_fragments(root: Path) -> None:
+    systemd = root / "ops/systemd"
+    libexec = systemd / "libexec"
+    libexec.mkdir(parents=True, exist_ok=True)
+    for name in SCHEDULER_NAMES:
+        (systemd / f"{name}.service").write_text("[Service]\nType=oneshot\n", encoding="utf-8")
+        (systemd / f"{name}.timer").write_text(f"[Timer]\nUnit={name}.service\n", encoding="utf-8")
+        shim = libexec / name
+        shim.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        shim.chmod(0o755)
+
+
 def init_repo(root: Path) -> None:
     root.mkdir()
     git(root, "init", "-b", "main")
@@ -37,6 +50,9 @@ def init_repo(root: Path) -> None:
     (root / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
     (root / "src/bureau").mkdir(parents=True)
     (root / "src/bureau/runtime_identity.py").write_text("# test\n", encoding="utf-8")
+    (root / "src/bureau_cycle").mkdir(parents=True)
+    (root / "src/bureau_cycle/__init__.py").write_text("# cycle\n", encoding="utf-8")
+    write_scheduler_fragments(root)
     git(root, "add", ".")
     git(root, "commit", "-m", "init")
     git(root, "remote", "add", "origin", str(root / ".git"))
@@ -85,6 +101,9 @@ def test_manifest_bound_release_matches_registry(tmp_path: Path, monkeypatch) ->
     module.parent.mkdir(parents=True)
     module.write_text("# release\n", encoding="utf-8")
     (release / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    (release / "src/bureau_cycle").mkdir(parents=True)
+    (release / "src/bureau_cycle/__init__.py").write_text("# cycle\n", encoding="utf-8")
+    write_scheduler_fragments(release)
     tree_sha256 = _package_tree_sha256(release)
     assert tree_sha256 is not None
     manifest = tmp_path / "manifest.json"
@@ -108,6 +127,50 @@ def test_manifest_bound_release_matches_registry(tmp_path: Path, monkeypatch) ->
     assert identity["compatibility"]["status"] == "compatible"
     assert identity["module"]["source_kind"] == "immutable-release"
     assert identity["manifest"]["observed_package_tree_sha256"] == tree_sha256
+
+
+def test_package_tree_digest_includes_cycle_scheduler_sources(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    before = _package_tree_sha256(root)
+    assert before is not None
+
+    cycle = root / "src/bureau_cycle/__init__.py"
+    cycle.write_text("# changed cycle source\n", encoding="utf-8")
+
+    after = _package_tree_sha256(root)
+    assert after is not None
+    assert after != before
+
+
+def test_package_tree_digest_includes_executable_class(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    target = root / "ops/systemd/libexec/bureau-curator"
+    before = _package_tree_sha256(root)
+    assert before is not None
+    target.chmod(0o644)
+    after = _package_tree_sha256(root)
+    assert after is not None
+    assert after != before
+
+
+def test_package_tree_digest_ignores_unrelated_systemd_files(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    before = _package_tree_sha256(root)
+    assert before is not None
+    (root / "ops/systemd/unrelated.service").write_text(
+        "[Service]\nType=oneshot\n", encoding="utf-8"
+    )
+    assert _package_tree_sha256(root) == before
+
+
+def test_package_tree_digest_requires_every_scheduler_fragment(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    (root / "ops/systemd/bureau-curator.timer").unlink()
+    assert _package_tree_sha256(root) is None
 
 
 def test_state_identity_is_visible(tmp_path: Path) -> None:
@@ -202,6 +265,8 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     source.mkdir()
     project_root = Path(__file__).resolve().parents[1]
     shutil.copytree(project_root / "src/bureau", source / "src/bureau")
+    shutil.copytree(project_root / "src/bureau_cycle", source / "src/bureau_cycle")
+    shutil.copytree(project_root / "ops/systemd", source / "ops/systemd")
     shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
     git(source, "init", "-b", "main")
     git(source, "config", "user.email", "test@example.invalid")
@@ -227,6 +292,25 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     first = subprocess.run(command, check=True, capture_output=True, text=True)
     first_receipt = json.loads(first.stdout)
     assert Path(first_receipt["receipt_path"]).is_file()
+    deployment_manifest = json.loads(
+        (prefix / "deployment-manifest.json").read_text(encoding="utf-8")
+    )
+    release_systemd = Path(deployment_manifest["immutable_release_path"]) / "ops/systemd"
+    actual = {
+        path.relative_to(release_systemd).as_posix()
+        for path in release_systemd.rglob("*")
+        if path.is_file()
+    }
+    expected = {
+        *(f"{name}.service" for name in SCHEDULER_NAMES),
+        *(f"{name}.timer" for name in SCHEDULER_NAMES),
+        *(f"libexec/{name}" for name in SCHEDULER_NAMES),
+    }
+    assert actual == expected
+    for name in SCHEDULER_NAMES:
+        assert (release_systemd / f"{name}.service").stat().st_mode & 0o777 == 0o444
+        assert (release_systemd / f"{name}.timer").stat().st_mode & 0o777 == 0o444
+        assert (release_systemd / "libexec" / name).stat().st_mode & 0o777 == 0o555
     second = subprocess.run(command, check=True, capture_output=True, text=True)
     second_receipt = json.loads(second.stdout)
     rollback = second_receipt["rollback"]
@@ -280,6 +364,8 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     source.mkdir()
     project_root = Path(__file__).resolve().parents[1]
     shutil.copytree(project_root / "src/bureau", source / "src/bureau")
+    shutil.copytree(project_root / "src/bureau_cycle", source / "src/bureau_cycle")
+    shutil.copytree(project_root / "ops/systemd", source / "ops/systemd")
     shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
     git(source, "init", "-b", "main")
     git(source, "config", "user.email", "test@example.invalid")

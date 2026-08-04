@@ -1,0 +1,19 @@
+[Unit]
+Description=Bureau local read-only verifier control stage
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bureau cycle-run verifier
+TimeoutStartSec=2min
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau-verifier %h/.local/state/bureau-cycle
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+SystemCallArchitectures=native

@@ -1,0 +1,19 @@
+[Unit]
+Description=Bureau local non-mutating operator control stage
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bureau cycle-run operator
+TimeoutStartSec=2min
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau-operator
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+SystemCallArchitectures=native

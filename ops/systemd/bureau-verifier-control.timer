@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Bureau local verifier control stage hourly
+
+[Timer]
+OnCalendar=*-*-* *:15:05
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=false
+Unit=bureau-verifier-control.service
+
+[Install]
+WantedBy=timers.target

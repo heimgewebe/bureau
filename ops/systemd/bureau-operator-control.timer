@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Bureau local operator control stage hourly
+
+[Timer]
+OnCalendar=*-*-* *:00:05
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=false
+Unit=bureau-operator-control.service
+
+[Install]
+WantedBy=timers.target

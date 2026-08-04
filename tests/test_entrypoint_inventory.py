@@ -25,11 +25,10 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     inventory = build_inventory(ROOT)
     units = {unit["unit"]: unit for unit in inventory["systemd_units"]}
 
-    assert inventory["summary"]["systemd_services"] == 7
-    assert inventory["summary"]["systemd_timers"] == 7
+    assert inventory["summary"]["systemd_services"] == 12
+    assert inventory["summary"]["systemd_timers"] == 12
     assert (
-        units["ops/systemd/bureau-status-projection.service"]["matched_console_script"]
-        == "bureau"
+        units["ops/systemd/bureau-status-projection.service"]["matched_console_script"] == "bureau"
     )
     assert units["ops/systemd/bureau-reconcile.service"]["matched_console_script"] == "bureau"
     assert (

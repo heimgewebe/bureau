@@ -10,6 +10,7 @@ import bureau.cycle_deployment as deployment
 from bureau.cycle_deployment import (
     SOURCES,
     STAGES,
+    STATE_DIRECTORIES,
     CycleDeploymentError,
     audit_cycle_deployment,
 )
@@ -119,6 +120,60 @@ def test_five_stages_and_source_ownership_are_in_canonical_release(tmp_path: Pat
     assert all(stage["service"]["matches"] for stage in result["stages"])
     assert all(stage["timer"]["matches"] for stage in result["stages"])
     assert all(stage["compatibility_shim"]["matches"] for stage in result["stages"])
+
+
+def test_fresh_profile_state_contract_is_private_and_exact(tmp_path: Path) -> None:
+    fixture = _fixture(tmp_path)
+    result = _audit(fixture)
+
+    for stage_result, (stage, name, _module) in zip(result["stages"], STAGES, strict=True):
+        directories = STATE_DIRECTORIES[stage]
+        read_write_paths = [f"%h/.local/state/{item}" for item in directories]
+        assert stage_result["state_contract"] == {
+            "directories": list(directories),
+            "mode": "0700",
+            "read_write_paths": read_write_paths,
+        }
+        service = (
+            fixture["release"] / "ops" / "systemd" / f"{name}.service"
+        ).read_text(encoding="utf-8")
+        lines = service.splitlines()
+        assert lines.count("StateDirectory=" + " ".join(directories)) == 1
+        assert lines.count("StateDirectoryMode=0700") == 1
+        assert lines.count("ReadWritePaths=" + " ".join(read_write_paths)) == 1
+        assert "ProtectHome=read-only" in lines
+        assert "NoNewPrivileges=yes" in lines
+
+
+def test_missing_state_directory_contract_fails_closed(tmp_path: Path) -> None:
+    fixture = _fixture(tmp_path)
+    service = fixture["release"] / "ops" / "systemd" / "bureau-curator.service"
+    service.write_text(
+        service.read_text(encoding="utf-8").replace(
+            "StateDirectory=bureau-curator\n", ""
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CycleDeploymentError) as caught:
+        _audit(fixture)
+    assert caught.value.code == "canonical-unit-state-directory"
+
+
+def test_broad_state_write_path_fails_closed(tmp_path: Path) -> None:
+    fixture = _fixture(tmp_path)
+    service = fixture["release"] / "ops" / "systemd" / "bureau-operator-control.service"
+    service.write_text(
+        service.read_text(encoding="utf-8").replace(
+            "ReadWritePaths=%h/.local/state/bureau-operator",
+            "ReadWritePaths=%h/.local/state",
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CycleDeploymentError) as caught:
+        _audit(fixture)
+    assert caught.value.code == "canonical-unit-state-paths"
 
 
 def test_release_package_tree_drift_is_reported_without_repair(tmp_path: Path) -> None:

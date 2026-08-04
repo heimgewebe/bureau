@@ -66,6 +66,22 @@ def git(source: Path, *arguments: str) -> str:
 
 
 MANAGED_PACKAGES = ("bureau", "bureau_cycle")
+SCHEDULER_NAMES = (
+    "bureau-halfhour-operator",
+    "bureau-curator",
+    "bureau-operator-control",
+    "bureau-verifier-control",
+    "bureau-closure-planner",
+)
+
+
+def scheduler_fragment_paths(root: Path) -> list[Path]:
+    systemd = root / "ops/systemd"
+    return [
+        *(systemd / f"{name}.service" for name in SCHEDULER_NAMES),
+        *(systemd / f"{name}.timer" for name in SCHEDULER_NAMES),
+        *(systemd / "libexec" / name for name in SCHEDULER_NAMES),
+    ]
 
 
 def package_source_paths(root: Path) -> list[Path]:
@@ -83,7 +99,7 @@ def package_source_paths(root: Path) -> list[Path]:
     paths = [
         pyproject,
         *(path for package in packages for path in sorted(package.rglob("*.py"))),
-        *(path for path in sorted(systemd.rglob("*")) if path.is_file()),
+        *scheduler_fragment_paths(root),
     ]
     for path in paths:
         if path.is_symlink() or not path.is_file():
@@ -285,10 +301,13 @@ if (
 ):
     raise SystemExit("bureau runtime package tree is incomplete")
 digest = hashlib.sha256()
+scheduler_names = {SCHEDULER_NAMES!r}
 paths = [
     pyproject,
     *(path for package in packages for path in sorted(package.rglob("*.py"))),
-    *(path for path in sorted(systemd.rglob("*")) if path.is_file()),
+    *(systemd / (name + ".service") for name in scheduler_names),
+    *(systemd / (name + ".timer") for name in scheduler_names),
+    *(systemd / "libexec" / name for name in scheduler_names),
 ]
 for path in paths:
     if path.is_symlink() or not path.is_file():

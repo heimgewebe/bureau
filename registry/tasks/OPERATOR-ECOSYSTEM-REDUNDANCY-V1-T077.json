@@ -84,7 +84,93 @@
     },
     "registered_from": "operator_review_followup",
     "source_commit": "85bdbd29e5e9c2b2c9abcb3f81b9fb84fc70a234",
-    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017",
+    "verified_at": "2026-08-04T14:09:32Z",
+    "outcome": "Bureau PR #1507 adds exact private systemd StateDirectory declarations for all five scheduler stages, validates the paths and modes fail-closed, and proves fresh-profile entrypoint reachability without deploying or restarting the live runtime.",
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout",
+      "verified_at": "2026-08-04T14:09:32Z",
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1507,
+        "url": "https://github.com/heimgewebe/bureau/pull/1507",
+        "implementation_head": "b38f315835cae4852cf05912aa21c357c7a627c6",
+        "merge_commit": "ce341e1724cbd50b50c0eda879268b83860dbcde",
+        "merged_at": "2026-08-04T13:58:42Z",
+        "current_main": "ce341e1724cbd50b50c0eda879268b83860dbcde",
+        "merge_is_ancestor_of_current_main": true,
+        "required_checks_green": true
+      },
+      "fresh_profile": {
+        "mechanism": "systemd StateDirectory",
+        "mode": "0700",
+        "stage_directories": {
+          "discovery": [
+            "bureau-halfhour-operator"
+          ],
+          "curator": [
+            "bureau-curator"
+          ],
+          "operator": [
+            "bureau-operator"
+          ],
+          "verifier": [
+            "bureau-verifier",
+            "bureau-cycle"
+          ],
+          "closure": [
+            "bureau-closure"
+          ]
+        },
+        "focused_job_id": "29b229d47e12",
+        "focused_receipt_sha256": "5fac76e773b14c86d5a974dde11ca3bc66eccbfa31335fea3fa6b0a978efc2cd",
+        "focused_tests": 52,
+        "systemd_analyze_verify": "PASS",
+        "verified_unit_files": 10
+      },
+      "review": {
+        "diff_sha256": "1e052cdbb74d1249bf1af6e11c28c0fe0ee7c2967d22a488a23ede283df77686",
+        "diff_bytes": 14520,
+        "changed_files": 9,
+        "verdict": "PASS",
+        "material_findings_remaining": 0
+      },
+      "full_validation": {
+        "local_head": "79ed34f1e684dd2011c3432e0b7f66adef6d4328",
+        "scheduler_tree_matches_implementation_head": true,
+        "job_id": "a03bbe33dcee",
+        "receipt_sha256": "1178f085644d2bdd68e541f4c86f5e345733c35c64d8795245355350798e7117",
+        "tests": 1111,
+        "subtests": 18,
+        "registry_valid": true,
+        "systemkatalog_valid": true,
+        "sqlite_integrity": "ok",
+        "broad_bureau_scope_findings": [],
+        "github_exact_head": "b38f315835cae4852cf05912aa21c357c7a627c6"
+      },
+      "validated_acceptance": {
+        "fresh-state-start": "PASS — all five services declare exact StateDirectory paths at mode 0700; the parametrized fresh-profile test begins without those directories and reaches every Python entrypoint after declarative setup.",
+        "hardening-preserved": "PASS — exact ReadWritePaths, ProtectHome=read-only, NoNewPrivileges, private temporary storage and address-family restrictions remain; broad state writes fail closed.",
+        "existing-host-compatibility": "PASS — changes are additive unit declarations only; no live deployment, unit-mode requirement, historical-state rewrite or service restart occurred.",
+        "tests-review-ci": "PASS — 52 focused tests, systemd verification, 1111 full tests plus 18 subtests, exact diff self-review and exact-head GitHub CI passed."
+      },
+      "validation": [
+        "PR #1507 exact-head validate (3.10), validate (3.12), CodeQL, analyses and Registry freshness passed.",
+        "Focused fresh-profile validation passed 52 tests and systemd-analyze --user verify for all ten service/timer files.",
+        "Local full validation on the byte-identical scheduler tree passed 1111 tests and 18 subtests; Registry, Systemkatalog and SQLite integrity passed.",
+        "The implementation was merged through GitHub merge queue as ce341e1724cbd50b50c0eda879268b83860dbcde."
+      ],
+      "does_not_establish": [
+        "live runtime deployment",
+        "systemd daemon-reload",
+        "unit or timer restart",
+        "future timer success",
+        "a real fresh-host boot outside the isolated tests"
+      ],
+      "task_sha256": "b432e6926ee4e291badf34478511d5e5b2e2f6c36366a68a03cbf1d1b4a88fcf",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   },
   "priority": {
     "lane": "later",
@@ -98,6 +184,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Make Bureau scheduler state directories fresh-host safe"
 }

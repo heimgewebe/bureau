@@ -6,7 +6,7 @@
   "state": "planned",
   "goal": "Den vorhandenen gehärteten Recordervertrag als vollständiges Voice-Setup in Jetzt und Bibliothek integrieren: Pegel, Quelle, Monitoring, Start, Stop, Take, Wiedergabe und Recovery, weiterhin strikt an MOTU-, RØDE-, 48-V- und Pegelgates gebunden.",
   "depends_on": [
-    "AUDIO-CONTROL-PLANE-V1-T021",
+    "AUDIO-CONTROL-PLANE-V1-T031",
     "AUDIO-CONTROL-PLANE-V1-T004"
   ],
   "priority": {
@@ -96,6 +96,13 @@
         "acceptance completion",
         "permission to bypass dependencies or live gates"
       ]
+    },
+    "telemetry_gate_split": {
+      "schema_version": 1,
+      "observed_at": "2026-08-04T18:24:00+02:00",
+      "repository_task": "AUDIO-CONTROL-PLANE-V1-T021",
+      "host_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T031",
+      "reason": "Die Voice-Integration darf erst nach der separat belegten passiven Telemetrie-Langzeitabnahme fortgesetzt werden."
     }
   }
 }

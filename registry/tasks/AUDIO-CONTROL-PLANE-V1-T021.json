@@ -16,9 +16,9 @@
       "id": "passive-pipewire"
     },
     {
-      "assertion": "Achtstündiger passiver Soak und einstündige Lastprobe verursachen keine der Anwendung zurechenbaren XRuns oder ungebremste Speicher-/CPU-Zunahme.",
+      "assertion": "Die versionierten einstündigen Last- und achtstündigen Soak-Läufe, ihre begrenzten Reports und die ehrliche Trennung synthetischer von realer Evidenz sind implementiert und offline geprüft; ihre reale Ausführung ist nicht Teil dieses Repositorytasks.",
       "evidence_type": "object",
-      "id": "soak"
+      "id": "soak-contract"
     },
     {
       "assertion": "UI- oder Streamverlust beendet Audio nicht und wird sichtbar als stale/unavailable ausgewiesen.",
@@ -64,7 +64,11 @@
   "metadata": {
     "admission_reconciled_at": "2026-08-04T08:17:00+02:00",
     "admission_reconciled_reason": "T021 verwendet einen eigenen Bureau-Komponentenclaim zur Doppelarbeitsvermeidung und getrennte exakte Grabowski-Dateileases; der frühere repo.audio-Claim erzwang trotz disjunktem Dateiscope eine globale Repository-Admission gegen unabhängige fremde Dirty-Worktrees.",
-    "does_not_establish": [],
+    "does_not_establish": [
+      "real one-hour telemetry load completion",
+      "real eight-hour passive soak completion",
+      "host stability after later kernel, PipeWire, device or package changes"
+    ],
     "plan": {
       "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
       "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae",
@@ -77,6 +81,24 @@
       "merge_commit": "d6ccab393de05ad9ce86228ac14bfca12b785a08",
       "source_ref": "heimgewebe/audio#46",
       "task_id": "AUDIO-CONTROL-PLANE-V1-T020"
+    },
+    "scope_split": {
+      "schema_version": 1,
+      "split_at": "2026-08-04T18:24:00+02:00",
+      "reason": "Der ursprüngliche T021-Vertrag vermischte belegbare Repositorylieferung mit einer realen 1h-/8h-Hostabnahme. PR #55 und die Reviewkorrektur PR #56 liefern und testen die Harness, erzeugen aber keine Langzeitberichte.",
+      "repository_delivery": {
+        "repository": "heimgewebe/audio",
+        "implementation_pull_request": 55,
+        "implementation_merge_commit": "d2f9410a2468417ccbdc6f84389bad19deedbe6f",
+        "review_pull_request": 56,
+        "review_merge_commit": "230052d6f10760632a90a63dd94ab602f5de3415"
+      },
+      "host_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T031",
+      "does_not_establish": [
+        "real one-hour load evidence",
+        "real eight-hour soak evidence",
+        "absence of future host drift"
+      ]
     }
   },
   "priority": {

@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T031",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Live-Telemetrie unter Langzeitlast am Heim-PC abnehmen",
+  "state": "planned",
+  "goal": "Die in T021 gelieferte passive Telemetrie auf dem realen Heim-PC mit einer einstündigen erhöhten Snapshotlast und einem achtstündigen passiven Lauf abnehmen, ohne Defaults, Routen, Profile, Lautstärken, Links oder Audiostreams zu verändern.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T021"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 22
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "component:audio-live-telemetry-v1",
+      "host:heim-pc",
+      "service:pipewire"
+    ],
+    "approval": {
+      "action_class": "read_only_observation",
+      "required_level": "none",
+      "note": "Nur die versionierten passiven Harness-Befehle aus dem gemergten Audio-Commit dürfen laufen. Der Task hält den Audio-Host zur Messreinheit exklusiv, ändert aber keine Defaults, Routen, Profile, Pegel, Links oder Geräte. Jeder Bericht benötigt frische Vor- und Nachreadbacks."
+    }
+  },
+  "claims": [
+    {
+      "resource": "component.audio.live-telemetry-v1",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-passive-baseline",
+      "assertion": "Vor jedem Lauf sind exakter Audio-Mergecommit, Telemetrievertrag, Host, PipeWire-Dienst, aktuelle Defaults, Routen, Links, XRun-Zähler und verfügbare Beobachtungswerkzeuge frisch und hashgebunden erfasst.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "one-hour-load",
+      "assertion": "Ein vollständiger realer 3600-Sekunden-Lauf mit 0,25 Sekunden Beobachtungsintervall und Lastfaktor 8 erzeugt einen privaten begrenzten Report mit live_proof true, exakt null globalem XRun-Delta, ausgeübter Snapshotlast sowie bestandenen Speicher-, CPU-, Queue- und Shutdownchecks.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "eight-hour-soak",
+      "assertion": "Ein vollständiger realer 28800-Sekunden-Lauf mit 30 Sekunden Beobachtungsintervall und Lastfaktor 1 erzeugt einen privaten begrenzten Report mit live_proof true, exakt null globalem XRun-Delta und ohne ungebremsten Speicher-, CPU-, Thread-, Prozess- oder Fehlerzuwachs.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-effect-readback",
+      "assertion": "Vor- und Nachreadback belegen unveränderte Standardgeräte, Routen, Profile, Lautstärken und produktive Links; owned_nodes und owned_links bleiben leer, und keine Audioaufnahme, Wiedergabe oder MIDI-Subskription wurde geöffnet.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "report-integrity",
+      "assertion": "Beide Reports sind an Laufparameter, Start- und Endzeit, Hostidentität, Audio-Commit, Harnesshash, Dateihash, Belegklasse und vollständige Checkliste gebunden; fehlende Werkzeuge, nicht lesbare Zähler, Abbruch oder positive XRuns bleiben ausdrücklich nicht bestanden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-cleanup",
+      "assertion": "Nach jedem Lauf sind alle taskeigenen Harness- und Kindprozesse beendet, keine Telemetrie-Threads oder temporären Beobachtungsressourcen bleiben zurück und nur die explizit erzeugten privaten Reports bleiben als Evidenz erhalten.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "pipewire",
+    "midi",
+    "runtime-observability",
+    "audio"
+  ],
+  "rollback": {
+    "strategy": "Die Harness läuft als begrenzter Vordergrundprozess. Bei Fehler oder Abbruch wird nur ihr eigener Prozessbaum beendet; anschließend werden Prozess-, Thread-, PipeWire-, Default-, Routen-, Link- und XRun-Zustand frisch zurückgelesen. Reportdateien werden nur identitäts- und hashgebunden entfernt oder ersetzt."
+  },
+  "metadata": {
+    "registered_at": "2026-08-04T18:24:00+02:00",
+    "source_task": "AUDIO-CONTROL-PLANE-V1-T021",
+    "implementation": {
+      "repository": "heimgewebe/audio",
+      "implementation_pull_request": 55,
+      "implementation_merge_commit": "d2f9410a2468417ccbdc6f84389bad19deedbe6f",
+      "review_pull_request": 56,
+      "review_merge_commit": "230052d6f10760632a90a63dd94ab602f5de3415",
+      "documentation_path": "docs/audio-live-telemetry-v1.md"
+    },
+    "split_reason": "Reale Langzeitbeobachtung ist Hostevidenz und kann nicht durch Repositorytests oder vorhandene Befehle ersetzt werden.",
+    "does_not_establish": [
+      "Ursachenzuordnung eines fremden XRun",
+      "Stabilität nach späterer Hostdrift",
+      "Freigabe aktiver Audio-, Routing- oder Geräteänderungen"
+    ]
+  }
+}

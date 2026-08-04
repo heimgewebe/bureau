@@ -93,6 +93,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Transport-Verifikationen atomar an Zielaufrufe binden"
 }

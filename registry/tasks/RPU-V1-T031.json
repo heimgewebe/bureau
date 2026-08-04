@@ -15,7 +15,7 @@
   },
   "claims": [
     {
-      "resource": "component.repoground.call-graph-incremental-parallel-v1",
+      "resource": "component.repoground.call-graph-producer",
       "mode": "write",
       "isolation": "worktree"
     },

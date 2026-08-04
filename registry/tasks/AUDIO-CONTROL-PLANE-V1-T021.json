@@ -99,6 +99,28 @@
         "real eight-hour soak evidence",
         "absence of future host drift"
       ]
+    },
+    "verified_at": "2026-08-04T22:10:00Z",
+    "completion_summary": "Audio PR #55 delivered the passive telemetry implementation and PR #56 delivered the review corrections; the coordinated repository closeout run succeeded, and the real one-hour/eight-hour host acceptance was split into ready follow-up T031 instead of being falsely claimed by T021.",
+    "closeout": {
+      "bureau_closeout_owner": "operator:automation:bureau-shard0-closeout-t139-t021-20260805",
+      "source_run_id": "BUR-RUN-20260804T211139Z-0d0b9f83cf",
+      "source_run_state": "succeeded",
+      "source_run_updated_at": "2026-08-04T21:22:18.532914Z",
+      "source_run_task_sha256": "e028b214665a0f40c63ec47f13cb6d2fdc68dec0ea9cc65e3b6482ff43d03411",
+      "registry_base_commit": "de042c9f71e8a4fb2440f7ab66f849beb8368e69",
+      "stale_queue_entry_removed": true,
+      "repository": "heimgewebe/audio",
+      "implementation_pull_request": 55,
+      "implementation_merge_commit": "d2f9410a2468417ccbdc6f84389bad19deedbe6f",
+      "review_pull_request": 56,
+      "review_merge_commit": "230052d6f10760632a90a63dd94ab602f5de3415",
+      "host_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T031",
+      "dependency_completion_receipt_sha256": "3a06ef429706703e412738e4a34de8ed60b45945551bfa27b77ff6ec310bc25f"
+    },
+    "verification": {
+      "task_sha256": "bac8e9d950e5363f045950c1501a0aaaa9aa1f89fe88f52aa3854b341702ee91",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d"
     }
   },
   "priority": {
@@ -121,6 +143,6 @@
     "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Passive Audio- und MIDI-Livetelemetrie integrieren"
 }

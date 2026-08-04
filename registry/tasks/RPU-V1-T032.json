@@ -3,7 +3,7 @@
   "id": "RPU-V1-T032",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Controlled S1 recall expansion for object-oriented and import edges",
-  "state": "planned",
+  "state": "verified",
   "goal": "Evaluate inheritance, mixin, super, receiver-alias and selected import patterns as separately reason-coded candidates, promoting only classes that preserve the registered S1 precision threshold.",
   "depends_on": [
     "RPU-V1-T024",
@@ -79,6 +79,55 @@
       "claim_resource": "component.bureau.registry",
       "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T032.json",
       "reason": "Keep Bureau intake and unrelated registry writes available while Lenskit implementation runs in an isolated worktree."
+    },
+    "verified_at": "2026-08-04T21:19:00Z",
+    "completion_summary": "RepoGround PR #1152 implemented conservative S1 recall expansion for separately reason-coded inheritance, receiver-alias, super, import and re-export cases; kept dynamic or ambiguous cases fail-closed; passed exact-head self-review and all visible GitHub workflows; and merged to canonical main.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1152,
+      "base_commit": "165cada0a164565e84cf7f45176f623b94ecc9c5",
+      "head_commit": "1255a17692c0a338a97cab96affbd095e4bac897",
+      "merge_commit": "504c51421a1c8a3931e39e9614007ae100331eba",
+      "current_main": "504c51421a1c8a3931e39e9614007ae100331eba",
+      "changed_paths": [
+        "merger/repoground/architecture/call_graph.py",
+        "merger/repoground/tests/test_python_call_graph_s1_recall.py"
+      ]
+    },
+    "review": {
+      "review_id": "PRR_kwDOP0INTM8AAAABIY-1NA",
+      "bound_head": "1255a17692c0a338a97cab96affbd095e4bac897",
+      "verdict": "PASS",
+      "open_findings": 0,
+      "open_threads": 0
+    },
+    "validation": {
+      "fixed_goldset_minimum_promoted_precision": 1.0,
+      "registered_minimum_precision": 0.97,
+      "successful_workflow_runs": {
+        "contracts-validate": 30941373296,
+        "task-index": 30941371661,
+        "ai-context guard": 30941370813,
+        "Python Call Graph Goldset": 30941370738,
+        "lint": 30941370758,
+        "CodeQL": 30941371550,
+        "test-suite": 30941370823
+      }
+    },
+    "deployment": {
+      "product_runtime_required": false,
+      "bureau_registry_publication_required": true,
+      "reason": "RepoGround needs no separate runtime deployment for this library change; the Bureau closeout must be merged before the verified state becomes canonical."
+    },
+    "closeout": {
+      "source_task_sha256": "e1e32ea895205c86393b855ddac845bdb3fb9721f8f441981101bf385b56f797",
+      "observed_repoground_main_at_closeout": "504c51421a1c8a3931e39e9614007ae100331eba",
+      "stale_queue_entry_removed": true,
+      "bureau_closeout_owner": "chatgpt:bureau:rpu-v1-t032-closeout:20260804"
+    },
+    "verification": {
+      "task_sha256": "f86512f03d4be2878116bd5d4b7ad6ec82f96d21ee3a13eaada8c9cde9ad90be",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

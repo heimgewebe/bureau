@@ -76,7 +76,51 @@
       "permission to alter foreign work",
       "automatic merge authority",
       "automatic deployment authority"
-    ]
+    ],
+    "closeout": {
+      "verified_at": "2026-08-04T03:39:26Z",
+      "implementation_pr": "heimgewebe/bureau#1479",
+      "reviewed_head_sha": "3ec41fedd3832497c50018cc7945e91e3bf94a60",
+      "merge_commit_sha": "16f31177d93368a44f48c82456287b5dd77cbf17",
+      "merged_at": "2026-08-04T03:12:20Z",
+      "ci": {
+        "github_status_check_rollup_count": 7,
+        "all_required_checks_green": true,
+        "exact_head_self_review": "PASS, 0 confirmed findings",
+        "local_validation": "1069 passed, 18 subtests passed; Ruff, Systemkatalog boundary and Registry check passed"
+      },
+      "deployment": {
+        "runtime_source_commit": "2d70654bff61cf246386a86271e1e3aea82a3f00",
+        "release_id": "2d70654bff61-src812011d784b5",
+        "manifest_sha256": "6935e9fcffa3bb5003c121a8d6ab00e0b0f7df7e29c73974572c22a6ebf230fc",
+        "canonical_registry_source_commit": "2d70654bff61cf246386a86271e1e3aea82a3f00",
+        "canonical_registry_tree_sha256": "8f89e6d39ceff20a76cd11e68aa0adfb91eb8a4f7924681cf47aeefe63f852ed",
+        "implementation_merge_is_ancestor": true
+      },
+      "live_readback": {
+        "grabowski_task_id": "254953f53b9547de99e35967",
+        "grabowski_outcome_receipt_sha256": "ce71e080c9403e3b77be5c70e0710c572c9b92be66401f9800bae980edf37610",
+        "registry_check_exit_success": true,
+        "runtime_identity_valid": true,
+        "canonical_registry_valid": true,
+        "initiative_state": "waiting",
+        "health_blocks_normal_claim": false,
+        "lifecycle_mismatch": false,
+        "repair_task_candidate_count": 0
+      },
+      "scope": {
+        "changed_paths": [
+          "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T138.json"
+        ],
+        "acceptance_claims_dependencies_priority_changed": false
+      },
+      "does_not_establish": [
+        "new task, claim, merge or deployment authority",
+        "permission to mutate foreign worktrees, leases, branches or processes",
+        "claimability of unrelated tasks",
+        "future runtime health or future main stability"
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -92,6 +136,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Grabowski-Initiative nach T135 kanonisch auf waiting setzen"
 }

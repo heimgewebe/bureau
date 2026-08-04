@@ -160,7 +160,7 @@
       },
       "validation": [
         "PR #1491 exact-head validate (3.10), validate (3.12), CodeQL, analyses and Registry preflight passed.",
-        "Implementation PR records local make validate with 1101 tests and 18 subtests; exact-head GitHub CI independently passed.",
+        "Closeout local make validate passed 1103 tests and 18 subtests; Registry and Systemkatalog checks passed.",
         "Activation systemd-analyze --user verify returned 0 for all ten unit files.",
         "All five previously active timers returned active/enabled/waiting after daemon-reload and controlled restart.",
         "No service oneshot was manually started during activation.",

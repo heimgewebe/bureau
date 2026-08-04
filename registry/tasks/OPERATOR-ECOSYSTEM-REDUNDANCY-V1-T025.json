@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Cut over the active RepoGround runtime without losing rollback",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 5
@@ -112,8 +112,6 @@
     ],
     "implemented_at": "2026-07-18T02:03:16+02:00",
     "blocked_at": "2026-07-18T02:29:58+02:00",
-    "block_reason": "The immutable RepoGround runtime is live and locally R2-terminal, but the mandatory hash-bound Grabowski convergence-assess call is blocked by the platform safety layer whenever the exact published protocol head is supplied. No authoritative allow_closure receipt exists.",
-    "next_action": "Re-run the unchanged convergence-assess grip when the platform permits the exact protocol-head parameter; accept closure only if request SHA-256 0b6a2684…b35d and protocol head 83ed435b…d40b are returned with terminally_closed.",
     "implementation": {
       "source_head": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
       "source_pull_request": "heimgewebe/repoground#1038",
@@ -166,21 +164,28 @@
     },
     "convergence": {
       "risk_level": "R2",
-      "request_path": "/home/alex/iCloud/Drive/halde/rg-t025-r2/request.json",
+      "request_path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/assessment-request-r2.json",
       "request_sha256": "0b6a2684a4949b6e3afaa14cdd6f4f772e19113b15abb7aa55dcac21c3d2b35d",
-      "protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
+      "protocol_head": "8a4345e8b5f66943a21e05434217ce8fc303c696",
       "local_reference_status": "terminally_closed",
       "local_missing_evidence": [],
       "local_conflicts": [],
       "local_blocked_by": [],
-      "authoritative_grip_status": "unavailable_platform_blocked",
-      "authoritative_closure_allowed": false,
+      "authoritative_grip_status": "passed",
+      "authoritative_closure_allowed": true,
       "platform_blocker_path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/grip-platform-blocker.json",
       "platform_blocker_sha256": "4e1ed200d8273777cedf55a08481d9aa6ca6a5fec286c7217bc3fb2d59a0e689",
       "preflight_receipts": [
         "e1e130a43af9feeee54ab599010653d53ed67598dc1a00408920594efaadc8fe",
         "ed81ae4d21987ac0f5e4c580978a1fc54ebeefddda7597f5fbed35f2f74d14e4"
-      ]
+      ],
+      "assessment_status": "terminally_closed",
+      "decision": "allow_closure",
+      "authoritative_receipt_sha256": "7b9c862157a7d57ecb08c97a27eec9b4284a6547fdd14f967ed1ff24403a682a",
+      "assessed_at": "2026-08-04T21:43:44Z",
+      "missing_evidence": [],
+      "conflicts": [],
+      "blocked_by": []
     },
     "validated_acceptance": {
       "exact-source": "PASS",
@@ -188,12 +193,59 @@
       "consumer-parity": "PASS with shared non-regression FTS defect recorded in follow-up T006",
       "rollback-proof": "PASS",
       "controlled-cutover": "PASS",
-      "convergence-gate": "BLOCKED: local evaluator terminally_closed, mandatory Grabowski receipt unavailable"
+      "convergence-gate": "PASS: authoritative Grabowski convergence-assess receipt 7b9c8621…a682a returned terminally_closed and allow_closure on protocol head 8a4345e8…c696."
     },
     "known_residuals": [
       "REPOGROUND-LEGACY-RECONCILIATION-V1-T006",
       "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
-    ]
+    ],
+    "verified_at": "2026-08-04T21:43:44Z",
+    "resolved_blocker": {
+      "resolved_at": "2026-08-04T21:43:44Z",
+      "historical_reason": "The immutable RepoGround runtime is live and locally R2-terminal, but the mandatory hash-bound Grabowski convergence-assess call is blocked by the platform safety layer whenever the exact published protocol head is supplied. No authoritative allow_closure receipt exists.",
+      "historical_next_action": "Re-run the unchanged convergence-assess grip when the platform permits the exact protocol-head parameter; accept closure only if request SHA-256 0b6a2684…b35d and protocol head 83ed435b…d40b are returned with terminally_closed.",
+      "decision": "allow_closure",
+      "assessment_status": "terminally_closed",
+      "authoritative_receipt_sha256": "7b9c862157a7d57ecb08c97a27eec9b4284a6547fdd14f967ed1ff24403a682a",
+      "request_path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/assessment-request-r2.json",
+      "request_sha256": "0b6a2684a4949b6e3afaa14cdd6f4f772e19113b15abb7aa55dcac21c3d2b35d",
+      "protocol_head": "8a4345e8b5f66943a21e05434217ce8fc303c696",
+      "previous_pinned_protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
+      "previous_head_result": "protocol-identity-mismatch",
+      "missing_evidence": [],
+      "conflicts": [],
+      "blocked_by": []
+    },
+    "closeout": {
+      "verified_at": "2026-08-04T21:43:44Z",
+      "source_head": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+      "source_pull_request": "heimgewebe/repoground#1038",
+      "runtime_path": "/home/alex/.local/share/repoground-runtime/d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+      "repoground_service": {
+        "load": "loaded",
+        "active": "active",
+        "sub": "running",
+        "unit_file": "enabled",
+        "result": "success",
+        "restarts": 0
+      },
+      "legacy_rlens_service": {
+        "load": "not-found",
+        "active": "inactive",
+        "sub": "dead"
+      },
+      "rollback_used": false,
+      "convergence_receipt_sha256": "7b9c862157a7d57ecb08c97a27eec9b4284a6547fdd14f967ed1ff24403a682a",
+      "does_not_establish": [
+        "future runtime availability",
+        "absence of all legacy compatibility names",
+        "closure of known residual follow-up tasks"
+      ]
+    },
+    "verification": {
+      "task_sha256": "cb390ebe26fca6f07ef62ad64131191517f32ca7674e075c9ee7e1d97a98f9f6",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

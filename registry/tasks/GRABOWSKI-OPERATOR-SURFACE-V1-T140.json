@@ -1,0 +1,133 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Korrektur verwendet einen read-only Preview und einen separaten Apply. Der Apply verlangt den exakten Preview-Digest, eine kurze Gültigkeitsfrist, ausdrückliche Bestätigung und einen unveränderten autoritativen Readback.",
+      "id": "two-phase-preview-apply"
+    },
+    {
+      "assertion": "Eine orphaned_binding darf nur abgeschlossen werden, wenn eine unveränderliche, quelltyp-spezifische Terminalevidenz für den gebundenen Source-Verweis vorliegt; fehlende, widersprüchliche oder nicht beobachtbare Quellwahrheit bleibt blockierend.",
+      "id": "immutable-source-terminality"
+    },
+    {
+      "assertion": "Preview und Apply sind an Checkout-Key, Repository/Common-Dir, Checkout-Pfad, gespeicherten Branch, gespeicherten Head, Lifecycle-Owner, Source-Kind und Source-ID gebunden; jede Abweichung bricht fail-closed ab.",
+      "id": "exact-identity-binding"
+    },
+    {
+      "assertion": "Unmittelbar vor Apply werden Checkout-Abwesenheit, Tasks, Leases, Prozesse, Repository-Beobachtbarkeit, Retention und Archivzustand erneut geprüft. Aktive oder unklare fremde Arbeit verhindert die Korrektur.",
+      "id": "fresh-conflict-readback"
+    },
+    {
+      "assertion": "Der Zustandswechsel erfolgt transaktional per Compare-and-Swap gegen die exakt gelesene Binding-Revision. Wiederholung desselben Receipts ist idempotent; eine veränderte Binding-Zeile wird nicht überschrieben.",
+      "id": "cas-and-idempotency"
+    },
+    {
+      "assertion": "Der neue terminale Zustand dokumentiert ausschließlich den belegten externen Abschluss und die bereits bestehende Checkout-Abwesenheit. Er archiviert oder löscht keine Dateien, Branches, Refs, Retention- oder Archivdaten und erzeugt keine Cleanup-Autorität.",
+      "id": "evidence-state-only"
+    },
+    {
+      "assertion": "Ein erfolgreicher Apply erzeugt ein hashgebundenes Audit-Receipt und einen autoritativen Post-State-Readback; bei unklarem Transportergebnis muss der Zielzustand gelesen werden, bevor irgendeine Wiederholung zulässig ist.",
+      "id": "audited-readback"
+    },
+    {
+      "assertion": "Deterministische Tests decken Bureau-Task, Operator-Verpflichtung, Thread-Fokus und GitHub-Issue als Source-Kinds sowie fehlende Terminalevidenz, widersprüchlichen Head, aktive Lease, neu erschienenen Worktree, TOCTOU und idempotente Wiederholung ab; die vollständige Grabowski-Validierung bleibt grün.",
+      "id": "source-kind-regressions"
+    },
+    {
+      "assertion": "T095- und T096-Projektionen bleiben unverändert fail-closed. Der neue Vertrag ersetzt weder current_work noch die read-only orphaned_binding-Klassifikation und schwächt keine bestehenden Lifecycle- oder Cleanup-Guards.",
+      "id": "preserve-t095-t096-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T095",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T096"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung nach Live-Prüfung ausdrücklich beauftragt. Der Task bleibt auf einen receiptgebundenen Reconciliation-Vertrag und Tests begrenzt; keine automatische Archivierung, Löschung oder Übernahme fremder Arbeitsstände.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_checkouts.py",
+      "component:tests/test_checkouts.py",
+      "component:docs/checkout-lifecycle.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Einen eng begrenzten, zweiphasigen Reconciliation-Vertrag ergänzen, mit dem durable Checkout-Lifecycle-Bindungen nach externem Verschwinden des Git-Worktrees nur bei unveränderlicher Quellterminalität und frischem konfliktfreiem Readback atomar in einen terminalen Evidenzzustand überführt werden können. Fehlende Checkouts erzeugen weiterhin weder Archivierungs-, Cleanup-, Branch-Lösch- noch historische Schätzautorität.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T140",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Terminalität einer der vier historischen Quellen",
+      "Berechtigung zur sofortigen Korrektur bestehender Bindungen",
+      "Archivierungs- oder Cleanup-Autorität",
+      "Branch- oder Ref-Löschautorität",
+      "Übernahme fremder Leases, Prozesse, Branches, Worktrees oder Dirty-States"
+    ],
+    "live_findings": [
+      "Alle vier Bindungen haben keinen aktuellen Git-Worktree, keine aktive Lease und keine Executor-Liveness.",
+      "Für keinen der vier Pfade existiert in der vollständigen Grabowski-Auditkette ein checkout-archive- oder checkout-cleanup-apply-Receipt.",
+      "T095 und T096 decken Klassifikation und fail-closed Projektion ab, schließen mutierende Reconciliation jedoch ausdrücklich aus.",
+      "Die laufende Dirty-Arbeit t095-checkout-owner-handoff-v1 betrifft Eigentümerdrift bei weiterhin vorhandenem Checkout und ist nicht inhaltsgleich."
+    ],
+    "observed_checkout_keys": [
+      "2bffc8bdef7e4a246ede001a8614737c0c0ffacced9ae6d340d1a1bb3c715a8a",
+      "3faee3a00c7d935f41c7510c61a099ac6004830b2ba65115ea992838e645afe7",
+      "55dd0145175d3ae6708085d3ee65a07895f2dc3bc3bb46f6c9a96e020436d770",
+      "a42d02845497193a2e85d637a51a85b81772fbf8f2c5abd647345cec34fd8a69"
+    ],
+    "registered_at": "2026-08-04",
+    "registry_base_head": "f1baba9f1ab81105d1e592eb3dd3352d942d0f65",
+    "source": "Live-Audit der vier orphaned Checkout-Bindungen am 4. August 2026",
+    "source_snapshot_sha256": "44deb224bd9016272a71e47f462050a749bd0f521d1113a515c50921b28a8c48",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8676c3e39448b85e9b87b626",
+      "event_id": 2480,
+      "event_created_at": "2026-08-04T10:34:34.084605Z",
+      "request_sha256": "5d84442700948d9ce538091f6559b26c75d0a1d12c58225caf889ca95901870f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-system-audit",
+        "locator": "grabowski://checkout-binding-reconciliation/44deb224bd9016272a71e47f462050a749bd0f521d1113a515c50921b28a8c48",
+        "observed_at": "2026-08-04T10:21:00Z",
+        "sha256": "44deb224bd9016272a71e47f462050a749bd0f521d1113a515c50921b28a8c48"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 140
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "checkout-lifecycle",
+    "recovery"
+  ],
+  "rollback": {
+    "strategy": "Den neuen mutierenden Reconciliation-Pfad vollständig revertieren. T095/T096 bleiben als rein read-only, fail-closed Projektion bestehen; orphaned Bindungen werden bis zu einer korrigierten, erneut reviewten Lösung weiterhin nur blockierend angezeigt."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Verschwundene managed Checkouts receiptgebunden abschließen"
+}

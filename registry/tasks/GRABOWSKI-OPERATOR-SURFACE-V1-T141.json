@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der koordinierte Pickup trennt Bureau-eigene Host-Semantik und öffentliche Grabowski-Leases anhand eines versionierten, zentralen Vertrags; kein nicht unterstützter host:-Schlüssel erreicht grabowski_resource_acquire.",
+      "id": "supported-resource-partition"
+    },
+    {
+      "assertion": "Hostscope bleibt in Claim-, Approval-, Audit- und Recovery-Evidence sichtbar und autoritätsgebunden; er wird weder still entfernt noch als Repo-, Pfad-, Service- oder Emergency-Lease ausgegeben.",
+      "id": "host-scope-preserved"
+    },
+    {
+      "assertion": "Unbekannte oder nicht partitionierbare Ressourcentypen blockieren vor Claim, Lease, Workspace und Registry-Wirkung mit stabilem Fehlercode und eindeutiger Readback-Anforderung.",
+      "id": "unknown-kind-fails-before-effect"
+    },
+    {
+      "assertion": "Eine reale T017-förmige Fixture mit host:heim-pc und gültigen Pfad-/Service-Ressourcen durchläuft die Koordination bis zur vorgesehenen Boundary; Negativproben belegen keine Teilleases und keine Claimwirkung.",
+      "id": "t017-regression"
+    },
+    {
+      "assertion": "Bestehende Tasks und historische Claim-Intents mit Hostscope bleiben lesbar; gültige repo-, path-, service-, component- und operation-Leases behalten ihr Verhalten.",
+      "id": "compatibility"
+    },
+    {
+      "assertion": "Fokussierte Pickup-, Lease- und Ressourcenprüfungen sowie die vollständige Grabowski-Repositoryvalidierung sind auf dem exakten finalen PR-Head grün.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat mit @grabowski umsetzen die Registrierung und spätere Umsetzung dieses frisch belegten Vertragsfehlers freigegeben. Erlaubt ist ausschließlich die deterministische Ausrichtung von Bureau-Hostscope und Grabowski-Leasetypen samt Regressionstests; Claim-, Merge- und Deploymentgrenzen bleiben erhalten.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_leases.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_lease_consumer.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Richte die vom Bureau-Claimvertrag ausgegebenen Host-Semantiken und die öffentlichen Grabowski-Leasetypen so aus, dass T017-förmige koordinierte Pickups deterministisch, sichtbar und fail-closed funktionieren, ohne Hostscope still zu löschen oder in breite Ersatzleasen umzudeuten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T141",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "T017 incompleteness",
+      "permission to broaden repository leases",
+      "permission to bypass host authority",
+      "automatic claim or dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ],
+    "finding": "Bureau emitted host:heim-pc in T017 required_resource_keys while Grabowski RESOURCE_KINDS omitted host; coordinated pickup and direct acquire failed before effect.",
+    "observed_bureau_commit": "c31150c3344f8b0196594ac4755d140b56934a42",
+    "observed_grabowski_commit": "982d1c2a89a4d30f9130ffe0fccdcac34e2baa67",
+    "registered_at": "2026-08-04",
+    "source": "live_t017_coordinated_pickup_contract_mismatch",
+    "source_candidate": "candidate-4f8e61a3c52a3f660160f26d",
+    "source_event_id": 2485,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4f8e61a3c52a3f660160f26d",
+      "event_id": 2485,
+      "event_created_at": "2026-08-04T11:29:49.631019Z",
+      "request_sha256": "29dff6b47697964966ae2af429003cb00bfe0436ebbb9fc8f466ee08f471232b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_operator_contract_mismatch",
+        "locator": "bureau:claim-intent:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017@b82225f9fffdd8cb1b46ae57cd0a38a3c5bb65db;grabowski:src/grabowski_resources.py@982d1c2a89a4d30f9130ffe0fccdcac34e2baa67",
+        "observed_at": "2026-08-04T11:22:00Z",
+        "sha256": "c17bf781f106072368753589bfac855bc216c2147c2978e748f70449a12f3c9a"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 790
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Hostressourcen mit Grabowski-Leasetypen ausrichten"
+}

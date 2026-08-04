@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T031",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Live-Telemetrie unter Langzeitlast am Heim-PC abnehmen",
-  "state": "planned",
+  "state": "ready",
   "goal": "Die in T021 gelieferte passive Telemetrie auf dem realen Heim-PC mit einer einstündigen erhöhten Snapshotlast und einem achtstündigen passiven Lauf abnehmen, ohne Defaults, Routen, Profile, Lautstärken, Links oder Audiostreams zu verändern.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T021"
@@ -87,6 +87,13 @@
   "metadata": {
     "registered_at": "2026-08-04T18:24:00+02:00",
     "source_task": "AUDIO-CONTROL-PLANE-V1-T021",
+    "readied_at": "2026-08-04T23:32:00+02:00",
+    "readiness_basis": {
+      "dependency_task": "AUDIO-CONTROL-PLANE-V1-T021",
+      "dependency_run": "BUR-RUN-20260804T211139Z-0d0b9f83cf",
+      "dependency_state": "verified",
+      "completion_receipt_sha256": "3a06ef429706703e412738e4a34de8ed60b45945551bfa27b77ff6ec310bc25f"
+    },
     "implementation": {
       "repository": "heimgewebe/audio",
       "implementation_pull_request": 55,

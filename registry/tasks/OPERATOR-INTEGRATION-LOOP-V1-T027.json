@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Aussensensor-AJV-Update aus PR #158 mit Artefaktbeleg reparieren",
   "goal": "Erzeuge für das weiterhin sinnvolle geschlossene Aussensensor-Update auf AJV ~8.20.0 aus PR #158 einen frischen Ersatz-PR vom aktuellen origin/main und belege Schema-, Laufzeit- und Artefaktkompatibilität auf dem exakten Ersatz-Head.",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 3
@@ -58,6 +58,39 @@
         "automatische Queueaufnahme",
         "Berechtigung zu administrativen Merge-Bypässen"
       ]
+    },
+    "closeout": {
+      "verified_at": "2026-08-04T01:27:00Z",
+      "source_run": "BUR-RUN-20260803T021551Z-6de91b6fd6",
+      "implementation_pr": "heimgewebe/aussensensor#161",
+      "reviewed_head_sha": "ec13af13757012793d397aaf00d49eab7acb0e47",
+      "merge_commit_sha": "f35301469194860864cf69eca1ba617f8a8c5969",
+      "merged_at": "2026-08-03T02:40:04Z",
+      "run_state": "succeeded",
+      "ci": {
+        "ai-context guard": "success",
+        "ajv-validate": "success",
+        "contracts-drift": "success",
+        "validate-aussen-jsonl": "success",
+        "CodeQL": "success"
+      },
+      "repository_readback": {
+        "origin_main": "f35301469194860864cf69eca1ba617f8a8c5969",
+        "working_tree_clean": true
+      },
+      "stale_projection_resolution": {
+        "cause": "terminal succeeded run and merged replacement PR were not projected into Registry task state and queue",
+        "goal_acceptance_claims_dependencies_changed": false
+      },
+      "does_not_establish": [
+        "generic permission to close tasks from a terminal run alone",
+        "completion of unrelated Bureau tasks",
+        "claimability of a specific downstream task without fresh Frontier readback"
+      ]
+    },
+    "verification": {
+      "task_sha256": "ce05b301fada65be5a24a3f42fa71bc86ef17058421f5a9f552d56f063523479",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },
   "acceptance": [

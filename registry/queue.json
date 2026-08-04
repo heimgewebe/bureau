@@ -82,9 +82,7 @@
       "AUDIO-CONTROL-PLANE-V1-T023",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T137"
     ],
-    "now": [
-      "OPERATOR-INTEGRATION-LOOP-V1-T027"
-    ]
+    "now": []
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

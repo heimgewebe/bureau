@@ -120,6 +120,10 @@
         "claimability of unrelated tasks",
         "future runtime health or future main stability"
       ]
+    },
+    "verification": {
+      "task_sha256": "728ef78bd24c2708326a8a9e45ef38e8202ba080cd085041ae1f96badc155c8f",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },
   "priority": {

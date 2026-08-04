@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "id": "stale-run-closed",
+      "assertion": "Der festhängende Run BUR-RUN-20260803T132723Z-5e1701eef0 für T135 ist mit kriterienspezifischer Evidenz atomar succeeded/verified abgeschlossen; es bestehen keine aktiven Run-Leases."
+    },
+    {
+      "id": "canonical-lifecycle-repair",
+      "assertion": "Der kanonische Bureau-Reconciler erkennt genau eine sichere Transition für GRABOWSKI-OPERATOR-SURFACE-V1 von active nach waiting und wendet ausschließlich diese Transition an."
+    },
+    {
+      "id": "bounded-registry-diff",
+      "assertion": "Der funktionale Registry-Diff ist auf den deklarativen Initiative-Lifecycle plus diese dedizierte PR-/Aufgabenbindung begrenzt; fremde Tasks, Queues, Leases und Checkouts bleiben unverändert."
+    },
+    {
+      "id": "exact-head-validation",
+      "assertion": "Diff-Check, Ruff, vollständige Pytest-Suite, Systemkatalog-Grenze und Bureau-Registry-Check sind auf dem exakten finalen PR-Head grün."
+    },
+    {
+      "id": "pr-binding-and-review",
+      "assertion": "Der PR ist an diese nichtterminale Aufgabe gebunden, der exakte Head wird methodisch getrennt selbst geprüft und weist keine bestätigten Befunde auf."
+    },
+    {
+      "id": "merge-deploy-readback",
+      "assertion": "Nach Merge wird der kanonische Bureau-Stand deployed; Runtime-Identität, Registry-Integrität und what-now werden zurückgelesen und der active/waiting-Health-Block ist verschwunden."
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "Die Reparatur erzeugt keine neue Aufgaben-, Claim-, Merge- oder Deployment-Autorität und umgeht weder Prioritäten noch Blocker; sie stellt nur die deklarative Lifecycle-Wahrheit wieder her."
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T135"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer beauftragte am 4. August 2026 die nächste Bureau-Aufgabe. Live war keine Aufgabe claimfähig, weil der bereits umgesetzte T135-Run festhing und danach die deklarative Initiative active statt des kanonisch empfohlenen waiting war. Erlaubt ist nur der kanonische Lifecycle-Reconcile mit Review, CI, Merge, Deploy und Readback.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/initiatives/GRABOWSKI-OPERATOR-SURFACE-V1.json",
+      "path:/home/alex/repos/bureau/registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T138.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den durch den verifizierten Abschluss von T135 sichtbar gewordenen Lifecycle-Drift der Initiative GRABOWSKI-OPERATOR-SURFACE-V1 kanonisch von active nach waiting versetzen, damit Bureau normale Claims nicht wegen widersprüchlicher deklarativer Wahrheit global sperrt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T138",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "registered_at": "2026-08-04",
+    "source": "live_bureau_what_now_after_t135_closeout",
+    "live_evidence": {
+      "blocked_run": "BUR-RUN-20260803T132723Z-5e1701eef0",
+      "blocked_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T135",
+      "t135_completion_receipt_sha256": "078fc7aa1396f43dab60b9caecf51ed5761c1209dd0ab1028a744f1e5626f945",
+      "t135_verified_at": "2026-08-04T02:26:51.950569Z",
+      "observed_declared_state": "active",
+      "observed_recommended_state": "waiting",
+      "observed_repair_candidate_count": 1,
+      "base_commit": "7fef6bb8a2697270f134bd40f7810763a9507f43",
+      "initial_repair_commit": "aaf394ca9888ab4204d55e3c60175b14df1505b0"
+    },
+    "does_not_establish": [
+      "queue readiness beyond fresh what-now",
+      "permission to claim planned tasks",
+      "permission to alter foreign work",
+      "automatic merge authority",
+      "automatic deployment authority"
+    ]
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "bureau",
+    "repository",
+    "python",
+    "github",
+    "grabowski",
+    "runtime-deployment",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Grabowski-Initiative nach T135 kanonisch auf waiting setzen"
+}

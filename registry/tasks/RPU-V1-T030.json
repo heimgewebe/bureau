@@ -3,7 +3,7 @@
   "id": "RPU-V1-T030",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Make the RepoGround raw-call producer handoff immutable",
-  "state": "ready",
+  "state": "verified",
   "goal": "Replace the mutable dictionary handoff between AST call collection and resolution with a frozen slotted internal record while preserving the exact public v1 call-graph artifact, resolution semantics and deterministic goldset output.",
   "depends_on": [
     "RPU-V1-T024"
@@ -66,59 +66,44 @@
   "metadata": {
     "registered_at": "2026-07-15T22:40:00Z",
     "historical_initiative_id_retained": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
-    "current_assessment": {
-      "observed_at": "2026-08-01T23:55:00+02:00",
-      "repoground_main": "6aeb0f15595422ac323f0155b748f97edf6bf886",
-      "open_repoground_pull_requests": 0,
-      "producer_path": "merger/repoground/architecture/call_graph.py",
-      "producer_lines": 1733,
-      "visitor_span_lines": 897,
-      "resolver_span_lines": 359,
-      "ruff_c901_findings": 0,
-      "mutable_handoff": "_ModuleState.calls: list[dict[str, Any]]",
-      "prototype_diff": {
-        "files": 1,
-        "insertions": 29,
-        "deletions": 19
-      },
-      "prototype_focused_tests": {
-        "passed": 93,
-        "failed": 0
-      },
-      "goldset_before": {
-        "call_count": 16,
-        "skipped_files_count": 0,
-        "sha256": "647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae"
-      },
-      "goldset_after": {
-        "call_count": 16,
-        "skipped_files_count": 0,
-        "sha256": "647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae"
-      }
-    },
-    "fine_grained_execution_scope": {
-      "component_resource": "component.repoground.call-graph-producer",
-      "decision": "component-and-exact-paths",
-      "exact_paths": [
-        "/home/alex/repos/repoground/merger/repoground/architecture/call_graph.py",
-        "/home/alex/repos/repoground/merger/repoground/tests/test_python_call_graph.py"
-      ],
-      "does_not_authorize": [
-        "public call-graph artifact changes",
-        "resolution-rule changes",
-        "schema or version changes",
-        "dependency upgrades",
-        "repository-wide refactors",
-        "queue or unrelated Bureau mutations"
+    "verified_at": "2026-08-04T05:10:00Z",
+    "completion_summary": "RepoGround PR #1145 replaced the mutable raw-call dictionary handoff with a frozen slotted typed record, preserved the exact public call-graph goldset and merged after revision-bound review and green CI.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1145,
+      "base_commit": "6aeb0f15595422ac323f0155b748f97edf6bf886",
+      "head_commit": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
+      "merge_commit": "4ce9e1d8ea1849ce298180004f197d48f9e8a162",
+      "current_main": "633568ce1e0880b729ff48e4ff77fd6ae69b351f",
+      "changed_paths": [
+        "merger/repoground/architecture/call_graph.py",
+        "merger/repoground/tests/test_python_call_graph.py"
       ]
     },
-    "scope_revision_reason": "The 2026-07-15 Lenskit-wide task was remeasured on current RepoGround main. No C901 producer finding remains; the smallest still-valid decomposition is the mutable raw-call dictionary boundary.",
-    "does_not_establish": [
-      "semantic improvement",
-      "higher S1 recall",
-      "performance improvement",
-      "permission to change files outside the exact two-path scope",
-      "merge readiness before fresh CI and review"
-    ]
+    "review": {
+      "review_id": "PRR_kwDOP0INTM8AAAABID5jSQ",
+      "bound_head": "1f1d4c819bb1ec3ae9c4b02367fd5490db8c3803",
+      "verdict": "PASS",
+      "open_findings": 0
+    },
+    "validation": {
+      "focused_tests_passed": 94,
+      "goldset_call_count": 16,
+      "goldset_skipped_files": 0,
+      "goldset_sha256": "647bb16d23b01a9318ed8b9c2ec31f3f122e5d0d7a631244439718ff9efec3ae",
+      "successful_workflow_run_ids": [
+        30721268653,
+        30721268633,
+        30721268797,
+        30721268618,
+        30721268615,
+        30721268632,
+        30721268620
+      ]
+    },
+    "verification": {
+      "task_sha256": "db03b63178e1d64cceb078af9888f5ed8f14b16b633bd7498751314632396efc",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
+    }
   }
 }

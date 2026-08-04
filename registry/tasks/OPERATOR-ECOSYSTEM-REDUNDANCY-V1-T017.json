@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "state": "ready",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -79,7 +79,10 @@
       "unit_restart_permission",
       "automatic_self_healing",
       "safe_rename",
-      "merge_permission"
+      "merge_permission",
+      "fresh-profile state-directory creation (tracked by OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T077)",
+      "future timer success",
+      "future GitHub availability"
     ],
     "lease_scope_migration": {
       "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
@@ -99,6 +102,78 @@
         "merge or deployment authority",
         "verification authority",
         "safe mutation of terminal historical tasks"
+      ]
+    },
+    "verified_at": "2026-08-04T09:54:27Z",
+    "outcome": "Bureau PR #1491 versioned all five scheduler stages, timers and compatibility shims. The current immutable Bureau release and all 15 live files now agree; systemd verification, timer reload and an independent drift audit completed successfully.",
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout",
+      "verified_at": "2026-08-04T09:54:27Z",
+      "task_sha256": "6b821d1d04cac10d02c81c5ce604f494e2b170fbac81896b04f02cfcd0933516",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1491,
+        "url": "https://github.com/heimgewebe/bureau/pull/1491",
+        "implementation_head": "85bdbd29e5e9c2b2c9abcb3f81b9fb84fc70a234",
+        "merge_commit": "291df6df85366fb5777de3dd2bdb84a06c131f75",
+        "merged_at": "2026-08-04T08:12:33Z",
+        "current_main": "f1baba9f1ab81105d1e592eb3dd3352d942d0f65",
+        "merge_is_ancestor_of_current_main": true,
+        "required_checks_green": true
+      },
+      "runtime": {
+        "release_id": "f1baba9f1ab8-srce8f6f18bdd05",
+        "source_commit": "f1baba9f1ab81105d1e592eb3dd3352d942d0f65",
+        "deployment_manifest_sha256": "4dc575cf5cd2c9d4425fa3a8295482c4382327311bd6d7e6d3b135820315a0c2",
+        "registry_snapshot": "f1baba9f1ab8-treefa89b941d3c4",
+        "release_identity_matches": true
+      },
+      "activation": {
+        "grabowski_task_id": "e5d0fc5ea1414fd2a485df1c",
+        "lifecycle_receipt_sha256": "0c94cc0c1d6c05ff61c12e4e33b4c7b4ea0b08c4ff4243b8cbf3d0ee761fa284",
+        "receipt_path": "/home/alex/.local/state/bureau/cycle-deployment-activation/f1baba9f1ab81105d1e592eb3dd3352d942d0f65/success-receipt.json",
+        "receipt_sha256": "a377d7da5ab966936e2ebbc0656ed5ffd9486718df54125ee9b747544cbd050b",
+        "backup_count": 15,
+        "installed_file_count": 15,
+        "systemd_analyze_verify": "PASS",
+        "cycle_deployment_pre_reload": "ok",
+        "cycle_deployment_post_reload": "ok",
+        "independent_postflight": "ok",
+        "restarted_timers": [
+          "bureau-halfhour-operator.timer",
+          "bureau-curator.timer",
+          "bureau-operator-control.timer",
+          "bureau-verifier-control.timer",
+          "bureau-closure-planner.timer"
+        ],
+        "timer_state": "all five active, enabled and waiting",
+        "services_manually_started": [],
+        "rollback_backups_preserved": true
+      },
+      "validated_acceptance": {
+        "source-owner": "PASS — repository sources, immutable release and all installed stage files share one release identity.",
+        "unit-coverage": "PASS — discovery, curator, operator, verifier and closure services/timers plus five compatibility shims are versioned and installed.",
+        "drift-check": "PASS — independent bureau cycle-deployment returned status ok, no findings, read_only true and self_heal false.",
+        "compatibility": "PASS — bureau-halfhour-operator keeps its stable unit and shim names; all previous live bytes are preserved in 15 rollback backups."
+      },
+      "validation": [
+        "PR #1491 exact-head validate (3.10), validate (3.12), CodeQL, analyses and Registry preflight passed.",
+        "Implementation PR records local make validate with 1101 tests and 18 subtests; exact-head GitHub CI independently passed.",
+        "Activation systemd-analyze --user verify returned 0 for all ten unit files.",
+        "All five previously active timers returned active/enabled/waiting after daemon-reload and controlled restart.",
+        "No service oneshot was manually started during activation.",
+        "Independent postflight returned cycle-deployment status ok with zero findings."
+      ],
+      "followups": {
+        "fresh_profile_state_directories": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T077"
+      },
+      "does_not_establish": [
+        "future timer success",
+        "future GitHub availability",
+        "fresh-profile state-directory creation",
+        "completion of OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T077"
       ]
     }
   }

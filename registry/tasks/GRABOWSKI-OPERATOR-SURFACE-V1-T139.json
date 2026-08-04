@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jede Verifikationsquittung ist an Aufrufer- oder Sitzungsidentität, Runtimevertrag, exaktes Zielwerkzeug, kanonischen Argumentdigest oder explizite Mutationsabsicht, Ablaufzeit und Einmalverbrauch gebunden; unbeschriftete globale Nutzung ist ausgeschlossen.",
+      "id": "exact-intent-binding"
+    },
+    {
+      "assertion": "Acknowledge, Reservierung und Verbrauch bilden einen atomaren oder gleichwertig serialisierten Ablauf, sodass zwischen Bestätigung und Zielmutation kein fremder Aufruf dieselbe Quittung übernehmen oder entwerten kann.",
+      "id": "atomic-ack-consume"
+    },
+    {
+      "assertion": "Deterministische Paralleltests mit mindestens zwei Clients belegen, dass fremde read-only und mutierende Aufrufe eine reservierte Verifikation nicht konsumieren und der vorgesehene Aufruf genau einmal erfolgreich fortgesetzt werden kann.",
+      "id": "parallel-nonconsumption"
+    },
+    {
+      "assertion": "Read-only-Werkzeuge benötigen und verbrauchen keine Mutationsverifikation; sie bleiben bei vorhandenen, abgelaufenen oder fremd gebundenen Verifikationen unabhängig lesbar.",
+      "id": "readonly-boundary"
+    },
+    {
+      "assertion": "Abgelaufene, wiederholte, argumentabweichende, werkzeugabweichende oder fremde Quittungen scheitern fail-closed mit eindeutigen typisierten Fehlerklassen und ohne mehrdeutiges 'different mutation' ohne Identitätsbezug.",
+      "id": "typed-fail-closed-errors"
+    },
+    {
+      "assertion": "Tests decken Replay, Crash zwischen Acknowledge und Verbrauch, Ablauf, Retry derselben Mutation, unterschiedliche Mutationen, parallele Aufrufer und Runtime-Neustart ab.",
+      "id": "replay-crash-expiry-tests"
+    },
+    {
+      "assertion": "Migration und Kompatibilitätsgrenze für bestehende Clients sind dokumentiert; alte ungebundene Poolzustände werden sicher verworfen oder nur read-only diagnostiziert und können keine neue Mutation autorisieren.",
+      "id": "compatibility-migration"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Operatornachweis misst die Rate falsch verbrauchter oder falsch gebundener Verifikationen vor und nach der Änderung und bestätigt zugleich, dass Replay- und Fremdverbrauchsschutz nicht geschwächt wurden.",
+      "id": "measured-regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangt, sinnvolle nicht behobene Befunde im Bureau zu registrieren. Diese Aufgabe darf nur Transportverifikations- und Testpfade in Grabowski ändern; keine bestehende Autoritäts-, Lease-, Review-, Merge- oder Recovery-Grenze darf gelockert werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den gemeinsamen unbeschrifteten Einmal-Token-Pool der Grabowski-Transportverifikation durch eine atomare, revisionsgebundene Verifikation ersetzen, die ausschließlich vom vorgesehenen Aufrufer und dem exakten Zielwerkzeug mit gebundenem Argument- oder Mutationsdigest verbraucht werden kann. Parallele fremde Aufrufe dürfen bestätigte Verifikationen weder übernehmen noch entwerten; alle bestehenden fail-closed-, Lease-, Review- und Recovery-Grenzen bleiben erhalten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T139",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "registered_at": "2026-08-04",
+    "source": "Live-Operatorbefund während Commonworld-Katalog-PR #185",
+    "live_evidence": {
+      "repository": "heimgewebe/commonworld",
+      "base_sha": "f03f5eead4a9da7e4d59a9c7925ce8aa3ab2492d",
+      "final_pr_head": "af06759375aa196e9ebce3860a39efb1c1f33ca6",
+      "persistent_validation_task": "f3690af2e3154d91a5df6384",
+      "observed_error": "available transport verifications are bound to a different mutation",
+      "observed_pool_mode": "bounded-shared-token-pool",
+      "observed_client_scope_kind": "shared_unlabeled",
+      "mutation_intent_bound": false,
+      "target_tool_name": null,
+      "target_arguments_sha256": null,
+      "canonical_proposer_error": "shared-workbench-registry-root-forbidden"
+    },
+    "does_not_establish": [
+      "task readiness",
+      "claim or dispatch authority",
+      "permission to bypass transport verification",
+      "permission to weaken fail-closed behavior",
+      "automatic merge authority",
+      "automatic deployment authority"
+    ]
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Transport-Verifikationen atomar an Zielaufrufe binden"
+}

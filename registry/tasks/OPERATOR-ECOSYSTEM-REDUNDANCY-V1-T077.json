@@ -1,0 +1,103 @@
+{
+  "acceptance": [
+    {
+      "assertion": "On a fresh user profile with the scheduler state directories absent, each canonical cycle or closure service can enter its Python entrypoint because the exact writable state path is created declaratively or by the bound installer before systemd applies ReadWritePaths.",
+      "id": "fresh-state-start"
+    },
+    {
+      "assertion": "ProtectHome, NoNewPrivileges, private temporary storage, address-family restrictions and the read-only drift contract remain at least as strict as the T017 baseline; no broad home-directory write access or self-healing is introduced.",
+      "id": "hardening-preserved"
+    },
+    {
+      "assertion": "Existing installations with private 0600 user units and current state data remain valid; the implementation does not require world-readable unit files or rewrite historical state.",
+      "id": "existing-host-compatibility"
+    },
+    {
+      "assertion": "Focused fresh-profile tests, exact diff-bound self-review and the full relevant Bureau validation pass on one exact revision.",
+      "id": "tests-review-ci"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.ops"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implement only declarative or installer-bound creation of the exact scheduler state directories plus focused tests and documentation. Runtime deployment, unit restart and foreign-work override remain excluded.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T077.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Make the canonical Bureau cycle and closure units start correctly when their user-state directories do not yet exist, without weakening service hardening, changing current deployment truth or introducing self-healing.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T077",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current T017 merge blocker",
+      "runtime deployment permission",
+      "unit restart permission",
+      "automatic self-healing",
+      "merge permission"
+    ],
+    "finding": "The T017 installer and activation guide do not establish the state directories named by ReadWritePaths. The current Heim-PC already has them, so current-host validation does not establish fresh-profile startup.",
+    "observed_at": "2026-08-04T09:54:00+02:00",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b5671810a6c46b71ebf9359a",
+      "event_id": 2471,
+      "event_created_at": "2026-08-04T08:02:24.514336Z",
+      "request_sha256": "49a0031d5c699d445ee5f40e868f25bc9f59e55a3dfe345a0f8d3f3bcfa40599",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "code_review_finding",
+        "locator": "git:heimgewebe/bureau@85bdbd29e5e9c2b2c9abcb3f81b9fb84fc70a234:ops/systemd+ops/install-bureau-runtime.py",
+        "observed_at": "2026-08-04T09:54:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_from": "operator_review_followup",
+    "source_commit": "85bdbd29e5e9c2b2c9abcb3f81b9fb84fc70a234",
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 780
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "systemd",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make Bureau scheduler state directories fresh-host safe"
+}

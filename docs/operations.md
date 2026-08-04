@@ -408,6 +408,16 @@ bureau-status-capsule read \
 The reader touches only the capsule file and reports `fresh`, `stale` or `unavailable`; see
 `docs/bureau-status-capsule-v1.md`.
 
+### Canonical cycle scheduler deployment
+
+The discovery, curator, operator, verifier and closure scheduler sources and their five service/timer pairs are versioned in this repository. Audit the installed deployment without writes:
+
+```bash
+bureau --json cycle-deployment
+```
+
+The audit binds source files, units, timers, compatibility shims and loaded module paths to the immutable Bureau deployment manifest. Exit `0` means agreement, `1` means readable drift and `2` means invalid or unsafe input. It never installs, rewrites, reloads, restarts or self-heals. The historical `bureau-halfhour-operator` discovery name remains stable. Runtime activation is a separate review-before-effect operation; see `docs/bureau-cycle-deployment-v1.md`.
+
 ### Bureau repo leases do not reserve operational state
 
 Use `bureau --json lease-contract` when an operator needs to classify a Bureau command. The

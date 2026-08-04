@@ -27,12 +27,26 @@ def _sha256(path: Path) -> str | None:
         return None
 
 
+MANAGED_PACKAGES = ("bureau", "bureau_cycle")
+
+
 def _package_tree_sha256(root: Path) -> str | None:
     pyproject = root / "pyproject.toml"
-    package = root / "src/bureau"
-    if pyproject.is_symlink() or not pyproject.is_file() or not package.is_dir():
+    packages = [root / "src" / name for name in MANAGED_PACKAGES]
+    systemd = root / "ops/systemd"
+    if (
+        pyproject.is_symlink()
+        or not pyproject.is_file()
+        or systemd.is_symlink()
+        or not systemd.is_dir()
+        or any(package.is_symlink() or not package.is_dir() for package in packages)
+    ):
         return None
-    paths = [pyproject, *sorted(package.rglob("*.py"))]
+    paths = [
+        pyproject,
+        *(path for package in packages for path in sorted(package.rglob("*.py"))),
+        *(path for path in sorted(systemd.rglob("*")) if path.is_file()),
+    ]
     digest = hashlib.sha256()
     try:
         for path in paths:
@@ -42,6 +56,7 @@ def _package_tree_sha256(root: Path) -> str | None:
             content = path.read_bytes()
             digest.update(len(relative).to_bytes(4, "big"))
             digest.update(relative)
+            digest.update(b"x" if path.stat().st_mode & 0o111 else b"-")
             digest.update(len(content).to_bytes(8, "big"))
             digest.update(content)
     except (OSError, ValueError):

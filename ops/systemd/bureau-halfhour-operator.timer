@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the Bureau deterministic discovery scanner at every half hour
+
+[Timer]
+OnCalendar=*-*-* *:30:00
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=false
+Unit=bureau-halfhour-operator.service
+
+[Install]
+WantedBy=timers.target

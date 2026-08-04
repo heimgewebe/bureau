@@ -37,6 +37,10 @@ def init_repo(root: Path) -> None:
     (root / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
     (root / "src/bureau").mkdir(parents=True)
     (root / "src/bureau/runtime_identity.py").write_text("# test\n", encoding="utf-8")
+    (root / "src/bureau_cycle").mkdir(parents=True)
+    (root / "src/bureau_cycle/__init__.py").write_text("# cycle\n", encoding="utf-8")
+    (root / "ops/systemd").mkdir(parents=True)
+    (root / "ops/systemd/test.service").write_text("[Service]\nType=oneshot\n", encoding="utf-8")
     git(root, "add", ".")
     git(root, "commit", "-m", "init")
     git(root, "remote", "add", "origin", str(root / ".git"))
@@ -85,6 +89,10 @@ def test_manifest_bound_release_matches_registry(tmp_path: Path, monkeypatch) ->
     module.parent.mkdir(parents=True)
     module.write_text("# release\n", encoding="utf-8")
     (release / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    (release / "src/bureau_cycle").mkdir(parents=True)
+    (release / "src/bureau_cycle/__init__.py").write_text("# cycle\n", encoding="utf-8")
+    (release / "ops/systemd").mkdir(parents=True)
+    (release / "ops/systemd/test.service").write_text("[Service]\nType=oneshot\n", encoding="utf-8")
     tree_sha256 = _package_tree_sha256(release)
     assert tree_sha256 is not None
     manifest = tmp_path / "manifest.json"
@@ -108,6 +116,34 @@ def test_manifest_bound_release_matches_registry(tmp_path: Path, monkeypatch) ->
     assert identity["compatibility"]["status"] == "compatible"
     assert identity["module"]["source_kind"] == "immutable-release"
     assert identity["manifest"]["observed_package_tree_sha256"] == tree_sha256
+
+
+def test_package_tree_digest_includes_cycle_scheduler_sources(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    before = _package_tree_sha256(root)
+    assert before is not None
+
+    cycle = root / "src/bureau_cycle/__init__.py"
+    cycle.write_text("# changed cycle source\n", encoding="utf-8")
+
+    after = _package_tree_sha256(root)
+    assert after is not None
+    assert after != before
+
+
+def test_package_tree_digest_includes_executable_class(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    target = root / "ops/systemd/test.service"
+    before = _package_tree_sha256(root)
+    assert before is not None
+
+    target.chmod(0o755)
+
+    after = _package_tree_sha256(root)
+    assert after is not None
+    assert after != before
 
 
 def test_state_identity_is_visible(tmp_path: Path) -> None:
@@ -202,6 +238,8 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     source.mkdir()
     project_root = Path(__file__).resolve().parents[1]
     shutil.copytree(project_root / "src/bureau", source / "src/bureau")
+    shutil.copytree(project_root / "src/bureau_cycle", source / "src/bureau_cycle")
+    shutil.copytree(project_root / "ops/systemd", source / "ops/systemd")
     shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
     git(source, "init", "-b", "main")
     git(source, "config", "user.email", "test@example.invalid")
@@ -280,6 +318,8 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     source.mkdir()
     project_root = Path(__file__).resolve().parents[1]
     shutil.copytree(project_root / "src/bureau", source / "src/bureau")
+    shutil.copytree(project_root / "src/bureau_cycle", source / "src/bureau_cycle")
+    shutil.copytree(project_root / "ops/systemd", source / "ops/systemd")
     shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
     git(source, "init", "-b", "main")
     git(source, "config", "user.email", "test@example.invalid")

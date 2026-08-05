@@ -1,0 +1,130 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jeder Lease-, Run- oder Worktree-Bindung werden alle aktuellen Checkouts und Prozesse gelesen, die exakt benötigte Schreibpfade physisch überdecken; fremder Dirty-State oder mögliche aktive Wirkung bleibt auch ohne bestehende Lease oder Taskbindung konfliktwirksam.",
+      "id": "pre-acquire-physical-overlap"
+    },
+    {
+      "assertion": "Der reproduzierte Fall erhält deterministisch ISOLATE_AND_EXECUTE, AUTO_PREPARE_AND_EXECUTE oder HARD_BLOCK nach Wirkungslage; eine erfolgreiche normale Aufnahme trotz unbekanntem fremdem Ausgang ist ausgeschlossen.",
+      "id": "normative-admission-result"
+    },
+    {
+      "assertion": "Bei wertvollem oder im Ausgang unbekanntem Dirty-State entsteht ein dauerhafter Rescue-/Handoff-Beleg mit Repository, Checkout, Branch, Head, betroffenen Pfaden, Diff-Digest, beobachteten Prozessen und klarer Nichtübernahme; nichts wird gelöscht, resettet, gestasht oder überschrieben.",
+      "id": "dirty-state-rescue"
+    },
+    {
+      "assertion": "Dirty-States und Prozesse auf disjunkten Pfaden oder in disjunkten Ressourcen-Lanes blockieren keine neue isolierte Arbeit.",
+      "id": "no-false-global-block"
+    },
+    {
+      "assertion": "Wenn die Aufnahme wegen Fremdwirkung nicht zulässig ist, bleiben keine neu erworbenen Leases, kein assigned Run und kein leerer Doppel-Worktree zurück; bei erst nachträglich erkannter Fremdwirkung wird der eigene Run automatisch terminalisiert und vollständig freigegeben.",
+      "id": "atomic-no-partial-claim"
+    },
+    {
+      "assertion": "Ein deterministischer Regressionstest reproduziert den Live-Fall vom 5. August 2026: fremder Dirty-Hauptcheckout auf den T139-Pfaden, interaktiver Prozess, keine fremde Lease, clean isolierbarer Basiskommit. Der Test belegt Rescue statt Doppelclaim.",
+      "id": "regression-reproduction"
+    },
+    {
+      "assertion": "MCP- und CLI-Grenzen liefern typisierte, strukturierte Blocker- und Rescue-Evidenz einschließlich der kollidierenden Pfade und Checkoutidentität; generische Lease- oder Dirty-State-Fehler reichen nicht.",
+      "id": "structured-evidence"
+    },
+    {
+      "assertion": "Nach ownergebundener Terminalisierung oder erfolgreichem Handoff der Fremdarbeit kann derselbe autorisierte Auftrag ohne manuelle Vorab-Leases atomar aufgenommen und bis zu einem zulässigen Closeoutzustand fortgesetzt werden.",
+      "id": "e2e-recovery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_work_admission.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_work_admission.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "workspace_isolation": "worktree"
+  },
+  "goal": "Härte die atomare Bureau-/Grabowski-Arbeitsaufnahme so, dass fremde Dirty-States und laufende Prozesse auf exakt benötigten Schreibpfaden vor Lease-, Run- und Worktree-Bindung erkannt werden. Ungebunden bedeutet nicht wirkungslos: wertvolle oder im Ausgang unbekannte Fremdarbeit wird revisions- und checkoutgebunden als Rescue-Fall erhalten; nur disjunkte Arbeit wird isoliert fortgesetzt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T146",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Erlaubnis zur Übernahme oder Änderung des fremden Dirty-States",
+      "Erlaubnis zum Stoppen des fremden Prozesses",
+      "Erfolg oder Korrektheit der fremden T139-Implementierung",
+      "Merge- oder Deploymentreife",
+      "globale Sperrung disjunkter Arbeit"
+    ],
+    "live_evidence": {
+      "bureau_release": "5b2bf4b5d6956fb6dc6fc060bf35951b59400ff5",
+      "foreign_branch": "fix/t139-atomic-sessionless-transport-v1",
+      "foreign_checkout": "/home/alex/repos/grabowski",
+      "foreign_dirty_entry_count": 5,
+      "foreign_head": "2e22fb481da08ae3e4adff1760a3674195333561",
+      "foreign_process_pid": 1581853,
+      "open_pull_requests_for_foreign_branch": 0,
+      "overlap": "exact T139 write paths",
+      "runtime_head": "6b1de9d9990ea80b8132480b64ee074e07e4775a",
+      "source_run_id": "BUR-RUN-20260805T193823Z-378d0787b1",
+      "source_run_lease_release": "released",
+      "source_run_state": "failed",
+      "source_run_terminal_readback_sha256": "c3620ac87bacdeafbd2cd56eb80cfce3feba518e2c303bafa44386efb958c862"
+    },
+    "registered_at": "2026-08-05",
+    "resource_contract": {
+      "authority": "execution.grabowski_resources",
+      "exact_disjoint_paths": true,
+      "excluded_foreign_dirty_paths": true,
+      "reason": "Der Rescue-Task darf die zu rettenden T139-Dateien nicht selbst leasen. Er ändert nur Aufnahme-, Admission- und zugehörige Testpfade; der T139-Dirty-State bleibt unverändert.",
+      "schema_version": 1
+    },
+    "source": "Bureau operator intake candidate-c61fc45556c6d651d85c5b5e event 2675",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c61fc45556c6d651d85c5b5e",
+      "event_id": 2675,
+      "event_created_at": "2026-08-05T20:01:44.870945Z",
+      "request_sha256": "c7fc69410b60a4ac22dae451d26f4c16c7227b404394388dae81e9d82855342d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-runtime-observation",
+        "locator": "operator-candidate-event:2674;bureau-run:BUR-RUN-20260805T193823Z-378d0787b1;checkout:/home/alex/repos/grabowski;branch:fix/t139-atomic-sessionless-transport-v1;head:2e22fb481da08ae3e4adff1760a3674195333561",
+        "observed_at": "2026-08-05T19:56:07Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression oder Überblockierung auf den vorherigen Admissionpfad zurückrollen, den Live-Fall weiter fail-closed als outcome_unknown behandeln und sämtliche Dirty-State- sowie Prozesszustände unverändert erhalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Ungebundene Fremdwirkung vor Work-Acquire in Rescue überführen"
+}

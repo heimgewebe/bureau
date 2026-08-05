@@ -1,0 +1,96 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vertragstests vergleichen für denselben Faden und dieselbe kanonische Uhr die berechnete Opazität im statischen und bewegten Pfad an Entstehung, Zwischenständen, kurz vor Ablauf und an der Ablaufgrenze.",
+      "evidence_type": "object",
+      "id": "static-motion-parity",
+      "verifier": "fixed-clock unit and integration tests"
+    },
+    {
+      "assertion": "Create-, Release- und Reduced-Motion-Pfade bewahren die vorgesehene Lifecycle-Opazität ohne kurzzeitiges Zurückspringen auf volle Deckkraft und ohne Geisterfäden.",
+      "evidence_type": "object",
+      "id": "transition-integrity",
+      "verifier": "Playwright lifecycle and reduced-motion tests with exact timestamps"
+    },
+    {
+      "assertion": "Nur bei reproduzierter Abweichung wird die Opazität über den gemeinsamen Daten- oder Stilpfad weitergegeben; Fadenarten, Layerzahl, Mehrfarbenbereiche und Verfallsgrenzen bleiben unverändert.",
+      "evidence_type": "boolean",
+      "id": "minimal-correction",
+      "verifier": "diff review and layer/style contract tests"
+    },
+    {
+      "assertion": "Die Beobachtung aus PR #1687 wird ausdrücklich als möglicher vorbestehender Zustand behandelt; ohne Reproduktion darf der Task als belegt nicht fehlerhaft geschlossen werden.",
+      "evidence_type": "object",
+      "id": "no-regression-assumption",
+      "verifier": "reviewed reproduction decision record"
+    },
+    {
+      "assertion": "Fokussierte Unit- und Playwright-Tests, vollständige Web-Unit-Suite, Produktions-Build und bestehende Budgets bleiben grün; keine Budgeterhöhung und kein ungeprüfter Deploymenteffekt.",
+      "evidence_type": "object",
+      "id": "full-validation",
+      "verifier": "commit-bound CI and local receipts"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Mit festen Uhren belegen, ob statische, erzeugte, gelöste und laufend animierte Fäden dieselbe kanonische Lifecycle-Opazität verwenden, und nur bei reproduzierbarer Abweichung einen eng begrenzten Fix umsetzen.",
+  "id": "WELTGEWEBE-MOTION-LIFECYCLE-OPACITY-V1",
+  "initiative": "WELTGEWEBE-FADEN-VERFALL-V1",
+  "metadata": {
+    "current_fact": "A reviewer identified a plausible pre-existing opacity-propagation gap in the motion input path. The exact PR #1687 test and CI suite is green, so this is not established as a regression or user-visible defect.",
+    "does_not_establish": [
+      "that motion opacity is currently incorrect",
+      "that PR #1687 introduced the issue",
+      "permission to alter the canonical seven-day lifecycle",
+      "permission to increase visual or performance budgets"
+    ],
+    "independently_executable": true,
+    "source": "Follow-up from exact-head correctness review of heimgewebe/weltgewebe PR #1687 on 2026-08-05",
+    "source_head": "c3cab65b3772c7a3b06fd46c919c1d543dce6cfa",
+    "source_pull_request": "heimgewebe/weltgewebe#1687",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "weltgewebe-motion-lifecycle-opacity-v1",
+      "event_id": 2680,
+      "event_created_at": "2026-08-05T20:12:48.960749Z",
+      "request_sha256": "ce8d6a712f47fa412bd3c0bc39c95282d4c07e204d99847e67d5cfc87513c519",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "heimgewebe/weltgewebe#1687@c3cab65b3772c7a3b06fd46c919c1d543dce6cfa",
+        "observed_at": "2026-08-05T20:03:00Z",
+        "sha256": "64c88cd6743591073f0c9cd84c7bda1984c4c95bd097ae29fd7599655e99a9a1"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 55
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "playwright",
+    "fixed-clock-testing"
+  ],
+  "schema_version": 1,
+  "state": "inbox",
+  "title": "Weltgewebe: Alterungsopazität im Faden-Motion-Pfad belegen"
+}

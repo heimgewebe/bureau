@@ -1,0 +1,132 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf einem exakten aktuellen Weltgewebe-main wird der in PR #1686 gemergte Zustand reproduziert und an Base, Head, Diff und den Reviewbefund gebunden: selectMapResourceTransport entscheidet derzeit allein anhand apiBase und kann eine leere Same-Origin-Basis im Entwicklungs- oder Testproxy fälschlich als Bare-Array-Transport behandeln.",
+      "evidence_type": "object",
+      "id": "fresh-merged-regression"
+    },
+    {
+      "assertion": "Die Transportwahl erhält ein explizites, typisiertes Laufzeit- oder Konfigurationssignal statt aus einer leeren URL zu raten. Nichtleere API-Basis ergibt cursor; leere Basis für statische Produktions-/Prerender-Daten ergibt static-list; leere Basis für Entwicklungs- oder Testproxy mit Cursor-API ergibt cursor. Unbekannte oder widersprüchliche Konfiguration endet verständlich fail-closed.",
+      "evidence_type": "object",
+      "id": "explicit-runtime-contract"
+    },
+    {
+      "assertion": "Deterministische Unit- und Routenprüfungen decken alle drei Transportfälle, Cursor-Hüllen, Bare Arrays, relative Same-Origin-URLs und fehlende oder widersprüchliche Konfiguration ab. Die Tests beweisen, dass weder Produktionsdemo noch Entwicklungsproxy die Karte durch falsches Parsen leeren.",
+      "evidence_type": "object",
+      "id": "three-way-regression-tests"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head- und Diffbindung, ein vollständiger Self- oder Fremdreview des finalen Heads, geschlossene materielle Reviewbefunde und vollständig grüne Pflichtchecks einschließlich Karten- und Browserregressionen vor.",
+      "evidence_type": "object",
+      "id": "revision-bound-review"
+    },
+    {
+      "assertion": "Nach Merge werden beide Achsen getrennt belegt: Produktion auf dem exakten Deploymentcommit lädt /map ohne lokalen Basemap-404, Cursor-/Array-Parsefehler oder leere Kartenprojektion; ein Entwicklungs- oder Testproxy mit leerer API-Basis verarbeitet nachweislich die Cursor-Hülle. HTTP 200 oder Vercel READY allein gilt nicht als Browserbeweis.",
+      "evidence_type": "object",
+      "id": "post-merge-dual-readback"
+    },
+    {
+      "assertion": "Die Änderung bleibt auf Karten-Transportwahl und zugehörige Tests begrenzt, verändert keine Knoten-/Fadenfachsemantik und besitzt einen klaren Rückbau auf den vorherigen Selektor. Fremde Dirty-States, Leases, Branches und laufende Deployments werden nicht übernommen.",
+      "evidence_type": "object",
+      "id": "scope-and-rollback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangt, alle sinnvollen nicht unmittelbar behobenen PR-Befunde als Bureau-Folgetask zu registrieren und taskgebunden abzuschließen. Die spätere Umsetzung bleibt auf den expliziten Karten-Transportvertrag begrenzt und benötigt vor Wirkung aktuellen Main-, Worktree-, Lease-, Review- und CI-Readback.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/mapResourceTransport.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/mapResourceTransport.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/routes/map/+page.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/map-load-fallback.spec.ts"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den mit Weltgewebe-PR #1686 gemergten Karten-Transportselektor so korrigieren, dass eine leere PUBLIC_GEWEBE_API_BASE nicht allein die Antwortform bestimmt: konfigurierte Remote-APIs bleiben cursor-paginiert, die statische Produktions-/Prerender-Demo verwendet Bare-Array-Transport, und Entwicklungs- oder Testproxies mit leerer Same-Origin-Basis behalten den Cursor-Vertrag.",
+  "id": "WELTGEWEBE-OS-V1-T067",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "queue truth",
+      "claim or dispatch authority",
+      "automatic implementation",
+      "production browser correctness from HTTP 200 or Vercel READY",
+      "permission to overwrite foreign worktrees or leases",
+      "permission to merge without final exact-head review and green gates"
+    ],
+    "merge_commit": "83272e02e68425b197849951b91e63a7b463ac03",
+    "observed_production": {
+      "deployment_id": "dpl_GW89yrGSFQuSvZtov4Rg1iYYaVQj",
+      "limitations": [
+        "Kein browserseitiger Canvas- oder Kartenobjektbeweis",
+        "Kein Beleg des Entwicklungsproxy-Cursorvertrags"
+      ],
+      "map_http_status": 200,
+      "provider": "vercel",
+      "runtime_error_clusters_last_hour": 0,
+      "state": "READY",
+      "target": "production"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e8771dd8db8558f162b00fa9",
+      "event_id": 2649,
+      "event_created_at": "2026-08-05T17:59:18.721247Z",
+      "request_sha256": "84a2a04b09bd7be25407d59c2799e4d3f5850290175bfb9b792b7347a441981f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1686#pullrequestreview-4867082010",
+        "observed_at": "2026-08-05T17:31:43Z",
+        "sha256": "ae22caa2c1e89389820f207f45d7603c2795d820c44c4ca64f77ce86afd9eb10"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-05",
+    "source": "operator_followup_from_merged_weltgewebe_pr_1686",
+    "source_head": "ab8d253599176002eaa4c28b9eed7778d4de7a7d",
+    "source_pr": "heimgewebe/weltgewebe#1686",
+    "source_review": "https://github.com/heimgewebe/weltgewebe/pull/1686#pullrequestreview-4867082010",
+    "source_review_sha256": "ae22caa2c1e89389820f207f45d7603c2795d820c44c4ca64f77ce86afd9eb10"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "sveltekit",
+    "testing",
+    "browser",
+    "vercel",
+    "deployment",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Den expliziten Selektor und seine Aufrufbindung auf den letzten vollständig geprüften Transportvertrag zurücksetzen; bei unklarer Umgebung fail-closed statt zwischen Cursor-Hülle und Bare Array zu raten."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Karten-Transportvertrag für Entwicklungsproxy und Vercel explizit trennen"
+}

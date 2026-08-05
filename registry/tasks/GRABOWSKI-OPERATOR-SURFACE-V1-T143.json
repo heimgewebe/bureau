@@ -1,0 +1,122 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein echter Connector überträgt einen großen pr-create-or-update-Aufruf mit langem body, verschachtelten Parametern, draft=false und top-level allow_mutation=true vollständig. Der am MCP-Eingang beobachtete kanonische Argumentdigest entspricht dem vor dem Handshake gebundenen Zielargumentdigest und dem tatsächlich an grip_run weitergereichten Argumentobjekt.",
+      "id": "exact-argument-roundtrip"
+    },
+    {
+      "assertion": "Fehlende, abgeschnittene oder nicht darstellbare Felder führen vor Handshakeverbrauch und Wirkung zu einem typisierten Fehler. Kein boolesches, nullbares oder verschachteltes Feld darf still entfallen oder durch einen Funktionsdefault ersetzt werden.",
+      "id": "no-silent-default-fallback"
+    },
+    {
+      "assertion": "Deterministische Tests decken Payloadgrößen unterhalb, an und oberhalb jeder relevanten Connector-, Schema- und Transportgrenze sowie frühe, mittlere und letzte Felder, false, true, null, leere Werte, Unicode und tiefe Verschachtelung ab.",
+      "id": "boundary-matrix"
+    },
+    {
+      "assertion": "Die Runtime belegt revisionsgebunden, dass Connectorargumente, FastMCP/Pydantic-Modell, transport-roundtrip-Zielbindung und Dispatcherargumente dieselbe kanonische Struktur und denselben SHA-256-Vertrag verwenden. Jede Abweichung blockiert vor der Zielmutation.",
+      "id": "canonical-digest-continuity"
+    },
+    {
+      "assertion": "allow_mutation=false blockiert mutierende Grips weiterhin; allow_mutation=true autorisiert nur nach exakter Transportverifikation genau den gebundenen Aufruf. Die Korrektur erzeugt keine implizite Mutationsfreigabe und schwächt keinen Einmal-, Replay- oder Fremdverbrauchsschutz.",
+      "id": "mutation-gate-preserved"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Integrationstest gegen die deployte Runtime und den realen ChatGPT-Connector belegt den zuvor fehlschlagenden großen Aufruf erfolgreich sowie mindestens einen absichtlich abweichenden oder übergroßen Negativfall fail-closed ohne Wirkung.",
+      "id": "deployed-connector-proof"
+    },
+    {
+      "assertion": "Die Größen- und Kompatibilitätsgrenze ist dokumentiert. Fehlerreceipts nennen Phase und fehlendes oder abweichendes Feld beziehungsweise Digest, ohne Secrets oder den gesamten sensiblen Payload offenzulegen.",
+      "id": "compatibility-and-observability"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T142"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Argumenttransport, kanonische Digestbindung, Connector-/Runtime-Grenze, Tests und Nachweise ändern. Mutationsfreigabe, Transportverifikation, Lease-, Review-, Merge-, Deployment- und Recovery-Gates bleiben erhalten.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/proofs/grip-argument-roundtrip-v1-t143.md",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/tests/test_grips.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_v2_runtime.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die vollständige kanonische Übertragung großer und verschachtelter MCP-Werkzeugargumente vom Connector bis zum Grabowski-Dispatcher sicherstellen. Boolesche Tail-Felder wie allow_mutation und draft dürfen weder still entfallen noch auf Defaults zurückfallen. Nicht vollständig darstellbare oder übertragbare Argumente müssen vor Handshake und Wirkung typisiert fail-closed scheitern.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T143",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass Grabowski-Core statt Connector oder Plattformtransport die Ursache ist",
+      "Berechtigung zum Überspringen von T142",
+      "automatische Merge- oder Deployment-Autorität",
+      "Berechtigung, Argumentgrößen durch stilles Trunkieren zu begrenzen"
+    ],
+    "live_evidence": {
+      "candidate_event_id": 2565,
+      "candidate_id": "candidate-83600efd99d7a8ddff2dc50e",
+      "current_workaround": "Argumentumfang reduzieren oder optionale Felder in getrennten verifizierten Aufrufen setzen; dies ist kein akzeptabler Dauervertrag.",
+      "first_blocked_receipt_sha256": "378b3fabae50057497445a6da439e99e55c2d03f3c71aec59170899b7fc83444",
+      "observed_failure": "Zwei kombinierte Aufrufe mit langem body, draft=false und top-level allow_mutation=true erreichten den Grip-Preflight als allow_mutation=false. Kontrollaufrufe mit nur langem body oder nur draft=false bestanden.",
+      "observed_parameters_sha256": "705a418b40e6063143a58ba89448158e86dc358c3d22625f0a4c061d51a6b2b7",
+      "root_cause_status": "unconfirmed",
+      "second_blocked_receipt_sha256": "04bb48ac89d568d8e3fd68073bde2aeeca445fde63daf3dccfbd006a5e1d0016"
+    },
+    "registered_at": "2026-08-05",
+    "resource_contract": {
+      "broad_claim_is_not_effect_authority": true,
+      "exact_path_leases_required": true,
+      "schema_version": 1
+    },
+    "source": "Live-Operatorbefund beim Abschluss von Grabowski PR #616",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-83600efd99d7a8ddff2dc50e",
+      "event_id": 2565,
+      "event_created_at": "2026-08-05T05:56:04.198548Z",
+      "request_sha256": "3caa9fa78cc4863481ce0acab27400bc636d97600c2ec9773b1e240c0e88ff65",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski_receipt",
+        "locator": "grabowski:grip-run:pr-create-or-update:parameters-sha256:705a418b40e6063143a58ba89448158e86dc358c3d22625f0a4c061d51a6b2b7",
+        "observed_at": "2026-08-05T05:31:47Z",
+        "sha256": "378b3fabae50057497445a6da439e99e55c2d03f3c71aec59170899b7fc83444"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "MCP-Werkzeugargumente an Größenkanten vollständig binden"
+}

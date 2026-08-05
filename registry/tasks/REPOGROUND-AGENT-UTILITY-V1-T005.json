@@ -60,11 +60,11 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/lenskit"
+      "repo:/home/alex/repos/repoground"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit"
+    "working_repository": "/home/alex/repos/repoground"
   },
   "goal": "Eine datensparsame Evidenzschicht ergänzen, die deklarierte Agent-Consumption-Angaben mit vertrauenswürdig erzeugten Tool-Lese-Receipts für dieselbe Aufgabe, denselben Repository-Commit und dasselbe Artefakt vergleicht, ohne Quellinhalte zu speichern oder Verständnis, Relevanz und Wahrheit zu behaupten.",
   "id": "REPOGROUND-AGENT-UTILITY-V1-T005",

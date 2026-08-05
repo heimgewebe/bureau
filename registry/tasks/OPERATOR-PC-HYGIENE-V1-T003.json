@@ -57,8 +57,8 @@
     ],
     "live_audit_finding": "system systemd remained degraded because user@111.service stale fail could not be reset without sudo; broker had no reset-failed action.",
     "blocked_at": "2026-07-11T02:33:46Z",
-    "block_reason": "Four terminal system units are bounded reset-failed candidates after read-only classification, but the Grabowski runtime is NoNewPrivileges-hardened, direct sudo cannot elevate, and the recovery-gated Rootbroker rejects eligible calls as stale under T030. Bypassing that gate is not authorized.",
-    "blocked_by_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
+    "block_reason": "The historical dependency on T030 is no longer current: the root-owned privileged broker, configuration and socket are valid and ready. The task remains blocked because the canonical recovery evidence for heimberry:rest-server/grabowski-recovery-probe is stale and AUDIO-CONTROL-PLANE-V1-T031 actively holds host:heim-pc. No reset-failed effect is authorized until both conditions clear and the exact unit properties are freshly revalidated.",
+    "blocked_by_task": "AUDIO-CONTROL-PLANE-V1-T031",
     "live_candidates": [
       "grabowski-privileged-broker@0-943410-1000.service",
       "grabowski-privileged-broker@1-2209771-1000.service",
@@ -71,7 +71,43 @@
       "NRestarts": 0,
       "mutation_applied": false
     },
-    "next_action": "After T030 is deployed, re-read exact unit properties and execute only systemctl reset-failed for the unchanged allowlist; then prove systemctl --failed empty.",
+    "next_action": "After T031 reaches an authoritative terminal state and releases host:heim-pc, produce fresh server-recovery evidence for heimberry:rest-server/grabowski-recovery-probe. Then re-read the exact unit properties and execute only systemctl reset-failed for the unchanged allowlist; prove systemctl --failed is empty.",
+    "blocker_refresh": {
+      "observed_at": "2026-08-05T13:40:00Z",
+      "decision": "confirmed",
+      "historical_blocker_decision": "refuted",
+      "runtime_commit": "23848e407e76db9b72f93abb2307927f55aa5cb3",
+      "privileged_broker_ready": true,
+      "recovery_gate": {
+        "ready_for_privileged_actions": false,
+        "reason": "stale",
+        "target": "heimberry:rest-server/grabowski-recovery-probe",
+        "evidence_age_seconds": 152174,
+        "max_age_seconds": 86400,
+        "canonical_record_sha256": "d551fe9c19dfe30c6513fdf31eb97e38e23e96171c8f023621c325fcdc46769b"
+      },
+      "active_conflict": {
+        "task_id": "AUDIO-CONTROL-PLANE-V1-T031",
+        "run_id": "BUR-RUN-20260804T220205Z-f479c28096",
+        "owner_id": "bureau-run:BUR-RUN-20260804T220205Z-f479c28096",
+        "resources": [
+          "host:heim-pc",
+          "service:pipewire",
+          "component:audio-live-telemetry-v1"
+        ],
+        "lease_status": "active-bound"
+      },
+      "required_to_unblock": [
+        "Authoritative terminal readback and controlled release of the T031 host lease.",
+        "Fresh recovery probe for the configured heimberry target.",
+        "Fresh unit-property readback proving the allowlist remains terminal and unchanged."
+      ],
+      "does_not_establish": [
+        "permission to release the foreign T031 lease",
+        "permission to run privileged reset-failed while recovery evidence is stale",
+        "that the historical unit candidates remain unchanged"
+      ]
+    },
     "lease_scope_migration": {
       "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
       "source_broad_resource_key": "repo:/home/alex/repos/bureau",

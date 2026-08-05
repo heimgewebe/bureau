@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T030",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "RepoBrief-Quellcheckouts nach RepoGround-Cutover schließen",
-  "state": "blocked",
+  "state": "ready",
   "goal": "Liveinventur 2026-07-19: Die aktive RepoGround-Fleet-Publikation verwendet standardmäßig `/home/alex/repos/.repoground-sources`; `.repobrief-sources` wird im aktuellen Publisher nur noch als auszuschließende Fleetwurzel genannt. Es laufen keine Prozesse aus dem Altpfad. Die alte Fläche enthält 43 Checkouts mit 424 MiB, die neue 42 mit 160 MiB; 41 Namen überschneiden sich, alt-only sind `heim-assi` und `vault-gewebe`, neu-only ist `repoground`. Zahlreiche absolute Altpfadreferenzen liegen in unveränderlichen Task-Outcomes, Audit-, Verifier-, Benchmark- und Archivbelegen und dürfen nicht umgeschrieben werden. Aufgabe: nach Abschluss der fremden RepoGround-Publisher-Arbeit jeden Altcheckout auf Dirty-State, Git-Bindung, Lease, Prozess und Recoverybeleg klassifizieren, benötigte Wiederherstellung hashgebunden sichern und nur terminale redundante Checkouts entfernen; historische Receipts bleiben unverändert.",
   "priority": {
     "lane": "next",
@@ -110,6 +110,26 @@
         "retired-runtime-backups"
       ],
       "current_conflict_owner": "chatgpt-repoground-fleet-publisher-hygiene-20260719"
+    },
+    "blocker_resolution": {
+      "observed_at": "2026-08-05T01:13:00Z",
+      "decision": "widerlegt",
+      "former_conflict_owner": "chatgpt-repoground-fleet-publisher-hygiene-20260719",
+      "active_matching_lease_count": 0,
+      "active_legacy_path_process_count": 0,
+      "observed_canonical_process": "/usr/bin/python3 -m merger.repoground serve",
+      "legacy_source_directory_count": 42,
+      "canonical_source_directory_count": 45,
+      "dependencies_verified": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
+      ],
+      "does_not_establish": [
+        "task completion",
+        "safe removal of any checkout",
+        "classification of individual dirty states",
+        "permission to rewrite historical evidence"
+      ]
     }
   }
 }

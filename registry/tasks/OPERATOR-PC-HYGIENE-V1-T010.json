@@ -71,6 +71,36 @@
     },
     "publication_worktrees_unchanged": true,
     "next_action": "Re-run typed checkout inventory after the active processes finish. Attach main only if process count is zero or every remaining shell is explicitly classified quiescent, HEAD still equals origin/main and the checkout remains clean.",
-    "mutation_applied": false
+    "mutation_applied": false,
+    "blocker_refresh": {
+      "observed_at": "2026-08-05T01:17:18Z",
+      "decision": "bestätigt",
+      "current_checkout": {
+        "branch": "feat/find-symbol-mcp-tool",
+        "head": "03ad9ba3653ecf2058b77059765a23418fb21d12",
+        "upstream": "origin/feat/find-symbol-mcp-tool",
+        "dirty": true,
+        "dirty_paths": [
+          ".gitignore"
+        ],
+        "open_pull_request_for_branch": false
+      },
+      "process_pattern_readback": {
+        "pattern": "repobrief|repoground|rlens|lenskit",
+        "matching_legacy_or_lenskit_process_count": 0,
+        "canonical_repoground_process_count": 1
+      },
+      "current_block_reason": "The old process blocker has cleared, but the canonical checkout is now a foreign dirty feature branch rather than a clean exact main checkout. Attaching main would overwrite or absorb unclassified work.",
+      "required_to_unblock": [
+        "Classify the modified .gitignore and the feature branch owner.",
+        "Preserve or publish any unique branch state.",
+        "Proceed only after the checkout is clean and exact origin/main attachment is safe."
+      ],
+      "does_not_establish": [
+        "permission to reset or stash the dirty path",
+        "permission to delete or take over the feature branch",
+        "safe attachment to main"
+      ]
+    }
   }
 }

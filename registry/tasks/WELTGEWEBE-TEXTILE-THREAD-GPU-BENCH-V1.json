@@ -1,0 +1,89 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Reproduzierbare Browserprofile messen 100, 500 und 1000 sichtbare Knoten sowie 250, 1000 und 10000 repräsentative Fadensegmente mit statischem und maximal zulässigem Motion-Pfad auf Desktop, Tablet und schmalem Mobilprofil.",
+      "evidence_type": "object",
+      "id": "representative-browser-load",
+      "verifier": "commit-bound browser performance report with fixture hash"
+    },
+    {
+      "assertion": "Vorab festgelegte Budgets für p50/p95-Framezeit, Long Tasks, Speicher und Interaktionslatenz werden getrennt für 10+10 und 15+15 feste MapLibre-Layer ausgewiesen; CPU-Projektionszeit wird nicht als FPS-Beleg ausgegeben.",
+      "evidence_type": "object",
+      "id": "gpu-frame-budgets",
+      "verifier": "before/after trace and metrics artifact"
+    },
+    {
+      "assertion": "Jede Optimierung bewahrt die feste Layerobergrenze, die drei textile Materiallagen, die fünf Fadenarten, feste Mehrfarbenbereiche, Style-Rehydration und fail-closed Endpunkte; Layer oder Features wachsen nicht unbeschränkt pro Kante.",
+      "evidence_type": "boolean",
+      "id": "bounded-architecture",
+      "verifier": "unit tests, Playwright tests and layer/feature budget checks"
+    },
+    {
+      "assertion": "Keine Architektur-, Datenlimit- oder Budgeterhöhung wird vorgenommen, solange kein relevantes Zielgerätebudget reproduzierbar überschritten ist; ein grüner Messlauf darf als Abschluss ohne Codeänderung gelten.",
+      "evidence_type": "object",
+      "id": "evidence-driven-change",
+      "verifier": "reviewed benchmark decision record"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die feste Garn-Layerarchitektur aus PR #1687 auf repräsentativen Geräten unter dichter statischer und animierter Kartenlast messen und nur bei reproduzierbarer Bildraten-, Framezeit- oder Speicherüberschreitung optimieren.",
+  "id": "WELTGEWEBE-TEXTILE-THREAD-GPU-BENCH-V1",
+  "initiative": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
+  "metadata": {
+    "current_fact": "PR #1687 uses a fixed ceiling of 15 static and 15 motion MapLibre layers. Host-local 100/500/1000 projection timings and CI runtime gates are green, but they do not establish dense-device GPU frame performance.",
+    "does_not_establish": [
+      "that PR #1687 violates a browser performance budget",
+      "permission to increase JS, CSS, feature or layer budgets",
+      "permission to merge or deploy PR #1687"
+    ],
+    "independently_executable": true,
+    "source": "Follow-up from exact-head review of heimgewebe/weltgewebe PR #1687 on 2026-08-05",
+    "source_head": "c3cab65b3772c7a3b06fd46c919c1d543dce6cfa",
+    "source_pull_request": "heimgewebe/weltgewebe#1687",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "weltgewebe-textile-thread-gpu-bench-v1",
+      "event_id": 2677,
+      "event_created_at": "2026-08-05T20:06:45.115965Z",
+      "request_sha256": "090c4b237983905a79f5304d2505829733c5df4111e164f20d4668dcab99d2c3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "heimgewebe/weltgewebe#1687@c3cab65b3772c7a3b06fd46c919c1d543dce6cfa",
+        "observed_at": "2026-08-05T20:03:00Z",
+        "sha256": "64c88cd6743591073f0c9cd84c7bda1984c4c95bd097ae29fd7599655e99a9a1"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 45
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "playwright",
+    "browser-profiling"
+  ],
+  "schema_version": 1,
+  "state": "inbox",
+  "title": "Weltgewebe: textile Fäden unter dichter Browserlast messen"
+}

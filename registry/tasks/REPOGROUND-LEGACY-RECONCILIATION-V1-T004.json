@@ -13,7 +13,7 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
-    "baseline_commit": "dc67fdcf832655b948fe2bb725507fa0da6295bb",
+    "baseline_commit": "a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9",
     "grabowski_resources": [
       "repo:/home/alex/repos/repoground"
     ]

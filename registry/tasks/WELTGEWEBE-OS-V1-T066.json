@@ -50,7 +50,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "component.weltgewebe.web-push-production-t066"
+      "resource": "repo.weltgewebe"
     }
   ],
   "depends_on": [

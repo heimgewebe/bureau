@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002D",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run one newly authorized live baseline and RepoBrief pair",
-  "state": "blocked",
+  "state": "cancelled",
   "goal": "After the one-shot orchestrator is merged and verified, execute exactly one newly authorized frozen baseline/treatment pair with no retry, bounded total spend, immutable evidence and immediate fail-closed stop on any invalid outcome.",
   "priority": {
     "lane": "later",
@@ -232,7 +232,7 @@
       "permission to retry",
       "permission for pilot or full benchmark"
     ],
-    "updated_at": "2026-07-13",
+    "updated_at": "2026-08-05",
     "execution_status": "failed_pre_dispatch",
     "predecessor": {
       "task_id": "RAB-V1-T002C",
@@ -270,6 +270,33 @@
     "provider_process_intents": 0,
     "provider_processes_currently_running": 0,
     "next_task": "RAB-V1-T002E",
-    "state_reason": "The one-shot authorization was consumed by an unambiguous launcher submission, but the local adapter rejected the command before any provider intent because argparse prefix abbreviation removed the absolute --claude-command argument. No retry is permitted."
+    "state_reason": "The one-shot authorization was consumed by an unambiguous launcher submission, but the local adapter rejected the command before any provider intent because argparse prefix abbreviation removed the absolute --claude-command argument. No retry is permitted.",
+    "cancellation": {
+      "authority": "bureau-blocker-research-lane",
+      "cancelled_at": "2026-08-05T17:57:45.723332Z",
+      "classification": "one_shot_authorization_consumed_pre_dispatch_no_retry",
+      "reason": "The reviewed one-shot authorization is consumed, remaining_uses is zero and retry_permitted is false. The attempt failed before provider dispatch and started no provider process. The task contract explicitly forbids retry or continuation, so keeping T002D blocked preserves no executable path.",
+      "primary_evidence": {
+        "bureau_main": "3f048dbf8c786e13128dfc5d195e999f9ec4a041",
+        "authorization_status": "consumed",
+        "remaining_uses": 0,
+        "retry_permitted": false,
+        "execution_status": "failed_pre_dispatch",
+        "attempt_outcome": "invalid_pre_dispatch",
+        "failure_class": "cli_argument_prefix_abbreviation_collision",
+        "provider_processes_started": 0,
+        "real_provider_cost_observed_usd": 0.0,
+        "failure_evidence_sha256": "d2559d0a22365f7d07ac8435db8f5d1c9148c59fbd996a0130fe67122fc12fc3"
+      },
+      "acceptance_disposition": "not_verified_and_not_retryable",
+      "net_nonterminal_delta": -1,
+      "does_not_establish": [
+        "valid live pair",
+        "provider availability",
+        "permission to retry",
+        "benchmark completion",
+        "default promotion"
+      ]
+    }
   }
 }

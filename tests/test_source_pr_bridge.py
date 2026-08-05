@@ -75,3 +75,25 @@ def test_reconcile_updates_open_pull_request(monkeypatch):
     assert result["status"] == "updated"
     assert result["pull_request"] == 8
     assert runner.calls[-1][0][:3] == ["pr", "edit", "8"]
+
+
+def test_now_refill_bridge_creates_pr_and_enables_auto_merge(monkeypatch):
+    runner = FakeRunner(
+        [
+            encoded({"object": {"sha": "def"}}),
+            encoded({"ahead_by": 1}),
+            encoded([]),
+            "https://github.com/heimgewebe/bureau/pull/10",
+            "",
+        ]
+    )
+    monkeypatch.setattr(source_pr_bridge, "_run", runner)
+    result = source_pr_bridge.reconcile(
+        branch=source_pr_bridge.NOW_REFILL_BRANCH,
+        kind="now-refill",
+        auto_merge=True,
+    )
+    assert result["status"] == "created"
+    assert result["pull_request"] == 10
+    assert result["auto_merge_requested"] is True
+    assert runner.calls[-1][0][:3] == ["pr", "merge", "10"]

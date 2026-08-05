@@ -1,11 +1,11 @@
 [Unit]
-Description=Open or refresh the Bureau Weltgewebe source PR twice hourly
+Description=Open or refresh Bureau automation PRs every five minutes
 
 [Timer]
-OnCalendar=*-*-* *:15,45:00
+OnCalendar=*-*-* *:0/5:00
 Persistent=true
-RandomizedDelaySec=60
-AccuracySec=1min
+RandomizedDelaySec=30
+AccuracySec=30s
 Unit=bureau-source-pr-bridge.service
 
 [Install]

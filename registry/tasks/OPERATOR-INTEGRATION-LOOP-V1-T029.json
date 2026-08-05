@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jede Promotion wird aus einem lokal autoritativ gebundenen Snapshot berechnet, der kanonischen Registry-Head und Queue-Digest sowie Live-StateStore, aktive Runs, Grabowski-Leases, offene PR-Bindungen und Runtime-Gates umfasst; fehlende oder widersprüchliche Evidenz blockiert ohne Registry-Wirkung.",
+      "id": "authoritative-local-decision"
+    },
+    {
+      "assertion": "Ein GitHub-Hosted-Runner mit leerem oder nicht gebundenem StateStore kann keine Next→Now-Promotion entscheiden. Er ist entfernt oder darf ausschließlich einen zuvor lokal erzeugten, unveränderten und revisionsgebundenen Vorschlag transportieren.",
+      "id": "hosted-runner-cannot-invent-truth"
+    },
+    {
+      "assertion": "Wiederholte Läufe erzeugen weder Doppelpromotionen noch parallele Queue-PRs; Branch-Update, PR-Erzeugung, Auto-Merge und Post-Readback bleiben auf registry/queue.json und den exakten Vorschlagsdigest begrenzt.",
+      "id": "bounded-idempotent-publication"
+    },
+    {
+      "assertion": "Ein kontrollierter Unter-Floor-Fall wird mit echtem lokalen State, echten Lease- und PR-Gates durchlaufen. Der Beleg zeigt Preview, gebundenen Vorschlag, grünen PR, Merge, kanonischen Runtime-Readback und eine wieder aktive Timerkette.",
+      "id": "live-end-to-end-proof"
+    },
+    {
+      "assertion": "docs/operations.md beschreibt die tatsächliche lokale und gehostete Verantwortungsgrenze, Fünf-Minuten-Bridge, Hysterese, Blockierfälle und einen getesteten Rollback ohne direkte main-Mutation.",
+      "id": "documentation-and-rollback"
+    },
+    {
+      "assertion": "Fokustests, ruff, Bureau-Check und vollständige Testsuite sind grün; Self-Review und alle Pflichtchecks sind an den exakten PR-Head gebunden.",
+      "id": "full-validation-green"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-INTEGRATION-LOOP-V1-T028"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Folgevertrag aus dem Live-Readback von PR #1562: Die kanonische Now-Lane ist repariert, aber der Hosted-Workflow besitzt keinen lokalen StateStore-, Lease-, Run- oder Open-PR-Kontext und darf deshalb nicht dauerhaft die autoritative Entscheidung treffen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.github/workflows/now-lane-refill.yml",
+      "path:/home/alex/repos/bureau/src/bureau/now_refill.py",
+      "path:/home/alex/repos/bureau/src/bureau/source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/ops/systemd/bureau-source-pr-bridge.service",
+      "path:/home/alex/repos/bureau/ops/systemd/bureau-source-pr-bridge.timer",
+      "path:/home/alex/repos/bureau/docs/operations.md",
+      "path:/home/alex/repos/bureau/tests/test_now_refill.py",
+      "path:/home/alex/repos/bureau/tests/test_source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T029.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Die in T028 eingeführte Next→Now-Hysterese so nachhärten, dass ausschließlich ein lokal autoritativ gebundener Lauf die Promotion entscheidet. Der Entscheider muss denselben kanonischen Registry-Head, Queue-Digest, Bureau-StateStore, laufende Runs, Grabowski-Leases, offene PR-Bindungen und Runtime-Gates sehen wie der Claim-Pfad. Ein GitHub-Hosted-Runner ohne diese Live-Wahrheit darf keine eigenständige Promotion berechnen; er darf höchstens einen bereits lokal erzeugten, revisions- und digestgebundenen Vorschlag transportieren. Dokumentation, Rollback und ein echter End-to-End-Nachweis gehören zum Abschluss.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T029",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass die aktuelle Now-Lane falsch ist",
+      "dass eine Promotion einen Claim oder Start auslöst",
+      "dass ein Hosted-Runner Zugriff auf private lokale Laufzeitwahrheit erhalten soll"
+    ],
+    "registered_at": "2026-08-05",
+    "risk": "Hosted-Entscheidung kann lokale aktive Runs, Leases und Open-PR-Bindungen übersehen und dadurch zwar schema-valide, aber operativ veraltete Priorisierung vorschlagen.",
+    "source": "Live-Readback nach Merge von Bureau PR #1562; kanonische Registry auf Merge-Commit 5b2bf4b5d6956fb6dc6fc060bf35951b59400ff5, Now-Lane 2, lokaler PR-Bridge-Timer aktiv.",
+    "user_authority": "2026-08-05: alle sinnvollen, nicht sofort behobenen Dauerlücken als Bureau-Folgetask registrieren",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6f5c65995eb017415d489a22",
+      "event_id": 2681,
+      "event_created_at": "2026-08-05T20:19:32.861821Z",
+      "request_sha256": "c59d81d68fa460289bab998766443e8280ff6770502acae4d054b9d1cb391e56",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:2026-08-05:sofortfix-dauerfix",
+        "observed_at": "2026-08-05T20:15:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Now-Nachfüllung an autoritative lokale Laufzeit binden"
+}

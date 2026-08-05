@@ -77,6 +77,34 @@ def test_queue_reconcile_reports_unqueued_ready_priority_now(registry_factory, t
     }
 
 
+
+def test_queue_reconcile_does_not_promote_parent_blocked_by_children(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2)
+    parent_id = "BUR-TEST-001-T001"
+    child_id = "BUR-TEST-001-T002"
+    _remove_from_queue(root, parent_id)
+    _set_task(root, child_id, depends_on=[], metadata={"parent_task": parent_id})
+
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    report = queue_reconcile_report(registry, store)
+    finding = next(
+        item
+        for item in report["findings"]
+        if item.get("task_id") == parent_id
+    )
+
+    assert finding["code"] == "parent-task-blocked-from-queue-promotion"
+    assert finding["rule"] == "parent_child_claim_gate_precedes_queue_promotion"
+    assert finding["recommendation"] == "wait_for_children"
+    assert finding["blocking_child_task_ids"] == [child_id]
+    assert "proposed_action" not in finding
+    assert report["summary"]["promote_to_now_candidates"] == 0
+    plan = queue_reconcile_module.queue_reconcile_plan(registry, store)
+    assert all(action["task_id"] != parent_id for action in plan["actions"])
+
 def test_queue_reconcile_reports_unqueued_priority_next(registry_factory, tmp_path):
     root = registry_factory(1)
     _remove_from_queue(root, "BUR-TEST-001-T001")

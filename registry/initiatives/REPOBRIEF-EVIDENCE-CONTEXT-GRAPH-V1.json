@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "RepoBrief evidence context graph",
-  "state": "completion-ready",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Build an evidence-graded coding context graph that adds precise Python caller, callee and reference navigation before measured edit-context, runtime, multilingual and build/test overlays.",
   "current_plan": {
     "repository": "repo.bureau",

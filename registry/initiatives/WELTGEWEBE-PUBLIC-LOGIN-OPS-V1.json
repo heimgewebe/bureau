@@ -1,5 +1,5 @@
 {
-  "commitment": "now",
+  "commitment": "completed",
   "completion": [
     "Runtime JWT secret on wg-prod-1 is rotated through a redacted secret-safe path after the prior exposure.",
     "SMTP credential presence is verified by metadata only and no secret values are stored in Bureau, GitHub or chat.",
@@ -46,6 +46,6 @@
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "completion-ready",
+  "state": "completed",
   "title": "Weltgewebe public login production rollout safety"
 }

@@ -59,7 +59,6 @@
   "id": "WELTGEWEBE-PUBLIC-LOGIN-OPS-V1-T001",
   "initiative": "WELTGEWEBE-PUBLIC-LOGIN-OPS-V1",
   "metadata": {
-    "block_reason": "SMTP credential pair is not available in an approved secret source, and an exposed API JWT runtime secret must be rotated before public-login rollout proceeds.",
     "does_not_establish": [
       "secret_values_known",
       "secret_values_registered",
@@ -78,7 +77,73 @@
     "schema_repair": {
       "secret_boundary": "execution.policy normalized to review-before-effect and secret-channel represented as isolation=namespace; privileged secret boundary preserved in metadata.block_reason and required_capabilities"
     },
-    "source_issue": "heimgewebe/weltgewebe#1370"
+    "source_issue": "heimgewebe/weltgewebe#1370",
+    "former_blocker": {
+      "block_reason": "SMTP credential pair is not available in an approved secret source, and an exposed API JWT runtime secret must be rotated before public-login rollout proceeds.",
+      "does_not_establish": [
+        "secret_values_known",
+        "secret_values_registered",
+        "public_login_enabled",
+        "jwt_rotated",
+        "delivery_working"
+      ],
+      "registered_at": "2026-07-08T17:15:00Z",
+      "source_issue": "heimgewebe/weltgewebe#1370"
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_public_login_rollout",
+      "verified_at": "2026-08-05T00:11:02Z",
+      "source_issue": {
+        "repository": "heimgewebe/weltgewebe",
+        "number": 1370,
+        "state": "CLOSED",
+        "closed_at": "2026-07-09T11:46:00Z",
+        "completion_comment": "https://github.com/heimgewebe/weltgewebe/issues/1370#issuecomment-4924706069",
+        "close_comment": "https://github.com/heimgewebe/weltgewebe/issues/1370#issuecomment-4924706985"
+      },
+      "acceptance_evidence": {
+        "jwt-rotated": {
+          "status": "pass",
+          "evidence": "The rollout completion comment records that the API JWT runtime secret was rotated before rollout completion and the API was recreated."
+        },
+        "smtp-secret-present": {
+          "status": "pass",
+          "evidence": "The rollout completion comment records Brevo SMTP delivery configured through protected runtime environment using reachable port 2525; no secret values are recorded in Bureau."
+        },
+        "public-login-enabled-after-preflight": {
+          "status": "pass",
+          "evidence": "The completion comment records AUTH_PUBLIC_LOGIN enabled and AUTH_LOG_MAGIC_TOKEN disabled after correcting environment precedence and SMTP identity."
+        },
+        "health-ready": {
+          "status": "pass",
+          "issue_evidence": "Public API health returned 200 after API recreation.",
+          "fresh_readback": {
+            "url": "https://api.weltgewebe.net/health/ready",
+            "http_status": 200,
+            "observed_at": "2026-08-05T00:11:02Z",
+            "elapsed_seconds": 0.080656
+          }
+        },
+        "magic-link-delivered": {
+          "status": "pass",
+          "evidence": "The user confirmed successful Magic-Link login in the rollout session; the issue was closed immediately afterward."
+        }
+      },
+      "does_not_establish": [
+        "secret values or their current plaintext",
+        "future SMTP provider availability",
+        "future delivery for every recipient",
+        "absence of unrelated production drift"
+      ]
+    },
+    "verification": {
+      "task_sha256": "15889174be94e552ad96f132865617b40f9e5d9ec7dfe644538738af4853cbd4",
+      "plan_sha256": "c17ac3ec57717b3047075d8493a6f85d891a651fdc44d831df54639baa59aa6f",
+      "source": "closed_issue_live_health_and_user_confirmed_magic_link",
+      "source_ref": "github-issue:heimgewebe/weltgewebe#1370",
+      "verified_at": "2026-08-05T00:11:02Z"
+    }
   },
   "priority": {
     "lane": "later",
@@ -92,6 +157,6 @@
     "external-mail-confirmation"
   ],
   "schema_version": 1,
-  "state": "blocked",
+  "state": "verified",
   "title": "Rotate runtime JWT and finish SMTP-backed public login rollout"
 }

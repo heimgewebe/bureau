@@ -1,0 +1,126 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Branch, HEAD, Upstream, Dirty-State, vollständiger binärer Diff-Digest und SHA-256 jedes betroffenen Dateiinhalts sind vor weiterer Wirkung gebunden.",
+      "id": "exact-dirty-preimage"
+    },
+    {
+      "assertion": "Prozessbaum, CWD, Startzeit, tmux-Pane, Aktivität und Logs belegen, ob ein aktiver T139-Writer, ein fremder Prozess oder nur ein inaktiver CWD-Rest vorliegt; bloßes Alter genügt nicht.",
+      "id": "process-owner-evidence"
+    },
+    {
+      "assertion": "Kein Prozesssignal, keine Dateiänderung, kein Reset, Stash, Clean, Checkout-Wechsel, Worktree-Remove oder Lease-Force erfolgt.",
+      "id": "no-foreign-state-destruction"
+    },
+    {
+      "assertion": "Das Ergebnis lautet genau owner-handoff, inactive-safe-to-resume oder unresolved-blocked und nennt Primärevidenz sowie erlaubte nächste Wirkungen.",
+      "id": "typed-ownership-decision"
+    },
+    {
+      "assertion": "Der exakte Dirty-Preimage ist vor Freigabe als digestgebundenes Patch- und Inventarartefakt außerhalb des Arbeitsbaums vollständig rücklesbar bewahrt.",
+      "id": "immutable-preservation"
+    },
+    {
+      "assertion": "Die neun T139-Pfade werden nur nach owner-handoff oder inactive-safe-to-resume an genau einen neuen Bureau-Lauf gebunden; sonst bleibt T139 blockiert.",
+      "id": "t139-resumption-gate"
+    },
+    {
+      "assertion": "Task, Lauf, Pfadleasen, Checkout und Prozessbefund werden nach jeder Lifecycle-Wirkung frisch rückgelesen.",
+      "id": "lifecycle-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Reconciliation, Beweissicherung und exakte Ownership-Herstellung; keine Codeänderung, kein Prozesssignal, kein Reset, Stash, Clean oder Checkout-Wechsel.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/proofs/transport-roundtrip-v3-t139-20260804.md",
+      "path:/home/alex/repos/grabowski/docs/transport-roundtrip-v3.md",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip_intent_replacement.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den ownerlosen, dirty T139-Arbeitsstand ohne Verlust fremder Arbeit revisionsgebunden sichern, den Prozess- und Eigentumszustand belegen und die neun T139-Pfade nur nach eindeutiger Übergabe oder belegter Inaktivität für genau einen neuen Lauf freigeben.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T146",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "T139-Mutationsautorität",
+      "Erlaubnis zum Prozesssignal",
+      "Erlaubnis zur Übernahme fremder Arbeit",
+      "T139-Abschluss"
+    ],
+    "failed_run_plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+    "independently_executable": true,
+    "observed_checkout": {
+      "branch": "fix/t139-atomic-sessionless-transport-v1",
+      "dirty_file_count": 5,
+      "head": "2e22fb481da08ae3e4adff1760a3674195333561",
+      "path": "/home/alex/repos/grabowski"
+    },
+    "observed_process": {
+      "cwd": "/home/alex/repos/grabowski",
+      "pane_state": "idle unrelated Claude prompt",
+      "pid": 1581853,
+      "tmux_session": "opus"
+    },
+    "parent_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T139",
+    "registered_at": "2026-08-05",
+    "source": "BUR-RUN-20260805T193823Z-378d0787b1 blocked_with_durable_followup",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-fe439025b3c60d6881528773",
+      "event_id": 2679,
+      "event_created_at": "2026-08-05T20:10:45.704190Z",
+      "request_sha256": "f0dbc1d09fc4e5b0ec76a131b8f4ffb30fea2de8ad1390ac8238bf0cf1d0f649",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-bureau-pickup-failure",
+        "locator": "grabowski:bureau-pickup:BUR-RUN-20260805T193823Z-378d0787b1",
+        "observed_at": "2026-08-05T19:56:07Z",
+        "sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "git",
+    "process-lifecycle",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "Bei Unklarheit eigene Reconciliation-Leases unverändert freigeben, Checkout und Prozesse unberührt lassen, Preimage bewahren und unresolved-blocked melden."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Ownerlosen T139-Checkout revisionsgebunden reconciliieren"
+}

@@ -73,7 +73,23 @@
       "observed_runtime_state_schema_version": 3,
       "observed_scope_kind": "caller_session",
       "root_cause_evidence": "FastMCP Context exposes request_context.session but no stable public session_id; current fallback derives authority from weak-reference-bound Python object identity, while the connector presents different session objects across separate tool invocations.",
-      "source_pr_declared_limit": "Noch kein echter Netzwerkversuch mit zwei externen MCP-Clients gegen eine deployte T139-Runtime."
+      "source_pr_declared_limit": "Noch kein echter Netzwerkversuch mit zwei externen MCP-Clients gegen eine deployte T139-Runtime.",
+      "post_t142_deployment_external_probe": {
+        "observed_at": "2026-08-05",
+        "deployed_repository_revision": "606d16fabe845ce233ebb2e6e7fd84c51b62abb1",
+        "source_pr": 618,
+        "connector": "ChatGPT Grabowski connector",
+        "begin_result": "success",
+        "begin_scope_kind": "connector_session",
+        "begin_challenge_receipt_sha256": "ba50c27a05547b140b20e8cc085e7cc752a1e16640429be8846593ac0fa7e28f",
+        "immediate_ack_result": "failure",
+        "ack_error": "transport challenge is missing; begin a new handshake",
+        "readonly_result": "success",
+        "mutation_result": "fail_closed_before_effect",
+        "affected_operation": "Weltgewebe Web Push production activation and explicit temporary lease release",
+        "fallback_used": "reviewed GitOps path through heimgewebe/weltgewebe#1682; no unbound direct mutation",
+        "github_evidence": "heimgewebe/grabowski#618 comment 5190055647"
+      }
     },
     "does_not_establish": [
       "permission to reuse a global client snapshot as authentication",

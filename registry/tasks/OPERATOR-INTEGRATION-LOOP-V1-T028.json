@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Claimable-Supply-Schleife von Beobachtung zu kanonischer Publikation schliessen",
   "state": "ready",
-  "goal": "Die von T014 gelieferte Supply-Politik produktiv machen. Ein Stadium erzeugt den autoritativen, revisionsgebundenen Frontier-Snapshot, schreibt den Supply-Report an den Pfad, den bureau-agent-frontier bereits liest, und publiziert bei unterschrittener claimfaehiger Frontier mehrere deterministische, deduplizierte Fallbacks nur bei expliziter Mutationsautoritaet kanonisch als Task- und Queue-Eintraege. Preview bleibt read-only, echte Arbeit bleibt vorrangig, und alle Lease-, Capability-, Open-PR- und Runtime-Gates bleiben unveraendert.",
+  "goal": "Die von T014 gelieferte Supply-Politik produktiv machen. Ein Stadium erzeugt den autoritativen, revisionsgebundenen Frontier-Snapshot, schreibt den Supply-Report an den Pfad, den bureau-agent-frontier bereits liest, und publiziert bei unterschrittener claimfaehiger Frontier mehrere deterministische, deduplizierte Fallbacks nur bei expliziter Mutationsautoritaet kanonisch als Task- und Queue-Eintraege. Preview bleibt read-only, echte Arbeit bleibt vorrangig, und alle Lease-, Capability-, Open-PR- und Runtime-Gates bleiben unveraendert. Zusaetzlich haelt eine revisionsgebundene Hysterese die kanonische Now-Lane bei vorhandener strukturell arbeitsfaehiger Next-Arbeit auf mindestens zwei Eintraegen und fuellt bis Ziel vier nach.",
   "priority": {
     "lane": "next",
     "rank": 2
@@ -56,7 +56,15 @@
       "path:/home/alex/repos/bureau/tests/test_supply_runner.py",
       "path:/home/alex/repos/bureau/tests/test_task_supply.py",
       "path:/home/alex/repos/bureau/docs/bureau-ready-supply-fallback-v1.md",
-      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T028.json"
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T028.json",
+      "path:/home/alex/repos/bureau/src/bureau/now_refill.py",
+      "path:/home/alex/repos/bureau/tests/test_now_refill.py",
+      "path:/home/alex/repos/bureau/.github/workflows/now-lane-refill.yml",
+      "path:/home/alex/repos/bureau/registry/queue.json",
+      "path:/home/alex/repos/bureau/src/bureau/source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/tests/test_source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/ops/systemd/bureau-source-pr-bridge.service",
+      "path:/home/alex/repos/bureau/ops/systemd/bureau-source-pr-bridge.timer"
     ]
   },
   "acceptance": [
@@ -87,6 +95,14 @@
     {
       "id": "gates-and-validation",
       "assertion": "Regressionstests, ruff, bureau check und die vollstaendige Testsuite sind gruen, und Lease-, Capability-, Open-PR- sowie Runtime-Gates bleiben unveraendert wirksam."
+    },
+    {
+      "id": "now-lane-hysteresis",
+      "assertion": "Faellt die Zahl strukturell arbeitsfaehiger Now-Aufgaben unter zwei, werden deterministisch und pro Lauf begrenzt strukturell freie Next-Aufgaben bis Ziel vier nach Now verschoben; Actor-Freigaben bleiben Pickup-Gates."
+    },
+    {
+      "id": "durable-refill-automation",
+      "assertion": "Ein push- und 15-minuetig ausgeloester GitHub-Workflow darf ausschliesslich registry/queue.json aendern und publiziert nur einen Branch. Der lokale, authentisierte PR-Bridge-Dienst erzeugt oder aktualisiert den taskgebundenen PR im Fuenf-Minuten-Takt und aktiviert Auto-Merge; main wird nie direkt beschrieben."
     }
   ],
   "metadata": {
@@ -103,15 +119,16 @@
     },
     "complements": "OPERATOR-INTEGRATION-LOOP-V1-T014 claimable supply floor",
     "scope_exclusions": [
-      "Aktivieren eines registry-mutierenden Timers ohne Operator-Entscheidung",
       "Aufweichen von Lease-, Capability-, Open-PR- oder Runtime-Gates",
       "Aenderung fremder Worktrees oder Dirty-States",
-      "Merge ohne gruene Pflichtchecks"
+      "Merge ohne gruene Pflichtchecks",
+      "Direkte Claims, Starts oder Freigabeumgehung durch die Now-Nachfuellung"
     ],
     "does_not_establish": [
       "Claimbarkeit publizierter Fallbacks vor erneuter Pruefung durch die normalen Claim-Gates",
       "Merge- oder Deployment-Autoritaet",
       "dass Rohzaehlungen von ready-Dokumenten ausfuehrbare Arbeit messen"
-    ]
+    ],
+    "user_authority": "2026-08-05: sofortiger und dauerhafter Fix der leeren Now-Lane"
   }
 }

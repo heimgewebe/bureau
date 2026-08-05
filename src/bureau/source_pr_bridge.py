@@ -9,6 +9,7 @@ from typing import Any
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
 DEFAULT_BASE = "main"
 DEFAULT_BRANCH = "automation/weltgewebe-source-sync"
+NOW_REFILL_BRANCH = "automation/now-lane-refill"
 
 
 class GhCommandError(RuntimeError):
@@ -39,7 +40,26 @@ def _json(arguments: Sequence[str], *, allow_not_found: bool = False) -> Any:
     return json.loads(output)
 
 
-def _pull_request_body(branch: str, head_sha: str) -> str:
+def _pull_request_title(kind: str) -> str:
+    if kind == "now-refill":
+        return "chore(queue): refill Bureau Now lane"
+    return "chore: sync Weltgewebe source snapshot"
+
+
+def _pull_request_body(branch: str, head_sha: str, *, kind: str) -> str:
+    if kind == "now-refill":
+        return (
+            "## Automated Now-lane refill\n\n"
+            "Bureau detected that its immediate workfront fell below the configured floor and "
+            "promoted existing structurally runnable tasks from Next to Now.\n\n"
+            "Bureau-Task: OPERATOR-INTEGRATION-LOOP-V1-T028\n\n"
+            f"- proposal branch: `{branch}`\n"
+            f"- proposal commit: `{head_sha}`\n"
+            "- bounded path: `registry/queue.json`\n\n"
+            "This proposal changes prioritisation only. It does not claim or start tasks. "
+            "Pickup-time approval, capability, lease, open-PR and runtime gates remain "
+            "authoritative.\n"
+        )
     return (
         "## Automated source observation\n\n"
         "Bureau observed a changed, commit-bound Weltgewebe task snapshot.\n\n"
@@ -52,11 +72,30 @@ def _pull_request_body(branch: str, head_sha: str) -> str:
     )
 
 
+def _enable_auto_merge(repository: str, pull_request: int) -> None:
+    _run(
+        [
+            "pr",
+            "merge",
+            str(pull_request),
+            "--repo",
+            repository,
+            "--auto",
+            "--squash",
+        ]
+    )
+
+
 def reconcile(
     repository: str = DEFAULT_REPOSITORY,
     base: str = DEFAULT_BASE,
     branch: str = DEFAULT_BRANCH,
+    *,
+    kind: str = "source",
+    auto_merge: bool = False,
 ) -> dict[str, Any]:
+    if kind not in {"source", "now-refill"}:
+        raise ValueError(f"unsupported bridge kind: {kind}")
     ref = _json(
         ["api", f"repos/{repository}/git/ref/heads/{branch}"],
         allow_not_found=True,
@@ -95,10 +134,12 @@ def reconcile(
             "number,url",
         ]
     )
-    body = _pull_request_body(branch, head_sha)
+    body = _pull_request_body(branch, head_sha, kind=kind)
     if pull_requests:
-        number = str(pull_requests[0]["number"])
-        _run(["pr", "edit", number, "--repo", repository, "--body", body])
+        number = int(pull_requests[0]["number"])
+        _run(["pr", "edit", str(number), "--repo", repository, "--body", body])
+        if auto_merge:
+            _enable_auto_merge(repository, number)
         return {
             "status": "updated",
             "repository": repository,
@@ -106,8 +147,9 @@ def reconcile(
             "branch": branch,
             "head_sha": head_sha,
             "ahead_by": ahead_by,
-            "pull_request": int(number),
+            "pull_request": number,
             "url": pull_requests[0]["url"],
+            "auto_merge_requested": auto_merge,
         }
 
     url = _run(
@@ -121,11 +163,16 @@ def reconcile(
             "--head",
             branch,
             "--title",
-            "chore: sync Weltgewebe source snapshot",
+            _pull_request_title(kind),
             "--body",
             body,
         ]
     )
+    if url is None:
+        raise GhCommandError("gh pr create returned no pull-request URL")
+    pull_request = int(url.rstrip("/").rsplit("/", 1)[-1])
+    if auto_merge:
+        _enable_auto_merge(repository, pull_request)
     return {
         "status": "created",
         "repository": repository,
@@ -133,24 +180,37 @@ def reconcile(
         "branch": branch,
         "head_sha": head_sha,
         "ahead_by": ahead_by,
+        "pull_request": pull_request,
         "url": url,
+        "auto_merge_requested": auto_merge,
     }
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Create or update the review PR for the Weltgewebe source snapshot branch."
+        description="Create or update a review PR for one bounded Bureau automation branch."
     )
     parser.add_argument("--repo", default=DEFAULT_REPOSITORY)
     parser.add_argument("--base", default=DEFAULT_BASE)
-    parser.add_argument("--branch", default=DEFAULT_BRANCH)
+    parser.add_argument("--branch")
+    parser.add_argument("--kind", choices=("source", "now-refill"), default="source")
+    parser.add_argument("--auto-merge", action="store_true")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
+    branch = arguments.branch or (
+        NOW_REFILL_BRANCH if arguments.kind == "now-refill" else DEFAULT_BRANCH
+    )
     try:
-        result = reconcile(arguments.repo, arguments.base, arguments.branch)
+        result = reconcile(
+            arguments.repo,
+            arguments.base,
+            branch,
+            kind=arguments.kind,
+            auto_merge=arguments.auto_merge,
+        )
     except (GhCommandError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
         raise SystemExit(f"source PR bridge failed: {error}") from error
     print(json.dumps(result, sort_keys=True))

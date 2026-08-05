@@ -1,5 +1,5 @@
 [Unit]
-Description=Bureau Weltgewebe source PR bridge
+Description=Bureau automation PR bridge
 Documentation=https://github.com/heimgewebe/bureau
 After=network-online.target
 Wants=network-online.target
@@ -7,6 +7,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge
+ExecStart=%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge --kind now-refill --auto-merge
 Environment=GH_HOST=github.com
 NoNewPrivileges=true
 PrivateTmp=true

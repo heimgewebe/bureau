@@ -1,0 +1,116 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Root-Broker-Unit enthält exakt RestrictAddressFamilies=AF_UNIX AF_NETLINK; AF_INET und AF_INET6 sind weder ausdrücklich noch indirekt freigegeben.",
+      "id": "exact-address-family-contract"
+    },
+    {
+      "assertion": "Ein fokussierter Regressionstest prüft die exakte erlaubte Socketfamilienmenge und scheitert bei AF_INET, AF_INET6 oder fehlendem AF_NETLINK.",
+      "id": "regression-contract"
+    },
+    {
+      "assertion": "Der geprüfte Commit wird mit gültiger Runtime- und Deploymentintegrität ausgerollt; installierte Unit, Quellrevision und Deploymentbeleg stimmen überein.",
+      "id": "reviewed-runtime-deploy"
+    },
+    {
+      "assertion": "UFW status verbose, nft list ruleset und iptables-save werden ausschließlich read-only und mit begrenzter Ausgabe ausgeführt; erfolgreiche oder teilweise erfolgreiche Ergebnisse werden redigiert und revisionsgebunden gespeichert.",
+      "id": "bounded-firewall-readback"
+    },
+    {
+      "assertion": "Vorher-/Nachher-Evidenz belegt, dass der Abnahmelauf keine Firewallregel, Standardpolicy, Netzwerkschnittstelle, Route oder Veröffentlichung verändert hat.",
+      "id": "no-effect-proof"
+    },
+    {
+      "assertion": "OPERATOR-PC-HYGIENE-V1-T008 ersetzt den historischen T030-Blocker durch den aktuellen Firewall- und externen Netzsichtstand, ohne unbelegte öffentliche Sicherheit zu behaupten.",
+      "id": "t008-truth-update"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "namespace",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/systemd/grabowski-privileged-broker@.service",
+      "path:/home/alex/repos/grabowski/tests/test_control_plane.py",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Ermögliche dem recovery-gated Root-Broker ausschließlich die für UFW-, nftables- und iptables-Readbacks notwendige AF_NETLINK-Socketfamilie, ohne AF_INET oder AF_INET6 freizugeben. Beweise den exakten Systemd-Vertrag, deploye revisionsgebunden und erfasse anschließend die effektiven Host-Firewallregeln read-only mit No-Effect-Readback für OPERATOR-PC-HYGIENE-V1-T008.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T145",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass aktuelle Firewallregeln sicher sind",
+      "dass der Heim-PC öffentlich nicht erreichbar ist",
+      "Erlaubnis zu Firewallmutationen",
+      "Erlaubnis, fremde Worktrees, Leases oder Prozesse zu übernehmen",
+      "Erlaubnis, AF_INET oder AF_INET6 im Root-Broker zu aktivieren"
+    ],
+    "live_evidence": {
+      "bureau_main": "3f048dbf8c786e13128dfc5d195e999f9ec4a041",
+      "grabowski_main": "77d072d72e40dc68d5585e2c014403817e50e382",
+      "iptables_error": "Failed to initialize nft: Address family not supported by protocol",
+      "nft_error": "Unable to initialize Netlink socket: Address family not supported by protocol",
+      "observed_runtime_head": "7ead4b4abf4fd409770e76d57e3b415538e01051",
+      "observed_unit_contract": "RestrictAddressFamilies=AF_UNIX",
+      "ufw_error": "Couldn't determine iptables version",
+      "work_admission_durable_receipt_sha256": "93a4c660fc746f9d982d468b8e7e9f4fe08da580fd5a990ee648f2b2b8c53fff",
+      "work_admission_receipt": "10ab0dea57b5ce5fdf38ee7faf56d378dc6874d7a4f273d7091e1f7d04130bce"
+    },
+    "registered_at": "2026-08-05",
+    "source": "bureau operator-intake candidate candidate-2afcfacdf452aad0af27e680 event 2651",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2afcfacdf452aad0af27e680",
+      "event_id": 2651,
+      "event_created_at": "2026-08-05T17:59:58.483589Z",
+      "request_sha256": "858375184deb61ea3882c89290ae0e175db05e50ea7369e130567a4bbc009fb5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-08-05T17:59:58.445789Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "systemd",
+    "testing",
+    "privileged-action"
+  ],
+  "rollback": {
+    "strategy": "Bei Test-, Deploy- oder No-Effect-Abweichung die Unit auf AF_UNIX zurücksetzen, den Root-Broker neu laden und den Firewall-Readback weiterhin UNVERIFIED lassen; keine Firewallregel automatisch verändern."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Root-Broker für begrenzten Netlink-Firewall-Readback öffnen"
+}

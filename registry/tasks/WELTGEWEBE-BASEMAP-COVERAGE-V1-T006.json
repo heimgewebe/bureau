@@ -1,0 +1,78 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Node, pnpm und das Containerimage sind versions- und digestgebunden; der Wrapper arbeitet offline und lädt keine latest-Version nach.",
+      "id": "immutable-toolchain"
+    },
+    {
+      "assertion": "Der Wrapper wartet auf exited oder dead und behandelt paused, restarting, removing, unbekannte Zustände, OOMKilled und State.Error typisiert.",
+      "id": "terminal-state-contract"
+    },
+    {
+      "assertion": "Der echte Container-Exitcode wird unverändert weitergegeben; ein dead-Container mit Exitcode 0 gilt nicht als Erfolg.",
+      "id": "exit-propagation"
+    },
+    {
+      "assertion": "Erfolg, Fehler, Signal und Wrapperabbruch entfernen ausschließlich den selbst erzeugten Hilfscontainer; fremde Container werden nie übernommen.",
+      "id": "cleanup-guarantee"
+    },
+    {
+      "assertion": "Tests decken einen verzögerten Erfolgslauf, Exitcode 17, OOM/State.Error, Signalabbruch und das Fehlen verbliebener wg-pnpm-Container ab.",
+      "id": "regression-matrix"
+    },
+    {
+      "assertion": "Deutschland-Aktivierung, Regionalrückbau und normale Produktionsbuilds verwenden denselben geprüften Wrappervertrag.",
+      "id": "deployment-integration"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/scripts",
+      "path:/home/alex/repos/weltgewebe/apps/web/package.json",
+      "path:/home/alex/repos/weltgewebe/apps/web/pnpm-lock.yaml"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den offline gepinnten pnpm-/Node-Containerwrapper als revisionsgebundene produktive Toolchain etablieren. Er wartet auf den echten Containerendzustand, propagiert Fehler exakt und hinterlässt keine Hilfscontainer.",
+  "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T006",
+  "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass die auf dem VPS installierte Hilfsdatei bereits ein Repositoryfix ist"
+    ],
+    "live_evidence": {
+      "observed_tests": "pnpm 9.11.0; verzögerter Lauf 3,6 s; absichtlicher Exitcode 17; keine Containerreste",
+      "validated_wrapper_sha256": "993a51b03bc33dd0d7be39c90a7ff40abb4e4251d3467ec1b382ac5e987725b1"
+    },
+    "registered_at": "2026-08-05",
+    "source": "Operator-Closeout heimgewebe/bureau#1523"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 16
+  },
+  "required_capabilities": [
+    "git",
+    "docker",
+    "node",
+    "pnpm",
+    "bash",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Bei Wrapperabweichung keine Produktion mutieren; auf die letzte hashgebundene Toolchain zurückgehen und verbliebene eigene Hilfscontainer nach Identitätsprüfung entfernen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Gepinnten pnpm-Containerwrapper produktionsfest machen"
+}

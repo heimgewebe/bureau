@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T031",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Live-Telemetrie unter Langzeitlast am Heim-PC abnehmen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Die in T021 gelieferte passive Telemetrie auf dem realen Heim-PC mit einer einstündigen erhöhten Snapshotlast und einem achtstündigen passiven Lauf abnehmen, ohne Defaults, Routen, Profile, Lautstärken, Links oder Audiostreams zu verändern.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T021"
@@ -107,6 +107,18 @@
       "Ursachenzuordnung eines fremden XRun",
       "Stabilität nach späterer Hostdrift",
       "Freigabe aktiver Audio-, Routing- oder Geräteänderungen"
-    ]
+    ],
+    "verification": {
+      "schema_version": 1,
+      "source": "bureau_run_receipt",
+      "source_ref": "bureau-run:BUR-RUN-20260805T172446Z-82fe9791e9@648a99152a50a66b4174bd807f618a4abea463e79643e258fb55c77643da9570",
+      "run_id": "BUR-RUN-20260805T172446Z-82fe9791e9",
+      "worker_id": "automation:shard1:20260805T1924",
+      "verified_at": "2026-08-05T21:30:24.595782Z",
+      "outcome": "succeeded",
+      "task_sha256": "8bb5ac71a74c88e0686464b8a0b1bbaa54b30ec79c9dd98d4014928709c8d606",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
+      "receipt_sha256": "648a99152a50a66b4174bd807f618a4abea463e79643e258fb55c77643da9570"
+    }
   }
 }

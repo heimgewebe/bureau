@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audiozentrale als lokale, messbare Live-Audioumgebung",
-  "state": "active",
+  "state": "waiting",
   "commitment": "now",
   "goal": "Eine lokal betriebene Audiozentrale liefern, die reale Signalwege live sichtbar macht, Referenzhören, sichere Aufnahme, Roland- und Gitarrenspiel sowie begrenzte erklärbare Modulation in einer gemeinsamen wiederherstellbaren Produktoberfläche verbindet, ohne DAW-, Cloud-, KI- oder freien Modulargraph-Zwang.",
   "current_plan": {
@@ -135,9 +135,9 @@
       }
     ],
     "lifecycle": {
-      "reconciled_at": "2026-08-04T07:19:00+02:00",
-      "reconciled_from": "waiting",
-      "reconciled_to": "active",
+      "reconciled_at": "2026-08-05T21:50:05.241432Z",
+      "reconciled_from": "active",
+      "reconciled_to": "waiting",
       "reason": "Wave 1 task T021 is unblocked and explicitly not blocked by the physical hardware gate."
     }
   }

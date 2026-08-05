@@ -48,7 +48,7 @@
     }
   ],
   "depends_on": [
-    "OPERATOR-INTEGRATION-LOOP-V1-T028"
+    "OPERATOR-INTEGRATION-LOOP-V1-T014"
   ],
   "execution": {
     "approval": {
@@ -82,8 +82,8 @@
     ],
     "registered_at": "2026-08-05",
     "risk": "Hosted-Entscheidung kann lokale aktive Runs, Leases und Open-PR-Bindungen übersehen und dadurch zwar schema-valide, aber operativ veraltete Priorisierung vorschlagen.",
-    "source": "Live-Readback nach Merge von Bureau PR #1562; kanonische Registry auf Merge-Commit 5b2bf4b5d6956fb6dc6fc060bf35951b59400ff5, Now-Lane 2, lokaler PR-Bridge-Timer aktiv.",
-    "user_authority": "2026-08-05: alle sinnvollen, nicht sofort behobenen Dauerlücken als Bureau-Folgetask registrieren",
+    "source": "Live-Readback nach Merge von PR #1562 und dem fehlerhaften Nachfüllversuch #1566: AUDIO-CONTROL-PLANE-V1-T031 besitzt bereits den aktiven Run BUR-RUN-20260805T172446Z-82fe9791e9. Der gehostete Workflow wurde deaktiviert und der lokale Bridge-Timer bis zur autoritativen Reparatur gestoppt.",
+    "user_authority": "2026-08-05: sofortiger und dauerhafter Fix der leeren Now-Lane sowie autonome Umsetzung sinnvoller Dauerreparaturen",
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-6f5c65995eb017415d489a22",
@@ -105,10 +105,20 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "activated_at": "2026-08-05T21:11:00Z",
+    "activation_reason": "T028 ist durch den nicht autoritativen Hosted-Entscheidungspfad materiell überholt. T029 übernimmt die Reparatur mit lokaler Laufzeitbindung.",
+    "activation_evidence": {
+      "predecessor_state": "superseded",
+      "closed_refill_pr": 1566,
+      "active_run": "BUR-RUN-20260805T172446Z-82fe9791e9",
+      "hosted_workflow_state": "disabled_manually",
+      "local_bridge_timer_state": "inactive",
+      "open_bureau_pull_requests": 0
     }
   },
   "priority": {
-    "lane": "next",
+    "lane": "now",
     "rank": 3
   },
   "required_capabilities": [
@@ -119,6 +129,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Now-Nachfüllung an autoritative lokale Laufzeit binden"
 }

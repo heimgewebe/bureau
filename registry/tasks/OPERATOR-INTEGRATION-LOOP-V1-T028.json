@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T028",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Claimable-Supply-Schleife von Beobachtung zu kanonischer Publikation schliessen",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Die von T014 gelieferte Supply-Politik produktiv machen. Ein Stadium erzeugt den autoritativen, revisionsgebundenen Frontier-Snapshot, schreibt den Supply-Report an den Pfad, den bureau-agent-frontier bereits liest, und publiziert bei unterschrittener claimfaehiger Frontier mehrere deterministische, deduplizierte Fallbacks nur bei expliziter Mutationsautoritaet kanonisch als Task- und Queue-Eintraege. Preview bleibt read-only, echte Arbeit bleibt vorrangig, und alle Lease-, Capability-, Open-PR- und Runtime-Gates bleiben unveraendert. Zusaetzlich haelt eine revisionsgebundene Hysterese die kanonische Now-Lane bei vorhandener strukturell arbeitsfaehiger Next-Arbeit auf mindestens zwei Eintraegen und fuellt bis Ziel vier nach.",
   "priority": {
     "lane": "next",
@@ -129,6 +129,16 @@
       "Merge- oder Deployment-Autoritaet",
       "dass Rohzaehlungen von ready-Dokumenten ausfuehrbare Arbeit messen"
     ],
-    "user_authority": "2026-08-05: sofortiger und dauerhafter Fix der leeren Now-Lane"
+    "user_authority": "2026-08-05: sofortiger und dauerhafter Fix der leeren Now-Lane",
+    "superseded_by": "OPERATOR-INTEGRATION-LOOP-V1-T029",
+    "superseded_at": "2026-08-05T21:09:00Z",
+    "supersession_reason": "Der gehostete Now-Nachfuell-Entscheider kann den lokalen Bureau-StateStore, aktive Runs, Grabowski-Leases und offene PR-Bindungen nicht autoritativ beobachten. T029 ersetzt diesen Wirkungspfad und darf nur lokal gebundene Entscheidungen beziehungsweise digestgebundenen Transport zulassen.",
+    "supersession_evidence": {
+      "flawed_refill_pr": 1566,
+      "flawed_refill_pr_state": "closed-unmerged",
+      "conflicting_active_run": "BUR-RUN-20260805T172446Z-82fe9791e9",
+      "hosted_workflow_state": "disabled_manually",
+      "local_bridge_timer_state": "inactive"
+    }
   }
 }

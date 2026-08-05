@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T003",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Add narrow stale systemd cleanup privilege",
-  "state": "blocked",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 203
@@ -56,9 +56,6 @@
       "system_manager_healthy"
     ],
     "live_audit_finding": "system systemd remained degraded because user@111.service stale fail could not be reset without sudo; broker had no reset-failed action.",
-    "blocked_at": "2026-07-11T02:33:46Z",
-    "block_reason": "The historical dependency on T030 is no longer current: the root-owned privileged broker, configuration and socket are valid and ready. The task remains blocked because the canonical recovery evidence for heimberry:rest-server/grabowski-recovery-probe is stale and AUDIO-CONTROL-PLANE-V1-T031 actively holds host:heim-pc. No reset-failed effect is authorized until both conditions clear and the exact unit properties are freshly revalidated.",
-    "blocked_by_task": "AUDIO-CONTROL-PLANE-V1-T031",
     "live_candidates": [
       "grabowski-privileged-broker@0-943410-1000.service",
       "grabowski-privileged-broker@1-2209771-1000.service",
@@ -71,7 +68,7 @@
       "NRestarts": 0,
       "mutation_applied": false
     },
-    "next_action": "After T031 reaches an authoritative terminal state and releases host:heim-pc, produce fresh server-recovery evidence for heimberry:rest-server/grabowski-recovery-probe. Then re-read the exact unit properties and execute only systemctl reset-failed for the unchanged allowlist; prove systemctl --failed is empty.",
+    "next_action": "Implement a dedicated allowlisted reset-failed path or exact manual fallback that cannot restart, stop, enable, disable or edit arbitrary services; add regression tests and prove it against a freshly failed allowlisted fixture without touching unrelated failed units.",
     "blocker_refresh": {
       "observed_at": "2026-08-05T13:40:00Z",
       "decision": "confirmed",
@@ -124,6 +121,66 @@
         "merge or deployment authority",
         "verification authority",
         "safe mutation of terminal historical tasks"
+      ]
+    },
+    "readied_at": "2026-08-05T21:52:01Z",
+    "readiness_reason": "Fresh primary evidence cleared the stale recovery and Audio T031 host prerequisites. The exact historical candidates are already inactive with Result=success, so no reset effect is currently required. The remaining work is the task’s own narrow least-privilege reset-failed implementation and regression proof, not an external blocker.",
+    "blocker_reconciliation_20260805": {
+      "observed_at": "2026-08-05T21:52:01Z",
+      "decision": "external_prerequisites_refuted_task_ready_for_implementation",
+      "source_bureau_commit": "a528bca94c24cd62aff49a8e57b3cfa785ce0264",
+      "grabowski_runtime_commit": "116ede07a71a00472d893e0f639804b0221815b1",
+      "recovery_gate": {
+        "ready_for_privileged_actions": true,
+        "canonical_record_sha256": "8f465acdcfa556ca087c818cc5ce79583f21905aef9859c2f537764d1724cbd6",
+        "target": "heimberry:rest-server/grabowski-recovery-probe"
+      },
+      "audio_dependency": {
+        "task_id": "AUDIO-CONTROL-PLANE-V1-T031",
+        "state": "ready",
+        "active_run_count": 0,
+        "host_lease_present": false,
+        "pipewire_lease_present": false
+      },
+      "candidate_readback": {
+        "power_request_id": "99e2d5eb5e2140758e9cb20346d6aa4c",
+        "power_reference_sha256": "9d2412f698d7fed6650e25b0d4607c1ee6ee24a41bd2f88cac9974c504fac53a",
+        "units": [
+          "grabowski-privileged-broker@0-943410-1000.service",
+          "grabowski-privileged-broker@1-2209771-1000.service",
+          "grabowski-privileged-broker@2-2277057-1000.service",
+          "user@111.service"
+        ],
+        "invariants": {
+          "LoadState": "loaded",
+          "ActiveState": "inactive",
+          "SubState": "dead",
+          "Result": "success",
+          "MainPID": 0,
+          "Restart": "no",
+          "NRestarts": 0
+        }
+      },
+      "current_system_failed_units": [
+        "heim-pc-storage-tomb-cleanup.service",
+        "logrotate.service"
+      ],
+      "implementation_gap": {
+        "dedicated_reset_failed_action_present": false,
+        "edit_system_service_enabled": false,
+        "broad_operator_power_argv_does_not_satisfy_narrow_acceptance": true
+      },
+      "historical_blocker": {
+        "blocked_at": "2026-07-11T02:33:46Z",
+        "block_reason": "The historical dependency on T030 is no longer current: the root-owned privileged broker, configuration and socket are valid and ready. The task remains blocked because the canonical recovery evidence for heimberry:rest-server/grabowski-recovery-probe is stale and AUDIO-CONTROL-PLANE-V1-T031 actively holds host:heim-pc. No reset-failed effect is authorized until both conditions clear and the exact unit properties are freshly revalidated.",
+        "blocked_by_task": "AUDIO-CONTROL-PLANE-V1-T031",
+        "next_action": "After T031 reaches an authoritative terminal state and releases host:heim-pc, produce fresh server-recovery evidence for heimberry:rest-server/grabowski-recovery-probe. Then re-read the exact unit properties and execute only systemctl reset-failed for the unchanged allowlist; prove systemctl --failed is empty."
+      },
+      "does_not_establish": [
+        "task verification",
+        "queue placement or claim success",
+        "permission to clear unrelated failed units",
+        "that broad operator_power_argv satisfies the narrow least-privilege acceptance"
       ]
     }
   },

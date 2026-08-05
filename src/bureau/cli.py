@@ -435,6 +435,12 @@ def parser() -> argparse.ArgumentParser:
     projection.add_argument("--github-observations")
     projection.add_argument("--skip-github", action="store_true")
     projection.add_argument("--github-max-age", type=int, default=3600)
+    
+    receipt_normalize = sub.add_parser("receipt-normalize")
+    receipt_normalize_mode = receipt_normalize.add_mutually_exclusive_group(required=True)
+    receipt_normalize_mode.add_argument("--dry-run", action="store_true")
+    receipt_normalize_mode.add_argument("--apply", action="store_true")
+
     return result
 
 
@@ -566,6 +572,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "status-projection",
         "what-now",
         "workspace-status",
+        "receipt-normalize",
     }
 )
 
@@ -591,6 +598,8 @@ def _command_mutates(args: argparse.Namespace) -> bool:
     if command == "live-promote-plan":
         return bool(args.write_plan or args.apply_plan)
     if command == "operator-task-publish":
+        return bool(args.apply)
+    if command == "receipt-normalize":
         return bool(args.apply)
     # Fail closed for every command not explicitly proven read-only. This also
     # makes newly added commands mutation-gated until they are classified.
@@ -793,6 +802,16 @@ def main(argv: list[str] | None = None) -> int:
             if blocked is not None:
                 emit(blocked, args.json)
                 return 2
+        if args.command == "receipt-normalize":
+            from .receipt_normalization import receipt_normalize
+            value = receipt_normalize(
+                Registry.load(root),
+                StateStore(state_path, state_root),
+                dry_run=args.dry_run,
+                runtime_identity=_CLI_RUNTIME_IDENTITY,
+            )
+            emit(value, args.json)
+            return 0
         if args.command == "resource-lifecycle-contract":
             try:
                 value = resource_lifecycle_contract(args.resource_kind)

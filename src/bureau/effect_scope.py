@@ -9,7 +9,7 @@ from typing import Any
 READ_ONLY = "read_only"
 COORDINATION_STATE_MUTATION = "coordination_state_mutation"
 REGISTRY_MUTATION = "registry_mutation"
-_COORDINATION_STATE_MUTATION_COMMANDS = frozenset({"claim-commit", "claim-intent"})
+_COORDINATION_STATE_MUTATION_COMMANDS = frozenset({"claim-commit", "claim-intent", "receipt-normalize"})
 
 
 def classify_command_effect_scope(command: str, *, mutates: bool) -> str:

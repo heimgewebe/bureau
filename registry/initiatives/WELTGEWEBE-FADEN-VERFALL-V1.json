@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "WELTGEWEBE-FADEN-VERFALL-V1",
   "title": "Weltgewebe temporal thread lifecycle",
-  "state": "completed",
-  "commitment": "completed",
+  "state": "active",
+  "commitment": "later",
   "goal": "Implement the user-authorized seven-day lifecycle of unbraided Weltgewebe threads as a deterministic, history-preserving domain projection while keeping durable yarn and adjacent cleanup work outside this first task.",
   "current_plan": {
     "repository": "bureau",
@@ -41,7 +41,11 @@
       "completion of cache compaction"
     ],
     "lifecycle": {
-      "completed_at": "2026-07-22T01:32:15.509616Z"
+      "completed_at": "2026-07-22T01:32:15.509616Z",
+      "reopened_at": "2026-08-05T20:44:58.650221Z",
+      "reopen_reason": "Registered open follow-up WELTGEWEBE-MOTION-LIFECYCLE-OPACITY-V1 requires active initiative lifecycle.",
+      "reopen_source_task": "WELTGEWEBE-MOTION-LIFECYCLE-OPACITY-V1",
+      "reopen_source_commit": "fb617736ca0ff44914452026f9f4dbb594cfba44"
     }
   }
 }

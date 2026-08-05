@@ -2440,6 +2440,66 @@ def test_coordinated_claim_intent_records_issuance_and_requires_approval(
         ).fetchone()[0] == 1
 
 
+def test_coordinated_claim_supports_path_leased_worktree_without_broad_claim(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["claims"] = []
+    task["execution"]["policy"] = "review-before-effect"
+    task["execution"]["workspace_isolation"] = "worktree"
+    task["execution"]["grabowski_resources"] = [
+        f"path:{root / 'leased-component'}"
+    ]
+    task_path.write_text(json.dumps(task))
+    init_clean_origin_main(root)
+
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent_result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task["id"],
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+        approval_source="test exact path-leased worktree",
+    )
+
+    assert intent_result["ready_supply"]["workspace_planned"] is True
+    assert intent_result["intent"]["required_resource_keys"] == [
+        f"path:{root / 'leased-component'}"
+    ]
+    binding, database = coordinated_lease_database(
+        tmp_path, intent_result["intent"]
+    )
+    claimed = dispatcher.commit_claim_intent(
+        intent_result["intent"], binding, resource_db=database
+    )
+    workspace = bureau_v2.create_workspace(
+        registry, store, claimed["run"]["run_id"], tmp_path / "worktrees"
+    )
+    assert Path(workspace["workspace_path"]).is_dir()
+    assert workspace["workspace_branch"].startswith("bureau/")
+
+
+def test_path_leased_worktree_rejects_broad_repository_resource(
+    registry_factory
+):
+    root = registry_factory(1, mode="write")
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["claims"] = []
+    task["execution"]["workspace_isolation"] = "worktree"
+    task["execution"]["grabowski_resources"] = [f"repo:{root}"]
+    task_path.write_text(json.dumps(task))
+
+    with pytest.raises(
+        ValidationError,
+        match="path-leased worktree needs exact path resources without broad repo resources",
+    ):
+        Registry.load(root)
+
+
 def test_coordinated_claim_intent_uses_origin_main_when_source_head_is_stale(
     registry_factory, tmp_path, monkeypatch
 ):

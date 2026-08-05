@@ -273,6 +273,12 @@ def _workspace_baseline_for_task(registry: Registry, task: legacy.Task) -> str |
     return baseline
 
 
+def _task_uses_worktree_workspace(task: legacy.Task) -> bool:
+    return any(claim.isolation == "worktree" for claim in task.claims) or (
+        task.execution.get("workspace_isolation") == "worktree"
+    )
+
+
 def _planned_workspace(
     registry: Registry,
     task: legacy.Task,
@@ -280,7 +286,7 @@ def _planned_workspace(
     base_dir: Path | None,
     baseline: str | None,
 ) -> dict[str, Any] | None:
-    if not any(claim.isolation == "worktree" for claim in task.claims):
+    if not _task_uses_worktree_workspace(task):
         return None
     repository = task.execution.get("working_repository")
     if not isinstance(repository, str) or not repository.strip():
@@ -5657,8 +5663,10 @@ def create_workspace(
     repository = task.execution.get("working_repository")
     if not repository:
         raise legacy.StateError(f"task {task.id} has no working_repository")
-    if not any(claim.isolation == "worktree" for claim in task.claims):
-        raise legacy.StateError(f"task {task.id} has no worktree-isolated claim")
+    if not _task_uses_worktree_workspace(task):
+        raise legacy.StateError(
+            f"task {task.id} has no worktree-isolated claim or workspace contract"
+        )
     if run["workspace_path"]:
         return run
     repo = Path(repository).expanduser().resolve()

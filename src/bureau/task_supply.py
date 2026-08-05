@@ -316,11 +316,17 @@ def classify_frontier(
 
 def _existing_fallbacks(
     task_documents: Mapping[str, Mapping[str, Any]],
+    *,
+    terminal_task_ids: frozenset[str] = frozenset(),
 ) -> dict[str, tuple[str, dict[str, Any]]]:
     result: dict[str, tuple[str, dict[str, Any]]] = {}
     for task_id, task in sorted(task_documents.items()):
         marker = _task_fallback_metadata(task)
-        if marker is None or task.get("state") in TERMINAL_TASK_STATES:
+        if (
+            marker is None
+            or task.get("state") in TERMINAL_TASK_STATES
+            or task_id in terminal_task_ids
+        ):
             continue
         open_key = marker.get("open_key")
         if isinstance(open_key, str) and open_key:
@@ -468,7 +474,6 @@ def build_supply_report(
     shortage = max(0, policy.refill_target - total_claimable) if refill_triggered else 0
     proposal_limit = min(shortage, policy.max_new_per_cycle, len(FALLBACK_CATALOG))
     bucket = time_bucket(now, policy.bucket_hours)
-    existing = _existing_fallbacks(documents)
     global_blockers = sorted(
         {
             str(blocker)
@@ -484,6 +489,17 @@ def build_supply_report(
         for item in classification["items"]
         if isinstance(item.get("task_id"), str) and item["task_id"]
     }
+    # A task document can still read "ready" after the state store closed it. The
+    # authoritative frontier decides, otherwise a closed fallback is reused forever
+    # and its category never refills again.
+    existing = _existing_fallbacks(
+        documents,
+        terminal_task_ids=frozenset(
+            task_id
+            for task_id, item in frontier_by_task.items()
+            if item.get("effective_state") in TERMINAL_TASK_STATES
+        ),
+    )
     proposals: list[dict[str, Any]] = []
     created_count = 0
     for index, spec in enumerate(FALLBACK_CATALOG):
@@ -527,6 +543,11 @@ def build_supply_report(
             )
             continue
         task_id = _fallback_task_id(initiative_id, spec, fingerprint)
+        if task_id in documents:
+            # A terminal fallback keeps its canonical document for the rest of its time
+            # bucket. Creating the identical id again would abort the whole publication,
+            # so this category waits for the next bucket instead of deadlocking the rest.
+            blockers.add("fallback-task-id-already-canonical-in-current-bucket")
         task = _fallback_task(
             task_id=task_id,
             initiative_id=initiative_id,

@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T028",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Claimable-Supply-Schleife von Beobachtung zu kanonischer Publikation schliessen",
+  "state": "ready",
+  "goal": "Die von T014 gelieferte Supply-Politik produktiv machen. Ein Stadium erzeugt den autoritativen, revisionsgebundenen Frontier-Snapshot, schreibt den Supply-Report an den Pfad, den bureau-agent-frontier bereits liest, und publiziert bei unterschrittener claimfaehiger Frontier mehrere deterministische, deduplizierte Fallbacks nur bei expliziter Mutationsautoritaet kanonisch als Task- und Queue-Eintraege. Preview bleibt read-only, echte Arbeit bleibt vorrangig, und alle Lease-, Capability-, Open-PR- und Runtime-Gates bleiben unveraendert.",
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "depends_on": [
+    "OPERATOR-INTEGRATION-LOOP-V1-T014"
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Folgevertrag zu T014 nach Live-Befund vom 2026-08-05: agent-frontier meldete acht ausgewaehlte Kandidaten ohne kanonische Task-Bindung, weil kein Stadium den autoritativen Snapshot und den Supply-Report erzeugte."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/supply_runner.py",
+      "path:/home/alex/repos/bureau/src/bureau/task_supply.py",
+      "path:/home/alex/repos/bureau/tests/test_supply_runner.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py",
+      "path:/home/alex/repos/bureau/docs/bureau-ready-supply-fallback-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T028.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "authoritative-snapshot-produced",
+      "assertion": "Ein Stadium liest die Frontier ueber den kanonischen Dispatcher mit derselben Runtime-Wahrheit wie der Claim-Pfad, persistiert sie als begrenzten, an Registry-Head und Queue-Digest gebundenen Snapshot und schreibt den Supply-Report an den Pfad, den bureau-agent-frontier bereits konsumiert."
+    },
+    {
+      "id": "refill-toward-target",
+      "assertion": "Acht ausgewaehlte, aber ungebundene Kandidaten ergeben null autoritativ claimfaehige Arbeit und fuellen bei Mutationsautoritaet deterministisch und pro Zyklus begrenzt in Richtung des Refill-Ziels auf; die publizierten Tasks erscheinen kanonisch in registry/tasks und in der later-Lane."
+    },
+    {
+      "id": "authority-failure-is-blocked",
+      "assertion": "Ohne Mutationsautoritaet bleibt das Ergebnis explizit blocked mit dem Blocker registry-mutation-authority-unavailable, die Registry bleibt byteidentisch, und Preview bleibt read-only."
+    },
+    {
+      "id": "repetition-without-duplicates",
+      "assertion": "Wiederholte Zyklen nutzen nichtterminale Fallbacks wieder statt zu duplizieren; ein im selben Zeitfenster terminaler Fallback blockiert nur seine eigene Kategorie und laesst die Publikation der uebrigen Kategorien unberuehrt."
+    },
+    {
+      "id": "no-displacement-of-real-work",
+      "assertion": "Liegt die normale claimfaehige Arbeit auf oder ueber dem Floor, entstehen keine Vorschlaege, keine Publikation und keine Registry-Aenderung."
+    },
+    {
+      "id": "authoritative-state-beats-document",
+      "assertion": "Ein nur ueber den State-Store geschlossener Fallback wird nicht dauerhaft wiederverwendet; die autoritative Frontier entscheidet ueber Terminalitaet, damit eine Kategorie wieder auffuellbar wird."
+    },
+    {
+      "id": "gates-and-validation",
+      "assertion": "Regressionstests, ruff, bureau check und die vollstaendige Testsuite sind gruen, und Lease-, Capability-, Open-PR- sowie Runtime-Gates bleiben unveraendert wirksam."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-08-05",
+    "source": "Live-Befund aus /home/alex/.local/state/bureau-agent-frontier/latest-report.json, cycle_id 2026-08-05T06",
+    "live_evidence": {
+      "selected_frontier_count": 8,
+      "eligible_candidate_count": 273,
+      "canonical_task_bound_count": 0,
+      "selected_lane_count": 0,
+      "report_sha256": "1fbb7bcc6154f2928bf0adb09def137551aef03b723990cd4bf45c6a47def9a0",
+      "measured_authoritative_claimable_count": 0,
+      "measured_raw_ready_count": 8
+    },
+    "complements": "OPERATOR-INTEGRATION-LOOP-V1-T014 claimable supply floor",
+    "scope_exclusions": [
+      "Aktivieren eines registry-mutierenden Timers ohne Operator-Entscheidung",
+      "Aufweichen von Lease-, Capability-, Open-PR- oder Runtime-Gates",
+      "Aenderung fremder Worktrees oder Dirty-States",
+      "Merge ohne gruene Pflichtchecks"
+    ],
+    "does_not_establish": [
+      "Claimbarkeit publizierter Fallbacks vor erneuter Pruefung durch die normalen Claim-Gates",
+      "Merge- oder Deployment-Autoritaet",
+      "dass Rohzaehlungen von ready-Dokumenten ausfuehrbare Arbeit messen"
+    ]
+  }
+}

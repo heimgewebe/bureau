@@ -259,6 +259,56 @@ def test_existing_nonterminal_fallback_is_reused(tmp_path: Path) -> None:
     ]
 
 
+def test_fallback_closed_only_by_authoritative_state_is_not_reused_forever(
+    tmp_path: Path,
+) -> None:
+    first = report(tmp_path, [], generated_at=NOW)
+    published = first["proposals"][0]["task"]
+    closed = frontier_item(published["id"], state="verified", reasons=["state is verified"])
+
+    # The document still says "ready"; the authoritative frontier says otherwise, so the
+    # category is released instead of being pinned to a closed task.
+    same_bucket = report(tmp_path, [closed], task_documents={published["id"]: published})
+    assert same_bucket["proposals"][0]["action"] == "create"
+    assert same_bucket["proposals"][0]["blockers"] == [
+        "fallback-task-id-already-canonical-in-current-bucket"
+    ]
+
+    replaced = report(
+        tmp_path,
+        [closed],
+        task_documents={published["id"]: published},
+        generated_at=NEXT_BUCKET,
+    )
+    assert replaced["proposals"][0]["action"] == "create"
+    assert replaced["proposals"][0]["task_id"] != published["id"]
+    assert replaced["proposals"][0]["blockers"] == []
+
+
+def test_terminal_fallback_id_blocks_only_its_category_in_the_same_bucket(
+    tmp_path: Path,
+) -> None:
+    first = report(tmp_path, [], generated_at=NOW)
+    terminal = dict(first["proposals"][0]["task"], state="cancelled")
+    second = report(tmp_path, [], task_documents={terminal["id"]: terminal}, generated_at=NOW)
+    blocked = second["proposals"][0]
+    assert blocked["action"] == "create"
+    assert blocked["task_id"] == terminal["id"]
+    assert blocked["blockers"] == ["fallback-task-id-already-canonical-in-current-bucket"]
+    actions = second["publication_plan"]["actions"]
+    assert terminal["id"] not in [action["task_id"] for action in actions]
+    assert second["publication_plan"]["status"] == "authorized"
+    assert second["metrics"]["new_proposal_count"] == 4
+
+    later = report(
+        tmp_path,
+        [],
+        task_documents={terminal["id"]: terminal},
+        generated_at=NEXT_BUCKET,
+    )
+    assert later["proposals"][0]["blockers"] == []
+
+
 def test_report_and_plan_digests_bind_full_payload(tmp_path: Path) -> None:
     result = report(tmp_path, [])
     report_payload = {key: value for key, value in result.items() if key != "report_sha256"}

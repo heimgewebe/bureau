@@ -57,6 +57,24 @@ Each category has two identifiers:
 
 A nonterminal canonical task with the same open key is reused. A later cycle therefore does not create a duplicate merely because the fingerprint bucket changed. Terminal tasks may be replaced in a later bucket. Each cycle is additionally capped by `max_new_per_cycle` and the finite catalog size.
 
+A terminal fallback keeps its canonical task document, and that document keeps the id derived from the current bucket. Recreating the identical id would abort the whole publication, so a category whose current-bucket id already exists canonically carries the blocker `fallback-task-id-already-canonical-in-current-bucket` and waits for the next bucket. The remaining categories still refill, so a fast-closing fallback cannot deadlock the supply loop.
+
+## Supply stage
+
+`python -m bureau.supply_runner` closes the loop that preview alone cannot: it produces the authoritative snapshot the preview demands and writes the report the agent frontier reads.
+
+One cycle:
+
+1. reads the current Registry Git head and the queue SHA-256;
+2. observes the frontier through the canonical `Dispatcher`, using the same runtime execution truth the claim path gates on and the worker capabilities passed with `--capability`;
+3. persists that observation as a bounded, revision-bound snapshot (`frontier-snapshot.json`) restricted to the fields the claim contract exposes;
+4. writes the supply report to `latest-report.json` under the state root that `bureau-agent-frontier` already consumes;
+5. publishes the bounded plan **only** with both `--mutation-authority` and `--publish`, and only when the plan is authorized and blocker-free;
+6. reads the published tasks back through the dispatcher and records whether the normal gates now admit them;
+7. emits a terminal cycle receipt.
+
+Without `--mutation-authority` the stage stays a preview: a starved frontier yields status `blocked` with the explicit `registry-mutation-authority-unavailable` blocker and leaves the Registry byte-identical. Capabilities have no default; an empty capability set is rejected rather than treated as unrestricted. The stage is not wired into a timer — mutation authority stays an operator decision per Registry revision.
+
 ## Preview and publication
 
 `bureau.task_supply` produces a versioned report and a digest-bound publication plan.
@@ -114,6 +132,8 @@ The frontier remains read-only. It does not publish tasks, reserve resources, cl
 
 ## Operational sequence
 
+Steps 1, 2, 5, 6, and 7 are the supply stage; steps 3, 4, and 8 stay with the operator.
+
 1. Read the current Registry, state database, runtime identity, open-PR guard, capabilities, and frontier through the canonical dispatcher.
 2. Persist that authoritative frontier as a revision-bound snapshot and generate a read-only supply report from it.
 3. Review counts, blockers, catalog scopes, fingerprints, head, queue digest, and plan digest.
@@ -122,6 +142,17 @@ The frontier remains read-only. It does not publish tasks, reserve resources, cl
 6. Reload and validate the Registry.
 7. Run the normal claim-intent path again.
 8. Treat any post-publication blocker as authoritative; do not bypass it.
+
+```
+# 1-3: preview only, no mutation authority
+python -m bureau.supply_runner --registry-root . --capability repository --capability python \
+  --capability testing --capability bureau --capability grabowski
+
+# 4-7: after reviewing the plan for this exact Registry revision
+python -m bureau.supply_runner --registry-root . --capability repository --capability python \
+  --capability testing --capability bureau --capability grabowski \
+  --mutation-authority --publish
+```
 
 ## Nonclaims
 

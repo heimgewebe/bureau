@@ -1,0 +1,139 @@
+{
+  "acceptance": [
+    {
+      "id": "fresh-live-state",
+      "evidence_type": "object",
+      "assertion": "Vor jeder weiteren Wirkung werden der aktuelle Weltgewebe-main, der exakte Kopf und die Mergeability von PR #1682, Reviews, Pflichtchecks, parallele Worktrees und Leases, der öffentliche Frontend-/API-Commit sowie der reale Produktionszustand der API frisch gelesen. Zusammenfassungen oder ältere Screenshots ersetzen diesen Readback nicht."
+    },
+    {
+      "id": "reviewed-release-bound-bootstrap",
+      "evidence_type": "object",
+      "assertion": "PR #1682 oder ein nachweislich gleichwertiger Nachfolger ist auf einen exakten Base-, Head- und Diffstand gebunden, vollständig geprüft und nach geltender Satzung reviewed. Der private VAPID-Schlüssel entsteht ausschließlich in der root-geschützten Produktionsumgebung, wird nicht protokolliert oder ins Repository geschrieben, bleibt über Deploys stabil und wird bei Teilkonfiguration, unsicherer Datei oder ungültigem Wert fail-closed verweigert."
+    },
+    {
+      "id": "exact-main-production-deployment",
+      "evidence_type": "object",
+      "assertion": "Nach grünen Schutzgates wird ausschließlich der geprüfte exakte Main-Commit über den kanonischen migrationssicheren Produktions-Reconciler ausgerollt. Frontend und API melden denselben Commit; die Migration 20260804000001_web_push_notifications ist angewendet; vorhandene fremde Dirty-States, Leases und Prozesse bleiben unangetastet."
+    },
+    {
+      "id": "server-readback-enabled",
+      "evidence_type": "object",
+      "assertion": "Die Produktions-API startet mit dem belegten Logzustand `Privacy-safe Web Push delivery configured`. Ein angemeldeter Readback von `/api/push/config` liefert `enabled: true` und einen nicht leeren öffentlichen Anwendungsschlüssel, ohne den privaten Schlüssel oder andere Secrets offenzulegen."
+    },
+    {
+      "id": "ios-device-registration",
+      "evidence_type": "object",
+      "assertion": "Auf einer zum Home-Bildschirm hinzugefügten Weltgewebe-Web-App wird die Gerätefreigabe durch eine bewusste Nutzeraktion ausgelöst und die iOS-/iPadOS-Systemberechtigung bestätigt. Danach zeigt die Oberfläche dieses konkrete Gerät als aktiv registriert; eine serverseitige Aktivierung wird nicht fälschlich als erteilte Betriebssystemeinwilligung ausgegeben."
+    },
+    {
+      "id": "privacy-safe-provider-delivery",
+      "evidence_type": "object",
+      "assertion": "Eine private Testnachricht erzeugt auf dem registrierten Gerät genau einen verschlüsselten neutralen Hinweis. Sperrbildschirm und Hinweis enthalten weder Nachrichtentext noch Absendername, Account-ID oder sonstige private Metadaten; das Öffnen führt nur zur gleichursprünglichen Weltgewebe-Unterhaltung. Providerannahme und tatsächliche Geräteanzeige werden getrennt belegt."
+    },
+    {
+      "id": "disable-and-inbox-independence",
+      "evidence_type": "object",
+      "assertion": "Nach Deaktivierung des Testgeräts erzeugt eine weitere private Testnachricht keinen neuen Push-Hinweis. Beide Nachrichten bleiben unverändert im kanonischen Postfach sichtbar; Push-Ausfall, Ablehnung oder Abschaltung verändert weder Nachrichtenspeicher noch Zugriff."
+    },
+    {
+      "id": "rollback-and-key-stability",
+      "evidence_type": "object",
+      "assertion": "Der Rückbau über `WEB_PUSH_VAPID_BOOTSTRAP_MODE=disabled`, gemeinsames Entfernen der drei Web-Push-Werte und einen begrenzten API-Neustart ist dokumentiert und maschinengeprüft. Ein normaler Folge-Deploy rotiert die bestehende VAPID-Identität nicht; eine spätere Rotation bleibt eine eigene geplante Geräteerneuerung."
+    },
+    {
+      "id": "operator-transport-boundary",
+      "evidence_type": "object",
+      "assertion": "Der weiterhin offene Connector-Sitzungsfehler aus GRABOWSKI-OPERATOR-SURFACE-V1-T142 wird nicht durch direkte, ungebundene oder globale Mutationsautorität umgangen. Schreibende Operatorwirkung erfolgt nur über einen nachweislich funktionierenden Transport-Dreischritt oder den überprüften GitOps-/Reconcilerpfad."
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.weltgewebe.web-push-production-t066"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T142"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Der Nutzer verlangte am 5. August 2026 ausdrücklich die vollständige Umsetzung der Web-Push-Aktivierung. Repository- und GitOps-Arbeit ist autorisiert; vor jeder Produktionswirkung bleiben exakter Commit, Review, grüne Checks, Nichtüberlappung, Rückbau und der kanonische Reconcilerpfad zwingend. Die iOS-/iPadOS-Berechtigung muss der Nutzer selbst bewusst erteilen."
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/scripts/ops/ensure_web_push_vapid_env.py",
+      "path:/home/alex/repos/weltgewebe/scripts/ops/activate-production-reconciler-from-release.sh",
+      "path:/home/alex/repos/weltgewebe/scripts/ci/tests/test_ensure_web_push_vapid_env.py",
+      "path:/etc/weltgewebe/weltgewebe.env",
+      "operation:weltgewebe:web-push-production-activation",
+      "service:weltgewebe-api-production"
+    ]
+  },
+  "goal": "Den bereits implementierten datenschutzarmen Web-Push-Kanal für private Nachrichten vollständig und belegbar in Produktion aktivieren: sichere stabile VAPID-Identität, geprüfter exakter GitOps-Deploy, serverseitiger Aktivierungsreadback, bewusst registriertes iOS-/iPadOS-Gerät, neutrale Ende-zu-Ende-Zustellung sowie belegte Deaktivierung und Postfachunabhängigkeit.",
+  "id": "WELTGEWEBE-OS-V1-T066",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "registered_at": "2026-08-05",
+    "source": "operator_followup_from_web_push_production_activation",
+    "source_pr": "heimgewebe/weltgewebe#1682",
+    "source_branch": "ops/web-push-production-bootstrap-v1",
+    "source_base_sha": "7fc3720a988e911204ad9446dd0108119b298b7c",
+    "initial_head_sha": "f6d0b433014a8cd0ef6ee3bdd206656cf8294f9b",
+    "observed_production_state": {
+      "target": "wg-prod-1",
+      "api_image": "weltgewebe-api:7fc3720a",
+      "runtime_env": "/etc/weltgewebe/weltgewebe.env",
+      "web_push_vapid_private_key": "unset",
+      "web_push_vapid_contact": "unset",
+      "web_push_allowed_host_suffixes": "unset",
+      "public_ui": "server delivery path not configured"
+    },
+    "operator_blocker": {
+      "task": "GRABOWSKI-OPERATOR-SURFACE-V1-T142",
+      "deployed_grabowski_revision": "606d16fabe845ce233ebb2e6e7fd84c51b62abb1",
+      "begin_receipt_sha256": "ba50c27a05547b140b20e8cc085e7cc752a1e16640429be8846593ac0fa7e28f",
+      "ack_error": "transport challenge is missing; begin a new handshake",
+      "fallback": "reviewed GitOps release path; no direct unbound production mutation"
+    },
+    "does_not_establish": [
+      "successful production deployment before merge and public readback",
+      "provider acceptance",
+      "device delivery",
+      "iOS or iPadOS notification permission",
+      "queue truth",
+      "claim or dispatch authority",
+      "permission to expose or rotate the private VAPID key",
+      "permission to overwrite foreign Dirty-States, leases or processes"
+    ]
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "ci",
+    "testing",
+    "deployment",
+    "web-push",
+    "ios",
+    "privacy",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Vor Lösungswahl und Wirkung müssen aktueller Weltgewebe-main, PR #1682, Produktions-Reconciler, API-Konfiguration, Logs, öffentlicher Commit und Gerätezustand live gelesen werden; RepoGround ergänzt nur Abhängigkeiten und Änderungsfolgen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Web Push für private Nachrichten produktiv aktivieren und Ende-zu-Ende belegen"
+}

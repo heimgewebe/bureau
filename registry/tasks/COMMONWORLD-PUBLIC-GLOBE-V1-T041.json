@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The canonical Commonworld model contains separately documented, bounded and versioned dimensions for data openness, software openness and governance control or participation, including explicit unknown and not-applicable states rather than forcing a positive or negative claim.",
+      "evidence_type": "object",
+      "id": "bounded-openness-dimensions"
+    },
+    {
+      "assertion": "Every non-unknown openness or governance value can reference primary-source evidence and observation dates; validators reject unsupported, contradictory or overbroad claims such as treating use of an open-source component as proof that an entire platform is open source.",
+      "evidence_type": "object",
+      "id": "evidence-bound-claims"
+    },
+    {
+      "assertion": "Existing catalog and Commons-basis records migrate deterministically. Records are marked unknown where current evidence is insufficient, and no bulk migration infers openness from names, themes or third-party descriptions.",
+      "evidence_type": "object",
+      "id": "deterministic-catalog-migration"
+    },
+    {
+      "assertion": "Public catalog detail and, where useful, filtering can expose the three dimensions independently with locale-safe labels and accessible explanations. mundraub.org is representable as operator-led with unproven full data and software openness without being excluded as Commons infrastructure.",
+      "evidence_type": "object",
+      "id": "public-comparison-and-localization"
+    },
+    {
+      "assertion": "Schema tests, admission tests, validation, deterministic generation, full make validate, browser smoke and required GitHub checks pass on the exact proposed head; generated release and evidence artifacts are updated only through canonical generators.",
+      "evidence_type": "object",
+      "id": "regression-and-release-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The task may evolve generic catalog and admission schemas, validators, rendering and generated releases in an isolated worktree. It must not retroactively infer openness from project reputation or component licenses.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Replace free-text-only openness caveats in Commonworld admissions with evidence-bound, comparable dimensions for data openness, software openness and governance control, without inferring openness where evidence is absent.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T041",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that openness is required for every Commons classification",
+      "that unknown means closed",
+      "that open-source dependencies make a platform open source",
+      "permission to rewrite historical evidence without fresh source review",
+      "automatic merge, deployment or production-verification authority"
+    ],
+    "observed_gap": "Data openness, software openness and operator-versus-community governance are stored only in prose limitations, preventing consistent comparison and filtering.",
+    "source": "Follow-up from Commonworld mundraub.org admission in PR #190 on 2026-08-05",
+    "source_locator": "github:heimgewebe/commonworld#190@f29f4ccb5ee4f286f356dc4191c2731d7589438d",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-46ab915fbfd0ccb45000bf6c",
+      "event_id": 2636,
+      "event_created_at": "2026-08-05T16:42:54.990461Z",
+      "request_sha256": "0ae0e88c799d8c8ded17688c476e36eaeea655b224cf2c5ed3a20e44ce964f7b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "implementation-closeout",
+        "locator": "github:heimgewebe/commonworld#190@f29f4ccb5ee4f286f356dc4191c2731d7589438d",
+        "observed_at": "2026-08-05T16:40:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 41
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "shell",
+    "grabowski",
+    "schema-design",
+    "testing",
+    "build-system",
+    "ci",
+    "browser",
+    "i18n"
+  ],
+  "rollback": {
+    "strategy": "If the new fields destabilize catalog compatibility or encourage unsupported classifications, revert schema, migration, UI and generated release changes together while retaining focused fixtures that demonstrate the ambiguity of free-text-only openness notes."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Model data, software and governance openness explicitly"
+}

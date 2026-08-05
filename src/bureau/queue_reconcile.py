@@ -21,6 +21,7 @@ class TaskSnapshot:
     queue_lane: str | None
     priority_lane: str
     priority_rank: int
+    blocking_child_task_ids: tuple[str, ...]
 
 
 def _validate_resource_filter(registry: Registry, resource: str | None) -> None:
@@ -83,6 +84,9 @@ def _snapshot_tasks(
                 queue_lane=_queue_lane(registry, task.id),
                 priority_lane=task.lane,
                 priority_rank=task.rank,
+                blocking_child_task_ids=registry.parent_child_projection(
+                    task.id, overlays
+                ).blocking_child_task_ids,
             )
         )
     return snapshots
@@ -547,6 +551,31 @@ def queue_reconcile_report(
             )
         if (
             item.queue_lane is None
+            and item.blocking_child_task_ids
+            and item.effective_state in {"planned", "ready"}
+            and item.priority_lane in {"now", "next"}
+        ):
+            finding = _finding(
+                code="parent-task-blocked-from-queue-promotion",
+                severity="info",
+                task=task,
+                message=(
+                    "Parent task is absent from the queue because nonterminal "
+                    "child tasks still block dispatch."
+                ),
+                recommendation="wait_for_children",
+                rule="parent_child_claim_gate_precedes_queue_promotion",
+                queue_lane=item.queue_lane,
+                priority_lane=item.priority_lane,
+                effective_state=item.effective_state,
+            )
+            finding["blocking_child_task_ids"] = list(
+                item.blocking_child_task_ids
+            )
+            findings.append(finding)
+        if (
+            item.queue_lane is None
+            and not item.blocking_child_task_ids
             and item.effective_state == "ready"
             and item.priority_lane == "now"
         ):
@@ -566,6 +595,7 @@ def queue_reconcile_report(
             )
         if (
             item.queue_lane is None
+            and not item.blocking_child_task_ids
             and item.effective_state in {"planned", "ready"}
             and item.priority_lane == "next"
         ):

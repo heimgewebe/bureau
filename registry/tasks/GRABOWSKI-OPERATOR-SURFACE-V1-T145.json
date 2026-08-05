@@ -93,7 +93,79 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "updated_at": "2026-08-05T20:05:00Z",
+    "closeout": {
+      "status": "verified",
+      "verified_at": "2026-08-05T20:05:00Z",
+      "implementation": {
+        "pull_request": "heimgewebe/grabowski#637",
+        "source_commit": "039959610844f0c9853c3a65290565d813c9efd3",
+        "merge_commit": "bc5e817415c590818d09da124e0e11dda14046b2",
+        "installed_unit_contract": "RestrictAddressFamilies=AF_UNIX AF_NETLINK",
+        "forbidden_address_families": [
+          "AF_INET",
+          "AF_INET6"
+        ]
+      },
+      "runtime": {
+        "repo_head": "a5e4db7781ace45dfa0abaab370171a5e7916237",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "serving_process_current": true
+      },
+      "tests": {
+        "focused": "83 passed, 9 subtests passed",
+        "full_deploy_validation": "4876 passed, 12 skipped",
+        "ci": [
+          "validate 3.10",
+          "validate 3.12",
+          "CodeQL actions",
+          "CodeQL python",
+          "Codex review settled"
+        ]
+      },
+      "firewall_readback": {
+        "power_request_id": "f1c663b5a0db4cd9b3c5895a3df6de92",
+        "power_reference_sha256": "f9be39239485d257456fbdf709f68afc587b807d6e013fdfccedd493d7ac43ff",
+        "argv_sha256": "addc59aa6eead79521fff7efdaee6b17b0de2d4ff8913f5c7ede5edc29e441dd",
+        "structural_sha256": {
+          "ufw": "41de42ed5201da9f8bdd8c755c3d6d4afacca3021bbfaaeadf4aeaccf2dd0e33",
+          "nft": "be97438975373abcf21a9fd880d698bd1fdf1af75944c33580400dc1d3bb8428",
+          "iptables": "470c402c01e8b6f9aa4726bfca66690cf222689e57911ae9d72e306d2de7b4a1",
+          "ip6tables": "ed21bd34b677b0e316cf684ea7f85083962a96b22b8af423921b5746b32b7529"
+        },
+        "two_snapshot_structural_identity": true,
+        "normalization": [
+          "nft packet and byte counters only",
+          "iptables generated and completed timestamps only"
+        ]
+      },
+      "t008_truth_update": {
+        "task_id": "OPERATOR-PC-HYGIENE-V1-T008",
+        "target_state": "verified",
+        "unsupported_edges_retained_as_unverified": true
+      },
+      "does_not_establish": [
+        "firewall correctness",
+        "categorical absence of public ingress",
+        "UDP reachability outside tested evidence",
+        "permission to mutate firewall rules"
+      ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "kind": "bureau.task_verification_receipt",
+      "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T145",
+      "task_sha256": "d0e1277073125d73cb15337714ac44d714a2f9da0834c106c29bc7e383268c25",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "evidence_sha256": "51c6595771489daf5004a59761d131ef9b871735cbd1a8c0ac41fe748c7566f4",
+      "source": "operator_live_evidence",
+      "source_ref": "grabowski-runtime:a5e4db7781ace45dfa0abaab370171a5e7916237;grabowski-pr:637@bc5e817415c590818d09da124e0e11dda14046b2;bureau-base:5a446a5b4b0d73671547492cbe09dd404380a84a",
+      "verified_at": "2026-08-05T20:05:00Z",
+      "receipt_sha256": "b93eeed7f4376b5ce71c130cb921693053b56484f92961de5ef62c000da2e576"
+    },
+    "verified_at": "2026-08-05T20:05:00Z"
   },
   "priority": {
     "lane": "next",
@@ -111,6 +183,6 @@
     "strategy": "Bei Test-, Deploy- oder No-Effect-Abweichung die Unit auf AF_UNIX zurücksetzen, den Root-Broker neu laden und den Firewall-Readback weiterhin UNVERIFIED lassen; keine Firewallregel automatisch verändern."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Root-Broker für begrenzten Netlink-Firewall-Readback öffnen"
 }

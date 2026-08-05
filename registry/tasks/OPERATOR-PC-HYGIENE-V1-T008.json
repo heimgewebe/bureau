@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-PC-HYGIENE-V1",
-  "state": "blocked",
+  "state": "verified",
   "required_capabilities": [
     "shell",
     "grabowski"
@@ -57,14 +57,16 @@
     "source_audit": "OPERATOR-PC-HYGIENE-V1-T004 closeout",
     "reason": "T004 classified listeners but deliberately did not prove router forwarding, complete firewall policy or categorical public-ingress absence.",
     "does_not_establish": [
-      "no_public_ingress",
-      "router_configuration_access",
+      "UDP reachability",
+      "categorical absence of public ingress",
       "external_probe_authority",
-      "firewall_correctness"
+      "firewall correctness",
+      "firewall_correctness",
+      "no_public_ingress",
+      "permission to change firewall or router configuration",
+      "router configuration beyond named unavailable surfaces",
+      "router_configuration_access"
     ],
-    "blocked_at": "2026-07-11T02:33:46Z",
-    "block_reason": "Router IGD and local Tailscale publication are proven, but effective UFW/nftables/iptables policy remains unreadable because T030 rejects the privileged read immediately after a fresh recovery proof. No independent external-network probe authority is available in this run.",
-    "blocked_by_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
     "partial_evidence": {
       "infra_pr": "heimgewebe/infra#120",
       "merge_commit": "61bc893ee50ac7d50eb548dcb4167f5ec6cb1461",
@@ -88,12 +90,144 @@
       "command_executed": false
     },
     "unverified": [
-      "effective host firewall rules/default input policy",
-      "manual router web-UI forwarding outside IGD visibility",
-      "PCP state outside read IGD surface",
-      "bounded independent external-network probe",
+      "current manual router forwarding outside authenticated IGD or router API visibility",
+      "current PCP and NAT-PMP mapping state",
+      "public UDP reachability",
+      "public reachability of unlisted TCP ports or from other source networks",
       "categorical no-public-ingress claim"
     ],
-    "next_action": "Complete T030, capture bounded UFW/nftables/iptables truth, then run an explicitly scoped external probe from an independent registered host or retain that acceptance item UNVERIFIED."
+    "updated_at": "2026-08-05T20:05:00Z",
+    "current_evidence_20260805": {
+      "runtime": {
+        "grabowski_repo_head": "a5e4db7781ace45dfa0abaab370171a5e7916237",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true
+      },
+      "rootbroker": {
+        "source_merge_commit": "bc5e817415c590818d09da124e0e11dda14046b2",
+        "installed_unit_contract": "RestrictAddressFamilies=AF_UNIX AF_NETLINK",
+        "broker_ready": true,
+        "recovery_gate_ready": true
+      },
+      "host_firewall": {
+        "ufw_status": "inactive",
+        "effective_policies": {
+          "ipv4_input": "accept",
+          "ipv4_forward": "accept",
+          "ipv4_output": "accept",
+          "ipv6_input": "accept",
+          "ipv6_forward": "drop",
+          "ipv6_output": "accept"
+        },
+        "managed_chains": [
+          "Docker",
+          "Tailscale",
+          "libvirt"
+        ],
+        "readback_power_request_id": "f1c663b5a0db4cd9b3c5895a3df6de92",
+        "readback_power_reference_sha256": "f9be39239485d257456fbdf709f68afc587b807d6e013fdfccedd493d7ac43ff",
+        "structural_sha256": {
+          "ufw": "41de42ed5201da9f8bdd8c755c3d6d4afacca3021bbfaaeadf4aeaccf2dd0e33",
+          "nft": "be97438975373abcf21a9fd880d698bd1fdf1af75944c33580400dc1d3bb8428",
+          "iptables": "470c402c01e8b6f9aa4726bfca66690cf222689e57911ae9d72e306d2de7b4a1",
+          "ip6tables": "ed21bd34b677b0e316cf684ea7f85083962a96b22b8af423921b5746b32b7529"
+        },
+        "two_snapshot_structural_identity": true,
+        "normalization": [
+          "nft packet and byte counters only",
+          "iptables generated and completed timestamps only"
+        ]
+      },
+      "overlay": {
+        "backend_state": "Running",
+        "self_online": true,
+        "tailscale_ip_count": 2,
+        "peer_count": 4,
+        "serve_configured": true,
+        "funnel_configured": true,
+        "serve_funnel_stdout_sha256": "bce050973bd175e12e7f43fbbafa52b3e6d16b8371888a9743f93ca440c938d3",
+        "status_stdout_sha256": "22eb98a5eb9a9633ef20e9bc56a04104fe4abe272e81f289b11411c7bc4825c3"
+      },
+      "router": {
+        "current_status": "UNVERIFIED",
+        "missing_access": [
+          "authenticated router web UI or API",
+          "UPnP IGD client",
+          "PCP client",
+          "NAT-PMP client"
+        ],
+        "locally_available_clients": {
+          "upnpc": false,
+          "pcp": false,
+          "pcp-client": false,
+          "natpmpc": false
+        },
+        "historical_igd_evidence_retained": true,
+        "historical_igd_evidence_is_current": false
+      },
+      "external_probe": {
+        "source_host": "wg-prod-1",
+        "source_roles": [
+          "vps",
+          "production"
+        ],
+        "target_ipv4_sha256": "c724ec735c364915647497ff48f2879e1a05e225859a60d2a0f643ac07b9d1ad",
+        "observed_at": "2026-08-05T20:04:46Z",
+        "tested_protocol": "tcp",
+        "tested_ports": [
+          22,
+          80,
+          443,
+          3389,
+          4196,
+          6600,
+          6789,
+          8080,
+          8443,
+          47984,
+          47989,
+          47990,
+          48010,
+          55432
+        ],
+        "result": "all 14 connection attempts failed before application exchange",
+        "curl_exit_code": 7,
+        "fleet_argv_sha256": "b2c5ac521f2d528f60e49c697b936e7dc114b2c3fd8401600e6ab3fd1a056d07",
+        "limitations": [
+          "does not test UDP",
+          "does not test unlisted TCP ports",
+          "one source network only",
+          "connection failure is not universal proof of no public ingress"
+        ]
+      },
+      "local_listener_snapshot": {
+        "stdout_sha256": "00e13349d4a6ef7ee7c5a87992570650ba7eec83ac5a4f463cca41fddb771da7",
+        "identity_redacted": true
+      }
+    },
+    "verification_summary": {
+      "status": "verified_with_explicit_unverified_edges",
+      "verified_at": "2026-08-05T20:05:00Z",
+      "acceptance_disposition": {
+        "router-proof": "pass: current authenticated router web-UI and PCP truth remain explicitly UNVERIFIED with missing access named; historical IGD evidence is retained but not promoted to current truth",
+        "host-firewall-proof": "pass",
+        "overlay-proof": "pass",
+        "external-probe": "pass: one bounded TCP probe from wg-prod-1 against 14 explicitly listed ports",
+        "runtime-truth": "pass"
+      }
+    },
+    "verification": {
+      "schema_version": 1,
+      "kind": "bureau.task_verification_receipt",
+      "task_id": "OPERATOR-PC-HYGIENE-V1-T008",
+      "task_sha256": "c87e479069b813b0fe3faea8cc17112eb35195e2bcbd19f0b2fd5431cfeeeebb",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b",
+      "evidence_sha256": "a95134aac497a9b0a22cee9b6ba58b9d2103e38ca8eb53a391fa0a664a087510",
+      "source": "operator_live_evidence",
+      "source_ref": "grabowski-runtime:a5e4db7781ace45dfa0abaab370171a5e7916237;grabowski-pr:637@bc5e817415c590818d09da124e0e11dda14046b2;bureau-base:5a446a5b4b0d73671547492cbe09dd404380a84a",
+      "verified_at": "2026-08-05T20:05:00Z",
+      "receipt_sha256": "9ffa1b63f3e0177321f31b31fbda297d34780a90f060b0d8e71712537c2e50eb"
+    },
+    "verified_at": "2026-08-05T20:05:00Z"
   }
 }

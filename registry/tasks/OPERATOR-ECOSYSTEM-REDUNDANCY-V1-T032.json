@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T032",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Heimserver-Retirement terminal abschließen",
-  "state": "blocked",
+  "state": "cancelled",
   "goal": "Verifiziere nach den getrennten Ausführungstasks T060, T061, T063 und T062 den terminalen Heimserver-Retirement-Zustand: kein aktiver Fleet-, Host-, Rollen-, Expositions- oder Ausführungspfad; Heimserver-Repository und Systemkatalog historisch korrekt gebunden; Leitstand-Lifecycle-Consumer produktiv, ohne Retirement als aktuellen Gesundheitsfehler darzustellen.",
   "priority": {
     "lane": "next",
@@ -106,7 +106,7 @@
     "live_register_created_at": "2026-07-19T03:47:26.267079Z",
     "live_register_source": "chatgpt-operator-redundancy-20260719",
     "promotion_required_from_event": true,
-    "last_reconciled_at": "2026-07-26T19:40:00Z",
+    "last_reconciled_at": "2026-08-05T17:57:45.723332Z",
     "live_evidence": {
       "infra_pr": 131,
       "infra_merge_commit": "97785f2e5a9f8faced5f7a96fd92d947d867465d",
@@ -163,6 +163,39 @@
       "historical_or_superseded_evidence_authoritative": false,
       "merged_pr_ancestry_sufficient": false,
       "observed_infra_head_reference": "b4f3638752200c5db69d77344bfc594ec6bd4f57"
+    },
+    "cancellation": {
+      "authority": "bureau-blocker-research-lane",
+      "cancelled_at": "2026-08-05T17:57:45.723332Z",
+      "classification": "irrecoverable_dependency_terminal_state_mismatch",
+      "reason": "T032 requires T060, T061, T063 and T062 to be verified before closeout. On the exact Bureau main revision, T060, T062 and T063 are cancelled while only T061 is verified. Those terminal dependency outcomes cannot be retroactively converted into verification without weakening the frozen acceptance contract, so no executable success path remains.",
+      "primary_evidence": {
+        "bureau_main": "3f048dbf8c786e13128dfc5d195e999f9ec4a041",
+        "required_dependency_states": {
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060": "verified",
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061": "verified",
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063": "verified",
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062": "verified"
+        },
+        "observed_dependency_states": {
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060": "cancelled",
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061": "verified",
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063": "cancelled",
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062": "cancelled"
+        }
+      },
+      "irrecoverable_missing_preconditions": [
+        "verification of T060 under its frozen exact-head contract",
+        "verification of T062 under its frozen execution contract",
+        "verification of T063 under its frozen execution contract"
+      ],
+      "acceptance_disposition": "not_verified_and_not_retroactively_satisfied",
+      "net_nonterminal_delta": -1,
+      "does_not_establish": [
+        "T032 verification",
+        "retroactive dependency verification",
+        "permission to weaken acceptance or dependencies"
+      ]
     }
   }
 }

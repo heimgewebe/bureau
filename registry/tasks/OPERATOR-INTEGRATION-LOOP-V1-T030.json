@@ -1,0 +1,148 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jeder direkte Erwerb einer Branch-, Datei- oder Worktree-Lease bindet Owner, Controller-/Operation-ID, Repository, Branch, Checkout, exakten Scope und mindestens eine dauerhafte Ausführungsidentität aus persistentem Task, Agent-Workspace oder gleichwertigem revisionsgebundenem Receipt. Eine bloße Owner-Zeichenfolge genügt nicht.",
+      "id": "durable-execution-binding"
+    },
+    {
+      "assertion": "Lease-Erneuerung setzt ein frisches, owner- und executionsgebundenes Lebenszeichen voraus. Fehlen Prozess, persistenter Task, Workspace-Status oder zulässiger terminaler Publikationszustand, wird nicht still für Stunden erneuert; der Zustand wird als attention_required beziehungsweise blocking projiziert.",
+      "id": "fresh-heartbeat-renewal"
+    },
+    {
+      "assertion": "Ein Eigentümerwechsel auf einem dirty Checkout oder identischem Branch-/Dateiscope ist nur mit einem terminalen Handoff möglich, der bisherigen Owner, neuen Owner, exakten Head, Branch, Dirty-Digest, Lease-Snapshots, erlaubte Fortsetzung und Zeitpunkt bindet. Ohne Handoff bleibt die Übernahme fail-closed.",
+      "id": "terminal-owner-handoff"
+    },
+    {
+      "assertion": "Leases ohne passenden Prozess, persistenten Task, Workspace-Receipt, Commit/PR oder Chronik-Abschluss können nur nach erneutem exaktem Readback und unveränderten Lease-Snapshots als verwaist reconciliert werden. Dirty-Inhalt wird erhalten; Force, Reset und History-Rewrite sind ausgeschlossen.",
+      "id": "orphan-reconciliation"
+    },
+    {
+      "assertion": "Current-Work, Checkout-Inventar und Operator-Status unterscheiden aktive Ausführung, terminal wartende Publikation, unterbrochene wiederaufnehmbare Arbeit und verwaiste Lease. Ein Owner mit 0 Prozess, 0 Task, 0 Workspace und 0 PR wird nicht als gesund aktive Arbeit dargestellt.",
+      "id": "current-work-visibility"
+    },
+    {
+      "assertion": "Tests reproduzieren zwei direkte Controller auf demselben Task, Branch, Worktree und Dateiscope, Übernahme während Dirty-State, Runtime-Deploy zwischen Challenge und Mutation, fehlenden Prozess/Task, ausgelaufenen Heartbeat, terminalen Handoff, unveränderte Snapshot-Reconciliation sowie konkurrierende Erneuerung. Doppelwirkung und stilles Lease-Stehlen bleiben ausgeschlossen.",
+      "id": "collision-regressions"
+    },
+    {
+      "assertion": "Der am 5. August 2026 beobachtete T012-Fall wird nach terminalem Ende der bestehenden Fremdbindung revisionsgebunden reconciliert: kein fremder Dirty-State geht verloren, der belegte Same-Intent-Retry-Bug bleibt als T012-Codebefund erhalten und eine spätere Fortsetzung besitzt genau einen autoritativen Owner.",
+      "id": "live-incident-proof"
+    },
+    {
+      "assertion": "Fokussierte Lease-, Task-, Workspace-, Current-Work- und Reconciliation-Tests sowie die vollständige Grabowski-Validierung sind grün. Ein frischer Produktions-Readback belegt, dass legitime aktive Controller erneuern können und verwaiste Bindungen nicht mehr stundenlang ohne ausführbaren Owner blockieren.",
+      "id": "full-validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Lease-, Ausführungs- und Handoff-Verträge ändern. Keine fremden Dirty-States, Branches, Prozesse, Tasks oder Leases force-releasen, resetten oder übernehmen. Live-Reconciliation bleibt an exakte terminale Evidenz gebunden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski:operation:operator-integration-loop-v1-t030",
+      "component:grabowski-resource-leases",
+      "component:grabowski-current-work",
+      "component:grabowski-task-lifecycle",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T030.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Verhindern, dass direkte Controller langlebige Branch-, Datei- oder Worktree-Leases ohne nachweislich aktive Ausführung halten oder dass ein zweiter Controller dirty Arbeit ohne terminalen, ownergebundenen Handoff übernimmt. Erwerb und Erneuerung müssen an eine dauerhafte Ausführungsidentität und frische Lebenszeichen gebunden sein; verwaiste Bindungen werden aus exakter terminaler Evidenz sichtbar reconciliert, ohne fremden Dirty-State zu überschreiben.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T030",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to release the current foreign leases",
+      "permission to mutate the current T012 dirty checkout",
+      "that the foreign controller is permanently dead",
+      "permission to bypass exact ownership and handoff checks"
+    ],
+    "registered_at": "2026-08-06T00:00:00+02:00",
+    "source": "chatgpt-operator-live-reconciliation",
+    "source_observation": {
+      "branch": "fix/storage-lifecycle-v1-t012",
+      "checkout": "/home/alex/repos/.grabowski-worktrees/storage-lifecycle-v1-t012",
+      "foreign_owner": "operator:chatgpt:storage-lifecycle-v1-t012-direct-20260805T2336",
+      "friction_event_id": "f5b93d8d40d34d069a0f24f685ef0f55",
+      "head": "116ede07a71a00472d893e0f639804b0221815b1",
+      "identity_file_sha256": "3d7218952e626ba45e03eecef6c5f0c3d3abf77bfbf70d2a245a840b0ba31609",
+      "observed_chronik_handoffs": 0,
+      "observed_matching_prs": 0,
+      "observed_persistent_tasks": 0,
+      "observed_processes": 0,
+      "overlap_axes": [
+        "task",
+        "branch",
+        "worktree",
+        "paths",
+        "migration",
+        "merge-gate",
+        "deployment"
+      ],
+      "repository": "/home/alex/repos/grabowski",
+      "source_sha256": "6fe991adcb8762276ebe38de2f9beeeba2dc589c7475067ffe771da22471f167",
+      "test_file_sha256": "abff4887c31b36c2e309686c58f07f7dd22a01397189b37ad8cd317e447c4351"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6a52fd7d4771b4b06bb9f291",
+      "event_id": 2701,
+      "event_created_at": "2026-08-05T22:00:35.214568Z",
+      "request_sha256": "344fd0af00d35fb38ecbd5ee37d7f9d6fc4f765696259f0fa13abd36cc13527a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-live-reconciliation",
+        "locator": "grabowski-friction:f5b93d8d40d34d069a0f24f685ef0f55",
+        "observed_at": "2026-08-05T23:54:00+02:00",
+        "sha256": "6fe991adcb8762276ebe38de2f9beeeba2dc589c7475067ffe771da22471f167"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 84
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "resource-leases",
+    "process-observation",
+    "task-lifecycle",
+    "concurrency-testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "stop": {
+    "conditions": [
+      "ein angeblich verwaister Owner besitzt doch einen lebenden Prozess, persistenten Task, Workspace oder Publikationslauf",
+      "Dirty-Digest, Head, Branch oder Lease-Snapshot hat sich seit der Prüfung verändert",
+      "die Korrektur würde fremde Inhalte, Leases oder Recovery-Evidenz überschreiben",
+      "eine Wirkung erforderte Force, Reset, History-Rewrite oder ungebundene Prozessbeendigung"
+    ]
+  },
+  "title": "Direkte Operator-Leases an aktive Ausführung und terminalen Handoff binden"
+}

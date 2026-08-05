@@ -1,0 +1,79 @@
+{
+  "acceptance": [
+    {
+      "assertion": "completed wird erst projiziert, wenn der gesamte gebundene Prozess-, Cgroup- und Kindprozessbaum terminal ist und der echte Exitstatus feststeht.",
+      "id": "whole-process-terminality"
+    },
+    {
+      "assertion": "Kann die Terminalität nicht sicher belegt werden, endet der Task als outcome_unknown oder attention_required statt completed.",
+      "id": "uncertainty-fails-closed"
+    },
+    {
+      "assertion": "Ein Test mit Docker create/start/wait und verzögertem Containerende beweist, dass der Task nicht vor dem Container terminalisiert.",
+      "id": "nested-docker-regression"
+    },
+    {
+      "assertion": "Ein Test mit langem curl-oder-Producer-Pipe-zu-sha256sum beweist, dass Pipeline und Nachparser vollständig abgewartet werden.",
+      "id": "stream-regression"
+    },
+    {
+      "assertion": "Abgesetzte oder daemonisierte Kindprozesse werden entweder explizit übernommen und beobachtet oder vor Erfolg als ungebunden blockiert.",
+      "id": "daemonization-regression"
+    },
+    {
+      "assertion": "Output-Capture, Taskstatus und Ressourcenfreigabe verwenden denselben terminalen Beleg; fremde Prozesse oder Container werden nie bereinigt.",
+      "id": "output-and-cleanup-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src",
+      "path:/home/alex/repos/grabowski/tests",
+      "path:/home/alex/repos/grabowski/docs"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Verhindern, dass ein Grabowski-Task als completed gilt, während ein verschachtelter Dockerprozess, eine lange Stream-Pipeline oder ein Kindprozess noch läuft. Terminalität muss an den gesamten revisionsgebundenen Prozess- und Wirkungsbaum gebunden sein.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T144",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass systemd selbst falsch terminalisiert",
+      "dass T143 diese Prozesslebenszykluslücke abdeckt"
+    ],
+    "live_evidence": {
+      "observed_failure": "Mehrere Grabowski-Tasks meldeten completed exakt am Start eines langen pnpm-Dockerbuilds oder öffentlichen curl|sha256sum-Laufs, obwohl die eigentliche Wirkung noch lief beziehungsweise unklar war."
+    },
+    "registered_at": "2026-08-05",
+    "source": "Operator-Closeout heimgewebe/bureau#1523"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "systemd",
+    "docker",
+    "process-lifecycle",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Neue Terminalitätslogik zunächst shadow-evaluieren; bei Fehlklassifikation auf outcome_unknown zurückfallen, ohne fremde Prozesse zu beenden oder Leases vorzeitig freizugeben."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Task-Lebenszyklus an verschachtelte Docker- und Streamprozesse binden"
+}

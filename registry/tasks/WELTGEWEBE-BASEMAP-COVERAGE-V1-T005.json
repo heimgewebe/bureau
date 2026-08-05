@@ -1,0 +1,73 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest reproduziert den Splitzustand: Hostpfad zeigt auf den neuen Buildordner, Caddy auf den alten leeren Inode, öffentliche Webrouten liefern 404.",
+      "id": "reproduce-stale-bind-mount"
+    },
+    {
+      "assertion": "Der produktive Build ersetzt den eingebundenen Ordner nicht oder bindet Caddy vor Freigabe atomar auf die neue revisionsgebundene Generation um.",
+      "id": "stable-publication-contract"
+    },
+    {
+      "assertion": "Buildidentität, Root-HTTP-200 und Host-/Caddy-Verzeichnisidentität werden vor Erfolg geprüft; Abweichungen stellen den letzten belegten Build wieder her.",
+      "id": "fail-closed-readback"
+    },
+    {
+      "assertion": "Eine Caddy-Neubindung verändert API-, Datenbank- und NATS-Container nicht; Tests prüfen deren Containeridentität.",
+      "id": "bounded-caddy-rebind"
+    },
+    {
+      "assertion": "Regionale und Germany-PMTiles-Varianten bestehen denselben Publikations- und Rückbauvertrag.",
+      "id": "variant-parity"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web",
+      "path:/home/alex/repos/weltgewebe/scripts/weltgewebe-up",
+      "path:/home/alex/repos/weltgewebe/infra/compose"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den produktiven Frontendbuild so härten, dass Caddy nie unbemerkt auf einem ersetzten, leeren Buildordner verbleibt. Buildgeneration, Caddy-Bindung, öffentliche Identität und Rückbau werden revisionsgebunden atomar behandelt.",
+  "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T005",
+  "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass eine manuelle Caddy-Neubindung ein dauerhafter Repositoryfix ist"
+    ],
+    "live_evidence": {
+      "observed_failure": "Host-Inode 1827580 und Caddy-Inode 1825966 führten zu HTTP 404; nach kontrolliertem Caddy-Recreate waren beide 1827580 und die Routen lieferten 200."
+    },
+    "registered_at": "2026-08-05",
+    "source": "Operator-Closeout heimgewebe/bureau#1523"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 15
+  },
+  "required_capabilities": [
+    "git",
+    "docker",
+    "caddy",
+    "sveltekit",
+    "systemd",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Bei fehlender öffentlicher Identitäts- oder Inodeübereinstimmung die neue Generation nicht freigeben und die letzte belegte Generation samt Caddy-Bindung wiederherstellen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Weltgewebe-Webbuild bind-mount-stabil publizieren"
+}

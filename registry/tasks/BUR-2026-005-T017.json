@@ -41,7 +41,8 @@
       "path:/home/alex/.local/state/bureau",
       "path:/home/alex/repos/bureau/.bureau-scopes/registry",
       "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T017.json"
-    ]
+    ],
+    "working_repository": "/home/alex/repos/bureau"
   },
   "metadata": {
     "source": "Registered after PR #253 classified superseded receipt drift as non-blocking but did not rewrite the state database.",

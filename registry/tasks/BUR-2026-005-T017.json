@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T017",
   "initiative": "BUR-2026-005",
   "title": "Design receipt state-store normalization path",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T014"
   ],
@@ -72,6 +72,38 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "verified_at": "2026-08-05T11:29:33Z",
+    "outcome": "Implemented by Bureau PR #1546. The exact merge commit is deployed as the immutable Bureau release. Live dry-run against the current state database found no T139 row requiring normalization, so no state rewrite or backup was necessary; runtime-drift-check remained successful and classified remaining historical receipt drift as non-blocking embedded-verification history.",
+    "implementation_pr": "heimgewebe/bureau#1546",
+    "implementation_head": "3ca86c5537811310e6e3ced5ec39b71108daf5dc",
+    "implementation_merge_commit": "8d35f6489e3fdbef5365fb20464577c387768051",
+    "live_runtime_release": "8d35f6489e3f-src69f4be753020",
+    "validation": [
+      "PR #1546 required checks passed on exact head 3ca86c5537811310e6e3ced5ec39b71108daf5dc for Python 3.10, Python 3.12, CodeQL and registry preflight.",
+      "PR #1546 merged through the merge queue as 8d35f6489e3fdbef5365fb20464577c387768051.",
+      "Managed Bureau runtime identity and canonical Registry snapshot both read back exact commit 8d35f6489e3fdbef5365fb20464577c387768051 with valid manifest, inventory and tree digests.",
+      "Live receipt-normalize --dry-run returned status ok and an empty normalizable inventory for GRABOWSKI-OPERATOR-SURFACE-V1-T139.",
+      "No apply was attempted because the exact inventory was empty; therefore no database backup waiver, row mutation or history deletion occurred.",
+      "Live runtime-drift-check returned exit code 0, state integrity ok, no stale_tasks and only informational superseded receipt history plus the pre-existing initiative lifecycle warning."
+    ],
+    "verified_acceptance": {
+      "dry-run-inventory": "The deployed command returned the exact T139 inventory as an empty list, proving no current row requires normalization.",
+      "backup-required": "Apply was correctly skipped because the inventory was empty; the implementation and regression tests require a backup for every non-empty apply.",
+      "history-preserved": "No state row was changed or deleted. The implementation tests cover audit-event preservation for an actual apply.",
+      "runtime-drift-clear": "Live runtime-drift-check completed successfully with no true stale receipt blocker and state database integrity ok."
+    },
+    "verification": {
+      "verified_at": "2026-08-05T11:29:33Z",
+      "acceptance_ids": [
+        "dry-run-inventory",
+        "backup-required",
+        "history-preserved",
+        "runtime-drift-clear"
+      ],
+      "verification_note": "Exact implementation head was green, merge-queue integration and immutable runtime deployment were read back, live dry-run required no mutation, and runtime-drift-check remained successful.",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917",
+      "task_sha256": "57472252fc4d62f25309c478e7e4bf0b1e50f85cd639bed66459b9833d351047"
     }
   },
   "acceptance": [

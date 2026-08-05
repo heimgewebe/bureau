@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Reduce operator ecosystem redundancy",
-  "state": "waiting",
+  "state": "active",
   "commitment": "next",
   "goal": "Reduce duplicated scheduling, execution residue, status projections, maps, event capture and proposal-only work while preserving the distinct authority of Bureau, Grabowski, RepoBrief/Lenskit, GitHub, CI and runtime.",
   "current_plan": {
@@ -377,6 +377,22 @@
       "reconciled_at": "2026-08-04T12:42:40.643822Z",
       "reconciled_from": "active",
       "reconciled_to": "waiting"
+    },
+    "lifecycle_reconciliation_20260805": {
+      "status": "applied",
+      "reconciled_at": "2026-08-05T05:11:31Z",
+      "authority": "user-explicit-implement-all-blocker-actions",
+      "previous_state": "waiting",
+      "current_state": "active",
+      "reason": "The initiative still contains nonterminal work. Projecting it as waiting contradicts the lifecycle contract and the current Doctor requirement for an active initiative.",
+      "base_commit": "bc5a3e21f8f193a9e3e6b1612143084ace11beb9",
+      "source_file_sha256": "f5ef204ad36444ccd58146875743d57aabce0d3d90ba5f4c162f75503448b78c",
+      "does_not_establish": [
+        "completion of any remaining task",
+        "deployment completion",
+        "runtime mutation",
+        "verification of T062"
+      ]
     }
   }
 }

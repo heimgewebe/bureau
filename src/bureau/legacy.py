@@ -494,6 +494,56 @@ class Registry:
                 errors.append(f"task {task.id} has invalid execution policy")
             if task.execution.get("mode") not in execution_modes:
                 errors.append(f"task {task.id} has invalid execution mode")
+            workspace_isolation = task.execution.get("workspace_isolation")
+            if workspace_isolation not in {None, "worktree"}:
+                errors.append(f"task {task.id} has invalid workspace isolation")
+            if workspace_isolation == "worktree" and not any(
+                claim.isolation == "worktree" for claim in task.claims
+            ):
+                working_repository = task.execution.get("working_repository")
+                grabowski_resources = task.execution.get("grabowski_resources")
+                if not isinstance(working_repository, str) or not working_repository.strip():
+                    errors.append(
+                        f"task {task.id} path-leased worktree needs working_repository"
+                    )
+                if not isinstance(grabowski_resources, list) or not grabowski_resources:
+                    errors.append(
+                        f"task {task.id} path-leased worktree needs grabowski_resources"
+                    )
+                elif any(
+                    not isinstance(resource_key, str)
+                    for resource_key in grabowski_resources
+                ):
+                    errors.append(
+                        f"task {task.id} path-leased worktree resources must be strings"
+                    )
+                elif isinstance(working_repository, str) and working_repository.strip():
+                    repository_path = Path(working_repository).expanduser().resolve()
+                    path_resources = [
+                        resource_key.removeprefix("path:")
+                        for resource_key in grabowski_resources
+                        if resource_key.startswith("path:")
+                    ]
+                    if any(
+                        resource_key.startswith("repo:")
+                        for resource_key in grabowski_resources
+                    ) or not path_resources:
+                        errors.append(
+                            f"task {task.id} path-leased worktree needs exact path resources without broad repo resources"
+                        )
+                    for raw_path in path_resources:
+                        resource_path = Path(raw_path).expanduser().resolve()
+                        try:
+                            resource_path.relative_to(repository_path)
+                        except ValueError:
+                            errors.append(
+                                f"task {task.id} path-leased worktree resource is outside working_repository: {raw_path}"
+                            )
+                        else:
+                            if resource_path == repository_path:
+                                errors.append(
+                                    f"task {task.id} path-leased worktree resource must be below working_repository: {raw_path}"
+                                )
             if task.mode == "manual" and task.policy == "autonomous":
                 errors.append(f"manual task {task.id} cannot be autonomous")
             metadata = task.raw.get("metadata")

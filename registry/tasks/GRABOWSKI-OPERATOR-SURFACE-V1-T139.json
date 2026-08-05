@@ -54,7 +54,8 @@
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski"
+    "working_repository": "/home/alex/repos/grabowski",
+    "workspace_isolation": "worktree"
   },
   "goal": "Den gemeinsamen unbeschrifteten Einmal-Token-Pool der Grabowski-Transportverifikation durch eine atomare, revisionsgebundene Verifikation ersetzen, die ausschließlich vom vorgesehenen Aufrufer und dem exakten Zielwerkzeug mit gebundenem Argument- oder Mutationsdigest verbraucht werden kann. Parallele fremde Aufrufe dürfen bestätigte Verifikationen weder übernehmen noch entwerten; alle bestehenden fail-closed-, Lease-, Review- und Recovery-Grenzen bleiben erhalten.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T139",

@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer deployen und live verifizieren",
-  "state": "blocked",
+  "state": "cancelled",
   "goal": "Deploye nach verifiziertem T063-Merge den exakten Leitstand-main-Commit über den kanonischen Releaseadapter und belege per Runtime-, HTTP- und Browser-Readback, dass Lifecycle, technische Freshness und Runtime-Gesundheit getrennt dargestellt werden.",
   "priority": {
     "lane": "next",
@@ -83,6 +83,48 @@
       "deployment_readiness",
       "future_runtime_health",
       "permission_to_mutate_unrelated_services"
-    ]
+    ],
+    "process_deviation": {
+      "status": "reconciled-by-cancellation",
+      "description": "T062 requires the exact verified T063 merge commit as its first acceptance input. T063 is terminal cancelled and explicitly not verified because its required pre-merge receipts were irreversibly lost after an external merge. A deployment retry cannot recreate that prerequisite.",
+      "required_next_evidence": [],
+      "consequence": "T062 has no executable success path under its immutable acceptance contract and is terminally cancelled rather than repeatedly retried."
+    },
+    "cancellation": {
+      "authority": "user-explicit-implement-all-blocker-actions",
+      "cancelled_at": "2026-08-05T05:11:31Z",
+      "classification": "irreversible_dependency_contract_loss",
+      "reason": "T062 can only execute from an exact verified T063 merge. T063 is cancelled with acceptance_disposition not_verified_and_not_retroactively_satisfied. The missing pre-merge, Captain and lease receipts cannot be manufactured after the fact, so T062 cannot satisfy its dependency or first acceptance criterion.",
+      "source_task_sha256": "f26c74ebfdb94a2167b57b4cd117ee8dd54904b25f8a8513b3284131f035e7a4",
+      "source_bureau_base_sha": "bc5a3e21f8f193a9e3e6b1612143084ace11beb9",
+      "dependency": {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
+        "state": "cancelled",
+        "task_sha256": "69c8f260fd1d133ad5abb5de0824b5a57410954e3080a6815bf3bf91ab881652",
+        "classification": "irreversible_precondition_loss_after_external_merge",
+        "acceptance_disposition": "not_verified_and_not_retroactively_satisfied",
+        "observed_merge": {
+          "repository": "heimgewebe/leitstand",
+          "pull_request": 190,
+          "reviewed_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+          "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+          "merged_at": "2026-07-27T01:55:41Z",
+          "post_merge_observed_at": "2026-07-27T17:52:09Z",
+          "canonical_diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+          "current_main_comparison": "identical"
+        }
+      },
+      "acceptance_disposition": "not_verified_and_not_retroactively_satisfied",
+      "deployment_performed": false,
+      "runtime_mutation_performed": false,
+      "net_nonterminal_delta": -1,
+      "does_not_establish": [
+        "contract-compliant T062 execution",
+        "T062 verification",
+        "retroactive T063 verification",
+        "Leitstand deployment completion",
+        "Leitstand runtime health"
+      ]
+    }
   }
 }

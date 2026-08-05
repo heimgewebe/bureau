@@ -59,7 +59,7 @@
   "depends_on": [],
   "metadata": {
     "registered_at": "2026-07-17T23:07:14+02:00",
-    "blocker": "Genau eine fremde Claude-MCP-Sitzung nutzt weiterhin den alten Lenskit-/RepoBrief-Launcher, den alten Repositorypfad und den alten Bundlepfad. Der Prozess wird nicht beendet. Das vertragliche 30-Tage-Nullnutzungsfenster kann erst nach seinem natürlichen Ende beginnen.",
+    "blocker": "The historical foreign Claude legacy-path consumer is no longer observed. A canonical 30-day zero-usage observation window is now collecting from 2026-08-05T05:11:31Z; the task remains blocked until uninterrupted telemetry reaches 2026-09-04T05:11:31Z and a fresh final readback confirms zero legacy use.",
     "does_not_establish": [
       "Nullverbrauch alter Import- und Kommandopfade",
       "Ablauf des 30-Tage-Nullnutzungsfensters",
@@ -115,10 +115,35 @@
       "rollback_backup": "/home/alex/iCloud/Drive/halde/repoground-host-cutover-backup-20260718"
     },
     "remaining_actions": [
-      "Den fremden Claude-MCP-Prozess nicht beenden oder verändern.",
-      "Nach seinem natürlichen Ende ein 30-Tage-Nullnutzungsfenster für alte CLI-, Repository-, Bundle- und Environmentflächen beginnen.",
-      "Erst nach belegtem Nullverbrauch alte Konfigurationen und Adapter gemäß RepoGround-Kompatibilitätsvertrag entfernen.",
-      "T002 erst schließen, wenn alle verbleibenden Verbraucher migriert und die Entfernungskriterien erfüllt sind."
-    ]
+      "Continue timestamp-bound legacy-consumer telemetry through the full 30-day window.",
+      "Reset the window immediately if any LensKit, RepoBrief or rLens consumption is observed.",
+      "At or after earliest_completion_at, rerun the full process/CWD, service, checkout and adapter-consumer readback.",
+      "Only after a clean final readback may adapter-removal work be separately claimed and executed."
+    ],
+    "zero_usage_window": {
+      "status": "collecting",
+      "started_at": "2026-08-05T05:11:31Z",
+      "earliest_completion_at": "2026-09-04T05:11:31Z",
+      "duration_days": 30,
+      "start_authority": "user-explicit-implement-all-blocker-actions",
+      "source_task_sha256": "62ca56a62f2d1dcc65b421062dff2cddd4a116ffb0a15a93353c9772b6bb63ab",
+      "source_bureau_base_sha": "bc5a3e21f8f193a9e3e6b1612143084ace11beb9",
+      "initial_observation": {
+        "legacy_consumer_process_count": 0,
+        "canonical_repoground_service_process_count": 1,
+        "canonical_service_command": "/usr/bin/python3 -m merger.repoground serve",
+        "lenskit_checkout_inventory_sha256": "0b32876bf4da57f5a8f1e18e98c37a443ef303e9a32492a0e70bd565bd40c829",
+        "repoground_checkout_inventory_sha256": "d17cae9a4f7fe66b8bfff4e7c486225926f7fd2672c09e678ad524c616988c05",
+        "observed_legacy_paths": []
+      },
+      "reset_condition": "Any observed LensKit, RepoBrief or rLens launcher, bundle, repository or compatibility-adapter consumption resets started_at and earliest_completion_at from the new observation.",
+      "completion_gate": "After earliest_completion_at, perform a fresh process/CWD, service, checkout, adapter-telemetry and consumer-inventory readback before any removal or task verification.",
+      "does_not_establish": [
+        "the exact historical last-use timestamp",
+        "30 completed days of zero use",
+        "permission to remove legacy adapters",
+        "task verification"
+      ]
+    }
   }
 }

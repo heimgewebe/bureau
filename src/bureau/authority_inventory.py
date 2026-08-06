@@ -28,6 +28,17 @@ _STATE_TABLES = (
     "task_claims",
     "receipt_records",
 )
+_FRESHNESS_CONTRACTS = {
+    "python-module": (
+        "source-revision-bound-static-detection;live-source-freshness-unobserved"
+    ),
+    "github-workflow": (
+        "workflow-revision-and-trigger-bound;external-source-freshness-unobserved"
+    ),
+    "systemd-unit": "unit-file-revision-bound;live-state-projected-separately",
+    "external-authority": "external-source-specific-contract",
+    "external-consumer": "external-source-specific-contract",
+}
 
 
 def _call_name(node: ast.expr) -> str:
@@ -73,7 +84,18 @@ def _classify_consumer(record: dict[str, Any]) -> None:
     else:
         target = "typed-read-only-projection"
         disposition = "retain-as-observer"
+    record["assumed_authorities"] = sorted(
+        set(record["reads"]).union(record["writes"])
+    )
+    record["freshness_contract"] = record.get(
+        "declared_freshness_contract",
+        _FRESHNESS_CONTRACTS.get(
+            kind,
+            "source-revision-bound-static-detection;live-source-freshness-unobserved",
+        ),
+    )
     record["target_authority"] = target
+    record["target_interface"] = target
     record["migration_disposition"] = disposition
 
 
@@ -370,6 +392,7 @@ def _external_consumers() -> list[dict[str, Any]]:
             "reads": ["execution_envelopes", "task_claims"],
             "writes": ["runtime_effects", "resource_leases", "workspaces"],
             "declared_target": "grabowski-runtime-authority",
+            "declared_freshness_contract": "invocation-time-grabowski-readback",
             "evidence": {"contract": "Bureau README external-authority boundary"},
         },
         {
@@ -378,6 +401,7 @@ def _external_consumers() -> list[dict[str, Any]]:
             "reads": ["github", "git_registry"],
             "writes": ["ci_results"],
             "declared_target": "github-code-ci-or-redacted-snapshot-validation",
+            "declared_freshness_contract": "github-event-and-head-sha-bound",
             "evidence": {"contract": "public workflow checks"},
         },
         {
@@ -386,12 +410,14 @@ def _external_consumers() -> list[dict[str, Any]]:
             "reads": ["read_only_projection"],
             "writes": [],
             "declared_target": "typed-read-only-projection",
+            "declared_freshness_contract": "bounded-dashboard-snapshot-readback",
             "evidence": {"contract": "dashboard read-only boundary"},
         },
     ]
     for record in records:
         _classify_consumer(record)
         record.pop("declared_target", None)
+        record.pop("declared_freshness_contract", None)
     return records
 
 

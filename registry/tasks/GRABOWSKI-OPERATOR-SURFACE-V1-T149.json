@@ -89,6 +89,19 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "readiness": {
+      "schema_version": 1,
+      "observed_at": "2026-08-06T08:22:56Z",
+      "reason": "Task is independently executable and the initiative parallel blocker T139 is authoritatively succeeded.",
+      "t139_run_id": "BUR-RUN-20260806T043411Z-6bf5bd0a99",
+      "t139_receipt_sha256": "5907e4f4fbd619caf905fe85a4f8b39e3bbaf1d60219b047a5be53e789d9ecc9",
+      "queue_mutated": false,
+      "does_not_establish": [
+        "queue membership",
+        "claimability",
+        "dispatch authority"
+      ]
     }
   },
   "priority": {
@@ -106,6 +119,6 @@
     "strategy": "Bei unklarem Scope, fehlender offizieller Quelle, Kosten- oder Vertragsabweichung den Eintrag deaktivieren, keine externe Wirkung auslösen und die lokale Evidenz revisionsgebunden bewahren."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Autorisierte OSS- und Agentenprogramme katalogisieren"
 }

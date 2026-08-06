@@ -160,6 +160,19 @@
         "permission to weaken caller or session isolation",
         "completion of T142"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "bureau_run_receipt",
+      "source_ref": "bureau-run:BUR-RUN-20260806T043411Z-6bf5bd0a99@5907e4f4fbd619caf905fe85a4f8b39e3bbaf1d60219b047a5be53e789d9ecc9",
+      "run_id": "BUR-RUN-20260806T043411Z-6bf5bd0a99",
+      "worker_id": "controller:chatgpt:t139-resume-after-t146:20260806T0631",
+      "verified_at": "2026-08-06T07:58:18.031743Z",
+      "outcome": "succeeded",
+      "task_sha256": "f9f70db16bbaa27777761ad117b3c52241ac0a37207243d48192a593ebb6f297",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "receipt_sha256": "5907e4f4fbd619caf905fe85a4f8b39e3bbaf1d60219b047a5be53e789d9ecc9",
+      "receipt_file_sha256": "fc7e88eafa4744f48ec8bde5caa101b635d88cf629a080bed5c12a81ff3e34c6"
     }
   },
   "priority": {
@@ -173,6 +186,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Transport-Verifikationen atomar an Zielaufrufe binden"
 }

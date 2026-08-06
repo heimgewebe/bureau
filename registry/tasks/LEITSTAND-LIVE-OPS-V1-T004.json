@@ -1,0 +1,125 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The Systemkatalog manifest checker runs under Python -I while only the verified release scripts directory is available for tracked sibling imports.",
+      "evidence_type": "object",
+      "id": "isolated-checker-imports",
+      "verifier": "release contract tests and merged implementation review"
+    },
+    {
+      "assertion": "A non-ancestral Systemkatalog manifest source is accepted only through the deterministic exact canonical provenance tag; broad tag fetches and post-seal repair are rejected.",
+      "evidence_type": "object",
+      "id": "exact-provenance-tag",
+      "verifier": "positive and negative release contract tests plus real-remote preflight"
+    },
+    {
+      "assertion": "The exact reviewed Leitstand merge commit is deployed through the canonical release adapter and local plus canonical HTTPS /health both report status ok with the same Git head and current Systemkatalog release.",
+      "evidence_type": "object",
+      "id": "healthy-canonical-runtime",
+      "verifier": "deployment receipt and independent curl readbacks"
+    },
+    {
+      "assertion": "The previous managed Leitstand release and exact unit backup remain available after successful cutover.",
+      "evidence_type": "object",
+      "id": "rollback-preserved",
+      "verifier": "deployment receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Restore canonical Leitstand /health status after the running release fell behind the canonical Systemkatalog head, while preserving Python isolation, exact producer provenance and rollback-safe deployment.",
+  "id": "LEITSTAND-LIVE-OPS-V1-T004",
+  "initiative": "LEITSTAND-LIVE-OPS-V1",
+  "metadata": {
+    "deployment_receipt_path": "/home/alex/.local/state/leitstand/releases/receipts/20260806T043817.252793Z-1593910-4269b5e6-deploy-switch.json",
+    "deployment_receipt_sha256": "db193cd43593c43def91a9415f7a4f85155c8381cda37d43184a20d0c956679a",
+    "deployment_task_id": "0533680f9f8042bbbb5113f7",
+    "deployment_task_lifecycle_receipt_sha256": "88dd6a37f0b1f53c7af1179609f7756af7a11fb6afefe3f815d84994cabc945f",
+    "does_not_establish": [
+      "public_internet_exposure",
+      "future_systemkatalog_compatibility_without_contract_checks",
+      "bureau_task_truth_before_publication",
+      "leitstand_execution_authority"
+    ],
+    "implementation_merge_commits": [
+      "64c9f2f7ce956b130ced7f06db63807f7af80e4c",
+      "d3e094504693f034465fb19ffe62513f8437b63f"
+    ],
+    "implementation_prs": [
+      "heimgewebe/leitstand#206",
+      "heimgewebe/leitstand#208"
+    ],
+    "live_leitstand_commit": "d3e094504693f034465fb19ffe62513f8437b63f",
+    "live_systemkatalog_commit": "9801c11cdc11df19696eec4476824eb59cef62f1",
+    "manifest_sha256": "69d35ca60bf0b2762ce15c9341c36c220ca57b3b79709cb8f145b6ec2301d99f",
+    "manifest_source_commit": "dcf6ac5dd2ca963d7017dbeb52f3c1c4da595120",
+    "outcome": "Leitstand PR #206 restored isolated sibling imports; PR #208 added exact Systemkatalog provenance-tag materialization and pre-cutover evidence binding. Merge commit d3e094504693f034465fb19ffe62513f8437b63f was deployed successfully. Local and canonical HTTPS /health independently returned status ok on that exact head with Systemkatalog release 9801c11cdc11df19696eec4476824eb59cef62f1.",
+    "provenance_ref": "refs/tags/systemkatalog-provenance-v1/dcf6ac5dd2ca963d7017dbeb52f3c1c4da595120",
+    "rollback_backup_manifest_sha256": "e62f216b7fa482b33d2b4d5973f13f8f845feb698bd8ab4ac9e6d0c68fe0dc11",
+    "validation": [
+      "PR #206 and PR #208 required checks passed, including CI, CodeQL, security-hygiene, ai-context guards and Cloudflare Pages.",
+      "Release/runtime contract: 54 tests passed after provenance evidence hardening.",
+      "Service-free real-remote preflight bound Systemkatalog main 9801c11cdc11df19696eec4476824eb59cef62f1 to manifest source dcf6ac5dd2ca963d7017dbeb52f3c1c4da595120 through the exact provenance tag.",
+      "Canonical release adapter completed successfully and reported local_health_status=ok, active routes 200, zero restarts and rollback backup preservation.",
+      "Independent local curl at 2026-08-06T04:40:30Z and canonical HTTPS curl at 2026-08-06T04:41:37Z returned kind=leitstand_runtime_health_receipt, status=ok, Git head d3e094504693f034465fb19ffe62513f8437b63f and ecosystem map head consistency ok."
+    ],
+    "verification": {
+      "plan_sha256": "f91a1c386d504325502def8539cc00838c169b36183b98516766614c275f8dd6",
+      "task_sha256": "5ed98a0079b006cdfe0139b1340ce63e3d9f952b0024a34a0f70dc9a4e7aab4c"
+    },
+    "verified_acceptance": {
+      "exact-provenance-tag": "Merged PR #208 verifies the deterministic remote tag, fetches only the exact ref with --no-tags, rejects missing/misdirected/local drift, and rebinds provenance_ref before cutover.",
+      "healthy-canonical-runtime": "Deployment task 0533680f9f8042bbbb5113f7 completed successfully; independent local and canonical health receipts both reported status ok on d3e094504693f034465fb19ffe62513f8437b63f.",
+      "isolated-checker-imports": "Merged PR #206 keeps Python -I and bootstraps only the verified Systemkatalog scripts directory; focused and full release tests passed.",
+      "rollback-preserved": "The deployment receipt records prior target 186baf56d354f60b7bb3a616d904eaf17ba8fbfb-runtime-v1 and backup manifest e62f216b7fa482b33d2b4d5973f13f8f845feb698bd8ab4ac9e6d0c68fe0dc11."
+    },
+    "verified_at": "2026-08-06T04:41:37Z",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7eb278220d5a4733ab1102a3",
+      "event_id": 2746,
+      "event_created_at": "2026-08-06T04:55:30.425130Z",
+      "request_sha256": "87177f1f7b57d85b2e82e78b5a2837f319d1f7592fccb509201698441370beb4",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-deployment",
+        "locator": "github:heimgewebe/leitstand@d3e094504693f034465fb19ffe62513f8437b63f;deployment-task:0533680f9f8042bbbb5113f7",
+        "observed_at": "2026-08-06T04:55:30.385298Z",
+        "sha256": "db193cd43593c43def91a9415f7a4f85155c8381cda37d43184a20d0c956679a"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "deployment"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Restore healthy Leitstand runtime across Systemkatalog provenance changes"
+}

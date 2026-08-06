@@ -171,6 +171,57 @@
           "change to guest authorization"
         ]
       }
+    },
+    "verification": {
+      "status": "verified",
+      "source": "merged_pr_ci_production_descendant_and_acceptance_closeout",
+      "verified_at": "2026-08-06T17:04:00Z",
+      "task_sha256": "0cc7137bc33ba822cf97621aea53fae3544f06492b68c21cd0ea5c5bad1af00b",
+      "plan_sha256": "48a3408c3d0931c35975552cdee284f220253982e6ba6f67f7eb205d0cf9ac29",
+      "implementation": {
+        "repository": "heimgewebe/weltgewebe",
+        "pull_request": 1648,
+        "base_commit": "9c8f8c5c12e942ead2246a2d114bc71e40204855",
+        "head_commit": "59de44c7c842aa8b3fb7f227b8b092243a2516ed",
+        "merge_commit": "322655285b520d04363e48487ae64d57264de573",
+        "merged_at": "2026-07-31T20:40:16Z",
+        "current_main": "ff8b28511a4b8c21cb491314efa5fe6a91b7f2ec",
+        "merge_is_ancestor_of_current_main": true
+      },
+      "validation": {
+        "required_merge_gate": "success",
+        "ci": "success",
+        "web_e2e": "success",
+        "build_and_lint": "success",
+        "codeql": "success",
+        "review_evidence_gate": "success",
+        "local_web_browser_tests": "231/231 passed",
+        "local_web_unit_tests": "279/279 passed",
+        "svelte_typescript_errors": 0,
+        "git_diff_check": "passed",
+        "historical_review_evaluator_failure": "superseded by the later exact-diff Review evidence gate and required merge gate"
+      },
+      "deployment": {
+        "required": true,
+        "current_production_commit": "ff8b28511a4b8c21cb491314efa5fe6a91b7f2ec",
+        "deployment_id": 5782368693,
+        "state": "success",
+        "completed_at": "2026-08-06T15:31:41Z",
+        "task_merge_is_ancestor": true
+      },
+      "validated_acceptance": {
+        "delete-conflict-visibility": "PASS — DELETE 412 keeps node and marker and shows the server state with persistent understandable feedback.",
+        "cancel-and-role-transition": "PASS — cancel restores state; permission loss falls back to guest view without draft or edit tab.",
+        "guest-keyboard-contract": "PASS — Overview, Conversation and History are covered for arrows, Home and End with consistent focus and selection.",
+        "aria-controls-decision": "PASS — every visible tab has a persistent hidden tabpanel shell, so aria-controls never targets a permanently absent node.",
+        "mutation-error-lifecycle": "PASS — normal tab changes preserve conflict feedback; cancel, selection change and permission loss clear stale errors.",
+        "exact-review-and-ci": "PASS — exact head passed Svelte/TypeScript, full web suites, required CI and the final diff-bound review gate."
+      },
+      "does_not_establish": [
+        "future accessibility correctness after later UI changes",
+        "absence of unrelated InfoHeading warnings",
+        "future production deployment health"
+      ]
     }
   },
   "priority": {
@@ -185,6 +236,6 @@
     "repository"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Knoten-Reiter Bearbeiten durch Randfalltests härten"
 }

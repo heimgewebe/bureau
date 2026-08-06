@@ -152,6 +152,51 @@
         "safe_merge",
         "future_nonconflict"
       ]
+    },
+    "verification": {
+      "status": "verified",
+      "source": "merged_pr_ci_current_main_runtime_and_fresh_functional_test",
+      "verified_at": "2026-08-06T17:04:00Z",
+      "task_sha256": "3c6e8a1c0e4173002d27dbe807c8b215ccfb326525be26007a39e0370de9f685",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1197,
+        "base_commit": "6838bb855a28b4b255d4647cc2b48191624695c6",
+        "head_commit": "39bdb25daeacfab28fe84327fc88c6a564a67bc9",
+        "merge_commit": "01842bcbd05bc6406600423c1b3ff354b7a435fe",
+        "merged_at": "2026-07-29T21:24:05Z",
+        "current_main": "4c9b3eb28c23841c172656306e760fbef5dd66e7",
+        "merge_is_ancestor_of_current_main": true
+      },
+      "validation": {
+        "required_checks_green": true,
+        "historical_full_validate": "891 passed",
+        "historical_focused_tests": "5 passed",
+        "fresh_exact_current_main_focused_tests": "9 passed",
+        "fresh_validation_task_id": "655027169299421bb2111005",
+        "fresh_lifecycle_receipt_sha256": "c748f7ef44644bb37ea5d02a9542b1172c384344bd625d11305d83c55cea6833",
+        "tested_current_main": "4c9b3eb28c23841c172656306e760fbef5dd66e7"
+      },
+      "runtime": {
+        "release_id": "4c9b3eb28c23-srca9853b2bc6f5",
+        "source_commit": "4c9b3eb28c23841c172656306e760fbef5dd66e7",
+        "deployment_manifest_sha256": "959f0f2db16b1ffee8df8c192084eece791e5fc36bd6e7ad4cfc9c1c90a97b9f",
+        "integrity": "ok"
+      },
+      "validated_acceptance": {
+        "exact-prefix-before-latest": "PASS — merged selector filters exact check name and external-ID prefix before latest-run selection.",
+        "mixed-prefix-regression": "PASS — executable mixed-prefix tests pass on the current main commit.",
+        "latest-exact-success-preserved": "PASS — current focused suite covers successful exact-prefix masking of older failure/in-progress runs.",
+        "fail-closed-boundary-preserved": "PASS — missing or ambiguous evidence remains non-mutating.",
+        "functional-not-string-only": "PASS — nine executable workflow behavior tests passed on exact current main.",
+        "no-new-authority": "PASS — diff and tests alter recovery selection only, not merge, queue, claim, deployment or foreign checks."
+      },
+      "does_not_establish": [
+        "future GitHub Actions availability",
+        "correctness of unrelated check-run selectors",
+        "authority to mutate existing foreign check runs"
+      ]
     }
   },
   "priority": {
@@ -168,6 +213,6 @@
     "strategy": "Revertiere ausschließlich die revisionsgebundene Auswahl- und Teständerung. Bei unklarer CheckRun-Zuordnung bleibt die Recovery wirkungslos; bestehende CheckRuns, Branchschutz- und Queuewahrheit werden weder gelöscht noch umgedeutet."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Registry-Check-Recovery prefixgenau auswählen"
 }

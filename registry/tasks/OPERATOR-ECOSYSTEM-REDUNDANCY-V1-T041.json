@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Aktuelle HausKI-Audio-Abhängigkeitsbefunde einzeln prüfen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Die nach Abschluss der historischen T038-Queue noch live gemeldeten Abhängigkeitsbefunde in HausKI-Audio werden einzeln inventarisiert, gegen den aktuellen Hauptzweig dedupliziert und evidenzgebunden behoben oder terminal eingeordnet.",
   "priority": {
     "lane": "later",
@@ -128,6 +128,57 @@
       "fix availability",
       "runtime reachability",
       "completion of remediation"
-    ]
+    ],
+    "verification": {
+      "status": "verified",
+      "source": "merged_pr_ci_and_live_dependabot_readback",
+      "verified_at": "2026-08-06T17:04:00Z",
+      "task_sha256": "812198324b5f0fd3bb80450e98839c088b8b2bbc2f6db335a80f3612c5f53b82",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "implementation": {
+        "repository": "heimgewebe/hausKI-audio",
+        "pull_request": 167,
+        "base_commit": "4f2b4bdbfaa6419725aba02acd71347ac1e9da02",
+        "head_commit": "3a60a560bc55c50f231cf3929feeb73190fb01c8",
+        "merge_commit": "958e3288b864ddaa5617bf4bd5bf5efac38904ce",
+        "merged_at": "2026-07-30T03:40:04Z",
+        "current_main": "958e3288b864ddaa5617bf4bd5bf5efac38904ce",
+        "merge_is_current_main": true
+      },
+      "validation": {
+        "required_checks_green": true,
+        "checks": [
+          "backend",
+          "Docs CI lint",
+          "Secret Scan",
+          "AI context guard",
+          "CodeQL actions/python/rust"
+        ],
+        "historical_inventory_document": {
+          "path": "docs/security/dependabot-t041-20260729.md",
+          "git_blob_sha": "55543ae4196be9624126a79caef9347dd4f5457f",
+          "size_bytes": 6130,
+          "documented_findings": 12
+        },
+        "live_dependabot_open_alerts": 0,
+        "live_readback_at": "2026-08-06T17:04:00Z"
+      },
+      "validated_acceptance": {
+        "live-inventory": "PASS — PR #167 binds twelve individually documented live findings; the fresh Dependabot API readback reports zero open alerts.",
+        "dedupe-after-t038": "PASS — the merged evidence document compares every finding with T038 instead of reprocessing aggregate counts.",
+        "evidence-per-finding": "PASS — the merged report records package, advisory, manifest, severity, reachability and disposition per finding.",
+        "reviewed-repository-effect": "PASS — exact PR head and all required checks were green before merge; main is exactly the merge commit.",
+        "terminal-readback": "PASS — current Dependabot open-alert count is zero."
+      },
+      "deployment": {
+        "required": false,
+        "reason": "The task contract is repository dependency remediation and evidence closeout; it declares no separately operated product runtime or deployment surface."
+      },
+      "does_not_establish": [
+        "future absence of dependency alerts",
+        "absence of vulnerabilities outside GitHub Dependabot coverage",
+        "runtime reachability of every future dependency graph"
+      ]
+    }
   }
 }

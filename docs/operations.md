@@ -364,13 +364,15 @@ The installed user timer already passes `--publish --root %h/repos/bureau --stat
 exists. The timer's five-minute cadence is the only cadence at which the Now lane is observed and,
 if below floor, refilled; there is no faster or hosted path.
 
-Repeated cycles are bounded and idempotent. If the lane is already at or above the floor, or no
-structurally runnable Next task exists, or the runtime gate is blocked, the cycle publishes nothing
-and reconcile leaves any still-open PR unchanged. If a proposal is still open and unmerged, a repeat
-cycle recomputes the same deterministic promotion from `origin/main`, force-with-lease-updates the
-same branch and refreshes the existing PR body — it never opens a second, parallel PR. Once a
-promotion merges, the next cycle observes a satisfied Now lane and publishes nothing, so no
-double-promotion occurs.
+Repeated cycles are bounded and idempotent. If the lane is already at or above the floor, no
+structurally runnable Next task exists, or the runtime gate is blocked, the cycle publishes nothing.
+It also closes any still-open proposal from an earlier decision, because an old auto-merge request
+must not outlive the local truth that authorised it. A later authorised cycle may publish the same
+branch again and open a fresh revision-bound PR. If a proposal remains authorised, a repeat cycle
+recomputes the same deterministic promotion from `origin/main`, force-with-lease-updates the same
+branch and refreshes the existing PR body — it never opens a second parallel PR. Once a promotion
+merges, the next cycle observes a satisfied Now lane and publishes nothing, so no double-promotion
+occurs.
 
 Blocking cases surface as `status: "blocked"` with a specific entry in `blockers`:
 

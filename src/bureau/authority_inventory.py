@@ -36,6 +36,7 @@ _FRESHNESS_CONTRACTS = {
         "workflow-revision-and-trigger-bound;external-source-freshness-unobserved"
     ),
     "systemd-unit": "unit-file-revision-bound;live-state-projected-separately",
+    "runtime-installer": "source-head-origin-main-and-approval-intent-bound",
     "external-authority": "external-source-specific-contract",
     "external-consumer": "external-source-specific-contract",
 }
@@ -72,6 +73,12 @@ def _classify_consumer(record: dict[str, Any]) -> None:
     elif "github_transport" in writes:
         target = "github-code-ci-or-redacted-snapshot-transport"
         disposition = "retain-only-as-bounded-transport"
+    elif kind == "runtime-installer":
+        target = "github-code-authority-and-immutable-runtime-deployment"
+        disposition = "retain-as-explicit-deployment-authority"
+    elif "cycle_state" in writes:
+        target = "state-store-api"
+        disposition = "migrate-cycle-side-state-to-state-store"
     elif kind == "systemd-unit":
         target = "typed-bureau-cli-or-read-only-projection"
         disposition = "retain-as-runtime-consumer"
@@ -149,6 +156,8 @@ def _scan_python(
         )
     )
     grabowski_reference = "grabowski" in lowered_source
+    cycle_reference = relative.startswith("src/bureau_cycle/")
+    cycle_state_reference = cycle_reference and bool(call_tails)
 
     reads: set[str] = set()
     writes: set[str] = set()
@@ -160,6 +169,8 @@ def _scan_python(
         reads.add("github")
     if grabowski_reference:
         reads.add("grabowski")
+    if cycle_state_reference:
+        reads.add("cycle_state")
     if "StateStore" in call_tails:
         writes.add("state_store")
     if registry_reference and _WRITE_CALLS.intersection(call_tails):
@@ -169,6 +180,13 @@ def _scan_python(
         for token in ("git push", "gh pr create", "create_pull_request", "update_ref")
     ):
         writes.add("github_transport")
+    if cycle_reference and {
+        "atomic_json",
+        "replace",
+        "write_bytes",
+        "write_text",
+    }.intersection(call_tails):
+        writes.add("cycle_state")
 
     if not reads and not writes:
         return None, None
@@ -198,6 +216,8 @@ def _scan_python(
             "state_reference": state_reference,
             "github_reference": github_reference,
             "grabowski_reference": grabowski_reference,
+            "cycle_reference": cycle_reference,
+            "cycle_state_reference": cycle_state_reference,
         },
     }
     _classify_consumer(record)
@@ -384,6 +404,35 @@ def _systemd_probe(root: Path, *, enabled: bool) -> dict[str, Any]:
     return result
 
 
+def _runtime_installer_consumer(root: Path) -> dict[str, Any] | None:
+    path = root / "ops/install-bureau-runtime.py"
+    if not path.is_file() or path.is_symlink():
+        return None
+    try:
+        source = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+    record: dict[str, Any] = {
+        "path": path.relative_to(root).as_posix(),
+        "kind": "runtime-installer",
+        "reads": ["git_registry", "runtime_approval", "runtime_source"],
+        "writes": [
+            "deployment_manifest",
+            "immutable_runtime",
+            "launchers",
+            "registry_snapshot",
+        ],
+        "evidence": {
+            "immutable_release_marker": "immutable_release_path" in source,
+            "origin_main_gate": 'rev-parse", "origin/main"' in source,
+            "approval_intent_gate": "approval_intent" in source,
+            "registry_snapshot_writer": "ensure_registry_snapshot" in source,
+        },
+    }
+    _classify_consumer(record)
+    return record
+
+
 def _external_consumers() -> list[dict[str, Any]]:
     records = [
         {
@@ -431,7 +480,7 @@ def authority_inventory(
     consumers: list[dict[str, Any]] = []
     findings: list[dict[str, Any]] = []
 
-    source_root = root / "src/bureau"
+    source_root = root / "src"
     if source_root.is_dir():
         for path in sorted(source_root.rglob("*.py")):
             relative = path.relative_to(root).as_posix()
@@ -458,6 +507,19 @@ def authority_inventory(
                 if record is not None:
                     consumers.append(record)
 
+    runtime_installer_path = root / "ops/install-bureau-runtime.py"
+    runtime_installer = _runtime_installer_consumer(root)
+    if runtime_installer is not None:
+        consumers.append(runtime_installer)
+    elif runtime_installer_path.exists() or runtime_installer_path.is_symlink():
+        findings.append(
+            {
+                "severity": "error",
+                "code": "source-parse-error",
+                "path": runtime_installer_path.relative_to(root).as_posix(),
+                "detail": "runtime installer is not a readable regular file",
+            }
+        )
     consumers.extend(_external_consumers())
     consumers.sort(key=lambda item: item["path"])
 
@@ -484,6 +546,18 @@ def authority_inventory(
                     "detail": (
                         "operational Git write must be removed or reduced "
                         "to snapshot transport"
+                    ),
+                }
+            )
+        if "cycle_state" in writes:
+            findings.append(
+                {
+                    "severity": "warning",
+                    "code": "operational-side-state-writer-to-migrate",
+                    "path": record["path"],
+                    "detail": (
+                        "cycle side-state write must converge on the StateStore API "
+                        "or become a bounded read-only projection"
                     ),
                 }
             )
@@ -545,6 +619,9 @@ def authority_inventory(
             "state_writer_count": sum(
                 "state_store" in item["writes"] for item in consumers
             ),
+            "cycle_state_writer_count": sum(
+                "cycle_state" in item["writes"] for item in consumers
+            ),
             "git_registry_writer_count": sum(
                 "git_registry" in item["writes"] for item in consumers
             ),
@@ -563,6 +640,7 @@ def authority_inventory(
                 in {
                     "remove-operational-git-write-after-cutover",
                     "split-dual-writer-and-remove-operational-git-write",
+                    "migrate-cycle-side-state-to-state-store",
                 }
                 for item in consumers
             ),

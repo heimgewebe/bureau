@@ -169,7 +169,9 @@ def build_now_refill_report(
         }
         for item in selected
     ]
-    if not triggered:
+    if runtime_blocked:
+        status = "blocked"
+    elif not triggered:
         status = "satisfied"
     elif promotions:
         status = "refill-planned"

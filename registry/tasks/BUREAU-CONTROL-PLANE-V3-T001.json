@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-T001",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Autoritäts- und Consumerinventar maschinenlesbar machen",
+  "goal": "Alle produktiven Leser und Schreiber von Git-Registry, Queue, StateStore, Live Register, Dispatcher, Grabowski-Adapter, Dashboard, Timern und GitHub-Bridges revisionsgebunden inventarisieren. Eine read-only CLI-Projektion muss pro Consumer Quelle, Schreibwirkung, angenommene Autorität, Aktualitätsvertrag und Zielpfad ausgeben.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 3
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/authority_inventory.py",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/tests/test_authority_inventory.py",
+      "path:/home/alex/repos/bureau/docs/architecture/bureau-control-plane-v3-authority-inventory.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T001.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "complete-consumer-inventory",
+      "assertion": "Alle produktiven Consumer und Mutationspfade sind ohne unbekannte Git- oder State-Schreiber inventarisiert."
+    },
+    {
+      "id": "authority-conflicts-visible",
+      "assertion": "Mehrfachautoritäten, direkte Dateischreiber und Git/State-Divergenzen werden maschinenlesbar und fail-closed ausgewiesen."
+    },
+    {
+      "id": "read-only-live-proof",
+      "assertion": "Der Inventarlauf liest den echten Runtime-, Registry-, StateStore-, Timer- und Bridgezustand ohne Mutation."
+    },
+    {
+      "id": "migration-map",
+      "assertion": "Jeder Consumer besitzt einen eindeutigen Zielpfad: StateStore/API, read-only Projektion, GitHub-Codeautorität oder Entfernung."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-08-06T11:11:00Z",
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
+    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
+    "does_not_establish": [
+      "Merge- oder Deploymentabschluss",
+      "Freigabe fremder Ressourcen",
+      "direkte main-Mutation"
+    ]
+  }
+}

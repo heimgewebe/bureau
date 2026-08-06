@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-T008",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Candidate-Intake und Live Register vereinheitlichen",
+  "goal": "Conversation, GitHub-Issue, Source-Observer, Doctor und lokale Fallbacks über ein gemeinsames Candidate Event aufnehmen, deduplizieren, reviewen und in TaskSpec-Revisionen promoten. GitHub Issues bleiben Notfalleingang, nie Ersatzregistry.",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T003",
+    "BUREAU-CONTROL-PLANE-V3-T005"
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/src/bureau/live_register.py",
+      "path:/home/alex/repos/bureau/src/bureau/source_discovery.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_live_register.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T008.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "single-candidate-identity",
+      "assertion": "Alle Quellen verwenden stabile Candidate-, Event-, Idempotenz- und Source-Fingerprints."
+    },
+    {
+      "id": "cross-source-deduplication",
+      "assertion": "Mehrere Quellen können denselben Befund nicht mehrfach als ausführbare Task registrieren."
+    },
+    {
+      "id": "connector-outage-survival",
+      "assertion": "Candidate-Aufnahme bleibt bei Connector- oder GitHub-Ausfall lokal verfügbar und später idempotent synchronisierbar."
+    },
+    {
+      "id": "authority-preserved",
+      "assertion": "Candidate, Review und Promotion begründen ohne normalen Claim keine Ausführungs-, Merge- oder Deploymentautorität."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-08-06T11:11:00Z",
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
+    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
+    "does_not_establish": [
+      "Merge- oder Deploymentabschluss",
+      "Freigabe fremder Ressourcen",
+      "direkte main-Mutation"
+    ]
+  }
+}

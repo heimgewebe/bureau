@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-T002",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Übergangsjournal und Replay-Projektion vervollständigen",
+  "goal": "Die bestehende events-Tabelle und StateStore-Transaktionen zu einem begrenzten append-only Übergangsvertrag vervollständigen. Fachliche Task-, Initiativen-, Claim-, Run- und Acceptance-Übergänge müssen Ereignis und aktuelle Projektion atomar binden und deterministisch replaybar sein.",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T001"
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/src/bureau/state_events.py",
+      "path:/home/alex/repos/bureau/tests/test_state_events.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T002.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "bounded-event-vocabulary",
+      "assertion": "Ein begrenztes versioniertes Ereignisvokabular deckt operative Zustandsübergänge ab."
+    },
+    {
+      "id": "atomic-event-projection",
+      "assertion": "Ereignis und aktuelle Projektion werden in derselben BEGIN-IMMEDIATE-Transaktion geschrieben oder bleiben beide wirkungslos."
+    },
+    {
+      "id": "deterministic-replay",
+      "assertion": "Replay aus leerer Projektion erzeugt dieselben aktuellen Zustände und Wurzeldigests."
+    },
+    {
+      "id": "migration-and-crash-tests",
+      "assertion": "Migration, Crash, Doppelaufruf, unbekannter Ausgang und Schema-Drift sind fail-closed getestet."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-08-06T11:11:00Z",
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
+    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
+    "does_not_establish": [
+      "Merge- oder Deploymentabschluss",
+      "Freigabe fremder Ressourcen",
+      "direkte main-Mutation"
+    ]
+  }
+}

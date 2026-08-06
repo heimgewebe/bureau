@@ -73,7 +73,8 @@
     "now": [
       "ALPHA-LAB-SHADOW-RESEARCH-V1-T001",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T149",
-      "AUDIO-CONTROL-PLANE-V1-T002"
+      "AUDIO-CONTROL-PLANE-V1-T002",
+      "BUREAU-CONTROL-PLANE-V3-T001"
     ]
   },
   "queue_policy": "skip-blocked",

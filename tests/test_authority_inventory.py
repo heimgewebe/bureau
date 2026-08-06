@@ -72,7 +72,9 @@ ExecStart=/home/test/.local/bin/bureau source-pr-bridge
     return root, state
 
 
-def test_inventory_is_read_only_hash_bound_and_classifies_dual_writers(tmp_path: Path) -> None:
+def test_inventory_is_read_only_hash_bound_and_classifies_dual_writers(
+    tmp_path: Path,
+) -> None:
     root, state = _fixture_root(tmp_path)
     before = state.read_bytes()
 
@@ -85,12 +87,31 @@ def test_inventory_is_read_only_hash_bound_and_classifies_dual_writers(tmp_path:
     assert first["state_store"]["integrity"] == "ok"
     assert first["state_store"]["schema_version"] == 3
     assert set(first["state_store"]["table_counts"].values()) == {1}
-    writer = next(item for item in first["consumers"] if item["path"].endswith("writer.py"))
+    for consumer in first["consumers"]:
+        assert consumer["assumed_authorities"] == sorted(
+            set(consumer["reads"]).union(consumer["writes"])
+        )
+        assert consumer["freshness_contract"]
+        assert consumer["target_interface"] == consumer["target_authority"]
+    writer = next(
+        item for item in first["consumers"] if item["path"].endswith("writer.py")
+    )
     assert writer["writes"] == ["git_registry", "state_store"]
+    assert writer["assumed_authorities"] == ["git_registry", "state_store"]
+    assert writer["freshness_contract"] == (
+        "source-revision-bound-static-detection;live-source-freshness-unobserved"
+    )
     assert writer["target_authority"] == "state-store-api"
+    assert writer["target_interface"] == "state-store-api"
     assert writer["migration_disposition"] == (
         "split-dual-writer-and-remove-operational-git-write"
     )
+    dashboard = next(
+        item
+        for item in first["consumers"]
+        if item["path"] == "external:heim-pc-dashboard"
+    )
+    assert dashboard["freshness_contract"] == "bounded-dashboard-snapshot-readback"
     assert any(item["code"] == "dual-operational-writer" for item in first["findings"])
     assert first["inventory_sha256"] == legacy.sha256_json(
         {key: value for key, value in first.items() if key != "inventory_sha256"}

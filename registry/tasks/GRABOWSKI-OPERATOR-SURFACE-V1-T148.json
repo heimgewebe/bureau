@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Mergecommit b5a91d58cd82aa9c45387712ffb0ceb851789f29, T147 und die aktuelle Bureau-Workspace-Logik werden revisionsgebunden gelesen.",
+      "id": "defect-bound"
+    },
+    {
+      "assertion": "Der T147-Worktree-Claim wird gegen _task_uses_worktree_workspace und _planned_workspace als unerlaubte automatische Worktree-Erzeugung aus /home/alex/repos/grabowski reproduziert.",
+      "id": "conflict-reproduced"
+    },
+    {
+      "assertion": "Die vorhandenen Bureau- und Grabowski-Checkouts werden weder verändert noch als Worktree-Quelle benutzt.",
+      "id": "protected-checkouts-untouched"
+    },
+    {
+      "assertion": "T147 erhält claim isolation=none, kein execution.workspace_isolation-Feld, eine no-automatic-worktree-Akzeptanz und einen Ressourcenvertrag für den eigenständigen Salvage-Clone.",
+      "id": "contract-corrected"
+    },
+    {
+      "assertion": "Registry-Prüfung, relevante Workspace-/Claim-Tests und make validate bestehen auf dem exakten Korrektur-Head.",
+      "id": "validation-green"
+    },
+    {
+      "assertion": "Die Korrektur endet in einem taskgebundenen Pull Request mit exaktem Head, revisionsgebundenem Self-Review, grünen Pflichtchecks und geschlossenen relevanten Threads.",
+      "id": "reviewed-delivery"
+    },
+    {
+      "assertion": "Mergecommit, origin/main und T147 werden nach dem Merge zurückgelesen; erst dann gilt T147 wieder als sicher ausführbar.",
+      "id": "post-merge-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T146"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Autonome PR-Reparatur ist beauftragt; Wirkung nur im eigenständigen Reparatur-Clone und exakt auf T147.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/.local/state/grabowski/pr-merge-lane/t147-contract-repair",
+      "path:/home/alex/repos/bureau/registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T147.json",
+      "repo:/home/alex/repos/bureau:branch:fix/t147-standalone-clone-contract-v1",
+      "repo:/home/alex/repos/bureau:operation:t147-standalone-clone-contract-v1"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den durch Bureau-PR #1596 gemergten T147-Workspacevertrag korrigieren, sodass kein automatischer Git-Worktree aus dem geschützten historischen Grabowski-Checkout entsteht und alle operativen Wirkungen im eigenständigen Salvage-Clone bleiben.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T148",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "corrects_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T147",
+    "does_not_establish": [
+      "permission to run unsafe T147 before correction",
+      "permission to mutate protected checkouts",
+      "automatic merge or deployment authority"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-b072b3fa718aa74de4f8bd67",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-06T06:40:19.517798Z",
+      "event_id": 2764,
+      "request_sha256": "d6574c91e571f754fb912cedb476501d61e50c4a453c933b2798a66013dbb372",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-merged-pr-review-finding",
+        "locator": "https://github.com/heimgewebe/bureau/pull/1596",
+        "observed_at": "2026-08-06T06:39:00Z",
+        "sha256": null
+      }
+    },
+    "resource_contract": {
+      "registry_claim": "component.bureau.registry",
+      "repair_clone": "/home/alex/.local/state/grabowski/pr-merge-lane/t147-contract-repair",
+      "schema_version": 1,
+      "target_path": "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T147.json",
+      "workspace_isolation": "omitted"
+    },
+    "source_merge_commit": "b5a91d58cd82aa9c45387712ffb0ceb851789f29",
+    "source_pr": "https://github.com/heimgewebe/bureau/pull/1596"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "git",
+    "python",
+    "testing",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "Nur eigenen Reparatur-Clone, Branch und eigene Ressourcen bereinigen; geschützte Checkouts unverändert lassen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Unsicheren T147-Workspacevertrag korrigieren"
+}

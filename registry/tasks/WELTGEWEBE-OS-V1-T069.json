@@ -1,0 +1,135 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Marker, Ersteller oder Incident-Grund, Zweck, Zeitpunkt und explizite Freigabebedingung sind frisch gebunden; ein leerer root-eigener Marker gilt nicht als Löschfreigabe.",
+      "evidence_type": "object",
+      "id": "blockade-origin-bound"
+    },
+    {
+      "assertion": "Kein fremder Deploy-, Recovery-, Lease- oder Wartungsvorgang überlappt; die mit SIGTERM beendete Ausführung ist anhand Journal, Prozessen und Receipts eingeordnet. Unbekannter Zustand bleibt fail-closed.",
+      "evidence_type": "object",
+      "id": "no-foreign-overlap"
+    },
+    {
+      "assertion": "Die Sperre wird nur atomar und rückbaubar aufgehoben oder präzisiert. Danach verarbeitet der kanonische Reconciler den zum Startzeitpunkt exakten origin/main-Commit mit terminalem commitgebundenem Deploymentreceipt.",
+      "evidence_type": "object",
+      "id": "safe-clear-and-reconcile"
+    },
+    {
+      "assertion": "Frontend-Version, API-Version und der GitHub-Workflow Production live contract belegen denselben erwarteten Commit terminal grün. HTTP 200, ein älterer kohärenter Commit oder ein laufender Poller genügen nicht.",
+      "evidence_type": "object",
+      "id": "independent-live-proof"
+    },
+    {
+      "assertion": "Rollback auf das letzte belegte Release ist vorhanden. Die Ursache einer unbegründeten oder ownerlosen Blockade wird im engen Fix verhindert oder als eigener gebundener Folgetask registriert; geschützte Dienste und fremde Zustände bleiben unangetastet.",
+      "evidence_type": "object",
+      "id": "rollback-and-prevention"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Produktionsdeployments sind autorisiert. Die vorhandene root-eigene Sperrdatei darf nicht blind gelöscht werden; vor Wirkung sind Ursache oder Owner, Freigabebedingung, Nichtüberlappung, Rückbau und exakter Zielcommit frisch zu belegen.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "host:wg-prod-1",
+      "path:/run/weltgewebe-production-reconcile-block",
+      "service:weltgewebe-production-reconcile.service",
+      "service:weltgewebe-production-reconcile.timer",
+      "operation:weltgewebe:production-reconciler-recovery"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die root-eigene Sperre des kanonischen Weltgewebe-Produktions-Reconcilers ursächlich und ownergebunden klären, nur bei belegter Freigabebedingung aufheben und danach den exakten aktuellen main-Commit geschützt ausrollen sowie Frontend und API unabhängig auf denselben Live-Commit verifizieren.",
+  "id": "WELTGEWEBE-OS-V1-T069",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "marker creator or reason",
+      "permission to delete the marker",
+      "successful deployment of the merge commit",
+      "queue truth before publication"
+    ],
+    "evidence_receipts": {
+      "candidate_record": "c7d34d9541f0675a63f24043ad2a9c837b95e482c7efe9358bc69c10c60ebac2",
+      "first_publication_failure": "62ae244fd671b1b65f51cd008f001342862a95703ef8ea4105382d7d16855d6e",
+      "journal_lifecycle": "600e05e7db2a5947b3e1929aaea2c3f290aaa6b1c28c4d282cce86684f946dc6",
+      "marker_stat": "13366f8f0ec5d416f256c1bc5c15cab75262aabd09a96875e2fba425945beaae",
+      "process_readback": "c97cf52986f1006a8a16b56ac6b284a71975cfc11b9faf1086264518a9133d71",
+      "service_status": "94a5869c9561b0f41a7e1cd88f4d5de5494709e4c9109c73363dd1b1a4032574"
+    },
+    "observed_blockade": {
+      "active_reconcile_processes": 0,
+      "host": "wg-prod-1",
+      "last_result": "SIGTERM at 2026-08-06 05:36:21 CEST",
+      "live_contract_run": 31088921592,
+      "marker": "/run/weltgewebe-production-reconcile-block",
+      "mode": "000",
+      "mtime": "2026-08-06 05:46:29.787362184 +0200",
+      "owner": "root:root",
+      "service_state": "inactive-dead"
+    },
+    "observed_live_commit": "848d399d9513d2897fbd024e0ddc6f7ba165fdaf",
+    "operator_intake": {
+      "candidate_id": "candidate-47f15c170befd52022a078bf",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-06T09:50:06.385699Z",
+      "event_id": 2804,
+      "request_sha256": "895ccd386d25cb52cef75873b575d0109e04b418b82819a2c3aa2824aa098509",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-08-06T09:50:06.344254Z",
+        "sha256": null
+      }
+    },
+    "proposal_refresh": {
+      "reason": "Remote main advanced after the first reviewed proposal; no publication effect occurred. The deployed Bureau runtime remained bound to the previous Registry snapshot, so this task was published through an isolated exact-main repository path after the canonical adapter failed closed.",
+      "registry_commit": "c46bbff0d7c1faf9ec4ff3f0a11bd5384199543b",
+      "superseded_adapter_proposal_id": "60f2a82b5e35c114ef342e7190ca52afb4a83a8cebd88ea2fa5a1b222aada3ea"
+    },
+    "registered_at": "2026-08-06",
+    "source": "productblocker_fixlane_live_production_readback",
+    "source_merge_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+    "source_pr": "heimgewebe/weltgewebe#1698"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "ci",
+    "testing",
+    "deployment",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Bei unklarer Ursache oder fehlendem Livebeleg die Sperre erhalten beziehungsweise kontrolliert wieder setzen, keinen parallelen Reconciler starten und beim letzten kohärent belegten Release bleiben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Unbekannte Produktionsblockade des Weltgewebe-Reconcilers sicher auflösen"
+}

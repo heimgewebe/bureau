@@ -1,0 +1,141 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor Planung und Änderung werden aktueller Weltgewebe-origin/main, PR #1695, offene Karten-PRs, Worktrees, Leases und Dirty-States sowie alle Produktions- und Test-Callsites von buildThreadPathState, buildEdgeFeatures, buildProgressClippedThemeSegments, pointAtArcProgress, motionGeometryKey, EDGE_VISUAL_STYLE-Aliasen und Layer-Aliasen frisch inventarisiert. Der belegte Nichtbefund, dass buildProgressClippedThemeSegments derzeit nur in Tests benutzt wird, bleibt als solcher dokumentiert und wird nicht als Produktionsfehler behandelt.",
+      "evidence_type": "object",
+      "id": "fresh-baseline-and-consumers"
+    },
+    {
+      "assertion": "Ein reproduzierbarer, fixture- und commitgebundener Browserbenchmark misst 250, 1.000 und 10.000 repräsentative Kanten auf Desktop und iPad-nahem Profil. Getrennt erfasst werden initialer Aufbau, identisches Update, Opazitäts-/Zeitupdate, Filterwechsel, Themeänderung, Koordinatenänderung, Style-Reload, CPU-Zeit, Frameverteilung und zusätzlicher Speicher. Budgets werden vor einer Optimierungsentscheidung festgelegt; Durchschnitt, p95 und Worst Case werden ausgewiesen.",
+      "evidence_type": "object",
+      "id": "target-scale-browser-profile"
+    },
+    {
+      "assertion": "Ein statischer Fadenpfadcache wird nur eingeführt, wenn mindestens ein relevantes Zielbudget reproduzierbar überschritten wird und der Cache den Engpass messbar senkt. Er ist hart begrenzt, besitzt deterministische Schlüssel für ID, gerundete visuell relevante Koordinaten, Fadenart, Subjektbindung und geordnete Farbpalette, invalidiert bei jeder geometrie- oder themenwirksamen Änderung und kann keine veralteten Endpunkte, Farben, Lebenszykluswerte oder Style-Zustände ausliefern. Speichergewinn und -kosten werden gegenüber der Baseline gemessen.",
+      "evidence_type": "object",
+      "id": "evidence-gated-static-cache"
+    },
+    {
+      "assertion": "Die wiederholte Mercator-Chord- und Kontrollpunktberechnung innerhalb eines einzelnen Fadenpfad-Builds wird nur dann zusammengeführt, wenn Profil oder Zählbeleg die Doppelarbeit bestätigt. Ein gemeinsamer unveränderlicher Build-Kontext darf die exakten Endpunkte, Antimeridian-Entfaltung, Polgrenzen, Kontrollpunktprojektionen, adaptive Abtastung und maximal 24 Samples numerisch nicht verändern; Differenztests vergleichen Alt- und Neupfad auf einer großen deterministischen Geometriemenge.",
+      "evidence_type": "object",
+      "id": "single-projection-build"
+    },
+    {
+      "assertion": "Der Bewegungsschlüssel erhält eine dokumentierte Koordinatenquantisierung nur unterhalb der sichtbaren und fachlichen Präzisionsschwelle. Echte Koordinaten-, Fadenart-, Subjekt- oder Farbfolgenänderungen bauen weiterhin neu; die Reihenfolge mehrerer Themenfarben wird nicht sortiert oder semantisch entwertet. Tests belegen weniger Rebuilds bei reinem Float-Rauschen und unveränderte Rebuilds bei materiellen Änderungen.",
+      "evidence_type": "object",
+      "id": "stable-motion-identity"
+    },
+    {
+      "assertion": "Kein leerer oder ungültiger Pfad kann NaN/Infinity in ein GeoJSON-Feature bringen. Der leere Vertrag von pointAtArcProgress wird über nullable/Result-Semantik oder eine vollständig belegte interne Vorbedingung gehärtet, ohne Nullinsel-Ersatz. Test-only-Zähler werden nur bei nachgewiesenem Bundle- oder API-Nutzen aus dem Produktionsmodul verschoben. Rückwärtskompatibilitäts-Aliase und alte Layernamen werden erst nach repoweiter und browserseitiger Verbraucherinventur entfernt oder stärker als deprecated markiert; aktuelle externe oder persistente Verbraucher werden nicht gebrochen.",
+      "evidence_type": "object",
+      "id": "empty-path-and-api-hygiene"
+    },
+    {
+      "assertion": "Statische einfarbige, statische mehrfarbige und animierte Fäden behalten dieselben kanonischen Samples, Endpunkte, Bogenlängen, Kurvenprofile und Clipgrenzen. Eine Vereinheitlichung des Mono-Pfads über clipThreadPathByProgress erfolgt nur, wenn sie keine neue themeColor-Eigenschaft, Farb- oder Layersemantik einführt; andernfalls wird die bewusste Abweichung dokumentiert und getestet.",
+      "evidence_type": "object",
+      "id": "static-motion-parity"
+    },
+    {
+      "assertion": "Der PR bleibt auf gemessene Engpässe und belegte API-Härtung begrenzt. Vor Merge liegen exakte Base-, Head- und Diffbindung, Vorher-/Nachher-Benchmark, Speichervergleich, Self-Review, vollständige Unit-/Browser-/Performancechecks und ein Readback auf Desktop sowie iPad-nahem Profil vor. Kein Cache, Aliasbruch oder Geometrieumbau wird allein wegen theoretischer Eleganz eingeführt.",
+      "evidence_type": "object",
+      "id": "bounded-release-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangte am 6. August 2026 die autonome Fortsetzung der Prüfung und Umsetzung der gemergten Faden- und Knoten-Reviews. Performance- und API-Änderungen bleiben messungsgebunden, isoliert, kostenfrei, revisionsgebunden und benötigen grüne Pflichtchecks.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests",
+      "path:/home/alex/repos/weltgewebe/docs/specs/knoten-gewebe-visualisierung.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die statischen Fadenpfad-Neuberechnungen und zugehörigen Overlay-Hilfen nach PR #1695 auf repräsentativen Browserlasten messen. Nur bei reproduzierter Budgetüberschreitung einen begrenzten, korrekt invalidierten Pfadcache oder engere Rechenoptimierungen einführen; zugleich leere-Pfad-, Test-Hook-, Schlüssel- und Rückwärtskompatibilitätsverträge minimal härten, ohne sichtbare Fadengeometrie, Farbfolge, Fachsemantik oder Bewegung zu verändern.",
+  "id": "WELTGEWEBE-EDGE-PERFORMANCE-HYGIENE-V1",
+  "initiative": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current performance budget violation",
+      "automatic need for a cache",
+      "permission to change Faden-Fachsemantik",
+      "permission to reorder theme colors",
+      "permission to remove compatibility aliases without consumers proof",
+      "queue truth",
+      "claim or dispatch authority"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f0fd7ea149f2cbd6985da3ab",
+      "event_id": 2775,
+      "event_created_at": "2026-08-06T08:06:52.002861Z",
+      "request_sha256": "35dc7fb04f464c603f1117bbcd87f35d7cdfe6b0249a8df113ccdce7e4828f0f",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:weltgewebe:2026-08-06:pr1690-postmerge-review:performance-api-hygiene",
+        "observed_at": "2026-08-06T08:06:51.953719Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-06",
+    "related_pull_requests": [
+      "heimgewebe/weltgewebe#1690",
+      "heimgewebe/weltgewebe#1695"
+    ],
+    "related_task": "WELTGEWEBE-EDGE-PROJECTION-INDEX-BENCH-V1",
+    "scope_distinction": "Der bestehende Task misst Backend-Projektionen und Datenindizes bei 500.000 Kanten; dieser Task misst Browser-Fadenpfade und Overlay-API bei 250, 1.000 und 10.000 Kanten.",
+    "source": "operator_followup_from_weltgewebe_pr1690_pr1695_postmerge_review"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 41
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "maplibre",
+    "profiling",
+    "performance",
+    "browser-e2e",
+    "playwright",
+    "webkit",
+    "api-review",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Live-Code, Browserprofile und Verbraucher müssen vor jeder Optimierung gelesen werden; RepoGround ergänzt Aufruf- und Änderungsfolgen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Fadenpfad-Browserleistung messen und Overlay-API härten"
+}

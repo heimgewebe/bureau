@@ -1,0 +1,127 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jeder Wirkung werden aktueller origin/main, Branch, exakter Head, Dirty-State, Prozesse, Leases und einschlägige offene PRs frisch gelesen. Die vier reproduzierten Fehlerklassen sind an konkrete Testfälle gebunden: gegenläufige Zielhaken, nur endpunktbasierte Tangentenprüfung bei S-/Schleifenformen, 5-m-Sehnenfrühausstieg trotz sichtbarem Innenbogen und die falsche Forderung identischer Zieltangenten aus entgegengesetzten Quellen.",
+      "evidence_type": "object",
+      "id": "fresh-reproduction"
+    },
+    {
+      "assertion": "Die Bézier-Kontrollpunkte bleiben entlang der Quelle-Ziel-Achse monoton und treten innerhalb eines sicheren Zielkegels ein. Gegenläufige Haken, Rückfaltungen und lokale Schleifen nahe dem Ziel werden deterministisch verhindert, ohne die fachliche Fadenart oder Endpunktbindung zu verändern.",
+      "evidence_type": "object",
+      "id": "fold-free-control-contract"
+    },
+    {
+      "assertion": "Die Kurve wird per de-Casteljau-Subdivision krümmungs- und abweichungsadaptiv abgetastet. Kurze Endpunktsehnen dürfen sichtbare Innenbögen nicht überspringen; die Ausgabe bleibt durch ein dokumentiertes Punktlimit von höchstens 24 Punkten begrenzt.",
+      "evidence_type": "object",
+      "id": "adaptive-visible-sampling"
+    },
+    {
+      "assertion": "Deterministische Tests decken alle vier Fehlerklassen, Degenerationsfälle, Punktlimit und bestehende Fadenarten ab. Mindestens der fokussierte edges-Test, die vollständige Web-Testsuite, App-Lint und alle relevanten Repository-Pflichtgates sind auf dem exakten finalen Head grün; Tests oder Grenzwerte werden nicht abgeschwächt.",
+      "evidence_type": "object",
+      "id": "regression-gates"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head- und Diffbindung, ein methodisch getrennter Review des finalen Heads, geschlossene materielle Befunde und vollständig grüne Pflichtchecks vor. Der Merge erfolgt nur auf den exakt geprüften Head.",
+      "evidence_type": "object",
+      "id": "revision-bound-release"
+    },
+    {
+      "assertion": "Nach Merge und erforderlichem Deployment wird die öffentliche Karte im Browser auf dem exakten Deploymentcommit geprüft. Repräsentative Fäden zeigen keine sichtbaren Rückfaltungen, polygonalen Zielhaken oder ausgelassenen Innenbögen; Konsole, Kartenlayer und Performancebeleg bleiben unauffällig. HTTP 200 oder Provider-READY allein genügt nicht.",
+      "evidence_type": "object",
+      "id": "post-merge-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Beseitigung konkret reproduzierter Produktblocker einschließlich Commit, PR, Merge, Deployment und Live-Verifikation beauftragt. Die Änderung bleibt auf Fadengeometrie, Regressionstests und Spezifikation begrenzt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.test.ts",
+      "path:/home/alex/repos/weltgewebe/docs/specs/knoten-gewebe-visualisierung.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die bereits konkret reproduzierten Kartenfehler der textilen Fadengeometrie vollständig schließen: gegenläufige Zielhaken und lokale Rückfaltungen verhindern, innere S- und Schleifenbögen auch bei kurzen Endpunktabständen sichtbar abtasten und die resultierenden Kurven für alle Fadenarten stabil, natürlich und performant rendern.",
+  "id": "WELTGEWEBE-OS-V1-T068",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "queue truth before publication",
+      "merge readiness",
+      "production correctness before browser proof",
+      "permission to modify foreign dirty worktrees, leases or processes",
+      "permission to open an unbound pull request"
+    ],
+    "observed_validation": {
+      "app_lint": "PASS",
+      "focused_edges_tests": "37/37 PASS",
+      "full_web_tests": "446/446 PASS",
+      "independent_focused_rerun": "37/37 PASS",
+      "required_scope": "PASS"
+    },
+    "registered_at": "2026-08-06",
+    "source": "productblocker_fixlane_existing_validated_branch",
+    "source_branch": "fix/thread-curve-robustness-v2",
+    "source_checkout": "/home/alex/repos/.weltgewebe-standalone/thread-curve-robustness-v2-20260806",
+    "source_head": "76fe4465de00710f0498af31e55ccbad6fa2de99",
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_task": "grabowski-task:8cbdf39011c347619943519a",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-92b484e83fc727056a703cb8",
+      "event_id": 2750,
+      "event_created_at": "2026-08-06T05:15:18.035724Z",
+      "request_sha256": "e67b100bc7c345e5e0ecab1cd4609cf11130f1f24bb3ce6b0ce2b3712e4b59f4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-08-06T05:15:17.996400Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "maplibre",
+    "geometry",
+    "testing",
+    "browser",
+    "deployment",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Den revisionsgebundenen Geometrie-Commit zurücknehmen und auf den letzten vollständig geprüften Fadenkurvenvertrag zurückkehren; bei unklarer Laufzeitgeometrie die betreffende Feature-Ausgabe fail-closed auslassen statt NaN-, Schleifen- oder Rückfaltungskoordinaten zu veröffentlichen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Fadengeometrie gegen Rückfaltungen und unsichtbare Innenbögen härten"
+}

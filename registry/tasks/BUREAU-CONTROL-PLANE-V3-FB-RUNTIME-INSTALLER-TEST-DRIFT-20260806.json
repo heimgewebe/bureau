@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "test_deployed_launcher_uses_hash_bound_canonical_registry besteht auf einem sauberen, exakten aktuellen Main-Baseline-Checkout; der explizite Registry-Root erhält den vertraglich korrekten Compatibility-Zustand und Mutationserlaubnis.",
+      "id": "explicit-root-compatible"
+    },
+    {
+      "assertion": "test_installer_rejects_existing_release_with_unmanaged_entry erreicht die beabsichtigte Unmanaged-Entry-Prüfung, ohne den Source-Checkout unbeabsichtigt dirty zu machen; Manifest und vorhandener Release bleiben bei Ablehnung unverändert.",
+      "id": "unmanaged-entry-reaches-target"
+    },
+    {
+      "assertion": "Vorher-/Nachher-Evidence bindet beide Fehler an den exakten Main-Baseline-Commit und den reparierten Head; hermetische Einzeltests sind reproduzierbar.",
+      "id": "baseline-and-feature-reproducible"
+    },
+    {
+      "assertion": "Ruff, die fokussierten Runtime-Installer-Tests und der vollständige Validate-Vertrag sind auf dem exakten PR-Head grün oder verbleibende Fehler sind nachweislich identisch auf dem unveränderten Main-Baseline-Commit.",
+      "id": "validate-no-regression"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T001"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den belegten Runtime-Installer- und Testvertrag korrigieren; keine produktive Runtime installieren oder fremde Arbeitsstände verändern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/ops/install-bureau-runtime.py",
+      "path:/home/alex/repos/bureau/src/bureau/runtime_identity.py",
+      "path:/home/alex/repos/bureau/tests/test_canonical_registry_runtime.py",
+      "path:/home/alex/repos/bureau/tests/runtime_approval.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Die zwei auf dem exakten Bureau-main-Commit 4c9b3eb28c23841c172656306e760fbef5dd66e7 reproduzierten Runtime-Installer-Testfehler ursächlich beheben: explizite Registry-Roots dürfen nach einer hermetischen Installation nicht fälschlich als stale gelten, und die Unmanaged-Entry-Prüfung muss den absichtlich verunreinigten Release prüfen, ohne zuvor durch einen unbeabsichtigt dirty gewordenen Source-Checkout abgebrochen zu werden.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-INSTALLER-TEST-DRIFT-20260806",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "architecture_constraint": "Bestehende Runtime-Identity-, Approval-Intent- und immutable-release-Verträge korrigieren; keine zweite Deployment- oder Registry-Autorität einführen.",
+    "does_not_establish": [
+      "Priorität vor BUREAU-CONTROL-PLANE-V3-T002",
+      "Queue-Aufnahme",
+      "Claim oder Ausführung",
+      "Produktivdeployment",
+      "Freigabe fremder Ressourcen"
+    ],
+    "evidence": {
+      "baseline_commit": "4c9b3eb28c23841c172656306e760fbef5dd66e7",
+      "candidate_id": "candidate-66f0dee244518b1ca79e1f88",
+      "event_id": 2913,
+      "failing_tests": [
+        "tests/test_canonical_registry_runtime.py::test_deployed_launcher_uses_hash_bound_canonical_registry",
+        "tests/test_canonical_registry_runtime.py::test_installer_rejects_existing_release_with_unmanaged_entry"
+      ],
+      "feature_head": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
+      "observed_mismatches": [
+        "explicit compatibility expected compatible, observed stale",
+        "expected unmanaged release rejection, observed source checkout is dirty"
+      ]
+    },
+    "registered_at": "2026-08-06T18:58:20Z",
+    "source": "Candidate candidate-66f0dee244518b1ca79e1f88, Event 2913. Unabhängiger Volltest- und Baselinevergleich während BUREAU-CONTROL-PLANE-V3-T001; exakt dieselben zwei Fehler auf Main 4c9b3eb28c23841c172656306e760fbef5dd66e7 und Feature-Head 6cbecfa8754a17383be24397bbdddbe2dc1d8832.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-66f0dee244518b1ca79e1f88",
+      "event_id": 2913,
+      "event_created_at": "2026-08-06T18:58:20.135386Z",
+      "request_sha256": "edfc7e4056b240cdf2ac5ab3c4371c180ef86640493ad77a1c60f65ad60f5132",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-test-baseline",
+        "locator": "git:heimgewebe/bureau@4c9b3eb28c23841c172656306e760fbef5dd66e7;tests:test_canonical_registry_runtime.py",
+        "observed_at": "2026-08-06T18:51:50Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 95
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kanonische Runtime-Installer-Tests auf aktuellem Main reparieren"
+}

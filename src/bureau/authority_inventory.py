@@ -511,6 +511,24 @@ def authority_inventory(
     runtime_installer = _runtime_installer_consumer(root)
     if runtime_installer is not None:
         consumers.append(runtime_installer)
+        installer_evidence = runtime_installer["evidence"]
+        missing_installer_markers = sorted(
+            marker
+            for marker, present in installer_evidence.items()
+            if not present
+        )
+        if missing_installer_markers:
+            findings.append(
+                {
+                    "severity": "error",
+                    "code": "runtime-installer-contract-incomplete",
+                    "path": runtime_installer["path"],
+                    "detail": (
+                        "runtime installer lacks required authority markers: "
+                        + ", ".join(missing_installer_markers)
+                    ),
+                }
+            )
     elif runtime_installer_path.exists() or runtime_installer_path.is_symlink():
         findings.append(
             {

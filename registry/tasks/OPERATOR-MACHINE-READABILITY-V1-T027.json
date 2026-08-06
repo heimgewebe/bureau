@@ -57,7 +57,8 @@
       "Implementierung",
       "Mergebereitschaft",
       "Queue- oder Claim-Autorität",
-      "Änderung der Audio-Systemwahrheit"
+      "Änderung der Audio-Systemwahrheit",
+      "Erfüllung der historischen Akzeptanzkriterien"
     ],
     "observed_error": "Expected '*', '+', end of line, or end of file at KIND?=debug.test",
     "observed_main": "6b41d844235b3672264aca97c601a76912ceb7aa",
@@ -85,7 +86,19 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "superseded_at": "2026-08-06T08:30:55Z",
+    "supersession_reason": "Der Auftrag besitzt auf dem exakten aktuellen Bureau-main keinen ausführbaren Zielpfad mehr: Die zwingend vorausgesetzte Datei `Justfile` ist am Commit d93599edaa8e9ec4a4cf8e0041f226b9c7fad026 nicht vorhanden. Die Akzeptanz wird nicht als erfüllt ausgegeben; der historische Auftrag wird wegen entfallener Implementierungsoberfläche wahrheitsgemäß beendet.",
+    "supersession_evidence": {
+      "kind": "github-contents-readback",
+      "repository": "heimgewebe/bureau",
+      "ref": "d93599edaa8e9ec4a4cf8e0041f226b9c7fad026",
+      "path": "Justfile",
+      "http_status": 404,
+      "observed_at": "2026-08-06T08:30:55Z"
+    },
+    "acceptance_not_waived": true,
+    "historical_record_retained": true
   },
   "priority": {
     "lane": "next",
@@ -104,6 +117,6 @@
     "strategy": "Die Justfile-Syntaxänderung, den fokussierten Regressionstest und einen gegebenenfalls ergänzten Parser-Gate gemeinsam revertieren; keine Registry-, Queue- oder Runtime-Migration ist erforderlich."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Bureau-Justfile parsebar machen und Parserregression absichern"
 }

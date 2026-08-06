@@ -1,0 +1,111 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jeder Katalogeintrag bindet eine aktuelle offizielle Programmquelle, Scope, erlaubte Methoden, Ausschlüsse, Einreichungsweg, Vergütungsangaben soweit veröffentlicht und Beobachtungszeit. Fehlende oder widersprüchliche Autorisierung schließt den Eintrag aus.",
+      "id": "official-authorization-evidence"
+    },
+    {
+      "assertion": "Der Pilot liest nur öffentliche Programminformationen und öffentlich verfügbaren Quellcode. Er erzeugt keinen aktiven Verkehr gegen Zielsysteme, keine Accounts, keine Meldungen und keine Veröffentlichungen.",
+      "id": "passive-only-boundary"
+    },
+    {
+      "assertion": "Der Pilot liefert mindestens fünf belegte Programme mit Schwerpunkt Open Source oder AI-Agenten und rankt sie nachvollziehbar nach Autorisierung, technischer Passung, möglicher Vergütung, Zeitaufwand, Dublettenrisiko und lokaler Prüfbarkeit.",
+      "id": "ranked-five-program-pilot"
+    },
+    {
+      "assertion": "Für genau einen priorisierten Kandidaten entsteht ein eng begrenzter Plan zur lokalen Prüfung einer gepinnten Version oder eines exakten Commits. Der Plan enthält Zeitbudget, Abbruchkriterien, erlaubte Analysearten und Non-Claims, führt aber selbst keine aktive Sicherheitsprüfung aus.",
+      "id": "local-review-plan"
+    },
+    {
+      "assertion": "Katalog, Rangliste und lokaler Prüfplan werden digestgebunden geprüft. Externe Kontaktaufnahme, Meldung oder Veröffentlichung erfordert einen späteren separaten, zielgebundenen Auftrag.",
+      "id": "review-before-external-effect"
+    },
+    {
+      "assertion": "Der Pilot verwendet nur vorhandene lokale Ressourcen, öffentliche Quellen und vorhandene Abonnements; Zusatzkosten und kostenpflichtige Scanner oder APIs bleiben gesperrt.",
+      "id": "zero-additional-cost"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Erlaubt sind nur Grabowski-Code, Tests, Dokumentation und lokale Katalogartefakte. Aktive Zielsystemtests und externe Kommunikation bleiben gesperrt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bounty_catalog.py",
+      "path:/home/alex/repos/grabowski/tests/test_bounty_catalog.py",
+      "path:/home/alex/repos/grabowski/docs/authorized-bounty-catalog-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "In Grabowski einen nullkostenfähigen Katalog- und Auswahlpfad für offiziell autorisierte Open-Source- und AI-Agenten-Programme bauen. Der Pilot beschränkt sich auf Programmbedingungen, passive Quellcode-Triage und einen lokalen Prüfplan; aktive Zielsystemtests und externe Meldungen sind ausgeschlossen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T149",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Existenz eines Sicherheitsfehlers",
+      "Anspruch auf Vergütung",
+      "Erlaubnis zu aktiven Zielsystemtests",
+      "Einreichungs- oder Veröffentlichungsvollmacht"
+    ],
+    "independently_executable": true,
+    "pilot_contract": {
+      "active_target_tests": 0,
+      "additional_cost_eur": 0,
+      "external_submissions": 0,
+      "local_review_plans": 1,
+      "minimum_authorized_programs": 5
+    },
+    "registered_at": "2026-08-06",
+    "source": "bureau operator-intake candidate candidate-3d81e301fb9a2e6a6f717477 event 2766",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3d81e301fb9a2e6a6f717477",
+      "event_id": 2766,
+      "event_created_at": "2026-08-06T06:43:32.703687Z",
+      "request_sha256": "1631f991a513ebb163c6bda66a0c929f84f77822321c7c430d518ae8831823f4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt-project://schotter/path-b/authorized-bounty-search",
+        "observed_at": "2026-08-06T06:43:32.660416Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "web-research",
+    "testing",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem Scope, fehlender offizieller Quelle, Kosten- oder Vertragsabweichung den Eintrag deaktivieren, keine externe Wirkung auslösen und die lokale Evidenz revisionsgebunden bewahren."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Autorisierte OSS- und Agentenprogramme katalogisieren"
+}

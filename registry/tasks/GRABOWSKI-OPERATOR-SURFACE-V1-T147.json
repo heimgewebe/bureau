@@ -137,6 +137,19 @@
         "merge authority",
         "deployment authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "bureau_run_receipt",
+      "source_ref": "bureau-run:BUR-RUN-20260806T085741Z-0117587720@f88d44f6febc00bc798cb7dc860043b3724d25547dabd249e6d7ffb414e9065a",
+      "run_id": "BUR-RUN-20260806T085741Z-0117587720",
+      "worker_id": "controller:chatgpt:t147-evidence-closeout:20260806T1056",
+      "verified_at": "2026-08-06T09:42:26.845746Z",
+      "outcome": "succeeded",
+      "task_sha256": "aa961c376a3a4bf7387ab3d3b23a31fc0ae78092a1b2e093b9bf3854f0adef1e",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "receipt_sha256": "f88d44f6febc00bc798cb7dc860043b3724d25547dabd249e6d7ffb414e9065a",
+      "receipt_file_sha256": "23f6375b974d650c6163d2cf2c68e4feab3a3ae74d4eca5305cc0f8dbaf068af"
     }
   },
   "priority": {
@@ -155,6 +168,6 @@
     "strategy": "Bei Fehlern nur die selbstgebundene Lifecycle-Ausführung terminalisieren und die eigene Salvage-State-Pfadlease unverändert freigeben. Grabowski-Repository, historischer Checkout und Salvage-Clone bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Gesicherten T139-Stand isoliert auf aktuellem Main fortführen"
 }

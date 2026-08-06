@@ -6,7 +6,7 @@
 
 Der Inventarlauf verbindet vier Belegklassen:
 
-1. statische Python-Analyse für Registry-, StateStore-, GitHub- und Grabowski-Zugriffe;
+1. statische Python-Analyse über alle produktiven Pakete unter `src/` sowie den revisionsgebundenen Runtime-Installer für Registry-, StateStore-, Cycle-State-, GitHub- und Grabowski-Zugriffe;
 2. Workflowanalyse für GitHub-Transport- und Registry-Schreibkandidaten;
 3. systemd-Unit-Inventar einschließlich optionalem read-only Live-Readback;
 4. SQLite-Readback mit `mode=ro`, `query_only`, Integritätsprüfung, Schema und begrenzten Tabellenzählungen.
@@ -47,7 +47,9 @@ Besonders sichtbar bleiben:
 - heutige Doppelwriter für Git Registry und StateStore,
 - operative Git-Schreiber, die nach dem Cutover entfernt werden müssen,
 - GitHub-Transporte, die nur Code, CI oder redigierte Snapshots transportieren dürfen,
-- StateStore-Schreiber, die in den Single-Writer-Vertrag konvergieren müssen.
+- StateStore-Schreiber, die in den Single-Writer-Vertrag konvergieren müssen,
+- Schreiber der separaten `bureau_cycle`-Nebenstände, die in die StateStore-API oder eine begrenzte read-only Projektion überführt werden müssen,
+- den expliziten Runtime-Installer als Head-, `origin/main`- und Approval-Intent-gebundene Deploymentautorität.
 
 ## Grenzen
 

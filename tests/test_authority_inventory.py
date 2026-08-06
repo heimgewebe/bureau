@@ -12,6 +12,8 @@ from bureau.cli import main as bureau_main
 def _fixture_root(tmp_path: Path) -> tuple[Path, Path]:
     root = tmp_path / "repo"
     (root / "src/bureau").mkdir(parents=True)
+    (root / "src/bureau_cycle").mkdir(parents=True)
+    (root / "src/bureau_cycle/__init__.py").write_text("", encoding="utf-8")
     (root / ".github/workflows").mkdir(parents=True)
     (root / "ops/systemd").mkdir(parents=True)
 
@@ -35,6 +37,19 @@ from bureau.read_only_state import ReadOnlyStateStore
 
 def read(state):
     return ReadOnlyStateStore(state, state.parent)
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (root / "src/bureau_cycle/operator.py").write_text(
+        """
+from pathlib import Path
+
+def atomic_json(path, value):
+    path.write_text('{}')
+
+def run():
+    atomic_json(Path.home() / '.local/state/bureau-cycle/latest.json', {})
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -113,7 +128,26 @@ def test_inventory_is_read_only_hash_bound_and_classifies_dual_writers(
         if item["path"] == "external:heim-pc-dashboard"
     )
     assert dashboard["freshness_contract"] == "bounded-dashboard-snapshot-readback"
+    assert not any(
+        item["path"] == "src/bureau_cycle/__init__.py"
+        for item in first["consumers"]
+    )
+    cycle = next(
+        item
+        for item in first["consumers"]
+        if item["path"] == "src/bureau_cycle/operator.py"
+    )
+    assert cycle["reads"] == ["cycle_state"]
+    assert cycle["writes"] == ["cycle_state"]
+    assert cycle["target_authority"] == "state-store-api"
+    assert cycle["migration_disposition"] == "migrate-cycle-side-state-to-state-store"
+    assert first["summary"]["cycle_state_writer_count"] == 1
     assert any(item["code"] == "dual-operational-writer" for item in first["findings"])
+    assert any(
+        item["code"] == "operational-side-state-writer-to-migrate"
+        and item["path"] == "src/bureau_cycle/operator.py"
+        for item in first["findings"]
+    )
     assert first["inventory_sha256"] == legacy.sha256_json(
         {key: value for key, value in first.items() if key != "inventory_sha256"}
     )
@@ -184,3 +218,32 @@ def test_canonical_cli_exposes_read_only_authority_inventory(
     assert inventory["complete"] is True
     assert inventory["state_store"]["path"] == str(state)
     assert inventory["systemd"]["enabled"] is False
+
+
+def test_inventory_declares_runtime_installer_authority(tmp_path: Path) -> None:
+    root, state = _fixture_root(tmp_path)
+    installer = root / "ops/install-bureau-runtime.py"
+    installer.parent.mkdir(parents=True, exist_ok=True)
+    installer.write_text(
+        "immutable_release_path = True\n"
+        "approval_intent = True\n"
+        "ensure_registry_snapshot = True\n"
+        "marker = 'rev-parse\", \"origin/main'\n",
+        encoding="utf-8",
+    )
+
+    value = authority_inventory(root, state_path=state, probe_systemd=False)
+
+    consumer = next(
+        item for item in value["consumers"] if item["path"] == "ops/install-bureau-runtime.py"
+    )
+    assert consumer["kind"] == "runtime-installer"
+    assert consumer["target_authority"] == (
+        "github-code-authority-and-immutable-runtime-deployment"
+    )
+    assert consumer["migration_disposition"] == (
+        "retain-as-explicit-deployment-authority"
+    )
+    assert consumer["freshness_contract"] == (
+        "source-head-origin-main-and-approval-intent-bound"
+    )

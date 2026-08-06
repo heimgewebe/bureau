@@ -547,6 +547,57 @@ def test_candidate_replay_returns_current_superseding_event_without_self_duplica
     )
 
 
+def test_candidate_assess_resolves_idempotency_key_to_current_candidate(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    correction = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title="Corrected operator intake task",
+        source="operator-intake-correction",
+        repo="repo.alpha",
+        candidate_id=first["candidate_id"],
+        status="promoted",
+        promotion_required=False,
+        supersedes_event_id=first["event_id"],
+        note="Corrected wording without creating a new candidate identity",
+    )
+
+    assessed = candidate_assess(
+        registry,
+        store,
+        idempotency_key="source:alpha",
+    )
+    assert assessed["candidate_id"] == first["candidate_id"]
+    assert assessed["event_id"] == correction["event_id"]
+    assert assessed["candidate_status"] == "promoted"
+
+    with pytest.raises(OperatorIntakeError) as invalid:
+        candidate_assess(registry, store, idempotency_key="invalid key")
+    assert invalid.value.code == "idempotency-key-invalid"
+
+    with pytest.raises(OperatorIntakeError) as mixed:
+        candidate_assess(
+            registry,
+            store,
+            candidate_id=first["candidate_id"],
+            idempotency_key="source:alpha",
+        )
+    assert mixed.value.code == "candidate-selector-invalid"
+
+
+def test_candidate_assess_rejects_unknown_idempotency_key(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_assess(registry, store, idempotency_key="source:missing")
+    assert caught.value.code == "idempotency-key-unknown"
+
+
 def test_candidate_request_refines_current_event_and_inherits_identity(
     registry_factory, tmp_path
 ):
@@ -3322,6 +3373,22 @@ def test_cli_adapters_preserve_domain_results_without_extra_authority(
     assert assessed["kind"] == "bureau_candidate_assessment"
     assert assessed["decision"] == "promote"
     assert assessed["advisory_only"] is True
+
+    assert (
+        bureau_cli.main(
+            [
+                *common,
+                "operator-candidate-assess",
+                "--idempotency-key",
+                "cli:operator-intake-refinement",
+            ]
+        )
+        == 0
+    )
+    assessed_by_key = _cli_result(capsys)
+    assert assessed_by_key["kind"] == "bureau_candidate_assessment"
+    assert assessed_by_key["candidate_id"] == recorded["candidate_id"]
+    assert assessed_by_key["event_id"] == recorded["event_id"]
 
     task_path = tmp_path / "task.json"
     task_path.write_text(json.dumps(_task(root), indent=2) + "\n")

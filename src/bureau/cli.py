@@ -316,6 +316,7 @@ def parser() -> argparse.ArgumentParser:
     candidate_assess_selector = candidate_assess_parser.add_mutually_exclusive_group(required=True)
     candidate_assess_selector.add_argument("--candidate-id")
     candidate_assess_selector.add_argument("--event-id", type=int)
+    candidate_assess_selector.add_argument("--idempotency-key")
     candidate_assess_parser.add_argument("--initiative")
     candidate_assess_parser.add_argument("--task-id")
     task_propose_parser = sub.add_parser("operator-task-propose")
@@ -1234,6 +1235,7 @@ def main(argv: list[str] | None = None) -> int:
                 store,
                 candidate_id=args.candidate_id,
                 event_id=args.event_id,
+                idempotency_key=args.idempotency_key,
                 initiative=args.initiative,
                 task_id=args.task_id,
             )

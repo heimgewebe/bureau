@@ -306,6 +306,63 @@ def reconcile(
     }
 
 
+def withdraw_open_proposal(
+    repository: str = DEFAULT_REPOSITORY,
+    base: str = DEFAULT_BASE,
+    branch: str = NOW_REFILL_BRANCH,
+) -> dict[str, Any]:
+    """Close one stale Now-refill PR when local truth authorises no proposal."""
+    pull_requests = _json(
+        [
+            "pr",
+            "list",
+            "--repo",
+            repository,
+            "--base",
+            base,
+            "--head",
+            branch,
+            "--state",
+            "open",
+            "--limit",
+            "1",
+            "--json",
+            "number,url",
+        ]
+    )
+    if not pull_requests:
+        return {
+            "status": "no_open_proposal",
+            "repository": repository,
+            "base": base,
+            "branch": branch,
+        }
+    number = int(pull_requests[0]["number"])
+    _run(
+        [
+            "pr",
+            "close",
+            str(number),
+            "--repo",
+            repository,
+            "--comment",
+            (
+                "The current local authoritative Now-refill decision does not authorise "
+                "a queue proposal. Closing this stale proposal fail-closed; a later "
+                "authorised cycle may publish a fresh revision-bound branch."
+            ),
+        ]
+    )
+    return {
+        "status": "withdrawn",
+        "repository": repository,
+        "base": base,
+        "branch": branch,
+        "pull_request": number,
+        "url": pull_requests[0]["url"],
+    }
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Create or update a review PR for one bounded Bureau automation branch."
@@ -365,13 +422,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 base=arguments.base,
                 branch=branch,
             )
-        result = reconcile(
-            arguments.repo,
-            arguments.base,
-            branch,
-            kind=arguments.kind,
-            auto_merge=arguments.auto_merge,
-        )
+        if publish_result is not None and publish_result["status"] != "published":
+            result = withdraw_open_proposal(arguments.repo, arguments.base, branch)
+        else:
+            result = reconcile(
+                arguments.repo,
+                arguments.base,
+                branch,
+                kind=arguments.kind,
+                auto_merge=arguments.auto_merge,
+            )
     except (
         GhCommandError,
         GitCommandError,

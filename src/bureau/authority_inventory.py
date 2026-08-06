@@ -29,14 +29,11 @@ _STATE_TABLES = (
     "receipt_records",
 )
 _FRESHNESS_CONTRACTS = {
-    "python-module": (
-        "source-revision-bound-static-detection;live-source-freshness-unobserved"
-    ),
-    "github-workflow": (
-        "workflow-revision-and-trigger-bound;external-source-freshness-unobserved"
-    ),
+    "python-module": ("source-revision-bound-static-detection;live-source-freshness-unobserved"),
+    "github-workflow": ("workflow-revision-and-trigger-bound;external-source-freshness-unobserved"),
     "systemd-unit": "unit-file-revision-bound;live-state-projected-separately",
     "runtime-installer": "source-head-origin-main-and-approval-intent-bound",
+    "installed-systemd-unit": "invocation-time-systemd-unit-file-and-state-bound",
     "external-authority": "external-source-specific-contract",
     "external-consumer": "external-source-specific-contract",
 }
@@ -79,7 +76,7 @@ def _classify_consumer(record: dict[str, Any]) -> None:
     elif "cycle_state" in writes:
         target = "state-store-api"
         disposition = "migrate-cycle-side-state-to-state-store"
-    elif kind == "systemd-unit":
+    elif kind in {"systemd-unit", "installed-systemd-unit"}:
         target = "typed-bureau-cli-or-read-only-projection"
         disposition = "retain-as-runtime-consumer"
     elif kind == "github-workflow":
@@ -91,9 +88,7 @@ def _classify_consumer(record: dict[str, Any]) -> None:
     else:
         target = "typed-read-only-projection"
         disposition = "retain-as-observer"
-    record["assumed_authorities"] = sorted(
-        set(record["reads"]).union(record["writes"])
-    )
+    record["assumed_authorities"] = sorted(set(record["reads"]).union(record["writes"]))
     record["freshness_contract"] = record.get(
         "declared_freshness_contract",
         _FRESHNESS_CONTRACTS.get(
@@ -104,6 +99,53 @@ def _classify_consumer(record: dict[str, Any]) -> None:
     record["target_authority"] = target
     record["target_interface"] = target
     record["migration_disposition"] = disposition
+
+
+def _literal_strings(node: ast.AST) -> list[str]:
+    return [
+        child.value
+        for child in ast.walk(node)
+        if isinstance(child, ast.Constant) and isinstance(child.value, str)
+    ]
+
+
+def _command_invocations(tree: ast.AST) -> list[dict[str, str]]:
+    direct_calls = {"Popen", "check_call", "check_output", "run", "system"}
+    wrapper_kinds: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for child in ast.walk(node):
+            if not isinstance(child, ast.Call):
+                continue
+            call_tail = _call_name(child.func).rsplit(".", 1)[-1]
+            if call_tail not in direct_calls:
+                continue
+            literals = [value.lower() for value in _literal_strings(child)]
+            executable = next((value for value in literals if value in {"gh", "git"}), None)
+            if executable is not None:
+                wrapper_kinds[node.name] = executable
+                break
+
+    invocations: list[dict[str, str]] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        call_tail = _call_name(node.func).rsplit(".", 1)[-1]
+        literals = [value.lower() for value in _literal_strings(node)]
+        kind = wrapper_kinds.get(call_tail)
+        if call_tail in direct_calls and kind is None:
+            kind = next((value for value in literals if value in {"gh", "git"}), None)
+        if kind is None:
+            continue
+        invocations.append(
+            {
+                "kind": kind,
+                "call": call_tail,
+                "command": " ".join(literals),
+            }
+        )
+    return invocations
 
 
 def _scan_python(
@@ -121,12 +163,9 @@ def _scan_python(
             "detail": f"{type(exc).__name__}: {exc}",
         }
 
-    calls = {
-        _call_name(node.func)
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-    }
+    calls = {_call_name(node.func) for node in ast.walk(tree) if isinstance(node, ast.Call)}
     call_tails = {name.rsplit(".", 1)[-1] for name in calls if name}
+    command_invocations = _command_invocations(tree)
     strings = {
         node.value
         for node in ast.walk(tree)
@@ -154,6 +193,9 @@ def _scan_python(
             "pull_request",
             "source-pr-bridge",
         )
+    ) or any(
+        item["kind"] == "gh" or (item["kind"] == "git" and "push" in item["command"].split())
+        for item in command_invocations
     )
     grabowski_reference = "grabowski" in lowered_source
     cycle_reference = relative.startswith("src/bureau_cycle/")
@@ -173,12 +215,31 @@ def _scan_python(
         reads.add("cycle_state")
     if "StateStore" in call_tails:
         writes.add("state_store")
-    if registry_reference and _WRITE_CALLS.intersection(call_tails):
+    git_write_command = any(
+        item["kind"] == "git"
+        and any(marker in item["command"].split() for marker in ("add", "commit", "push"))
+        for item in command_invocations
+    )
+    if registry_reference and (_WRITE_CALLS.intersection(call_tails) or git_write_command):
         writes.add("git_registry")
-    if github_reference and any(
-        token in lowered_source
-        for token in ("git push", "gh pr create", "create_pull_request", "update_ref")
-    ):
+    github_write_call = bool({"create_pull_request", "update_ref"}.intersection(call_tails))
+    github_write_command = any(
+        (item["kind"] == "git" and "push" in item["command"].split())
+        or (
+            item["kind"] == "gh"
+            and any(
+                marker in f" {item['command']} "
+                for marker in (
+                    " pr create ",
+                    " pr edit ",
+                    " pr close ",
+                    " pr merge ",
+                )
+            )
+        )
+        for item in command_invocations
+    )
+    if github_reference and (github_write_call or github_write_command):
         writes.add("github_transport")
     if cycle_reference and {
         "atomic_json",
@@ -218,6 +279,9 @@ def _scan_python(
             "grabowski_reference": grabowski_reference,
             "cycle_reference": cycle_reference,
             "cycle_state_reference": cycle_state_reference,
+            "git_write_command": git_write_command,
+            "github_write_command": github_write_command,
+            "command_wrapper_kinds": sorted({item["kind"] for item in command_invocations}),
         },
     }
     _classify_consumer(record)
@@ -263,11 +327,7 @@ def _scan_unit(path: Path, relative: str) -> dict[str, Any] | None:
         lines = path.read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeError):
         return None
-    exec_start = [
-        line.split("=", 1)[1].strip()
-        for line in lines
-        if line.startswith("ExecStart=")
-    ]
+    exec_start = [line.split("=", 1)[1].strip() for line in lines if line.startswith("ExecStart=")]
     if not exec_start and path.suffix not in {".service", ".timer"}:
         return None
     joined = "\n".join(lines).lower()
@@ -358,31 +418,67 @@ def _parse_systemd_show(stdout: str) -> list[dict[str, str]]:
     return records
 
 
-def _systemd_probe(root: Path, *, enabled: bool) -> dict[str, Any]:
-    unit_root = root / "ops/systemd"
-    unit_names = sorted(
-        path.name
-        for path in unit_root.glob("bureau-*")
-        if path.suffix in {".service", ".timer"}
-    )
-    result: dict[str, Any] = {
-        "enabled": enabled,
-        "read_only": True,
-        "declared_units": unit_names,
-        "live_available": False,
-        "units": [],
-    }
-    if not enabled or not unit_names:
-        result["reason"] = "disabled" if not enabled else "no-declared-units"
-        return result
+def _systemd_scope_flag(scope: str) -> str:
+    if scope == "user":
+        return "--user"
+    if scope == "system":
+        return "--system"
+    raise ValueError(f"unsupported systemd scope: {scope}")
+
+
+def _systemd_list_unit_files(scope: str) -> tuple[list[str], str | None]:
     try:
         completed = subprocess.run(
             [
                 "systemctl",
-                "--user",
+                _systemd_scope_flag(scope),
+                "list-unit-files",
+                "--no-legend",
+                "--no-pager",
+                "--type=service,timer",
+                "bureau-*",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return [], f"{type(exc).__name__}: {exc}"
+    if completed.returncode != 0:
+        if (
+            completed.returncode == 1
+            and not completed.stdout.strip()
+            and not completed.stderr.strip()
+        ):
+            return [], None
+        detail = (completed.stderr or completed.stdout).strip().splitlines()
+        return [], detail[0][:300] if detail else f"systemctl-exit-{completed.returncode}"
+    unit_names = sorted(
+        {
+            line.split()[0]
+            for line in completed.stdout.splitlines()
+            if line.split()
+            and line.split()[0].startswith("bureau-")
+            and Path(line.split()[0]).suffix in {".service", ".timer"}
+        }
+    )
+    return unit_names, None
+
+
+def _systemd_show_units(
+    scope: str, unit_names: list[str]
+) -> tuple[list[dict[str, str]], str | None]:
+    if not unit_names:
+        return [], None
+    try:
+        completed = subprocess.run(
+            [
+                "systemctl",
+                _systemd_scope_flag(scope),
                 "show",
                 "--no-pager",
-                "--property=Id,LoadState,ActiveState,SubState,UnitFileState,FragmentPath",
+                "--property=Id,LoadState,ActiveState,SubState,UnitFileState,FragmentPath,ExecStart",
                 *unit_names,
             ],
             check=False,
@@ -391,17 +487,104 @@ def _systemd_probe(root: Path, *, enabled: bool) -> dict[str, Any]:
             timeout=8,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
-        result["reason"] = f"{type(exc).__name__}: {exc}"
-        return result
+        return [], f"{type(exc).__name__}: {exc}"
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip().splitlines()
-        result["reason"] = (
-            detail[0][:300] if detail else f"systemctl-exit-{completed.returncode}"
-        )
+        return [], detail[0][:300] if detail else f"systemctl-exit-{completed.returncode}"
+    records = _parse_systemd_show(completed.stdout)
+    for record in records:
+        record["Scope"] = scope
+    return records, None
+
+
+def _systemd_probe(root: Path, *, enabled: bool) -> dict[str, Any]:
+    unit_root = root / "ops/systemd"
+    declared_units = sorted(
+        path.name for path in unit_root.glob("bureau-*") if path.suffix in {".service", ".timer"}
+    )
+    result: dict[str, Any] = {
+        "enabled": enabled,
+        "read_only": True,
+        "declared_units": declared_units,
+        "installed_units": {"user": [], "system": []},
+        "declared_not_installed": [],
+        "installed_not_declared": {"user": [], "system": []},
+        "live_available": False,
+        "scopes": {},
+        "units": [],
+    }
+    if not enabled:
+        result["reason"] = "disabled"
         return result
-    result["units"] = _parse_systemd_show(completed.stdout)
-    result["live_available"] = True
+
+    errors: list[str] = []
+    installed_by_scope: dict[str, list[str]] = {}
+    all_records: list[dict[str, str]] = []
+    for scope in ("user", "system"):
+        installed, list_error = _systemd_list_unit_files(scope)
+        installed_by_scope[scope] = installed
+        observed = sorted(set(installed).union(declared_units if scope == "user" else []))
+        records: list[dict[str, str]] = []
+        show_error: str | None = None
+        if list_error is None:
+            records, show_error = _systemd_show_units(scope, observed)
+        error = list_error or show_error
+        result["scopes"][scope] = {
+            "available": error is None,
+            "installed_units": installed,
+            "observed_units": observed,
+            "reason": error,
+        }
+        if error is not None:
+            errors.append(f"{scope}:{error}")
+        all_records.extend(records)
+
+    user_installed = set(installed_by_scope["user"])
+    declared = set(declared_units)
+    result["installed_units"] = installed_by_scope
+    result["declared_not_installed"] = sorted(declared - user_installed)
+    result["installed_not_declared"] = {
+        "user": sorted(user_installed - declared),
+        "system": sorted(installed_by_scope["system"]),
+    }
+    result["units"] = sorted(
+        all_records, key=lambda item: (item.get("Scope", ""), item.get("Id", ""))
+    )
+    result["live_available"] = not errors
+    if errors:
+        result["reason"] = "; ".join(errors)
     return result
+
+
+def _installed_systemd_consumers(systemd: dict[str, Any]) -> list[dict[str, Any]]:
+    declared = set(systemd.get("declared_units", []))
+    consumers: list[dict[str, Any]] = []
+    for unit in systemd.get("units", []):
+        unit_name = unit.get("Id", "")
+        scope = unit.get("Scope", "")
+        if not unit_name.startswith("bureau-") or scope not in {"user", "system"}:
+            continue
+        if scope == "user" and unit_name in declared:
+            continue
+        exec_start = unit.get("ExecStart", "")
+        record: dict[str, Any] = {
+            "path": f"systemd:{scope}:{unit_name}",
+            "kind": "installed-systemd-unit",
+            "reads": ["git_registry", "runtime", "state_store"],
+            "writes": ["delegated_cli"] if exec_start else [],
+            "evidence": {
+                "scope": scope,
+                "unit_name": unit_name,
+                "fragment_path": unit.get("FragmentPath", ""),
+                "exec_start": exec_start,
+                "load_state": unit.get("LoadState", ""),
+                "active_state": unit.get("ActiveState", ""),
+                "source_declared": False,
+            },
+        }
+        _classify_consumer(record)
+        consumers.append(record)
+    return consumers
 
 
 def _runtime_installer_consumer(root: Path) -> dict[str, Any] | None:
@@ -492,9 +675,7 @@ def authority_inventory(
 
     workflow_root = root / ".github/workflows"
     if workflow_root.is_dir():
-        for path in sorted(
-            [*workflow_root.glob("*.yml"), *workflow_root.glob("*.yaml")]
-        ):
+        for path in sorted([*workflow_root.glob("*.yml"), *workflow_root.glob("*.yaml")]):
             record = _scan_workflow(path, path.relative_to(root).as_posix())
             if record is not None:
                 consumers.append(record)
@@ -539,6 +720,9 @@ def authority_inventory(
             }
         )
     consumers.extend(_external_consumers())
+    state = _state_probe(state_path.expanduser())
+    systemd = _systemd_probe(root, enabled=probe_systemd)
+    consumers.extend(_installed_systemd_consumers(systemd))
     consumers.sort(key=lambda item: item["path"])
 
     for record in consumers:
@@ -550,8 +734,7 @@ def authority_inventory(
                     "code": "dual-operational-writer",
                     "path": record["path"],
                     "detail": (
-                        "consumer can write both Git Registry and StateStore "
-                        "during migration"
+                        "consumer can write both Git Registry and StateStore during migration"
                     ),
                 }
             )
@@ -562,8 +745,7 @@ def authority_inventory(
                     "code": "operational-git-writer-to-migrate",
                     "path": record["path"],
                     "detail": (
-                        "operational Git write must be removed or reduced "
-                        "to snapshot transport"
+                        "operational Git write must be removed or reduced to snapshot transport"
                     ),
                 }
             )
@@ -580,14 +762,34 @@ def authority_inventory(
                 }
             )
 
-    state = _state_probe(state_path.expanduser())
-    systemd = _systemd_probe(root, enabled=probe_systemd)
+    for unit_name in systemd["declared_not_installed"]:
+        findings.append(
+            {
+                "severity": "warning",
+                "code": "declared-systemd-unit-not-installed",
+                "path": f"ops/systemd/{unit_name}",
+                "detail": (
+                    "source-declared user unit is absent from the "
+                    "installed unit-file inventory"
+                ),
+            }
+        )
+    for scope, unit_names in systemd["installed_not_declared"].items():
+        for unit_name in unit_names:
+            findings.append(
+                {
+                    "severity": "warning",
+                    "code": "installed-systemd-unit-not-declared",
+                    "path": f"systemd:{scope}:{unit_name}",
+                    "detail": "installed Bureau unit has no matching source declaration",
+                }
+            )
     if not systemd["live_available"]:
         findings.append(
             {
                 "severity": "info",
                 "code": "systemd-live-state-unavailable",
-                "path": "systemd:user",
+                "path": "systemd:user-and-system",
                 "detail": systemd.get("reason", "unknown"),
             }
         )
@@ -634,12 +836,8 @@ def authority_inventory(
         ),
         "summary": {
             "consumer_count": len(consumers),
-            "state_writer_count": sum(
-                "state_store" in item["writes"] for item in consumers
-            ),
-            "cycle_state_writer_count": sum(
-                "cycle_state" in item["writes"] for item in consumers
-            ),
+            "state_writer_count": sum("state_store" in item["writes"] for item in consumers),
+            "cycle_state_writer_count": sum("cycle_state" in item["writes"] for item in consumers),
             "git_registry_writer_count": sum(
                 "git_registry" in item["writes"] for item in consumers
             ),
@@ -647,12 +845,13 @@ def authority_inventory(
                 "github_transport" in item["writes"] for item in consumers
             ),
             "systemd_unit_count": sum(
-                item["kind"] == "systemd-unit" for item in consumers
+                item["kind"] in {"systemd-unit", "installed-systemd-unit"} for item in consumers
+            ),
+            "installed_systemd_unit_count": sum(
+                item["kind"] == "installed-systemd-unit" for item in consumers
             ),
             "error_count": error_count,
-            "warning_count": sum(
-                1 for item in findings if item["severity"] == "warning"
-            ),
+            "warning_count": sum(1 for item in findings if item["severity"] == "warning"),
             "migration_required_count": sum(
                 item["migration_disposition"]
                 in {

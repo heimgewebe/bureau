@@ -1,0 +1,119 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das tatsächlich veröffentlichte Schema von grabowski_bureau_task_propose bildet den Vertrag ab, dass genau einer der Selektoren candidate_id oder event_id gesetzt sein muss; kein Selektor und beide Selektoren sind vor Dispatch ungültig.",
+      "id": "published-exactly-one-selector"
+    },
+    {
+      "assertion": "Der bestehende Runtime-Vertrag, die Kandidatenauflösung und alle Fehlercodes bleiben unverändert; der Fix verschiebt nur eindeutig ungültige Aufrufe an die veröffentlichte Eingabegrenze.",
+      "id": "runtime-contract-preserved"
+    },
+    {
+      "assertion": "Regressionstests decken candidate_id allein, event_id allein, keinen Selektor, beide Selektoren und die tatsächlich veröffentlichte Connector-Schemaform ab.",
+      "id": "schema-adapter-regression"
+    },
+    {
+      "assertion": "Live wird belegt, dass Aufrufe ohne oder mit beiden Selektoren bereits durch den veröffentlichten Vertrag abgewiesen werden und den Bureau-Adapter nicht erreichen.",
+      "id": "no-roundtrip-for-invalid-shape"
+    },
+    {
+      "assertion": "Fokustests und vollständige Validierung sind grün; der PR ist auf dem geprüften Head gemergt, die Runtime commitgenau deployt und der Connector-Vertrag driftfrei.",
+      "id": "full-validation-and-deploy"
+    },
+    {
+      "assertion": "Der ursprüngliche Live-Fall wird nach Deploy wiederholt: kein Selektor scheitert vor Dispatch, ein einzelner candidate_id-Aufruf erreicht den Proposal-Pfad, und der Post-State zeigt keine doppelte Proposal-Wirkung.",
+      "id": "same-live-repro"
+    }
+  ],
+  "claims": [],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Erlaubt ist nur eine rückwärtskompatible, schema- und adapterseitige Abbildung des bereits geltenden Exactly-one-Selector-Vertrags. Kandidaten-, Proposal-, Review-, Publication-, Lease- und Registry-Semantik dürfen nicht verändert werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_intake.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_capabilities.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_intake_adapter.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-operator-intake-adapter-v1.md",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den veröffentlichten Eingabevertrag von grabowski_bureau_task_propose so binden, dass genau einer der Selektoren candidate_id oder event_id bereits vor Dispatch verlangt wird und der vermeidbare Fehl-Roundtrip entfällt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T152",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "deduplication": {
+      "candidate_assessment": "promote",
+      "exact_duplicates": 0,
+      "open_task_id_collision_checked": true,
+      "similarity_only": "candidate-grabowski-task-start-selector-schema-v1 score 0.28125",
+      "similarity_suggestions": 1
+    },
+    "does_not_establish": [
+      "Änderung der Proposal- oder Kandidatenidentität",
+      "automatische Task-Publikation",
+      "Registry-Mutationsautorität",
+      "Beseitigung anderer Selector- oder Transportfehler"
+    ],
+    "independently_executable": true,
+    "live_reproduction": {
+      "corrected_request_reached_application": true,
+      "corrected_shape": "candidate_id supplied",
+      "failed_transport_receipt_sha256": "228b2b8dbf24cf3b8ca84e1ecc80aa08f0f60a1f2ec1c569cb3104d05b5b08cf",
+      "invalid_shape": "neither selector supplied",
+      "published_candidate_id_optional": true,
+      "published_event_id_optional": true,
+      "runtime_error": "provide exactly one of candidate_id or event_id",
+      "tool": "grabowski_bureau_task_propose"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-grabowski-task-propose-selector-xor-v1",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-06T15:59:02.724652Z",
+      "event_id": 2888,
+      "request_sha256": "ccce2352b7b8e760013c41307b3d46ec601b6b0249fcc8fb1cea807024a28721",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-runtime-reproduction",
+        "locator": "grabowski:live-repro:2026-08-06:task-propose-selector-xor",
+        "observed_at": "2026-08-06T15:38:00Z",
+        "sha256": null
+      }
+    },
+    "registered_at": "2026-08-06",
+    "source": "Bureau operator-intake candidate candidate-grabowski-task-propose-selector-xor-v1 event 2888"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "testing",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei Schema- oder Clientkompatibilitätsproblemen den PR nicht mergen und die bisherige Runtime-XOR-Prüfung unverändert beibehalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Task-Propose-Selector-XOR im veröffentlichten Schema abbilden"
+}

@@ -3,7 +3,7 @@
   "id": "ALPHA-LAB-SHADOW-RESEARCH-V1-T001",
   "initiative": "ALPHA-LAB-SHADOW-RESEARCH-V1",
   "title": "Build the lawful point-in-time evidence archive",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implement a lawful append-only data foundation for public SEC filings plus timestamped market, FX, calendar and corporate-action observations. Every simulated decision must be reproducible from content-addressed raw inputs. HTTP 403, missing licenses, missing timestamps or ambiguous corrections fail closed; no bypass, paid purchase or trading edge is added.",
   "priority": {
     "lane": "now",
@@ -91,6 +91,48 @@
       "real_trading_permission",
       "automatic_progression_to_real_capital"
     ],
-    "known_blocker": "A direct SEC archive request from the Heim-PC returned HTTP 403 on 2026-08-06; diagnose compliant access or preserve the blocker, never evade it."
+    "known_blocker": "A direct SEC archive request from the Heim-PC returned HTTP 403 on 2026-08-06; diagnose compliant access or preserve the blocker, never evade it.",
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "1f6724368501de16bbb76ed082332031849bb78b02d2b8d17ecb33d872e07978",
+      "plan_sha256": "256b8b5259efd3818c49d46e7860c6a6a8be900b51ef821567ed3d25658fe96d",
+      "source": "merged_pr_and_ci_closeout",
+      "verified_at": "2026-08-06T15:34:00Z",
+      "implementation": {
+        "repository": "heimgewebe/alpha-lab",
+        "pull_request": 1,
+        "base_commit": "b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+        "head_commit": "d150b94887f8d3fd27518400d0c645f317586e6c",
+        "merge_commit": "4e5a11426fde8733059a680704da69082999f84b",
+        "merged_at": "2026-08-06T11:15:29Z"
+      },
+      "validation": {
+        "github_ci_python_3_10": "success",
+        "github_ci_python_3_12": "success",
+        "local_final_verification_receipt_sha256": "8e899bf5f8eaddeb48bc7c3677fedc067ab609b83d9998ad2a5572321c3469c2",
+        "unit_tests": {
+          "passed": 58,
+          "failed": 0
+        },
+        "safety_check": "passed",
+        "compile_all": "passed",
+        "git_diff_check": "passed"
+      },
+      "acceptance_evidence": {
+        "source-legality-matrix": "Versioned fail-closed source matrix shipped in docs/source-legality-v1.json.",
+        "append-only-sec-archive": "Content-addressed append-only SEC archive and retrieval records shipped; HTTP errors remain archived and are not bypassed.",
+        "market-fx-contract": "Timestamp, timezone, currency, provenance and conservative substitution contracts are implemented and tested.",
+        "corporate-actions-and-calendars": "Sessions, holidays, splits, symbol changes, delistings and distributions are implemented and tested.",
+        "reproducible-manifest": "Content-addressed reproducibility manifests bind raw inputs, normalized records, configuration and code identity.",
+        "no-live-execution-regression": "Static safety tests reject broker, wallet, order, leverage, CFD, option, short and capital surfaces.",
+        "validation-green": "Exact reviewed head passed local validation and both required GitHub Python jobs before merge."
+      },
+      "does_not_establish": [
+        "strategy profitability",
+        "permission for real trading or capital deployment",
+        "availability or licensing of future market-data providers",
+        "future correctness after later repository changes"
+      ]
+    }
   }
 }

@@ -2004,6 +2004,7 @@ class LocalGitPublisher(SubprocessTaskPublisher):
             assert cwd is not None
             head = super()._run(["git", "rev-parse", "HEAD"], cwd=cwd)
             branch = super()._run(["git", "branch", "--show-current"], cwd=cwd)
+            body = arguments[list(arguments).index("--body") + 1]
             self.pull_request = {
                 "number": 7,
                 "url": "https://example.invalid/pull/7",
@@ -2011,6 +2012,7 @@ class LocalGitPublisher(SubprocessTaskPublisher):
                 "headRefOid": head,
                 "headRefName": branch,
                 "baseRefName": "main",
+                "body": body,
             }
             return "https://example.invalid/pull/7"
         if list(arguments[:3]) == ["gh", "pr", "list"]:
@@ -2235,6 +2237,7 @@ def test_subprocess_publisher_creates_only_target_branch_and_task_file(registry_
     plan_path = _proposal(registry, store, tmp_path)
     plan = _review(plan_path)
     preview = publication_preview(registry, store, plan_path=plan_path)
+    publisher = LocalGitPublisher()
     result = publish_task_proposal(
         registry,
         store,
@@ -2243,7 +2246,7 @@ def test_subprocess_publisher_creates_only_target_branch_and_task_file(registry_
         resource_db=_lease_db(preview, tmp_path),
         workspace_root=tmp_path / "workspaces",
         receipt_path=tmp_path / "receipt.json",
-        publisher=LocalGitPublisher(),
+        publisher=publisher,
     )
     branch = result["branch"]
     remote_head = subprocess.run(
@@ -2281,6 +2284,15 @@ def test_subprocess_publisher_creates_only_target_branch_and_task_file(registry_
     ).stdout
     assert task_bytes.decode().endswith("\n")
     assert json.loads(task_bytes)["id"] == plan["task_id"]
+    assert publisher.pull_request is not None
+    body = publisher.pull_request["body"]
+    assert f"Bureau-Task: {plan['task_id']}\n" in body
+    assert (
+        "Bureau-Task-Binding-Exception: task-registration PR; "
+        f"{plan['task_id']} is introduced by this PR and is absent from the base registry\n"
+        in body
+    )
+    assert f"Bureau-Task: {plan['publishing_task_id']}\n" not in body
     assert result["publication"]["readback_complete"] is True
 
 

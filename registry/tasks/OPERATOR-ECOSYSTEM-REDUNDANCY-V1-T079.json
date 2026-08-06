@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der unterstützte Python-Versionsvertrag wird anhand von pyproject, CI, lokalen Werkzeugen und Nutzern entschieden und an allen maßgeblichen Stellen konsistent abgebildet.",
+      "id": "runtime-contract-decision"
+    },
+    {
+      "assertion": "Unter jeder weiterhin unterstützten Python-Version lassen sich alle Tests sammeln; `tomllib` wird entweder kompatibel importiert oder die Mindestversion wird revisionsgebunden angehoben.",
+      "id": "tomllib-compatibility"
+    },
+    {
+      "assertion": "Die vollständige Testsuite besteht auf allen deklarierten Python-Versionen; Sammlung, Ausführung und Coverage-Gates werden getrennt belegt.",
+      "id": "cross-version-tests"
+    },
+    {
+      "assertion": "Die Behebung verwendet keine pauschalen Testausschlüsse, keine versionsabhängigen stillen Skips und keine ungebundene CI-Sonderbehandlung.",
+      "id": "no-silent-skip"
+    },
+    {
+      "assertion": "Entwicklerdokumentation und lokale Standardbefehle nennen denselben Python-Vertrag wie Paketmetadaten und CI.",
+      "id": "documentation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.metarepo"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Im T046-Abschlusslauf scheiterte die vollständige Testsammlung auf der lokal vorhandenen Python-3.10-Laufzeit vor der Ausführung, weil Tests das erst ab Python 3.11 vorhandene stdlib-Modul tomllib direkt importieren. Vor Umsetzung sind der aktuelle Versionsvertrag und alle CI-Matrizen frisch zu prüfen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo"
+  },
+  "goal": "Die deklarierte Python-Untergrenze des Metarepo und die tatsächliche Testsuite wieder in Übereinstimmung bringen. Die Lösung muss entweder Python 3.10 vollständig unterstützen oder die Mindestversion bewusst und konsistent anheben; ein stilles Überspringen der betroffenen Tests ist ausgeschlossen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T079",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass Python 3.10 beibehalten werden muss",
+      "dass eine Mindestversionsanhebung vorzuziehen ist",
+      "dass Produktionscode unter Python 3.10 fehlschlägt",
+      "dass Tests übersprungen werden dürfen"
+    ],
+    "observed_evidence": {
+      "base_commit": "9c4caedec6f9e0fef4d1132838c8d8c24c0ba859",
+      "declared_python": ">=3.10",
+      "failure_class": "test collection import failure",
+      "grabowski_task_id": "473d8b85788944d8a142adeb",
+      "lifecycle_receipt_sha256": "1e546a161b9946db1ed27c87fd83cc1a14b1d693a48d545c3b668de31fa526e2",
+      "missing_module": "tomllib",
+      "observed_at": "2026-08-06T04:23:35Z",
+      "repository": "heimgewebe/metarepo",
+      "successful_reference": {
+        "python": "3.12",
+        "tests_passed": 208
+      }
+    },
+    "source": "T046 Renovate-Fleet-Runtimeaktivierung",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b7a453f2f8994209cb3ebf61",
+      "event_id": 2738,
+      "event_created_at": "2026-08-06T04:23:35.923383Z",
+      "request_sha256": "2d5e737083cd3fb872e9780d59b7dfb5a3dcebcedf4a967b068f474790fd3b57",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-task-receipt",
+        "locator": "grabowski-task:473d8b85788944d8a142adeb@9c4caedec6f9e0fef4d1132838c8d8c24c0ba859",
+        "observed_at": "2026-08-06T04:23:35.874365Z",
+        "sha256": "1e546a161b9946db1ed27c87fd83cc1a14b1d693a48d545c3b668de31fa526e2"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 790
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "continuous-integration",
+    "metarepo"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Metarepo-Testvertrag unter Python 3.10 wiederherstellen"
+}

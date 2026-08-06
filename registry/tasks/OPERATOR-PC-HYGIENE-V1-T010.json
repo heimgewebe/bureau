@@ -58,48 +58,62 @@
       "safe_to_attach_now"
     ],
     "blocked_at": "2026-07-11T02:33:46Z",
-    "block_reason": "The canonical checkout is clean and exactly at origin/main but eight live processes still use it as cwd, including two Claude/Python groups and shells. Attaching main now would mutate active working context.",
+    "block_reason": "The historical process blocker is cleared, but the canonical Lenskit checkout is a foreign dirty feature branch. Its uncommitted .gitignore change adds .mcp.json; attaching main now would overwrite, stash or absorb unclassified local work.",
     "checkout_evidence": {
       "path": "/home/alex/repos/lenskit",
-      "head": "879347d736427d33f6c3e43061586735bd206799",
-      "origin_main": "879347d736427d33f6c3e43061586735bd206799",
-      "branch": null,
-      "dirty": false,
-      "blocking_process_count": 8,
-      "inventory_sha256": "2b201f01cde1bb2443e64b97a1961e43fa55803c7d148926e5f8264af934f955",
-      "generated_at_unix": 1783738276
+      "head": "03ad9ba3653ecf2058b77059765a23418fb21d12",
+      "origin_main": "cfd341b00c6a36125a014dbfa54cf78c8215da75",
+      "branch": "feat/find-symbol-mcp-tool",
+      "upstream": "origin/feat/find-symbol-mcp-tool",
+      "dirty": true,
+      "dirty_paths": [
+        ".gitignore"
+      ],
+      "blocking_process_count": 0,
+      "head_ahead_of_origin_main": 2,
+      "head_behind_origin_main": 366,
+      "diff_sha256": "073e5e65ac06d718d6012040b483fa4e663d1692cff0c1c9d15aeaff5265fafc",
+      "observed_at": "2026-08-06T10:47:15Z"
     },
     "publication_worktrees_unchanged": true,
-    "next_action": "Re-run typed checkout inventory after the active processes finish. Attach main only if process count is zero or every remaining shell is explicitly classified quiescent, HEAD still equals origin/main and the checkout remains clean.",
+    "next_action": "The checkout owner must classify the local +.mcp.json ignore rule and preserve any needed branch state. Then re-read processes, branch containment and dirty state; attach main only when the checkout is clean and exact origin/main attachment is lossless.",
     "mutation_applied": false,
     "blocker_refresh": {
-      "observed_at": "2026-08-05T01:17:18Z",
-      "decision": "bestätigt",
+      "observed_at": "2026-08-06T10:47:15Z",
+      "decision": "externe konkrete Handlung nötig",
+      "historical_process_blocker": "widerlegt",
       "current_checkout": {
         "branch": "feat/find-symbol-mcp-tool",
         "head": "03ad9ba3653ecf2058b77059765a23418fb21d12",
         "upstream": "origin/feat/find-symbol-mcp-tool",
+        "origin_main": "cfd341b00c6a36125a014dbfa54cf78c8215da75",
+        "ahead_of_origin_main": 2,
+        "behind_origin_main": 366,
         "dirty": true,
         "dirty_paths": [
           ".gitignore"
         ],
-        "open_pull_request_for_branch": false
+        "exact_diff": [
+          "+.mcp.json"
+        ],
+        "diff_sha256": "073e5e65ac06d718d6012040b483fa4e663d1692cff0c1c9d15aeaff5265fafc"
       },
-      "process_pattern_readback": {
-        "pattern": "repobrief|repoground|rlens|lenskit",
+      "process_readback": {
         "matching_legacy_or_lenskit_process_count": 0,
-        "canonical_repoground_process_count": 1
+        "canonical_repoground_process_count": 1,
+        "repoground_service": "active",
+        "rlens_service": "inactive"
       },
-      "current_block_reason": "The old process blocker has cleared, but the canonical checkout is now a foreign dirty feature branch rather than a clean exact main checkout. Attaching main would overwrite or absorb unclassified work.",
+      "current_block_reason": "No active process now blocks attachment. The remaining blocker is ownership and preservation of the foreign uncommitted .gitignore change plus safe classification of the feature branch before any branch switch.",
       "required_to_unblock": [
-        "Classify the modified .gitignore and the feature branch owner.",
-        "Preserve or publish any unique branch state.",
-        "Proceed only after the checkout is clean and exact origin/main attachment is safe."
+        "Owner-classify the +.mcp.json line as local-only, publishable or discardable.",
+        "Preserve any required branch state without reset or stash.",
+        "Repeat a target-specific process and Git readback immediately before attaching main."
       ],
       "does_not_establish": [
-        "permission to reset or stash the dirty path",
+        "permission to reset or stash .gitignore",
         "permission to delete or take over the feature branch",
-        "safe attachment to main"
+        "safe attachment to main before owner classification"
       ]
     }
   }

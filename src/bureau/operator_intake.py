@@ -579,6 +579,12 @@ def _candidate_by_idempotency_key(
     key = _checked_text(
         idempotency_key, field="idempotency_key", maximum=200, required=True
     )
+    assert key is not None
+    if not _IDEMPOTENCY_RE.fullmatch(key):
+        raise OperatorIntakeError(
+            "idempotency-key-invalid",
+            "idempotency_key contains unsupported characters",
+        )
     for event in reversed(candidate_records(store)):
         if _operator_context(event["record"]).get("idempotency_key") != key:
             continue

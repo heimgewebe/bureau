@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T003",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Deklarativen Profilmanager repositoryseitig implementieren",
-  "state": "planned",
+  "state": "ready",
   "goal": "Den kanonischen Profilkatalog und Doctor/Plan/Diff/Apply/Readback/Rollback-Verträge ohne produktive Anwendung implementieren.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T002"
@@ -93,6 +93,40 @@
     "does_not_establish": [
       "Live-Apply-Autorität",
       "Profilqualität ohne T007-Laborbeleg"
-    ]
+    ],
+    "readiness": {
+      "schema_version": 1,
+      "ready_at": "2026-08-06T14:15:30Z",
+      "authorized_by": "alex",
+      "authorization_reference": "conversation:2026-08-06 Ausführungslane Shard 0; task approval remains unchanged",
+      "source_main_head": "b85b080502d697d36c047ace58c0c80358242f97",
+      "dependency": "AUDIO-CONTROL-PLANE-V1-T002",
+      "dependency_state": "verified",
+      "dependency_source_ref": "github-pr:heimgewebe/audio#57@a1c1cf498a8d31bbb1abd2383b468907b55fc166:c8364bd433d9fdce9ff703c34dcb79f5226a99c7",
+      "checks": {
+        "task_queued": true,
+        "initiative_active": false,
+        "initiative_commitment_supported": true,
+        "dependencies_satisfied": true,
+        "existing_task_implementation_pr_observed": false,
+        "active_task_run_observed": false,
+        "isolated_checkout_required": true,
+        "operator_authorization_present": true,
+        "acceptance_unchanged": true,
+        "claims_unchanged": true,
+        "initiative_waiting": true,
+        "lifecycle_transition_required": true
+      },
+      "does_not_establish": [
+        "implementation",
+        "claim_or_dispatch_authority",
+        "safe_merge",
+        "live apply authority",
+        "physical hardware readiness",
+        "future queue stability",
+        "initiative activation",
+        "immediate claimability"
+      ]
+    }
   }
 }

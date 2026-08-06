@@ -6,7 +6,7 @@ import json
 import sqlite3
 import subprocess
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from . import legacy
 
@@ -77,7 +77,10 @@ def _classify_consumer(record: dict[str, Any]) -> None:
     record["migration_disposition"] = disposition
 
 
-def _scan_python(path: Path, relative: str) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+def _scan_python(
+    path: Path,
+    relative: str,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=relative)
@@ -218,7 +221,11 @@ def _scan_unit(path: Path, relative: str) -> dict[str, Any] | None:
         lines = path.read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeError):
         return None
-    exec_start = [line.split("=", 1)[1].strip() for line in lines if line.startswith("ExecStart=")]
+    exec_start = [
+        line.split("=", 1)[1].strip()
+        for line in lines
+        if line.startswith("ExecStart=")
+    ]
     if not exec_start and path.suffix not in {".service", ".timer"}:
         return None
     joined = "\n".join(lines).lower()
@@ -346,7 +353,9 @@ def _systemd_probe(root: Path, *, enabled: bool) -> dict[str, Any]:
         return result
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip().splitlines()
-        result["reason"] = detail[0][:300] if detail else f"systemctl-exit-{completed.returncode}"
+        result["reason"] = (
+            detail[0][:300] if detail else f"systemctl-exit-{completed.returncode}"
+        )
         return result
     result["units"] = _parse_systemd_show(completed.stdout)
     result["live_available"] = True
@@ -386,14 +395,6 @@ def _external_consumers() -> list[dict[str, Any]]:
     return records
 
 
-def _iter_files(root: Path, pattern: str) -> Iterable[Path]:
-    directory, _, suffix = pattern.partition("/**/")
-    base = root / directory
-    if not base.is_dir():
-        return ()
-    return base.rglob(suffix or "*")
-
-
 def authority_inventory(
     root: Path,
     *,
@@ -416,7 +417,9 @@ def authority_inventory(
 
     workflow_root = root / ".github/workflows"
     if workflow_root.is_dir():
-        for path in sorted([*workflow_root.glob("*.yml"), *workflow_root.glob("*.yaml")]):
+        for path in sorted(
+            [*workflow_root.glob("*.yml"), *workflow_root.glob("*.yaml")]
+        ):
             record = _scan_workflow(path, path.relative_to(root).as_posix())
             if record is not None:
                 consumers.append(record)
@@ -440,7 +443,10 @@ def authority_inventory(
                     "severity": "warning",
                     "code": "dual-operational-writer",
                     "path": record["path"],
-                    "detail": "consumer can write both Git Registry and StateStore during migration",
+                    "detail": (
+                        "consumer can write both Git Registry and StateStore "
+                        "during migration"
+                    ),
                 }
             )
         elif "git_registry" in writes:
@@ -449,7 +455,10 @@ def authority_inventory(
                     "severity": "info",
                     "code": "operational-git-writer-to-migrate",
                     "path": record["path"],
-                    "detail": "operational Git write must be removed or reduced to snapshot transport",
+                    "detail": (
+                        "operational Git write must be removed or reduced "
+                        "to snapshot transport"
+                    ),
                 }
             )
 
@@ -501,15 +510,28 @@ def authority_inventory(
         "consumers": consumers,
         "state_store": state,
         "systemd": systemd,
-        "findings": sorted(findings, key=lambda item: (item["severity"], item["code"], item["path"])),
+        "findings": sorted(
+            findings,
+            key=lambda item: (item["severity"], item["code"], item["path"]),
+        ),
         "summary": {
             "consumer_count": len(consumers),
-            "state_writer_count": sum("state_store" in item["writes"] for item in consumers),
-            "git_registry_writer_count": sum("git_registry" in item["writes"] for item in consumers),
-            "github_transport_count": sum("github_transport" in item["writes"] for item in consumers),
-            "systemd_unit_count": sum(item["kind"] == "systemd-unit" for item in consumers),
+            "state_writer_count": sum(
+                "state_store" in item["writes"] for item in consumers
+            ),
+            "git_registry_writer_count": sum(
+                "git_registry" in item["writes"] for item in consumers
+            ),
+            "github_transport_count": sum(
+                "github_transport" in item["writes"] for item in consumers
+            ),
+            "systemd_unit_count": sum(
+                item["kind"] == "systemd-unit" for item in consumers
+            ),
             "error_count": error_count,
-            "warning_count": sum(1 for item in findings if item["severity"] == "warning"),
+            "warning_count": sum(
+                1 for item in findings if item["severity"] == "warning"
+            ),
             "migration_required_count": sum(
                 item["migration_disposition"]
                 in {

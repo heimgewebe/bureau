@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jeder Wirkung werden aktueller Weltgewebe-origin/main, die exakten Mergecommits der einschlägigen Faden-/Knoten-PRs einschließlich PR #1690 und #1695, offene Karten-PRs, relevante Worktrees, Leases, Dirty-States, tatsächliche Layerdefinitionen und vorhandene Browserbelege frisch gelesen. Zusammenfassungen und Unit-Objektformen ersetzen diesen Live-Readback nicht.",
+      "evidence_type": "object",
+      "id": "fresh-live-contract"
+    },
+    {
+      "assertion": "Ein echter MapLibre-Browserbeleg rendert den stichartigen Stimmfaden auf hellen und dunklen Kartenhintergründen bei mehreren Zoomstufen. Er misst oder vergleicht die sichtbaren Stichlücken mit und ohne Schatten und entscheidet belegt, ob der kontinuierliche Schatten die Lücken unzulässig auffüllt. Nur bei reproduziertem Verlust der Stichlesbarkeit werden shadowContinuous, Opazität, Blur oder Dashvertrag minimal angepasst; Körper, Highlight und Bewegung bleiben statisch/animiert identisch.",
+      "evidence_type": "object",
+      "id": "vote-shadow-render-proof"
+    },
+    {
+      "assertion": "Ein echter Kartenbeleg rendert mehrere kurze und lange Fäden über den Antimeridian einschließlich Weltkopien, Zoom, Pan und Style-Reload. Die sichtbare Route bleibt die kurze Verbindung, erzeugt keinen Sprung über die Welt, keine NaN-/Infinity-Geometrie, keinen Nullinsel-Spike und keine doppelte oder verschwindende Linie. Falls MapLibre unwrapped Zwischenlängen nicht stabil darstellt, wird eine deterministische Normalisierung oder ein expliziter LineString-Split implementiert und in statischer sowie animierter Darstellung gemeinsam genutzt.",
+      "evidence_type": "object",
+      "id": "antimeridian-render-proof"
+    },
+    {
+      "assertion": "Die Umbenennung des früheren Halo-Layer-Strings sowie externe Selektoren, Screenshots, Style-Patches und persistente Style-Reload-Pfade werden repo- und browserseitig inventarisiert. Ein Kompatibilitätsadapter wird nur eingeführt, wenn ein aktueller Consumer tatsächlich den alten Layer-String benötigt; andernfalls bleibt die bereinigte ID ohne unnötigen Alias bestehen.",
+      "evidence_type": "object",
+      "id": "layer-compatibility-readback"
+    },
+    {
+      "assertion": "Automatisierte Browserprüfungen decken Chromium und einen realen WebKit-Pfad ab, jeweils hell/dunkel, statisch/animiert, Zoom/Pan/Style-Reload und reduzierte Bewegung. Beweisscreenshots oder robuste Pixel-/Geometrieasserts sind an exakten Head und Diff gebunden; rein synthetische Paint-Objekt-Tests reichen nicht als visuelle Abnahme.",
+      "evidence_type": "object",
+      "id": "cross-browser-regression"
+    },
+    {
+      "assertion": "Der Umsetzungs-PR bleibt auf reproduzierte Renderfehler und eng zugehörige Tests/Dokumentation begrenzt. Vor Merge liegen exakte Base-, Head- und Diffbindung, Self-Review nach geltender Satzung, grüne Pflichtchecks und belegte Browserausgabe vor; kein Deploy oder Merge erfolgt auf bloßen Reviewverdacht.",
+      "evidence_type": "object",
+      "id": "bounded-scope-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangte am 6. August 2026 ausdrücklich die autonome Fortsetzung der Prüfung und Umsetzung der gemergten Faden- und Knoten-Reviews. Änderungen sind nur nach echtem Renderbeleg, in isoliertem Arbeitsbaum, kostenfrei, revisionsgebunden und mit grünen Pflichtchecks zulässig.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests",
+      "path:/home/alex/repos/weltgewebe/docs/specs/knoten-gewebe-visualisierung.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die nach den gemergten Faden- und Knotendarstellungs-PRs verbliebenen sichtbaren Renderunsicherheiten mit echter MapLibre-Ausgabe statt reinen Objekt- oder Geometrietests klären: prüfen, ob der kontinuierliche Schatten eines stichartigen Stimmfadens die Stichlücken optisch schließt, und ob bewusst unwrapped geführte Fäden am Antimeridian ohne Weltsprung, NaN-Spike oder falsche Langroute erscheinen. Nur reproduzierte Fehler werden revisionsgebunden behoben; die textile Materialwirkung und die gemeinsame statische/animierte Geometriequelle bleiben erhalten.",
+  "id": "WELTGEWEBE-EDGE-RENDER-CONTRACT-V1",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current visual defect before browser reproduction",
+      "automatic queue placement",
+      "claim or dispatch authority",
+      "permission to alter Faden-Fachsemantik",
+      "permission to overwrite foreign worktrees, leases or processes"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-982f5b4ff69898b7f176fa10",
+      "event_id": 2743,
+      "event_created_at": "2026-08-06T04:36:08.082395Z",
+      "request_sha256": "459440f4f5d1dcb2d745e649acbff19289a69656c24fa2c08d7f0337c2d76da1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:weltgewebe:2026-08-06:pr1690-postmerge-review",
+        "observed_at": "2026-08-06T04:36:08.042794Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-06",
+    "related_pull_requests": [
+      "heimgewebe/weltgewebe#1690",
+      "heimgewebe/weltgewebe#1695"
+    ],
+    "source": "operator_followup_from_weltgewebe_pr1690_pr1695_postmerge_review"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "maplibre",
+    "browser-e2e",
+    "playwright",
+    "webkit",
+    "visual-regression",
+    "performance",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Zuerst müssen Live-Code, aktuelle PRs und echte MapLibre-Ausgabe geprüft werden; RepoGround ergänzt nur Aufruf-, Consumer- und Änderungsfolgen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Faden-Rendervertrag für Stichschatten und Antimeridian belegen"
+}

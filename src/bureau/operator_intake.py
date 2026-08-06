@@ -4037,7 +4037,9 @@ class SubprocessTaskPublisher:
                 "push_confirmed", phase_changed, workspace=workspace, marker=marker
             )
         body = (
-            f"Bureau-Task: {plan['publishing_task_id']}\n\n"
+            f"Bureau-Task: {task_id}\n"
+            "Bureau-Task-Binding-Exception: task-registration PR; "
+            f"{task_id} is introduced by this PR and is absent from the base registry\n\n"
             f"Register reviewed candidate task `{task_id}`.\n\n"
             f"- proposal: `{plan['proposal_sha256']}`\n"
             f"- candidate: `{plan['candidate']['candidate_id']}`\n"

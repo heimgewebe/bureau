@@ -13,11 +13,11 @@
       "id": "single-producer-guard"
     },
     {
-      "assertion": "The policy encodes bounded waves for Mitschreiber custom-manager pilot, HausKI/HausKI-Audio volume pilot, RepoGround signal-quality pilot, Weltgewebe multi-ecosystem pilot, Metarepo control-plane cutover and later eligible Fleet repositories. Consumer-repository mutations remain separate follow-up tasks with their own claims, leases and rollback.",
+      "assertion": "The policy encodes bounded rollout waves. Default-branch consumer configuration changes remain separate follow-up work; source-bound Event 1823 additionally permits the central runtime to create bounded Renovate update branches and pull requests without merge or automerge authority.",
       "id": "rollout-contract"
     },
     {
-      "assertion": "The rollout contract requires any Mend-hosted Renovate installation to be limited to explicitly selected repositories and requires drift comparison between expected Git-authored rollout scope and observed GitHub App repository scope. No all-repository installation is accepted in V1.",
+      "assertion": "No all-repository Mend-hosted installation is accepted in V1. The verified implementation uses the explicitly scoped self-hosted runtime and no Mend application.",
       "id": "hosted-scope-contract"
     },
     {
@@ -25,12 +25,20 @@
       "id": "baseline"
     },
     {
-      "assertion": "The task records that repo.mitschreiber is currently absent from the Bureau repository-resource catalog and does not invent a claim. Required consumer-cutover and missing-resource follow-ups are registered through operator-native Bureau intake instead of being hidden in prose.",
+      "assertion": "Material runtime follow-ups are registered through operator-native Bureau intake. The Python-3.10 test-contract and future multi-lockfile issues are registered as T079 and T080.",
       "id": "followup-boundary"
     },
     {
-      "assertion": "The metarepo foundation is independently reversible by reverting the policy/preset/tooling commit; no consumer Dependabot configuration, Renovate App permission, Bureau queue, claim, deployment or security-update state is changed by this task.",
+      "assertion": "The Metarepo foundation remains independently reversible. The Event-1823 runtime refinement is separately reversible by disabling the timer and restoring the previous immutable runtime release; it grants no merge, automerge, Mend-app, PAYG or direct-main authority.",
       "id": "rollback-closeout"
+    },
+    {
+      "assertion": "A clean immutable self-hosted Renovate runtime is installed from the exact reviewed Metarepo merge commit. A full lookup dry-run and a bounded writing run complete across the deterministic 18-repository Fleet scope with exit code 0 while automerge remains disabled.",
+      "id": "runtime-activation"
+    },
+    {
+      "assertion": "The real systemd service completes successfully and the daily timer is enabled and waiting. Post-effect GitHub readback shows Renovate branches and pull requests but no autoMergeRequest and no direct default-branch mutation.",
+      "id": "runtime-live-readback"
     }
   ],
   "claims": [
@@ -46,7 +54,7 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "The user explicitly instructed on 2026-07-23 to implement the newly reviewed system-wide Renovate plan. This task changes only metarepo policy/tooling and publishes no Renovate GitHub App installation or consumer-repository cutover.",
+      "note": "The original 2026-07-23 directive authorized the reviewed Fleet-bound Renovate foundation. Source-bound Candidate candidate-4238aa9b268efe0ee5b53843 / Event 1823 later explicitly refined T046 to include immutable runtime installation, bounded dry and writing runs, timer activation and revisionsgebundener closeout after foreign Metarepo work became terminal. No Mend/PAYG or automerge authority was granted.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -56,7 +64,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/metarepo"
   },
-  "goal": "Supersede the T044 targeted-only Renovate boundary after the user's explicit 2026-07-23 decision by establishing the canonical Fleet-bound Renovate V1 policy, scope projection, duplicate-producer guard, baseline metrics and staged rollout contract in metarepo. This task does not yet activate Renovate in consumer repositories; it creates the reviewed foundation required for later repository-specific cutovers without introducing a second Fleet, lifecycle, merge, deployment or security truth.",
+  "goal": "Establish the canonical Fleet-bound Renovate V1 policy and rollout contract in Metarepo and, under the later source-bound Event-1823 refinement, activate its immutable self-hosted runtime on the Heim-PC. The runtime may create bounded Renovate update branches and pull requests across the deterministic Fleet scope, but it may not merge, automerge, enable a hosted Mend application, use PAYG capacity or mutate consumer default branches directly.",
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T046",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
@@ -68,13 +76,14 @@
       "window_start": "2026-06-23"
     },
     "does_not_establish": [
-      "Renovate GitHub App is already installed",
-      "consumer repositories are cut over",
-      "Renovate will necessarily reduce PR count",
-      "permission to bypass interactive GitHub App authorization",
+      "Renovate necessarily reduces pull-request volume",
+      "a Mend-hosted Renovate application is installed",
+      "automerge or merge authority exists",
+      "all generated dependency updates are correct or mergeable",
+      "consumer default branches were directly changed by the runtime",
       "permission to override foreign leases or dirty worktrees"
     ],
-    "known_catalog_gap": "repo.mitschreiber is not currently registered as a Bureau repository resource",
+    "known_catalog_gap": "Historical source context: repo.mitschreiber was absent from the Bureau repository-resource catalog when T046 was registered; the verified runtime scope is derived from current fleet/repos.yml rather than an invented second Fleet.",
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-6ca0cbb406ae6ce9f464eef1",
@@ -97,11 +106,104 @@
         "claim_or_dispatch_authority"
       ]
     },
-    "registered_from": "User directive 2026-07-23 after system-wide Renovate architecture review and live comparison against existing Fleet, Bureau and Grabowski contracts.",
+    "registered_from": "User directive 2026-07-23 after system-wide Renovate architecture review; runtime activation and T046 closeout were added by source-bound Event 1823.",
     "supersedes_prior_decision": {
       "prior_boundary": "global Renovate rollout over Dependabot",
-      "scope": "This task supersedes the no-go only for designing and implementing a staged Fleet-bound replacement foundation; repository activation remains separately gated.",
+      "scope": "The reviewed Fleet-bound foundation and bounded self-hosted runtime activation are authorized. Default-branch consumer configuration migrations remain separately gated.",
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+    },
+    "contract_refinement": {
+      "candidate_id": "candidate-4238aa9b268efe0ee5b53843",
+      "event_id": 1823,
+      "event_created_at": "2026-07-31T05:03:34.576369Z",
+      "request_sha256": "66a076df74d8af2140740997f7c84027f845e16c6275e717a00ce47383f8af09",
+      "source": {
+        "freshness": "digest-bound",
+        "kind": "live_runtime_audit",
+        "locator": "heim-pc:renovate-fleet-runtime-audit:2026-07-31T04:55Z",
+        "observed_at": "2026-07-31T04:55:00Z",
+        "sha256": "38f6e8084b002efbdae0befaf5842601d0c5b78396ecc1dfadff0657bae815ed"
+      },
+      "superseded_boundary": "The original foundation-only boundary did not itself authorize runtime activation. Event 1823 explicitly merged the missing runtime activation and T046 closeout into this task after the foreign Metarepo lease became terminal."
+    },
+    "verification": {
+      "verified_at": "2026-08-06T05:10:00Z",
+      "outcome_summary": "Fleet-bound Renovate V1 is implemented and its immutable self-hosted runtime is active. The deterministic 18-repository scope completed both lookup and bounded writing execution successfully; the service and timer are healthy, automerge remains disabled, and material residual issues are registered as T079 and T080.",
+      "metarepo": {
+        "foundation_prs": [
+          {
+            "number": 662,
+            "merge_commit": "621164441bdeb3734da531085d74a9e1ad055407"
+          },
+          {
+            "number": 663,
+            "merge_commit": "1be27a95e8ade74670150315243afd34c32e277e"
+          }
+        ],
+        "runtime_hardening_pr": {
+          "number": 682,
+          "state": "MERGED",
+          "merge_commit": "9c4caedec6f9e0fef4d1132838c8d8c24c0ba859",
+          "head_branch": "fix/renovate-runtime-env-v1"
+        },
+        "validation": {
+          "python_3_12_tests_passed": 208,
+          "focused_runtime_policy_tests_passed": 12,
+          "shellcheck": "passed",
+          "github_required_checks": "passed"
+        }
+      },
+      "runtime": {
+        "release": "/home/alex/.local/share/renovate-fleet/releases/9c4caedec6f9e0fef4d1132838c8d8c24c0ba859",
+        "lookup_task_id": "f38041616f8249c9bf4f2c00",
+        "lookup_lifecycle_receipt_sha256": "8b1869076bd7e05a9423127faf171bd5238b91695c4adaebbe526c5e1558c513",
+        "writing_task_id": "74bbd6d4975e4878a7addd1e",
+        "writing_lifecycle_receipt_sha256": "013ff6b54e2d61dfda0ab41feffd4cfa8868af4cebc89e7a19a37c1de26f3a11",
+        "repository_count": 18,
+        "lookup_exit_code": 0,
+        "writing_exit_code": 0,
+        "stderr": "empty",
+        "automerge": false
+      },
+      "live_readback": {
+        "service": {
+          "load_state": "loaded",
+          "result": "success",
+          "exec_main_status": 0,
+          "restarts": 0
+        },
+        "timer": {
+          "load_state": "loaded",
+          "unit_file_state": "enabled",
+          "active_state": "active",
+          "sub_state": "waiting",
+          "result": "success"
+        },
+        "github": {
+          "auto_merge_requests": 0,
+          "direct_default_branch_mutations": 0
+        }
+      },
+      "followups": [
+        {
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T079",
+          "bureau_pr": 1588,
+          "merge_commit": "5aa7a1dd660682265768373d7a066d4e51baa54e"
+        },
+        {
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T080",
+          "bureau_pr": 1589,
+          "merge_commit": "df9737b295f140ff387eb0421a87fd36d3461100"
+        }
+      ],
+      "bureau_runtime": {
+        "source_commit": "df9737b295f140ff387eb0421a87fd36d3461100",
+        "release_id": "df9737b295f1-srcda0090e7c744",
+        "manifest_sha256": "25cf6be142ddaac2ccbbfd00d207b28779c4c05233a59896af1a816185b80d2e",
+        "runtime_identity_valid": true
+      },
+      "task_sha256": "01a660b7c9625b4b5ba3924980b1e14a7a62914e6abab29d0826f8c22ea33ca2",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "priority": {
@@ -116,9 +218,9 @@
     "bureau"
   ],
   "rollback": {
-    "strategy": "Revert the metarepo Renovate V1 policy, preset and scope-validation changes. Because this task performs no consumer-repository cutover and grants no GitHub App permissions, rollback does not require restoring Dependabot configs or changing external bot state."
+    "strategy": "Revert the Metarepo foundation commits independently. For the Event-1823 runtime refinement, disable renovate-fleet.timer, stop any active renovate-fleet.service execution, restore the previous immutable release and launcher binding from the install backup, and leave already-created Renovate pull requests subject to normal review or closure. Do not rewrite consumer default branches or enable automerge during rollback."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Establish Fleet-bound Renovate V1 policy and rollout contract"
 }

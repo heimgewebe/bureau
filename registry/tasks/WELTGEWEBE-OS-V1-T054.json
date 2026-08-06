@@ -72,6 +72,35 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "readiness": {
+      "schema_version": 1,
+      "ready_at": "2026-08-06T13:30:30Z",
+      "authorized_by": "alex",
+      "authorization_reference": "conversation:2026-08-06T14:57+02:00 @grabowski umsetzen",
+      "source_main_head": "4f8b8f968e1c981565a0ad1cef6b92d2af001f95",
+      "selection": {
+        "queue_policy": "skip-blocked",
+        "selected_task": "WELTGEWEBE-OS-V1-T054",
+        "basis": "First queued operator-attention candidate with verified dependency, current queue placement, explicit operator authorization, no active run and no existing implementation pull request."
+      },
+      "checks": {
+        "task_queued": true,
+        "initiative_active": true,
+        "initiative_commitment_supported": true,
+        "dependencies_satisfied": true,
+        "existing_task_implementation_pr_observed": false,
+        "foreign_checkout_mutation_required": false,
+        "isolated_checkout_required": true,
+        "operator_authorization_present": true
+      },
+      "does_not_establish": [
+        "implementation",
+        "claim_or_dispatch_authority",
+        "safe_merge",
+        "absence of path overlap before exact implementation inventory",
+        "permission to mutate foreign worktrees or open pull requests"
+      ]
     }
   },
   "priority": {
@@ -90,6 +119,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Widersprüchliche Systemwahrheiten und ungeklärte Abhängigkeiten bereinigen"
 }

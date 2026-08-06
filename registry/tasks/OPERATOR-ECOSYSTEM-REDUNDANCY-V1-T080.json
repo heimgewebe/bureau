@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle npm-Arbeitsbereiche, Manifestdateien und Lockfiles des Metarepo werden vollständig inventarisiert; für jede Paarung ist dokumentiert, ob sie gemeinsam oder unabhängig aktualisiert werden soll.",
+      "id": "workspace-lockfile-inventory"
+    },
+    {
+      "assertion": "Der Renovate-Vertrag verwendet keine auslaufende gemeinsame Aktualisierung mehrerer npm-Lockfiles. Die gewählte Struktur oder Konfiguration funktioniert mit einer aktuellen Renovate-Version ohne diese Deprecation-Warnung.",
+      "id": "remove-deprecated-multi-lockfile-path"
+    },
+    {
+      "assertion": "Renovate-Lookup- und schreibende Tests belegen, dass Updates weiterhin im richtigen Paket landen und keine unbeteiligten Lockfiles, Paketgrenzen oder Releaseverträge verändern.",
+      "id": "bounded-update-scope"
+    },
+    {
+      "assertion": "Die vollständige Metarepo-Validierung sowie die relevanten Renovate-Policy- und Runtime-Tests bleiben grün.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Die Lösung führt weder zusätzliche Paketmanager-Wahrheiten noch manuelle Sonderfälle pro Abhängigkeit ein; lokale Dokumentation beschreibt den verbleibenden Lockfile-Vertrag.",
+      "id": "single-maintainable-contract"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.metarepo"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der erfolgreiche T046-Cutover meldete mit Renovate 42.99.0, dass die gemeinsame Aktualisierung mehrerer npm-Lockfiles künftig entfernt wird. Vor Umsetzung sind die aktuellen npm-Arbeitsbereiche, Paketgrenzen und Lockfile-Verwendungen frisch zu prüfen; die Warnung allein legt noch keine Zielarchitektur fest.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo"
+  },
+  "goal": "Den npm- und Lockfile-Vertrag des Metarepo so umstellen, dass zukünftige Renovate-Versionen weiterhin deterministische, paketgrenzengebundene Aktualisierungen erzeugen, ohne auf die auslaufende Mehrfach-Lockfile-Unterstützung angewiesen zu sein.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T080",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass Lockfiles zusammengeführt werden müssen",
+      "dass Paketgrenzen geändert werden müssen",
+      "dass die aktuelle Renovate-Version bereits fehlschlägt",
+      "dass manuelle Dependency-Ausnahmen zulässig sind"
+    ],
+    "observed_evidence": {
+      "base_commit": "9c4caedec6f9e0fef4d1132838c8d8c24c0ba859",
+      "grabowski_task_id": "74bbd6d4975e4878a7addd1e",
+      "lifecycle_receipt_sha256": "013ff6b54e2d61dfda0ab41feffd4cfa8868af4cebc89e7a19a37c1de26f3a11",
+      "observed_at": "2026-08-06T04:24:13Z",
+      "renovate_version": "42.99.0",
+      "repository": "heimgewebe/metarepo",
+      "warning": "Updating multiple npm lock files is deprecated and support will be removed in future versions."
+    },
+    "source": "T046 Renovate-Fleet-Runtimeaktivierung",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-91ae89990de530e18c3d2e2d",
+      "event_id": 2739,
+      "event_created_at": "2026-08-06T04:24:13.673947Z",
+      "request_sha256": "7cfd8ecd06f357fea8fcd318e9bca397b2f3c44184c64f755f1d34a3ead10299",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-task-receipt",
+        "locator": "grabowski-task:74bbd6d4975e4878a7addd1e@9c4caedec6f9e0fef4d1132838c8d8c24c0ba859",
+        "observed_at": "2026-08-06T04:24:13.632920Z",
+        "sha256": "013ff6b54e2d61dfda0ab41feffd4cfa8868af4cebc89e7a19a37c1de26f3a11"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 800
+  },
+  "required_capabilities": [
+    "repository",
+    "javascript",
+    "npm",
+    "renovate",
+    "testing",
+    "continuous-integration",
+    "metarepo"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Metarepo-Lockfile-Vertrag für künftige Renovate-Versionen härten"
+}

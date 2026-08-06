@@ -1,0 +1,122 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Produktionsfehler ist an einen frischen Browserbeleg gebunden: /map.html erzeugte 99 Hauptdokument-Navigationen in ungefähr acht Sekunden, jeweils HTTP 200 auf dieselbe URL, ohne Titel, Karten-Canvas, Marker oder Inhalt.",
+      "evidence_type": "object",
+      "id": "fresh-loop-reproduction"
+    },
+    {
+      "assertion": "Jeder direkte Aufruf von /map.html endet mit höchstens einer kanonischen Weiterleitung auf /map oder einem stabilen terminalen 404. Wiederholte Dokumentnavigationen, Reload-Schleifen und leere HTTP-200-Fallbackseiten sind ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "single-terminal-outcome"
+    },
+    {
+      "assertion": "Die gültige Route /map lädt im echten Browser weiterhin genau eine Kartenanwendung mit Canvas, Markern und Fäden. Die Änderung verändert keine Knoten-, Faden-, Karten-Transport- oder Authentifizierungsfachlogik.",
+      "evidence_type": "object",
+      "id": "valid-map-preserved"
+    },
+    {
+      "assertion": "Deterministische Tests decken die Produktions-Caddy-Konfiguration, den statischen beziehungsweise Container-Auslieferungsweg und einen Browserlauf für /map.html und /map ab. Relative Pfade, Query-Parameter und Fragmente werden sinnvoll kanonisiert oder terminal abgewiesen.",
+      "evidence_type": "object",
+      "id": "multi-surface-tests"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head- und Diffbindung, vollständiger Review des finalen Heads, geschlossene materielle Befunde und grüne Pflichtchecks vor. Fremde Dirty-States, Prozesse, Leases und Branches werden nicht übernommen.",
+      "evidence_type": "object",
+      "id": "revision-bound-integration"
+    },
+    {
+      "assertion": "Nach Merge und Deployment belegen Frontend- und API-Identität denselben exakten Commit. Ein frischer Produktionsbrowser zeigt für /map.html höchstens eine Navigation zur funktionsfähigen /map und für /map eine sichtbare Karte ohne Reload-Schleife.",
+      "evidence_type": "object",
+      "id": "production-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die vollständige autonome Umsetzung einschließlich Merge und Produktionsprüfung freigegeben. Änderungen bleiben auf die Kanonisierung ungültiger .html-Kartenpfade und ihre Tests begrenzt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/infra/caddy/Caddyfile.prod",
+      "path:/home/alex/repos/weltgewebe/apps/web/Caddyfile.container",
+      "path:/home/alex/repos/weltgewebe/scripts/ci/tests/test_static_app_caddy_csp_adapted_contract.py",
+      "operation:weltgewebe:map-html-canonicalization"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die veraltete Adresse /map.html darf nicht mehr in einer selbstverstärkenden Dokument-Neuladeschleife enden. Sie wird auf Produktions-, Vorschau- und lokalen Auslieferungswegen höchstens einmal kanonisch nach /map umgeleitet oder liefert einen stabilen terminalen 404; die gültige Route /map lädt weiterhin unverändert die echte Karte.",
+  "id": "WELTGEWEBE-OS-V1-T070",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "queue truth before publication",
+      "automatic implementation",
+      "permission to overwrite foreign work",
+      "future correctness after later unrelated deployments"
+    ],
+    "evidence": {
+      "observed_canvas_count": 0,
+      "observed_document_status": 200,
+      "observed_marker_count": 0,
+      "observed_navigation_count": 99,
+      "route_browser_report": "/home/alex/.local/state/grabowski/evidence/t069-map-html-route-verification.json",
+      "route_browser_report_sha256": "0c1ab910a8c6153ef295a3da0cffd8e679143a6188fe6feaa71de3e131e57d7d"
+    },
+    "registered_at": "2026-08-06",
+    "source": "production_browser_followup_from_thread_geometry_closeout",
+    "source_commit": "ff8b28511a4b8c21cb491314efa5fe6a91b7f2ec",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-82c8d84dc693cf5ecbcd8e14",
+      "event_id": 2891,
+      "event_created_at": "2026-08-06T16:16:06.758387Z",
+      "request_sha256": "ea2d436c5f1b86581ab37277b062f1edf38cce3b9548b5213d01b8b166af78ae",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "artifact",
+        "locator": "/home/alex/.local/state/grabowski/evidence/t069-map-html-route-verification.json",
+        "observed_at": "2026-08-06T16:16:06.714238Z",
+        "sha256": "0c1ab910a8c6153ef295a3da0cffd8e679143a6188fe6feaa71de3e131e57d7d"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "sveltekit",
+    "caddy",
+    "testing",
+    "browser",
+    "deployment",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Die eng begrenzte Redirect- beziehungsweise 404-Regel und ihre Tests auf den vorherigen Auslieferungsvertrag zurücksetzen. Bei unbekanntem Routingverhalten fail-closed statt die SPA-Fallbackschleife erneut zuzulassen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Endlosschleife der veralteten Kartenadresse /map.html beseitigen"
+}

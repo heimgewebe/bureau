@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "id": "ALPHA-LAB-SHADOW-RESEARCH-V1-T002",
+  "initiative": "ALPHA-LAB-SHADOW-RESEARCH-V1",
+  "title": "Freeze and falsify the Form-4 research protocol",
+  "state": "planned",
+  "goal": "Freeze signal, universe, entry, exit, holding period, sizing, costs, FX and exclusions before reading validation outcomes; evaluate out of sample against declared baselines and publish positive or negative results without post-hoc selection.",
+  "priority": {
+    "lane": "later",
+    "rank": 200
+  },
+  "claims": [
+    {
+      "resource": "repo.alpha-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [
+    "ALPHA-LAB-SHADOW-RESEARCH-V1-T001"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/alpha-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/alpha-lab"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User authorised autonomous repository implementation on 2026-08-06. Real orders, broker/wallet access, paid data purchases and capital deployment remain excluded."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "protocol-frozen-before-outcomes",
+      "assertion": "Signal, universe, entry latency, exit, holding period, sizing, fees, slippage, FX, missing-data policy and exclusions are hash-frozen before validation outcomes."
+    },
+    {
+      "id": "point-in-time-splits",
+      "assertion": "Development, validation and prospective-shadow periods are separated and future corrections cannot rewrite earlier decisions."
+    },
+    {
+      "id": "baseline-comparison",
+      "assertion": "Compare broad buy-and-hold, matched equal-weight, simple momentum, all eligible Form-4 purchases and matched random controls."
+    },
+    {
+      "id": "stress-tests",
+      "assertion": "Report doubled costs, one-trading-day delay, illiquidity exclusions, removal of ten best trades and regime/year slices."
+    },
+    {
+      "id": "explicit-go-no-go",
+      "assertion": "Output is no-go, continue-shadow or independent-review request, never automatic real-capital authority."
+    }
+  ],
+  "metadata": {
+    "phase": "out-of-sample-validation",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4755d9858ff79fb34caa623f",
+      "event_id": 2769,
+      "source": {
+        "kind": "conversation",
+        "locator": "git:/home/alex/repos/alpha-lab@b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+        "observed_at": "2026-08-06T06:55:45Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_commit": "b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+    "does_not_establish": [
+      "strategy_profitability",
+      "real_trading_permission",
+      "automatic_progression_to_real_capital"
+    ]
+  }
+}

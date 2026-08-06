@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "repo.alpha-lab",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/alpha-lab",
+  "grabowski_key": "repo:/home/alex/repos/alpha-lab",
+  "metadata": {
+    "role": "Read-only SEC event research and deterministic cash-only shadow simulation",
+    "boundaries": [
+      "local_repository_without_github_origin",
+      "public_sec_read_only",
+      "no_broker_order_wallet_or_live_trading_authority",
+      "no_leverage_cfd_option_or_short_authority",
+      "real_capital_requires_separate_explicit_approval_after_evidence_gate"
+    ]
+  }
+}

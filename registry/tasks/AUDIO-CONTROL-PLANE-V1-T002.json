@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T002",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audio-Architekturentscheidungen der Phase 2 schließen",
-  "state": "ready",
+  "state": "verified",
   "goal": "PipeWire/ALSA, Ratenpolitik, Quantums, Qobuz/Mopidy, Ardour, Pluginruntime und EasyEffects vor jeder mutierenden Implementierung objektiv entscheiden.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T001"
@@ -111,6 +111,47 @@
         "Laufzeitfreigabe",
         "Abschluss von T032",
         "physische Gerätebereitschaft"
+      ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "bureau_run_completion",
+      "source_ref": "bureau-run:BUR-RUN-20260806T133117Z-134392b969@fe63c9911f379d7e5fa9877c2a0c57a372e10bd6b063feb1f277d0a6b021fdfb",
+      "verified_at": "2026-08-06T13:37:04.318641Z",
+      "outcome": "architecture_contracts_succeeded",
+      "task_sha256": "39cf48788c7dc9398a5318223796b6ddbde8d3ce742281ff93088e0b7ff2b18c",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
+      "receipt_sha256": "fe63c9911f379d7e5fa9877c2a0c57a372e10bd6b063feb1f277d0a6b021fdfb",
+      "evidence_bundle_sha256": "a7ff3f4b09bf55ee6d5a5f3e236975e794aea577dd7fc5553c1a7ba0312fe5ea",
+      "evidence": {
+        "task_id": "AUDIO-CONTROL-PLANE-V1-T002",
+        "run_id": "BUR-RUN-20260806T133117Z-134392b969",
+        "repository": "heimgewebe/audio",
+        "pull_request": 57,
+        "reviewed_head": "a1c1cf498a8d31bbb1abd2383b468907b55fc166",
+        "merge_commit": "c8364bd433d9fdce9ff703c34dcb79f5226a99c7",
+        "github_ci_run": 31104878469,
+        "focused_test_count": 58,
+        "full_test_count": 653,
+        "audio_safety": "pass",
+        "adr": {
+          "path": "docs/decisions/0002-audio-architecture-phase-2.md",
+          "sha256": "b549d901eab31ad321c36ceeb9de9fbb3179eeb262f2fefe6da7bb747823ac4d"
+        },
+        "machine_contract": {
+          "path": "inventory/audio-architecture-decisions.v1.json",
+          "sha256": "11780e73252b0069323bfc590d899654926eb4a6de71596d9bdf0b75c4ca6625"
+        },
+        "scope": "repository-architecture-and-contracts-only",
+        "host_mutation": false,
+        "physical_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T032"
+      },
+      "does_not_establish": [
+        "Abschluss von AUDIO-CONTROL-PLANE-V1-T032",
+        "physische Geräte- oder Pegelbereitschaft",
+        "Bit-Perfect-Wiedergabe",
+        "Low-Latency-Freigabe",
+        "Profilaktivierung oder sonstige Laufzeitwirkung"
       ]
     }
   }

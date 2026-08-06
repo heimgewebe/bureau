@@ -1,0 +1,129 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #659, sein aktueller Head, geänderte Pfade und Pflichtchecks werden live zurückgelesen; der PR-Text bindet danach ausschließlich GRABOWSKI-OPERATOR-SURFACE-V1-T150 und der Bureau-Frontier-Readback meldet für #659 keine fehlende oder mehrdeutige Taskbindung mehr.",
+      "id": "source-and-binding-exact"
+    },
+    {
+      "assertion": "Keine fremde Dirty-Fläche, Lease, Branch, Prozess- oder Deploymentspur wird übernommen; gearbeitet wird nur in einem sauber belegten isolierten Arbeitsbaum und mit eigenen exakten Ressourcen.",
+      "id": "foreign-state-untouched"
+    },
+    {
+      "assertion": "Der PR-Head integriert den aktuellen origin/main; deterministische Operator-Kontext- und sonstige projektionserzeugte Dateien werden aus genau diesem Head regeneriert, ohne fremde Projektionen zu überschreiben.",
+      "id": "current-main-and-projections"
+    },
+    {
+      "assertion": "Regressionstests beweisen, dass identische kanonische Repository-/Zielcommit-Paare worktreeübergreifend denselben laufenden Self-Deploy wiederverwenden, während andere Repositories oder Zielcommits weiterhin fail-closed getrennt bleiben und Receipts angeforderte sowie tatsächlich laufende Source-Identität unterscheiden.",
+      "id": "dedupe-contract-preserved"
+    },
+    {
+      "assertion": "Fokussierte Self-Deploy-Tests, vollständiges make validate, Diff-Prüfung und revisionsgebundener Self-Review bestehen auf dem exakten veröffentlichten Head.",
+      "id": "validation-and-review-green"
+    },
+    {
+      "assertion": "Alle GitHub-Pflichtchecks sind auf dem unveränderten exakten Head grün; erst dann erfolgt der Merge regelkonform über die konfigurierte Merge-Queue und der Mergecommit wird von GitHub sowie origin/main zurückgelesen.",
+      "id": "exact-head-merge"
+    },
+    {
+      "assertion": "Der exakte Mergecommit wird über den kanonischen Grabowski-Self-Deploy ausgerollt; Deploymentintegrität, Runtime-Release und Runtime-Head stimmen anschließend revisionsgenau überein.",
+      "id": "exact-deployment"
+    },
+    {
+      "assertion": "Ein begrenzter Live-Nachweis mit zwei getrennten Source-Identitäten für denselben kanonischen Zielcommit zeigt genau einen laufenden Deploymenteffekt und eine belegte Wiederverwendung statt Doppelwirkung.",
+      "id": "live-double-schedule-proof"
+    },
+    {
+      "assertion": "Task, PR-Projektion, Registry, Doctor und Frontier werden nach Merge und Deployment erneut gelesen; die Aufgabe wird nur mit vollständigen maschinenlesbaren Belegen terminalisiert.",
+      "id": "postmerge-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat den autonomen Taskgraph-Reparatur-, PR-Rettungs-, Merge- und Deploymentlauf ausdrücklich beauftragt; Kosten und fremde Wirkungen bleiben ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/.grabowski-worktrees/grabowski-operator-surface-v1-t150",
+      "repo:/home/alex/repos/grabowski:branch:fix/runtime-deploy-target-dedup-v1",
+      "repo:/home/alex/repos/grabowski:operation:pr659-self-deploy-dedup-closeout",
+      "host:heim-pc:operation:deploy-grabowski-t150"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "PR heimgewebe/grabowski#659 kanonisch an genau diese Bureau-Aufgabe binden und die Self-Deploy-In-flight-Erkennung so abschließen, dass getrennte Quellworktrees denselben kanonischen Grabowski-Zielcommit nicht parallel ausrollen, ohne die fail-closed Trennung anderer Repositories oder Zielcommits abzuschwächen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T150",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "merge readiness before green checks",
+      "permission to bypass active leases",
+      "permission to weaken deployment acceptance",
+      "runtime correctness before exact deployment readback"
+    ],
+    "source_head_at_intake": "1dd8560765647e7276bb85ab9f0d51389c90fcb1",
+    "source_observed_at": "2026-08-06T15:19:40Z",
+    "source_pr": "https://github.com/heimgewebe/grabowski/pull/659",
+    "structural_finding": "open PR without canonical Bureau task binding and red required validation",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-330bec177bb440cdac2d1249",
+      "event_id": 2880,
+      "event_created_at": "2026-08-06T15:26:39.191542Z",
+      "request_sha256": "0abb26f777df4d42d2c275f40eb7541b13306d08bfc99c0afb845b4f66441800",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-open-pr-live-readback",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/659",
+        "observed_at": "2026-08-06T15:19:40Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "deployment",
+    "systemd",
+    "audit",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Vor dem Merge nur eigenen Worktree, Branch und eigene Leases bereinigen. Nach dem Merge bei belegter Regression den exakten Mergecommit über einen separaten geprüften Revert-PR zurücknehmen; keine fremden Deployments oder State-Spuren löschen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Kanonische Self-Deploy-Zielcommits worktreeübergreifend deduplizieren"
+}

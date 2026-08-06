@@ -115,6 +115,18 @@
       "hosted_workflow_state": "disabled_manually",
       "local_bridge_timer_state": "inactive",
       "open_bureau_pull_requests": 0
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "bureau_run_receipt",
+      "source_ref": "bureau-run:BUR-RUN-20260806T052543Z-447c6a2cb3@fa4208349979ba3df7a043102294b2132f73c7ede9251520b8ec734f0dd7072d",
+      "run_id": "BUR-RUN-20260806T052543Z-447c6a2cb3",
+      "worker_id": "chatgpt-bureau-t029-repoground-unblock-20260806t0302z",
+      "verified_at": "2026-08-06T06:14:52.110266Z",
+      "outcome": "succeeded",
+      "task_sha256": "016ee310ee6ba2af47cc26e03484615fbcd27fba21e7c2ed03f0acaa608f6cc1",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "receipt_sha256": "fa4208349979ba3df7a043102294b2132f73c7ede9251520b8ec734f0dd7072d"
     }
   },
   "priority": {
@@ -129,6 +141,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Now-Nachfüllung an autoritative lokale Laufzeit binden"
 }

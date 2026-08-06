@@ -44,6 +44,8 @@ Ein gemeinsamer Source-Digest begründet allein keine Identitätsgleichheit. Kan
 
 Ähnlichkeit ist ausschließlich beratend. Sie darf nie automatisch mergen, schließen, unterdrücken oder Registry-Wahrheit verändern.
 
+Die Bewertung verlangt genau einen Selektor: aktuelle Kandidaten-ID, aktuelle Event-ID oder den ursprünglichen `idempotency_key`. Der Idempotenzselektor ist insbesondere der eindeutige Readback-Pfad nach einem unklaren Aufnahmeergebnis. Er liefert den aktuellen, gegebenenfalls supersedierenden Stand derselben Kandidatenidentität und begründet keine neue Mutation.
+
 ### 3. `operator-task-propose`
 
 Der Vorschlag bindet:
@@ -130,6 +132,12 @@ Bewertung:
 
 ```bash
 bureau --json operator-candidate-assess --candidate-id candidate-...
+```
+
+Mehrdeutiger Aufnahme-Readback über den exakten Idempotenzschlüssel:
+
+```bash
+bureau --json operator-candidate-assess --idempotency-key conversation:...
 ```
 
 Vorschlag in einem expliziten sauberen Registry-Checkout:

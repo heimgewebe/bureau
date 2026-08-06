@@ -1,0 +1,116 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein neu erzeugter Registrierungs-PR enthält als Bureau-Task-Markierung exakt die ID des neu registrierten Tasks und nicht die ID des publizierenden Parent-Tasks.",
+      "evidence_type": "object",
+      "id": "candidate-binding"
+    },
+    {
+      "assertion": "Der PR enthält eine explizite, eng begrenzte Task-Registrierungs-Ausnahme, die nur erklärt, dass der neue Task auf der Base noch nicht vorhanden sein kann; Exact-Head-Review, Scope-Prüfung und Pflicht-CI bleiben unverändert bindend.",
+      "evidence_type": "object",
+      "id": "registration-exception"
+    },
+    {
+      "assertion": "Ein Regressionstest liest den tatsächlich an gh pr create übergebenen Body zurück und schlägt fehl, wenn Candidate-Bindung, Ausnahme oder Ausschluss der Parent-Bindung verletzt werden.",
+      "evidence_type": "object",
+      "id": "regression-test"
+    },
+    {
+      "assertion": "Die live gefundenen Fehlbindungen der Bureau-PRs #1650 und #1658 sind bei unverändertem Head korrigiert und durch Frontier-Readback nicht mehr dem falschen Parent-Task zugeordnet.",
+      "evidence_type": "object",
+      "id": "existing-misbinding-repair"
+    },
+    {
+      "assertion": "Fokussierte und vollständige relevante Tests, Registry-Check und Pflicht-CI sind auf dem exakten Fix-Head grün; der PR wird regelkonform gemergt und die kanonische Runtime nur bei erforderlicher Codepublikation revisionsgebunden aktualisiert.",
+      "evidence_type": "object",
+      "id": "validation-and-merge"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Fix ist auf die PR-Body-Erzeugung des Operator-Intake-Publishers und den zugehörigen Regressionstest begrenzt. Bestehende fremde Worktrees, Leases und PR-Inhalte bleiben unangetastet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den Operator-Intake-Publisher so korrigieren, dass jeder Task-Registrierungs-PR den neu erzeugten Task mit einer expliziten Registrierungs-Ausnahme bindet, statt den publizierenden Parent-Task fälschlich als Implementierungsbindung auszugeben; bestehende Fehlbindungen werden revisionsgebunden korrigiert.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-REGISTRATION-PR-BINDING-DRIFT-20260806",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "automatic merge readiness",
+      "permission to weaken PR task-binding guards",
+      "claimability before registration merge",
+      "future correctness after later publisher changes"
+    ],
+    "registered_at": "2026-08-06",
+    "source": "live_taskgraph_repair_2026-08-06",
+    "source_findings": [
+      {
+        "created_task": "WELTGEWEBE-MAP-THREAD-NATURAL-PROFILES-V2",
+        "pull_request": 1650,
+        "repository": "heimgewebe/bureau",
+        "wrong_task": "WELTGEWEBE-OS-V1-T022"
+      },
+      {
+        "created_task": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-INSTALLER-TEST-DRIFT-20260806",
+        "pull_request": 1658,
+        "repository": "heimgewebe/bureau",
+        "wrong_task": "BUREAU-CONTROL-PLANE-V3-T001"
+      }
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-158f4a469562670e2c5104cb",
+      "event_id": 2915,
+      "event_created_at": "2026-08-06T19:43:41.455219Z",
+      "request_sha256": "5d727b90238817a64dcd2a21ef4ee691fd7c232b41cec96fe4072a7c7023f114",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-taskgraph-audit",
+        "locator": "heimgewebe/bureau#1650, heimgewebe/bureau#1658, src/bureau/operator_intake.py@4c9b3eb28c23841c172656306e760fbef5dd66e7",
+        "observed_at": "2026-08-06T19:39:00Z",
+        "sha256": "917b211151ac8fc9c486928b32054ad86969c0bdb7d76a02a5e227dff56e28e0"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression die PR-Body-Erzeugung auf den letzten geprüften Zustand zurücksetzen; bereits korrigierte PR-Metadaten nicht auf die nachweislich falschen Parent-Bindungen zurückstellen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Registrierungs-PRs an den erzeugten Task statt an den Publisher binden"
+}

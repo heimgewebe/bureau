@@ -83,8 +83,34 @@
       "dependency_receipt_sha256": "246b87fc592681492ef5353c6b9bbbb917559ae39e9bb63856f36bececc1bf9b",
       "dependency_pull_request": 1647,
       "dependency_head": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
-      "required_live_inventory_sha256": "6367b498fbe4c2d9b39c7cadb68237e02a262e14b126e7e702e54775258c71e3",
-      "required_before_merge": "PR 1647 merged through the merge queue and the same inventory capability observed from the deployed Bureau runtime",
+      "inventory_gate": {
+        "schema_version": 1,
+        "required_source_head": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
+        "required_runtime_binding": "deployed Bureau source commit equals the merge commit that contains PR 1647",
+        "required_observation": {
+          "status": "complete",
+          "complete": true,
+          "read_only": true,
+          "summary.error_count": 0,
+          "state_store.integrity": "ok",
+          "state_store.schema_version": 3,
+          "systemd.live_available": true
+        },
+        "hash_policy": "record the fresh inventory_sha256 as evidence; do not compare it with a historical live hash because StateStore counts and systemd execution timestamps are intentionally volatile",
+        "premerge_observations": [
+          {
+            "inventory_sha256": "6367b498fbe4c2d9b39c7cadb68237e02a262e14b126e7e702e54775258c71e3",
+            "role": "earlier T001 acceptance evidence"
+          },
+          {
+            "observed_at": "2026-08-06T20:06:35Z",
+            "inventory_sha256": "b3280fa8d56d761753914339ef2e37ba1963b9882ccc94f300efe9b10002fe51",
+            "repository_head": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
+            "role": "fresh pre-merge live read-only observation proving the historical live hash is not stable"
+          }
+        ]
+      },
+      "required_before_merge": "PR 1647 merged through the merge queue; the deployed Bureau source commit equals that merge commit; and a fresh read-only inventory satisfies inventory_gate.required_observation. Its fresh inventory_sha256 is recorded as evidence but is not compared with a historical live hash.",
       "queue_admission": "deferred",
       "queue_blocker_pull_request": 1646,
       "does_not_establish": [

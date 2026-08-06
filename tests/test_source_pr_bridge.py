@@ -287,3 +287,66 @@ def test_publish_now_refill_is_a_noop_when_not_triggered(tmp_path, registry_fact
     assert source_pr_bridge.NOW_REFILL_BRANCH not in branches
     worktrees = _run_git(checkout, "worktree", "list", "--porcelain")
     assert "bureau-now-refill" not in worktrees
+
+
+def test_withdraw_open_proposal_closes_stale_pr(monkeypatch):
+    calls = []
+
+    def fake_json(arguments, *, allow_not_found=False):
+        assert allow_not_found is False
+        assert arguments[-1] == "number,url"
+        return [{"number": 44, "url": "https://example.invalid/pr/44"}]
+
+    def fake_run(arguments, *, allow_not_found=False):
+        calls.append(arguments)
+        return ""
+
+    monkeypatch.setattr(source_pr_bridge, "_json", fake_json)
+    monkeypatch.setattr(source_pr_bridge, "_run", fake_run)
+
+    result = source_pr_bridge.withdraw_open_proposal()
+
+    assert result["status"] == "withdrawn"
+    assert result["pull_request"] == 44
+    assert calls[0][:4] == ["pr", "close", "44", "--repo"]
+
+
+def test_main_withdraws_instead_of_reconciling_not_applied_publish(
+    monkeypatch, capsys, tmp_path
+):
+    monkeypatch.setattr(
+        source_pr_bridge,
+        "publish_now_refill",
+        lambda *args, **kwargs: {
+            "status": "not-applied",
+            "refill_status": "blocked",
+            "blockers": ["runtime-execution-blocked"],
+            "report_sha256": "a" * 64,
+        },
+    )
+    monkeypatch.setattr(
+        source_pr_bridge,
+        "withdraw_open_proposal",
+        lambda *args, **kwargs: {"status": "withdrawn", "pull_request": 44},
+    )
+
+    def fail_reconcile(*args, **kwargs):
+        raise AssertionError("stale proposal must not be reconciled")
+
+    monkeypatch.setattr(source_pr_bridge, "reconcile", fail_reconcile)
+
+    assert (
+        source_pr_bridge.main(
+            [
+                "--kind",
+                "now-refill",
+                "--publish",
+                "--root",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "withdrawn"
+    assert result["publish"]["status"] == "not-applied"

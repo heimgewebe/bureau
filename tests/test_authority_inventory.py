@@ -228,7 +228,7 @@ def test_inventory_declares_runtime_installer_authority(tmp_path: Path) -> None:
         "immutable_release_path = True\n"
         "approval_intent = True\n"
         "ensure_registry_snapshot = True\n"
-        "marker = 'rev-parse\", \"origin/main'\n",
+        "marker = 'rev-parse\", \"origin/main\"'\n",
         encoding="utf-8",
     )
 
@@ -246,4 +246,36 @@ def test_inventory_declares_runtime_installer_authority(tmp_path: Path) -> None:
     )
     assert consumer["freshness_contract"] == (
         "source-head-origin-main-and-approval-intent-bound"
+    )
+    assert consumer["evidence"] == {
+        "approval_intent_gate": True,
+        "immutable_release_marker": True,
+        "origin_main_gate": True,
+        "registry_snapshot_writer": True,
+    }
+    assert value["complete"] is True
+
+
+def test_inventory_fails_closed_for_incomplete_runtime_installer_contract(
+    tmp_path: Path,
+) -> None:
+    root, state = _fixture_root(tmp_path)
+    installer = root / "ops/install-bureau-runtime.py"
+    installer.parent.mkdir(parents=True, exist_ok=True)
+    installer.write_text("immutable_release_path = True\n", encoding="utf-8")
+
+    value = authority_inventory(root, state_path=state, probe_systemd=False)
+
+    assert value["complete"] is False
+    assert value["status"] == "incomplete"
+    finding = next(
+        item
+        for item in value["findings"]
+        if item["code"] == "runtime-installer-contract-incomplete"
+    )
+    assert finding["path"] == "ops/install-bureau-runtime.py"
+    assert finding["severity"] == "error"
+    assert finding["detail"] == (
+        "runtime installer lacks required authority markers: "
+        "approval_intent_gate, origin_main_gate, registry_snapshot_writer"
     )

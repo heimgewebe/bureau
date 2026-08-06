@@ -58,7 +58,6 @@
     ],
     "next": [
       "GRABOWSKI-OPERATOR-SURFACE-V1-T139",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T147",
       "WELTGEWEBE-OS-V1-T051",
       "WELTGEWEBE-OS-V1-T054",
       "WELTGEWEBE-OS-V1-T055",
@@ -72,7 +71,8 @@
       "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011"
     ],
     "now": [
-      "WELTGEWEBE-OS-V1-T067"
+      "WELTGEWEBE-OS-V1-T067",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T147"
     ]
   },
   "queue_policy": "skip-blocked",

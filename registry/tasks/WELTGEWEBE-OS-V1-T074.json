@@ -1,0 +1,141 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein reproduzierbarer Produktionsbuild erzeugt ein maschinenlesbares Manifest mit unkomprimierten, gzip- und brotli-Größen aller initialen und verzögerten JavaScript-Chunks. Die beobachtete ungefähr 803-kB-Hauptdatei wird an einen exakten Commit und Asset-Fingerprint gebunden.",
+      "evidence_type": "object",
+      "id": "exact-bundle-baseline",
+      "verifier": "build manifest and hashes"
+    },
+    {
+      "assertion": "Die größten Beiträge des initialen Haupt-Chunks werden nach Modul oder Funktionsbereich ausgewiesen. Vermutungen ohne Bundle- beziehungsweise Importgraphbeleg gelten nicht als Optimierungsgrund.",
+      "evidence_type": "object",
+      "id": "contributor-analysis",
+      "verifier": "bundle analyzer report"
+    },
+    {
+      "assertion": "Nicht für den ersten sichtbaren Kartenrahmen benötigte Oberflächen werden über bestehende SvelteKit- und Vite-Grenzen lazy geladen. MapLibre-Grundinitialisierung, zentrale Fadengeometrie und unmittelbar sichtbare Kartenfunktionen bleiben konsistent verfügbar.",
+      "evidence_type": "object",
+      "id": "safe-code-splitting",
+      "verifier": "import graph and browser tests"
+    },
+    {
+      "assertion": "Ein frischer Desktop- und iPad-naher Browserlauf misst Karten-Canvas, erste Marker, Fäden und Interaktionsbereitschaft. Die Änderung verbessert oder wahrt diese Werte und erzeugt keine leeren Ladezustände, Importfehler oder zusätzlichen Reload-Schleifen.",
+      "evidence_type": "object",
+      "id": "startup-preserved",
+      "verifier": "Playwright startup trace"
+    },
+    {
+      "assertion": "Routing, Authentifizierungsinitialisierung, Suche, Filter, Kontextpanel, Dark Mode, Deutschland-Kacheln, Fadenanimation und Stilneuladen bleiben durch gezielte Browser- und Integrationstests abgedeckt.",
+      "evidence_type": "object",
+      "id": "functional-regression-guard",
+      "verifier": "focused integration and browser suite"
+    },
+    {
+      "assertion": "Ein versioniertes Build-Budget begrenzt initiale und einzelne Chunkgrößen mit nachvollziehbaren Warn- und Fehlergrenzen. Es enthält eine negative Testfixture und erlaubt keine Umgehung durch bloßes Umbenennen oder Aufspalten in gleichzeitig initial geladene Chunks.",
+      "evidence_type": "object",
+      "id": "versioned-budget",
+      "verifier": "budget gate and negative test"
+    },
+    {
+      "assertion": "Vorher und Nachher werden auf demselben Buildmodus verglichen. Berichtete Einsparungen unterscheiden Roh-, gzip- und brotli-Größe und benennen zusätzliche Requests, Cachewirkung sowie Wartungs- und Laufzeittrade-offs.",
+      "evidence_type": "object",
+      "id": "measured-effect",
+      "verifier": "before-after report"
+    },
+    {
+      "assertion": "Analyse und CI verwenden vorhandene Werkzeuge und kostenlose Infrastruktur. Keine kostenpflichtigen Analyse- oder Monitoringdienste werden eingeführt. Jede neue Ladegrenze kann fokussiert zurückgenommen werden.",
+      "evidence_type": "object",
+      "id": "zero-cost-and-reversible",
+      "verifier": "dependency and cost review"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head-, Diff- und Buildmanifest-Bindung, zwei getrennte Reviewachsen, grüne Pflichtchecks und Browserbelege auf dem finalen Head vor.",
+      "evidence_type": "object",
+      "id": "revision-bound-integration",
+      "verifier": "GitHub, build and browser readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Registrierung sinnvoller Folgearbeiten ohne kostenpflichtige Dienste freigegeben. Die Umsetzung muss auf gemessene Bundlebeiträge begrenzt sein und darf keine Funktionen entfernen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe",
+      "operation:weltgewebe:web-bundle-budget"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Das beim exakten PR-#1702-Build beobachtete große Haupt-JavaScript-Bündel reproduzierbar vermessen, seine wesentlichen Beiträge erklären und nichtkritische Karten-, Panel- oder Werkzeugpfade sicher aufteilen beziehungsweise verzögert laden, ohne Kartenstart, Fadenrendering, Routing oder Authentifizierung zu regressieren.",
+  "id": "WELTGEWEBE-OS-V1-T074",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that the bundle warning is caused by PR #1702",
+      "that smaller raw bytes automatically improve user experience",
+      "permission to buy analysis services or remove features"
+    ],
+    "execution_order_note": "Unabhängig vom Fadenfix planbar, aber nicht parallel in dieselben Kartenstart- und Importpfade schreiben, solange ein anderer Writer dort aktiv ist.",
+    "observed_baseline": {
+      "main_javascript_chunk": "approximately 803 kB in exact PR-head build warning",
+      "qualification": "existing condition, not established as caused by thread geometry patch"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6e8be4bfc090b6921c22b079",
+      "event_id": 2904,
+      "event_created_at": "2026-08-06T17:28:44.546500Z",
+      "request_sha256": "dca30512bdafba7d6fa76f530f78cd71b120931b9206b7de443225b4c1ca77db",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "production-acceptance-finding",
+        "locator": "github:heimgewebe/weltgewebe#1702;grabowski-build:e9a9005af28844e68a247eac",
+        "observed_at": "2026-08-06T17:23:00Z",
+        "sha256": "45a9069126f9c03296810f7ce8fb2a07ba896c0f8f34fbdaef7299409c7f64e4"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-06",
+    "source": "production_acceptance_followup_from_weltgewebe_pr_1702",
+    "source_pr": "heimgewebe/weltgewebe#1702"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "sveltekit",
+    "vite",
+    "bundling",
+    "performance",
+    "browser",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Neue Chunk- oder Lazy-Import-Grenzen einzeln auf den letzten vollständig geprüften Importgraphen zurücksetzen, wenn Startpfad, Routing, Authentifizierung oder Kartenfunktionen regressieren. Baseline und Budgetberichte erhalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Haupt-JavaScript-Bündel verkleinern und budgetieren"
+}

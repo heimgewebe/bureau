@@ -119,6 +119,57 @@
         "resource availability",
         "implementation completion"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "github_pull_request",
+      "source_ref": "heimgewebe/repoground#1154@573de8ae0387fdf31b287ded4386f098bb5721b7",
+      "verified_at": "2026-08-05T23:36:00Z",
+      "outcome": "succeeded",
+      "implementation_repository": "heimgewebe/repoground",
+      "implementation_pull_request": 1154,
+      "implementation_head": "573de8ae0387fdf31b287ded4386f098bb5721b7",
+      "implementation_merge_commit": "be1930bb915a44fca4c713e27c53e23a919f10ec",
+      "validation": {
+        "focused_receipt_contract_tests": "29 passed",
+        "related_cli_tests": "24 passed",
+        "full_suite": "5412 passed, 12 skipped",
+        "maintainability": "current_count=189, new_count=0, baseline=189",
+        "github_workflows": [
+          "Forensic Preflight Canary",
+          "Anti-Hallucination Contract Lint (C2.4)",
+          "ai-context guard",
+          "contracts-validate",
+          "Doc-Freshness (diagnostic v0)",
+          "Parity Gate (Content vs Diagnostic)",
+          "Lens Model",
+          "CodeQL",
+          "task-index",
+          "lint",
+          "test-suite"
+        ],
+        "workflow_conclusion": "all listed pull-request workflows completed successfully"
+      },
+      "acceptance_evidence": {
+        "receipt-contract": "Versioned receipt schema and deterministic tests bind task_id, repository commit, artifact role, path, sha256 and byte count without content storage.",
+        "trusted-source-boundary": "Negative issuer and forgery tests permit only allowlisted trusted_wrapper or tool_gateway issuers; declarations and answer text cannot mint observed evidence.",
+        "comparison-states": "Deterministic comparison tests cover declared-only, observed-only, declared-and-observed and unavailable while preserving does_not_establish boundaries.",
+        "privacy-boundary": "Schemas and adversarial tests restrict receipts to bounded metadata and hashes and reject raw repository content and secrets.",
+        "freshness-and-replay": "Freshness, replay, task, commit and artifact mismatch tests fail closed and never elevate evidence.",
+        "end-to-end-adoption": "The trusted wrapper integration and compare-evidence CLI are covered by focused and related CLI tests.",
+        "sequence-gate": "Dependency REPOGROUND-AGENT-UTILITY-V1-T001 was already verified; T005 was reconciled from blocked to ready before execution and the initiative remains max_active_tasks=1."
+      },
+      "does_not_establish": [
+        "semantic reading",
+        "artifact relevance",
+        "answer correctness",
+        "answer truth",
+        "mandatory wrapper adoption",
+        "runtime interception",
+        "deployment"
+      ],
+      "task_sha256": "981ed42e8aa6346861beff181a19b92321bb0a6c1911b5e48dfe4ef0fcb1965f",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955"
     }
   },
   "priority": {
@@ -137,6 +188,6 @@
     "strategy": "Die optionale Receipt-Erzeugung und Vergleichsschicht deaktivieren oder entfernen; bestehende Agent-Consumption-Deklarationen und ihre negative Semantik bleiben unverändert nutzbar."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Agent-Consumption-Angaben an beobachtete Tool-Lese-Receipts binden"
 }

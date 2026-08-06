@@ -58,7 +58,6 @@
       "GRABOWSKI-OPERATOR-SURFACE-V1-T120"
     ],
     "next": [
-      "AUDIO-CONTROL-PLANE-V1-T002",
       "WELTGEWEBE-OS-V1-T051",
       "WELTGEWEBE-OS-V1-T054",
       "WELTGEWEBE-OS-V1-T055",
@@ -73,7 +72,8 @@
     ],
     "now": [
       "ALPHA-LAB-SHADOW-RESEARCH-V1-T001",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T149"
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T149",
+      "AUDIO-CONTROL-PLANE-V1-T002"
     ]
   },
   "queue_policy": "skip-blocked",

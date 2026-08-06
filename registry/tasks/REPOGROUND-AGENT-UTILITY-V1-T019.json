@@ -41,7 +41,12 @@
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/repoground"
+    "working_repository": "/home/alex/repos/repoground",
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Umsetzung von T019 am 6. August 2026 erneut ausdrücklich über Grabowski beauftragt. Der Claim bleibt T019-gebunden und erfordert einen isolierten Arbeitsbaum, einen vollständig geprüften Diff, revisionsgebundene Selbstprüfung, grüne Tests und grüne Pflichtchecks vor einem Merge.",
+      "required_level": "operator"
+    }
   },
   "goal": "Natürlich formulierte Repositoryfragen über eine taskprofil- und benchmarkgebundene hybride Retrieval-Lane beantworten, context_compose innerhalb harter Bytebudgets nach belegter Relevanz statt starrer Lane-Stückzahlen zusammensetzen und Agentenantworten standardmäßig ohne wiederholtes Metadatenboilerplate kompakt projizieren.",
   "id": "REPOGROUND-AGENT-UTILITY-V1-T019",
@@ -62,13 +67,18 @@
       "runtime correctness"
     ],
     "live_evidence": {
-      "bundle_manifest_sha256": "8593018b47917ff5a9f4576c87eae68388211b5db65aa9ecac73580aa9242730",
-      "bundle_stem": "heimgewebe__repoground__main-max-260728-1203",
-      "exact_query": "context_budget_bytes -> 1 Treffer",
-      "external_observation": "30-Dateien-Diff: 14 Dateien laut Auswertung allein durch feste Cutoffs ausgelassen",
+      "bundle_manifest_sha256": "ab86a56568875183460bed42f323ca735ea150cea0882d35462edece58b5222f",
+      "bundle_stem": "heimgewebe__repoground__main-max-260806-0703",
+      "exact_query": "context_budget_bytes -> 0 Treffer",
       "freshness": "fresh_exact",
-      "natural_language_query": "Wo wird das Kontextbudget für Agentenantworten festgelegt und verarbeitet? -> 0 Treffer",
-      "repo_commit": "42f1c11afcd105ccb125c90544cdb5842b820485"
+      "natural_language_query": "context_compose context_budget_bytes feste Lane-Caps relevanzbasierte Budgetverteilung ausgelassene Pfade omission reasons changed paths -> 0 Treffer",
+      "repo_commit": "cfd341b00c6a36125a014dbfa54cf78c8215da75",
+      "source_audit": {
+        "compact_projection": "bereits implementiert und mit eigenen Frontdoor- und Projektionsprüfungen abgedeckt",
+        "context_budgeting_gap": "context_compiler sortiert deterministisch nach fester Priorität, geschätzten Tokens und ID; belegte Relevanz, Änderungsnähe, Evidenzautorität und Diversität fließen noch nicht gemeinsam in die Auswahl ein",
+        "retrieval_activation_gap": "semantisches Re-Ranking und T013-Entscheidungslogik existieren, sind aber nicht zu einer profilgebundenen Laufzeitaktivierung verbunden",
+        "semantic_evaluation": "Recall@k-, MRR- und Fehlerisolationsgerüst existiert; das T019-spezifische mehrsprachige Natürlichsprach-Goldset fehlt"
+      }
     },
     "registered_from_audit": "Empirische Claude-Code-Auswertung und revisionsgebundener Grabowski-Readback, 2026-07-28",
     "operator_intake": {
@@ -90,6 +100,34 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "activation": {
+      "activated_at": "2026-08-06",
+      "basis": "T013 ist verified. Zwei zuvor ungebundene RepoGround-PRs (#1155 und #1156) sind gemergt und vollständig grün; RepoGround main ist sauber und mit origin/main synchron. Der Nutzer hat die Umsetzung erneut ausdrücklich beauftragt.",
+      "does_not_establish": [
+        "queue placement",
+        "claim authority",
+        "implementation",
+        "merge readiness"
+      ],
+      "queue_policy": "skip-blocked",
+      "repoground_main_at_activation": "cfd341b00c6a36125a014dbfa54cf78c8215da75"
+    },
+    "readiness": {
+      "assessed_at": "2026-08-06T08:18:56Z",
+      "basis": [
+        "dependency REPOGROUND-AGENT-UTILITY-V1-T013 is verified",
+        "no open RepoGround pull requests",
+        "no competing open Bureau pull request for T019",
+        "canonical claim rejected only because T019 was planned and absent from queue.json",
+        "exact T019 task record was unleased before this readiness change"
+      ],
+      "does_not_establish": [
+        "queue placement",
+        "claim authority",
+        "implementation completion",
+        "semantic route promotion"
+      ]
     }
   },
   "priority": {
@@ -104,6 +142,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Semantische Retrievalqualität, relevanzbasierte Kontextbudgets und kompakte Agentenantworten"
 }

@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest reproduziert, dass git clone eines lokalen Repositorypfads eine lokale origin-URL und lokale origin/main-Referenz übernimmt; dieser Zustand darf nicht als frisch beobachtetes GitHub main gelten.",
+      "id": "local-clone-reproduction"
+    },
+    {
+      "assertion": "Jede Aussage über GitHub main bindet Repositoryidentität, erwartete Remote-URL, frisch beobachteten Remote-Commit und Beobachtungsquelle; lokale Referenzen allein reichen nicht.",
+      "id": "remote-provenance-binding"
+    },
+    {
+      "assertion": "Ausgaben unterscheiden explizit lokalen Source-Checkout, unveränderlichen kanonischen Runtime-Snapshot und externe GitHub-Remote-Wahrheit. Widersprüche werden sichtbar und blockieren mutationstragende Folgerungen.",
+      "id": "truth-layer-separation"
+    },
+    {
+      "assertion": "Ein echter Claim verwendet einen sauberen, schreibbaren Checkout mit HEAD == origin/main == deploytem Source-Commit; der kanonische Runtime-Snapshot bleibt read-only und wird nicht als Mutationsroot missbraucht.",
+      "id": "claim-root-contract"
+    },
+    {
+      "assertion": "Fokussierte Tests, vollständige Bureau-Validierung und ein echter fail-closed Live-Probe bestehen auf dem exakten PR-Head.",
+      "id": "regression-validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Umsetzung ist auf Provenienzprüfung, Regressionstests und Dokumentation begrenzt. Sie darf keine fremden Checkouts aktualisieren und keine Akzeptanz- oder Claim-Gates abschwächen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/runtime_identity.py",
+      "path:/home/alex/repos/bureau/src/bureau/status_capsule.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_identity.py",
+      "path:/home/alex/repos/bureau/tests/test_status_capsule.py",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-EF220B3499.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Verhindere, dass ein aus einem lokalen Bureau-Checkout erzeugter Klon dessen lokale origin-URL und refs/remotes/origin/main erbt und anschließend als autoritativer GitHub-main- oder Frontier-Snapshot ausgewiesen wird. Frontier-, Doctor- und Claim-Vorprüfungen müssen lokale Git-Identität, kanonischen Runtime-Snapshot und frisch beobachtete GitHub-Remote-Wahrheit getrennt ausweisen und bei widersprüchlicher Provenienz fail-closed bleiben.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-EF220B3499",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "deduplication": "RepoGround und aktueller Registry-Grep fanden Verträge zu lokaler origin/main- und Runtime-Identität, aber keinen Task, der lokale Klonprovenienz gegen autoritative GitHub-main-Aussagen bindet.",
+    "does_not_establish": [
+      "Dass lokales origin/main generell falsch ist",
+      "Dass GitHub bei jedem Read verfügbar sein muss",
+      "Erlaubnis, Dirty-States oder fremde Worktrees zu verändern",
+      "Claimfähigkeit vor Merge und Runtime-Refresh"
+    ],
+    "registered_at": "2026-08-06T17:50:30Z",
+    "source": "Live-Frontierlauf: Ein lokaler Klon von /home/alex/repos/bureau meldete df9737b als vermeintliches origin/main, während GitHub API, deployte immutable Runtime und kanonischer Registry-Snapshot übereinstimmend 4c9b3eb meldeten. Daraus entstanden falsche T029/T139-Queue- und Lifecycle-Befunde; der kanonische Gegenlauf falsifizierte sie.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-frontier-local-clone-origin-provenance-20260806",
+      "event_id": 2910,
+      "event_created_at": "2026-08-06T17:56:19.013550Z",
+      "request_sha256": "973a4fa0d2e644111c63f4329c016588d3d525e9709c38ca3eb7576571c5f47e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-live-audit",
+        "locator": "grabowski-live-audit:2026-08-06T17:31Z/4c9b3eb-vs-df9737b",
+        "observed_at": "2026-08-06T17:31:19Z",
+        "sha256": "74406f09fc2b6bf272495cd933ca70c4bfba56b3d7e30743cee29da787899046"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 904
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Remote-Identität von Frontier-Snapshots revisionsgebunden prüfen"
+}

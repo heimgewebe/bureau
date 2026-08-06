@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Nach einem succeeded Run und anschließendem verified Taskstatus liefert der exakt identische öffentliche Pickup-Request denselben Run als existing-terminal; es entstehen kein zweiter Run, keine neue Lease und kein neuer Workspace.",
+      "id": "terminal-identical-retry"
+    },
+    {
+      "assertion": "Journal-Replay bleibt an identischen normalisierten Request, exakte Registry-Bindung, unveränderten Claim-Intent und eindeutige Journalidentität gebunden; jede Abweichung bleibt vor Wirkung fail-closed.",
+      "id": "exact-binding-only"
+    },
+    {
+      "assertion": "Mehrere passende Journale, beschädigte Artefakte oder Bindungsdrift werden weiterhin als stabile Ambiguitäts- oder Integritätsfehler abgewiesen und niemals heuristisch ausgewählt.",
+      "id": "ambiguity-preserved"
+    },
+    {
+      "assertion": "Runtime-Drift-, stale-runtime- und Request-Digest-Replay sowie aktive Assignment- und Lease-Reparaturpfade behalten ihr bisheriges Verhalten.",
+      "id": "existing-replay-paths-preserved"
+    },
+    {
+      "assertion": "Fokussierte Pickup-Tests und die vollständige Grabowski-Validierung sind grün; derselbe Audio-T002-Request für BUR-RUN-20260806T133117Z-134392b969 wird nach Deployment zweimal live wiederholt und beide Antworten binden denselben terminalen Run ohne neue Ressourcen.",
+      "id": "regression-and-live-repro"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den terminalen Same-Request-Journal-Replay und seine Regressionstests ändern. Aktive Claims, Akzeptanz, Dependencies, fremde Leases und T030-Arbeit bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die koordinierte Pickup-Oberfläche muss einen exakt identischen öffentlichen Request auch nach erfolgreichem terminalem Run und anschließendem verified Taskstatus auf den vorhandenen journalgebundenen Run abbilden, statt vor dem Journal-Replay mit no-eligible-task abzubrechen.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T031",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "deployed_runtime_commit": "616356c13f7257ed42241293172e062d8d2e0189",
+    "does_not_establish": [
+      "permission to modify the active T030 checkout",
+      "permission to release or steal T030 leases",
+      "automatic readiness or claimability",
+      "that terminal replay may ignore request or registry binding"
+    ],
+    "observed_error": "claim-intent-no-eligible-task: state is verified",
+    "overlap_note": "T030 besitzt aktuell die beiden Implementierungsdateien für Execution-Binding und Orphan-Reconciliation. T031 darf erst nach terminaler Freigabe oder sauberem ownergebundenem Handoff schreiben; die Verträge sind fachlich getrennt.",
+    "source": "grabowski-live-repro",
+    "source_candidate_id": "candidate-9414eb3cc73402fd965d59fa",
+    "source_event_id": 2873,
+    "source_run_id": "BUR-RUN-20260806T133117Z-134392b969",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9414eb3cc73402fd965d59fa",
+      "event_id": 2873,
+      "event_created_at": "2026-08-06T14:11:24.553104Z",
+      "request_sha256": "6629b19558610610fddb6d79d6edbcaea01ee50afcb0e385770fb9cc54c31e31",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "grabowski-live-repro",
+        "locator": "grabowski-bureau-pickup:BUR-RUN-20260806T133117Z-134392b969#verified-terminal-replay",
+        "observed_at": "2026-08-06T13:58:55Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 85
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Terminalen Pickup-Retry aus Journal idempotent wiederverwenden"
+}

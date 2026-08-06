@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "ALPHA-LAB-SHADOW-RESEARCH-V1-T003",
+  "initiative": "ALPHA-LAB-SHADOW-RESEARCH-V1",
+  "title": "Operate the append-only prospective shadow cohort",
+  "state": "planned",
+  "goal": "Run the frozen protocol prospectively on new public events and preserve every input, rejection, simulated fill, valuation and code/config identity until at least 200 independent signals and six months of untouched evidence exist or an earlier no-go terminates the experiment.",
+  "priority": {
+    "lane": "later",
+    "rank": 201
+  },
+  "claims": [
+    {
+      "resource": "repo.alpha-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [
+    "ALPHA-LAB-SHADOW-RESEARCH-V1-T002"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/alpha-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/alpha-lab"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User authorised autonomous repository implementation on 2026-08-06. Real orders, broker/wallet access, paid data purchases and capital deployment remain excluded."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "append-only-prospective-run",
+      "assertion": "New observations append with immutable hashes; earlier decisions and outcomes cannot be silently edited or backfilled."
+    },
+    {
+      "id": "minimum-cohort",
+      "assertion": "Capital discussion is blocked until at least 200 independent eligible signals and six calendar months of untouched prospective evidence."
+    },
+    {
+      "id": "operational-failure-visible",
+      "assertion": "Collection gaps, SEC blocks, stale quotes, missing FX and parser ambiguity remain visible as rejected or interrupted intervals."
+    },
+    {
+      "id": "frozen-stress-views",
+      "assertion": "Report normal, doubled-cost, one-day-delay and ten-best-trades-removed views."
+    },
+    {
+      "id": "no-order-surface",
+      "assertion": "Runtime produces reports and bounded notifications only, with no broker, wallet, order, leverage, short or capital operation."
+    },
+    {
+      "id": "independent-decision-gate",
+      "assertion": "Completion yields an evidence-bound no-go or independent-review request; thresholds alone do not authorize capital."
+    }
+  ],
+  "metadata": {
+    "phase": "prospective-live-shadow",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4755d9858ff79fb34caa623f",
+      "event_id": 2769,
+      "source": {
+        "kind": "conversation",
+        "locator": "git:/home/alex/repos/alpha-lab@b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+        "observed_at": "2026-08-06T06:55:45Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_commit": "b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+    "does_not_establish": [
+      "strategy_profitability",
+      "real_trading_permission",
+      "automatic_progression_to_real_capital"
+    ]
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "ALPHA-LAB-SHADOW-RESEARCH-V1-T001",
+  "initiative": "ALPHA-LAB-SHADOW-RESEARCH-V1",
+  "title": "Build the lawful point-in-time evidence archive",
+  "state": "ready",
+  "goal": "Implement a lawful append-only data foundation for public SEC filings plus timestamped market, FX, calendar and corporate-action observations. Every simulated decision must be reproducible from content-addressed raw inputs. HTTP 403, missing licenses, missing timestamps or ambiguous corrections fail closed; no bypass, paid purchase or trading edge is added.",
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "claims": [
+    {
+      "resource": "repo.alpha-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/alpha-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/alpha-lab"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User authorised autonomous repository implementation on 2026-08-06. Real orders, broker/wallet access, paid data purchases and capital deployment remain excluded."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "source-legality-matrix",
+      "assertion": "A versioned source matrix records provider, permitted use, attribution, retention, redistribution, rate limits, cost and point-in-time properties; unknown or paid terms block ingestion until separately approved."
+    },
+    {
+      "id": "append-only-sec-archive",
+      "assertion": "SEC submissions and ownership XML use only the exact-host read-only client and are archived append-only with retrieval time, final URL, status, content hash and parser revision; HTTP 403 is preserved and never bypassed."
+    },
+    {
+      "id": "market-fx-contract",
+      "assertion": "Market quote and FX adapters require timezone-aware observation times, currency identity, provenance and bid/ask or conservative substitutes; future observations cannot enter earlier decisions."
+    },
+    {
+      "id": "corporate-actions-and-calendars",
+      "assertion": "Splits, symbol changes, delistings, distributions, sessions and holidays are represented or fail closed before validation claims."
+    },
+    {
+      "id": "reproducible-manifest",
+      "assertion": "A manifest binds raw inputs, normalized records, configuration, code commit and output digest for offline reproduction."
+    },
+    {
+      "id": "no-live-execution-regression",
+      "assertion": "Safety tests prove no broker, wallet, order, leverage, CFD, option, short or automatic capital path exists."
+    },
+    {
+      "id": "validation-green",
+      "assertion": "Focused and full Alpha Lab tests, compile checks, examples and git diff checks pass on the exact reviewed head."
+    }
+  ],
+  "metadata": {
+    "phase": "data-foundation",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4755d9858ff79fb34caa623f",
+      "event_id": 2769,
+      "source": {
+        "kind": "conversation",
+        "locator": "git:/home/alex/repos/alpha-lab@b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+        "observed_at": "2026-08-06T06:55:45Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_commit": "b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+    "does_not_establish": [
+      "strategy_profitability",
+      "real_trading_permission",
+      "automatic_progression_to_real_capital"
+    ],
+    "known_blocker": "A direct SEC archive request from the Heim-PC returned HTTP 403 on 2026-08-06; diagnose compliant access or preserve the blocker, never evade it."
+  }
+}

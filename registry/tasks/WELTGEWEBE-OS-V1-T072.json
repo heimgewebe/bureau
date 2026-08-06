@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine Vorschau weist den ausgelieferten vollständigen Git-Commit und einen Build- beziehungsweise Asset-Fingerprint maschinenlesbar nach; PR-Head, Buildidentität und Browserartefakte stimmen exakt überein.",
+      "evidence_type": "object",
+      "id": "exact-commit-identity",
+      "verifier": "deployment receipt and browser readback"
+    },
+    {
+      "assertion": "Mindestens ein kostenloser Vorschau-URL-Pfad ist in einem frischen anonymen Browser ohne Anbieteranmeldung erreichbar und lädt die Kartenanwendung bis zu einem sichtbaren MapLibre-Canvas.",
+      "evidence_type": "object",
+      "id": "anonymous-browser-access",
+      "verifier": "fresh Chromium and WebKit browser run"
+    },
+    {
+      "assertion": "JavaScript-, CSS-, JSON-, Kartenstil- und Asset-Anfragen liefern korrekte Statuscodes und MIME-Typen. Kein Modulpfad, kein dynamischer Import und kein Asset-Fingerprint wird durch eine HTML-Fallback- oder Authentifizierungsseite ersetzt.",
+      "evidence_type": "object",
+      "id": "module-content-contract",
+      "verifier": "network trace and content-type assertions"
+    },
+    {
+      "assertion": "Die Vorschau unterstützt deterministische Kartenprüfdaten und erzeugt revisionsgebundene Screenshots für mehrere Fadenarten, Zoomstufen, hellen und dunklen Modus sowie Desktop und iPad-nahes Touchprofil.",
+      "evidence_type": "object",
+      "id": "map-visual-proof",
+      "verifier": "Playwright visual acceptance"
+    },
+    {
+      "assertion": "Vorschau- und Produktionsrouting bleiben getrennt. Keine Vorschaukonfiguration verändert Produktionsdomain, Secrets, Authentifizierung oder kanonische Deploymentautorität.",
+      "evidence_type": "object",
+      "id": "production-separation",
+      "verifier": "configuration diff and negative tests"
+    },
+    {
+      "assertion": "Die Lösung verwendet ausschließlich vorhandene kostenlose Kontingente. Wenn ein Anbieter keine anonyme Vorschau zulässt, wird er nicht umgangen; stattdessen wird der andere vorhandene Vorschaupfad korrekt repariert oder ein lokaler revisionsgebundener Abnahmeweg dokumentiert.",
+      "evidence_type": "object",
+      "id": "zero-cost-and-fail-closed",
+      "verifier": "provider configuration and cost review"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head- und Diffbindung, vollständiger Review des finalen Heads, geschlossene materielle Befunde und grüne Pflichtchecks vor.",
+      "evidence_type": "object",
+      "id": "revision-bound-integration",
+      "verifier": "GitHub and local readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Umsetzung sinnvoller Weltgewebe-Folgearbeiten ohne kostenpflichtige Zusatzdienste freigegeben. Änderungen bleiben auf kostenlose Vorschau-, Routing-, Build- und Testpfade begrenzt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe",
+      "operation:weltgewebe:exact-head-public-preview"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Für Weltgewebe mindestens einen kostenlosen, anonym zugänglichen Vorschaupfad bereitstellen, der den exakten Pull-Request-Commit ausliefert und eine reproduzierbare visuelle Browserabnahme von Karte, Knoten und Fäden auf Desktop und iPad-nahem Touchprofil ermöglicht, ohne Moduldateien als HTML auszuliefern oder eine interaktive Anbieteranmeldung zu verlangen.",
+  "id": "WELTGEWEBE-OS-V1-T072",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "production correctness from preview readiness alone",
+      "permission to purchase additional services",
+      "permission to weaken authentication or expose secrets"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-cb0f2668d354a19e3dc65a18",
+      "event_id": 2902,
+      "event_created_at": "2026-08-06T17:27:26.784419Z",
+      "request_sha256": "467d7534566f83383b43854187c5b21a915b42027412b1c643fd8c05166675fe",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "production-acceptance-finding",
+        "locator": "github:heimgewebe/weltgewebe#1702;grabowski-evidence:/home/alex/.local/state/grabowski/evidence/wg1702-preview-26f44bce-retry1",
+        "observed_at": "2026-08-06T17:23:00Z",
+        "sha256": "45a9069126f9c03296810f7ce8fb2a07ba896c0f8f34fbdaef7299409c7f64e4"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-06",
+    "source": "production_acceptance_followup_from_weltgewebe_pr_1702",
+    "source_pr": "heimgewebe/weltgewebe#1702"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "sveltekit",
+    "cloudflare-pages",
+    "vercel",
+    "browser",
+    "testing",
+    "deployment",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Die fokussierten Vorschau- oder Routingänderungen auf den letzten nachweislich funktionierenden Vorschauvertrag zurücksetzen. Bei unklarer Anbieterwirkung fail-closed bleiben und Produktion unverändert lassen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Öffentliche Exact-Head-Vorschau zuverlässig prüfbar machen"
+}

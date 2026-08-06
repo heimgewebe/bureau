@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Bureau Control Plane v3",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Bureau so konvergieren, dass Code, Schemas und unabhängige CI auf dem öffentlichen GitHub-Repository verbleiben, während Taskrevisionen, Statusübergänge, Frontier, Claims, Runs, Acceptance und Closeout ausschließlich über den lokalen transaktionalen StateStore autoritativ verwaltet werden. Bestehende StateStore-, Live-Register-, CAS-, Receipt-, Runtime- und Queue-Organe werden migriert und verbunden; es entsteht keine zweite Datenbank und kein Hosted-Runner darf lokale Laufzeitwahrheit erfinden.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/bureau-control-plane-v3.md"
+  },
+  "completion": [
+    "Operative Task-, Status-, Queue-, Initiativen- und Closeout-Übergänge benötigen keinen GitHub-PR mehr.",
+    "Frontier-Lanes werden deterministisch aus Taskrevisionen, Prioritäten, Abhängigkeiten, Actorprofilen, Runs, Ressourcen, offenen PRs und Runtime-Gates projiziert.",
+    "Alle Mutationen laufen über einen einzelnen idempotenten Compare-and-swap-Vertrag mit terminalem Readback und unveränderlichem Receipt.",
+    "Typed Acceptance-Evidence terminalisiert vollständig belegte Tasks automatisch; unknown bleibt offen.",
+    "Öffentliche GitHub-Snapshots sind redigierte, hashgebundene Projektionen ohne Rückschreibautorität; vollständige State-Sicherungen werden verschlüsselt und restoregetestet.",
+    "Nach belegtem Schattenbetrieb lesen alle produktiven Consumer StateStore/API-Projektionen; alte Git-Registry-Schreibpfade sind entfernt."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-08-06T11:11:00Z",
+    "source_request": "Nutzerauftrag vom 6. August 2026: Bureau maximal funktional machen, öffentlich auf GitHub belassen und den vollständigen Control-Plane-v3-Plan autonom umsetzen.",
+    "user_authority": "Repositoryänderungen, Tests, Commits, Pushes und Pull Requests sind ohne Zusatzkosten autorisiert; Merge nur auf exakt geprüftem Head mit grüner Pflicht-CI und ohne Übernahme fremder Ressourcen.",
+    "architecture_basis": {
+      "existing_organs": [
+        "SQLite StateStore mit WAL und synchronous=FULL",
+        "BEGIN IMMEDIATE und Compare-and-swap-Pfade",
+        "events, runs, claims, resources, execution envelopes und receipt records",
+        "gitloses Live Register",
+        "lokal autoritative Now-Refill-Entscheidung",
+        "immutable Runtime- und Registry-Bindung"
+      ],
+      "decision": "Migration und Konvergenz statt paralleler Neuentwicklung."
+    },
+    "scope_exclusions": [
+      "privates GitHub-Repository",
+      "kostenpflichtige CI- oder Modellrouten",
+      "zweite operative Datenbank",
+      "Hosted-Runner als Queue- oder Claim-Autorität",
+      "direkte main-Mutation",
+      "Übernahme fremder Dirty-States, Leases, Prozesse oder Worktrees"
+    ],
+    "does_not_establish": [
+      "dass bestehende Git-Registry-Dateien sofort entfernt werden dürfen",
+      "dass der aktuelle StateStore bereits vollständige TaskSpec-Autorität besitzt",
+      "dass ein Snapshot ein vollständiges Backup ersetzt",
+      "dass der Cutover vor erfolgreichem Schattenbetrieb zulässig ist",
+      "dass Registrierung dieser Initiative Implementierung oder Deployment beweist"
+    ]
+  }
+}

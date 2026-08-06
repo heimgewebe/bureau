@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-T012",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Schattenbetrieb, Consumer-Migration und Cutover durchführen",
+  "goal": "Git-Registry und StateStore zunächst dual lesen, aber immer nur einen Writer zulassen. Null-Divergenz, Multi-Agent-Claim, automatischer Closeout, Offline-Betrieb, Restore und Rückrollpfad müssen über mehrere kontrollierte Zyklen belegt sein, bevor StateStore alleinige operative Autorität wird.",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T011"
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/runtime_identity.py",
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/src/bureau/registry_snapshot.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_identity.py",
+      "path:/home/alex/repos/bureau/tests/test_registry_snapshot.py",
+      "path:/home/alex/repos/bureau/docs/operations.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T012.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "single-writer-shadow-mode",
+      "assertion": "Während des Schattenbetriebs existiert genau ein autoritativer Writer; die andere Seite ist nur Projektion."
+    },
+    {
+      "id": "zero-divergence-window",
+      "assertion": "Wiederholte Kontrollzyklen zeigen null unerklärte Divergenz zwischen StateStore und Git-Kompatibilitätsprojektion."
+    },
+    {
+      "id": "end-to-end-cutover-gates",
+      "assertion": "Multi-Agent-Claim, Acceptance-Closeout, GitHub-Ausfall, Backup-Restore und Runtime-Readback sind erfolgreich belegt."
+    },
+    {
+      "id": "reversible-cutover",
+      "assertion": "Cutover und Rückrollpfad sind an exakte Release-, Schema-, Checkpoint- und State-Wurzeln gebunden."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-08-06T11:11:00Z",
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
+    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
+    "does_not_establish": [
+      "Merge- oder Deploymentabschluss",
+      "Freigabe fremder Ressourcen",
+      "direkte main-Mutation"
+    ]
+  }
+}

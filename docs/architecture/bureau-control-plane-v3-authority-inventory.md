@@ -8,7 +8,7 @@ Der Inventarlauf verbindet vier Belegklassen:
 
 1. statische Python-Analyse über alle produktiven Pakete unter `src/` sowie den revisionsgebundenen Runtime-Installer für Registry-, StateStore-, Cycle-State-, GitHub- und Grabowski-Zugriffe;
 2. Workflowanalyse für GitHub-Transport- und Registry-Schreibkandidaten;
-3. systemd-Unit-Inventar einschließlich optionalem read-only Live-Readback;
+3. systemd-Unit-Inventar aus Quellstand und installierten User-/System-Units einschließlich read-only Live-Readback und Abweichungsnachweis;
 4. SQLite-Readback mit `mode=ro`, `query_only`, Integritätsprüfung, Schema und begrenzten Tabellenzählungen.
 
 ## Aufruf
@@ -23,7 +23,7 @@ bureau \
 
 Der direkte Modulaufruf `python -m bureau.authority_inventory` bleibt für hermetische Tests und eingebettete Nutzung verfügbar; die kanonische Operatoroberfläche ist die Haupt-CLI.
 
-Für hermetische Tests oder Hosts ohne systemd-Userbus kann der Live-Readback mit `--skip-systemd` abgeschaltet werden. Das wird im Ergebnis sichtbar; fehlende Live-Evidence wird nicht als Gesundheit interpretiert.
+Für hermetische Tests oder Hosts ohne systemd-User- oder Systembus kann der Live-Readback mit `--skip-systemd` abgeschaltet werden. Das wird im Ergebnis sichtbar; fehlende Live-Evidence wird nicht als Gesundheit interpretiert.
 
 ## Ausgabe
 
@@ -49,10 +49,13 @@ Besonders sichtbar bleiben:
 - GitHub-Transporte, die nur Code, CI oder redigierte Snapshots transportieren dürfen,
 - StateStore-Schreiber, die in den Single-Writer-Vertrag konvergieren müssen,
 - Schreiber der separaten `bureau_cycle`-Nebenstände, die in die StateStore-API oder eine begrenzte read-only Projektion überführt werden müssen,
-- den expliziten Runtime-Installer als Head-, `origin/main`- und Approval-Intent-gebundene Deploymentautorität.
+- den expliziten Runtime-Installer als Head-, `origin/main`- und Approval-Intent-gebundene Deploymentautorität,
+- installierte Bureau-Units ohne Quellentsprechung sowie deklarierte, aber nicht installierte Units als getrennte Live-Abweichungen.
+
+GitHub-Schreibwirkung wird nur aus tatsächlichen API-Aufrufen oder literal gebundenen `git push`-/`gh pr create`-Kommandos abgeleitet; bloße Scanner-Markierungstexte erzeugen keinen Writer.
 
 ## Grenzen
 
-Die Oberfläche erteilt keine Mutation, klassifiziert keine fremde Arbeit als übernehmbar und beweist bei fehlendem Live-Systemd-Readback keine Runtimegesundheit. Ein statischer Schreibkandidat ist ein zu prüfender Consumer, nicht automatisch ein Fehler oder eine Löschfreigabe.
+Die Oberfläche erteilt keine Mutation, klassifiziert keine fremde Arbeit als übernehmbar und beweist bei fehlendem Live-Systemd-Readback keine Runtimegesundheit. User- und System-Units werden ausschließlich über read-only `systemctl`-Abfragen beobachtet. Ein statischer Schreibkandidat ist ein zu prüfender Consumer, nicht automatisch ein Fehler oder eine Löschfreigabe.
 
 Der Inventarhash bindet den vollständigen beobachteten Inhalt. Ein späterer Apply- oder Cutover-Vertrag muss den Hash frisch lesen und separat autorisieren.

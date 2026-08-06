@@ -1,0 +1,129 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #1702 ist an diesen Task gebunden; finaler Head, Base, Diff-SHA-256 und alle acht geänderten Pfade sind exakt und revisionsfest dokumentiert.",
+      "evidence_type": "object",
+      "id": "exact-pr-binding"
+    },
+    {
+      "assertion": "Knüpfung ist am dicksten, stabilsten und geradesten; Gespräch am dünnsten und weichsten ausschwingend; Antrag deutlich und ruhig; Stimme antragsverwandt, aber schlanker und straffer. out bleibt interne Renderlane und keine fünfte Fadenart.",
+      "evidence_type": "object",
+      "id": "natural-thread-semantics"
+    },
+    {
+      "assertion": "Statische und animierte Pfade verwenden deckungsgleiche, adaptive und begrenzte Geometrie ohne sichtbare Polygonknicke, Zielhaken, Rückfaltungen, NaN oder Infinity.",
+      "evidence_type": "object",
+      "id": "smooth-geometry-contract"
+    },
+    {
+      "assertion": "Fokussierte Vitest-, Svelte-, Playwright-, Lint- und Repository-Pflichtgates sind auf dem exakten finalen Head grün; Tests oder Grenzwerte wurden nicht abgeschwächt.",
+      "evidence_type": "object",
+      "id": "revision-bound-tests"
+    },
+    {
+      "assertion": "Merge und Deployment erfolgen nur auf dem exakt geprüften Head; Runtime und öffentliche Produktionsseite werden commitgenau zurückgelesen.",
+      "evidence_type": "object",
+      "id": "exact-merge-and-deploy"
+    },
+    {
+      "assertion": "Reale Fäden werden auf Desktop und iPad- beziehungsweise digestgebundenem WebKit-Touchprofil über mehrere Zoomstufen visuell geprüft; HTTP 200 oder Preview-READY allein genügt nicht.",
+      "evidence_type": "object",
+      "id": "real-map-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die natürliche und vollständig runde Fadendarstellung einschließlich Review, Merge, Deployment und Produktionsbeweis ausdrücklich beauftragt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.theme.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/edge-motion.spec.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/woven-node-visualization.spec.ts",
+      "path:/home/alex/repos/weltgewebe/docs/specs/knoten-gewebe-visualisierung.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bereits implementierten Fadenprofil-Vertrag aus Weltgewebe-PR #1702 revisionsgebunden prüfen, an einen kanonischen Bureau-Task binden, bei vollständig grünen Gates exakt mergen, commitgenau deployen und anschließend auf realen Kartendaten belegen.",
+  "id": "WELTGEWEBE-MAP-THREAD-NATURAL-PROFILES-V2",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "merge readiness",
+      "deployment completion",
+      "production correctness",
+      "authority to overwrite foreign worktrees, leases or branches"
+    ],
+    "observed_at": "2026-08-06T20:34:00+02:00",
+    "observed_worktree_diff_sha256": "b551a2776851ba8b84a08247814eff3010473fd622f6e7f03b0a5e407566be25",
+    "observed_worktree_head": "9744fcd0e71ee1421a68c6c7ef7eb71e11de35b6",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a4a5f524aedab6ad0ba8400f",
+      "event_id": 2881,
+      "event_created_at": "2026-08-06T15:39:22.107603Z",
+      "request_sha256": "470d640fd683d0ed2cbc1a74a82ddd71d880c97cdf0dba52cb4faf3ac724dac7",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-diff",
+        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1702",
+        "observed_at": "2026-08-06T15:31:49Z",
+        "sha256": "a51463b5e9422a8e524b2fd397bb9c7418bb73cb09d5971edbbab5a8e951670e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-06",
+    "relation_to_t068": "T068 beschreibt den älteren Fold-Free-Vertrag; dieser Task deckt die späteren vier Fadenprofile, die interne out-Lane, 96-Punkte-Grenze und den vollständigen PR-#1702-Scope ab.",
+    "relation_to_t070": "T070 ist ausschließlich die nachgelagerte Produktionsabnahme und eventuelle Reparatur nach Merge dieses Implementierungstasks.",
+    "source": "active_implementation_pr_1702_and_grabowski_watcher",
+    "source_branch": "fix/thread-natural-profiles-v2",
+    "source_diff_sha256": "b551a2776851ba8b84a08247814eff3010473fd622f6e7f03b0a5e407566be25",
+    "source_head": "9744fcd0e71ee1421a68c6c7ef7eb71e11de35b6",
+    "source_pr": "heimgewebe/weltgewebe#1702"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "maplibre",
+    "geometry",
+    "testing",
+    "browser",
+    "webkit",
+    "ipad",
+    "performance",
+    "deployment",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Auf den letzten vollständig geprüften Fadenrendervertrag zurückgehen; bei unklarer Produktionsidentität oder visueller Regression keine weitere Geometriewirkung behaupten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Natürliche Fadenprofile revisionsgebunden integrieren"
+}

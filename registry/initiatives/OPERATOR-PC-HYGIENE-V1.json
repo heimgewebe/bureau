@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "OPERATOR-PC-HYGIENE-V1",
   "title": "Heim-PC operator hygiene follow-ups",
-  "state": "waiting",
+  "state": "active",
   "commitment": "later",
   "goal": "Close the remaining Heim-PC service hygiene gaps found in the 2026-07-08 live audit without weakening Operator Relay boundaries or making blind runtime claims.",
   "current_plan": {
@@ -52,6 +52,21 @@
         "brave_cori"
       ]
     },
-    "waiting_reason_20260713": "Waiting on T002, T012, on T030 for T003/T008, and on active Lenskit checkout users for T010."
+    "waiting_reason_20260713": "Waiting on T002, T012, on T030 for T003/T008, and on active Lenskit checkout users for T010.",
+    "lifecycle_reconciled_20260806": {
+      "from_state": "waiting",
+      "to_state": "active",
+      "reason": "Seven tasks remain nonterminal; the canonical lifecycle projection therefore requires an active initiative. Historical waiting reasons remain preserved as evidence, and no task state, dependency, acceptance criterion or commitment is changed.",
+      "open_tasks": [
+        "OPERATOR-PC-HYGIENE-V1-T002",
+        "OPERATOR-PC-HYGIENE-V1-T003",
+        "OPERATOR-PC-HYGIENE-V1-T010",
+        "OPERATOR-PC-HYGIENE-V1-T012",
+        "OPERATOR-PC-HYGIENE-V1-T013",
+        "OPERATOR-PC-HYGIENE-V1-T014",
+        "OPERATOR-PC-HYGIENE-V1-T015"
+      ],
+      "source_runtime_commit": "8ac96598971090962333b13167b23034c71d2f2b"
+    }
   }
 }

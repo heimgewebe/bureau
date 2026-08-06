@@ -109,6 +109,18 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "bureau_run_receipt",
+      "source_ref": "bureau-run:BUR-RUN-20260806T020314Z-319933bcbc@41090f00256e1b19306dfd88d11ea28fed91ff2477828e039950f9bea0abfd18",
+      "run_id": "BUR-RUN-20260806T020314Z-319933bcbc",
+      "worker_id": "automation:claim-contract-repair:t146:20260806T0138",
+      "verified_at": "2026-08-06T03:01:19.056950Z",
+      "outcome": "succeeded",
+      "task_sha256": "fd5f4771e2566264a18d24fe15556da7f60cc8ee695f34201da093d037a64df1",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "receipt_sha256": "41090f00256e1b19306dfd88d11ea28fed91ff2477828e039950f9bea0abfd18"
     }
   },
   "priority": {
@@ -126,6 +138,6 @@
     "strategy": "Bei Unklarheit eigene Reconciliation-Leases unverändert freigeben, Checkout und Prozesse unberührt lassen, Preimage bewahren und unresolved-blocked melden."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Ownerlosen T139-Checkout revisionsgebunden reconciliieren"
 }

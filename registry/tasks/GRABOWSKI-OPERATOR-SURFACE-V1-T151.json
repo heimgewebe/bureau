@@ -1,0 +1,134 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #662, sein unveränderter aktueller Head, geänderte Pfade, Reviews und Pflichtchecks werden live zurückgelesen; der PR-Text bindet danach ausschließlich GRABOWSKI-OPERATOR-SURFACE-V1-T151 und der Bureau-Frontier-Readback meldet für #662 keine fehlende oder mehrdeutige Taskbindung mehr.",
+      "id": "source-and-binding-exact"
+    },
+    {
+      "assertion": "Keine fremde Dirty-Fläche, Lease, Branch, Prozess- oder Deploymentspur wird übernommen oder forciert freigegeben; gearbeitet wird nur in einem sauber belegten isolierten Arbeitsbaum mit eigenen exakten Ressourcen.",
+      "id": "foreign-state-untouched"
+    },
+    {
+      "assertion": "Der PR-Head integriert den aktuellen origin/main; deterministische Operator-Kontext- und sonstige projektionserzeugte Dateien werden aus genau diesem Head regeneriert, ohne fremde Projektionen zu überschreiben.",
+      "id": "current-main-and-projections"
+    },
+    {
+      "assertion": "Regressionstests beweisen den snapshotgebundenen ot1-Cursorvertrag, gültige Task- und Unit-Identitäten sowie deterministische Operationsidentitäten über gruppierte Projektionen und rohe Taskdaten hinweg; cw1- und ot1-Cursor bleiben strikt getrennt.",
+      "id": "cursor-and-identity-contract"
+    },
+    {
+      "assertion": "Nur aktive Tasks, aktive exakte Leases, exakte Ressourcenüberschneidungen, authority-, lease- oder checkoutgebundene Prozesse, offene gebundene Pull Requests und aktive Deploymentwirkungen werden als operative Blocker klassifiziert; terminale, historische oder erwartbar rote Einzelrecords bleiben nichtaktionale Evidenz.",
+      "id": "operational-blocker-boundary"
+    },
+    {
+      "assertion": "Fokussierte Operational-Truth-, Current-Work- und Task-Attention-Tests, vollständiges make validate, Diff-Prüfung und revisionsgebundener Self-Review bestehen auf dem exakten veröffentlichten Head.",
+      "id": "validation-and-review-green"
+    },
+    {
+      "assertion": "Alle GitHub-Pflichtchecks sind auf dem unveränderten exakten Head grün; erst dann erfolgt der Merge regelkonform über die konfigurierte Merge-Queue und der Mergecommit wird von GitHub sowie origin/main zurückgelesen.",
+      "id": "exact-head-merge"
+    },
+    {
+      "assertion": "Der exakte Mergecommit wird über den kanonischen Grabowski-Self-Deploy ausgerollt; Deploymentintegrität, Runtime-Release und Runtime-Head stimmen anschließend revisionsgenau überein.",
+      "id": "exact-deployment"
+    },
+    {
+      "assertion": "Ein begrenzter Live-Readback der Operational-Truth-, Current-Work- und Task-Attention-Oberflächen zeigt stabile Cursor und Operationsidentitäten, keine falschen Blocker aus terminalen Records und die weiterhin fail-closed Behandlung aktiver oder widersprüchlicher Ressourcen.",
+      "id": "live-operational-truth-proof"
+    },
+    {
+      "assertion": "Task, PR-Projektion, Registry, Doctor und Frontier werden nach Merge und Deployment erneut gelesen; die Aufgabe wird nur mit vollständigen maschinenlesbaren Belegen terminalisiert.",
+      "id": "postmerge-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat den autonomen Frontier-Entblockungs-, PR-Rettungs-, Merge- und Deploymentlauf ausdrücklich beauftragt; Kosten, fremde Leases und fremde Dirty-Zustände bleiben ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/.grabowski-worktrees/grabowski-operator-surface-v1-t151",
+      "repo:/home/alex/repos/grabowski:branch:feat/agentic-operational-truth-v1",
+      "repo:/home/alex/repos/grabowski:operation:pr662-operational-truth-closeout",
+      "host:heim-pc:operation:deploy-grabowski-t151"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "PR heimgewebe/grabowski#662 kanonisch an genau diese Bureau-Aufgabe binden und die neue Operational-Truth-Projektion so abschließen, dass aktive Tasks, exakte Leases, Ressourcenüberschneidungen, gebundene Prozesse, offene gebundene Pull Requests und laufende Deploymentwirkungen revisionsstabil erfasst werden, während terminale oder nur historisch fehlgeschlagene Arbeit keine falschen operativen Blocker erzeugt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T151",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "merge readiness before green checks",
+      "permission to bypass active leases",
+      "permission to weaken operational blocker acceptance",
+      "runtime correctness before exact deployment readback"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-55b17144094deb66520e2654",
+      "event_id": 2889,
+      "event_created_at": "2026-08-06T16:07:46.770806Z",
+      "request_sha256": "3ad3254edbf4f64b2745259d9bd351ee3e5e5a9e92b177a1e9fbcfeab8107efd",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github_pull_request",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/662@cc28e0e2926c594bc1a680cadb512e900cec7d75",
+        "observed_at": "2026-08-06T16:01:30Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_head_at_intake": "cc28e0e2926c594bc1a680cadb512e900cec7d75",
+    "source_observed_at": "2026-08-06T16:01:30Z",
+    "source_pr": "https://github.com/heimgewebe/grabowski/pull/662",
+    "structural_finding": "open broad operational-truth PR without canonical Bureau task binding and with red required validation"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "runtime-observability",
+    "deployment",
+    "systemd",
+    "audit",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Vor dem Merge nur eigenen Worktree, Branch und eigene Leases bereinigen. Nach dem Merge bei belegter Regression den exakten Mergecommit über einen separaten geprüften Revert-PR zurücknehmen; keine fremden Prozesse, Leases, Deployments oder State-Spuren löschen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Operational-Truth-Projektion produktionsreif abschließen"
+}

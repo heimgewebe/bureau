@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Aktuelle HausKI-Audio-Abhängigkeitsbefunde einzeln prüfen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Die nach Abschluss der historischen T038-Queue noch live gemeldeten Abhängigkeitsbefunde in HausKI-Audio werden einzeln inventarisiert, gegen den aktuellen Hauptzweig dedupliziert und evidenzgebunden behoben oder terminal eingeordnet.",
   "priority": {
     "lane": "later",
@@ -128,6 +128,54 @@
       "fix availability",
       "runtime reachability",
       "completion of remediation"
-    ]
+    ],
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "812198324b5f0fd3bb80450e98839c088b8b2bbc2f6db335a80f3612c5f53b82",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "source": "merged_pr_green_ci_and_live_dependabot_readback",
+      "verified_at": "2026-08-06T17:04:30Z",
+      "implementation": {
+        "repository": "heimgewebe/hausKI-audio",
+        "pull_request": 167,
+        "base_commit": "4f2b4bdbfaa6419725aba02acd71347ac1e9da02",
+        "head_commit": "3a60a560bc55c50f231cf3929feeb73190fb01c8",
+        "merge_commit": "958e3288b864ddaa5617bf4bd5bf5efac38904ce",
+        "merged_at": "2026-07-30T03:40:04Z"
+      },
+      "validation": {
+        "github_checks": "all_observed_checks_success",
+        "rust_backend": "success",
+        "codeql_actions_python_rust": "success",
+        "docs_lint": "success",
+        "secret_scan": "success",
+        "ai_context_guard": "success",
+        "cargo_metadata_locked": "passed",
+        "cargo_fmt": "passed",
+        "cargo_clippy": "passed",
+        "cargo_test_workspace": "passed",
+        "cargo_audit": "passed",
+        "markdownlint": "passed",
+        "git_diff_check": "passed"
+      },
+      "live_readback": {
+        "current_main_commit": "958e3288b864ddaa5617bf4bd5bf5efac38904ce",
+        "implementation_merge_equals_current_main": true,
+        "open_dependabot_alerts": 0,
+        "observed_at": "2026-08-06T16:58:24Z"
+      },
+      "acceptance_evidence": {
+        "live-inventory": "PR #167 documents twelve live-read Dependabot findings individually with package, manifest, advisory, severity and disposition.",
+        "dedupe-after-t038": "The PR explicitly compares every finding with T038 and avoids reworking already resolved history.",
+        "evidence-per-finding": "The source-bound report distinguishes active TLS paths from inactive lockfile branches and records fix and reachability evidence per finding.",
+        "reviewed-repository-effect": "Exact head 3a60a560 passed all observed required checks and merged as 958e3288; current main is identical.",
+        "terminal-readback": "GitHub Dependabot API returned an empty open-alert set on 2026-08-06."
+      },
+      "does_not_establish": [
+        "absence of future dependency advisories",
+        "security of dependencies outside scanned manifests",
+        "permission for blanket alert suppression"
+      ]
+    }
   }
 }

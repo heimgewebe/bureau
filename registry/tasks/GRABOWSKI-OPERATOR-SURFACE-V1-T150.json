@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine typisierte REMOTE_READ-Oberfläche listet Repository-Metadaten eines explizit validierten GitHub-Owners mit serverseitig begrenztem Limit und strikt validierter Sichtbarkeit. Sie verwendet nur fest vorgegebene gh-repo-list-Argumente und gibt geparstes, begrenztes JSON zurück.",
+      "evidence_type": "object",
+      "id": "typed-private-repo-read"
+    },
+    {
+      "assertion": "Ein deterministischer Cutover-Test belegt, dass die neue Read-Surface bei mutations_closed=true weiter zugelassen und erfolgreich ausgeführt wird.",
+      "evidence_type": "object",
+      "id": "drain-read-continuity"
+    },
+    {
+      "assertion": "Der generische grabowski_github-Pfad bleibt als wirkungstragend klassifiziert. Schreibende, unbekannte oder nicht eindeutig lesende gh-Aufrufe bleiben während mutations_closed=true gesperrt und benötigen weiterhin den bestehenden Mutations- und Transportvertrag.",
+      "evidence_type": "boolean",
+      "id": "mutations-remain-closed"
+    },
+    {
+      "assertion": "Ein Live-Readback gegen einen privaten heimgewebe-Repositorybestand liefert mindestens eine PRIVATE-Repositoryidentität über die neue typisierte Oberfläche, ohne Mutation, Lease oder Audit-Schreibwirkung.",
+      "evidence_type": "object",
+      "id": "private-read-live-proof"
+    },
+    {
+      "assertion": "Capability-Matrix, Operator-Kontext, Toolkatalog und Repository-Verträge enthalten die neue Oberfläche konsistent. Gezielte Tests, vollständige Validierung, Self-Review und GitHub-Pflichtchecks sind auf dem exakten Head grün.",
+      "evidence_type": "object",
+      "id": "contract-and-regression"
+    },
+    {
+      "assertion": "Ungültige Owner, Sichtbarkeiten, Limits, nicht-JSON-Ausgaben, Timeouts und gekappte Ausgaben scheitern stabil und begründen keine Mutation oder automatische Wiederholung.",
+      "evidence_type": "object",
+      "id": "bounded-failure"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Änderung ergänzt ausschließlich eine schmale typisierte Read-Surface. Der bestehende generische GitHub-CLI-Pfad und alle Schreiboperationen bleiben unverändert wirkungstragend und fail-closed.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_read_surface.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_capabilities.py",
+      "path:/home/alex/repos/grabowski/tests/test_read_surface.py",
+      "path:/home/alex/repos/grabowski/tests/test_repository_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_convergence_coverage_contract.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Eine schmale, typisierte und streng begrenzte GitHub-Read-Surface bereitstellen, damit private Repository-Listen und vergleichbare eindeutig lesende GitHub-Metadatenabfragen während eines Blue-Green-Deployment-Drains weiterlaufen, ohne den generischen mutierenden GitHub-Pfad oder unklassifizierte gh-Aufrufe freizugeben.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T150",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic_merge",
+      "automatic_deployment",
+      "safe execution of arbitrary gh arguments",
+      "authenticated connector caller identity"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3f23c23dcf0951b008444384",
+      "event_id": 2887,
+      "event_created_at": "2026-08-06T15:58:38.111117Z",
+      "request_sha256": "c4afa262117c4e23f4b466473fa8e582fb7e01b4f1f96029858dbd429c4bf6c4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:grabowski:2026-08-06T17:50+02:00:private-github-read-drain",
+        "observed_at": "2026-08-06T15:50:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "root_cause": "grabowski_github is intentionally annotated MUTATING as a broad GitHub CLI surface, so even semantically read-only gh repo list calls are closed by the serving-process deployment drain."
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "github",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Die neue typisierte Read-Surface und ihre Vertragsregistrierung revertieren. Der bestehende grabowski_github-Pfad bleibt unverändert verfügbar und während Deployment-Drains weiterhin konservativ gesperrt."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Private GitHub-Lesezugriffe während Deployment-Drain erhalten"
+}

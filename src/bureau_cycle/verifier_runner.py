@@ -24,12 +24,14 @@ HEALTH_PATH = HOME / ".local/state/bureau-cycle/health.json"
 LEASES = HOME / ".local/state/bureau-cycle/leases"
 TASK_DB = HOME / ".local/state/grabowski/tasks.sqlite3"
 BUREAU_DB = HOME / ".local/state/bureau/bureau.sqlite3"
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 HELPER = [sys.executable, "-m", "bureau_cycle.cycle_contract"]
 HELPER_ENV = {
     "HOME": str(HOME),
     "PATH": "/usr/bin:/bin",
     "LC_ALL": "C.UTF-8",
     "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": str(PACKAGE_ROOT),
 }
 CONTRACT_VERSION = 2
 SCHEMA_VERSION = 2

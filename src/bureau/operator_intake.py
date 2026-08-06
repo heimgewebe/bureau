@@ -573,6 +573,26 @@ def _candidate_idempotency_result(
     return None
 
 
+def _candidate_by_idempotency_key(
+    store: StateStore, *, idempotency_key: str
+) -> dict[str, Any]:
+    key = _checked_text(
+        idempotency_key, field="idempotency_key", maximum=200, required=True
+    )
+    for event in reversed(candidate_records(store)):
+        if _operator_context(event["record"]).get("idempotency_key") != key:
+            continue
+        identity = _candidate_identity(event)
+        try:
+            return current_candidate_record(store, candidate_id=identity)
+        except StateError:
+            return event
+    raise OperatorIntakeError(
+        "idempotency-key-unknown",
+        "idempotency_key does not identify a candidate",
+    )
+
+
 def candidate_record_request(
     registry: Registry | None,
     store: StateStore,
@@ -785,11 +805,26 @@ def _candidate_assess(
     *,
     candidate_id: str | None = None,
     event_id: int | None = None,
+    idempotency_key: str | None = None,
     initiative: str | None = None,
     task_id: str | None = None,
 ) -> dict[str, Any]:
     """Assess one current candidate without changing Registry or Live Register truth."""
-    event = current_candidate_record(store, candidate_id=candidate_id, event_id=event_id)
+    selector_count = sum(
+        value is not None for value in (candidate_id, event_id, idempotency_key)
+    )
+    if selector_count != 1:
+        raise OperatorIntakeError(
+            "candidate-selector-invalid",
+            "use exactly one of candidate_id, event_id or idempotency_key",
+        )
+    event = (
+        _candidate_by_idempotency_key(store, idempotency_key=idempotency_key)
+        if idempotency_key is not None
+        else current_candidate_record(
+            store, candidate_id=candidate_id, event_id=event_id
+        )
+    )
     record = event["record"]
     identity = _candidate_identity(event)
     context = _operator_context(record)
@@ -1000,6 +1035,7 @@ def candidate_assess(
     *,
     candidate_id: str | None = None,
     event_id: int | None = None,
+    idempotency_key: str | None = None,
     initiative: str | None = None,
     task_id: str | None = None,
 ) -> dict[str, Any]:
@@ -1010,6 +1046,7 @@ def candidate_assess(
         store,
         candidate_id=candidate_id,
         event_id=event_id,
+        idempotency_key=idempotency_key,
         initiative=initiative,
         task_id=task_id,
     )

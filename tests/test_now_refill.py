@@ -166,6 +166,25 @@ def test_runtime_execution_blocked_refuses_promotion(registry_factory, tmp_path,
     assert (root / "registry/queue.json").read_text() == before_text
 
 
+def test_runtime_execution_blocked_is_not_satisfied_at_floor(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(task_count=2)
+    store = StateStore(tmp_path / "state" / "state.sqlite3", tmp_path / "state")
+    monkeypatch.setattr(Dispatcher, "_runtime_execution_truth", _blocked_runtime_truth)
+
+    report = build_now_refill_report(
+        Registry.load(root),
+        store,
+        policy=NowRefillPolicy(floor=2, target=3, max_promotions=3),
+    )
+
+    assert report["metrics"]["structurally_runnable_now_count"] == 2
+    assert report["status"] == "blocked"
+    assert report["blockers"] == ["runtime-execution-blocked"]
+    assert report["promotions"] == []
+
+
 @pytest.mark.parametrize("terminal_state", ["cancelled", "superseded"])
 def test_registry_terminal_state_supersedes_historical_verified_receipt(
     registry_factory, terminal_state

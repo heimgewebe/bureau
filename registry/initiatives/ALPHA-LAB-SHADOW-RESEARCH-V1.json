@@ -1,42 +1,50 @@
 {
   "schema_version": 1,
   "id": "ALPHA-LAB-SHADOW-RESEARCH-V1",
-  "title": "Alpha Lab point-in-time research and shadow evidence",
+  "title": "Alpha Lab bounded Form-4 falsification experiment",
   "state": "active",
   "commitment": "next",
-  "goal": "Build a lawful and reproducible point-in-time SEC, market-price and FX evidence base, falsify or validate one frozen Form-4 hypothesis out of sample, and operate an append-only shadow portfolio without any route to real orders or capital.",
+  "goal": "Preserve the completed lawful point-in-time data foundation, execute exactly one cheap preregistered Form-4 kill test, and stop with a published no-go whenever free lawful data or robustness gates fail. Alpha Lab is a bounded secondary experiment, not the primary revenue path, and has no automatic prospective-shadow or capital progression.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/alpha-lab-shadow-research-v1.md"
   },
   "completion": [
-    "A license- and timestamp-bound SEC, market-price, FX and corporate-action archive can reproduce every decision input without future data.",
-    "The preregistered hypothesis is evaluated out of sample against fixed baselines and declared stress tests without post-hoc rule selection.",
-    "At least 200 independent eligible signals and six months of untouched append-only live-shadow evidence yield an explicit no-go or independent-review decision; no real-capital action is automatic."
+    "T001 is evidence-bound to the merged Alpha Lab data-foundation implementation and its green Python 3.10 and 3.12 checks.",
+    "T002 preregisters and runs one fixed 20-trading-day kill test using only lawful free data, at least 200 issuer-independent events, public-release timing, fixed costs, fixed baselines and automatic no-go criteria.",
+    "The initiative terminates with a full no-go result or an independent-review request. The former T003 six-month cohort is superseded; any prospective work requires a new task and explicit opportunity-cost review."
   ],
   "parallelism": {
     "max_active_tasks": 1
   },
   "metadata": {
     "primary_repo_path": "/home/alex/repos/alpha-lab",
-    "source_commit": "b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+    "source_commit": "4e5a11426fde8733059a680704da69082999f84b",
+    "economic_posture": {
+      "role": "bounded_secondary_experiment",
+      "primary_revenue_path": false,
+      "paid_data_authorised": false,
+      "prospective_runtime_precommitted": false,
+      "broker_or_capital_path": false
+    },
+    "scope_revision": {
+      "decided_at": "2026-08-06",
+      "reason": "The full historical plus six-month shadow programme was too slow, data-heavy and capital-constrained to justify priority as a Schotter path.",
+      "result": "one falsification kill test only"
+    },
     "operator_intake": {
       "candidate_id": "candidate-4755d9858ff79fb34caa623f",
       "event_id": 2769,
-      "source_locator": "git:/home/alex/repos/alpha-lab@b956f976fbdba3f09f5557de5ad43f176e6bfb1d"
+      "source_locator": "git:/home/alex/repos/alpha-lab@4e5a11426fde8733059a680704da69082999f84b"
     },
-    "user_authority": "2026-08-06 @grabowski umsetzen; repository work and shadow research authorized, real-capital execution excluded",
-    "queue_publication_blocker": {
-      "resource": "path:/home/alex/repos/bureau/registry/queue.json",
-      "owner": "operator:chatgpt:t147-queue-publication-20260806",
-      "observed_at": "2026-08-06T09:17:00+02:00"
-    },
+    "user_authority": "2026-08-06 @grabowski umsetzen; bounded repository research authorised, paid data and real-capital execution excluded",
     "does_not_establish": [
       "strategy_profitability",
       "market_data_license_availability",
-      "real_trading_permission",
+      "prospective_shadow_authority",
+      "paper_or_real_trading_permission",
       "broker_or_wallet_authority",
-      "automatic_progression_after_failed_acceptance"
+      "automatic_progression_after_any_result"
     ]
   }
 }

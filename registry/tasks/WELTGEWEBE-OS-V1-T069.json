@@ -38,7 +38,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "note": "Produktionsdeployments sind autorisiert. Die vorhandene root-eigene Sperrdatei darf nicht blind gelöscht werden; vor Wirkung sind Ursache oder Owner, Freigabebedingung, Nichtüberlappung, Rückbau und exakter Zielcommit frisch zu belegen.",
-      "required_level": "operator"
+      "required_level": "break_glass"
     },
     "grabowski_resources": [
       "host:wg-prod-1",

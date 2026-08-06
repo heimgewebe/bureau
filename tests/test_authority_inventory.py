@@ -6,6 +6,7 @@ from pathlib import Path
 
 from bureau import legacy
 from bureau.authority_inventory import authority_inventory, main
+from bureau.cli import main as bureau_main
 
 
 def _fixture_root(tmp_path: Path) -> tuple[Path, Path]:
@@ -156,3 +157,30 @@ def test_module_cli_emits_machine_readable_inventory(tmp_path: Path, capsys) -> 
         "cutover_readiness",
         "safe_removal_of_any_writer",
     ]
+
+
+def test_canonical_cli_exposes_read_only_authority_inventory(
+    tmp_path: Path, capsys
+) -> None:
+    root, state = _fixture_root(tmp_path)
+
+    exit_code = bureau_main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state),
+            "--json",
+            "authority-inventory",
+            "--skip-systemd",
+        ]
+    )
+
+    assert exit_code == 0
+    payload = json.loads(capsys.readouterr().out)
+    inventory = payload.get("result", payload)
+    assert inventory["kind"] == "bureau_authority_inventory"
+    assert inventory["read_only"] is True
+    assert inventory["complete"] is True
+    assert inventory["state_store"]["path"] == str(state)
+    assert inventory["systemd"]["enabled"] is False

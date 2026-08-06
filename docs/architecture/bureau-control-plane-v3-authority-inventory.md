@@ -29,9 +29,15 @@ Jeder Consumer nennt:
 - Quellpfad oder externe Vertragsidentität,
 - gelesene Autoritätsflächen,
 - mögliche Schreibflächen,
+- daraus abgeleitete angenommene Autoritäten,
+- den konkreten Aktualitätsvertrag der jeweiligen Belegklasse,
 - statische Evidenzmarker,
-- Zielautorität unter Control Plane v3,
+- Zielautorität und Zielinterface unter Control Plane v3,
 - Migrationsdisposition.
+
+`assumed_authorities` beschreibt ausschließlich, welche Autoritätsflächen der Consumer nach statischer oder explizit deklarierter Evidence derzeit voraussetzt. Das Feld erteilt keine Berechtigung.
+
+`freshness_contract` trennt repository-revisionsgebundene Erkennung von echter Live-Evidence. Bei Pythonmodulen und Workflows bleibt die Aktualität externer Quellen ausdrücklich unbeobachtet. systemd-Livezustand wird separat über den read-only Probeabschnitt gebunden. Externe Autoritäten besitzen jeweils einen eigenen benannten Readbackvertrag.
 
 Besonders sichtbar bleiben:
 

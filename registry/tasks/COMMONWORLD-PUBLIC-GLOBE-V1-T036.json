@@ -63,7 +63,40 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/commonworld"
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "path:/home/alex/repos/commonworld/404.html",
+      "path:/home/alex/repos/commonworld/ar.html",
+      "path:/home/alex/repos/commonworld/de.html",
+      "path:/home/alex/repos/commonworld/es.html",
+      "path:/home/alex/repos/commonworld/fr.html",
+      "path:/home/alex/repos/commonworld/index.html",
+      "path:/home/alex/repos/commonworld/method.ar.html",
+      "path:/home/alex/repos/commonworld/method.de.html",
+      "path:/home/alex/repos/commonworld/method.es.html",
+      "path:/home/alex/repos/commonworld/method.fr.html",
+      "path:/home/alex/repos/commonworld/method.html",
+      "path:/home/alex/repos/commonworld/method.pt-BR.html",
+      "path:/home/alex/repos/commonworld/propose.ar.html",
+      "path:/home/alex/repos/commonworld/propose.de.html",
+      "path:/home/alex/repos/commonworld/propose.es.html",
+      "path:/home/alex/repos/commonworld/propose.fr.html",
+      "path:/home/alex/repos/commonworld/propose.html",
+      "path:/home/alex/repos/commonworld/propose.pt-BR.html",
+      "path:/home/alex/repos/commonworld/pt-BR.html",
+      "path:/home/alex/repos/commonworld/assets/commonworld-app.js",
+      "path:/home/alex/repos/commonworld/assets/commonworld-core.mjs",
+      "path:/home/alex/repos/commonworld/assets/commonworld-i18n.mjs",
+      "path:/home/alex/repos/commonworld/assets/commonworld-locale.mjs",
+      "path:/home/alex/repos/commonworld/assets/commonworld-page-builds.json",
+      "path:/home/alex/repos/commonworld/assets/commonworld-proposal.js",
+      "path:/home/alex/repos/commonworld/docs/architecture/locale-release.contract.json",
+      "path:/home/alex/repos/commonworld/docs/evidence/locale-releases",
+      "path:/home/alex/repos/commonworld/docs/evidence/locale-reviews",
+      "path:/home/alex/repos/commonworld/releases",
+      "path:/home/alex/repos/commonworld/scripts/smoke_locale_candidates_browser.mjs",
+      "path:/home/alex/repos/commonworld/tests/js/i18n.test.mjs"
+    ]
   },
   "goal": "Replace Commonworld's English/German-specific locale branching with one canonical registry and then release the planned interface languages one locale at a time: first Spanish, French, Brazilian Portuguese and Arabic; afterwards Simplified Chinese, Hindi, Indonesian and Japanese in an order justified by aggregate demand and editorial capacity. Preserve the private T033 precedence contract, support script- and region-aware BCP 47 matching, keep content languages independent and expose no locale before its complete translation, review, accessibility, browser, release and production evidence passes.",
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T036",
@@ -124,6 +157,17 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "scope_contract": {
+      "schema_version": 1,
+      "basis": "Commonworld PR #196 exact 564-path diff grouped into public locale roots, runtime files, evidence directories and immutable release tree",
+      "source_pr": "heimgewebe/commonworld#196",
+      "source_head": "28f49b2af306974b4351a857904accee78e22f58",
+      "source_file_count": 564,
+      "does_not_establish": [
+        "permission to mutate Commonworld paths outside execution.grabowski_resources",
+        "scope for future locale changes that touch additional files"
       ]
     }
   },

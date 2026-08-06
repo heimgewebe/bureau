@@ -306,6 +306,88 @@ journalctl --user -u bureau-source-pr-bridge.service -n 50 --no-pager
 Neither half of the pipeline establishes readiness, dependency completeness, safe parallel scope or
 autonomous execution permission.
 
+## Now-lane refill: local authoritative decision
+
+`bureau.now_refill` keeps the canonical Now lane at or above a configured floor by promoting
+existing, structurally runnable tasks from Next. The decision is a revision-bound snapshot of the
+same live truth the claim path checks: canonical Registry head, `registry/queue.json` digest, the
+live Bureau StateStore (active runs, reservations), open GitHub pull-request bindings observed
+through `gh`, and the runtime-execution gate (Bureau checkout dirty, `HEAD` diverged from
+`origin/main`, or registry/receipt drift). Missing or contradictory evidence in any of these blocks
+the decision with no Registry effect; it never produces a partial or best-guess promotion.
+
+```bash
+python -m bureau.now_refill --root . --floor 2 --target 4 --max-promotions 4
+python -m bureau.now_refill --root . --apply --authority <explicit-operator-authority>
+```
+
+The default command is read-only preview. `--apply` requires an explicit, non-empty `--authority`
+string, re-validates the queue digest, Git head and runtime gate immediately before writing, and
+rolls the queue file back to its exact prior bytes if any post-write consistency check fails.
+
+**A GitHub-hosted runner cannot see any of this local truth** — it starts from an empty StateStore,
+has no visibility into locally running Bureau agents, Grabowski leases or the operator's checkout
+drift, and would either invent a promotion from stale or absent evidence or silently promote nothing
+while claiming success. Bureau therefore removed the hosted `refill-bureau-now-lane` GitHub Actions
+workflow entirely. No workflow in this repository computes or applies a Now-refill decision. The
+decision, the branch and the commit are produced only by the local, already-authenticated
+`bureau-source-pr-bridge --kind now-refill --publish` path below; a hosted runner may at most
+observe and merge the exact, unmodified, revision-bound branch this path pushes.
+
+`bureau-source-pr-bridge --publish` computes and publishes the proposal without touching the
+operator's own working tree or branch:
+
+```bash
+bureau-source-pr-bridge --kind now-refill --publish --auto-merge \
+  --root ~/repos/bureau --state-root ~/.local/state/bureau \
+  --authority bureau-source-pr-bridge-local
+```
+
+It fetches `origin/main`, adds a detached throwaway `git worktree` pinned to that exact commit,
+computes and applies the refill decision inside that worktree only, commits `registry/queue.json`
+there when (and only when) a promotion is authorised, force-with-lease pushes the commit to
+`automation/now-lane-refill`, and removes the worktree again. `~/repos/bureau` itself is never
+checked out to a different branch, staged or committed to. The subsequent pull-request reconcile
+step (already covered above) then creates or refreshes the task-bound PR and enables auto-merge
+using the operator's own authorised `gh` session; `main` is never written to directly.
+
+The proposal commit is created while the throwaway worktree remains detached; no local
+`automation/now-lane-refill` branch is checked out. Therefore a surviving historical branch ref
+cannot block a later cycle. If a cycle is killed before its own cleanup runs (out-of-band `SIGKILL`,
+host reboot), the orphaned worktree is still diagnosed and removed through
+`bureau --root ~/repos/bureau --json worktree-hygiene` and its reviewed cleanup plan (`## Worktree
+hygiene and reviewed cleanup` above), not by hand-editing `~/repos/bureau/.git`.
+
+The installed user timer already passes `--publish --root %h/repos/bureau --state-root
+%h/.local/state/bureau` on its `--kind now-refill` invocation, so enabling
+`bureau-source-pr-bridge.timer` (installation steps above) is sufficient — no separate refill timer
+exists. The timer's five-minute cadence is the only cadence at which the Now lane is observed and,
+if below floor, refilled; there is no faster or hosted path.
+
+Repeated cycles are bounded and idempotent. If the lane is already at or above the floor, or no
+structurally runnable Next task exists, or the runtime gate is blocked, the cycle publishes nothing
+and reconcile leaves any still-open PR unchanged. If a proposal is still open and unmerged, a repeat
+cycle recomputes the same deterministic promotion from `origin/main`, force-with-lease-updates the
+same branch and refreshes the existing PR body — it never opens a second, parallel PR. Once a
+promotion merges, the next cycle observes a satisfied Now lane and publishes nothing, so no
+double-promotion occurs.
+
+Blocking cases surface as `status: "blocked"` with a specific entry in `blockers`:
+
+- `no-structurally-runnable-next-task` — the lane is below floor but no Next task clears every
+  structural claim gate (dependencies, child gates, active runs, initiative limits, resource
+  conflicts, open-PR overlap, queue absence, non-ready state).
+- `runtime-execution-blocked` — the checkout is dirty, `HEAD` differs from `origin/main`, or the
+  registry/receipt state failed the drift check; no promotion is proposed or applied until the
+  runtime gate clears.
+
+**Rollback without direct `main` mutation.** An incorrect promotion is reverted the same way any
+other canonical change is reverted: open a normal pull request. Either `git revert` the merge commit
+on a fresh branch, or move the affected task(s) back from `now` to `next` through the reviewed
+`queue-reconcile` plan path (`## Queue freshness reconcile` above) and open a PR for the reviewed
+plan. Both paths go through the standard PR, CI and merge gate; neither pushes to `main` directly or
+edits `registry/queue.json` in place on the canonical branch.
+
 ## Source promotion preview
 
 Plan one Weltgewebe task candidate without materialising it:

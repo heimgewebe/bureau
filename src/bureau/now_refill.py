@@ -111,6 +111,7 @@ def build_now_refill_report(
     store: StateStore,
     *,
     policy: NowRefillPolicy | None = None,
+    _check_runtime: bool = True,
 ) -> dict[str, Any]:
     """Build a revision-bound, read-only refill decision.
 
@@ -118,9 +119,17 @@ def build_now_refill_report(
     queue placement. All structural claim blockers still exclude a candidate:
     dependencies, child gates, active runs, initiative limits, resource conflicts,
     open-PR overlap, queue absence and non-ready state.
+
+    The decision is bound to the same runtime-execution truth the claim path checks
+    at ``claim_intent`` time (Bureau checkout drift, dirty working tree, StateStore
+    availability). ``_check_runtime`` is a private knob used only by
+    :func:`apply_now_refill`'s own post-write consistency read, where the working
+    tree is expected to carry our own not-yet-committed change.
     """
     selected_policy = policy or NowRefillPolicy()
     dispatcher = Dispatcher(registry, store)
+    runtime_truth = dispatcher._runtime_execution_truth() if _check_runtime else None
+    runtime_blocked = bool(_check_runtime and (runtime_truth or {}).get("execution_blocked"))
     frontier = dispatcher.frontier(_all_declared_capabilities(registry))
     now_items = [item for item in frontier if _candidate(item, lane="now")]
     next_items = [item for item in frontier if _candidate(item, lane="next")]
@@ -135,10 +144,12 @@ def build_now_refill_report(
 
     triggered = len(now_items) < selected_policy.floor
     shortage = max(0, selected_policy.target - len(now_items)) if triggered else 0
-    promotion_limit = min(shortage, selected_policy.max_promotions)
+    promotion_limit = 0 if runtime_blocked else min(shortage, selected_policy.max_promotions)
     selected = next_items[:promotion_limit]
     blockers: list[str] = []
-    if triggered and not selected:
+    if runtime_blocked:
+        blockers.append("runtime-execution-blocked")
+    elif triggered and not selected:
         blockers.append("no-structurally-runnable-next-task")
 
     queue = legacy.read_json(_queue_path(registry))
@@ -178,6 +189,7 @@ def build_now_refill_report(
             "git_head": git_head,
             "queue_sha256_before": _queue_sha256(queue),
         },
+        "runtime": runtime_truth,
         "metrics": {
             "queued_now_count": len(queue.get("lanes", {}).get("now", [])),
             "queued_next_count": len(queue.get("lanes", {}).get("next", [])),
@@ -243,13 +255,20 @@ def apply_now_refill(
         raise legacy.StateError("queue changed after Now-refill report generation")
     if _git_head(registry.root) != report["registry"]["git_head"]:
         raise legacy.StateError("registry Git head changed after Now-refill report generation")
+    if Dispatcher(registry, store)._runtime_execution_truth().get("execution_blocked"):
+        raise legacy.StateError("runtime execution is blocked; refusing Now-refill apply")
     expected = _apply_promotions(queue_before, report["promotions"])
     legacy.atomic_write(queue_path, json.dumps(expected, ensure_ascii=False, indent=2) + "\n")
     try:
         if _git_head(registry.root) != report["registry"]["git_head"]:
             raise legacy.StateError("registry Git head changed during Now refill")
         registry_after = Registry.load(registry.root)
-        post = build_now_refill_report(registry_after, store, policy=policy)
+        # The working tree now carries our own uncommitted promotion; skip the
+        # runtime-execution (checkout-dirty) gate for this internal consistency
+        # read only. The gate already ran, unblocked, immediately before the write.
+        post = build_now_refill_report(
+            registry_after, store, policy=policy, _check_runtime=False
+        )
         expected_minimum = min(
             report["policy"]["floor"],
             report["metrics"]["structurally_runnable_now_count"]

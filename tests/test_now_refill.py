@@ -7,7 +7,12 @@ import pytest
 
 from bureau import legacy
 from bureau.core import StateStore
-from bureau.now_refill import NowRefillPolicy, apply_now_refill, build_now_refill_report
+from bureau.now_refill import (
+    Dispatcher,
+    NowRefillPolicy,
+    apply_now_refill,
+    build_now_refill_report,
+)
 from bureau.v2 import Registry
 
 
@@ -127,3 +132,63 @@ def test_manual_task_is_not_promoted(registry_factory, tmp_path):
         policy=NowRefillPolicy(floor=1, target=2, max_promotions=2),
     )
     assert [item["task_id"] for item in report["promotions"]] == ids[1:]
+
+
+def _blocked_runtime_truth(self) -> dict:
+    return {
+        "schema_version": 1,
+        "gate": "steering-runtime-preflight",
+        "status": "blocked",
+        "execution_blocked": True,
+        "drift_classification": "blocked",
+        "blocker_codes": ["checkout-dirty"],
+    }
+
+
+def test_runtime_execution_blocked_refuses_promotion(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(task_count=3)
+    _move_all_to_next(root, review_before_effect=True)
+    store = StateStore(tmp_path / "state" / "state.sqlite3", tmp_path / "state")
+    registry = Registry.load(root)
+    monkeypatch.setattr(Dispatcher, "_runtime_execution_truth", _blocked_runtime_truth)
+
+    policy = NowRefillPolicy(floor=2, target=3, max_promotions=3)
+    report = build_now_refill_report(registry, store, policy=policy)
+    assert report["status"] == "blocked"
+    assert report["blockers"] == ["runtime-execution-blocked"]
+    assert report["promotions"] == []
+    assert report["runtime"]["execution_blocked"] is True
+
+    before_text = (root / "registry/queue.json").read_text()
+    result = apply_now_refill(registry, store, authority="test-operator", policy=policy)
+    assert result["applied"] is False
+    assert result["changed"] is False
+    assert (root / "registry/queue.json").read_text() == before_text
+
+
+def test_runtime_drift_between_preview_and_apply_refuses_write(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(task_count=3)
+    _move_all_to_next(root, review_before_effect=True)
+    store = StateStore(tmp_path / "state" / "state.sqlite3", tmp_path / "state")
+    registry = Registry.load(root)
+    policy = NowRefillPolicy(floor=2, target=3, max_promotions=3)
+
+    calls = {"count": 0}
+
+    def flaky_runtime_truth(self) -> dict:
+        calls["count"] += 1
+        blocked = calls["count"] > 1
+        return {
+            "schema_version": 1,
+            "status": "blocked" if blocked else "clear",
+            "execution_blocked": blocked,
+        }
+
+    monkeypatch.setattr(Dispatcher, "_runtime_execution_truth", flaky_runtime_truth)
+
+    before_text = (root / "registry/queue.json").read_text()
+    with pytest.raises(legacy.StateError, match="runtime"):
+        apply_now_refill(registry, store, authority="test-operator", policy=policy)
+    assert (root / "registry/queue.json").read_text() == before_text

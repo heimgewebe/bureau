@@ -97,7 +97,7 @@
           "source_content_identity"
         ],
         "freshness": "unknown",
-        "kind": "live-production-readback",
+        "kind": "conversation",
         "locator": null,
         "observed_at": "2026-08-06T09:50:06.344254Z",
         "sha256": null
@@ -109,7 +109,7 @@
       "superseded_adapter_proposal_id": "60f2a82b5e35c114ef342e7190ca52afb4a83a8cebd88ea2fa5a1b222aada3ea"
     },
     "registered_at": "2026-08-06",
-    "source": "product_blocker_fixlane_live_production_readback",
+    "source": "productblocker_fixlane_live_production_readback",
     "source_merge_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
     "source_pr": "heimgewebe/weltgewebe#1698"
   },

@@ -37,26 +37,18 @@
       "id": "lifecycle-readback"
     }
   ],
-  "claims": [
-    {
-      "isolation": "worktree",
-      "mode": "write",
-      "resource": "repo.grabowski"
-    }
-  ],
+  "claims": [],
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T146"
   ],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Der Nutzer hat die autonome Umsetzung am 6. August 2026 ausdrücklich beauftragt. Nur der eigenständige Salvage-Clone und selbstgebundene Branch-/Operationsressourcen dürfen verändert werden; der historische Checkout bleibt unberührt.",
+      "note": "Der Nutzer hat den revisionsgebundenen T147-Abschluss ausdrücklich beauftragt. Die Produktlieferung ist bereits gemergt und belegt; dieser Lauf liest nur den dedizierten Salvage-State und verändert ausschließlich den Bureau-Lifecycle. Grabowski-Repository, Branches, Checkouts, Prozesse und fremde Leases bleiben unberührt.",
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "path:/home/alex/.local/state/grabowski/t139-salvage",
-      "repo:/home/alex/repos/grabowski:branch:salvage/t139-preserved-preimage-v1",
-      "repo:/home/alex/repos/grabowski:operation:t139-preserved-preimage-v1"
+      "path:/home/alex/.local/state/grabowski/t139-salvage"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -130,6 +122,21 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "resource_contract": {
+      "schema_version": 1,
+      "evidence_only_closeout": true,
+      "broad_repository_claim_removed": true,
+      "self_scoped_delivery_leases_removed": true,
+      "authority": "execution.grabowski_resources",
+      "reason": "Die T147-Produktlieferung ist bereits abgeschlossen. Für den ausstehenden revisionsgebundenen Lifecycle-Closeout genügt der dedizierte Salvage-State-Pfad; eine breite Repository-Schreiblease sowie historische Branch- und Operationsleases würden keine verbleibende Wirkung abbilden und unabhängige Grabowski-Arbeit unnötig blockieren.",
+      "does_not_establish": [
+        "permission to mutate the Grabowski repository",
+        "permission to modify or delete the salvage clone",
+        "permission to overlap exact paths",
+        "merge authority",
+        "deployment authority"
+      ]
     }
   },
   "priority": {
@@ -145,7 +152,7 @@
     "audit"
   ],
   "rollback": {
-    "strategy": "Bei Fehlern nur den neuen Salvage-Clone und die selbstgebundenen Branch-/Operationsressourcen nach digestgebundener Ergebnisarchivierung bereinigen oder freigeben. Den historischen Checkout unverändert lassen."
+    "strategy": "Bei Fehlern nur die selbstgebundene Lifecycle-Ausführung terminalisieren und die eigene Salvage-State-Pfadlease unverändert freigeben. Grabowski-Repository, historischer Checkout und Salvage-Clone bleiben unverändert."
   },
   "schema_version": 1,
   "state": "ready",

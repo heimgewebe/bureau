@@ -101,6 +101,84 @@
         "absence of path overlap before exact implementation inventory",
         "permission to mutate foreign worktrees or open pull requests"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "merged_revision_chain_fresh_github_closeout",
+      "verified_at": "2026-08-06T16:12:00Z",
+      "implementation": {
+        "repository": "heimgewebe/weltgewebe",
+        "pull_requests": [
+          {
+            "number": 1699,
+            "base_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+            "head_commit": "63c81bef1f840cf3dc71ff9898efba3e3f7af864",
+            "merge_commit": "7e0b7209f6c8cca13243faa25d9c506a6dd0aaf0",
+            "merged_at": "2026-08-06T14:39:37Z"
+          },
+          {
+            "number": 1701,
+            "base_commit": "7e0b7209f6c8cca13243faa25d9c506a6dd0aaf0",
+            "head_commit": "a7b090864acf951415aab520f2ac01bbc4f7089c",
+            "merge_commit": "a04cfec38b587679e08719c5f77b8192957bec5f",
+            "merged_at": "2026-08-06T15:05:08Z"
+          },
+          {
+            "number": 1700,
+            "base_commit": "a04cfec38b587679e08719c5f77b8192957bec5f",
+            "head_commit": "a92efabed2927c9a62aee6b20ec22a8c529f8abb",
+            "merge_commit": "ff8b28511a4b8c21cb491314efa5fe6a91b7f2ec",
+            "merged_at": "2026-08-06T15:31:07Z"
+          }
+        ],
+        "live_main_commit": "ff8b28511a4b8c21cb491314efa5fe6a91b7f2ec",
+        "task_merge_ancestor_of_live_main": true
+      },
+      "validation": {
+        "historical_findings_decided": "51/51",
+        "required_merge_gate": {
+          "1699": "success",
+          "1701": "success",
+          "1700": "success"
+        },
+        "ci": "success",
+        "web_e2e": "success",
+        "blocking_doc_validations": "success",
+        "python_tooling": "success",
+        "codeql": "success",
+        "review_evidence_gate": "success",
+        "historical_review_evaluator_failures": {
+          "count": 2,
+          "disposition": "superseded_by_final_exact_diff_gate"
+        },
+        "hosting_checks": {
+          "vercel": "success",
+          "cloudflare_pages": "success"
+        }
+      },
+      "acceptance_evidence": {
+        "phase-truth": "Historical report is explicitly bounded; controlled lifecycle projections were regenerated against reachable merge commits.",
+        "no-heuristic-pass": "Generated report denies an overall architecture, runtime, deployment or mutation-safety pass; follow-up narrows the Makefile-inventory statement.",
+        "dependency-decisions": "All 51 historical execution edges are individually classified with stable IDs, decisions and evidence.",
+        "source-priority": "Historical bytes are commit- and SHA-256-bound; unresolved current evidence fails closed.",
+        "drift-guard": "Check mode rejects source drift, duplicate findings and unresolved tracked edges; required merge gates passed."
+      },
+      "deployment": {
+        "product_runtime_deploy_required": false,
+        "reason": "Documentation, generator and regression-test metadata only; no product runtime or database artifact changed.",
+        "observed_hosting_checks": [
+          "Vercel success",
+          "Cloudflare Pages success"
+        ]
+      },
+      "does_not_establish": [
+        "semantic correctness of all runtime paths",
+        "complete coverage outside tracked grammar",
+        "future correctness",
+        "permission to mutate foreign resources"
+      ],
+      "task_sha256": "429013d43c490cfb8dc57461ab748c59302fce89728540ec0eb16c25e26caec8",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
     }
   },
   "priority": {
@@ -119,6 +197,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Widersprüchliche Systemwahrheiten und ungeklärte Abhängigkeiten bereinigen"
 }

@@ -152,6 +152,57 @@
         "safe_merge",
         "future_nonconflict"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "3c6e8a1c0e4173002d27dbe807c8b215ccfb326525be26007a39e0370de9f685",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "source": "merged_pr_green_ci_and_current_main_ancestry",
+      "verified_at": "2026-08-06T17:04:30Z",
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1209,
+        "base_commit": "1f3a0013b284ba776c30e51b3f4fccfb3c3deb37",
+        "head_commit": "c6cfbdaae391fb9a0f29b5be1d79a47c3db1b940",
+        "merge_commit": "f31cce6602d48bbf79732ba609ccbe7486b5894f",
+        "merged_at": "2026-07-30T06:21:18Z"
+      },
+      "validation": {
+        "registry_freshness": "success",
+        "validate_3_10": "success",
+        "validate_3_12": "success",
+        "codeql_actions": "success",
+        "codeql_python": "success",
+        "focused_tests_passed": 9,
+        "full_tests_passed": 922,
+        "ruff": "passed",
+        "yaml_parse": "passed",
+        "systemkatalog_boundary": "passed",
+        "registry_state_store": "valid",
+        "git_diff_check": "passed"
+      },
+      "live_readback": {
+        "current_bureau_main": "4c9b3eb28c23841c172656306e760fbef5dd66e7",
+        "implementation_merge_ancestor_of_current_main": true,
+        "commits_after_implementation": 743
+      },
+      "acceptance_evidence": {
+        "exact-prefix-before-latest": "PR #1209 filters exact check name and PR/head external-id prefix before selecting the newest matching run.",
+        "mixed-prefix-regression": "Functional jq regression tests cover a newer foreign-prefix run masking an older matching in-progress or failure run.",
+        "latest-exact-success-preserved": "Tests preserve intentional newest-success masking inside the same exact prefix.",
+        "fail-closed-boundary-preserved": "Missing or ambiguous CheckRun collections remain effectless and scope is not widened.",
+        "functional-not-string-only": "The exact jq expression used by the workflow is executed by functional tests.",
+        "no-new-authority": "Diff and PR contract add no review, merge, queue, claim, dispatch, deployment, branch-protection or cleanup authority."
+      },
+      "deployment": {
+        "runtime_deploy_required": false,
+        "reason": "The effect is a GitHub workflow selection rule versioned on Bureau main; no separate service runtime artifact exists."
+      },
+      "does_not_establish": [
+        "absence of future GitHub API changes",
+        "completion of unrelated control-plane tasks",
+        "permission to mutate foreign CheckRuns"
+      ]
     }
   },
   "priority": {
@@ -168,6 +219,6 @@
     "strategy": "Revertiere ausschließlich die revisionsgebundene Auswahl- und Teständerung. Bei unklarer CheckRun-Zuordnung bleibt die Recovery wirkungslos; bestehende CheckRuns, Branchschutz- und Queuewahrheit werden weder gelöscht noch umgedeutet."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Registry-Check-Recovery prefixgenau auswählen"
 }

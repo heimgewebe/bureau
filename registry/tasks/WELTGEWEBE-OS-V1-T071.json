@@ -1,0 +1,121 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jeder Wirkung werden PR #1702, sein finaler Head, Base, Diff-SHA-256, exakte Review-Evidenz, grüne Pflichtchecks, Mergecommit und der tatsächlich ausgelieferte Produktionscommit frisch gelesen. Ein offener PR, HTTP 200, Vercel READY oder eine Preview allein gilt nicht als Produktionsbeweis.",
+      "evidence_type": "object",
+      "id": "exact-release-precondition"
+    },
+    {
+      "assertion": "Die öffentliche Karte wird mit realen Produktionsfäden auf einem physischen iPad oder einem digestgebundenen WebKit-Touchprofil in der maßgeblichen Querformatklasse sowie auf Desktop geprüft. Mindestens drei Zoomstufen und die zuvor sichtbaren langen, stark gekrümmten und knotennahen Verbindungen werden mit Screenshots und reproduzierbaren Kartenkoordinaten belegt.",
+      "evidence_type": "object",
+      "id": "real-data-ipad-visual-proof"
+    },
+    {
+      "assertion": "Die final an MapLibre übergebene Geometrie besitzt keine sichtbaren Polygonknicke, Rückfaltungen oder Zielhaken. Bildschirmbezogene Sehnenabweichung und Richtungswechsel bleiben unter der festgelegten Wahrnehmungsschwelle; Shadow, Körper, Lichtkante, Mehrfarbigkeit und Bewegungs-Clipping verwenden deckungsgleiche Koordinaten.",
+      "evidence_type": "object",
+      "id": "roundness-contract"
+    },
+    {
+      "assertion": "Die vier fachlichen Fadenarten sind auf realen Beispielen eindeutig und konsistent: Knüpfung ist am dicksten, stabilsten und geradesten; Gespräch am dünnsten und am stärksten weich ausschwingend; Antrag deutlich und ruhig; Stimme mit Antrag verwandt, aber schlanker, straffer und anders rhythmisiert. `out` bleibt genau eine interne untypisierte Renderlane und keine fünfte Fadenart.",
+      "evidence_type": "object",
+      "id": "fadenart-semantics"
+    },
+    {
+      "assertion": "Browsermessung und Konsole zeigen keine dauerhaft laufenden Frame-Schleifen, keine auffällige Zoom- oder Pan-Regressionsrate, keine NaN-/Infinity-Geometrie und keine verschwundenen Deutschland-Kacheln. Das adaptive Maximum von 96 Punkten bleibt begrenzt und wird nicht pauschal für jeden Faden ausgeschöpft.",
+      "evidence_type": "object",
+      "id": "performance-and-basemap-regression"
+    },
+    {
+      "assertion": "Bei bestandenem Sicht- und Geometriebeweis wird T071 commit- und screenshotgebunden verifiziert. Bei einem materiellen Fehlschlag wird die genaue Ursache reproduziert, in einem sauberen isolierten Worktree minimal behoben, getestet, exakt reviewt und über einen eigenen grünen PR erneut bis zur Produktionsabnahme geführt; fremde Zustände werden nicht übernommen.",
+      "evidence_type": "object",
+      "id": "failure-repair-or-verified-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die direkte Umsetzung der natürlichen Fadenprofile beauftragt und verlangt dauerhaft, sinnvolle nicht unmittelbar abschließbare Restarbeit als Bureau-Folgetask zu registrieren. T071 darf erst nach exaktem Merge- und Deploymentreadback wirken; fremde Worktrees, Leases, Prozesse und Deployments bleiben unangetastet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edgeMotion.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/overlay/edges.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/edge-motion.spec.ts"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Nach dem Merge von Weltgewebe-PR #1702 den exakten Produktionsdeploy mit realen Kartendaten auf iPad- beziehungsweise WebKit-Touchdarstellung über mehrere Zoomstufen visuell und geometrisch abnehmen; verbleibende Polygonknicke, unzutreffende Fadenart-Unterschiede oder Leistungsregressionen revisionsgebunden belegen und nur bei Fehlschlag in einem isolierten Reparatur-PR beheben.",
+  "id": "WELTGEWEBE-OS-V1-T071",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "merge readiness before exact final checks",
+      "production correctness from preview or provider readiness",
+      "permission to overwrite foreign dirty worktrees, leases, processes or deployments",
+      "automatic repair when visual evidence is ambiguous"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a4a5f524aedab6ad0ba8400f",
+      "event_id": 2881,
+      "event_created_at": "2026-08-06T15:39:22.107603Z",
+      "request_sha256": "470d640fd683d0ed2cbc1a74a82ddd71d880c97cdf0dba52cb4faf3ac724dac7",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-diff",
+        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1702",
+        "observed_at": "2026-08-06T15:31:49Z",
+        "sha256": "a51463b5e9422a8e524b2fd397bb9c7418bb73cb09d5971edbbab5a8e951670e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-06",
+    "relation_to_t068": "T068 deckt den vorherigen fold-free Geometrievertrag mit höchstens 24 Punkten ab; T071 ist auf den späteren PR-#1702-Vertrag mit vier Fadenarten, interner out-Lane und adaptivem Maximum 96 sowie dessen reale iPad-Produktionsabnahme begrenzt.",
+    "source": "operator_followup_from_weltgewebe_pr_1702",
+    "source_diff_sha256": "a51463b5e9422a8e524b2fd397bb9c7418bb73cb09d5971edbbab5a8e951670e",
+    "source_head": "1d2e23258ba9ff25d0f79a1b37fb76bb34b4b16e",
+    "source_pr": "heimgewebe/weltgewebe#1702"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "maplibre",
+    "geometry",
+    "testing",
+    "browser",
+    "webkit",
+    "ipad",
+    "performance",
+    "vercel",
+    "deployment",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Eine ausschließlich zur fehlgeschlagenen Abnahme eingeführte Reparatur auf den letzten vollständig geprüften Fadenrendervertrag zurücknehmen; bei unklarer Produktionsidentität keine Geometrieänderung oder erneute Auslieferung behaupten und auf dem letzten kohärent belegten Release bleiben."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "PR #1702 auf realen Fäden und iPad visuell abnehmen"
+}

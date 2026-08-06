@@ -128,6 +128,49 @@
         "implementation completion",
         "semantic route promotion"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "265148d183e8352edb33c9fabd97da196ff82f37020be2b6cb8e210e42d3136f",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "source": "merged_pr_and_ci_closeout",
+      "verified_at": "2026-08-06T15:34:00Z",
+      "implementation": {
+        "repository": "heimgewebe/repoground",
+        "pull_request": 1157,
+        "base_commit": "cfd341b00c6a36125a014dbfa54cf78c8215da75",
+        "head_commit": "619abe18a29fb2785538b02f426920391cf5596d",
+        "merge_commit": "d3bc40afd435a1901adb7e94c9d61891c6c1b338",
+        "merged_at": "2026-08-06T13:28:03Z"
+      },
+      "validation": {
+        "focused_tests": {
+          "passed": 59,
+          "failed": 0
+        },
+        "pytest_full": "success",
+        "release_candidate": "success",
+        "browser_tests": "success",
+        "ruff": "success",
+        "codeql": "success",
+        "contracts_validation": "success",
+        "ai_context_guard": "success",
+        "git_diff_check": "passed"
+      },
+      "acceptance_evidence": {
+        "hybrid-retrieval-contract": "Profile-bound, default-inactive hybrid activation binds model, tokenizer, policy, index, bundle, repository commit and T013 evidence while retaining deterministic lexical fallback.",
+        "natural-language-goldset": "A multilingual goldset and paired Recall@k, MRR, error, latency, context-byte and tool-call evaluation shipped.",
+        "relevance-budgeting": "Context selection now combines relevance, change proximity, evidence authority and diversity within hard byte and token limits.",
+        "compact-projection": "Compact output remains the default and the full plan requires explicit verbose mode.",
+        "size-and-regression-gates": "Focused and full suites plus browser, release-candidate and policy checks passed on the reviewed head.",
+        "no-overclaim": "The implementation and proof explicitly deny truth, completeness, superiority and global default-route claims."
+      },
+      "does_not_establish": [
+        "global semantic-search activation",
+        "semantic retrieval superiority for arbitrary repositories",
+        "truth or completeness from similarity scores",
+        "future correctness after later repository changes"
+      ]
     }
   },
   "priority": {
@@ -142,6 +185,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Semantische Retrievalqualität, relevanzbasierte Kontextbudgets und kompakte Agentenantworten"
 }

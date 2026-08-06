@@ -171,6 +171,65 @@
           "change to guest authorization"
         ]
       }
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "0cc7137bc33ba822cf97621aea53fae3544f06492b68c21cd0ea5c5bad1af00b",
+      "plan_sha256": "48a3408c3d0931c35975552cdee284f220253982e6ba6f67f7eb205d0cf9ac29",
+      "source": "merged_pr_green_required_gate_current_production_readback",
+      "verified_at": "2026-08-06T17:04:30Z",
+      "implementation": {
+        "repository": "heimgewebe/weltgewebe",
+        "pull_request": 1648,
+        "base_commit": "9c8f8c5c12e942ead2246a2d114bc71e40204855",
+        "head_commit": "59de44c7c842aa8b3fb7f227b8b092243a2516ed",
+        "merge_commit": "322655285b520d04363e48487ae64d57264de573",
+        "merged_at": "2026-07-31T20:40:16Z",
+        "changed_files": 3
+      },
+      "validation": {
+        "required_merge_gate": "success",
+        "ci": "success",
+        "web_e2e": "success",
+        "web_runtime_performance": "success",
+        "build_and_lint": "success",
+        "codeql": "success",
+        "cloudflare_pages": "success",
+        "vercel": "success",
+        "targeted_browser_regressions": "passed",
+        "full_web_browser_suite": "231/231 passed",
+        "web_unit_tests": "279/279 passed",
+        "svelte_typescript": "0 errors",
+        "prettier": "passed",
+        "eslint_changed_files": "passed",
+        "git_diff_check": "passed",
+        "historical_review_evaluator_failure": {
+          "count": 1,
+          "disposition": "superseded_by_exact_review_evidence_gate_and_required_merge_gate"
+        }
+      },
+      "deployment": {
+        "current_main_commit": "ff8b28511a4b8c21cb491314efa5fe6a91b7f2ec",
+        "implementation_merge_ancestor_of_current_main": true,
+        "current_main_cloudflare_pages": "success",
+        "live_http_status": 200,
+        "live_build_header": "ff8b2851",
+        "live_last_modified": "2026-08-06T15:31:07Z",
+        "observed_at": "2026-08-06T17:03:10Z"
+      },
+      "acceptance_evidence": {
+        "delete-conflict-visibility": "Browser regression mocks DELETE 412, keeps node and marker, surfaces current server state and preserves understandable feedback.",
+        "cancel-and-role-transition": "Tests cover cancel restoration and safe fallback to guest overview when authorization is lost mid-edit.",
+        "guest-keyboard-contract": "Guest tabs overview, conversation and history are covered with arrows, Home and End while focus and selected panel remain consistent.",
+        "aria-controls-decision": "Every visible tab has a persistent tabpanel shell; only active content loads and hidden shells cannot be overridden by grid CSS.",
+        "mutation-error-lifecycle": "Conflict feedback intentionally survives ordinary tab changes and is cleared on cancel, selection change or permission loss.",
+        "exact-review-and-ci": "Exact head passed required merge gate, full web checks and a later exact review-evidence gate before merge."
+      },
+      "does_not_establish": [
+        "future correctness after later UI changes",
+        "absence of unrelated production regressions",
+        "permission to change shared node-edit authorization"
+      ]
     }
   },
   "priority": {
@@ -185,6 +244,6 @@
     "repository"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Knoten-Reiter Bearbeiten durch Randfalltests härten"
 }

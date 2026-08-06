@@ -1,0 +1,119 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das tatsächlich veröffentlichte Eingabeschema von grabowski_task_start weist chronik_operation als Enum mit exakt deploy, implement, merge, other, recovery, review und runtime_verify aus; Default bleibt other.",
+      "id": "published-selector-enum"
+    },
+    {
+      "assertion": "Schema und Runtime-Validierung beziehen die erlaubten Werte aus einer gemeinsamen revisionsgebundenen Autorität oder ein Regressionstest beweist ihre exakte Gleichheit, sodass späterer Drift fail-closed auffällt.",
+      "id": "single-selector-authority"
+    },
+    {
+      "assertion": "Der Fix ändert weder die erlaubte Wertemenge noch Chronik-, Outbox-, Resume- oder Task-Semantik; alle bisher gültigen Aufrufe bleiben rückwärtskompatibel.",
+      "id": "no-semantic-expansion"
+    },
+    {
+      "assertion": "Regressionstests prüfen alle sieben erlaubten Werte, mindestens einen ungültigen Wert und die tatsächlich veröffentlichte Connector-Schemaform. Ungültige Werte werden vor Dispatch abgewiesen.",
+      "id": "schema-runtime-regression"
+    },
+    {
+      "assertion": "Fokustests und vollständige Validierung sind grün; der PR ist auf dem geprüften Head gemergt, die erforderliche Runtime commitgenau deployt und der veröffentlichte Connector-Vertrag driftfrei.",
+      "id": "full-validation-and-deploy"
+    },
+    {
+      "assertion": "Der ursprüngliche Live-Fall wird nach Deploy wiederholt: audit ist bereits nach Schema ungültig, other startet weiterhin genau einen Task, und der Post-State zeigt keine Doppelwirkung.",
+      "id": "same-live-repro"
+    }
+  ],
+  "claims": [],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Erlaubt ist ausschließlich die rückwärtskompatible Veröffentlichung des bereits geltenden Selector-Enums samt Tests, generierten Verträgen und erforderlichem Runtime-Deploy. Die erlaubte Wertemenge und die Task-, Chronik-, Outbox- und Resume-Semantik dürfen nicht erweitert werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_tasks.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_connector_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_tasks.py",
+      "path:/home/alex/repos/grabowski/tests/test_connector_contract.py",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den veröffentlichten MCP-Eingabevertrag von grabowski_task_start für chronik_operation exakt an die bereits geltende Runtime-Validierung binden, damit ungültige Werte vor Dispatch abgewiesen werden und kein vermeidbarer Transport-Roundtrip entsteht.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T151",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "deduplication": {
+      "candidate_assessment": "promote",
+      "exact_duplicates": 0,
+      "open_task_id_collision_checked": true,
+      "similarity_suggestions": 0,
+      "t150_collision_avoided": "Bureau PR #1635 registers a different GRABOWSKI-OPERATOR-SURFACE-V1-T150 for PR #659."
+    },
+    "does_not_establish": [
+      "Änderung der erlaubten Chronik-Operationen",
+      "allgemeine Client-Authentifizierung",
+      "Beseitigung anderer Transport-Roundtrips",
+      "Merge- oder Deploy-Freigabe für fremde PRs"
+    ],
+    "independently_executable": true,
+    "live_reproduction": {
+      "corrected_request_succeeded": true,
+      "corrected_transport_receipt_sha256": "99bd2fe70e0756face45c2b0878f5f70f7fcefe1f756714c3fac3f51a936749d",
+      "corrected_value": "other",
+      "failed_transport_receipt_sha256": "3c8070626023094cabd732faba6b119ab1fa19f919fa00e2084448909f4b75ed",
+      "invalid_request_value": "audit",
+      "published_default": "other",
+      "published_parameter_type": "string",
+      "runtime_error": "chronik_operation must be one of ['deploy', 'implement', 'merge', 'other', 'recovery', 'review', 'runtime_verify']",
+      "tool": "grabowski_task_start"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-grabowski-task-start-selector-schema-v1",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-06T15:54:50.619744Z",
+      "event_id": 2886,
+      "request_sha256": "e626c493b739b756b2af71da4fe2982865cf66e3d4f591e428c3b6930e8ad7d9",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-runtime-reproduction",
+        "locator": "grabowski:live-repro:2026-08-06:chronik_operation",
+        "observed_at": "2026-08-06T15:24:00Z",
+        "sha256": null
+      }
+    },
+    "registered_at": "2026-08-06",
+    "source": "Bureau operator-intake candidate candidate-grabowski-task-start-selector-schema-v1 event 2886"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "testing",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei Schema-, Generator- oder Kompatibilitätsabweichung den PR nicht mergen, die gemeinsame Enum-Bindung zurücknehmen und den bisherigen Runtime-Validator unverändert belassen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Task-Start-Selectorvertrag im veröffentlichten Schema schließen"
+}

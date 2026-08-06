@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The evidence records the exact merged Commonworld commit, deployed release ID, production readback result, physical iPad model, iPadOS version, Safari version, viewport orientation and relevant motion or accessibility settings. Chromium tablet emulation is not accepted as physical-device proof.",
+      "evidence_type": "object",
+      "id": "exact-device-release-binding"
+    },
+    {
+      "assertion": "On the physical iPad, es, fr, pt-BR and ar each reach runtime-ready, show a non-empty MapLibre canvas, render and rotate the globe, respond to drag and zoom, preserve interaction after switching languages, emit no uncaught page error and display no missing-translation marker.",
+      "evidence_type": "object",
+      "id": "wave1-normal-path"
+    },
+    {
+      "assertion": "Using a controlled fault harness bound to the exact deployed release content, Safari is tested once with the Wave-1 locale-pack request rejected and once with it stalled beyond the configured timeout. For every Wave-1 locale, the page leaves the loading state within a bounded interval, keeps the document language, renders an interactive globe and falls back to usable English runtime labels without repeated warnings.",
+      "evidence_type": "object",
+      "id": "bounded-locale-pack-failure"
+    },
+    {
+      "assertion": "Arabic retains RTL natural-language controls and LTR structured URL or contact inputs. Each localized proposal page remains operable when the locale pack is unavailable, produces understandable English runtime validation messages and renders no missing marker.",
+      "evidence_type": "object",
+      "id": "arabic-and-proposal-fallback"
+    },
+    {
+      "assertion": "If no defect is found, the physical evidence is attached to the exact deployed release without changing product code. If a defect is found, the exact remediation head passes focused i18n tests, locale-release validation, deterministic build, browser smoke, diff-bound review, required GitHub checks, merge, Pages deployment and production readback before the task can be verified.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Physical verification is read-only until a reproducible defect is observed. Any correction must use an isolated Commonworld worktree, preserve the locale-release contract and pass exact-head CI and production readback.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Verify the Wave-1 locale-pack resilience fix from Commonworld PR #196 on a physical iPad in Safari against the exact deployed release, prove that Spanish, French, Brazilian Portuguese and Arabic retain an interactive globe on the normal path and under a controlled missing or stalled locale-pack request, and repair any physical-device-only regression without weakening localization or accessibility.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T042",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that Chromium tablet emulation equals physical Safari behavior",
+      "that a green PR check proves production deployment",
+      "permission to weaken translations or remove the locale pack",
+      "automatic merge, deployment or task verification authority"
+    ],
+    "observed_gap": "Automated Chromium and WebGL tests prove the normal and forced locale-pack failure paths, but the Juno physical iPad agent was unreachable during PR #196 closeout, so Safari and WKWebView behavior on the real device remains unproven.",
+    "source": "Follow-up from Commonworld PR #196 locale-pack resilience closeout on 2026-08-06",
+    "source_locator": "github:heimgewebe/commonworld#196@28f49b2af306974b4351a857904accee78e22f58",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a2bee094dd5161d1dc1a872b",
+      "event_id": 2900,
+      "event_created_at": "2026-08-06T17:18:03.007943Z",
+      "request_sha256": "121981c8f9b6bd9c08509edf0689610c3a9744d024fc93ee0d93a00e34cba1a0",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "implementation-closeout",
+        "locator": "github:heimgewebe/commonworld#196@28f49b2af306974b4351a857904accee78e22f58",
+        "observed_at": "2026-08-06T17:06:20Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 42
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser",
+    "webkit",
+    "ios",
+    "mobile",
+    "i18n"
+  ],
+  "rollback": {
+    "strategy": "If a corrective change regresses localization, Arabic directionality, proposal validation, globe interaction or deterministic release generation, revert the runtime change and generated release artifacts together while retaining the physical-device failure evidence and controlled fault harness for a revised fix."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Verify Wave-1 globe fallback on physical iPad Safari"
+}

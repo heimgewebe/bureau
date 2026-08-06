@@ -2,12 +2,12 @@
   "schema_version": 1,
   "id": "ALPHA-LAB-SHADOW-RESEARCH-V1-T002",
   "initiative": "ALPHA-LAB-SHADOW-RESEARCH-V1",
-  "title": "Freeze and falsify the Form-4 research protocol",
-  "state": "planned",
-  "goal": "Freeze signal, universe, entry, exit, holding period, sizing, costs, FX and exclusions before reading validation outcomes; evaluate out of sample against declared baselines and publish positive or negative results without post-hoc selection.",
+  "title": "Run one bounded Form-4 falsification kill test",
+  "state": "ready",
+  "goal": "Preregister and execute exactly one low-cost historical kill test of the simple public Form-4 open-market-purchase hypothesis. Stop with no-go when lawful free data, publication-time execution, realistic costs, independent-event counting or fixed baselines remove the effect. Do not build a general research platform, prospective collector, broker integration or model-search system.",
   "priority": {
-    "lane": "later",
-    "rank": 200
+    "lane": "now",
+    "rank": 2
   },
   "claims": [
     {
@@ -36,53 +36,68 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
-      "note": "User authorised autonomous repository implementation on 2026-08-06. Real orders, broker/wallet access, paid data purchases and capital deployment remain excluded."
+      "note": "Only the bounded research kill test is authorised. Paid data, scheduled prospective collection, broker/wallet access, orders, leverage and capital deployment remain excluded."
     }
   },
   "acceptance": [
     {
-      "id": "protocol-frozen-before-outcomes",
-      "assertion": "Signal, universe, entry latency, exit, holding period, sizing, fees, slippage, FX, missing-data policy and exclusions are hash-frozen before validation outcomes."
+      "id": "single-hypothesis-preregistered",
+      "assertion": "Before any return outcome is read, one canonical digest freezes the signal, eligible universe, data-availability period rule, next-trading-day-close entry, 20-trading-day close exit, issuer-level independence rule, 50-basis-point round-trip cost, doubled-cost stress and exclusions. No parameter search or best-result selection is permitted."
     },
     {
-      "id": "point-in-time-splits",
-      "assertion": "Development, validation and prospective-shadow periods are separated and future corrections cannot rewrite earlier decisions."
+      "id": "lawful-free-data-gate",
+      "assertion": "Only positively reviewed free sources may be ingested. Unknown terms, paid access, incomplete publication timestamps, missing delistings or fewer than 200 independent eligible events produce immediate no-go without further infrastructure work."
     },
     {
-      "id": "baseline-comparison",
-      "assertion": "Compare broad buy-and-hold, matched equal-weight, simple momentum, all eligible Form-4 purchases and matched random controls."
+      "id": "publication-time-primary-test",
+      "assertion": "The primary trade clock starts from the public filing acceptance time, never the insider transaction date. Entry is the next eligible trading-day close and the same rule is used for every event."
     },
     {
-      "id": "stress-tests",
-      "assertion": "Report doubled costs, one-trading-day delay, illiquidity exclusions, removal of ten best trades and regime/year slices."
+      "id": "independent-event-accounting",
+      "assertion": "At most one signal per issuer enters each 20-trading-day holding window. Overlapping issuer events are aggregated or rejected and are never counted as independent observations."
     },
     {
-      "id": "explicit-go-no-go",
-      "assertion": "Output is no-go, continue-shadow or independent-review request, never automatic real-capital authority."
+      "id": "fixed-baselines-and-stresses",
+      "assertion": "The untouched final time segment is compared with fixed eligible-universe, simple momentum and matched-random baselines. Results include doubled costs, removal of the ten best trades, year or regime slices and the declared liquidity exclusion without changing rules after outcomes."
+    },
+    {
+      "id": "automatic-kill-criteria",
+      "assertion": "The result is no-go when the effect fails after public-release timing, one-day-delay execution, realistic costs, top-ten removal, minimum sample size or baseline comparison, or when a few illiquid securities dominate it."
+    },
+    {
+      "id": "bounded-terminal-output",
+      "assertion": "Completion publishes the preregistration digest, reproducibility manifest, full positive or negative result and exactly one outcome: no-go or independent-review-request. Neither outcome authorises prospective infrastructure, paper trading or real capital."
     }
   ],
   "metadata": {
-    "phase": "out-of-sample-validation",
+    "phase": "bounded-falsification-kill-test",
+    "economic_role": "secondary_experiment_not_primary_revenue_path",
+    "scope_revision": {
+      "decided_at": "2026-08-06",
+      "reason": "The former multi-stage research and six-month shadow plan had excessive data, time and capital opportunity cost relative to direct paid work.",
+      "supersedes": "broad out-of-sample programme and automatic prospective-shadow progression"
+    },
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-4755d9858ff79fb34caa623f",
       "event_id": 2769,
       "source": {
         "kind": "conversation",
-        "locator": "git:/home/alex/repos/alpha-lab@b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
-        "observed_at": "2026-08-06T06:55:45Z",
+        "locator": "git:/home/alex/repos/alpha-lab@4e5a11426fde8733059a680704da69082999f84b",
+        "observed_at": "2026-08-06T11:15:44Z",
         "sha256": null
       },
       "does_not_establish": [
         "queue_truth",
-        "task_readiness",
+        "task_readiness_without_T001_verification",
         "claim_or_dispatch_authority"
       ]
     },
-    "source_commit": "b956f976fbdba3f09f5557de5ad43f176e6bfb1d",
+    "source_commit": "4e5a11426fde8733059a680704da69082999f84b",
     "does_not_establish": [
       "strategy_profitability",
-      "real_trading_permission",
+      "prospective_shadow_authority",
+      "paper_or_real_trading_permission",
       "automatic_progression_to_real_capital"
     ]
   }

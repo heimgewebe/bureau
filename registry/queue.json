@@ -72,7 +72,8 @@
     ],
     "now": [
       "WELTGEWEBE-OS-V1-T067",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T147"
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T147",
+      "ALPHA-LAB-SHADOW-RESEARCH-V1-T001"
     ]
   },
   "queue_policy": "skip-blocked",

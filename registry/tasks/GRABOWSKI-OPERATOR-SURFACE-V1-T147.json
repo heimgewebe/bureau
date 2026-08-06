@@ -1,0 +1,153 @@
+{
+  "acceptance": [
+    {
+      "assertion": "T146-Receipt, konservierter Preimage und lokaler Quellcommit dd99f44 werden vor Wirkung hash- und revisionsgebunden gelesen.",
+      "id": "source-preimage-bound"
+    },
+    {
+      "assertion": "Branch, HEAD und Dirty-State des historischen Checkouts werden vor und nach der Arbeit rückgelesen; dort findet keine Datei-, Git-, Prozess- oder tmux-Mutation statt.",
+      "id": "foreign-checkout-untouched"
+    },
+    {
+      "assertion": "Die Arbeit erfolgt in einem eigenständigen Clone aus dem jeweils aktuellen origin/main unter dem dedizierten Salvage-State-Root mit eigenen Git-Metadaten.",
+      "id": "standalone-clone-isolation"
+    },
+    {
+      "assertion": "Jede gesicherte Änderung wird als angewendet, bereits upstream, semantisch ersetzt oder konflikthaft klassifiziert; keine Änderung geht still verloren.",
+      "id": "exact-salvage-replay"
+    },
+    {
+      "assertion": "Der rekonstruierte Stand wird gegen aktuelles origin/main und zwischenzeitlich gemergte Transport- und Admission-Änderungen reconciliiert; Konflikte werden semantisch statt pauschal gelöst.",
+      "id": "current-main-reconciliation"
+    },
+    {
+      "assertion": "Gezielte Transport-, Gate-, Grip- und Operatorprüfungen sowie make validate bestehen revisionsgebunden.",
+      "id": "test-regression-proof"
+    },
+    {
+      "assertion": "Das Ergebnis endet in pr_opened oder pr_updated mit exaktem Head und Diff-Digest, no_change_proven oder blocked_with_durable_followup; lokaler wertvoller Diff ohne Push oder PR ist kein Abschluss.",
+      "id": "reviewed-delivery"
+    },
+    {
+      "assertion": "T139 wird nur verifiziert, wenn seine aktuelle vollständige Acceptance durch unabhängige Evidenz erfüllt ist; andernfalls bleibt T139 offen und jeder Rest wird exakt registriert.",
+      "id": "t139-closeout-gate"
+    },
+    {
+      "assertion": "Nach jeder Wirkung werden Clone, Branch, Remote, PR, CI, Tests, T139/T147-Status, Ressourcenleases und der historische Checkout frisch rückgelesen.",
+      "id": "lifecycle-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T146"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Umsetzung am 6. August 2026 ausdrücklich beauftragt. Nur der eigenständige Salvage-Clone und selbstgebundene Branch-/Operationsressourcen dürfen verändert werden; der historische Checkout bleibt unberührt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/.local/state/grabowski/t139-salvage",
+      "repo:/home/alex/repos/grabowski:branch:salvage/t139-preserved-preimage-v1",
+      "repo:/home/alex/repos/grabowski:operation:t139-preserved-preimage-v1"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den als Commit dd99f44b1f6e2c37bc3c9c1912c2abb270bf361d gesicherten T139-Arbeitsstand in einem vollständig getrennten Clone auf aktuellem origin/main rekonstruieren, semantisch reconciliieren und ohne Wirkung auf den historischen Checkout bis zu einem revisionsgebundenen Pull Request, einem vollständigen No-Change-Nachweis oder einem präzisen durable Follow-up führen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T147",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "authority to mutate or delete the historical checkout",
+      "automatic satisfaction of T139 acceptance",
+      "automatic merge or deployment authority",
+      "permission to discard preserved differences"
+    ],
+    "live_salvage": {
+      "base_commit": "8e95b24a0253b22ed4947fe66696e71c4a3f61ee",
+      "current_salvage_head": "8be8f72cfdd773a63aa02de2c079e640dd777135",
+      "focused_validation": "642 passed, 269 subtests passed",
+      "historical_checkout": "/home/alex/repos/grabowski",
+      "historical_commit": "dd99f44b1f6e2c37bc3c9c1912c2abb270bf361d",
+      "standalone_clone": "/home/alex/.local/state/grabowski/t139-salvage/repo"
+    },
+    "parent_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T139",
+    "preserved_preimage": {
+      "archive_sha256": "ef45171f496a24c428ead81cc3f806bef3a9441059b5a94f11231da9bb873e2f",
+      "inventory_sha256": "08bc4dbfcd97d62d32065d902b0b8dc75dd76d4c9d76973978a7cb5f2e234745",
+      "manifest_sha256": "a2caccf14152f7a8f5767bac94a345aabdcc4c033702f9321c510d08aadda67c",
+      "patch_sha256": "3089b66f587874a9a80ceb722804a418396e88fdba9df0eb9da83395c983d24f",
+      "root": "/home/alex/.local/state/grabowski/t146-reconciliation/BUR-RUN-20260806T002522Z-1b1a5ac255"
+    },
+    "reconciliation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T146",
+    "registered_at": "2026-08-06",
+    "safety_boundary": {
+      "forbidden_effects": [
+        "process signal",
+        "tmux input",
+        "file mutation in historical checkout",
+        "reset",
+        "stash",
+        "clean",
+        "checkout switch in historical checkout",
+        "lease force"
+      ],
+      "old_checkout": "/home/alex/repos/grabowski",
+      "required_isolation": "fresh standalone clone from current remote origin/main under the dedicated t139-salvage state root"
+    },
+    "source": "Terminaler T146-Readback mit typed decision unresolved-blocked und nachfolgende Sicherung des historischen Arbeitsstands als lokaler Commit dd99f44b1f6e2c37bc3c9c1912c2abb270bf361d.",
+    "source_receipt": {
+      "file_sha256": "fc3a1b2d733c6b4aaefd4436b431eed619e37824b89a03429098fa64c10079ae",
+      "path": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260806T020314Z-319933bcbc.json",
+      "receipt_sha256": "41090f00256e1b19306dfd88d11ea28fed91ff2477828e039950f9bea0abfd18"
+    },
+    "source_run_id": "BUR-RUN-20260806T020314Z-319933bcbc",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-73665d6f428e2501b93bc0b7",
+      "event_id": 2758,
+      "event_created_at": "2026-08-06T06:20:52.072174Z",
+      "request_sha256": "34d296320f94cd50fef81de5d7d56832522000b3d5b69989a7c7c94e6780e4fc",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "bureau-reconciliation-receipt",
+        "locator": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260806T020314Z-319933bcbc.json",
+        "observed_at": "2026-08-06T03:01:19.056950Z",
+        "sha256": "fc3a1b2d733c6b4aaefd4436b431eed619e37824b89a03429098fa64c10079ae"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "git",
+    "python",
+    "testing",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "Bei Fehlern nur den neuen Salvage-Clone und die selbstgebundenen Branch-/Operationsressourcen nach digestgebundener Ergebnisarchivierung bereinigen oder freigeben. Den historischen Checkout unverändert lassen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Gesicherten T139-Stand isoliert auf aktuellem Main fortführen"
+}

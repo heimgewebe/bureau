@@ -13,7 +13,7 @@ from bureau.now_refill import (
     apply_now_refill,
     build_now_refill_report,
 )
-from bureau.v2 import Registry
+from bureau.v2 import Registry, _receipt_drift
 
 
 def _task_ids(root: Path) -> list[str]:
@@ -164,6 +164,52 @@ def test_runtime_execution_blocked_refuses_promotion(registry_factory, tmp_path,
     assert result["applied"] is False
     assert result["changed"] is False
     assert (root / "registry/queue.json").read_text() == before_text
+
+
+@pytest.mark.parametrize("terminal_state", ["cancelled", "superseded"])
+def test_registry_terminal_state_supersedes_historical_verified_receipt(
+    registry_factory, terminal_state
+):
+    root = registry_factory(task_count=1)
+    task_id = _task_ids(root)[0]
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"] = {"now": [], "next": [], "later": []}
+    queue_path.write_text(json.dumps(queue))
+    task_path = root / f"registry/tasks/{task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["state"] = terminal_state
+    task_path.write_text(json.dumps(task))
+    registry = Registry.load(root)
+    state = {
+        "available": True,
+        "integrity": "ok",
+        "foreign_key_errors": [],
+        "rows": {
+            "task_status": [
+                {
+                    "task_id": task_id,
+                    "state": "verified",
+                    "task_sha256": "a" * 64,
+                    "plan_sha256": "b" * 64,
+                    "receipt_sha256": "c" * 64,
+                }
+            ],
+            "runs": [],
+            "receipts": [],
+        },
+    }
+    findings: list[dict] = []
+    report = _receipt_drift(registry, state, findings)
+    assert report["stale_tasks"] == []
+    assert [item["task_id"] for item in report["terminal_receipt_tasks"]] == [
+        task_id
+    ]
+    assert not any(item["severity"] == "blocker" for item in findings)
+    assert any(
+        item["code"] == "receipt-drift-superseded-by-registry-terminal-state"
+        for item in findings
+    )
 
 
 def test_runtime_drift_between_preview_and_apply_refuses_write(

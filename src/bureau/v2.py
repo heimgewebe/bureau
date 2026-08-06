@@ -6236,6 +6236,7 @@ def _receipt_drift(
 
     task_status_rows = state["rows"]["task_status"]
     stale_tasks: list[dict[str, Any]] = []
+    terminal_receipt_tasks: list[dict[str, Any]] = []
     superseded_receipt_tasks: list[dict[str, Any]] = []
     unknown_status_rows: list[str] = []
     for row in task_status_rows:
@@ -6250,33 +6251,32 @@ def _receipt_drift(
             row.get("task_sha256") != task.sha256 or row.get("plan_sha256") != current_plan
         ):
             verification = task.raw.get("metadata", {}).get("verification", {})
-            if (
+            drift = {
+                "task_id": task_id,
+                "stored_task_sha256": row.get("task_sha256"),
+                "current_task_sha256": task.sha256,
+                "stored_plan_sha256": row.get("plan_sha256"),
+                "current_plan_sha256": current_plan,
+                "receipt_sha256": row.get("receipt_sha256"),
+            }
+            if task.state in {"cancelled", "superseded"}:
+                terminal_receipt_tasks.append(
+                    {
+                        **drift,
+                        "reason": "registry-terminal-state",
+                        "terminal_state": task.state,
+                    }
+                )
+            elif (
                 task.state == "verified"
                 and verification.get("task_sha256") == task.sha256
                 and verification.get("plan_sha256") == current_plan
             ):
                 superseded_receipt_tasks.append(
-                    {
-                        "task_id": task_id,
-                        "stored_task_sha256": row.get("task_sha256"),
-                        "current_task_sha256": task.sha256,
-                        "stored_plan_sha256": row.get("plan_sha256"),
-                        "current_plan_sha256": current_plan,
-                        "receipt_sha256": row.get("receipt_sha256"),
-                        "reason": "embedded-verification-current",
-                    }
+                    {**drift, "reason": "embedded-verification-current"}
                 )
             else:
-                stale_tasks.append(
-                    {
-                        "task_id": task_id,
-                        "stored_task_sha256": row.get("task_sha256"),
-                        "current_task_sha256": task.sha256,
-                        "stored_plan_sha256": row.get("plan_sha256"),
-                        "current_plan_sha256": current_plan,
-                        "receipt_sha256": row.get("receipt_sha256"),
-                    }
-                )
+                stale_tasks.append(drift)
     active_run_drift: list[dict[str, Any]] = []
     for row in state["rows"]["runs"]:
         if row.get("state") not in legacy.ACTIVE_STATES:
@@ -6309,7 +6309,22 @@ def _receipt_drift(
                 "task_ids": [item["task_id"] for item in stale_tasks],
             }
         )
-    elif superseded_receipt_tasks:
+    if terminal_receipt_tasks:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "receipt-drift-superseded-by-registry-terminal-state",
+                "message": (
+                    "Historical verified task_status receipts no longer match current "
+                    "task or plan revisions, but the canonical Registry now declares "
+                    "each affected task cancelled or superseded. Registry terminal truth "
+                    "already wins in the runtime overlay, so the historical receipts do "
+                    "not block execution."
+                ),
+                "task_ids": [item["task_id"] for item in terminal_receipt_tasks],
+            }
+        )
+    if superseded_receipt_tasks:
         findings.append(
             {
                 "severity": "info",
@@ -6323,7 +6338,7 @@ def _receipt_drift(
                 "task_ids": [item["task_id"] for item in superseded_receipt_tasks],
             }
         )
-    else:
+    if not stale_tasks and not terminal_receipt_tasks and not superseded_receipt_tasks:
         findings.append(
             {
                 "severity": "info",
@@ -6355,6 +6370,7 @@ def _receipt_drift(
     return {
         "available": True,
         "stale_tasks": stale_tasks,
+        "terminal_receipt_tasks": terminal_receipt_tasks,
         "superseded_receipt_tasks": superseded_receipt_tasks,
         "active_run_drift": active_run_drift,
         "unknown_task_status_rows": unknown_status_rows,

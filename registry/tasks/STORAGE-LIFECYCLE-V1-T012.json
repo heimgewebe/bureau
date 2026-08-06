@@ -63,6 +63,26 @@
       "permission to shorten archive grace or retention",
       "permission to delete either lifecycle identity"
     ],
+    "operator_intake": {
+      "candidate_id": "candidate-8a7dd330bb9d83d64056ea3e",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-05T20:27:05.229962Z",
+      "event_id": 2682,
+      "request_sha256": "8f56e82e538e22a62c146d4b871fe8ea3f8fa74296845e3d666df1e9143946cf",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "checkout-archive:20260805T200921Z-dae1957778f4",
+        "observed_at": "2026-08-05T22:14:05+02:00",
+        "sha256": "edd45f60fa361547e80b95991d42fac84c6d5d19dedbb764478279fe7487c831"
+      }
+    },
     "registered_at": "2026-08-05T22:16:30+02:00",
     "source": "chatgpt-operator-live-reconciliation",
     "source_observation": {
@@ -80,25 +100,95 @@
       "our_live_leases": 0,
       "repository": "/home/alex/repos/grabowski"
     },
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-8a7dd330bb9d83d64056ea3e",
-      "event_id": 2682,
-      "event_created_at": "2026-08-05T20:27:05.229962Z",
-      "request_sha256": "8f56e82e538e22a62c146d4b871fe8ea3f8fa74296845e3d666df1e9143946cf",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "conversation",
-        "locator": "checkout-archive:20260805T200921Z-dae1957778f4",
-        "observed_at": "2026-08-05T22:14:05+02:00",
-        "sha256": "edd45f60fa361547e80b95991d42fac84c6d5d19dedbb764478279fe7487c831"
+    "verification": {
+      "evidence_sha256": "193c22d904a77c1c4265cc59dd01ecc7a338db37ba1e719495dcdf1ed38a1328",
+      "plan_sha256": "abf1a6fcb3e04766eede2e4438bb31bb376416688176d945dec986d171a795b1",
+      "pr_completion": {
+        "evidence": {
+          "acceptance_ids": [
+            "path-reuse-guard",
+            "atomic-supersession",
+            "scope-preservation",
+            "concurrency-regressions",
+            "live-incident-reconciliation",
+            "full-validation"
+          ],
+          "base_sha": "7ed0e030974e03dbde13bebace3b1eca85acdb7a",
+          "deployment_attempts": [
+            {
+              "failure_phase": "operator-admission-drain",
+              "final_status": "failed-before-runtime-switch",
+              "finalization_receipt_sha256": "32b4f0c2de1bc9ed40007da54b0065528e57b792e8b06174290263fd37ee0fad",
+              "unit": "grabowski-job-37d8bc56a525"
+            },
+            {
+              "failure_phase": "operator-admission-drain",
+              "final_status": "failed-before-runtime-switch",
+              "finalization_receipt_sha256": "948125001447feab3d86b053ef47ebe4337545b41c7fe40a9f44dc91e4a90047",
+              "unit": "grabowski-job-807de3bdde3a"
+            }
+          ],
+          "does_not_establish": [
+            "completion of neighbouring Bureau or Grabowski tasks",
+            "future correctness after later runtime changes",
+            "permission to mutate or delete foreign checkouts, leases, processes, archives, or recovery refs"
+          ],
+          "evidence_sha256": "193c22d904a77c1c4265cc59dd01ecc7a338db37ba1e719495dcdf1ed38a1328",
+          "full_validation": {
+            "command": "make validate",
+            "final_status": "succeeded",
+            "lifecycle_receipt_sha256": "0d2a2ada47685b71a7684b203034f8d7e34d5461158b2346dd676e90e6710236",
+            "task_id": "1deaa93d4b214fb08aa79c71",
+            "terminalization_sha256": "8dc7a230487f370ea05f7e5de107870a65051098c49a337c77b87d80a5b3783f",
+            "tests_passed": 4913,
+            "tests_skipped": 13
+          },
+          "head_sha": "bbd9c5a2a06515adbd81e2e7fa6051381f2b7d2c",
+          "kind": "grabowski.checkout_identity_reuse_closeout_evidence",
+          "merge_commit": "c488e5e159717a5361125b08b707f20675ed19f7",
+          "merged_at": "2026-08-05T22:30:44Z",
+          "production_runtime": {
+            "commit_relation": {
+              "ahead_by": 3,
+              "behind_by": 0,
+              "merge_base": "c488e5e159717a5361125b08b707f20675ed19f7",
+              "status": "ahead"
+            },
+            "deployment_complete": true,
+            "deployment_integrity_valid": true,
+            "grabowski_checkout_identity_source_bound": true,
+            "release_id": "bf51434d72fb-srcset87a2e697cdb1-locke6664d600b6c-contract764de51a8f5f",
+            "repo_head": "bf51434d72fb4a0106661819e7d928d8f8294d82",
+            "serving_process_matches_manifest": true
+          },
+          "pull_request": 645,
+          "repository": "heimgewebe/grabowski",
+          "required_checks": {
+            "Analyze (actions)": "SUCCESS",
+            "Analyze (python)": "SUCCESS",
+            "Codex review settled": "SUCCESS",
+            "validate (3.10)": "SUCCESS",
+            "validate (3.12)": "SUCCESS"
+          },
+          "schema_version": 1,
+          "source": "github_pull_request_full_validation_and_deployed_descendant",
+          "source_ref": "github-pr:heimgewebe/grabowski#645@bbd9c5a2a06515adbd81e2e7fa6051381f2b7d2c:c488e5e159717a5361125b08b707f20675ed19f7",
+          "task_id": "STORAGE-LIFECYCLE-V1-T012"
+        },
+        "kind": "bureau.pr_completion_receipt",
+        "outcome": "completed-by-merged-pr-full-validation-and-deployed-descendant",
+        "receipt_id": "pr-completion:heimgewebe/grabowski#645:bbd9c5a2a06515adbd81e2e7fa6051381f2b7d2c",
+        "receipt_sha256": "705be435b038ccaebbe05b9a2c14ea2ba01b2f72f2090f3b2f8cda1fdd9b3ac9",
+        "schema_version": 2,
+        "task_id": "STORAGE-LIFECYCLE-V1-T012"
       },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      "receipt_id": "pr-completion:heimgewebe/grabowski#645:bbd9c5a2a06515adbd81e2e7fa6051381f2b7d2c",
+      "receipt_sha256": "705be435b038ccaebbe05b9a2c14ea2ba01b2f72f2090f3b2f8cda1fdd9b3ac9",
+      "schema_version": 1,
+      "source": "github_pull_request_full_validation_and_deployed_descendant",
+      "source_ref": "github-pr:heimgewebe/grabowski#645@bbd9c5a2a06515adbd81e2e7fa6051381f2b7d2c:c488e5e159717a5361125b08b707f20675ed19f7",
+      "task_sha256": "15b09d4ecccaaa7692c922ebe74f2136282d93f8f148523b927dd170fa7feb34",
+      "verified_at": "2026-08-06T03:03:50Z"
     }
   },
   "priority": {
@@ -115,7 +205,7 @@
     "filesystem-forensics"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "stop": {
     "conditions": [
       "der Zielcheckout besitzt aktive fremde Leases, Prozesse oder Tasks",

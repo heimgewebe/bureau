@@ -59,7 +59,6 @@
     ],
     "next": [
       "WELTGEWEBE-OS-V1-T051",
-      "WELTGEWEBE-OS-V1-T054",
       "WELTGEWEBE-OS-V1-T055",
       "WELTGEWEBE-OS-V1-T057",
       "HEIMGEWEBE-RESILIENZ-V1-T018",
@@ -73,7 +72,8 @@
     "now": [
       "ALPHA-LAB-SHADOW-RESEARCH-V1-T001",
       "AUDIO-CONTROL-PLANE-V1-T002",
-      "BUREAU-CONTROL-PLANE-V3-T001"
+      "BUREAU-CONTROL-PLANE-V3-T001",
+      "WELTGEWEBE-OS-V1-T054"
     ]
   },
   "queue_policy": "skip-blocked",

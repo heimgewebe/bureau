@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Übergangsjournal und Replay-Projektion vervollständigen",
   "goal": "Die bestehende events-Tabelle und StateStore-Transaktionen zu einem begrenzten append-only Übergangsvertrag vervollständigen. Fachliche Task-, Initiativen-, Claim-, Run- und Acceptance-Übergänge müssen Ereignis und aktuelle Projektion atomar binden und deterministisch replaybar sein.",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 50
@@ -74,6 +74,26 @@
     "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
     "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
     "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
+    "activation_gate": {
+      "schema_version": 1,
+      "prepared_at": "2026-08-06T18:39:30Z",
+      "dependency_task": "BUREAU-CONTROL-PLANE-V3-T001",
+      "dependency_state": "verified",
+      "dependency_run_id": "BUR-RUN-20260806T140102Z-36993281f2",
+      "dependency_receipt_sha256": "246b87fc592681492ef5353c6b9bbbb917559ae39e9bb63856f36bececc1bf9b",
+      "dependency_pull_request": 1647,
+      "dependency_head": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
+      "required_live_inventory_sha256": "6367b498fbe4c2d9b39c7cadb68237e02a262e14b126e7e702e54775258c71e3",
+      "required_before_merge": "PR 1647 merged through the merge queue and the same inventory capability observed from the deployed Bureau runtime",
+      "queue_admission": "deferred",
+      "queue_blocker_pull_request": 1646,
+      "does_not_establish": [
+        "PR 1647 merge or deployment",
+        "T002 Queue admission",
+        "T002 claim or execution",
+        "permission to modify PR 1646 or another owner's Queue branch"
+      ]
+    },
     "does_not_establish": [
       "Merge- oder Deploymentabschluss",
       "Freigabe fremder Ressourcen",

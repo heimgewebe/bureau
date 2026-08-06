@@ -2,7 +2,7 @@
 
 ## Zweck
 
-`python -m bureau.authority_inventory` erzeugt eine begrenzte, maschinenlesbare und strikt read-only Sicht auf die heutigen Bureau-Autoritäten und Consumer.
+`bureau authority-inventory` erzeugt eine begrenzte, maschinenlesbare und strikt read-only Sicht auf die heutigen Bureau-Autoritäten und Consumer.
 
 Der Inventarlauf verbindet vier Belegklassen:
 
@@ -14,11 +14,14 @@ Der Inventarlauf verbindet vier Belegklassen:
 ## Aufruf
 
 ```bash
-python -m bureau.authority_inventory \
+bureau \
   --root /pfad/zum/bureau-release \
   --state-root ~/.local/state/bureau \
-  --json
+  --json \
+  authority-inventory
 ```
+
+Der direkte Modulaufruf `python -m bureau.authority_inventory` bleibt für hermetische Tests und eingebettete Nutzung verfügbar; die kanonische Operatoroberfläche ist die Haupt-CLI.
 
 Für hermetische Tests oder Hosts ohne systemd-Userbus kann der Live-Readback mit `--skip-systemd` abgeschaltet werden. Das wird im Ergebnis sichtbar; fehlende Live-Evidence wird nicht als Gesundheit interpretiert.
 

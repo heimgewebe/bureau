@@ -158,6 +158,8 @@ def parser() -> argparse.ArgumentParser:
     sub = result.add_subparsers(dest="command", required=True)
     sub.add_parser("check")
     sub.add_parser("runtime-identity")
+    authority_inventory_parser = sub.add_parser("authority-inventory")
+    authority_inventory_parser.add_argument("--skip-systemd", action="store_true")
     cycle_run = sub.add_parser("cycle-run")
     cycle_run.add_argument(
         "stage", choices=("discovery", "curator", "operator", "verifier", "closure")
@@ -545,6 +547,7 @@ def _state_root_path(args: argparse.Namespace) -> Path:
 
 _READ_ONLY_COMMANDS = frozenset(
     {
+        "authority-inventory",
         "check",
         "conflicts",
         "cycle-deployment",
@@ -687,6 +690,16 @@ def main(argv: list[str] | None = None) -> int:
                 args.json,
             )
             return 2
+        if args.command == "authority-inventory":
+            from .authority_inventory import authority_inventory
+
+            value = authority_inventory(
+                root,
+                state_path=_state_path(args),
+                probe_systemd=not args.skip_systemd,
+            )
+            emit(value, args.json)
+            return 0 if value["complete"] else 2
         if args.command == "source-pr-bridge":
             module_value = _CLI_RUNTIME_IDENTITY.get("module")
             manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")

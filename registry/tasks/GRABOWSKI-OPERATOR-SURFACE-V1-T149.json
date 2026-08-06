@@ -25,13 +25,7 @@
       "id": "zero-additional-cost"
     }
   ],
-  "claims": [
-    {
-      "isolation": "worktree",
-      "mode": "write",
-      "resource": "repo.grabowski"
-    }
-  ],
+  "claims": [],
   "depends_on": [],
   "execution": {
     "approval": {
@@ -101,6 +95,23 @@
         "queue membership",
         "claimability",
         "dispatch authority"
+      ]
+    },
+    "resource_contract": {
+      "schema_version": 1,
+      "authority": "execution.grabowski_resources",
+      "broad_repository_claim_removed": true,
+      "exact_resources": [
+        "path:/home/alex/repos/grabowski/src/grabowski_bounty_catalog.py",
+        "path:/home/alex/repos/grabowski/tests/test_bounty_catalog.py",
+        "path:/home/alex/repos/grabowski/docs/authorized-bounty-catalog-v1.md"
+      ],
+      "reason": "The pilot changes only three declared files. A broad repository claim blocks unrelated Grabowski delivery without granting additional task authority.",
+      "does_not_establish": [
+        "permission to overlap exact paths",
+        "merge authority",
+        "deployment authority",
+        "permission to mutate generated context or other Grabowski files"
       ]
     }
   },

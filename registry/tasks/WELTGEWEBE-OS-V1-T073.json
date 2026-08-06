@@ -1,0 +1,143 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor Messung wird der tatsächlich ausgelieferte Fadenrendervertrag frisch gelesen. Wenn PR #1702 beziehungsweise sein Nachfolger noch nicht in Produktion ist, wird dessen exakter geprüfter Head als separate Baseline gekennzeichnet und nicht mit Produktionswerten vermischt.",
+      "evidence_type": "object",
+      "id": "release-baseline-precondition",
+      "verifier": "Git and deployment readback"
+    },
+    {
+      "assertion": "Ein deterministischer Benchmark erzeugt mindestens drei dokumentierte Lastklassen mit etwa 100, 500 und 1000 gleichzeitig sichtbaren Fäden und umfasst kurze, lange, gerade, stark gekrümmte, mehrfarbige und animierte Beispiele aller vier fachlichen Fadenarten.",
+      "evidence_type": "object",
+      "id": "representative-load-matrix",
+      "verifier": "benchmark fixture and manifest"
+    },
+    {
+      "assertion": "Für jede Lastklasse werden Gesamtzahl, Median, Perzentile und Maximum der erzeugten Koordinaten gemessen. Kein Faden überschreitet das bestehende harte Maximum von 96 Punkten; typische Fäden schöpfen das Maximum nicht pauschal aus.",
+      "evidence_type": "object",
+      "id": "coordinate-budget",
+      "verifier": "geometry metrics report"
+    },
+    {
+      "assertion": "Pan, Zoom, Stilwechsel, Fadenaufbau und Fadenrückzug werden auf Desktop und iPad-nahem Touchprofil gemessen. Der Bericht enthält Frame-Zeiten, lange Tasks, CPU-Zeit und Heapentwicklung sowie klar begründete Warn- und Fehlergrenzen.",
+      "evidence_type": "object",
+      "id": "interaction-performance",
+      "verifier": "Playwright performance trace"
+    },
+    {
+      "assertion": "Nach abgeschlossenen Animationen bleiben keine unnötigen requestAnimationFrame-Schleifen, Timer, Worker-Neuberechnungen oder wiederholten Pfadaufbauten aktiv. Pfadzustände werden nicht pro Frame neu erzeugt.",
+      "evidence_type": "object",
+      "id": "no-runaway-work",
+      "verifier": "runtime instrumentation and browser assertions"
+    },
+    {
+      "assertion": "Jede Optimierung behält den bestehenden Rundheitsvertrag, runde Kappen und Übergänge, die Profile von Knüpfung, Gespräch, Antrag und Stimme, Mehrfarbigkeit sowie deckungsgleiche statische und animierte Pfade bei.",
+      "evidence_type": "object",
+      "id": "visual-quality-preserved",
+      "verifier": "existing and new visual tests"
+    },
+    {
+      "assertion": "Ein reproduzierbarer CI- oder lokaler Gate-Befehl vergleicht die gemessenen Kennzahlen mit einer versionierten Baseline. Schwellen berücksichtigen Messrauschen, verhindern aber materielle Regressionen bei Koordinatenzahl, Pfadaufbauten und Browserreaktionszeit.",
+      "evidence_type": "object",
+      "id": "regression-budget",
+      "verifier": "budget test and negative fixture"
+    },
+    {
+      "assertion": "Optimierungen vermeiden pauschal extrem hohe oder niedrige Samplezahlen. Caching, Memoization und adaptive Abtastung werden anhand gemessener Wirkung bewertet; Speicher-, CPU- und visuelle Trade-offs werden dokumentiert.",
+      "evidence_type": "object",
+      "id": "bounded-optimization",
+      "verifier": "before-after report"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head- und Diffbindung, zwei getrennte Reviewachsen, grüne Pflichtchecks und ein Browserbeleg auf dem finalen Head vor.",
+      "evidence_type": "object",
+      "id": "revision-bound-integration",
+      "verifier": "GitHub and browser readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Registrierung sinnvoller Folgearbeiten freigegeben. Die spätere Umsetzung muss revisionsgebunden bleiben und darf keine visuelle Qualitätsabsenkung als Performancefix tarnen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe",
+      "operation:weltgewebe:thread-density-performance-budget"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die Laufzeitkosten der geglätteten Weltgewebe-Fäden bei vielen gleichzeitig sichtbaren Verbindungen reproduzierbar messen und durch ein Qualitäts- und Leistungsbudget begrenzen, ohne die visuelle Rundheit, Fadenarten, Mehrfarbigkeit oder gemeinsame statisch-animierte Geometrie zu verschlechtern.",
+  "id": "WELTGEWEBE-OS-V1-T073",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current production performance at scale",
+      "permission to weaken visual acceptance",
+      "permission to add paid monitoring services"
+    ],
+    "execution_order_note": "Sachlich nach der realen Produktionsabnahme des geglätteten Fadenrendervertrags ausführen. Keine formale depends_on-Bindung, solange WELTGEWEBE-OS-V1-T071 noch nicht in der kanonischen Registry veröffentlicht ist.",
+    "observed_baseline": {
+      "curved_coordinate_range": "14-19 in controlled PR-head examples",
+      "gap": "no many-thread production-scale benchmark",
+      "hard_maximum": 96
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8065e49059e95ae196558c89",
+      "event_id": 2903,
+      "event_created_at": "2026-08-06T17:28:08.993095Z",
+      "request_sha256": "e95eb3e5b075f35b105a14c8b3485c10cf061d604bf5b43f32718f79af627a7b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "production-acceptance-finding",
+        "locator": "github:heimgewebe/weltgewebe#1702;grabowski-evidence:/home/alex/.local/state/grabowski/evidence/wg1702-visual-26f44bce-v2",
+        "observed_at": "2026-08-06T17:23:00Z",
+        "sha256": "45a9069126f9c03296810f7ce8fb2a07ba896c0f8f34fbdaef7299409c7f64e4"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-06",
+    "source": "production_acceptance_followup_from_weltgewebe_pr_1702",
+    "source_pr": "heimgewebe/weltgewebe#1702"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "maplibre",
+    "geometry",
+    "performance",
+    "browser",
+    "testing",
+    "webkit",
+    "ipad",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Performanceinstrumentierung oder Optimierungen auf den letzten vollständig getesteten Fadenrendervertrag zurücksetzen, falls Rundheit, Fachsemantik, Kartenstabilität oder Speicherverhalten regressieren. Messartefakte und Baseline erhalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Faden-Dichte und Renderbudget verbindlich messen"
+}

@@ -7,8 +7,8 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge
-ExecStart=%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge --kind now-refill --auto-merge --publish --root %h/repos/bureau --state-root %h/.local/state/bureau --authority bureau-source-pr-bridge-local
+ExecStart=%h/.local/bin/bureau source-pr-bridge
+ExecStart=%h/.local/bin/bureau source-pr-bridge --kind now-refill --auto-merge --publish --root %h/repos/bureau --state-root %h/.local/state/bureau --authority bureau-source-pr-bridge-local
 Environment=GH_HOST=github.com
 Environment=PYTHONUNBUFFERED=1
 NoNewPrivileges=true

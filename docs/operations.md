@@ -277,11 +277,10 @@ least-privilege design therefore keeps branch publication in GitHub Actions and 
 request creation to the local `bureau-source-pr-bridge`, which uses the already authorised user
 `gh` session without exporting its token to GitHub Actions.
 
-Install the bridge into an isolated environment and enable the supplied user timer:
+Install the supplied user units only after the immutable Bureau release and its stable
+`~/.local/bin/bureau` launcher have been activated through the reviewed deployment procedure:
 
 ```bash
-python3 -m venv ~/.local/share/bureau-source-pr-bridge/venv
-~/.local/share/bureau-source-pr-bridge/venv/bin/pip install .
 install -Dm644 ops/systemd/bureau-source-pr-bridge.service \
   ~/.config/systemd/user/bureau-source-pr-bridge.service
 install -Dm644 ops/systemd/bureau-source-pr-bridge.timer \
@@ -290,15 +289,18 @@ systemctl --user daemon-reload
 systemctl --user enable --now bureau-source-pr-bridge.timer
 ```
 
-The timer runs at minute 15 and 45, after the hosted source observation. A delayed hosted run is
-picked up by a later bridge run. The bridge is idempotent: it does nothing without an ahead source
-branch, creates a missing review pull request, and otherwise refreshes the existing pull request
-body.
+The timer must not point at a mutable checkout or a separately installed bridge virtual
+environment. Rollback restores the previously reviewed unit files and immutable Bureau release,
+then runs `systemctl --user daemon-reload` before the timer is started again.
+
+The timer runs every five minutes. A delayed hosted source observation is picked up by a later
+bridge run. The bridge is idempotent: it does nothing without an ahead source branch, creates a
+missing review pull request, and otherwise refreshes the existing pull request body.
 
 Manual checks:
 
 ```bash
-bureau-source-pr-bridge
+~/.local/bin/bureau source-pr-bridge
 systemctl --user status bureau-source-pr-bridge.timer
 journalctl --user -u bureau-source-pr-bridge.service -n 50 --no-pager
 ```
@@ -330,15 +332,16 @@ has no visibility into locally running Bureau agents, Grabowski leases or the op
 drift, and would either invent a promotion from stale or absent evidence or silently promote nothing
 while claiming success. Bureau therefore removed the hosted `refill-bureau-now-lane` GitHub Actions
 workflow entirely. No workflow in this repository computes or applies a Now-refill decision. The
-decision, the branch and the commit are produced only by the local, already-authenticated
-`bureau-source-pr-bridge --kind now-refill --publish` path below; a hosted runner may at most
-observe and merge the exact, unmodified, revision-bound branch this path pushes.
+decision, branch and commit are produced only by the local, already-authenticated, manifest-bound
+`~/.local/bin/bureau source-pr-bridge --kind now-refill --publish` path below. A hosted runner may
+at most observe and merge the exact, unmodified, revision-bound branch this path pushes.
 
-`bureau-source-pr-bridge --publish` computes and publishes the proposal without touching the
-operator's own working tree or branch:
+`~/.local/bin/bureau source-pr-bridge --publish` computes and publishes the proposal without
+touching the operator's own working tree or branch. The stable `bureau` launcher verifies the
+immutable release and canonical Registry snapshot before dispatching the bridge:
 
 ```bash
-bureau-source-pr-bridge --kind now-refill --publish --auto-merge \
+~/.local/bin/bureau source-pr-bridge --kind now-refill --publish --auto-merge \
   --root ~/repos/bureau --state-root ~/.local/state/bureau \
   --authority bureau-source-pr-bridge-local
 ```
@@ -358,10 +361,10 @@ host reboot), the orphaned worktree is still diagnosed and removed through
 `bureau --root ~/repos/bureau --json worktree-hygiene` and its reviewed cleanup plan (`## Worktree
 hygiene and reviewed cleanup` above), not by hand-editing `~/repos/bureau/.git`.
 
-The installed user timer already passes `--publish --root %h/repos/bureau --state-root
-%h/.local/state/bureau` on its `--kind now-refill` invocation, so enabling
-`bureau-source-pr-bridge.timer` (installation steps above) is sufficient — no separate refill timer
-exists. The timer's five-minute cadence is the only cadence at which the Now lane is observed and,
+The installed user timer invokes the same manifest-bound `~/.local/bin/bureau source-pr-bridge`
+entrypoint and passes `--publish --root %h/repos/bureau --state-root %h/.local/state/bureau` on its
+`--kind now-refill` invocation. Enabling `bureau-source-pr-bridge.timer` through the installation
+steps above is sufficient; no separate refill timer exists. The timer's five-minute cadence is the only cadence at which the Now lane is observed and,
 if below floor, refilled; there is no faster or hosted path.
 
 Repeated cycles are bounded and idempotent. If the lane is already at or above the floor, no

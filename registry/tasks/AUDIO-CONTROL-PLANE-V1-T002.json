@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T002",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audio-Architekturentscheidungen der Phase 2 schließen",
-  "state": "planned",
+  "state": "ready",
   "goal": "PipeWire/ALSA, Ratenpolitik, Quantums, Qobuz/Mopidy, Ardour, Pluginruntime und EasyEffects vor jeder mutierenden Implementierung objektiv entscheiden.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T001"
@@ -99,6 +99,19 @@
     "does_not_establish": [
       "Laufzeitfreigabe",
       "Bit-Perfect-Wiedergabe für ungemessene Titel"
-    ]
+    ],
+    "readiness_reconciliation": {
+      "schema_version": 1,
+      "reconciled_at": "2026-08-06T05:19:30+02:00",
+      "dependency": "AUDIO-CONTROL-PLANE-V1-T001",
+      "dependency_state": "verified",
+      "physical_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T032",
+      "reason": "T002 schreibt ausschließlich Architektur- und Vertragsartefakte. Die reale Hardwareabnahme wurde ohne Abschwächung nach T032 getrennt und ist keine Voraussetzung für die fail-closed ADR-Lieferung.",
+      "does_not_establish": [
+        "Laufzeitfreigabe",
+        "Abschluss von T032",
+        "physische Gerätebereitschaft"
+      ]
+    }
   }
 }

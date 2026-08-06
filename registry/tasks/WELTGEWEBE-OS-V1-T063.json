@@ -93,6 +93,77 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "evidence_sha256": "4bc0cab8e7ac1cf92660d86b05f7d3bdc79b494933304f912372b5c19bf79ddf",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "pr_completion": {
+        "evidence": {
+          "acceptance_ids": [
+            "fresh-main-reproduction",
+            "canonical-python-runtime",
+            "oci-provenance-contract",
+            "negative-environment-tests",
+            "full-validation-convergence",
+            "scope-and-release"
+          ],
+          "base_sha": "be6cb3b0fe463f2d3c5727acf318fb9118ec3d25",
+          "does_not_establish": [
+            "completion of neighbouring Weltgewebe tasks",
+            "future correctness after later main changes",
+            "permission to mutate foreign worktrees or host packages"
+          ],
+          "evidence_sha256": "4bc0cab8e7ac1cf92660d86b05f7d3bdc79b494933304f912372b5c19bf79ddf",
+          "head_sha": "7397a582d21bf20c5437e8a4ed94d0ff1141b725",
+          "kind": "weltgewebe.local_validation_truth_closeout_evidence",
+          "merge_commit": "f8aa0457a9564f8d8d1116213c1905c2b714dfb6",
+          "merged_at": "2026-08-06T00:23:38Z",
+          "post_merge_main_commit": "848d399d9513d2897fbd024e0ddc6f7ba165fdaf",
+          "post_merge_validation": {
+            "command": "make validate",
+            "cwd": "/home/alex/repos/weltgewebe",
+            "final_status": "succeeded",
+            "job_id": "47107c1ea9d8",
+            "payload_sha256": "e712d1420aebe06a07347a671f2b98016582f253f9e32aaf79b209ebeb784ed0",
+            "receipt_sha256": "187b4aedca7301c1fc084733746d83a268b12ce24cea40becd6716dff819bd06",
+            "returncode": 0,
+            "unit": "grabowski-job-47107c1ea9d8"
+          },
+          "production_live_contract": {
+            "conclusion": "success",
+            "exact_main_commit_live": "success",
+            "head_sha": "848d399d9513d2897fbd024e0ddc6f7ba165fdaf",
+            "run_id": 31062286782
+          },
+          "pull_request": 1689,
+          "repository": "heimgewebe/weltgewebe",
+          "required_checks": {
+            "Blocking doc validations": "SUCCESS",
+            "Python tooling checks": "SUCCESS",
+            "Required merge gate": "SUCCESS",
+            "Review evidence gate": "SUCCESS",
+            "Web E2E": "SUCCESS",
+            "Web runtime performance proof": "SUCCESS"
+          },
+          "schema_version": 1,
+          "source": "github_pull_request_and_post_merge_validation",
+          "source_ref": "github-pr:heimgewebe/weltgewebe#1689@7397a582d21bf20c5437e8a4ed94d0ff1141b725:f8aa0457a9564f8d8d1116213c1905c2b714dfb6",
+          "task_id": "WELTGEWEBE-OS-V1-T063"
+        },
+        "kind": "bureau.pr_completion_receipt",
+        "outcome": "completed-by-merged-pr-post-merge-validation-and-live-main",
+        "receipt_id": "pr-completion:heimgewebe/weltgewebe#1689:7397a582d21bf20c5437e8a4ed94d0ff1141b725",
+        "receipt_sha256": "38780473213015cf73b4df07b54d97b15149e6d1eae836ff69a56111bc3d94fc",
+        "schema_version": 2,
+        "task_id": "WELTGEWEBE-OS-V1-T063"
+      },
+      "receipt_id": "pr-completion:heimgewebe/weltgewebe#1689:7397a582d21bf20c5437e8a4ed94d0ff1141b725",
+      "receipt_sha256": "38780473213015cf73b4df07b54d97b15149e6d1eae836ff69a56111bc3d94fc",
+      "schema_version": 1,
+      "source": "github_pull_request_and_post_merge_validation",
+      "source_ref": "github-pr:heimgewebe/weltgewebe#1689@7397a582d21bf20c5437e8a4ed94d0ff1141b725:f8aa0457a9564f8d8d1116213c1905c2b714dfb6",
+      "task_sha256": "e73700db39ba92ffd2c42213494c23124e10dc22ff546502225d325408271f38",
+      "verified_at": "2026-08-06T01:37:12Z"
     }
   },
   "priority": {
@@ -118,6 +189,6 @@
     "task_profile": "repo_change"
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Lokale Validierungswahrheit von Weltgewebe reparieren"
 }

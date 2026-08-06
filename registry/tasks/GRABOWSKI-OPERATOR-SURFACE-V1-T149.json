@@ -113,6 +113,28 @@
         "deployment authority",
         "permission to mutate generated context or other Grabowski files"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "bureau_run_completion",
+      "source_ref": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260806T122409Z-a874011d8d.json",
+      "run_id": "BUR-RUN-20260806T122409Z-a874011d8d",
+      "receipt_id": "bureau-run:BUR-RUN-20260806T122409Z-a874011d8d",
+      "receipt_sha256": "fbc842a8d5be35b464f994a499fd8d734fa7917ea6defceed068e80cd8489ef8",
+      "task_sha256": "c12e03ece87d38f14b0df95b669881c6fc2ec8d668693293a43fdec3d4c17191",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "verified_at": "2026-08-06T12:25:46.683696Z",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 658,
+        "merge_commit": "02bc7f3acbc747a59c5c429c894a614e683ef4a6",
+        "runtime_release_id": "02bc7f3acbc7-srcsetcbaa83bd79f0-locke6664d600b6c-contract764de51a8f5f-attempt2"
+      },
+      "does_not_establish": [
+        "permission for active target-system tests",
+        "external submission or publication authority",
+        "future bounty eligibility or payment"
+      ]
     }
   },
   "priority": {
@@ -130,6 +152,6 @@
     "strategy": "Bei unklarem Scope, fehlender offizieller Quelle, Kosten- oder Vertragsabweichung den Eintrag deaktivieren, keine externe Wirkung auslösen und die lokale Evidenz revisionsgebunden bewahren."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Autorisierte OSS- und Agentenprogramme katalogisieren"
 }

@@ -56,10 +56,8 @@
   "initiative": "WELTGEWEBE-OS-V1",
   "metadata": {
     "does_not_establish": [
-      "marker creator or reason",
-      "permission to delete the marker",
-      "successful deployment of the merge commit",
-      "queue truth before publication"
+      "future production drift after the verified closeout",
+      "unrelated product behavior outside the exact live-contract scope"
     ],
     "evidence_receipts": {
       "candidate_record": "c7d34d9541f0675a63f24043ad2a9c837b95e482c7efe9358bc69c10c60ebac2",
@@ -80,7 +78,7 @@
       "owner": "root:root",
       "service_state": "inactive-dead"
     },
-    "observed_live_commit": "848d399d9513d2897fbd024e0ddc6f7ba165fdaf",
+    "observed_live_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
     "operator_intake": {
       "candidate_id": "candidate-47f15c170befd52022a078bf",
       "does_not_establish": [
@@ -111,7 +109,83 @@
     "registered_at": "2026-08-06",
     "source": "productblocker_fixlane_live_production_readback",
     "source_merge_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
-    "source_pr": "heimgewebe/weltgewebe#1698"
+    "source_pr": "heimgewebe/weltgewebe#1698",
+    "closeout": {
+      "schema_version": 1,
+      "status": "verified",
+      "verified_at": "2026-08-06T12:26:06Z",
+      "target_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+      "blockade_resolution": {
+        "classification": "temporary T069 recovery boundary",
+        "creator_identity": "not independently identified",
+        "incident_reason": "hold the canonical reconciler until the exact target deployment, public identities, receipts and non-overlap were verified",
+        "blocking_marker": "/run/weltgewebe-production-reconcile-block",
+        "marker_state_after_closeout": "absent",
+        "released_marker_archived": true,
+        "recovery_dropin_archived": true,
+        "archive_dir": "/var/lib/weltgewebe-main-reconciler/recovery-blocks/t069-closeout-20260806T122605Z",
+        "cleanup_task_id": "b2a14a87072342e485601b67",
+        "cleanup_output_directory_sha256": "316d07b7969e9de41b130da92043d1e926c90963716fb4475acaea636d521133",
+        "cleanup_stdout_sha256": "c57e768218e61cefa9cf3c2091db509a4bfeaaac794093e3e5728bed44a13ce9"
+      },
+      "deployment": {
+        "result": "verified",
+        "completed_at": "2026-08-06T12:13:58Z",
+        "frontend_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+        "api_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+        "deploy_invocation_id": "4fcf4b207a13a7b190c790e9c43e94ee92429c26e35ad6531f989a3dec8093ef",
+        "service_result": "success",
+        "service_state": "inactive-dead",
+        "timer_state": "active-waiting"
+      },
+      "independent_live_proof": {
+        "github_workflow": "Production live contract",
+        "run_id": 31088921592,
+        "attempt": 2,
+        "conclusion": "success",
+        "head_sha": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+        "exact_main_job_id": 92614432598,
+        "completed_at": "2026-08-06T12:21:42Z",
+        "readback_task_id": "99f2b600a6c34d73be22d30e",
+        "readback_output_directory_sha256": "019850316d3e331cc50c248ff8be739557a2f83ef065709db8e04fb940051712",
+        "readback_stdout_sha256": "49e68f1191750dbea2faabcc59d0eba172d5a23aaf84c7d5e4693590493398f2"
+      },
+      "rollback": {
+        "previous_release_preserved": true,
+        "recovery_artifacts_hash_verified_and_archived": true
+      },
+      "does_not_establish": [
+        "future drift after a later deployment",
+        "artifact endpoint provenance attestation beyond the deployment receipt and terminal live-contract workflow",
+        "unrelated frontend or API functionality"
+      ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "production_reconciler_closeout",
+      "source_ref": "wg-prod-1@9360ffd65bd2d809afa2691fab46b7db590a9669",
+      "verified_at": "2026-08-06T12:26:06Z",
+      "outcome": "production_blockade_resolved_and_exact_release_verified",
+      "task_sha256": "66992d182f6be131fa92ab5a661d0ebfe54682c25cc68afcb2d1d0028dc5af05",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "receipt_sha256": "c57e768218e61cefa9cf3c2091db509a4bfeaaac794093e3e5728bed44a13ce9",
+      "evidence_bundle_sha256": "316d07b7969e9de41b130da92043d1e926c90963716fb4475acaea636d521133",
+      "evidence": {
+        "target_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+        "deployment_result": "verified",
+        "frontend_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+        "api_commit": "9360ffd65bd2d809afa2691fab46b7db590a9669",
+        "live_contract_run": 31088921592,
+        "live_contract_attempt": 2,
+        "live_contract_conclusion": "success",
+        "cleanup_task_id": "b2a14a87072342e485601b67",
+        "archive_dir": "/var/lib/weltgewebe-main-reconciler/recovery-blocks/t069-closeout-20260806T122605Z"
+      },
+      "does_not_establish": [
+        "future drift after a later deployment",
+        "unrelated product functionality"
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -130,6 +204,6 @@
     "strategy": "Bei unklarer Ursache oder fehlendem Livebeleg die Sperre erhalten beziehungsweise kontrolliert wieder setzen, keinen parallelen Reconciler starten und beim letzten kohärent belegten Release bleiben."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Unbekannte Produktionsblockade des Weltgewebe-Reconcilers sicher auflösen"
 }

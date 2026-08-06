@@ -2,9 +2,9 @@
   "schema_version": 1,
   "id": "AUDIO-CONTROL-PLANE-V1-T001",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
-  "title": "Audio-Systemwahrheit und sichere Referenzmessungen schließen",
-  "state": "blocked",
-  "goal": "Die Phasen 0 und 1 als gemeinsame read-only Wahrheits- und Messgrundlage einschließlich sicherer Hör-, Aufnahme- und Gerätebelege abschließen.",
+  "title": "Audio-Systemwahrheit und sichere Messverträge repositoryseitig schließen",
+  "state": "verified",
+  "goal": "Die read-only Wahrheits-, Beobachtungs-, Labor-, Drift- und Berichtskomponenten der Phasen 0 und 1 repositoryseitig liefern und offline prüfen; reale Geräte-, Pegel-, Hör-, Latenz- und Verlustbelege werden getrennt in T032 abgenommen.",
   "depends_on": [],
   "priority": {
     "lane": "later",
@@ -38,33 +38,33 @@
   ],
   "acceptance": [
     {
-      "id": "single-truth-model",
-      "assertion": "Doctor, physische Fakten, Profilkatalog und Labor-Gates bilden eine einzige hashgebundene Wahrheitskette; unbekannte Zustände bleiben ausdrücklich unbekannt.",
+      "id": "single-truth-model-contract",
+      "assertion": "Doctor, physische Fakten, Profilkatalog und Labor-Gates sind als eine hashgebundene Wahrheitskette implementiert; unbekannte Zustände bleiben ausdrücklich unbekannt.",
       "evidence_type": "object"
     },
     {
       "id": "host-read-boundary",
-      "assertion": "Livebeobachtung erfolgt unter einem expliziten read-Claim auf host.heim-pc und verändert weder Routing, Dienste, Geräte noch Aufnahmezustand.",
+      "assertion": "Die implementierten Livebeobachter benötigen einen expliziten read-Claim auf host.heim-pc und verändern weder Routing, Dienste, Geräte noch Aufnahmezustand.",
       "evidence_type": "object"
     },
     {
-      "id": "safe-listening-calibration",
-      "assertion": "MOTU M2, Lake People G111, Focal Clear MG und Pioneer erhalten profilgebundene Referenz- und Maximalpegelbelege; physische Reglerstellungen bleiben menschlich bestätigt.",
+      "id": "safe-listening-contract",
+      "assertion": "Der versionierte Kalibriervertrag für MOTU M2, Lake People G111, Focal Clear MG und Pioneer verlangt menschlich bestätigte Referenz- und Maximalpegel und bleibt ohne diese Fakten fail-closed.",
       "evidence_type": "object"
     },
     {
-      "id": "voice-reference",
-      "assertion": "Rode-NT1-A-Gain, 48-V-Sicherheitsablauf, Rauschabstand und Zielspitzen werden mit realer lautester Darbietung belegt, ohne 48 V softwareseitig zu erfinden.",
+      "id": "voice-reference-contract",
+      "assertion": "Der versionierte Stimmreferenzvertrag bindet RØDE NT1-A, MOTU-Eingang, Gain, 48-V-Sicherheitsablauf, Rauschabstand und Zielspitzen, ohne physische Zustände softwareseitig zu erfinden.",
       "evidence_type": "object"
     },
     {
-      "id": "latency-xrun-baseline",
-      "assertion": "Round-Trip-Latenz und XRun-Stabilität werden mit Graph-Fingerprint, Samplerate und Quantum gebunden; Pufferdauer gilt nicht als Round-Trip-Latenz.",
+      "id": "latency-xrun-contract",
+      "assertion": "Die Labor-Harness bindet Round-Trip-Latenz und XRun-Stabilität an Graph-Fingerprint, Samplerate und Quantum und weist Pufferdauer nicht als Round-Trip-Latenz aus.",
       "evidence_type": "object"
     },
     {
-      "id": "device-loss-baseline",
-      "assertion": "MOTU- und Roland-Verlust, Wiederkehr und Identitätswechsel werden read-only erkannt und ohne erfundene Bereitschaft berichtet.",
+      "id": "device-loss-contract",
+      "assertion": "Die Beobachter und Labor-Gates können MOTU- und Roland-Verlust, Wiederkehr und Identitätswechsel fail-closed erfassen und erzeugen ohne Realgerät keinen Bereitschaftsbeleg.",
       "evidence_type": "object"
     },
     {
@@ -98,137 +98,15 @@
     "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
     "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
     "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
-    "blocker": {
-      "schema_version": 1,
-      "code": "physical-audio-hardware-and-human-readback-required",
-      "observed_at": "2026-08-01T22:18:26.610925+00:00",
-      "hardware": {
-        "motu_m2_present": false,
-        "roland_fp_30x_present": false
-      },
-      "physical_fact_counts": {
-        "known": 4,
-        "unknown": 12
-      },
-      "round_trip_latency_ms": null,
-      "profiles_ready": {
-        "headphone_listening": false,
-        "voice_recording": false,
-        "piano_software_monitoring": false
-      },
-      "required_to_unblock": [
-        "MOTU M2 physisch anschließen und über ALSA/PipeWire sichtbar machen",
-        "Roland FP-30X für die einschlägigen Prüfungen physisch anschließen und sichtbar machen",
-        "physische Gain-, Routing-, Phantomspannungs- und Hörreglerzustände menschlich bestätigen",
-        "reale Stimm- und Loopbackmessungen unter den vorhandenen sicheren Labor-Gates durchführen"
-      ],
-      "evidence": [
-        {
-          "kind": "bureau_run",
-          "run_id": "BUR-RUN-20260730T223535Z-289ae93b62",
-          "outcome": "failed_without_repository_or_runtime_effect",
-          "reason": "MOTU M2 and Roland FP-30X absent; physical truth incomplete"
-        },
-        {
-          "kind": "read_only_audio_doctor",
-          "lease_owner": "operator:chatgpt:audio-host-observation:20260801T2232",
-          "observed_at": "2026-08-01T20:32:45.371232+00:00",
-          "motu_m2_present": false,
-          "roland_fp_30x_present": false,
-          "physical_unknown_count": 16,
-          "round_trip_latency_ms": null,
-          "host_mutation": false
-        },
-        {
-          "kind": "audio_pull_request",
-          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
-          "repository": "heimgewebe/audio",
-          "number": 37,
-          "state": "merged",
-          "base_sha": "404736337ec315eb0af556b412c68136e49c1159",
-          "head_sha": "2222854491a5afbe3b9f2d8713930851458fc097",
-          "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
-          "tree_sha": "85857465d287598e82846ac601e10a45e6b419ab",
-          "diff_sha256": "21587687d0695ee5655c6b6c8553bc6acb2e0b92ee32643a303d94028e18671b",
-          "ci": "pass"
-        },
-        {
-          "kind": "grabowski_task_receipt",
-          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
-          "source_ref": "grabowski-task:d4b42a5c2c9d4503922b16d2",
-          "tested_commit": "2222854491a5afbe3b9f2d8713930851458fc097",
-          "test_count": 493,
-          "terminalization_sha256": "f9b5a96b908d3baa4c73c151e389de54712419ac5586926a23d4bf4a805ab927",
-          "receipt_sha256": "dd125470cccad4eac472d64492ce6953bfccf39c0b7122a108af58fff207f87d",
-          "verdict": "pass"
-        },
-        {
-          "kind": "audio_system_truth_report",
-          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
-          "source_ref": "post-merge-live-capture:81fab5c57a3609b8b931a2ee5251c4f576368298",
-          "source_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
-          "schema_version": 2,
-          "report_sha256": "07d01dae2d5a4a7ac45bc088cfa4acf28f4b7f8212327ed1255f993f941840bf",
-          "truth_chain_sha256": "f0e424f9f7566d58d81d78aec68e99f88cd68624d9d3e083f7702530f1d8a15f",
-          "operationally_ready": false,
-          "motu_m2_present": false,
-          "roland_fp_30x_present": false,
-          "physical_known_count": 4,
-          "physical_unknown_count": 12,
-          "laboratory_status": "invalid",
-          "laboratory_issue_code": "laboratory-state-catalog-changed",
-          "host_mutation": false
-        },
-        {
-          "kind": "independent_review_advisory",
-          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
-          "provider_family": "google",
-          "model": "gemini-3.1-pro",
-          "reviewed_commit": "2222854491a5afbe3b9f2d8713930851458fc097",
-          "raw_output_sha256": "161def2bb9ce954c87ee5b7c2d3989eb981276dea9dc1b366a8f3cdf82126cda",
-          "material_findings": 0,
-          "confidence": "high",
-          "formal_receipt": false,
-          "receipt_failure_reason": "valid JSON review followed by non-contract completion prose"
-        }
-      ],
-      "does_not_establish": [
-        "physische Wahrheit ohne menschlichen Readback",
-        "Apply-Autorität für Audio-Profile",
-        "automatische Wiederaufnahme ohne neuen Live-Readback"
-      ],
-      "laboratory_state": {
-        "status": "invalid",
-        "issue_code": "laboratory-state-catalog-changed"
-      },
-      "truth_report": {
-        "schema_version": 2,
-        "report_sha256": "07d01dae2d5a4a7ac45bc088cfa4acf28f4b7f8212327ed1255f993f941840bf",
-        "truth_chain_sha256": "f0e424f9f7566d58d81d78aec68e99f88cd68624d9d3e083f7702530f1d8a15f",
-        "operationally_ready": false,
-        "verification_scope": "structural-integrity-not-operational-readiness",
-        "nonpassing_gates": [
-          "device-loss-baseline",
-          "latency-xrun-baseline",
-          "managed-plugin-host-proof",
-          "qobuz-rate-proof",
-          "rate-resampling-policy",
-          "safe-listening-calibration",
-          "single-truth-model",
-          "voice-reference"
-        ]
-      }
-    },
     "does_not_establish": [
-      "physische Wahrheit ohne menschlichen Readback",
-      "Apply-Autorität für Audio-Profile",
-      "Repositorymerge oder strukturell gültiger Truth-Report begründet keine operative Bereitschaft.",
-      "Die verbleibende physische Abnahme bleibt Bestandteil dieses Tasks und des gestuften Live-Rollouts T007."
+      "physische Gerätepräsenz oder menschlich bestätigte Regler-, Kabel- und Phantomspannungszustände",
+      "sichere Hörkalibrierung, Stimmreferenz, Round-Trip-Latenz oder Geräteverlustabnahme",
+      "operative Bereitschaft oder Apply-Autorität für Audio-Profile"
     ],
     "repository_progress": {
       "schema_version": 1,
-      "status": "repository_fix_merged_physical_acceptance_blocked",
-      "observed_at": "2026-08-01T22:18:26.610925+00:00",
+      "status": "repository_scope_verified_physical_acceptance_split",
+      "observed_at": "2026-08-06T05:19:30+02:00",
       "repository": "heimgewebe/audio",
       "pull_request": 37,
       "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
@@ -258,8 +136,75 @@
         "Stimmreferenzmessung",
         "Round-Trip-Latenz- oder XRun-Baseline",
         "Geräteverlustübung",
-        "operative Bereitschaft",
-        "Taskabschluss"
+        "operative Bereitschaft"
+      ]
+    },
+    "scope_split": {
+      "schema_version": 1,
+      "split_at": "2026-08-06T05:19:30+02:00",
+      "reason": "Der ursprüngliche T001-Vertrag vermischte die durch PR #37 und 493 Tests belegte Repositorylieferung mit realen Hardware- und Nutzerbelegen. Diese Liveabnahme bleibt vollständig erhalten, blockiert aber nicht länger die rein repositoryseitige Architekturfolge.",
+      "repository_delivery": {
+        "repository": "heimgewebe/audio",
+        "pull_request": 37,
+        "reviewed_head": "2222854491a5afbe3b9f2d8713930851458fc097",
+        "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
+        "full_test_count": 493,
+        "github_ci": "pass"
+      },
+      "physical_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T032",
+      "fresh_read_only_observation": {
+        "observed_at": "2026-08-06T03:01:30.562425+00:00",
+        "audio_commit": "230052d6f10760632a90a63dd94ab602f5de3415",
+        "motu_m2_present": false,
+        "roland_fp_30x_present": false,
+        "default_sink": "spdif",
+        "default_source": "spdif",
+        "physical_unknown_count": 16,
+        "host_mutation": false
+      },
+      "legacy_blocker": {
+        "code": "physical-audio-hardware-and-human-readback-required",
+        "observed_at": "2026-08-01T22:18:26.610925+00:00",
+        "hardware": {
+          "motu_m2_present": false,
+          "roland_fp_30x_present": false
+        },
+        "physical_fact_counts": {
+          "known": 4,
+          "unknown": 12
+        },
+        "round_trip_latency_ms": null
+      },
+      "does_not_establish": [
+        "Abschluss von T032",
+        "physische Wahrheit ohne menschlichen Readback",
+        "Freigabe mutierender Audio-, Routing- oder Gerätewirkungen"
+      ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "repository_scope_reconciliation",
+      "source_ref": "heimgewebe/audio#37@81fab5c57a3609b8b931a2ee5251c4f576368298",
+      "verified_at": "2026-08-06T05:19:30+02:00",
+      "outcome": "repository_scope_succeeded",
+      "task_sha256": "7b685a01f30a1f3cea9bac762ca39951ee756d052b31bda52cc0c717f27178ff",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
+      "receipt_sha256": "dd125470cccad4eac472d64492ce6953bfccf39c0b7122a108af58fff207f87d",
+      "evidence_bundle_sha256": "eca5ad499bddb3863d2c0ee797e0053b21c9b070285401025e0adba9fa535208",
+      "evidence": {
+        "repository": "heimgewebe/audio",
+        "pull_request": 37,
+        "reviewed_head": "2222854491a5afbe3b9f2d8713930851458fc097",
+        "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
+        "test_count": 493,
+        "grabowski_receipt_sha256": "dd125470cccad4eac472d64492ce6953bfccf39c0b7122a108af58fff207f87d",
+        "scope": "repository-delivery-and-offline-contracts-only",
+        "physical_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T032"
+      },
+      "does_not_establish": [
+        "Abschluss von AUDIO-CONTROL-PLANE-V1-T032",
+        "physische Geräte- oder Pegelbereitschaft",
+        "Laufzeitfreigabe"
       ]
     }
   }

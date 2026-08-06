@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audiozentrale als lokale, messbare Live-Audioumgebung",
-  "state": "waiting",
+  "state": "active",
   "commitment": "now",
   "goal": "Eine lokal betriebene Audiozentrale liefern, die reale Signalwege live sichtbar macht, Referenzhören, sichere Aufnahme, Roland- und Gitarrenspiel sowie begrenzte erklärbare Modulation in einer gemeinsamen wiederherstellbaren Produktoberfläche verbindet, ohne DAW-, Cloud-, KI- oder freien Modulargraph-Zwang.",
   "current_plan": {
@@ -74,7 +74,7 @@
     "physical_gates": {
       "status": "phase-specific",
       "blocked_tasks": [
-        "AUDIO-CONTROL-PLANE-V1-T001",
+        "AUDIO-CONTROL-PLANE-V1-T032",
         "AUDIO-CONTROL-PLANE-V1-T016",
         "AUDIO-CONTROL-PLANE-V1-T027"
       ],
@@ -83,7 +83,11 @@
         "AUDIO-CONTROL-PLANE-V1-T019",
         "AUDIO-CONTROL-PLANE-V1-T020",
         "AUDIO-CONTROL-PLANE-V1-T021",
-        "repository-only portions of T022 through T026"
+        "repository-only portions of T022 through T026",
+        "AUDIO-CONTROL-PLANE-V1-T002",
+        "AUDIO-CONTROL-PLANE-V1-T003",
+        "AUDIO-CONTROL-PLANE-V1-T004",
+        "AUDIO-CONTROL-PLANE-V1-T005"
       ]
     },
     "implementation_waves": [
@@ -135,10 +139,19 @@
       }
     ],
     "lifecycle": {
-      "reconciled_at": "2026-08-05T21:50:05.241432Z",
-      "reconciled_from": "active",
-      "reconciled_to": "waiting",
-      "reason": "Wave 1 task T021 is unblocked and explicitly not blocked by the physical hardware gate."
+      "reconciled_at": "2026-08-06T05:19:30+02:00",
+      "reconciled_from": "waiting",
+      "reconciled_to": "active",
+      "reason": "T001 repository scope is verified, T032 retains the physical gate, and T002 is ready for repository-only execution."
+    },
+    "foundation_scope_split": {
+      "schema_version": 1,
+      "reconciled_at": "2026-08-06T05:19:30+02:00",
+      "repository_foundation_task": "AUDIO-CONTROL-PLANE-V1-T001",
+      "physical_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T032",
+      "next_repository_task": "AUDIO-CONTROL-PLANE-V1-T002",
+      "fresh_blocker_observed_at": "2026-08-06T03:01:30.562425+00:00",
+      "reason": "Repository- und Physikbelege wurden getrennt, damit abwesende Hardware keine sicheren, wirkungslosen Architektur- und Vertragsartefakte blockiert."
     }
   }
 }

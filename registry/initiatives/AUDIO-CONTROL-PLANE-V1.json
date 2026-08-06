@@ -87,7 +87,7 @@
         "AUDIO-CONTROL-PLANE-V1-T002",
         "AUDIO-CONTROL-PLANE-V1-T003",
         "AUDIO-CONTROL-PLANE-V1-T004",
-        "repository-only portions of T005 and T006"
+        "AUDIO-CONTROL-PLANE-V1-T005"
       ]
     },
     "implementation_waves": [

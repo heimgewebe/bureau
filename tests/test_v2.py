@@ -201,7 +201,7 @@ def test_database_migrates_old_columns(tmp_path):
     assert "event_schema_version" in event_columns
     assert legacy_event_version == 0
     assert baseline_count == 1
-    assert version == 4
+    assert version == 5
     assert store.replay_projection()["matches_current"] is True
 
 

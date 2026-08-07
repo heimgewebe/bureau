@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from . import github_repository, legacy, runtime_refresh, state_events
+from . import github_repository, legacy, runtime_refresh, state_events, task_specs
 from .adapters import AdapterRegistry
 from .approval import (
     ApprovalEvidence,
@@ -43,7 +43,7 @@ from .state_root_artifacts import (
     reviewed_plan_directory_valid,
 )
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 TERMINAL_STATES = {"succeeded", "failed", "cancelled", "orphaned"}
 EVIDENCE_TYPES: dict[str, type | tuple[type, ...]] = {
     "object": dict,
@@ -2913,6 +2913,7 @@ class StateStore:
                 "events",
                 "event_schema_version INTEGER NOT NULL DEFAULT 0",
             )
+            task_specs.ensure_schema(connection)
             connection.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS unique_dispatch_request "
                 "ON runs(dispatch_request_id) WHERE dispatch_request_id IS NOT NULL"
@@ -3093,20 +3094,108 @@ class StateStore:
                     "FROM events ORDER BY event_id"
                 )
             ]
+            base_rows, task_spec_rows = task_specs.split_event_rows(rows)
             try:
                 current = state_events.current_projection(connection)
-                replayed = state_events.replay(rows)
+                replayed = state_events.replay(base_rows)
                 current_root = state_events.projection_root(current)
-            except state_events.StateEventError as exc:
+                task_spec_replay = task_specs.verify_replay(connection, task_spec_rows)
+            except (state_events.StateEventError, task_specs.TaskSpecError) as exc:
                 raise legacy.StateError(str(exc)) from exc
         if replayed["root_sha256"] != current_root:
             raise legacy.StateError(
                 "replayed state projection does not match the current StateStore projection"
             )
+        authoritative_projection = {
+            "schema_version": 1,
+            "operational": replayed["projection"],
+            "task_specs": task_spec_replay["projection"],
+        }
+        authoritative_root = legacy.sha256_json(authoritative_projection)
+        current_authoritative = {
+            "schema_version": 1,
+            "operational": current,
+            "task_specs": task_spec_replay["projection"],
+        }
+        current_authoritative_root = legacy.sha256_json(current_authoritative)
+        if authoritative_root != current_authoritative_root:
+            raise legacy.StateError(
+                "replayed authoritative projection does not match current StateStore projection"
+            )
         return {
             **replayed,
             "current_root_sha256": current_root,
+            "task_specs": task_spec_replay,
+            "authoritative_root_sha256": authoritative_root,
+            "current_authoritative_root_sha256": current_authoritative_root,
             "matches_current": True,
+        }
+
+    def task_spec(self, task_id: str) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            try:
+                return task_specs.get_current(connection, task_id)
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+
+    def put_task_spec(
+        self,
+        spec: dict[str, Any],
+        *,
+        idempotency_key: str,
+        expected_revision: int | None,
+        source: str,
+    ) -> dict[str, Any]:
+        with self.immediate() as connection:
+            try:
+                return task_specs.put(
+                    connection,
+                    spec,
+                    idempotency_key=idempotency_key,
+                    expected_revision=expected_revision,
+                    source=source,
+                )
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+
+    def import_registry_task_specs(self, registry: Registry) -> dict[str, Any]:
+        with self.immediate() as connection:
+            try:
+                result = task_specs.import_registry(connection, registry)
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+        replay = self.replay_projection()
+        return {
+            **result,
+            "task_spec_root_sha256": replay["task_specs"]["root_sha256"],
+            "authoritative_root_sha256": replay["authoritative_root_sha256"],
+        }
+
+    def register_task_spec_with_legacy_import(
+        self,
+        registry: Registry,
+        spec: dict[str, Any],
+        *,
+        idempotency_key: str,
+        expected_revision: int | None,
+        source: str,
+    ) -> dict[str, Any]:
+        """Atomically converge legacy specs and register one reviewed TaskSpec revision."""
+        with self.immediate() as connection:
+            try:
+                legacy_import = task_specs.import_registry(connection, registry)
+                revision = task_specs.put(
+                    connection,
+                    spec,
+                    idempotency_key=idempotency_key,
+                    expected_revision=expected_revision,
+                    source=source,
+                )
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+        return {
+            "legacy_task_spec_import": legacy_import,
+            "task_spec_revision": revision,
         }
 
     def issue_claim_intent(

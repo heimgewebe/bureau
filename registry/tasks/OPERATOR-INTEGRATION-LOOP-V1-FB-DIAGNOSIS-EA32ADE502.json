@@ -119,6 +119,8 @@
       "source": "merged_pr_runtime_live_closeout",
       "verified_at": "2026-08-07T16:42:37.744290Z",
       "canonical_bureau_run": null,
+      "task_sha256": "4fe1580c88e6ec88aa2b78dbccd655e2319e2f103026429bf4570d999979cb7a",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
       "implementation": {
         "repository": "heimgewebe/grabowski",
         "pull_request": 677,

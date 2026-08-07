@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Autoritäts- und Consumerinventar maschinenlesbar machen",
   "goal": "Alle produktiven Leser und Schreiber von Git-Registry, Queue, StateStore, Live Register, Dispatcher, Grabowski-Adapter, Dashboard, Timern und GitHub-Bridges revisionsgebunden inventarisieren. Eine read-only CLI-Projektion muss pro Consumer Quelle, Schreibwirkung, angenommene Autorität, Aktualitätsvertrag und Zielpfad ausgeben.",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 3
@@ -81,6 +81,63 @@
       "Merge- oder Deploymentabschluss",
       "Freigabe fremder Ressourcen",
       "direkte main-Mutation"
-    ]
+    ],
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "6546d7025a88204a54c09d41fdc9da079f6aa0114e5bfa89233234c0d707186c",
+      "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+      "source": "successful_run_receipt_merged_pr_required_ci_and_live_runtime_readback",
+      "verified_at": "2026-08-07T02:22:26Z",
+      "run": {
+        "run_id": "BUR-RUN-20260806T140102Z-36993281f2",
+        "state": "succeeded",
+        "receipt_sha256": "246b87fc592681492ef5353c6b9bbbb917559ae39e9bb63856f36bececc1bf9b"
+      },
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1647,
+        "base_commit": "4c9b3eb28c23841c172656306e760fbef5dd66e7",
+        "head_commit": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
+        "merge_commit": "aa079c765a796848ba3a04eb5a3348db5b9ea680",
+        "merged_at": "2026-08-06T23:42:31Z"
+      },
+      "validation": {
+        "required_status_contexts": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "registry-registration-preflight/freshness"
+        ],
+        "validate_3_10": "success",
+        "validate_3_12": "success",
+        "registry_registration_preflight_freshness": "success",
+        "codeql_actions": "success_non_required",
+        "codeql_python": "cancelled_non_required",
+        "focused_tests": "8/8 passed",
+        "ruff": "passed",
+        "verification_stamp": "passed"
+      },
+      "live_readback": {
+        "current_bureau_main": "db89e2989d7f8e88f0e5108cb376854ae8eeef34",
+        "implementation_merge_ancestor_of_current_main": true,
+        "commits_after_implementation_merge": 43,
+        "runtime_release": "db89e2989d7f-src4f101438ac6a",
+        "runtime_registry_source_commit": "db89e2989d7f8e88f0e5108cb376854ae8eeef34",
+        "authority_inventory_complete": true,
+        "state_store_integrity": "ok"
+      },
+      "acceptance_evidence": {
+        "complete-consumer-inventory": "The merged implementation enumerates code, workflow, systemd and external consumers and the live deployed authority-inventory readback reports complete=true.",
+        "authority-conflicts-visible": "The machine-readable inventory exposes assumed authorities, reads, writes, direct Git/State effects and migration dispositions instead of hiding dual-writer conflicts.",
+        "read-only-live-proof": "The deployed Bureau authority-inventory command completed successfully against the canonical runtime snapshot and live systemd/StateStore inputs without requesting mutation authority.",
+        "migration-map": "Every emitted consumer carries migration_disposition plus target_authority and target_interface, distinguishing StateStore/API convergence, read-only projections, GitHub code/CI authority and removal after cutover."
+      },
+      "does_not_establish": [
+        "runtime unit mutation authority",
+        "cutover completion",
+        "permission to delete legacy writers",
+        "absence of future consumers after later repository changes",
+        "completion of dependent Bureau Control Plane v3 tasks"
+      ]
+    }
   }
 }

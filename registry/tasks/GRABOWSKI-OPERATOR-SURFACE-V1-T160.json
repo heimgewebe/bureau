@@ -1,0 +1,117 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine revisionsgebundene, manipulationsgeschützte Primärevidenz oder äquivalente autoritative Beobachtung beschreibt die von der Plattform tatsächlich veröffentlichten Connector-Tools und ihre relevanten Input-Schemas; ihre Herkunft, Frische und Bindung sind maschinenlesbar.",
+      "id": "platform-primary-evidence"
+    },
+    {
+      "assertion": "Required-Schema-Sentinels werden gegen diese Plattform-Evidenz geprüft; grip_run muss mindestens allow_mutation, name, parameters und profile enthalten. Fehlende Properties erzeugen deterministischen Schema-Drift.",
+      "id": "schema-sentinel-platform-check"
+    },
+    {
+      "assertion": "Server-Loopback-, Runtime- und Toolnamen-Matches werden getrennt ausgewiesen und können fehlende Plattform-Schema-Evidenz nicht in platform_connector_schema_observable=true oder einen Plattform-Match umwandeln.",
+      "id": "no-loopback-substitution"
+    },
+    {
+      "assertion": "Fehlender, abgelaufener, revisionsfremder oder integritätsungültiger Plattform-Snapshot führt zu einem expliziten unbeobachtbar/Drift-Zustand und einer konkreten nächsten Maßnahme; er wird niemals stillschweigend als aktuell behandelt.",
+      "id": "freshness-fail-closed"
+    },
+    {
+      "assertion": "Tests decken mindestens fehlende grip_run.allow_mutation-Property, veraltete Plattform-Evidenz, Integritäts-/Revisionsdrift, getrennten Loopback-Match und erfolgreiche vollständige Plattformkonvergenz ab.",
+      "id": "regression"
+    },
+    {
+      "assertion": "Fokustests und vollständige relevante Grabowski-Validierung sind auf dem exakten Head grün; Diff und Self-Review sind revisionsgebunden.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Der geprüfte Head ist über grünen PR gemergt und source-identitätsgebunden deployt. Ein Live-Readback zeigt getrennt Server-Loopback und Plattformpublikation sowie den aktuellen Sentinel-Status; falls die Plattform selbst keine Primärquelle bereitstellt, bleibt der Plattformstatus ehrlich unbeobachtbar und die technische Grenze ist durable dokumentiert.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T158"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Connector-/Client-Snapshot-Observability, Vertragsvergleich, Probes und fokussierte Tests ändern. Keine Plattform-Evidenz synthetisieren und Server-Loopback nicht als Plattform-Snapshot umdeklarieren.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_connector_contract.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_client_snapshot.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/tools/connector_probe.py",
+      "path:/home/alex/repos/grabowski/tests/test_connector_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_client_snapshot.py",
+      "path:/home/alex/repos/grabowski/tests/test_blue_green_cutover.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py",
+      "path:/home/alex/repos/grabowski/tests/test_control_plane.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowski um eine revisionsgebundene Primärevidenz für die tatsächlich von der Plattform veröffentlichte Connector-Tool- und Schemasicht erweitern. Server-Loopback-, Runtime- und Namensverträge bleiben nützliche interne Evidenz, dürfen aber fehlende Plattformbeobachtbarkeit nicht als Match ausgeben. Required-Schema-Sentinels – insbesondere grip_run.allow_mutation – werden gegen einen frischen, manipulationsgeschützten Plattform-Snapshot oder eine äquivalente Plattform-Primärquelle geprüft; fehlende, veraltete oder unvollständige Plattform-Evidenz wird explizit fail-closed als unbeobachtbar/Drift ausgewiesen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T160",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass die Plattform bereits eine geeignete Snapshot-API anbietet",
+      "automatische Autorität für Connector-Mutationen",
+      "Gleichsetzung von Server-Loopback mit Plattformpublikation"
+    ],
+    "source_candidate": "candidate-c9e317b7776704447db600b9",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c9e317b7776704447db600b9",
+      "event_id": 4154,
+      "event_created_at": "2026-08-07T17:49:40.641965Z",
+      "request_sha256": "15c1ea8e2f90890b89a0d93bb7cfa757f7054d93506f59bdf6c147680fd30e2b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pr",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/677",
+        "observed_at": "2026-08-07T17:49:40.605425Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 160
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "runtime-observability",
+    "transport"
+  ],
+  "rollback": {
+    "strategy": "Die neue Plattform-Snapshot-Erfassung und den Vergleichspfad per normalem Revert entfernen. Bestehende Server-Loopback- und Runtime-Verträge bleiben erhalten; keine gespeicherten Evidenz-/Audit-Historien umdeuten oder löschen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Connector: veröffentlichte Plattform-Schemasicht beweisbar machen"
+}

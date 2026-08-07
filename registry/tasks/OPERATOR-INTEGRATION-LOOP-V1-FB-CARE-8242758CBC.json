@@ -1,0 +1,69 @@
+{
+  "acceptance": [
+    {
+      "assertion": "One current care burden and its operational consequence are evidenced.",
+      "id": "care-1"
+    },
+    {
+      "assertion": "The change removes or consolidates material instead of duplicating it.",
+      "id": "care-2"
+    },
+    {
+      "assertion": "The resulting documentation remains linked to canonical Registry truth.",
+      "id": "care-3"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/docs"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Reduce one concrete hygiene, documentation, or operability burden without creating a second source of truth.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-CARE-8242758CBC",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "care",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "8242758cbc83eb3ed2089b6f0fbefbc861c43550b454f7732e1ea8a25d4bc705",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "490acfdbb83c7bf1354792a6f8cce2dd529a3ea71caf3b1ddc1b3dc629c3cefa",
+      "schema_version": 1,
+      "scope_path": "docs",
+      "time_bucket": "20672"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 901
+  },
+  "required_capabilities": [
+    "repository",
+    "documentation",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Perform one bounded Bureau care pass"
+}

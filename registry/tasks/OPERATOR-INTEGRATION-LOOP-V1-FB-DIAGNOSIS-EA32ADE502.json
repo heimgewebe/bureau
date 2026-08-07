@@ -113,6 +113,66 @@
       "head_commit": "c1245de7f0a253cc6ce9d779e4009f130962c6d1",
       "number": 677,
       "repository": "heimgewebe/grabowski"
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "merged_pr_runtime_live_closeout",
+      "verified_at": "2026-08-07T16:42:37.744290Z",
+      "canonical_bureau_run": null,
+      "task_sha256": "4fe1580c88e6ec88aa2b78dbccd655e2319e2f103026429bf4570d999979cb7a",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 677,
+        "base_commit": "311fcb3f3a9a77200a7581705b71d5bf302d390d",
+        "head_commit": "c1245de7f0a253cc6ce9d779e4009f130962c6d1",
+        "merge_commit": "c59c64da66ca505816c4b9cb9217f0581538ebaa",
+        "merged_at": "2026-08-07T16:13:43Z",
+        "review_id": 4884812080
+      },
+      "validation": {
+        "github_validate": "success",
+        "github_validate_run": 31195410206,
+        "codex_review_settled": "success",
+        "deploy_validate_tests_passed": 5070,
+        "deploy_validate_tests_skipped": 14,
+        "deploy_job": "grabowski-job-8da2902fcfbb",
+        "deploy_finalization_receipt_sha256": "5712c700af1be1b13d38cd5fa704ed5000b9ebe606edacf4ca3b33a74d56bb1d"
+      },
+      "runtime": {
+        "release_id": "c59c64da66ca-srcseta859e4bb8163-locke6664d600b6c-contract46ba648f01da",
+        "repo_head": "c59c64da66ca505816c4b9cb9217f0581538ebaa",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "serving_process_matches_manifest": true,
+        "audit_valid": true,
+        "audit_writable": true,
+        "kill_switch_engaged": false
+      },
+      "live_proof": {
+        "bootstrap_client_allow_mutation": false,
+        "bootstrap_execute_receipt_sha256": "01038dd0ad3ec0ab6d9ccd6a2e876d7351d26c7dd1bf61d8d8bf8ca9361e53f0",
+        "bootstrap_target": "grabowski_resource_release",
+        "negative_client_allow_mutation": false,
+        "negative_target": "operator-obligation-open",
+        "negative_target_receipt_sha256": "dd4bdb9f16fd99e2f46a8546ddec0f5c129ed0c77ffa6fddde2bae1193a82238",
+        "negative_transport_receipt_sha256": "c7e6e0c54c0fb570abd3e4d350472df4fc4254736a86ffd5fd6c79088e90f2d7",
+        "negative_result": "blocked_before_effect_mutation_permission_missing"
+      },
+      "acceptance_evidence": {
+        "bootstrap-reproduction": "The pre-fix failure mode is captured by the task intake and exact-head regression suite; the deployed post-fix handshake now reaches exact-target execution with client allow_mutation=false.",
+        "handshake-only-exemption": "Exact-head code and regression review show only transport-roundtrip receives the bootstrap exemption; a deployed negative live proof kept operator-obligation-open blocked with allow_mutation=false.",
+        "connector-schema-sentinel": "The exact PR diff adds grip_run to the connector schema sentinels with allow_mutation, name, parameters and profile; exact-head validation is green.",
+        "authority-preserved": "The deployed negative proof returned mutation_permission_missing for another mutating grip and created no target effect; transport execution remained exact-target, digest, runtime and single-use bound.",
+        "validation": "GitHub validate on exact head c1245de7f0a253cc6ce9d779e4009f130962c6d1 completed successfully; the deploy path reran the full validation suite with 5070 tests passing and 14 skipped.",
+        "pr-adoption": "PR #677 stayed on exact head c1245de7f0a253cc6ce9d779e4009f130962c6d1, merged as c59c64da66ca505816c4b9cb9217f0581538ebaa after green checks, and has an exact-head closeout review with no material finding.",
+        "deploy-live-proof": "The exact merge commit is the active Grabowski runtime and serving-process head; health, integrity and audit are valid, kill switch is off, transport-roundtrip succeeds with client allow_mutation=false, and an unrelated mutating grip remains blocked before effect with allow_mutation=false."
+      },
+      "does_not_establish": [
+        "authority for unrelated mutating grips",
+        "future correctness after a later Grabowski deployment",
+        "retroactive Bureau claim or run existence"
+      ]
     }
   },
   "priority": {
@@ -132,6 +192,6 @@
     "strategy": "Bei Autoritätsausweitung, Schema- oder Transportregression den revisionsgebundenen Merge normal revertieren. Bis zu einer korrigierten Version bleibt der Handshake fail-closed; keine Challenge-, Lease-, Audit- oder Replay-Historie verändern."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Grabowski-Handshake-Bootstrap gegen Connector-Schemadrift härten"
 }

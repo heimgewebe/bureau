@@ -373,7 +373,20 @@ def load_task_supply_summary(
                 "reason": "registry-binding-missing",
             }
         try:
-            current_head = _git_head(registry_root)
+            inventory_path = registry_root / ".bureau-runtime-snapshot.json"
+            if inventory_path.is_file() and not inventory_path.is_symlink():
+                inventory = load_json(inventory_path, None)
+                if (
+                    not isinstance(inventory, dict)
+                    or inventory.get("schema_version") != 1
+                    or inventory.get("kind") != "bureau_registry_snapshot"
+                    or not isinstance(inventory.get("source_commit"), str)
+                    or len(inventory["source_commit"]) != 40
+                ):
+                    raise SupplyError("invalid canonical Registry snapshot inventory")
+                current_head = inventory["source_commit"]
+            else:
+                current_head = _git_head(registry_root)
             current_queue_sha256 = file_sha256(registry_root / "registry/queue.json")
         except (OSError, SupplyError):
             return {

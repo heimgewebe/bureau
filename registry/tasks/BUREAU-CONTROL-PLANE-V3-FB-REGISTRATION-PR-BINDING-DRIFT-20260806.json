@@ -136,7 +136,9 @@
         "future correctness after later publisher changes",
         "permission to weaken PR task-binding or registration guards",
         "claimability or completion of unrelated Bureau tasks"
-      ]
+      ],
+      "task_sha256": "32d4fdb158b694bdb9d54781f9a760a17c23bb38af85362d82b93b8e3cf1607f",
+      "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529"
     }
   },
   "priority": {

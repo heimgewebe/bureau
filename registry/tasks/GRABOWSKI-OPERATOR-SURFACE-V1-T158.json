@@ -1,0 +1,117 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Fehler wird auf der vor dem Fix installierten Runtime mit einer frischen Challenge und exakt unverändertem Toolnamen/Argumentobjekt revisions- und receiptgebunden reproduziert oder durch stärkere Primärevidenz als bereits behoben widerlegt.",
+      "id": "live-reproduction"
+    },
+    {
+      "assertion": "Die konkrete Abweichung zwischen Challenge-Erzeugung, kanonischem Argumentdigest, Toolnamenbindung, Client-Scope und action=execute wird aus Primärcode und reproduzierendem Test bestimmt; T156-Kausalität oder allgemeiner Connector-Ausfall werden nicht ohne Beleg behauptet.",
+      "id": "root-cause"
+    },
+    {
+      "assertion": "Eine für ein exaktes Ziel ausgegebene Challenge kann für genau denselben Toolnamen und dasselbe kanonische Argumentobjekt atomar genau einmal ausgeführt werden; semantisch andere Toolnamen oder Argumente bleiben fail-closed abgelehnt.",
+      "id": "exact-binding-fix"
+    },
+    {
+      "assertion": "Replay, zweite Konsumierung, abgelaufene/veraltete Runtime-Bindung und fremder Client-Scope können keinen zweiten Effekt auslösen; vorhandene Exactly-once- und Single-use-Grenzen bleiben erhalten.",
+      "id": "exactly-once-boundary"
+    },
+    {
+      "assertion": "Regressionstests decken mindestens grabowski_resource_renew, grabowski_github sowie funktionierende Kontrolloberflächen ab und unterscheiden Wrapper-/Grip-Toolnamen von den tatsächlich dispatchten MCP-Zielen.",
+      "id": "surface-regressions"
+    },
+    {
+      "assertion": "Fokustests und vollständige relevante Grabowski-Validierung sind auf dem exakten Head grün; Diff und Review sind revisionsgebunden.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Der exakte geprüfte Head ist über einen grünen PR gemergt und source-identitätsgebunden deployt; Runtime-Identität und Integrität lesen danach gültig zurück.",
+      "id": "delivery"
+    },
+    {
+      "assertion": "Nach Deployment bestehen reversible Live-Proofs mit frischen Challenges für die zuvor betroffenen Oberflächen; exakt unveränderte Ziele werden einmal ausgeführt, absichtlich veränderte Ziele werden ohne Effekt abgelehnt und alle taskeigenen temporären Leases werden freigegeben.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den exakt reproduzierten Transport-Roundtrip-Bindungsvertrag und zugehörige Tests/Dokumentation ändern. Keine Challenge-Wiederverwendung, kein Bypass der Exactly-once- oder Fail-closed-Gates und keine Übernahme fremder Leases/Worktrees.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_operator.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_roundtrip.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den live reproduzierten Transport-Roundtrip-Bindungsfehler beheben, bei dem eine frische, auf Toolname und Argumente gebundene Mutation-Challenge für ausgewählte Grabowski-Oberflächen beim unmittelbar folgenden action=execute mit exakt unverändertem Ziel fälschlich als nicht an die angeforderte atomare Mutation gebunden abgelehnt werden kann. Die Ursache ist revisionsgebunden zu bestimmen; bestehende Exactly-once-, Fail-closed- und Client-Scope-Grenzen dürfen nicht aufgeweicht werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T158",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Kausalität durch T156",
+      "allgemeinen Connector-Ausfall",
+      "Erlaubnis zur Übernahme fremder T157- oder Chronik-Arbeit",
+      "automatische Merge- oder Deploymentfreigabe"
+    ],
+    "source_candidate": "candidate-2a5b61ef0f6184da1c2fc46e",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2a5b61ef0f6184da1c2fc46e",
+      "event_id": 3042,
+      "event_created_at": "2026-08-07T11:05:37.504033Z",
+      "request_sha256": "96659a2ddbe2f60938985d9068e5c5c0bf98816e7f691eb847d07dae7c09820f",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-reproduction",
+        "locator": "grabowski-runtime:5e16ab2f7acb61a950b8b1f432838515a137384e:run:BUR-RUN-20260807T101915Z-5ec325afbe:transport-roundtrip-binding-reproduction",
+        "observed_at": "2026-08-07T10:40:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 158
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability",
+    "transport"
+  ],
+  "rollback": {
+    "strategy": "Den revisionsgebundenen Transport-Fix per normalem Revert zurücknehmen und die vorherige strengere Fail-closed-Semantik wiederherstellen; keine Challenge-, Lease- oder Audit-Historie löschen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Mutation-Challenge an exakten Zielaufruf stabil binden"
+}

@@ -84,6 +84,61 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "operator_live_closeout",
+      "source_ref": "github-pr:heimgewebe/bureau#1692@776a9366a1f4ee3b294b304708fa0105efb48ea2:674d2fb457d47cdc3cfd81c8d24b1abe4d3d1ac8",
+      "verified_at": "2026-08-07T10:19:02.976562Z",
+      "outcome": "implementation_merged_deployed_live_verified",
+      "task_sha256": "b9f22fe2b5415d86510f3c9e18920bb869d287838792a810aef6dc13c61da025",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "task_preimage_sha256": "27d2cd97e7a4c82c20abdf81938cdba5a44f8eed78e46b3ccd94ce9d18db074e",
+      "evidence": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1692,
+        "reviewed_head": "776a9366a1f4ee3b294b304708fa0105efb48ea2",
+        "merge_commit": "674d2fb457d47cdc3cfd81c8d24b1abe4d3d1ac8",
+        "current_main_commit": "1219220bea8f7d29d0b9679b6a9b0a522cfd6e0d",
+        "current_runtime_commit": "1219220bea8f7d29d0b9679b6a9b0a522cfd6e0d",
+        "current_registry_commit": "1219220bea8f7d29d0b9679b6a9b0a522cfd6e0d",
+        "runtime_manifest_sha256": "15e1050eab3438234cdf533cd31bef0121184c58a824731fd9ed219a23545722",
+        "registry_snapshot_tree_sha256": "90bfd157bda203c23989b27efa5e7a4050085ef339df5ef1645369c391f31ec9",
+        "required_ci": {
+          "registry-registration-preflight/freshness": "SUCCESS",
+          "validate (3.10)": "SUCCESS",
+          "validate (3.12)": "SUCCESS",
+          "CodeQL": "SUCCESS",
+          "Analyze (actions)": "SUCCESS",
+          "Analyze (python)": "SUCCESS"
+        },
+        "focused_test_count": 21,
+        "focused_test_file": "tests/test_status_projection.py",
+        "live_frontier": {
+          "selected": null,
+          "normal_eligible_task_count": 0,
+          "eligible_task_count": 0,
+          "health_blocks_normal_claim": false,
+          "lifecycle_mismatch": false,
+          "repair_task_candidates": []
+        },
+        "validation": [
+          "tests/test_status_projection.py: 21 passed on exact current main before closeout publication",
+          "git diff --check PASS",
+          "make validate PASS on the closeout head before publication",
+          "PR #1692 required CI gates PASS on the exact implementation head",
+          "implementation merge is contained in the exact deployed current Bureau main",
+          "current main, runtime manifest source and canonical Registry snapshot are commit-identical",
+          "fresh what-now readback exposes no selected task, no eligible task and no lifecycle repair candidate"
+        ],
+        "foreign_resource_mutation": false
+      },
+      "does_not_establish": [
+        "future runtime health",
+        "future GitHub main stability",
+        "new claim authority for terminal tasks",
+        "cleanup or deletion authority for foreign resources"
+      ]
     }
   },
   "priority": {
@@ -102,6 +157,6 @@
     "strategy": "Bei Dispatchregression den exakten Implementierungsmerge per normalem Revert-PR zurücknehmen und die letzte bekannte gesunde Bureau-Runtime wiederherstellen. Registry-/Queue-Status wird nicht künstlich zurückgesetzt."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Statusprojektion an effektiven Taskzustand binden"
 }

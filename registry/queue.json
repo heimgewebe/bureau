@@ -79,10 +79,11 @@
       "HEIMGEWEBE-RESILIENZ-V1-T019",
       "BUREAU-TRUTH-MODEL-V2-T020",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T073",
-      "OPERATOR-MACHINE-READABILITY-V1-T010",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T157"
+      "OPERATOR-MACHINE-READABILITY-V1-T010"
     ],
-    "now": []
+    "now": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T157"
+    ]
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

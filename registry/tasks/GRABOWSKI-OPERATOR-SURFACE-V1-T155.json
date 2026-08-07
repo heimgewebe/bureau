@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "`verification-stamp` ist explizit als read-only klassifiziert; `_command_mutates(SimpleNamespace(command=\"verification-stamp\"))` liefert false, während unbekannte Befehle weiterhin fail-closed als mutierend gelten.",
+      "id": "effect-classification"
+    },
+    {
+      "assertion": "Der kanonische Aufruf `bureau --json verification-stamp GRABOWSKI-OPERATOR-SURFACE-V1-T154` funktioniert ohne `--root` gegen den immutable Runtime-Snapshot und liefert den aktuellen revisionsgebundenen T154-Verification-Stamp statt `canonical-registry-read-only`.",
+      "id": "canonical-runtime-readback"
+    },
+    {
+      "assertion": "Regressionstests belegen, dass `verification-stamp` im kanonischen Runtime-Modus den read-only StateStore-Pfad nutzt und weder Registry- noch Coordination-State-Mutation autorisiert.",
+      "id": "no-write-regression"
+    },
+    {
+      "assertion": "Fokussierte Tests sowie `make validate` sind auf dem exakten finalen PR-Head grün; `git diff --check` ist sauber.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Der PR wird nur mit dem exakt geprüften Head über die Bureau-Merge-Queue gemergt; der Merge-Readback bestätigt diesen Head auf main.",
+      "id": "exact-merge"
+    },
+    {
+      "assertion": "Nach dem Merge ist die Bureau-Runtime auf einen Main-Commit konvergiert, der den Fix enthält, und der produktive `verification-stamp`-Readback für T154 ist erfolgreich.",
+      "id": "runtime-convergence"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die CLI-Effektklassifikation und den zugehörigen kanonischen Runtime-Regressionstest ändern. T002s v2.py/state_events.py und deren Tests nicht berühren; fremde Leases und Dirty-States unverändert lassen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/tests/test_canonical_registry_runtime.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den reproduzierten Bureau-Operatorfehler beheben, bei dem `verification-stamp` trotz rein lesender Semantik nicht in `_READ_ONLY_COMMANDS` steht und deshalb auf dem kanonischen immutable Runtime-Registry-Snapshot mit `canonical-registry-read-only` blockiert. Die Korrektur muss schmal bleiben, unbekannte Befehle weiter fail-closed behandeln, mit einem Regressionstest abgesichert, über die Merge-Queue integriert, deployed und am realen T154-Verification-Stamp nachgewiesen werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T155",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to modify T002-owned files",
+      "permission to release foreign T002 leases",
+      "automatic merge readiness before exact-head CI is green"
+    ],
+    "source_candidate": "candidate-1b70c7a2c6675214fc5ea857",
+    "source_runtime": "d2fcab722ed78dfae46859fe93ce95ce187d8e62",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T154",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1b70c7a2c6675214fc5ea857",
+      "event_id": 2985,
+      "event_created_at": "2026-08-07T06:02:21.827246Z",
+      "request_sha256": "dceae22802e8a3160181b5943cbc7364eadad242e75892ded51083536d87c062",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-runtime-reproduction",
+        "locator": "bureau:verification-stamp:t154:canonical-registry-read-only",
+        "observed_at": "2026-08-07T06:02:21.789524Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression den exakten Merge per neuem Revert-PR zurücknehmen. Keine T002-Ressourcen, fremden Leases oder Dirty-States übernehmen; die fail-closed Defaultklassifikation unbekannter Befehle muss erhalten bleiben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "verification-stamp als kanonische read-only Operatorabfrage freigeben"
+}

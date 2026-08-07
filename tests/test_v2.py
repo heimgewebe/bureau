@@ -173,6 +173,12 @@ def test_database_migrates_old_columns(tmp_path):
         CREATE TABLE task_status(
             task_id TEXT PRIMARY KEY,state TEXT,receipt_sha256 TEXT,updated_at TEXT
         );
+        CREATE TABLE events(
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,run_id TEXT,event_type TEXT,
+            payload_json TEXT,created_at TEXT
+        );
+        INSERT INTO events(run_id,event_type,payload_json,created_at)
+        VALUES(NULL,'run-heartbeat','{}','2026-08-01T00:00:00Z');
         """
     )
     connection.commit()
@@ -181,10 +187,22 @@ def test_database_migrates_old_columns(tmp_path):
     with store.connect() as migrated:
         run_columns = {row["name"] for row in migrated.execute("PRAGMA table_info(runs)")}
         status_columns = {row["name"] for row in migrated.execute("PRAGMA table_info(task_status)")}
+        event_columns = {row["name"] for row in migrated.execute("PRAGMA table_info(events)")}
+        legacy_event_version = migrated.execute(
+            "SELECT event_schema_version FROM events WHERE event_type='run-heartbeat'"
+        ).fetchone()[0]
+        baseline_count = migrated.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='state-projection-v1' "
+            "AND event_schema_version=1"
+        ).fetchone()[0]
         version = migrated.execute("PRAGMA user_version").fetchone()[0]
     assert {"plan_sha256", "dispatch_request_id", "external_state"} <= run_columns
     assert {"task_sha256", "plan_sha256"} <= status_columns
-    assert version == 3
+    assert "event_schema_version" in event_columns
+    assert legacy_event_version == 0
+    assert baseline_count == 1
+    assert version == 4
+    assert store.replay_projection()["matches_current"] is True
 
 
 def test_task_revision_makes_operational_receipt_stale(registry_factory, tmp_path, monkeypatch):
@@ -228,6 +246,36 @@ def test_completion_is_idempotent(registry_factory, tmp_path, monkeypatch):
     second = complete_run(registry, store, run["run_id"], {})
     assert second["idempotent"] is True
     assert second["receipt"]["receipt_sha256"] == first["receipt"]["receipt_sha256"]
+
+
+def test_claim_and_completion_projection_replays_current_state(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+
+    claimed = store.replay_projection()
+    assert claimed["matches_current"] is True
+    assert claimed["projection"]["runs"][run["run_id"]]["state"] == "assigned"
+    assert claimed["projection"]["claims"][run["run_id"]]
+    assert run["task_id"] not in claimed["projection"]["tasks"]
+
+    result = complete_run(
+        registry,
+        store,
+        run["run_id"],
+        {"proof": {"result": "passed"}},
+    )
+    completed = store.replay_projection()
+    assert completed["matches_current"] is True
+    assert completed["projection"]["runs"][run["run_id"]]["state"] == "succeeded"
+    assert completed["projection"]["claims"][run["run_id"]] == []
+    assert completed["projection"]["tasks"][run["task_id"]]["state"] == "verified"
+    assert (
+        completed["projection"]["acceptances"][run["run_id"]]["receipt_sha256"]
+        == result["receipt"]["receipt_sha256"]
+    )
 
 
 def test_completion_rejects_task_drift_after_claim(registry_factory, tmp_path, monkeypatch):

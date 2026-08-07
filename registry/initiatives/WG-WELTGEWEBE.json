@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "WG-WELTGEWEBE",
   "title": "Weltgewebe source-task materialization",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Materialize explicitly approved Weltgewebe source tasks into Bureau without reinterpreting the source repository status or creating a second source of truth.",
   "completion": [
@@ -25,6 +25,17 @@
       "weltgewebe_task_completion",
       "source_claim_truth",
       "autonomous_execution_permission"
-    ]
+    ],
+    "lifecycle_reconciliation_20260807": {
+      "previous_state": "active",
+      "recommended_state": "completion-ready",
+      "reason": "All materialized WG-WELTGEWEBE tasks are terminal; live lifecycle repair reported open_task_count=0.",
+      "registry_head_before_repair": "008c57576265091d17f6630d945789b4f50c75d1",
+      "source_candidate_id": "candidate-bdf4e8543ef068e3192615a5",
+      "source_event_id": 3011,
+      "materialized_tasks": {
+        "WG-DOCMETA-FRESHNESS-001": "verified"
+      }
+    }
   }
 }

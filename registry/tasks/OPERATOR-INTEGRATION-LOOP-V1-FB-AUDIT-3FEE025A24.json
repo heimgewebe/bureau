@@ -51,6 +51,55 @@
       "schema_version": 1,
       "scope_path": "docs/evidence",
       "time_bucket": "20672"
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "operator_live_closeout",
+      "source_ref": "bureau-run:BUR-RUN-20260807T101915Z-5ec325afbe@github-pr:heimgewebe/bureau#1701",
+      "verified_at": "2026-08-07T12:26:42Z",
+      "outcome": "no_change_audit_succeeded",
+      "task_sha256": "a6a3b7ff998edc80b18b48aa1973ac1d3fb5ff4aa6c4b90cee18c98fa3ed3710",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "task_preimage_sha256": "548161bff858864c061829f7094987270bb664e281c84597804e7ef31f38e0ea",
+      "evidence": {
+        "repository": "heimgewebe/bureau",
+        "run_id": "BUR-RUN-20260807T101915Z-5ec325afbe",
+        "run_state": "succeeded",
+        "worker_id": "chatgpt-20260807-1204-bureau-fallback-audit",
+        "audit_pull_request": 1701,
+        "audit_reviewed_head": "fb716a84f485dcf84b31b3c6992e56cd929a5ffe",
+        "audit_merge_commit": "a93c25b065f9089dc8e1536e1f0ff91a5d135f18",
+        "audit_evidence_path": "docs/evidence/operator-integration-loop-v1-fb-audit-3fee025a24-effective-state-dispatch-20260807.md",
+        "queue_closeout_pull_request": 1710,
+        "queue_closeout_merge_commit": "65bdf820a53ffe8a367e193734183b619460facb",
+        "current_bureau_main": "65bdf820a53ffe8a367e193734183b619460facb",
+        "current_bureau_contract_release": "65bdf820a53ffe8a367e193734183b619460facb",
+        "bureau_runtime_identity_sha256": "ae3eac9660e4a5ef58c611fb1693defa80c755dbb23e6f990e5cbf5008e67794",
+        "required_ci": {
+          "registry-registration-preflight/freshness": "SUCCESS",
+          "validate (3.10)": "SUCCESS",
+          "validate (3.12)": "SUCCESS",
+          "CodeQL": "SUCCESS",
+          "Analyze (actions)": "SUCCESS",
+          "Analyze (python)": "SUCCESS"
+        },
+        "validation": [
+          "run readback is succeeded with exact task_sha256 and plan_sha256",
+          "audit PR #1701 is merged on reviewed head fb716a84f485dcf84b31b3c6992e56cd929a5ffe",
+          "all required PR #1701 CI gates are green",
+          "audit evidence documents a passing negative regression test and no-change justification",
+          "queue closeout PR #1710 is merged and removes only this terminal audit fallback from the queue",
+          "current Bureau contract release matches current main 65bdf820a53ffe8a367e193734183b619460facb",
+          "foreign resources were not modified"
+        ],
+        "foreign_resource_mutation": false
+      },
+      "does_not_establish": [
+        "future runtime health",
+        "future GitHub main stability",
+        "automatic verification of unrelated fallback tasks",
+        "cleanup authority for foreign worktrees, branches or leases"
+      ]
     }
   },
   "priority": {
@@ -66,6 +115,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Audit one bounded Bureau contract"
 }

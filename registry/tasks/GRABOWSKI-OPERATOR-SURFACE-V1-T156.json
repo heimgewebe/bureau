@@ -1,0 +1,128 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein revisionsgebundener Test reproduziert, dass ein terminal verifizierter Task in einer Queue-Lane vorhanden sein kann, während der Claim-Pfad ihn als nicht eligible zurückweist.",
+      "id": "live-drift-reproduced"
+    },
+    {
+      "assertion": "Kanonische Queue-Erzeugung und -Validierung schließen terminale Taskzustände aus oder entfernen sie idempotent, ohne nichtterminale Reihenfolge unnötig zu verändern.",
+      "id": "terminal-pruning"
+    },
+    {
+      "assertion": "Queue-Readback und Grabowski-Pickup stützen die Eligibility auf dieselbe autoritative Registry-/StateStore-Wahrheit; widersprüchliche Evidenz erzeugt eine typisierte Drift-Diagnose statt eines Schein-Kandidaten.",
+      "id": "single-truth"
+    },
+    {
+      "assertion": "Keine fremden Runs, Leases, PR-Bindungen, Dirty-States oder historische Verification-Belege werden verändert.",
+      "id": "no-foreign-effects"
+    },
+    {
+      "assertion": "Fokustests sowie vollständige relevante Bureau-Validierung sind auf dem exakten Head grün; Wiederholung der Bereinigung ist idempotent.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Nach Integration enthält die kanonische Queue keine terminalen T148/T153-Projektionen mehr und ein frischer Grabowski-Pickup verschwendet keinen Claimversuch auf diese Tasks.",
+      "id": "live-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Queue-/Picker-Projektion und zugehörige Tests ändern. Keine fremden Runs, Leases, Dirty-States oder terminalen Taskbelege umschreiben.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py",
+      "path:/home/alex/repos/bureau/registry/queue.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Die kanonische Bureau-Queue so härten, dass terminale Tasks nicht weiter als now/next/later-Kandidaten erscheinen und Grabowski keine Claims auf bereits verifizierte Tasks verschwendet. Queue-Projektion, Picker und Readback müssen dieselbe autoritative Task-State-Wahrheit verwenden; Drift wird fail-closed diagnostiziert und idempotent bereinigt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T156",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to rewrite terminal task evidence",
+      "permission to release foreign leases",
+      "automatic merge authority"
+    ],
+    "live_reproduction": {
+      "canonical_registry_source_commit": "69db38b2c443f93f12259aedd29563c8ed8c0208",
+      "pickup_rejects": [
+        {
+          "reason": "state is verified",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T148"
+        },
+        {
+          "reason": "state is verified",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T153"
+        }
+      ],
+      "queue_contains": [
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T148",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T153"
+      ]
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6fff40bf35a49c631fad1f64",
+      "event_id": 3006,
+      "event_created_at": "2026-08-07T08:39:34.774282Z",
+      "request_sha256": "3acf5573141d59c2971fe910c6c8fcd0a53a639dd2c3dd91e32c03fc6ca57422",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-runtime-reproduction",
+        "locator": "grabowski:bureau-pickup:terminal-queue-drift:69db38b2c443",
+        "observed_at": "2026-08-07T08:29:06Z",
+        "sha256": "b68978ad3a192bd775c6b2f861444a2f424233728552a0c6f4695d5962256137"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-07",
+    "source": "live Grabowski operator readback"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "grabowski",
+    "python",
+    "testing",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "Nur Queue-/Picker-Härtung per revisionsgebundenem Revert zurücknehmen; terminale Taskbelege und fremde Laufzeitressourcen unverändert lassen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Terminale Queue-Projektionen vor Grabowski-Pickup bereinigen"
+}

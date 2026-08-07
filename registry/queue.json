@@ -82,9 +82,7 @@
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T073",
       "OPERATOR-MACHINE-READABILITY-V1-T010"
     ],
-    "now": [
-      "BUREAU-TRUTH-MODEL-V2-T027"
-    ]
+    "now": []
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

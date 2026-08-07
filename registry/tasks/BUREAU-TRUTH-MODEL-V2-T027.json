@@ -1,0 +1,107 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Repository-Bälle und claim-task-Empfehlungen verwenden für Dispatchentscheidungen den effektiven Taskzustand statt des bloßen Registryzustands.",
+      "id": "effective-state-dispatch"
+    },
+    {
+      "assertion": "Ein Task mit Registryzustand ready und hash-/plangebundenem effektiven StateStore-Zustand verified erzeugt weder einen eligible repository ball noch eine claim-task-Empfehlung.",
+      "id": "terminal-overlay-regression"
+    },
+    {
+      "assertion": "Nichtterminale effektive ready-Aufgaben bleiben unverändert dispatchbar; echte Blocker, Queue-Lanes und Akzeptanzbedingungen werden nicht abgeschwächt.",
+      "id": "nonterminal-behavior-preserved"
+    },
+    {
+      "assertion": "Fokussierte Regressionstests, git diff --check, vollständiges make validate, exakter Head-Review und alle Pflicht-CI-Gates sind grün.",
+      "id": "validation-and-review"
+    },
+    {
+      "assertion": "Der exakt geprüfte Head wird regelkonform gemergt; falls die Bureau-Runtime Codepublikation benötigt, wird exakt der Mergecommit ausgerollt. Ein frischer Live-Readback zeigt für die zuvor widersprüchlichen terminalen Queue-Reste keine claim-task-Empfehlung und keinen ready/eligible Repository-Ball.",
+      "id": "merge-deploy-live-readback"
+    },
+    {
+      "assertion": "Erst nach Merge-, Deployment- und Livebeleg wird T027 mit Primärevidenz terminalisiert; fremde Queue-Leases, Dirty-States und Prozesse bleiben unangetastet.",
+      "id": "bureau-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat im aktuellen Taskgraph-Reparaturlauf ausdrücklich die Behebung widersprüchlicher Projektionen einschließlich Tests, PR, grüner CI, Merge, erforderlicher Publikation/Deployment und Frontier-Readback beauftragt. Queue- oder Akzeptanzsemantik wird nicht gelockert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/status_projection.py",
+      "path:/home/alex/repos/bureau/tests/test_status_projection.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Die Bureau-Statusprojektion so korrigieren, dass Repository-Bälle und claim-task-Empfehlungen den autoritativen effektiven StateStore-Zustand verwenden. Terminal verifizierte Queue-Reste dürfen niemals als ready oder claimbar erscheinen, während nichtterminale ready-Aufgaben unverändert dispatchbar bleiben.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T027",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "Queue-Bereinigung selbst",
+      "neue Claimautorität für terminale Tasks",
+      "Erlaubnis zur Abschwächung echter Dependencies oder Akzeptanz",
+      "automatische Merge- oder Deploymentbereitschaft"
+    ],
+    "source_finding": {
+      "candidate_id": "candidate-3235245866091bed07701490",
+      "event_id": 3003,
+      "live_registry_commit": "69db38b2c443f93f12259aedd29563c8ed8c0208",
+      "local_fix_commit": "04543350fde2757df00f04f49756c60f2dcaa52c"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3235245866091bed07701490",
+      "event_id": 3003,
+      "event_created_at": "2026-08-07T08:19:57.254536Z",
+      "request_sha256": "ac2374e6ed5f4534192e51457ff602d11fdb5e868e2a718d061b73dee587c01c",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-live-audit",
+        "locator": "bureau:status-projection:effective-state-vs-frontier",
+        "observed_at": "2026-08-07T08:12:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Bei Dispatchregression den exakten Implementierungsmerge per normalem Revert-PR zurücknehmen und die letzte bekannte gesunde Bureau-Runtime wiederherstellen. Registry-/Queue-Status wird nicht künstlich zurückgesetzt."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Statusprojektion an effektiven Taskzustand binden"
+}

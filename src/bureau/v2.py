@@ -6165,8 +6165,7 @@ def _canonical_snapshot_identity_valid(
         return False
     source_commit = manifest.get("source_commit")
     return (
-        runtime_identity.get("registry_selection") == "canonical-runtime-default"
-        and compatibility.get("status") == "canonical-read-only"
+        compatibility.get("status") == "canonical-read-only"
         and compatibility.get("mutation_allowed") is False
         and module.get("source_kind") == "immutable-release"
         and manifest.get("valid") is True

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -12,6 +13,7 @@ from types import SimpleNamespace
 from runtime_approval import write_runtime_approval_intent
 
 from bureau import cli as bureau_cli
+from bureau import runtime_identity as runtime_identity_module
 from bureau.runtime_identity import (
     SCHEDULER_NAMES,
     _package_tree_sha256,
@@ -123,10 +125,49 @@ def test_manifest_bound_release_matches_registry(tmp_path: Path, monkeypatch) ->
         encoding="utf-8",
     )
     monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST", str(manifest))
+    git(root, "remote", "set-url", "origin", "git@github.com:heimgewebe/bureau.git")
     identity = bureau_runtime_identity(root, module_path=module)
     assert identity["compatibility"]["status"] == "compatible"
     assert identity["module"]["source_kind"] == "immutable-release"
     assert identity["manifest"]["observed_package_tree_sha256"] == tree_sha256
+
+
+def test_manifest_bound_release_rejects_local_clone_origin_provenance(
+    tmp_path: Path, monkeypatch
+) -> None:
+    source = tmp_path / "source"
+    init_repo(source)
+    clone = tmp_path / "clone"
+    subprocess.run(["git", "clone", str(source), str(clone)], check=True, capture_output=True)
+    head = git(clone, "rev-parse", "HEAD")
+    assert git(clone, "remote", "get-url", "origin") == str(source)
+    assert git(clone, "rev-parse", "origin/main") == head
+    module = tmp_path / "release/src/bureau/runtime_identity.py"
+    module.parent.mkdir(parents=True)
+    module.write_text("# release\n", encoding="utf-8")
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "_manifest_identity",
+        lambda _module: {
+            "available": True,
+            "valid": True,
+            "source_commit": head,
+            "canonical_registry": {},
+        },
+    )
+    identity = bureau_runtime_identity(clone, module_path=module)
+    assert identity["registry"]["origin_main_provenance"] == "local-ref-without-fetch"
+    assert identity["registry"]["origin_repository"] is None
+    assert identity["registry"]["origin_url"] is None
+    assert identity["external_remote"]["configured_origin_url"] is None
+    assert identity["external_remote"]["freshness"] == "not-observed"
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert identity["compatibility"]["reason_codes"] == ["registry-origin-repository-mismatch"]
+    git(clone, "remote", "set-url", "origin", "git@github.com:heimgewebe/bureau.git")
+    rebound = bureau_runtime_identity(clone, module_path=module)
+    assert rebound["registry"]["origin_repository"] == "heimgewebe/bureau"
+    assert rebound["compatibility"]["status"] == "compatible"
+    assert rebound["compatibility"]["mutation_allowed"] is True
 
 
 def test_package_tree_digest_includes_cycle_scheduler_sources(tmp_path: Path) -> None:
@@ -275,6 +316,7 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     git(source, "commit", "-m", "source")
     git(source, "remote", "add", "origin", str(source / ".git"))
     git(source, "fetch", "origin", "main:refs/remotes/origin/main")
+    git(source, "remote", "set-url", "origin", "git@github.com:heimgewebe/bureau.git")
     prefix = tmp_path / "runtime"
     bin_dir = tmp_path / "bin"
     command = [
@@ -289,7 +331,13 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     ]
     approval = write_runtime_approval_intent(source, tmp_path, label="identity")
     command.extend(["--approval-intent", str(approval)])
-    first = subprocess.run(command, check=True, capture_output=True, text=True)
+    first = subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
     first_receipt = json.loads(first.stdout)
     assert Path(first_receipt["receipt_path"]).is_file()
     deployment_manifest = json.loads(
@@ -311,7 +359,13 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
         assert (release_systemd / f"{name}.service").stat().st_mode & 0o777 == 0o444
         assert (release_systemd / f"{name}.timer").stat().st_mode & 0o777 == 0o444
         assert (release_systemd / "libexec" / name).stat().st_mode & 0o777 == 0o555
-    second = subprocess.run(command, check=True, capture_output=True, text=True)
+    second = subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
     second_receipt = json.loads(second.stdout)
     rollback = second_receipt["rollback"]
     assert Path(rollback["manifest"]).is_file()
@@ -400,7 +454,13 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     ]
     approval = write_runtime_approval_intent(source, tmp_path, label="symlink")
     command.extend(["--approval-intent", str(approval)])
-    blocked = subprocess.run(command, check=False, capture_output=True, text=True)
+    blocked = subprocess.run(
+        command,
+        check=False,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    )
     assert blocked.returncode != 0
     assert "launcher is a symlink" in blocked.stderr
     assert launcher.is_symlink()
@@ -411,6 +471,7 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
         check=True,
         capture_output=True,
         text=True,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
     receipt = json.loads(migrated.stdout)
     assert launcher.is_file()

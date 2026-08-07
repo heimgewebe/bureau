@@ -23,12 +23,17 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from . import legacy
+from .runtime_identity import (
+    CANONICAL_GITHUB_REPOSITORY,
+    github_repository_from_remote,
+)
 
 if TYPE_CHECKING:
     from .v2 import Registry
 
 CAPSULE_SCHEMA_VERSION = 1
 DEFAULT_FRESHNESS_SECONDS = 900
+DEFAULT_CANONICAL_REMOTE_URL = "git@github.com:heimgewebe/bureau.git"
 DEFAULT_MAX_RUNS = 25
 MAX_ACTIVE_ITEMS = 100
 MAX_CAPSULE_BYTES = 1_000_000
@@ -285,9 +290,89 @@ def _safe_extract(archive: Path, destination: Path) -> None:
         handle.extractall(destination, filter="fully_trusted")
 
 
-def _archive_canonical_registry(repo: Path, destination: Path) -> dict[str, Any]:
+def _ls_remote_main(remote_url: str) -> str:
+    completed = subprocess.run(
+        ["git", "ls-remote", "--exit-code", remote_url, "refs/heads/main"],
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=15,
+        env=_git_environment(),
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or "git ls-remote failed"
+        raise CapsuleError(f"fresh remote main observation failed: {detail}")
+    lines = [line.split() for line in completed.stdout.splitlines() if line.strip()]
+    if len(lines) != 1 or len(lines[0]) != 2 or lines[0][1] != "refs/heads/main":
+        raise CapsuleError("fresh remote main observation is ambiguous")
+    commit = lines[0][0].casefold()
+    if len(commit) != 40 or any(ch not in "0123456789abcdef" for ch in commit):
+        raise CapsuleError("fresh remote main commit is invalid")
+    return commit
+
+
+def _observe_remote_main(
+    repo: Path,
+    expected_remote_url: str,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
     canonical = repo.expanduser().resolve()
-    head = _git(canonical, "rev-parse", "--verify", "origin/main^{commit}")
+    expected_repository = github_repository_from_remote(expected_remote_url)
+    if str(expected_repository or "").casefold() != CANONICAL_GITHUB_REPOSITORY:
+        raise CapsuleError(
+            "expected remote URL is not the canonical Bureau GitHub repository"
+        )
+    configured_url = _git(canonical, "remote", "get-url", "origin")
+    configured_repository = github_repository_from_remote(configured_url)
+    if str(configured_repository or "").casefold() != CANONICAL_GITHUB_REPOSITORY:
+        raise CapsuleError(
+            "configured origin is not the canonical Bureau GitHub repository"
+        )
+    observed = (now or _utc_now()).astimezone(timezone.utc)
+    return {
+        "repository": CANONICAL_GITHUB_REPOSITORY,
+        "expected_remote_url": expected_remote_url,
+        "configured_origin_url": configured_url,
+        "configured_repository": configured_repository,
+        "ref": "refs/heads/main",
+        "commit": _ls_remote_main(expected_remote_url),
+        "source": "git-ls-remote",
+        "observed_at": _timestamp(observed),
+        "freshness": "fresh-at-observation",
+    }
+
+
+def _archive_canonical_registry(
+    repo: Path,
+    destination: Path,
+    *,
+    expected_remote_url: str | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    canonical = repo.expanduser().resolve()
+    local_origin_main = _git(canonical, "rev-parse", "--verify", "origin/main^{commit}")
+    remote_provenance: dict[str, Any] | None = None
+    if expected_remote_url is not None:
+        remote_provenance = _observe_remote_main(
+            canonical, expected_remote_url, now=now
+        )
+        head = str(remote_provenance["commit"])
+        if local_origin_main != head:
+            raise CapsuleError(
+                "local origin/main differs from freshly observed GitHub main; "
+                "refusing canonical capsule"
+            )
+        source = "fresh-remote-main-bound-local-archive"
+        source_scope = "fresh-github-main-with-matching-local-object"
+        observed_ref = "refs/heads/main"
+        remote_freshness = "fresh-at-observation"
+    else:
+        head = local_origin_main
+        source = "local-origin-main-archive"
+        source_scope = "local-origin-main-without-fetch"
+        observed_ref = "origin/main"
+        remote_freshness = "not-observed"
     tree = _git(canonical, "rev-parse", f"{head}:registry")
     archive = destination / "registry.tar"
     completed = subprocess.run(
@@ -313,23 +398,24 @@ def _archive_canonical_registry(repo: Path, destination: Path) -> dict[str, Any]
     snapshot_root.mkdir(mode=0o700)
     _safe_extract(archive, snapshot_root)
     registry_sha256, file_count = _registry_digest(snapshot_root)
-    return {
-        "snapshot_root": snapshot_root,
-        "identity": {
-            "source": "local-origin-main-archive",
-            "source_scope": "local-origin-main-without-fetch",
-            "observed_ref": "origin/main",
-            "observed_ref_head": head,
-            "remote_freshness": "not-observed",
-            "root": str(canonical),
-            "git_head": head,
-            "registry_tree": tree,
-            "registry_sha256": registry_sha256,
-            "registry_json_files": file_count,
-            "dirty": False,
-            "canonical_repo": str(canonical),
-        },
+    identity = {
+        "source": source,
+        "source_scope": source_scope,
+        "observed_ref": observed_ref,
+        "observed_ref_head": head,
+        "remote_freshness": remote_freshness,
+        "local_origin_main": local_origin_main,
+        "root": str(canonical),
+        "git_head": head,
+        "registry_tree": tree,
+        "registry_sha256": registry_sha256,
+        "registry_json_files": file_count,
+        "dirty": False,
+        "canonical_repo": str(canonical),
     }
+    if remote_provenance is not None:
+        identity["remote_provenance"] = remote_provenance
+    return {"snapshot_root": snapshot_root, "identity": identity}
 
 
 def _state_db_path(state_db: Path | None, state_root: Path | None) -> Path:
@@ -693,6 +779,7 @@ def build_capsule(
     state_db: Path | None = None,
     state_root: Path | None = None,
     canonical_repo: Path | None = None,
+    expected_remote_url: str | None = None,
     output: Path | None = None,
     freshness_seconds: int = DEFAULT_FRESHNESS_SECONDS,
     max_runs: int = DEFAULT_MAX_RUNS,
@@ -719,7 +806,12 @@ def build_capsule(
     with tempfile.TemporaryDirectory(prefix="bureau-status-capsule-") as temp_dir:
         temporary = Path(temp_dir)
         if canonical_repo is not None:
-            archived = _archive_canonical_registry(canonical_repo, temporary)
+            archived = _archive_canonical_registry(
+                canonical_repo,
+                temporary,
+                expected_remote_url=expected_remote_url,
+                now=created,
+            )
             resolved_root = archived["snapshot_root"]
             registry_identity = archived["identity"]
         else:
@@ -748,6 +840,7 @@ def build_capsule(
         )
     repo_balls = _compact_repo_balls(projection.get("repository_balls", {}))
     repo_summary = Counter(str(item.get("status")) for item in repo_balls.values())
+    remote_observed = registry_identity.get("remote_freshness") == "fresh-at-observation"
     body = {
         "schema_version": CAPSULE_SCHEMA_VERSION,
         "kind": "bureau-status-capsule",
@@ -761,11 +854,11 @@ def build_capsule(
         "registry": registry_identity,
         "collector": _collector_identity(),
         "observation_scope": {
-            "registry": "local-origin-main-without-fetch",
+            "registry": registry_identity["source_scope"],
             "state_store": "consistent-read-only-sqlite-backup",
-            "github": "not-observed",
+            "github": "fresh-git-ls-remote" if remote_observed else "not-observed",
             "grabowski": "not-required",
-            "network": "not-used",
+            "network": "git-ls-remote-only" if remote_observed else "not-used",
         },
         "state_store": {
             key: value
@@ -793,7 +886,12 @@ def build_capsule(
             "baseline_probe": "skipped-for-bounded-read-only-capsule",
         },
         "last_successful_snapshot": previous,
-        "does_not_establish": list(DOES_NOT_ESTABLISH),
+        "does_not_establish": [
+            item
+            for item in DOES_NOT_ESTABLISH
+            if not (remote_observed and item == "remote_origin_freshness")
+        ]
+        + (["future_remote_origin_freshness"] if remote_observed else []),
     }
     sealed = _seal(body)
     size = len(_pretty_bytes(sealed))
@@ -831,6 +929,7 @@ def write_capsule(
     state_db: Path | None = None,
     state_root: Path | None = None,
     canonical_repo: Path | None = None,
+    expected_remote_url: str | None = None,
     freshness_seconds: int = DEFAULT_FRESHNESS_SECONDS,
     max_runs: int = DEFAULT_MAX_RUNS,
     now: datetime | None = None,
@@ -851,6 +950,7 @@ def write_capsule(
             state_db=state_db,
             state_root=state_root,
             canonical_repo=canonical_repo,
+            expected_remote_url=expected_remote_url,
             output=path,
             freshness_seconds=freshness_seconds,
             max_runs=max_runs,
@@ -969,6 +1069,7 @@ def parser() -> argparse.ArgumentParser:
     write.add_argument("--state-db")
     write.add_argument("--state-root")
     write.add_argument("--canonical-repo")
+    write.add_argument("--expected-remote-url")
     write.add_argument("--output")
     write.add_argument("--freshness-seconds", type=int, default=DEFAULT_FRESHNESS_SECONDS)
     write.add_argument("--max-runs", type=int, default=DEFAULT_MAX_RUNS)
@@ -1005,6 +1106,11 @@ def main(argv: list[str] | None = None) -> int:
                 state_root=Path(args.state_root).expanduser() if args.state_root else None,
                 canonical_repo=(
                     Path(args.canonical_repo).expanduser() if args.canonical_repo else None
+                ),
+                expected_remote_url=(
+                    args.expected_remote_url
+                    if args.expected_remote_url
+                    else DEFAULT_CANONICAL_REMOTE_URL if args.canonical_repo else None
                 ),
                 freshness_seconds=args.freshness_seconds,
                 max_runs=args.max_runs,

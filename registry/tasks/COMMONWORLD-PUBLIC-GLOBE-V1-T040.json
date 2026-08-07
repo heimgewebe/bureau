@@ -87,6 +87,116 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-08-07T06:32:12Z",
+    "outcome": "Commonworld PR #197 implemented an append-only content-addressed release lifecycle, immutable existing-snapshot verification and digest-bound lifecycle evidence. The exact reviewed head 45d2fc291ef815bbbd039f71e00af4ee9b12559e passed focused tests, full repository validation, browser smoke and all required GitHub checks, then merged as 43e773a9f118865d4177a763c2c6eae23db04487. GitHub Pages and production readback verified that exact merge commit and complete release snapshot; the post-merge main validation including browser smoke also passed. The remaining repository-growth trade-off is explicitly tracked by COMMONWORLD-PUBLIC-GLOBE-V1-T043.",
+    "validated_acceptance": {
+      "reproducible-conflict-model": {
+        "result": "PASS",
+        "summary": "A real temporary two-branch Git fixture reproduces the legacy delete-and-replace lifecycle with 36 unmerged generated paths and proves the append-only replacement merges with 0 unmerged paths; semantic source conflicts remain normal fail-closed Git conflicts.",
+        "evidence_refs": [
+          "git:heimgewebe/commonworld@45d2fc291ef815bbbd039f71e00af4ee9b12559e:docs/evidence/release-snapshot-lifecycle-v1.json",
+          "git:heimgewebe/commonworld@45d2fc291ef815bbbd039f71e00af4ee9b12559e:scripts/validate_release_snapshot_lifecycle.py"
+        ]
+      },
+      "conflict-resistant-release-lifecycle": {
+        "result": "PASS",
+        "summary": "The release builder no longer deletes releases/. It retains the common ancestor, appends a hash-named snapshot through a staging rename and verifies an already existing content-addressed snapshot byte-for-byte and file-set-for-file-set or fails closed. No semantic merge driver was introduced.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#197",
+          "git:heimgewebe/commonworld@45d2fc291ef815bbbd039f71e00af4ee9b12559e:scripts/build_page_release_manifest.py",
+          "git:heimgewebe/commonworld@45d2fc291ef815bbbd039f71e00af4ee9b12559e:docs/architecture/release-snapshot-lifecycle.contract.json"
+        ]
+      },
+      "deterministic-retention-and-readback": {
+        "result": "PASS",
+        "summary": "Historical release directories are retained, the current release remains selected by assets/commonworld-page-builds.json, current snapshot bytes are checked against source output, and exact GitHub Pages plus production-readback verification succeeded for merge commit 43e773a9f118865d4177a763c2c6eae23db04487 and release 651c62f84db1d7d6fab4.",
+        "evidence_refs": [
+          "github-actions:heimgewebe/commonworld:pages:31153508531",
+          "github-actions:heimgewebe/commonworld:production-readback:31153508960",
+          "git:heimgewebe/commonworld@43e773a9f118865d4177a763c2c6eae23db04487"
+        ]
+      },
+      "fresh-evidence-contract": {
+        "result": "PASS",
+        "summary": "Lifecycle evidence is bound to current release, delivery evidence hashes and a digest-defined proposed-head input scope. The validator rejects stale status, source-input digests, scope digests and delivery-evidence hashes; regression coverage explicitly proves source-digest invalidation.",
+        "evidence_refs": [
+          "git:heimgewebe/commonworld@45d2fc291ef815bbbd039f71e00af4ee9b12559e:docs/evidence/release-snapshot-lifecycle-v1.json#scope=58d28ddb813899ab06c7e49b3a2978e546fc04d08762b56e9e7af1282ff4143d",
+          "git:heimgewebe/commonworld@45d2fc291ef815bbbd039f71e00af4ee9b12559e:tests/test_release_snapshot_lifecycle.py"
+        ]
+      },
+      "regression-and-closeout": {
+        "result": "PASS",
+        "summary": "Focused lifecycle/cache tests passed 19/19; full make validate passed 175 JavaScript and 712 Python tests; final local browser smoke passed; PR #197 contained only 10 files (+685/-14), was CLEAN and mergeable, and all required validate/CodeQL checks passed on exact head. Post-merge main validation including failure-safe browser smoke also passed. One retained snapshot measured about 5.03 MB; bounded-retention/external-artifact alternatives remain follow-up T043 rather than being hidden.",
+        "evidence_refs": [
+          "grabowski-task:5494c7a34ff94989bc121922",
+          "github-actions:heimgewebe/commonworld:validate:31152136441",
+          "github-actions:heimgewebe/commonworld:codeql:31152133670",
+          "github-actions:heimgewebe/commonworld:validate:31153508959",
+          "bureau-task:COMMONWORLD-PUBLIC-GLOBE-V1-T043"
+        ]
+      }
+    },
+    "verification": {
+      "source": "github_pr_and_exact_postmerge_validation",
+      "repository": "heimgewebe/commonworld",
+      "implementation_base": "da2cb883b7c7562d236f679fbb435834aed0684c",
+      "reviewed_head": "45d2fc291ef815bbbd039f71e00af4ee9b12559e",
+      "merge_commit": "43e773a9f118865d4177a763c2c6eae23db04487",
+      "merged_at": "2026-08-07T06:18:53Z",
+      "current_release_id": "651c62f84db1d7d6fab4",
+      "proposed_head_scope_sha256": "58d28ddb813899ab06c7e49b3a2978e546fc04d08762b56e9e7af1282ff4143d",
+      "conflict_reproduction": {
+        "legacy_unmerged_path_count": 36,
+        "append_only_unmerged_path_count": 0
+      },
+      "local_validation": {
+        "focused_tests": "PASS; 19/19",
+        "make_validate": "PASS; 175 JavaScript and 712 Python tests",
+        "browser_smoke": "PASS",
+        "browser_smoke_task": "5494c7a34ff94989bc121922",
+        "git_diff_check": "PASS",
+        "self_review": "PASS; complete final 10-file diff inspected, generated releases/pages absent from the PR diff, no remaining material finding; independence not claimed"
+      },
+      "github_required_checks": {
+        "pull_request_validate": {
+          "run_id": 31152136441,
+          "result": "success"
+        },
+        "pull_request_codeql": {
+          "run_id": 31152133670,
+          "result": "success"
+        }
+      },
+      "postmerge": {
+        "observed_main": "43e773a9f118865d4177a763c2c6eae23db04487",
+        "validate_run": {
+          "id": 31153508959,
+          "result": "success"
+        },
+        "production_readback_run": {
+          "id": 31153508960,
+          "result": "success",
+          "exact_pages_and_public_content": "PASS",
+          "complete_path_keyed_release_snapshot": "PASS"
+        },
+        "pages_deployment_run": {
+          "id": 31153508531,
+          "result": "success"
+        }
+      },
+      "tradeoff": {
+        "measured_current_snapshot_bytes": 5031395,
+        "assessment": "Append-only history removes the observed generated rename/delete conflict class but grows retained repository history per distinct release; Git object compression may reduce packed growth.",
+        "followup_task": "COMMONWORLD-PUBLIC-GLOBE-V1-T043",
+        "followup_registration_pr": "heimgewebe/bureau#1680"
+      },
+      "reconciliation": {
+        "reason": "T040 remained planned because the implementation was performed under direct user authorization after the canonical pickup path correctly rejected an unqueued planned task. No Bureau run or current verification existed, so verification-stamp correctly refused to invent one. Registry truth is reconciled only now, after exact PR, merge, Pages, production-readback and post-merge validation evidence became terminal.",
+        "pre_reconciliation_task_file_sha256": "2ebee99cd67e30a0cff3865b237bc28d9012be7db3d984f4b138d06c1a2dffd9"
+      },
+      "task_sha256": "cabe6e5edec2ba1e9c8c8e4ad16cf4bf467a88fde53707ab4ff4f922522c4de9",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
     }
   },
   "priority": {
@@ -108,6 +218,6 @@
     "strategy": "If the new lifecycle weakens release retention, deterministic readback or deployment compatibility, revert its source, CI and generated-manifest changes together and restore the previous release-generation contract; retain the conflict reproduction as a regression test for a revised design."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Make generated release snapshots conflict-resistant"
 }

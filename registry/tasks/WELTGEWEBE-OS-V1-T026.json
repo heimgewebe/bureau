@@ -29,7 +29,27 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_auto_provision_write_path.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_domain_account_write_path.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_domain_backfill.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_domain_edge_write_path.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_domain_node_write_path.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_domain_read_path.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_domain_schema_migrations.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_governance.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_multi_instance_foundation.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_passkey_fk_readiness.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_passkey_schema_preflight.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_passkey_store_persistence.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_semantic_search_foundation.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_semantic_search_projection_worker.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_session_store_persistence.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_webauthn_user_id_backfill_audit.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/sqlx_postgres_direct_session_crud.rs",
+      "path:/home/alex/repos/weltgewebe/scripts/ci/run-postgres-integration-proofs.sh"
+    ]
   },
   "goal": "WG-AUD-TEST-001 beheben: Der gebündelte PostgreSQL-Integrationsproof soll seine disposable Datenbankkonvention einheitlich durchsetzen, PostgreSQL- und JetStream-Voraussetzungen vorab fail-fast prüfen oder selbst provisionieren und Testdienste zuverlässig aufräumen.",
   "id": "WELTGEWEBE-OS-V1-T026",

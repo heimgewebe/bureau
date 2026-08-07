@@ -4,9 +4,9 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "TaskSpec-Revisionen in den StateStore überführen",
   "goal": "Taskdefinitionen und ihre unveränderlichen Revisionen in den StateStore aufnehmen. Neue Registrierung und Änderung laufen über idempotente TaskSpec-Revisionen; Git-Taskdateien bleiben während der Migration überprüfbare Kompatibilitätsprojektion und Archiv, nicht parallele Laufzeitwahrheit.",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 50
   },
   "depends_on": [

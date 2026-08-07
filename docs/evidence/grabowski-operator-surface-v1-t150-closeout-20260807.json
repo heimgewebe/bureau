@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "kind": "bureau_task_verification_evidence",
+  "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T150",
+  "decision": "verified",
+  "observed_at": "2026-08-07T06:55:00Z",
+  "registry_base": {
+    "repository": "heimgewebe/bureau",
+    "commit": "27385fd8d5df04c808542121c4f828762c098970",
+    "snapshot_commit": "d332fd4efc4858f1c64fc40a1c9e260ec4cc2086",
+    "task_state": "ready",
+    "task_sha256": "96d49ed605bb1bcb2a51d6abe3f7da60dd4912ba7a032a41aad7d5b79d8be632",
+    "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+    "queue_projection": {
+      "queued": false,
+      "formal_pickup_result": "task is not queued",
+      "frontier_contains_task": false,
+      "stale_verified_task_in_frontier": "GRABOWSKI-OPERATOR-SURFACE-V1-T153"
+    },
+    "doctor": {
+      "healthy": false,
+      "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+      "initiative_consistent": true,
+      "initiative_declared_state": "active",
+      "initiative_recommended_state": "active",
+      "task_state": "ready"
+    },
+    "registration_pr": 1635,
+    "registration_merge_commit": "0aea67f6249d2a48e4793488d95923dbd054a5ed"
+  },
+  "implementation": {
+    "repository": "heimgewebe/grabowski",
+    "pull_request": 659,
+    "pr_head": "3bb594d2851e9d7388af5bd1f9ca046e57ed0d64",
+    "merge_commit": "cdb0a474d32264f94694e9ae049d480a50c301d7",
+    "changed_paths": [
+      "docs/generated/operator-context.v1.json",
+      "src/grabowski_self_deploy.py",
+      "tests/test_self_deploy.py"
+    ],
+    "validation": {
+      "focused_self_deploy_tests": "78/78 pass",
+      "make_validate": "5003 pass, 14 skipped",
+      "make_deploy_check": "pass",
+      "git_diff_check": "pass",
+      "self_review": "pass, five iterations",
+      "github_required_checks": "green before merge"
+    },
+    "binding": {
+      "bureau_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T150",
+      "registry_pr": 1635,
+      "postmerge_open_pr_frontier_reservation": false
+    }
+  },
+  "exact_merge_deployment": {
+    "unit": "grabowski-job-382295c9afd6",
+    "expected_head": "cdb0a474d32264f94694e9ae049d480a50c301d7",
+    "repo_head": "cdb0a474d32264f94694e9ae049d480a50c301d7",
+    "release_id": "cdb0a474d322-srcset67edab00d9e5-locke6664d600b6c-contract46ba648f01da",
+    "final_status": "completed",
+    "finalization_receipt_valid": true,
+    "receipt_sha256": "43b3a5fc87b995c564adeca62157b8e0cacab9a27dc5f1578a8c3eb47769ccae",
+    "payload_sha256": "727097f78bf0cd45bfe6804293f66480c09f653a9a7fc921dbd81dd0f1866c45",
+    "write_audit_schedule_record_sha256": "64b6751a97a816a6d929c9dac4630cf99382d5ed99651b6840f315fbb2e6d80a"
+  },
+  "live_double_schedule_proof": {
+    "target_head": "6b2b1a70423e3fccf68c75432b44bef17a02579d",
+    "unit": "grabowski-job-a3d0d03659d0",
+    "argv_sha256": "10bb3cf30e23313961f79a42ee496a403cb1489cda0cb2703c003f77ff4a14b1",
+    "source_a": {
+      "identity_sha256": "5fc66ff6e1d6b85f5f1d8be5c20f6c595ea5fe9c29d3d840532dff3425ffd791",
+      "scheduled": true,
+      "already_scheduled": false
+    },
+    "source_b": {
+      "identity_sha256": "00c48f0b1508754515feafecb312ca93a35063aa36aff60a10c91160e1d70c5d",
+      "already_scheduled": true,
+      "reused_across_source_identity": true,
+      "effective_source_identity_sha256": "5fc66ff6e1d6b85f5f1d8be5c20f6c595ea5fe9c29d3d840532dff3425ffd791"
+    },
+    "final_status": "completed",
+    "finalization_receipt_valid": true,
+    "receipt_sha256": "fa039f1e6e608afc7c7d18dfc1e6860f4aa7c8dceb79d3c20cae50bbe994bb9b",
+    "payload_sha256": "8997221253a3a2b8c714afea55bc276448ba14e9ba7546030a5eba271ff61032"
+  },
+  "runtime_readback": {
+    "healthy": true,
+    "deployment_complete": true,
+    "deployment_integrity_valid": true,
+    "kill_switch": false,
+    "repo_head": "6b2b1a70423e3fccf68c75432b44bef17a02579d",
+    "release_id": "6b2b1a70423e-srcsetb8a9dcf2953e-locke6664d600b6c-contract46ba648f01da-attempt1",
+    "merge_commit_is_ancestor": true
+  },
+  "acceptance": {
+    "source-and-binding-exact": {
+      "status": "passed",
+      "evidence": "PR #659 exact head/paths and Bureau-Task binding read live; registration PR #1635 is merged; merged PR no longer appears as an open-PR binding reservation."
+    },
+    "foreign-state-untouched": {
+      "status": "passed",
+      "evidence": "Canonical dirty Grabowski/Bureau checkouts were not mutated; only clean T150-related paths with exact owner leases were used."
+    },
+    "current-main-and-projections": {
+      "status": "passed",
+      "evidence": "PR head included deterministic operator-context projection; merge commit is ancestor of current origin/main 6b2b1a70423e."
+    },
+    "dedupe-contract-preserved": {
+      "status": "passed",
+      "evidence": "Focused tests and live proof preserve separation while deduplicating canonical repository+head across source identities."
+    },
+    "validation-and-review-green": {
+      "status": "passed",
+      "evidence": "78/78 focused tests, 5003+14 validate, deploy-check, diff-check and five-iteration self-review passed on exact PR tree; required GitHub checks were green before merge."
+    },
+    "exact-head-merge": {
+      "status": "passed",
+      "evidence": "PR #659 merged exact head 3bb594d2851e9d7388af5bd1f9ca046e57ed0d64 as cdb0a474d32264f94694e9ae049d480a50c301d7."
+    },
+    "exact-deployment": {
+      "status": "passed",
+      "evidence": "Persistent job receipt 43b3a5fc binds successful canonical self-deploy and runtime head exactly to merge commit cdb0a474."
+    },
+    "live-double-schedule-proof": {
+      "status": "passed",
+      "evidence": "Two distinct source identities targeting 6b2b1a70423e reused exactly one unit grabowski-job-a3d0d03659d0; source B returned reused_across_source_identity=true."
+    },
+    "postmerge-closeout": {
+      "status": "passed",
+      "evidence": "After implementation merge/deploy, task, registration PR, Registry, Doctor and Frontier were re-read; this evidence is hash-bound for terminal registry publication."
+    }
+  },
+  "does_not_establish": [
+    "global Bureau Doctor health",
+    "repair of unrelated open PR/frontier blockers",
+    "existence of a canonical Bureau run receipt for T150; no run was fabricated because queue projection omitted the ready task",
+    "future Grabowski self-deploy correctness after later code changes"
+  ],
+  "evidence_sha256": "c02466f644d388dba238eccdd02e77bee211e9832e9c621e94c4e1527fd6c7f7"
+}

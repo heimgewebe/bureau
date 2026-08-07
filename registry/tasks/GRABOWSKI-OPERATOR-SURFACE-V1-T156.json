@@ -1,0 +1,131 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Für source.kind=automation existiert ein expliziter versionierter Terminalevidenzvertrag oder der Producer bindet künftig eine bereits unterstützte evidence-bearing Source; bloße Checkout-Abwesenheit, Retention-Ablauf oder Lease-Abwesenheit genügen nie.",
+      "id": "automation-source-contract"
+    },
+    {
+      "assertion": "Jede akzeptierte Automations-Terminalevidenz ist an die exakte source_id, einen unveränderlichen Receipt-Digest, einen terminalen Outcome und die relevante Ausführungsidentität gebunden; frei übergebene Statusbehauptungen werden abgelehnt.",
+      "id": "source-id-and-outcome-bound"
+    },
+    {
+      "assertion": "Der aktuelle Orphan c7fea37b2569b5b7752fceb16b55e367cd118fa323ae0a1d6050f14cf84453d7 wird nur dann terminal reconciled, wenn für bureau-frontier-entblockung-20260806T1519Z eine passende unveränderliche Terminalquelle gefunden wird. Andernfalls bleibt er blockierend und wird diagnostisch als fehlende Automation-Terminalevidenz ausgewiesen.",
+      "id": "historical-orphan-fail-closed"
+    },
+    {
+      "assertion": "Regressionstests beweisen, dass fehlender Git-Worktree, abgelaufene Retention, fehlende aktive Lease, gemergter Base-Commit oder ein vollständiges worktree-ensure Receipt einzeln oder gemeinsam keine Automations-Terminalität begründen.",
+      "id": "no-absence-inference"
+    },
+    {
+      "assertion": "Neue automation-gebundene managed Checkouts erhalten bereits beim Erzeugen eine nachvollziehbare spätere Terminalquelle oder werden fail-closed abgelehnt, wenn der Producer keinen solchen Vertrag liefern kann.",
+      "id": "future-producer-binding"
+    },
+    {
+      "assertion": "Preview/Apply, Preview-TTL, exakte Checkout-/Owner-/Head-/Branch-Bindung, frischer Koordinationsreadback, CAS, Audit-Receipt sowie das Verbot von Archiv-, Cleanup-, Branch- und Ref-Löschautorität bleiben unverändert erhalten.",
+      "id": "t140-boundaries-preserved"
+    },
+    {
+      "assertion": "Gezielte Source-/Checkout-Regressionstests und die vollständige Grabowski-Validierung bestehen; nach Merge und Deploy zeigt ein Live-Readback entweder den exakt belegten extern terminalen Zustand des aktuellen Orphans oder weiterhin einen eindeutigen fail-closed Blocker ohne Cleanup-Autorität.",
+      "id": "validation-and-live-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T140"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den source-spezifischen Terminalevidenzvertrag und seine Producer-/Reconciliation-Integration erweitern. Keine historische Terminalität erfinden, keine fremden Worktrees/Branches/Leases übernehmen oder löschen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_checkout_terminal_sources.py",
+      "component:src/grabowski_checkout_terminal_reconciliation.py",
+      "component:src/grabowski_checkouts.py",
+      "component:src/grabowski_worktree_ensure.py",
+      "component:tests/test_checkouts.py",
+      "component:docs/checkout-lifecycle.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bestehenden T140-Vertrag für verschwundene managed Checkouts so ergänzen, dass lifecycle bindings mit source.kind=automation nur auf Basis einer dauerhaften, source-id- und outcome-gebundenen Terminalevidenz sicher reconciled werden können. Falls aktuelle Automationsproduzenten keine solche Terminalquelle besitzen, muss der Erzeugungspfad künftig eine unterstützte evidence-bearing Source binden oder einen versionierten Automations-Receipt-Vertrag einführen; historische Bindungen ohne Terminalbeleg bleiben ausdrücklich blockierend.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T156",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "terminality of bureau-frontier-entblockung-20260806T1519Z",
+      "permission to modify or delete the historical branch",
+      "permission to remove lifecycle or retention evidence",
+      "queue admission or automatic dispatch"
+    ],
+    "live_evidence": {
+      "checkout_key": "c7fea37b2569b5b7752fceb16b55e367cd118fa323ae0a1d6050f14cf84453d7",
+      "checkout_path": "/home/alex/repos/.bureau-worktrees/automation-frontier-20260806T1519Z",
+      "expected_branch": "automation/frontier-unblock-20260806-1519",
+      "expected_head": "6d67025b0f8324318365fcd39c75e7d1aeaeda00",
+      "observed_gap": "automation is not present in grabowski_checkout_terminal_sources._OBSERVERS",
+      "owner_id": "chatgpt-frontier-20260806T1519Z",
+      "reconciliation_snapshot_sha256": "3876ab92d58b0c3a6481b15e40090a6994ab5cee52557da1564fd94cca1c3802",
+      "source_id": "bureau-frontier-entblockung-20260806T1519Z",
+      "source_kind": "automation",
+      "t140_source_observers": [
+        "bureau_task",
+        "operator_obligation",
+        "thread_focus",
+        "github_issue"
+      ],
+      "worktree_ensure_file_sha256": "7fd496c4517d247fd8816716d8e053e365811ef043b7467b864e00d43d0881bf",
+      "worktree_ensure_receipt_sha256": "2818fb24066c869b63a6c60ed99a1e7c4f20e89b91e76bd3460832335ef7e98f"
+    },
+    "registered_at": "2026-08-07T08:35:00Z",
+    "source": "Live checkout-binding reconciliation during autonomous Grabowski/Bureau cleanup.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b77ba49022014b3c166bad40",
+      "event_id": 3005,
+      "event_created_at": "2026-08-07T08:25:56.325625Z",
+      "request_sha256": "479cea09261236704b3b411edca96afbc43d8797fb17b33e5851f44a3f374b06",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski_checkout_binding_reconciliation",
+        "locator": "checkout_key=c7fea37b2569b5b7752fceb16b55e367cd118fa323ae0a1d6050f14cf84453d7 path=/home/alex/repos/.bureau-worktrees/automation-frontier-20260806T1519Z branch=automation/frontier-unblock-20260806-1519",
+        "observed_at": "2026-08-07T08:22:02Z",
+        "sha256": "3876ab92d58b0c3a6481b15e40090a6994ab5cee52557da1564fd94cca1c3802"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 156
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "checkout-lifecycle",
+    "recovery"
+  ],
+  "rollback": {
+    "strategy": "Den Automation-Source-Vertrag beziehungsweise Producer-Binding-Fix per normalem Revert zurücknehmen. Historische unsupported automation bindings bleiben weiterhin fail-closed sichtbar; keine Lifecycle-, Retention-, Branch- oder Recovery-Evidenz löschen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Automation-Checkout-Quellen terminalevidenzfähig machen"
+}

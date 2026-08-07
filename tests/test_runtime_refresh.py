@@ -393,6 +393,97 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
         )
 
 
+def test_prepare_intent_omits_stable_launchers_and_requires_only_drift(tmp_path: Path) -> None:
+    observed, manifest_path = candidate(tmp_path)
+    prefix = (tmp_path / "prefix").resolve()
+    bin_dir = (tmp_path / "bin").resolve()
+    bin_dir.mkdir(parents=True)
+    for name, entrypoint in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS:
+        path = bin_dir / name
+        path.write_bytes(refresh.stable_launcher_bytes(manifest_path, entrypoint))
+        path.chmod(0o755)
+
+    state_root = (tmp_path / "stable-state").resolve()
+    intent, _ = refresh.prepare_intent(
+        candidate=observed,
+        state_root=state_root,
+        prefix=prefix,
+        bin_dir=bin_dir,
+        remote_url="file:///tmp/bureau.git",
+        authorized_by="chatgpt",
+        authorization="Explicit stable-launcher migration approval.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id="BUR-STABLE-LAUNCHER-TEST",
+        now=NOW,
+    )
+    launcher_keys = {f"path:{bin_dir / name}" for name, _ in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS}
+    assert launcher_keys.isdisjoint(intent["required_resource_keys"])
+
+    status_capsule = bin_dir / "bureau-status-capsule"
+    status_capsule.write_text("corrupt\n", encoding="utf-8")
+    drift_state = (tmp_path / "drift-state").resolve()
+    drift_intent, _ = refresh.prepare_intent(
+        candidate=observed,
+        state_root=drift_state,
+        prefix=prefix,
+        bin_dir=bin_dir,
+        remote_url="file:///tmp/bureau.git",
+        authorized_by="chatgpt",
+        authorization="Explicit launcher repair approval.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id="BUR-STABLE-LAUNCHER-REPAIR",
+        now=NOW,
+    )
+    assert f"path:{status_capsule}" in drift_intent["required_resource_keys"]
+    assert f"path:{bin_dir / 'bureau'}" not in drift_intent["required_resource_keys"]
+    assert (
+        f"path:{bin_dir / 'bureau-runtime-refresh'}"
+        not in drift_intent["required_resource_keys"]
+    )
+
+
+def test_apply_blocks_launcher_drift_absent_from_intent_before_observer(tmp_path: Path) -> None:
+    observed, manifest_path = candidate(tmp_path)
+    prefix = (tmp_path / "prefix").resolve()
+    bin_dir = (tmp_path / "bin").resolve()
+    bin_dir.mkdir(parents=True)
+    for name, entrypoint in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS:
+        path = bin_dir / name
+        path.write_bytes(refresh.stable_launcher_bytes(manifest_path, entrypoint))
+        path.chmod(0o755)
+    state_root = (tmp_path / "state").resolve()
+    intent, intent_path = refresh.prepare_intent(
+        candidate=observed,
+        state_root=state_root,
+        prefix=prefix,
+        bin_dir=bin_dir,
+        remote_url="file:///tmp/bureau.git",
+        authorized_by="chatgpt",
+        authorization="Explicit drift-gate approval.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id="BUR-STABLE-LAUNCHER-DRIFT",
+        now=NOW,
+    )
+    status_capsule = bin_dir / "bureau-status-capsule"
+    status_capsule.write_text("drifted\n", encoding="utf-8")
+    binding, resource_db = lease_for(tmp_path / "drift-leases", intent)
+    with pytest.raises(refresh.RuntimeRefreshError) as error:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=state_root,
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("observer must not run after launcher drift"),
+        )
+    assert error.value.code == "launcher-drift-after-intent"
+    assert error.value.details["resource_keys"] == [f"path:{status_capsule}"]
+
+
 def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
     observed, _ = candidate(tmp_path)
     intent, intent_path = refresh.prepare_intent(
@@ -1200,11 +1291,11 @@ def test_installer_wrapper_selects_refresh_entrypoint_and_backs_up_both(
     installer = load_installer_module()
     rendered = installer.wrapper(
         tmp_path / "deployment-manifest.json",
-        "a" * 64,
         "bureau.runtime_refresh",
     ).decode()
     assert "importlib.import_module('bureau.runtime_refresh')" in rendered
     assert installer.MANAGED_MARKER in rendered
+    assert "manifest payload digest mismatch" in rendered
 
     prefix = tmp_path / "prefix"
     manifest = prefix / "deployment-manifest.json"
@@ -1365,6 +1456,123 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
     deployed_head = git(clean, "rev-parse", "HEAD")
     assert payload["deployed_source_commit"] == deployed_head
 
+    launcher_hashes = {
+        path.name: refresh.sha256_bytes(path.read_bytes())
+        for path in (bureau, runner, bin_dir / "bureau-status-capsule")
+    }
+    repeated_approval = write_runtime_approval_intent(
+        clean,
+        tmp_path,
+        label="stable-launcher-repeat",
+    )
+    repeated = subprocess.run(
+        [
+            *command,
+            "--approval-intent",
+            str(repeated_approval),
+            "--replace-existing",
+        ],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert repeated.returncode == 0, repeated.stderr
+    repeated_receipt = json.loads(repeated.stdout.strip().splitlines()[-1])
+    assert repeated_receipt["launcher_written"] is False
+    assert repeated_receipt["runtime_refresh_launcher_written"] is False
+    assert repeated_receipt["status_capsule_launcher_written"] is False
+    assert launcher_hashes == {
+        path.name: refresh.sha256_bytes(path.read_bytes())
+        for path in (bureau, runner, bin_dir / "bureau-status-capsule")
+    }
+
+    status_capsule = bin_dir / "bureau-status-capsule"
+    stable_status_capsule = status_capsule.read_bytes()
+    manifest_before_launcher_drift = (prefix / "deployment-manifest.json").read_bytes()
+    drift_approval = write_runtime_approval_intent(
+        clean,
+        tmp_path,
+        label="stable-launcher-drift",
+    )
+    status_capsule.write_text("drifted launcher\n", encoding="utf-8")
+    drift_blocked = subprocess.run(
+        [
+            *command,
+            "--approval-intent",
+            str(drift_approval),
+            "--replace-existing",
+            "--enforce-launcher-allowlist",
+        ],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert drift_blocked.returncode != 0
+    assert "launcher mutation is not covered" in drift_blocked.stderr
+    assert (prefix / "deployment-manifest.json").read_bytes() == manifest_before_launcher_drift
+    assert status_capsule.read_text(encoding="utf-8") == "drifted launcher\n"
+    status_capsule.write_bytes(stable_status_capsule)
+    status_capsule.chmod(0o755)
+
+    symlink_target = tmp_path / "status-capsule-symlink-target"
+    symlink_target.write_text("legacy symlink target\n", encoding="utf-8")
+    status_capsule.unlink()
+    status_capsule.symlink_to(symlink_target)
+    symlink_approval = write_runtime_approval_intent(
+        clean,
+        tmp_path,
+        label="stable-launcher-symlink-repair",
+    )
+    symlink_repair = subprocess.run(
+        [
+            *command,
+            "--approval-intent",
+            str(symlink_approval),
+            "--replace-existing",
+            "--enforce-launcher-allowlist",
+            "--allowed-launcher-path",
+            str(status_capsule),
+        ],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert symlink_repair.returncode == 0, symlink_repair.stderr
+    symlink_receipt = json.loads(symlink_repair.stdout.strip().splitlines()[-1])
+    assert symlink_receipt["launcher_written"] is False
+    assert symlink_receipt["runtime_refresh_launcher_written"] is False
+    assert symlink_receipt["status_capsule_launcher_written"] is True
+    assert status_capsule.is_file() and not status_capsule.is_symlink()
+    assert status_capsule.read_bytes() == stable_status_capsule
+
+    manifest_payload = json.loads((prefix / "deployment-manifest.json").read_text())
+    manifest_payload["source_commit"] = "f" * 40
+    (prefix / "deployment-manifest.json").write_bytes(refresh.canonical_bytes(manifest_payload))
+    tampered = subprocess.run(
+        [str(bureau), "--json", "check"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert tampered.returncode != 0
+    assert "manifest payload digest mismatch" in tampered.stderr
+    repeated = subprocess.run(
+        [
+            *command,
+            "--approval-intent",
+            str(repeated_approval),
+            "--replace-existing",
+        ],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert repeated.returncode == 0, repeated.stderr
+
     readme = clean / "README.md"
     readme.write_text(
         readme.read_text(encoding="utf-8") + "\nLegacy refresh cutover fixture.\n",
@@ -1478,6 +1686,13 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
     )
     assert legacy_install.returncode == 0, legacy_install.stderr
     legacy_receipt = json.loads(legacy_install.stdout.strip().splitlines()[-1])
+    assert legacy_receipt["launcher_written"] is False
+    assert legacy_receipt["runtime_refresh_launcher_written"] is False
+    assert legacy_receipt["status_capsule_launcher_written"] is False
+    assert launcher_hashes == {
+        path.name: refresh.sha256_bytes(path.read_bytes())
+        for path in (bureau, runner, status_capsule)
+    }
     assert (
         legacy_receipt["runtime_approval"]["required_level"]
         == "legacy_runtime_operator_gate"

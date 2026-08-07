@@ -72,6 +72,72 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "f17a8900a0321ce935c934ae40a1bf21bfd3580370d299e05c34e6ff0ea0b7f9",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "source": "merged_pr_and_ci_closeout",
+      "closeout_mode": "direct-user-authorized-fallback-post-merge-reconciliation",
+      "verified_at": "2026-08-07T19:12:53.044954Z",
+      "canonical_bureau_run": null,
+      "implementation": {
+        "repository": "heimgewebe/repoground",
+        "pull_request": 1112,
+        "base_commit": "5da2ce47593af1afaea719f1d319f2bc6457b57e",
+        "head_commit": "c282dfaccb4d51e680823b71350fbe8e08bd75a3",
+        "merge_commit": "1634b55183447fa6e846e231a0b1e6880039fc17",
+        "merged_at": "2026-07-28T05:39:17Z",
+        "current_main_readback": "ba1bda950ea23c987fba7a3f38537854a566c5e6"
+      },
+      "validation": {
+        "pr_local_evidence": {
+          "frontdoor_guard": "4 passed",
+          "focused_selection": "16 passed",
+          "ai_context_validator": "success",
+          "ruff": "success",
+          "git_diff_check": "passed"
+        },
+        "head_ci": {
+          "CodeQL": "success",
+          "test-suite": "success",
+          "task-index": "success",
+          "wgx-guard": "success",
+          "Frontend Parity Guard": "success",
+          "Doc-Freshness (diagnostic v0)": "success",
+          "ai-context guard": "success",
+          "lint": "success",
+          "contracts-validate": "success"
+        },
+        "current_readback": {
+          "repoground_commit": "ba1bda950ea23c987fba7a3f38537854a566c5e6",
+          "publication_freshness": "fresh_exact",
+          "bundle_health": "pass",
+          "guard_path": "tests/test_agent_frontdoor_metadata.py"
+        }
+      },
+      "acceptance_evidence": {
+        "frontdoor-link": "Merged PR #1112 replaces the broken planned-client blueprint reference with docs/blueprints/repoground-cli-operational-blueprint.md; the current guard asserts explicit AGENTS.md document links exist and keeps merger/repoground/cli/serve.py as service launcher.",
+        "operating-flow": "Current AGENTS.md contains Bind live state -> Choose a task profile -> Read RepoGround evidence -> Plan in the agent -> Execute through Grabowski -> Read back reality plus explicit stop/nonclaim semantics.",
+        "wgx-identity": "Current .wgx/profile.yml declares profile repoground, class knowledge-compiler, RepoGround description/tags and RepoGround task output; the regression guard rejects active lenskit/repolens identity.",
+        "ai-context-semantics": "Current .ai-context.yml defines visibility_semantics, Python >=3.11 as minimum_supported and CI-certified Python 3.12.",
+        "drift-guard": "tests/test_agent_frontdoor_metadata.py covers missing AGENTS links, operating-flow/launcher boundary, active WGX identity and AI-context semantics; PR-head test-suite and related CI checks succeeded."
+      },
+      "execution_reconciliation": {
+        "canonical_pickup_attempted": false,
+        "canonical_pickup_result": "not_attempted_health_blocked_and_unqueued",
+        "reason": "Authoritative Bureau frontier showed T015 planned but absent from registry/queue.json while normal claims were globally health-blocked; the already-merged implementation was therefore reconciled without fabricating a retroactive claim or run.",
+        "fallback_authority": "direct user authorization in this conversation",
+        "retroactive_claim_created": false,
+        "bureau_run_created": false
+      },
+      "does_not_establish": [
+        "retroactive Bureau claim or run existence",
+        "runtime semantic correctness beyond observed metadata/frontdoor surfaces",
+        "test sufficiency beyond the recorded local and CI gates",
+        "future correctness after later repository changes",
+        "deployment of this closeout TaskSpec until a cumulative Bureau runtime refresh completes"
+      ]
     }
   },
   "priority": {
@@ -86,6 +152,6 @@
     "github-actions"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Agenten-Frontdoor und aktive RepoGround-Metadaten konsistent machen"
 }

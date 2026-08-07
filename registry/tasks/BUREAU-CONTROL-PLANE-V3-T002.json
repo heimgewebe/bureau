@@ -86,7 +86,7 @@
       "inventory_gate": {
         "schema_version": 1,
         "required_source_head": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
-        "required_runtime_binding": "deployed Bureau source commit equals the merge commit that contains PR 1647",
+        "required_runtime_binding": "deployed Bureau source commit contains the PR 1647 merge commit as an ancestor and is itself an ancestor of current Bureau main",
         "required_observation": {
           "status": "complete",
           "complete": true,
@@ -108,17 +108,38 @@
             "repository_head": "6cbecfa8754a17383be24397bbdddbe2dc1d8832",
             "role": "fresh pre-merge live read-only observation proving the historical live hash is not stable"
           }
-        ]
+        ],
+        "postmerge_observation": {
+          "observed_at": "2026-08-07T00:42:12Z",
+          "current_bureau_main": "f7f7a6c20fcb37ae4143f4757b42d8f817d5f130",
+          "deployment_source_commit": "29c42b6444a4a1d9854b860adb515a5087beaf1b",
+          "deployment_installed_at": "2026-08-07T00:27:52.228423+00:00",
+          "dependency_merge_commit": "aa079c765a796848ba3a04eb5a3348db5b9ea680",
+          "dependency_merge_ancestor_of_deployment": true,
+          "deployment_source_ancestor_of_current_main": true,
+          "inventory_sha256": "6e0e210747e81db761b588dfec47013d0112c5a7450df6df1c3c217b0f7da930",
+          "status": "complete",
+          "complete": true,
+          "read_only": true,
+          "summary_error_count": 0,
+          "state_store_integrity": "ok",
+          "state_store_schema_version": 3,
+          "systemd_live_available": true
+        }
       },
-      "required_before_merge": "PR 1647 merged through the merge queue; the deployed Bureau source commit equals that merge commit; and a fresh read-only inventory satisfies inventory_gate.required_observation. Its fresh inventory_sha256 is recorded as evidence but is not compared with a historical live hash.",
-      "queue_admission": "deferred",
+      "required_before_merge": "PR 1647 is merged; the deployed Bureau source contains its exact merge commit as an ancestor; and a fresh inventory from that immutable deployed release satisfies inventory_gate.required_observation.",
+      "queue_admission": "deferred_to_postmerge_canonical_refill",
       "queue_blocker_pull_request": 1646,
       "does_not_establish": [
-        "PR 1647 merge or deployment",
         "T002 Queue admission",
         "T002 claim or execution",
-        "permission to modify PR 1646 or another owner's Queue branch"
-      ]
+        "permission to modify unrelated Queue paths or foreign resources"
+      ],
+      "dependency_task_sha256": "6546d7025a88204a54c09d41fdc9da079f6aa0114e5bfa89233234c0d707186c",
+      "dependency_state_source": "state_store.task_status",
+      "dependency_merge_commit": "aa079c765a796848ba3a04eb5a3348db5b9ea680",
+      "dependency_merged_at": "2026-08-06T23:42:31Z",
+      "queue_blocker_pull_request_state": "merged"
     },
     "does_not_establish": [
       "Merge- oder Deploymentabschluss",

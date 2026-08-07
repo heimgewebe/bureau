@@ -69,6 +69,93 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "closeout_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bd55bb6d9db1337ed9745c3d",
+      "event_id": 4124,
+      "event_created_at": "2026-08-07T16:07:00.565200Z",
+      "request_sha256": "887ac1c507992c6e1aadd1665eefa9090325ebea774d0fd735b2aac8249c69a8",
+      "source": {
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/repoground#1167@ba1bda950ea23c987fba7a3f38537854a566c5e6",
+        "freshness": "unknown",
+        "sha256": null,
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "retroactive_claim_authority",
+        "bureau_run_existence",
+        "queue_truth",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "0d4d1e4cf92bcce3ac3732b13b989d9fcd9f5e22e9cbfe3c64d7f4efe268150d",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "source": "merged_pr_and_ci_closeout",
+      "closeout_mode": "direct-user-authorized-fallback-post-merge-reconciliation",
+      "verified_at": "2026-08-07T16:19:55.749160Z",
+      "canonical_bureau_run": null,
+      "implementation": {
+        "repository": "heimgewebe/repoground",
+        "pull_request": 1167,
+        "base_commit": "08d5691dd65c1ee7e48a259dbfd4377eed12b015",
+        "head_commit": "3dbc80cfb7fd6df8adc7a55ef8e8dc2b54063dce",
+        "merge_commit": "ba1bda950ea23c987fba7a3f38537854a566c5e6",
+        "merged_at": "2026-08-07T16:04:38Z"
+      },
+      "validation": {
+        "doctor_tests": {
+          "passed": 10,
+          "failed": 0
+        },
+        "focused_tests": {
+          "passed": 46,
+          "failed": 0
+        },
+        "pytest_full": "success",
+        "release_candidate": "success",
+        "browser_tests": "success",
+        "ruff": "success",
+        "maintainability_ratchet": "success",
+        "codeql": "success",
+        "contracts_validation": "success",
+        "ai_context_guard": "success",
+        "parity_gate": "success",
+        "forensic_preflight": "success",
+        "doc_freshness": "success",
+        "git_diff_check": "passed"
+      },
+      "acceptance_evidence": {
+        "doctor-surface": "Merged Doctor provides human and JSON checks for Python, local Git, SQLite/FTS5, jsonschema, existing bundle catalog selection, manifest health, local freshness, tracked MCP config/starter and optional wrapper/structure adapters.",
+        "status-semantics": "Each check emits available, degraded or blocked plus stable id, cause, impact, allowed next action, bounded evidence and nonclaims; optional adapter degradation is separated and does not lower required core status.",
+        "no-repair-default": "Machine-readable mutation boundary is read_only and disables network sync, package install, bundle refresh, Git/service mutation and secret reads with writes=[].",
+        "bootstrap-doc": "GETTING_STARTED documents CPython 3.12 source checkout with hash-locked runtime/dev setup, explicit upgrade boundary, project MCP starter and exact-manifest first bundle readback without inventing a PyPI/Wheel contract.",
+        "negative-tests": "Ten dedicated Doctor tests cover missing jsonschema, broken FTS5, ambiguous catalog, stale bundle, missing starter, MCP symlink rejection, valid binding, optional adapters, summary boundary and CLI exits; broader T017 selection passes 46 tests."
+      },
+      "execution_reconciliation": {
+        "canonical_pickup_attempted": true,
+        "canonical_pickup_result": "rejected_no_eligible_task",
+        "reason": "T017 was planned and absent from registry/queue.json; unrelated queue lease was preserved.",
+        "fallback_authority": "direct user authorization in this conversation",
+        "retroactive_claim_created": false,
+        "bureau_run_created": false
+      },
+      "does_not_establish": [
+        "remote freshness",
+        "runtime semantic correctness",
+        "repository understanding or answer correctness",
+        "test sufficiency beyond observed gates",
+        "service reachability",
+        "semantic completeness of optional adapters",
+        "Rust/Bash adapter implementation",
+        "automatic repair authority",
+        "future correctness after later repository changes"
+      ]
     }
   },
   "priority": {
@@ -83,6 +170,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "RepoGround Doctor und capabilitygebundener Bootstrap"
 }

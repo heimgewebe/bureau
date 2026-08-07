@@ -93,6 +93,52 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "9afe5ed672fb10276b4d89f08875d1c75c9242889c62de40d4b0f46b0680d935",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "source": "merged_pr_and_ci_closeout",
+      "verified_at": "2026-08-07T13:39:47Z",
+      "implementation": {
+        "repository": "heimgewebe/repoground",
+        "pull_request": 1166,
+        "base_commit": "be022b1f40f9955f17001d426a655d4f427531c0",
+        "head_commit": "a10fbdbc4c872c9eb0fe2d2b3554c39a36f515cd",
+        "merge_commit": "08d5691dd65c1ee7e48a259dbfd4377eed12b015",
+        "merged_at": "2026-08-07T12:57:22Z"
+      },
+      "validation": {
+        "focused_tests": {
+          "passed": 211,
+          "skipped": 10,
+          "failed": 0
+        },
+        "pytest_full": "success",
+        "release_candidate": "success",
+        "browser_tests": "success",
+        "ruff": "success",
+        "codeql": "success",
+        "contracts_validation": "success",
+        "ai_context_guard": "success",
+        "parity_gate": "success",
+        "forensic_preflight": "success",
+        "git_diff_check": "passed"
+      },
+      "acceptance_evidence": {
+        "qualified-call-resolution": "The fixed Python call-graph goldset passes all 13 cases, including direct, imported-alias and module-qualified calls while dynamic and ambiguous cases remain explicitly unresolved or ambiguous.",
+        "coverage-confidence-contract": "call_graph_coverage_confidence reports resolved/candidate/ambiguous/unresolved ratios and causes, task-profile assessments and explicit insufficiency caveats; skipped Python files force insufficient confidence.",
+        "config-schema-relations": "The T020 structural fixture proves separate provenance-bound declares_config, references_config and validates_schema relations; these never become Python calls or constructs edges.",
+        "graph-goldset": "The fixed T020 goldset binds the Python call-graph goldset and structural fixtures; S1 precision and target recall are 1.0 with zero false positives and false negatives in the recorded proof.",
+        "bounded-regressions": "The fixed 50k-call benchmark preserves byte-equivalent responses, measures 308.438 ms index build and 53.131 ms indexed warm batch versus 811.245 ms linear warm batch (~15.27x); full PR CI is green.",
+        "truth-boundary": "The proof explicitly limits the model to observed static Python call edges and denies runtime truth, completeness, test sufficiency, out-of-model change impact, review completeness and merge readiness."
+      },
+      "does_not_establish": [
+        "runtime call truth",
+        "automatic Config/Workflow evidence collection",
+        "performance on every machine or repository",
+        "future correctness after later repository changes"
+      ]
     }
   },
   "priority": {
@@ -107,6 +153,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Call-Graph-Auflösung, Konfidenz und Config-/Schema-Wirkung härten"
 }

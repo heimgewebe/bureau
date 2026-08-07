@@ -51,6 +51,77 @@
       "schema_version": 1,
       "scope_path": "src/bureau",
       "time_bucket": "20672"
+    },
+    "verification": {
+      "schema_version": 1,
+      "outcome": "succeeded",
+      "verified_at": "2026-08-07T14:16:02Z",
+      "source": "operator_live_closeout",
+      "source_ref": "bureau-run:BUR-RUN-20260807T122056Z-16592db2bb",
+      "task_sha256": "3399689d8a2dc1b38f5ac283c7ee99e3c5694ff2c14a5330b859a4e9bde58833",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "task_preimage_sha256": "0d9a67d08d87aa4c3dcf8bde690cd487257196af9229efd8a785790b4eac1e96",
+      "acceptance_results": {
+        "maintenance-1": true,
+        "maintenance-2": true,
+        "maintenance-3": true
+      },
+      "evidence": {
+        "run": {
+          "run_id": "BUR-RUN-20260807T122056Z-16592db2bb",
+          "state": "succeeded",
+          "task_sha256": "3399689d8a2dc1b38f5ac283c7ee99e3c5694ff2c14a5330b859a4e9bde58833",
+          "worker_id": "chatgpt-20260807-1419-bureau-maintenance",
+          "updated_at": "2026-08-07T12:43:59.294027Z"
+        },
+        "reproduction": {
+          "pre_fix_source_commit": "65bdf820a53ffe8a367e193734183b619460facb",
+          "pre_fix_result": "fully bound canonical snapshot with registry_selection=explicit-root returned False",
+          "reviewed_head": "92b3eea52e047b9d5e47293275a4af421c4034be",
+          "post_fix_result": "same exact reproducer returned True"
+        },
+        "implementation_pr": {
+          "repository": "heimgewebe/bureau",
+          "number": 1714,
+          "reviewed_head": "92b3eea52e047b9d5e47293275a4af421c4034be",
+          "merge_commit": "4bacc5a3d1e9cf32e57807bb6d5a45b6d3d08063",
+          "merged_at": "2026-08-07T12:53:16Z",
+          "self_review_comment": "https://github.com/heimgewebe/bureau/pull/1714#issuecomment-5217230203",
+          "scope": [
+            "src/bureau/v2.py"
+          ]
+        },
+        "validation": {
+          "focused_result": "2 passed",
+          "tests_test_v2": "passed to 100%",
+          "tests_test_v2_receipt_sha256": "c0c0dbae87b192a92d1e6d45969ec3f2ac60a9c3372dcc5c04254a3b0c9c2444",
+          "ruff": "passed",
+          "github_required_checks": [
+            "validate (3.10): SUCCESS",
+            "validate (3.12): SUCCESS"
+          ],
+          "github_security_checks": [
+            "CodeQL: SUCCESS",
+            "Analyze (actions): SUCCESS",
+            "Analyze (python): SUCCESS",
+            "registry-registration-preflight/freshness: SUCCESS"
+          ]
+        },
+        "deployment": {
+          "runtime_source_commit": "2c0bbf3a686d1e5daa0a0d7f1b808b6bb7704f91",
+          "runtime_release": "2c0bbf3a686d-src0677106917ff",
+          "canonical_registry_source_commit": "2c0bbf3a686d1e5daa0a0d7f1b808b6bb7704f91",
+          "canonical_registry_tree_sha256": "f06bb73eb6e64c70a80059d73b74649157353e5ee6a4eb671f60d9b081bef38f",
+          "manifest_valid": true,
+          "state_integrity": "ok",
+          "implementation_merge_is_ancestor": true
+        },
+        "does_not_establish": [
+          "future runtime health",
+          "permission to alter foreign work",
+          "claim authority for unrelated tasks"
+        ]
+      }
     }
   },
   "priority": {
@@ -65,6 +136,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Perform one bounded Bureau maintenance repair"
 }

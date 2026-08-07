@@ -14,7 +14,9 @@ from pathlib import Path
 import pytest
 
 from bureau.status_capsule import (
+    DEFAULT_CANONICAL_REMOTE_URL,
     CapsuleError,
+    _archive_canonical_registry,
     _atomic_json,
     _compact_repo_balls,
     _safe_extract,
@@ -170,6 +172,86 @@ def test_atomic_write_resolves_parent_alias_before_publication(tmp_path, monkeyp
     }))
 
     assert observed["path"] == real_parent.resolve() / "capsule.json"
+
+def test_canonical_archive_binds_fresh_remote_main_provenance(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, _state_root, _output, head = setup_capsule_sources(
+        registry_factory, tmp_path
+    )
+    git(root, "remote", "add", "origin", DEFAULT_CANONICAL_REMOTE_URL)
+    from bureau import status_capsule as module
+
+    monkeypatch.setattr(module, "_ls_remote_main", lambda _url: head)
+    destination = tmp_path / "snapshot"
+    destination.mkdir()
+    archived = _archive_canonical_registry(
+        root,
+        destination,
+        expected_remote_url=DEFAULT_CANONICAL_REMOTE_URL,
+        now=NOW,
+    )
+    identity = archived["identity"]
+    remote = identity["remote_provenance"]
+    assert identity["source"] == "fresh-remote-main-bound-local-archive"
+    assert identity["source_scope"] == "fresh-github-main-with-matching-local-object"
+    assert identity["remote_freshness"] == "fresh-at-observation"
+    assert identity["local_origin_main"] == head
+    assert remote["repository"] == "heimgewebe/bureau"
+    assert remote["configured_repository"] == "heimgewebe/bureau"
+    assert remote["commit"] == head
+    assert remote["source"] == "git-ls-remote"
+    assert remote["observed_at"] == "2026-07-12T10:00:00Z"
+
+
+def test_canonical_archive_rejects_local_clone_origin_as_github_truth(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, _state_root, _output, head = setup_capsule_sources(
+        registry_factory, tmp_path
+    )
+    git(root, "remote", "add", "origin", str(root))
+    from bureau import status_capsule as module
+
+    monkeypatch.setattr(module, "_ls_remote_main", lambda _url: head)
+    destination = tmp_path / "snapshot"
+    destination.mkdir()
+    with pytest.raises(
+        CapsuleError,
+        match="configured origin is not the canonical Bureau GitHub repository",
+    ):
+        _archive_canonical_registry(
+            root,
+            destination,
+            expected_remote_url=DEFAULT_CANONICAL_REMOTE_URL,
+            now=NOW,
+        )
+
+
+def test_canonical_archive_rejects_stale_local_origin_main(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, _state_root, _output, head = setup_capsule_sources(
+        registry_factory, tmp_path
+    )
+    git(root, "remote", "add", "origin", DEFAULT_CANONICAL_REMOTE_URL)
+    from bureau import status_capsule as module
+
+    remote_head = "a" * 40 if head != "a" * 40 else "b" * 40
+    monkeypatch.setattr(module, "_ls_remote_main", lambda _url: remote_head)
+    destination = tmp_path / "snapshot"
+    destination.mkdir()
+    with pytest.raises(
+        CapsuleError,
+        match="local origin/main differs from freshly observed GitHub main",
+    ):
+        _archive_canonical_registry(
+            root,
+            destination,
+            expected_remote_url=DEFAULT_CANONICAL_REMOTE_URL,
+            now=NOW,
+        )
+
 
 def test_write_and_read_capsule_exposes_required_truth(
     registry_factory, tmp_path
@@ -732,8 +814,14 @@ def test_second_snapshot_links_previous_success(registry_factory, tmp_path):
     }
 
 
-def test_cli_exit_codes_and_independent_read(registry_factory, tmp_path, capsys):
-    root, state_root, output, _head = setup_capsule_sources(registry_factory, tmp_path)
+def test_cli_exit_codes_and_independent_read(
+    registry_factory, tmp_path, capsys, monkeypatch
+):
+    root, state_root, output, head = setup_capsule_sources(registry_factory, tmp_path)
+    git(root, "remote", "add", "origin", DEFAULT_CANONICAL_REMOTE_URL)
+    from bureau import status_capsule as module
+
+    monkeypatch.setattr(module, "_ls_remote_main", lambda _url: head)
     assert (
         main(
             [
@@ -754,6 +842,12 @@ def test_cli_exit_codes_and_independent_read(registry_factory, tmp_path, capsys)
     assert main(["read", "--path", str(output)]) == 0
     read_output = json.loads(capsys.readouterr().out)
     assert read_output["status"] == "fresh"
+    snapshot = read_output["snapshot"]
+    assert snapshot["registry"]["remote_freshness"] == "fresh-at-observation"
+    assert snapshot["observation_scope"]["github"] == "fresh-git-ls-remote"
+    assert snapshot["observation_scope"]["network"] == "git-ls-remote-only"
+    assert "remote_origin_freshness" not in snapshot["does_not_establish"]
+    assert "future_remote_origin_freshness" in snapshot["does_not_establish"]
 
     assert main(["read", "--path", str(tmp_path / "none.json")]) == 2
     unavailable = json.loads(capsys.readouterr().out)

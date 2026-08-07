@@ -37,6 +37,31 @@ SCHEDULER_NAMES = (
 )
 
 
+CANONICAL_GITHUB_REPOSITORY = "heimgewebe/bureau"
+
+
+def github_repository_from_remote(value: str | None) -> str | None:
+    """Return owner/repo only for an unambiguous github.com Git remote."""
+    if not value:
+        return None
+    remote = value.strip()
+    prefixes = ("git@github.com:", "https://github.com/", "ssh://git@github.com/")
+    path_value = None
+    for prefix in prefixes:
+        if remote.casefold().startswith(prefix.casefold()):
+            path_value = remote[len(prefix) :]
+            break
+    if path_value is None:
+        return None
+    path_value = path_value.rstrip("/")
+    if path_value.endswith(".git"):
+        path_value = path_value[:-4]
+    parts = path_value.split("/")
+    if len(parts) != 2 or not all(parts):
+        return None
+    return f"{parts[0]}/{parts[1]}"
+
+
 def _scheduler_fragment_paths(root: Path) -> list[Path]:
     systemd = root / "ops/systemd"
     return [
@@ -110,6 +135,9 @@ def _git_identity(root: Path) -> dict[str, Any]:
             "root": str(root),
             "head": None,
             "origin_main": None,
+            "origin_main_provenance": "local-ref-without-fetch",
+            "origin_url": None,
+            "origin_repository": None,
             "head_equals_origin_main": None,
             "dirty": None,
             "dirty_paths": [],
@@ -123,11 +151,17 @@ def _git_identity(root: Path) -> dict[str, Any]:
                 dirty_paths.append(line[3:])
     head = _git(resolved, "rev-parse", "HEAD")
     origin_main = _git(resolved, "rev-parse", "origin/main")
+    raw_origin_url = _git(resolved, "remote", "get-url", "origin")
+    origin_repository = github_repository_from_remote(raw_origin_url)
+    origin_url = raw_origin_url if origin_repository is not None else None
     return {
         "available": True,
         "root": str(resolved),
         "head": head,
         "origin_main": origin_main,
+        "origin_main_provenance": "local-ref-without-fetch",
+        "origin_url": origin_url,
+        "origin_repository": origin_repository,
         "head_equals_origin_main": bool(head and origin_main and head == origin_main),
         "dirty": bool(status),
         "dirty_paths": dirty_paths,
@@ -332,7 +366,10 @@ def bureau_runtime_identity(
             mutation_allowed = True
     elif manifest.get("valid") is True:
         source_kind = "immutable-release"
-        if manifest.get("source_commit") == registry.get("head") and registry.get("dirty") is False:
+        if (
+            manifest.get("source_commit") == registry.get("head")
+            and registry.get("dirty") is False
+        ):
             status = "compatible"
             mutation_allowed = True
         else:
@@ -346,6 +383,52 @@ def bureau_runtime_identity(
         if manifest.get("available"):
             reasons.extend(str(item) for item in manifest.get("reasons", []))
 
+    claim_root_reasons: list[str] = []
+    if canonical_selected:
+        claim_root_status = "read-only-snapshot"
+        claim_root_reasons.append("canonical-registry-read-only")
+    elif manifest.get("valid") is not True:
+        claim_root_status = "not-established"
+        claim_root_reasons.append("deployed-source-not-observed")
+    else:
+        if registry.get("available") is not True:
+            claim_root_reasons.append("registry-checkout-unavailable")
+        if registry.get("dirty") is not False:
+            claim_root_reasons.append("registry-checkout-dirty")
+        if registry.get("head") != manifest.get("source_commit"):
+            claim_root_reasons.append("registry-head-differs-deployed-source")
+        if registry.get("origin_main") != registry.get("head"):
+            claim_root_reasons.append("registry-origin-main-mismatch")
+        if (
+            str(registry.get("origin_repository") or "").casefold()
+            != CANONICAL_GITHUB_REPOSITORY
+        ):
+            claim_root_reasons.append("registry-origin-repository-mismatch")
+        claim_root_status = (
+            "local-preflight-clear" if not claim_root_reasons else "blocked"
+        )
+        claim_root_reasons.append("external-github-main-not-observed")
+
+    claim_root = {
+        "status": claim_root_status,
+        "local_preconditions_met": claim_root_status == "local-preflight-clear",
+        "claim_authority_established": False,
+        "mutation_conclusion_allowed": False,
+        "expected_repository": CANONICAL_GITHUB_REPOSITORY,
+        "head": registry.get("head"),
+        "origin_main": registry.get("origin_main"),
+        "deployed_source_commit": manifest.get("source_commit"),
+        "configured_repository": registry.get("origin_repository"),
+        "external_main_commit": None,
+        "external_freshness": "not-observed",
+        "reason_codes": sorted(set(claim_root_reasons)),
+        "does_not_establish": [
+            "fresh_github_main",
+            "claim_authority",
+            "lease_availability",
+        ],
+    }
+
     return {
         "schema_version": 1,
         "kind": "bureau_runtime_identity",
@@ -357,6 +440,16 @@ def bureau_runtime_identity(
         },
         "source": source,
         "registry": registry,
+        "external_remote": {
+            "expected_repository": CANONICAL_GITHUB_REPOSITORY,
+            "configured_origin_url": registry.get("origin_url"),
+            "configured_repository": registry.get("origin_repository"),
+            "main_commit": None,
+            "source": "not-observed",
+            "freshness": "not-observed",
+            "does_not_establish": ["github_main_commit", "remote_freshness"],
+        },
+        "claim_root": claim_root,
         "state": _state_identity(state_path),
         "manifest": manifest,
         "compatibility": {

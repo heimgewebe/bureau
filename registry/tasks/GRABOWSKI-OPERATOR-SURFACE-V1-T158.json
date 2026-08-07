@@ -84,6 +84,81 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "outcome": "succeeded",
+      "verified_at": "2026-08-07T12:33:47Z",
+      "source": "operator_live_closeout",
+      "source_ref": "grabowski-runtime-deploy:grabowski-job-5b43566e0ce3@6e943c4514640617e45d4258a12f629e178a00386a0272d31ce2032d62f103f9",
+      "receipt_id": "grabowski-job-5b43566e0ce3",
+      "receipt_sha256": "6e943c4514640617e45d4258a12f629e178a00386a0272d31ce2032d62f103f9",
+      "task_preimage_sha256": "02949cd34bc38dcf7c7c1a4d53aacc45ea8169a46a63bc30ddf86f070a5dd15e",
+      "acceptance_results": {
+        "false-positive-reproduction": true,
+        "guidance": true,
+        "semantics-preserved": true,
+        "regression": true,
+        "validation": true,
+        "delivery": true,
+        "live-proof": true
+      },
+      "evidence": {
+        "kind": "grabowski_operator_surface_t158_closeout_evidence",
+        "false_positive_reproduction": {
+          "candidate_id": "candidate-2a5b61ef0f6184da1c2fc46e",
+          "refinement_event_id": 3050,
+          "source_locator": "grabowski-runtime:5e16ab2f7acb61a950b8b1f432838515a137384e:transport-roundtrip:omitted-vs-explicit-default-proof",
+          "finding": "Explicitly materialized optional defaults change the raw canonical target_arguments digest and are correctly rejected; the exact originally supplied JSON object succeeds."
+        },
+        "implementation_pr": {
+          "repository": "heimgewebe/grabowski",
+          "number": 675,
+          "reviewed_head": "6abfac3011a0a1785fd6478b5e325f000b66b546",
+          "merge_commit": "89c13c1abdfc931a5a61544dc346b17da4be410b",
+          "merged_at": "2026-08-07T12:16:38Z",
+          "self_review_comment": "https://github.com/heimgewebe/grabowski/pull/675#issuecomment-5216887528"
+        },
+        "validation": {
+          "focused_task_id": "cd550dca78c54fcd921292f2",
+          "focused_result": "2 passed, 29 deselected",
+          "transport_gate_task_id": "e914b7dd3e5b4279b7b9f148",
+          "transport_gate_result": "31 passed",
+          "full_task_id": "81e1b3a3d55d49f3b9ba519f",
+          "full_result": "5061 passed, 14 skipped; make validate PASS",
+          "full_lifecycle_receipt_sha256": "2b575bd7ddf27e59ad74a2d93d58b83caa73e04ca711a25521b1db6eecee6f73"
+        },
+        "deployment": {
+          "job": "grabowski-job-5b43566e0ce3",
+          "expected_head": "89c13c1abdfc931a5a61544dc346b17da4be410b",
+          "finalization_receipt_sha256": "6e943c4514640617e45d4258a12f629e178a00386a0272d31ce2032d62f103f9",
+          "final_status": "completed",
+          "runtime_release": "89c13c1abdfc-srcsetb71a591654a4-locke6664d600b6c-contract46ba648f01da",
+          "deployment_complete": true,
+          "deployment_integrity_valid": true,
+          "serving_process_matches_manifest": true
+        },
+        "live_proof": {
+          "guidance_acquire_receipt_sha256": "d2413568b612b9c94e9bb4c22fe37e76302e73f119c423508a0c6b14aa1c3b4f",
+          "default_materialization_blocked_receipt_sha256": "1072f537e48bad42c2f443189481c39777342340d5679ef017d1dacdff51d59d",
+          "exact_original_arguments_pass_receipt_sha256": "97477f3cf86e4685eb42d619467d17086df940b3f103755cde216a70ef0bdcce",
+          "proof_lease_release_receipt_sha256": "0fd06cf472458455bd84bd8f39402fc889e20771973e402bfa8ea5db565adafc",
+          "guidance_contains": [
+            "original target call",
+            "preserve omitted optional fields exactly",
+            "do not materialize default-valued fields"
+          ]
+        },
+        "does_not_establish": [
+          "a transport digest bug",
+          "causality from T156",
+          "a general connector outage",
+          "future runtime health",
+          "permission to alter queue or foreign work"
+        ]
+      },
+      "task_sha256": "c76ddef51f4fa5d3ae9fa7b1b3992ec7391fd38020b85aa5322c1fa6922fb155",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },
   "priority": {
@@ -105,6 +180,6 @@
     "strategy": "Die reine Recovery-Textpräzisierung und ihren Test per normalem Revert zurücknehmen; keine Transport-, Challenge-, Lease- oder Audit-Historie verändern."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Roundtrip-Anweisung gegen Defaultmaterialisierung härten"
 }

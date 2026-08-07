@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf dem tatsächlich deployten Grabowski-Head wird GRABOWSKI-OPERATOR-SURFACE-V1-T148 nach kanonischer Queue-Sicht mit create_workspace=false reproduziert und scheitert ausschließlich am selbstgescopten Branch-/Operationsresource-Pfad mit repository-scope-required.",
+      "id": "live-defect-reproduced"
+    },
+    {
+      "assertion": "repo:<checkout>:branch:<branch> und repo:<checkout>:operation:<operation> werden als selbstgescopte Repository-Ressourcen erkannt; der Pickup verlangt dafür kein repository_scope_manifest und hängt bei der Lease-Akquise kein scope_manifest an.",
+      "id": "self-scoped-keys-authoritative"
+    },
+    {
+      "assertion": "Breite repo:<checkout>-Ressourcen verlangen weiterhin einen vollständigen normalisierten Scope mit scope_manifest_complete=true; unvollständige oder widersprüchliche Scope-Evidenz bleibt fail-closed.",
+      "id": "broad-repo-scope-preserved"
+    },
+    {
+      "assertion": "Regressionstests decken mindestens Branch-Key und Operations-Key jeweils mit create_workspace=false, breite Repo-Lease mit gültigem Manifest sowie breite Repo-Lease ohne Manifest ab und prüfen die tatsächlich an grabowski_resources übergebenen Metadaten.",
+      "id": "regression-coverage"
+    },
+    {
+      "assertion": "Fokustests und vollständige relevante Grabowski-Gates sind auf dem exakten Head grün; der PR ist revisionsgebunden reviewed, gemergt und die Grabowski-Runtime commitgenau deployt.",
+      "id": "full-validation-delivery"
+    },
+    {
+      "assertion": "Nach Deploy wird GRABOWSKI-OPERATOR-SURFACE-V1-T148 über den echten Pickup-Pfad erneut aufgerufen; repository-scope-required ist verschwunden und das Ergebnis wird als erfolgreicher Claim oder als neuer, konkret belegter nachgelagerter Gate-Blocker zurückgelesen.",
+      "id": "live-claim-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die Scope-Klassifikation und Akquise selbstgescopter branch/operation Repository-Keys im koordinierten Bureau-Pickup ändern. Breite Repository-Leases, Nonkonfliktprüfung, Lease-Owner, Claim-, Queue- und Approval-Semantik bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-pickup.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den koordinierten Grabowski-Bureau-Pickup so korrigieren, dass selbstgescopte Branch- und Operationsressourcen wie repo:/checkout:branch:name und repo:/checkout:operation:name ohne zusätzliches Scope-Manifest akquiriert werden, während breite repo:/checkout-Leases unverändert einen vollständigen exakten Repository-Scope verlangen. Der aktuelle Live-Blocker von GRABOWSKI-OPERATOR-SURFACE-V1-T148 muss danach über einen echten Pickup-Claim erneut geprüft werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T153",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "blocks_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T148",
+    "does_not_establish": [
+      "permission to mutate the currently foreign-leased Grabowski checkout",
+      "permission to weaken broad repository scope validation",
+      "automatic claim or completion of T148"
+    ],
+    "live_reproduction": {
+      "bureau_runtime_source_commit": "fa997c85ff5d5a49fda523ea12a52c622a190aef",
+      "deployed_grabowski_head": "286e51734d9e36ea3b68ce6998551462b90047c7",
+      "error": "repository-scope-required",
+      "observed_at": "2026-08-07T02:38:56Z",
+      "receipt_sha256": "a67a2f0a2c06b66b8bfba67bb6091a1b76f41154309b3f298cc7a7eb24f49023",
+      "resource_key": "repo:/home/alex/repos/bureau:branch:fix/t147-standalone-clone-contract-v1"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4bc4d33e34104af0f0c9fb43",
+      "event_id": 2943,
+      "event_created_at": "2026-08-07T02:46:15.739184Z",
+      "request_sha256": "b932d8819dc2c031648424e12949a33d3f03b49627086941c54cdf3d0798a687",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-runtime-claim-reproduction",
+        "locator": "grabowski:bureau-pickup:t148:repository-scope-required",
+        "observed_at": "2026-08-07T02:38:56Z",
+        "sha256": "a67a2f0a2c06b66b8bfba67bb6091a1b76f41154309b3f298cc7a7eb24f49023"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei Scope-Ausweitung oder Regression breite Repository-Leases nicht mergen beziehungsweise den revisionsgebundenen Fix zurücknehmen; keine fremden Leases, Dirty-States oder Prozesse verändern."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Selbstgescopte Repository-Leases im Bureau-Pickup korrekt akquirieren"
+}

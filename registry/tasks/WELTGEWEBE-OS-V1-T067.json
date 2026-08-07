@@ -105,7 +105,178 @@
     "source_head": "ab8d253599176002eaa4c28b9eed7778d4de7a7d",
     "source_pr": "heimgewebe/weltgewebe#1686",
     "source_review": "https://github.com/heimgewebe/weltgewebe/pull/1686#pullrequestreview-4867082010",
-    "source_review_sha256": "ae22caa2c1e89389820f207f45d7603c2795d820c44c4ca64f77ce86afd9eb10"
+    "source_review_sha256": "ae22caa2c1e89389820f207f45d7603c2795d820c44c4ca64f77ce86afd9eb10",
+    "implementation_pr": "heimgewebe/weltgewebe#1697",
+    "implementation_head": "b139ee32760235c2b6f7f9442b59a9c9300e15b9",
+    "implementation_base": "6ed10dbff401c6fe9cb80ab1f3c58fdd7ed542d5",
+    "implementation_merge_commit": "526d44ccc31ab03475329d2a844661475a3b0bd2",
+    "implementation_diff_sha256": "e3d39a7e0e66f46c172807f3133b646a5e849bc7eaf165b8993e9cd3f9b861e8",
+    "implementation_state": "merged_verified",
+    "merged_at": "2026-08-06T08:55:22Z",
+    "coordinated_run": "BUR-RUN-20260806T081840Z-2430b5a2cd",
+    "verified_at": "2026-08-06T09:16:19.399475Z",
+    "outcome": "Der Karten-Transportvertrag ist explizit, exact-head-geprüft, gemergt und durch getrennten Produktionsbrowser- sowie Entwicklungsproxy-Readback belegt.",
+    "validated_acceptance": {
+      "fresh-merged-regression": {
+        "status": "reproduced",
+        "repository": "heimgewebe/weltgewebe",
+        "base_sha": "6ed10dbff401c6fe9cb80ab1f3c58fdd7ed542d5",
+        "task_baseline_sha": "810cf409783857571cbeb6bc7f476989a505ba62",
+        "finding": "selectMapResourceTransport selected static-list solely from an empty apiBase, so an empty same-origin development or test proxy rejected a cursor envelope and emptied map resources",
+        "source_task": "WELTGEWEBE-OS-V1-T067"
+      },
+      "explicit-runtime-contract": {
+        "status": "implemented",
+        "fix_commit": "b139ee32760235c2b6f7f9442b59a9c9300e15b9",
+        "files": [
+          "apps/web/src/lib/map/mapResourceTransport.ts",
+          "apps/web/src/lib/map/mapResourceTransport.test.ts",
+          "apps/web/src/routes/map/+page.ts",
+          "apps/web/tests/map-load-fallback.spec.ts"
+        ],
+        "contract": {
+          "nonempty_api_base": "cursor",
+          "empty_production_or_prerender": "static-list",
+          "empty_development_or_test_proxy": "cursor",
+          "missing_or_conflicting_signals": "fail-closed"
+        }
+      },
+      "three-way-regression-tests": {
+        "status": "passed",
+        "unit": "451/451",
+        "focused_playwright": "6/6",
+        "broader_map_browser": "69/69",
+        "full_web_ci": "passed",
+        "diff_check": "passed",
+        "cursor_envelope_test": "empty API base keeps cursor contract in E2E proxy",
+        "bare_array_test": "bare array is rejected under cursor proxy contract",
+        "relative_same_origin": "covered by unit test"
+      },
+      "revision-bound-review": {
+        "status": "passed",
+        "pr": "https://github.com/heimgewebe/weltgewebe/pull/1697",
+        "head_sha": "b139ee32760235c2b6f7f9442b59a9c9300e15b9",
+        "diff_sha256": "e3d39a7e0e66f46c172807f3133b646a5e849bc7eaf165b8993e9cd3f9b861e8",
+        "review_axes": [
+          {
+            "axis": "correctness",
+            "report_sha256": "0e512d7d9fa89b3d7522c599073c32eba31d3f2fb2e87f65d08992f9c682b521"
+          },
+          {
+            "axis": "testing",
+            "report_sha256": "49135e829a86a5d5855e41d37bfc7ac58632458c1b569ee76e84763f285986ea"
+          }
+        ],
+        "review_evidence_gate_run": 31086339129,
+        "required_checks": "all passed",
+        "unresolved_review_threads": 0
+      },
+      "post-merge-dual-readback": {
+        "status": "passed",
+        "merge_commit": "526d44ccc31ab03475329d2a844661475a3b0bd2",
+        "deployment": {
+          "provider": "vercel",
+          "deployment_id": "dpl_GGQ64zgD5tweSrHk3dhCPnRfEJe4",
+          "target": "production",
+          "state": "READY",
+          "url": "https://weltgewebe.vercel.app/map"
+        },
+        "production_browser": {
+          "receipt_sha256": "5fb27671f0db410cec0abe746bdec7fe3b6ed1c34f62ac2ff800b16e406a9cb7",
+          "payload_sha256": "9d3efc16139e381fa61bc1d4e4386620e9111035146d4f1e418b8496029f262c",
+          "map_visible": true,
+          "partial_banners": 0,
+          "failed_banners": 0,
+          "resources": {
+            "/api/nodes": {
+              "status": 200,
+              "array": true,
+              "length": 1
+            },
+            "/api/edges": {
+              "status": 200,
+              "array": true,
+              "length": 1
+            },
+            "/api/webgemeindezentren": {
+              "status": 200,
+              "array": true,
+              "length": 1
+            },
+            "/api/accounts": {
+              "status": 200,
+              "array": true,
+              "length": 3
+            }
+          }
+        },
+        "development_or_test_proxy": {
+          "proof": "focused Playwright regression processes a cursor envelope with empty API base",
+          "result": "6/6 passed"
+        }
+      },
+      "scope-and-rollback": {
+        "status": "passed",
+        "changed_files_exact": [
+          "apps/web/src/lib/map/mapResourceTransport.ts",
+          "apps/web/src/lib/map/mapResourceTransport.test.ts",
+          "apps/web/src/routes/map/+page.ts",
+          "apps/web/tests/map-load-fallback.spec.ts"
+        ],
+        "domain_semantics_changed": false,
+        "foreign_states_touched": false,
+        "workspace_clean": true,
+        "rollback": "git revert 526d44ccc31ab03475329d2a844661475a3b0bd2 restores the prior selector without data migration",
+        "previous_production_deployment": "dpl_5G68D1dE15AwStMM72rdbXaNNGVx"
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "bureau_run_receipt",
+          "authority": "bureau",
+          "task_id": "WELTGEWEBE-OS-V1-T067",
+          "source_ref": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260806T081840Z-2430b5a2cd.json",
+          "run_id": "BUR-RUN-20260806T081840Z-2430b5a2cd",
+          "receipt_sha256": "483479be4c8667f747368b175f428231d29d415b76813626547a766822e23384",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T067",
+          "source_ref": "heimgewebe/weltgewebe#1697",
+          "number": 1697,
+          "head_sha": "b139ee32760235c2b6f7f9442b59a9c9300e15b9",
+          "base_sha": "6ed10dbff401c6fe9cb80ab1f3c58fdd7ed542d5",
+          "merge_commit_sha": "526d44ccc31ab03475329d2a844661475a3b0bd2",
+          "diff_sha256": "e3d39a7e0e66f46c172807f3133b646a5e849bc7eaf165b8993e9cd3f9b861e8"
+        },
+        {
+          "kind": "production_browser",
+          "authority": "bureau-run-evidence",
+          "task_id": "WELTGEWEBE-OS-V1-T067",
+          "source_ref": "BUR-RUN-20260806T081840Z-2430b5a2cd:post-merge-dual-readback",
+          "commit_sha": "526d44ccc31ab03475329d2a844661475a3b0bd2",
+          "receipt_sha256": "5fb27671f0db410cec0abe746bdec7fe3b6ed1c34f62ac2ff800b16e406a9cb7",
+          "verdict": "PASS"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "0ce0f53ddec6f7cdb0df9988a6724f72d7d74922dabb1aa2d040299b469d9f31",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "envelope_sha256": "3123e7ade97caf929344f2780eeb99d95aedfffa9cee36eb8c84e97b117e7ea0",
+      "run_id": "BUR-RUN-20260806T081840Z-2430b5a2cd",
+      "receipt_sha256": "483479be4c8667f747368b175f428231d29d415b76813626547a766822e23384",
+      "review_diff_sha256": "e3d39a7e0e66f46c172807f3133b646a5e849bc7eaf165b8993e9cd3f9b861e8",
+      "review_evidence_verdict": "PASS",
+      "post_merge_dual_readback": "PASS",
+      "run_task_sha256": "411d5e64d2fe025fa47f74f98d811f061446456ba2df53f2ff1e18801c145c1d",
+      "run_plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
+    }
   },
   "priority": {
     "lane": "next",
@@ -127,6 +298,6 @@
     "strategy": "Den expliziten Selektor und seine Aufrufbindung auf den letzten vollständig geprüften Transportvertrag zurücksetzen; bei unklarer Umgebung fail-closed statt zwischen Cursor-Hülle und Bare Array zu raten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Karten-Transportvertrag für Entwicklungsproxy und Vercel explizit trennen"
 }

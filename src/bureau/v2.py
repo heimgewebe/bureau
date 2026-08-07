@@ -344,6 +344,46 @@ def github_repository_from_remote_url(remote_url: str) -> str | None:
 
 def _github_repository_for_path(path: Path) -> str | None:
     try:
+        repository = subprocess.run(
+            ["git", "-C", str(path), "rev-parse", "--git-dir"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot inspect git repository for {path}: {exc}"
+        ) from exc
+    if repository.returncode != 0:
+        detail = repository.stderr.strip() or repository.stdout.strip() or "no diagnostic"
+        raise OpenPullRequestObservationError(
+            f"cannot inspect git repository for {path}: {detail}"
+        )
+
+    try:
+        remotes = subprocess.run(
+            ["git", "-C", str(path), "remote"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot list git remotes for {path}: {exc}"
+        ) from exc
+    if remotes.returncode != 0:
+        detail = remotes.stderr.strip() or remotes.stdout.strip() or "no diagnostic"
+        raise OpenPullRequestObservationError(
+            f"cannot list git remotes for {path}: {detail}"
+        )
+    if "origin" not in {line.strip() for line in remotes.stdout.splitlines()}:
+        # A valid local-only repository without an origin cannot have GitHub PRs.
+        # Missing paths and non-repositories already failed closed above.
+        return None
+
+    try:
         result = subprocess.run(
             ["git", "-C", str(path), "remote", "get-url", "origin"],
             text=True,
@@ -1560,9 +1600,11 @@ def _repo_write_guard_failure_reservations(
 def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Reservation]:
     """Represent open GitHub PRs as conservative repo write blockers.
 
-    Repository remotes are resolved locally, then distinct GitHub repositories
-    are observed concurrently with the same fresh ``gh pr list`` contract used
-    for claim-time safety. Failures remain scoped to every affected resource.
+    Explicit ``github_slug`` bindings are authoritative for GitHub observation;
+    resources without one fall back to their local origin remote. Distinct GitHub
+    repositories are observed concurrently with the same fresh ``gh pr list``
+    contract used for claim-time safety. Failures remain scoped to every affected
+    resource, while an intentional local-only repository without origin is skipped.
     """
     if os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD", "1") in {"0", "false", "False"}:
         return []
@@ -1575,6 +1617,9 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
     resource_errors: dict[str, str] = {}
 
     for resource in resources:
+        if resource.github_slug:
+            repositories_by_resource[resource.id] = resource.github_slug
+            continue
         if not resource.path:
             resource_errors[resource.id] = (
                 f"cannot observe configured repository {resource.id}: missing path"

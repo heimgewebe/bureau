@@ -98,6 +98,59 @@ def test_github_repository_from_remote_url(remote, expected):
     assert bureau_v2.github_repository_from_remote_url(remote) == expected
 
 
+def test_configured_github_slug_does_not_require_local_checkout_for_observation(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    resource_path = root / "registry/resources/1.json"
+    resource = json.loads(resource_path.read_text())
+    resource["path"] = str(root / "missing-checkout")
+    resource["github_slug"] = "heimgewebe/example"
+    resource_path.write_text(json.dumps(resource))
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+
+    observed = []
+
+    def repository_for_path(_path):
+        raise AssertionError("configured github_slug must bypass local remote discovery")
+
+    def open_pull_requests(repository):
+        observed.append(repository)
+        return []
+
+    monkeypatch.setattr(bureau_v2, "_github_repository_for_path", repository_for_path)
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", open_pull_requests)
+
+    registry = Registry.load(root)
+    reservations = bureau_v2.open_pull_request_reservations(registry)
+
+    assert reservations == []
+    assert observed == ["heimgewebe/example"]
+
+
+def test_local_git_repository_without_origin_is_not_github_observation_failure(tmp_path):
+    repository = tmp_path / "local-only"
+    subprocess.run(["git", "init", str(repository)], check=True, capture_output=True, text=True)
+
+    assert bureau_v2._github_repository_for_path(repository) is None
+
+
+def test_origin_lookup_failure_remains_observation_failure(monkeypatch, tmp_path):
+    results = iter(
+        [
+            subprocess.CompletedProcess([], 0, stdout=".git\n", stderr=""),
+            subprocess.CompletedProcess([], 0, stdout="origin\n", stderr=""),
+            subprocess.CompletedProcess([], 2, stdout="", stderr="broken origin"),
+        ]
+    )
+    monkeypatch.setattr(bureau_v2.subprocess, "run", lambda *args, **kwargs: next(results))
+
+    with pytest.raises(
+        bureau_v2.OpenPullRequestObservationError, match="cannot resolve git remote"
+    ):
+        bureau_v2._github_repository_for_path(tmp_path / "repository")
+
+
 def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_factory, tmp_path):
     root = registry_factory(1, mode="read")
     registry = Registry.load(root)

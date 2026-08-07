@@ -21,6 +21,7 @@ from .github_observer import (
     observation_is_stale,
 )
 from .v2 import (
+    TERMINAL_TASK_STATES,
     Registry,
     _read_only_overlays,
     _read_only_state_rows,
@@ -225,10 +226,15 @@ def _repository_balls(
             status = "active"
             current_ball = {"kind": "active_run", **active_runs[0]}
         else:
-            ready = [
+            dispatchable = [
                 task
                 for task in queued
-                if task.get("registry_state") == "ready" and not _task_has_blocker(task)
+                if task.get("effective_state") not in TERMINAL_TASK_STATES
+            ]
+            ready = [
+                task
+                for task in dispatchable
+                if task.get("effective_state") == "ready" and not _task_has_blocker(task)
             ]
             if ready:
                 task = ready[0]
@@ -239,8 +245,8 @@ def _repository_balls(
                     "title": task["title"],
                     "queue_lane": task["queue_lane"],
                 }
-            elif queued:
-                task = queued[0]
+            elif dispatchable:
+                task = dispatchable[0]
                 status = "blocked" if _task_has_blocker(task) else "planned"
                 current_ball = {
                     "kind": "queued_task",
@@ -291,7 +297,7 @@ def _next_actions(
             break
         if task.get("queue_lane") not in {"now", "next"}:
             continue
-        if task.get("registry_state") != "ready":
+        if task.get("effective_state") != "ready":
             continue
         if _task_has_blocker(task):
             actions.append(

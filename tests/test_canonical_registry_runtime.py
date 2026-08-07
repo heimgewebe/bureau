@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sqlite3
 import stat
@@ -68,6 +69,7 @@ def install_runtime(tmp_path: Path, source: Path) -> tuple[Path, Path, dict]:
         check=True,
         capture_output=True,
         text=True,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
     return bin_dir / "bureau", prefix, json.loads(completed.stdout)
 
@@ -133,11 +135,28 @@ def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) ->
     manifest = json.loads((prefix / "deployment-manifest.json").read_text(encoding="utf-8"))
     snapshot = Path(manifest["canonical_registry_root"])
     inventory = Path(manifest["canonical_registry_inventory_path"])
+    status_capsule_launcher = Path(receipt["status_capsule_launcher_path"])
 
     assert receipt["canonical_registry_root"] == str(snapshot)
+    assert manifest["status_capsule_launcher_path"] == str(status_capsule_launcher)
+    assert status_capsule_launcher.is_file()
     assert snapshot.is_dir()
     assert inventory.is_file()
     assert stat.S_IMODE((snapshot / "registry/queue.json").stat().st_mode) == 0o444
+
+    status_read = subprocess.run(
+        [
+            str(status_capsule_launcher),
+            "read",
+            "--path",
+            str(tmp_path / "missing-status-capsule.json"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert status_read.returncode == 2
+    assert json.loads(status_read.stdout)["status"] == "unavailable"
 
     unrelated = tmp_path / "unrelated-dirty-checkout"
     unrelated.mkdir()

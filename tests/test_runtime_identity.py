@@ -354,8 +354,17 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     )
     first_receipt = json.loads(first.stdout)
     assert Path(first_receipt["receipt_path"]).is_file()
+    status_capsule_launcher = Path(first_receipt["status_capsule_launcher_path"])
+    assert status_capsule_launcher == bin_dir / "bureau-status-capsule"
+    assert status_capsule_launcher.is_file()
+    assert first_receipt["status_capsule_launcher_sha256"] == hashlib.sha256(
+        status_capsule_launcher.read_bytes()
+    ).hexdigest()
     deployment_manifest = json.loads(
         (prefix / "deployment-manifest.json").read_text(encoding="utf-8")
+    )
+    assert deployment_manifest["status_capsule_launcher_path"] == str(
+        status_capsule_launcher
     )
     release_systemd = Path(deployment_manifest["immutable_release_path"]) / "ops/systemd"
     actual = {
@@ -384,6 +393,7 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     rollback = second_receipt["rollback"]
     assert Path(rollback["manifest"]).is_file()
     assert Path(rollback["launcher"]).is_file()
+    assert Path(rollback["status_capsule_launcher"]).is_file()
 
     launcher = bin_dir / "bureau"
     launched = subprocess.run(
@@ -398,6 +408,20 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     assert identity["module"]["source_kind"] == "immutable-release"
     assert envelope["result"] == {"status": "ok"}
 
+    status_read = subprocess.run(
+        [
+            str(status_capsule_launcher),
+            "read",
+            "--path",
+            str(tmp_path / "missing-status-capsule.json"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert status_read.returncode == 2
+    assert json.loads(status_read.stdout)["status"] == "unavailable"
+
     manifest = prefix / "deployment-manifest.json"
     original_manifest = manifest.read_bytes()
     manifest.write_bytes(original_manifest + b" ")
@@ -409,6 +433,19 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     )
     assert drifted_manifest.returncode != 0
     assert "manifest digest mismatch" in drifted_manifest.stderr
+    drifted_status_manifest = subprocess.run(
+        [
+            str(status_capsule_launcher),
+            "read",
+            "--path",
+            str(tmp_path / "missing-status-capsule.json"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert drifted_status_manifest.returncode != 0
+    assert "manifest digest mismatch" in drifted_status_manifest.stderr
     manifest.write_bytes(original_manifest)
 
     deployment = json.loads(original_manifest)
@@ -455,6 +492,13 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     raw_target = "../share/bureau/venv/bin/bureau"
     launcher.symlink_to(raw_target)
     legacy_sha256 = hashlib.sha256(legacy_target.read_bytes()).hexdigest()
+    legacy_status_target = prefix / "venv/bin/bureau-status-capsule"
+    legacy_status_target.write_text("legacy status capsule launcher\n", encoding="utf-8")
+    legacy_status_target.chmod(0o755)
+    status_launcher = bin_dir / "bureau-status-capsule"
+    raw_status_target = "../share/bureau/venv/bin/bureau-status-capsule"
+    status_launcher.symlink_to(raw_status_target)
+    legacy_status_sha256 = hashlib.sha256(legacy_status_target.read_bytes()).hexdigest()
 
     command = [
         sys.executable,
@@ -479,6 +523,8 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     assert "launcher is a symlink" in blocked.stderr
     assert launcher.is_symlink()
     assert launcher.readlink().as_posix() == raw_target
+    assert status_launcher.is_symlink()
+    assert status_launcher.readlink().as_posix() == raw_status_target
 
     migrated = subprocess.run(
         [*command, "--replace-existing"],
@@ -490,7 +536,13 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     receipt = json.loads(migrated.stdout)
     assert launcher.is_file()
     assert not launcher.is_symlink()
+    assert status_launcher.is_file()
+    assert not status_launcher.is_symlink()
     assert hashlib.sha256(legacy_target.read_bytes()).hexdigest() == legacy_sha256
+    assert (
+        hashlib.sha256(legacy_status_target.read_bytes()).hexdigest()
+        == legacy_status_sha256
+    )
     rollback = receipt["rollback"]
     assert rollback["launcher_kind"] == "symlink"
     assert rollback["launcher_symlink_target"] == raw_target
@@ -501,4 +553,14 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
         "kind": "bureau_launcher_symlink_backup",
         "path": str(launcher),
         "target": raw_target,
+    }
+    assert rollback["status_capsule_launcher_kind"] == "symlink"
+    assert rollback["status_capsule_launcher_symlink_target"] == raw_status_target
+    status_metadata_path = Path(rollback["status_capsule_launcher_metadata"])
+    status_metadata = json.loads(status_metadata_path.read_text(encoding="utf-8"))
+    assert status_metadata == {
+        "schema_version": 1,
+        "kind": "bureau_launcher_symlink_backup",
+        "path": str(status_launcher),
+        "target": raw_status_target,
     }

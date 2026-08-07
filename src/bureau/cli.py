@@ -576,6 +576,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "github-observe",
         "claim-coordination-status",
         "status-projection",
+        "verification-stamp",
         "what-now",
         "workspace-status",
         "receipt-normalize",

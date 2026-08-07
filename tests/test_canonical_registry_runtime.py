@@ -97,6 +97,7 @@ def test_registry_root_resolution_precedence(tmp_path: Path, monkeypatch) -> Non
 def test_statement_and_mutation_classification() -> None:
     assert bureau_cli._command_mutates(SimpleNamespace(command="status")) is False
     assert bureau_cli._command_mutates(SimpleNamespace(command="what-now")) is False
+    assert bureau_cli._command_mutates(SimpleNamespace(command="verification-stamp")) is False
     assert bureau_cli._command_mutates(SimpleNamespace(command="doctor", repair=False)) is False
     assert bureau_cli._command_mutates(SimpleNamespace(command="doctor", repair=True)) is True
     assert (
@@ -166,6 +167,34 @@ def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) ->
     check = json.loads(check_run.stdout)
     assert check["result"]["valid"] is True
     assert check["runtime_identity"]["registry"]["root"] == str(snapshot)
+
+    verification_state_root = tmp_path / "verification-state"
+    expected_verification = json.loads(
+        (source / "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T154.json").read_text(
+            encoding="utf-8"
+        )
+    )["metadata"]["verification"]
+    verification_run = subprocess.run(
+        [
+            str(launcher),
+            "--state-root",
+            str(verification_state_root),
+            "--json",
+            "verification-stamp",
+            "GRABOWSKI-OPERATOR-SURFACE-V1-T154",
+        ],
+        cwd=unrelated,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    verification = json.loads(verification_run.stdout)
+    assert verification["result"]["receipt_sha256"] == expected_verification["receipt_sha256"]
+    assert verification["result"]["task_sha256"] == expected_verification["task_sha256"]
+    assert verification["result"]["plan_sha256"] == expected_verification["plan_sha256"]
+    assert verification["runtime_identity"]["command_effect_scope"] == "read_only"
+    assert verification["runtime_identity"]["state"]["available"] is False
+    assert not verification_state_root.exists()
 
     blocked_write = subprocess.run(
         [str(launcher), "--json", "close-ready"],

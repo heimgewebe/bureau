@@ -343,6 +343,39 @@ def _observe_remote_main(
     }
 
 
+def _materialize_remote_commit(
+    remote_url: str,
+    head: str,
+    destination: Path,
+) -> Path:
+    repository = destination / "remote-main.git"
+    repository.mkdir(mode=0o700)
+    _git(repository, "init", "--bare")
+    completed = subprocess.run(
+        _git_command(
+            repository,
+            "fetch",
+            "--quiet",
+            "--depth=1",
+            "--no-tags",
+            remote_url,
+            head,
+        ),
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=30,
+        env=_git_environment(),
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or "git fetch failed"
+        raise CapsuleError(f"fresh remote main materialization failed: {detail}")
+    materialized = _git(repository, "rev-parse", "--verify", f"{head}^{{commit}}")
+    if materialized != head:
+        raise CapsuleError("fresh remote main materialization commit mismatch")
+    return repository
+
+
 def _archive_canonical_registry(
     repo: Path,
     destination: Path,
@@ -352,19 +385,24 @@ def _archive_canonical_registry(
 ) -> dict[str, Any]:
     canonical = repo.expanduser().resolve()
     local_origin_main = _git(canonical, "rev-parse", "--verify", "origin/main^{commit}")
+    archive_root = canonical
+    archive_materialization = "canonical-local-object"
     remote_provenance: dict[str, Any] | None = None
     if expected_remote_url is not None:
         remote_provenance = _observe_remote_main(
             canonical, expected_remote_url, now=now
         )
         head = str(remote_provenance["commit"])
-        if local_origin_main != head:
-            raise CapsuleError(
-                "local origin/main differs from freshly observed GitHub main; "
-                "refusing canonical capsule"
+        if local_origin_main == head:
+            source = "fresh-remote-main-bound-local-archive"
+            source_scope = "fresh-github-main-with-matching-local-object"
+        else:
+            archive_root = _materialize_remote_commit(
+                expected_remote_url, head, destination
             )
-        source = "fresh-remote-main-bound-local-archive"
-        source_scope = "fresh-github-main-with-matching-local-object"
+            archive_materialization = "ephemeral-exact-fetch"
+            source = "fresh-remote-main-ephemeral-archive"
+            source_scope = "fresh-github-main-with-ephemeral-exact-fetch"
         observed_ref = "refs/heads/main"
         remote_freshness = "fresh-at-observation"
     else:
@@ -373,11 +411,11 @@ def _archive_canonical_registry(
         source_scope = "local-origin-main-without-fetch"
         observed_ref = "origin/main"
         remote_freshness = "not-observed"
-    tree = _git(canonical, "rev-parse", f"{head}:registry")
+    tree = _git(archive_root, "rev-parse", f"{head}:registry")
     archive = destination / "registry.tar"
     completed = subprocess.run(
         _git_command(
-            canonical,
+            archive_root,
             "archive",
             "--format=tar",
             f"--output={archive}",
@@ -405,6 +443,8 @@ def _archive_canonical_registry(
         "observed_ref_head": head,
         "remote_freshness": remote_freshness,
         "local_origin_main": local_origin_main,
+        "local_origin_main_matches_observed": local_origin_main == head,
+        "archive_materialization": archive_materialization,
         "root": str(canonical),
         "git_head": head,
         "registry_tree": tree,
@@ -841,6 +881,9 @@ def build_capsule(
     repo_balls = _compact_repo_balls(projection.get("repository_balls", {}))
     repo_summary = Counter(str(item.get("status")) for item in repo_balls.values())
     remote_observed = registry_identity.get("remote_freshness") == "fresh-at-observation"
+    remote_materialized = (
+        registry_identity.get("archive_materialization") == "ephemeral-exact-fetch"
+    )
     body = {
         "schema_version": CAPSULE_SCHEMA_VERSION,
         "kind": "bureau-status-capsule",
@@ -858,7 +901,13 @@ def build_capsule(
             "state_store": "consistent-read-only-sqlite-backup",
             "github": "fresh-git-ls-remote" if remote_observed else "not-observed",
             "grabowski": "not-required",
-            "network": "git-ls-remote-only" if remote_observed else "not-used",
+            "network": (
+                "git-ls-remote-plus-exact-fetch"
+                if remote_materialized
+                else "git-ls-remote-only"
+                if remote_observed
+                else "not-used"
+            ),
         },
         "state_store": {
             key: value

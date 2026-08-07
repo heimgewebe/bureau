@@ -19,6 +19,7 @@ from bureau.status_capsule import (
     _archive_canonical_registry,
     _atomic_json,
     _compact_repo_balls,
+    _materialize_remote_commit,
     _safe_extract,
     _seal,
     failure_path,
@@ -197,11 +198,35 @@ def test_canonical_archive_binds_fresh_remote_main_provenance(
     assert identity["source_scope"] == "fresh-github-main-with-matching-local-object"
     assert identity["remote_freshness"] == "fresh-at-observation"
     assert identity["local_origin_main"] == head
+    assert identity["local_origin_main_matches_observed"] is True
+    assert identity["archive_materialization"] == "canonical-local-object"
     assert remote["repository"] == "heimgewebe/bureau"
     assert remote["configured_repository"] == "heimgewebe/bureau"
     assert remote["commit"] == head
     assert remote["source"] == "git-ls-remote"
     assert remote["observed_at"] == "2026-07-12T10:00:00Z"
+
+
+def test_remote_commit_materialization_fetches_exact_object(
+    registry_factory, tmp_path
+):
+    root, _state_root, _output, head = setup_capsule_sources(
+        registry_factory, tmp_path
+    )
+    remote = tmp_path / "remote.git"
+    subprocess.run(
+        ["git", "clone", "--bare", str(root), str(remote)],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    destination = tmp_path / "materialized"
+    destination.mkdir()
+
+    repository = _materialize_remote_commit(str(remote), head, destination)
+
+    assert git(repository, "rev-parse", "--verify", f"{head}^{{commit}}") == head
+    assert git(repository, "rev-parse", f"{head}:registry")
 
 
 def test_canonical_archive_rejects_local_clone_origin_as_github_truth(
@@ -228,29 +253,110 @@ def test_canonical_archive_rejects_local_clone_origin_as_github_truth(
         )
 
 
-def test_canonical_archive_rejects_stale_local_origin_main(
+def test_canonical_archive_materializes_fresh_remote_when_local_origin_is_stale(
     registry_factory, tmp_path, monkeypatch
 ):
-    root, _state_root, _output, head = setup_capsule_sources(
+    root, _state_root, _output, local_head = setup_capsule_sources(
         registry_factory, tmp_path
     )
     git(root, "remote", "add", "origin", DEFAULT_CANONICAL_REMOTE_URL)
+    marker = root / "registry" / "remote-only.json"
+    marker.write_text('{"remote": true}\n', encoding="utf-8")
+    git(root, "add", str(marker.relative_to(root)))
+    git(root, "commit", "-m", "test: remote registry advance")
+    remote_head = git(root, "rev-parse", "HEAD")
+    git(root, "update-ref", "refs/remotes/origin/main", local_head)
     from bureau import status_capsule as module
 
-    remote_head = "a" * 40 if head != "a" * 40 else "b" * 40
     monkeypatch.setattr(module, "_ls_remote_main", lambda _url: remote_head)
+    materialized: dict[str, object] = {}
+
+    def capture_materialization(remote_url: str, head: str, destination: Path) -> Path:
+        materialized.update(
+            remote_url=remote_url,
+            head=head,
+            destination=destination,
+        )
+        return root
+
+    monkeypatch.setattr(module, "_materialize_remote_commit", capture_materialization)
+    before_status = git(root, "status", "--porcelain=v1", "--untracked-files=all")
     destination = tmp_path / "snapshot"
     destination.mkdir()
-    with pytest.raises(
-        CapsuleError,
-        match="local origin/main differs from freshly observed GitHub main",
-    ):
-        _archive_canonical_registry(
-            root,
-            destination,
-            expected_remote_url=DEFAULT_CANONICAL_REMOTE_URL,
-            now=NOW,
-        )
+
+    archived = _archive_canonical_registry(
+        root,
+        destination,
+        expected_remote_url=DEFAULT_CANONICAL_REMOTE_URL,
+        now=NOW,
+    )
+
+    identity = archived["identity"]
+    assert materialized["remote_url"] == DEFAULT_CANONICAL_REMOTE_URL
+    assert materialized["head"] == remote_head
+    assert identity["source"] == "fresh-remote-main-ephemeral-archive"
+    assert (
+        identity["source_scope"]
+        == "fresh-github-main-with-ephemeral-exact-fetch"
+    )
+    assert identity["archive_materialization"] == "ephemeral-exact-fetch"
+    assert identity["remote_freshness"] == "fresh-at-observation"
+    assert identity["local_origin_main"] == local_head
+    assert identity["local_origin_main_matches_observed"] is False
+    assert identity["git_head"] == remote_head
+    assert (archived["snapshot_root"] / "registry" / "remote-only.json").is_file()
+    assert git(root, "rev-parse", "refs/remotes/origin/main") == local_head
+    assert git(root, "status", "--porcelain=v1", "--untracked-files=all") == before_status
+
+
+
+
+def test_write_capsule_reports_ephemeral_fetch_for_stale_local_origin(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, state_root, output, local_head = setup_capsule_sources(
+        registry_factory, tmp_path
+    )
+    git(root, "remote", "add", "origin", DEFAULT_CANONICAL_REMOTE_URL)
+    marker = root / "remote-proof.txt"
+    marker.write_text("remote advance\n", encoding="utf-8")
+    git(root, "add", marker.name)
+    git(root, "commit", "-m", "test: remote-only non-registry advance")
+    remote_head = git(root, "rev-parse", "HEAD")
+    git(root, "update-ref", "refs/remotes/origin/main", local_head)
+    from bureau import status_capsule as module
+
+    monkeypatch.setattr(module, "_ls_remote_main", lambda _url: remote_head)
+    monkeypatch.setattr(
+        module,
+        "_materialize_remote_commit",
+        lambda _url, _head, _destination: root,
+    )
+
+    result = write_capsule(
+        root,
+        canonical_repo=root,
+        expected_remote_url=DEFAULT_CANONICAL_REMOTE_URL,
+        state_root=state_root,
+        output=output,
+        now=NOW,
+    )
+    snapshot = read_capsule(output, now=NOW)["snapshot"]
+
+    assert result["written"] is True
+    assert snapshot["registry"]["git_head"] == remote_head
+    assert snapshot["registry"]["local_origin_main"] == local_head
+    assert snapshot["registry"]["archive_materialization"] == "ephemeral-exact-fetch"
+    assert (
+        snapshot["observation_scope"]["registry"]
+        == "fresh-github-main-with-ephemeral-exact-fetch"
+    )
+    assert (
+        snapshot["observation_scope"]["network"]
+        == "git-ls-remote-plus-exact-fetch"
+    )
+    assert "remote_origin_freshness" not in snapshot["does_not_establish"]
+    assert "future_remote_origin_freshness" in snapshot["does_not_establish"]
 
 
 def test_write_and_read_capsule_exposes_required_truth(

@@ -103,6 +103,31 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "96d49ed605bb1bcb2a51d6abe3f7da60dd4912ba7a032a41aad7d5b79d8be632",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "evidence_ref": "docs/evidence/grabowski-operator-surface-v1-t150-closeout-20260807.json",
+      "evidence_sha256": "c02466f644d388dba238eccdd02e77bee211e9832e9c621e94c4e1527fd6c7f7",
+      "receipt_sha256": "bc835b8d16247f37c6996871e0624f70554bd464784ceda6ea4a73ccdfc6a48e",
+      "source": "github_pr_runtime_and_cross_source_live_proof",
+      "source_ref": "heimgewebe/grabowski#659; grabowski-job-382295c9afd6; grabowski-job-a3d0d03659d0; heimgewebe/bureau#1635",
+      "verified_at": "2026-08-07T06:55:00Z",
+      "receipt": {
+        "schema_version": 1,
+        "kind": "bureau.task_verification_receipt",
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T150",
+        "outcome": "verified",
+        "task_sha256": "96d49ed605bb1bcb2a51d6abe3f7da60dd4912ba7a032a41aad7d5b79d8be632",
+        "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+        "evidence_ref": "docs/evidence/grabowski-operator-surface-v1-t150-closeout-20260807.json",
+        "evidence_sha256": "c02466f644d388dba238eccdd02e77bee211e9832e9c621e94c4e1527fd6c7f7",
+        "verified_at": "2026-08-07T06:55:00Z",
+        "source": "github_pr_runtime_and_cross_source_live_proof",
+        "source_ref": "heimgewebe/grabowski#659; grabowski-job-382295c9afd6; grabowski-job-a3d0d03659d0; heimgewebe/bureau#1635",
+        "receipt_sha256": "bc835b8d16247f37c6996871e0624f70554bd464784ceda6ea4a73ccdfc6a48e"
+      }
     }
   },
   "priority": {
@@ -124,6 +149,6 @@
     "strategy": "Vor dem Merge nur eigenen Worktree, Branch und eigene Leases bereinigen. Nach dem Merge bei belegter Regression den exakten Mergecommit über einen separaten geprüften Revert-PR zurücknehmen; keine fremden Deployments oder State-Spuren löschen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Kanonische Self-Deploy-Zielcommits worktreeübergreifend deduplizieren"
 }

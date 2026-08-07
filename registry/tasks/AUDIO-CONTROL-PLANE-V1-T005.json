@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T005",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Qobuz- und Playlistkomponenten repositoryseitig implementieren",
-  "state": "planned",
+  "state": "verified",
   "goal": "Nach T002 nur die entschiedenen providerneutralen Wiedergabe- und Playlistverträge implementieren, ohne Livekonto oder Playlist zu verändern.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T002"
@@ -98,6 +98,52 @@
     "does_not_establish": [
       "Qobuz-Verfügbarkeit außerhalb der Prüfung",
       "Live-Playlist-Wirkung"
-    ]
+    ],
+    "verification": {
+      "schema_version": 1,
+      "source": "repository_scope_reconciliation",
+      "source_ref": "github-pr:heimgewebe/audio#59@967aca456ea8ab1eb42d7bb685566068e2815d68:e2b7d601589d119a5a1a1300b6e1123988314cdf",
+      "verified_at": "2026-08-07T08:47:20Z",
+      "outcome": "repository_scope_succeeded",
+      "task_preimage_sha256": "18ee4e1da32ff747d8394c3cc88c23e56bff86d0661620fcec2eaa05795ad307",
+      "evidence": {
+        "repository": "heimgewebe/audio",
+        "pull_request": 59,
+        "reviewed_head": "967aca456ea8ab1eb42d7bb685566068e2815d68",
+        "merge_commit": "e2b7d601589d119a5a1a1300b6e1123988314cdf",
+        "github_ci_run": 31162047218,
+        "github_ci_check": "safety",
+        "github_ci_state": "SUCCESS",
+        "focused_test_count": 24,
+        "full_test_count": 691,
+        "reviewed_tree_sha": "d8173223acb8ed805e59047004b0220a35fc51a3",
+        "merged_tree_sha": "d8173223acb8ed805e59047004b0220a35fc51a3",
+        "validation": [
+          "audio safety PASS",
+          "repository audio-surface safety PASS",
+          "92 Python files compile",
+          "new JSON contracts parse PASS",
+          "systemd verify PASS",
+          "git diff --check PASS",
+          "exact-head self-review PASS",
+          "reviewed and merged tree identity PASS",
+          "two pre-existing whale timing thresholds that fluctuated under concurrent host load passed isolated 2/2 on the unchanged head; GitHub safety CI passed on the merged tree"
+        ],
+        "scope": "repository-provider-neutral-playlist-contracts-and-simulation-only",
+        "host_mutation": false,
+        "provider_account_mutation": false,
+        "playlist_mutation": false,
+        "playback_route_mutation": false
+      },
+      "does_not_establish": [
+        "Live-Qobuz-Provider- oder Kontoverfügbarkeit",
+        "Playlist-Mutationsautorität",
+        "Wiedergabe- oder Routingautorität",
+        "Exklusiv- oder Bitperfect-Wiedergabebeleg",
+        "physische Gerätebereitschaft"
+      ],
+      "task_sha256": "49f54e577525953f572e39d95b8b1f31b733340b98fb7d59e69d1e8495ec3cde",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d"
+    }
   }
 }

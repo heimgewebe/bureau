@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Measure current snapshot size and project repository, clone and checkout growth across realistic Commonworld release cadences; define explicit thresholds or a bounded horizon rather than relying on an unbounded append-only assumption.",
+      "evidence_type": "object",
+      "id": "measured-growth-envelope"
+    },
+    {
+      "assertion": "Compare at least bounded in-Git retention with external immutable deployment-artifact storage (or an equivalent architecture), including GitHub Pages compatibility, current-release selection, exact readback, operational complexity and rollback consequences.",
+      "evidence_type": "object",
+      "id": "retention-design-comparison"
+    },
+    {
+      "assertion": "Any pruning, compaction or migration is prohibited from deleting the shared common-ancestor release tree during ordinary independent feature-branch builds. A deterministic concurrent-branch fixture proves that the T040 rename/delete conflict class remains absent and semantic source conflicts still fail closed.",
+      "evidence_type": "object",
+      "id": "conflict-class-not-reintroduced"
+    },
+    {
+      "assertion": "The chosen lifecycle documents and validates the retained rollback/readback horizon, including how current release metadata and historical artifacts are restored together without shared-history rewrite or manual hash-directory selection.",
+      "evidence_type": "object",
+      "id": "rollback-horizon-preserved"
+    },
+    {
+      "assertion": "Focused retention tests, deterministic build, full make validate, browser smoke, diff-bound self-review and required GitHub checks pass on the exact proposed head; closeout reports before/after storage growth and any remaining availability trade-off.",
+      "evidence_type": "object",
+      "id": "regression-and-browser-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T040"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Any retention or compaction mechanism must preserve T040 conflict resistance and must not delete the common-ancestor release tree as an ordinary feature-branch build side effect.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Bound the repository and clone-size growth introduced by append-only immutable Commonworld release snapshots without reintroducing the generated rename/delete conflict class, weakening exact current-release readback, or losing the intended rollback horizon.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T043",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that 5.03 MB is the long-term average release delta after Git compression",
+      "that every historical release must remain in Git indefinitely",
+      "permission to prune release artifacts from independent feature branches",
+      "permission to weaken exact readback or rollback guarantees"
+    ],
+    "observed_releases_tree_bytes": 5035491,
+    "observed_snapshot_bytes": 5031395,
+    "source": "COMMONWORLD-PUBLIC-GLOBE-V1-T040 implementation trade-off observed 2026-08-07",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-acf14462ed7e2d03b8b6b6ac",
+      "event_id": 2974,
+      "event_created_at": "2026-08-07T05:23:07.960591Z",
+      "request_sha256": "2adb5638ad4a1f5fc12a01f6545a03aeb4726a5ec3f90a3b54e9605b02c5a911",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "implementation-closeout",
+        "locator": "bureau:COMMONWORLD-PUBLIC-GLOBE-V1-T040#release-history-growth",
+        "observed_at": "2026-08-07T05:21:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 43
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "build-system",
+    "ci",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "If a bounded-retention or external-artifact design weakens exact release readback, rollback integrity, GitHub Pages compatibility or T040 conflict resistance, revert the lifecycle changes together and retain append-only history while a safer design is developed."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bound immutable release-history growth safely"
+}

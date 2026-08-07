@@ -1,0 +1,129 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein frischer organisationsweiter GitHub-Readback inventarisiert die aktuell offenen self-hosted-Renovate-PRs mit Repository, PR-Nummer, exaktem Head und geändertem Dateiscope; mindestens die am 7. August 2026 live beobachtete Welle weltgewebe#1705, semantAH#272, repoground#1158/#1159, mitschreiber#90, metarepo#686 und chronik#255 wird revisionsgebunden klassifiziert.",
+      "evidence_type": "object",
+      "id": "live-wave-inventory"
+    },
+    {
+      "assertion": "Jeder substantive Renovate-PR wird entweder einem bereits existierenden fachlich exakt passenden nichtterminalen Bureau-Task zugeordnet oder über den kanonischen Operator-Intake als eigener source-bound Update-Task registriert; anschließend enthält der PR exakt diese gültige Bureau-Taskbindung. Terminale, nur ähnlich klingende oder geratene Tasks sind ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "canonical-per-update-binding"
+    },
+    {
+      "assertion": "Die Aufnahme bindet den unveränderten PR-Head und den vollständigen geänderten Dateiscope. Ein Renovate-PR darf andere Bureau-Blattarbeit nur dann nicht mehr repositoryweit blockieren, wenn vollständige Task- und PR-Scope-Evidenz belegte Nichtüberlappung ergibt; unbekannte oder widersprüchliche Evidenz bleibt fail-closed.",
+      "evidence_type": "object",
+      "id": "exact-scope-before-admission"
+    },
+    {
+      "assertion": "Regressionstests belegen, dass normale ungebundene Arbeits-PRs weiterhin als missing-github-task-binding blockieren und Renovate keine pauschale Ausnahme erhält. Der bestehende Exactly-one-task-Vertrag bleibt erhalten.",
+      "evidence_type": "object",
+      "id": "guard-preserved"
+    },
+    {
+      "assertion": "Der Pfad registriert und bindet Renovate-Arbeit, erteilt aber weder Renovate noch dem Intake Automerge-, Merge-Queue-Bypass- oder Direct-main-Autorität; jeder spätere Merge verlangt weiterhin exakten Head und grüne Pflichtchecks.",
+      "evidence_type": "boolean",
+      "id": "no-merge-authority"
+    },
+    {
+      "assertion": "Fokussierte und vollständige relevante Bureau-Tests, Registry-Check und Pflicht-CI sind auf dem exakten Implementierungs-Head grün; der PR wird regelkonform gemergt und eine erforderliche immutable Bureau-Runtime-/Registry-Publikation wird mit post-refresh Doctor- und Frontier-Readback belegt.",
+      "evidence_type": "object",
+      "id": "validation-and-publication"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T046"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Reparatur darf ausschließlich den Bureau-Intake/PR-Binding-Pfad und dessen Tests ändern. Sie darf keine bestehenden Renovate-PRs ohne source-bound Taskidentität mergen, keine fremden Leases übernehmen, keine Bindung raten und keine fail-closed Guardregel abschwächen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_github_observer_binding_guard_v2.py",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T081.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den nach T046 produktiven Fleet-bound-Renovate-Ausgabepfad mit dem fail-closed Bureau-PR-Binding-Vertrag versöhnen: Jeder substantive Renovate-PR wird revisionsgebunden als source-bound Bureau-Candidate beziehungsweise genau ein kanonischer Update-Task mit exaktem PR-Dateiscope aufgenommen und anschließend an diese Task-ID gebunden. Unbekannte oder nicht eindeutig zuordenbare Updates bleiben blockiert; Taskidentitäten werden nie geraten, der PR-Binding-Guard wird nicht abgeschwächt und Renovate erhält weiterhin weder Merge- noch Automerge-Autorität.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T081",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "merge readiness of any current Renovate PR",
+      "that every Renovate update is desirable",
+      "permission to weaken the PR binding guard",
+      "automatic queue or claim authority",
+      "permission to touch foreign leases or dirty worktrees"
+    ],
+    "registered_from": "Live Taskgraph repair on 2026-08-07 after merged exact-scope repair PR #1673 exposed the systemic interaction between Fleet-bound Renovate PR generation and the Bureau PR-binding guard.",
+    "source_findings": {
+      "bureau_runtime_source_commit": "82c7f60470fe4113efc5be5cfeb4fbe6823891d6",
+      "contract_conflict": "T046 explicitly authorizes bounded Renovate PR creation without merge authority, while BUREAU-DETERMINISTIC-OPS-V1-T004 deliberately fail-closes open working PRs without exactly one valid Bureau task binding.",
+      "frontier_count": 968,
+      "open_renovate_prs": [
+        "heimgewebe/weltgewebe#1705",
+        "heimgewebe/semantAH#272",
+        "heimgewebe/repoground#1158",
+        "heimgewebe/repoground#1159",
+        "heimgewebe/mitschreiber#90",
+        "heimgewebe/metarepo#686",
+        "heimgewebe/chronik#255"
+      ],
+      "repo_write_blocked_by_open_pr_task_binding_violation_projections": 573
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6bccbf262052f17feaf17d55",
+      "event_id": 2952,
+      "event_created_at": "2026-08-07T04:04:11.095115Z",
+      "request_sha256": "bf763069a07b4e3406338239b765e27284f828cd71bdc2bb1309d49d7e73f40d",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-taskgraph-audit",
+        "locator": "github-org:heimgewebe:renovate-open-pr-wave@2026-08-07T03:58Z;bureau-runtime:82c7f60470fe4113efc5be5cfeb4fbe6823891d6",
+        "observed_at": "2026-08-07T04:04:11.052163Z",
+        "sha256": "32540944d09d7e051f1b514db48b0873adb03f8c105e5ed3edc4d0c5b7496928"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 810
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression den Intake-/Binding-Fix auf den letzten geprüften Stand zurücksetzen. Bereits source-bound registrierte Tasks nicht löschen oder auf andere Identitäten umbiegen; betroffene Renovate-PRs bleiben bis zur erneuten eindeutigen Bindung fail-closed blockiert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Renovate-PRs kanonisch an Bureau-Tasks binden"
+}

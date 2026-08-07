@@ -250,90 +250,11 @@ def ensure_registry_snapshot(
 
 def wrapper(
     manifest_path: Path,
-    manifest_sha256: str,
     entrypoint: str = "bureau.cli",
 ) -> bytes:
-    return f"""#!/usr/bin/env python3
-{MANAGED_MARKER}
-import hashlib
-import importlib
-import json
-import os
-import sys
-from pathlib import Path
+    from bureau.runtime_refresh import stable_launcher_bytes
 
-manifest_path = Path({str(manifest_path)!r})
-expected_manifest_sha256 = {manifest_sha256!r}
-if manifest_path.is_symlink() or not manifest_path.is_file():
-    raise SystemExit("bureau runtime manifest is not a regular file")
-manifest_bytes = manifest_path.read_bytes()
-if hashlib.sha256(manifest_bytes).hexdigest() != expected_manifest_sha256:
-    raise SystemExit("bureau runtime manifest digest mismatch")
-try:
-    manifest = json.loads(manifest_bytes)
-    if manifest["schema_version"] != 1 or manifest["kind"] != "bureau_runtime_deployment":
-        raise ValueError("unsupported manifest contract")
-    release = Path(manifest["immutable_release_path"]).resolve()
-    module = Path(manifest["module_path"]).resolve()
-    expected_module_sha256 = manifest["module_sha256"]
-    expected_tree_sha256 = manifest["package_tree_sha256"]
-    canonical_registry_root = Path(manifest["canonical_registry_root"]).resolve()
-    canonical_registry_inventory = Path(manifest["canonical_registry_inventory_path"]).resolve()
-except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-    raise SystemExit(f"bureau runtime manifest invalid: {{exc}}")
-if module.is_symlink() or not module.is_file():
-    raise SystemExit("bureau runtime module is not a regular file")
-if hashlib.sha256(module.read_bytes()).hexdigest() != expected_module_sha256:
-    raise SystemExit("bureau runtime module digest mismatch")
-try:
-    module.relative_to(release)
-except ValueError:
-    raise SystemExit("bureau runtime module escaped immutable release")
-pyproject = release / "pyproject.toml"
-packages = [release / "src/bureau", release / "src/bureau_cycle"]
-systemd = release / "ops/systemd"
-if (
-    pyproject.is_symlink()
-    or not pyproject.is_file()
-    or systemd.is_symlink()
-    or not systemd.is_dir()
-    or any(package.is_symlink() or not package.is_dir() for package in packages)
-):
-    raise SystemExit("bureau runtime package tree is incomplete")
-digest = hashlib.sha256()
-scheduler_names = {SCHEDULER_NAMES!r}
-paths = [
-    pyproject,
-    *(path for package in packages for path in sorted(package.rglob("*.py"))),
-    *(systemd / (name + ".service") for name in scheduler_names),
-    *(systemd / (name + ".timer") for name in scheduler_names),
-    *(systemd / "libexec" / name for name in scheduler_names),
-]
-for path in paths:
-    if path.is_symlink() or not path.is_file():
-        raise SystemExit("bureau runtime package tree contains a non-regular file")
-    relative = path.relative_to(release).as_posix().encode()
-    content = path.read_bytes()
-    digest.update(len(relative).to_bytes(4, "big"))
-    digest.update(relative)
-    digest.update(b"x" if path.stat().st_mode & 0o111 else b"-")
-    digest.update(len(content).to_bytes(8, "big"))
-    digest.update(content)
-if digest.hexdigest() != expected_tree_sha256:
-    raise SystemExit("bureau runtime package tree digest mismatch")
-if not canonical_registry_root.is_dir() or canonical_registry_root.is_symlink():
-    raise SystemExit("bureau canonical Registry snapshot is invalid")
-if not canonical_registry_inventory.is_file() or canonical_registry_inventory.is_symlink():
-    raise SystemExit("bureau canonical Registry inventory is invalid")
-sys.path.insert(0, str(release / "src"))
-os.environ["BUREAU_RUNTIME_MANIFEST"] = str(manifest_path)
-os.environ["BUREAU_RUNTIME_MANIFEST_SHA256"] = expected_manifest_sha256
-os.environ["BUREAU_REGISTRY_ROOT"] = str(canonical_registry_root)
-os.environ["BUREAU_REGISTRY_ROOT_MODE"] = "canonical-runtime-default"
-os.environ.setdefault("BUREAU_JSON_ENVELOPE", "1")
-module = importlib.import_module({entrypoint!r})
-raise SystemExit(module.main())
-""".encode()
+    return stable_launcher_bytes(manifest_path, entrypoint)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -357,6 +278,8 @@ def parser() -> argparse.ArgumentParser:
         ),
     )
     value.add_argument("--replace-existing", action="store_true")
+    value.add_argument("--enforce-launcher-allowlist", action="store_true")
+    value.add_argument("--allowed-launcher-path", action="append", default=[])
     return value
 
 
@@ -473,6 +396,33 @@ def _validate_existing_launcher(launcher: Path, *, label: str, replace_existing:
         raise SystemExit(f"existing {label} launcher is unmanaged; use --replace-existing")
 
 
+def _launcher_needs_write(path: Path, expected: bytes) -> bool:
+    try:
+        return not (
+            not path.is_symlink()
+            and path.is_file()
+            and bool(path.stat().st_mode & 0o111)
+            and path.read_bytes() == expected
+        )
+    except OSError:
+        return True
+
+
+def _write_launcher_if_needed(
+    path: Path,
+    expected: bytes,
+    *,
+    enforce_allowlist: bool,
+    allowed_paths: set[Path],
+) -> bool:
+    if not _launcher_needs_write(path, expected):
+        return False
+    if enforce_allowlist and path not in allowed_paths:
+        raise SystemExit(f"launcher mutation is not covered by runtime-refresh lease: {path}")
+    atomic_write(path, expected, 0o755)
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     source = Path(args.source).expanduser().resolve()
@@ -492,7 +442,9 @@ def main(argv: list[str] | None = None) -> int:
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))
     from bureau.runtime_refresh import (
+        RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD,
         RuntimeRefreshError,
+        stable_launcher_bytes,
         validate_legacy_runtime_refresh_bootstrap,
         validate_runtime_approval_intent,
     )
@@ -515,6 +467,38 @@ def main(argv: list[str] | None = None) -> int:
             )
     except RuntimeRefreshError as exc:
         raise SystemExit(f"runtime approval denied: {exc.code}: {exc.message}") from exc
+
+    launcher = bin_dir / "bureau"
+    runtime_refresh_launcher = bin_dir / "bureau-runtime-refresh"
+    status_capsule_launcher = bin_dir / "bureau-status-capsule"
+    expected_launchers = {
+        launcher: stable_launcher_bytes(manifest_path),
+        runtime_refresh_launcher: stable_launcher_bytes(
+            manifest_path, "bureau.runtime_refresh"
+        ),
+        status_capsule_launcher: stable_launcher_bytes(
+            manifest_path, "bureau.status_capsule"
+        ),
+    }
+    # Normalize lexically, not with Path.resolve(): a launcher may itself
+    # be a symlink that this exact leased path is authorized to replace.
+    allowed_launcher_paths = {
+        Path(os.path.abspath(os.path.expanduser(value)))
+        for value in args.allowed_launcher_path
+    }
+    initial_launcher_mutations = {
+        path
+        for path, expected in expected_launchers.items()
+        if _launcher_needs_write(path, expected)
+    }
+    if args.enforce_launcher_allowlist:
+        unleased = sorted(
+            str(path) for path in initial_launcher_mutations if path not in allowed_launcher_paths
+        )
+        if unleased:
+            raise SystemExit(
+                "launcher mutation is not covered by runtime-refresh lease: " + ", ".join(unleased)
+            )
 
     registry_snapshot = ensure_registry_snapshot(source, prefix, head)
     source_digest = package_tree_sha256(source)
@@ -545,9 +529,6 @@ def main(argv: list[str] | None = None) -> int:
     if not module.is_file() or module.is_symlink():
         raise SystemExit("immutable release is missing runtime_identity.py")
 
-    launcher = bin_dir / "bureau"
-    runtime_refresh_launcher = bin_dir / "bureau-runtime-refresh"
-    status_capsule_launcher = bin_dir / "bureau-status-capsule"
     if manifest_path.exists() and (manifest_path.is_symlink() or not manifest_path.is_file()):
         raise SystemExit("existing Bureau runtime manifest is not a regular file")
     _validate_existing_launcher(launcher, label="bureau", replace_existing=args.replace_existing)
@@ -594,20 +575,48 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "rollback": backup,
     }
+    manifest[RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD] = hashlib.sha256(
+        canonical(manifest)
+    ).hexdigest()
     manifest_bytes = canonical(manifest)
     manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
-    launcher_bytes = wrapper(manifest_path, manifest_digest)
-    runtime_refresh_launcher_bytes = wrapper(
-        manifest_path, manifest_digest, "bureau.runtime_refresh"
-    )
-    status_capsule_launcher_bytes = wrapper(
-        manifest_path, manifest_digest, "bureau.status_capsule"
-    )
+    launcher_bytes = expected_launchers[launcher]
+    runtime_refresh_launcher_bytes = expected_launchers[runtime_refresh_launcher]
+    status_capsule_launcher_bytes = expected_launchers[status_capsule_launcher]
 
+    final_launcher_mutations = {
+        path
+        for path, expected in expected_launchers.items()
+        if _launcher_needs_write(path, expected)
+    }
+    if args.enforce_launcher_allowlist:
+        unleased = sorted(
+            str(path) for path in final_launcher_mutations if path not in allowed_launcher_paths
+        )
+        if unleased:
+            raise SystemExit(
+                "launcher drift detected before effect without runtime-refresh lease: "
+                + ", ".join(unleased)
+            )
     atomic_write(manifest_path, manifest_bytes)
-    atomic_write(launcher, launcher_bytes, 0o755)
-    atomic_write(runtime_refresh_launcher, runtime_refresh_launcher_bytes, 0o755)
-    atomic_write(status_capsule_launcher, status_capsule_launcher_bytes, 0o755)
+    launcher_written = _write_launcher_if_needed(
+        launcher,
+        launcher_bytes,
+        enforce_allowlist=args.enforce_launcher_allowlist,
+        allowed_paths=allowed_launcher_paths,
+    )
+    runtime_refresh_launcher_written = _write_launcher_if_needed(
+        runtime_refresh_launcher,
+        runtime_refresh_launcher_bytes,
+        enforce_allowlist=args.enforce_launcher_allowlist,
+        allowed_paths=allowed_launcher_paths,
+    )
+    status_capsule_launcher_written = _write_launcher_if_needed(
+        status_capsule_launcher,
+        status_capsule_launcher_bytes,
+        enforce_allowlist=args.enforce_launcher_allowlist,
+        allowed_paths=allowed_launcher_paths,
+    )
     receipt = {
         "schema_version": 1,
         "kind": "bureau_runtime_install_receipt",
@@ -616,10 +625,13 @@ def main(argv: list[str] | None = None) -> int:
         "manifest_sha256": sha256(manifest_path),
         "launcher_path": str(launcher),
         "launcher_sha256": sha256(launcher),
+        "launcher_written": launcher_written,
         "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
         "runtime_refresh_launcher_sha256": sha256(runtime_refresh_launcher),
+        "runtime_refresh_launcher_written": runtime_refresh_launcher_written,
         "status_capsule_launcher_path": str(status_capsule_launcher),
         "status_capsule_launcher_sha256": sha256(status_capsule_launcher),
+        "status_capsule_launcher_written": status_capsule_launcher_written,
         "package_tree_sha256": source_digest,
         "canonical_registry_root": registry_snapshot["root"],
         "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],

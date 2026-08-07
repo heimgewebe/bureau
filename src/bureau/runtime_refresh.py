@@ -44,6 +44,20 @@ GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY = "resource_lease_contract_versio
 SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS = frozenset({"1"})
 DEFAULT_GRABOWSKI_RESOURCE_DB = Path("~/.local/state/grabowski/resources.sqlite3").expanduser()
 MAX_JSON_BYTES = 256 * 1024
+RUNTIME_LAUNCHER_MANAGED_MARKER = "# managed-by: heimgewebe-bureau-runtime-v1"
+RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD = "manifest_payload_sha256"
+RUNTIME_LAUNCHER_ENTRYPOINTS = (
+    ("bureau", "bureau.cli"),
+    ("bureau-runtime-refresh", "bureau.runtime_refresh"),
+    ("bureau-status-capsule", "bureau.status_capsule"),
+)
+RUNTIME_SCHEDULER_NAMES = (
+    "bureau-halfhour-operator",
+    "bureau-curator",
+    "bureau-operator-control",
+    "bureau-verifier-control",
+    "bureau-closure-planner",
+)
 
 
 class RuntimeRefreshError(RuntimeError):
@@ -81,6 +95,134 @@ def canonical_bytes(value: Any) -> bytes:
     return (
         json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
     ).encode()
+
+
+def stable_launcher_bytes(
+    manifest_path: Path,
+    entrypoint: str = "bureau.cli",
+) -> bytes:
+    """Render the deployment-independent Bureau bootstrap launcher.
+
+    The launcher validates the manifest canonical bytes and payload digest
+    before it consumes any runtime paths, then retains the existing
+    module/package-tree verification.  The raw manifest digest is
+    still exported to the runtime identity layer, but it is no longer embedded
+    in launcher bytes and therefore does not force a launcher rewrite for every
+    ordinary deployment.
+    """
+    return f"""#!/usr/bin/env python3
+{RUNTIME_LAUNCHER_MANAGED_MARKER}
+import hashlib
+import importlib
+import json
+import os
+import sys
+from pathlib import Path
+
+manifest_path = Path({str(manifest_path)!r})
+manifest_digest_field = {RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD!r}
+if manifest_path.is_symlink() or not manifest_path.is_file():
+    raise SystemExit("bureau runtime manifest is not a regular file")
+manifest_bytes = manifest_path.read_bytes()
+observed_manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+try:
+    manifest = json.loads(manifest_bytes)
+    if manifest["schema_version"] != 1 or manifest["kind"] != "bureau_runtime_deployment":
+        raise ValueError("unsupported manifest contract")
+    canonical_manifest_bytes = (
+        json.dumps(
+            manifest,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\\n"
+    ).encode()
+    if manifest_bytes != canonical_manifest_bytes:
+        raise ValueError("manifest digest mismatch: manifest bytes are not canonical")
+    manifest_payload = dict(manifest)
+    expected_manifest_payload_sha256 = manifest_payload.pop(manifest_digest_field)
+    if (
+        not isinstance(expected_manifest_payload_sha256, str)
+        or len(expected_manifest_payload_sha256) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in expected_manifest_payload_sha256
+        )
+    ):
+        raise ValueError("manifest payload digest is invalid")
+    rendered_payload = (
+        json.dumps(
+            manifest_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\\n"
+    ).encode()
+    if hashlib.sha256(rendered_payload).hexdigest() != expected_manifest_payload_sha256:
+        raise ValueError("manifest payload digest mismatch")
+    release = Path(manifest["immutable_release_path"]).resolve()
+    module = Path(manifest["module_path"]).resolve()
+    expected_module_sha256 = manifest["module_sha256"]
+    expected_tree_sha256 = manifest["package_tree_sha256"]
+    canonical_registry_root = Path(manifest["canonical_registry_root"]).resolve()
+    canonical_registry_inventory = Path(manifest["canonical_registry_inventory_path"]).resolve()
+except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"bureau runtime manifest invalid: {{exc}}")
+if module.is_symlink() or not module.is_file():
+    raise SystemExit("bureau runtime module is not a regular file")
+if hashlib.sha256(module.read_bytes()).hexdigest() != expected_module_sha256:
+    raise SystemExit("bureau runtime module digest mismatch")
+try:
+    module.relative_to(release)
+except ValueError:
+    raise SystemExit("bureau runtime module escaped immutable release")
+pyproject = release / "pyproject.toml"
+packages = [release / "src/bureau", release / "src/bureau_cycle"]
+systemd = release / "ops/systemd"
+if (
+    pyproject.is_symlink()
+    or not pyproject.is_file()
+    or systemd.is_symlink()
+    or not systemd.is_dir()
+    or any(package.is_symlink() or not package.is_dir() for package in packages)
+):
+    raise SystemExit("bureau runtime package tree is incomplete")
+digest = hashlib.sha256()
+scheduler_names = {RUNTIME_SCHEDULER_NAMES!r}
+paths = [
+    pyproject,
+    *(path for package in packages for path in sorted(package.rglob("*.py"))),
+    *(systemd / (name + ".service") for name in scheduler_names),
+    *(systemd / (name + ".timer") for name in scheduler_names),
+    *(systemd / "libexec" / name for name in scheduler_names),
+]
+for path in paths:
+    if path.is_symlink() or not path.is_file():
+        raise SystemExit("bureau runtime package tree contains a non-regular file")
+    relative = path.relative_to(release).as_posix().encode()
+    content = path.read_bytes()
+    digest.update(len(relative).to_bytes(4, "big"))
+    digest.update(relative)
+    digest.update(b"x" if path.stat().st_mode & 0o111 else b"-")
+    digest.update(len(content).to_bytes(8, "big"))
+    digest.update(content)
+if digest.hexdigest() != expected_tree_sha256:
+    raise SystemExit("bureau runtime package tree digest mismatch")
+if not canonical_registry_root.is_dir() or canonical_registry_root.is_symlink():
+    raise SystemExit("bureau canonical Registry snapshot is invalid")
+if not canonical_registry_inventory.is_file() or canonical_registry_inventory.is_symlink():
+    raise SystemExit("bureau canonical Registry inventory is invalid")
+sys.path.insert(0, str(release / "src"))
+os.environ["BUREAU_RUNTIME_MANIFEST"] = str(manifest_path)
+os.environ["BUREAU_RUNTIME_MANIFEST_SHA256"] = observed_manifest_sha256
+os.environ["BUREAU_REGISTRY_ROOT"] = str(canonical_registry_root)
+os.environ["BUREAU_REGISTRY_ROOT_MODE"] = "canonical-runtime-default"
+os.environ.setdefault("BUREAU_JSON_ENVELOPE", "1")
+module = importlib.import_module({entrypoint!r})
+raise SystemExit(module.main())
+""".encode()
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -225,6 +367,20 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
     source_commit = value.get("source_commit")
     if not isinstance(source_commit, str) or len(source_commit) != 40:
         raise RuntimeRefreshError("manifest-source-invalid", "manifest source_commit is invalid")
+    manifest_payload_sha256 = value.get(RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD)
+    if manifest_payload_sha256 is not None:
+        expected = payload_digest(value, RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD)
+        if (
+            not isinstance(manifest_payload_sha256, str)
+            or len(manifest_payload_sha256) != 64
+            or any(character not in "0123456789abcdef" for character in manifest_payload_sha256)
+            or manifest_payload_sha256 != expected
+        ):
+            raise RuntimeRefreshError(
+                "manifest-payload-digest-mismatch",
+                "Bureau deployment manifest payload digest is invalid",
+                details={"expected": expected, "observed": manifest_payload_sha256},
+            )
     return value, sha256_bytes(path.read_bytes())
 
 
@@ -451,14 +607,32 @@ def persist_observation(state_root: Path, observation: dict[str, Any]) -> Path:
     return path
 
 
+def launcher_mutation_resource_keys(*, prefix: Path, bin_dir: Path) -> list[str]:
+    manifest_path = prefix / "deployment-manifest.json"
+    keys: set[str] = set()
+    for name, entrypoint in RUNTIME_LAUNCHER_ENTRYPOINTS:
+        path = bin_dir / name
+        expected = stable_launcher_bytes(manifest_path, entrypoint)
+        try:
+            valid = (
+                not path.is_symlink()
+                and path.is_file()
+                and bool(path.stat().st_mode & 0o111)
+                and path.read_bytes() == expected
+            )
+        except OSError:
+            valid = False
+        if not valid:
+            keys.add(f"path:{path}")
+    return sorted(keys)
+
+
 def required_resource_keys(
     *, state_root: Path, prefix: Path, bin_dir: Path, workspace: Path
 ) -> list[str]:
     return sorted(
         {
-            f"path:{bin_dir / 'bureau'}",
-            f"path:{bin_dir / 'bureau-runtime-refresh'}",
-            f"path:{bin_dir / 'bureau-status-capsule'}",
+            *launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir),
             f"path:{prefix}",
             f"path:{state_root}",
             f"path:{workspace}",
@@ -1294,6 +1468,7 @@ def run_installer(
     prefix: Path,
     bin_dir: Path,
     approval_intent: Path,
+    allowed_launcher_paths: Iterable[Path] = (),
     timeout: float = 300,
 ) -> dict[str, Any]:
     argv = [
@@ -1308,7 +1483,10 @@ def run_installer(
         "--approval-intent",
         str(approval_intent),
         "--replace-existing",
+        "--enforce-launcher-allowlist",
     ]
+    for path in sorted({str(item) for item in allowed_launcher_paths}):
+        argv.extend(["--allowed-launcher-path", path])
     result = _run(argv, cwd=source, timeout=timeout)
     if result.returncode:
         raise RuntimeRefreshError(
@@ -1465,6 +1643,19 @@ def apply_runtime_refresh(
     resolved_state_root = state_root.expanduser().resolve()
     if Path(intent["state_root"]).expanduser().resolve() != resolved_state_root:
         raise RuntimeRefreshError("intent-state-root-mismatch", "intent state root differs")
+    prefix = Path(intent["prefix"]).expanduser().resolve()
+    bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
+    intent_resource_keys = set(intent.get("required_resource_keys", []))
+    live_launcher_keys = set(
+        launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir)
+    )
+    unleased_launcher_drift = sorted(live_launcher_keys - intent_resource_keys)
+    if unleased_launcher_drift:
+        raise RuntimeRefreshError(
+            "launcher-drift-after-intent",
+            "a launcher now requires mutation but is absent from the intent leases",
+            details={"resource_keys": unleased_launcher_drift},
+        )
     binding = validate_live_lease_binding(
         intent, lease_binding, resource_db=resource_db, now=current
     )
@@ -1561,8 +1752,13 @@ def apply_runtime_refresh(
     create_only(started_path, canonical_bytes(started))
     effect_started = False
     workspace = Path(intent["workspace"])
-    prefix = Path(intent["prefix"])
-    bin_dir = Path(intent["bin_dir"])
+    launcher_key_to_path = {
+        f"path:{bin_dir / name}": bin_dir / name
+        for name, _entrypoint in RUNTIME_LAUNCHER_ENTRYPOINTS
+    }
+    allowed_launcher_paths = [
+        path for key, path in launcher_key_to_path.items() if key in intent_resource_keys
+    ]
     try:
         source_identity = source_preparer(
             remote_url=intent["remote_url"],
@@ -1576,6 +1772,7 @@ def apply_runtime_refresh(
             prefix=prefix,
             bin_dir=bin_dir,
             approval_intent=intent_path,
+            allowed_launcher_paths=allowed_launcher_paths,
         )
         evidence = readback(
             expected_commit=intent["main_commit"],

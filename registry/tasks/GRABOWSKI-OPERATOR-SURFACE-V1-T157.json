@@ -1,0 +1,111 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein eindeutiger repo:<checkout>:tag:<name>-Schlüssel wird als selbstgescopte Repository-Ressource erkannt.",
+      "id": "tag-scope"
+    },
+    {
+      "assertion": "Die bestehende Erkennung für branch und operation bleibt unverändert.",
+      "id": "existing-scopes"
+    },
+    {
+      "assertion": "Breite Repository-Schlüssel verlangen weiterhin den bestehenden vollständigen Scope-Nachweis; mehrdeutige Schlüssel bleiben abgelehnt.",
+      "id": "strict-broad-scope"
+    },
+    {
+      "assertion": "Regressionstests decken tag, branch, operation, existierende vollständige Pfade und mehrdeutige Marker ab.",
+      "id": "resource-tests"
+    },
+    {
+      "assertion": "Pickup-Regressionstests zeigen, dass die drei selbstgescopten Schlüsselklassen ohne Scope-Manifest weitergereicht werden und breite Repository-Schlüssel separat validiert bleiben.",
+      "id": "pickup-tests"
+    },
+    {
+      "assertion": "Fokustests und vollständige relevante Grabowski-Validierung sind auf dem exakten Head grün; PR und Runtime-Readback sind revisionsgebunden.",
+      "id": "delivery"
+    },
+    {
+      "assertion": "Nach Deployment wird ein eigener temporärer repo:<checkout>:tag:<name>-Ressourcenschlüssel über den realen Leasepfad ohne Scope-Manifest erfolgreich akquiriert und wieder freigegeben.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T153"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Parser, fokussierte Regressionstests und Pickup-Dokumentation für den tag-Scope ändern; bestehende branch-/operation-Semantik und breite Repository-Validierung beibehalten.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-pickup.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bestehenden selbstgescopten Repository-Schlüsselvertrag um das Segment ':tag:' ergänzen. Ein eindeutiger Schlüssel repo:<checkout>:tag:<name> soll wie die bestehenden branch- und operation-Segmente ohne Repository-Scope-Manifest behandelt werden. Breite Repository-Schlüssel und mehrdeutige Eingaben bleiben unverändert streng validiert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T157",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Änderung der verifizierten T153-Historie",
+      "automatische Claim- oder Mergefreigabe"
+    ],
+    "refines_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T153",
+    "source_candidate": "candidate-fee22d064ab344f71289da88",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-fee22d064ab344f71289da88",
+      "event_id": 3012,
+      "event_created_at": "2026-08-07T09:58:18.222366Z",
+      "request_sha256": "e8e8592f18418635bd33525a32597fbd97b2142380a2946dff163097422a349d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-reproduction",
+        "locator": "grabowski:systemkatalog-alpha-lab-20260807:provenance-tag-resource-key-preflight",
+        "observed_at": "2026-08-07T09:50:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 157
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression den revisionsgebundenen Nachtrag per normalem Revert zurücknehmen und die bisherige strengere Klassifikation wiederherstellen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Repository-Referenzschlüssel um tag-Scope ergänzen"
+}

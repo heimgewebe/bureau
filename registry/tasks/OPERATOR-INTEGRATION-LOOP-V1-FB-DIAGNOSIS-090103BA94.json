@@ -51,6 +51,38 @@
       "schema_version": 1,
       "scope_path": "tests",
       "time_bucket": "20672"
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "coordinated-run-and-canonical-follow-up-closeout",
+      "verified_at": "2026-08-07T16:46:45Z",
+      "run": {
+        "run_id": "BUR-RUN-20260807T160435Z-89986b7216",
+        "state": "succeeded",
+        "task_id": "OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-090103BA94",
+        "worker_id": "operator:chatgpt:diagnose-pr677-binding-20260807",
+        "updated_at": "2026-08-07T16:21:24.524951Z",
+        "coordination_blocking": false,
+        "lease_status": "terminal-released-or-expired"
+      },
+      "acceptance_evidence": {
+        "diagnosis-1": "The coordinated run was created from the then-current Bureau/PR state, later terminalized succeeded, and its live pickup readback now reports coordination_blocking=false rather than inferring completion from historical summaries.",
+        "diagnosis-2": "The diagnosis isolated the missing canonical Bureau binding around Grabowski PR #677 and did not take over foreign work; the resulting bounded follow-up was registered separately as OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-EA32ADE502.",
+        "diagnosis-3": "The canonical follow-up task EA32ADE502 is present on Bureau main through merged PR #1729. Grabowski PR #677 is merged and the deployed runtime now serves merge commit c59c64da66ca505816c4b9cb9217f0581538ebaa with valid integrity. A fresh transport bootstrap executed an exact mutating resource acquisition while client allow_mutation was omitted, and a nested branch-publish negative control with allow_mutation omitted was blocked before effect."
+      },
+      "live_evidence": {
+        "grabowski_repo_head": "c59c64da66ca505816c4b9cb9217f0581538ebaa",
+        "deployment_integrity_valid": true,
+        "transport_bootstrap_receipt_sha256": "d2ad9bfaf00f9e1ae769c206d76b5d36708ea2d539175098ec21e234aac7bc8f",
+        "negative_control_receipt_sha256": "4d1e81b6b0e5faa0f7d9a451d97b2b85872b086ff10535359d9bbcba6a98e1a4"
+      },
+      "does_not_establish": [
+        "future runtime correctness after later Grabowski deployments",
+        "automatic claimability of unrelated Bureau tasks",
+        "permission to release or mutate foreign resources"
+      ],
+      "task_sha256": "631171e5f4cefec5c2d525aa4a27d5a24e47aad1308b5c6294cd632ed0251a4b",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },
   "priority": {
@@ -65,6 +97,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Diagnose one current Bureau bottleneck"
 }

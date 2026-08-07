@@ -1,0 +1,106 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die unterstützten Config-, Schema- und Workflow-Quellen und Relationstypen sind explizit begrenzt; dynamische, generierte oder nicht statisch eindeutige Verweise werden als ausgelassen oder unsicher ausgewiesen statt inferiert.",
+      "id": "producer-contract"
+    },
+    {
+      "assertion": "Der Producer erzeugt deterministische repoground.system_relation_evidence mit Repositorycommit, Quelle, Range, Evidenzklasse und Contract-Identität; system_relation_overlay akzeptiert die Ausgabe ohne Typvermischung mit Python calls/constructs.",
+      "id": "provenance-bound-output"
+    },
+    {
+      "assertion": "Ein fixes Goldset enthält positive, mehrdeutige und echte Nullfälle für Config-/Workflow-/Schema-Beziehungen und misst getrennt Präzision, Recall, Rangegenauigkeit sowie Auslassungsgründe; false positives in den als S1 ausgegebenen Beziehungen sind im Goldset null.",
+      "id": "goldset"
+    },
+    {
+      "assertion": "Impact-/Context-Consumer verwenden die neuen Strukturrelationen nur bei kohärenter commit- und digestgebundener Evidenz; fehlende oder unvereinbare Evidenz bleibt sichtbar und aktiviert keine Relationslane fälschlich.",
+      "id": "consumer-integration"
+    },
+    {
+      "assertion": "Die Erkennung arbeitet lokal, deterministisch und begrenzt, lädt nichts aus dem Netz, liest keine Secrets und behauptet weder Config-Laufzeitwirkung noch Schema-Konformität oder Workflow-Ausführung.",
+      "id": "bounded-offline"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Skalierungstest belegt akzeptable Laufzeit, Speicher und Artefaktgröße auf einem realistischen Repository; eine breitere Default-Aktivierung erfolgt nur bei nachgewiesenem Agentennutzen.",
+      "id": "scale-regression"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T020"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Einen konservativen lokalen Producer ergänzen, der unterstützte Config-, Schema- und Workflow-Deklarationen aus revisionsgebundenen Repositorydateien erkennt und daraus provenance- und digestgebundene repoground.system_relation_evidence für das bestehende system_relation_overlay erzeugt, ohne Laufzeitwirkung oder semantische Korrektheit zu erfinden.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T022",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "deduplication": {
+      "checked_registry_snapshot": "814749b12e53-tree53547683c8a4",
+      "result": "No RepoGround Agent Utility T001-T021 task defines an automatic Config/Workflow system-relation evidence producer; T021 covers optional Rust/Bash adapters and is distinct."
+    },
+    "does_not_establish": [
+      "implementation",
+      "runtime config semantics",
+      "schema conformance",
+      "workflow execution",
+      "complete repository relation coverage",
+      "default activation",
+      "merge readiness"
+    ],
+    "registered_from": "REPOGROUND-AGENT-UTILITY-V1-T020 closeout self-review",
+    "source_evidence": {
+      "finding": "T020 establishes typed Config/Schema/Workflow relation contracts and validation, but system_relation_overlay consumes already-collected evidence and does not itself scan repositories to produce it.",
+      "merge_commit": "08d5691dd65c1ee7e48a259dbfd4377eed12b015",
+      "pull_request": 1166,
+      "repository": "heimgewebe/repoground"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-665ce72f0724cbfdf18640d6",
+      "event_id": 3088,
+      "event_created_at": "2026-08-07T13:04:15.195493Z",
+      "request_sha256": "7e99a52c30355c3c48e53a40aa16e9bd9753f2a700a9ec26691695705a39625a",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/repoground#1166@08d5691dd65c1ee7e48a259dbfd4377eed12b015",
+        "observed_at": "2026-08-07T13:04:15.156779Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "repoground",
+    "retrieval-evaluation",
+    "testing",
+    "benchmarking"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Config- und Workflow-Relations-Evidenz automatisch sammeln"
+}

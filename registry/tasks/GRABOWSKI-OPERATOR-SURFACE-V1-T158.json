@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Primäre Live-Evidenz dokumentiert, dass explizit nachgetragene optionale Default-Felder den Argumentdigest korrekt ändern und blockiert werden, während das exakt ursprünglich gesendete Objekt mit derselben Challenge erfolgreich ausgeführt wird.",
+      "id": "false-positive-reproduction"
+    },
+    {
+      "assertion": "Die Shared-Unlabeled-Challenge-Anweisung sagt ausdrücklich, dass das ursprüngliche JSON-Argumentobjekt wiederverwendet werden muss und ausgelassene optionale Default-Felder nicht materialisiert werden dürfen.",
+      "id": "guidance"
+    },
+    {
+      "assertion": "Keine Transport-Digest-, Client-Scope-, Challenge-, Single-use-, Exactly-once- oder Fail-closed-Semantik wird geändert.",
+      "id": "semantics-preserved"
+    },
+    {
+      "assertion": "Ein Integrationstest bindet die neue Anweisung und bestehende Tests beweisen weiterhin, dass abweichende Argumentdigests blockiert und exakt passende Ziele ausgeführt werden.",
+      "id": "regression"
+    },
+    {
+      "assertion": "Fokustests und vollständige relevante Grabowski-Validierung sind auf dem exakten Head grün; Diff und Review sind revisionsgebunden.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Der exakte geprüfte Head ist über einen grünen PR gemergt und source-identitätsgebunden deployt; Runtime-Identität und Integrität lesen gültig zurück.",
+      "id": "delivery"
+    },
+    {
+      "assertion": "Nach Deployment liefert eine frische Shared-Unlabeled-Challenge die präzisierte Anweisung; ein exakt ursprüngliches Argumentobjekt wird erfolgreich ausgeführt und eine absichtlich default-materialisierte Variante bleibt ohne Effekt blockiert.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die Shared-Unlabeled-Roundtrip-Recovery-Anweisung und den zugehörigen Integrationstest präzisieren. Keine Digest-Normalisierung, keine Default-Kanonisierung und keine Lockerung von Single-use/Exactly-once.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_operator.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die bestehende korrekte exakte Digestbindung des Shared-Unlabeled-Transport-Roundtrips operatorisch eindeutig machen: Die Challenge-Anweisung muss ausdrücklich verlangen, das ursprünglich an das Zielwerkzeug gesendete JSON-Argumentobjekt unverändert wiederzuverwenden, einschließlich der Abwesenheit optionaler Default-Felder. Die Transport-, Exactly-once- und Fail-closed-Semantik selbst bleibt unverändert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T158",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "einen Transport-Digestfehler",
+      "Kausalität durch T156",
+      "allgemeinen Connector-Ausfall",
+      "Erlaubnis zur Übernahme fremder T157-Arbeit",
+      "automatische Merge- oder Deploymentfreigabe"
+    ],
+    "source_candidate": "candidate-2a5b61ef0f6184da1c2fc46e",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2a5b61ef0f6184da1c2fc46e",
+      "event_id": 3050,
+      "event_created_at": "2026-08-07T11:18:24.500709Z",
+      "request_sha256": "4a2a979118096ce82f8c0f8d1d573f916345352f19cd2c33d0fa482247f7a3da",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-reproduction",
+        "locator": "grabowski-runtime:5e16ab2f7acb61a950b8b1f432838515a137384e:transport-roundtrip:omitted-vs-explicit-default-proof",
+        "observed_at": "2026-08-07T11:15:52Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 158
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "runtime-observability",
+    "transport"
+  ],
+  "rollback": {
+    "strategy": "Die reine Recovery-Textpräzisierung und ihren Test per normalem Revert zurücknehmen; keine Transport-, Challenge-, Lease- oder Audit-Historie verändern."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Roundtrip-Anweisung gegen Defaultmaterialisierung härten"
+}

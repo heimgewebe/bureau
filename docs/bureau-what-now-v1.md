@@ -4,7 +4,7 @@ Status: closes `BUR-2026-003-T007`.
 
 ## Decision
 
-`bureau what-now` is a read-only operator entrypoint for choosing the next useful Bureau ball from registry truth. It does not claim a run, create a workspace, dispatch an agent, mutate the queue or depend on chat memory.
+`bureau what-now` is a read-only operator entrypoint for choosing the next useful Bureau ball from canonical Registry declarations interpreted through current runtime state. It does not claim a run, create a workspace, dispatch an agent, mutate the queue or depend on chat memory.
 
 The command answers three questions:
 
@@ -16,10 +16,13 @@ The command answers three questions:
 
 `what-now` deliberately separates operator attention from autonomous claiming:
 
-- `eligible=true` means the task is suitable for operator attention according to registry state, queue position, dependency state, capability context, resource claims and runtime blockers.
+- `eligible=true` means the task is suitable for operator attention according to its effective task state, queue position, dependency state, capability context, resource claims and runtime blockers.
+- Registry state remains the durable task declaration and an eligibility input; it is not by itself dispatch truth. When current revision-bound runtime evidence yields a terminal `effective_state`, that task is not eligible even if its Registry file still says `ready`.
 - `claim_eligible=true` means the stricter `claim-next` path could claim it immediately.
 - Planned `interactive-agent/review-before-effect` tasks are operator-eligible but not claim-eligible. Their soft reasons are preserved in `soft_reasons`.
 - Hard blockers remain in `blocker_reasons` and are summarized by `blocker_summary.reason_counts`.
+
+The shared status vocabulary remains defined in [`runtime-automation-contract.md`](runtime-automation-contract.md); the Registry/effective-state projection fields are documented in [`bureau-runtime-observation-v1.md`](bureau-runtime-observation-v1.md). This page does not duplicate those contracts.
 
 ## Ranking contract
 
@@ -30,7 +33,7 @@ The ranking is deterministic and derived from registry/runtime facts only:
 3. Task priority rank.
 4. Task id.
 
-Eligibility inputs include task state, initiative state and commitment, execution policy, capabilities, dependency states, active runs, reservations, resource claim conflicts, open PR guard output and RLens policy.
+Eligibility inputs include effective task state, initiative state and commitment, execution policy, capabilities, dependency states, active runs, reservations, resource claim conflicts, open PR guard output and RLens policy.
 
 ## Output shape
 

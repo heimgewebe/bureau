@@ -367,29 +367,67 @@ def bureau_runtime_identity(
     elif manifest.get("valid") is True:
         source_kind = "immutable-release"
         if (
-            manifest.get("source_commit") != registry.get("head")
-            or registry.get("dirty") is not False
+            manifest.get("source_commit") == registry.get("head")
+            and registry.get("dirty") is False
         ):
+            status = "compatible"
+            mutation_allowed = True
+        else:
             status = "stale"
             mutation_allowed = False
             reasons.append("release-registry-identity-mismatch")
-        elif registry.get("origin_main") != registry.get("head"):
-            status = "stale"
-            mutation_allowed = False
-            reasons.append("registry-origin-main-mismatch")
-        elif str(registry.get("origin_repository") or "").casefold() != CANONICAL_GITHUB_REPOSITORY:
-            status = "stale"
-            mutation_allowed = False
-            reasons.append("registry-origin-repository-mismatch")
-        else:
-            status = "compatible"
-            mutation_allowed = True
     else:
         status = "unbound"
         mutation_allowed = False
         reasons.append("runtime-not-bound-to-registry")
         if manifest.get("available"):
             reasons.extend(str(item) for item in manifest.get("reasons", []))
+
+    claim_root_reasons: list[str] = []
+    if canonical_selected:
+        claim_root_status = "read-only-snapshot"
+        claim_root_reasons.append("canonical-registry-read-only")
+    elif manifest.get("valid") is not True:
+        claim_root_status = "not-established"
+        claim_root_reasons.append("deployed-source-not-observed")
+    else:
+        if registry.get("available") is not True:
+            claim_root_reasons.append("registry-checkout-unavailable")
+        if registry.get("dirty") is not False:
+            claim_root_reasons.append("registry-checkout-dirty")
+        if registry.get("head") != manifest.get("source_commit"):
+            claim_root_reasons.append("registry-head-differs-deployed-source")
+        if registry.get("origin_main") != registry.get("head"):
+            claim_root_reasons.append("registry-origin-main-mismatch")
+        if (
+            str(registry.get("origin_repository") or "").casefold()
+            != CANONICAL_GITHUB_REPOSITORY
+        ):
+            claim_root_reasons.append("registry-origin-repository-mismatch")
+        claim_root_status = (
+            "local-preflight-clear" if not claim_root_reasons else "blocked"
+        )
+        claim_root_reasons.append("external-github-main-not-observed")
+
+    claim_root = {
+        "status": claim_root_status,
+        "local_preconditions_met": claim_root_status == "local-preflight-clear",
+        "claim_authority_established": False,
+        "mutation_conclusion_allowed": False,
+        "expected_repository": CANONICAL_GITHUB_REPOSITORY,
+        "head": registry.get("head"),
+        "origin_main": registry.get("origin_main"),
+        "deployed_source_commit": manifest.get("source_commit"),
+        "configured_repository": registry.get("origin_repository"),
+        "external_main_commit": None,
+        "external_freshness": "not-observed",
+        "reason_codes": sorted(set(claim_root_reasons)),
+        "does_not_establish": [
+            "fresh_github_main",
+            "claim_authority",
+            "lease_availability",
+        ],
+    }
 
     return {
         "schema_version": 1,
@@ -411,6 +449,7 @@ def bureau_runtime_identity(
             "freshness": "not-observed",
             "does_not_establish": ["github_main_commit", "remote_freshness"],
         },
+        "claim_root": claim_root,
         "state": _state_identity(state_path),
         "manifest": manifest,
         "compatibility": {

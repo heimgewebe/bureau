@@ -161,13 +161,27 @@ def test_manifest_bound_release_rejects_local_clone_origin_provenance(
     assert identity["registry"]["origin_url"] is None
     assert identity["external_remote"]["configured_origin_url"] is None
     assert identity["external_remote"]["freshness"] == "not-observed"
-    assert identity["compatibility"]["mutation_allowed"] is False
-    assert identity["compatibility"]["reason_codes"] == ["registry-origin-repository-mismatch"]
+    assert identity["compatibility"]["status"] == "compatible"
+    assert identity["compatibility"]["mutation_allowed"] is True
+    assert identity["claim_root"]["status"] == "blocked"
+    assert identity["claim_root"]["local_preconditions_met"] is False
+    assert identity["claim_root"]["claim_authority_established"] is False
+    assert identity["claim_root"]["mutation_conclusion_allowed"] is False
+    assert identity["claim_root"]["reason_codes"] == [
+        "external-github-main-not-observed",
+        "registry-origin-repository-mismatch",
+    ]
     git(clone, "remote", "set-url", "origin", "git@github.com:heimgewebe/bureau.git")
     rebound = bureau_runtime_identity(clone, module_path=module)
     assert rebound["registry"]["origin_repository"] == "heimgewebe/bureau"
     assert rebound["compatibility"]["status"] == "compatible"
     assert rebound["compatibility"]["mutation_allowed"] is True
+    assert rebound["claim_root"]["status"] == "local-preflight-clear"
+    assert rebound["claim_root"]["local_preconditions_met"] is True
+    assert rebound["claim_root"]["claim_authority_established"] is False
+    assert rebound["claim_root"]["reason_codes"] == [
+        "external-github-main-not-observed"
+    ]
 
 
 def test_package_tree_digest_includes_cycle_scheduler_sources(tmp_path: Path) -> None:

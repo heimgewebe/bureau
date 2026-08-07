@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from . import legacy, runtime_refresh
+from . import legacy, runtime_refresh, state_events
 from .adapters import AdapterRegistry
 from .approval import (
     ApprovalEvidence,
@@ -43,7 +43,7 @@ from .state_root_artifacts import (
     reviewed_plan_directory_valid,
 )
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 TERMINAL_STATES = {"succeeded", "failed", "cancelled", "orphaned"}
 EVIDENCE_TYPES: dict[str, type | tuple[type, ...]] = {
     "object": dict,
@@ -2842,6 +2842,11 @@ class StateStore:
                     receipt_sha256 TEXT,
                     updated_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS initiative_status(
+                    initiative_id TEXT PRIMARY KEY,
+                    state TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
                 CREATE TABLE IF NOT EXISTS receipts(
                     run_id TEXT PRIMARY KEY,
                     receipt_json TEXT NOT NULL,
@@ -2865,6 +2870,7 @@ class StateStore:
                     event_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     run_id TEXT,
                     event_type TEXT NOT NULL,
+                    event_schema_version INTEGER NOT NULL DEFAULT 0,
                     payload_json TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
@@ -2880,9 +2886,17 @@ class StateStore:
             self._add_column(connection, "runs", "external_observed_at TEXT")
             self._add_column(connection, "task_status", "task_sha256 TEXT NOT NULL DEFAULT ''")
             self._add_column(connection, "task_status", "plan_sha256 TEXT NOT NULL DEFAULT ''")
+            self._add_column(
+                connection,
+                "events",
+                "event_schema_version INTEGER NOT NULL DEFAULT 0",
+            )
             connection.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS unique_dispatch_request "
                 "ON runs(dispatch_request_id) WHERE dispatch_request_id IS NOT NULL"
+            )
+            self._ensure_projection_baseline(
+                connection, allow_create=current_version < SCHEMA_VERSION
             )
             connection.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
             connection.commit()
@@ -2905,17 +2919,173 @@ class StateStore:
         finally:
             connection.close()
 
+    @staticmethod
+    def _insert_event(
+        connection: sqlite3.Connection,
+        event_type: str,
+        payload: dict[str, Any],
+        run_id: str | None = None,
+    ) -> None:
+        try:
+            state_events.validate_event(event_type, payload, run_id)
+        except state_events.StateEventError as exc:
+            raise legacy.StateError(str(exc)) from exc
+        connection.execute(
+            "INSERT INTO events("
+            "run_id,event_type,event_schema_version,payload_json,created_at"
+            ") VALUES(?,?,?,?,?)",
+            (
+                run_id,
+                event_type,
+                state_events.EVENT_SCHEMA_VERSION,
+                legacy.canonical_json(payload),
+                legacy.utc_now(),
+            ),
+        )
+
+    def _ensure_projection_baseline(
+        self, connection: sqlite3.Connection, *, allow_create: bool
+    ) -> None:
+        count = connection.execute(
+            "SELECT COUNT(*) FROM events "
+            "WHERE event_schema_version=? AND event_type=?",
+            (state_events.EVENT_SCHEMA_VERSION, state_events.PROJECTION_EVENT_TYPE),
+        ).fetchone()[0]
+        if count > 0:
+            row = connection.execute(
+                "SELECT payload_json FROM events "
+                "WHERE event_schema_version=? AND event_type=? ORDER BY event_id LIMIT 1",
+                (state_events.EVENT_SCHEMA_VERSION, state_events.PROJECTION_EVENT_TYPE),
+            ).fetchone()
+            try:
+                payload = json.loads(row["payload_json"])
+                state_events.validate_projection_event_payload(payload)
+            except (json.JSONDecodeError, state_events.StateEventError) as exc:
+                raise legacy.StateError(f"state projection baseline is invalid: {exc}") from exc
+            if payload.get("mode") != "baseline":
+                raise legacy.StateError("state projection baseline is missing before deltas")
+            return
+        if not allow_create:
+            raise legacy.StateError(
+                "state projection baseline is missing from schema version 4"
+            )
+        occupied = connection.execute(
+            "SELECT event_type,event_schema_version FROM events WHERE event_id=0"
+        ).fetchone()
+        if occupied is not None:
+            raise legacy.StateError("event id 0 is reserved for the state projection baseline")
+        try:
+            payload = state_events.baseline_payload(connection, trigger="schema-v4-migration")
+            state_events.validate_event(state_events.PROJECTION_EVENT_TYPE, payload, None)
+        except state_events.StateEventError as exc:
+            raise legacy.StateError(str(exc)) from exc
+        connection.execute(
+            "INSERT INTO events("
+            "event_id,run_id,event_type,event_schema_version,payload_json,created_at"
+            ") VALUES(0,NULL,?,?,?,?)",
+            (
+                state_events.PROJECTION_EVENT_TYPE,
+                state_events.EVENT_SCHEMA_VERSION,
+                legacy.canonical_json(payload),
+                legacy.utc_now(),
+            ),
+        )
+
+    def _append_projection_snapshot(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        trigger: str,
+        run_id: str | None = None,
+        initiative_id: str | None = None,
+    ) -> None:
+        try:
+            payload = state_events.delta_payload(
+                connection,
+                trigger=trigger,
+                run_id=run_id,
+                initiative_id=initiative_id,
+            )
+        except state_events.StateEventError as exc:
+            raise legacy.StateError(str(exc)) from exc
+        if payload is not None:
+            self._insert_event(
+                connection, state_events.PROJECTION_EVENT_TYPE, payload, run_id
+            )
+
     def event(
         self,
         connection: sqlite3.Connection,
         event_type: str,
         payload: dict[str, Any],
         run_id: str | None = None,
+        *,
+        initiative_id: str | None = None,
     ) -> None:
-        connection.execute(
-            "INSERT INTO events(run_id,event_type,payload_json,created_at) VALUES(?,?,?,?)",
-            (run_id, event_type, legacy.canonical_json(payload), legacy.utc_now()),
-        )
+        self._insert_event(connection, event_type, payload, run_id)
+        if event_type != state_events.PROJECTION_EVENT_TYPE and (
+            run_id is not None or initiative_id is not None
+        ):
+            self._append_projection_snapshot(
+                connection,
+                trigger=event_type,
+                run_id=run_id,
+                initiative_id=initiative_id,
+            )
+
+    def set_initiative_state(self, initiative_id: str, state: str) -> dict[str, Any]:
+        if not initiative_id or not state:
+            raise legacy.StateError("initiative_id and state must be non-empty")
+        with self.immediate() as connection:
+            existing = connection.execute(
+                "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
+                (initiative_id,),
+            ).fetchone()
+            if existing is not None and existing["state"] == state:
+                return dict(existing)
+            now = legacy.utc_now()
+            connection.execute(
+                "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
+                "ON CONFLICT(initiative_id) DO UPDATE SET "
+                "state=excluded.state,updated_at=excluded.updated_at",
+                (initiative_id, state, now),
+            )
+            self.event(
+                connection,
+                "initiative-state-set",
+                {"initiative_id": initiative_id, "state": state},
+                initiative_id=initiative_id,
+            )
+            row = connection.execute(
+                "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
+                (initiative_id,),
+            ).fetchone()
+        return dict(row)
+
+    def replay_projection(self) -> dict[str, Any]:
+        with self.connect() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT event_id,run_id,event_type,event_schema_version,payload_json "
+                    "FROM events ORDER BY event_id"
+                )
+            ]
+            try:
+                current = state_events.current_projection(connection)
+                replayed = state_events.replay(rows)
+                current_root = state_events.projection_root(current)
+            except state_events.StateEventError as exc:
+                raise legacy.StateError(str(exc)) from exc
+        if replayed["root_sha256"] != current_root:
+            raise legacy.StateError(
+                "replayed state projection does not match the current StateStore projection"
+            )
+        return {
+            **replayed,
+            "current_root_sha256": current_root,
+            "matches_current": True,
+        }
 
     def issue_claim_intent(
         self, intent: dict[str, Any], action_class: str
@@ -4540,6 +4710,12 @@ class Dispatcher(legacy.Dispatcher):
                             external_observed_at=?,heartbeat_at=?,updated_at=? WHERE run_id=?
                         """,
                         (observed_at, observed_at, observed_at, row["run_id"]),
+                    )
+                    self.store.event(
+                        connection,
+                        "external-succeeded",
+                        {"state": "succeeded"},
+                        row["run_id"],
                     )
                     verifying.append(row["run_id"])
                 elif observation.state in {"failed", "cancelled", "interrupted", "missing"}:

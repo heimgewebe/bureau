@@ -1,0 +1,137 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein reproduzierter MCP-Fall zeigt, dass grip_run(name=transport-roundtrip) mit fehlendem oder false zurückgefallenem Client-allow_mutation den Handshake bisher vor dessen eigentlicher Verifikationswirkung blockieren kann, obwohl genau dieser Handshake erst die nachfolgende Zielmutation autorisieren soll.",
+      "id": "bootstrap-reproduction"
+    },
+    {
+      "assertion": "Die effektive interne Mutationsfreigabe wird ausschließlich für name=transport-roundtrip auf true gehoben. Für jeden anderen Grip bleibt allow_mutation=false unverändert false, auch innerhalb vorhandener Execution-Capability-Kontexte.",
+      "id": "handshake-only-exemption"
+    },
+    {
+      "assertion": "Der veröffentlichte Connector-/Runtime-Vertrag beobachtet grip_run als Schema-Sentinel mit den erforderlichen Properties allow_mutation, name, parameters und profile; fehlende Properties werden deterministisch als Schema-Drift erkannt.",
+      "id": "connector-schema-sentinel"
+    },
+    {
+      "assertion": "Die Änderung vergibt keine Zielmutationsautorität: transport-roundtrip bleibt an Challenge, exaktes Ziel, Argumentdigest, Runtimevertrag, Single-use und zentralen Gate-Verbrauch gebunden. Andere mutierende Grips bleiben ohne explizite allow_mutation-Freigabe blockiert.",
+      "id": "authority-preserved"
+    },
+    {
+      "assertion": "Fokussierte Connector-, Snapshot-, Control-Plane- und Transport-Gate-Tests sowie die vollständigen erforderlichen Grabowski-Checks sind auf dem exakten Implementierungshead grün.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Grabowski PR #677 ist an genau diesen Task gebunden, bleibt auf Head c1245de7f0a253cc6ce9d779e4009f130962c6d1, erhält revisionsgebundenen Review und wird nur mit grünen Pflichtchecks gemergt.",
+      "id": "pr-adoption"
+    },
+    {
+      "assertion": "Der Merge wird source-identitätsgebunden deployt. Runtime-Integrität und Connector-Schema-Vertrag lesen gültig zurück; ein frischer realer Handshake funktioniert auch ohne clientseitige Bootstrap-Mutationsfreigabe, während ein anderer mutierender Grip mit allow_mutation=false weiterhin vor Wirkung blockiert.",
+      "id": "deploy-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Adoptiere ausschließlich PR #677 auf dem exakten Head c1245de7f0a253cc6ce9d779e4009f130962c6d1. Die implizite Bootstrap-Ausnahme darf nur transport-roundtrip betreffen. Andere Grips dürfen bei allow_mutation=false keine zusätzliche Autorität erhalten. Bei Head-, Scope- oder CI-Drift nicht mergen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/src/grabowski_connector_contract.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/tests/test_blue_green_cutover.py",
+      "path:/home/alex/repos/grabowski/tests/test_client_snapshot.py",
+      "path:/home/alex/repos/grabowski/tests/test_connector_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_control_plane.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Transport-Roundtrip-Handshake so absichern, dass er als alleiniger Bootstrap für spätere mutierende Zielaufrufe nicht selbst von einem durch Connector-Schemadrift fehlenden oder auf false zurückgefallenen top-level allow_mutation-Feld blockiert wird. Die interne effektive Mutationsfreigabe darf ausschließlich für den Grip transport-roundtrip gelten; alle anderen Grips behalten die vom Client verlangte allow_mutation-Semantik. grip_run wird als revisionsgebundener Connector-Schema-Sentinel vollständig beobachtbar, damit künftige Feldverluste vor Operatorwirkung sichtbar werden. Den bereits implementierten Grabowski PR #677 nur auf exaktem Head c1245de7f0a253cc6ce9d779e4009f130962c6d1 und bei grünen Pflichtchecks adoptieren, deployen und live verifizieren.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-EA32ADE502",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic claim or dispatch authority",
+      "permission to merge a changed PR head",
+      "permission to widen non-handshake grip authority"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ea32ade50257085b60f37462",
+      "event_id": 4125,
+      "event_created_at": "2026-08-07T16:11:14.751564Z",
+      "request_sha256": "acd456e2163bd62d94dee58c501e5a082999fc7f0e3e610f4b793e948f2f8e4d",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-github-pr-readback",
+        "locator": "github:heimgewebe/grabowski#677@c1245de7f0a253cc6ce9d779e4009f130962c6d1",
+        "observed_at": "2026-08-07T16:05:58.731260Z",
+        "sha256": "00c018759a46b33a18c95eeecf31e2a3e3ba1202dc40eb47e847d1ca8bb75b84"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "related_tasks_not_duplicates": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T139",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T142",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T143",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T151",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T158"
+    ],
+    "source_pr": {
+      "base_commit": "311fcb3f3a9a77200a7581705b71d5bf302d390d",
+      "changed_paths": [
+        "docs/generated/operator-context.v1.json",
+        "src/grabowski_connector_contract.py",
+        "src/grabowski_mcp.py",
+        "tests/test_blue_green_cutover.py",
+        "tests/test_client_snapshot.py",
+        "tests/test_connector_contract.py",
+        "tests/test_control_plane.py",
+        "tests/test_transport_gate_integration.py"
+      ],
+      "ci_observed": "validate 3.10/3.12, CodeQL and analyses green at 2026-08-07T16:04:19Z",
+      "does_not_establish": [
+        "merge readiness before valid Bureau task binding",
+        "deployment or live-proof completion"
+      ],
+      "head_commit": "c1245de7f0a253cc6ce9d779e4009f130962c6d1",
+      "number": 677,
+      "repository": "heimgewebe/grabowski"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 907
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "python",
+    "testing",
+    "github",
+    "runtime-observability",
+    "transport"
+  ],
+  "rollback": {
+    "strategy": "Bei Autoritätsausweitung, Schema- oder Transportregression den revisionsgebundenen Merge normal revertieren. Bis zu einer korrigierten Version bleibt der Handshake fail-closed; keine Challenge-, Lease-, Audit- oder Replay-Historie verändern."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Grabowski-Handshake-Bootstrap gegen Connector-Schemadrift härten"
+}

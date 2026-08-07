@@ -29,7 +29,17 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/Caddyfile.container",
+      "path:/home/alex/repos/weltgewebe/infra/caddy/Caddyfile.vps",
+      "path:/home/alex/repos/weltgewebe/scripts/ci/tests/test_static_app_caddy_csp_adapted_contract.py",
+      "path:/home/alex/repos/weltgewebe/scripts/ci/tests/test_vps_http_smoke_csp_contract.py",
+      "path:/home/alex/repos/weltgewebe/scripts/guard/caddy-build-header-guard.sh",
+      "path:/home/alex/repos/weltgewebe/scripts/guard/security-headers-guard.sh",
+      "path:/home/alex/repos/weltgewebe/scripts/preflight/csp_contract_static.sh",
+      "path:/home/alex/repos/weltgewebe/scripts/tests/test_csp_contract_static.sh"
+    ]
   },
   "goal": "Das belegte CSP-Residualrisiko WG-AUD-SEC-001 reduzieren: die produktive Content-Security-Policy nach Möglichkeit auf Nonce-/Hash-basierte Skriptfreigaben ohne script-src unsafe-inline migrieren, verbleibende Ausnahmen explizit minimieren und Build sowie Produktion artefaktgebunden fail-closed verifizieren.",
   "id": "WELTGEWEBE-OS-V1-T023",

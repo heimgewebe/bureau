@@ -29,7 +29,14 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/api/migrations/20260721000001_semantic_search_projection_worker.down.sql",
+      "path:/home/alex/repos/weltgewebe/apps/api/migrations/20260721000001_semantic_search_projection_worker.up.sql",
+      "path:/home/alex/repos/weltgewebe/apps/api/src/bin/search-backfill.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/src/search.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/db_semantic_search_projection_worker.rs"
+    ]
   },
   "goal": "WG-AUD-OBS-001 beheben: Knoten- und Jobfortschritt im Semantic-Search-Projektionsworker eindeutig trennen, Felder passend benennen und Aktivierungsbereitschaft separat ausweisen.",
   "id": "WELTGEWEBE-OS-V1-T025",

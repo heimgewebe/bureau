@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from . import legacy, runtime_refresh
+from . import github_repository, legacy, runtime_refresh
 from .adapters import AdapterRegistry
 from .approval import (
     ApprovalEvidence,
@@ -1634,10 +1634,18 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             repositories_by_resource[resource.id] = repository
 
     observed, observation_errors = _observe_open_pull_requests(repositories_by_resource.values())
+
+    classification = github_repository.classify_repository_identities(
+        repositories_by_resource, observed
+    )
+    resource_errors.update(classification.blocked_by_resource)
+    repositories_by_resource = dict(classification.canonical_by_resource)
     for resource in resources:
         resource_error = resource_errors.get(resource.id)
         if resource_error is not None:
             result.append(_repo_write_guard_failure_reservation(resource, resource_error))
+            continue
+        if resource.id in classification.alias_by_resource:
             continue
         repository = repositories_by_resource.get(resource.id)
         if repository is None:
@@ -1646,7 +1654,21 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
         if observation_error is not None:
             result.append(_repo_write_guard_failure_reservation(resource, observation_error))
             continue
-        for pull_request in observed.get(repository, []):
+        pull_requests = observed.get(repository, [])
+        contradictions = github_repository.contradictory_canonical_identities(
+            repository,
+            (str(pull_request.get("url") or "") for pull_request in pull_requests),
+        )
+        if contradictions:
+            result.append(
+                _repo_write_guard_failure_reservation(
+                    resource,
+                    f"observed pull requests for {repository} resolve to conflicting "
+                    f"repository identities: {', '.join(contradictions)}",
+                )
+            )
+            continue
+        for pull_request in pull_requests:
             number = pull_request.get("number")
             if not isinstance(number, int):
                 continue

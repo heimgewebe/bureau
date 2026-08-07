@@ -8,7 +8,11 @@ import pytest
 
 from bureau.cli import main, parser
 from bureau.github_repository import (
+    CanonicalRepositoryIdentity,
+    RepositoryCanonicalIdentityError,
     RepositoryIdentifierError,
+    canonical_slug_from_pull_requests,
+    classify_repository_identities,
     resolve_github_repository,
     validate_github_repository_slug,
 )
@@ -253,3 +257,166 @@ def test_registry_rejects_invalid_and_duplicate_github_mappings(
     )
     with pytest.raises(ValidationError, match="share github_slug"):
         Registry.load(duplicate_root)
+
+
+def _canonical_resolver(mapping: dict[str, str]):
+    def resolve(slug: str) -> str:
+        try:
+            return mapping[slug]
+        except KeyError as exc:  # pragma: no cover - guards test wiring mistakes
+            raise AssertionError(f"unexpected canonical lookup for {slug}") from exc
+
+    return resolve
+
+
+def _pr(url: str) -> dict[str, object]:
+    return {"number": 1130, "url": url}
+
+
+def test_canonical_slug_is_derived_from_observed_pull_request_urls():
+    observed = [_pr("https://github.com/heimgewebe/repoground/pull/1130")]
+
+    assert (
+        canonical_slug_from_pull_requests(observed) == "heimgewebe/repoground"
+    )
+    assert canonical_slug_from_pull_requests([]) is None
+    assert (
+        canonical_slug_from_pull_requests(
+            [
+                _pr("https://github.com/heimgewebe/repoground/pull/1130"),
+                _pr("https://github.com/heimgewebe/other/pull/7"),
+            ]
+        )
+        is None
+    )
+
+
+def test_redirect_slug_is_classified_as_alias_not_a_second_identity():
+    """The live heimgewebe/lenskit -> heimgewebe/repoground redirect case."""
+    pull_requests = [_pr("https://github.com/heimgewebe/repoground/pull/1130")]
+    classification = classify_repository_identities(
+        {"repo.lenskit": "heimgewebe/lenskit", "repo.repoground": "heimgewebe/repoground"},
+        {"heimgewebe/lenskit": pull_requests, "heimgewebe/repoground": pull_requests},
+        resolver=_canonical_resolver(
+            {
+                "heimgewebe/lenskit": "heimgewebe/repoground",
+                "heimgewebe/repoground": "heimgewebe/repoground",
+            }
+        ),
+    )
+
+    assert classification.canonical_by_resource == {"repo.repoground": "heimgewebe/repoground"}
+    assert "repo.lenskit" not in classification.canonical_by_resource
+    assert classification.blocked_by_resource == {}
+    alias = classification.alias_by_resource["repo.lenskit"]
+    assert alias["supplied_slug"] == "heimgewebe/lenskit"
+    assert alias["canonical_slug"] == "heimgewebe/repoground"
+    assert alias["canonical_resource_id"] == "repo.repoground"
+    assert classification.absorbed_aliases == {"repo.repoground": ("heimgewebe/lenskit",)}
+
+
+def test_distinct_repositories_are_untouched_and_need_no_provider_call():
+    def resolve(slug: str) -> str:  # pragma: no cover - must not be reached
+        raise AssertionError(f"no canonical lookup expected for {slug}")
+
+    classification = classify_repository_identities(
+        {"repo.alpha": "heimgewebe/alpha", "repo.beta": "heimgewebe/beta"},
+        {
+            "heimgewebe/alpha": [_pr("https://github.com/heimgewebe/alpha/pull/1")],
+            "heimgewebe/beta": [_pr("https://github.com/heimgewebe/beta/pull/2")],
+        },
+        resolver=resolve,
+    )
+
+    assert classification.canonical_by_resource == {
+        "repo.alpha": "heimgewebe/alpha",
+        "repo.beta": "heimgewebe/beta",
+    }
+    assert classification.alias_by_resource == {}
+    assert classification.blocked_by_resource == {}
+
+
+def test_provider_failure_on_a_colliding_group_fails_closed():
+    pull_requests = [_pr("https://github.com/heimgewebe/repoground/pull/1130")]
+
+    def resolve(slug: str) -> str:
+        raise RepositoryCanonicalIdentityError(
+            "canonical-identity-unavailable", f"gh repo view failed for {slug}"
+        )
+
+    classification = classify_repository_identities(
+        {"repo.lenskit": "heimgewebe/lenskit", "repo.repoground": "heimgewebe/repoground"},
+        {"heimgewebe/lenskit": pull_requests, "heimgewebe/repoground": pull_requests},
+        resolver=resolve,
+    )
+
+    assert classification.alias_by_resource == {}
+    assert set(classification.blocked_by_resource) == {"repo.lenskit", "repo.repoground"}
+    for diagnostic in classification.blocked_by_resource.values():
+        assert "canonical-identity-unavailable" in diagnostic
+
+
+def test_collision_without_exactly_one_canonical_owner_fails_closed():
+    pull_requests = [_pr("https://github.com/heimgewebe/repoground/pull/1130")]
+    classification = classify_repository_identities(
+        {"repo.lenskit": "heimgewebe/lenskit", "repo.old": "heimgewebe/old"},
+        {"heimgewebe/lenskit": pull_requests, "heimgewebe/old": pull_requests},
+        resolver=_canonical_resolver(
+            {
+                "heimgewebe/lenskit": "heimgewebe/repoground",
+                "heimgewebe/old": "heimgewebe/repoground",
+                "heimgewebe/repoground": "heimgewebe/repoground",
+            }
+        ),
+    )
+
+    assert classification.alias_by_resource == {}
+    assert set(classification.blocked_by_resource) == {"repo.lenskit", "repo.old"}
+    for diagnostic in classification.blocked_by_resource.values():
+        assert "without exactly one canonical owner" in diagnostic
+
+
+def test_unstable_alias_chain_fails_closed():
+    pull_requests = [_pr("https://github.com/heimgewebe/repoground/pull/1130")]
+    classification = classify_repository_identities(
+        {"repo.lenskit": "heimgewebe/lenskit", "repo.repoground": "heimgewebe/repoground"},
+        {"heimgewebe/lenskit": pull_requests, "heimgewebe/repoground": pull_requests},
+        resolver=_canonical_resolver(
+            {
+                "heimgewebe/lenskit": "heimgewebe/repoground",
+                "heimgewebe/repoground": "heimgewebe/moved-again",
+                "heimgewebe/moved-again": "heimgewebe/moved-again",
+            }
+        ),
+    )
+
+    assert classification.alias_by_resource == {}
+    assert set(classification.blocked_by_resource) == {"repo.lenskit", "repo.repoground"}
+
+
+def test_canonical_identity_can_be_disabled_for_recovery(monkeypatch):
+    monkeypatch.setenv("BUREAU_GITHUB_CANONICAL_IDENTITY", "0")
+    pull_requests = [_pr("https://github.com/heimgewebe/repoground/pull/1130")]
+
+    classification = classify_repository_identities(
+        {"repo.lenskit": "heimgewebe/lenskit", "repo.repoground": "heimgewebe/repoground"},
+        {"heimgewebe/lenskit": pull_requests, "heimgewebe/repoground": pull_requests},
+        resolver=_canonical_resolver({}),
+    )
+
+    assert classification.canonical_by_resource == {
+        "repo.lenskit": "heimgewebe/lenskit",
+        "repo.repoground": "heimgewebe/repoground",
+    }
+    assert classification.alias_by_resource == {}
+
+
+def test_classification_grants_no_new_authority():
+    identity = CanonicalRepositoryIdentity("heimgewebe/lenskit", "heimgewebe/repoground")
+
+    assert identity.redirect is True
+    metadata = identity.metadata()
+    assert "local checkout ownership or migration authority" in metadata["does_not_establish"]
+    assert "branch deletion or dirty-state authority" in metadata["does_not_establish"]
+    assert "merge readiness" in metadata["does_not_establish"]
+    assert "claim or queue authority" in metadata["does_not_establish"]

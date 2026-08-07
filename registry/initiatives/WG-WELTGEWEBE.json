@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "WG-WELTGEWEBE",
   "title": "Weltgewebe source-task materialization",
-  "state": "completion-ready",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Materialize explicitly approved Weltgewebe source tasks into Bureau without reinterpreting the source repository status or creating a second source of truth.",
   "completion": [
     "Every materialized WG-* task remains bound to an exact Weltgewebe source task hash and source commit.",
@@ -36,6 +36,9 @@
       "materialized_tasks": {
         "WG-DOCMETA-FRESHNESS-001": "verified"
       }
+    },
+    "lifecycle": {
+      "completed_at": "2026-08-07T18:58:14.729816Z"
     }
   }
 }

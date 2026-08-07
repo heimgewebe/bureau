@@ -105,6 +105,6 @@
     "strategy": "Bei Scope-Ausweitung oder Regression breite Repository-Leases nicht mergen beziehungsweise den revisionsgebundenen Fix zurücknehmen; keine fremden Leases, Dirty-States oder Prozesse verändern."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Selbstgescopte Repository-Leases im Bureau-Pickup korrekt akquirieren"
 }

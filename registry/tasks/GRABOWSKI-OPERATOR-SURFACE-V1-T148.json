@@ -37,7 +37,8 @@
     }
   ],
   "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T146"
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T146",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T153"
   ],
   "execution": {
     "approval": {

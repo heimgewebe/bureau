@@ -564,7 +564,10 @@ def test_agent_frontier_validates_runtime_snapshot_inventory_binding(tmp_path: P
     supply_path = tmp_path / "supply-snapshot.json"
     supply_path.write_text(json.dumps(supply), encoding="utf-8")
     frontier_report = build_frontier_report(
-        empty_source_state(), registry_root=root, task_supply_report_path=supply_path, generated_at=NOW
+        empty_source_state(),
+        registry_root=root,
+        task_supply_report_path=supply_path,
+        generated_at=NOW,
     )
     summary = frontier_report["scanner_summary"]["task_supply"]
     assert summary["available"] is True

@@ -12,7 +12,7 @@
     "WELTGEWEBE-OS-009",
     "WELTGEWEBE-OS-010"
   ],
-  "commit_sha": "e7192b6c01d49a6fdaa5f3c8a7601f1c49f4f77e",
+  "commit_sha": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1030,14 +1030,14 @@
       "risk": "medium",
       "source_task": {
         "acceptance": [
-          "Eine minimale Claim-Evidence-Spine existiert mit vier CLAIM-AGENT-SAFE-* Claims",
-          "Die Spine ist deterministisch validierbar via Claim-Registry, Doc-Freshness-Registry und Claim-Evidence-Map",
-          "Claim-Evidence-Map und Doc-Freshness-Registry sind vorhanden und über Repo-Checks validierbar",
-          "Task-Control-Registrierung bleibt sichtbar; epistemische Grenzen bleiben sichtbar",
-          "Scope wird deklarativ durch scripts/docmeta/freshness_scope_policy.yml entschieden; aktueller realer Scope bleibt CLAIM-AGENT-SAFE-* (S3-Scope-Policy umgesetzt)",
-          "Status bleibt partial: Scope bewusst klein, alle drei Claims tragen requires_live_check, kein Wahrheits-/Suffizienz-/Kausalitäts-/Vollständigkeitsbeweis",
-          "Claim-Evidence-Information wird intern als ClaimInfo typisiert; externes Registry-/Generator-Verhalten bleibt unverändert",
-          "Review-Age-Hygiene für kanonische Architektur-/Runtime-/Runbook-Dokumente wurde durchgeführt; betroffene Dokumente sind geprüft, aktualisiert oder explizit eingeordnet"
+          "Eine minimale Claim-Evidence-Spine existiert; alle durch scripts/docmeta/freshness_scope_policy.yml aktivierten Claim-Familien werden vollständig in docs/doc-freshness-registry.yml gespiegelt.",
+          "Die Spine ist deterministisch validierbar via Claim-Registry, Doc-Freshness-Registry und Claim-Evidence-Map.",
+          "Claim-Evidence-Map und Doc-Freshness-Registry sind vorhanden und über Repo-Checks validierbar.",
+          "Task-Control-Registrierung bleibt sichtbar; epistemische Grenzen bleiben sichtbar.",
+          "Der reale Freshness-Scope wird ausschließlich deklarativ durch scripts/docmeta/freshness_scope_policy.yml bestimmt; Task-Metadaten hard-codieren weder Claim-Anzahl noch eine einzelne Claim-Familie.",
+          "Status bleibt partial: aktive Scope-Familien verlangen require_live_check, Registry-Einträge bleiben partial oder stale, und die Schiene behauptet keinen Wahrheits-, Suffizienz-, Kausalitäts- oder Vollständigkeitsbeweis.",
+          "Claim-Evidence-Information wird intern als ClaimInfo typisiert; externes Registry-/Generator-Verhalten bleibt unverändert.",
+          "Review-Age-Hygiene bleibt über last_verified und status in docs/doc-freshness-registry.yml sichtbar; überalterte oder live nicht belegte Einträge dürfen stale bleiben statt still hochgestuft zu werden."
         ],
         "area": "docs",
         "effort": "S",
@@ -1072,12 +1072,12 @@
         "risk": "medium",
         "status": "partial",
         "title": "Claim-Evidence/Freshness-Spine registrieren und reviewbar halten",
-        "updated_at": "2026-06-09"
+        "updated_at": "2026-08-07"
       },
-      "source_task_sha256": "e45c1fd0f1d346c39b63b942a723f870431f504f69d183e7ea97f332c24fe266",
+      "source_task_sha256": "c1428495cec81840f804b93d7ba4fb1d0acf8381801ec47e5752dabf59049778",
       "status": "partial",
       "title": "Claim-Evidence/Freshness-Spine registrieren und reviewbar halten",
-      "updated_at": "2026-06-09"
+      "updated_at": "2026-08-07"
     },
     {
       "acceptance_count": 4,
@@ -3176,8 +3176,8 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "d30bc4a47ab211d2f810da0359b9cbd3e7a5864b44aa6b889fc8224ec4fc5e2f",
-  "ref": "HEAD",
+  "index_sha256": "b6db3c149a2135dfcc47c115fcad1055a2dec612cb1c8b314eab818f5479d3a6",
+  "ref": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
   "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",

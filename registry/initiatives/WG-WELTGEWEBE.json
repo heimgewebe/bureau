@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "WG-WELTGEWEBE",
+  "title": "Weltgewebe source-task materialization",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Materialize explicitly approved Weltgewebe source tasks into Bureau without reinterpreting the source repository status or creating a second source of truth.",
+  "completion": [
+    "Every materialized WG-* task remains bound to an exact Weltgewebe source task hash and source commit.",
+    "Terminal Bureau execution evidence never upgrades a partial or blocked Weltgewebe source status by implication.",
+    "Duplicate materialization is blocked by the canonical WG-<source-task-id> identity."
+  ],
+  "current_plan": {
+    "repository": "bureau",
+    "path": "registry/initiatives/WG-WELTGEWEBE.json"
+  },
+  "parallelism": {
+    "max_active_tasks": 8
+  },
+  "metadata": {
+    "registered_at": "2026-08-07T07:41:21Z",
+    "source_system": "heimgewebe/weltgewebe docs/tasks/index.json",
+    "source_authority_boundary": "The source snapshot is an import/projection only; Bureau task state records execution lifecycle, not source epistemic truth.",
+    "does_not_establish": [
+      "weltgewebe_task_completion",
+      "source_claim_truth",
+      "autonomous_execution_permission"
+    ]
+  }
+}

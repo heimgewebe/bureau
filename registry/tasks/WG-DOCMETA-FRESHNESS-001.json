@@ -1,0 +1,174 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine minimale Claim-Evidence-Spine existiert; alle durch scripts/docmeta/freshness_scope_policy.yml aktivierten Claim-Familien werden vollständig in docs/doc-freshness-registry.yml gespiegelt.",
+      "id": "source-01"
+    },
+    {
+      "assertion": "Die Spine ist deterministisch validierbar via Claim-Registry, Doc-Freshness-Registry und Claim-Evidence-Map.",
+      "id": "source-02"
+    },
+    {
+      "assertion": "Claim-Evidence-Map und Doc-Freshness-Registry sind vorhanden und über Repo-Checks validierbar.",
+      "id": "source-03"
+    },
+    {
+      "assertion": "Task-Control-Registrierung bleibt sichtbar; epistemische Grenzen bleiben sichtbar.",
+      "id": "source-04"
+    },
+    {
+      "assertion": "Der reale Freshness-Scope wird ausschließlich deklarativ durch scripts/docmeta/freshness_scope_policy.yml bestimmt; Task-Metadaten hard-codieren weder Claim-Anzahl noch eine einzelne Claim-Familie.",
+      "id": "source-05"
+    },
+    {
+      "assertion": "Status bleibt partial: aktive Scope-Familien verlangen require_live_check, Registry-Einträge bleiben partial oder stale, und die Schiene behauptet keinen Wahrheits-, Suffizienz-, Kausalitäts- oder Vollständigkeitsbeweis.",
+      "id": "source-06"
+    },
+    {
+      "assertion": "Claim-Evidence-Information wird intern als ClaimInfo typisiert; externes Registry-/Generator-Verhalten bleibt unverändert.",
+      "id": "source-07"
+    },
+    {
+      "assertion": "Review-Age-Hygiene bleibt über last_verified und status in docs/doc-freshness-registry.yml sichtbar; überalterte oder live nicht belegte Einträge dürfen stale bleiben statt still hochgestuft zu werden.",
+      "id": "source-08"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "manual",
+    "policy": "review-before-effect",
+    "approval": {
+      "action_class": "task_creation_from_external_evidence",
+      "required_level": "operator",
+      "note": "User explicitly requested merging heimgewebe/weltgewebe#1711 and marking the completed execution in Bureau; source status remains partial by contract."
+    }
+  },
+  "goal": "Claim-Evidence/Freshness-Spine registrieren und reviewbar halten",
+  "id": "WG-DOCMETA-FRESHNESS-001",
+  "initiative": "WG-WELTGEWEBE",
+  "metadata": {
+    "source": {
+      "commit_sha": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+      "index_path": "docs/tasks/index.json",
+      "index_sha256": "b6db3c149a2135dfcc47c115fcad1055a2dec612cb1c8b314eab818f5479d3a6",
+      "ref": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+      "repository": "heimgewebe/weltgewebe",
+      "schema_path": "docs/tasks/schema.json",
+      "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",
+      "source_effort": "S",
+      "source_owner": "docs-mechanik",
+      "source_priority": "medium",
+      "source_risk": "medium",
+      "source_status": "partial",
+      "source_task_id": "DOCMETA-FRESHNESS-001",
+      "source_task_sha256": "c1428495cec81840f804b93d7ba4fb1d0acf8381801ec47e5752dabf59049778",
+      "source_updated_at": "2026-08-07",
+      "system": "weltgewebe-task-control"
+    },
+    "closeout_plan": {
+      "schema_version": 1,
+      "task_id": "WG-DOCMETA-FRESHNESS-001",
+      "source_task_id": "DOCMETA-FRESHNESS-001",
+      "source_task_sha256": "c1428495cec81840f804b93d7ba4fb1d0acf8381801ec47e5752dabf59049778",
+      "source_commit": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+      "implementation": {
+        "repository": "heimgewebe/weltgewebe",
+        "pull_request": 1711,
+        "reviewed_head_sha": "bb5c7ae6d40bf48adb4e9b89bcf1b161ad2909bc",
+        "merge_commit_sha": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+        "github_diff_sha256": "49919e1eb1e23900d98359f1ff1828675539c3da15d42d27e7667dc7d01a761e"
+      },
+      "decision": "Register the execution slice as verified while preserving the source task status partial.",
+      "does_not_establish": [
+        "source_task_done",
+        "claim_truth",
+        "live_runtime_truth",
+        "future_freshness"
+      ]
+    },
+    "verification": {
+      "task_sha256": "c90d1aa379e32359182a56012ea3529d76f62cadf0ef0bedc54c371d80e79be1",
+      "plan_sha256": "55c54f404908abaccc44f6e2a47f0a90192015132db7a4b53479d1bad475516b",
+      "task_hash_semantics": "Bureau task_revision_sha256: task JSON excluding state and metadata.verification.",
+      "plan_hash_semantics": "Bureau plan_sha256: initiative current_plan JSON."
+    },
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1711,
+      "reviewed_head_sha": "bb5c7ae6d40bf48adb4e9b89bcf1b161ad2909bc",
+      "merge_commit_sha": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+      "merged_at": "2026-08-07T07:41:21Z",
+      "github_diff_sha256": "49919e1eb1e23900d98359f1ff1828675539c3da15d42d27e7667dc7d01a761e"
+    },
+    "registry_truth": {
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "task_id": "WG-DOCMETA-FRESHNESS-001",
+          "repository": "heimgewebe/weltgewebe",
+          "number": 1711,
+          "head_sha": "bb5c7ae6d40bf48adb4e9b89bcf1b161ad2909bc",
+          "merge_commit_sha": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+          "diff_sha256": "49919e1eb1e23900d98359f1ff1828675539c3da15d42d27e7667dc7d01a761e",
+          "status": "merged"
+        },
+        {
+          "kind": "github_workflow",
+          "task_id": "WG-DOCMETA-FRESHNESS-001",
+          "repository": "heimgewebe/weltgewebe",
+          "workflow_run_id": 31157558842,
+          "head_sha": "bb5c7ae6d40bf48adb4e9b89bcf1b161ad2909bc",
+          "status": "success"
+        },
+        {
+          "kind": "github_review_gate",
+          "task_id": "WG-DOCMETA-FRESHNESS-001",
+          "repository": "heimgewebe/weltgewebe",
+          "workflow_run_id": 31157782832,
+          "head_sha": "bb5c7ae6d40bf48adb4e9b89bcf1b161ad2909bc",
+          "diff_sha256": "49919e1eb1e23900d98359f1ff1828675539c3da15d42d27e7667dc7d01a761e",
+          "status": "success"
+        },
+        {
+          "kind": "source_task",
+          "task_id": "WG-DOCMETA-FRESHNESS-001",
+          "repository": "heimgewebe/weltgewebe",
+          "source_ref": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+          "commit_sha": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+          "task_sha256": "c1428495cec81840f804b93d7ba4fb1d0acf8381801ec47e5752dabf59049778",
+          "source_task_id": "DOCMETA-FRESHNESS-001",
+          "source_status": "partial"
+        }
+      ],
+      "does_not_establish": [
+        "source_task_done",
+        "claim_truth",
+        "future_freshness"
+      ]
+    },
+    "closure": {
+      "bureau_execution_state": "verified",
+      "source_epistemic_state": "partial",
+      "interpretation": "The requested maintenance execution is closed; the ongoing freshness spine remains intentionally partial and reviewable."
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Claim-Evidence/Freshness-Spine registrieren und reviewbar halten"
+}

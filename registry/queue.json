@@ -78,8 +78,7 @@
     ],
     "now": [
       "WELTGEWEBE-OS-V1-T068",
-      "WELTGEWEBE-OS-V1-T070",
-      "BUREAU-CONTROL-PLANE-V3-T003"
+      "WELTGEWEBE-OS-V1-T070"
     ]
   },
   "queue_policy": "skip-blocked",

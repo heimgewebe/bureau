@@ -87,14 +87,17 @@
       "worktree_ensure_file_sha256": "7fd496c4517d247fd8816716d8e053e365811ef043b7467b864e00d43d0881bf",
       "worktree_ensure_receipt_sha256": "2818fb24066c869b63a6c60ed99a1e7c4f20e89b91e76bd3460832335ef7e98f"
     },
-    "registered_at": "2026-08-07T08:35:00Z",
-    "source": "Live checkout-binding reconciliation during autonomous Grabowski/Bureau cleanup.",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-b77ba49022014b3c166bad40",
-      "event_id": 3005,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-08-07T08:25:56.325625Z",
+      "event_id": 3005,
       "request_sha256": "479cea09261236704b3b411edca96afbc43d8797fb17b33e5851f44a3f374b06",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -102,12 +105,81 @@
         "locator": "checkout_key=c7fea37b2569b5b7752fceb16b55e367cd118fa323ae0a1d6050f14cf84453d7 path=/home/alex/repos/.bureau-worktrees/automation-frontier-20260806T1519Z branch=automation/frontier-unblock-20260806-1519",
         "observed_at": "2026-08-07T08:22:02Z",
         "sha256": "3876ab92d58b0c3a6481b15e40090a6994ab5cee52557da1564fd94cca1c3802"
+      }
+    },
+    "registered_at": "2026-08-07T08:35:00Z",
+    "source": "Live checkout-binding reconciliation during autonomous Grabowski/Bureau cleanup.",
+    "verification": {
+      "acceptance_results": {
+        "automation-source-contract": true,
+        "future-producer-binding": true,
+        "historical-orphan-fail-closed": true,
+        "no-absence-inference": true,
+        "source-id-and-outcome-bound": true,
+        "t140-boundaries-preserved": true,
+        "validation-and-live-readback": true
       },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      "evidence": {
+        "deployment": {
+          "deployment_integrity_valid": true,
+          "failed_attempt": {
+            "job": "grabowski-job-36033a01da45",
+            "reason": "operator-admission-drain did not empty; no cutover",
+            "receipt_sha256": "3700bb04507f9bc16c797dd764763bb8db38f345d15b88efb26a14368d95112a"
+          },
+          "followup_candidate": "candidate-15effa06a28a33055021d15d",
+          "receipt_sha256": "c93180516cbc29024a59018764aa5e646a987c6edbd9cdc63570a7197b7f6ae0",
+          "runtime_head": "5e16ab2f7acb61a950b8b1f432838515a137384e",
+          "runtime_release": "5e16ab2f7acb-srcset610e547fef76-locke6664d600b6c-contract46ba648f01da-attempt1",
+          "successful_job": "grabowski-job-615eda7b61d4"
+        },
+        "does_not_establish": [
+          "terminality of the historical automation source",
+          "permission to delete the historical branch or binding",
+          "permission to release foreign leases",
+          "future runtime health"
+        ],
+        "implementation_pr": {
+          "merge_commit": "5e16ab2f7acb61a950b8b1f432838515a137384e",
+          "merged_at": "2026-08-07T10:10:35Z",
+          "number": 673,
+          "repository": "heimgewebe/grabowski",
+          "reviewed_head": "aa0bab1938f9f96f924428e185e7de4e2c1fb66a"
+        },
+        "kind": "grabowski_operator_surface_t156_closeout_evidence",
+        "live_orphan": {
+          "blocking": true,
+          "checkout_key": "c7fea37b2569b5b7752fceb16b55e367cd118fa323ae0a1d6050f14cf84453d7",
+          "cleanup_authority": false,
+          "phase": "active",
+          "reconciliation_snapshot_sha256": "2486ede9ccff3d247912e38cc4e5ed535edb5ec3c339dff0ad516aef4b8ee334",
+          "source_id": "bureau-frontier-entblockung-20260806T1519Z",
+          "source_kind": "automation",
+          "state": "orphaned_binding",
+          "terminal_probe_receipt_sha256": "00d66a1c1ef0e93f6a0c21f4fa545e50e4a2c8219b468591dd67cc68397bc548",
+          "terminal_probe_result": "automation checkout lifecycle source has no immutable terminal evidence contract; checkout absence, retention expiry and lease absence do not establish terminality",
+          "terminalization_authority": false
+        },
+        "schema_version": 1,
+        "validation": {
+          "expanded": "275 passed, 1 skipped, 69 subtests passed",
+          "focused": "42 passed, 5 subtests passed",
+          "full": "5058 passed, 14 skipped; make validate PASS",
+          "full_job": "grabowski-job-7c55e317b0c7",
+          "full_job_receipt_sha256": "e81d336d613a22d9baf085ad8d1e9aa08df02808e70d14db3840f41cde9d6d1c",
+          "operator_context": "8 passed"
+        }
+      },
+      "outcome": "succeeded",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "receipt_id": "grabowski-job-615eda7b61d4",
+      "receipt_sha256": "c93180516cbc29024a59018764aa5e646a987c6edbd9cdc63570a7197b7f6ae0",
+      "schema_version": 1,
+      "source": "operator_live_closeout",
+      "source_ref": "grabowski-runtime-deploy:grabowski-job-615eda7b61d4@c93180516cbc29024a59018764aa5e646a987c6edbd9cdc63570a7197b7f6ae0",
+      "task_preimage_sha256": "c838d13dfdd8e25bbd70f45797a903c97d9586799b2e4f567eb421a20d72df63",
+      "task_sha256": "bf9e864c1707d4149b73a24a3f2555fdad7f3137c7269a35f46e932c59666d6a",
+      "verified_at": "2026-08-07T10:25:07Z"
     }
   },
   "priority": {
@@ -126,6 +198,6 @@
     "strategy": "Den Automation-Source-Vertrag beziehungsweise Producer-Binding-Fix per normalem Revert zurücknehmen. Historische unsupported automation bindings bleiben weiterhin fail-closed sichtbar; keine Lifecycle-, Retention-, Branch- oder Recovery-Evidenz löschen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Automation-Checkout-Quellen terminalevidenzfähig machen"
 }

@@ -1,0 +1,82 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die vollständige Worktree-Konfliktentscheidung wird weiterhin aus allen gelesenen Worktrees abgeleitet; ausgegeben werden aber nur Gesamtzahl, eine feste begrenzte Stichprobe und ein Trunkierungsmarker.",
+      "id": "worktree-output-bounded"
+    },
+    {
+      "assertion": "Unlesbare /proc-CWDs bleiben fail-closed; die Ausgabe enthält eine feste begrenzte Fehlerstichprobe sowie Gesamtzahl und Trunkierungsmarker statt einer unbeschränkten Fehlerliste.",
+      "id": "process-errors-bounded"
+    },
+    {
+      "assertion": "`preflight_candidate` darf durch die Begrenzung niemals von false auf true kippen; Lease-Freigabe und Löschautorität werden weiterhin ausdrücklich nicht behauptet.",
+      "id": "decision-semantics-preserved"
+    },
+    {
+      "assertion": "Tests decken mehr Worktrees und Prozessfehler als die jeweilige Ausgabeschranke ab und beweisen Zähler, Trunkierung und unveränderte Blockierentscheidung.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Ein read-only Live-Lauf gegen `/home/alex/repos/.repobrief-sources` bleibt unter einem explizit getesteten Ausgabegrößenbudget und vollständig als JSON parsebar.",
+      "id": "live-output-bounded"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Die mit RepoGround PR #1168 eingeführte read-only Legacy-Quellinventur soll auch bei Repositories mit sehr vielen verknüpften Worktrees und zahlreichen /proc-Lesefehlern eine streng begrenzte, maschinenlesbare Ausgabe erzeugen, ohne die fail-closed Klassifikation abzuschwächen. Vollständige Entscheidungslogik bleibt intern; die Ausgabe enthält Zähler, begrenzte Stichproben und explizite Trunkierungsmarker statt unbeschränkter Pfad-/Fehlerlisten.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T082",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ],
+    "observed_issue": "Live-Read-only-Ausgabe wurde wegen vollständiger worktree_paths bei Repositories mit sehr vielen Worktrees vom Werkzeug-Ausgabelimit abgeschnitten.",
+    "origin_head": "6bc8009d073312b66fe1b1a43c847a33d198cfaf",
+    "origin_pr": 1168,
+    "source": "chatgpt-repoground-live-followup-20260807",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "REPOGROUND-REPOBRIEF-SOURCE-CLOSEOUT-V1",
+      "event_id": 736,
+      "event_created_at": "2026-07-19T03:46:46.864453Z",
+      "request_sha256": null,
+      "source": null,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 182
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "RepoGround-Legacy-Inventur-Ausgabe begrenzen"
+}

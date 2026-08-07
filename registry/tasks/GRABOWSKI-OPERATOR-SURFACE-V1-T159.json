@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Selbstgescopte operation-Leases tragen eine maschinenlesbare Wirkungs-/Scope-Klassifikation, die bekannte reine Push-/PR-Publikationsoperationen von Merge-, Deploy-, Worktree-Admin- und unbekannten Legacy-Operationen unterscheidet.",
+      "id": "operation-scope-contract"
+    },
+    {
+      "assertion": "Ein bereits aktiver, belegbar disjunkter reiner Push-/PR-Publikations-Operation-Lease blockiert einen Captain-Merge nicht; der exakte Nichtüberschneidungsnachweis ist im Guard-Receipt sichtbar.",
+      "id": "existing-operation-to-merge"
+    },
+    {
+      "assertion": "Während eines aktiven Merge-Gates darf eine später eintreffende bekannte disjunkte reine Push-/PR-Publikationsoperation passieren, während wirkungsüberlappende Operationen blockiert bleiben.",
+      "id": "merge-to-late-operation"
+    },
+    {
+      "assertion": "Unbekannte Legacy-operation-Schlüssel sowie Merge-, Deploy- und Worktree-Admin-Operationen bleiben ohne explizit belegte Disjunktheit konfliktbehaftet und werden nicht durch Heuristik freigegeben.",
+      "id": "fail-closed-unknown"
+    },
+    {
+      "assertion": "Symmetrische Regressionstests decken Operation→Merge, Merge→Operation, unbekannte/überlappende Negativfälle und unveränderte breite Repository-Lease-Semantik ab.",
+      "id": "regression"
+    },
+    {
+      "assertion": "Fokustests und vollständige relevante Grabowski-Validierung sind auf dem exakten Head grün; Diff und Self-Review sind revisionsgebunden.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Der geprüfte Head ist über grünen PR gemergt, source-identitätsgebunden deployt und mit einem Live-Proof für einen disjunkten sowie einen absichtlich konfliktbehafteten Fall verifiziert.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T157"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Operation-Lease-Scope-Semantik, Merge-Guard-/Resource-Konfliktbewertung und fokussierte Tests ändern. Unbekannte oder wirkungsüberlappende Operationen bleiben fail-closed.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_merge_guard.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_nonconflict_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_grips.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Selbstgescopte repo:<repo>:operation:<id>-Leases mit maschinenlesbarer Wirkungs-/Scope-Semantik versehen und den Captain-/Resource-Konfliktvertrag so verfeinern, dass belegbar disjunkte reine Push-/PR-Publikationsoperationen einen Merge nicht pauschal blockieren. Merge-, Deploy-, Worktree-Admin- und unbekannte Legacy-Operationen bleiben fail-closed konfliktbehaftet; die Regel gilt symmetrisch für bereits bestehende Operationen und spät eintreffende Operationen während eines aktiven Merge-Gates.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T159",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatische Mergefreigabe für unbekannte Operationen",
+      "Lockerung von Deploy- oder Worktree-Admin-Konflikten",
+      "Übernahme laufender T157-Arbeit"
+    ],
+    "source_candidate": "candidate-4a1b8029d9401868a3d7c2e5",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4a1b8029d9401868a3d7c2e5",
+      "event_id": 4134,
+      "event_created_at": "2026-08-07T16:43:29.897283Z",
+      "request_sha256": "69147ea6a42b64d5bca4da29ee51682cd43c4f0aed4eeb3b9a21abef9f9b35b5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pr",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/677",
+        "observed_at": "2026-08-07T16:43:29.856864Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 159
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Die Wirkungs-/Scope-Klassifikation und Merge-Guard-Ausnahme per normalem Revert zurücknehmen; unbekannte Operationen fallen dadurch wieder auf die strengere pauschale Konfliktbehandlung zurück. Keine Lease- oder Audit-Historie verändern."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Merge-Guard: disjunkte Operations-Leases parallelisieren"
+}

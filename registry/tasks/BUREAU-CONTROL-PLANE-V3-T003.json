@@ -4,9 +4,9 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "TaskSpec-Revisionen in den StateStore überführen",
   "goal": "Taskdefinitionen und ihre unveränderlichen Revisionen in den StateStore aufnehmen. Neue Registrierung und Änderung laufen über idempotente TaskSpec-Revisionen; Git-Taskdateien bleiben während der Migration überprüfbare Kompatibilitätsprojektion und Archiv, nicht parallele Laufzeitwahrheit.",
-  "state": "ready",
+  "state": "verified",
   "priority": {
-    "lane": "now",
+    "lane": "later",
     "rank": 50
   },
   "depends_on": [
@@ -80,6 +80,66 @@
       "Merge- oder Deploymentabschluss",
       "Freigabe fremder Ressourcen",
       "direkte main-Mutation"
-    ]
+    ],
+    "verification": {
+      "schema_version": 1,
+      "source": "merged_pr_ci_and_live_runtime_closeout",
+      "closeout_mode": "evidence-bound-post-merge-reconciliation",
+      "verified_at": "2026-08-07T16:51:02Z",
+      "canonical_bureau_run": null,
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1723,
+        "base_commit": "b52e5778fbfd9f777ab9d49852d1d38045eba92c",
+        "head_commit": "1d00a8d9473c111f3d6d79dd63d7af198fb4bfd9",
+        "merge_commit": "e138d1cabe4b73b68d8d9aabaa26855c7009fdd1",
+        "merged_at": "2026-08-07T15:10:50Z",
+        "deployed_runtime_commit": "3b546af8f2adaac3c61f3d07a5b82460aa3081b5",
+        "merge_is_ancestor_of_deployed_runtime": true,
+        "closeout_base_commit": "3b546af8f2adaac3c61f3d07a5b82460aa3081b5"
+      },
+      "runtime": {
+        "state_store_schema_version": 5,
+        "state_store_integrity": "ok",
+        "dependency_task": "BUREAU-CONTROL-PLANE-V3-T002",
+        "dependency_state": "verified",
+        "dependency_state_source": "deployed StateStore via bureau status",
+        "task_state_before_closeout": "planned",
+        "git_dependency_projection_observed_state": "ready",
+        "projection_note": "The Git task file is a compatibility projection; deployed StateStore is authoritative for dependency state under T003."
+      },
+      "validation": {
+        "pr_validate_3_10": "success",
+        "pr_validate_3_12": "success",
+        "codeql_actions": "success",
+        "codeql_python": "success",
+        "registry_preflight": "success",
+        "exact_pr_head": "1d00a8d9473c111f3d6d79dd63d7af198fb4bfd9",
+        "closeout_registry_check": "success",
+        "closeout_focused_acceptance_tests": "6 passed"
+      },
+      "acceptance_evidence": {
+        "immutable-spec-revisions": "Exact merged tests cover schema v5, revision CAS, immutable new revisions including revert-to-prior-content, digest verification, crash rollback, replay integrity and fail-closed schema/event drift.",
+        "idempotent-registration": "Exact merged tests prove idempotent replay, semantic no-op deduplication, idempotency-key conflict rejection and concurrent CAS serialization.",
+        "legacy-import": "Exact merged tests prove lossless legacy import, idempotent re-import, Git-projection divergence detection and transactional rollback on failed imports.",
+        "offline-intake": "Exact merged operator-intake tests persist TaskSpec revisions before/through publisher failures and prove idempotent publication/readback retries without duplicate push or PR effects."
+      },
+      "does_not_establish": [
+        "retroactive Bureau run",
+        "future correctness after later source changes",
+        "deployment of this closeout TaskSpec until a cumulative Bureau runtime refresh completes"
+      ],
+      "task_sha256": "c05130fc1b8c0f49cedc2e2abe56b6ea094cf9a36197de4463fad5e94f6ca8ef",
+      "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+      "activation_reconciliation": {
+        "schema_version": 1,
+        "activation_pull_request": 1739,
+        "activation_merge_commit": "05c0fdb184a4972aadaaa6a0fe9dc9976e304a0d",
+        "closeout_rebase_base_commit": "116723b4dbbd4e9aa5f16dd5c78ed3adc36d7c0b",
+        "state_observed_on_rebase": "ready",
+        "queue_lane_observed_on_rebase": "now",
+        "closeout_projection_action": "state ready->verified and remove task from queue"
+      }
+    }
   }
 }

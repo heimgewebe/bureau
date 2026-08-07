@@ -355,6 +355,10 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
     assert intent["expected_deployed_source_commit"] == DEPLOYED
     assert intent["required_resource_keys"] == sorted(intent["required_resource_keys"])
     assert f"path:{tmp_path.resolve() / 'bin/bureau'}" in intent["required_resource_keys"]
+    assert (
+        f"path:{tmp_path.resolve() / 'bin/bureau-status-capsule'}"
+        in intent["required_resource_keys"]
+    )
     assert intent["runtime_approval"]["allowed"] is True
     assert intent["runtime_approval"]["required_level"] == "break_glass"
     assert intent["runtime_approval"]["expected_reference"] == observed["target_sha256"]
@@ -558,6 +562,51 @@ def test_lease_binding_requires_live_complete_private_database(tmp_path: Path) -
     with pytest.raises(refresh.RuntimeRefreshError) as public:
         refresh.validate_live_lease_binding(intent, binding, resource_db=live_db, now=NOW)
     assert public.value.code == "lease-database-mode-invalid"
+
+
+def test_apply_requires_status_capsule_launcher_lease_before_effect(tmp_path: Path) -> None:
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    status_key = f"path:{Path(intent['bin_dir']) / 'bureau-status-capsule'}"
+    assert status_key in intent["required_resource_keys"]
+
+    binding, missing_db = lease_for(
+        tmp_path / "status-missing", intent, omit={status_key}
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=missing_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("observer must not run"),
+            source_preparer=lambda **_: pytest.fail("source preparation must not run"),
+            installer=lambda **_: pytest.fail("installer must not run"),
+        )
+    assert missing.value.code == "lease-resources-missing"
+
+    binding, foreign_db = lease_for(tmp_path / "status-foreign", intent)
+    connection = sqlite3.connect(foreign_db)
+    connection.execute(
+        "UPDATE leases SET owner_id = ? WHERE resource_key = ?",
+        ("foreign-owner", status_key),
+    )
+    connection.commit()
+    connection.close()
+    with pytest.raises(refresh.RuntimeRefreshError) as foreign:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=foreign_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("observer must not run"),
+            source_preparer=lambda **_: pytest.fail("source preparation must not run"),
+            installer=lambda **_: pytest.fail("installer must not run"),
+        )
+    assert foreign.value.code == "lease-owner-mismatch"
 
 
 def test_lease_binding_verifies_metadata_digest_and_required_binding(tmp_path: Path) -> None:
@@ -1038,7 +1087,7 @@ def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) ->
     assert result["effect_started"] is False
 
 
-def test_readback_validates_both_launchers_and_runtime_identity(tmp_path: Path) -> None:
+def test_readback_validates_all_launchers_and_runtime_identity(tmp_path: Path) -> None:
     prefix = tmp_path / "prefix"
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -1076,10 +1125,14 @@ else:
     runner = bin_dir / "bureau-runtime-refresh"
     runner.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     runner.chmod(0o755)
+    status_capsule = bin_dir / "bureau-status-capsule"
+    status_capsule.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    status_capsule.chmod(0o755)
     receipt = {
         "manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
         "launcher_sha256": refresh.sha256_bytes(bureau.read_bytes()),
         "runtime_refresh_launcher_sha256": refresh.sha256_bytes(runner.read_bytes()),
+        "status_capsule_launcher_sha256": refresh.sha256_bytes(status_capsule.read_bytes()),
         "rollback": {"directory": "/rollback"},
     }
 
@@ -1093,7 +1146,43 @@ else:
     assert result["check_valid"] is True
     assert result["runtime_identity_valid"] is True
     assert result["source_commit"] == MAIN
+    assert result["status_capsule_launcher_sha256"] == receipt[
+        "status_capsule_launcher_sha256"
+    ]
     assert result["rollback"] == {"directory": "/rollback"}
+
+    status_capsule.unlink()
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
+        refresh.readback_install(
+            expected_commit=MAIN,
+            prefix=prefix,
+            bin_dir=bin_dir,
+            install_receipt=receipt,
+        )
+    assert missing.value.code == "readback-launcher-invalid"
+
+    status_capsule.symlink_to(runner)
+    with pytest.raises(refresh.RuntimeRefreshError) as symlinked:
+        refresh.readback_install(
+            expected_commit=MAIN,
+            prefix=prefix,
+            bin_dir=bin_dir,
+            install_receipt=receipt,
+        )
+    assert symlinked.value.code == "readback-launcher-invalid"
+
+    status_capsule.unlink()
+    status_capsule.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    status_capsule.chmod(0o755)
+    bad_receipt = {**receipt, "status_capsule_launcher_sha256": "0" * 64}
+    with pytest.raises(refresh.RuntimeRefreshError) as mismatch:
+        refresh.readback_install(
+            expected_commit=MAIN,
+            prefix=prefix,
+            bin_dir=bin_dir,
+            install_receipt=bad_receipt,
+        )
+    assert mismatch.value.code == "readback-launcher-mismatch"
 
 
 def load_installer_module() -> Any:

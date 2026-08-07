@@ -458,6 +458,7 @@ def required_resource_keys(
         {
             f"path:{bin_dir / 'bureau'}",
             f"path:{bin_dir / 'bureau-runtime-refresh'}",
+            f"path:{bin_dir / 'bureau-status-capsule'}",
             f"path:{prefix}",
             f"path:{state_root}",
             f"path:{workspace}",
@@ -1369,9 +1370,11 @@ def readback_install(
         )
     bureau_launcher = bin_dir / "bureau"
     refresh_launcher = bin_dir / "bureau-runtime-refresh"
+    status_capsule_launcher = bin_dir / "bureau-status-capsule"
     for path, receipt_field in (
         (bureau_launcher, "launcher_sha256"),
         (refresh_launcher, "runtime_refresh_launcher_sha256"),
+        (status_capsule_launcher, "status_capsule_launcher_sha256"),
     ):
         if path.is_symlink() or not path.is_file():
             raise RuntimeRefreshError("readback-launcher-invalid", f"launcher is invalid: {path}")
@@ -1423,6 +1426,7 @@ def readback_install(
         "registry_snapshot_tree_sha256": manifest.get("canonical_registry_tree_sha256"),
         "bureau_launcher_sha256": sha256_bytes(bureau_launcher.read_bytes()),
         "runtime_refresh_launcher_sha256": sha256_bytes(refresh_launcher.read_bytes()),
+        "status_capsule_launcher_sha256": sha256_bytes(status_capsule_launcher.read_bytes()),
         "check_valid": True,
         "runtime_identity_valid": True,
         "rollback": install_receipt.get("rollback"),

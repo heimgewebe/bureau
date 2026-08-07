@@ -1,0 +1,92 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Dokumentation nennt ~/.local/bin/bureau-status-capsule als produktiven, manifestgebundenen Launcher und beschreibt den persistenten Venv nicht mehr als Production-Entrypoint.",
+      "id": "managed-launcher-doc"
+    },
+    {
+      "assertion": "Canonical writes werden als frische GitHub-main-Beobachtung über read-only git ls-remote beschrieben; lokale origin/main-Refs allein gelten ausdrücklich nicht als Remote-Wahrheit.",
+      "id": "remote-provenance-doc"
+    },
+    {
+      "assertion": "Die Dokumentation erklärt AF_INET/AF_INET6 als ausschließlich für die Remote-Beobachtung erforderliche Unit-Freigabe und hält fest, dass kein git fetch oder Repository-Write erfolgt.",
+      "id": "network-boundary-doc"
+    },
+    {
+      "assertion": "Der unabhängige Capsule-Reader bleibt als netzfreier Read-only-Pfad getrennt dokumentiert.",
+      "id": "reader-boundary-doc"
+    },
+    {
+      "assertion": "Die Dokumentation behauptet weiterhin keine Claim-, Queue-, Registry-Mutations-, Merge- oder Deployment-Autorität.",
+      "id": "authority-boundary-doc"
+    },
+    {
+      "assertion": "Dokumentationsnahe Tests und Bureau-Validierung bestehen; der Diff ändert ausschließlich docs/bureau-status-capsule-v1.md.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-INTEGRATION-LOOP-V1-FU-STATUSCAPSULE-LAUNCHER-6830A60E"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den Status-Capsule-Vertrag dokumentarisch an den bereits implementierten Produktvertrag angleichen; keine Produkt-, Runtime-, Queue- oder Claim-Mutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/docs/bureau-status-capsule-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Die Status-Capsule-Dokumentation soll den tatsächlichen Produktvertrag widerspruchsfrei beschreiben: canonical writes beobachten GitHub main frisch via read-only git ls-remote, der Reader bleibt netzfrei, die Production-Unit nutzt den managed immutable Launcher und erlaubt nur die dafür erforderlichen IP-Adressfamilien; kein git fetch und keine Claim-, Queue- oder Mutationsautorität.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FU-STATUSCAPSULE-DOCS-CD7DD236",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-cd7dd2361dfad6d3fcd6accd",
+      "event_id": 4155,
+      "event_created_at": "2026-08-07T17:50:50.442906Z",
+      "request_sha256": "782b5d4b5a047f6e73204ee4bf96dad788b98312e1db268fc7e43195f17798aa",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-repo-finding",
+        "locator": "heimgewebe/bureau:docs/bureau-status-capsule-v1.md@46f510cd204f7356ce34898c64a06b85984e48d2",
+        "observed_at": "2026-08-07T17:50:10Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_from_candidate": "candidate-cd7dd2361dfad6d3fcd6accd",
+    "scope_boundary": "Nur docs/bureau-status-capsule-v1.md; Produktcode und systemd-Unit gehören zum vorgelagerten Launcher-Task."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 907
+  },
+  "required_capabilities": [
+    "repository",
+    "documentation",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Status-Capsule-Dokumentation an Remote-Provenienz angleichen"
+}

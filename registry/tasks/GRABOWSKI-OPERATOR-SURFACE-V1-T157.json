@@ -86,6 +86,80 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "outcome": "succeeded",
+      "verified_at": "2026-08-07T12:59:08Z",
+      "source": "operator_live_closeout",
+      "source_ref": "grabowski-runtime-deploy:grabowski-job-08df2a8adcf5@9d03acfdb539aa10ad6c101227c037b0e12525c614c27e2b756b3d2620d5e8d7",
+      "receipt_id": "grabowski-job-08df2a8adcf5",
+      "receipt_sha256": "9d03acfdb539aa10ad6c101227c037b0e12525c614c27e2b756b3d2620d5e8d7",
+      "task_preimage_sha256": "ad87583a90d0d1347d64faad4e2f72ca62dd5e25f6b8eac9a0059fe01998431c",
+      "acceptance_results": {
+        "tag-scope": true,
+        "existing-scopes": true,
+        "strict-broad-scope": true,
+        "resource-tests": true,
+        "pickup-tests": true,
+        "delivery": true,
+        "live-proof": true
+      },
+      "evidence": {
+        "kind": "grabowski_operator_surface_t157_closeout_evidence",
+        "implementation_pr": {
+          "repository": "heimgewebe/grabowski",
+          "number": 674,
+          "reviewed_head": "ac83da5b436cb107ade81e33accce160b5831da8",
+          "merge_commit": "8f78f8ac47cbaae669018c09c725d991c6386128",
+          "merged_at": "2026-08-07T11:22:18Z",
+          "reviewed_diff_sha256": "df4aae162627f6360ca1926cb7176075bf77d8912106214686df2fab73d313a8"
+        },
+        "validation": {
+          "focused_result": "246 passed, 2 skipped; 35 subtests passed",
+          "full_result": "5061 passed, 14 skipped; make validate PASS",
+          "self_review_readiness_receipt_sha256": "d0313e0a421410e99a7c3ffb0bc448994880308528a5b7dcdff1a0f47917c2f6",
+          "pull_request_checks": [
+            "validate (3.10): SUCCESS",
+            "validate (3.12): SUCCESS",
+            "Analyze (actions): SUCCESS",
+            "Analyze (python): SUCCESS",
+            "CodeQL: SUCCESS",
+            "Codex review settled: SUCCESS (optional review not requested)"
+          ]
+        },
+        "deployment": {
+          "job": "grabowski-job-08df2a8adcf5",
+          "expected_head": "8f78f8ac47cbaae669018c09c725d991c6386128",
+          "finalization_receipt_sha256": "9d03acfdb539aa10ad6c101227c037b0e12525c614c27e2b756b3d2620d5e8d7",
+          "finalization_payload_sha256": "09d66dccc95043c6c9209364189cb1835999d692ded10be3473688f84004c29d",
+          "final_status": "completed",
+          "runtime_release_at_proof": "8f78f8ac47cb-srcsetf4d646f2b66b-locke6664d600b6c-contract46ba648f01da-attempt1",
+          "deployment_complete": true,
+          "deployment_integrity_valid": true,
+          "serving_process_matches_manifest": true
+        },
+        "live_proof": {
+          "resource_key": "repo:/home/alex/repos/grabowski:tag:t157-live-proof-8f78f8ac",
+          "scope_manifest_supplied": false,
+          "acquire_transport_receipt_sha256": "7a6b9e7fb0f6cbbc016b2e201fad743341cdc466fff4f6b5e186c41304e6d163",
+          "release_transport_receipt_sha256": "d86bae7287b50d6948705265a4ff6d552c5f7e5951440d07fd876b32b4d4efc0",
+          "released_force": false
+        },
+        "current_runtime": {
+          "observed_head": "89c13c1abdfc931a5a61544dc346b17da4be410b",
+          "release_id": "89c13c1abdfc-srcsetb71a591654a4-locke6664d600b6c-contract46ba648f01da",
+          "deployment_integrity_valid": true,
+          "serving_process_matches_manifest": true
+        },
+        "does_not_establish": [
+          "future runtime health",
+          "permission to alter foreign leases or work",
+          "automatic workspace cleanup authority"
+        ]
+      },
+      "task_sha256": "f436306ebd3f42eeb64473934d9da70375a7d23f1bfa28320380d36b0ccbdff6",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },
   "priority": {
@@ -106,6 +180,6 @@
     "strategy": "Bei Regression den revisionsgebundenen Nachtrag per normalem Revert zurücknehmen und die bisherige strengere Klassifikation wiederherstellen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Repository-Referenzschlüssel um tag-Scope ergänzen"
 }

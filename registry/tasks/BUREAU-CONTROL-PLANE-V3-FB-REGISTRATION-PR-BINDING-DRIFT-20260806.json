@@ -93,6 +93,52 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "merged_exact_head_green_ci_and_live_runtime_readback",
+      "verified_at": "2026-08-07T01:55:12.780968Z",
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1661,
+        "base_commit": "529819b07fba5cabb8b262f8bbd202de14dc8fd5",
+        "head_commit": "582f2e4a4a4197148ad90b5cb6b6bd3d3308a77b",
+        "merge_commit": "d359cd510193171b593d65cdf964a83ac6acdaa4"
+      },
+      "validation": {
+        "validate_3_10": "success",
+        "validate_3_12": "success",
+        "registry_registration_preflight_freshness": "success",
+        "codeql_python": "success",
+        "codeql_actions": "success",
+        "exact_head": "582f2e4a4a4197148ad90b5cb6b6bd3d3308a77b"
+      },
+      "live_readback": {
+        "current_main_commit": "1a30d47354eb1dfa6115594f5188aad25103032f",
+        "deployed_runtime_source_commit": "1a30d47354eb1dfa6115594f5188aad25103032f",
+        "implementation_merge_is_ancestor_of_current_main": true,
+        "runtime_source_equals_current_main": true,
+        "corrected_registration_pull_requests": [
+          1650,
+          1658
+        ],
+        "frontier_readback_receipt_sha256": "a1384e32d3a0659f3327ad70ad63e3c9b754c85560619434e5d546edabfaee0e",
+        "observed_at": "2026-08-07T01:55:12.780968Z"
+      },
+      "acceptance_evidence": {
+        "candidate-binding": "Fresh GitHub metadata for merged registration PRs #1650 and #1658 binds each PR to its newly registered task; merged implementation PR #1661 changes the publisher accordingly.",
+        "registration-exception": "Fresh GitHub metadata for #1650 and #1658 contains the narrow Bureau-Task-Binding-Exception while PR #1661 retained exact-head review and required CI.",
+        "regression-test": "Implementation PR #1661 records the exact gh-pr-create body regression; its exact head passed validate on Python 3.10 and 3.12 plus CodeQL and registry preflight.",
+        "existing-misbinding-repair": "Fresh GitHub metadata shows corrected task bindings on merged PRs #1650 and #1658; a fresh live Frontier readback was executed against the current runtime after those repairs.",
+        "validation-and-merge": "PR #1661 merged as d359cd510193171b593d65cdf964a83ac6acdaa4 after green required checks; that merge is an ancestor of current main, and the immutable Bureau runtime source commit equals current main."
+      },
+      "does_not_establish": [
+        "future correctness after later publisher changes",
+        "permission to weaken PR task-binding or registration guards",
+        "claimability or completion of unrelated Bureau tasks"
+      ],
+      "task_sha256": "32d4fdb158b694bdb9d54781f9a760a17c23bb38af85362d82b93b8e3cf1607f",
+      "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529"
     }
   },
   "priority": {
@@ -111,6 +157,6 @@
     "strategy": "Bei Regression die PR-Body-Erzeugung auf den letzten geprüften Zustand zurücksetzen; bereits korrigierte PR-Metadaten nicht auf die nachweislich falschen Parent-Bindungen zurückstellen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Registrierungs-PRs an den erzeugten Task statt an den Publisher binden"
 }

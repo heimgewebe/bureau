@@ -89,6 +89,65 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "merged_pr_runtime_live_closeout",
+      "verified_at": "2026-08-07T19:23:37.780366+00:00",
+      "canonical_bureau_run": null,
+      "root_cause": {
+        "classification": "historical-journal-replay-masking-current-request",
+        "detail": "After a replay-eligible claim rejection, _journaled_existing_assignment_after_claim_rejection normalized unrelated historical stored requests before checking whether they matched the current request. A stale journal referenced deleted registry_root /home/alex/repos/.bureau-claim-roots/shard2-t022-9a3bace; its FileNotFoundError was flattened into the current-request registry_root error.",
+        "fix": "Historical replay candidates whose stored explicit registry_root now fails with FileNotFoundError or NotADirectoryError are skipped as non-replayable. Current-request root validation and all other path/journal errors remain fail-closed."
+      },
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 682,
+        "reviewed_head_commit": "05e5b8547879ea52655f328f91a5a6f10e6964e9",
+        "merge_commit": "d2b2f457fd529bd5354cdd126e0cb9899c1aef92",
+        "merged_at": "2026-08-07T19:06:21Z"
+      },
+      "validation": {
+        "focused_pickup_tests_passed": 141,
+        "full_validate_tests_passed": 5085,
+        "full_validate_tests_skipped": 14,
+        "final_validation_lifecycle_receipt_sha256": "01a28b0c37022890b3499b7a0ff4fb677dd3293057887597f22b48ce2b8f1dde",
+        "github_required_checks": "passed"
+      },
+      "runtime": {
+        "release_id": "d2b2f457fd52-srcset16853b9f65d8-locke6664d600b6c-contract46ba648f01da",
+        "repo_head": "d2b2f457fd529bd5354cdd126e0cb9899c1aef92",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "serving_process_matches_manifest": true,
+        "deployment_job": "grabowski-job-eada9f3330f3",
+        "deployment_finalization_receipt_sha256": "805ebe21e5b6a78359fa3dea98803d164c84b45c8b29abc222c2299f7a5f3ab7"
+      },
+      "live_proof": {
+        "positive_registry_root": "/home/alex/repos/.grabowski-worktrees/bureau-explicit-root-liveproof-20260807",
+        "positive_registry_commit": "03e1e6f7c4f251ed21bac9fcc1ce909929953211",
+        "positive_transport_receipt_sha256": "ce359f3f7fc2d798ba2936d90b3e1303cae51d546c60fd02dfe8bdaf0c9693b7",
+        "positive_result": "claim-intent-no-eligible-task: task is not queued in registry/queue.json; explicit root was accepted and bound through typed Bureau eligibility",
+        "negative_registry_root": "/home/alex/repos/.grabowski-worktrees/bureau-explicit-root-missing-liveproof-20260807",
+        "negative_transport_receipt_sha256": "8d7fcb4757bcec37bbd20864cbab864f26376a9cc9d9ed8a8358d8ce2389d68a",
+        "negative_result": "blocked before Bureau/lease effect: registry_root must resolve to an existing directory"
+      },
+      "acceptance_evidence": {
+        "live-regression-reproduction": "The pre-fix live failure was reproduced twice and again on current #679 runtime; instrumented FastMCP execution proved the current root normalized successfully and the stale unrelated historical journal root caused the masked failure.",
+        "causal-boundary": "Mount namespace, process root visibility, direct _normalize_registry_root and direct _prepare_request all passed. The failure was isolated to historical journal replay before current-request matching.",
+        "explicit-root-contract-restored": "After deployment, a fresh Bureau linked worktree at 03e1e6f7c4f251ed21bac9fcc1ce909929953211 was accepted as explicit registry_root and reached typed Bureau eligibility; rejection was only that the task was not queued.",
+        "unsafe-roots-fail-closed": "A fresh nonexistent explicit registry_root remained blocked before Bureau/lease effect with registry_root must resolve to an existing directory.",
+        "t127-contract-preserved": "The fix does not modify _normalize_registry_root, canonical default-root selection, journal binding equality, symlink/traversal checks, claim gates or lease gates; T127 remains untouched.",
+        "regression-validation": "141/141 pickup tests passed; final full make validate on the base-updated PR worktree passed 5085 tests with 14 skipped; GitHub required checks passed on exact reviewed head.",
+        "delivery-live-proof": "PR #682 was reviewed at exact head 05e5b8547879ea52655f328f91a5a6f10e6964e9, squash-merged as d2b2f457fd529bd5354cdd126e0cb9899c1aef92, deployed source-identically, and verified by positive and negative live explicit-root probes."
+      },
+      "does_not_establish": [
+        "retroactive Bureau claim or run existence",
+        "future correctness after a later Grabowski deployment",
+        "permission to weaken current explicit-root path validation"
+      ],
+      "task_sha256": "0643dd0bd380258db4187421ff601051bc96ce1fd55e487b7f275f428bf9fb29",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },
   "priority": {
@@ -108,6 +167,6 @@
     "strategy": "Den eng begrenzten Pickup-Root-Fix und seine Tests normal revertieren. Bei Unsicherheit bleibt der bestehende kanonische Default-Root als sicherer Pfad aktiv; explizite Overrides dürfen weiterhin fail-closed abgewiesen werden, aber kein unsicherer Fallback wird eingeführt."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Explizite Bureau-Pickup-Registry-Roots namespace-sicher erkennen"
 }

@@ -88,6 +88,164 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "operator_live_closeout",
+      "source_ref": "operator-live-closeout:64e9b9d29bc11b66cfe7f15deecd59293565ac5ce1ba592228150a566ce0710d",
+      "receipt_id": "operator-live-closeout:64e9b9d29bc11b66cfe7f15deecd59293565ac5ce1ba592228150a566ce0710d",
+      "receipt_sha256": "64e9b9d29bc11b66cfe7f15deecd59293565ac5ce1ba592228150a566ce0710d",
+      "task_sha256": "f3f2a4ef5530f514991f92710b2f655b1c741bf0c4bb0142d71be0c21147ff93",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "verified_at": "2026-08-07T07:18:32.275285Z",
+      "outcome": "succeeded",
+      "evidence": {
+        "schema_version": 1,
+        "kind": "grabowski_operator_surface_t155_closeout_evidence",
+        "observed_at": "2026-08-07T07:18:32.275285Z",
+        "registration_pr": {
+          "repository": "heimgewebe/bureau",
+          "number": 1684,
+          "head_sha": "ad2aa6564e6a96bdca0343be7763fca547891350",
+          "merge_commit": "27385fd8d5df04c808542121c4f828762c098970",
+          "merged_at": "2026-08-07T06:23:58Z",
+          "checks": [
+            {
+              "bucket": "pass",
+              "name": "CodeQL",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.12)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "registry-registration-preflight/freshness",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.10)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (actions)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (python)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "skipping",
+              "name": "main-push-revalidation",
+              "state": "SKIPPED"
+            }
+          ]
+        },
+        "implementation_pr": {
+          "repository": "heimgewebe/bureau",
+          "number": 1686,
+          "head_sha": "672534bdb069c278edf03843e4f21a4fa5012fed",
+          "merge_commit": "55007048cec6f7adaca8e24772975acd044ca400",
+          "merged_at": "2026-08-07T07:07:29Z",
+          "checks": [
+            {
+              "bucket": "pass",
+              "name": "CodeQL",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.10)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "registry-registration-preflight/freshness",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.12)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (actions)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (python)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "skipping",
+              "name": "main-push-revalidation",
+              "state": "SKIPPED"
+            }
+          ]
+        },
+        "merge_group": {
+          "conclusion": "success",
+          "createdAt": "2026-08-07T06:58:56Z",
+          "databaseId": 31155893767,
+          "event": "merge_group",
+          "headSha": "55007048cec6f7adaca8e24772975acd044ca400",
+          "status": "completed",
+          "updatedAt": "2026-08-07T07:06:58Z",
+          "url": "https://github.com/heimgewebe/bureau/actions/runs/31155893767",
+          "workflowName": "validate"
+        },
+        "validation": {
+          "focused": {
+            "command": "env PYTHONPATH=src T155_TEST_REV=2 pytest -q tests/test_canonical_registry_runtime.py",
+            "result": "9 passed",
+            "grabowski_task_id": "20ef6628bc7f431caa343b84"
+          },
+          "full": {
+            "command": "make validate",
+            "result": "1175 passed, 18 subtests passed; Ruff PASS; Systemkatalog boundary PASS; Registry valid; StateStore integrity OK",
+            "grabowski_task_id": "ac2c3f6158dd42deb536c9fe"
+          },
+          "diff_check": "pass"
+        },
+        "bureau_runtime": {
+          "source_commit": "55007048cec6f7adaca8e24772975acd044ca400",
+          "release_id": "55007048cec6-src6bad4c8ae741",
+          "manifest_sha256": "ef69af3c6a28af879c8bf2d5df52f544794a983f72c61bfe156522990e6bb9ec"
+        },
+        "productive_verification_stamp": {
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T154",
+          "receipt_sha256": "7445410bad0964437d826468156f9495ea6df044949da116cbd56bf2c72e60f3",
+          "task_sha256": "953e8ab474b12de44878e09cd4a6fa5ed9eea3d4c9e7ec19f10ad65907e1ee8b",
+          "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+          "command_effect_scope": "read_only",
+          "mutation_allowed": false,
+          "registry_role": "canonical-runtime-snapshot",
+          "registry_head": "55007048cec6f7adaca8e24772975acd044ca400",
+          "state_integrity": "ok"
+        },
+        "nonconflict": {
+          "t002_files_untouched": [
+            "src/bureau/v2.py",
+            "src/bureau/state_events.py",
+            "tests/test_v2.py",
+            "tests/test_state_events.py"
+          ],
+          "foreign_t002_leases_released": false
+        },
+        "does_not_establish": [
+          "future runtime health",
+          "permission to release foreign T002 leases",
+          "permission to mutate unrelated Bureau tasks"
+        ]
+      }
     }
   },
   "priority": {
@@ -108,6 +266,6 @@
     "strategy": "Bei Regression den exakten Merge per neuem Revert-PR zurücknehmen. Keine T002-Ressourcen, fremden Leases oder Dirty-States übernehmen; die fail-closed Defaultklassifikation unbekannter Befehle muss erhalten bleiben."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "verification-stamp als kanonische read-only Operatorabfrage freigeben"
 }

@@ -68,9 +68,7 @@
       "WELTGEWEBE-OS-V1-T043",
       "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011"
     ],
-    "now": [
-      "BUREAU-CONTROL-PLANE-V3-T001"
-    ]
+    "now": []
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

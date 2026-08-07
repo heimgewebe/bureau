@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein deterministischer Test reproduziert den Livefall: Ein frisch erzeugter, sauberer linked Bureau-Git-Worktree ist über die gleichen Host-/Grabowski-Pfadoberflächen sichtbar, wird aber im Vorzustand von der expliziten registry_root-Normalisierung des Pickup-Adapters abgewiesen. Die zwei Live-Receipts 0a36d5bf1684f319c600c469bf48635ed93f2c9c00802af67ce23e96bf07a500 und 423d73f37519dbf9aee0b6b7bc8e991041de34ec200396970244dfd2b08f696b bleiben als Primärevidenz gebunden.",
+      "id": "live-regression-reproduction"
+    },
+    {
+      "assertion": "Die Ursache wird auf die kleinste belegte Pfad-/Namespace-Grenze zwischen MCP-Adapter und den Git-/Read-Oberflächen eingegrenzt; nicht belegte Ursachen werden nicht behauptet. Der Fix adressiert die nachgewiesene Grenze statt lediglich einen speziellen Pfadpräfix zu erlauben.",
+      "id": "causal-boundary"
+    },
+    {
+      "assertion": "Ein absoluter, existierender und sicherer expliziter registry_root, der als Bureau-Registry-Root validierbar ist, wird vom Pickup normalisiert, in der Registry-Bindung gejournalt und bis zum Bureau-Eligibility-Pfad weitergereicht. Ein kontrollierter Live-Readback scheitert nach dem Fix nicht mehr mit 'registry_root must resolve to an existing directory'.",
+      "id": "explicit-root-contract-restored"
+    },
+    {
+      "assertion": "Fehlende Roots, Nicht-Verzeichnisse, unsichere Symlink-/Traversal-Fälle und während der Bindung driftende Roots bleiben vor Claim- oder Leasewirkung fail-closed; es entsteht kein Fallback auf einen beliebigen Checkout.",
+      "id": "unsafe-roots-fail-closed"
+    },
+    {
+      "assertion": "Die T127-Verträge für kanonischen Default-Root, Dirty-Checkout-Ausschluss, expliziten Override, Journal-Replay, Manifest-Fail-closed und Autoritätsgrenzen bleiben vollständig erhalten. T127 wird nicht historisch umgeschrieben oder reopened.",
+      "id": "t127-contract-preserved"
+    },
+    {
+      "assertion": "Fokussierte Bureau-Pickup-Tests einschließlich linked-worktree-Positivfall und unsafe/missing-Negativfällen sowie die vollständigen relevanten Grabowski-Pflichtchecks sind auf dem exakten Implementierungshead grün.",
+      "id": "regression-validation"
+    },
+    {
+      "assertion": "Der exakte reviewte Head wird nur bei grünen Pflichtchecks gemergt und source-identitätsgebunden deployt. Danach belegt ein frischer echter expliziter-registry_root-Pickup gegen einen neu erzeugten sicheren Worktree, dass die Root-Bindung bis zur typisierten Bureau-Eligibility gelangt, während ein absichtlich ungültiger Root weiterhin ohne Wirkung blockiert.",
+      "id": "delivery-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den expliziten registry_root-Normalisierungs-/Namespace-Vertrag des Bureau-Pickup-Adapters und eng zugehörige Tests ändern. Keine Lockerung von strict-existing-directory, Symlink/Traversal, kanonischem Default-Root, Journal-Replay, Claim-, Lease-, Review-, Merge- oder Deployment-Gates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Beseitige die reproduzierte Regression im Grabowski-Bureau-Pickup, bei der ein frisch erzeugter absoluter Bureau-Git-Worktree über Grabowski-Git- und Read-Oberflächen vollständig sichtbar ist, aber grabowski_bureau_pickup_execute denselben Pfad in _normalize_registry_root bei Path.resolve(strict=True) als nicht existent abweist. Stelle einen einheitlichen, sicheren Pfad-/Namespace-Vertrag für explizite registry_root-Overrides her, ohne Symlink-, Traversal-, Registry-, Claim-, Lease-, Journal- oder Runtime-Gates zu lockern. GRABOWSKI-OPERATOR-SURFACE-V1-T127 bleibt als historische, damals belegte Implementierung verified; dieser Task behandelt die später erneut reproduzierte Regression.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-ERRORINVESTIGATION-12F4D9ED7F",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to weaken strict path safety",
+      "permission to reopen or rewrite T127",
+      "automatic merge or deployment authority"
+    ],
+    "live_reproduction": {
+      "corroboration": "Both roots were clean Git worktrees visible to grabowski_git_status; task content under the first root was readable via grabowski_read_text before pickup rejection.",
+      "effect_before_failure": false,
+      "first_root": "/home/alex/repos/.bureau-closeout-roots/pr677-20260807",
+      "first_transport_receipt_sha256": "0a36d5bf1684f319c600c469bf48635ed93f2c9c00802af67ce23e96bf07a500",
+      "observed_failure": "registry_root must resolve to an existing directory",
+      "second_root": "/home/alex/repos/.bureau-worktrees/PR677-CLOSEOUT-20260807",
+      "second_transport_receipt_sha256": "423d73f37519dbf9aee0b6b7bc8e991041de34ec200396970244dfd2b08f696b"
+    },
+    "regression_of": "GRABOWSKI-OPERATOR-SURFACE-V1-T127",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-12f4d9ed7fa9b0c8f2a8099a",
+      "event_id": 4145,
+      "event_created_at": "2026-08-07T17:15:11.407484Z",
+      "request_sha256": "4cf2cd73da32f6ed38f312319e08e9e79f8d96bbbc1bb93ca2addaa67f723e64",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-receipt",
+        "locator": "grabowski:transport-roundtrip:grabowski_bureau_pickup_execute:explicit-registry-root-namespace-reproducer:423d73f37519dbf9aee0b6b7bc8e991041de34ec200396970244dfd2b08f696b",
+        "observed_at": "2026-08-07T16:53:08.804571Z",
+        "sha256": "423d73f37519dbf9aee0b6b7bc8e991041de34ec200396970244dfd2b08f696b"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 908
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "python",
+    "testing",
+    "runtime-observability",
+    "transport"
+  ],
+  "rollback": {
+    "strategy": "Den eng begrenzten Pickup-Root-Fix und seine Tests normal revertieren. Bei Unsicherheit bleibt der bestehende kanonische Default-Root als sicherer Pfad aktiv; explizite Overrides dürfen weiterhin fail-closed abgewiesen werden, aber kein unsicherer Fallback wird eingeführt."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Explizite Bureau-Pickup-Registry-Roots namespace-sicher erkennen"
+}

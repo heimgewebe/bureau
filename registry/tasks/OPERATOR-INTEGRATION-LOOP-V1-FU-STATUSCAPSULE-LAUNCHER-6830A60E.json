@@ -1,0 +1,105 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest reproduziert den heutigen Fehler: immutable Bureau-Runtime unterstützt das aktuelle StateStore-Schema, während eine Status-Capsule-Unit auf einen unabhängigen persistenten Venv-Entrypoint zeigt und dadurch Versionsdrift zulässt.",
+      "id": "reproduce-entrypoint-split"
+    },
+    {
+      "assertion": "Der immutable Bureau-Installer erzeugt einen dritten managed Launcher bureau-status-capsule, der denselben Deployment-Manifest-Digest, immutable_release_path, package_tree_sha256 und kanonischen Registry-Snapshot prüft und anschließend bureau.status_capsule aus dem gebundenen Release startet.",
+      "id": "managed-status-capsule-launcher"
+    },
+    {
+      "assertion": "Install, Replace und Rollback behandeln den neuen Launcher mit denselben fail-closed Managed-/Symlink-/Backup-Regeln wie bureau und bureau-runtime-refresh; Manifest bzw. Install-Receipt machen seine Identität revisionsgebunden sichtbar.",
+      "id": "backup-and-receipt"
+    },
+    {
+      "assertion": "bureau-status-capsule.service startet ausschließlich ~/.local/bin/bureau-status-capsule; der alte ~/.local/share/bureau/venv/bin/bureau-status-capsule Pfad ist nicht mehr Produktions-ExecStart.",
+      "id": "systemd-uses-managed-launcher"
+    },
+    {
+      "assertion": "Die Reparatur installiert oder aktualisiert keine Pakete im persistenten ~/.local/share/bureau/venv und führt keine Versionskopplung über einen mutable Venv-Hotfix ein.",
+      "id": "no-persistent-venv-hotfix"
+    },
+    {
+      "assertion": "Fokussierte Installer-/Runtime-/systemd-Regressionstests sowie make validate bestehen auf dem exakten PR-Head; Self-Review und GitHub-Pflichtchecks sind revisionsgebunden grün.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Nach Merge und source-identitätsgebundenem Bureau-Deployment läuft bureau-status-capsule.service erfolgreich gegen den aktuellen StateStore (mindestens Schema 5) und die geschriebene Capsule weist frische GitHub-main-Provenienz aus, ohne claim-, queue- oder mutation-Autorität zu behaupten.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den bestehenden immutable Runtime-Installer um einen manifestgebundenen bureau-status-capsule Launcher erweitern, dessen Backup/Receipt/Tests ergänzen und die systemd-Unit darauf umstellen. Kein pip/venv-Hotfix und keine Abschwächung der Manifest- oder Release-Integritätsprüfung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/ops/install-bureau-runtime.py",
+      "path:/home/alex/repos/bureau/ops/systemd/bureau-status-capsule.service",
+      "path:/home/alex/repos/bureau/tests/test_runtime_identity.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_observation_systemd.py",
+      "path:/home/alex/repos/bureau/tests/test_canonical_registry_runtime.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den produktiven Bureau-Status-Capsule-Pfad aus dem veraltbaren persistenten ~/.local/share/bureau/venv lösen und an denselben immutable, manifest- und source-identitätsgebundenen Runtime-Release wie den Bureau-Launcher binden, sodass Runtime-Refresh und Status-Capsule nicht mehr unterschiedliche StateStore-Schema- und Source-Wahrheiten verwenden.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FU-STATUSCAPSULE-LAUNCHER-6830A60E",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "observed_execstart": "/home/alex/.local/share/bureau/venv/bin/bureau-status-capsule",
+    "observed_failure": "unsupported Bureau state schema 5; maximum is 3",
+    "observed_runtime_source_commit": "0020499542da815448c9aba7a12175be5276a424",
+    "observed_service": "bureau-status-capsule.service",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6830a60e8959a4308c7d5a8b",
+      "event_id": 4144,
+      "event_created_at": "2026-08-07T17:08:50.791018Z",
+      "request_sha256": "ddd22e7a475fe60dc1ad21ca4769a4500cbe328baf0deb9ea27bc496b1a86b88",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-runtime-finding",
+        "locator": "heim-pc:systemd/bureau-status-capsule.service@2026-08-07T18:45:13+02:00",
+        "observed_at": "2026-08-07T16:45:13Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_from_candidate": "candidate-6830a60e8959a4308c7d5a8b",
+    "scope_boundary": "Kein Venv-Upgrade, kein Direktpatch unter ~/.local/share, kein Bypass von Runtime-Manifest/Package-Tree-Prüfung und keine Änderung von Claim-/Queue-Autorität. Nur den Status-Capsule-Entrypoint in den bestehenden immutable Runtime-Installationsvertrag aufnehmen."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 906
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "runtime-observability"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Status-Capsule an immutable Bureau-Runtime binden"
+}

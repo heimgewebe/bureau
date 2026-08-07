@@ -1,0 +1,70 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The selected defect is reproduced before repair and bound to an exact revision.",
+      "id": "maintenance-1"
+    },
+    {
+      "assertion": "The patch stays inside the declared scope and does not reset foreign work.",
+      "id": "maintenance-2"
+    },
+    {
+      "assertion": "Focused tests and the relevant Bureau validation gate pass.",
+      "id": "maintenance-3"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Select one current, reproducible Bureau maintenance defect, repair only its declared scope, and produce a revision-bound validation receipt.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-MAINTENANCE-6AFACB5DB8",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "maintenance",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "6afacb5db80235d2903cc299c4ae944bc55ae5079e684eccfc808ade912c1250",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "ceb05c8ddb1008d3f56d704d02b9d643f950161633e02ddda36434b59009bc3e",
+      "schema_version": 1,
+      "scope_path": "src/bureau",
+      "time_bucket": "20672"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 900
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Perform one bounded Bureau maintenance repair"
+}

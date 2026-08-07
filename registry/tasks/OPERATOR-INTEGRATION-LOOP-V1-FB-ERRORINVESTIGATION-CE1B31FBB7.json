@@ -1,0 +1,70 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A deterministic reproduction or explicit non-reproducibility boundary exists.",
+      "id": "error-investigation-1"
+    },
+    {
+      "assertion": "The causal claim is separated from symptoms and unrelated warnings.",
+      "id": "error-investigation-2"
+    },
+    {
+      "assertion": "A regression test fails before the repair and passes afterwards when applicable.",
+      "id": "error-investigation-3"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/tests"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Reproduce one current Bureau error, isolate the smallest causal surface, and add a regression test before or with the repair.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-ERRORINVESTIGATION-CE1B31FBB7",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "error-investigation",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "ce1b31fbb7b4ac3a17b51b02020c564bf0dd4e9a3d826549b1ef37d4ec7e9ab6",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "d8d8f4b4b06c570c5800a7f18a7d1ad4e3c5f714f44172dea0e83f1beb7295dd",
+      "schema_version": 1,
+      "scope_path": "tests",
+      "time_bucket": "20672"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 906
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Investigate one reproducible Bureau error"
+}

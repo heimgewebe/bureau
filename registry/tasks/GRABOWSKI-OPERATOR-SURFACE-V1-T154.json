@@ -81,7 +81,128 @@
       ]
     },
     "source_issue": "heimgewebe/bureau#1637",
-    "source_pr": "heimgewebe/grabowski#667"
+    "source_pr": "heimgewebe/grabowski#667",
+    "verification": {
+      "schema_version": 1,
+      "source": "operator_live_closeout",
+      "source_ref": "operator-live-closeout:7445410bad0964437d826468156f9495ea6df044949da116cbd56bf2c72e60f3",
+      "receipt_id": "operator-live-closeout:7445410bad0964437d826468156f9495ea6df044949da116cbd56bf2c72e60f3",
+      "receipt_sha256": "7445410bad0964437d826468156f9495ea6df044949da116cbd56bf2c72e60f3",
+      "task_sha256": "953e8ab474b12de44878e09cd4a6fa5ed9eea3d4c9e7ec19f10ad65907e1ee8b",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "verified_at": "2026-08-07T05:13:59.363514Z",
+      "outcome": "succeeded",
+      "evidence": {
+        "schema_version": 1,
+        "kind": "grabowski_operator_surface_t154_closeout_evidence",
+        "observed_at": "2026-08-07T05:13:59.363514Z",
+        "source_pr": {
+          "repository": "heimgewebe/grabowski",
+          "number": 667,
+          "head_sha": "3c61c9d2d459bccb7e5981790f69851e81a4f730",
+          "merge_commit": "19ae90716dd65f63aa1dc929afc1850b255fea2f",
+          "checks": [
+            {
+              "bucket": "pass",
+              "name": "CodeQL",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.12)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Codex review settled",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.10)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (python)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (actions)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Codex review settled",
+              "state": "SUCCESS"
+            }
+          ]
+        },
+        "registration_pr": {
+          "repository": "heimgewebe/bureau",
+          "number": 1678,
+          "head_sha": "330cfbb85bf94fde04201713ba5cdc0674d5a64d",
+          "merge_commit": "20e586adb513579d867a6a26ba0d8de5c2196057",
+          "checks": [
+            {
+              "bucket": "pass",
+              "name": "CodeQL",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "registry-registration-preflight/freshness",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.10)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "validate (3.12)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (actions)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "pass",
+              "name": "Analyze (python)",
+              "state": "SUCCESS"
+            },
+            {
+              "bucket": "skipping",
+              "name": "main-push-revalidation",
+              "state": "SKIPPED"
+            }
+          ]
+        },
+        "bureau_runtime": {
+          "source_commit": "e2709784b60b121cf8ce7d84fee770ee4a7faac5",
+          "task_present": true
+        },
+        "grabowski_runtime": {
+          "source_commit": "45996c21a6cdc834b40165e2ca11cb35edad4eba",
+          "release_id": "45996c21a6cd-srcset31839ff321db-locke6664d600b6c-contract46ba648f01da-attempt1",
+          "healthy": true,
+          "deployment_integrity_valid": true
+        },
+        "retention_contract": {
+          "physical_cleanup_during_active_retention": false,
+          "fresh_cleanup_plan_required_after_retention": true
+        },
+        "does_not_establish": [
+          "future runtime health",
+          "permission to delete retention-protected checkouts",
+          "permission to overwrite foreign work"
+        ]
+      }
+    }
   },
   "priority": {
     "lane": "now",
@@ -102,6 +223,6 @@
     "strategy": "Bei einer Regression PR #667 nicht mergen beziehungsweise den exakten Merge per neuem Revert-PR zurücknehmen. Retention-geschützte Checkouts und Recovery-Evidenz nicht löschen; fremde Leases, Dirty-States und Prozesse unverändert lassen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "PR #667 cleanup-retention-lifecycle taskgebunden abschließen"
 }

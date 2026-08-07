@@ -11,7 +11,7 @@ from bureau.status_projection import (
     STATUS_PROJECTION_SCHEMA_VERSION,
     status_projection,
 )
-from bureau.v2 import StateStore
+from bureau.v2 import Registry, StateStore, plan_sha256
 
 NOW = "2026-07-07T12:00:00Z"
 
@@ -492,6 +492,34 @@ def test_projection_includes_repository_balls_and_next_actions(
     assert beta["status"] == "ready"
     assert beta["current_ball"]["task_id"] == TASK_2
     assert {action["action"] for action in projection["next_actions"]} >= {"claim-task"}
+
+
+def test_projection_uses_effective_state_for_dispatch_surfaces(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(2, mode="write")
+    state_root = make_state(root)
+    registry = Registry.load(root)
+    task = registry.tasks[TASK_2]
+    add_task_status(state_root, TASK_2, "verified", task_sha256=task.sha256)
+    with connect(state_root) as connection:
+        connection.execute(
+            "UPDATE task_status SET plan_sha256 = ? WHERE task_id = ?",
+            (plan_sha256(registry, task.initiative), TASK_2),
+        )
+
+    projection = project(root)
+
+    entry = task_entry(projection, TASK_2)
+    assert entry["registry_state"] == "ready"
+    assert entry["effective_state"] == "verified"
+    beta = projection["repository_balls"]["repo.beta"]
+    assert beta["status"] == "empty"
+    assert beta["current_ball"] is None
+    assert not any(
+        action.get("action") == "claim-task" and action.get("task_id") == TASK_2
+        for action in projection["next_actions"]
+    )
 
 
 def test_projection_repository_ball_ambiguity_is_actionable(

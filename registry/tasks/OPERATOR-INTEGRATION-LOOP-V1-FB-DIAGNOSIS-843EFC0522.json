@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest belegt, dass ein zunächst gültiger Supply-Report nach einer späteren Registry-/Queue-Lifecycle-Änderung kryptographisch intakt bleiben kann, aber nicht mehr als aktuelle Supply-Wahrheit gelten darf.",
+      "id": "stale-report-reproduction"
+    },
+    {
+      "assertion": "Supply-Report-Konsum bindet und vergleicht den erwarteten Registry-Head sowie Queue-Digest mit dem Registry-Root der Frontier; fehlende, nicht beobachtbare oder abweichende Bindungen werden explizit als stale/unverifizierbar klassifiziert.",
+      "id": "registry-queue-binding"
+    },
+    {
+      "assertion": "Ein stale oder nicht verifizierbarer Supply-Report liefert keine historischen Supply-Metriken als aktuelle Wahrheit und fordert deterministisch eine Regeneration an.",
+      "id": "fail-closed-regeneration"
+    },
+    {
+      "assertion": "Fokussierte Supply-/Frontier-Regressionstests sowie die vollständigen relevanten Bureau-Pflichtchecks sind auf dem exakten Implementierungshead grün.",
+      "id": "regression-validation"
+    },
+    {
+      "assertion": "Bureau PR #1726 ist an genau diesen Task gebunden, auf unverändertem Head eca9b6498a84a54616f25c251ebbd0483a1db1a4 revisionsgebunden reviewt und nur bei grünen Pflichtchecks gemergt; danach wird der Merge in main und gegebenenfalls der Runtime-Readback belegt.",
+      "id": "pr-adoption"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Adoptiere ausschließlich den exakt gelesenen PR #1726 auf Head eca9b6498a84a54616f25c251ebbd0483a1db1a4, sofern Diff, Pflichtchecks und Taskbindung unverändert sind. Bei Head-Drift, zusätzlichem Scope oder rotem Check keine Mergefreigabe.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/agent_frontier.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Verhindere, dass ein kryptographisch intakter, aber revisionsveralteter Bureau-Supply-Report nach späteren Task-, Run- oder Queue-Transitions weiter als aktuelle Frontier-Wahrheit konsumiert wird. Supply-Reports müssen ihre Registry- und Queue-Bindung gegen den tatsächlich verwendeten Registry-Root revalidieren; fehlende, nicht prüfbare oder stale Bindungen bleiben fail-closed und verlangen Regeneration. Den bereits implementierten PR #1726 auf exaktem Head eca9b6498a84a54616f25c251ebbd0483a1db1a4 nur nach gültiger Taskbindung, grünen Pflichtchecks und revisionsgebundenem Review adoptieren.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-843EFC0522",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic claim or dispatch authority",
+      "permission to merge a changed PR head",
+      "permission to weaken stale-report validation"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-843efc0522c1dee8ca9858db",
+      "event_id": 3129,
+      "event_created_at": "2026-08-07T15:34:12.982881Z",
+      "request_sha256": "8472d002c557c709dd3f4ee9c38b547e8b9b3467e14b647e8d9dc799bce6cb34",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-github-pr-readback",
+        "locator": "github:heimgewebe/bureau#1726@eca9b6498a84a54616f25c251ebbd0483a1db1a4",
+        "observed_at": "2026-08-07T15:27:18Z",
+        "sha256": "e80784213a81dddb007e1a76e97151284c6992b7c4a8b9d40faaa7296bee5a1f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_pr": {
+      "base_commit": "c0bfece10bb35fe2b07bfabc24a84a14e495303d",
+      "changed_paths": [
+        "src/bureau/agent_frontier.py",
+        "tests/test_task_supply.py"
+      ],
+      "does_not_establish": [
+        "merge readiness before required CI completes",
+        "valid Bureau task binding before registration"
+      ],
+      "head_commit": "eca9b6498a84a54616f25c251ebbd0483a1db1a4",
+      "number": 1726,
+      "observed_validation": [
+        "focused stale/current/tamper tests 3/3 passed",
+        "task_supply + supply_runner 48/48 passed per PR evidence",
+        "git diff --check passed"
+      ],
+      "repository": "heimgewebe/bureau"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 905
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "github",
+    "ci"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression den revisionsgebundenen Implementierungsmerge normal revertieren; bis zur korrigierten Version stale Supply-Reports weiterhin fail-closed ablehnen und keine historischen Supply-Metriken als aktuelle Frontier-Wahrheit behandeln."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Supply-Reports revisionsgebunden an aktuelle Registry-Wahrheit binden"
+}

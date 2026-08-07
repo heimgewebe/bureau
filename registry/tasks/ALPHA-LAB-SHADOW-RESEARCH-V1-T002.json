@@ -3,7 +3,7 @@
   "id": "ALPHA-LAB-SHADOW-RESEARCH-V1-T002",
   "initiative": "ALPHA-LAB-SHADOW-RESEARCH-V1",
   "title": "Run one bounded Form-4 falsification kill test",
-  "state": "ready",
+  "state": "verified",
   "goal": "Preregister and execute exactly one low-cost historical kill test of the simple public Form-4 open-market-purchase hypothesis. Stop with no-go when lawful free data, publication-time execution, realistic costs, independent-event counting or fixed baselines remove the effect. Do not build a general research platform, prospective collector, broker integration or model-search system.",
   "priority": {
     "lane": "now",
@@ -99,6 +99,56 @@
       "prospective_shadow_authority",
       "paper_or_real_trading_permission",
       "automatic_progression_to_real_capital"
-    ]
+    ],
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "c5085a9039e3a86b442f011aa5fd4d0d0fec0e1ca8266268d8aef97c12341826",
+      "plan_sha256": "256b8b5259efd3818c49d46e7860c6a6a8be900b51ef821567ed3d25658fe96d",
+      "source": "successful_run_receipt_merged_pr_green_ci_and_main_readback",
+      "verified_at": "2026-08-07T01:35:24.794780Z",
+      "run": {
+        "run_id": "BUR-RUN-20260807T004456Z-b152b43c76",
+        "receipt_sha256": "45c90c7571f531243f5508ecbb57c34364ebff8538b2848027e7b2e43f76602f",
+        "verification_stamp_receipt_sha256": "45c90c7571f531243f5508ecbb57c34364ebff8538b2848027e7b2e43f76602f",
+        "state": "succeeded"
+      },
+      "implementation": {
+        "repository": "heimgewebe/alpha-lab",
+        "pull_request": 2,
+        "base_commit": "4e5a11426fde8733059a680704da69082999f84b",
+        "head_commit": "2774fb1dadaed5b848209ee9d794601222b06d70",
+        "merge_commit": "10aff64880758a9b47c6012c1b2aadc9ef409ade",
+        "merged_at": "2026-08-07T01:13:40Z"
+      },
+      "validation": {
+        "github_ci_python_3_10": "success",
+        "github_ci_python_3_12": "success",
+        "verification_stamp": "passed",
+        "completion_receipt": "passed",
+        "main_equals_merge_commit": true,
+        "outcome": "no-go-at-lawful-free-data-gate"
+      },
+      "acceptance_evidence": {
+        "single-hypothesis-preregistered": "The merged evidence freezes one Form-4 hypothesis and deterministic preregistration digest before outcome readback; no parameter search or best-result selection was introduced.",
+        "lawful-free-data-gate": "The experiment stopped with no-go when reproducible lawful/free issuer and insider-filing coverage did not satisfy the preregistered data gate; paid or broker access was not added.",
+        "publication-time-primary-test": "The preregistered clock remains public filing acceptance time with next-eligible-close entry; the data gate stopped execution before return computation rather than relaxing the rule.",
+        "independent-event-accounting": "Issuer-level non-overlap accounting remains frozen in the preregistration and was not weakened after the data gate failed.",
+        "fixed-baselines-and-stresses": "Fixed baselines and stress tests remain frozen; no outcome-driven adaptation occurred because the kill test terminated before return analysis.",
+        "automatic-kill-criteria": "The declared lawful/free reproducibility and sample-availability kill gate triggered a terminal no-go before follow-on infrastructure or trading work.",
+        "bounded-terminal-output": "PR #2 publishes the preregistration, reproducibility manifest and terminal no-go; exact head passed both required Python jobs and merged to the commit that equals current alpha-lab main."
+      },
+      "live_readback": {
+        "alpha_lab_main_commit": "10aff64880758a9b47c6012c1b2aadc9ef409ade",
+        "implementation_merge_equals_current_main": true
+      },
+      "does_not_establish": [
+        "strategy profitability",
+        "prospective data-collection authority",
+        "paper or real trading permission",
+        "broker or wallet access",
+        "orders, leverage or capital deployment",
+        "future correctness after later repository changes"
+      ]
+    }
   }
 }

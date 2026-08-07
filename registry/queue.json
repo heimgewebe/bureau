@@ -68,9 +68,7 @@
       "WELTGEWEBE-OS-V1-T043",
       "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011"
     ],
-    "now": [
-      "ALPHA-LAB-SHADOW-RESEARCH-V1-T002"
-    ]
+    "now": []
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

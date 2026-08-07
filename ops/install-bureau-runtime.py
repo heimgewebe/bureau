@@ -397,10 +397,13 @@ def _backup_existing(
     manifest_path: Path,
     launcher: Path,
     runtime_refresh_launcher: Path | None = None,
+    status_capsule_launcher: Path | None = None,
 ) -> dict[str, Any]:
     launchers = [launcher]
     if runtime_refresh_launcher is not None:
         launchers.append(runtime_refresh_launcher)
+    if status_capsule_launcher is not None:
+        launchers.append(status_capsule_launcher)
     if not manifest_path.exists() and not any(os.path.lexists(item) for item in launchers):
         return {
             "directory": None,
@@ -413,6 +416,10 @@ def _backup_existing(
             "runtime_refresh_launcher_kind": None,
             "runtime_refresh_launcher_symlink_target": None,
             "runtime_refresh_launcher_metadata": None,
+            "status_capsule_launcher": None,
+            "status_capsule_launcher_kind": None,
+            "status_capsule_launcher_symlink_target": None,
+            "status_capsule_launcher_metadata": None,
         }
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     directory = prefix / "backups" / stamp
@@ -427,6 +434,11 @@ def _backup_existing(
         if runtime_refresh_launcher is not None
         else {"path": None, "kind": None, "symlink_target": None, "metadata": None}
     )
+    status_capsule = (
+        _backup_launcher(directory, status_capsule_launcher, "bureau-status-capsule")
+        if status_capsule_launcher is not None
+        else {"path": None, "kind": None, "symlink_target": None, "metadata": None}
+    )
     return {
         "directory": str(directory),
         "manifest": str(manifest_backup) if manifest_backup else None,
@@ -438,6 +450,10 @@ def _backup_existing(
         "runtime_refresh_launcher_kind": refresh["kind"],
         "runtime_refresh_launcher_symlink_target": refresh["symlink_target"],
         "runtime_refresh_launcher_metadata": refresh["metadata"],
+        "status_capsule_launcher": status_capsule["path"],
+        "status_capsule_launcher_kind": status_capsule["kind"],
+        "status_capsule_launcher_symlink_target": status_capsule["symlink_target"],
+        "status_capsule_launcher_metadata": status_capsule["metadata"],
     }
 
 
@@ -531,6 +547,7 @@ def main(argv: list[str] | None = None) -> int:
 
     launcher = bin_dir / "bureau"
     runtime_refresh_launcher = bin_dir / "bureau-runtime-refresh"
+    status_capsule_launcher = bin_dir / "bureau-status-capsule"
     if manifest_path.exists() and (manifest_path.is_symlink() or not manifest_path.is_file()):
         raise SystemExit("existing Bureau runtime manifest is not a regular file")
     _validate_existing_launcher(launcher, label="bureau", replace_existing=args.replace_existing)
@@ -539,7 +556,18 @@ def main(argv: list[str] | None = None) -> int:
         label="bureau-runtime-refresh",
         replace_existing=args.replace_existing,
     )
-    backup = _backup_existing(prefix, manifest_path, launcher, runtime_refresh_launcher)
+    _validate_existing_launcher(
+        status_capsule_launcher,
+        label="bureau-status-capsule",
+        replace_existing=args.replace_existing,
+    )
+    backup = _backup_existing(
+        prefix,
+        manifest_path,
+        launcher,
+        runtime_refresh_launcher,
+        status_capsule_launcher,
+    )
     previous_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
     installed_at = datetime.now(timezone.utc).isoformat()
     manifest = {
@@ -558,6 +586,7 @@ def main(argv: list[str] | None = None) -> int:
         "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
         "launcher_path": str(launcher),
         "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
+        "status_capsule_launcher_path": str(status_capsule_launcher),
         "installed_at": installed_at,
         "runtime_approval": runtime_approval,
         "previous_manifest_sha256": (
@@ -571,10 +600,14 @@ def main(argv: list[str] | None = None) -> int:
     runtime_refresh_launcher_bytes = wrapper(
         manifest_path, manifest_digest, "bureau.runtime_refresh"
     )
+    status_capsule_launcher_bytes = wrapper(
+        manifest_path, manifest_digest, "bureau.status_capsule"
+    )
 
     atomic_write(manifest_path, manifest_bytes)
     atomic_write(launcher, launcher_bytes, 0o755)
     atomic_write(runtime_refresh_launcher, runtime_refresh_launcher_bytes, 0o755)
+    atomic_write(status_capsule_launcher, status_capsule_launcher_bytes, 0o755)
     receipt = {
         "schema_version": 1,
         "kind": "bureau_runtime_install_receipt",
@@ -585,6 +618,8 @@ def main(argv: list[str] | None = None) -> int:
         "launcher_sha256": sha256(launcher),
         "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
         "runtime_refresh_launcher_sha256": sha256(runtime_refresh_launcher),
+        "status_capsule_launcher_path": str(status_capsule_launcher),
+        "status_capsule_launcher_sha256": sha256(status_capsule_launcher),
         "package_tree_sha256": source_digest,
         "canonical_registry_root": registry_snapshot["root"],
         "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],

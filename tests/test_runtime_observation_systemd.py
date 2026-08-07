@@ -102,16 +102,18 @@ def test_reconcile_service_is_bounded_to_the_state_root() -> None:
     assert "--stale-after" in text
 
 
-def test_status_capsule_service_is_networkless_and_source_read_only() -> None:
+def test_status_capsule_service_uses_managed_launcher_and_bounded_network() -> None:
     text = (OPS / "bureau-status-capsule.service").read_text(encoding="utf-8")
-    assert "bureau-status-capsule write" in text
+    assert "ConditionFileIsExecutable=%h/.local/bin/bureau-status-capsule" in text
+    assert "ExecStart=%h/.local/bin/bureau-status-capsule write" in text
+    assert "/bureau/venv/bin/bureau-status-capsule" not in text
     assert "--canonical-repo %h/repos/bureau" in text
     assert "--state-root %h/.local/state/bureau" in text
     assert "ReadOnlyPaths=%h/repos/bureau %h/.local/state/bureau" in text
     assert "ReadWritePaths=%h/.local/state/bureau-readonly" in text
     assert "ConditionPathIsDirectory=%h/.local/state/bureau-readonly" in text
     assert "StateDirectory=" not in text
-    assert "RestrictAddressFamilies=AF_UNIX" in text
+    assert "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6" in text.splitlines()
     assert " fetch" not in text
     assert "--root %h/repos/bureau" not in text
     docs = (

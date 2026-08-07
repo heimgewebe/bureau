@@ -4,10 +4,11 @@ Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/bureau-status-
 ConditionPathIsDirectory=%h/repos/bureau
 ConditionPathExists=%h/.local/state/bureau/bureau.sqlite3
 ConditionPathIsDirectory=%h/.local/state/bureau-readonly
+ConditionFileIsExecutable=%h/.local/bin/bureau-status-capsule
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/share/bureau/venv/bin/bureau-status-capsule write --canonical-repo %h/repos/bureau --state-root %h/.local/state/bureau --output %h/.local/state/bureau-readonly/status-capsule.json --freshness-seconds 900 --max-runs 25
+ExecStart=%h/.local/bin/bureau-status-capsule write --canonical-repo %h/repos/bureau --state-root %h/.local/state/bureau --output %h/.local/state/bureau-readonly/status-capsule.json --freshness-seconds 900 --max-runs 25
 Environment=PYTHONUNBUFFERED=1
 TimeoutStartSec=2min
 Nice=5
@@ -19,7 +20,7 @@ ProtectSystem=strict
 ProtectHome=read-only
 ReadOnlyPaths=%h/repos/bureau %h/.local/state/bureau
 ReadWritePaths=%h/.local/state/bureau-readonly
-RestrictAddressFamilies=AF_UNIX
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 LockPersonality=true
 MemoryDenyWriteExecute=true
 RestrictSUIDSGID=true

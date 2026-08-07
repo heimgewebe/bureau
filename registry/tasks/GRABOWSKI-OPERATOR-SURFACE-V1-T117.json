@@ -21,9 +21,14 @@
       "id": "bounded-live-load-profile"
     },
     {
-      "assertion": "Das Live-Profil erzeugt ein unveränderliches commit-, Konfigurations- und Messwert-gebundenes Proof-Artefakt für MCP-Liveness, serialisierte Store-Mutationen, Queue-/Threadnutzung, SQLite-Busy-Verhalten, vermeidbare 502 und watchdogverstärkte Neustarts.",
+      "assertion": "Das Live-Profil erzeugt ein unveränderliches commit-, Konfigurations- und Messwert-gebundenes Proof-Artefakt für MCP-Liveness, serialisierte Store-Mutationen, Queue-/Threadnutzung, SQLite-Busy-Verhalten, vermeidbare 502, Signale der diagnostischen Fehlerdomäne duplicate_or_unknown_response und watchdogverstärkte Neustarts.",
       "evidence_type": "object",
       "id": "live-measurement-proof"
+    },
+    {
+      "assertion": "Im begrenzten Live-Profil gilt für die diagnostische Fehlerdomäne duplicate_or_unknown_response der Grenzwert 0; jeder Treffer stoppt weitere Last gemäß Abbruchvertrag, wird im Proof-Artefakt erhalten und beweist weder eine echte Doppelantwort noch eine bestimmte Transportursache.",
+      "evidence_type": "object",
+      "id": "duplicate-or-unknown-response-live-slo"
     },
     {
       "assertion": "Unterschiede zwischen hermetischem Test, begrenztem Canary und allgemeiner Produktionsaussage werden ausdrücklich ausgewiesen; ein Grenzwertverstoß stoppt weitere Last, erhält Belege und löst keinen stillen Retry aus.",
@@ -81,6 +86,7 @@
       "Code-Merge-Autorität",
       "Belastbarkeit außerhalb des geprüften Live-Profils",
       "Erlaubnis zur Übernahme fremder Effekte",
+      "dass ein duplicate_or_unknown_response-Signal eine echte Doppelantwort oder eine bestimmte Transportursache beweist",
       "zukünftige Runtime-Verfügbarkeit"
     ],
     "review_origin": {

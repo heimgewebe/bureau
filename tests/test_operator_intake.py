@@ -1752,6 +1752,13 @@ def test_publication_writes_receipt_and_is_idempotent(registry_factory, tmp_path
     )
     assert first["status"] == "published"
     assert first["queue_mutated"] is False
+    assert first["task_spec_revision"]["revision"] == 1
+    plan = json.loads(plan_path.read_text())
+    assert first["task_spec_revision"]["spec_sha256"] == plan["task_json_sha256"]
+    stored = store.task_spec(first["task_id"])
+    assert stored is not None
+    assert stored["spec_sha256"] == plan["task_json_sha256"]
+    assert store.replay_projection()["task_specs"]["matches_current"] is True
     assert second["idempotent_replay"] is True
     assert publisher.calls == 1
 
@@ -1958,6 +1965,11 @@ def test_publication_wraps_unknown_publisher_failure_as_ambiguous(registry_facto
     assert caught.value.effect_started is True
     assert caught.value.ambiguity is True
     assert "remote branch head" in caught.value.required_readback
+    plan = json.loads(plan_path.read_text())
+    stored = store.task_spec(plan["task_id"])
+    assert stored is not None
+    assert stored["spec_sha256"] == plan["task_json_sha256"]
+    assert store.replay_projection()["task_specs"]["matches_current"] is True
 
 
 @pytest.mark.parametrize(

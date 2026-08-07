@@ -2171,6 +2171,39 @@ def publish_task_proposal(
         )
         raise error
 
+    # T003: after local authority and lease validation, but before remote GitHub
+    # effects, commit the reviewed TaskSpec to the existing StateStore journal.
+    try:
+        registration = store.register_task_spec_with_legacy_import(
+            registry,
+            plan["task_json"],
+            idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+            expected_revision=None,
+            source="operator-intake-reviewed-proposal",
+        )
+        legacy_import = registration["legacy_task_spec_import"]
+        task_spec_revision = registration["task_spec_revision"]
+    except StateError as exc:
+        raise OperatorIntakeError(
+            "task-spec-state-mutation-failed",
+            f"cannot register reviewed TaskSpec in StateStore: {exc}",
+            retryable=False,
+            effect_started=False,
+            details={"task_id": plan["task_id"]},
+        ) from exc
+    if task_spec_revision["spec_sha256"] != plan["task_json_sha256"]:
+        raise OperatorIntakeError(
+            "task-spec-digest-divergence",
+            "StateStore TaskSpec digest differs from reviewed proposal digest",
+            effect_started=True,
+            required_readback=["StateStore TaskSpec revision"],
+            details={
+                "task_id": plan["task_id"],
+                "state_store_sha256": task_spec_revision["spec_sha256"],
+                "proposal_sha256": plan["task_json_sha256"],
+            },
+        )
+
     def assert_plan_unchanged() -> None:
         current_bytes, _ = _read_bounded_regular_file(path, field="plan")
         observed = hashlib.sha256(current_bytes).hexdigest()
@@ -2292,6 +2325,8 @@ def publish_task_proposal(
         "publishing_task_sha256": plan["publishing_task_sha256"],
         "lease_binding": normalized_leases,
         "lease_release": lease_release,
+        "task_spec_revision": task_spec_revision,
+        "legacy_task_spec_import": legacy_import,
         "publication": published,
         "created_at": legacy.utc_now(),
         "queue_mutated": False,

@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "id": "canonical-pr-binding",
+      "assertion": "Der PR-Text von heimgewebe/grabowski#677 bindet exakt Bureau-Task: OPERATOR-INTEGRATION-LOOP-V1-FB-PRBINDING-C1245DE7F0; ein frischer Bureau-Frontier-Readback klassifiziert den offenen PR danach als kanonisch taskgebunden und nennt keine zweite Task-ID."
+    },
+    {
+      "id": "exact-source-identity",
+      "assertion": "Vor Review, Merge oder Deployment werden PR #677, Base 311fcb3f3a9a77200a7581705b71d5bf302d390d, Head c1245de7f0a253cc6ce9d779e4009f130962c6d1 und der Acht-Dateien-Diff frisch gelesen; jede Head- oder Scopeabweichung stoppt den Closeout."
+    },
+    {
+      "id": "transport-safety",
+      "assertion": "Die Änderung macht ausschließlich transport-roundtrip im MCP-Adapter unabhängig vom clientseitigen allow_mutation-Flag, ohne Mutationsautorität auf andere Grips zu erweitern; Connector-Schema-Sentinels erfassen grip_run einschließlich allow_mutation."
+    },
+    {
+      "id": "tests-review-ci",
+      "assertion": "Fokussierte Transport-, Connector-, Snapshot- und Control-Plane-Tests sowie die vollständigen relevanten Pflichtgates sind auf dem exakten Head grün; Self-Review bindet den exakten Diff und offene materielle Befunde sind null."
+    },
+    {
+      "id": "exact-head-merge",
+      "assertion": "PR #677 wird nur bei unverändertem Head, bestätigter Mergebarkeit und grünen Pflichtchecks mit Expected-Head-Bindung gemergt; fremde Leases, Worktrees und Prozesse bleiben unverändert."
+    },
+    {
+      "id": "deploy-live-proof",
+      "assertion": "Der resultierende Grabowski-Merge-Commit wird über den kanonischen transaktionalen Pfad deployt; Runtime-Identität, Integrität und veröffentlichter Connector-Vertrag stimmen commitgenau überein, und ein Live-Repro zeigt transport-roundtrip ohne clientseitiges allow_mutation=true bei unverändert fail-closed bleibenden anderen mutierenden Grips."
+    },
+    {
+      "id": "closeout",
+      "assertion": "Bureau-Evidence bindet Task, PR, finalen Head, Merge-Commit, CI, Review, Runtime-Release und Live-Repro; eigene Ressourcen werden erst danach regulär freigegeben."
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur den bereits implementierten PR #677 revisionsgebunden taskbinden und closeouten. Keine Erweiterung der Mutationsautorität, keine Gateabschwächung und keine Übernahme fremder Zustände."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/src/grabowski_connector_contract.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/tests/test_blue_green_cutover.py",
+      "path:/home/alex/repos/grabowski/tests/test_client_snapshot.py",
+      "path:/home/alex/repos/grabowski/tests/test_connector_contract.py",
+      "path:/home/alex/repos/grabowski/tests/test_control_plane.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_gate_integration.py",
+      "component:github-pr-677-binding-merge-closeout",
+      "component:grabowski-runtime-deployment"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bereits implementierten, aktuell ungebundenen Grabowski-PR #677 kanonisch an Bureau binden und ausschließlich auf dem exakten Head c1245de7f0a253cc6ce9d779e4009f130962c6d1 revisionsgebunden closeouten: Transport-Sicherheitsgrenze prüfen, Pflichtgates und Self-Review binden, kontrolliert mergen, den Merge-Commit deployen und denselben Live-Handshake ohne clientseitiges allow_mutation=true reproduzieren, ohne andere Grips oder fremde Arbeitszustände zu öffnen.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-PRBINDING-C1245DE7F0",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "registered_at": "2026-08-07",
+    "source": "Live Bureau Frontier und GitHub PR #677",
+    "source_pr": {
+      "repository": "heimgewebe/grabowski",
+      "number": 677,
+      "head": "c1245de7f0a253cc6ce9d779e4009f130962c6d1",
+      "base": "311fcb3f3a9a77200a7581705b71d5bf302d390d",
+      "observed_state": "OPEN",
+      "observed_title": "fix(transport): harden grip handshake against connector drift"
+    },
+    "structural_finding": {
+      "kind": "missing-canonical-pr-binding",
+      "frontier_effect": "open PR #677 erzeugt breite repo.grabowski Guards, weil task_id und kanonische Bindung fehlen",
+      "does_not_establish": [
+        "Mergefreigabe",
+        "Deploymentfreigabe",
+        "Taskabschluss vor Live-Repro",
+        "Erlaubnis zur Änderung fremder Dirty-States oder Leases"
+      ]
+    },
+    "deduplication": {
+      "exact_task_id_collision_checked": true,
+      "exact_pr_number_search_checked": true,
+      "existing_exact_binding_found": false
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 905
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "github",
+    "git",
+    "python",
+    "testing",
+    "runtime-observability",
+    "transport"
+  ],
+  "rollback": {
+    "strategy": "Bei Scope-, Head-, CI- oder Live-Repro-Abweichung PR #677 offen lassen; die Taskregistrierung bleibt als wahrheitsgemäßer Follow-up erhalten und darf ohne neuen Primärbeleg nicht verifiziert werden."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Grabowski PR #677 kanonisch binden und closeouten"
+}

@@ -1,0 +1,106 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine deterministische Browser-Prüfmatrix deckt den Knotenübergang bei Zoom 12, 14 und 16 sowie Device-Pixel-Ratios 1, 2 und 3 ab; nicht ausführbare Kombinationen werden ausdrücklich als unbelegt ausgewiesen und nicht still übersprungen.",
+      "evidence_type": "object",
+      "id": "dpr-zoom-matrix",
+      "verifier": "commit-bound browser matrix report with explicit covered and unsupported cells"
+    },
+    {
+      "assertion": "Chromium sowie, soweit die CI-Umgebung sie unterstützt, WebKit und Firefox prüfen denselben Canvas↔DOM-Knotenübergang; Unterschiede durch Anti-Aliasing oder Compositor-Rasterung werden mit einer vorab dokumentierten Toleranz bewertet.",
+      "evidence_type": "object",
+      "id": "cross-engine-proof",
+      "verifier": "Playwright/browser evidence with browser engine, DPR, zoom and raster metrics"
+    },
+    {
+      "assertion": "Die Prüfung schlägt fehl, wenn am Übergang Knüpfungsfaden → Knotenzentrum → X ein sichtbarer Dicken- oder Positionssprung oder eine Zentrumslücke außerhalb der dokumentierten Rastertoleranz entsteht.",
+      "evidence_type": "boolean",
+      "id": "pixel-continuity",
+      "verifier": "pixel/raster junction assertion and close-up evidence"
+    },
+    {
+      "assertion": "Der echte MapLibre-Layer edges-knotting-layer liefert in jeder ausgeführten Probe eine endliche numerische line-width; der DOM-X-Pfad bleibt an KNOTTING_THREAD_WIDTH_PX gebunden, ohne zweite Magic-Width oder CSS-Fallback.",
+      "evidence_type": "boolean",
+      "id": "real-layer-fail-closed",
+      "verifier": "runtime paint-property and DOM computed-style assertions"
+    },
+    {
+      "assertion": "Die bestehenden Knotenstich-Unit-/E2E-Verträge sowie die verpflichtenden Web-Gates bleiben grün; eine reine Messung ohne Codeänderung darf als Abschluss gelten, wenn keine relevante Rasterabweichung belegt wird.",
+      "evidence_type": "object",
+      "id": "regression-safety",
+      "verifier": "exact-head unit, Playwright and required CI gate readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 7. August 2026 ausdrücklich @grabowski umsetzen angeordnet. Zulässig sind nur revisionsgebundene Test-/Messänderungen für den Knotenstich; KNOTTING_THREAD_WIDTH_PX, der fail-closed CSS-Vertrag und die fachliche Faden-/Knoten-Semantik werden nur bei gemessenem Defekt geändert.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die nach PR #1713 belegte semantische Kontinuität zwischen MapLibre-Knüpfungsfaden und DOM-X zusätzlich auf der tatsächlich gerasterten Pixeloberfläche über repräsentative Zoomstufen, Device-Pixel-Ratios und Browser-Engines absichern, ohne den bestehenden Stichvertrag oder seine Single Sources of Truth aufzuweichen.",
+  "id": "WELTGEWEBE-OS-V1-T074",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "current_fact": "PR #1713 proves shared authored width and terminal colour, removes the crossing blob, and checks MapLibre↔DOM width continuity at zoom 12/14/16. Browser computed style showed expected subpixel rasterization around 4.14062px for an authored 4.15px width, but cross-DPR and cross-engine pixel equivalence is not yet established.",
+    "does_not_establish": [
+      "that PR #1713 has a visible raster defect",
+      "permission to change KNOTTING_THREAD_WIDTH_PX without measurement",
+      "permission to add a CSS width fallback",
+      "permission to replace the DOM interaction carrier with a pure MapLibre implementation without separate architectural review"
+    ],
+    "independently_executable": true,
+    "source": "Follow-up from exact-head review and merge of heimgewebe/weltgewebe PR #1713 on 2026-08-07",
+    "source_head": "3038234c7028dedb8d3efc9d54d18bbda7c762f6",
+    "source_merge_commit": "33cd7ca796fd6ff08bf12522fdfd43b4f7ea0518",
+    "source_pull_request": "heimgewebe/weltgewebe#1713",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-224d3a4ab6ea8484862f1dfa",
+      "event_id": 3063,
+      "event_created_at": "2026-08-07T12:17:13.477063Z",
+      "request_sha256": "e28d56c3c5d27271f45adcf72d9d391216f75307d8181b81a6b74eb1d21411f1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github_pr",
+        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1713",
+        "observed_at": "2026-08-07T12:17:13.435700Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 46
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "playwright",
+    "browser-profiling",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Knotenstich pixelgenau über DPR und Browser absichern"
+}

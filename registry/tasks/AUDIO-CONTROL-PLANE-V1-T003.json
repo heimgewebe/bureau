@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T003",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Deklarativen Profilmanager repositoryseitig implementieren",
-  "state": "planned",
+  "state": "verified",
   "goal": "Den kanonischen Profilkatalog und Doctor/Plan/Diff/Apply/Readback/Rollback-Verträge ohne produktive Anwendung implementieren.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T002"
@@ -93,6 +93,47 @@
     "does_not_establish": [
       "Live-Apply-Autorität",
       "Profilqualität ohne T007-Laborbeleg"
-    ]
+    ],
+    "verification": {
+      "schema_version": 1,
+      "source": "repository_scope_reconciliation",
+      "source_ref": "github-pr:heimgewebe/audio#58@09699260888759d8e451fb32d90b47248429c1f2:b6ad3ea306985f4c1bde7cbee244842f784abea3",
+      "verified_at": "2026-08-07T06:39:25.795640Z",
+      "outcome": "repository_scope_succeeded",
+      "task_preimage_sha256": "c18b11b973d05afa03d3a5698e08648d7b4eb07defd153af3010bb5f9f224388",
+      "evidence": {
+        "repository": "heimgewebe/audio",
+        "pull_request": 58,
+        "reviewed_head": "09699260888759d8e451fb32d90b47248429c1f2",
+        "merge_commit": "b6ad3ea306985f4c1bde7cbee244842f784abea3",
+        "github_ci_run": 31148325340,
+        "github_ci_check": "safety",
+        "github_ci_state": "SUCCESS",
+        "focused_test_count": 14,
+        "focused_subtest_count": 222,
+        "full_test_count": 667,
+        "full_subtest_count": 550,
+        "tested_tree_sha": "62451dd8a119fa7aad5eae2e3d2840dff6acf7ae",
+        "merged_tree_sha": "62451dd8a119fa7aad5eae2e3d2840dff6acf7ae",
+        "validation": [
+          "py_compile PASS",
+          "JSON contract parse PASS",
+          "git diff --check PASS",
+          "no live-effect command surface found",
+          "exact-head self-review PASS",
+          "all 100 directed profile-pair cancellation paths covered"
+        ],
+        "scope": "repository-profile-manager-and-simulation-only",
+        "host_mutation": false,
+        "live_boundary_task": "AUDIO-CONTROL-PLANE-V1-T007"
+      },
+      "does_not_establish": [
+        "Abschluss von AUDIO-CONTROL-PLANE-V1-T007",
+        "physische Geräte- oder Pegelbereitschaft",
+        "Profilaktivierung oder sonstige Laufzeitwirkung"
+      ],
+      "task_sha256": "7f2ee0bd2e93d2f50d97dca6d1aef9759589f0fb6f8900be19fe583f55d89e45",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d"
+    }
   }
 }

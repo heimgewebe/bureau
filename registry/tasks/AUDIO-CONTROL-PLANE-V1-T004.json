@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T004",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Aufnahme-Sitzungsmanager repositoryseitig implementieren",
-  "state": "planned",
+  "state": "verified",
   "goal": "Stimme, Roland-Audio und Produktion mit eindeutiger Prozess- und Dateisemantik implementieren, ohne reale Aufnahme zu starten.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T003"
@@ -213,12 +213,12 @@
       }
     ],
     "remaining_scope": [
-      "keine weitere T004-Repositoryimplementierung; formale Terminalisierung erst nach Abschluss der kanonischen Abhängigkeit AUDIO-CONTROL-PLANE-V1-T003",
-      "physische, klangliche und Liveabnahme ausschließlich in AUDIO-CONTROL-PLANE-V1-T007"
+      "T004-Repositoryscope vollständig und nach verifiziertem AUDIO-CONTROL-PLANE-V1-T003 formal terminalisiert.",
+      "Physische, klangliche und Liveabnahme ausschließlich in AUDIO-CONTROL-PLANE-V1-T007."
     ],
     "acceptance_assessment": {
-      "status": "repository-scope-satisfied-dependency-open",
-      "assessed_at": "2026-08-01T08:57:15Z",
+      "status": "repository-scope-satisfied-dependency-verified",
+      "assessed_at": "2026-08-07T06:39:25.795640Z",
       "reviewed_audio_heads": [
         "33b278616d93f16045453d581e01ab5a16a123ba",
         "5f661ba498741653a7f216b5ba25910e805d660c",
@@ -233,12 +233,60 @@
         "negative-tests",
         "no-live-capture"
       ],
-      "formal_terminalization_blocker": {
+      "live_boundary_task": "AUDIO-CONTROL-PLANE-V1-T007",
+      "dependency_closeout": {
         "task_id": "AUDIO-CONTROL-PLANE-V1-T003",
-        "observed_state": "planned",
-        "reason": "T004 canonically depends on T003 and must not be terminalized ahead of its unfinished dependency."
+        "state": "verified",
+        "evidence_source": "heimgewebe/audio#58"
+      }
+    },
+    "verification": {
+      "schema_version": 1,
+      "source": "repository_scope_reconciliation",
+      "source_ref": "github-prs:heimgewebe/audio#32,#33,#34+grabowski-task:8aff356788a543f89131c0a6",
+      "verified_at": "2026-08-07T06:39:25.795640Z",
+      "outcome": "repository_scope_succeeded",
+      "task_preimage_sha256": "36ebe7e3fe3bd45fbc40a0febc4df8240f10bcc5714bdeecc9e73c391fe93e4b",
+      "evidence": {
+        "repository": "heimgewebe/audio",
+        "implementation_pull_requests": [
+          32,
+          33,
+          34
+        ],
+        "reviewed_heads": [
+          "33b278616d93f16045453d581e01ab5a16a123ba",
+          "5f661ba498741653a7f216b5ba25910e805d660c",
+          "54bd39b95651c0cbd34833a656f28d03a41a0c2f"
+        ],
+        "merge_commits": [
+          "49710c62c017019ba3778d0599e511e6b8bc61a7",
+          "cd50529157ec4874c4c95dd570bedf24f0584d99",
+          "2fa73388d3641bcc414fe3b7250db73f18825291"
+        ],
+        "fresh_audit_task": "8aff356788a543f89131c0a6",
+        "focused_test_count": 112,
+        "focused_subtest_count": 230,
+        "full_test_count": 667,
+        "full_subtest_count": 550,
+        "validation": [
+          "compileall PASS",
+          "all seven T004 acceptance ids already satisfied in task-bound assessment",
+          "no real capture started"
+        ],
+        "dependency": "AUDIO-CONTROL-PLANE-V1-T003",
+        "dependency_state": "verified",
+        "scope": "repository-recording-session-contracts-only",
+        "host_mutation": false,
+        "live_boundary_task": "AUDIO-CONTROL-PLANE-V1-T007"
       },
-      "live_boundary_task": "AUDIO-CONTROL-PLANE-V1-T007"
+      "does_not_establish": [
+        "Abschluss von AUDIO-CONTROL-PLANE-V1-T007",
+        "physische Aufnahmequalität",
+        "Live PipeWire-, Geräte- oder Aufnahmefreigabe"
+      ],
+      "task_sha256": "da7128f9c2cedd3dfe5422349412fa8a806c503f997fddf2b81eea92473030d9",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d"
     }
   }
 }

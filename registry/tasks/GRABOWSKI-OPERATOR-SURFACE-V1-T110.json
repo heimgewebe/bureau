@@ -6,9 +6,14 @@
       "id": "reproducible-load-harness"
     },
     {
-      "assertion": "Der Nachweis definiert und prüft maximale MCP-Liveness-Latenz, serialisierte Store-Mutationen, begrenzte Queue-/Threadnutzung, null vermeidbare 502 und null watchdogverstärkte Neustarts im freigegebenen Lastprofil.",
+      "assertion": "Der Nachweis definiert und prüft maximale MCP-Liveness-Latenz, serialisierte Store-Mutationen, begrenzte Queue-/Threadnutzung, null vermeidbare 502, null diagnostische Signale der Fehlerdomäne duplicate_or_unknown_response und null watchdogverstärkte Neustarts im freigegebenen Lastprofil.",
       "evidence_type": "object",
       "id": "explicit-slo-thresholds"
+    },
+    {
+      "assertion": "Für die diagnostische Fehlerdomäne duplicate_or_unknown_response gilt im freigegebenen Lastprofil der Grenzwert 0; jeder Treffer lässt den Nachweis fehlschlagen und wird revisions- und messwertgebunden erhalten, ohne daraus eine echte Doppelantwort oder eine bestimmte Transportursache abzuleiten.",
+      "evidence_type": "object",
+      "id": "duplicate-or-unknown-response-slo"
     },
     {
       "assertion": "Negativtests decken Guard-Entzug während Lock-Wartezeit, dauerhaften Hänger, Busy-Store, Auditfehler, Tunnel-Upstream-Ausfall und unbekannten Mutationsausgang ab; alle Effekte bleiben fail-closed und readbackgebunden.",
@@ -50,7 +55,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Auf dem durch T113 und T115 deployment- und liveverifizierten Stand einen reproduzierbaren Mehrclient-Last- und Failure-Injection-Nachweis für Task-Reconcile, SQLite-Busy-Verhalten, MCP-Ansprechbarkeit, Tunnel-Upstream-Readiness und Watchdog-Neustarts etablieren, mit expliziten Latenz-, Serialisierungs- und No-502-Akzeptanzgrenzen.",
+  "goal": "Auf dem durch T113 und T115 deployment- und liveverifizierten Stand einen reproduzierbaren Mehrclient-Last- und Failure-Injection-Nachweis für Task-Reconcile, SQLite-Busy-Verhalten, MCP-Ansprechbarkeit, Tunnel-Upstream-Readiness und Watchdog-Neustarts etablieren, mit expliziten Latenz-, Serialisierungs-, No-502- und No-duplicate_or_unknown_response-Akzeptanzgrenzen.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T110",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
@@ -58,6 +63,7 @@
       "Belastbarkeit außerhalb des geprüften Profils",
       "Erlaubnis zu ungebremster Produktionslast",
       "Abwesenheit aller zukünftigen Transportfehler",
+      "dass ein duplicate_or_unknown_response-Signal eine echte Doppelantwort oder eine bestimmte Transportursache beweist",
       "Merge- oder Deployment-Autorität",
       "einen Produktiv-Canary vor GRABOWSKI-OPERATOR-SURFACE-V1-T117"
     ],

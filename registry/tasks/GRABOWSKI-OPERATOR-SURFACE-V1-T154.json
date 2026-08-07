@@ -1,0 +1,107 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #667 trägt exakt die kanonische Bureau-Task-Bindung GRABOWSKI-OPERATOR-SURFACE-V1-T154, und der Live-Binding-Readback meldet für den offenen PR keine missing-task- oder open-pr-task-binding-Verletzung mehr.",
+      "id": "bureau-binding"
+    },
+    {
+      "assertion": "Auf dem exakten finalen PR-Head ist make context-refresh idempotent beziehungsweise tests.test_operator_context grün; docs/generated/operator-context.v1.json enthält den aktuellen Hash von src/grabowski_agent_workspace.py.",
+      "id": "generated-context-current"
+    },
+    {
+      "assertion": "Tests belegen getrennte Zustände für archive_eligible, archived_waiting_for_cleanup und archived_ready_for_cleanup; physischer Checkout-Cleanup bleibt während aktiver Retention blockiert und verlangt danach einen frischen Cleanup-Plan.",
+      "id": "retention-state-contract"
+    },
+    {
+      "assertion": "Alle für PR #667 verpflichtenden GitHub-Checks sind auf dem exakten zu mergenden Head grün und der finale Diff ist revisionsgebunden self-reviewed.",
+      "id": "full-validation"
+    },
+    {
+      "assertion": "PR #667 wird nur mit dem exakt geprüften Head gemergt; der Merge-Readback bestätigt diesen Head als Bestandteil von main.",
+      "id": "exact-merge"
+    },
+    {
+      "assertion": "Nach dem Merge enthält main die Cleanup-Lifecycle-Änderung und der frische Bureau-/Grabowski-Readback wird nicht mehr durch PR #667 blockiert; vorhandene Retention-geschützte Checkouts bleiben erhalten, solange kein frischer physischer Cleanup-Plan sie explizit freigibt.",
+      "id": "post-merge-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bestehenden PR #667 auf seinem exakten Head vervollständigen, taskbinden, validieren und mergen. Keine fremden Leases oder Dirty-States übernehmen und keine Retention-geschützten Checkouts vor Ablauf beziehungsweise ohne frischen Cleanup-Plan löschen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_agent_workspace.py",
+      "path:/home/alex/repos/grabowski/tests/test_agent_workspace.py",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bereits implementierten Grabowski-PR #667 revisionsgebunden in den Bureau-Lifecycle aufnehmen und vollständig abschließen: den generierten Operator-Kontext auf dem exakten PR-Head aktuell halten, die Trennung von Archivierungsbereitschaft, aktiver Retention und physischer Cleanup-Bereitschaft validieren, den PR korrekt an diese Bureau-Aufgabe binden, alle Pflichtgates grün bekommen, exakt diesen geprüften Head mergen und den resultierenden Main-/Runtimezustand nachlesen. Retention-geschützte Checkouts dürfen dabei nicht vorzeitig gelöscht werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T154",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to delete retention-protected checkouts",
+      "permission to overwrite foreign work",
+      "automatic merge readiness before exact-head checks are green"
+    ],
+    "observed_pr_head": "3c61c9d2d459bccb7e5981790f69851e81a4f730",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e720275cbff261afa03c117f",
+      "event_id": 2955,
+      "event_created_at": "2026-08-07T04:23:14.828548Z",
+      "request_sha256": "39b8f067e2df09d091eadead74cf77bf220c0db104ae2c21fa39546e0a296cd8",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github_pr",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/667",
+        "observed_at": "2026-08-07T04:23:14.784317Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_issue": "heimgewebe/bureau#1637",
+    "source_pr": "heimgewebe/grabowski#667"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei einer Regression PR #667 nicht mergen beziehungsweise den exakten Merge per neuem Revert-PR zurücknehmen. Retention-geschützte Checkouts und Recovery-Evidenz nicht löschen; fremde Leases, Dirty-States und Prozesse unverändert lassen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "PR #667 cleanup-retention-lifecycle taskgebunden abschließen"
+}

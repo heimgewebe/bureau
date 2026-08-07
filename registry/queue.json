@@ -57,7 +57,6 @@
       "GRABOWSKI-OPERATOR-SURFACE-V1-T120"
     ],
     "next": [
-      "BUREAU-CONTROL-PLANE-V3-T002",
       "WELTGEWEBE-OS-V1-T051",
       "WELTGEWEBE-OS-V1-T055",
       "WELTGEWEBE-OS-V1-T057",
@@ -78,7 +77,8 @@
     ],
     "now": [
       "GRABOWSKI-OPERATOR-SURFACE-V1-T148",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T153"
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T153",
+      "BUREAU-CONTROL-PLANE-V3-T002"
     ]
   },
   "queue_policy": "skip-blocked",

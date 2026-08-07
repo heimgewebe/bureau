@@ -546,6 +546,31 @@ def test_agent_frontier_rejects_stale_revision_bound_supply_report(tmp_path: Pat
     assert frontier_report["next_action"].startswith("regenerate and verify")
 
 
+def test_agent_frontier_validates_runtime_snapshot_inventory_binding(tmp_path: Path) -> None:
+    root = copy_registry(Path(__file__).parents[1], tmp_path / "snapshot")
+    queue_path = root / "registry/queue.json"
+    inventory = {
+        "schema_version": 1,
+        "kind": "bureau_registry_snapshot",
+        "source_commit": HEAD,
+        "tree_sha256": "d" * 64,
+        "paths": [],
+    }
+    (root / ".bureau-runtime-snapshot.json").write_text(json.dumps(inventory), encoding="utf-8")
+    supply = report(
+        tmp_path, [], mutation_authority=False, registry_head=HEAD,
+        queue_sha256=file_sha256(queue_path), registry_root=root, repository=root,
+    )
+    supply_path = tmp_path / "supply-snapshot.json"
+    supply_path.write_text(json.dumps(supply), encoding="utf-8")
+    frontier_report = build_frontier_report(
+        empty_source_state(), registry_root=root, task_supply_report_path=supply_path, generated_at=NOW
+    )
+    summary = frontier_report["scanner_summary"]["task_supply"]
+    assert summary["available"] is True
+    assert summary["status"] == "blocked"
+
+
 def test_real_frontier_candidate_ranks_ahead_of_supply_fallback(tmp_path: Path) -> None:
     supply = report(tmp_path, [], mutation_authority=True)
     supply_path = tmp_path / "supply.json"

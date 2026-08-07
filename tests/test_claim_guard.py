@@ -2135,3 +2135,136 @@ def test_open_pr_merge_adoption_claim_commit_rejects_head_drift(
 
     with store.connect() as connection:
         assert store.active_runs(connection) == []
+
+
+def _redirect_registry(registry_factory, monkeypatch, resolver):
+    """Registry with repo.lenskit as a GitHub redirect onto repo.repoground."""
+    root = registry_factory(1, mode="write")
+    for name, slug in (("lenskit", "heimgewebe/lenskit"), ("repoground", "heimgewebe/repoground")):
+        (root / f"registry/resources/{name}.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "id": f"repo.{name}",
+                    "type": "git-repository",
+                    "parent": "root",
+                    "path": str(root / name),
+                    "github_slug": slug,
+                }
+            ),
+            encoding="utf-8",
+        )
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    monkeypatch.setattr(bureau_v2, "_github_repository_for_path", lambda _path: None)
+    monkeypatch.setattr(
+        bureau_v2.github_repository, "github_canonical_slug", resolver
+    )
+    return root
+
+
+def _redirected_pull_requests(repository):
+    """Both slugs resolve server-side to the same canonical repository."""
+    if repository not in {"heimgewebe/lenskit", "heimgewebe/repoground"}:
+        return []
+    return [
+        {
+            "number": 1130,
+            "title": "repoground change",
+            "headRefName": "feat/repoground",
+            "body": "Bureau-Task: BUR-TEST-001-T001",
+            "url": "https://github.com/heimgewebe/repoground/pull/1130",
+        }
+    ]
+
+
+def test_github_redirect_slug_does_not_create_a_second_pr_reservation(
+    registry_factory, monkeypatch
+):
+    root = _redirect_registry(
+        registry_factory,
+        monkeypatch,
+        lambda slug: "heimgewebe/repoground",
+    )
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", _redirected_pull_requests)
+
+    registry = Registry.load(root)
+    reservations = bureau_v2.open_pull_request_reservations(registry)
+
+    pr_reservations = [
+        item
+        for item in reservations
+        if isinstance(item, bureau_v2.OpenPullRequestReservation) and item.number == 1130
+    ]
+    assert len(pr_reservations) == 1
+    reservation = pr_reservations[0]
+    assert reservation.repository == "heimgewebe/repoground"
+    assert reservation.resource == "repo.repoground"
+
+    rendered = json.dumps([item.__dict__ for item in reservations], default=str)
+    assert "heimgewebe/lenskit" not in rendered
+    assert not any(
+        isinstance(item, bureau_v2.OpenPullRequestReservation) and item.observation_failed
+        for item in reservations
+    )
+
+
+def test_github_redirect_provider_failure_blocks_instead_of_guessing(
+    registry_factory, monkeypatch
+):
+    def failing(slug):
+        raise bureau_v2.github_repository.RepositoryCanonicalIdentityError(
+            "canonical-identity-unavailable", f"gh repo view failed for {slug}"
+        )
+
+    root = _redirect_registry(registry_factory, monkeypatch, failing)
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", _redirected_pull_requests)
+
+    registry = Registry.load(root)
+    reservations = bureau_v2.open_pull_request_reservations(registry)
+
+    blocked = {
+        item.resource
+        for item in reservations
+        if isinstance(item, bureau_v2.OpenPullRequestReservation) and item.observation_failed
+    }
+    assert blocked == {"repo.lenskit", "repo.repoground"}
+    assert not any(
+        isinstance(item, bureau_v2.OpenPullRequestReservation) and item.number == 1130
+        for item in reservations
+    )
+
+
+def test_pull_requests_contradicting_the_observed_identity_block(registry_factory, monkeypatch):
+    root = _redirect_registry(
+        registry_factory,
+        monkeypatch,
+        lambda slug: "heimgewebe/repoground",
+    )
+
+    def contradictory(repository):
+        if repository != "heimgewebe/repoground":
+            return []
+        return [
+            {
+                "number": 1130,
+                "title": "contradictory",
+                "headRefName": "feat/x",
+                "body": "Bureau-Task: BUR-TEST-001-T001",
+                "url": "https://github.com/heimgewebe/somewhere-else/pull/1130",
+            }
+        ]
+
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", contradictory)
+
+    registry = Registry.load(root)
+    reservations = bureau_v2.open_pull_request_reservations(registry)
+
+    failures = [
+        item
+        for item in reservations
+        if isinstance(item, bureau_v2.OpenPullRequestReservation)
+        and item.observation_failed
+        and item.resource == "repo.repoground"
+    ]
+    assert len(failures) == 1
+    assert "conflicting" in failures[0].diagnostic

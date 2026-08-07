@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Bureau-Task-IDs bei parallelen Registry-PRs kollisionssicher vergeben",
   "goal": "Die dauerhafte Bureau-Task-Registrierung gegen parallele ID-Races härten: neue Task-IDs und Registry-Pfade müssen gegen den aktuellen kanonischen main sowie bereits offene PR-Reservierungen geprüft werden, bei veralteter Basis fail-closed neu bewertet werden und eine nachvollziehbare Reservierungs-/Entscheidungsevidenz erzeugen. Dieser Vertrag ergänzt, aber ersetzt nicht T005s kollisionssicheren Live-Task-Pickup und dessen Runtime-Claims.",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 9
@@ -82,6 +82,69 @@
         "implementation completion",
         "task readiness",
         "permission to alter terminal history"
+      ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "33fc22d205edebded261c86560b0e62972755a50210b7a57755b1f51d3c7ed4a",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "task_file_sha256_before_closeout": "6c1144c7672ad4d6ef355cb61a12b767aa3bea2862837152d87ded0dd11c4db8",
+      "frontier_task_sha256": "33fc22d205edebded261c86560b0e62972755a50210b7a57755b1f51d3c7ed4a",
+      "source": "merged_pr_and_ci_closeout",
+      "closeout_mode": "direct-user-authorized-fallback-post-merge-reconciliation",
+      "verified_at": "2026-08-07T20:42:00Z",
+      "canonical_bureau_run": null,
+      "implementation": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 878,
+        "head_commit": "b05eb5caa1a21bc461a3d1f2d1c7b911d261d49d",
+        "merge_commit": "8738c06f1fdfe4a117fc633f6961ec5e616a3fb8",
+        "merged_at": "2026-07-22T20:21:25Z",
+        "current_main_readback": "739873c5f2f025d986744635c5135d98c18a1afd"
+      },
+      "validation": {
+        "focused_current_main": "18 passed; Grabowski task 77024a8a39b8470ebbf8bc4f; lifecycle e84a1e69ee25abfca4556c84b6afa31c74dd209775171b2f5033f4ea39ae2aa8",
+        "bureau_check": "valid=true; StateStore integrity=ok; Grabowski task 39b782608ad84b37bca7c982; lifecycle b684e19e05424e74984b10f5ad0ff9134152b35124212ad3dcd68b032235e00e",
+        "implementation_head_ci": {
+          "CodeQL": "success",
+          "validate (3.10)": "success",
+          "validate (3.12)": "success",
+          "Analyze (actions)": "success",
+          "Analyze (python)": "success"
+        },
+        "current_merge_gate": {
+          "ruleset_id": 20228857,
+          "enforcement": "active",
+          "strict": true,
+          "required": [
+            "validate (3.10)",
+            "validate (3.12)",
+            "registry-registration-preflight/freshness"
+          ],
+          "bypass_actors": []
+        }
+      },
+      "acceptance_evidence": {
+        "canonical-and-open-pr-preflight": "Current focused tests cover canonical collisions, open-PR reservations, exact revisions and paginated GitHub observation.",
+        "stale-base-fail-closed": "Current focused tests cover stale base and base movement during preflight.",
+        "semantic-dedup-boundary": "Current focused tests keep semantic duplicate hints advisory.",
+        "concurrency-regression": "Current focused tests block the second publisher once an open PR reserves the same task path.",
+        "reservation-receipt": "Current focused tests cover deterministic decision_sha256 receipts, JSON output and blocked exit codes.",
+        "merge-integration": "Active main ruleset 20228857 strictly requires registry-registration-preflight/freshness plus both validate jobs and has no bypass actors.",
+        "exact-review": "PR #878 merged exact head b05eb5c... with five successful head checks; current main passes 18 focused tests and Bureau validation."
+      },
+      "execution_reconciliation": {
+        "canonical_frontier_result": "zero_atomically_claimable_tasks",
+        "operator_fallback_selected_task": "OPERATOR-INTEGRATION-LOOP-V1-T009",
+        "fallback_authority": "direct user authorization in this conversation",
+        "retroactive_claim_created": false,
+        "bureau_run_created": false
+      },
+      "does_not_establish": [
+        "retroactive Bureau claim or run existence",
+        "test sufficiency beyond recorded focused tests, validator and CI",
+        "future correctness after later repository changes",
+        "deployment of this TaskSpec closeout before runtime refresh"
       ]
     }
   },

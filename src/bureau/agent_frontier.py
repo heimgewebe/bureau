@@ -20,6 +20,7 @@ from .cycle_contract import (
 from .cycle_contract import (
     SCHEMA_VERSION as CYCLE_SCHEMA_VERSION,
 )
+from .task_supply import SupplyError, _git_head, file_sha256
 
 AGENT_FRONTIER_SCHEMA_VERSION = 1
 DEFAULT_FRONTIER_LIMIT = 8
@@ -330,7 +331,9 @@ def load_optional_summary(path: Path | None) -> dict[str, Any]:
     return summary
 
 
-def load_task_supply_summary(path: Path | None) -> dict[str, Any]:
+def load_task_supply_summary(
+    path: Path | None, *, registry_root: Path | None = None
+) -> dict[str, Any]:
     if path is None:
         return {"available": False}
     if not path.is_file():
@@ -360,6 +363,39 @@ def load_task_supply_summary(path: Path | None) -> dict[str, Any]:
             "claimed_report_sha256": claimed_digest,
             "observed_report_sha256": observed_digest,
         }
+    if registry_root is not None:
+        registry = value.get("registry")
+        if not isinstance(registry, dict):
+            return {
+                "available": False,
+                "path": str(path),
+                "invalid": True,
+                "reason": "registry-binding-missing",
+            }
+        try:
+            current_head = _git_head(registry_root)
+            current_queue_sha256 = file_sha256(registry_root / "registry/queue.json")
+        except (OSError, SupplyError):
+            return {
+                "available": False,
+                "path": str(path),
+                "invalid": True,
+                "reason": "registry-binding-unverifiable",
+            }
+        report_head = registry.get("head")
+        report_queue_sha256 = registry.get("queue_sha256")
+        if report_head != current_head or report_queue_sha256 != current_queue_sha256:
+            return {
+                "available": False,
+                "path": str(path),
+                "invalid": True,
+                "stale": True,
+                "reason": "registry-binding-stale",
+                "report_registry_head": report_head,
+                "current_registry_head": current_head,
+                "report_queue_sha256": report_queue_sha256,
+                "current_queue_sha256": current_queue_sha256,
+            }
     metrics = value.get("metrics")
     compact_metrics = {}
     if isinstance(metrics, dict):
@@ -531,7 +567,9 @@ def build_frontier_report(
     kinds = [item.get("candidate_kind") for item in assessments]
     statuses = [item.get("status") for item in assessments]
     scanner_summary = load_optional_summary(scanner_latest_path)
-    supply_summary = load_task_supply_summary(task_supply_report_path)
+    supply_summary = load_task_supply_summary(
+        task_supply_report_path, registry_root=registry_root
+    )
     if supply_summary.get("available") or supply_summary.get("invalid"):
         scanner_summary = {**scanner_summary, "task_supply": supply_summary}
     closure_summary = load_optional_summary(closure_plan_path)

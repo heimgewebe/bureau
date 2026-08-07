@@ -481,6 +481,71 @@ def test_agent_frontier_consumes_supply_report_without_granting_authority(
     Draft202012Validator(schema).validate(frontier_report)
 
 
+def test_agent_frontier_rejects_stale_revision_bound_supply_report(tmp_path: Path) -> None:
+    root = copy_registry(Path(__file__).parents[1], tmp_path / "registry-repo")
+    subprocess.run(["git", "init", str(root)], check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-C", str(root), "config", "user.name", "Bureau Test"],
+        check=True, capture_output=True, text=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(root), "config", "user.email", "bureau-test@example.invalid"],
+        check=True, capture_output=True, text=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(root), "add", "registry", "schemas"],
+        check=True, capture_output=True, text=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(root), "commit", "-m", "initial registry"],
+        check=True, capture_output=True, text=True,
+    )
+    report_head = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    queue_path = root / "registry/queue.json"
+    supply = report(
+        tmp_path,
+        [],
+        mutation_authority=False,
+        registry_head=report_head,
+        queue_sha256=file_sha256(queue_path),
+        registry_root=root,
+        repository=root,
+    )
+    supply_path = tmp_path / "supply.json"
+    supply_path.write_text(json.dumps(supply), encoding="utf-8")
+
+    queue_path.write_text(queue_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "-C", str(root), "add", "registry/queue.json"],
+        check=True, capture_output=True, text=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(root), "commit", "-m", "terminal lifecycle transition"],
+        check=True, capture_output=True, text=True,
+    )
+
+    frontier_report = build_frontier_report(
+        empty_source_state(),
+        registry_root=root,
+        task_supply_report_path=supply_path,
+        generated_at=NOW,
+    )
+    summary = frontier_report["scanner_summary"]["task_supply"]
+    assert summary["available"] is False
+    assert summary["invalid"] is True
+    assert summary["stale"] is True
+    assert summary["reason"] == "registry-binding-stale"
+    assert "metrics" not in summary
+    assert any(
+        item["kind"] == "claimable_task_supply_report_invalid"
+        for item in frontier_report["bottlenecks"]
+    )
+    assert frontier_report["next_action"].startswith("regenerate and verify")
+
+
 def test_real_frontier_candidate_ranks_ahead_of_supply_fallback(tmp_path: Path) -> None:
     supply = report(tmp_path, [], mutation_authority=True)
     supply_path = tmp_path / "supply.json"

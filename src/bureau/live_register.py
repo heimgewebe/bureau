@@ -279,7 +279,11 @@ def live_register_record(
                 if checked_candidate_id is not None and checked_candidate_id != inherited_id:
                     raise StateError("candidate_id must match the superseded candidate identity")
                 previous_repo = previous["record"].get("repo")
-                if checked_repo is not None and checked_repo != previous_repo:
+                if (
+                    previous_repo is not None
+                    and checked_repo is not None
+                    and checked_repo != previous_repo
+                ):
                     raise StateError("candidate repo cannot change across supersession")
                 checked_repo = checked_repo or previous_repo
                 previous_task_id = previous["record"].get("task_id")

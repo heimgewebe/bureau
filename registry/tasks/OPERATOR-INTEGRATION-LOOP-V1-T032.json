@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein revisionsgebundener Test reproduziert: Report R ist zunächst gültig, danach ändert sich Registry-Head oder Queue-Digest, und agent-frontier klassifiziert R korrekt als stale statt ihn als aktuelle Supply-Wahrheit zu verwenden.",
+      "id": "live-reproduction"
+    },
+    {
+      "assertion": "Der read-only Consumer-Pfad erzeugt bei genau diesem stale-Fall bounded einen neuen Supply-Snapshot und Report aus derselben aktuellen Registry-/Runtime-Wahrheit, gegen die agent-frontier läuft, und validiert den neuen Report vor Konsum erneut.",
+      "id": "consumer-regeneration"
+    },
+    {
+      "assertion": "Die Regeneration setzt weder mutation_authority noch publish, schreibt keine Registry-Taskdatei und verändert registry/queue.json nicht. Ein unterversorgter frischer Report bleibt ein expliziter blocker-/proposal-bound Zustand für einen separat autorisierten Controller.",
+      "id": "no-mutation-escalation"
+    },
+    {
+      "assertion": "Der regenerierte Report bindet aktuelle Registry-Revision, Queue-Digest, Frontier-Snapshot und Runtime-Health. Nicht beobachtbare oder inkonsistente Quellen bleiben fail-closed und erzeugen keinen vermeintlich frischen Report.",
+      "id": "identity-binding"
+    },
+    {
+      "assertion": "Schlägt die Regeneration fehl, bleibt der ursprüngliche stale/invalid Befund sichtbar, der Fehler wird bounded dokumentiert und agent-frontier setzt seine read-only Arbeit ohne historische Supply-Zahlen als aktuelle Wahrheit fort.",
+      "id": "bounded-failure"
+    },
+    {
+      "assertion": "Fokussierte agent-frontier/task-supply/supply-runner Tests sowie die relevanten vollständigen Bureau-Pflichtchecks sind auf dem exakten Implementierungshead grün.",
+      "id": "regression"
+    },
+    {
+      "assertion": "Der exakte Head erhält revisionsgebundenen Self-Review, grüne Pflichtchecks und Merge. Der Live-Readback erzeugt nach einer realen Registry-/Queue-Revision einen frischen Supply-Report ohne manuelles Anstoßen und agent-frontier konsumiert dessen exakte Bindungen.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-INTEGRATION-LOOP-V1-T014"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repariere ausschließlich die read-only Supply-Regeneration und ihre Bindung an aktuelle Registry-/Runtime-Wahrheit. Keine automatische Registry-/Queue-Publikation, keine Fremdlease-Übernahme und keine Abschwächung der stale-report-Prüfung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/agent_frontier.py",
+      "path:/home/alex/repos/bureau/src/bureau/supply_runner.py",
+      "path:/home/alex/repos/bureau/src/bureau/task_supply.py",
+      "path:/home/alex/repos/bureau/tests/test_agent_frontier.py",
+      "path:/home/alex/repos/bureau/tests/test_supply_runner.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Beseitige die wiederkehrende Lücke, dass bureau-agent-frontier nach Registry- oder Queue-Änderungen einen kryptographisch intakten, aber revisionsveralteten Task-Supply-Report konsumiert. Wenn der bestehende Report wegen Registry-/Queue-Bindungsdrift stale ist, muss der read-only Supply-Pfad gegen die aktuelle autoritative Bureau-Runtime-/Registry-Wahrheit einen neuen Snapshot und Report erzeugen und anschließend erneut validieren. Dieser Task erteilt keine automatische Registry-Publikationsautorität und darf keine Fallback-Tasks oder Queue-Einträge selbständig veröffentlichen.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T032",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatische Fallback-Publikation",
+      "Registry- oder Queue-Mutationsautorität",
+      "Claim-Autorität aus einem stale Report",
+      "Berechtigung zur Übernahme fremder Bureau-Runs oder Leases"
+    ],
+    "live_basis": "Am 8. August 2026 meldete bureau-agent-frontier claimable_task_supply_report_invalid reason=registry-binding-stale. Der halbstündige Discovery-Dienst aktualisiert Discovery, aber keinen Supply-Report. Eine manuelle read-only supply_runner-Regeneration erzeugte unmittelbar einen gültigen, aktuellen Report; agent-frontier konsumierte ihn danach korrekt. Spätere Registry-Bewegung machte den Report erneut revisionsabhängig.",
+    "source_candidate": "candidate-7301f30393be64d786272385",
+    "source_event_id": 4304,
+    "supersedes_design": "Bevorzugt Consumer-seitige read-only Regeneration gegenüber einem separaten periodischen Timer, sofern dieselbe autoritative Runtime-/Registry-Wahrheit ohne zweite Control-Plane-Quelle genutzt werden kann.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7301f30393be64d786272385",
+      "event_id": 4304,
+      "event_created_at": "2026-08-08T08:06:36.788225Z",
+      "request_sha256": "6b252747a4297892ae89f8b053523d271610dd1e6751145247ff2f6d9efb8ec2",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-observation",
+        "locator": "runtime:bureau-agent-frontier:2026-08-08T10CEST",
+        "observed_at": "2026-08-08T10:05:30+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 32
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Consumer-seitige Regeneration normal revertieren. Die bestehende stale-report-Prüfung aus PR #1726 bleibt autoritativ; bei Regression fällt agent-frontier auf fail-closed stale/invalid zurück und nimmt keine Registry-Mutation vor."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Task-Supply-Report am Consumer revisionsfrisch regenerieren"
+}

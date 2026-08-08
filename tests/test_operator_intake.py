@@ -639,6 +639,83 @@ def test_candidate_request_refines_current_event_and_inherits_identity(
     assert refined["record"]["operator_intake"] != first["record"]["operator_intake"]
 
 
+
+def test_candidate_request_can_add_assessment_missing_repo_once(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:repo-late",
+        title="Candidate awaiting repository binding",
+        source_kind="conversation",
+        source_locator="chat:repo-late",
+        desired_outcome="Bind the repository requested by candidate assessment",
+    )
+
+    before = candidate_assess(registry, store, candidate_id=first["candidate_id"])
+    assert before["decision"] == "refine"
+    assert before["missing_fields"] == ["repo"]
+
+    refined = candidate_record_request(
+        registry,
+        store,
+        {
+            "schema_version": 1,
+            "idempotency_key": "source:repo-late-refinement",
+            "title": "Candidate with repository binding",
+            "source_kind": "conversation",
+            "source_locator": "chat:repo-late",
+            "desired_outcome": "Bind the repository requested by candidate assessment",
+            "repo": "repo.alpha",
+            "supersedes_event_id": first["event_id"],
+        },
+    )
+
+    assert refined["candidate_id"] == first["candidate_id"]
+    assert refined["record"]["repo"] == "repo.alpha"
+    assert refined["record"]["status"] == first["record"]["status"]
+    assert (
+        refined["record"]["promotion_required"]
+        == first["record"]["promotion_required"]
+    )
+    after = candidate_assess(registry, store, candidate_id=first["candidate_id"])
+    assert after["decision"] == "promote"
+    assert after["missing_fields"] == []
+    assert after["target"]["claims"] == [
+        {"resource": "repo.alpha", "mode": "write", "isolation": "worktree"}
+    ]
+
+
+def test_candidate_request_still_rejects_refinement_repo_rebinding(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+
+    with pytest.raises(OperatorIntakeError, match="repo cannot change") as caught:
+        candidate_record_request(
+            registry,
+            store,
+            {
+                "schema_version": 1,
+                "idempotency_key": "source:repo-rebinding",
+                "title": "Attempt repository rebinding",
+                "source_kind": "conversation",
+                "source_locator": "chat:repo-rebinding",
+                "desired_outcome": "Reject changing an existing repository binding",
+                "repo": "repo.beta",
+                "supersedes_event_id": first["event_id"],
+            },
+        )
+
+    assert caught.value.code == "candidate-record-invalid"
+    assert caught.value.effect_started is False
+    assert len(operator_intake_module.candidate_records(store)) == 1
+
 def test_candidate_request_rejects_refinement_task_rebinding(
     registry_factory, tmp_path
 ):

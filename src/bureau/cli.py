@@ -68,7 +68,7 @@ from .read_only_state import ReadOnlyStateStore
 from .resource_lifecycle import resource_lifecycle_contract
 from .rlens_policy import evaluate_registry_rlens_policy
 from .runtime_identity import bureau_runtime_identity, require_mutation_compatible
-from .v2 import coordinated_claim_status
+from .v2 import coordinated_claim_intent_readback, coordinated_claim_status
 
 _CLI_RUNTIME_IDENTITY: dict[str, Any] | None = None
 _CLI_JSON_ENVELOPE = False
@@ -359,6 +359,9 @@ def parser() -> argparse.ArgumentParser:
         "--approval-source",
         default="cli claim-intent explicit approval",
     )
+    claim_intent.add_argument("--idempotency-key")
+    claim_readback = sub.add_parser("claim-intent-readback")
+    claim_readback.add_argument("--idempotency-key", required=True)
     claim_commit = sub.add_parser("claim-commit")
     claim_commit.add_argument("--intent", required=True)
     claim_commit.add_argument("--lease-binding")
@@ -575,6 +578,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "status",
         "github-observe",
         "claim-coordination-status",
+        "claim-intent-readback",
         "status-projection",
         "verification-stamp",
         "what-now",
@@ -1367,6 +1371,11 @@ def main(argv: list[str] | None = None) -> int:
                 approved=args.approve,
                 break_glass=args.break_glass,
                 approval_source=args.approval_source,
+                idempotency_key=args.idempotency_key,
+            )
+        elif args.command == "claim-intent-readback":
+            value = coordinated_claim_intent_readback(
+                store, args.idempotency_key
             )
         elif args.command == "claim-commit":
             intent = read_json_object_file(args.intent, field="intent")

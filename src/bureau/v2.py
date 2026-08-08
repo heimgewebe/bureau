@@ -70,6 +70,9 @@ COORDINATED_CLAIM_INTENT_SCHEMA_VERSION = 1
 COORDINATED_CLAIM_INTENT_TTL_SECONDS = 300
 COORDINATED_CLAIM_MIN_LEASE_SECONDS = 60
 COORDINATED_CLAIM_ISSUED_EVENT = "coordinated-claim-intent-issued"
+COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION = 2
+COORDINATED_CLAIM_MUTATION_SCHEMA_VERSION = 1
+COORDINATED_CLAIM_IDEMPOTENCY_MAX_LENGTH = 512
 
 
 def _task_from_authoritative_spec(spec: dict[str, Any], digest: str) -> legacy.Task:
@@ -271,12 +274,59 @@ def _coordinated_approval_from_dict(data: dict[str, Any]) -> ApprovalEvidence:
         f"unsupported coordinated claim approval level {level or '<missing>'}"
     )
 
+def _validate_coordinated_claim_mutation_contract(contract: dict[str, Any]) -> None:
+    required = {
+        "schema_version",
+        "idempotency_key",
+        "request_sha256",
+        "expected_task_revision",
+        "expected_task_spec_sha256",
+        "expected_task_state",
+        "attempt",
+    }
+    if not isinstance(contract, dict) or set(contract) != required:
+        raise legacy.StateError("coordinated claim mutation contract fields are not exact")
+    if contract.get("schema_version") != COORDINATED_CLAIM_MUTATION_SCHEMA_VERSION:
+        raise legacy.StateError("unsupported coordinated claim mutation contract schema")
+    key = contract.get("idempotency_key")
+    if (
+        not isinstance(key, str)
+        or not key
+        or len(key) > COORDINATED_CLAIM_IDEMPOTENCY_MAX_LENGTH
+    ):
+        raise legacy.StateError("coordinated claim idempotency key is invalid")
+    request_sha256 = contract.get("request_sha256")
+    if (
+        not isinstance(request_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", request_sha256) is None
+    ):
+        raise legacy.StateError("coordinated claim request digest is invalid")
+    revision = contract.get("expected_task_revision")
+    if revision is not None and (
+        not isinstance(revision, int) or isinstance(revision, bool) or revision < 1
+    ):
+        raise legacy.StateError("coordinated claim expected task revision is invalid")
+    spec_sha256 = contract.get("expected_task_spec_sha256")
+    if (
+        not isinstance(spec_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", spec_sha256) is None
+    ):
+        raise legacy.StateError("coordinated claim expected TaskSpec digest is invalid")
+    state = contract.get("expected_task_state")
+    if not isinstance(state, str) or not state:
+        raise legacy.StateError("coordinated claim expected task state is invalid")
+    attempt = contract.get("attempt")
+    if not isinstance(attempt, int) or isinstance(attempt, bool) or attempt < 1:
+        raise legacy.StateError("coordinated claim expected attempt is invalid")
+
+
 def _coordinated_claim_issuance(
-    intent: dict[str, Any], action_class: str
+    intent: dict[str, Any],
+    action_class: str,
+    mutation_contract: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     approval = intent["operator_approval"]
-    return {
-        "schema_version": 1,
+    base = {
         "run_id": intent["run_id"],
         "task_id": intent["task_id"],
         "worker_id": intent["worker_id"],
@@ -287,6 +337,60 @@ def _coordinated_claim_issuance(
         "intent_sha256": intent["intent_sha256"],
         "expires_at_unix": intent["expires_at_unix"],
     }
+    if mutation_contract is None:
+        return {"schema_version": 1, **base}
+    _validate_coordinated_claim_mutation_contract(mutation_contract)
+    return {
+        "schema_version": COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION,
+        **base,
+        "mutation_contract": json.loads(legacy.canonical_json(mutation_contract)),
+        "intent": json.loads(legacy.canonical_json(intent)),
+    }
+
+
+def _validated_coordinated_claim_issuance(issuance: dict[str, Any]) -> dict[str, Any]:
+    base_fields = {
+        "schema_version",
+        "run_id",
+        "task_id",
+        "worker_id",
+        "reviewer",
+        "action_class",
+        "approval_level",
+        "approval_sha256",
+        "intent_sha256",
+        "expires_at_unix",
+    }
+    if not isinstance(issuance, dict):
+        raise legacy.StateError("coordinated claim issuance must be an object")
+    schema_version = issuance.get("schema_version")
+    if schema_version == 1:
+        if set(issuance) != base_fields:
+            raise legacy.StateError("coordinated claim issuance fields are not exact")
+    elif schema_version == COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION:
+        if set(issuance) != base_fields | {"mutation_contract", "intent"}:
+            raise legacy.StateError("coordinated claim issuance fields are not exact")
+    else:
+        raise legacy.StateError("coordinated claim issuance schema is invalid")
+    text_fields = base_fields - {"schema_version", "expires_at_unix"}
+    if not all(
+        isinstance(issuance.get(field), str) and issuance[field]
+        for field in text_fields
+    ):
+        raise legacy.StateError("coordinated claim issuance identity is incomplete")
+    if not isinstance(issuance.get("expires_at_unix"), int):
+        raise legacy.StateError("coordinated claim issuance expiry is invalid")
+    if schema_version == COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION:
+        contract = issuance.get("mutation_contract")
+        intent = issuance.get("intent")
+        _validate_coordinated_claim_mutation_contract(contract)
+        _validate_coordinated_claim_intent(intent)
+        expected = _coordinated_claim_issuance(
+            intent, issuance["action_class"], contract
+        )
+        if issuance != expected:
+            raise legacy.StateError("coordinated claim issuance binding is invalid")
+    return issuance
 
 
 def _validate_coordinated_claim_intent(intent: dict[str, Any]) -> None:
@@ -338,11 +442,14 @@ def _validate_coordinated_claim_intent(intent: dict[str, Any]) -> None:
         raise legacy.StateError("coordinated claim nonclaims are invalid")
 
 
-def coordinated_claim_commit_handoff(intent: dict[str, Any]) -> dict[str, Any]:
-    """Project the exact lease-bound input required by claim-commit."""
+def coordinated_claim_commit_handoff(
+    intent: dict[str, Any],
+    mutation_contract: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Project the exact lease- and CAS-bound input required by claim-commit."""
     required_keys = list(intent["required_resource_keys"])
     lease_required = bool(required_keys)
-    return {
+    handoff = {
         "schema_version": 1,
         "claim_intent_sha256": intent["intent_sha256"],
         "run_id": intent["run_id"],
@@ -370,6 +477,52 @@ def coordinated_claim_commit_handoff(intent: dict[str, Any]) -> dict[str, Any]:
             "dispatch authority",
         ],
     }
+    if mutation_contract is not None:
+        _validate_coordinated_claim_mutation_contract(mutation_contract)
+        handoff["mutation_contract"] = json.loads(
+            legacy.canonical_json(mutation_contract)
+        )
+        handoff["claim_intent_readback"] = {
+            "operation": "claim-intent-readback",
+            "idempotency_key": mutation_contract["idempotency_key"],
+        }
+    return handoff
+
+
+def _coordinated_claim_request_sha256(
+    *,
+    worker_id: str,
+    capabilities: tuple[str, ...],
+    kind: str,
+    task_id: str | None,
+    resource: str | None,
+    base_dir: Path | None,
+    approved: bool,
+    break_glass: bool,
+    approval_source: str,
+) -> str:
+    return legacy.sha256_json(
+        {
+            "schema_version": 1,
+            "operation": "claim-intent",
+            "worker_id": worker_id,
+            "capabilities": sorted(set(capabilities)),
+            "kind": kind,
+            "task_id": task_id,
+            "resource": resource,
+            "base_dir": str(base_dir.expanduser().resolve()) if base_dir else None,
+            "approved": approved,
+            "break_glass": break_glass,
+            "approval_source": approval_source,
+        }
+    )
+
+
+def _coordinated_claim_auto_idempotency_key(
+    request_sha256: str, renewal: int = 0
+) -> str:
+    suffix = "" if renewal == 0 else f":renewal:{renewal}"
+    return f"claim-intent:{request_sha256}{suffix}"
 
 
 def _workspace_baseline_for_task(registry: Registry, task: legacy.Task) -> str | None:
@@ -3309,10 +3462,47 @@ class StateStore:
         }
 
     def issue_claim_intent(
-        self, intent: dict[str, Any], action_class: str
+        self,
+        intent: dict[str, Any],
+        action_class: str,
+        mutation_contract: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        issuance = _coordinated_claim_issuance(intent, action_class)
+        issuance = _coordinated_claim_issuance(
+            intent, action_class, mutation_contract
+        )
         with self.immediate() as connection:
+            if mutation_contract is not None:
+                idempotency_key = mutation_contract["idempotency_key"]
+                matches: list[dict[str, Any]] = []
+                for row in connection.execute(
+                    "SELECT payload_json FROM events "
+                    "WHERE event_type=? ORDER BY event_id",
+                    (COORDINATED_CLAIM_ISSUED_EVENT,),
+                ):
+                    existing = _validated_coordinated_claim_issuance(
+                        json.loads(row["payload_json"])
+                    )
+                    if (
+                        existing.get("schema_version")
+                        == COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION
+                        and existing["mutation_contract"]["idempotency_key"]
+                        == idempotency_key
+                    ):
+                        matches.append(existing)
+                if len(matches) > 1:
+                    raise legacy.StateError(
+                        "coordinated claim idempotency key has multiple issuance records"
+                    )
+                if matches:
+                    existing = matches[0]
+                    if (
+                        existing["mutation_contract"]["request_sha256"]
+                        != mutation_contract["request_sha256"]
+                    ):
+                        raise legacy.StateError(
+                            "coordinated claim idempotency key is bound to another mutation"
+                        )
+                    return {"issuance": existing, "idempotent_replay": True}
             rows = connection.execute(
                 "SELECT payload_json FROM events "
                 "WHERE run_id=? AND event_type=? ORDER BY event_id",
@@ -3323,19 +3513,21 @@ class StateStore:
                     "coordinated claim intent has multiple issuance records"
                 )
             if rows:
-                existing = json.loads(rows[0]["payload_json"])
+                existing = _validated_coordinated_claim_issuance(
+                    json.loads(rows[0]["payload_json"])
+                )
                 if existing != issuance:
                     raise legacy.StateError(
                         "coordinated claim run id already has another issuance"
                     )
-                return existing
+                return {"issuance": existing, "idempotent_replay": True}
             self.event(
                 connection,
                 COORDINATED_CLAIM_ISSUED_EVENT,
                 issuance,
                 intent["run_id"],
             )
-        return issuance
+        return {"issuance": issuance, "idempotent_replay": False}
 
     def claim_intent_issuance(self, run_id: str) -> dict[str, Any]:
         with self.connect() as connection:
@@ -3348,40 +3540,41 @@ class StateStore:
             raise legacy.StateError(
                 "coordinated claim intent has no unique issuance record"
             )
-        issuance = json.loads(rows[0]["payload_json"])
-        required = {
-            "schema_version",
-            "run_id",
-            "task_id",
-            "worker_id",
-            "reviewer",
-            "action_class",
-            "approval_level",
-            "approval_sha256",
-            "intent_sha256",
-            "expires_at_unix",
-        }
-        if not isinstance(issuance, dict) or set(issuance) != required:
-            raise legacy.StateError(
-                "coordinated claim issuance fields are not exact"
-            )
-        if issuance.get("schema_version") != 1:
-            raise legacy.StateError(
-                "coordinated claim issuance schema is invalid"
-            )
-        text_fields = required - {"schema_version", "expires_at_unix"}
-        if not all(
-            isinstance(issuance.get(field), str) and issuance[field]
-            for field in text_fields
+        return _validated_coordinated_claim_issuance(
+            json.loads(rows[0]["payload_json"])
+        )
+
+    def claim_intent_issuance_by_idempotency_key(
+        self, idempotency_key: str
+    ) -> dict[str, Any] | None:
+        if (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key
+            or len(idempotency_key) > COORDINATED_CLAIM_IDEMPOTENCY_MAX_LENGTH
         ):
+            raise legacy.StateError("coordinated claim idempotency key is invalid")
+        matches: list[dict[str, Any]] = []
+        with self.connect() as connection:
+            for row in connection.execute(
+                "SELECT payload_json FROM events "
+                "WHERE event_type=? ORDER BY event_id",
+                (COORDINATED_CLAIM_ISSUED_EVENT,),
+            ):
+                issuance = _validated_coordinated_claim_issuance(
+                    json.loads(row["payload_json"])
+                )
+                if (
+                    issuance.get("schema_version")
+                    == COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION
+                    and issuance["mutation_contract"]["idempotency_key"]
+                    == idempotency_key
+                ):
+                    matches.append(issuance)
+        if len(matches) > 1:
             raise legacy.StateError(
-                "coordinated claim issuance identity is incomplete"
+                "coordinated claim idempotency key has multiple issuance records"
             )
-        if not isinstance(issuance.get("expires_at_unix"), int):
-            raise legacy.StateError(
-                "coordinated claim issuance expiry is invalid"
-            )
-        return issuance
+        return matches[0] if matches else None
 
     def register_worker(self, worker_id: str, kind: str, capabilities: tuple[str, ...]) -> None:
         if not worker_id or len(worker_id) > 200:
@@ -4072,6 +4265,69 @@ class Dispatcher(legacy.Dispatcher):
                 overlays=overlays,
             )
 
+    def _coordinated_claim_approval_extensions(
+        self, task: legacy.Task
+    ) -> dict[str, Any]:
+        _ = task
+        return {}
+
+    def _coordinated_claim_result_from_issuance(
+        self,
+        issuance: dict[str, Any],
+        *,
+        idempotent_replay: bool,
+        open_pr_scope: dict[str, Any] | None = None,
+        runtime_truth: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        issuance = _validated_coordinated_claim_issuance(issuance)
+        if issuance["schema_version"] != COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION:
+            raise legacy.StateError(
+                "coordinated claim idempotency replay requires issuance schema v2"
+            )
+        intent = issuance["intent"]
+        mutation_contract = issuance["mutation_contract"]
+        if open_pr_scope is None:
+            supplied = intent["operator_approval"].get("open_pr_nonconflict")
+            open_pr_scope = (
+                supplied
+                if isinstance(supplied, dict)
+                else {"requires_evidence": False, "reservations": []}
+            )
+        return {
+            "status": "claim-intent",
+            "intent": intent,
+            "mutation_contract": mutation_contract,
+            "idempotent_replay": idempotent_replay,
+            "ready_supply": {
+                "task_eligible": True,
+                "approval_bound": True,
+                "lease_required": bool(intent["required_resource_keys"]),
+                "required_resource_keys": list(intent["required_resource_keys"]),
+                "workspace_planned": intent["workspace"] is not None,
+                "workspace": intent["workspace"],
+                "attempt": mutation_contract["attempt"],
+                "expected_task_revision": mutation_contract["expected_task_revision"],
+                "expected_task_state": mutation_contract["expected_task_state"],
+                "open_pr_scope": open_pr_scope,
+                "open_pr_scope_resource_mode": (
+                    "exact-paths"
+                    if open_pr_scope.get("requires_evidence") is True
+                    else "task-default"
+                ),
+            },
+            "claim_commit_handoff": coordinated_claim_commit_handoff(
+                intent, mutation_contract
+            ),
+            "runtime_truth": (
+                runtime_truth
+                if runtime_truth is not None
+                else {
+                    "status": "issuance-replay",
+                    "runtime_truth_sha256": intent["runtime_truth_sha256"],
+                }
+            ),
+        }
+
     def claim_intent(
         self,
         worker_id: str,
@@ -4084,9 +4340,72 @@ class Dispatcher(legacy.Dispatcher):
         approved: bool = False,
         break_glass: bool = False,
         approval_source: str = "coordinated claim intent",
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        """Issue a source-bound plan without claiming or creating run effects."""
+        """Issue one idempotent, revision-bound claim plan without run effects."""
         self._validate_resource_filter(resource)
+        request_sha256 = _coordinated_claim_request_sha256(
+            worker_id=worker_id,
+            capabilities=capabilities,
+            kind=kind,
+            task_id=task_id,
+            resource=resource,
+            base_dir=base_dir,
+            approved=approved,
+            break_glass=break_glass,
+            approval_source=approval_source,
+        )
+        explicit_idempotency_key = idempotency_key is not None
+        if idempotency_key is not None and (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key
+            or len(idempotency_key) > COORDINATED_CLAIM_IDEMPOTENCY_MAX_LENGTH
+        ):
+            raise legacy.StateError("coordinated claim idempotency key is invalid")
+        renewal = 0
+        effective_idempotency_key = (
+            idempotency_key
+            if idempotency_key is not None
+            else _coordinated_claim_auto_idempotency_key(request_sha256)
+        )
+        while True:
+            existing_issuance = self.store.claim_intent_issuance_by_idempotency_key(
+                effective_idempotency_key
+            )
+            if existing_issuance is None:
+                break
+            contract = existing_issuance["mutation_contract"]
+            if contract["request_sha256"] != request_sha256:
+                raise legacy.StateError(
+                    "coordinated claim idempotency key is bound to another mutation"
+                )
+            with self.store.connect() as connection:
+                existing_run = connection.execute(
+                    "SELECT * FROM runs WHERE run_id=?",
+                    (existing_issuance["run_id"],),
+                ).fetchone()
+            if existing_run is not None:
+                terminal = existing_run["state"] in TERMINAL_STATES
+                return {
+                    "status": "existing-terminal" if terminal else "existing-assignment",
+                    "run": self.store.public_run(existing_run),
+                    "envelope": json.loads(existing_run["envelope_json"]),
+                    "mutation_contract": contract,
+                    "idempotent_replay": True,
+                }
+            if (
+                explicit_idempotency_key
+                or existing_issuance["expires_at_unix"]
+                > int(datetime.now(timezone.utc).timestamp())
+            ):
+                return self._coordinated_claim_result_from_issuance(
+                    existing_issuance, idempotent_replay=True
+                )
+            renewal += 1
+            effective_idempotency_key = _coordinated_claim_auto_idempotency_key(
+                request_sha256, renewal
+            )
+
         runtime_truth = self._runtime_execution_truth()
         runtime_stop = self._runtime_execution_stop(
             command="claim-intent", runtime_truth=runtime_truth
@@ -4120,6 +4439,7 @@ class Dispatcher(legacy.Dispatcher):
             rejected: list[dict[str, Any]] = []
             selected: legacy.Task | None = None
             approval_evidence: dict[str, Any] | None = None
+            selected_effective_state: str | None = None
             for task in self._ordered_tasks():
                 candidate_approval_evidence: dict[str, Any] | None = None
                 if task_id is not None and task.id != task_id:
@@ -4147,6 +4467,7 @@ class Dispatcher(legacy.Dispatcher):
                 if not reasons:
                     selected = task
                     approval_evidence = candidate_approval_evidence
+                    selected_effective_state = overlays.get(task.id, task.state)
                     break
                 rejected.append({"task_id": task.id, "reasons": reasons})
                 if task_id is not None:
@@ -4161,6 +4482,7 @@ class Dispatcher(legacy.Dispatcher):
                 ).fetchone()["n"]
                 + 1
             )
+        assert selected_effective_state is not None
         if approval_evidence is None:
             approval, _approval_decision = _coordinated_claim_approval(
                 selected,
@@ -4179,6 +4501,14 @@ class Dispatcher(legacy.Dispatcher):
                 **approval_evidence,
                 "open_pr_nonconflict": open_pr_scope,
             }
+        approval_extensions = self._coordinated_claim_approval_extensions(selected)
+        overlap = sorted(set(approval_evidence).intersection(approval_extensions))
+        if overlap:
+            raise legacy.StateError(
+                "coordinated claim approval extension fields collide: "
+                + ", ".join(overlap)
+            )
+        approval_evidence = {**approval_evidence, **approval_extensions}
         current_plan_sha = plan_sha256(self.registry, selected.initiative)
         baseline = _workspace_baseline_for_task(self.registry, selected)
         workspace = _planned_workspace(self.registry, selected, run_id, base_dir, baseline)
@@ -4187,6 +4517,23 @@ class Dispatcher(legacy.Dispatcher):
                 self.registry.resources, selected, open_pr_scope
             )
         )
+        revision = self.task_revisions.get(selected.id)
+        if not isinstance(revision, dict):
+            raise legacy.StateError(
+                f"coordinated claim TaskSpec revision is missing for {selected.id}"
+            )
+        expected_revision = revision.get("revision")
+        expected_spec_sha256 = task_specs.task_spec_digest(selected.raw)
+        mutation_contract = {
+            "schema_version": COORDINATED_CLAIM_MUTATION_SCHEMA_VERSION,
+            "idempotency_key": effective_idempotency_key,
+            "request_sha256": request_sha256,
+            "expected_task_revision": expected_revision,
+            "expected_task_spec_sha256": expected_spec_sha256,
+            "expected_task_state": selected_effective_state,
+            "attempt": attempt,
+        }
+        _validate_coordinated_claim_mutation_contract(mutation_contract)
         now = datetime.now(timezone.utc)
         intent: dict[str, Any] = {
             "schema_version": COORDINATED_CLAIM_INTENT_SCHEMA_VERSION,
@@ -4214,30 +4561,17 @@ class Dispatcher(legacy.Dispatcher):
             ],
         }
         intent["intent_sha256"] = coordinated_claim_intent_sha256(intent)
-        self.store.issue_claim_intent(
-            intent, _coordinated_task_action_class(selected)
+        issued = self.store.issue_claim_intent(
+            intent,
+            _coordinated_task_action_class(selected),
+            mutation_contract,
         )
-        return {
-            "status": "claim-intent",
-            "intent": intent,
-            "ready_supply": {
-                "task_eligible": True,
-                "approval_bound": True,
-                "lease_required": bool(required_keys),
-                "required_resource_keys": required_keys,
-                "workspace_planned": workspace is not None,
-                "workspace": workspace,
-                "attempt": attempt,
-                "open_pr_scope": open_pr_scope,
-                "open_pr_scope_resource_mode": (
-                    "exact-paths"
-                    if open_pr_scope["requires_evidence"]
-                    else "task-default"
-                ),
-            },
-            "claim_commit_handoff": coordinated_claim_commit_handoff(intent),
-            "runtime_truth": runtime_truth,
-        }
+        return self._coordinated_claim_result_from_issuance(
+            issued["issuance"],
+            idempotent_replay=issued["idempotent_replay"],
+            open_pr_scope=(None if issued["idempotent_replay"] else open_pr_scope),
+            runtime_truth=(None if issued["idempotent_replay"] else runtime_truth),
+        )
 
     def commit_claim_intent(
         self,
@@ -4257,8 +4591,13 @@ class Dispatcher(legacy.Dispatcher):
         if intent["expires_at_unix"] <= int(datetime.now(timezone.utc).timestamp()):
             raise legacy.StateError("coordinated claim intent expired")
         issuance = self.store.claim_intent_issuance(intent["run_id"])
+        mutation_contract = (
+            issuance["mutation_contract"]
+            if issuance["schema_version"] == COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION
+            else None
+        )
         expected_issuance = _coordinated_claim_issuance(
-            intent, issuance["action_class"]
+            intent, issuance["action_class"], mutation_contract
         )
         if issuance != expected_issuance:
             raise legacy.StateError(
@@ -4377,6 +4716,50 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + fresh_open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
+            attempt = (
+                connection.execute(
+                    "SELECT COUNT(*) AS n FROM runs WHERE task_id=?", (task.id,)
+                ).fetchone()["n"]
+                + 1
+            )
+            if mutation_contract is not None:
+                try:
+                    current_spec = task_specs.get_current(connection, task.id)
+                except task_specs.TaskSpecError as exc:
+                    raise legacy.StateError(str(exc)) from exc
+                observed_revision = (
+                    None if current_spec is None else int(current_spec["revision"])
+                )
+                observed_spec_sha256 = (
+                    task_specs.task_spec_digest(task.raw)
+                    if current_spec is None
+                    else str(current_spec["spec_sha256"])
+                )
+                observed_state = overlays.get(task.id, task.state)
+                if observed_revision != mutation_contract["expected_task_revision"]:
+                    raise legacy.StateError(
+                        "coordinated claim stale TaskSpec revision CAS: "
+                        f"expected {mutation_contract['expected_task_revision']!r}, "
+                        f"current {observed_revision!r}"
+                    )
+                if (
+                    observed_spec_sha256
+                    != mutation_contract["expected_task_spec_sha256"]
+                ):
+                    raise legacy.StateError(
+                        "coordinated claim stale TaskSpec digest CAS"
+                    )
+                if observed_state != mutation_contract["expected_task_state"]:
+                    raise legacy.StateError(
+                        "coordinated claim stale prior-state CAS: "
+                        f"expected {mutation_contract['expected_task_state']!r}, "
+                        f"current {observed_state!r}"
+                    )
+                if attempt != mutation_contract["attempt"]:
+                    raise legacy.StateError(
+                        "coordinated claim stale attempt CAS: "
+                        f"expected {mutation_contract['attempt']!r}, current {attempt!r}"
+                    )
             reasons = self.reasons(task, set(intent["capabilities"]), runs, reservations, overlays)
             review_reason = f"execution is {task.mode}/{task.policy}"
             reasons = [reason for reason in reasons if reason != review_reason]
@@ -4419,12 +4802,6 @@ class Dispatcher(legacy.Dispatcher):
                     legacy.canonical_json(intent["capabilities"]),
                     now,
                 ),
-            )
-            attempt = (
-                connection.execute(
-                    "SELECT COUNT(*) AS n FROM runs WHERE task_id=?", (task.id,)
-                ).fetchone()["n"]
-                + 1
             )
             initiative = self.registry.initiatives[task.initiative]
             envelope = {
@@ -6008,6 +6385,64 @@ def fail_run(store: StateStore, run_id: str, error: str, state: str = "failed") 
         envelope = json.loads(envelope_row["envelope_json"])
         result["lease_release"] = coordinated_lease_release_projection(envelope)
     return result
+
+
+def coordinated_claim_intent_readback(
+    store: StateStore, idempotency_key: str
+) -> dict[str, Any]:
+    """Read back the exact durable state for one idempotent claim-intent request."""
+    issuance = store.claim_intent_issuance_by_idempotency_key(idempotency_key)
+    if issuance is None:
+        return {
+            "schema_version": 1,
+            "status": "not-issued",
+            "idempotency_key": idempotency_key,
+            "safe_to_retry_same_key": True,
+            "does_not_establish": ["claim_intent_issuance", "Bureau claim"],
+        }
+    intent = issuance["intent"]
+    contract = issuance["mutation_contract"]
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (issuance["run_id"],)
+        ).fetchone()
+    expired = issuance["expires_at_unix"] <= int(
+        datetime.now(timezone.utc).timestamp()
+    )
+    if row is None:
+        return {
+            "schema_version": 1,
+            "status": "issued-uncommitted",
+            "idempotency_key": idempotency_key,
+            "expired": expired,
+            "issuance": issuance,
+            "intent": intent,
+            "mutation_contract": contract,
+            "claim_commit_handoff": coordinated_claim_commit_handoff(
+                intent, contract
+            ),
+            "safe_to_retry_same_key": True,
+            "next_action": (
+                "issue-new-intent-with-new-explicit-idempotency-key"
+                if expired
+                else "claim-commit"
+            ),
+            "does_not_establish": ["Bureau claim", "workspace creation"],
+        }
+    run = store.public_run(row)
+    return {
+        "schema_version": 1,
+        "status": "run-observed",
+        "idempotency_key": idempotency_key,
+        "expired": expired,
+        "issuance": issuance,
+        "intent": intent,
+        "mutation_contract": contract,
+        "run": run,
+        "safe_to_retry_same_key": True,
+        "next_action": "claim-coordination-status",
+        "does_not_establish": ["external dispatch success", "task completion"],
+    }
 
 
 def _claim_bound_envelope(

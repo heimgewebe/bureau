@@ -2542,6 +2542,240 @@ def test_coordinated_claim_intent_records_issuance_and_requires_approval(
         ).fetchone()[0] == 1
 
 
+
+def test_coordinated_claim_intent_idempotency_and_unknown_outcome_readback(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+
+    first = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="t005 idempotency",
+        idempotency_key="t005:claim:one",
+    )
+    replay = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="t005 idempotency",
+        idempotency_key="t005:claim:one",
+    )
+
+    assert first["idempotent_replay"] is False
+    assert replay["idempotent_replay"] is True
+    assert replay["intent"] == first["intent"]
+    contract = first["mutation_contract"]
+    assert contract["idempotency_key"] == "t005:claim:one"
+    assert contract["expected_task_state"] == "ready"
+    assert contract["attempt"] == 1
+    assert first["claim_commit_handoff"]["mutation_contract"] == contract
+    assert first["claim_commit_handoff"]["claim_intent_readback"] == {
+        "operation": "claim-intent-readback",
+        "idempotency_key": "t005:claim:one",
+    }
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (bureau_v2.COORDINATED_CLAIM_ISSUED_EVENT,),
+        ).fetchone()[0] == 1
+
+    readback = bureau_v2.coordinated_claim_intent_readback(
+        store, "t005:claim:one"
+    )
+    assert readback["status"] == "issued-uncommitted"
+    assert readback["intent"] == first["intent"]
+    assert readback["mutation_contract"] == contract
+    assert readback["next_action"] == "claim-commit"
+    assert store.list_runs() == []
+
+    claimed = dispatcher.commit_claim_intent(first["intent"], None)
+    assert claimed["status"] == "claimed"
+    observed = bureau_v2.coordinated_claim_intent_readback(
+        store, "t005:claim:one"
+    )
+    assert observed["status"] == "run-observed"
+    assert observed["run"]["run_id"] == first["intent"]["run_id"]
+    assert observed["next_action"] == "claim-coordination-status"
+
+
+def test_coordinated_claim_idempotency_key_rejects_different_request(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    dispatcher.claim_intent(
+        "operator-a",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="t005 key binding",
+        idempotency_key="t005:shared-key",
+    )
+    with pytest.raises(StateError, match="idempotency key is bound to another mutation"):
+        dispatcher.claim_intent(
+            "operator-b",
+            ("repository",),
+            task_id=task_id,
+            approved=True,
+            approval_source="t005 key binding",
+            idempotency_key="t005:shared-key",
+        )
+    assert store.list_runs() == []
+
+
+def test_coordinated_claim_commit_rejects_task_spec_revision_cas_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    registry, store, _dispatcher = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    dispatcher = Dispatcher(registry, store)
+    fixed_runtime_truth = {
+        "schema_version": 1,
+        "execution_blocked": False,
+        "status": "clear",
+    }
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: fixed_runtime_truth)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+
+    result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        idempotency_key="t005:revision-cas",
+    )
+    contract = result["mutation_contract"]
+    assert contract["expected_task_revision"] == 1
+    current = store.task_spec(task_id)
+    changed = json.loads(json.dumps(current["spec"]))
+    changed["title"] = "concurrent TaskSpec revision"
+    store.put_task_spec(
+        changed,
+        idempotency_key="t005:concurrent-spec-change",
+        expected_revision=1,
+        source="test concurrent mutation",
+    )
+
+    with pytest.raises(StateError, match="stale TaskSpec revision CAS"):
+        dispatcher.commit_claim_intent(result["intent"], None)
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
+
+
+def test_coordinated_claim_commit_rejects_prior_state_cas_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    fixed_runtime_truth = {
+        "schema_version": 1,
+        "execution_blocked": False,
+        "status": "clear",
+    }
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: fixed_runtime_truth)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+
+    result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        idempotency_key="t005:state-cas",
+    )
+    task = registry.tasks[task_id]
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO task_status("
+            "task_id,task_sha256,plan_sha256,state,receipt_sha256,updated_at"
+            ") VALUES(?,?,?,?,NULL,?)",
+            (
+                task_id,
+                task.sha256,
+                plan_sha256(registry, task.initiative),
+                "planned",
+                bureau_v2.legacy.utc_now(),
+            ),
+        )
+
+    with pytest.raises(StateError, match="stale prior-state CAS"):
+        dispatcher.commit_claim_intent(result["intent"], None)
+    assert store.list_runs() == []
+
+
+def test_coordinated_claim_parallel_same_task_cas_and_disjoint_tasks_continue(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="read")
+    for task_path in sorted((root / "registry/tasks").glob("*.json")):
+        task = json.loads(task_path.read_text())
+        task["execution"]["policy"] = "review-before-effect"
+        task["execution"]["grabowski_resources"] = []
+        task_path.write_text(json.dumps(task))
+    init_clean_origin_main(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+    first_id, second_id = sorted(registry.tasks)
+
+    same_a = dispatcher.claim_intent(
+        "worker-a",
+        ("repository",),
+        task_id=first_id,
+        approved=True,
+        idempotency_key="t005:same:a",
+    )
+    same_b = dispatcher.claim_intent(
+        "worker-b",
+        ("repository",),
+        task_id=first_id,
+        approved=True,
+        idempotency_key="t005:same:b",
+    )
+    disjoint = dispatcher.claim_intent(
+        "worker-c",
+        ("repository",),
+        task_id=second_id,
+        approved=True,
+        idempotency_key="t005:disjoint:c",
+    )
+
+    dispatcher.commit_claim_intent(same_a["intent"], None)
+    with pytest.raises(StateError, match="stale attempt CAS"):
+        dispatcher.commit_claim_intent(same_b["intent"], None)
+    second_claim = dispatcher.commit_claim_intent(disjoint["intent"], None)
+
+    active = [run for run in store.list_runs() if run["state"] == "assigned"]
+    assert {run["task_id"] for run in active} == {first_id, second_id}
+    assert second_claim["run"]["task_id"] == second_id
+
 def test_coordinated_claim_supports_path_leased_worktree_without_broad_claim(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -3016,6 +3250,22 @@ def test_coordinated_claim_cli_contract_parses_exact_surfaces():
     assert intent_args.command == "claim-intent"
     assert intent_args.approve is True
     assert intent_args.break_glass is False
+
+    keyed_intent_args = bureau_cli.parser().parse_args(
+        [
+            "claim-intent",
+            "--worker",
+            "operator",
+            "--idempotency-key",
+            "request-1",
+        ]
+    )
+    assert keyed_intent_args.idempotency_key == "request-1"
+    readback_args = bureau_cli.parser().parse_args(
+        ["claim-intent-readback", "--idempotency-key", "request-1"]
+    )
+    assert readback_args.command == "claim-intent-readback"
+    assert readback_args.idempotency_key == "request-1"
 
     break_glass_args = bureau_cli.parser().parse_args(
         [

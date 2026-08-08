@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from bureau import broad_scope_dispatcher as broad_scope
 from bureau import legacy
 from bureau.core import Dispatcher, NoEligibleTask, Registry, StateError, StateStore
 from bureau.v2 import task_revision_sha256
@@ -223,3 +224,52 @@ def test_tampered_self_declared_plan_remains_blocked_without_review_authority(
         )
 
     assert store.list_runs() == []
+
+
+def test_broad_scope_review_is_bound_before_claim_issuance(
+    registry_factory,
+    tmp_path,
+    monkeypatch,
+) -> None:
+    root = registry_factory(1, mode="write")
+    plan_path = tmp_path / "reviewed-plan.json"
+    task_id = _prepare_broad_task(root, plan_path)
+    store, dispatcher = _dispatcher(root, tmp_path / "state.sqlite3")
+
+    monkeypatch.setattr(
+        broad_scope,
+        "BROAD_SCOPE_REVIEW_RECEIPT_VERIFIER_AVAILABLE",
+        True,
+    )
+    monkeypatch.setattr(
+        broad_scope,
+        "_broad_scope_assessment",
+        lambda _task, _resources: {
+            "broad_scope_requested": True,
+            "allowed": True,
+            "exception_status": "allowed",
+        },
+    )
+    monkeypatch.setattr(
+        broad_scope,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+        raising=False,
+    )
+
+    result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="t005 broad-scope issuance binding",
+        idempotency_key="t005:broad-scope",
+    )
+
+    evidence = result["intent"]["operator_approval"]["broad_scope_review"]
+    issuance = store.claim_intent_issuance(result["intent"]["run_id"])
+    assert evidence["task_id"] == task_id
+    assert issuance["intent"] == result["intent"]
+    assert issuance["intent"]["operator_approval"]["broad_scope_review"] == evidence
+    assert issuance["intent_sha256"] == result["intent"]["intent_sha256"]
+    assert result["ready_supply"]["broad_scope_review_bound"] is True

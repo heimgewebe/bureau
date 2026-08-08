@@ -1,0 +1,87 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Nur explizit registrierte Sachantragsklassen besitzen typisierte Executor-Kommandos; unbekannte oder freie Payload-Mutationen scheitern fail-closed.",
+      "evidence_type": "object",
+      "id": "typed-executors",
+      "verifier": "executor contract and negative tests"
+    },
+    {
+      "assertion": "Beschlusswirkungen nutzen bestehende Advisory Locks, Preconditions, Autorisierung und Auditpfade; es entsteht kein paralleler ungeschützter Mutationspfad.",
+      "evidence_type": "boolean",
+      "id": "reuse-write-guards",
+      "verifier": "integration tests and code review"
+    },
+    {
+      "assertion": "Wiederholung nach unklarem Ergebnis erzeugt keine Doppelwirkung; Fehler- und Retry-Zustand ist persistent und revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "idempotent-effect",
+      "verifier": "direct PostgreSQL integration proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Folgetask aus PR #1720; Beschlusswirkungen müssen eng typisiert und revisionsgebunden bleiben.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Für konkrete Sachantragsklassen eng typisierte, revisionsgebundene Executor-Verträge einführen, die angenommene Beschlüsse sicher in Domänenwirkungen übersetzen. Bestehende Knoten-Locks, Preconditions, Audit- und Autorisierungslogik wiederverwenden; keine freie oder beliebige Mutation aus Antragspayloads zulassen. Idempotenz, Fehler-/Retry-Vertrag und Integrationsbeweise einschließen.",
+  "id": "WELTGEWEBE-OS-V1-T076",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "current_fact": "PR #1720 finalisiert Sachanträge absichtlich nur als Beschluss und führt keine beliebigen Domänenmutationen aus.",
+    "independently_executable": true,
+    "source": "Follow-up from merged heimgewebe/weltgewebe PR #1720",
+    "source_merge_commit": "f4a9848863a59c7a78d12a7d13813296391d66ed",
+    "source_pull_request": "heimgewebe/weltgewebe#1720",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-acea56a6a4c0fd4dd3b95ad7",
+      "event_id": 4266,
+      "event_created_at": "2026-08-08T06:48:57.170408Z",
+      "request_sha256": "1f2030b9a9cb661b2b60355556aa51119682c25340d0a1ca561209f335ee57fa",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "github:heimgewebe/weltgewebe#1720@f4a9848863a59c7a78d12a7d13813296391d66ed",
+        "observed_at": "2026-08-08T06:36:58Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 48
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "postgresql",
+    "api",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Angenommene Sachanträge über typisierte Beschluss-Executor ausführen"
+}

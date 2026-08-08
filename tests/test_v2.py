@@ -404,7 +404,7 @@ def test_dirty_workspace_is_preserved(registry_factory, tmp_path, monkeypatch):
 
 
 
-def test_queue_json_is_dispatch_canon_for_unqueued_ready_task(registry_factory, tmp_path):
+def test_queue_json_is_compatibility_only_for_unqueued_ready_task(registry_factory, tmp_path):
     root = registry_factory(2, mode="write", max_active=2)
     queue_path = root / "registry/queue.json"
     queue = json.loads(queue_path.read_text())
@@ -422,16 +422,70 @@ def test_queue_json_is_dispatch_canon_for_unqueued_ready_task(registry_factory, 
     first["state"] = "planned"
     first_path.write_text(json.dumps(first))
 
+    subprocess.run(["git", "-C", str(root), "init", "-b", "main"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
+    subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(
+        ["git", "-C", str(root), "commit", "-m", "base"],
+        check=True,
+        capture_output=True,
+    )
+
     registry = Registry.load(root)
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
     dispatcher = Dispatcher(registry, store)
 
     frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
-    assert frontier["BUR-TEST-001-T002"]["eligible"] is False
-    assert "task is not queued in registry/queue.json" in frontier["BUR-TEST-001-T002"]["reasons"]
-    with pytest.raises(bureau_v2.legacy.NoEligibleTask) as excinfo:
-        dispatcher.claim_next("worker", ("repository",))
-    assert "task is not queued in registry/queue.json" in str(excinfo.value)
+    assert frontier["BUR-TEST-001-T002"]["eligible"] is True
+    assert frontier["BUR-TEST-001-T002"]["queue_lane"] is None
+    assert (
+        "task is not queued in registry/queue.json"
+        not in frontier["BUR-TEST-001-T002"]["reasons"]
+    )
+
+    intent = dispatcher.claim_intent(
+        "intent-worker",
+        ("repository",),
+        task_id="BUR-TEST-001-T002",
+        approved=True,
+        approval_source="test",
+    )
+    assert intent["status"] == "claim-intent"
+    assert intent["intent"]["task_id"] == "BUR-TEST-001-T002"
+
+    claimed = dispatcher.claim_next("worker", ("repository",))
+    assert claimed["run"]["task_id"] == "BUR-TEST-001-T002"
+
+
+def test_stale_git_queue_order_does_not_preempt_task_priority(registry_factory, tmp_path):
+    root = registry_factory(2, mode="write", max_active=2)
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"]["now"] = ["BUR-TEST-001-T001"]
+    queue_path.write_text(json.dumps(queue))
+
+    first_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    first = json.loads(first_path.read_text())
+    first["state"] = "ready"
+    first["priority"] = {"lane": "now", "rank": 50}
+    first_path.write_text(json.dumps(first))
+
+    second_path = root / "registry/tasks/BUR-TEST-001-T002.json"
+    second = json.loads(second_path.read_text())
+    second["state"] = "ready"
+    second["priority"] = {"lane": "now", "rank": 1}
+    second_path.write_text(json.dumps(second))
+
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(registry, store)
+
+    # The legacy Registry view may still render the checked-in queue first;
+    # dispatch must instead follow the task priority used by the dynamic frontier.
+    assert registry.ordered_tasks()[0].id == "BUR-TEST-001-T001"
+    claimed = dispatcher.claim_next("worker", ("repository",))
+    assert claimed["run"]["task_id"] == "BUR-TEST-001-T002"
 
 
 def test_queued_tasks_sort_before_unqueued_priority_tasks(registry_factory):

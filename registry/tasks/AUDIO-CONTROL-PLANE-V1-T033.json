@@ -1,0 +1,105 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Recorderaktionen werden in der UI nur freigeschaltet, wenn die Seite direkt über http://127.0.0.1:<port> oder http://localhost:<port> geladen wurde; jede Fernorigin bleibt read-only, auch ohne Bridge-Header.",
+      "evidence_type": "object",
+      "id": "direct-loopback-origin-gate"
+    },
+    {
+      "assertion": "Die serverseitigen Host-, Origin- und Aktionstoken-Gates bleiben unverändert fail-closed und bilden eine zweite unabhängige Schutzschicht.",
+      "evidence_type": "object",
+      "id": "backend-defense-preserved"
+    },
+    {
+      "assertion": "Ein einmal beobachteter read-only-v1-Bridge-Header bleibt für die Seitenlebensdauer bindend; sein Fehlen kann keine Fern-Schreibfähigkeit erzeugen.",
+      "evidence_type": "object",
+      "id": "remote-bridge-fail-closed"
+    },
+    {
+      "assertion": "Lokale Plan-, Start-, Stop- und Recovery-Flows sowie T022-Recorder-, iPad- und Control-Tests bleiben grün.",
+      "evidence_type": "object",
+      "id": "no-recorder-regression"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T022"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Repository- und UI-Härtung. Keine Aufnahme-, Routing- oder Gerätewirkung; Live-Audio bleibt durch bestehende Recorder- und Onsite-Gates getrennt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Die nach T022 ausgelieferte Voice-Recorder-UI so härten, dass wirkende Recorderaktionen ausschließlich auf einer direkt geladenen lokalen Control-Origin freigeschaltet werden. Ein fehlender oder fehlerhafter Read-only-Bridge-Header darf auf Fernseiten niemals Schreibfähigkeit erzeugen.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T033",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "discovery": "Post-Merge-Self-Review: Die UI stützte Schreibfreigabe zusätzlich auf den Bridge-Header; serverseitig war Wirkung bereits auf lokale Host-/Origin-/Token-Bindung begrenzt, die UI konnte aber bei fehlendem Header auf einer Fernseite fälschlich Schreibfähigkeit anzeigen.",
+    "does_not_establish": [
+      "Live-Aufnahmefreigabe",
+      "physische MOTU- oder RØDE-Bereitschaft",
+      "Bypass der T032-Hardware- und Pegelabnahme"
+    ],
+    "registered_at": "2026-08-08T13:49:00+02:00",
+    "source_pull_request": 66,
+    "source_task": "AUDIO-CONTROL-PLANE-V1-T022",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-140630d4156aaf424fb884a1",
+      "event_id": 4405,
+      "event_created_at": "2026-08-08T11:47:30.187043Z",
+      "request_sha256": "88c4d32a5b967fe2e3b29885beede532885cd099c6b7b7efcb45faffafb4682d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "post-merge-self-review",
+        "locator": "heimgewebe/audio#66@aec28430667fc1a0e6a505b50a7b606bc7de5f74",
+        "observed_at": "2026-08-08T13:47:30+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 33
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "recording",
+    "audio",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Da T033 keine Live-Audio- oder Gerätewirkung ausführt, genügt Repository-Rollback plus erneuter Control- und UI-Readback."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Recorder-Schreibfreigabe auf direkte Loopback-Origin härten"
+}

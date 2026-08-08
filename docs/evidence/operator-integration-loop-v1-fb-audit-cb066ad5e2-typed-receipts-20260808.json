@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "kind": "bureau_audit_typed_receipt_bundle",
+  "task_id": "OPERATOR-INTEGRATION-LOOP-V1-FB-AUDIT-CB066AD5E2",
+  "run_id": "BUR-RUN-20260808T170825Z-729638cea3",
+  "captured_at": "2026-08-08T17:38:31Z",
+  "current_github_main_at_fix": "2ce81bf2af5e03c470d4b168a25ac1d420a5ae92",
+  "sources": {
+    "grabowski_runtime_health": {
+      "service": "grabowski-mcp",
+      "healthy": true,
+      "deployment_complete": true,
+      "deployment_integrity_valid": true,
+      "audit_valid": true,
+      "audit_writable": true,
+      "kill_switch_engaged": false,
+      "repo_head": "f664fd762b8f36e057b51c6ced4ae0d9d9938d22",
+      "release_id": "f664fd762b8f-srcseteaabf3d2d911-locke6664d600b6c-contract93192a0657da"
+    },
+    "grabowski_bureau_pickup_status": {
+      "kind": "grabowski_bureau_pickup_status",
+      "schema_version": 1,
+      "registry_root": "/home/alex/.local/share/bureau/registry-snapshots/72462b4b0403-tree6be6b35e8bfd",
+      "registry_binding_sha256": "630de47233199d5c9236e8afa9c035b86cc8d63fccf4fbc493836f7db9edbfe1",
+      "coordination_sha256": "11f2efc57ee0a4a00692c71d350e2345f8333a03049369a029ea539315f140c3",
+      "claim_intent_sha256": "0e42ebf2d4450b1da7579d82d8d2ed90075a666cf1ba42c292c909a8687b8fd8",
+      "run": {
+        "state": "succeeded",
+        "attempt": 2,
+        "task_sha256": "dff4c5355a4a36a62f7bebbb354499b74e562e19afe51dfc3c4c1a260e18bd21",
+        "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+        "envelope_sha256": "8c7f5fd43d051fc38fe19e870cd041fdc8c4ae6bd1a7a86e8cd530227efdaef2",
+        "worker_id": "operator:chatgpt:abarbeiten-20260808T1859",
+        "workspace_branch": "bureau/operator-integration-loop-v1-fb-audit-cb066ad5e2/729638cea3",
+        "reservations": []
+      },
+      "lease": {
+        "status": "terminal-released-or-expired",
+        "required_resource_keys": [
+          "path:/home/alex/repos/bureau/docs",
+          "path:/home/alex/repos/bureau/docs/evidence"
+        ],
+        "stored_lease_binding_sha256": "6fccd0f1331852cf20213c70ad6a7f552e9d3b135c531c62e0383fb7e6d97dfd"
+      },
+      "execution_binding": {
+        "classification": "unbound",
+        "actively_bound": false,
+        "state": "succeeded",
+        "reason_codes": [
+          "state_not_active"
+        ]
+      }
+    },
+    "bureau_projection_readback": {
+      "source_grabowski_task_id": "271db20862c64c55a3b7bdd0",
+      "output_directory_sha256": "ac65e3b8e3923d1e52efa3627ead684b5a489f806e32d5930c28fb9a563df9d6",
+      "stdout_path_sha256": "33f64cf6701130388cd7568e30591a4a4c0c927fbaf4b40b7c9472aafd6dfb28",
+      "queue_summary": {
+        "blockers": 0,
+        "compatibility_converged": false,
+        "findings": 114,
+        "lane_mismatch_candidates": 49,
+        "projected_now": 1,
+        "projected_later": 67,
+        "queued_now": 10,
+        "queued_next": 10,
+        "queued_later": 64
+      },
+      "runtime_identity": {
+        "deployed_source_commit": "828d59d612cd5a9b36ac8d7c38bef4fb55939053",
+        "registry_snapshot_root": "/home/alex/.local/share/bureau/registry-snapshots/828d59d612cd-treefa17bd92d468",
+        "registry_snapshot_tree_sha256": "fa17bd92d468d2def4ca200172f91757d21c766845f665bfa856765d93d02630",
+        "state_integrity": "ok",
+        "state_schema_version": 5,
+        "claim_authority_established": false,
+        "claim_root_status": "read-only-snapshot",
+        "claim_root_reason_codes": [
+          "canonical-registry-read-only"
+        ]
+      }
+    },
+    "github_pr": {
+      "repository": "heimgewebe/bureau",
+      "number": 1809,
+      "head_sha_before_fix": "512d7e94e1814931ba9868ed71ca86337600eeb1",
+      "open": true,
+      "draft": false,
+      "mergeable": true,
+      "workflow": {
+        "id": 31269450073,
+        "name": "validate",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 4816
+      },
+      "review_thread": {
+        "id": "PRRT_kwDOTG2jCs6Xfiz8",
+        "top_comment_id": "PRRC_kwDOTG2jCs7e_faf",
+        "severity": "P1",
+        "state_at_capture": "unresolved",
+        "finding": "typed receipts and acceptance mapping were missing from the commit"
+      }
+    }
+  },
+  "acceptance_map": [
+    {
+      "id": "audit-1",
+      "assertion": "The audited contract, revision, method, and evidence sources are explicit.",
+      "evidence": [
+        "sources.grabowski_bureau_pickup_status",
+        "sources.bureau_projection_readback.runtime_identity",
+        "sources.github_pr",
+        "review-approval-contract-20260808.md#revisionsbindung",
+        "review-approval-contract-20260808.md#methode-und-evidenzquellen"
+      ]
+    },
+    {
+      "id": "audit-2",
+      "assertion": "Belegt, plausibel, and unresolved findings remain separated.",
+      "evidence": [
+        "review-approval-contract-20260808.md#belegt",
+        "review-approval-contract-20260808.md#plausibel-aber-nicht-vollstandig-bewiesen",
+        "review-approval-contract-20260808.md#ungeklart--grenzen"
+      ]
+    },
+    {
+      "id": "audit-3",
+      "assertion": "Any repair has a negative regression test or the no-change closeout is justified.",
+      "evidence": [
+        "review-approval-contract-20260808.md#gezielte-regressionstests-sind-grun",
+        "review-approval-contract-20260808.md#urteil",
+        "sources.github_pr.workflow"
+      ]
+    }
+  ],
+  "does_not_establish": [
+    "current claim authority",
+    "permission to bypass leases or open-PR guards",
+    "merge or deployment authority",
+    "future runtime state"
+  ]
+}

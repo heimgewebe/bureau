@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Evidence records the exact merged Commonworld commit, deployed release ID, production URL, physical Android model, Android version, Brave version, viewport orientation and relevant display or accessibility settings.",
+      "evidence_type": "object",
+      "id": "exact-production-binding"
+    },
+    {
+      "assertion": "On the physical Android/Brave device in portrait, the digital sphere shows ring strokes and multiple non-empty readable ring labels, remains interactive, emits no uncaught page error and does not lose labels after globe drag, zoom or refocus.",
+      "evidence_type": "object",
+      "id": "portrait-ring-label-proof"
+    },
+    {
+      "assertion": "On a reserved physical Android/Brave device in landscape with a CSS viewport strictly wider than the compact 48rem breakpoint, the coarse-touch path remains active, primary and depth ring labels stay visible and the compositor regression does not recur. If the reserved device cannot provide such a viewport, verification is blocked until a suitable physical Android/Brave device is exclusively claimed.",
+      "evidence_type": "object",
+      "id": "wide-landscape-proof"
+    },
+    {
+      "assertion": "If no defect is found, physical evidence is bound to the exact deployed release without product-code changes. If a defect is found, T044 records the exact failing release/device evidence and remains blocked; remediation, merge and deployment must occur only in separately registered and exclusively claimed Bureau successor tasks, and T044 may resume final verification only after consuming their typed merge/deployment receipts for the exact corrective commit.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    },
+    {
+      "isolation": "profile",
+      "mode": "exclusive",
+      "resource": "device.android.physical"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Physical verification requires an exclusive Bureau claim on device.android.physical. T044 itself is read-only against product state unless a defect is reproduced; any remediation, merge or deployment requires separately registered exclusive successor tasks and typed receipts before T044 resumes verification.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Verify the Android digital-ring label fix from Commonworld PR #200 on a physical Android device in Brave against the exact merged and deployed release in portrait and non-compact landscape, and repair any device-only regression without reintroducing compositor-sensitive SVG parent motion.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T044",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that Chromium emulation equals physical Android/Brave compositor behavior",
+      "that green CI proves production deployment",
+      "permission to re-enable compositor-sensitive parent animation without physical proof",
+      "automatic merge or deployment authority",
+      "authority for T044 itself to remediate, merge or deploy a reproduced defect without separately registered exclusive successor tasks"
+    ],
+    "observed_gap": "Chromium automation proves 390x844 portrait and 844x390 coarse-touch layout, but a real Android/Brave readback of the deployed merged head is still required.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-906703d12a4a2649c566db01",
+      "event_id": 4606,
+      "event_created_at": "2026-08-08T17:45:49.950174Z",
+      "request_sha256": "d7ee5edfe7e88f0c77c469df46f0f8d36ed7c49407bd0218ebba3b838a4fe9f1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-08-08T17:45:49.908515Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source": "Follow-up from Commonworld PR #200 Android ring-label regression",
+    "source_locator": "github:heimgewebe/commonworld#200@ae4b2229ea594a7ed041647baa52bcbac60ce651"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 44
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "shell",
+    "grabowski",
+    "browser",
+    "android",
+    "mobile",
+    "testing",
+    "ci"
+  ],
+  "rollback": {
+    "strategy": "If physical Android verification exposes a regression, retain the failing evidence and revert only any new corrective change that worsens label visibility, accessibility or desktop motion; the deployed static-label workaround remains the safe baseline until a proven replacement exists."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Verify ring labels on physical Android after deploy"
+}

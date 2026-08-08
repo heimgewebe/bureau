@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Unmittelbar vor jeder PR-Wirkung werden Zustand, Base, exakter Head SHA, Body und Changed-File-Scope von heimgewebe/grabowski#692 frisch gelesen; ein anderer Head oder ein geschlossener PR macht die vorherige Bewertung ungültig.",
+      "id": "exact-pr-readback"
+    },
+    {
+      "assertion": "Der offene PR #692 trägt exakt die kanonische Bureau-Task-Bindung GRABOWSKI-OPERATOR-SURFACE-V1-FB-PR692-BINDING-20260808; der Post-Effect-Binding-Readback meldet keine missing-task- oder open-pr-task-binding-Verletzung für diesen PR.",
+      "id": "bureau-binding"
+    },
+    {
+      "assertion": "Die Binding-Reparatur verändert zunächst ausschließlich PR-Metadaten: der Git-Head bleibt byte-identisch und der veraltete Exact-head-Hinweis wird auf den tatsächlich gebundenen Head korrigiert.",
+      "id": "metadata-only-before-conflict-resolution"
+    },
+    {
+      "assertion": "Der aktuelle Konflikt gegen main wird nur innerhalb des bestehenden #692-Implementierungsscopes beziehungsweise durch notwendige generierte Kontextanpassung aufgelöst; keine sachfremde Implementierung wird übernommen oder überschrieben.",
+      "id": "conflict-resolution-scope"
+    },
+    {
+      "assertion": "Alle für PR #692 verpflichtenden GitHub-Checks sind auf dem exakt zu mergenden Head grün; Review-Evidenz und Changed-File-Scope sind revisionsgebunden nachgelesen.",
+      "id": "full-validation"
+    },
+    {
+      "assertion": "PR #692 wird nur mit dem exakt unmittelbar zuvor geprüften Head gemergt; der Merge-Readback bestätigt diesen Head und den resultierenden main-Commit.",
+      "id": "exact-merge"
+    },
+    {
+      "assertion": "Nach dem Merge enthält main die Reconcile-Korrektur; ein frischer Bureau-/Grabowski-Readback bestätigt die Task-Bindung beziehungsweise einen terminal konsistenten PR-Zustand, ohne globale Binding-Guards abzuschwächen.",
+      "id": "post-merge-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "PR #692 taskbinden, aktuellen main-Konflikt isoliert auflösen und anschließend nur bei vollständig grünen Pflichtchecks exakt den geprüften Head mergen. Keine fremden Leases oder Dirty-States übernehmen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "github-pr:heimgewebe/grabowski#692",
+      "path:/home/alex/repos/grabowski/src/grabowski_tasks.py",
+      "path:/home/alex/repos/grabowski/tests/test_tasks.py",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bereits implementierten Grabowski-PR #692 am jeweils frisch gelesenen exakten Head revisionsgebunden in den Bureau-Lifecycle aufnehmen und abschließen: die PR-Beschreibung an diese Bureau-Aufgabe binden und den veralteten Exact-head-Hinweis korrigieren, ohne sachfremde Implementierung zu verändern; anschließend den aktuellen Konflikt gegen main in einem isolierten taskgebundenen Arbeitsstand auflösen, alle verpflichtenden Checks auf genau diesem Head grün bestätigen, nur diesen Head mergen und den resultierenden main-/Binding-Zustand nachlesen. Bei jeder Head-Drift wird vor Wirkung neu bewertet statt eine alte Bindung zu erzwingen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FB-PR692-BINDING-20260808",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic merge readiness before exact-head checks are green",
+      "permission to overwrite foreign work",
+      "future PR-head stability"
+    ],
+    "id_collision_avoided": "GRABOWSKI-OPERATOR-SURFACE-V1-T161 is already occupied by the direct-user-authority work-lane task; this FB id is deliberately collision-free.",
+    "observed_mergeability": "CONFLICTING",
+    "observed_pr_head": "6d6edd9780d61f07d6f3dc4c6c65df4cef8bed5f",
+    "observed_pr_state": "OPEN",
+    "source_pr": "heimgewebe/grabowski#692",
+    "t011_live_proof": {
+      "bureau_runtime_commit": "c5ef4f65e36b0dee06216d576e11fb3ad58ea161",
+      "candidate_event_id": 4274,
+      "grabowski_runtime_commit": "73fe6b8a7d83b649b06fc467f823c2f864509f9f"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b527f1befc73f1e10e82ba2d",
+      "event_id": 4274,
+      "event_created_at": "2026-08-08T06:56:38.783359Z",
+      "request_sha256": "78abe7c51e6090609cdadc72238f8109b5c76074153e44705f1c4dc35e5f06cf",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live_runtime_finding",
+        "locator": "github-pr:heimgewebe/grabowski#692@6d6edd9780d61f07d6f3dc4c6c65df4cef8bed5f",
+        "observed_at": "2026-08-08T06:52:58Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 692
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Ist die PR-Bindung falsch, den PR-Body auf den unmittelbar vorher nachgelesenen Text zurücksetzen, solange der PR offen und der Head unverändert ist. Konfliktauflösung und Merge nur über normale Git-Historie; keinen History-Rewrite auf main. Fremde Leases, Dirty-States und Prozesse unverändert lassen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "PR #692 taskgebunden und revisionsgenau abschließen"
+}

@@ -3,14 +3,14 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T022",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Stimmaufnahme als ersten Produkt-Vertikalschnitt integrieren",
-  "state": "planned",
+  "state": "ready",
   "goal": "Den vorhandenen gehärteten Recordervertrag als vollständiges Voice-Setup in Jetzt und Bibliothek integrieren: Pegel, Quelle, Monitoring, Start, Stop, Take, Wiedergabe und Recovery, weiterhin strikt an MOTU-, RØDE-, 48-V- und Pegelgates gebunden.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T031",
     "AUDIO-CONTROL-PLANE-V1-T004"
   ],
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 22
   },
   "execution": {
@@ -103,6 +103,46 @@
       "repository_task": "AUDIO-CONTROL-PLANE-V1-T021",
       "host_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T031",
       "reason": "Die Voice-Integration darf erst nach der separat belegten passiven Telemetrie-Langzeitabnahme fortgesetzt werden."
+    },
+    "readied_at": "2026-08-08T06:47:00+02:00",
+    "readiness_basis": {
+      "schema_version": 1,
+      "scope": "repository-only",
+      "dependencies": [
+        {
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T031",
+          "state": "verified",
+          "run_id": "BUR-RUN-20260805T172446Z-82fe9791e9",
+          "receipt_sha256": "648a99152a50a66b4174bd807f618a4abea463e79643e258fb55c77643da9570",
+          "task_sha256": "8bb5ac71a74c88e0686464b8a0b1bbaa54b30ec79c9dd98d4014928709c8d606"
+        },
+        {
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T004",
+          "state": "verified",
+          "source_ref": "github-prs:heimgewebe/audio#32,#33,#34+grabowski-task:8aff356788a543f89131c0a6",
+          "task_sha256": "da7128f9c2cedd3dfe5422349412fa8a806c503f997fddf2b81eea92473030d9"
+        }
+      ],
+      "physical_gate_policy": "Repositoryarbeit ist explizit nicht durch abwesende MOTU-/Roland-Hardware blockiert; Start/Livefreigabe bleibt durch onsite-gate fail-closed.",
+      "does_not_establish": [
+        "physische MOTU- oder RØDE-Bereitschaft",
+        "bestätigte Mikrofon-, Kanal-, Gain- oder 48-V-Fakten",
+        "Erlaubnis für Aufnahme-, Routing- oder Gerätewirkung"
+      ]
+    },
+    "readiness_reconciliation": {
+      "schema_version": 1,
+      "observed_at": "2026-08-08T06:47:00+02:00",
+      "from_state": "planned",
+      "to_state": "ready",
+      "from_lane": "later",
+      "to_lane": "next",
+      "reason": "T031 ist revisionsgebunden verifiziert und T004 repositoryseitig verifiziert. Damit sind beide T022-Abhängigkeiten terminal erfüllt. Die Initiativen-Policy nimmt repository-only portions of T022 through T026 ausdrücklich vom physischen Hardwaregate aus; physische Startfreigabe bleibt unverändert fail-closed.",
+      "does_not_establish": [
+        "Abschluss von T022",
+        "Live-Aufnahmefreigabe",
+        "Bypass von onsite-gate oder späteren Hardwareabnahmen"
+      ]
     }
   }
 }

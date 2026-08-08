@@ -152,6 +152,29 @@ def test_actor_and_structural_blockers_are_separate(registry_factory, tmp_path):
     assert card["projected_lane"] == "blocked"
 
 
+def test_actor_eligibility_summary_is_independent_of_structural_gates(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2)
+    first = "BUR-TEST-001-T001"
+    second = "BUR-TEST-001-T002"
+    first_path = _task_path(root, first)
+    task = json.loads(first_path.read_text())
+    task["depends_on"] = [second]
+    first_path.write_text(json.dumps(task))
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
+
+    projection = build_frontier_projection(
+        Registry.load(root), store, check_runtime=False
+    )
+    card = _card(projection, first)
+
+    assert card["actor_eligible"] is True
+    assert card["claim_eligible"] is False
+    assert projection["summary"]["actor_eligible_count"] == 2
+    assert projection["summary"]["claim_eligible_count"] == 1
+
+
 def test_projection_is_deterministic_for_same_inputs(registry_factory, tmp_path):
     root = registry_factory(4)
     store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")

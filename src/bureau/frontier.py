@@ -517,7 +517,8 @@ def build_frontier_projection(
             "structurally_eligible_count": sum(
                 1 for card in cards if card["structurally_eligible"]
             ),
-            "actor_eligible_count": sum(1 for card in cards if card["claim_eligible"]),
+            "actor_eligible_count": sum(1 for card in cards if card["actor_eligible"]),
+            "claim_eligible_count": sum(1 for card in cards if card["claim_eligible"]),
             "now_refill_promotion_count": promotion_count,
             "work_ball_count": len(work_balls),
         },

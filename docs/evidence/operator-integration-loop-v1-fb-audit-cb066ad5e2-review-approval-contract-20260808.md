@@ -140,3 +140,17 @@ Wenn maximale Beweisbreite höher gewichtet wird als Durchsatz, wäre ein Vollte
 Unsicherheit: `0.07`. Ursache: direkter Live-Claim, direkte Runtime-/Git-Reads, leerer relevanter Revisionsdiff und gezielte grüne Tests; Restunsicherheit bleibt für nicht auditierte Mutationsoberflächen.
 
 Interpolationsgrad: `0.05`. Nahezu alle Aussagen stammen aus Primärzustand oder direkt ausgeführtem Verhalten; nur die Aussage zur allgemeinen Bypass-Wahrscheinlichkeit ist eine Systeminferenz.
+
+## Typed receipt map
+
+Der reproduzierbare strukturierte Readback liegt neben diesem Bericht in
+`operator-integration-loop-v1-fb-audit-cb066ad5e2-typed-receipts-20260808.json`.
+Er enthält die typisierten Grabowski-Runtime-/Pickup-Werte, den hashgebundenen
+Bureau-Projektionsreadback und den exakt headgebundenen GitHub-PR-/CI-Zustand.
+Die drei Acceptance-IDs `audit-1` bis `audit-3` sind dort einzeln auf konkrete
+Evidenzpfade abgebildet. Damit sind die zuvor nur prosaisch referenzierten
+Livebehauptungen reproduzierbar an strukturierte Werte und Digests gebunden.
+
+Wichtig: Der spätere Projektionsreadback weist `claim_authority_established=false`
+aus. Er wird deshalb ausschließlich als Read-only-Evidenz verwendet und erteilt
+keine neue Claim-, Merge- oder Deploymentautorität.

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "device.android.physical",
+  "type": "external",
+  "parent": "root",
+  "metadata": {
+    "role": "Physical Android/Brave device reserved for device-only verification",
+    "does_not_establish": [
+      "device availability",
+      "specific device identity",
+      "browser availability",
+      "device correctness"
+    ]
+  }
+}

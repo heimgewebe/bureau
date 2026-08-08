@@ -76,7 +76,8 @@
       "OPERATOR-MACHINE-READABILITY-V1-T010"
     ],
     "now": [
-      "AUDIO-CONTROL-PLANE-V1-T022"
+      "AUDIO-CONTROL-PLANE-V1-T022",
+      "BUREAU-CONTROL-PLANE-V3-T004"
     ]
   },
   "queue_policy": "skip-blocked",

@@ -18,8 +18,9 @@ Das Audit umfasst Dokumentation, aktuelle Registry-/Frontier-Wahrheit, den live 
 
 ## Revisionsbindung
 
-- kanonischer Bureau-Runtime-/Registry-Release: `72462b4b0403b30ce131869c051ad6432043a537`
-- Audit-Worktree-Baseline und beim Audit live gelesener GitHub-`main`: `40b5391da104403533548092599ce224abd745b0`
+- beim Claim kanonischer Bureau-Runtime-/Registry-Release: `72462b4b0403b30ce131869c051ad6432043a537`
+- Audit-Worktree-Baseline und beim ersten Audit-Readback live gelesener GitHub-`main`: `40b5391da104403533548092599ce224abd745b0`
+- beim Closeout live deployter Runtime-Release und GitHub-`main`: `828d59d612cd5a9b36ac8d7c38bef4fb55939053`
 - Worktree: `/home/alex/repos/.bureau-worktrees/BUR-RUN-20260808T170825Z-729638cea3`
 - Branch: `bureau/operator-integration-loop-v1-fb-audit-cb066ad5e2/729638cea3`
 - Task-SHA-256: `dff4c5355a4a36a62f7bebbb354499b74e562e19afe51dfc3c4c1a260e18bd21`
@@ -110,6 +111,19 @@ Die Kombination aus exakter Reason-Filterung, approval-bound Intent, erneuter Co
 - RepoGround konnte für Bureau keinen aktuellen verwertbaren Textindex liefern (`fresh_dirty_unverified`/fehlender Index). Deshalb wurde RepoGround nicht als Evidenzquelle gewertet; stattdessen wurden der isolierte aktuelle Worktree, der kanonische Runtime-Snapshot, GitHub-`main`, Live-Frontier und Tests direkt gelesen.
 - Dieses Audit erteilt keine Merge-, Deployment- oder globale Runtime-Mutationsautorität.
 - Der auditierte Vertrag ist revisionsgebunden; spätere Änderungen an den genannten Dateien benötigen eine neue Prüfung.
+
+## Post-Audit-Runtime-Drift
+
+Während des laufenden Audits wurde Bureau weiterentwickelt: PR `heimgewebe/bureau#1808` wurde gemergt; beim Closeout zeigten Deployment-Manifest und GitHub-`main` beide auf `828d59d612cd5a9b36ac8d7c38bef4fb55939053`. Der bereits laufende Audit-Run blieb gemäß Journal korrekt an seinen ursprünglichen Claim-Snapshot `72462b4b0403b30ce131869c051ad6432043a537` gebunden.
+
+Dieser Drift wurde nicht ignoriert:
+
+- PR #1808 änderte unter den auditierten Dateien `src/bureau/v2.py` und `tests/test_v2.py`; `src/bureau/approval.py` sowie die beiden Vertragsdokumente blieben unverändert.
+- Die neue Runtime wurde direkt gelesen. `claim_intent()` entfernt weiterhin nur den exakten `interactive-agent/review-before-effect`-Grund und wählt nur bei anschließend leerer Reason-Liste.
+- `commit_claim_intent()` revalidiert weiterhin die übrigen Eligibility-Gründe; #1808 ergänzt zusätzlich revisions-, Zustands-, Attempt- und Idempotenz-CAS-Bindungen. Diese Änderungen härten den Claim-Pfad, statt die Freigabe zu verbreitern.
+- Derselbe Vierer-Negativtest wurde zusätzlich mit `PYTHONPATH` auf den deployten `828d59d...`-Quellbaum ausgeführt und lief erneut 4/4 grün.
+
+Damit gilt das No-Change-Urteil sowohl für den revisionsgebundenen Claim-Stand als auch für den beim Closeout aktuellen Runtime-Stand.
 
 ## Urteil
 

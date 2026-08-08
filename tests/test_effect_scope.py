@@ -68,6 +68,14 @@ def test_claim_intent_is_coordination_state_mutation() -> None:
     )
 
 
+
+def test_claim_intent_readback_is_read_only() -> None:
+    args = bureau_cli.parser().parse_args(
+        ["claim-intent-readback", "--idempotency-key", "request-1"]
+    )
+    assert bureau_cli._command_mutates(args) is False
+    assert bureau_cli._command_effect_scope(args) == "read_only"
+
 def test_canonical_claim_intent_uses_writable_coordination_store(
     registry_factory, tmp_path: Path, monkeypatch, capsys
 ) -> None:

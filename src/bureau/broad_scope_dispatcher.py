@@ -18,7 +18,6 @@ from .lease_contract import (
 from .v2 import Dispatcher as _BaseDispatcher
 from .v2 import (
     _validate_coordinated_claim_intent,
-    coordinated_claim_intent_sha256,
     task_revision_sha256,
 )
 
@@ -302,6 +301,25 @@ class Dispatcher(_BaseDispatcher):
             reasons.append(_BROAD_SCOPE_REVIEW_REASON)
         return reasons
 
+    def _coordinated_claim_approval_extensions(
+        self, task: legacy.Task
+    ) -> dict[str, Any]:
+        extensions = super()._coordinated_claim_approval_extensions(task)
+        assessment = _broad_scope_assessment(task, self.registry.resources)
+        if (
+            assessment["broad_scope_requested"]
+            and _BROAD_SCOPE_REVIEWED_TASK.get() == task.id
+        ):
+            if "broad_scope_review" in extensions:
+                raise legacy.StateError(
+                    "broad-scope review approval extension is duplicated"
+                )
+            return {
+                **extensions,
+                "broad_scope_review": _reviewed_plan_evidence(task),
+            }
+        return extensions
+
     def claim_intent(
         self,
         worker_id: str,
@@ -314,8 +332,8 @@ class Dispatcher(_BaseDispatcher):
         approved: bool = False,
         break_glass: bool = False,
         approval_source: str = "coordinated claim intent",
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        evidence: dict[str, Any] | None = None
         token = None
         if task_id is not None:
             task = self.registry.tasks.get(task_id)
@@ -340,7 +358,6 @@ class Dispatcher(_BaseDispatcher):
                     "broad Bureau scope exception contract is invalid"
                 )
             if assessment["broad_scope_requested"]:
-                evidence = _reviewed_plan_evidence(task)
                 token = _BROAD_SCOPE_REVIEWED_TASK.set(task.id)
         try:
             result = super().claim_intent(
@@ -353,20 +370,22 @@ class Dispatcher(_BaseDispatcher):
                 approved=approved,
                 break_glass=break_glass,
                 approval_source=approval_source,
+                idempotency_key=idempotency_key,
             )
         finally:
             if token is not None:
                 _BROAD_SCOPE_REVIEWED_TASK.reset(token)
-        if evidence is None or result.get("status") != "claim-intent":
+        if result.get("status") != "claim-intent":
             return result
         intent = result["intent"]
         operator_approval = intent.get("operator_approval")
-        if not isinstance(operator_approval, dict):
-            raise legacy.StateError(
-                "coordinated claim operator approval is invalid"
-            )
-        operator_approval["broad_scope_review"] = evidence
-        intent["intent_sha256"] = coordinated_claim_intent_sha256(intent)
+        evidence = (
+            operator_approval.get("broad_scope_review")
+            if isinstance(operator_approval, dict)
+            else None
+        )
+        if not isinstance(evidence, dict):
+            return result
         ready_supply = result["ready_supply"]
         ready_supply["broad_scope_review_bound"] = True
         ready_supply["broad_scope_review"] = {

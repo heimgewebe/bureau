@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audiozentrale als lokale, messbare Live-Audioumgebung",
-  "state": "active",
+  "state": "waiting",
   "commitment": "now",
   "goal": "Eine lokal betriebene Audiozentrale liefern, die reale Signalwege live sichtbar macht, Referenzhören, sichere Aufnahme, Roland- und Gitarrenspiel sowie begrenzte erklärbare Modulation in einer gemeinsamen wiederherstellbaren Produktoberfläche verbindet, ohne DAW-, Cloud-, KI- oder freien Modulargraph-Zwang.",
   "current_plan": {
@@ -140,10 +140,10 @@
       }
     ],
     "lifecycle": {
-      "reconciled_at": "2026-08-08T15:21:27.097844Z",
-      "reconciled_from": "waiting",
-      "reconciled_to": "active",
-      "reason": "Current Registry now contains ready Audio work, including newly registered AUDIO-CONTROL-PLANE-V1-T033. T033 is repository-only hardening and is explicitly outside the phase-specific physical gates, so the prior no-ready-work waiting rationale is stale.",
+      "reconciled_at": "2026-08-08T17:38:05.179044Z",
+      "reconciled_from": "active",
+      "reconciled_to": "waiting",
+      "reason": "Die aktuelle effektive Audio-Tasklage enthält keine ready oder laufende Arbeit: T033 ist verifiziert, T032 bleibt blockiert und die übrigen offenen Fortsetzungstasks sind geplant. Daher ist waiting der konsistente Initiativenzustand; eine erneute Aktivierung setzt tatsächlich ausführbare Arbeit oder ein erfülltes phasenbezogenes physisches Gate voraus.",
       "supersedes": {
         "reconciled_at": "2026-08-08T12:11:17.730669Z",
         "reconciled_from": "active",

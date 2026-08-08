@@ -1,0 +1,70 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The bottleneck is reproduced from current state rather than historical summary.",
+      "id": "diagnosis-1"
+    },
+    {
+      "assertion": "The diagnosis names causal evidence, uncertainty, and excluded explanations.",
+      "id": "diagnosis-2"
+    },
+    {
+      "assertion": "The outcome is either a tested repair or one bounded canonical follow-up.",
+      "id": "diagnosis-3"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/tests"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Diagnose one current throughput or reliability bottleneck and produce either a bounded repair or a canonically registered follow-up with exact blockers.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-9B3700EF53",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "diagnosis",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "9b3700ef533dfeffce6d75fce6013ea6b0ab36937b873bd06a2426f2575468b8",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "7b8998d2bbde1c62da28b749f9abe73c7ac15411d33f0bacd655a831910abf53",
+      "schema_version": 1,
+      "scope_path": "tests",
+      "time_bucket": "20673"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 903
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Diagnose one current Bureau bottleneck"
+}

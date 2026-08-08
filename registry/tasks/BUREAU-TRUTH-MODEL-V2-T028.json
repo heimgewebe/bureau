@@ -30,7 +30,7 @@
     "working_repository": "/home/alex/repos/bureau",
     "approval": {
       "action_class": "runtime_mutation",
-      "required_level": "reviewed_plan",
+      "required_level": "break_glass",
       "note": "Die Autorität ist auf den exakten Bureau-Runtime-Refresh für source commit 30313a0022afee6acc4fd7d94f696dc386b4edd4 und Target 471f57e954e55c0db6ecf6de750ef0afdb6e9c577e460f5fbd63e9d7ed3162be begrenzt. Keine Abschwächung von Runtime-, Registry-, Queue-, Claim- oder Lease-Gates und keine Mutation anderer Dienste oder Repositories."
     },
     "grabowski_resources": [
@@ -48,7 +48,7 @@
     },
     {
       "id": "approval-and-lease-binding",
-      "assertion": "prepare-intent verwendet eine auf dieses Task-ID und Target gebundene reviewed_plan-Runtimefreigabe. apply verwendet ausschließlich die vom Runtime-Refresh-Vertrag geforderten exakten Live-Leases; keine Taskbindung, Autorisierung, Break-Glass-Evidenz oder Lease wird erfunden."
+      "assertion": "prepare-intent verwendet eine auf diese Task-ID und dieses Target gebundene break_glass-Runtimefreigabe. apply verwendet ausschließlich die vom Runtime-Refresh-Vertrag geforderten exakten Live-Leases; keine Taskbindung, Autorisierung, Break-Glass-Evidenz oder Lease wird erfunden."
     },
     {
       "id": "immutable-runtime-readback",

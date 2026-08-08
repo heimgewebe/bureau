@@ -93,6 +93,78 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "88095191acb817ccd695d163c3847f2615e28189475728c90f229f0034b21109",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "merged_pr_ci_runtime_closeout",
+      "closeout_mode": "direct-user-authorized-fallback-post-merge-reconciliation",
+      "verified_at": "2026-08-08T12:20:33Z",
+      "canonical_bureau_run": null,
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 692,
+        "registered_observed_head": "6d6edd9780d61f07d6f3dc4c6c65df4cef8bed5f",
+        "metadata_bound_head": "cb68e3ad5e93bac7ab067474314a020dd1a87a5f",
+        "final_merge_head": "c9e884ae25006e244342a45524eea7f2a9ea4805",
+        "base_commit": "36a36a8dfa40eee86a612dcff59f532f77b58582",
+        "merge_commit": "1fe58fb0c00e2036b2b21e075a595811f1297973",
+        "merged_at": "2026-08-08T11:44:36Z",
+        "merge_method": "squash",
+        "current_main_readback": "1fe58fb0c00e2036b2b21e075a595811f1297973"
+      },
+      "validation": {
+        "local": {
+          "focused_regression": "1 passed",
+          "reconcile_neighborhood": "15 passed",
+          "full_test_tasks": "278 passed, 1 skipped, 28 subtests passed"
+        },
+        "head_ci": {
+          "validate_3_10": "success",
+          "validate_3_12": "success",
+          "CodeQL": "success",
+          "Analyze_actions": "success",
+          "Analyze_python": "success",
+          "Codex_review_settled": "success"
+        },
+        "runtime": {
+          "deployment_job": "grabowski-job-95f1f0450021",
+          "deployment_receipt_sha256": "c716be43aed4e36cd2f20639a0ff3b4a4181adf435021c56cfbcc02ccc509264",
+          "repo_head": "1fe58fb0c00e2036b2b21e075a595811f1297973",
+          "release_id": "1fe58fb0c00e-srcsetc395c6978511-locke6664d600b6c-contract93192a0657da",
+          "deployment_validation": "OK (skipped=14)",
+          "connector_snapshot": "192/192 matched",
+          "audit": "valid and writable",
+          "kill_switch": "not engaged"
+        }
+      },
+      "acceptance_evidence": {
+        "exact-pr-readback": "Before final merge, PR #692 was reread at exact head c9e884ae25006e244342a45524eea7f2a9ea4805 and mergeability/check state was rebound; final readback shows MERGED with exactly three changed files: src/grabowski_tasks.py, tests/test_tasks.py and docs/generated/operator-context.v1.json.",
+        "bureau-binding": "The merged PR body begins with Bureau-Task: GRABOWSKI-OPERATOR-SURFACE-V1-FB-PR692-BINDING-20260808. Candidate candidate-b527f1befc73f1e10e82ba2d / event 4274 resolves to this exact existing TaskSpec rather than a duplicate.",
+        "metadata-only-before-conflict-resolution": "The PR body records cb68e3ad5e93bac7ab067474314a020dd1a87a5f as the metadata-bound implementation head after the initially observed 6d6edd9780d61f07d6f3dc4c6c65df4cef8bed5f; the later regular update-branch step moved the final merge head to c9e884ae25006e244342a45524eea7f2a9ea4805 without adding feature-scope files.",
+        "conflict-resolution-scope": "After the regular main update, the final PR scope remained exactly the two implementation/test files plus the generated operator-context file; no unrelated implementation file entered the PR.",
+        "full-validation": "Exact final head c9e884ae25006e244342a45524eea7f2a9ea4805 passed both Python validation matrices, CodeQL/actions/python analysis and Codex review settlement; local focused, neighborhood and full task tests also passed.",
+        "exact-merge": "The merge was executed with --match-head-commit c9e884ae25006e244342a45524eea7f2a9ea4805. Repository policy disallowed merge commits, so the allowed squash method produced main commit 1fe58fb0c00e2036b2b21e075a595811f1297973, confirmed by PR and main readback.",
+        "post-merge-proof": "Grabowski production was deployed from clean detached source 1fe58fb0c00e2036b2b21e075a595811f1297973; runtime/manifest/process converged to that commit, deployment validation completed, audit remained valid, kill switch stayed off, and the connector catalog converged from 191 to 192 tools with a fresh matched snapshot."
+      },
+      "execution_reconciliation": {
+        "canonical_pickup_attempted": false,
+        "canonical_pickup_result": "not_attempted_direct_work_already_in_progress",
+        "reason": "The PR repair/merge lane was executed under direct user authorization while this TaskSpec existed but had no canonical Bureau run or task_status row. Closeout therefore records the already-completed evidence without fabricating a retroactive claim or run.",
+        "retroactive_claim_created": false,
+        "bureau_run_created": false,
+        "pre_closeout_task_spec_revision": 1,
+        "pre_closeout_task_status_row": false,
+        "pre_closeout_run_count": 0
+      },
+      "does_not_establish": [
+        "a retroactive Bureau claim or run",
+        "that the PR body Exact head field tracks the later update-branch merge head rather than the earlier metadata-bound head",
+        "completion or lease release of GRABOWSKI-OPERATOR-SURFACE-V1-T160",
+        "permission to override foreign work or active repository leases",
+        "future correctness after later Grabowski or Bureau changes"
+      ]
     }
   },
   "priority": {
@@ -113,6 +185,6 @@
     "strategy": "Ist die PR-Bindung falsch, den PR-Body auf den unmittelbar vorher nachgelesenen Text zurücksetzen, solange der PR offen und der Head unverändert ist. Konfliktauflösung und Merge nur über normale Git-Historie; keinen History-Rewrite auf main. Fremde Leases, Dirty-States und Prozesse unverändert lassen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "PR #692 taskgebunden und revisionsgenau abschließen"
 }

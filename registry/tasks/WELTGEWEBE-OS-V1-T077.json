@@ -1,0 +1,87 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Sachantrag kann nach Löschung oder Anonymisierung des Antragsteller-Accounts deterministisch finalisiert werden, ohne die historische Beschlussspur zu verlieren.",
+      "evidence_type": "boolean",
+      "id": "sach-finalizes-without-live-account",
+      "verifier": "direct PostgreSQL lifecycle test"
+    },
+    {
+      "assertion": "Weberanträge behalten ihre rollenändernde Account-Transaktion und ihre bisherigen Sperr-/Konsensregeln unverändert.",
+      "evidence_type": "boolean",
+      "id": "weber-regression",
+      "verifier": "governance regression tests"
+    },
+    {
+      "assertion": "Account-Löschung und Anonymisierung definieren explizit, welche Antragsteller-Referenzen historisch erhalten bleiben und welche personenbezogenen Daten entfernt werden.",
+      "evidence_type": "object",
+      "id": "deletion-semantics",
+      "verifier": "canonical specification and lifecycle tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vor einer allgemeinen Weber/Admin-Accountlöschung schließen; heute noch kein Produktblocker.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die Finalisierung von Sachanträgen so entkoppeln, dass die historische Entscheidung nicht vom fortbestehenden Antragsteller-Account abhängt. Weberanträge behalten ihre rollenändernde Account-Transaktion; Sachanträge erhalten einen eigenen sicheren Finalisierungszweig mit klarer Account-Lösch-/Anonymisierungssemantik und PostgreSQL-Beweisen.",
+  "id": "WELTGEWEBE-OS-V1-T077",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "current_fact": "Sachantrags-Finalisierung serialisiert derzeit weiterhin über den Antragsteller-Account; im aktuellen Lebenszyklus ist das sicher, weil nur Weber/Admin Sachanträge stellen und der bestehende Austritt nur Gäste löscht.",
+    "independently_executable": true,
+    "source": "Follow-up from merged heimgewebe/weltgewebe PR #1720",
+    "source_merge_commit": "f4a9848863a59c7a78d12a7d13813296391d66ed",
+    "source_pull_request": "heimgewebe/weltgewebe#1720",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6ace776aecc7a6d39d8ba139",
+      "event_id": 4267,
+      "event_created_at": "2026-08-08T06:49:23.901469Z",
+      "request_sha256": "612bba2a72e61acafa1123965d8b364ac860a51a4291dbb7e086d8b5f344d7c7",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "github:heimgewebe/weltgewebe#1720@f4a9848863a59c7a78d12a7d13813296391d66ed",
+        "observed_at": "2026-08-08T06:36:58Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 49
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "postgresql",
+    "api",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Sachantrags-Finalisierung vom Antragsteller-Account entkoppeln"
+}

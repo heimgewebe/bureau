@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der globale Befehl `repoground` delegiert an die kanonische RepoGround-CLI und `repoground --help` zeigt deren aktuelle Oberfläche; der historische systemd/curl/xdg-open-Service-/Browser-Starter läuft nicht mehr unter diesem CLI-Namen.",
+      "id": "canonical-cli-wrapper"
+    },
+    {
+      "assertion": "Der read-only Doctor bewertet den globalen Wrapper nicht nur nach Existenz oder Ausführbarkeit, sondern prüft eine begrenzte kanonische Identität oder Delegationssemantik; ein historischer oder fremder Wrapper wird degraded oder blocked mit Ursache, Auswirkung und zulässigem nächsten Schritt gemeldet.",
+      "id": "doctor-validates-identity"
+    },
+    {
+      "assertion": "Automatisierte Tests unterscheiden mindestens fehlenden Wrapper, bekannten historischen Service-/Browser-Wrapper, fremden ausführbaren Wrapper und kanonische CLI-Delegation; falsche Wrapper dürfen nicht als available durchgehen.",
+      "id": "negative-wrapper-tests"
+    },
+    {
+      "assertion": "Vor der Hoständerung werden Wrapperinhalt, SHA-256, Dateityp oder Symlinkziel, Besitzer, relevante Prozesse und Lease-Konflikte frisch gelesen. Ersetzung nur gegen exakt beobachteten Zustand; bei Drift oder fremder aktiver Nutzung fail-closed.",
+      "id": "bounded-host-migration"
+    },
+    {
+      "assertion": "Der vorherige Wrapperzustand wird vor Ersetzung hashgebunden und reversibel gesichert oder mechanisch rekonstruierbar belegt; bei fehlgeschlagenem CLI- oder Doctor-Readback wird exakt zurückgerollt.",
+      "id": "rollback-proof"
+    },
+    {
+      "assertion": "Nach Merge und zulässiger lokaler Aktivierung belegen hashgebundener Heim-PC-Readback, `repoground --help` und `repoground doctor` die kanonische CLI-Identität und korrekte Doctor-Semantik; `repoground.service` bleibt unbeabsichtigt unverändert.",
+      "id": "live-readback"
+    },
+    {
+      "assertion": "Gezielte Wrapper-/Doctor-Tests, relevante RepoGround-Test- und Lint-Gates sowie erforderliche GitHub-CI laufen auf dem exakten PR-Head erfolgreich, bevor ein Merge erfolgt.",
+      "id": "validation-gates"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Direkter Nutzerauftrag vom 08.08.2026: nächsten RepoGround-Task claimen und bearbeiten; Hostmutation nur am exakt verifizierten globalen RepoGround-Wrapper, mit Readback und Rollback.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "path:/home/alex/.local/bin/repoground",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Den globalen Befehl `repoground` auf dem Heim-PC sicher an die kanonische RepoGround-CLI delegieren, den historischen Service-/Browser-Starter aus dieser CLI-Identität entfernen und den read-only Doctor so härten, dass bloße Dateiexistenz nicht mehr fälschlich als gültiger Wrapper gemeldet wird.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T023",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Abwesenheit späterer Wrapper-Drift",
+      "Berechtigung zu anderen Hoständerungen",
+      "Berechtigung zur Änderung von repoground.service",
+      "Merge-Bereitschaft vor CI",
+      "semantische Korrektheit beliebiger fremder Wrapper"
+    ],
+    "finding": "Live-Audit vom 07.08.2026: /home/alex/.local/bin/repoground mit SHA-256 654f3e516db8dd254c32ceb37b2316f3592f16c30dc171198ba8bf59428a1c82 ist ein 23-zeiliger systemd/curl/xdg-open-Service-Starter; der kanonische RepoGround-Starter delegiert an merger.repoground.__main__, während Doctor den installierten Drift derzeit als wrapper=available einstuft.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f19c6382d3cdf71ae4b15679",
+      "event_id": 4151,
+      "event_created_at": "2026-08-07T17:24:26.627133Z",
+      "request_sha256": "56afebbe7e512a8db4d4ab6d1e4f6d45565608f3728c3cb88ede534fde15afd8",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-audit",
+        "locator": "host:heim-pc:/home/alex/.local/bin/repoground@repo-main:ba1bda950ea23c987fba7a3f38537854a566c5e6",
+        "observed_at": "2026-08-07T17:24:26.585995Z",
+        "sha256": "654f3e516db8dd254c32ceb37b2316f3592f16c30dc171198ba8bf59428a1c82"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "repoground",
+    "cli",
+    "diagnostics",
+    "testing"
+  ],
+  "rollback": {
+    "procedure": "Keine unbekannten Zustände überschreiben. Falls die Ersetzung eindeutig erfolgt ist, den vorab hashgebundenen Wrapperzustand atomar wiederherstellen und CLI/Doctor erneut read-only prüfen; RepoGround-Service und fremde Arbeitszustände unverändert lassen.",
+    "trigger": "Der globale Befehl startet nicht die kanonische CLI, Doctor meldet den gültigen Wrapper nicht korrekt, ein unerwarteter Hostzustand wird beobachtet oder eine bestehende RepoGround-Nutzung regressiert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "stop": {
+    "conditions": [
+      "Der installierte Wrapper weicht vor der Mutation vom digestgebunden beobachteten Zustand ab und seine Herkunft ist nicht geklärt.",
+      "Eine fremde aktive Lease oder ein fremder Prozess beansprucht den Wrapperpfad oder eine überlappende RepoGround-Mutation.",
+      "Der RepoGround-Arbeitscheckout kann nicht sauber und isoliert vom aktuellen origin/main erzeugt werden.",
+      "Die kanonische CLI-Delegation oder der Doctor-Vertrag kann nicht ohne Erweiterung des freigegebenen Host-/Repository-Scope hergestellt werden."
+    ]
+  },
+  "title": "Globalen RepoGround-CLI-Wrapper und Doctor-Readiness konvergieren"
+}

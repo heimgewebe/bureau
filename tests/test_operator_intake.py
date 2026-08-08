@@ -55,7 +55,6 @@ def _committed_registry(registry_factory) -> tuple[Path, Registry]:
     return root, Registry.load(root)
 
 
-
 def _runtime_snapshot_registry(
     source: Path,
     tmp_path: Path,
@@ -121,6 +120,7 @@ def _runtime_snapshot_registry(
     )
     monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST", str(manifest))
     return Registry.load(snapshot), snapshot
+
 
 def _record(registry: Registry, store: StateStore, *, key: str = "source:alpha"):
     return candidate_record(
@@ -203,6 +203,43 @@ def _proposal(registry: Registry, store: StateStore, tmp_path: Path) -> Path:
     return path
 
 
+def _revision_proposal(
+    registry: Registry,
+    store: StateStore,
+    tmp_path: Path,
+    *,
+    task_id: str = "BUR-TEST-001-T002",
+    candidate_task_id: str | None = None,
+    key: str = "source:revision",
+) -> tuple[Path, dict, dict]:
+    store.import_registry_task_specs(registry)
+    candidate_target = task_id if candidate_task_id is None else candidate_task_id
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key=key,
+        title=f"Revise {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:{task_id}",
+        source_sha256="9" * 64,
+        desired_outcome=f"Revise the exact existing TaskSpec {task_id}",
+        repo="repo.alpha",
+        task_id=candidate_target,
+    )
+    revised = json.loads(json.dumps(registry.tasks[task_id].raw))
+    revised["title"] = f"{revised['title']} revised through operator intake"
+    plan_path = tmp_path / f"{task_id}.revision.proposal.json"
+    task_propose(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        task_json=revised,
+        publishing_task_id="BUR-TEST-001-T001",
+        path=plan_path,
+    )
+    return plan_path, recorded, revised
+
+
 def _lease_binding(*, owner: str = "operator-test", task_id: str = "BUR-TEST-001-T001") -> dict:
     return {"owner_id": owner, "task_id": task_id}
 
@@ -232,8 +269,7 @@ def _lease_db(
     )
     connection.execute("INSERT INTO metadata(key, value) VALUES('schema_version', '2')")
     connection.execute(
-        "INSERT INTO metadata(key, value) "
-        "VALUES('resource_lease_contract_version', '1')"
+        "INSERT INTO metadata(key, value) VALUES('resource_lease_contract_version', '1')"
     )
     lease_metadata: dict[str, object] = {
         "task_id": "BUR-TEST-001-T001",
@@ -405,9 +441,7 @@ def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
     ]
 
 
-def test_candidate_record_preserves_v1_request_hash_without_refinement(
-    registry_factory, tmp_path
-):
+def test_candidate_record_preserves_v1_request_hash_without_refinement(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     recorded = _record(registry, store)
@@ -427,9 +461,7 @@ def test_candidate_record_preserves_v1_request_hash_without_refinement(
         "catalog_validation": "strict",
     }
 
-    assert recorded["request_sha256"] == operator_intake_module.legacy.sha256_json(
-        expected_request
-    )
+    assert recorded["request_sha256"] == operator_intake_module.legacy.sha256_json(expected_request)
     assert "supersedes_event_id" not in expected_request
 
 
@@ -547,9 +579,7 @@ def test_candidate_replay_returns_current_superseding_event_without_self_duplica
     )
 
 
-def test_candidate_assess_resolves_idempotency_key_to_current_candidate(
-    registry_factory, tmp_path
-):
+def test_candidate_assess_resolves_idempotency_key_to_current_candidate(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     first = _record(registry, store)
@@ -598,9 +628,7 @@ def test_candidate_assess_rejects_unknown_idempotency_key(registry_factory, tmp_
     assert caught.value.code == "idempotency-key-unknown"
 
 
-def test_candidate_request_refines_current_event_and_inherits_identity(
-    registry_factory, tmp_path
-):
+def test_candidate_request_refines_current_event_and_inherits_identity(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     first = _record(registry, store)
@@ -626,23 +654,14 @@ def test_candidate_request_refines_current_event_and_inherits_identity(
     assert refined["record"]["supersedes_event_id"] == first["event_id"]
     assert refined["record"]["repo"] == "repo.alpha"
     assert refined["record"]["status"] == first["record"]["status"]
-    assert (
-        refined["record"]["promotion_required"]
-        == first["record"]["promotion_required"]
-    )
-    assert (
-        refined["record"]["operator_intake"]["request_sha256"]
-        == refined["request_sha256"]
-    )
+    assert refined["record"]["promotion_required"] == first["record"]["promotion_required"]
+    assert refined["record"]["operator_intake"]["request_sha256"] == refined["request_sha256"]
     assert refined["record"]["operator_intake"]["desired_outcome"] == request["desired_outcome"]
     assert refined["record"]["operator_intake"]["source"]["sha256"] == "b" * 64
     assert refined["record"]["operator_intake"] != first["record"]["operator_intake"]
 
 
-
-def test_candidate_request_can_add_assessment_missing_repo_once(
-    registry_factory, tmp_path
-):
+def test_candidate_request_can_add_assessment_missing_repo_once(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     first = candidate_record(
@@ -677,10 +696,7 @@ def test_candidate_request_can_add_assessment_missing_repo_once(
     assert refined["candidate_id"] == first["candidate_id"]
     assert refined["record"]["repo"] == "repo.alpha"
     assert refined["record"]["status"] == first["record"]["status"]
-    assert (
-        refined["record"]["promotion_required"]
-        == first["record"]["promotion_required"]
-    )
+    assert refined["record"]["promotion_required"] == first["record"]["promotion_required"]
     after = candidate_assess(registry, store, candidate_id=first["candidate_id"])
     assert after["decision"] == "promote"
     assert after["missing_fields"] == []
@@ -689,9 +705,7 @@ def test_candidate_request_can_add_assessment_missing_repo_once(
     ]
 
 
-def test_candidate_request_still_rejects_refinement_repo_rebinding(
-    registry_factory, tmp_path
-):
+def test_candidate_request_still_rejects_refinement_repo_rebinding(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     first = _record(registry, store)
@@ -716,9 +730,8 @@ def test_candidate_request_still_rejects_refinement_repo_rebinding(
     assert caught.value.effect_started is False
     assert len(operator_intake_module.candidate_records(store)) == 1
 
-def test_candidate_request_rejects_refinement_task_rebinding(
-    registry_factory, tmp_path
-):
+
+def test_candidate_request_rejects_refinement_task_rebinding(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     task_ids = sorted(registry.tasks)
     assert len(task_ids) >= 2
@@ -790,9 +803,7 @@ def test_candidate_request_strictly_revalidates_inherited_deferred_bindings(
 
 
 @pytest.mark.parametrize("value", [True, False, 0, -1, "1", 1.0])
-def test_candidate_request_rejects_invalid_supersedes_event_id(
-    registry_factory, tmp_path, value
-):
+def test_candidate_request_rejects_invalid_supersedes_event_id(registry_factory, tmp_path, value):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     with pytest.raises(OperatorIntakeError) as caught:
@@ -815,9 +826,7 @@ def test_candidate_request_rejects_invalid_supersedes_event_id(
     assert operator_intake_module.candidate_records(store) == []
 
 
-def test_candidate_refinement_idempotency_binds_superseded_event(
-    registry_factory, tmp_path
-):
+def test_candidate_refinement_idempotency_binds_superseded_event(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     first = _record(registry, store)
@@ -882,7 +891,6 @@ def test_candidate_record_rejects_idempotency_conflict(registry_factory, tmp_pat
     assert caught.value.effect_started is False
 
 
-
 def test_candidate_assess_accepts_manifest_bound_runtime_snapshot(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -925,7 +933,6 @@ def test_candidate_assess_rejects_runtime_snapshot_with_invalid_manifest(
     assert caught.value.code == "registry-git-read-failed"
 
 
-
 def test_candidate_assess_rejects_runtime_snapshot_drift_during_reload(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -955,6 +962,7 @@ def test_candidate_assess_rejects_runtime_snapshot_drift_during_reload(
 
     assert caught.value.code == "registry-snapshot-drift"
     assert caught.value.retryable is True
+
 
 def test_candidate_assessment_is_advisory_and_promotes_complete_input(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
@@ -1010,9 +1018,7 @@ def test_candidate_assessment_reports_shared_source_as_advisory(registry_factory
     }
 
 
-def test_candidate_assessment_keeps_explicit_task_identity_exact(
-    registry_factory, tmp_path
-):
+def test_candidate_assessment_keeps_explicit_task_identity_exact(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     first = candidate_record(
@@ -1050,17 +1056,13 @@ def test_candidate_assessment_keeps_explicit_task_identity_exact(
         "task-id",
     }
     candidate_finding = next(
-        finding
-        for finding in result["exact_duplicates"]
-        if finding["kind"] == "candidate-task-id"
+        finding for finding in result["exact_duplicates"] if finding["kind"] == "candidate-task-id"
     )
     assert candidate_finding["candidate_id"] == first["candidate_id"]
     assert result["source_relationships"] == []
 
 
-def test_candidate_assessment_bounds_shared_source_relationships(
-    registry_factory, tmp_path
-):
+def test_candidate_assessment_bounds_shared_source_relationships(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     for index in range(operator_intake_module.MAX_SOURCE_RELATIONSHIPS + 5):
@@ -1098,9 +1100,7 @@ def test_candidate_assessment_bounds_shared_source_relationships(
     }
 
 
-def test_shared_source_candidates_keep_independent_reviewed_proposals(
-    registry_factory, tmp_path
-):
+def test_shared_source_candidates_keep_independent_reviewed_proposals(registry_factory, tmp_path):
     root, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     source_sha256 = "7" * 64
@@ -1158,9 +1158,7 @@ def test_shared_source_candidates_keep_independent_reviewed_proposals(
         task = _task(root, request["task_id"])
         task["title"] = request["title"]
         task["goal"] = request["desired_outcome"]
-        task["claims"] = [
-            {"resource": request["repo"], "mode": "write", "isolation": "worktree"}
-        ]
+        task["claims"] = [{"resource": request["repo"], "mode": "write", "isolation": "worktree"}]
         proposal_path = tmp_path / f"{request['task_id']}.proposal.json"
         task_propose(
             registry,
@@ -1179,9 +1177,139 @@ def test_shared_source_candidates_keep_independent_reviewed_proposals(
     assert len({preview["proposal_sha256"] for preview in previews}) == 3
 
 
-def test_task_review_binds_exact_pending_proposal_and_enables_preview(
+def test_task_revision_proposal_binds_authoritative_baseline(registry_factory, tmp_path):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, recorded, _ = _revision_proposal(registry, store, tmp_path)
+
+    plan = json.loads(plan_path.read_text())
+    baseline = store.task_spec(plan["task_id"])
+    assert baseline is not None
+    assert plan["candidate"]["candidate_id"] == recorded["candidate_id"]
+    assert plan["task_spec"]["operation"] == "revise"
+    assert plan["task_spec"]["expected_revision"] == 1
+    assert plan["task_spec"]["expected_spec_sha256"] == baseline["spec_sha256"]
+    assert plan["task_spec"]["proposed_spec_sha256"] == plan["task_json_sha256"]
+    target = root / plan["target_path"]
+    assert (
+        plan["task_spec"]["expected_task_file_sha256"]
+        == hashlib.sha256(target.read_bytes()).hexdigest()
+    )
+    _review(plan_path)
+    assert publication_preview(registry, store, plan_path=plan_path)["status"] == "ready"
+
+
+def test_task_revision_rejects_candidate_bound_to_another_task(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:wrong-revision-target",
+        title="Wrong revision target",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:wrong-target",
+        source_sha256="8" * 64,
+        desired_outcome="Attempt to revise another task",
+        repo="repo.alpha",
+        task_id="BUR-TEST-001-T001",
+    )
+    revised = json.loads(json.dumps(registry.tasks[task_id].raw))
+    revised["title"] = "Must not be silently revised"
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "wrong-target.json",
+        )
+    assert caught.value.code == "candidate-task-identity-mismatch"
+    assert not (tmp_path / "wrong-target.json").exists()
+
+
+def test_task_revision_publication_advances_and_replays_without_receipt(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    publisher = FakePublisher()
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces-first",
+        receipt_path=tmp_path / "receipt-first.json",
+        publisher=publisher,
+    )
+    second = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces-replay",
+        receipt_path=tmp_path / "receipt-replay.json",
+        publisher=publisher,
+    )
+    assert first["task_spec_revision"]["revision"] == 2
+    assert first["task_spec_revision"]["parent_revision"] == 1
+    assert first["task_spec_revision"]["idempotent_replay"] is False
+    assert second["task_spec_revision"]["revision"] == 2
+    assert second["task_spec_revision"]["idempotent_replay"] is True
+    assert second["legacy_task_spec_import"]["replayed_after_revision"] is True
+    assert (
+        store.task_spec(first["task_id"])["spec_sha256"]
+        == first["task_spec_revision"]["spec_sha256"]
+    )
+    assert publisher.calls == 2
+
+
+def test_task_revision_stale_expected_revision_fails_before_publication_effect(
     registry_factory, tmp_path
 ):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    plan = json.loads(plan_path.read_text())
+    current = store.task_spec(plan["task_id"])
+    assert current is not None
+    foreign = json.loads(json.dumps(current["spec"]))
+    foreign["title"] = "Foreign revision wins the CAS race"
+    store.put_task_spec(
+        foreign,
+        idempotency_key="foreign-revision",
+        expected_revision=current["revision"],
+        source="test-foreign-revision",
+    )
+    publisher = FakePublisher()
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+            publisher=publisher,
+        )
+    assert caught.value.code == "task-spec-baseline-drift"
+    assert publisher.calls == 0
+    assert store.task_spec(plan["task_id"])["spec"]["title"] == (
+        "Foreign revision wins the CAS race"
+    )
+
+
+def test_task_review_binds_exact_pending_proposal_and_enables_preview(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
@@ -1317,9 +1445,7 @@ def test_task_review_cas_restores_foreign_pre_exchange_bytes(
     assert plan_path.read_bytes() == foreign_bytes
 
 
-def test_task_review_post_exchange_drift_is_ambiguous(
-    registry_factory, tmp_path, monkeypatch
-):
+def test_task_review_post_exchange_drift_is_ambiguous(registry_factory, tmp_path, monkeypatch):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
@@ -1483,9 +1609,7 @@ def test_publication_preview_rejects_symlink_plan(registry_factory, tmp_path):
     assert caught.value.code == "proposal-type-invalid"
 
 
-def test_publication_effect_rejects_symlink_plan_and_receipt(
-    registry_factory, tmp_path
-):
+def test_publication_effect_rejects_symlink_plan_and_receipt(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
@@ -2112,10 +2236,7 @@ class LocalGitPublisher(SubprocessTaskPublisher):
 
 
 def _publication_commit_count(commands: list[tuple[str, ...]]) -> int:
-    return sum(
-        "commit" in command or "commit-tree" in command
-        for command in commands
-    )
+    return sum("commit" in command or "commit-tree" in command for command in commands)
 
 
 class FaultInjectingLocalPublisher(LocalGitPublisher):
@@ -2231,9 +2352,7 @@ class MarkerInterruptionPublisher(FaultInjectingLocalPublisher):
             and self.interruption == point
         ):
             self.injected = True
-            raise RuntimeError(
-                f"marker interruption at {self.marker_phase}:{self.interruption}"
-            )
+            raise RuntimeError(f"marker interruption at {self.marker_phase}:{self.interruption}")
 
     def _after_marker_temp_created(self, temporary: Path) -> None:
         self._interrupt_marker("temp_created")
@@ -2283,6 +2402,48 @@ def _local_remote(root: Path, tmp_path: Path) -> Path:
         capture_output=True,
     )
     return remote
+
+
+def test_local_publisher_revises_existing_task_file(registry_factory, tmp_path):
+    root, registry = _committed_registry(registry_factory)
+    remote = _local_remote(root, tmp_path)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, revised = _revision_proposal(
+        registry, store, tmp_path, key="source:local-git-revision"
+    )
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    publisher = LocalGitPublisher()
+    result = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "publication-workspaces",
+        receipt_path=tmp_path / "revision-receipt.json",
+        publisher=publisher,
+    )
+
+    assert result["task_spec_revision"]["revision"] == 2
+    assert result["publication"]["readback_complete"] is True
+    assert publisher.pull_request is not None
+    assert "Revise reviewed candidate task" in publisher.pull_request["body"]
+    assert "Bureau-Task-Binding-Exception" not in publisher.pull_request["body"]
+    remote_task = subprocess.run(
+        [
+            "git",
+            "--git-dir",
+            str(remote),
+            "show",
+            f"{result['publication']['head']}:{result['target_path']}",
+        ],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout
+    assert json.loads(remote_task)["title"] == revised["title"]
 
 
 def _advance_remote_main(remote: Path, tmp_path: Path) -> None:
@@ -2378,8 +2539,7 @@ def test_subprocess_publisher_creates_only_target_branch_and_task_file(registry_
     assert f"Bureau-Task: {plan['task_id']}\n" in body
     assert (
         "Bureau-Task-Binding-Exception: task-registration PR; "
-        f"{plan['task_id']} is introduced by this PR and is absent from the base registry\n"
-        in body
+        f"{plan['task_id']} is introduced by this PR and is absent from the base registry\n" in body
     )
     assert f"Bureau-Task: {plan['publishing_task_id']}\n" not in body
     assert result["publication"]["readback_complete"] is True
@@ -2488,14 +2648,10 @@ def test_mutation_after_tree_capture_cannot_change_commit_or_reach_remote(
 
 
 def _publication_branch_for_test(plan: dict) -> str:
-    return operator_intake_module._publication_branch(
-        plan["task_id"], plan["proposal_sha256"]
-    )
+    return operator_intake_module._publication_branch(plan["task_id"], plan["proposal_sha256"])
 
 
-@pytest.mark.parametrize(
-    "interruption", ["before_clone_destination", "after_clone_destination"]
-)
+@pytest.mark.parametrize("interruption", ["before_clone_destination", "after_clone_destination"])
 def test_clone_destination_interruption_retries_from_exact_reservation_once(
     registry_factory, tmp_path, interruption
 ):
@@ -2507,9 +2663,7 @@ def test_clone_destination_interruption_retries_from_exact_reservation_once(
     preview = publication_preview(registry, store, plan_path=plan_path)
     workspace_root = tmp_path / "workspaces"
     workspace = workspace_root / plan["proposal_sha256"][:20]
-    staging = workspace.with_name(
-        f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}"
-    )
+    staging = workspace.with_name(f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}")
     reservation = SubprocessTaskPublisher._reservation_path(workspace)
     publisher = PreEffectInterruptionPublisher(interruption=interruption)
 
@@ -2567,9 +2721,7 @@ def test_markerless_staging_without_exact_reservation_blocks_without_deletion(
     preview = publication_preview(registry, store, plan_path=plan_path)
     workspace_root = tmp_path / "workspaces"
     workspace = workspace_root / plan["proposal_sha256"][:20]
-    staging = workspace.with_name(
-        f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}"
-    )
+    staging = workspace.with_name(f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}")
     reservation = SubprocessTaskPublisher._reservation_path(workspace)
     publisher = PreEffectInterruptionPublisher(interruption="after_clone_destination")
     with pytest.raises(OperatorIntakeError):
@@ -2593,9 +2745,7 @@ def test_markerless_staging_without_exact_reservation_blocks_without_deletion(
         value["proposal_sha256"] = "0" * 64
         unsigned = {key: item for key, item in value.items() if key != "reservation_sha256"}
         value["reservation_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
-        reservation.write_text(
-            json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n"
-        )
+        reservation.write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n")
 
     with pytest.raises(OperatorIntakeError) as caught:
         publish_task_proposal(
@@ -2653,9 +2803,7 @@ def test_markerless_staging_replacement_race_blocks_without_deleting_foreign_pat
             publisher=publisher,
         )
     workspace = workspace_root / plan["proposal_sha256"][:20]
-    staging = workspace.with_name(
-        f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}"
-    )
+    staging = workspace.with_name(f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}")
     assert caught.value.code == "workspace-staging-identity-changed"
     assert (staging / "FOREIGN.txt").read_text() == "must remain\n"
     assert publisher.displaced is not None and publisher.displaced.is_dir()
@@ -2663,9 +2811,7 @@ def test_markerless_staging_replacement_race_blocks_without_deleting_foreign_pat
     assert sum(command[:2] == ("git", "push") for command in publisher.commands) == 0
 
 
-@pytest.mark.parametrize(
-    "marker_phase", ["local_workspace", "committed_locally", "push_confirmed"]
-)
+@pytest.mark.parametrize("marker_phase", ["local_workspace", "committed_locally", "push_confirmed"])
 @pytest.mark.parametrize(
     "interruption", ["temp_created", "temp_written", "temp_fsync", "before_replace"]
 )
@@ -2679,9 +2825,7 @@ def test_marker_atomic_write_interruption_is_retry_safe_at_initial_and_later_pha
     plan = _review(plan_path)
     preview = publication_preview(registry, store, plan_path=plan_path)
     workspace_root = tmp_path / "workspaces"
-    publisher = MarkerInterruptionPublisher(
-        marker_phase=marker_phase, interruption=interruption
-    )
+    publisher = MarkerInterruptionPublisher(marker_phase=marker_phase, interruption=interruption)
 
     with pytest.raises(OperatorIntakeError):
         publish_task_proposal(
@@ -2708,9 +2852,7 @@ def test_marker_atomic_write_interruption_is_retry_safe_at_initial_and_later_pha
 
     workspace = Path(result["publication"]["workspace"])
     marker = workspace / ".git" / SubprocessTaskPublisher._MARKER_NAME
-    marker_temporary = marker.with_name(
-        marker.name + SubprocessTaskPublisher._MARKER_TEMP_SUFFIX
-    )
+    marker_temporary = marker.with_name(marker.name + SubprocessTaskPublisher._MARKER_TEMP_SUFFIX)
     assert json.loads(marker.read_text())["phase"] == "pr_confirmed"
     assert not marker_temporary.exists()
     assert _git(workspace, "rev-list", "--count", f"{plan['registry']['commit']}..HEAD") == "1"
@@ -2732,9 +2874,7 @@ def test_initial_marker_temporary_foreign_or_nonregular_state_blocks_without_rec
     preview = publication_preview(registry, store, plan_path=plan_path)
     workspace_root = tmp_path / "workspaces"
     workspace = workspace_root / plan["proposal_sha256"][:20]
-    staging = workspace.with_name(
-        f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}"
-    )
+    staging = workspace.with_name(f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}")
     publisher = MarkerInterruptionPublisher(
         marker_phase="local_workspace", interruption="temp_created"
     )
@@ -2793,9 +2933,7 @@ def test_interruption_after_workspace_setup_reconciles_staging_before_remote_eff
     plan = _review(plan_path)
     preview = publication_preview(registry, store, plan_path=plan_path)
     workspace_root = tmp_path / "workspaces"
-    publisher = PreEffectInterruptionPublisher(
-        interruption="before_workspace_rename"
-    )
+    publisher = PreEffectInterruptionPublisher(interruption="before_workspace_rename")
 
     with pytest.raises(OperatorIntakeError) as caught:
         publish_task_proposal(
@@ -2810,15 +2948,11 @@ def test_interruption_after_workspace_setup_reconciles_staging_before_remote_eff
         )
 
     workspace = workspace_root / plan["proposal_sha256"][:20]
-    staging = workspace.with_name(
-        f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}"
-    )
+    staging = workspace.with_name(f".{workspace.name}{SubprocessTaskPublisher._STAGING_SUFFIX}")
     assert caught.value.publication_phase == "local_workspace"
     assert not workspace.exists()
     assert staging.is_dir()
-    marker = json.loads(
-        (staging / ".git" / SubprocessTaskPublisher._MARKER_NAME).read_text()
-    )
+    marker = json.loads((staging / ".git" / SubprocessTaskPublisher._MARKER_NAME).read_text())
     assert marker["proposal_sha256"] == plan["proposal_sha256"]
     assert marker["phase"] == "local_workspace"
 
@@ -2985,9 +3119,7 @@ def test_t072_exact_pre_effect_workspace_is_reused_without_duplicate_effects(
     assert sum(command[:3] == ("gh", "pr", "create") for command in publisher.commands) == 1
 
 
-def test_fault_after_commit_reconciles_exactly_one_commit_across_retry(
-    registry_factory, tmp_path
-):
+def test_fault_after_commit_reconciles_exactly_one_commit_across_retry(registry_factory, tmp_path):
     root, registry = _committed_registry(registry_factory)
     _local_remote(root, tmp_path)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -3030,9 +3162,7 @@ def test_fault_after_commit_reconciles_exactly_one_commit_across_retry(
     assert _publication_commit_count(publisher.commands) == 1
 
 
-def test_fault_after_gh_pr_create_reuses_exact_pr_readback_across_retry(
-    registry_factory, tmp_path
-):
+def test_fault_after_gh_pr_create_reuses_exact_pr_readback_across_retry(registry_factory, tmp_path):
     root, registry = _committed_registry(registry_factory)
     _local_remote(root, tmp_path)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -3131,9 +3261,7 @@ def test_workspace_reconciliation_rejects_non_regular_target_without_following(
     assert sum(command[:2] == ("git", "push") for command in publisher.commands) == 0
 
 
-def test_unbound_existing_workspace_blocks_before_remote_effect(
-    registry_factory, tmp_path
-):
+def test_unbound_existing_workspace_blocks_before_remote_effect(registry_factory, tmp_path):
     root, registry = _committed_registry(registry_factory)
     _local_remote(root, tmp_path)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -3633,16 +3761,12 @@ def test_cli_non_object_task_json_is_typed_failure(registry_factory, tmp_path, c
     assert failure["effect_started"] is False
 
 
-def test_task_propose_rejects_broad_bureau_scope_before_plan_write(
-    registry_factory, tmp_path
-):
+def test_task_propose_rejects_broad_bureau_scope_before_plan_write(registry_factory, tmp_path):
     _root, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     recorded = _record(registry, store, key="source:broad-bureau-scope")
     task = _task(registry.root, "BUR-TEST-001-T099")
-    task["execution"]["grabowski_resources"] = [
-        "repo:/home/alex/repos/bureau"
-    ]
+    task["execution"]["grabowski_resources"] = ["repo:/home/alex/repos/bureau"]
     plan_path = tmp_path / "broad-proposal.json"
 
     with pytest.raises(OperatorIntakeError) as error:

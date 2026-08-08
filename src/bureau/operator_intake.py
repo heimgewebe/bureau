@@ -290,10 +290,8 @@ def _before_proposal_review_exchange(path: Path) -> None:
     """Fault-injection seam immediately before the review CAS exchange."""
 
 
-
 def _after_proposal_review_exchange(path: Path) -> None:
     """Fault-injection seam immediately after the review CAS exchange."""
-
 
 
 def _open_directory_beneath(root: Path, relative: Path) -> int:
@@ -322,9 +320,7 @@ def _clear_directory_fd(descriptor: int) -> None:
         if stat.S_ISDIR(observed.st_mode):
             child = os.open(
                 name,
-                os.O_RDONLY
-                | getattr(os, "O_DIRECTORY", 0)
-                | getattr(os, "O_NOFOLLOW", 0),
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
                 dir_fd=descriptor,
             )
             try:
@@ -573,12 +569,8 @@ def _candidate_idempotency_result(
     return None
 
 
-def _candidate_by_idempotency_key(
-    store: StateStore, *, idempotency_key: str
-) -> dict[str, Any]:
-    key = _checked_text(
-        idempotency_key, field="idempotency_key", maximum=200, required=True
-    )
+def _candidate_by_idempotency_key(store: StateStore, *, idempotency_key: str) -> dict[str, Any]:
+    key = _checked_text(idempotency_key, field="idempotency_key", maximum=200, required=True)
     assert key is not None
     if not _IDEMPOTENCY_RE.fullmatch(key):
         raise OperatorIntakeError(
@@ -737,9 +729,7 @@ def candidate_record(
             candidate_id=selected_candidate_id,
             supersedes_event_id=checked_supersedes_event_id,
             status=None if checked_supersedes_event_id is not None else "observed",
-            promotion_required=(
-                None if checked_supersedes_event_id is not None else True
-            ),
+            promotion_required=(None if checked_supersedes_event_id is not None else True),
             note=checked_note or str(checked_outcome),
             catalog_validation=catalog_validation,
             operator_context=context,
@@ -816,9 +806,7 @@ def _candidate_assess(
     task_id: str | None = None,
 ) -> dict[str, Any]:
     """Assess one current candidate without changing Registry or Live Register truth."""
-    selector_count = sum(
-        value is not None for value in (candidate_id, event_id, idempotency_key)
-    )
+    selector_count = sum(value is not None for value in (candidate_id, event_id, idempotency_key))
     if selector_count != 1:
         raise OperatorIntakeError(
             "candidate-selector-invalid",
@@ -827,9 +815,7 @@ def _candidate_assess(
     event = (
         _candidate_by_idempotency_key(store, idempotency_key=idempotency_key)
         if idempotency_key is not None
-        else current_candidate_record(
-            store, candidate_id=candidate_id, event_id=event_id
-        )
+        else current_candidate_record(store, candidate_id=candidate_id, event_id=event_id)
     )
     record = event["record"]
     identity = _candidate_identity(event)
@@ -1110,7 +1096,6 @@ def _raise_dirty_registry(entries: list[str]) -> None:
     )
 
 
-
 def _runtime_snapshot_binding(root: Path) -> dict[str, str] | None:
     try:
         identity = bureau_runtime_identity(root)
@@ -1173,6 +1158,7 @@ def _canonical_read_registry_snapshot(
             "registry_tree": before["registry_tree"],
         }
 
+
 def _canonical_registry_snapshot(registry: Registry) -> tuple[Registry, dict[str, str]]:
     root = registry.root.expanduser().resolve()
     before = {
@@ -1211,11 +1197,11 @@ def _render_task(task_json: dict[str, Any]) -> bytes:
     return (json.dumps(task_json, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def _task_change_sha256(path: str, content: bytes) -> str:
+def _task_change_sha256(path: str, content: bytes, *, before_sha256: str | None = None) -> str:
     return legacy.sha256_json(
         {
             "path": path,
-            "before": None,
+            "before_sha256": before_sha256,
             "after_sha256": hashlib.sha256(content).hexdigest(),
         }
     )
@@ -1252,7 +1238,12 @@ def _write_create_only(path: Path, content: bytes) -> None:
         ) from exc
 
 
-def _validate_task_semantics(registry: Registry, task_json: dict[str, Any]) -> None:
+def _validate_task_semantics(
+    registry: Registry,
+    task_json: dict[str, Any],
+    *,
+    allow_existing_task_id: bool = False,
+) -> None:
     try:
         registry.schemas.validate("task", task_json, "operator-intake-task")
     except Exception as exc:
@@ -1271,7 +1262,7 @@ def _validate_task_semantics(registry: Registry, task_json: dict[str, Any]) -> N
         )
     task_id = str(task_json.get("id", ""))
     initiative = str(task_json.get("initiative", ""))
-    if task_id in registry.tasks:
+    if task_id in registry.tasks and not allow_existing_task_id:
         raise OperatorIntakeError("task-exists", f"task {task_id} already exists")
     if initiative not in registry.initiatives:
         raise OperatorIntakeError("initiative-unknown", f"unknown initiative {initiative}")
@@ -1296,6 +1287,196 @@ def _validate_task_semantics(registry: Registry, task_json: dict[str, Any]) -> N
         raise OperatorIntakeError(
             "acceptance-missing", "task proposal requires explicit acceptance criteria"
         )
+
+
+def _task_projection_file_sha256(registry: Registry, task_id: str) -> str | None:
+    target = registry.root / "registry" / "tasks" / f"{task_id}.json"
+    if not os.path.lexists(target):
+        return None
+    payload, _ = _read_bounded_regular_file(target, field="task projection")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _task_spec_proposal_binding(
+    registry: Registry,
+    store: StateStore,
+    *,
+    task_json: dict[str, Any],
+    event: dict[str, Any],
+) -> dict[str, Any]:
+    task_id = str(task_json.get("id", ""))
+    proposed_sha256 = legacy.sha256_json(task_json)
+    current = store.task_spec(task_id)
+    projected = registry.tasks.get(task_id)
+    projected_file_sha256 = _task_projection_file_sha256(registry, task_id)
+    if current is None:
+        if projected is not None:
+            raise OperatorIntakeError(
+                "task-spec-baseline-missing",
+                "existing Git task has no authoritative StateStore TaskSpec baseline",
+                details={"task_id": task_id},
+            )
+        return {
+            "operation": "register",
+            "expected_revision": None,
+            "expected_spec_sha256": None,
+            "expected_task_file_sha256": None,
+            "proposed_spec_sha256": proposed_sha256,
+        }
+    explicit_task_id = event["record"].get("task_id")
+    if explicit_task_id != task_id:
+        raise OperatorIntakeError(
+            "candidate-task-identity-mismatch",
+            "TaskSpec revision candidate must explicitly bind the exact existing task_id",
+            details={"candidate_task_id": explicit_task_id, "task_id": task_id},
+        )
+    if projected is not None:
+        projected_sha256 = legacy.sha256_json(projected.raw)
+        if projected_sha256 != current["spec_sha256"]:
+            raise OperatorIntakeError(
+                "task-spec-projection-divergence",
+                "Git task projection differs from the authoritative StateStore TaskSpec baseline",
+                details={
+                    "task_id": task_id,
+                    "state_store_sha256": current["spec_sha256"],
+                    "git_projection_sha256": projected_sha256,
+                },
+            )
+    return {
+        "operation": "revise",
+        "expected_revision": int(current["revision"]),
+        "expected_spec_sha256": str(current["spec_sha256"]),
+        "expected_task_file_sha256": projected_file_sha256,
+        "proposed_spec_sha256": proposed_sha256,
+    }
+
+
+def _validate_task_spec_proposal_binding(
+    registry: Registry,
+    store: StateStore,
+    *,
+    plan: dict[str, Any],
+    task_json: dict[str, Any],
+    event: dict[str, Any],
+) -> dict[str, Any]:
+    binding = plan.get("task_spec")
+    expected_fields = {
+        "operation",
+        "expected_revision",
+        "expected_spec_sha256",
+        "expected_task_file_sha256",
+        "proposed_spec_sha256",
+    }
+    if not isinstance(binding, dict) or set(binding) != expected_fields:
+        raise OperatorIntakeError(
+            "task-spec-binding-invalid",
+            "proposal TaskSpec revision binding fields are not exact",
+        )
+    task_id = str(task_json.get("id", ""))
+    proposed_sha256 = legacy.sha256_json(task_json)
+    if binding.get("proposed_spec_sha256") != proposed_sha256:
+        raise OperatorIntakeError(
+            "task-spec-proposed-digest-drift",
+            "proposal TaskSpec digest does not match task_json",
+        )
+    operation = binding.get("operation")
+    current = store.task_spec(task_id)
+    expected_revision = binding.get("expected_revision")
+    expected_spec_sha256 = binding.get("expected_spec_sha256")
+    expected_file_sha256 = binding.get("expected_task_file_sha256")
+    observed_file_sha256 = _task_projection_file_sha256(registry, task_id)
+    projected = registry.tasks.get(task_id)
+    if operation == "register":
+        if (
+            expected_revision is not None
+            or expected_spec_sha256 is not None
+            or expected_file_sha256 is not None
+        ):
+            raise OperatorIntakeError(
+                "task-spec-binding-invalid",
+                "new TaskSpec registration must bind a null preimage",
+            )
+        replay_state = (
+            current is not None
+            and int(current["revision"]) == 1
+            and current["spec_sha256"] == proposed_sha256
+        )
+        if current is not None and not replay_state:
+            raise OperatorIntakeError(
+                "task-spec-baseline-drift",
+                "TaskSpec appeared after proposal review",
+                retryable=True,
+                details={"task_id": task_id, "current_revision": current["revision"]},
+            )
+        if projected is not None or observed_file_sha256 is not None:
+            raise OperatorIntakeError(
+                "target-exists",
+                f"target task file already exists: registry/tasks/{task_id}.json",
+            )
+    elif operation == "revise":
+        if (
+            not isinstance(expected_revision, int)
+            or isinstance(expected_revision, bool)
+            or expected_revision < 1
+            or not isinstance(expected_spec_sha256, str)
+            or _SOURCE_SHA_RE.fullmatch(expected_spec_sha256) is None
+            or (
+                expected_file_sha256 is not None
+                and (
+                    not isinstance(expected_file_sha256, str)
+                    or _SOURCE_SHA_RE.fullmatch(expected_file_sha256) is None
+                )
+            )
+        ):
+            raise OperatorIntakeError(
+                "task-spec-binding-invalid",
+                "TaskSpec revision baseline is malformed",
+            )
+        baseline_state = (
+            current is not None
+            and int(current["revision"]) == expected_revision
+            and current["spec_sha256"] == expected_spec_sha256
+        )
+        replay_state = (
+            current is not None
+            and int(current["revision"]) == expected_revision + 1
+            and current["spec_sha256"] == proposed_sha256
+        )
+        if not baseline_state and not replay_state:
+            raise OperatorIntakeError(
+                "task-spec-baseline-drift",
+                "authoritative TaskSpec revision changed after proposal review",
+                retryable=True,
+                details={
+                    "task_id": task_id,
+                    "expected_revision": expected_revision,
+                    "current_revision": None if current is None else current["revision"],
+                },
+            )
+        if event["record"].get("task_id") != task_id:
+            raise OperatorIntakeError(
+                "candidate-task-identity-mismatch",
+                "reviewed TaskSpec revision candidate no longer binds the exact task_id",
+            )
+        if projected is not None and legacy.sha256_json(projected.raw) != expected_spec_sha256:
+            raise OperatorIntakeError(
+                "task-spec-projection-divergence",
+                "Git task projection changed from the reviewed TaskSpec baseline",
+                retryable=True,
+            )
+        if observed_file_sha256 != expected_file_sha256:
+            raise OperatorIntakeError(
+                "task-file-baseline-drift",
+                "Git task file bytes changed from the reviewed proposal baseline",
+                retryable=True,
+                details={"expected": expected_file_sha256, "observed": observed_file_sha256},
+            )
+    else:
+        raise OperatorIntakeError(
+            "task-spec-binding-invalid",
+            "proposal TaskSpec operation must be register or revise",
+        )
+    return binding
 
 
 def _inject_candidate_binding(task_json: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
@@ -1345,6 +1526,9 @@ def task_propose(
             f"publishing task {publishing_task_id} is not in the Registry",
         )
     bound_task = _inject_candidate_binding(task_json, event)
+    task_spec_binding = _task_spec_proposal_binding(
+        registry, store, task_json=bound_task, event=event
+    )
     generic_ids = {
         criterion.get("id")
         for criterion in bound_task.get("acceptance", [])
@@ -1361,7 +1545,11 @@ def task_propose(
             "generic promotion acceptance requires explicit justification",
             details={"acceptance_ids": sorted(generic_ids)},
         )
-    _validate_task_semantics(registry, bound_task)
+    _validate_task_semantics(
+        registry,
+        bound_task,
+        allow_existing_task_id=task_spec_binding["operation"] == "revise",
+    )
     assessment = _candidate_assess(
         registry,
         store,
@@ -1369,11 +1557,18 @@ def task_propose(
         initiative=str(bound_task["initiative"]),
         task_id=str(bound_task["id"]),
     )
-    if assessment["exact_duplicates"]:
+    blocking_duplicates = list(assessment["exact_duplicates"])
+    if task_spec_binding["operation"] == "revise":
+        blocking_duplicates = [
+            item
+            for item in blocking_duplicates
+            if not (item.get("kind") == "task-id" and item.get("task_id") == bound_task["id"])
+        ]
+    if blocking_duplicates:
         raise OperatorIntakeError(
             "exact-duplicate",
             "candidate assessment found an exact duplicate",
-            details={"findings": assessment["exact_duplicates"]},
+            details={"findings": blocking_duplicates},
         )
     task_id = str(bound_task["id"])
     target_path = f"registry/tasks/{task_id}.json"
@@ -1399,7 +1594,12 @@ def task_propose(
         "task_json": bound_task,
         "task_json_sha256": legacy.sha256_json(bound_task),
         "task_file_sha256": hashlib.sha256(content).hexdigest(),
-        "proposed_diff_sha256": _task_change_sha256(target_path, content),
+        "task_spec": task_spec_binding,
+        "proposed_diff_sha256": _task_change_sha256(
+            target_path,
+            content,
+            before_sha256=task_spec_binding["expected_task_file_sha256"],
+        ),
         "assessment": assessment,
         "unresolved_fields": unresolved,
         "placeholder_justification": placeholder_justification,
@@ -1581,9 +1781,7 @@ def review_task_proposal(
         expected_reference=proposal_sha256,
         task_id=task_id,
     )
-    reviewed_bytes = (
-        json.dumps(plan, indent=2, ensure_ascii=False) + "\n"
-    ).encode("utf-8")
+    reviewed_bytes = (json.dumps(plan, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     plan_sha256_before = hashlib.sha256(plan_bytes).hexdigest()
     plan_sha256_after = hashlib.sha256(reviewed_bytes).hexdigest()
     parent_descriptor = -1
@@ -1592,9 +1790,7 @@ def review_task_proposal(
     try:
         parent_descriptor = os.open(
             path.parent,
-            os.O_RDONLY
-            | getattr(os, "O_DIRECTORY", 0)
-            | getattr(os, "O_NOFOLLOW", 0),
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
         )
         if not _directory_path_matches_descriptor(path.parent, parent_descriptor):
             raise OperatorIntakeError(
@@ -1729,9 +1925,7 @@ def review_task_proposal(
                 details={
                     "path": str(path),
                     "cause_code": exc.code,
-                    "displaced_path": str(temporary_path)
-                    if temporary_path is not None
-                    else None,
+                    "displaced_path": str(temporary_path) if temporary_path is not None else None,
                 },
             ) from exc
         raise
@@ -1871,15 +2065,30 @@ def _validated_proposal(
     task_json = plan.get("task_json")
     if not isinstance(task_json, dict):
         raise OperatorIntakeError("task-json-invalid", "proposal task_json is missing")
-    _validate_task_semantics(registry, task_json)
+    task_spec_binding = _validate_task_spec_proposal_binding(
+        registry, store, plan=plan, task_json=task_json, event=current
+    )
+    _validate_task_semantics(
+        registry,
+        task_json,
+        allow_existing_task_id=task_spec_binding["operation"] == "revise",
+    )
     content = _render_task(task_json)
     target_path = str(plan.get("target_path"))
     expected_path = f"registry/tasks/{task_json.get('id')}.json"
     if target_path != expected_path:
         raise OperatorIntakeError("target-path-invalid", f"target path must be {expected_path}")
-    if os.path.lexists(registry.root / target_path):
+    expected_target_file_sha256 = task_spec_binding["expected_task_file_sha256"]
+    observed_target_file_sha256 = _task_projection_file_sha256(registry, str(task_json.get("id")))
+    if observed_target_file_sha256 != expected_target_file_sha256:
         raise OperatorIntakeError(
-            "target-exists", f"target task file already exists: {target_path}"
+            "task-file-baseline-drift",
+            "target task file bytes differ from the reviewed proposal baseline",
+            retryable=True,
+            details={
+                "expected": expected_target_file_sha256,
+                "observed": observed_target_file_sha256,
+            },
         )
     if plan.get("task_json_sha256") != legacy.sha256_json(task_json):
         raise OperatorIntakeError("task-json-drift", "task_json_sha256 does not match task_json")
@@ -1887,7 +2096,11 @@ def _validated_proposal(
         raise OperatorIntakeError(
             "task-file-drift", "task_file_sha256 does not match rendered task JSON"
         )
-    if plan.get("proposed_diff_sha256") != _task_change_sha256(target_path, content):
+    if plan.get("proposed_diff_sha256") != _task_change_sha256(
+        target_path,
+        content,
+        before_sha256=task_spec_binding["expected_task_file_sha256"],
+    ):
         raise OperatorIntakeError(
             "proposal-diff-drift", "proposed_diff_sha256 does not match task file change"
         )
@@ -2033,10 +2246,9 @@ def _release_unchanged_publication_leases(binding: dict[str, Any]) -> dict[str, 
 
 def _attach_publication_phase(error: OperatorIntakeError, phase: str) -> OperatorIntakeError:
     """Keep the original typed failure while adding the last proven phase."""
-    if (
-        error.publication_phase not in PUBLICATION_PHASES
-        or PUBLICATION_PHASES.index(error.publication_phase) < PUBLICATION_PHASES.index(phase)
-    ):
+    if error.publication_phase not in PUBLICATION_PHASES or PUBLICATION_PHASES.index(
+        error.publication_phase
+    ) < PUBLICATION_PHASES.index(phase):
         error.publication_phase = phase
     return error
 
@@ -2174,15 +2386,38 @@ def publish_task_proposal(
     # T003: after local authority and lease validation, but before remote GitHub
     # effects, commit the reviewed TaskSpec to the existing StateStore journal.
     try:
-        registration = store.register_task_spec_with_legacy_import(
-            registry,
-            plan["task_json"],
-            idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
-            expected_revision=None,
-            source="operator-intake-reviewed-proposal",
+        task_spec_binding = plan["task_spec"]
+        expected_revision = task_spec_binding["expected_revision"]
+        current_task_spec = store.task_spec(plan["task_id"])
+        replay_after_revision = (
+            task_spec_binding["operation"] == "revise"
+            and current_task_spec is not None
+            and int(current_task_spec["revision"]) == int(expected_revision) + 1
+            and current_task_spec["spec_sha256"] == plan["task_json_sha256"]
         )
-        legacy_import = registration["legacy_task_spec_import"]
-        task_spec_revision = registration["task_spec_revision"]
+        if replay_after_revision:
+            task_spec_revision = store.put_task_spec(
+                plan["task_json"],
+                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+                expected_revision=expected_revision,
+                source="operator-intake-reviewed-proposal",
+            )
+            legacy_import = {
+                "replayed_after_revision": True,
+                "imported": 0,
+                "unchanged": len(registry.tasks),
+                "total": len(registry.tasks),
+            }
+        else:
+            registration = store.register_task_spec_with_legacy_import(
+                registry,
+                plan["task_json"],
+                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+                expected_revision=expected_revision,
+                source="operator-intake-reviewed-proposal",
+            )
+            legacy_import = registration["legacy_task_spec_import"]
+            task_spec_revision = registration["task_spec_revision"]
     except StateError as exc:
         raise OperatorIntakeError(
             "task-spec-state-mutation-failed",
@@ -2266,9 +2501,7 @@ def publish_task_proposal(
                         "open pull request for exact branch",
                         "target task file at remote head",
                     )
-        _release_leases_after_safe_failure(
-            error, phase=recorded_phase, binding=normalized_leases
-        )
+        _release_leases_after_safe_failure(error, phase=recorded_phase, binding=normalized_leases)
         raise
     except Exception as exc:
         remote_effect_possible = phase in _REMOTE_EFFECT_PHASES
@@ -2390,9 +2623,11 @@ class SubprocessTaskPublisher:
     ) -> str:
         env = self._command_environment()
         phase = getattr(self, "_publication_phase", "before_workspace")
-        effect_command = list(arguments[:2]) == ["git", "push"] or list(
-            arguments[:3]
-        ) == ["gh", "pr", "create"]
+        effect_command = list(arguments[:2]) == ["git", "push"] or list(arguments[:3]) == [
+            "gh",
+            "pr",
+            "create",
+        ]
         try:
             process = subprocess.run(
                 list(arguments),
@@ -2426,9 +2661,7 @@ class SubprocessTaskPublisher:
                 effect_started=remote_possible,
                 ambiguity=effect_command or phase in {"push_attempted", "pr_attempted"},
                 required_readback=(
-                    ["remote branch head", "open pull request"]
-                    if remote_possible
-                    else []
+                    ["remote branch head", "open pull request"] if remote_possible else []
                 ),
                 publication_phase=phase,
             )
@@ -2477,9 +2710,7 @@ class SubprocessTaskPublisher:
 
     @staticmethod
     def _json_bytes(value: dict[str, Any]) -> bytes:
-        return (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode(
-            "utf-8"
-        )
+        return (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
 
     def _write_workspace_marker(self, workspace: Path, marker: dict[str, Any]) -> None:
         marker_path = workspace / ".git" / self._MARKER_NAME
@@ -2488,10 +2719,7 @@ class SubprocessTaskPublisher:
         try:
             descriptor = os.open(
                 temporary,
-                os.O_WRONLY
-                | os.O_CREAT
-                | os.O_EXCL
-                | getattr(os, "O_NOFOLLOW", 0),
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
                 0o600,
             )
         except OSError as exc:
@@ -2596,9 +2824,7 @@ class SubprocessTaskPublisher:
     @classmethod
     def _marker_identity(cls, plan: dict[str, Any], branch: str) -> dict[str, Any]:
         target = Path(str(plan["target_path"]))
-        target_temporary = target.parent / (
-            f".{plan['proposal_sha256']}{cls._TARGET_TEMP_SUFFIX}"
-        )
+        target_temporary = target.parent / (f".{plan['proposal_sha256']}{cls._TARGET_TEMP_SUFFIX}")
         return {
             "schema_version": 1,
             "kind": "bureau_operator_publication_workspace",
@@ -2740,9 +2966,7 @@ class SubprocessTaskPublisher:
         try:
             parent_descriptor = os.open(
                 parent,
-                os.O_RDONLY
-                | getattr(os, "O_DIRECTORY", 0)
-                | getattr(os, "O_NOFOLLOW", 0),
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
             )
         except OSError as exc:
             raise OperatorIntakeError(
@@ -2796,16 +3020,12 @@ class SubprocessTaskPublisher:
                     temporary_path.unlink()
             os.close(parent_descriptor)
 
-    def _remove_exact_reservation(
-        self, reservation: Path, *, expected: dict[str, Any]
-    ) -> None:
+    def _remove_exact_reservation(self, reservation: Path, *, expected: dict[str, Any]) -> None:
         self._load_exact_reservation(reservation, expected=expected)
         try:
             parent_descriptor = os.open(
                 reservation.parent,
-                os.O_RDONLY
-                | getattr(os, "O_DIRECTORY", 0)
-                | getattr(os, "O_NOFOLLOW", 0),
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
             )
             try:
                 os.unlink(reservation.name, dir_fd=parent_descriptor)
@@ -2827,17 +3047,16 @@ class SubprocessTaskPublisher:
         identity: dict[str, Any],
         phases: Sequence[str],
     ) -> bool:
-        return any(raw == candidate[: len(raw)] for candidate in (
-            cls._json_bytes({**identity, "phase": phase}) for phase in phases
-        ))
+        return any(
+            raw == candidate[: len(raw)]
+            for candidate in (cls._json_bytes({**identity, "phase": phase}) for phase in phases)
+        )
 
     def _remove_marker_temporary(self, temporary: Path, *, git_directory: Path) -> None:
         try:
             descriptor = os.open(
                 git_directory,
-                os.O_RDONLY
-                | getattr(os, "O_DIRECTORY", 0)
-                | getattr(os, "O_NOFOLLOW", 0),
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
             )
             try:
                 os.unlink(temporary.name, dir_fd=descriptor)
@@ -3057,13 +3276,9 @@ class SubprocessTaskPublisher:
     ) -> None:
         """Remove only an inactive markerless clone path with an exact reservation."""
         self._load_exact_reservation(reservation, expected=expected_reservation)
-        if not self._checked_workspace_directory(
-            staging, code="workspace-staging-path-invalid"
-        ):
+        if not self._checked_workspace_directory(staging, code="workspace-staging-path-invalid"):
             return
-        if not self._checked_workspace_directory(
-            staging.parent, code="workspace-root-invalid"
-        ):
+        if not self._checked_workspace_directory(staging.parent, code="workspace-root-invalid"):
             raise OperatorIntakeError(
                 "workspace-root-invalid",
                 "publication staging parent is missing",
@@ -3095,9 +3310,7 @@ class SubprocessTaskPublisher:
             self._before_markerless_staging_remove(staging)
             parent_descriptor = os.open(
                 staging.parent,
-                os.O_RDONLY
-                | getattr(os, "O_DIRECTORY", 0)
-                | getattr(os, "O_NOFOLLOW", 0),
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
             )
             try:
                 _remove_directory_tree_at(parent_descriptor, staging.name, expected=expected)
@@ -3146,14 +3359,13 @@ class SubprocessTaskPublisher:
         *,
         reviewed_bytes: bytes,
         expected_sha256: str,
+        expected_preimage_sha256: str | None,
         proposal_sha256: str,
     ) -> None:
-        """Create one reviewed target through a durable same-directory temporary."""
+        """Create or CAS-replace one reviewed target through a durable temporary."""
         try:
             relative_target = target.relative_to(workspace)
-            parent_descriptor = _open_directory_beneath(
-                workspace, relative_target.parent
-            )
+            parent_descriptor = _open_directory_beneath(workspace, relative_target.parent)
         except OSError as exc:
             raise OperatorIntakeError(
                 "workspace-target-parent-invalid",
@@ -3175,30 +3387,27 @@ class SubprocessTaskPublisher:
             target_hash = self._workspace_file_sha256(
                 workspace, relative_target, phase="local_workspace"
             )
+            replace_existing = False
             if target_hash is not None:
-                try:
-                    os.stat(
-                        temporary.name,
-                        dir_fd=parent_descriptor,
-                        follow_symlinks=False,
-                    )
-                except FileNotFoundError:
-                    pass
-                else:
-                    raise OperatorIntakeError(
-                        "workspace-target-temp-ambiguous",
-                        "target and publication temporary both exist; neither was changed",
-                        details={"target": str(target), "temporary": str(temporary)},
-                        publication_phase="local_workspace",
-                    )
-                if target_hash != expected_sha256:
+                if target_hash == expected_sha256:
+                    return
+                if expected_preimage_sha256 is None or target_hash != expected_preimage_sha256:
                     raise OperatorIntakeError(
                         "workspace-target-hash-mismatch",
-                        "existing publication target does not match the reviewed proposal",
-                        details={"expected": expected_sha256, "observed": target_hash},
+                        "existing publication target does not match the reviewed preimage",
+                        details={
+                            "expected_preimage": expected_preimage_sha256,
+                            "observed": target_hash,
+                        },
                         publication_phase="local_workspace",
                     )
-                return
+                replace_existing = True
+            elif expected_preimage_sha256 is not None:
+                raise OperatorIntakeError(
+                    "workspace-target-missing",
+                    "reviewed TaskSpec revision target disappeared from the publication workspace",
+                    publication_phase="local_workspace",
+                )
             try:
                 temporary_stat = os.stat(
                     temporary.name,
@@ -3224,16 +3433,9 @@ class SubprocessTaskPublisher:
                         f"cannot reconcile exact owned publication temporary: {exc}",
                         publication_phase="local_workspace",
                     ) from exc
-            flags = (
-                os.O_WRONLY
-                | os.O_CREAT
-                | os.O_EXCL
-                | getattr(os, "O_NOFOLLOW", 0)
-            )
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
             try:
-                descriptor = os.open(
-                    temporary.name, flags, 0o600, dir_fd=parent_descriptor
-                )
+                descriptor = os.open(temporary.name, flags, 0o600, dir_fd=parent_descriptor)
             except OSError as exc:
                 raise OperatorIntakeError(
                     "workspace-target-temp-create-failed",
@@ -3246,9 +3448,7 @@ class SubprocessTaskPublisher:
                 while offset < len(reviewed_bytes):
                     written = os.write(descriptor, reviewed_bytes[offset:])
                     if written <= 0:
-                        raise OSError(
-                            errno.EIO, "publication target temporary write stalled"
-                        )
+                        raise OSError(errno.EIO, "publication target temporary write stalled")
                     offset += written
                 os.fsync(descriptor)
                 self._after_target_temp_fsync(temporary)
@@ -3270,12 +3470,33 @@ class SubprocessTaskPublisher:
                     publication_phase="local_workspace",
                 )
             try:
-                _rename_noreplace(
-                    temporary.name,
-                    target.name,
-                    source_dir_fd=parent_descriptor,
-                    target_dir_fd=parent_descriptor,
-                )
+                if replace_existing:
+                    observed_preimage = self._workspace_file_sha256(
+                        workspace, relative_target, phase="local_workspace"
+                    )
+                    if observed_preimage != expected_preimage_sha256:
+                        raise OperatorIntakeError(
+                            "workspace-target-preimage-drift",
+                            "publication target changed immediately before reviewed replacement",
+                            details={
+                                "expected": expected_preimage_sha256,
+                                "observed": observed_preimage,
+                            },
+                            publication_phase="local_workspace",
+                        )
+                    os.replace(
+                        temporary.name,
+                        target.name,
+                        src_dir_fd=parent_descriptor,
+                        dst_dir_fd=parent_descriptor,
+                    )
+                else:
+                    _rename_noreplace(
+                        temporary.name,
+                        target.name,
+                        source_dir_fd=parent_descriptor,
+                        target_dir_fd=parent_descriptor,
+                    )
                 self._after_target_rename(target)
                 os.fsync(parent_descriptor)
             except OSError as exc:
@@ -3288,9 +3509,7 @@ class SubprocessTaskPublisher:
             os.close(parent_descriptor)
 
     @staticmethod
-    def _workspace_file_sha256(
-        workspace: Path, relative: Path, *, phase: str
-    ) -> str | None:
+    def _workspace_file_sha256(workspace: Path, relative: Path, *, phase: str) -> str | None:
         """Hash a workspace file without following any symbolic-link component."""
         if relative.is_absolute() or relative.name in {"", ".", ".."}:
             raise OperatorIntakeError(
@@ -3309,9 +3528,7 @@ class SubprocessTaskPublisher:
                 publication_phase=phase,
             ) from exc
         try:
-            target_stat = os.stat(
-                relative.name, dir_fd=parent_descriptor, follow_symlinks=False
-            )
+            target_stat = os.stat(relative.name, dir_fd=parent_descriptor, follow_symlinks=False)
         except FileNotFoundError:
             os.close(parent_descriptor)
             return None
@@ -3407,10 +3624,9 @@ class SubprocessTaskPublisher:
             )
         target_path = str(plan["target_path"])
         target = workspace / target_path
-        target_hash = self._workspace_file_sha256(
-            workspace, Path(target_path), phase=marker_phase
-        )
+        target_hash = self._workspace_file_sha256(workspace, Path(target_path), phase=marker_phase)
         expected_hash = str(plan["task_file_sha256"])
+        expected_preimage = plan["task_spec"]["expected_task_file_sha256"]
         temporary = self._target_temporary_path(
             target,
             proposal_sha256=str(plan["proposal_sha256"]),
@@ -3421,18 +3637,28 @@ class SubprocessTaskPublisher:
         temporary_path = temporary.relative_to(workspace).as_posix()
         base_commit = str(plan["registry"]["commit"])
         if head == base_commit:
-            allowed = [
-                [],
-                [f"?? {target_path}"],
-                [f"A  {target_path}"],
-                [f"?? {temporary_path}"],
-            ]
-            target_and_temporary = target_hash is not None and temporary_hash is not None
-            invalid_temporary_state = temporary_hash is not None and target_hash is not None
+            if expected_preimage is None:
+                allowed = [
+                    [],
+                    [f"?? {target_path}"],
+                    [f"A  {target_path}"],
+                    [f"?? {temporary_path}"],
+                ]
+                allowed_target_hashes = {None, expected_hash}
+                invalid_temporary_state = temporary_hash is not None and target_hash is not None
+            else:
+                allowed = [
+                    [],
+                    [f" M {target_path}"],
+                    [f"M {target_path}"],
+                    [f"M  {target_path}"],
+                    [f"?? {temporary_path}"],
+                ]
+                allowed_target_hashes = {expected_preimage, expected_hash}
+                invalid_temporary_state = False
             if (
                 status not in allowed
-                or target_hash not in {None, expected_hash}
-                or target_and_temporary
+                or target_hash not in allowed_target_hashes
                 or invalid_temporary_state
             ):
                 raise OperatorIntakeError(
@@ -3495,9 +3721,7 @@ class SubprocessTaskPublisher:
         if PUBLICATION_PHASES.index(str(marker_phase)) < PUBLICATION_PHASES.index(
             "committed_locally"
         ):
-            self._set_phase(
-                "committed_locally", phase_changed, workspace=workspace, marker=marker
-            )
+            self._set_phase("committed_locally", phase_changed, workspace=workspace, marker=marker)
         return marker, head, diff
 
     def _pull_request_readback(
@@ -3619,9 +3843,7 @@ class SubprocessTaskPublisher:
                 f"publication workspace parent does not exist: {workspace_root.parent}",
                 publication_phase="before_workspace",
             )
-        final_exists = self._checked_workspace_directory(
-            workspace, code="workspace-path-invalid"
-        )
+        final_exists = self._checked_workspace_directory(workspace, code="workspace-path-invalid")
         staging_exists = self._checked_workspace_directory(
             staging, code="workspace-staging-path-invalid"
         )
@@ -3648,15 +3870,11 @@ class SubprocessTaskPublisher:
         assert_plan_unchanged()
         remote = self._run(["git", "-C", str(registry.root), "remote", "get-url", "origin"])
         repository = self._github_slug(remote)
-        expected_reservation = self._reservation_identity(
-            plan, branch, remote, staging, workspace
-        )
+        expected_reservation = self._reservation_identity(plan, branch, remote, staging, workspace)
         if final_exists:
             assert marker is not None
             if reservation_exists:
-                self._load_exact_reservation(
-                    reservation, expected=expected_reservation
-                )
+                self._load_exact_reservation(reservation, expected=expected_reservation)
             marker, head, diff = self._reconcile_exact_workspace(
                 workspace,
                 marker=marker,
@@ -3666,9 +3884,7 @@ class SubprocessTaskPublisher:
                 phase_changed=phase_changed,
             )
             if reservation_exists:
-                self._remove_exact_reservation(
-                    reservation, expected=expected_reservation
-                )
+                self._remove_exact_reservation(reservation, expected=expected_reservation)
                 reservation_exists = False
         elif staging_exists:
             self._load_exact_reservation(reservation, expected=expected_reservation)
@@ -3720,9 +3936,7 @@ class SubprocessTaskPublisher:
                         publication_phase="before_workspace",
                     ) from exc
                 root_exists = True
-            if not self._checked_workspace_directory(
-                workspace_root, code="workspace-root-invalid"
-            ):
+            if not self._checked_workspace_directory(workspace_root, code="workspace-root-invalid"):
                 raise OperatorIntakeError(
                     "workspace-root-invalid",
                     f"publication workspace root could not be created: {workspace_root}",
@@ -3737,9 +3951,7 @@ class SubprocessTaskPublisher:
             try:
                 root_descriptor = os.open(
                     workspace_root,
-                    os.O_RDONLY
-                    | getattr(os, "O_DIRECTORY", 0)
-                    | getattr(os, "O_NOFOLLOW", 0),
+                    os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
                 )
                 try:
                     os.mkdir(staging.name, mode=0o700, dir_fd=root_descriptor)
@@ -3768,9 +3980,7 @@ class SubprocessTaskPublisher:
             self._run(["git", "checkout", "--detach", base_commit], cwd=staging)
             self._run(["git", "checkout", "-b", branch], cwd=staging)
             marker = self._marker_identity(plan, branch)
-            self._set_phase(
-                "local_workspace", phase_changed, workspace=staging, marker=marker
-            )
+            self._set_phase("local_workspace", phase_changed, workspace=staging, marker=marker)
             self._reconcile_staged_workspace(
                 staging,
                 marker=marker,
@@ -3794,9 +4004,7 @@ class SubprocessTaskPublisher:
                     details={"workspace": str(workspace), "staging": str(staging)},
                     publication_phase="local_workspace",
                 ) from exc
-            self._remove_exact_reservation(
-                reservation, expected=expected_reservation
-            )
+            self._remove_exact_reservation(reservation, expected=expected_reservation)
             reservation_exists = False
             head = None
             diff = ""
@@ -3808,6 +4016,7 @@ class SubprocessTaskPublisher:
                 task_file,
                 reviewed_bytes=reviewed_bytes,
                 expected_sha256=str(plan["task_file_sha256"]),
+                expected_preimage_sha256=plan["task_spec"]["expected_task_file_sha256"],
                 proposal_sha256=str(plan["proposal_sha256"]),
             )
             try:
@@ -3821,7 +4030,16 @@ class SubprocessTaskPublisher:
             changed = self._run(
                 ["git", "status", "--porcelain", "--untracked-files=all"], cwd=workspace
             ).splitlines()
-            if changed not in ([f"?? {target_path}"], [f"A  {target_path}"]):
+            allowed_changes = (
+                ([f"?? {target_path}"], [f"A  {target_path}"])
+                if plan["task_spec"]["expected_task_file_sha256"] is None
+                else (
+                    [f" M {target_path}"],
+                    [f"M {target_path}"],
+                    [f"M  {target_path}"],
+                )
+            )
+            if changed not in allowed_changes:
                 raise OperatorIntakeError(
                     "publication-scope-drift",
                     "publication workspace changed outside the target task file",
@@ -3899,9 +4117,7 @@ class SubprocessTaskPublisher:
                     },
                     publication_phase="local_workspace",
                 )
-            base_date = self._run(
-                ["git", "show", "-s", "--format=%aI", base_commit], cwd=workspace
-            )
+            base_date = self._run(["git", "show", "-s", "--format=%aI", base_commit], cwd=workspace)
             candidate_head = self._run(
                 [
                     "/usr/bin/env",
@@ -3917,16 +4133,18 @@ class SubprocessTaskPublisher:
                     "-p",
                     base_commit,
                     "-m",
-                    f"Register Bureau task {task_id}",
+                    (
+                        f"Register Bureau task {task_id}"
+                        if plan["task_spec"]["operation"] == "register"
+                        else f"Revise Bureau task {task_id}"
+                    ),
                 ],
                 cwd=workspace,
             )
             candidate_tree = self._run(
                 ["git", "rev-parse", f"{candidate_head}^{{tree}}"], cwd=workspace
             )
-            candidate_parent = self._run(
-                ["git", "rev-parse", f"{candidate_head}^"], cwd=workspace
-            )
+            candidate_parent = self._run(["git", "rev-parse", f"{candidate_head}^"], cwd=workspace)
             committed_target_hash = self._git_blob_sha256(
                 workspace, f"{candidate_head}:{target_path}"
             )
@@ -3972,9 +4190,7 @@ class SubprocessTaskPublisher:
                     details={"status": post_commit_status, "head": head},
                     publication_phase="local_workspace",
                 )
-            self._set_phase(
-                "committed_locally", phase_changed, workspace=workspace, marker=marker
-            )
+            self._set_phase("committed_locally", phase_changed, workspace=workspace, marker=marker)
         remote_main_output = self._run(["git", "ls-remote", remote, "refs/heads/main"]).split()
         if not remote_main_output:
             raise OperatorIntakeError(
@@ -4021,9 +4237,7 @@ class SubprocessTaskPublisher:
             if PUBLICATION_PHASES.index(str(marker["phase"])) < PUBLICATION_PHASES.index(
                 "push_confirmed"
             ):
-                self._set_phase(
-                    "push_confirmed", phase_changed, workspace=workspace, marker=marker
-                )
+                self._set_phase("push_confirmed", phase_changed, workspace=workspace, marker=marker)
         else:
             if PUBLICATION_PHASES.index(str(marker["phase"])) >= PUBLICATION_PHASES.index(
                 "push_confirmed"
@@ -4035,13 +4249,9 @@ class SubprocessTaskPublisher:
                     required_readback=["remote branch head"],
                     publication_phase=str(marker["phase"]),
                 )
-            self._set_phase(
-                "push_attempted", phase_changed, workspace=workspace, marker=marker
-            )
+            self._set_phase("push_attempted", phase_changed, workspace=workspace, marker=marker)
             self._run(["git", "push", "origin", f"HEAD:refs/heads/{branch}"], cwd=workspace)
-            confirmed = self._run(
-                ["git", "ls-remote", remote, f"refs/heads/{branch}"]
-            ).split()
+            confirmed = self._run(["git", "ls-remote", remote, f"refs/heads/{branch}"]).split()
             if not confirmed or confirmed[0] != head:
                 raise OperatorIntakeError(
                     "publication-readback-mismatch",
@@ -4051,9 +4261,7 @@ class SubprocessTaskPublisher:
                     required_readback=["remote branch head", "target task file at remote head"],
                     publication_phase="push_attempted",
                 )
-            remote_target_hash = self._git_blob_sha256(
-                workspace, f"{confirmed[0]}:{target_path}"
-            )
+            remote_target_hash = self._git_blob_sha256(workspace, f"{confirmed[0]}:{target_path}")
             if remote_target_hash != str(plan["task_file_sha256"]):
                 raise OperatorIntakeError(
                     "remote-target-hash-mismatch",
@@ -4068,18 +4276,25 @@ class SubprocessTaskPublisher:
                     },
                     publication_phase="push_attempted",
                 )
-            self._set_phase(
-                "push_confirmed", phase_changed, workspace=workspace, marker=marker
-            )
-        body = (
-            f"Bureau-Task: {task_id}\n"
+            self._set_phase("push_confirmed", phase_changed, workspace=workspace, marker=marker)
+        operation = str(plan["task_spec"]["operation"])
+        git_target_absent = plan["task_spec"]["expected_task_file_sha256"] is None
+        binding_exception = (
             "Bureau-Task-Binding-Exception: task-registration PR; "
             f"{task_id} is introduced by this PR and is absent from the base registry\n\n"
-            f"Register reviewed candidate task `{task_id}`.\n\n"
+            if git_target_absent
+            else ""
+        )
+        action = "Register" if operation == "register" else "Revise"
+        body = (
+            f"Bureau-Task: {task_id}\n"
+            f"{binding_exception}"
+            f"{action} reviewed candidate task `{task_id}`.\n\n"
             f"- proposal: `{plan['proposal_sha256']}`\n"
             f"- candidate: `{plan['candidate']['candidate_id']}`\n"
             f"- source event: `{plan['candidate']['event_id']}`\n"
-            f"- target: `{target_path}`\n\n"
+            f"- target: `{target_path}`\n"
+            f"- expected TaskSpec revision: `{plan['task_spec']['expected_revision']}`\n\n"
             "This PR does not queue, claim, dispatch, merge, deploy or verify the task.\n"
         )
         readback = self._pull_request_readback(
@@ -4095,9 +4310,7 @@ class SubprocessTaskPublisher:
                     required_readback=["pull request metadata", "remote branch head"],
                     publication_phase="pr_confirmed",
                 )
-            self._set_phase(
-                "pr_attempted", phase_changed, workspace=workspace, marker=marker
-            )
+            self._set_phase("pr_attempted", phase_changed, workspace=workspace, marker=marker)
             url = self._run(
                 [
                     "gh",
@@ -4110,7 +4323,11 @@ class SubprocessTaskPublisher:
                     "--head",
                     branch,
                     "--title",
-                    f"Register Bureau task {task_id}",
+                    (
+                        f"Register Bureau task {task_id}"
+                        if operation == "register"
+                        else f"Revise Bureau task {task_id}"
+                    ),
                     "--body",
                     body,
                 ],

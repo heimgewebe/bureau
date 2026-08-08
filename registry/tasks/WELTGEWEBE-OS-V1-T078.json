@@ -1,0 +1,88 @@
+{
+  "acceptance": [
+    {
+      "assertion": "GET /proposals unterstützt optionale exakte Filter nach Webgemeindezentrum und Zielknoten; Filter sind kombinierbar und ungültige Werte werden explizit abgewiesen.",
+      "evidence_type": "object",
+      "id": "server-filters",
+      "verifier": "API contract and integration tests"
+    },
+    {
+      "assertion": "Gefilterte Abfragen verwenden passende Indizes und laden nicht zuerst die globale Antragsmenge; Last und Query-Plan bleiben für wachsende Antragsbestände begrenzt.",
+      "evidence_type": "object",
+      "id": "indexed-query",
+      "verifier": "PostgreSQL query/index proof and bounded load test"
+    },
+    {
+      "assertion": "CenterGovernance und NodeGovernance verwenden die serverseitigen Filter, während die globale /antraege-Sicht abwärtskompatibel bleibt.",
+      "evidence_type": "boolean",
+      "id": "ui-uses-filters",
+      "verifier": "web unit and browser tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Skalierungs-Folgetask aus PR #1720; globale /antraege-Sicht muss kompatibel bleiben.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die Governance-Lese-API um serverseitige, indexgestützte Filter für Webgemeindezentrum und Zielknoten erweitern. CenterGovernance und NodeGovernance sollen nicht mehr alle Anträge laden und clientseitig aussieben. Abwärtskompatible Query-Parameter, kombinierbare Filter, Pagination-/Sortiervertrag und Last-/Korrektheitsbeweise einschließen.",
+  "id": "WELTGEWEBE-OS-V1-T078",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "current_fact": "CenterGovernance und NodeGovernance laden im ersten Schnitt die globale Antragsliste und filtern im Client; das ist korrekt, skaliert aber unnötig mit der Gesamtzahl der Anträge.",
+    "independently_executable": true,
+    "source": "Follow-up from merged heimgewebe/weltgewebe PR #1720",
+    "source_merge_commit": "f4a9848863a59c7a78d12a7d13813296391d66ed",
+    "source_pull_request": "heimgewebe/weltgewebe#1720",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bede83726b6bbf64f6a16837",
+      "event_id": 4268,
+      "event_created_at": "2026-08-08T06:49:51.531887Z",
+      "request_sha256": "b0ebfd9ec37cf2d901dbefd72d61835bc38ad30ffbe680d836eac167569a841c",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "github:heimgewebe/weltgewebe#1720@f4a9848863a59c7a78d12a7d13813296391d66ed",
+        "observed_at": "2026-08-08T06:36:58Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "postgresql",
+    "api",
+    "web",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Sachanträge serverseitig nach Zentrum und Knoten filtern"
+}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import subprocess
 from pathlib import Path
@@ -11,6 +12,88 @@ from .core import Dispatcher, Registry, StateStore
 from .frontier import EXECUTABLE_LANES, build_frontier_projection
 
 TERMINAL_STATES = {"verified", "cancelled", "superseded"}
+QUEUE_RECONCILE_PLAN_SCHEMA_VERSION = 3
+QUEUE_RECONCILE_ACTION_FILTER_SCHEMA_VERSION = 1
+QUEUE_RECONCILE_ACTION_CLASSES = frozenset(
+    {"add_to_queue", "move_in_queue", "remove_from_queue", "reorder_lane"}
+)
+QUEUE_RECONCILE_FINDING_CODES = frozenset(
+    {
+        "compatibility-queue-lane-drift",
+        "compatibility-queue-order-drift",
+        "compatibility-task-not-in-frontier",
+        "queued-later-priority-now-or-next",
+        "terminal-task-in-queue",
+        "unqueued-open-priority-next",
+        "unqueued-ready-priority-now",
+    }
+)
+_ACTION_FILTER_KEYS = frozenset(
+    {
+        "schema_version",
+        "selection",
+        "allowed_action_classes",
+        "allowed_finding_codes",
+    }
+)
+
+
+def _normalize_action_filter(action_filter: dict[str, Any] | None) -> dict[str, Any]:
+    if action_filter is None:
+        return {
+            "schema_version": QUEUE_RECONCILE_ACTION_FILTER_SCHEMA_VERSION,
+            "selection": "all",
+            "allowed_action_classes": [],
+            "allowed_finding_codes": [],
+        }
+    if not isinstance(action_filter, dict) or set(action_filter) != _ACTION_FILTER_KEYS:
+        raise legacy.StateError(
+            "queue reconcile action filter must contain exactly its versioned selection fields"
+        )
+    schema_version = action_filter.get("schema_version")
+    if (
+        type(schema_version) is not int
+        or schema_version != QUEUE_RECONCILE_ACTION_FILTER_SCHEMA_VERSION
+    ):
+        raise legacy.StateError("queue reconcile action filter has unsupported schema version")
+    selection = action_filter.get("selection")
+    if selection not in {"all", "allow"}:
+        raise legacy.StateError("queue reconcile action filter has unknown selection mode")
+
+    normalized_values: dict[str, list[str]] = {}
+    for key in ("allowed_action_classes", "allowed_finding_codes"):
+        values = action_filter.get(key)
+        if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+            raise legacy.StateError(f"queue reconcile action filter {key} must be a string list")
+        normalized_values[key] = sorted(set(values))
+
+    unknown_actions = set(normalized_values["allowed_action_classes"]) - set(
+        QUEUE_RECONCILE_ACTION_CLASSES
+    )
+    if unknown_actions:
+        raise legacy.StateError(
+            "queue reconcile action filter contains unknown action classes: "
+            + ", ".join(sorted(unknown_actions))
+        )
+    unknown_findings = set(normalized_values["allowed_finding_codes"]) - set(
+        QUEUE_RECONCILE_FINDING_CODES
+    )
+    if unknown_findings:
+        raise legacy.StateError(
+            "queue reconcile action filter contains unknown finding codes: "
+            + ", ".join(sorted(unknown_findings))
+        )
+    if selection == "all" and any(normalized_values.values()):
+        raise legacy.StateError(
+            "queue reconcile action filter selection all cannot have allowlists"
+        )
+    if selection == "allow" and not any(normalized_values.values()):
+        raise legacy.StateError("queue reconcile action filter selection allow has no values")
+    return {
+        "schema_version": QUEUE_RECONCILE_ACTION_FILTER_SCHEMA_VERSION,
+        "selection": selection,
+        **normalized_values,
+    }
 
 
 def _validate_resource_filter(registry: Registry, resource: str | None) -> None:
@@ -204,6 +287,7 @@ def queue_reconcile_report(
     store: StateStore,
     *,
     resource: str | None = None,
+    action_filter: dict[str, Any] | None = None,
     _check_runtime: bool = True,
 ) -> dict[str, Any]:
     """Compare the checked-in queue with the authoritative dynamic projection.
@@ -212,6 +296,7 @@ def queue_reconcile_report(
     compatibility drift report whose target is rendered by :mod:`bureau.frontier`.
     """
 
+    normalized_action_filter = _normalize_action_filter(action_filter)
     _validate_resource_filter(registry, resource)
     projection = build_frontier_projection(
         registry,
@@ -220,9 +305,11 @@ def queue_reconcile_report(
         check_runtime=_check_runtime,
     )
     current = _read_queue(registry)
-    desired = _scoped_compatibility_queue(registry, current, projection, resource)
+    unfiltered_desired = _scoped_compatibility_queue(
+        registry, current, projection, resource
+    )
     current_positions = _lane_positions(current)
-    desired_positions = _lane_positions(desired)
+    desired_positions = _lane_positions(unfiltered_desired)
     cards = _card_index(projection)
     findings: list[dict[str, Any]] = []
 
@@ -265,7 +352,10 @@ def queue_reconcile_report(
 
     for lane in EXECUTABLE_LANES:
         current_ids = [str(item) for item in current.get("lanes", {}).get(lane, [])]
-        desired_ids = [str(item) for item in desired.get("lanes", {}).get(lane, [])]
+        desired_ids = [
+            str(item)
+            for item in unfiltered_desired.get("lanes", {}).get(lane, [])
+        ]
         if current_ids == desired_ids or set(current_ids) != set(desired_ids):
             continue
         findings.append(
@@ -281,6 +371,15 @@ def queue_reconcile_report(
             }
         )
 
+    actions = _plan_actions(
+        {"findings": findings}, action_filter=normalized_action_filter
+    )
+    desired = _expected_queue_after_actions(
+        current,
+        unfiltered_desired,
+        actions,
+        action_filter=normalized_action_filter,
+    )
     summary = {
         "queued_now": len(current.get("lanes", {}).get("now", [])),
         "queued_next": len(current.get("lanes", {}).get("next", [])),
@@ -309,6 +408,7 @@ def queue_reconcile_report(
         "queue_authoritative": False,
         "queue_role": "compatibility_projection_only",
         "resource": resource,
+        "action_filter": normalized_action_filter,
         "summary": summary,
         "findings": findings,
         "repo_focus": _repo_focus(registry, projection),
@@ -325,10 +425,26 @@ def queue_reconcile_report(
     }
 
 
-def _plan_actions(report: dict[str, Any]) -> list[dict[str, Any]]:
+def _action_allowed(finding: dict[str, Any], action_filter: dict[str, Any]) -> bool:
+    if action_filter["selection"] == "all":
+        return True
+    proposed = finding.get("proposed_action")
+    if not isinstance(proposed, dict):
+        return False
+    return (
+        proposed.get("operation") in action_filter["allowed_action_classes"]
+        or finding.get("code") in action_filter["allowed_finding_codes"]
+    )
+
+
+def _plan_actions(
+    report: dict[str, Any], *, action_filter: dict[str, Any]
+) -> list[dict[str, Any]]:
     actions: list[dict[str, Any]] = []
     seen: set[tuple[str, str | None, str]] = set()
     for finding in report.get("findings", []):
+        if not isinstance(finding, dict) or not _action_allowed(finding, action_filter):
+            continue
         proposed = finding.get("proposed_action")
         if not isinstance(proposed, dict):
             continue
@@ -353,20 +469,90 @@ def _plan_actions(report: dict[str, Any]) -> list[dict[str, Any]]:
     return actions
 
 
+def _expected_queue_after_actions(
+    current: dict[str, Any],
+    unfiltered_desired: dict[str, Any],
+    actions: list[dict[str, Any]],
+    *,
+    action_filter: dict[str, Any],
+) -> dict[str, Any]:
+    if action_filter["selection"] == "all":
+        return unfiltered_desired
+
+    expected = copy.deepcopy(current)
+    lanes = expected.get("lanes")
+    if not isinstance(lanes, dict):
+        raise legacy.StateError("compatibility queue lacks lanes")
+    for action in actions:
+        operation = action.get("operation")
+        task_id = action.get("task_id")
+        target_lane = action.get("target_lane")
+        if operation == "reorder_lane":
+            if target_lane not in legacy.LANE_ORDER:
+                raise legacy.StateError("queue reconcile action has unknown target lane")
+            lanes[target_lane] = list(
+                unfiltered_desired.get("lanes", {}).get(target_lane, [])
+            )
+            continue
+        if operation not in {"add_to_queue", "move_in_queue", "remove_from_queue"}:
+            raise legacy.StateError("queue reconcile action has unknown action class")
+        if not isinstance(task_id, str):
+            raise legacy.StateError("queue reconcile task action lacks a task id")
+        for lane in legacy.LANE_ORDER:
+            lane_items = lanes.get(lane)
+            if not isinstance(lane_items, list):
+                raise legacy.StateError(f"compatibility queue lane {lane} is not a list")
+            lanes[lane] = [item for item in lane_items if str(item) != task_id]
+        if operation != "remove_from_queue":
+            if target_lane not in legacy.LANE_ORDER:
+                raise legacy.StateError("queue reconcile action has unknown target lane")
+            target_items = lanes[target_lane]
+            projected_items = [
+                str(item)
+                for item in unfiltered_desired.get("lanes", {}).get(target_lane, [])
+            ]
+            projected_index = projected_items.index(task_id)
+            inserted = False
+            for predecessor in reversed(projected_items[:projected_index]):
+                if predecessor in target_items:
+                    target_items.insert(target_items.index(predecessor) + 1, task_id)
+                    inserted = True
+                    break
+            if not inserted:
+                for successor in projected_items[projected_index + 1 :]:
+                    if successor in target_items:
+                        target_items.insert(target_items.index(successor), task_id)
+                        inserted = True
+                        break
+            if not inserted:
+                target_items.append(task_id)
+    return expected
+
+
 def queue_reconcile_plan(
     registry: Registry,
     store: StateStore,
     *,
     resource: str | None = None,
+    action_filter: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    report = queue_reconcile_report(registry, store, resource=resource)
+    report = queue_reconcile_report(
+        registry,
+        store,
+        resource=resource,
+        action_filter=action_filter,
+    )
     queue_before = _read_queue(registry)
     expected = report["compatibility_queue"]
+    normalized_action_filter = report["action_filter"]
+    actions = _plan_actions(report, action_filter=normalized_action_filter)
     return {
-        "schema_version": 2,
+        "schema_version": QUEUE_RECONCILE_PLAN_SCHEMA_VERSION,
         "command": "queue-reconcile-plan",
         "created_at": legacy.utc_now(),
         "resource": resource,
+        "action_filter": normalized_action_filter,
+        "action_filter_sha256": legacy.sha256_json(normalized_action_filter),
         "registry": {
             "root": str(registry.root),
             "git_head": _git_head(registry.root),
@@ -374,15 +560,17 @@ def queue_reconcile_plan(
         },
         "frontier_projection_sha256": report["frontier_projection_sha256"],
         "dry_run_report_sha256": legacy.sha256_json(report),
-        "actions": _plan_actions(report),
+        "actions": actions,
+        "actions_sha256": legacy.sha256_json(actions),
         "expected_queue_after": expected,
         "expected_queue_after_sha256": _queue_sha256(expected),
         "review": {
             "required": True,
             "status": "pending",
             "instructions": (
-                "Review the dynamic-frontier compatibility projection. To materialize it, "
-                "set status to reviewed and add reviewer plus reviewed_at."
+                "Review the dynamic-frontier compatibility projection and its bound "
+                "action_filter. To materialize it, set status to reviewed and add "
+                "reviewer plus reviewed_at."
             ),
         },
         "does_not_establish": [
@@ -401,8 +589,14 @@ def write_queue_reconcile_plan(
     path: str | Path,
     *,
     resource: str | None = None,
+    action_filter: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    plan = queue_reconcile_plan(registry, store, resource=resource)
+    plan = queue_reconcile_plan(
+        registry,
+        store,
+        resource=resource,
+        action_filter=action_filter,
+    )
     target = Path(path).expanduser()
     legacy.atomic_write(target, legacy.canonical_json(plan) + "\n")
     return {**plan, "path": str(target)}
@@ -410,7 +604,10 @@ def write_queue_reconcile_plan(
 
 def _load_reviewed_plan(path: str | Path) -> dict[str, Any]:
     plan = legacy.read_json(Path(path).expanduser())
-    if plan.get("schema_version") != 2 or plan.get("command") != "queue-reconcile-plan":
+    if (
+        plan.get("schema_version") != QUEUE_RECONCILE_PLAN_SCHEMA_VERSION
+        or plan.get("command") != "queue-reconcile-plan"
+    ):
         raise legacy.StateError("queue reconcile plan has unsupported schema or command")
     review = plan.get("review")
     if not isinstance(review, dict) or review.get("status") != "reviewed":
@@ -441,6 +638,18 @@ def apply_queue_reconcile_plan(
     """Materialize the reviewed compatibility queue with rollback on drift."""
 
     plan = _load_reviewed_plan(path)
+    if "action_filter" not in plan:
+        raise legacy.StateError("queue reconcile plan lacks an action filter")
+    planned_action_filter = _normalize_action_filter(plan.get("action_filter"))
+    if planned_action_filter != plan.get("action_filter"):
+        raise legacy.StateError("queue reconcile plan action filter is not normalized")
+    if legacy.sha256_json(planned_action_filter) != plan.get("action_filter_sha256"):
+        raise legacy.StateError("queue reconcile plan action filter hash mismatch")
+    planned_actions = plan.get("actions")
+    if not isinstance(planned_actions, list):
+        raise legacy.StateError("queue reconcile plan actions are not a list")
+    if legacy.sha256_json(planned_actions) != plan.get("actions_sha256"):
+        raise legacy.StateError("queue reconcile plan actions hash mismatch")
     if plan.get("resource") != resource:
         raise legacy.StateError("queue reconcile plan resource does not match apply resource")
     plan_registry = plan.get("registry")
@@ -453,12 +662,22 @@ def apply_queue_reconcile_plan(
     current_queue_sha = _queue_sha256(current_queue)
     if current_queue_sha != plan_registry.get("queue_sha256_before"):
         raise legacy.StateError("queue changed since queue reconcile plan was generated")
-    current_report = queue_reconcile_report(registry, store, resource=resource)
+    current_report = queue_reconcile_report(
+        registry,
+        store,
+        resource=resource,
+        action_filter=planned_action_filter,
+    )
     if legacy.sha256_json(current_report) != plan.get("dry_run_report_sha256"):
-        raise legacy.StateError("dynamic frontier changed since queue plan review")
+        raise legacy.StateError(
+            "dynamic frontier changed, or findings/action filter drifted since queue plan review"
+        )
     if current_report["frontier_projection_sha256"] != plan.get("frontier_projection_sha256"):
         raise legacy.StateError("frontier projection changed since queue plan review")
-    if _plan_actions(current_report) != plan.get("actions"):
+    if (
+        _plan_actions(current_report, action_filter=planned_action_filter)
+        != planned_actions
+    ):
         raise legacy.StateError("queue reconcile actions changed since plan review")
     expected = plan.get("expected_queue_after")
     if not isinstance(expected, dict):
@@ -471,7 +690,7 @@ def apply_queue_reconcile_plan(
     _require_bound_git_head(registry.root, planned_git_head)
     if expected_sha == current_queue_sha:
         return {
-            "schema_version": 2,
+            "schema_version": QUEUE_RECONCILE_PLAN_SCHEMA_VERSION,
             "command": "queue-reconcile-apply",
             "applied": False,
             "no_op": True,
@@ -481,6 +700,7 @@ def apply_queue_reconcile_plan(
             "registry_git_head": current_git_head,
             "queue_sha256_before": current_queue_sha,
             "queue_sha256_after": expected_sha,
+            "action_filter": planned_action_filter,
             "actions": [],
             "approval": plan.get("approval"),
             "post_gates": None,
@@ -501,6 +721,7 @@ def apply_queue_reconcile_plan(
             registry_after,
             store,
             resource=resource,
+            action_filter=planned_action_filter,
             _check_runtime=False,
         )
         gates = {
@@ -532,7 +753,7 @@ def apply_queue_reconcile_plan(
         legacy.atomic_write(queue_path, before_text)
         raise
     return {
-        "schema_version": 2,
+        "schema_version": QUEUE_RECONCILE_PLAN_SCHEMA_VERSION,
         "command": "queue-reconcile-apply",
         "applied": True,
         "no_op": False,
@@ -542,6 +763,7 @@ def apply_queue_reconcile_plan(
         "registry_git_head": current_git_head,
         "queue_sha256_before": current_queue_sha,
         "queue_sha256_after": expected_sha,
+        "action_filter": planned_action_filter,
         "actions": plan.get("actions", []),
         "approval": plan.get("approval"),
         "post_gates": gates,

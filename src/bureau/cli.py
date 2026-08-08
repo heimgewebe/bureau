@@ -208,6 +208,8 @@ def parser() -> argparse.ArgumentParser:
     queue_reconcile.add_argument("--resource")
     queue_reconcile.add_argument("--write-plan")
     queue_reconcile.add_argument("--apply-plan")
+    queue_reconcile.add_argument("--allow-action-class", action="append")
+    queue_reconcile.add_argument("--allow-finding-code", action="append")
     worktree_hygiene = sub.add_parser("worktree-hygiene")
     worktree_hygiene.add_argument("--max-count", type=int, default=25)
     worktree_hygiene.add_argument("--candidate", action="append", default=[])
@@ -1272,6 +1274,7 @@ def main(argv: list[str] | None = None) -> int:
             value = dispatcher.repo_balls(set(args.capability))
         elif args.command == "queue-reconcile":
             from .queue_reconcile import (
+                QUEUE_RECONCILE_ACTION_FILTER_SCHEMA_VERSION,
                 apply_queue_reconcile_plan,
                 queue_reconcile_report,
                 write_queue_reconcile_plan,
@@ -1279,16 +1282,38 @@ def main(argv: list[str] | None = None) -> int:
 
             if args.write_plan and args.apply_plan:
                 raise StateError("use either --write-plan or --apply-plan, not both")
+            action_filter = None
+            if args.allow_action_class or args.allow_finding_code:
+                action_filter = {
+                    "schema_version": QUEUE_RECONCILE_ACTION_FILTER_SCHEMA_VERSION,
+                    "selection": "allow",
+                    "allowed_action_classes": args.allow_action_class or [],
+                    "allowed_finding_codes": args.allow_finding_code or [],
+                }
+            if args.apply_plan and action_filter is not None:
+                raise StateError(
+                    "action filter options cannot accompany --apply-plan; "
+                    "apply uses the reviewed plan filter"
+                )
             if args.write_plan:
                 value = write_queue_reconcile_plan(
-                    registry, store, args.write_plan, resource=args.resource
+                    registry,
+                    store,
+                    args.write_plan,
+                    resource=args.resource,
+                    action_filter=action_filter,
                 )
             elif args.apply_plan:
                 value = apply_queue_reconcile_plan(
                     registry, store, args.apply_plan, resource=args.resource
                 )
             else:
-                value = queue_reconcile_report(registry, store, resource=args.resource)
+                value = queue_reconcile_report(
+                    registry,
+                    store,
+                    resource=args.resource,
+                    action_filter=action_filter,
+                )
         elif args.command == "live-conflicts":
             value = dispatcher.live_conflicts(
                 set(args.capability), resource=args.repo, limit=args.limit

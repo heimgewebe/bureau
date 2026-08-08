@@ -11,12 +11,12 @@
       "id": "portrait-ring-label-proof"
     },
     {
-      "assertion": "On the same physical device in landscape with a CSS viewport wider than the compact 48rem breakpoint where available, the coarse-touch path remains active, primary and depth ring labels stay visible and the compositor regression does not recur.",
+      "assertion": "On a reserved physical Android/Brave device in landscape with a CSS viewport strictly wider than the compact 48rem breakpoint, the coarse-touch path remains active, primary and depth ring labels stay visible and the compositor regression does not recur. If the reserved device cannot provide such a viewport, verification is blocked until a suitable physical Android/Brave device is exclusively claimed.",
       "evidence_type": "object",
       "id": "wide-landscape-proof"
     },
     {
-      "assertion": "If no defect is found, physical evidence is bound to the exact deployed release without product-code changes. If a defect is found, the exact remediation head passes focused Android regressions, full make validate, canonical browser smoke, required GitHub checks, merge, deployment and production readback before verification.",
+      "assertion": "If no defect is found, physical evidence is bound to the exact deployed release without product-code changes. If a defect is found, T044 records the exact failing release/device evidence and remains blocked; remediation, merge and deployment must occur only in separately registered and exclusively claimed Bureau successor tasks, and T044 may resume final verification only after consuming their typed merge/deployment receipts for the exact corrective commit.",
       "evidence_type": "object",
       "id": "exact-head-closeout"
     }
@@ -26,13 +26,18 @@
       "isolation": "worktree",
       "mode": "write",
       "resource": "repo.commonworld"
+    },
+    {
+      "isolation": "profile",
+      "mode": "exclusive",
+      "resource": "device.android.physical"
     }
   ],
   "depends_on": [],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Physical verification is read-only unless the deployed Android/Brave surface reproduces a defect. Any remediation must use an isolated Commonworld worktree and preserve exact release/evidence binding.",
+      "note": "Physical verification requires an exclusive Bureau claim on device.android.physical. T044 itself is read-only against product state unless a defect is reproduced; any remediation, merge or deployment requires separately registered exclusive successor tasks and typed receipts before T044 resumes verification.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -50,7 +55,8 @@
       "that Chromium emulation equals physical Android/Brave compositor behavior",
       "that green CI proves production deployment",
       "permission to re-enable compositor-sensitive parent animation without physical proof",
-      "automatic merge or deployment authority"
+      "automatic merge or deployment authority",
+      "authority for T044 itself to remediate, merge or deploy a reproduced defect without separately registered exclusive successor tasks"
     ],
     "observed_gap": "Chromium automation proves 390x844 portrait and 844x390 coarse-touch layout, but a real Android/Brave readback of the deployed merged head is still required.",
     "operator_intake": {

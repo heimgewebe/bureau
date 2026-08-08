@@ -652,6 +652,13 @@ def _parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
         args = parser().parse_args(raw[: command_index + 1])
         args.bridge_args = raw[command_index + 1 :]
         return args
+    if (
+        command_index < len(raw)
+        and raw[command_index] == "cycle-run"
+        and len(raw) == command_index + 3
+        and raw[-1] in {"-h", "--help"}
+    ):
+        return parser().parse_args([*raw[: command_index + 1], raw[-1]])
     return parser().parse_args(raw)
 
 

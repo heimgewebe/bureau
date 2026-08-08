@@ -1,8 +1,10 @@
 # Runtime Automation Contract
 
-Status: active contract for Bureau runtime automation work
+Status: active operational contract for Bureau runtime automation work
 Owner layer: Bureau Core with Bureau Ops consumers
 Source plan: `docs/plans/bureau-runtime-automation-baseline-v1.md`
+Historical baseline evidence: `docs/bureau-runtime-automation-contract-v1.md`
+Historical task binding: `registry/tasks/BUR-2026-005-T001.json`
 
 Bureau automation is a control-tower contract, not an autopilot permission. Every automated loop must keep three questions separate:
 
@@ -10,18 +12,13 @@ Bureau automation is a control-tower contract, not an autopilot permission. Ever
 2. Which Bureau state may this loop mutate?
 3. Which decision remains outside the loop's authority?
 
-## Authority model
+## Document lineage and authority
 
-| Surface | Owns | May do | Must not do |
-|---|---|---|---|
-| Registry | initiatives, tasks, resources, queue order and durable plan references | define Bureau intent through reviewed Git changes | represent live runtime truth |
-| State root | SQLite runs, reservations, task overlays, workspaces, events, envelopes and receipts | record operational truth and materialised evidence | overwrite source authority |
-| Observer evidence | source-attributed facts from GitHub, Grabowski and other external systems | record observations with identifiers and timestamps | convert observations directly into completion |
-| Status projection | read-only status board assembled from registry, state root and observations | explain current effective state and unknowns | mutate registry, runs, receipts or source systems |
-| Dispatcher | optional claim and external dispatch entry point | claim only eligible ready work under explicit policy | merge, complete, clean up dirty workspaces or bypass evidence |
-| Merge gate | explicit final merge decision | merge only under a separate gate policy | inherit authority from CI, observer or dispatcher success |
+`docs/bureau-runtime-automation-contract-v1.md` is the retained acceptance artifact for the verified historical task `BUR-2026-005-T001`. Its anchors are referenced directly from that task's Registry metadata, so it remains historical evidence and is not a second current contract to keep in sync by hand.
 
-Bureau Core owns coordination and receipt validity. Bureau Ops may observe, derive, propose and materialise explicit evidence. External authorities keep their own facts: GitHub owns branches, pull requests, reviews and CI; Grabowski owns concrete processes, leases and durable workers.
+This file is the active operational delta. It does not maintain a second exhaustive authority matrix or status vocabulary. Current durable task facts come from the applicable `registry/tasks/*.json` record and queue placement from `registry/queue.json`; current run facts come from the Bureau StateStore and read-only CLI projections. `docs/architecture.md` describes the current component ownership model. When prose and a primary source disagree, the primary source wins and the prose is stale.
+
+The baseline control-tower ownership and forbidden-power rationale remain documented in the historical v1 contract. The rules below contain only operational additions that still need an active home.
 
 ## Scheduler contract
 
@@ -36,32 +33,25 @@ A scheduler loop must be:
 - observable through logs, JSON output or persisted events;
 - safe to stop without silently losing claimed work.
 
-## Status vocabulary
+## State-source invariants
 
-The status board must preserve distinctions instead of flattening them into green/red.
+Do not copy mutable runtime enumerations into this document. Read them from the current Registry and StateStore projections instead. The cross-source invariants that remain stable are:
 
-| Status family | Examples | Meaning |
-|---|---|---|
-| Registry state | `planned`, `ready`, `blocked`, `verified`, `cancelled`, `superseded` | durable task declaration and eligibility input |
-| Run state | `assigned`, `running`, `verifying`, `succeeded`, `failed`, `cancelled`, `orphaned` | operational run lifecycle in the state root |
-| Observation state | `github-observation-blocked`, `pr-observed`, `ci-unknown`, `ci-pending`, `ci-passed`, `ci-failed`, `reviewing`, `changes-requested`, `approved`, `merged-observed` | source-attributed facts imported by observers |
-| Freshness state | `current`, `stale`, `unknown` | whether task and plan hashes still match the verified evidence |
-| Projection state | `eligible`, `blocked`, `needs-review`, `verification-needed`, `unknown` | read-only synthesis for operators and dashboards |
+- Registry task state and queue placement are durable Bureau intent, not GitHub or CI facts.
+- StateStore run state is operational truth for one bound run, not permanent task verification.
+- GitHub owns observed pull-request, review and merge facts; CI owns only the result for its exact run and commit.
+- `merged-observed` is not `verified`; green CI is not completion.
+- An external process success is not Bureau receipt evidence.
+- A webhook event is an observation until an explicit reconciler interprets it under a mutation contract.
 
-`merged-observed` is not `verified`. Green CI is not completion. External process success is not receipt evidence. A webhook event is not a state transition until a reconciler interprets it under this contract.
+## Active authority deltas
 
-## Forbidden implicit powers
+The historical v1 contract already forbids implicit merge, cleanup, task verification, initiative completion, queue mutation, unsafe dispatch and deploy authority. This active contract adds four operational restrictions that must not be inferred away:
 
-Baseline automation must not:
-
-1. merge pull requests;
-2. mark tasks complete from GitHub merge, approval or CI alone;
-3. clean up dirty, unmerged or non-terminal workspaces;
-4. dispatch non-ready tasks or bypass dependency checks;
-5. treat webhook delivery as direct Bureau state mutation;
-6. treat observer evidence as source authority;
-7. mutate `current_plan.commit` or `document_sha256` without a freshness and re-verification strategy;
-8. make systemd or any specific scheduler a required Bureau Core runtime.
+1. webhook delivery does not directly mutate Bureau lifecycle state;
+2. dispatcher or scheduler success does not authorize merge, completion or cleanup;
+3. non-ready work and dependency checks cannot be bypassed by a scheduler;
+4. changing `current_plan.commit`, `document_sha256` or other plan identity requires an explicit freshness and re-verification strategy.
 
 Any exception requires a separate initiative or task with explicit acceptance criteria, source ownership and revalidation rules.
 

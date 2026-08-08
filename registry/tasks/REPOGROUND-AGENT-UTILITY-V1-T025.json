@@ -1,0 +1,107 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Frische, revisions- und runtimegebundene Evidenz trennt sauber zwischen tatsächlich nicht unterstützter Heim-PC-Runtime und einem zu strengen Doctor-Vertrag; Entscheidung, Gegenhypothese und Nichtbehauptungen sind explizit dokumentiert.",
+      "id": "decision-gate"
+    },
+    {
+      "assertion": "Wenn der Fehler im RepoGround-Vertrag liegt, wird nur der kleinste Doctor-/Launcher-Fix umgesetzt und getestet, ohne die CI-/Release-Baseline stillschweigend abzuschwächen. Wenn eine Host-Runtime-Migration nötig ist, verändert T025 kein OS-verwaltetes System-Python, sondern registriert dafür einen eigenen host-mutierenden Folgetask mit frischem Preflight- und Rollbackvertrag.",
+      "id": "bounded-fix"
+    },
+    {
+      "assertion": "Nach einem RepoGround-seitigen Fix belegen `repoground --help`, `repoground doctor --json` und der read-only Dienststatus weiterhin die kanonische Wrapperidentität; T024 darf nicht regressieren.",
+      "id": "live-readback"
+    },
+    {
+      "assertion": "Gezielte Doctor-/Runtime-Tests, relevante Lint-/RepoGround-Gates und erforderliche GitHub-CI sind auf dem exakten Änderungs-Head grün, bevor ein Merge erfolgt.",
+      "id": "regression-gates"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T024"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Die nach T024 verbleibende RepoGround-Doctor-Abweichung auf dem Heim-PC ergebnisoffen und revisionsgebunden auflösen: frisch bestimmen, ob CPython 3.10.12 für den tatsächlich unterstützten RepoGround-Vertrag unzulässig ist oder ob der Doctor die reproduzierte CI-/Release-Baseline 3.12 fälschlich als harte Hostanforderung behandelt. Falls ein RepoGround-seitiger Doctor-/Launcher-Fix genügt, diesen implementieren und testen. Falls stattdessen eine Host-Runtime-Migration erforderlich ist, keine OS-verwaltete System-Python-Installation verändern, sondern eine separate, explizit autorisierte Host-Mutation als eigenen Folgetask registrieren.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T025",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass CPython 3.10.12 inhärent unsicher oder defekt ist",
+      "dass RepoGround Core aktuell funktionsunfähig ist",
+      "dass das OS-verwaltete System-Python ersetzt werden muss",
+      "dass die optionalen Rust-/Bash-Strukturadapter für diesen Folgefund relevant sind"
+    ],
+    "finding": "T024 wurde am 08.08.2026 erfolgreich abgeschlossen. Der globale Wrapper ist kanonisch und Doctor bewertet ihn als available; der Doctor-Gesamtstatus bleibt jedoch degraded, weil der Heim-PC CPython 3.10.12 nutzt, während die reproduzierte CI-/Release-Baseline 3.12 ist.",
+    "source_receipt": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260808T165340Z-e7c7ef0bcc.json#evidence.live-readback.nonblocking_doctor_degradations.python",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-03bf8541c5395e5157d837ca",
+      "event_id": 4586,
+      "event_created_at": "2026-08-08T17:17:22.197933Z",
+      "request_sha256": "978166182e19932d71a9a5acf3e0ceafcb71e272b648fa6af26a63a556bc45b0",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "bureau-receipt",
+        "locator": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260808T165340Z-e7c7ef0bcc.json#evidence.live-readback.nonblocking_doctor_degradations.python",
+        "observed_at": "2026-08-08T17:10:58.348066Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 65
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "repoground",
+    "diagnostics",
+    "testing"
+  ],
+  "rollback": {
+    "procedure": "Den exakten RepoGround-Diff zurücknehmen und Doctor/CLI erneut revisionsgebunden prüfen. Host-Python und repoground.service bleiben durch T025 unverändert.",
+    "trigger": "Ein RepoGround-seitiger Fix verschlechtert CLI-, Doctor- oder Wrapper-Semantik oder macht eine zuvor unterstützte Runtime fälschlich unzulässig."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "stop": {
+    "conditions": [
+      "Frische Evidenz zeigt, dass eine Lösung nur durch Änderung der OS-verwalteten System-Python-Installation möglich wäre.",
+      "Eine notwendige Host-Runtime-Mutation geht über read-only Diagnose hinaus; dafür muss ein eigener, explizit autorisierter Folgetask entstehen.",
+      "Eine fremde aktive RepoGround-Mutation überschneidet sich mit dem vorgesehenen Worktree-Scope.",
+      "Der Befund betrifft nicht RepoGrounds Runtime-/Doctor-Vertrag, sondern ein anderes System."
+    ]
+  },
+  "title": "RepoGround-Python-Runtime und Doctor-Baseline konvergieren"
+}

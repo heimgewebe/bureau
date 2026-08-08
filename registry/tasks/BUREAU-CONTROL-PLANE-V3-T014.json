@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Für eine bereits existierende Task bindet operator-task-propose im Plan die aktuelle StateStore-TaskSpec-Revision, den aktuellen Spec-Digest und den neuen TaskSpec-Digest. Neuregistrierungen behalten expected_revision=null. Ein Kandidat darf nicht still eine andere bestehende Task revidieren.",
+      "evidence_type": "object",
+      "id": "revision-aware-proposal"
+    },
+    {
+      "assertion": "operator-task-publish übergibt bei Revisionen exakt die reviewte expected_revision an register_task_spec_with_legacy_import/StateStore.put_task_spec. Hat sich die TaskSpec zwischen Review und Publish verändert, bricht die Publikation vor TaskSpec-Wirkung mit stale-CAS ab.",
+      "evidence_type": "object",
+      "id": "cas-bound-publication"
+    },
+    {
+      "assertion": "Proposal-SHA, reviewed_plan-Freigabe, Idempotenzschlüssel, Task-ID und alter/neuer Digest bleiben durch Proposal, Review, Publication Receipt und Replay gebunden. Unbekannte Ausgänge erlauben keinen Blind-Retry.",
+      "evidence_type": "object",
+      "id": "review-and-idempotency-preserved"
+    },
+    {
+      "assertion": "Bestehende Neuregistrierungsfälle bleiben unverändert grün. Neue Tests belegen mindestens Revision 1→2, idempotenten Replay, stale expected_revision, Kandidat/Task-Identitätsfehler und unveränderte Neuregistrierung.",
+      "evidence_type": "object",
+      "id": "registration-regression-safe"
+    },
+    {
+      "assertion": "Die Lösung erweitert ausschließlich den bestehenden reviewed Operator-Intake. Es entsteht kein zweiter TaskSpec-Writer, keine direkte SQLite-/Python-Bedienoberfläche und keine Queue-Mutation als Nebenwirkung.",
+      "evidence_type": "object",
+      "id": "single-publication-path"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Fortsetzung am 2026-08-08 mit 'weiter' autorisiert. Dieser dringende Slice vervollständigt ausschließlich den vorhandenen T005-CAS-Vertrag; keine Queue-, Runtime-, Deployment- oder fremde Doku-Wirkung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T014.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den bestehenden operator-task-propose → review → publish-Vertrag so vervollständigen, dass er neben Neuregistrierungen auch bestehende TaskSpecs revisionsgebunden aktualisieren kann. Der Entwurf muss die aktuelle TaskSpec-Revision und den alten Digest binden; die Publikation muss StateStore.put_task_spec über register_task_spec_with_legacy_import mit exakt dieser expected_revision/CAS-Basis aufrufen. Es entsteht keine zweite Mutationsoberfläche und kein Direct-SQL-, Python- oder Registry-Bypass.",
+  "id": "BUREAU-CONTROL-PLANE-V3-T014",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "Abschluss des gesamten BUREAU-CONTROL-PLANE-V3-T005",
+      "Berechtigung zu Queue- oder Runtime-Mutationen",
+      "Berechtigung zu Änderungen außerhalb operator_intake.py, test_operator_intake.py und der eigenen Taskdatei",
+      "Freigabe des fremden PR #1787 oder dessen Doku-Run"
+    ],
+    "live_reproducer": "WELTGEWEBE-PR-MAINTENANCE-V2-T009: revision 1 exists; operator-task-propose returns task-exists; task is not claimable because queue.json omits it; final PR scope requires an honest revision 2.",
+    "operator_intake": {
+      "candidate_id": "candidate-62a122cc46e55c8bcdc3cb76",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-08T11:16:01.705770Z",
+      "event_id": 4383,
+      "request_sha256": "1034aeef7b5296240055f0ced936462cf6c807bef48cab00a1b9c69b7dd7a512",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:9f86e198cdec290738fcebcee63523d27a9adff4:task_specs.put+operator_intake",
+        "observed_at": "2026-08-08T11:13:12Z",
+        "sha256": "d38cf13906cac0882627d36d34a6c14b5b90f93aaa58fdc52c00e76ddd4bf47d"
+      }
+    },
+    "parent_contract": "BUREAU-CONTROL-PLANE-V3-T005",
+    "registered_at": "2026-08-08",
+    "slice_reason": "T005 is planned and unqueued, while a live Weltgewebe closeout is blocked today by the missing existing-TaskSpec revision surface. T014 is a bounded unblocker implementing only that already-declared CAS mutation requirement.",
+    "source_candidate": "candidate-62a122cc46e55c8bcdc3cb76",
+    "source_event_id": 4383,
+    "source_runtime_commit": "9f86e198cdec290738fcebcee63523d27a9adff4",
+    "source_task_specs_sha256": "d38cf13906cac0882627d36d34a6c14b5b90f93aaa58fdc52c00e76ddd4bf47d"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Bestehende TaskSpecs über den reviewed Operator-Intake CAS-revidieren"
+}

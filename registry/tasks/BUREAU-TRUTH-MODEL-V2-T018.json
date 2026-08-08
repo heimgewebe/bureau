@@ -79,6 +79,34 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "task_sha256": "401d45874bf41b26b09f3347dee1fcbaed3db533c7f1bb3640be257b1b7a7dc8",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "source": "historical_merged_pr_plus_current_head_validation",
+      "source_ref": "github-pr:heimgewebe/bureau#1087@12d120af1dc66782f77c8b865d3762ebc91a0b53:d119aa7504a8d93fa983873a5c08310d53699312",
+      "implementation_pr": "heimgewebe/bureau#1087",
+      "implementation_head": "12d120af1dc66782f77c8b865d3762ebc91a0b53",
+      "implementation_merge_commit": "d119aa7504a8d93fa983873a5c08310d53699312",
+      "fail_closed_hardening_commit": "9d929f978654f0700be0cde8a4455dfd587f51c5",
+      "current_validation_head": "bfb214d8cfdee2227d316099e16f06e34680e4a6",
+      "focused_validation_task": "3f9e3ea84aa5418eb5667354",
+      "full_validation_task": "519fc6989c0442989e44f7e6",
+      "full_validation_lifecycle_receipt_sha256": "e9c4e7ba81537b03d326546ffdfb27c14c839191e8f38dac28b8ed45ea701358",
+      "validation": [
+        "43 T018-focused tests passed on the exact current source tree with worktree-bound PYTHONPATH",
+        "Ruff passed on src and tests",
+        "Full Bureau pytest passed: 1214 tests plus 18 subtests",
+        "systemkatalog boundary passed",
+        "bureau check returned valid with StateStore integrity ok and broad_bureau_scope_findings empty",
+        "PR #1087 validate 3.10/3.12, CodeQL and registry-registration-preflight checks passed"
+      ],
+      "does_not_establish": [
+        "a generic StateStore historical-verification mutation path",
+        "permission to rewrite terminal historical tasks",
+        "completion of unrelated Bureau queue or lifecycle work"
+      ],
+      "verified_at": "2026-08-08T06:01:03.688813Z"
     }
   },
   "priority": {
@@ -92,6 +120,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Prevent broad Bureau claim regressions after exact-scope migration"
 }

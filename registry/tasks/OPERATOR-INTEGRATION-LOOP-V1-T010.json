@@ -79,6 +79,36 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "stale_target_closeout": {
+      "schema_version": 1,
+      "disposition": "cancelled-obsolete-target",
+      "observed_at": "2026-08-08T04:37:58Z",
+      "reason": "Fresh exact-target readback shows PR #858 is already merged and its head changed since task registration; the task acceptance explicitly invalidates the prior assessment when the PR is closed or the head changes, so no new PR mutation is permitted.",
+      "pr": {
+        "repo": "heimgewebe/bureau",
+        "number": 858,
+        "state": "MERGED",
+        "base_branch": "main",
+        "registered_head_sha": "9d509f139c5301169289463822b3382dbc7bcc64",
+        "current_head_sha": "3aab89fa98b7bc1c3bb468cd4ff2fd64fb6c39bf",
+        "merged_at": "2026-07-23T17:28:53Z",
+        "current_body_task_binding": "OPERATOR-INTEGRATION-LOOP-V1-T010",
+        "changed_files": [
+          "registry/tasks/WELTGEWEBE-OS-V1-T033.json",
+          "registry/tasks/WELTGEWEBE-OS-V1-T034.json"
+        ]
+      },
+      "bureau_github_observation": {
+        "binding_healthy": true,
+        "healthy": true,
+        "hard_findings": []
+      },
+      "does_not_establish": [
+        "historical byte-identical PR head at the moment the body binding was added",
+        "full acceptance verification for the original repair effect",
+        "permission to mutate merged PR #858"
+      ]
     }
   },
   "priority": {
@@ -92,6 +122,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Repair missing Bureau task binding on PR 858 without weakening fail-closed guards"
 }

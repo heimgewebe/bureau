@@ -20,12 +20,13 @@ from .cycle_contract import (
 from .cycle_contract import (
     SCHEMA_VERSION as CYCLE_SCHEMA_VERSION,
 )
-from .task_supply import SupplyError, _git_head, file_sha256
+from .task_supply import SupplyError, SupplyPolicy, _git_head, file_sha256
 
 AGENT_FRONTIER_SCHEMA_VERSION = 1
 DEFAULT_FRONTIER_LIMIT = 8
 DEFAULT_REJECT_LIMIT = 50
 DEFAULT_BINDING_LIMIT = 8
+SUPPLY_REGENERATION_DIRNAME = "task-supply-regeneration"
 DEFAULT_FOCUS_REPOSITORIES = ("weltgewebe", "lenskit", "grabowski")
 CANONICAL_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 SOURCE_MARKERS = (
@@ -331,6 +332,24 @@ def load_optional_summary(path: Path | None) -> dict[str, Any]:
     return summary
 
 
+def current_registry_binding(registry_root: Path) -> tuple[str, str]:
+    inventory_path = registry_root / ".bureau-runtime-snapshot.json"
+    if inventory_path.is_file() and not inventory_path.is_symlink():
+        inventory = load_json(inventory_path, None)
+        if (
+            not isinstance(inventory, dict)
+            or inventory.get("schema_version") != 1
+            or inventory.get("kind") != "bureau_registry_snapshot"
+            or not isinstance(inventory.get("source_commit"), str)
+            or re.fullmatch(r"[0-9a-f]{40}", inventory["source_commit"]) is None
+        ):
+            raise SupplyError("invalid canonical Registry snapshot inventory")
+        current_head = inventory["source_commit"]
+    else:
+        current_head = _git_head(registry_root)
+    return current_head, file_sha256(registry_root / "registry/queue.json")
+
+
 def load_task_supply_summary(
     path: Path | None, *, registry_root: Path | None = None
 ) -> dict[str, Any]:
@@ -373,21 +392,7 @@ def load_task_supply_summary(
                 "reason": "registry-binding-missing",
             }
         try:
-            inventory_path = registry_root / ".bureau-runtime-snapshot.json"
-            if inventory_path.is_file() and not inventory_path.is_symlink():
-                inventory = load_json(inventory_path, None)
-                if (
-                    not isinstance(inventory, dict)
-                    or inventory.get("schema_version") != 1
-                    or inventory.get("kind") != "bureau_registry_snapshot"
-                    or not isinstance(inventory.get("source_commit"), str)
-                    or len(inventory["source_commit"]) != 40
-                ):
-                    raise SupplyError("invalid canonical Registry snapshot inventory")
-                current_head = inventory["source_commit"]
-            else:
-                current_head = _git_head(registry_root)
-            current_queue_sha256 = file_sha256(registry_root / "registry/queue.json")
+            current_head, current_queue_sha256 = current_registry_binding(registry_root)
         except (OSError, SupplyError):
             return {
                 "available": False,
@@ -404,6 +409,7 @@ def load_task_supply_summary(
                 "invalid": True,
                 "stale": True,
                 "reason": "registry-binding-stale",
+                "report_sha256": claimed_digest,
                 "report_registry_head": report_head,
                 "current_registry_head": current_head,
                 "report_queue_sha256": report_queue_sha256,
@@ -446,6 +452,99 @@ def load_task_supply_summary(
         ),
     }
 
+
+
+def _supply_regeneration_policy(report_path: Path) -> SupplyPolicy:
+    value = load_json(report_path, None)
+    raw = value.get("policy") if isinstance(value, dict) else None
+    if not isinstance(raw, dict):
+        raise SupplyError("stale task-supply report has no policy binding")
+    fields: dict[str, int] = {}
+    for name in ("floor", "refill_target", "max_new_per_cycle", "bucket_hours"):
+        item = raw.get(name)
+        if not isinstance(item, int) or isinstance(item, bool) or item < 1:
+            raise SupplyError(f"stale task-supply policy field is invalid: {name}")
+        fields[name] = item
+    return SupplyPolicy(**fields)
+
+
+def _supply_regeneration_capabilities(report_path: Path) -> tuple[str, ...]:
+    snapshot = report_path.parent / "frontier-snapshot.json"
+    value = load_json(snapshot, None)
+    capabilities = value.get("capabilities") if isinstance(value, dict) else None
+    if (
+        isinstance(value, dict)
+        and value.get("schema_version") == 1
+        and value.get("kind") == "bureau_authoritative_frontier_snapshot"
+        and isinstance(capabilities, list)
+        and capabilities
+        and all(isinstance(item, str) and item for item in capabilities)
+    ):
+        return tuple(sorted(set(capabilities)))
+    raise SupplyError("task-supply regeneration capabilities are unavailable")
+
+
+def refresh_stale_task_supply_summary(
+    report_path: Path,
+    *,
+    registry_root: Path,
+    regeneration_root: Path,
+    stale_summary: dict[str, Any],
+) -> dict[str, Any]:
+    try:
+        from . import supply_runner
+
+        current_head, current_queue_sha256 = current_registry_binding(registry_root)
+        policy = _supply_regeneration_policy(report_path)
+        capabilities = _supply_regeneration_capabilities(report_path)
+        regeneration_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        result = supply_runner.run_supply_cycle(
+            registry_root=registry_root,
+            capabilities=capabilities,
+            state_root=regeneration_root,
+            policy=policy,
+            approval_available=False,
+            mutation_authority=False,
+            publish=False,
+            registry_head=current_head,
+        )
+        publication = result.get("publication")
+        if not isinstance(publication, dict) or publication.get("attempted") is not False:
+            raise SupplyError("read-only task-supply regeneration attempted publication")
+        refreshed_path = Path(str(result.get("report_path") or ""))
+        refreshed = load_task_supply_summary(refreshed_path, registry_root=registry_root)
+        if refreshed.get("available") is not True:
+            raise SupplyError("regenerated task-supply report failed current binding validation")
+        if result.get("registry", {}).get("head") != current_head:
+            raise SupplyError("regenerated task-supply report head drifted")
+        if result.get("registry", {}).get("queue_sha256") != current_queue_sha256:
+            raise SupplyError("regenerated task-supply report queue binding drifted")
+        return {
+            **refreshed,
+            "regeneration": {
+                "attempted": True,
+                "status": "regenerated",
+                "source_reason": "registry-binding-stale",
+                "source_report_path": str(report_path),
+                "registry_head": current_head,
+                "queue_sha256": current_queue_sha256,
+                "mutation_authority": False,
+                "publish": False,
+            },
+        }
+    except Exception as exc:
+        return {
+            **stale_summary,
+            "regeneration": {
+                "attempted": True,
+                "status": "failed",
+                "source_reason": "registry-binding-stale",
+                "source_report_path": str(report_path),
+                "error": str(exc)[:500],
+                "mutation_authority": False,
+                "publish": False,
+            },
+        }
 
 def score_closure_lane(lane: dict[str, Any], focus_repositories: tuple[str, ...]) -> dict[str, Any]:
     state = normalized_key(lane.get("state"))
@@ -542,6 +641,7 @@ def build_frontier_report(
     closure_plan_path: Path | None = None,
     closure_lanes_path: Path | None = None,
     task_supply_report_path: Path | None = None,
+    task_supply_regeneration_root: Path | None = None,
     focus_repositories: tuple[str, ...] = DEFAULT_FOCUS_REPOSITORIES,
     limit: int = DEFAULT_FRONTIER_LIMIT,
     reject_limit: int = DEFAULT_REJECT_LIMIT,
@@ -583,6 +683,19 @@ def build_frontier_report(
     supply_summary = load_task_supply_summary(
         task_supply_report_path, registry_root=registry_root
     )
+    if (
+        supply_summary.get("stale") is True
+        and supply_summary.get("reason") == "registry-binding-stale"
+        and task_supply_report_path is not None
+        and registry_root is not None
+        and task_supply_regeneration_root is not None
+    ):
+        supply_summary = refresh_stale_task_supply_summary(
+            task_supply_report_path,
+            registry_root=registry_root,
+            regeneration_root=task_supply_regeneration_root,
+            stale_summary=supply_summary,
+        )
     if supply_summary.get("available") or supply_summary.get("invalid"):
         scanner_summary = {**scanner_summary, "task_supply": supply_summary}
     closure_summary = load_optional_summary(closure_plan_path)
@@ -781,6 +894,9 @@ def run_frontier_cycle(
             closure_plan_path=selected_closure_plan,
             closure_lanes_path=selected_lanes_file,
             task_supply_report_path=selected_supply_report,
+            task_supply_regeneration_root=(
+                selected_state_root / SUPPLY_REGENERATION_DIRNAME
+            ),
             focus_repositories=focus_repositories,
             limit=limit,
         )

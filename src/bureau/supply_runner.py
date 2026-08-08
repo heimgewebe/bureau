@@ -14,13 +14,14 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .core import Dispatcher, StateStore
+from .core import Dispatcher
 from .cycle_contract import (
     CONTRACT_VERSION,
     SCHEMA_VERSION,
@@ -29,6 +30,7 @@ from .cycle_contract import (
     utc_now,
     validate_receipt,
 )
+from .read_only_state import ReadOnlyStateStore
 from .task_supply import (
     SupplyError,
     SupplyPolicy,
@@ -42,6 +44,7 @@ from .v2 import Registry
 CYCLE_SCHEMA_VERSION = 1
 CYCLE_KIND = "bureau_task_supply_cycle_result"
 SNAPSHOT_KIND = "bureau_authoritative_frontier_snapshot"
+GIT_HEAD_RE = re.compile(r"^[0-9a-f]{40}$")
 SNAPSHOT_FIELDS = (
     "task_id",
     "title",
@@ -97,7 +100,7 @@ def observe_authoritative_frontier(
     if not selected:
         raise SupplyError("at least one worker capability is required")
     registry = Registry.load(registry_root)
-    store = StateStore(state_db, state_store_root)
+    store = ReadOnlyStateStore(state_db, state_store_root)
     dispatcher = Dispatcher(registry, store)
     # Same truth the claim path gates on, so supply health cannot diverge from dispatch.
     runtime_truth = dispatcher._runtime_execution_truth()
@@ -173,6 +176,7 @@ def run_supply_cycle(
     publish: bool = False,
     environment_blockers: Sequence[str] = (),
     generated_at: str | None = None,
+    registry_head: str | None = None,
     observer: Callable[..., FrontierObservation] = observe_authoritative_frontier,
     head_reader: Callable[[Path], str] = _git_head,
 ) -> dict[str, Any]:
@@ -180,7 +184,21 @@ def run_supply_cycle(
     selected_root = (state_root or default_state_root()).expanduser()
     resolved_registry_root = registry_root.expanduser().resolve()
     now = generated_at or utc_now()
-    head = head_reader(resolved_registry_root)
+    selected_head_reader = head_reader
+    if registry_head is not None:
+        if not isinstance(registry_head, str) or GIT_HEAD_RE.fullmatch(registry_head) is None:
+            raise SupplyError("registry_head must be an exact lowercase 40-character Git commit")
+        if publish:
+            raise SupplyError(
+                "manifest-bound registry_head is read-only; publication requires "
+                "a Git-bound Registry"
+            )
+        head = registry_head
+
+        def selected_head_reader(_root: Path) -> str:
+            return head
+    else:
+        head = head_reader(resolved_registry_root)
     queue_digest = file_sha256(resolved_registry_root / "registry/queue.json")
     observation = observer(
         registry_root=resolved_registry_root,
@@ -210,7 +228,7 @@ def run_supply_cycle(
         frontier_registry_head=head,
         frontier_queue_sha256=queue_digest,
         frontier_snapshot_sha256=snapshot_digest,
-        head_reader=head_reader,
+        head_reader=selected_head_reader,
     )
     atomic_json(report_path(selected_root), report)
 
@@ -234,7 +252,7 @@ def run_supply_cycle(
                 plan,
                 mutation_authorized=True,
                 expected_plan_sha256=str(plan["plan_sha256"]),
-                head_reader=head_reader,
+                head_reader=selected_head_reader,
             )
         except SupplyError as exc:
             publication["status"] = "failed"
@@ -315,7 +333,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--environment-blocker", action="append", default=[])
     args = parser.parse_args(argv)
-
     selected_root = (
         Path(args.state_root).expanduser() if args.state_root else default_state_root()
     )

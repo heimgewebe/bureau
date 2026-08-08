@@ -91,6 +91,80 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "f3fc7ff6bfa1839ea0e860e9d376455c175aabc1ae51f2dbd02635fa0c30c198",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "merged_pr_ci_deployment_and_live_runtime_closeout",
+      "closeout_mode": "direct-user-authorized-fallback-post-merge-reconciliation",
+      "verified_at": "2026-08-08T15:04:39Z",
+      "canonical_bureau_run": "BUR-RUN-20260808T114953Z-7bae4d4c78",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 707,
+        "base_commit": "1fe58fb0c00e2036b2b21e075a595811f1297973",
+        "head_commit": "c7ac389079875b659c9f0619e7b12cf9e789627b",
+        "merge_commit": "0b2a22edc4ea67641d00ae309cdeebb38ffcc4df",
+        "merged_at": "2026-08-08T14:40:39Z"
+      },
+      "validation": {
+        "pr_validate_3_10": "success",
+        "pr_validate_3_12": "success",
+        "codeql_actions": "success",
+        "codeql_python": "success",
+        "codex_review_settled": "success",
+        "deploy_make_validate": "success",
+        "deploy_job": "grabowski-job-267f68aa0066",
+        "deploy_finalization_receipt_sha256": "ba92dca56f5b088a6114e81e9edcedd79b987f6629a24075bd6a7c1c978103fd"
+      },
+      "runtime": {
+        "release_id": "0b2a22edc4ea-srcset0df54f05cef5-locke6664d600b6c-contract93192a0657da",
+        "repo_head": "0b2a22edc4ea67641d00ae309cdeebb38ffcc4df",
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "serving_process_matches_manifest": true,
+        "registered_tool_count": 192,
+        "registered_names_sha256": "448bcd60d241f0f0b62f50ca4ed35d5127d23e32de46a5ba3331fcae5da4316b",
+        "server_loopback_observable": true,
+        "server_loopback_schema_observable": true,
+        "server_loopback_schema_contract_matches": true,
+        "platform_connector_snapshot_observable": false,
+        "platform_connector_schema_observable": false,
+        "platform_evidence_state": "missing",
+        "platform_snapshot_next_action": "capture a trusted platform connector catalog snapshot from ChatGPT connector discovery at the configured root-owned path",
+        "grip_run_required_schema_properties": [
+          "allow_mutation",
+          "name",
+          "parameters",
+          "profile"
+        ],
+        "required_schema_property_mismatches": []
+      },
+      "acceptance_evidence": {
+        "platform-primary-evidence": "Die neue autoritative Plattformquelle ist als root-owned Snapshot-Vertrag /run/grabowski/platform-connector-snapshot.json mit Herkunft, Hash, Runtime-Bindung und TTL implementiert. Live ist diese Plattformquelle derzeit missing; entsprechend wird keine Plattformpublikation behauptet.",
+        "schema-sentinel-platform-check": "Der Contract prüft Required-Schema-Properties einschließlich grip_run.allow_mutation/name/parameters/profile gegen Plattform-Evidenz; Regressionstests decken fehlendes allow_mutation deterministisch als Drift ab. Live ist der interne Sentinel-Satz vollständig und mismatch-frei.",
+        "no-loopback-substitution": "Live-Readback trennt server_loopback_observable=true und server_loopback_schema_contract_matches=true klar von platform_connector_snapshot_observable=false und platform_connector_schema_observable=false.",
+        "freshness-fail-closed": "Fehlende Plattform-Evidenz wird live als platform_evidence_state=missing, fresh=false, matched=false mit konkreter Capture-Maßnahme ausgewiesen.",
+        "regression": "PR #707 enthält Tests für fehlendes grip_run.allow_mutation, stale Plattform-Snapshot, Integritäts-/Revisionsdrift, getrennten Loopback-Match und vollständige Plattformkonvergenz; beide Python-Validierungsmatrizen und CodeQL sind grün.",
+        "validation": "PR #707 ist auf Head c7ac389079875b659c9f0619e7b12cf9e789627b vollständig grün; Deployment validierte den gemergten exakten Main-Commit 0b2a22edc4ea67641d00ae309cdeebb38ffcc4df erneut mit make validate.",
+        "delivery": "PR #707 wurde als 0b2a22edc4ea67641d00ae309cdeebb38ffcc4df gemergt und source-identitätsgebunden deployed. Live Runtime/Manifest/Serving Process sind exakt darauf. Die Plattform stellt in dieser Umgebung aktuell keinen trusted Snapshot bereit; der Status bleibt deshalb absichtlich ehrlich missing/unbeobachtbar statt Loopback als Plattformmatch auszugeben."
+      },
+      "execution_reconciliation": {
+        "canonical_run_state": "orphaned",
+        "canonical_run_updated_at": "2026-08-08T14:53:19.242803Z",
+        "canonical_run_error": "stale worker without external executor",
+        "retroactive_claim_created": false,
+        "bureau_run_created": false,
+        "external_completion_observed_after_orphan": true,
+        "reason": "Der ursprüngliche Writer-Run verlor seinen Heartbeat und wurde korrekt orphaned; der bereits veröffentlichte PR wurde danach vom Controller live geprüft, grün gemergt vorgefunden, source-identitätsgebunden deployed und per Live-Readback akzeptiert. Der historische Run wird nicht zu succeeded umgeschrieben."
+      },
+      "does_not_establish": [
+        "dass aktuell ein vertrauenswürdiger Plattform-Snapshot vorhanden ist",
+        "dass Server-Loopback Plattformpublikation beweist",
+        "zukünftige Korrektheit nach späteren Connector- oder Plattformänderungen",
+        "rückwirkenden Erfolg des orphaned Bureau-Runs"
+      ]
     }
   },
   "priority": {
@@ -112,6 +186,6 @@
     "strategy": "Die neue Plattform-Snapshot-Erfassung und den Vergleichspfad per normalem Revert entfernen. Bestehende Server-Loopback- und Runtime-Verträge bleiben erhalten; keine gespeicherten Evidenz-/Audit-Historien umdeuten oder löschen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Connector: veröffentlichte Plattform-Schemasicht beweisbar machen"
 }

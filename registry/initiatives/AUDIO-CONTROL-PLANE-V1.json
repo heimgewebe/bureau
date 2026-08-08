@@ -143,7 +143,7 @@
       "reconciled_at": "2026-08-08T15:21:27.097844Z",
       "reconciled_from": "waiting",
       "reconciled_to": "active",
-      "reason": "Current registry now contains ready Audio work (AUDIO-CONTROL-PLANE-V1-T022 and newly registered AUDIO-CONTROL-PLANE-V1-T033). T033 is repository-only hardening and is explicitly outside the phase-specific physical gates, so the prior no-ready-work waiting rationale is stale.",
+      "reason": "Current Registry now contains ready Audio work, including newly registered AUDIO-CONTROL-PLANE-V1-T033. T033 is repository-only hardening and is explicitly outside the phase-specific physical gates, so the prior no-ready-work waiting rationale is stale.",
       "supersedes": {
         "reconciled_at": "2026-08-08T12:11:17.730669Z",
         "reconciled_from": "active",

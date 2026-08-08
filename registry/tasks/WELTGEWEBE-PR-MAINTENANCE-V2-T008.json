@@ -1,0 +1,121 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der übernommene Pull Request ist heimgewebe/weltgewebe#1721; unmittelbar vor jeder PR-Mutation werden Basis, exakter Head und vollständiger Fünf-Dateien-Scope frisch gelesen. Der Intake-Head ist f49bdc54c7735d25d14ff9fc74f950a7211d4dbf.",
+      "evidence_type": "object",
+      "id": "exact-pr-identity"
+    },
+    {
+      "assertion": "wgx-guard.yml und wgx-smoke.yml verwenden auf dem finalen Head ausschließlich den beabsichtigten gepinnten Metarepo-Reusable-Repository-Verification-Pfad; direkte aktive heimgewebe/wgx/.github/workflows-Ownership bleibt entfernt, ohne Prüfsemantik stillschweigend zu verlieren.",
+      "evidence_type": "object",
+      "id": "metarepo-pin"
+    },
+    {
+      "assertion": "Die drei geänderten Lifecycle-/Node-24-Berichte sind aus dem finalen Codezustand abgeleitet und behaupten die bekannten unabhängigen Missing-Force-Befunde in germany-basemap-rollout.yml und kubernetes-proof-oci-mirror.yml nicht als gelöst.",
+      "evidence_type": "object",
+      "id": "reports-truthful"
+    },
+    {
+      "assertion": "Der finale Head besitzt ein aktuelles grünes Weltgewebe-R3-Review-Evidence-Gate. Ein früherer fehlgeschlagener Evaluatorlauf wird nicht durch bloße Historie ignoriert; maßgeblich ist ein revisionsgebundener finaler Erfolgsbeleg.",
+      "evidence_type": "object",
+      "id": "r3-review-evidence"
+    },
+    {
+      "assertion": "Alle für den finalen Head erforderlichen Weltgewebe-CI-, CodeQL-, Guard-, Browser- und Preview-Gates sind terminal grün oder repositoryvertraglich neutral/skipped.",
+      "evidence_type": "object",
+      "id": "required-ci"
+    },
+    {
+      "assertion": "PR #1721 trägt vor dem Merge exakt `Bureau-Task: WELTGEWEBE-PR-MAINTENANCE-V2-T008`, und Bureau github-observe erkennt diese Bindung ohne Hard Finding.",
+      "evidence_type": "object",
+      "id": "bureau-pr-binding"
+    },
+    {
+      "assertion": "Unmittelbar vor dem Merge werden Head, Basis, Mergebarkeit und Checks erneut gelesen; ausschließlich der exakt geprüfte Head wird headgeschützt gemergt und anschließend auf main zurückgelesen.",
+      "evidence_type": "object",
+      "id": "exact-head-merge"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Fortsetzung am 2026-08-08 mit '@grabowski umsetzen' ausdrücklich autorisiert. Diese Task übernimmt nur PR #1721 und seinen exakt fünf Dateien umfassenden Scope; bekannte unabhängige Node-24-Baselinebefunde bleiben getrennt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/.github/workflows/wgx-guard.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/wgx-smoke.yml",
+      "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle-inventory.md",
+      "path:/home/alex/repos/weltgewebe/docs/_generated/report-lifecycle.md",
+      "path:/home/alex/repos/weltgewebe/docs/reports/github-actions-node24-readiness.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bestehenden Weltgewebe-PR #1721 revisionsgebunden als eng begrenzten Verifikations-Cutover übernehmen: die beiden WGX-Guard/Smoke-Caller auf den gepinnten Metarepo-Reusable-Repository-Verification-Workflow umstellen, ausschließlich die drei dazugehörigen Lifecycle-/Node-24-Berichte aktualisieren, bekannte baseline Missing-Force-Befunde wahrheitsgemäß offen lassen, den PR an genau diese Bureau-Task binden und erst nach vollständiger R3-Review- und CI-Evidenz den exakt geprüften Head mergen.",
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T008",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "metadata": {
+    "does_not_establish": [
+      "Mergebereitschaft ohne finalen Readback",
+      "Lösung der unabhängigen Missing-Force-Baseline",
+      "Berechtigung zu Änderungen außerhalb der fünf deklarierten Pfade",
+      "neue Deploy- oder Runtime-Autorität für Metarepo oder WGX"
+    ],
+    "pinned_metarepo_merge": "fe6950616b2d06343e284a56a8944e0a36f1f972",
+    "registered_at": "2026-08-08",
+    "source_base": "7899dc3b30f2402d05b3782e5809bca2dfafa49d",
+    "source_head": "f49bdc54c7735d25d14ff9fc74f950a7211d4dbf",
+    "source_pull_request": 1721,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2f1878e0181156b1878a14eb",
+      "event_id": 4318,
+      "event_created_at": "2026-08-08T08:19:36.012787Z",
+      "request_sha256": "f6f68937e659892dfe46c6c7eeee358dbb8dc00dcec54e62b748362c8cbd219b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pull-request",
+        "locator": "github:heimgewebe/weltgewebe#1721@f49bdc54c7735d25d14ff9fc74f950a7211d4dbf;base:7899dc3b30f2402d05b3782e5809bca2dfafa49d",
+        "observed_at": "2026-08-08T08:16:11Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 8
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "github-actions",
+    "ci",
+    "security",
+    "documentation",
+    "review",
+    "bureau",
+    "grabowski",
+    "metarepo"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Repository-Verifikation aus PR #1721 auf Metarepo-Cutover übernehmen"
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audiozentrale als lokale, messbare Live-Audioumgebung",
-  "state": "waiting",
+  "state": "active",
   "commitment": "now",
   "goal": "Eine lokal betriebene Audiozentrale liefern, die reale Signalwege live sichtbar macht, Referenzhören, sichere Aufnahme, Roland- und Gitarrenspiel sowie begrenzte erklärbare Modulation in einer gemeinsamen wiederherstellbaren Produktoberfläche verbindet, ohne DAW-, Cloud-, KI- oder freien Modulargraph-Zwang.",
   "current_plan": {
@@ -87,7 +87,8 @@
         "AUDIO-CONTROL-PLANE-V1-T002",
         "AUDIO-CONTROL-PLANE-V1-T003",
         "AUDIO-CONTROL-PLANE-V1-T004",
-        "AUDIO-CONTROL-PLANE-V1-T005"
+        "AUDIO-CONTROL-PLANE-V1-T005",
+        "AUDIO-CONTROL-PLANE-V1-T033"
       ]
     },
     "implementation_waves": [
@@ -139,15 +140,21 @@
       }
     ],
     "lifecycle": {
-      "reconciled_at": "2026-08-08T12:11:17.730669Z",
-      "reconciled_from": "active",
-      "reconciled_to": "waiting",
-      "reason": "T022 sowie T029 bis T031 sind verifiziert; die verbleibenden Fortsetzungstasks sind geplant, während T032 und weitere phasenbezogene Hardware-Abnahmen blockiert bleiben. Ohne ready oder laufende Audio-Arbeit ist waiting der konsistente Initiativenzustand.",
+      "reconciled_at": "2026-08-08T15:21:27.097844Z",
+      "reconciled_from": "waiting",
+      "reconciled_to": "active",
+      "reason": "Current registry now contains ready Audio work (AUDIO-CONTROL-PLANE-V1-T022 and newly registered AUDIO-CONTROL-PLANE-V1-T033). T033 is repository-only hardening and is explicitly outside the phase-specific physical gates, so the prior no-ready-work waiting rationale is stale.",
       "supersedes": {
-        "reconciled_at": "2026-08-06T14:10:45.034337Z",
+        "reconciled_at": "2026-08-08T12:11:17.730669Z",
         "reconciled_from": "active",
         "reconciled_to": "waiting",
-        "reason": "T002 and the completed repository-only wave are verified; remaining continuation tasks are planned, while T032 and other phase-specific work still require an explicit readiness or physical-gate transition."
+        "reason": "T022 sowie T029 bis T031 sind verifiziert; die verbleibenden Fortsetzungstasks sind geplant, während T032 und weitere phasenbezogene Hardware-Abnahmen blockiert bleiben. Ohne ready oder laufende Audio-Arbeit ist waiting der konsistente Initiativenzustand.",
+        "supersedes": {
+          "reconciled_at": "2026-08-06T14:10:45.034337Z",
+          "reconciled_from": "active",
+          "reconciled_to": "waiting",
+          "reason": "T002 and the completed repository-only wave are verified; remaining continuation tasks are planned, while T032 and other phase-specific work still require an explicit readiness or physical-gate transition."
+        }
       }
     },
     "foundation_scope_split": {

@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from jsonschema import Draft202012Validator
 
+from bureau import agent_frontier
 from bureau.agent_frontier import build_frontier_report, run_frontier_cycle
 from bureau.cycle_contract import validate_receipt
+from bureau.task_supply import SupplyError, file_sha256
 
 
 def source_state() -> dict:
@@ -235,3 +238,185 @@ def test_frontier_selects_unbound_closure_lanes(tmp_path: Path) -> None:
     }
     assert rejected["lane-bound"] == "already_bound_to_canonical_task"
     assert rejected["lane-old"] == "terminal_or_obsolete_lane"
+
+
+def _write_stale_supply_fixture(tmp_path: Path) -> tuple[Path, Path, bytes]:
+    registry = make_registry(tmp_path / "supply-registry")
+    queue_path = registry / "registry/queue.json"
+    queue_path.write_text(
+        json.dumps({"lanes": {"now": [], "next": [], "later": []}}),
+        encoding="utf-8",
+    )
+    current_head = "b" * 40
+    (registry / ".bureau-runtime-snapshot.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bureau_registry_snapshot",
+                "source_commit": current_head,
+            }
+        ),
+        encoding="utf-8",
+    )
+    supply_root = tmp_path / "supply-state"
+    supply_root.mkdir()
+    report_path = supply_root / "latest-report.json"
+    report = {
+        "schema_version": 1,
+        "kind": "bureau_task_supply_report",
+        "generated_at": "2026-08-08T08:00:00Z",
+        "status": "blocked",
+        "registry": {
+            "root": str(registry),
+            "head": "a" * 40,
+            "queue_sha256": file_sha256(queue_path),
+        },
+        "policy": {
+            "schema_version": 1,
+            "floor": 8,
+            "refill_target": 12,
+            "max_new_per_cycle": 4,
+            "bucket_hours": 24,
+        },
+        "approval_available": False,
+        "mutation_authority_observed": False,
+        "metrics": {
+            "raw_ready_count": 1,
+            "normal_claimable_count": 0,
+            "fallback_claimable_count": 0,
+            "total_claimable_count": 0,
+            "blocked_ready_count": 1,
+            "floor": 8,
+            "refill_target": 12,
+            "shortage_to_target": 12,
+            "proposal_count": 0,
+            "blocked_proposal_count": 0,
+        },
+        "blockers": ["registry-mutation-authority-unavailable"],
+        "publication_plan": {"plan_sha256": "c" * 64},
+    }
+    report["report_sha256"] = agent_frontier.sha256_json(report)
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    (supply_root / "frontier-snapshot.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bureau_authoritative_frontier_snapshot",
+                "capabilities": ["repository", "python", "testing", "bureau", "grabowski"],
+                "frontier": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return registry, report_path, report_path.read_bytes()
+
+
+def test_stale_supply_is_regenerated_read_only_before_frontier_consumption(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry, stale_path, stale_bytes = _write_stale_supply_fixture(tmp_path)
+    regeneration_root = tmp_path / "frontier-state/task-supply-regeneration"
+    calls: list[dict[str, object]] = []
+
+    def fake_cycle(**kwargs: object) -> dict[str, object]:
+        calls.append(dict(kwargs))
+        selected_root = Path(str(kwargs["state_root"]))
+        selected_root.mkdir(parents=True, exist_ok=True)
+        queue_sha256 = file_sha256(registry / "registry/queue.json")
+        report = {
+            "schema_version": 1,
+            "kind": "bureau_task_supply_report",
+            "generated_at": "2026-08-08T09:00:00Z",
+            "status": "blocked",
+            "registry": {
+                "root": str(registry),
+                "head": "b" * 40,
+                "queue_sha256": queue_sha256,
+            },
+            "metrics": {"total_claimable_count": 0, "floor": 8, "refill_target": 12},
+            "blockers": ["registry-mutation-authority-unavailable"],
+            "publication_plan": {"plan_sha256": "d" * 64},
+        }
+        report["report_sha256"] = agent_frontier.sha256_json(report)
+        fresh_path = selected_root / "latest-report.json"
+        fresh_path.write_text(json.dumps(report), encoding="utf-8")
+        return {
+            "registry": report["registry"],
+            "report_path": str(fresh_path),
+            "publication": {"attempted": False, "status": "preview-only"},
+        }
+
+    import bureau.supply_runner as supply_runner
+
+    monkeypatch.setattr(supply_runner, "run_supply_cycle", fake_cycle)
+    report = build_frontier_report(
+        source_state(),
+        registry_root=registry,
+        task_supply_report_path=stale_path,
+        task_supply_regeneration_root=regeneration_root,
+        generated_at="2026-08-08T09:00:00Z",
+    )
+
+    supply = report["scanner_summary"]["task_supply"]
+    assert supply["available"] is True
+    assert supply["regeneration"]["status"] == "regenerated"
+    assert supply["regeneration"]["mutation_authority"] is False
+    assert supply["regeneration"]["publish"] is False
+    assert not any(
+        item["kind"] == "claimable_task_supply_report_invalid"
+        for item in report["bottlenecks"]
+    )
+    assert len(calls) == 1
+    second = build_frontier_report(
+        source_state(),
+        registry_root=registry,
+        task_supply_report_path=stale_path,
+        task_supply_regeneration_root=regeneration_root,
+        generated_at="2026-08-08T09:01:00Z",
+    )
+    assert second["scanner_summary"]["task_supply"]["regeneration"]["status"] == "regenerated"
+    assert len(calls) == 2
+    assert calls[0]["mutation_authority"] is False
+    assert calls[0]["publish"] is False
+    assert calls[0]["registry_head"] == "b" * 40
+    assert calls[0]["capabilities"] == (
+        "bureau",
+        "grabowski",
+        "python",
+        "repository",
+        "testing",
+    )
+    assert stale_path.read_bytes() == stale_bytes
+
+
+def test_stale_supply_regeneration_failure_preserves_stale_finding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry, stale_path, stale_bytes = _write_stale_supply_fixture(tmp_path)
+
+    import bureau.supply_runner as supply_runner
+
+    def fail_cycle(**_kwargs: object) -> dict[str, object]:
+        raise SupplyError("bounded regeneration failure")
+
+    monkeypatch.setattr(supply_runner, "run_supply_cycle", fail_cycle)
+    report = build_frontier_report(
+        source_state(),
+        registry_root=registry,
+        task_supply_report_path=stale_path,
+        task_supply_regeneration_root=tmp_path / "frontier-state/task-supply-regeneration",
+        generated_at="2026-08-08T09:00:00Z",
+    )
+
+    supply = report["scanner_summary"]["task_supply"]
+    assert supply["invalid"] is True
+    assert supply["stale"] is True
+    assert supply["reason"] == "registry-binding-stale"
+    assert supply["regeneration"]["status"] == "failed"
+    assert "bounded regeneration failure" in supply["regeneration"]["error"]
+    assert any(
+        item["kind"] == "claimable_task_supply_report_invalid"
+        for item in report["bottlenecks"]
+    )
+    assert report["selected_frontier"]
+    assert stale_path.read_bytes() == stale_bytes

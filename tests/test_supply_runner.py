@@ -17,7 +17,7 @@ from bureau.supply_runner import (
     run_supply_cycle,
     snapshot_path,
 )
-from bureau.task_supply import REVIEW_REASON, SupplyPolicy, _load_frontier_snapshot
+from bureau.task_supply import REVIEW_REASON, SupplyError, SupplyPolicy, _load_frontier_snapshot
 from bureau.v2 import Registry
 
 HEAD = "d" * 40
@@ -221,6 +221,57 @@ def test_snapshot_is_revision_bound_and_readable_by_the_preview_contract(tmp_pat
     assert snapshot["registry"]["head"] == HEAD
     assert snapshot["registry"]["queue_sha256"] == summary["registry"]["queue_sha256"]
     assert len(_load_frontier_snapshot(snapshot_path(tmp_path / "supply-state"))) == 8
+
+
+def test_manifest_bound_registry_head_refreshes_snapshot_without_git(tmp_path: Path) -> None:
+    root = registry_copy(tmp_path)
+    frontier = [unbound_candidate(index) for index in range(8)]
+    assert not (root / ".git").exists()
+
+    summary = run_supply_cycle(
+        registry_root=root,
+        capabilities=CAPABILITIES,
+        state_root=tmp_path / "supply-state",
+        mutation_authority=False,
+        publish=False,
+        generated_at=NOW,
+        registry_head=HEAD,
+        observer=observer_for(frontier),
+    )
+
+    assert summary["registry"]["head"] == HEAD
+    snapshot = json.loads(snapshot_path(tmp_path / "supply-state").read_text(encoding="utf-8"))
+    assert snapshot["registry"]["head"] == HEAD
+    assert summary["publication"]["attempted"] is False
+
+
+def test_manifest_bound_registry_head_cannot_publish(tmp_path: Path) -> None:
+    root = registry_copy(tmp_path)
+    queue_before = (root / "registry/queue.json").read_bytes()
+
+    with pytest.raises(SupplyError, match="read-only"):
+        run_supply_cycle(
+            registry_root=root,
+            capabilities=CAPABILITIES,
+            state_root=tmp_path / "supply-state",
+            mutation_authority=True,
+            publish=True,
+            generated_at=NOW,
+            registry_head=HEAD,
+            observer=observer_for([unbound_candidate(index) for index in range(8)]),
+        )
+
+    assert (root / "registry/queue.json").read_bytes() == queue_before
+
+
+def test_manifest_bound_registry_head_is_strict() -> None:
+    with pytest.raises(SupplyError, match="40-character"):
+        run_supply_cycle(
+            registry_root=Path("."),
+            capabilities=CAPABILITIES,
+            registry_head="not-a-commit",
+            observer=observer_for([]),
+        )
 
 
 def test_missing_mutation_authority_is_an_explicit_blocked_status(tmp_path: Path) -> None:

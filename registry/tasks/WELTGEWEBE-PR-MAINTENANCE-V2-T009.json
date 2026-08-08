@@ -1,0 +1,126 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der übernommene Pull Request ist heimgewebe/weltgewebe#1722; unmittelbar vor jeder PR-Mutation werden Basis, exakter Head und vollständiger Drei-Dateien-Scope frisch gelesen. Der Intake-Head ist ec35a92eb65113520253bda3d922005673104d37; nach einem zulässigen Rebase/Update ist der neue Head erneut vollständig zu prüfen.",
+      "evidence_type": "object",
+      "id": "exact-pr-identity"
+    },
+    {
+      "assertion": "Für reguläre Knoten mit mindestens einem kontrollierten thema:<slug>-Tag liefert weaveTopics ausschließlich die kontrollierten Themen als visuelle Themenwahrheit; freie Schlagwörter und entity.kind fügen keine zusätzliche sichtbare Farbe hinzu.",
+      "evidence_type": "object",
+      "id": "controlled-topic-authority"
+    },
+    {
+      "assertion": "Knoten ohne kontrolliertes Thema behalten die bisherige normalisierte Schlagwort-/Knotenart-Palette als Kompatibilitätsfallback; Webgemeindezentren behalten ihre bestehende Sonderpalette. Die Änderung erfindet keine Themenwahl und führt keine Datenmigration ein.",
+      "evidence_type": "object",
+      "id": "compatibility-fallback"
+    },
+    {
+      "assertion": "Regressionstests belegen, dass ein Knoten mit genau einem kontrollierten Thema trotz zusätzlichem freien Schlagwort und kind genau ein themeSegment und genau eine Zielfarbe für X/Fadenpalette besitzt; mehrere kontrollierte Themen bleiben deterministisch geordnet und zyklisch auf vier X-Arme projiziert.",
+      "evidence_type": "object",
+      "id": "one-topic-regression"
+    },
+    {
+      "assertion": "Der finale Head besitzt die nach Weltgewebe-Vertrag erforderliche exakte R2-Review-Evidenz mit zwei getrennten Review-Sitzungen/Reports und unterschiedlichen Achsen; stale oder malformed Evidenz zählt nicht.",
+      "evidence_type": "object",
+      "id": "r2-review-evidence"
+    },
+    {
+      "assertion": "Alle für den finalen Head erforderlichen Weltgewebe-CI-, Test-, CodeQL-, Browser-, Performance- und Preview-Gates sind terminal grün oder repositoryvertraglich neutral/skipped.",
+      "evidence_type": "object",
+      "id": "required-ci"
+    },
+    {
+      "assertion": "PR #1722 trägt vor dem Merge exakt `Bureau-Task: WELTGEWEBE-PR-MAINTENANCE-V2-T009`, und Bureau github-observe erkennt diese Bindung ohne eigenes Hard Finding.",
+      "evidence_type": "object",
+      "id": "bureau-pr-binding"
+    },
+    {
+      "assertion": "Unmittelbar vor dem Merge werden Head, Basis, Mergebarkeit und Checks erneut gelesen; ausschließlich der exakt geprüfte Head wird headgeschützt gemergt und anschließend auf main zurückgelesen.",
+      "evidence_type": "object",
+      "id": "exact-head-merge"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Fortsetzung am 2026-08-08 mit '@grabowski umsetzen' ausdrücklich autorisiert. Die Task übernimmt ausschließlich den vorhandenen Drei-Dateien-Scope von PR #1722; zusätzliche Karten-, Faden-, Deployment- oder Datenmodelländerungen sind nicht enthalten.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/weaveModel.test.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/map/weaveTheme.ts",
+      "path:/home/alex/repos/weltgewebe/docs/specs/knoten-gewebe-visualisierung.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bestehenden Weltgewebe-PR #1722 revisionsgebunden und ohne zusätzlichen Produktscope übernehmen: Bei regulären Knoten bestimmen vorhandene kontrollierte thema:<slug>-Themen exklusiv die sichtbare Knoten- und Zielfadenpalette; freie Schlagwörter und Knotenart bleiben Such-, Beschreibungs- und Klassifikationsmetadaten und dürfen nur bei vollständig fehlenden kontrollierten Themen als bestehender Kompatibilitätsfallback in die Palette einfließen. Webgemeindezentrum-Sonderfarben bleiben unverändert. Der PR wird erst nach exakter R2-Review-Evidenz, vollständiger CI, gültiger Bureau-Bindung und finalem Head-Readback gemergt.",
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T009",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "metadata": {
+    "does_not_establish": [
+      "Mergebereitschaft ohne finalen Readback",
+      "Berechtigung zu Änderungen außerhalb der drei deklarierten Pfade",
+      "Migration vorhandener Knotenmetadaten",
+      "Änderung der Webgemeindezentrum-Sonderpalette",
+      "dass freie Schlagwörter fachlich gelöscht oder ignoriert werden"
+    ],
+    "latest_reviewed_base": "74bdab6fa0684593ce0d5bf5338b17520e41fab5",
+    "latest_reviewed_diff_sha256": "c8ecfd751a5e7238c1ce044cabc1457609334ff18af83414f6b3fe6527965332",
+    "latest_reviewed_head": "9df8cb67bd9b7ec6ce18ae11af33a934d2b1f5e1",
+    "registered_at": "2026-08-08",
+    "source_base": "109ef821a49b734e248be0d4c79ffa0dd33ef4de",
+    "source_head": "ec35a92eb65113520253bda3d922005673104d37",
+    "source_pull_request": 1722,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1857dda1634c16d9d8338014",
+      "event_id": 4335,
+      "event_created_at": "2026-08-08T09:17:54.163823Z",
+      "request_sha256": "199d4631ac4fca86fd24af17054932325aef6ddbe32a25c4607da0f107c39ee1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pull-request",
+        "locator": "github:heimgewebe/weltgewebe#1722@ec35a92eb65113520253bda3d922005673104d37;base:109ef821a49b734e248be0d4c79ffa0dd33ef4de",
+        "observed_at": "2026-08-08T09:17:05Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 9
+  },
+  "required_capabilities": [
+    "repository",
+    "typescript",
+    "testing",
+    "github",
+    "ci",
+    "review",
+    "bureau",
+    "grabowski",
+    "product-map"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Kontrollierte Themen aus PR #1722 als Knoten-Farbwahrheit übernehmen"
+}

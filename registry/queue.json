@@ -77,7 +77,10 @@
     ],
     "now": [
       "AUDIO-CONTROL-PLANE-V1-T022",
-      "BUREAU-CONTROL-PLANE-V3-T004"
+      "BUREAU-CONTROL-PLANE-V3-T004",
+      "WELTGEWEBE-PR-MAINTENANCE-V2-T007",
+      "WELTGEWEBE-PR-MAINTENANCE-V2-T008",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T030"
     ]
   },
   "queue_policy": "skip-blocked",

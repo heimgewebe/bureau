@@ -1,8 +1,9 @@
-"""Keep the canonical Bureau Now lane supplied with structurally runnable work.
+"""Legacy Now-lane compatibility projection for Bureau Control Plane v3.
 
-The Now lane is a prioritisation surface, not an authority bypass. This module only
-moves existing canonical tasks from Next to Now. Claim, approval, capability, lease,
-open-PR and runtime gates remain authoritative at pickup time.
+The operational lane decision is made by :mod:`bureau.frontier` from StateStore
+TaskSpecs and live blockers. This module keeps the old bounded Next-to-Now surface
+for compatibility consumers; writing ``registry/queue.json`` never establishes
+admission, claim or dispatch authority.
 """
 
 from __future__ import annotations
@@ -16,17 +17,17 @@ from pathlib import Path
 from typing import Any
 
 from . import legacy
-from .core import Dispatcher, StateStore
+from .core import Dispatcher as Dispatcher
+from .core import StateStore
+from .frontier import FrontierPolicy, build_frontier_projection
 from .v2 import Registry
 
-SCHEMA_VERSION = 1
-ACTOR_CAPABILITY_PREFIX = "missing capabilities: "
-EXECUTION_REASON_PREFIX = "execution is "
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
 class NowRefillPolicy:
-    """Hysteresis policy for bounded Next-to-Now promotion."""
+    """Hysteresis policy retained for legacy Now-refill callers."""
 
     floor: int = 2
     target: int = 4
@@ -72,147 +73,26 @@ def _all_declared_capabilities(registry: Registry) -> set[str]:
     }
 
 
-def _actor_dependent_reason(reason: str) -> bool:
-    if reason.startswith(ACTOR_CAPABILITY_PREFIX):
-        return True
-    if not reason.startswith(EXECUTION_REASON_PREFIX):
-        return False
-    execution = reason.removeprefix(EXECUTION_REASON_PREFIX)
-    mode, separator, _policy = execution.partition("/")
-    return bool(separator) and mode != "manual"
-
-
-def _structural_reasons(item: dict[str, Any]) -> list[str]:
-    return [
-        str(reason)
-        for reason in item.get("claim_reasons", [])
-        if not _actor_dependent_reason(str(reason))
-    ]
-
-
-def _candidate(item: dict[str, Any], *, lane: str) -> bool:
-    return (
-        item.get("queue_lane") == lane
-        and item.get("effective_state") == "ready"
-        and not _structural_reasons(item)
+def _frontier_policy(policy: NowRefillPolicy) -> FrontierPolicy:
+    return FrontierPolicy(
+        now_floor=policy.floor,
+        now_target=policy.target,
+        max_now_promotions=policy.max_promotions,
+        work_ball_limit=max(policy.target, policy.max_promotions),
     )
 
 
-def _lane_order(registry: Registry, lane: str) -> dict[str, int]:
-    queue = legacy.read_json(_queue_path(registry))
-    return {
-        str(task_id): index
-        for index, task_id in enumerate(queue.get("lanes", {}).get(lane, []))
-    }
+def _queue_positions(queue: dict[str, Any]) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for lane in legacy.LANE_ORDER:
+        for task_id in queue.get("lanes", {}).get(lane, []):
+            result[str(task_id)] = lane
+    return result
 
 
-def build_now_refill_report(
-    registry: Registry,
-    store: StateStore,
-    *,
-    policy: NowRefillPolicy | None = None,
-    _check_runtime: bool = True,
+def _apply_promotions(
+    queue: dict[str, Any], promotions: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    """Build a revision-bound, read-only refill decision.
-
-    Capabilities and review policy are actor-dependent and therefore do not decide
-    queue placement. All structural claim blockers still exclude a candidate:
-    dependencies, child gates, active runs, initiative limits, resource conflicts,
-    open-PR overlap, queue absence and non-ready state.
-
-    The decision is bound to the same runtime-execution truth the claim path checks
-    at ``claim_intent`` time (Bureau checkout drift, dirty working tree, StateStore
-    availability). ``_check_runtime`` is a private knob used only by
-    :func:`apply_now_refill`'s own post-write consistency read, where the working
-    tree is expected to carry our own not-yet-committed change.
-    """
-    selected_policy = policy or NowRefillPolicy()
-    dispatcher = Dispatcher(registry, store)
-    runtime_truth = dispatcher._runtime_execution_truth() if _check_runtime else None
-    runtime_blocked = bool(_check_runtime and (runtime_truth or {}).get("execution_blocked"))
-    frontier = dispatcher.frontier(_all_declared_capabilities(registry))
-    now_items = [item for item in frontier if _candidate(item, lane="now")]
-    next_items = [item for item in frontier if _candidate(item, lane="next")]
-    next_order = _lane_order(registry, "next")
-    next_items.sort(
-        key=lambda item: (
-            next_order.get(str(item.get("task_id")), 10**9),
-            registry.tasks[str(item["task_id"])].rank,
-            str(item["task_id"]),
-        )
-    )
-
-    triggered = len(now_items) < selected_policy.floor
-    shortage = max(0, selected_policy.target - len(now_items)) if triggered else 0
-    promotion_limit = 0 if runtime_blocked else min(shortage, selected_policy.max_promotions)
-    selected = next_items[:promotion_limit]
-    blockers: list[str] = []
-    if runtime_blocked:
-        blockers.append("runtime-execution-blocked")
-    elif triggered and not selected:
-        blockers.append("no-structurally-runnable-next-task")
-
-    queue = legacy.read_json(_queue_path(registry))
-    git_head = _git_head(registry.root)
-    promotions = [
-        {
-            "task_id": str(item["task_id"]),
-            "title": str(item["title"]),
-            "from_lane": "next",
-            "to_lane": "now",
-            "structural_reasons": [],
-            "actor_dependent_reasons": [
-                str(reason)
-                for reason in item.get("claim_reasons", [])
-                if _actor_dependent_reason(str(reason))
-            ],
-        }
-        for item in selected
-    ]
-    if runtime_blocked:
-        status = "blocked"
-    elif not triggered:
-        status = "satisfied"
-    elif promotions:
-        status = "refill-planned"
-    else:
-        status = "blocked"
-    report: dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
-        "kind": "bureau_now_lane_refill_report",
-        "status": status,
-        "policy": {
-            "floor": selected_policy.floor,
-            "target": selected_policy.target,
-            "max_promotions": selected_policy.max_promotions,
-        },
-        "registry": {
-            "root": str(registry.root),
-            "git_head": git_head,
-            "queue_sha256_before": _queue_sha256(queue),
-        },
-        "runtime": runtime_truth,
-        "metrics": {
-            "queued_now_count": len(queue.get("lanes", {}).get("now", [])),
-            "queued_next_count": len(queue.get("lanes", {}).get("next", [])),
-            "structurally_runnable_now_count": len(now_items),
-            "structurally_runnable_next_count": len(next_items),
-            "shortage_to_target": shortage,
-            "promotion_count": len(promotions),
-        },
-        "promotions": promotions,
-        "blockers": blockers,
-        "boundaries": [
-            "queue promotion does not claim or start a task",
-            "pickup-time approval, capability, lease, PR and runtime gates remain authoritative",
-            "only existing ready tasks move from Next to Now",
-        ],
-    }
-    report["report_sha256"] = legacy.sha256_json(report)
-    return report
-
-
-def _apply_promotions(queue: dict[str, Any], promotions: list[dict[str, Any]]) -> dict[str, Any]:
     updated = {
         **queue,
         "lanes": {
@@ -231,6 +111,151 @@ def _apply_promotions(queue: dict[str, Any], promotions: list[dict[str, Any]]) -
     return updated
 
 
+def _projected_refill(
+    frontier: dict[str, Any], queue: dict[str, Any]
+) -> tuple[int, int, list[dict[str, Any]], list[dict[str, Any]]]:
+    positions = _queue_positions(queue)
+    raw_promotions: list[dict[str, Any]] = []
+    base_now_count = 0
+    for item in frontier["lanes"]["now"]:
+        if not item.get("structurally_eligible"):
+            continue
+        if item.get("projected_from_lane") == "next":
+            raw_promotions.append(
+                {
+                    "task_id": str(item["task_id"]),
+                    "title": str(item["title"]),
+                    "from_lane": "next",
+                    "to_lane": "now",
+                    "structural_reasons": list(item["structural_reasons"]),
+                    "actor_dependent_reasons": list(item["actor_dependent_reasons"]),
+                }
+            )
+        else:
+            base_now_count += 1
+    structurally_runnable_next_count = sum(
+        1
+        for item in frontier["lanes"]["next"]
+        if item.get("structurally_eligible")
+    ) + len(raw_promotions)
+    needed_promotions = [
+        item
+        for item in raw_promotions
+        if positions.get(str(item["task_id"])) != "now"
+    ]
+    return (
+        base_now_count,
+        structurally_runnable_next_count,
+        raw_promotions,
+        needed_promotions,
+    )
+
+
+def build_now_refill_report(
+    registry: Registry,
+    store: StateStore,
+    *,
+    policy: NowRefillPolicy | None = None,
+    _check_runtime: bool = True,
+) -> dict[str, Any]:
+    """Project the old Now-refill decision from the authoritative frontier.
+
+    Runtime failure blocks effects but does not erase structural supply metrics.
+    When a compatibility queue already reflects the projected refill, the result
+    is ``satisfied`` even though the dynamic frontier continues to derive those
+    same Next-to-Now promotions from TaskSpec priority and live supply.
+    """
+
+    selected_policy = policy or NowRefillPolicy()
+    queue = legacy.read_json(_queue_path(registry))
+    decision_frontier = build_frontier_projection(
+        registry,
+        store,
+        capabilities=_all_declared_capabilities(registry),
+        policy=_frontier_policy(selected_policy),
+        check_runtime=_check_runtime,
+    )
+    runtime_blocked = decision_frontier["runtime"].get("execution_blocked") is True
+    structural_frontier = (
+        build_frontier_projection(
+            registry,
+            store,
+            capabilities=_all_declared_capabilities(registry),
+            policy=_frontier_policy(selected_policy),
+            check_runtime=False,
+        )
+        if runtime_blocked
+        else decision_frontier
+    )
+    (
+        base_now_count,
+        structurally_runnable_next_count,
+        raw_promotions,
+        needed_promotions,
+    ) = _projected_refill(structural_frontier, queue)
+    triggered = base_now_count < selected_policy.floor
+    shortage = max(0, selected_policy.target - base_now_count) if triggered else 0
+    blockers: list[str] = []
+    if runtime_blocked:
+        blockers.append("runtime-execution-blocked")
+    elif triggered and not raw_promotions:
+        blockers.append("no-structurally-runnable-next-task")
+    if runtime_blocked:
+        status = "blocked"
+        promotions: list[dict[str, Any]] = []
+    elif needed_promotions:
+        status = "refill-planned"
+        promotions = needed_promotions
+    elif raw_promotions or not triggered:
+        status = "satisfied"
+        promotions = []
+    else:
+        status = "blocked"
+        promotions = []
+
+    report: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "bureau_now_lane_refill_report",
+        "status": status,
+        "authority": "bureau_dynamic_frontier_projection",
+        "queue_authoritative": False,
+        "queue_role": "compatibility_projection_only",
+        "policy": {
+            "floor": selected_policy.floor,
+            "target": selected_policy.target,
+            "max_promotions": selected_policy.max_promotions,
+        },
+        "registry": {
+            "root": str(registry.root),
+            "git_head": _git_head(registry.root),
+            "queue_sha256_before": _queue_sha256(queue),
+        },
+        "runtime": decision_frontier["runtime"],
+        "frontier_projection_sha256": structural_frontier["projection_sha256"],
+        "runtime_projection_sha256": decision_frontier["projection_sha256"],
+        "metrics": {
+            "queued_now_count": len(queue.get("lanes", {}).get("now", [])),
+            "queued_next_count": len(queue.get("lanes", {}).get("next", [])),
+            "structurally_runnable_now_count": base_now_count + len(raw_promotions),
+            "structurally_runnable_next_count": structurally_runnable_next_count,
+            "shortage_to_target": shortage,
+            "projected_promotion_count": len(raw_promotions),
+            "compatibility_promotion_count": len(promotions),
+        },
+        "promotions": promotions,
+        "blockers": blockers,
+        "boundaries": [
+            "Now supply is derived from the StateStore-backed dynamic frontier",
+            "runtime blockers suppress effects without erasing structural supply",
+            "registry/queue.json is compatibility output, not admission authority",
+            "queue projection does not claim or start a task",
+            "pickup-time approval, capability, lease, PR and runtime gates remain authoritative",
+        ],
+    }
+    report["report_sha256"] = legacy.sha256_json(report)
+    return report
+
+
 def apply_now_refill(
     registry: Registry,
     store: StateStore,
@@ -238,17 +263,29 @@ def apply_now_refill(
     authority: str,
     policy: NowRefillPolicy | None = None,
 ) -> dict[str, Any]:
-    """Apply one bounded refill with revision/hash binding and rollback."""
+    """Materialize one bounded compatibility refill with rollback."""
+
     if not authority.strip():
         raise legacy.StateError("explicit queue-refill authority is required")
-    report = build_now_refill_report(registry, store, policy=policy)
+    selected_policy = policy or NowRefillPolicy()
+    report = build_now_refill_report(registry, store, policy=selected_policy)
     if report["status"] != "refill-planned":
         return {
             **report,
             "applied": False,
             "changed": False,
-            "authority": authority,
+            "authority_evidence": authority,
         }
+
+    # Re-observe runtime/frontier immediately before the first file effect.
+    guard = build_now_refill_report(registry, store, policy=selected_policy)
+    if guard["runtime"].get("execution_blocked") is True:
+        raise legacy.StateError("runtime changed to blocked before Now-refill effect")
+    if (
+        guard["frontier_projection_sha256"] != report["frontier_projection_sha256"]
+        or guard["promotions"] != report["promotions"]
+    ):
+        raise legacy.StateError("dynamic frontier changed before Now-refill effect")
 
     queue_path = _queue_path(registry)
     before_text = queue_path.read_text(encoding="utf-8")
@@ -257,27 +294,22 @@ def apply_now_refill(
         raise legacy.StateError("queue changed after Now-refill report generation")
     if _git_head(registry.root) != report["registry"]["git_head"]:
         raise legacy.StateError("registry Git head changed after Now-refill report generation")
-    if Dispatcher(registry, store)._runtime_execution_truth().get("execution_blocked"):
-        raise legacy.StateError("runtime execution is blocked; refusing Now-refill apply")
     expected = _apply_promotions(queue_before, report["promotions"])
-    legacy.atomic_write(queue_path, json.dumps(expected, ensure_ascii=False, indent=2) + "\n")
+    legacy.atomic_write(
+        queue_path, json.dumps(expected, ensure_ascii=False, indent=2) + "\n"
+    )
     try:
         if _git_head(registry.root) != report["registry"]["git_head"]:
             raise legacy.StateError("registry Git head changed during Now refill")
         registry_after = Registry.load(registry.root)
-        # The working tree now carries our own uncommitted promotion; skip the
-        # runtime-execution (checkout-dirty) gate for this internal consistency
-        # read only. The gate already ran, unblocked, immediately before the write.
         post = build_now_refill_report(
-            registry_after, store, policy=policy, _check_runtime=False
+            registry_after,
+            store,
+            policy=selected_policy,
+            _check_runtime=False,
         )
-        expected_minimum = min(
-            report["policy"]["floor"],
-            report["metrics"]["structurally_runnable_now_count"]
-            + report["metrics"]["promotion_count"],
-        )
-        if post["metrics"]["structurally_runnable_now_count"] < expected_minimum:
-            raise legacy.StateError("Now-refill post-readback lost a promoted task")
+        if post["status"] != "satisfied":
+            raise legacy.StateError("Now-refill compatibility post-readback is not satisfied")
     except Exception:
         legacy.atomic_write(queue_path, before_text)
         raise
@@ -285,7 +317,7 @@ def apply_now_refill(
         **report,
         "applied": True,
         "changed": True,
-        "authority": authority,
+        "authority_evidence": authority,
         "queue_sha256_after": _queue_sha256(expected),
         "post_readback": post,
     }

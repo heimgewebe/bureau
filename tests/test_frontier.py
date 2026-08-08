@@ -93,6 +93,52 @@ def test_state_store_taskspec_wins_over_git_projection(registry_factory, tmp_pat
     assert json.loads(_task_path(root, task_id).read_text())["state"] == "ready"
 
 
+def test_dispatcher_uses_state_store_taskspec_priority_for_claim(registry_factory, tmp_path):
+    root = registry_factory(2)
+    first = "BUR-TEST-001-T001"
+    second = "BUR-TEST-001-T002"
+    registry = Registry.load(root)
+    assert registry.ordered_tasks()[0].id == first
+
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
+    store.import_registry_task_specs(registry)
+    first_current = store.task_spec(first)
+    second_current = store.task_spec(second)
+    assert first_current is not None
+    assert second_current is not None
+
+    first_spec = dict(first_current["spec"])
+    first_spec["priority"] = {"lane": "now", "rank": 50}
+    first_changed = store.put_task_spec(
+        first_spec,
+        idempotency_key="dispatcher-state-store-priority-first",
+        expected_revision=1,
+        source="test",
+    )
+    assert first_changed["revision"] == 2
+
+    second_spec = dict(second_current["spec"])
+    second_spec["priority"] = {"lane": "now", "rank": 0}
+    changed = store.put_task_spec(
+        second_spec,
+        idempotency_key="dispatcher-state-store-priority-second",
+        expected_revision=1,
+        source="test",
+    )
+    assert changed["revision"] == 2
+
+    dispatcher = Dispatcher(registry, store)
+    assert dispatcher.task_authority["kind"] == "bureau-state-store-task-specs"
+    assert dispatcher.registry.tasks[second].rank == 0
+    assert dispatcher.source_registry.tasks[second].rank != 0
+
+    claimed = dispatcher.claim_next("worker", ("repository",))
+    assert claimed["run"]["task_id"] == second
+    assert claimed["run"]["task_sha256"] == dispatcher.registry.tasks[second].sha256
+    assert claimed["run"]["task_sha256"] != changed["spec_sha256"]
+    assert dispatcher.task_revisions[second]["spec_sha256"] == changed["spec_sha256"]
+
+
 def test_terminal_state_never_enters_executable_projection(registry_factory, tmp_path):
     root = registry_factory(1)
     task_id = "BUR-TEST-001-T001"

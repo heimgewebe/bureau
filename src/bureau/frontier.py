@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import copy
 from dataclasses import dataclass
 from typing import Any
 
-from . import legacy, task_specs
+from . import legacy
 from .core import Dispatcher, Registry, StateStore
+from .v2 import authoritative_task_registry
 
 FRONTIER_SCHEMA_VERSION = 1
 EXECUTABLE_LANES = ("now", "next", "later")
@@ -38,118 +38,10 @@ class FrontierPolicy:
             raise ValueError("work_ball_limit must be at least one")
 
 
-def _task_from_spec(spec: dict[str, Any], digest: str) -> legacy.Task:
-    acceptance: list[dict[str, Any]] = []
-    for index, criterion in enumerate(spec.get("acceptance", []), 1):
-        if isinstance(criterion, str):
-            acceptance.append({"id": f"criterion-{index}", "assertion": criterion})
-        elif isinstance(criterion, dict):
-            acceptance.append(dict(criterion))
-        else:
-            raise legacy.StateError(
-                f"invalid acceptance criterion in authoritative TaskSpec {spec.get('id')!r}"
-            )
-    priority = spec.get("priority") if isinstance(spec.get("priority"), dict) else {}
-    return legacy.Task(
-        id=str(spec.get("id", "")),
-        initiative=str(spec.get("initiative", "")),
-        title=str(spec.get("title", "")),
-        state=str(spec.get("state", "")),
-        depends_on=tuple(spec.get("depends_on", [])),
-        capabilities=tuple(sorted(set(spec.get("required_capabilities", [])))),
-        lane=str(priority.get("lane", "later")),
-        rank=int(priority.get("rank", 1000)),
-        execution=dict(spec.get("execution", {})),
-        claims=tuple(legacy.Claim.from_raw(value) for value in spec.get("claims", [])),
-        acceptance=tuple(acceptance),
-        raw=spec,
-        sha256=digest,
-    )
-
-
 def _authoritative_registry(
     registry: Registry, store: StateStore
 ) -> tuple[Registry, dict[str, Any], dict[str, dict[str, Any]]]:
-    """Overlay the Registry catalogue with current StateStore TaskSpec revisions.
-
-    Resources, initiatives and schemas remain code/Registry contracts. Task payloads
-    are operational truth from T003's append-only StateStore. A completely empty
-    TaskSpec store is treated as a legacy bootstrap fixture only; once one StateStore
-    TaskSpec exists, Git-only task payloads never silently re-enter authority.
-    """
-
-    with store.connect() as connection:
-        try:
-            projection = task_specs.current_projection(connection)
-        except task_specs.TaskSpecError as exc:
-            raise legacy.StateError(str(exc)) from exc
-
-    state_tasks = projection["tasks"]
-    if not state_tasks:
-        revisions = {
-            task.id: {
-                "revision": None,
-                "spec_sha256": task.sha256,
-                "spec": task.raw,
-            }
-            for task in registry.tasks.values()
-        }
-        authority = {
-            "kind": "legacy-git-bootstrap",
-            "task_count": len(revisions),
-            "task_spec_root_sha256": legacy.sha256_json(
-                {task_id: item["spec_sha256"] for task_id, item in sorted(revisions.items())}
-            ),
-            "git_projection_only_task_ids": [],
-            "does_not_establish": ["state_store_task_spec_authority"],
-        }
-        return registry, authority, revisions
-
-    tasks: dict[str, legacy.Task] = {}
-    revisions: dict[str, dict[str, Any]] = {}
-    for task_id, item in sorted(state_tasks.items()):
-        spec = item["spec"]
-        digest = str(item["spec_sha256"])
-        if task_specs.task_spec_digest(spec) != digest:
-            raise legacy.StateError(f"authoritative TaskSpec digest drift for {task_id}")
-        task = _task_from_spec(spec, digest)
-        if task.id != task_id:
-            raise legacy.StateError(f"authoritative TaskSpec id drift for {task_id}")
-        tasks[task_id] = task
-        revisions[task_id] = {
-            "revision": int(item["revision"]),
-            "spec_sha256": digest,
-            "spec": spec,
-        }
-
-    for task in tasks.values():
-        if task.initiative not in registry.initiatives:
-            raise legacy.StateError(
-                f"authoritative TaskSpec {task.id} references unknown initiative {task.initiative}"
-            )
-        for dependency in task.depends_on:
-            if dependency not in tasks:
-                raise legacy.StateError(
-                    f"authoritative TaskSpec {task.id} references unknown dependency {dependency}"
-                )
-        for claim in task.claims:
-            if claim.resource not in registry.resources:
-                raise legacy.StateError(
-                    f"authoritative TaskSpec {task.id} references unknown resource {claim.resource}"
-                )
-
-    projected = copy.copy(registry)
-    projected.tasks = tasks
-    git_only = sorted(set(registry.tasks) - set(tasks))
-    authority = {
-        "kind": "bureau-state-store-task-specs",
-        "task_count": len(tasks),
-        "task_spec_root_sha256": task_specs.projection_root(projection),
-        "git_projection_only_task_ids": git_only,
-        "does_not_establish": ["git_task_payload_authority"],
-    }
-    return projected, authority, revisions
-
+    return authoritative_task_registry(registry, store)
 
 def _queue_lane(registry: Registry, task_id: str) -> str | None:
     position = registry.positions.get(task_id)

@@ -65,8 +65,7 @@ def _git(root: Path, *args: str) -> str:
         ["git", *args],
         cwd=root,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=True,
     )
     return result.stdout.strip()

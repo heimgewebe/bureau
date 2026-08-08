@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Any
 
 from . import legacy
-from .core import Dispatcher, StateStore
+from .core import Dispatcher as Dispatcher
+from .core import StateStore
 from .frontier import FrontierPolicy, build_frontier_projection
 from .v2 import Registry
 

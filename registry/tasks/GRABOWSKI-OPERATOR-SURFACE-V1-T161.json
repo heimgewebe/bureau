@@ -1,0 +1,129 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein revisionsgebundener Live-Test zeigt, dass grabowski_work_acquire mit source_kind=direct und einem konkreten owner-authorized source_id ohne vorherigen Bureau-Task eine neue isolierte Lane samt schmalen Leases und Worktree erfolgreich als EXECUTE oder AUTO_PREPARE_AND_EXECUTE eröffnet.",
+      "id": "direct-user-authority"
+    },
+    {
+      "assertion": "Die Checkout-Lifecycle-Bindung verwendet für direkte Arbeit eine serverseitig erzeugte lanegebundene durable Evidenzquelle. Nutzerthread-, MCP-Sitzungs- oder Modellidentität werden nicht als Terminalitätsautorität verwendet; Cleanup bleibt bis zu einem eindeutigen Lane-/Closeout-Nachweis fail-closed.",
+      "id": "lane-terminal-evidence"
+    },
+    {
+      "assertion": "Der veröffentlichte Operatorvertrag führt controller, scoped_writer, reviewer und observer als Autoritätsrollen. Modellnamen dürfen Routing- oder Qualitätspräferenz sein, bestimmen aber keine Schreib-, Merge- oder Deployment-Autorität.",
+      "id": "model-neutral-roles"
+    },
+    {
+      "assertion": "delegated_scoped_writers_allowed und owner-authorized automatic execution sind maschinenlesbar. Scoped Writer sind auf ihre Lane und Ressourcen beschränkt und dürfen implementieren, testen, committen, pushen und PRs erstellen/aktualisieren; Merge, Deployment, Bureau-Terminalisierung und Closeout bleiben ohne explizite Zusatzdelegation Controller-only.",
+      "id": "scoped-writer-contract"
+    },
+    {
+      "assertion": "Die Writer-Invariante gilt pro überlappender Ressourcenlane statt global. Disjunkte Lanes bleiben parallelisierbar; echte Ressourcenüberschneidung, outcome_unknown, ungültige Runtime/Auditintegrität und fehlende Kostenfreigabe bleiben fail-closed.",
+      "id": "parallelism-and-hard-blocks"
+    },
+    {
+      "assertion": "Fokustests decken direkte Lane-Eröffnung, Replays, Lifecycle-Evidenz, Modellneutralität und Writer-Autorität ab; relevante vollständige Grabowski-Validierung ist auf dem exakten Head grün.",
+      "id": "regression"
+    },
+    {
+      "assertion": "Der exakte geprüfte Head erhält revisionsgebundenen Self-Review, grüne Pflichtchecks, Merge und source-identitätsgebundenes Deployment. Ein Live-Readback zeigt die neue Rollenpolicy und einen erfolgreichen direkten work_acquire-Pfad.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Umsetzung des agentengeführten Grabowski-Ausführungsgewebes ausdrücklich angeordnet. Scope: direkte Lane-Evidenz, Rollen-/Delegationsvertrag, fokussierte Tests und notwendige generierte Verträge. Keine Lockerung von Overlap-, Outcome-unknown-, Kosten-, Merge-, Deploy- oder fremden Dirty-State-Gates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_operator_relay.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_work_acquire.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_worktree_ensure.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_checkouts.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_checkout_terminal_sources.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_relay.py",
+      "path:/home/alex/repos/grabowski/tests/test_work_acquire.py",
+      "path:/home/alex/repos/grabowski/tests/test_worktree_ensure.py",
+      "path:/home/alex/repos/grabowski/tests/test_checkout_terminal_sources.py",
+      "path:/home/alex/repos/grabowski/docs/agent-authority-lanes-v1.md",
+      "path:/home/alex/repos/grabowski/docs/blocked-action-protocol-v0.md",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Schließe die verbleibende P0-Lücke des agentengeführten Grabowski-Ausführungsgewebes: Ein konkreter autorisierter Nutzerauftrag muss ohne vorherigen Bureau-Task eine serverseitig evidence-fähige Work-Lane eröffnen können. Die interne Checkout-Lifecycle-Bindung erhält dafür eine lanegebundene, durable Quelle statt den direkten Nutzerauftrag als historisch unbeobachtbare Quelle zu behandeln. Gleichzeitig konvergiert die live veröffentlichte Operator-Policy auf modellneutrale Rollen controller, scoped_writer, reviewer und observer. Scoped Writer dürfen nur innerhalb expliziter, ressourcenbegrenzter Lanes implementieren, testen, committen, pushen und PRs erstellen/aktualisieren; Merge, Deployment, Bureau-Terminalisierung und Closeout bleiben Controller-Autorität, sofern nicht separat delegiert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T161",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatische Produktpriorisierung durch Grabowski",
+      "globale Writerparallelität bei überlappenden Ressourcen",
+      "Merge- oder Deployment-Autorität eines scoped_writer ohne separate Delegation",
+      "Kostenfreigabe außerhalb des stehenden Mandats",
+      "sicheren Retry nach outcome_unknown"
+    ],
+    "live_reproduction": {
+      "decision": "AUTO_PREPARE_FAILED",
+      "effect_observed": false,
+      "error": "source_kind=direct has no immutable terminal evidence observer",
+      "lane_id": "4713e2f270a6d1fc2189c0317ce94079",
+      "leases_compensated": true,
+      "runtime_head": "4a6d784ca1ea43ca00648668a1df50515b0c3ba0"
+    },
+    "source_candidate": "candidate-c9da37453fca23bbd1e3b951",
+    "source_event_id": 4280,
+    "user_authority": "2026-08-08: @grabowski Umsetzung des finalen Plans Agentengeführtes Grabowski-Ausführungsgewebe",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c9da37453fca23bbd1e3b951",
+      "event_id": 4280,
+      "event_created_at": "2026-08-08T07:10:42.229862Z",
+      "request_sha256": "56df1dde782c42ba03dc158594ac419bffb55f23d4c69e3ceea32914cbd82db2",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:2026-08-08:agent-driven-grabowski-execution-fabric",
+        "observed_at": "2026-08-08T09:07:46+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 161
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "runtime-deployment"
+  ],
+  "rollback": {
+    "strategy": "Die lanegebundene Direktquellen-Evidenz und Rollenpolicy per normalem Revert zurücknehmen. Bestehende Work-Lane-, Checkout-, Audit- und Bureau-Historien nicht löschen oder umdeuten; bereits erzeugte direkte Lanes bleiben bis zu ihrem normalen Closeout fail-closed erhalten."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Direkte Nutzeraufträge als evidence-fähige Work-Lanes ausführen"
+}

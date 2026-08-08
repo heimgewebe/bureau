@@ -78,6 +78,99 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "pr_completion": {
+      "auto_verify": true,
+      "head_sha": "aedcf783c206e84fef6de106f0e5f21a0b8d8a52",
+      "number": 67,
+      "post_merge_required": false,
+      "repo": "heimgewebe/audio"
+    },
+    "verification": {
+      "acceptance_evidence": {
+        "backend-defense-preserved": "PR #67 changes only ui/app.js and tests/test_audio_ipad_pwa.py; backend host/origin/action-token gates are untouched and the central UI gate still requires backendAllowed plus the action token contract.",
+        "direct-loopback-origin-gate": "ui/app.js requires protocol http: and exact hostname 127.0.0.1 or localhost before recordingActionsAllowed can succeed; focused regression tests pass.",
+        "no-recorder-regression": "Relevant iPad/recording/bridge suite passes 80 tests with 179 subtests; the full repository just check also succeeds.",
+        "remote-bridge-fail-closed": "Existing read-only-v1 bridge observation remains sticky for the page lifetime and is regression-tested; once true, a later missing header cannot reset remoteBridgeProjection to false."
+      },
+      "closeout_evidence_file_sha256": "b9450932fdcaa3547d396511b55cfc21361b58625e5529d30e44ae3b03d7e83c",
+      "closeout_mode": "direct-user-authorized-post-merge-reconciliation",
+      "does_not_establish": [
+        "physical MOTU or RODE readiness",
+        "live recording authorization",
+        "a retroactive Bureau claim or run",
+        "future correctness after later Audio changes"
+      ],
+      "evidence_sha256": "31a6b3122d8230f10b98efe9f76fd65160f7b4248ca58c0b36dbfd29cd6db361",
+      "execution_reconciliation": {
+        "attempts": [
+          {
+            "reason": "Bureau runtime Registry release lag before T033 became visible to pickup",
+            "result": "pre-effect-blocked"
+          },
+          {
+            "reason": "AUDIO-CONTROL-PLANE-V1 initiative remained waiting despite ready T033",
+            "result": "pre-effect-blocked"
+          }
+        ],
+        "canonical_pickup_attempted": true,
+        "canonical_pickup_run_created": false,
+        "direct_execution_authority": "direct user request: weiter @grabowski, 2026-08-08",
+        "retroactive_run_created": false,
+        "state_store_revision_before_closeout": 1,
+        "state_store_run_count_before_closeout": 0,
+        "state_store_task_status_row_before_closeout": false
+      },
+      "implementation": {
+        "base_commit": "cd26f8abb36fa949708c5b66bbd41ddadeceb931",
+        "head_commit": "aedcf783c206e84fef6de106f0e5f21a0b8d8a52",
+        "merge_commit": "7b37f673d281eb46f97897aaaee894b6460f122d",
+        "merged_at": "2026-08-08T15:53:36Z",
+        "pull_request": 67,
+        "repository": "heimgewebe/audio"
+      },
+      "pr_completion": {
+        "evidence": {
+          "evidence_sha256": "31a6b3122d8230f10b98efe9f76fd65160f7b4248ca58c0b36dbfd29cd6db361",
+          "head_sha": "aedcf783c206e84fef6de106f0e5f21a0b8d8a52",
+          "merge_commit": "7b37f673d281eb46f97897aaaee894b6460f122d",
+          "non_claims": [
+            "merged PR evidence does not prove deployment",
+            "merged PR evidence does not prove dependent tasks are complete",
+            "merged PR evidence does not prove runtime correctness"
+          ],
+          "pr_number": 67,
+          "repo": "heimgewebe/audio",
+          "source": "github_pull_request",
+          "source_ref": "github-pr:heimgewebe/audio#67@aedcf783c206e84fef6de106f0e5f21a0b8d8a52:7b37f673d281eb46f97897aaaee894b6460f122d"
+        },
+        "kind": "bureau.pr_completion_receipt",
+        "outcome": "completed-by-merged-pr",
+        "receipt_id": "pr-completion:heimgewebe/audio#67:aedcf783c206e84fef6de106f0e5f21a0b8d8a52",
+        "receipt_sha256": "867439b2dac5735040098fa931846cb69b9e4b29d06a65fbac201ffd07109903",
+        "schema_version": 2,
+        "task_id": "AUDIO-CONTROL-PLANE-V1-T033"
+      },
+      "receipt_id": "pr-completion:heimgewebe/audio#67:aedcf783c206e84fef6de106f0e5f21a0b8d8a52",
+      "receipt_sha256": "867439b2dac5735040098fa931846cb69b9e4b29d06a65fbac201ffd07109903",
+      "schema_version": 1,
+      "source": "github_pull_request",
+      "source_ref": "github-pr:heimgewebe/audio#67@aedcf783c206e84fef6de106f0e5f21a0b8d8a52:7b37f673d281eb46f97897aaaee894b6460f122d",
+      "validation": {
+        "full_just_check": {
+          "job": "grabowski-job-2f7c9376e925",
+          "receipt_sha256": "4050fe8fa79502d204b3fa686958b844cc7ead3224cf512f8ded99c2f941d2bf",
+          "status": "succeeded"
+        },
+        "git_diff_check": "clean",
+        "github_safety": "SUCCESS",
+        "ipad_recording_bridge": "80 passed, 179 subtests passed",
+        "recording_mutation_boundary": "3 passed, 48 deselected, 4 subtests passed",
+        "regression_before_fix": "1 failed, 2 passed, 48 deselected"
+      },
+      "verified_at": "2026-08-08T16:10:04Z",
+      "task_sha256": "a70c8379042ed37b7acbc8cbb3c9074bc14a91184d560771711188483bd91ceb",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d"
     }
   },
   "priority": {
@@ -100,6 +193,6 @@
     "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Da T033 keine Live-Audio- oder Gerätewirkung ausführt, genügt Repository-Rollback plus erneuter Control- und UI-Readback."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Recorder-Schreibfreigabe auf direkte Loopback-Origin härten"
 }

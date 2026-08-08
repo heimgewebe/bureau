@@ -1,0 +1,122 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der übernommene Pull Request ist heimgewebe/weltgewebe#1718; unmittelbar vor jeder PR-Mutation werden Basis, exakter Head und vollständiger 13-Dateien-Scope frisch gelesen. Der Intake-Head ist df338b70c7d938c51e211d2549b95655d469d1c6.",
+      "evidence_type": "object",
+      "id": "exact-pr-identity"
+    },
+    {
+      "assertion": "Der PR ändert auf dem finalen Head ausschließlich den gepinnten actions/setup-node-Digest in den 13 deklarierten GitHub-Workflows; unerwartete Workflow-Semantik oder zusätzliche Dateien blockieren die Übernahme.",
+      "evidence_type": "object",
+      "id": "digest-only-scope"
+    },
+    {
+      "assertion": "Der finale Head besitzt die vom Weltgewebe-R3-Vertrag verlangte exakte Review-Evidenz; abgebrochene, veraltete oder fehlgeschlagene Evaluatorläufe gelten nicht als Ersatz für ein aktuelles grünes Review-Evidence-Gate.",
+      "evidence_type": "object",
+      "id": "r3-review-evidence"
+    },
+    {
+      "assertion": "Alle für den finalen Head erforderlichen Weltgewebe-CI-, Security-, CodeQL-, Browser-, Basemap- und Deployment-Preview-Gates sind terminal grün oder gemäß Repositoryvertrag neutral/skipped; kein rotes Pflichtgate wird ignoriert.",
+      "evidence_type": "object",
+      "id": "required-ci"
+    },
+    {
+      "assertion": "PR #1718 trägt vor dem Merge exakt `Bureau-Task: WELTGEWEBE-PR-MAINTENANCE-V2-T007`, und Bureau github-observe erkennt diese Bindung ohne Hard Finding. Eine pauschale Renovate-Ausnahme ist verboten.",
+      "evidence_type": "object",
+      "id": "bureau-pr-binding"
+    },
+    {
+      "assertion": "Unmittelbar vor dem Merge werden Head, Basis, Mergebarkeit und Checks erneut gelesen; ausschließlich der exakt geprüfte Head wird headgeschützt gemergt und anschließend auf main zurückgelesen.",
+      "evidence_type": "object",
+      "id": "exact-head-merge"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Fortsetzung am 2026-08-08 mit '@grabowski umsetzen' ausdrücklich autorisiert. Die Task übernimmt nur den bestehenden PR #1718 auf exaktem Head und Scope; zusätzliche Produktänderungen, Automerge und Direct-main bleiben ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/.github/workflows/auth-passkey-register-proof.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/auth-session-persistence-proof.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/basemap-runtime-proof.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/ci.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/contracts-domain.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/contracts-validate.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/deploy-check.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/deploy-snapshot.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/germany-basemap-rollout.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/governance-full-flow-proof.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/heavy.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/web-e2e.yml",
+      "path:/home/alex/repos/weltgewebe/.github/workflows/web.yml"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bereits bestehenden Renovate-PR heimgewebe/weltgewebe#1718 ausschließlich auf seinem exakten Workflow-Scope revisionsgebunden übernehmen: den actions/setup-node-Digest in 13 GitHub-Workflows prüfen, die R3-Review-Evidenz und vollständige CI auf dem finalen Head belegen, den PR an genau diese Bureau-Task binden und nur den exakt geprüften Head mergen. Weder Renovate noch diese Task erhalten Automerge- oder Direct-main-Autorität.",
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T007",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "metadata": {
+    "does_not_establish": [
+      "Mergebereitschaft ohne finalen Readback",
+      "Automerge-Autorität",
+      "Berechtigung zu Änderungen außerhalb der 13 deklarierten Workflowpfade",
+      "dass zukünftige Renovate-PRs dieselbe Task verwenden dürfen"
+    ],
+    "registered_at": "2026-08-08",
+    "source_base": "f4a9848863a59c7a78d12a7d13813296391d66ed",
+    "source_head": "df338b70c7d938c51e211d2549b95655d469d1c6",
+    "source_parent_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T081",
+    "source_pull_request": 1718,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6d589cafc19c175cccad447c",
+      "event_id": 4317,
+      "event_created_at": "2026-08-08T08:18:55.164576Z",
+      "request_sha256": "517553ac31fbac84e74085647ba616bc4a949a23f31520025ffd96149e4150cf",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pull-request",
+        "locator": "github:heimgewebe/weltgewebe#1718@df338b70c7d938c51e211d2549b95655d469d1c6;base:f4a9848863a59c7a78d12a7d13813296391d66ed",
+        "observed_at": "2026-08-08T08:15:54Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 7
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "github-actions",
+    "ci",
+    "security",
+    "review",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Renovate setup-node-Digest aus PR #1718 revisionsgebunden übernehmen"
+}

@@ -63,6 +63,18 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T024",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "metadata": {
+    "activation": {
+      "activated_at": "2026-08-08T11:41:58.427527Z",
+      "dependency_basis": [
+        "REPOGROUND-AGENT-UTILITY-V1-T017:verified"
+      ],
+      "live_basis": [
+        "global wrapper sha256=654f3e516db8d2d3a26543c54318f"
+      ],
+      "note": "RepoGround had 0 open pull requests immediately before activation; priority remains now/rank 1.",
+      "schema_version": 1,
+      "source": "explicit-user-request-weiter-grabowski-20260808"
+    },
     "does_not_establish": [
       "Abwesenheit späterer Wrapper-Drift",
       "Berechtigung zu anderen Hoständerungen",
@@ -71,6 +83,26 @@
       "semantische Korrektheit beliebiger fremder Wrapper"
     ],
     "finding": "Live am 08.08.2026 erneut bestätigt: /home/alex/.local/bin/repoground hat weiterhin SHA-256 654f3e516db8dd254c32ceb37b2316f3592f16c30dc171198ba8bf59428a1c82 und ist unverändert der 23-zeilige systemd/curl/xdg-open-Service-Starter. RepoGround hatte beim erneuten GitHub-Readback 0 offene Pull Requests.",
+    "operator_intake": {
+      "candidate_id": "candidate-f19c6382d3cdf71ae4b15679",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-07T17:24:26.627133Z",
+      "event_id": 4151,
+      "request_sha256": "56afebbe7e512a8db4d4ab6d1e4f6d45565608f3728c3cb88ede534fde15afd8",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-audit",
+        "locator": "host:heim-pc:/home/alex/.local/bin/repoground@repo-main:ba1bda950ea23c987fba7a3f38537854a566c5e6",
+        "observed_at": "2026-08-07T17:24:26.585995Z",
+        "sha256": "654f3e516db8dd254c32ceb37b2316f3592f16c30dc171198ba8bf59428a1c82"
+      }
+    },
     "publication_reconciliation": {
       "latest_registry_churn": "Bureau PR #1773 now-lane refill advanced registry identity after T004 convergence; runtime was refreshed to the exact new commit before this reproposal",
       "latest_registry_commit": "7216453b39775f71b36188b465c26e43887a279e",
@@ -97,26 +129,6 @@
       "state_store_revision": 1,
       "state_store_spec_sha256": "116d618ebf8b8c1ea06c719944b56dad1e8b9782b970b62e7f76481a4ad4227a",
       "task_id": "REPOGROUND-AGENT-UTILITY-V1-T023"
-    },
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-f19c6382d3cdf71ae4b15679",
-      "event_id": 4151,
-      "event_created_at": "2026-08-07T17:24:26.627133Z",
-      "request_sha256": "56afebbe7e512a8db4d4ab6d1e4f6d45565608f3728c3cb88ede534fde15afd8",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "runtime-audit",
-        "locator": "host:heim-pc:/home/alex/.local/bin/repoground@repo-main:ba1bda950ea23c987fba7a3f38537854a566c5e6",
-        "observed_at": "2026-08-07T17:24:26.585995Z",
-        "sha256": "654f3e516db8dd254c32ceb37b2316f3592f16c30dc171198ba8bf59428a1c82"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
     }
   },
   "priority": {
@@ -138,7 +150,7 @@
     "trigger": "Der globale Befehl startet nicht die kanonische CLI, Doctor meldet den gültigen Wrapper nicht korrekt, ein unerwarteter Hostzustand wird beobachtet oder eine bestehende RepoGround-Nutzung regressiert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "stop": {
     "conditions": [
       "Der installierte Wrapper weicht vor der Mutation vom digestgebunden beobachteten Zustand ab und seine Herkunft ist nicht geklärt.",

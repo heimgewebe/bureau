@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-TRUTH-MODEL-V2-T028",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "title": "Immutable Bureau-Runtime an aktuellen Registry-Stand binden",
+  "goal": "Die installierte immutable Bureau-Runtime und den kanonischen Registry-Snapshot revisionsgebunden von cb9cb572b14cf742754f0a6eb0e290f872521eaa auf den bereits reviewten aktuellen main-Commit 30313a0022afee6acc4fd7d94f696dc386b4edd4 konvergieren. Der bestehende Runtime-Refresh-Vertrag muss exakt an Target 471f57e954e55c0db6ecf6de750ef0afdb6e9c577e460f5fbd63e9d7ed3162be gebunden werden; danach müssen Queue, Frontier und Doctor belegen, dass der nur aus dem alten Snapshot stammende T068-Drift verschwunden ist.",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Die Autorität ist auf den exakten Bureau-Runtime-Refresh für source commit 30313a0022afee6acc4fd7d94f696dc386b4edd4 und Target 471f57e954e55c0db6ecf6de750ef0afdb6e9c577e460f5fbd63e9d7ed3162be begrenzt. Keine Abschwächung von Runtime-, Registry-, Queue-, Claim- oder Lease-Gates und keine Mutation anderer Dienste oder Repositories."
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "exact-target-binding",
+      "assertion": "Observation, prepare-intent und apply binden exakt main commit 30313a0022afee6acc4fd7d94f696dc386b4edd4 und Runtime-Refresh-Target 471f57e954e55c0db6ecf6de750ef0afdb6e9c577e460f5fbd63e9d7ed3162be. Driftet main vorher, wird dieser Plan nicht wiederverwendet, sondern frisch beobachtet und neu gebunden."
+    },
+    {
+      "id": "reviewed-source-gates",
+      "assertion": "Unmittelbar vor prepare-intent bleibt der exakte Zielcommit aktueller Bureau-main und die für den Refresh erforderlichen Pflichtchecks sind erfolgreich; rote, fehlende oder revisionsfremde Gates führen fail-closed zum Abbruch."
+    },
+    {
+      "id": "approval-and-lease-binding",
+      "assertion": "prepare-intent verwendet eine auf dieses Task-ID und Target gebundene reviewed_plan-Runtimefreigabe. apply verwendet ausschließlich die vom Runtime-Refresh-Vertrag geforderten exakten Live-Leases; keine Taskbindung, Autorisierung, Break-Glass-Evidenz oder Lease wird erfunden."
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach apply belegen Deployment-Manifest, immutable Release und kanonischer Registry-Snapshot gültige Hashes und source commit 30313a0022afee6acc4fd7d94f696dc386b4edd4; Deployment-Integrität und StateStore-Integrität sind grün."
+    },
+    {
+      "id": "graph-convergence-readback",
+      "assertion": "Frische bureau --json registry-truth, queue-reconcile, frontier und doctor laufen aus der aktualisierten Runtime. Die aus dem alten Snapshot stammenden Findings terminal-task-in-queue und now-task-not-ready für WELTGEWEBE-OS-V1-T068 sind verschwunden, ohne Dependencies, Queue- oder Claimregeln abzuschwächen."
+    },
+    {
+      "id": "foreign-state-preserved",
+      "assertion": "Der fremde Dirty-State im kanonischen Checkout /home/alex/repos/bureau wird weder bereinigt noch überschrieben. Der Refresh verwendet den immutable Installationspfad und bricht bei unklarem Mutationsergebnis fail-closed ab."
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem Cutover keine neue Wahrheit behaupten. Den letzten integritätsgültigen immutable Release/Manifest-Stand beibehalten beziehungsweise über den bestehenden Runtime-Refresh-Rollbackpfad wiederherstellen; Registry-, Queue- oder StateStore-Historie nicht künstlich zurückschreiben."
+  },
+  "metadata": {
+    "source_candidate": "candidate-2c760a47001c8abd477ca37c",
+    "source_event_id": 4229,
+    "source_freshness": "digest-bound",
+    "observed_installed_source_commit": "cb9cb572b14cf742754f0a6eb0e290f872521eaa",
+    "target_source_commit": "30313a0022afee6acc4fd7d94f696dc386b4edd4",
+    "runtime_refresh_target_sha256": "471f57e954e55c0db6ecf6de750ef0afdb6e9c577e460f5fbd63e9d7ed3162be",
+    "observed_structural_error": [
+      "WELTGEWEBE-OS-V1-T068: terminal-task-in-queue im veralteten immutable Snapshot",
+      "WELTGEWEBE-OS-V1-T068: now-task-not-ready im veralteten immutable Snapshot"
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Der operator-native typed publication path wurde vor Registry-Wirkung mit release-registry-identity-mismatch blockiert, weil genau die hier zu reparierende immutable Bureau-Runtime hinter main liegt. BUREAU-TRUTH-MODEL-V2-T026 dokumentiert denselben fail-closed Bootstrap-Fall und den normalen geschützten PR als zulässigen Publikationspfad. Queue und StateStore werden dabei nicht direkt mutiert.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "runtime mutation before reviewed task publication",
+        "queue mutation",
+        "claim or dispatch authority from PR creation alone"
+      ]
+    },
+    "does_not_establish": [
+      "future main freshness after the bound target commit",
+      "claimability of any particular task after the refresh",
+      "permission to mutate unrelated services, repositories or foreign worktrees"
+    ]
+  }
+}

@@ -4,9 +4,9 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Queue als dynamische Frontier projizieren",
   "goal": "Now, Next, Later, Blocked, In Flight und Closeout deterministisch aus TaskSpec-Revisionen, Prioritäten, Abhängigkeiten, Child-Zuständen, Actorprofilen, Runs, Ressourcen, offenen PRs und Runtime-Gates berechnen. registry/queue.json wird zur zeitweiligen Kompatibilitätsausgabe ohne eigenständige Autorität.",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 50
   },
   "depends_on": [
@@ -74,6 +74,15 @@
     }
   ],
   "metadata": {
+    "activation": {
+      "schema_version": 1,
+      "activated_at": "2026-08-08T06:59:00Z",
+      "source": "explicit-user-request-alles-umsetzen",
+      "dependency_basis": [
+        "BUREAU-CONTROL-PLANE-V3-T003:verified"
+      ],
+      "ordering_basis": "T005 remains critical-path now work; T004 is activated as next and may proceed once overlapping Bureau core work clears."
+    },
     "registered_at": "2026-08-06T11:11:00Z",
     "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
     "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",

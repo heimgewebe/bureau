@@ -10,7 +10,12 @@ READ_ONLY = "read_only"
 COORDINATION_STATE_MUTATION = "coordination_state_mutation"
 REGISTRY_MUTATION = "registry_mutation"
 _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
-    {"claim-commit", "claim-intent", "receipt-normalize"}
+    {
+        "claim-commit",
+        "claim-intent",
+        "lifecycle-reconcile-apply",
+        "receipt-normalize",
+    }
 )
 
 

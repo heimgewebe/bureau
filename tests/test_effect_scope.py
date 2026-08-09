@@ -5,6 +5,7 @@ from pathlib import Path
 
 from bureau import cli as bureau_cli
 from bureau import effect_scope
+from bureau.core import Registry, StateStore
 
 
 def canonical_runtime_identity(root: Path, *, commit: str = "a" * 40) -> dict:
@@ -53,9 +54,52 @@ def test_command_effect_scope_is_explicit_and_fails_closed() -> None:
         == "coordination_state_mutation"
     )
     assert (
+        effect_scope.classify_command_effect_scope("lifecycle-reconcile-apply", mutates=True)
+        == "coordination_state_mutation"
+    )
+    assert (
         effect_scope.classify_command_effect_scope("future-command", mutates=True)
         == "registry_mutation"
     )
+
+
+def test_lifecycle_reconcile_apply_uses_canonical_coordination_store(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    task_path = next((registry_root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "blocked"
+    task_path.write_text(json.dumps(task))
+    queue_path = registry_root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"]["now"] = []
+    queue_path.write_text(json.dumps(queue))
+    state_root = tmp_path / "coordination-state"
+    store = StateStore(state_root / "bureau.sqlite3")
+    store.import_registry_task_specs(Registry.load(registry_root))
+    identity = canonical_runtime_identity(registry_root)
+    initiative_path = registry_root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
+
+    result = bureau_cli.main(
+        [
+            "--state-root", str(state_root),
+            "--json", "lifecycle-reconcile-apply",
+        ]
+    )
+
+    assert result == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["runtime_identity"]["command_effect_scope"] == "coordination_state_mutation"
+    result = value["result"]
+    assert result["changed_count"] == 1
+    assert result["changed"][0]["to_state"] == "waiting"
+    assert (state_root / "bureau.sqlite3").is_file()
+    assert initiative_path.read_bytes() == initiative_before
 
 
 def test_claim_intent_is_coordination_state_mutation() -> None:

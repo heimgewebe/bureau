@@ -7,6 +7,7 @@ import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -533,7 +534,10 @@ def test_lifecycle_reconcile_plans_and_applies_only_safe_active_waiting_transiti
     task["state"] = "blocked"
     remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
     registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
 
     preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
     assert preview["candidate_count"] == 1
@@ -543,13 +547,254 @@ def test_lifecycle_reconcile_plans_and_applies_only_safe_active_waiting_transiti
 
     applied = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
     assert applied["changed_count"] == 1
-    initiative = json.loads((root / "registry/initiatives/main.json").read_text())
-    assert initiative["state"] == "waiting"
-    assert initiative["metadata"]["lifecycle"]["reconciled_from"] == "active"
-    assert initiative["metadata"]["lifecycle"]["reconciled_to"] == "waiting"
+    assert applied["registry_mutated"] is False
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "waiting"
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["declared_state"] == "waiting"
+    assert lifecycle["registry_state"] == "active"
+    assert lifecycle["consistent"] is True
+
+    dispatcher = Dispatcher(registry, store)
+    dispatcher_lifecycle = dispatcher.explain_next({"repository"})["lifecycle"][0]
+    assert dispatcher_lifecycle["declared_state"] == "waiting"
+    assert dispatcher_lifecycle["registry_state"] == "active"
 
 
-def test_lifecycle_reconcile_excludes_completion_semantics(
+def test_lifecycle_reconcile_refuses_stale_initiative_task_inputs(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "blocked"
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    overlays = iter([{task["id"]: "blocked"}, {task["id"]: "ready"}])
+    monkeypatch.setattr(store, "overlays", lambda connection, selected: next(overlays))
+
+    with pytest.raises(StateError, match="lifecycle inputs changed during reconcile"):
+        bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is None
+
+
+def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_files_before = {
+        path.name: path.read_bytes()
+        for path in (root / "registry/tasks").glob("*.json")
+    }
+    dependency_id, task_id = sorted(registry.tasks)
+
+    dependency = store.task_spec(dependency_id)
+    assert dependency is not None
+    dependency_spec = dict(dependency["spec"])
+    dependency_spec["state"] = "verified"
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="lifecycle-dependency-verified",
+        expected_revision=dependency["revision"],
+        source="test",
+    )
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = dict(current["spec"])
+    task_spec["state"] = "planned"
+    task_spec["depends_on"] = [dependency_id]
+    planned = store.put_task_spec(
+        task_spec,
+        idempotency_key="lifecycle-dependent-planned",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    without_evidence = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert without_evidence["task_candidate_count"] == 0
+
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    current_dependency = store.task_spec(dependency_id)
+    assert current_dependency is not None
+    dependency_spec = json.loads(json.dumps(current_dependency["spec"]))
+    dependency_task = operational.tasks[dependency_id]
+    dependency_spec.setdefault("metadata", {})["verification"] = {
+        "task_sha256": dependency_task.sha256,
+        "plan_sha256": plan_sha256(operational, dependency_task.initiative),
+    }
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="lifecycle-dependency-verification-evidence",
+        expected_revision=current_dependency["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 1
+    candidate = preview["task_candidates"][0]
+    assert candidate["task_id"] == task_id
+    assert candidate["from_state"] == "planned"
+    assert candidate["to_state"] == "ready"
+    assert candidate["revision"] == planned["revision"]
+    assert candidate["dependency_states"] == {dependency_id: "verified"}
+
+    applied = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert applied["changed_task_count"] == 1
+    assert applied["total_changed_count"] == 1
+    after = store.task_spec(task_id)
+    assert after is not None
+    assert after["revision"] == planned["revision"] + 1
+    assert after["spec"]["state"] == "ready"
+    assert {
+        path.name: path.read_bytes()
+        for path in (root / "registry/tasks").glob("*.json")
+    } == task_files_before
+
+
+def test_lifecycle_reconcile_promotes_parent_after_terminal_child_gate(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    parent_id, child_id = sorted(registry.tasks)
+
+    parent = store.task_spec(parent_id)
+    assert parent is not None
+    parent_spec = dict(parent["spec"])
+    parent_spec["state"] = "planned"
+    store.put_task_spec(
+        parent_spec,
+        idempotency_key="lifecycle-parent-planned",
+        expected_revision=parent["revision"],
+        source="test",
+    )
+
+    child = store.task_spec(child_id)
+    assert child is not None
+    child_spec = dict(child["spec"])
+    child_spec["state"] = "verified"
+    child_metadata = dict(child_spec.get("metadata", {}))
+    child_metadata["parent_task"] = parent_id
+    child_spec["metadata"] = child_metadata
+    store.put_task_spec(
+        child_spec,
+        idempotency_key="lifecycle-child-verified",
+        expected_revision=child["revision"],
+        source="test",
+    )
+
+    without_evidence = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert without_evidence["task_candidate_count"] == 0
+
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    current_child = store.task_spec(child_id)
+    assert current_child is not None
+    child_spec = json.loads(json.dumps(current_child["spec"]))
+    child_task = operational.tasks[child_id]
+    child_spec.setdefault("metadata", {})["verification"] = {
+        "task_sha256": child_task.sha256,
+        "plan_sha256": plan_sha256(operational, child_task.initiative),
+    }
+    store.put_task_spec(
+        child_spec,
+        idempotency_key="lifecycle-child-verification-evidence",
+        expected_revision=current_child["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 1
+    candidate = preview["task_candidates"][0]
+    assert candidate["task_id"] == parent_id
+    assert candidate["dependency_states"] == {}
+    assert candidate["child_task_states"] == {child_id: "verified"}
+
+
+def test_lifecycle_reconcile_leaves_ungated_planned_task_open(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = dict(current["spec"])
+    task_spec["state"] = "planned"
+    task_spec["depends_on"] = []
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="lifecycle-ungated-planned",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 0
+    assert preview["changed_task_count"] == 0
+
+
+
+def test_lifecycle_reconcile_legacy_git_preview_fails_closed_on_apply(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    preliminary = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+        }
+    }
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    _, task_authority, _ = bureau_v2.authoritative_task_registry(registry, store)
+    assert task_authority["kind"] == "legacy-git-bootstrap"
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["candidate_count"] == 1
+    assert preview["candidates"][0]["from_state"] == "active"
+    assert preview["candidates"][0]["to_state"] == "completion-ready"
+    assert "completion-ready" not in preview["excluded_recommendations"]
+
+    with pytest.raises(
+        StateError, match="lifecycle reconciliation requires StateStore TaskSpec authority"
+    ):
+        bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is None
+
+
+def test_lifecycle_reconcile_rejects_legacy_git_verified_to_planned_drift(
     registry_factory, tmp_path, monkeypatch
 ):
     root = registry_factory(1)
@@ -568,8 +813,231 @@ def test_lifecycle_reconcile_excludes_completion_semantics(
     registry, store, _ = setup(root, tmp_path, monkeypatch)
 
     preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["candidates"][0]["to_state"] == "completion-ready"
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def reopen_task_before_reconcile_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            reopened = json.loads(task_path.read_text())
+            reopened["state"] = "planned"
+            reopened.get("metadata", {}).pop("verification", None)
+            task_path.write_text(json.dumps(reopened))
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(store, "immediate", reopen_task_before_reconcile_transaction)
+    with pytest.raises(
+        StateError, match="lifecycle reconciliation requires StateStore TaskSpec authority"
+    ):
+        bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is None
+
+
+
+
+def test_lifecycle_reconcile_requires_current_evidence_before_completion_ready(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = json.loads(json.dumps(current["spec"]))
+    task_spec["state"] = "verified"
+    metadata = dict(task_spec.get("metadata", {}))
+    metadata.pop("verification", None)
+    task_spec["metadata"] = metadata
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="lifecycle-unbound-verified-no-completion",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
     assert preview["candidate_count"] == 0
-    assert "completion-ready" in preview["excluded_recommendations"]
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["recommended_state"] == "active"
+    assert lifecycle["unverified_verified_task_ids"] == [task_id]
+
+
+def test_close_ready_rejects_unverified_state_store_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = json.loads(json.dumps(current["spec"]))
+    task_spec["state"] = "verified"
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="close-unverified-task",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    store.set_initiative_state("BUR-TEST-001", "completion-ready")
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+
+    assert close_ready_initiatives(registry, store) == []
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "completion-ready"
+
+
+
+
+
+def test_close_ready_revalidates_tasks_inside_completion_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = json.loads(json.dumps(current["spec"]))
+    task_spec["state"] = "verified"
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="close-race-verified-state",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = json.loads(json.dumps(current["spec"]))
+    task = operational.tasks[task_id]
+    task_spec.setdefault("metadata", {})["verification"] = {
+        "task_sha256": task.sha256,
+        "plan_sha256": plan_sha256(operational, task.initiative),
+    }
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="close-race-verification-evidence",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    reconciled = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert reconciled["changed"][0]["to_state"] == "completion-ready"
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def mutate_task_before_close_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            with original_immediate() as race_connection:
+                current_spec = bureau_v2.task_specs.get_current(race_connection, task_id)
+                assert current_spec is not None
+                mutated = json.loads(json.dumps(current_spec["spec"]))
+                mutated["state"] = "planned"
+                metadata = dict(mutated.get("metadata", {}))
+                metadata.pop("verification", None)
+                mutated["metadata"] = metadata
+                bureau_v2.task_specs.put(
+                    race_connection,
+                    mutated,
+                    idempotency_key="close-race-task-reopened",
+                    expected_revision=int(current_spec["revision"]),
+                    source="test",
+                )
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(store, "immediate", mutate_task_before_close_transaction)
+    with pytest.raises(StateError, match="TaskSpec projection changed during explicit closure"):
+        close_ready_initiatives(registry, store)
+
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "completion-ready"
+
+
+def test_close_ready_rejects_legacy_git_verified_to_planned_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    preliminary = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+        }
+    }
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+
+    store.set_initiative_state("BUR-TEST-001", "completion-ready")
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def reopen_git_task_before_close_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            reopened = json.loads(task_path.read_text())
+            reopened["state"] = "planned"
+            reopened.get("metadata", {}).pop("verification", None)
+            task_path.write_text(json.dumps(reopened))
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(store, "immediate", reopen_git_task_before_close_transaction)
+    with pytest.raises(StateError, match="closure requires StateStore TaskSpec authority"):
+        close_ready_initiatives(registry, store)
+
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "completion-ready"
 
 
 def test_completed_lifecycle_accepts_mixed_terminal_task_states(
@@ -1094,13 +1562,91 @@ def test_close_ready_updates_initiative_atomically(registry_factory, tmp_path, m
     remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    reconciled = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert reconciled["changed"][0]["to_state"] == "completion-ready"
+
     changed = close_ready_initiatives(registry, store)
     assert changed[0]["initiative_id"] == "BUR-TEST-001"
     initiative = json.loads((root / "registry/initiatives/main.json").read_text())
     assert initiative["state"] == "completed"
     assert initiative["commitment"] == "completed"
     assert initiative["metadata"]["lifecycle"]["completed_at"].endswith("Z")
-    Registry.load(root)
+    with store.connect() as connection:
+        status = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert status is not None
+    assert status["state"] == "completed"
+
+    current = Registry.load(root)
+    lifecycle = lifecycle_diagnostics(current, store)[0]
+    assert lifecycle["declared_state"] == "completed"
+    assert lifecycle["registry_state"] == "completed"
+    assert lifecycle["consistent"] is True
+
+
+
+def test_close_ready_preserves_completed_at_across_state_store_retry(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    initial = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(initial, task["initiative"]),
+        }
+    }
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    reconciled = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert reconciled["changed"][0]["to_state"] == "completion-ready"
+
+    original_set_initiative_state = store.set_initiative_state
+    injected = False
+
+    def fail_first_state_store_completion(
+        initiative_id: str,
+        state: str,
+        *,
+        connection: sqlite3.Connection | None = None,
+    ) -> dict[str, object]:
+        nonlocal injected
+        if not injected and state == "completed":
+            injected = True
+            raise RuntimeError("injected state-store completion failure")
+        return original_set_initiative_state(
+            initiative_id, state, connection=connection
+        )
+
+    monkeypatch.setattr(store, "set_initiative_state", fail_first_state_store_completion)
+    with pytest.raises(RuntimeError, match="injected state-store completion failure"):
+        close_ready_initiatives(registry, store)
+
+    initiative_path = root / "registry/initiatives/main.json"
+    after_first = json.loads(initiative_path.read_text())
+    first_completed_at = after_first["metadata"]["lifecycle"]["completed_at"]
+    assert first_completed_at.endswith("Z")
+
+    monkeypatch.setattr(store, "set_initiative_state", original_set_initiative_state)
+    retried = close_ready_initiatives(Registry.load(root), store)
+    assert retried[0]["initiative_id"] == "BUR-TEST-001"
+    after_retry = json.loads(initiative_path.read_text())
+    assert after_retry["metadata"]["lifecycle"]["completed_at"] == first_completed_at
+    with store.connect() as connection:
+        status = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert status is not None
+    assert status["state"] == "completed"
 
 
 def test_doctor_repairs_receipt_sidecar(registry_factory, tmp_path, monkeypatch):
@@ -3436,3 +3982,164 @@ def test_coordinated_claim_retry_recovers_after_intent_expiry_and_reports_drift(
     assert drifted["blocking"] is True
     assert drifted["lease"]["status"] == "active-binding-drift"
     assert len(store.list_runs()) == 1
+
+
+def test_claim_next_rechecks_initiative_state_inside_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    store.set_initiative_state("BUR-TEST-001", "completed")
+
+    with pytest.raises(NoEligibleTask, match="initiative state is completed"):
+        dispatcher.claim_next(
+            "stale-initiative-worker",
+            ("repository",),
+            reconcile_first=False,
+        )
+
+    assert store.list_runs() == []
+
+
+def test_claim_next_binds_envelope_to_fresh_initiative_plan(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["current_plan"] = {
+        "repository": root.name,
+        "path": "docs/plan.md",
+        "commit": "1" * 40,
+        "document_sha256": "2" * 64,
+    }
+    initiative_path.write_text(json.dumps(initiative))
+
+    claimed = dispatcher.claim_next(
+        "fresh-plan-worker", ("repository",), reconcile_first=False
+    )
+    fresh_registry = Registry.load(root)
+
+    assert claimed["envelope"]["plan"] == initiative["current_plan"]
+    assert claimed["envelope"]["plan_sha256"] == plan_sha256(
+        fresh_registry, "BUR-TEST-001"
+    )
+    assert claimed["envelope"]["baseline_commit"] == "1" * 40
+
+
+def test_claim_intent_binds_plan_and_workspace_to_fresh_initiative(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+    fixed_runtime_truth = {
+        "schema_version": 1,
+        "execution_blocked": False,
+        "status": "clear",
+    }
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: fixed_runtime_truth)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+    head = git_output(root, "rev-parse", "HEAD")
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["current_plan"] = {
+        "repository": root.name,
+        "path": "docs/plan.md",
+        "commit": head,
+        "document_sha256": "3" * 64,
+    }
+    initiative_path.write_text(json.dumps(initiative))
+
+    issued = dispatcher.claim_intent(
+        "fresh-plan-operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="fresh-plan-regression",
+    )
+    fresh_registry = Registry.load(root)
+
+    assert issued["intent"]["plan_sha256"] == plan_sha256(
+        fresh_registry, "BUR-TEST-001"
+    )
+    assert issued["intent"]["workspace"]["baseline_commit"] == head
+    claimed = dispatcher.commit_claim_intent(issued["intent"], None)
+    assert claimed["envelope"]["plan"] == initiative["current_plan"]
+    assert claimed["envelope"]["plan_sha256"] == issued["intent"]["plan_sha256"]
+
+
+def test_commit_claim_intent_rechecks_fresh_initiative_plan(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    head = git_output(root, "rev-parse", "HEAD")
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["current_plan"] = {
+        "repository": root.name,
+        "path": "docs/plan.md",
+        "commit": head,
+        "document_sha256": "4" * 64,
+    }
+    initiative_path.write_text(json.dumps(initiative))
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    fixed_runtime_truth = {
+        "schema_version": 1,
+        "execution_blocked": False,
+        "status": "clear",
+    }
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: fixed_runtime_truth)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+    intent = dispatcher.claim_intent(
+        "fresh-plan-commit-operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="fresh-plan-commit-regression",
+    )["intent"]
+    initiative["current_plan"]["commit"] = "5" * 40
+    initiative_path.write_text(json.dumps(initiative))
+
+    with pytest.raises(StateError, match="plan changed after intent"):
+        dispatcher.commit_claim_intent(intent, None)
+
+    assert store.list_runs() == []
+
+
+def test_commit_claim_intent_rechecks_initiative_state_inside_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+
+    issued = dispatcher.claim_intent(
+        "stale-initiative-operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="initiative-state-race-regression",
+        idempotency_key="initiative-state-race-regression",
+    )
+    store.set_initiative_state("BUR-TEST-001", "completed")
+
+    with pytest.raises(StateError, match="initiative state is completed"):
+        dispatcher.commit_claim_intent(issued["intent"], None)
+
+    assert store.list_runs() == []

@@ -107,10 +107,86 @@ def _task_from_authoritative_spec(spec: dict[str, Any], digest: str) -> legacy.T
     )
 
 
+def _state_store_initiative_registry(
+    registry: Registry,
+    store: StateStore,
+    *,
+    connection: sqlite3.Connection | None = None,
+) -> tuple[Registry, dict[str, Any]]:
+    valid_states = {
+        "inbox",
+        "candidate",
+        "committed",
+        "active",
+        "waiting",
+        "completion-ready",
+        "completed",
+        "dropped",
+    }
+    if connection is None:
+        with store.connect() as read_connection:
+            return _state_store_initiative_registry(
+                registry, store, connection=read_connection
+            )
+    rows = list(
+        connection.execute(
+            "SELECT initiative_id,state,updated_at FROM initiative_status "
+            "ORDER BY initiative_id"
+        )
+    )
+    known: dict[str, str] = {}
+    unknown: list[str] = []
+    for row in rows:
+        initiative_id = str(row["initiative_id"])
+        state = str(row["state"])
+        if initiative_id not in registry.initiatives:
+            unknown.append(initiative_id)
+            continue
+        if state not in valid_states:
+            raise legacy.StateError(
+                f"initiative {initiative_id} has invalid StateStore state {state}"
+            )
+        known[initiative_id] = state
+    if not known:
+        return registry, {
+            "kind": "git-registry-fallback",
+            "state_count": 0,
+            "unknown_initiative_status_ids": unknown,
+        }
+    projected = copy.copy(registry)
+    projected.initiatives = {
+        initiative_id: replace(
+            initiative, state=known.get(initiative_id, initiative.state)
+        )
+        for initiative_id, initiative in registry.initiatives.items()
+    }
+    return projected, {
+        "kind": "bureau-state-store-initiative-status",
+        "state_count": len(known),
+        "initiative_ids": sorted(known),
+        "unknown_initiative_status_ids": unknown,
+    }
+
+
+def _legacy_git_task_projection_sha256(registry: Registry) -> str:
+    return legacy.sha256_json(
+        {
+            "schema_version": 1,
+            "tasks": {
+                task.id: task_specs.task_spec_digest(task.raw)
+                for task in registry.tasks.values()
+            },
+        }
+    )
+
+
 def authoritative_task_registry(
     registry: Registry, store: StateStore
 ) -> tuple[Registry, dict[str, Any], dict[str, dict[str, Any]]]:
-    """Overlay Git contracts with StateStore TaskSpecs for operational dispatch truth."""
+    """Overlay Git contracts with StateStore lifecycle truth for operational dispatch."""
+    initiative_registry, initiative_authority = _state_store_initiative_registry(
+        registry, store
+    )
     with store.connect() as connection:
         try:
             projection = task_specs.current_projection(connection)
@@ -125,7 +201,7 @@ def authoritative_task_registry(
                 "spec_sha256": task.sha256,
                 "spec": task.raw,
             }
-            for task in registry.tasks.values()
+            for task in initiative_registry.tasks.values()
         }
         authority = {
             "kind": "legacy-git-bootstrap",
@@ -133,10 +209,14 @@ def authoritative_task_registry(
             "task_spec_root_sha256": legacy.sha256_json(
                 {task_id: item["spec_sha256"] for task_id, item in sorted(revisions.items())}
             ),
+            "legacy_git_task_projection_sha256": _legacy_git_task_projection_sha256(
+                initiative_registry
+            ),
             "git_projection_only_task_ids": [],
+            "initiative_authority": initiative_authority,
             "does_not_establish": ["state_store_task_spec_authority"],
         }
-        return registry, authority, revisions
+        return initiative_registry, authority, revisions
 
     tasks: dict[str, legacy.Task] = {}
     revisions: dict[str, dict[str, Any]] = {}
@@ -155,8 +235,9 @@ def authoritative_task_registry(
             "spec": spec,
         }
 
+    children_by_parent: dict[str, list[str]] = {}
     for task in tasks.values():
-        if task.initiative not in registry.initiatives:
+        if task.initiative not in initiative_registry.initiatives:
             raise legacy.StateError(
                 f"authoritative TaskSpec {task.id} references unknown initiative {task.initiative}"
             )
@@ -165,20 +246,35 @@ def authoritative_task_registry(
                 raise legacy.StateError(
                     f"authoritative TaskSpec {task.id} references unknown dependency {dependency}"
                 )
+        metadata = task.raw.get("metadata")
+        parent_task = metadata.get("parent_task") if isinstance(metadata, dict) else None
+        if parent_task is not None:
+            if not isinstance(parent_task, str) or parent_task not in tasks:
+                raise legacy.StateError(
+                    f"authoritative TaskSpec {task.id} references unknown parent task {parent_task}"
+                )
+            if parent_task == task.id:
+                raise legacy.StateError(f"authoritative TaskSpec {task.id} cannot parent itself")
+            children_by_parent.setdefault(parent_task, []).append(task.id)
         for claim in task.claims:
-            if claim.resource not in registry.resources:
+            if claim.resource not in initiative_registry.resources:
                 raise legacy.StateError(
                     f"authoritative TaskSpec {task.id} references unknown resource {claim.resource}"
                 )
 
-    projected = copy.copy(registry)
+    projected = copy.copy(initiative_registry)
     projected.tasks = tasks
+    projected._children_by_parent = {
+        parent_task: tuple(sorted(child_tasks))
+        for parent_task, child_tasks in children_by_parent.items()
+    }
     git_only = sorted(set(registry.tasks) - set(tasks))
     authority = {
         "kind": "bureau-state-store-task-specs",
         "task_count": len(tasks),
         "task_spec_root_sha256": task_specs.projection_root(projection),
         "git_projection_only_task_ids": git_only,
+        "initiative_authority": initiative_authority,
         "does_not_establish": ["git_task_payload_authority"],
     }
     return projected, authority, revisions
@@ -2205,6 +2301,24 @@ def closure_bridge_task_ids(plan_path: Path | None = None) -> set[str]:
     return result
 
 
+def _closure_bridge_contract_applies(
+    task: legacy.Task,
+    state: str,
+    initiative: legacy.Initiative,
+    *,
+    task_ids: set[str] | None = None,
+) -> bool:
+    selected_task_ids = closure_bridge_task_ids() if task_ids is None else task_ids
+    return (
+        task.id in selected_task_ids
+        and state == "planned"
+        and initiative.state in {"completion-ready", "completed"}
+        and initiative.commitment == "completed"
+        and task.mode == "interactive-agent"
+        and task.policy == "review-before-effect"
+    )
+
+
 TERMINAL_TASK_STATES = legacy.TERMINAL_TASK_STATES
 OPEN_TASK_STATES = frozenset({"inbox", "planned", "ready", "blocked", "stale"})
 
@@ -3319,33 +3433,43 @@ class StateStore:
                 initiative_id=initiative_id,
             )
 
-    def set_initiative_state(self, initiative_id: str, state: str) -> dict[str, Any]:
+    def set_initiative_state(
+        self,
+        initiative_id: str,
+        state: str,
+        *,
+        connection: sqlite3.Connection | None = None,
+    ) -> dict[str, Any]:
         if not initiative_id or not state:
             raise legacy.StateError("initiative_id and state must be non-empty")
-        with self.immediate() as connection:
-            existing = connection.execute(
-                "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
-                (initiative_id,),
-            ).fetchone()
-            if existing is not None and existing["state"] == state:
-                return dict(existing)
-            now = legacy.utc_now()
-            connection.execute(
-                "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
-                "ON CONFLICT(initiative_id) DO UPDATE SET "
-                "state=excluded.state,updated_at=excluded.updated_at",
-                (initiative_id, state, now),
-            )
-            self.event(
-                connection,
-                "initiative-state-set",
-                {"initiative_id": initiative_id, "state": state},
-                initiative_id=initiative_id,
-            )
-            row = connection.execute(
-                "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
-                (initiative_id,),
-            ).fetchone()
+        if connection is None:
+            with self.immediate() as write_connection:
+                return self.set_initiative_state(
+                    initiative_id, state, connection=write_connection
+                )
+        existing = connection.execute(
+            "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
+            (initiative_id,),
+        ).fetchone()
+        if existing is not None and existing["state"] == state:
+            return dict(existing)
+        now = legacy.utc_now()
+        connection.execute(
+            "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
+            "ON CONFLICT(initiative_id) DO UPDATE SET "
+            "state=excluded.state,updated_at=excluded.updated_at",
+            (initiative_id, state, now),
+        )
+        self.event(
+            connection,
+            "initiative-state-set",
+            {"initiative_id": initiative_id, "state": state},
+            initiative_id=initiative_id,
+        )
+        row = connection.execute(
+            "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
+            (initiative_id,),
+        ).fetchone()
         return dict(row)
 
     def replay_projection(self) -> dict[str, Any]:
@@ -3967,15 +4091,7 @@ class Dispatcher(legacy.Dispatcher):
     def _closure_bridge_applies(
         self, task: legacy.Task, state: str, initiative: legacy.Initiative
     ) -> bool:
-        if task.id not in closure_bridge_task_ids():
-            return False
-        return (
-            state == "planned"
-            and initiative.state == "completed"
-            and initiative.commitment == "completed"
-            and task.mode == "interactive-agent"
-            and task.policy == "review-before-effect"
-        )
+        return _closure_bridge_contract_applies(task, state, initiative)
 
     def _validate_resource_filter(self, resource: str | None) -> None:
         if resource is not None and resource not in self.registry.resources:
@@ -4063,9 +4179,11 @@ class Dispatcher(legacy.Dispatcher):
         overlays: dict[str, str],
         *,
         projection_resource: str | None = None,
+        initiative_registry: Registry | None = None,
     ) -> list[str]:
         result: list[str] = []
-        initiative = self.registry.initiatives[task.initiative]
+        initiative_source = initiative_registry or self.registry
+        initiative = initiative_source.initiatives[task.initiative]
         state = overlays.get(task.id, task.state)
         # registry/queue.json is a compatibility projection only. Claim
         # admission is derived from task state, priority and the live gates below.
@@ -4436,6 +4554,10 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                fresh_source_registry, self.store, connection=connection
+            )
             rejected: list[dict[str, Any]] = []
             selected: legacy.Task | None = None
             approval_evidence: dict[str, Any] | None = None
@@ -4446,7 +4568,14 @@ class Dispatcher(legacy.Dispatcher):
                     continue
                 if not self._task_matches_resource(task, resource):
                     continue
-                reasons = self.reasons(task, capabilities_set, runs, reservations, overlays)
+                reasons = self.reasons(
+                    task,
+                    capabilities_set,
+                    runs,
+                    reservations,
+                    overlays,
+                    initiative_registry=fresh_initiative_registry,
+                )
                 review_reason = f"execution is {task.mode}/{task.policy}"
                 if (
                     review_reason in reasons
@@ -4509,9 +4638,11 @@ class Dispatcher(legacy.Dispatcher):
                 + ", ".join(overlap)
             )
         approval_evidence = {**approval_evidence, **approval_extensions}
-        current_plan_sha = plan_sha256(self.registry, selected.initiative)
-        baseline = _workspace_baseline_for_task(self.registry, selected)
-        workspace = _planned_workspace(self.registry, selected, run_id, base_dir, baseline)
+        current_plan_sha = plan_sha256(fresh_initiative_registry, selected.initiative)
+        baseline = _workspace_baseline_for_task(fresh_initiative_registry, selected)
+        workspace = _planned_workspace(
+            fresh_initiative_registry, selected, run_id, base_dir, baseline
+        )
         required_keys = sorted(
             _coordinated_grabowski_resource_keys(
                 self.registry.resources, selected, open_pr_scope
@@ -4662,28 +4793,6 @@ class Dispatcher(legacy.Dispatcher):
             raise legacy.StateError("coordinated claim open PR nonconflict evidence is missing")
         if task.sha256 != intent["task_sha256"]:
             raise legacy.StateError("coordinated claim task changed after intent")
-        current_plan_sha = plan_sha256(self.registry, task.initiative)
-        if current_plan_sha != intent["plan_sha256"]:
-            raise legacy.StateError("coordinated claim plan changed after intent")
-        expected_workspace = _planned_workspace(
-            self.registry,
-            task,
-            intent["run_id"],
-            (
-                Path(intent["workspace"]["workspace_path"]).parent
-                if isinstance(intent.get("workspace"), dict)
-                else None
-            ),
-            _workspace_baseline_for_task(self.registry, task),
-        )
-        if expected_workspace != intent["workspace"]:
-            raise legacy.StateError("coordinated claim workspace changed after intent")
-        if isinstance(intent.get("workspace"), dict):
-            observed_source_head = _git(
-                Path(intent["workspace"]["repository"]), "rev-parse", "HEAD"
-            ).stdout.strip()
-            if observed_source_head != intent["workspace"]["source_head_at_intent"]:
-                raise legacy.StateError("workspace repository head changed after intent")
         normalized_lease: dict[str, Any] | None = None
         if required_keys:
             if not isinstance(lease_binding, dict):
@@ -4716,6 +4825,34 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + fresh_open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                fresh_source_registry, self.store, connection=connection
+            )
+            current_plan_sha = plan_sha256(fresh_initiative_registry, task.initiative)
+            if current_plan_sha != intent["plan_sha256"]:
+                raise legacy.StateError("coordinated claim plan changed after intent")
+            expected_workspace = _planned_workspace(
+                fresh_initiative_registry,
+                task,
+                intent["run_id"],
+                (
+                    Path(intent["workspace"]["workspace_path"]).parent
+                    if isinstance(intent.get("workspace"), dict)
+                    else None
+                ),
+                _workspace_baseline_for_task(fresh_initiative_registry, task),
+            )
+            if expected_workspace != intent["workspace"]:
+                raise legacy.StateError("coordinated claim workspace changed after intent")
+            if isinstance(intent.get("workspace"), dict):
+                observed_source_head = _git(
+                    Path(intent["workspace"]["repository"]), "rev-parse", "HEAD"
+                ).stdout.strip()
+                if observed_source_head != intent["workspace"]["source_head_at_intent"]:
+                    raise legacy.StateError(
+                        "workspace repository head changed after intent"
+                    )
             attempt = (
                 connection.execute(
                     "SELECT COUNT(*) AS n FROM runs WHERE task_id=?", (task.id,)
@@ -4760,7 +4897,14 @@ class Dispatcher(legacy.Dispatcher):
                         "coordinated claim stale attempt CAS: "
                         f"expected {mutation_contract['attempt']!r}, current {attempt!r}"
                     )
-            reasons = self.reasons(task, set(intent["capabilities"]), runs, reservations, overlays)
+            reasons = self.reasons(
+                task,
+                set(intent["capabilities"]),
+                runs,
+                reservations,
+                overlays,
+                initiative_registry=fresh_initiative_registry,
+            )
             review_reason = f"execution is {task.mode}/{task.policy}"
             reasons = [reason for reason in reasons if reason != review_reason]
             if reasons:
@@ -4803,7 +4947,7 @@ class Dispatcher(legacy.Dispatcher):
                     now,
                 ),
             )
-            initiative = self.registry.initiatives[task.initiative]
+            initiative = fresh_initiative_registry.initiatives[task.initiative]
             envelope = {
                 "schema_version": 1,
                 "run_id": intent["run_id"],
@@ -4995,12 +5139,23 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                fresh_source_registry, self.store, connection=connection
+            )
             rejected: list[dict[str, Any]] = []
             selected: legacy.Task | None = None
             for task in self._ordered_tasks():
                 if not self._task_matches_resource(task, resource):
                     continue
-                reasons = self.reasons(task, worker_capabilities, runs, reservations, overlays)
+                reasons = self.reasons(
+                    task,
+                    worker_capabilities,
+                    runs,
+                    reservations,
+                    overlays,
+                    initiative_registry=fresh_initiative_registry,
+                )
                 if not reasons:
                     selected = task
                     break
@@ -5021,8 +5176,8 @@ class Dispatcher(legacy.Dispatcher):
                 + uuid.uuid4().hex[:10]
             )
             now = legacy.utc_now()
-            initiative = self.registry.initiatives[selected.initiative]
-            current_plan_sha = plan_sha256(self.registry, selected.initiative)
+            initiative = fresh_initiative_registry.initiatives[selected.initiative]
+            current_plan_sha = plan_sha256(fresh_initiative_registry, selected.initiative)
             baseline = selected.execution.get("baseline_commit")
             if baseline is None and initiative.current_plan:
                 working = selected.execution.get("working_repository")
@@ -5380,7 +5535,7 @@ class Dispatcher(legacy.Dispatcher):
     ) -> dict[str, Any]:
         self._validate_resource_filter(resource)
         frontier = self.frontier(capabilities, resource=resource)
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         eligible = next((item for item in frontier if item["eligible"]), None)
         return {
             "resource": resource,
@@ -5485,7 +5640,7 @@ class Dispatcher(legacy.Dispatcher):
         """
         self._validate_resource_filter(resource)
         frontier = self.frontier(capabilities, resource=resource)
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         runtime_truth = frontier_runtime_truth(frontier, lifecycle)
         cards = [self._what_now_task_card(item, capabilities) for item in frontier]
         ranked_eligible = [item for item in cards if item["eligible"]]
@@ -5551,7 +5706,7 @@ class Dispatcher(legacy.Dispatcher):
 
     def repo_balls(self, capabilities: set[str]) -> dict[str, Any]:
         open_pr_reservations = self._open_pr_reservations(strict=False)
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         with self.store.connect() as connection:
             run_rows = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
@@ -5785,7 +5940,7 @@ class Dispatcher(legacy.Dispatcher):
                                 "issue": "backlog-task-not-actionable",
                             }
                         )
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         lifecycle_findings = [item for item in lifecycle if not item["consistent"]]
         state_root_report = state_root_hygiene(self.store.state_root, self.store.path)
         registry_truth = registry_truth_diagnostics(self.registry.root)
@@ -6704,13 +6859,13 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
     return {**status, "cleanup": "removed"}
 
 
-def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> dict[str, Any]:
+def _current_verification_stamp(
+    registry: Registry, task_id: str, row: sqlite3.Row | None
+) -> dict[str, Any] | None:
     task = registry.tasks.get(task_id)
     if task is None:
-        raise legacy.StateError(f"unknown task {task_id}")
+        return None
     current_plan = plan_sha256(registry, task.initiative)
-    with store.connect() as connection:
-        row = connection.execute("SELECT * FROM task_status WHERE task_id=?", (task_id,)).fetchone()
     if row and (
         row["state"] == "verified"
         and row["task_sha256"] == task.sha256
@@ -6727,15 +6882,63 @@ def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> d
         and verification.get("plan_sha256") == current_plan
     ):
         return dict(verification)
+    return None
+
+
+def _current_verification_stamps(
+    registry: Registry, connection: sqlite3.Connection
+) -> dict[str, dict[str, Any]]:
+    rows = {
+        row["task_id"]: row
+        for row in connection.execute("SELECT * FROM task_status")
+    }
+    return {
+        task_id: stamp
+        for task_id in registry.tasks
+        if (stamp := _current_verification_stamp(registry, task_id, rows.get(task_id)))
+        is not None
+    }
+
+
+def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> dict[str, Any]:
+    if task_id not in registry.tasks:
+        raise legacy.StateError(f"unknown task {task_id}")
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT * FROM task_status WHERE task_id=?", (task_id,)
+        ).fetchone()
+    stamp = _current_verification_stamp(registry, task_id, row)
+    if stamp is not None:
+        return stamp
     raise legacy.StateError(f"task {task_id} has no current verification")
 
 
-def _lifecycle_recommendation(initiative_state: str, states: dict[str, str]) -> str:
+def _lifecycle_recommendation(
+    initiative_state: str,
+    states: dict[str, str],
+    *,
+    verification_stamps: dict[str, dict[str, Any]] | None = None,
+) -> str:
     task_states = tuple(states.values())
-    all_terminal = bool(task_states) and all(
-        state in TERMINAL_TASK_STATES for state in task_states
+    unverified_verified_task_ids = (
+        {
+            task_id
+            for task_id, state in states.items()
+            if state == "verified" and task_id not in verification_stamps
+        }
+        if verification_stamps is not None
+        else set()
     )
-    all_verified = bool(task_states) and all(state == "verified" for state in task_states)
+    all_terminal = (
+        bool(task_states)
+        and not unverified_verified_task_ids
+        and all(state in TERMINAL_TASK_STATES for state in task_states)
+    )
+    all_verified = (
+        bool(task_states)
+        and not unverified_verified_task_ids
+        and all(state == "verified" for state in task_states)
+    )
 
     if initiative_state == "completed":
         return "completed" if all_terminal else "reopen-required"
@@ -6748,24 +6951,144 @@ def _lifecycle_recommendation(initiative_state: str, states: dict[str, str]) -> 
     return initiative_state
 
 
-def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
-    with store.connect() as connection:
-        overlays = store.overlays(connection, registry)
+def _lifecycle_diagnostics_from_overlays(
+    operational_registry: Registry,
+    source_registry: Registry,
+    overlays: dict[str, str],
+    verification_stamps: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
-    for initiative in registry.initiatives.values():
-        tasks = [task for task in registry.tasks.values() if task.initiative == initiative.id]
+    bridge_task_ids = closure_bridge_task_ids()
+    for initiative in operational_registry.initiatives.values():
+        tasks = [
+            task
+            for task in operational_registry.tasks.values()
+            if task.initiative == initiative.id
+        ]
         states = {task.id: overlays.get(task.id, task.state) for task in tasks}
-        recommendation = _lifecycle_recommendation(initiative.state, states)
+        recommendation = _lifecycle_recommendation(
+            initiative.state, states, verification_stamps=verification_stamps
+        )
+        source = source_registry.initiatives[initiative.id]
+        if (
+            initiative.state == "completion-ready"
+            and source.state == "completed"
+            and all(
+                state in TERMINAL_TASK_STATES
+                or _closure_bridge_contract_applies(
+                    task,
+                    state,
+                    initiative,
+                    task_ids=bridge_task_ids,
+                )
+                for task in tasks
+                for state in (states[task.id],)
+            )
+            and all(
+                state != "verified" or task_id in verification_stamps
+                for task_id, state in states.items()
+            )
+        ):
+            # A completed Git commitment can precede its StateStore completion
+            # during registry-first recovery. Keep the projected initiative and
+            # its selected repair task in the closure-bridge interval.
+            recommendation = "completion-ready"
+        unverified_verified_task_ids = sorted(
+            task_id
+            for task_id, state in states.items()
+            if state == "verified" and task_id not in verification_stamps
+        )
         result.append(
             {
                 "initiative_id": initiative.id,
                 "declared_state": initiative.state,
+                "registry_state": source.state,
                 "recommended_state": recommendation,
                 "task_states": states,
+                "unverified_verified_task_ids": unverified_verified_task_ids,
                 "consistent": initiative.state == recommendation,
             }
         )
     return result
+
+
+def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
+    operational_registry, _, _ = authoritative_task_registry(registry, store)
+    with store.connect() as connection:
+        overlays = store.overlays(connection, operational_registry)
+        verification_stamps = _current_verification_stamps(
+            operational_registry, connection
+        )
+    return _lifecycle_diagnostics_from_overlays(
+        operational_registry, registry, overlays, verification_stamps
+    )
+
+
+def _structural_task_reconcile_candidates(
+    registry: Registry,
+    overlays: dict[str, str],
+    task_revisions: dict[str, dict[str, Any]],
+    verification_stamps: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    bridge_task_ids = closure_bridge_task_ids()
+    for task in registry.tasks.values():
+        revision = task_revisions.get(task.id, {})
+        current_revision = revision.get("revision")
+        if not isinstance(current_revision, int):
+            continue
+        effective_state = overlays.get(task.id, task.state)
+        if task.state != "planned" or effective_state != "planned":
+            continue
+        initiative = registry.initiatives[task.initiative]
+        if _closure_bridge_contract_applies(
+            task, effective_state, initiative, task_ids=bridge_task_ids
+        ):
+            # The bridge exception itself is defined by planned state.  Promoting
+            # it would make a completed initiative block the very repair task
+            # selected to reconcile that initiative.
+            continue
+        parent_child = registry.parent_child_projection(task, overlays)
+        has_child_gate = (
+            bool(parent_child.child_task_ids)
+            and not parent_child.independently_executable
+        )
+        if not task.depends_on and not has_child_gate:
+            continue
+        dependency_states = {
+            dependency: overlays.get(dependency, registry.tasks[dependency].state)
+            for dependency in task.depends_on
+        }
+        if any(state != "verified" for state in dependency_states.values()):
+            continue
+        if any(dependency not in verification_stamps for dependency in dependency_states):
+            continue
+        if parent_child.blocker_reason is not None:
+            continue
+        child_states = {
+            child_task_id: overlays.get(
+                child_task_id, registry.tasks[child_task_id].state
+            )
+            for child_task_id in parent_child.child_task_ids
+        }
+        if any(
+            state == "verified" and child_task_id not in verification_stamps
+            for child_task_id, state in child_states.items()
+        ):
+            continue
+        candidates.append(
+            {
+                "task_id": task.id,
+                "from_state": "planned",
+                "to_state": "ready",
+                "revision": current_revision,
+                "spec_sha256": revision.get("spec_sha256"),
+                "dependency_states": dependency_states,
+                "child_task_states": child_states,
+                "gate": "schema-and-evidence-deterministic-structural-gates",
+            }
+        )
+    return candidates
 
 
 def _runtime_state_db_path(
@@ -7397,19 +7720,46 @@ def runtime_drift_check(
         "findings": findings,
     }
 
-SAFE_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset({("active", "waiting"), ("waiting", "active")})
+SAFE_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset(
+    {
+        ("active", "waiting"),
+        ("waiting", "active"),
+        ("active", "completion-ready"),
+        ("waiting", "completion-ready"),
+        ("completion-ready", "active"),
+        ("completion-ready", "waiting"),
+    }
+)
+SAFE_TASK_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset({("planned", "ready")})
 
 
 def reconcile_initiative_lifecycle(
     registry: Registry, store: StateStore, *, apply: bool = False
 ) -> dict[str, Any]:
-    diagnostics = lifecycle_diagnostics(registry, store)
-    candidates: list[dict[str, Any]] = []
+    operational_registry, task_authority, task_revisions = authoritative_task_registry(
+        registry, store
+    )
+    with store.connect() as connection:
+        overlays = store.overlays(connection, operational_registry)
+        verification_stamps = _current_verification_stamps(
+            operational_registry, connection
+        )
+    task_candidates = _structural_task_reconcile_candidates(
+        operational_registry, overlays, task_revisions, verification_stamps
+    )
+    projected_overlays = dict(overlays)
+    for candidate in task_candidates:
+        projected_overlays[candidate["task_id"]] = candidate["to_state"]
+
+    diagnostics = _lifecycle_diagnostics_from_overlays(
+        operational_registry, registry, projected_overlays, verification_stamps
+    )
+    initiative_candidates: list[dict[str, Any]] = []
     for item in diagnostics:
         transition = (item["declared_state"], item["recommended_state"])
         if item["consistent"] or transition not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS:
             continue
-        candidates.append(
+        initiative_candidates.append(
             {
                 "initiative_id": item["initiative_id"],
                 "from_state": item["declared_state"],
@@ -7418,46 +7768,181 @@ def reconcile_initiative_lifecycle(
             }
         )
 
-    changed: list[dict[str, Any]] = []
-    if apply:
-        by_id = {item["initiative_id"]: item for item in candidates}
-        for path in registry._files(registry.root / "registry/initiatives"):
-            raw = legacy.read_json(path)
-            candidate = by_id.get(raw.get("id"))
-            if candidate is None:
-                continue
-            if raw.get("state") != candidate["from_state"]:
+    changed_tasks: list[dict[str, Any]] = []
+    changed_initiatives: list[dict[str, Any]] = []
+    if apply and (task_candidates or initiative_candidates):
+        with store.immediate() as connection:
+            try:
+                current_projection = task_specs.current_projection(connection)
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+            if task_authority.get("kind") == "bureau-state-store-task-specs":
+                if (
+                    task_specs.projection_root(current_projection)
+                    != task_authority.get("task_spec_root_sha256")
+                ):
+                    raise legacy.StateError(
+                        "TaskSpec projection changed during lifecycle reconcile"
+                    )
+            elif current_projection["tasks"]:
                 raise legacy.StateError(
-                    f"initiative {candidate['initiative_id']} changed during lifecycle reconcile"
+                    "TaskSpec projection changed during lifecycle reconcile"
                 )
-            raw["state"] = candidate["to_state"]
-            metadata = raw.setdefault("metadata", {})
-            lifecycle = metadata.setdefault("lifecycle", {})
-            lifecycle["reconciled_at"] = legacy.utc_now()
-            lifecycle["reconciled_from"] = candidate["from_state"]
-            lifecycle["reconciled_to"] = candidate["to_state"]
-            legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
-            changed.append(
-                {
-                    "initiative_id": candidate["initiative_id"],
-                    "path": str(path),
-                    "from_state": candidate["from_state"],
-                    "to_state": candidate["to_state"],
-                }
+            elif task_candidates or initiative_candidates:
+                raise legacy.StateError(
+                    "automatic lifecycle reconciliation requires StateStore TaskSpec authority"
+                )
+
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                registry, store, connection=connection
             )
+            fresh_operational_registry = copy.copy(operational_registry)
+            fresh_operational_registry.initiatives = fresh_initiative_registry.initiatives
+            fresh_overlays = store.overlays(connection, fresh_operational_registry)
+            fresh_verification_stamps = _current_verification_stamps(
+                fresh_operational_registry, connection
+            )
+            fresh_task_candidates = _structural_task_reconcile_candidates(
+                fresh_operational_registry,
+                fresh_overlays,
+                task_revisions,
+                fresh_verification_stamps,
+            )
+            if fresh_task_candidates != task_candidates:
+                raise legacy.StateError(
+                    "task lifecycle gates changed during lifecycle reconcile"
+                )
+
+            for candidate in task_candidates:
+                task_id = candidate["task_id"]
+                try:
+                    current = task_specs.get_current(connection, task_id)
+                except task_specs.TaskSpecError as exc:
+                    raise legacy.StateError(str(exc)) from exc
+                if (
+                    current is None
+                    or current["revision"] != candidate["revision"]
+                    or current["spec_sha256"] != candidate["spec_sha256"]
+                    or current["spec"].get("state") != candidate["from_state"]
+                ):
+                    raise legacy.StateError(
+                        f"task {task_id} changed during lifecycle reconcile"
+                    )
+                spec = copy.deepcopy(current["spec"])
+                spec["state"] = candidate["to_state"]
+                key = (
+                    f"lifecycle-reconcile:{task_id}:r{current['revision']}:"
+                    f"{candidate['from_state']}->{candidate['to_state']}:"
+                    f"{current['spec_sha256']}"
+                )
+                try:
+                    mutation = task_specs.put(
+                        connection,
+                        spec,
+                        idempotency_key=key,
+                        expected_revision=int(current["revision"]),
+                        source="lifecycle-reconcile",
+                    )
+                except task_specs.TaskSpecError as exc:
+                    raise legacy.StateError(str(exc)) from exc
+                changed_tasks.append(
+                    {
+                        "task_id": task_id,
+                        "from_state": candidate["from_state"],
+                        "to_state": candidate["to_state"],
+                        "revision": mutation["revision"],
+                        "spec_sha256": mutation["spec_sha256"],
+                    }
+                )
+
+            fresh_projected_overlays = dict(fresh_overlays)
+            for candidate in fresh_task_candidates:
+                fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
+
+            for candidate in initiative_candidates:
+                initiative_id = candidate["initiative_id"]
+                row = connection.execute(
+                    "SELECT state FROM initiative_status WHERE initiative_id=?",
+                    (initiative_id,),
+                ).fetchone()
+                current_state = (
+                    str(row["state"])
+                    if row is not None
+                    else registry.initiatives[initiative_id].state
+                )
+                if current_state != candidate["from_state"]:
+                    raise legacy.StateError(
+                        f"initiative {initiative_id} changed during lifecycle reconcile"
+                    )
+                fresh_task_states = {
+                    task.id: fresh_projected_overlays.get(task.id, task.state)
+                    for task in operational_registry.tasks.values()
+                    if task.initiative == initiative_id
+                }
+                if (
+                    fresh_task_states != candidate["task_states"]
+                    or _lifecycle_recommendation(
+                        current_state,
+                        fresh_task_states,
+                        verification_stamps=fresh_verification_stamps,
+                    )
+                    != candidate["to_state"]
+                ):
+                    raise legacy.StateError(
+                        f"initiative {initiative_id} lifecycle inputs changed during reconcile"
+                    )
+                now = legacy.utc_now()
+                connection.execute(
+                    "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(initiative_id) DO UPDATE SET "
+                    "state=excluded.state,updated_at=excluded.updated_at",
+                    (initiative_id, candidate["to_state"], now),
+                )
+                store.event(
+                    connection,
+                    "initiative-state-set",
+                    {
+                        "initiative_id": initiative_id,
+                        "state": candidate["to_state"],
+                    },
+                    initiative_id=initiative_id,
+                )
+                changed_initiatives.append(
+                    {
+                        "initiative_id": initiative_id,
+                        "from_state": candidate["from_state"],
+                        "to_state": candidate["to_state"],
+                        "authority": "state-store",
+                    }
+                )
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "command": "lifecycle-reconcile",
         "apply": apply,
+        "state_store_only": True,
+        "registry_mutated": False,
         "safe_transitions": [
             {"from_state": source, "to_state": target}
             for source, target in sorted(SAFE_LIFECYCLE_RECONCILE_TRANSITIONS)
         ],
-        "candidate_count": len(candidates),
-        "candidates": candidates,
-        "changed_count": len(changed),
-        "changed": changed,
+        "safe_task_transitions": [
+            {"from_state": source, "to_state": target}
+            for source, target in sorted(SAFE_TASK_LIFECYCLE_RECONCILE_TRANSITIONS)
+        ],
+        "task_candidate_count": len(task_candidates),
+        "task_candidates": task_candidates,
+        "candidate_count": len(initiative_candidates),
+        "candidates": initiative_candidates,
+        "changed_task_count": len(changed_tasks),
+        "changed_tasks": changed_tasks,
+        "changed_count": len(changed_initiatives),
+        "changed": changed_initiatives,
+        "total_changed_count": len(changed_tasks) + len(changed_initiatives),
+        "executable_projection": {
+            "authority": "state-store-dynamic-frontier",
+            "compatibility_queue_mutated": False,
+        },
         "excluded_recommendations": sorted(
             {
                 item["recommended_state"]
@@ -7471,18 +7956,68 @@ def reconcile_initiative_lifecycle(
 
 
 def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
-    diagnostics = {item["initiative_id"]: item for item in lifecycle_diagnostics(registry, store)}
+    operational_registry, task_authority, _ = authoritative_task_registry(registry, store)
     changed: list[dict[str, Any]] = []
-    for path in registry._files(registry.root / "registry/initiatives"):
-        raw = legacy.read_json(path)
-        diagnostic = diagnostics.get(raw.get("id"))
-        if diagnostic is None or diagnostic["recommended_state"] != "completion-ready":
-            continue
-        raw["state"] = "completed"
-        raw["commitment"] = "completed"
-        metadata = raw.setdefault("metadata", {})
-        lifecycle = metadata.setdefault("lifecycle", {})
-        lifecycle["completed_at"] = legacy.utc_now()
-        legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
-        changed.append({"initiative_id": raw["id"], "path": str(path)})
+    with store.immediate() as connection:
+        try:
+            current_projection = task_specs.current_projection(connection)
+        except task_specs.TaskSpecError as exc:
+            raise legacy.StateError(str(exc)) from exc
+        if task_authority.get("kind") == "bureau-state-store-task-specs":
+            if (
+                task_specs.projection_root(current_projection)
+                != task_authority.get("task_spec_root_sha256")
+            ):
+                raise legacy.StateError(
+                    "TaskSpec projection changed during explicit closure"
+                )
+        elif current_projection["tasks"]:
+            raise legacy.StateError(
+                "TaskSpec projection changed during explicit closure"
+            )
+        else:
+            raise legacy.StateError(
+                "explicit closure requires StateStore TaskSpec authority"
+            )
+
+        fresh_initiative_registry, _ = _state_store_initiative_registry(
+            registry, store, connection=connection
+        )
+        fresh_operational_registry = copy.copy(operational_registry)
+        fresh_operational_registry.initiatives = fresh_initiative_registry.initiatives
+        overlays = store.overlays(connection, fresh_operational_registry)
+        verification_stamps = _current_verification_stamps(
+            fresh_operational_registry, connection
+        )
+        diagnostics = {
+            item["initiative_id"]: item
+            for item in _lifecycle_diagnostics_from_overlays(
+                fresh_operational_registry, registry, overlays, verification_stamps
+            )
+        }
+
+        for path in registry._files(registry.root / "registry/initiatives"):
+            raw = legacy.read_json(path)
+            diagnostic = diagnostics.get(raw.get("id"))
+            if (
+                diagnostic is None
+                or diagnostic["recommended_state"] != "completion-ready"
+                or diagnostic["unverified_verified_task_ids"]
+            ):
+                continue
+            raw["state"] = "completed"
+            raw["commitment"] = "completed"
+            metadata = raw.setdefault("metadata", {})
+            lifecycle = metadata.setdefault("lifecycle", {})
+            lifecycle.setdefault("completed_at", legacy.utc_now())
+            legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
+
+            # Registry-first recovery remains intentional: if the DB write or
+            # commit fails, the stale completion-ready row selects this already
+            # completed file on retry. Evidence and the authoritative StateStore
+            # completion share this one write transaction and canonical writer.
+            store.set_initiative_state(
+                raw["id"], "completed", connection=connection
+            )
+            changed.append({"initiative_id": raw["id"], "path": str(path)})
     return changed

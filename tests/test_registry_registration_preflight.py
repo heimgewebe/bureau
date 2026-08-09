@@ -22,6 +22,8 @@ from bureau.registry_registration_preflight import (
 SHA_A = "a" * 40
 SHA_B = "b" * 40
 HEAD = "c" * 40
+REPO_ID = 1282253578
+FORK_ID = 2282253578
 
 
 def task(
@@ -238,8 +240,10 @@ def test_t026_open_pr_identity_observation_is_stable_revision_and_time_bound():
     def runner(arguments: list[str]) -> str:
         calls.append(arguments)
         target = arguments[2]
+        if target == "repos/heimgewebe/bureau":
+            return f"{REPO_ID}\theimgewebe/bureau"
         if target.endswith("pulls?state=open&per_page=100"):
-            return f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork\t{SHA_A}\tmain"
+            return f"11\t{HEAD}\tforeign/task\t{FORK_ID}\theimgewebe/bureau-fork\t{SHA_A}\tmain"
         if target.endswith("pulls/11/files?per_page=100"):
             return "README.md\nregistry/tasks/EXAMPLE-V1-T002.json"
         if target.endswith(
@@ -256,10 +260,13 @@ def test_t026_open_pr_identity_observation_is_stable_revision_and_time_bound():
     )
     assert observation["complete"] is True
     assert observation["checked_base_sha"] == SHA_A
+    assert observation["repository_id"] == REPO_ID
+    assert observation["canonical_repository"] == "heimgewebe/bureau"
     assert observation["observed_at_unix"] == 123456
     assert len(observation["observation_sha256"]) == 64
     assert observation["open_prs"][0]["number"] == 11
     assert observation["open_prs"][0]["base_ref_name"] == "main"
+    assert observation["open_prs"][0]["head_repository_id"] == FORK_ID
     assert observation["open_prs"][0]["head_repository"] == "heimgewebe/bureau-fork"
     assert observation["open_prs"][0]["task_ids"] == ["EXAMPLE-V1-T002"]
     listing_calls = [
@@ -275,10 +282,12 @@ def test_t026_open_pr_identity_observation_fails_closed_on_relist_change():
     def runner(arguments: list[str]) -> str:
         nonlocal listing_reads
         target = arguments[2]
+        if target == "repos/heimgewebe/bureau":
+            return f"{REPO_ID}\theimgewebe/bureau"
         if target.endswith("pulls?state=open&per_page=100"):
             listing_reads += 1
             return (
-                f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork\t{SHA_A}\tmain"
+                f"11\t{HEAD}\tforeign/task\t{FORK_ID}\theimgewebe/bureau-fork\t{SHA_A}\tmain"
                 if listing_reads == 1
                 else ""
             )
@@ -335,8 +344,10 @@ def test_t026_exact_identity_axis_does_not_treat_semantic_similarity_as_collisio
 def test_t026_open_pr_identity_observation_fails_closed_on_unreadable_task_identity():
     def runner(arguments: list[str]) -> str:
         target = arguments[2]
+        if target == "repos/heimgewebe/bureau":
+            return f"{REPO_ID}\theimgewebe/bureau"
         if target.endswith("pulls?state=open&per_page=100"):
-            return f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork\t{SHA_A}\tmain"
+            return f"11\t{HEAD}\tforeign/task\t{FORK_ID}\theimgewebe/bureau-fork\t{SHA_A}\tmain"
         if target.endswith("pulls/11/files?per_page=100"):
             return "registry/tasks/EXAMPLE-V1-T002.json"
         if target.endswith(
@@ -350,17 +361,21 @@ def test_t026_open_pr_identity_observation_fails_closed_on_unreadable_task_ident
             "heimgewebe/bureau", checked_base_sha=SHA_A, runner=runner
         )
 
-def test_t026_self_branch_exclusion_requires_same_head_repository():
+def test_t026_self_branch_exclusion_uses_stable_repository_id_across_slug_redirect():
     target_path = "registry/tasks/EXAMPLE-V1-T001.json"
     branch = "operator/register-example-v1-t001-deadbeef00"
     observation = {
         "kind": "bureau_registry_open_pr_identity_observation",
         "complete": True,
+        "repository": "old-owner/bureau",
+        "canonical_repository": "new-owner/bureau",
+        "repository_id": REPO_ID,
         "open_prs": [
             {
                 "number": 11,
                 "head_sha": HEAD,
                 "head_ref_name": branch,
+                "head_repository_id": FORK_ID,
                 "head_repository": "foreign/bureau",
                 "base_sha": SHA_A,
                 "base_ref_name": "main",
@@ -375,19 +390,40 @@ def test_t026_self_branch_exclusion_requires_same_head_repository():
         task_id="EXAMPLE-V1-T001",
         target_path=target_path,
         excluded_head_ref=branch,
-        excluded_head_repository="heimgewebe/bureau",
+        excluded_head_repository_id=REPO_ID,
     )
     assert collision[0]["pr_number"] == 11
-    assert collision[0]["head_repository"] == "foreign/bureau"
+    assert collision[0]["head_repository_id"] == FORK_ID
 
-    observation["open_prs"][0]["head_repository"] = "heimgewebe/bureau"
+    observation["open_prs"][0]["head_repository_id"] = REPO_ID
+    observation["open_prs"][0]["head_repository"] = "new-owner/bureau"
     assert exact_open_pr_identity_collisions(
         observation,
         task_id="EXAMPLE-V1-T001",
         target_path=target_path,
         excluded_head_ref=branch,
-        excluded_head_repository="heimgewebe/bureau",
+        excluded_head_repository_id=REPO_ID,
     ) == []
+
+
+def test_t026_repository_provider_identity_drift_fails_closed():
+    identity_reads = 0
+
+    def runner(arguments: list[str]) -> str:
+        nonlocal identity_reads
+        target = arguments[2]
+        if target == "repos/old-owner/bureau":
+            identity_reads += 1
+            repository_id = REPO_ID if identity_reads == 1 else REPO_ID + 1
+            return f"{repository_id}\tnew-owner/bureau"
+        if target.endswith("pulls?state=open&per_page=100"):
+            return ""
+        raise AssertionError(arguments)
+
+    with pytest.raises(RegistrationPreflightError, match="identity changed during observation"):
+        github_open_pr_identity_observation(
+            "old-owner/bureau", checked_base_sha=SHA_A, runner=runner
+        )
 
 
 def test_t026_non_main_prs_are_filtered_before_task_identity_reads():
@@ -396,9 +432,11 @@ def test_t026_non_main_prs_are_filtered_before_task_identity_reads():
     def runner(arguments: list[str]) -> str:
         calls.append(arguments)
         target = arguments[2]
+        if target == "repos/heimgewebe/bureau":
+            return f"{REPO_ID}\theimgewebe/bureau"
         if target.endswith("pulls?state=open&per_page=100"):
             return (
-                f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork"
+                f"11\t{HEAD}\tforeign/task\t{FORK_ID}\theimgewebe/bureau-fork"
                 f"\t{SHA_A}\trelease"
             )
         raise AssertionError(arguments)
@@ -410,8 +448,9 @@ def test_t026_non_main_prs_are_filtered_before_task_identity_reads():
         observed_at_unix=123456,
     )
     assert observation["open_prs"] == []
-    assert len(calls) == 2
-    assert all(call[2].endswith("pulls?state=open&per_page=100") for call in calls)
+    assert sum(call[2].endswith("pulls?state=open&per_page=100") for call in calls) == 2
+    assert all("/pulls/11/files" not in call[2] for call in calls)
+    assert all("/contents/" not in call[2] for call in calls)
 
 
 def _git(root: Path, *args: str) -> str:

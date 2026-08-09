@@ -402,6 +402,41 @@ def github_open_prs(
     return sorted(result, key=lambda item: int(item["number"]))
 
 
+def _github_repository_provider_identity(
+    repository: str,
+    run: Callable[[list[str]], str],
+) -> dict[str, Any]:
+    try:
+        raw = run([
+            "gh",
+            "api",
+            f"repos/{repository}",
+            "--jq",
+            "[.id, .full_name] | @tsv",
+        ])
+    except Exception as exc:
+        raise RegistrationPreflightError(
+            "cannot resolve stable GitHub repository identity"
+        ) from exc
+    parts = raw.strip().split("\t")
+    if len(parts) != 2:
+        raise RegistrationPreflightError(
+            "cannot parse stable GitHub repository identity"
+        )
+    try:
+        repository_id = int(parts[0])
+    except ValueError as exc:
+        raise RegistrationPreflightError(
+            "GitHub repository id is not an integer"
+        ) from exc
+    if repository_id <= 0:
+        raise RegistrationPreflightError("GitHub repository id must be positive")
+    return {
+        "repository_id": repository_id,
+        "canonical_repository": validate_github_repository_slug(parts[1].strip()),
+    }
+
+
 def _github_open_pr_identity_listing(
     repository: str,
     run: Callable[[list[str]], str],
@@ -411,8 +446,8 @@ def _github_open_pr_identity_listing(
             "gh", "api", f"repos/{repository}/pulls?state=open&per_page=100",
             "--paginate", "--jq",
             ".[] | select(.base.ref == \"main\") "
-            "| [.number, .head.sha, .head.ref, (.head.repo.full_name // \"\"), "
-            ".base.sha, .base.ref] | @tsv",
+            "| [.number, .head.sha, .head.ref, (.head.repo.id // \"\"), "
+            "(.head.repo.full_name // \"\"), .base.sha, .base.ref] | @tsv",
         ])
     except Exception as exc:
         raise RegistrationPreflightError("cannot read complete open PR identity listing") from exc
@@ -420,7 +455,7 @@ def _github_open_pr_identity_listing(
     seen_numbers: set[int] = set()
     for line in raw.splitlines():
         parts = line.split("\t")
-        if len(parts) != 6:
+        if len(parts) != 7:
             raise RegistrationPreflightError("cannot parse paginated open PR identity listing")
         try:
             number = int(parts[0])
@@ -432,13 +467,27 @@ def _github_open_pr_identity_listing(
             )
         seen_numbers.add(number)
         head_ref_name = parts[2].strip()
-        head_repository_raw = parts[3].strip()
+        head_repository_id_raw = parts[3].strip()
+        if head_repository_id_raw:
+            try:
+                head_repository_id = int(head_repository_id_raw)
+            except ValueError as exc:
+                raise RegistrationPreflightError(
+                    f"open PR #{number} head repository id is not an integer"
+                ) from exc
+            if head_repository_id <= 0:
+                raise RegistrationPreflightError(
+                    f"open PR #{number} head repository id must be positive"
+                )
+        else:
+            head_repository_id = None
+        head_repository_raw = parts[4].strip()
         head_repository = (
             validate_github_repository_slug(head_repository_raw)
             if head_repository_raw
             else None
         )
-        base_ref_name = parts[5].strip()
+        base_ref_name = parts[6].strip()
         if not head_ref_name or not base_ref_name:
             raise RegistrationPreflightError("open PR listing is missing head/base ref identity")
         if base_ref_name != "main":
@@ -447,8 +496,9 @@ def _github_open_pr_identity_listing(
             "number": number,
             "head_sha": validate_sha(parts[1], field="open_pr_head_sha"),
             "head_ref_name": head_ref_name,
+            "head_repository_id": head_repository_id,
             "head_repository": head_repository,
-            "base_sha": validate_sha(parts[4], field="open_pr_base_sha"),
+            "base_sha": validate_sha(parts[5], field="open_pr_base_sha"),
             "base_ref_name": base_ref_name,
         })
     return sorted(listed, key=lambda item: int(item["number"]))
@@ -466,6 +516,7 @@ def github_open_pr_identity_observation(
     repository = validate_github_repository_slug(repository)
     checked_base_sha = validate_sha(checked_base_sha, field="checked_base_sha")
     run = runner or _run_text
+    repository_identity_before = _github_repository_provider_identity(repository, run)
     listed_before = _github_open_pr_identity_listing(repository, run)
     open_prs: list[dict[str, Any]] = []
     for identity in listed_before:
@@ -491,7 +542,8 @@ def github_open_pr_identity_observation(
         for path in task_paths:
             try:
                 head_repository = identity.get("head_repository")
-                if not head_repository:
+                head_repository_id = identity.get("head_repository_id")
+                if not head_repository or not isinstance(head_repository_id, int):
                     raise RegistrationPreflightError(
                         f"open PR #{number} is missing head repository identity"
                     )
@@ -524,12 +576,18 @@ def github_open_pr_identity_observation(
             "tasks": tasks,
         })
     listed_after = _github_open_pr_identity_listing(repository, run)
+    repository_identity_after = _github_repository_provider_identity(repository, run)
     if listed_after != listed_before:
         raise RegistrationPreflightError("open PR identity listing changed during observation")
+    if repository_identity_after != repository_identity_before:
+        raise RegistrationPreflightError(
+            "GitHub repository identity changed during observation"
+        )
     unsigned: dict[str, Any] = {
         "schema_version": 1,
         "kind": "bureau_registry_open_pr_identity_observation",
         "repository": repository,
+        **repository_identity_before,
         "checked_base_sha": checked_base_sha,
         "observed_at_unix": int(time.time()) if observed_at_unix is None else int(observed_at_unix),
         "complete": True,
@@ -548,14 +606,18 @@ def exact_open_pr_identity_collisions(
     task_id: str,
     target_path: str,
     excluded_head_ref: str | None = None,
-    excluded_head_repository: str | None = None,
+    excluded_head_repository_id: int | None = None,
 ) -> list[dict[str, Any]]:
     """Return only exact task-id/path collisions; semantic similarity is not consulted."""
     task_id = validate_task_id(task_id)
     target_path = validate_task_path(task_id, target_path)
-    if excluded_head_repository is not None:
-        excluded_head_repository = validate_github_repository_slug(
-            excluded_head_repository
+    if excluded_head_repository_id is not None and (
+        not isinstance(excluded_head_repository_id, int)
+        or isinstance(excluded_head_repository_id, bool)
+        or excluded_head_repository_id <= 0
+    ):
+        raise RegistrationPreflightError(
+            "excluded head repository id must be a positive integer"
         )
     if (
         not isinstance(observation, dict)
@@ -574,11 +636,9 @@ def exact_open_pr_identity_collisions(
             continue
         if (
             excluded_head_ref
-            and excluded_head_repository
+            and excluded_head_repository_id is not None
             and pr.get("head_ref_name") == excluded_head_ref
-            and isinstance(pr.get("head_repository"), str)
-            and pr["head_repository"].casefold()
-            == excluded_head_repository.casefold()
+            and pr.get("head_repository_id") == excluded_head_repository_id
         ):
             continue
         reasons: list[str] = []
@@ -591,6 +651,7 @@ def exact_open_pr_identity_collisions(
                 "pr_number": pr.get("number"),
                 "head_sha": pr.get("head_sha"),
                 "head_ref_name": pr.get("head_ref_name"),
+                "head_repository_id": pr.get("head_repository_id"),
                 "head_repository": pr.get("head_repository"),
                 "base_sha": pr.get("base_sha"),
                 "base_ref_name": pr.get("base_ref_name"),
@@ -599,6 +660,7 @@ def exact_open_pr_identity_collisions(
                 "collision_axes": reasons,
             })
     return collisions
+
 
 def repository_registration_preflight(
     root: str | Path,

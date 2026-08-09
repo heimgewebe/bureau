@@ -6842,12 +6842,32 @@ def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> d
     raise legacy.StateError(f"task {task_id} has no current verification")
 
 
-def _lifecycle_recommendation(initiative_state: str, states: dict[str, str]) -> str:
+def _lifecycle_recommendation(
+    initiative_state: str,
+    states: dict[str, str],
+    *,
+    verification_stamps: dict[str, dict[str, Any]] | None = None,
+) -> str:
     task_states = tuple(states.values())
-    all_terminal = bool(task_states) and all(
-        state in TERMINAL_TASK_STATES for state in task_states
+    unverified_verified_task_ids = (
+        {
+            task_id
+            for task_id, state in states.items()
+            if state == "verified" and task_id not in verification_stamps
+        }
+        if verification_stamps is not None
+        else set()
     )
-    all_verified = bool(task_states) and all(state == "verified" for state in task_states)
+    all_terminal = (
+        bool(task_states)
+        and not unverified_verified_task_ids
+        and all(state in TERMINAL_TASK_STATES for state in task_states)
+    )
+    all_verified = (
+        bool(task_states)
+        and not unverified_verified_task_ids
+        and all(state == "verified" for state in task_states)
+    )
 
     if initiative_state == "completed":
         return "completed" if all_terminal else "reopen-required"
@@ -6864,6 +6884,7 @@ def _lifecycle_diagnostics_from_overlays(
     operational_registry: Registry,
     source_registry: Registry,
     overlays: dict[str, str],
+    verification_stamps: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     for initiative in operational_registry.initiatives.values():
@@ -6873,7 +6894,14 @@ def _lifecycle_diagnostics_from_overlays(
             if task.initiative == initiative.id
         ]
         states = {task.id: overlays.get(task.id, task.state) for task in tasks}
-        recommendation = _lifecycle_recommendation(initiative.state, states)
+        recommendation = _lifecycle_recommendation(
+            initiative.state, states, verification_stamps=verification_stamps
+        )
+        unverified_verified_task_ids = sorted(
+            task_id
+            for task_id, state in states.items()
+            if state == "verified" and task_id not in verification_stamps
+        )
         source = source_registry.initiatives[initiative.id]
         result.append(
             {
@@ -6882,6 +6910,7 @@ def _lifecycle_diagnostics_from_overlays(
                 "registry_state": source.state,
                 "recommended_state": recommendation,
                 "task_states": states,
+                "unverified_verified_task_ids": unverified_verified_task_ids,
                 "consistent": initiative.state == recommendation,
             }
         )
@@ -6892,8 +6921,11 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
     operational_registry, _, _ = authoritative_task_registry(registry, store)
     with store.connect() as connection:
         overlays = store.overlays(connection, operational_registry)
+        verification_stamps = _current_verification_stamps(
+            operational_registry, connection
+        )
     return _lifecycle_diagnostics_from_overlays(
-        operational_registry, registry, overlays
+        operational_registry, registry, overlays, verification_stamps
     )
 
 
@@ -7625,7 +7657,7 @@ def reconcile_initiative_lifecycle(
         projected_overlays[candidate["task_id"]] = candidate["to_state"]
 
     diagnostics = _lifecycle_diagnostics_from_overlays(
-        operational_registry, registry, projected_overlays
+        operational_registry, registry, projected_overlays, verification_stamps
     )
     initiative_candidates: list[dict[str, Any]] = []
     for item in diagnostics:
@@ -7745,7 +7777,11 @@ def reconcile_initiative_lifecycle(
                 }
                 if (
                     fresh_task_states != candidate["task_states"]
-                    or _lifecycle_recommendation(current_state, fresh_task_states)
+                    or _lifecycle_recommendation(
+                        current_state,
+                        fresh_task_states,
+                        verification_stamps=fresh_verification_stamps,
+                    )
                     != candidate["to_state"]
                 ):
                     raise legacy.StateError(
@@ -7827,7 +7863,7 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
         raw["commitment"] = "completed"
         metadata = raw.setdefault("metadata", {})
         lifecycle = metadata.setdefault("lifecycle", {})
-        lifecycle["completed_at"] = legacy.utc_now()
+        lifecycle.setdefault("completed_at", legacy.utc_now())
         legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
         # Explicit closure must advance the StateStore overlay too.  Write the
         # Registry document first so an interrupted StateStore update remains

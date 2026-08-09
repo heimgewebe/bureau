@@ -22,11 +22,11 @@ jobs:
           python-version: "3.12"
       - name: Verify bootstrap parent
         env:
-          EXPECTED_PARENT: be9b2df8df44a72cf43126ef9fe898a8141eb9c0
+          EXPECTED_PARENT: dc1c0ef0f5e3c8b315b6ba1bbda48884c608f75d
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD^)" = "${EXPECTED_PARENT}"
-      - name: Correct transaction anchor
+      - name: Correct transaction anchors
         run: python .github/pr1814_fix_anchor.py
       - name: Apply deterministic review patch
         run: python .github/pr1814_review_fix2.py

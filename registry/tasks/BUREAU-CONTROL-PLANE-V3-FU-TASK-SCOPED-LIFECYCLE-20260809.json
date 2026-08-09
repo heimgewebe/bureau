@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Preview akzeptiert einen expliziten Taskselektor und liefert nur den exakt passenden deterministischen Lifecycle-Kandidaten; unbekannte oder nicht passende Tasks stoppen eindeutig ohne Wirkung.",
+      "id": "task-selector-preview"
+    },
+    {
+      "assertion": "Apply bindet Task-ID, From/To-State, TaskSpec-Revision und Spec-Digest per CAS und mutiert höchstens den ausgewählten Task; Concurrent Drift stoppt vor Wirkung.",
+      "id": "task-selector-apply"
+    },
+    {
+      "assertion": "Ohne Taskselektor bleibt das bisherige vollständige Preview-/Apply-Verhalten kompatibel und ausdrücklich breit.",
+      "id": "broad-default-preserved"
+    },
+    {
+      "assertion": "Taskgenaues Apply verändert keine anderen TaskStatus-, Initiative-, Queue-, Claim-, Lease- oder Workspace-Zustände.",
+      "id": "no-side-effects"
+    },
+    {
+      "assertion": "Fokussierte Lifecycle-Regressionstests und die relevanten Bureau-Gates sind auf exakt demselben Head grün.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T006"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den taskgenauen Lifecycle-Selektor, dessen CAS-/Preview-/Apply-Bindung und fokussierte Tests ändern. Broad apply bleibt explizit; keine Queue-, Claim- oder fremde Workspace-Mutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Erweitere lifecycle-reconcile und lifecycle-reconcile-apply um eine explizite, revisions- und CAS-gebundene Taskauswahl, damit ein einzelner deterministischer Task-Übergang geprüft und angewendet werden kann, ohne alle gleichzeitig gefundenen Lifecycle-Kandidaten als Nebenwirkung zu mutieren.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-TASK-SCOPED-LIFECYCLE-20260809",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "Taskbereitschaft",
+      "Merge- oder Deploymentfreigabe",
+      "Berechtigung zur breiten Lifecycle-Mutation"
+    ],
+    "live_evidence": {
+      "broad_apply_used": false,
+      "cli_task_selector_present": false,
+      "observed_task_candidate_counts": [
+        122,
+        121
+      ],
+      "runtime_commit": "3422bae5eacf2a4736e96cf7f1f78d67f1243396"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-00dcc99bf1f37b2d95c7d52b",
+      "event_id": 4789,
+      "event_created_at": "2026-08-09T13:34:48.877114Z",
+      "request_sha256": "1acb87bb0236a3a23d0f36140e79ece071a605a982218f297707cc199f31b4aa",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:abarbeiten:2026-08-09:t019-followup-task-scoped-lifecycle",
+        "observed_at": "2026-08-09T13:34:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-09T13:36:00Z",
+    "source": "Live-Folgebefund beim T019-Closeout"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 55
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich Taskselektor, CAS-Bindung und zugehörige Tests; das bestehende breite Lifecycle-Reconcile bleibt unverändert verfügbar."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Lifecycle-Reconcile taskgenau begrenzen"
+}

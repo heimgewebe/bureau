@@ -108,7 +108,10 @@ def _task_from_authoritative_spec(spec: dict[str, Any], digest: str) -> legacy.T
 
 
 def _state_store_initiative_registry(
-    registry: Registry, store: StateStore
+    registry: Registry,
+    store: StateStore,
+    *,
+    connection: sqlite3.Connection | None = None,
 ) -> tuple[Registry, dict[str, Any]]:
     valid_states = {
         "inbox",
@@ -120,13 +123,17 @@ def _state_store_initiative_registry(
         "completed",
         "dropped",
     }
-    with store.connect() as connection:
-        rows = list(
-            connection.execute(
-                "SELECT initiative_id,state,updated_at FROM initiative_status "
-                "ORDER BY initiative_id"
+    if connection is None:
+        with store.connect() as read_connection:
+            return _state_store_initiative_registry(
+                registry, store, connection=read_connection
             )
+    rows = list(
+        connection.execute(
+            "SELECT initiative_id,state,updated_at FROM initiative_status "
+            "ORDER BY initiative_id"
         )
+    )
     known: dict[str, str] = {}
     unknown: list[str] = []
     for row in rows:
@@ -3411,33 +3418,43 @@ class StateStore:
                 initiative_id=initiative_id,
             )
 
-    def set_initiative_state(self, initiative_id: str, state: str) -> dict[str, Any]:
+    def set_initiative_state(
+        self,
+        initiative_id: str,
+        state: str,
+        *,
+        connection: sqlite3.Connection | None = None,
+    ) -> dict[str, Any]:
         if not initiative_id or not state:
             raise legacy.StateError("initiative_id and state must be non-empty")
-        with self.immediate() as connection:
-            existing = connection.execute(
-                "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
-                (initiative_id,),
-            ).fetchone()
-            if existing is not None and existing["state"] == state:
-                return dict(existing)
-            now = legacy.utc_now()
-            connection.execute(
-                "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
-                "ON CONFLICT(initiative_id) DO UPDATE SET "
-                "state=excluded.state,updated_at=excluded.updated_at",
-                (initiative_id, state, now),
-            )
-            self.event(
-                connection,
-                "initiative-state-set",
-                {"initiative_id": initiative_id, "state": state},
-                initiative_id=initiative_id,
-            )
-            row = connection.execute(
-                "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
-                (initiative_id,),
-            ).fetchone()
+        if connection is None:
+            with self.immediate() as write_connection:
+                return self.set_initiative_state(
+                    initiative_id, state, connection=write_connection
+                )
+        existing = connection.execute(
+            "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
+            (initiative_id,),
+        ).fetchone()
+        if existing is not None and existing["state"] == state:
+            return dict(existing)
+        now = legacy.utc_now()
+        connection.execute(
+            "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
+            "ON CONFLICT(initiative_id) DO UPDATE SET "
+            "state=excluded.state,updated_at=excluded.updated_at",
+            (initiative_id, state, now),
+        )
+        self.event(
+            connection,
+            "initiative-state-set",
+            {"initiative_id": initiative_id, "state": state},
+            initiative_id=initiative_id,
+        )
+        row = connection.execute(
+            "SELECT initiative_id,state FROM initiative_status WHERE initiative_id=?",
+            (initiative_id,),
+        ).fetchone()
         return dict(row)
 
     def replay_projection(self) -> dict[str, Any]:
@@ -7694,12 +7711,17 @@ def reconcile_initiative_lifecycle(
                     "automatic task lifecycle reconciliation requires StateStore TaskSpec authority"
                 )
 
-            fresh_overlays = store.overlays(connection, operational_registry)
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                registry, store, connection=connection
+            )
+            fresh_operational_registry = copy.copy(operational_registry)
+            fresh_operational_registry.initiatives = fresh_initiative_registry.initiatives
+            fresh_overlays = store.overlays(connection, fresh_operational_registry)
             fresh_verification_stamps = _current_verification_stamps(
-                operational_registry, connection
+                fresh_operational_registry, connection
             )
             fresh_task_candidates = _structural_task_reconcile_candidates(
-                operational_registry,
+                fresh_operational_registry,
                 fresh_overlays,
                 task_revisions,
                 fresh_verification_stamps,
@@ -7852,23 +7874,56 @@ def reconcile_initiative_lifecycle(
 
 
 def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
-    diagnostics = {item["initiative_id"]: item for item in lifecycle_diagnostics(registry, store)}
+    operational_registry, task_authority, _ = authoritative_task_registry(registry, store)
     changed: list[dict[str, Any]] = []
-    for path in registry._files(registry.root / "registry/initiatives"):
-        raw = legacy.read_json(path)
-        diagnostic = diagnostics.get(raw.get("id"))
-        if diagnostic is None or diagnostic["recommended_state"] != "completion-ready":
-            continue
-        raw["state"] = "completed"
-        raw["commitment"] = "completed"
-        metadata = raw.setdefault("metadata", {})
-        lifecycle = metadata.setdefault("lifecycle", {})
-        lifecycle.setdefault("completed_at", legacy.utc_now())
-        legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
-        # Explicit closure must advance the StateStore overlay too.  Write the
-        # Registry document first so an interrupted StateStore update remains
-        # retryable: a stale completion-ready overlay will select this closure
-        # again on the next invocation.
-        store.set_initiative_state(raw["id"], "completed")
-        changed.append({"initiative_id": raw["id"], "path": str(path)})
+    with store.immediate() as connection:
+        if task_authority.get("kind") == "bureau-state-store-task-specs":
+            try:
+                current_projection = task_specs.current_projection(connection)
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+            if (
+                task_specs.projection_root(current_projection)
+                != task_authority.get("task_spec_root_sha256")
+            ):
+                raise legacy.StateError(
+                    "TaskSpec projection changed during explicit closure"
+                )
+
+        fresh_initiative_registry, _ = _state_store_initiative_registry(
+            registry, store, connection=connection
+        )
+        fresh_operational_registry = copy.copy(operational_registry)
+        fresh_operational_registry.initiatives = fresh_initiative_registry.initiatives
+        overlays = store.overlays(connection, fresh_operational_registry)
+        verification_stamps = _current_verification_stamps(
+            fresh_operational_registry, connection
+        )
+        diagnostics = {
+            item["initiative_id"]: item
+            for item in _lifecycle_diagnostics_from_overlays(
+                fresh_operational_registry, registry, overlays, verification_stamps
+            )
+        }
+
+        for path in registry._files(registry.root / "registry/initiatives"):
+            raw = legacy.read_json(path)
+            diagnostic = diagnostics.get(raw.get("id"))
+            if diagnostic is None or diagnostic["recommended_state"] != "completion-ready":
+                continue
+            raw["state"] = "completed"
+            raw["commitment"] = "completed"
+            metadata = raw.setdefault("metadata", {})
+            lifecycle = metadata.setdefault("lifecycle", {})
+            lifecycle.setdefault("completed_at", legacy.utc_now())
+            legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
+
+            # Registry-first recovery remains intentional: if the DB write or
+            # commit fails, the stale completion-ready row selects this already
+            # completed file on retry. Evidence and the authoritative StateStore
+            # completion share this one write transaction and canonical writer.
+            store.set_initiative_state(
+                raw["id"], "completed", connection=connection
+            )
+            changed.append({"initiative_id": raw["id"], "path": str(path)})
     return changed

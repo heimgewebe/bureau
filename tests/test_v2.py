@@ -7,6 +7,7 @@ import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -820,6 +821,89 @@ def test_lifecycle_reconcile_requires_current_evidence_before_completion_ready(
     assert lifecycle["unverified_verified_task_ids"] == [task_id]
 
 
+
+
+
+def test_close_ready_revalidates_tasks_inside_completion_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = json.loads(json.dumps(current["spec"]))
+    task_spec["state"] = "verified"
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="close-race-verified-state",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = json.loads(json.dumps(current["spec"]))
+    task = operational.tasks[task_id]
+    task_spec.setdefault("metadata", {})["verification"] = {
+        "task_sha256": task.sha256,
+        "plan_sha256": plan_sha256(operational, task.initiative),
+    }
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="close-race-verification-evidence",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    reconciled = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert reconciled["changed"][0]["to_state"] == "completion-ready"
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def mutate_task_before_close_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            with original_immediate() as race_connection:
+                current_spec = bureau_v2.task_specs.get_current(race_connection, task_id)
+                assert current_spec is not None
+                mutated = json.loads(json.dumps(current_spec["spec"]))
+                mutated["state"] = "planned"
+                metadata = dict(mutated.get("metadata", {}))
+                metadata.pop("verification", None)
+                mutated["metadata"] = metadata
+                bureau_v2.task_specs.put(
+                    race_connection,
+                    mutated,
+                    idempotency_key="close-race-task-reopened",
+                    expected_revision=int(current_spec["revision"]),
+                    source="test",
+                )
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(store, "immediate", mutate_task_before_close_transaction)
+    with pytest.raises(StateError, match="TaskSpec projection changed during explicit closure"):
+        close_ready_initiatives(registry, store)
+
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "completion-ready"
+
+
 def test_completed_lifecycle_accepts_mixed_terminal_task_states(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -1390,12 +1474,19 @@ def test_close_ready_preserves_completed_at_across_state_store_retry(
     original_set_initiative_state = store.set_initiative_state
     injected = False
 
-    def fail_first_state_store_completion(initiative_id: str, state: str) -> None:
+    def fail_first_state_store_completion(
+        initiative_id: str,
+        state: str,
+        *,
+        connection: sqlite3.Connection | None = None,
+    ) -> dict[str, object]:
         nonlocal injected
         if not injected and state == "completed":
             injected = True
             raise RuntimeError("injected state-store completion failure")
-        original_set_initiative_state(initiative_id, state)
+        return original_set_initiative_state(
+            initiative_id, state, connection=connection
+        )
 
     monkeypatch.setattr(store, "set_initiative_state", fail_first_state_store_completion)
     with pytest.raises(RuntimeError, match="injected state-store completion failure"):

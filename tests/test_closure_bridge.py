@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
-from bureau.core import Dispatcher, Registry, StateStore
+import pytest
+
+from bureau.core import Dispatcher, Registry, StateError, StateStore
 from bureau.v2 import (
     closure_bridge_task_ids,
     plan_sha256,
@@ -161,3 +164,69 @@ def test_lifecycle_reconcile_preserves_planned_closure_bridge(
     explained = dispatcher.explain_next({"repository"})
     assert explained["selected"]["task_id"] == task_id
     assert explained["selected"]["closure_bridge"] is True
+
+
+def test_lifecycle_reconcile_rechecks_bridge_initiative_authority_inside_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    task_id = _make_completed_review_task(root)
+    dependency_id = "BUR-TEST-001-T002"
+
+    task_path = root / f"registry/tasks/{task_id}.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["depends_on"] = [dependency_id]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    preliminary = Registry.load(root)
+    dependency_path = root / f"registry/tasks/{dependency_id}.json"
+    dependency = json.loads(dependency_path.read_text(encoding="utf-8"))
+    dependency["state"] = "verified"
+    dependency.setdefault("metadata", {})["verification"] = {
+        "task_sha256": task_revision_sha256(dependency),
+        "plan_sha256": plan_sha256(preliminary, dependency["initiative"]),
+    }
+    dependency_path.write_text(json.dumps(dependency), encoding="utf-8")
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    for lane in queue["lanes"].values():
+        while dependency_id in lane:
+            lane.remove(dependency_id)
+    queue_path.write_text(json.dumps(queue), encoding="utf-8")
+
+    plan_path = tmp_path / "closure-plan-race.json"
+    _write_plan(plan_path, task_id)
+    monkeypatch.setenv("BUREAU_CLOSURE_PLAN", str(plan_path))
+    registry, store, _dispatcher = _setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    store.set_initiative_state("BUR-TEST-001", "active")
+
+    preview = reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 1
+    assert preview["task_candidates"][0]["task_id"] == task_id
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def complete_initiative_before_reconcile_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            with original_immediate() as race_connection:
+                race_connection.execute(
+                    "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(initiative_id) DO UPDATE SET "
+                    "state=excluded.state,updated_at=excluded.updated_at",
+                    ("BUR-TEST-001", "completed", "2026-08-09T06:00:00Z"),
+                )
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(store, "immediate", complete_initiative_before_reconcile_transaction)
+    with pytest.raises(StateError, match="task lifecycle gates changed during lifecycle reconcile"):
+        reconcile_initiative_lifecycle(registry, store, apply=True)
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "planned"

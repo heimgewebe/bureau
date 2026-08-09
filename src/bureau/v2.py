@@ -7733,11 +7733,31 @@ SAFE_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset(
 SAFE_TASK_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset({("planned", "ready")})
 
 
+def _initiative_lifecycle_reconcile_candidates(
+    diagnostics: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    for item in diagnostics:
+        transition = (item["declared_state"], item["recommended_state"])
+        if item["consistent"] or transition not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS:
+            continue
+        candidates.append(
+            {
+                "initiative_id": item["initiative_id"],
+                "from_state": item["declared_state"],
+                "to_state": item["recommended_state"],
+                "task_states": item["task_states"],
+            }
+        )
+    return candidates
+
+
 def reconcile_initiative_lifecycle(
     registry: Registry, store: StateStore, *, apply: bool = False
 ) -> dict[str, Any]:
+    source_registry = Registry.load(registry.root)
     operational_registry, task_authority, task_revisions = authoritative_task_registry(
-        registry, store
+        source_registry, store
     )
     with store.connect() as connection:
         overlays = store.overlays(connection, operational_registry)
@@ -7752,21 +7772,9 @@ def reconcile_initiative_lifecycle(
         projected_overlays[candidate["task_id"]] = candidate["to_state"]
 
     diagnostics = _lifecycle_diagnostics_from_overlays(
-        operational_registry, registry, projected_overlays, verification_stamps
+        operational_registry, source_registry, projected_overlays, verification_stamps
     )
-    initiative_candidates: list[dict[str, Any]] = []
-    for item in diagnostics:
-        transition = (item["declared_state"], item["recommended_state"])
-        if item["consistent"] or transition not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS:
-            continue
-        initiative_candidates.append(
-            {
-                "initiative_id": item["initiative_id"],
-                "from_state": item["declared_state"],
-                "to_state": item["recommended_state"],
-                "task_states": item["task_states"],
-            }
-        )
+    initiative_candidates = _initiative_lifecycle_reconcile_candidates(diagnostics)
 
     changed_tasks: list[dict[str, Any]] = []
     changed_initiatives: list[dict[str, Any]] = []
@@ -7793,8 +7801,9 @@ def reconcile_initiative_lifecycle(
                     "automatic lifecycle reconciliation requires StateStore TaskSpec authority"
                 )
 
+            fresh_source_registry = Registry.load(registry.root)
             fresh_initiative_registry, _ = _state_store_initiative_registry(
-                registry, store, connection=connection
+                fresh_source_registry, store, connection=connection
             )
             fresh_operational_registry = copy.copy(operational_registry)
             fresh_operational_registry.initiatives = fresh_initiative_registry.initiatives
@@ -7811,6 +7820,26 @@ def reconcile_initiative_lifecycle(
             if fresh_task_candidates != task_candidates:
                 raise legacy.StateError(
                     "task lifecycle gates changed during lifecycle reconcile"
+                )
+
+            fresh_projected_overlays = dict(fresh_overlays)
+            for candidate in fresh_task_candidates:
+                fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
+            fresh_diagnostics = _lifecycle_diagnostics_from_overlays(
+                fresh_operational_registry,
+                fresh_source_registry,
+                fresh_projected_overlays,
+                fresh_verification_stamps,
+            )
+            fresh_diagnostics_by_id = {
+                item["initiative_id"]: item for item in fresh_diagnostics
+            }
+            if (
+                _initiative_lifecycle_reconcile_candidates(fresh_diagnostics)
+                != initiative_candidates
+            ):
+                raise legacy.StateError(
+                    "initiative lifecycle inputs changed during reconcile"
                 )
 
             for candidate in task_candidates:
@@ -7855,10 +7884,6 @@ def reconcile_initiative_lifecycle(
                     }
                 )
 
-            fresh_projected_overlays = dict(fresh_overlays)
-            for candidate in fresh_task_candidates:
-                fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
-
             for candidate in initiative_candidates:
                 initiative_id = candidate["initiative_id"]
                 row = connection.execute(
@@ -7868,7 +7893,7 @@ def reconcile_initiative_lifecycle(
                 current_state = (
                     str(row["state"])
                     if row is not None
-                    else registry.initiatives[initiative_id].state
+                    else fresh_source_registry.initiatives[initiative_id].state
                 )
                 if current_state != candidate["from_state"]:
                     raise legacy.StateError(
@@ -7879,14 +7904,11 @@ def reconcile_initiative_lifecycle(
                     for task in operational_registry.tasks.values()
                     if task.initiative == initiative_id
                 }
+                fresh_diagnostic = fresh_diagnostics_by_id[initiative_id]
                 if (
                     fresh_task_states != candidate["task_states"]
-                    or _lifecycle_recommendation(
-                        current_state,
-                        fresh_task_states,
-                        verification_stamps=fresh_verification_stamps,
-                    )
-                    != candidate["to_state"]
+                    or fresh_diagnostic["declared_state"] != current_state
+                    or fresh_diagnostic["recommended_state"] != candidate["to_state"]
                 ):
                     raise legacy.StateError(
                         f"initiative {initiative_id} lifecycle inputs changed during reconcile"
@@ -7956,7 +7978,10 @@ def reconcile_initiative_lifecycle(
 
 
 def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
-    operational_registry, task_authority, _ = authoritative_task_registry(registry, store)
+    source_registry = Registry.load(registry.root)
+    operational_registry, task_authority, _ = authoritative_task_registry(
+        source_registry, store
+    )
     changed: list[dict[str, Any]] = []
     with store.immediate() as connection:
         try:
@@ -7980,8 +8005,9 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
                 "explicit closure requires StateStore TaskSpec authority"
             )
 
+        fresh_source_registry = Registry.load(registry.root)
         fresh_initiative_registry, _ = _state_store_initiative_registry(
-            registry, store, connection=connection
+            fresh_source_registry, store, connection=connection
         )
         fresh_operational_registry = copy.copy(operational_registry)
         fresh_operational_registry.initiatives = fresh_initiative_registry.initiatives
@@ -7992,7 +8018,10 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
         diagnostics = {
             item["initiative_id"]: item
             for item in _lifecycle_diagnostics_from_overlays(
-                fresh_operational_registry, registry, overlays, verification_stamps
+                fresh_operational_registry,
+                fresh_source_registry,
+                overlays,
+                verification_stamps,
             )
         }
 

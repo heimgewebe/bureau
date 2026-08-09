@@ -8,6 +8,7 @@ import pytest
 
 from bureau.core import Dispatcher, Registry, StateError, StateStore
 from bureau.v2 import (
+    close_ready_initiatives,
     closure_bridge_task_ids,
     plan_sha256,
     reconcile_initiative_lifecycle,
@@ -197,9 +198,17 @@ def test_lifecycle_reconcile_preserves_bridge_during_registry_first_recovery(
     plan_path = tmp_path / "closure-plan-partial-recovery.json"
     _write_plan(plan_path, task_id)
     monkeypatch.setenv("BUREAU_CLOSURE_PLAN", str(plan_path))
+
+    initiative_path = root / "registry/initiatives/main.json"
+    completed_initiative = json.loads(initiative_path.read_text(encoding="utf-8"))
+    stale_initiative = dict(completed_initiative)
+    stale_initiative["state"] = "active"
+    stale_initiative["commitment"] = "now"
+    initiative_path.write_text(json.dumps(stale_initiative), encoding="utf-8")
     registry, store, _dispatcher = _setup(root, tmp_path, monkeypatch)
     store.import_registry_task_specs(registry)
     store.set_initiative_state("BUR-TEST-001", "completion-ready")
+    initiative_path.write_text(json.dumps(completed_initiative), encoding="utf-8")
 
     preview = reconcile_initiative_lifecycle(registry, store)
     assert preview["task_candidate_count"] == 0
@@ -210,6 +219,19 @@ def test_lifecycle_reconcile_preserves_bridge_during_registry_first_recovery(
     applied = reconcile_initiative_lifecycle(registry, store, apply=True)
     assert applied["changed_task_count"] == 0
     assert applied["changed_count"] == 0
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "planned"
+
+    closed = close_ready_initiatives(registry, store)
+    assert [item["initiative_id"] for item in closed] == ["BUR-TEST-001"]
+    with store.connect() as connection:
+        initiative_state = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert initiative_state is not None
+    assert initiative_state["state"] == "completed"
     current = store.task_spec(task_id)
     assert current is not None
     assert current["spec"]["state"] == "planned"
@@ -281,6 +303,63 @@ def test_lifecycle_reconcile_rechecks_bridge_initiative_authority_inside_transac
     with pytest.raises(StateError, match="task lifecycle gates changed during lifecycle reconcile"):
         reconcile_initiative_lifecycle(registry, store, apply=True)
 
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "planned"
+
+
+def test_lifecycle_reconcile_rechecks_registry_first_recovery_inside_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_id = _make_completed_review_task(root)
+    plan_path = tmp_path / "closure-plan-registry-race.json"
+    _write_plan(plan_path, task_id)
+    monkeypatch.setenv("BUREAU_CLOSURE_PLAN", str(plan_path))
+
+    initiative_path = root / "registry/initiatives/main.json"
+    completed_initiative = json.loads(initiative_path.read_text(encoding="utf-8"))
+    stale_initiative = dict(completed_initiative)
+    stale_initiative["state"] = "active"
+    stale_initiative["commitment"] = "now"
+    initiative_path.write_text(json.dumps(stale_initiative), encoding="utf-8")
+    registry, store, _dispatcher = _setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    store.set_initiative_state("BUR-TEST-001", "completion-ready")
+
+    preview = reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 0
+    assert preview["candidates"][0]["to_state"] == "active"
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def complete_git_initiative_before_reconcile_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            initiative_path.write_text(
+                json.dumps(completed_initiative), encoding="utf-8"
+            )
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(
+        store, "immediate", complete_git_initiative_before_reconcile_transaction
+    )
+    with pytest.raises(
+        StateError, match="initiative lifecycle inputs changed during reconcile"
+    ):
+        reconcile_initiative_lifecycle(registry, store, apply=True)
+
+    with store.connect() as connection:
+        initiative_state = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert initiative_state is not None
+    assert initiative_state["state"] == "completion-ready"
     current = store.task_spec(task_id)
     assert current is not None
     assert current["spec"]["state"] == "planned"

@@ -533,6 +533,8 @@ def test_lifecycle_reconcile_plans_and_applies_only_safe_active_waiting_transiti
     task["state"] = "blocked"
     remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
     registry, store, _ = setup(root, tmp_path, monkeypatch)
 
     preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
@@ -543,13 +545,169 @@ def test_lifecycle_reconcile_plans_and_applies_only_safe_active_waiting_transiti
 
     applied = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
     assert applied["changed_count"] == 1
-    initiative = json.loads((root / "registry/initiatives/main.json").read_text())
-    assert initiative["state"] == "waiting"
-    assert initiative["metadata"]["lifecycle"]["reconciled_from"] == "active"
-    assert initiative["metadata"]["lifecycle"]["reconciled_to"] == "waiting"
+    assert applied["registry_mutated"] is False
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "waiting"
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["declared_state"] == "waiting"
+    assert lifecycle["registry_state"] == "active"
+    assert lifecycle["consistent"] is True
 
 
-def test_lifecycle_reconcile_excludes_completion_semantics(
+def test_lifecycle_reconcile_refuses_stale_initiative_task_inputs(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "blocked"
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    overlays = iter([{task["id"]: "blocked"}, {task["id"]: "ready"}])
+    monkeypatch.setattr(store, "overlays", lambda connection, selected: next(overlays))
+
+    with pytest.raises(StateError, match="lifecycle inputs changed during reconcile"):
+        bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is None
+
+
+def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_files_before = {
+        path.name: path.read_bytes()
+        for path in (root / "registry/tasks").glob("*.json")
+    }
+    dependency_id, task_id = sorted(registry.tasks)
+
+    dependency = store.task_spec(dependency_id)
+    assert dependency is not None
+    dependency_spec = dict(dependency["spec"])
+    dependency_spec["state"] = "verified"
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="lifecycle-dependency-verified",
+        expected_revision=dependency["revision"],
+        source="test",
+    )
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = dict(current["spec"])
+    task_spec["state"] = "planned"
+    task_spec["depends_on"] = [dependency_id]
+    planned = store.put_task_spec(
+        task_spec,
+        idempotency_key="lifecycle-dependent-planned",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 1
+    candidate = preview["task_candidates"][0]
+    assert candidate["task_id"] == task_id
+    assert candidate["from_state"] == "planned"
+    assert candidate["to_state"] == "ready"
+    assert candidate["revision"] == planned["revision"]
+    assert candidate["dependency_states"] == {dependency_id: "verified"}
+
+    applied = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert applied["changed_task_count"] == 1
+    assert applied["total_changed_count"] == 1
+    after = store.task_spec(task_id)
+    assert after is not None
+    assert after["revision"] == planned["revision"] + 1
+    assert after["spec"]["state"] == "ready"
+    assert {
+        path.name: path.read_bytes()
+        for path in (root / "registry/tasks").glob("*.json")
+    } == task_files_before
+
+
+def test_lifecycle_reconcile_promotes_parent_after_terminal_child_gate(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    parent_id, child_id = sorted(registry.tasks)
+
+    parent = store.task_spec(parent_id)
+    assert parent is not None
+    parent_spec = dict(parent["spec"])
+    parent_spec["state"] = "planned"
+    store.put_task_spec(
+        parent_spec,
+        idempotency_key="lifecycle-parent-planned",
+        expected_revision=parent["revision"],
+        source="test",
+    )
+
+    child = store.task_spec(child_id)
+    assert child is not None
+    child_spec = dict(child["spec"])
+    child_spec["state"] = "verified"
+    child_metadata = dict(child_spec.get("metadata", {}))
+    child_metadata["parent_task"] = parent_id
+    child_spec["metadata"] = child_metadata
+    store.put_task_spec(
+        child_spec,
+        idempotency_key="lifecycle-child-verified",
+        expected_revision=child["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 1
+    candidate = preview["task_candidates"][0]
+    assert candidate["task_id"] == parent_id
+    assert candidate["dependency_states"] == {}
+    assert candidate["child_task_states"] == {child_id: "verified"}
+
+
+def test_lifecycle_reconcile_leaves_ungated_planned_task_open(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = dict(current["spec"])
+    task_spec["state"] = "planned"
+    task_spec["depends_on"] = []
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="lifecycle-ungated-planned",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 0
+    assert preview["changed_task_count"] == 0
+
+
+
+def test_lifecycle_reconcile_projects_completion_ready_without_completing(
     registry_factory, tmp_path, monkeypatch
 ):
     root = registry_factory(1)
@@ -565,11 +723,29 @@ def test_lifecycle_reconcile_excludes_completion_semantics(
     }
     remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
     registry, store, _ = setup(root, tmp_path, monkeypatch)
 
     preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
-    assert preview["candidate_count"] == 0
-    assert "completion-ready" in preview["excluded_recommendations"]
+    assert preview["candidate_count"] == 1
+    assert preview["candidates"][0]["from_state"] == "active"
+    assert preview["candidates"][0]["to_state"] == "completion-ready"
+    assert "completion-ready" not in preview["excluded_recommendations"]
+
+    applied = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert applied["changed_count"] == 1
+    assert applied["changed"][0]["to_state"] == "completion-ready"
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "completion-ready"
+    assert row["state"] != "completed"
+
 
 
 def test_completed_lifecycle_accepts_mixed_terminal_task_states(

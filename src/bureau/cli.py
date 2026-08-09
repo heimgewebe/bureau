@@ -1252,10 +1252,6 @@ def main(argv: list[str] | None = None) -> int:
             from .v2 import reconcile_initiative_lifecycle
 
             apply_lifecycle = args.command == "lifecycle-reconcile-apply"
-            if apply_lifecycle and registry_selection == "canonical-runtime-default":
-                raise StateError(
-                    "lifecycle-reconcile-apply requires an explicit writable Registry root"
-                )
             value = reconcile_initiative_lifecycle(registry, store, apply=apply_lifecycle)
         elif args.command == "close-ready":
             value = close_ready_initiatives(registry, store)

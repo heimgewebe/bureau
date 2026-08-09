@@ -4,9 +4,9 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Lifecycle-Reconciliation ohne Registry-PR automatisieren",
   "goal": "Deterministisch ableitbare Status-, Abhängigkeits-, Queue- und Initiativenübergänge im StateStore automatisch reconciliieren. Inhaltliche Entscheidungen bleiben explizit; rein strukturelle Drift wird in einem Zyklus geschlossen.",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 50
   },
   "depends_on": [
@@ -45,13 +45,18 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "path:/home/alex/repos/bureau/src/bureau/lifecycle.py",
-      "path:/home/alex/repos/bureau/src/bureau/registry_truth.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T006.json",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
       "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
-      "path:/home/alex/repos/bureau/tests/test_lifecycle.py",
+      "path:/home/alex/repos/bureau/src/bureau/registry_truth.py",
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_queue_reconcile.py",
       "path:/home/alex/repos/bureau/tests/test_registry_truth.py",
-      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T006.json"
-    ]
+      "path:/home/alex/repos/bureau/tests/test_v2.py"
+    ],
+    "baseline_commit": "eeac521c4d97f5f938fadb16ad530b16d98693ea"
   },
   "acceptance": [
     {
@@ -80,6 +85,32 @@
       "Merge- oder Deploymentabschluss",
       "Freigabe fremder Ressourcen",
       "direkte main-Mutation"
-    ]
+    ],
+    "activation": {
+      "baseline_commit": "eeac521c4d97f5f938fadb16ad530b16d98693ea",
+      "dependency_basis": [
+        "BUREAU-CONTROL-PLANE-V3-T003:effective-verified",
+        "BUREAU-CONTROL-PLANE-V3-T005:effective-verified"
+      ],
+      "schema_version": 1,
+      "source": "explicit-user-request-next-bureau-optimization-20260808"
+    },
+    "scope_reconciliation": {
+      "absent_paths": [
+        "src/bureau/lifecycle.py",
+        "tests/test_lifecycle.py"
+      ],
+      "base_commit": "eeac521c4d97f5f938fadb16ad530b16d98693ea",
+      "reason": "Current lifecycle implementation lives in v2.py; StateStore-only apply additionally requires CLI/effect-scope reclassification so canonical runtime no longer treats lifecycle reconciliation as a Registry mutation.",
+      "replacement_paths": [
+        "src/bureau/cli.py",
+        "src/bureau/effect_scope.py",
+        "src/bureau/v2.py",
+        "tests/test_effect_scope.py",
+        "tests/test_queue_reconcile.py",
+        "tests/test_v2.py"
+      ],
+      "schema_version": 1
+    }
   }
 }

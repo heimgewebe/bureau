@@ -751,7 +751,7 @@ def test_lifecycle_reconcile_leaves_ungated_planned_task_open(
 
 
 
-def test_lifecycle_reconcile_projects_completion_ready_without_completing(
+def test_lifecycle_reconcile_legacy_git_no_drift_projects_completion_ready(
     registry_factory, tmp_path, monkeypatch
 ):
     root = registry_factory(1)
@@ -770,6 +770,8 @@ def test_lifecycle_reconcile_projects_completion_ready_without_completing(
     initiative_path = root / "registry/initiatives/main.json"
     initiative_before = initiative_path.read_bytes()
     registry, store, _ = setup(root, tmp_path, monkeypatch)
+    _, task_authority, _ = bureau_v2.authoritative_task_registry(registry, store)
+    assert task_authority["kind"] == "legacy-git-bootstrap"
 
     preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
     assert preview["candidate_count"] == 1
@@ -789,6 +791,54 @@ def test_lifecycle_reconcile_projects_completion_ready_without_completing(
     assert row is not None
     assert row["state"] == "completion-ready"
     assert row["state"] != "completed"
+
+
+def test_lifecycle_reconcile_rejects_legacy_git_verified_to_planned_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    preliminary = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+        }
+    }
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["candidates"][0]["to_state"] == "completion-ready"
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def reopen_task_before_reconcile_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            reopened = json.loads(task_path.read_text())
+            reopened["state"] = "planned"
+            reopened.get("metadata", {}).pop("verification", None)
+            task_path.write_text(json.dumps(reopened))
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(store, "immediate", reopen_task_before_reconcile_transaction)
+    with pytest.raises(StateError, match="legacy Git task projection changed"):
+        bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is None
 
 
 

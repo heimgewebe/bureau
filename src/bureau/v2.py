@@ -168,6 +168,18 @@ def _state_store_initiative_registry(
     }
 
 
+def _legacy_git_task_projection_sha256(registry: Registry) -> str:
+    return legacy.sha256_json(
+        {
+            "schema_version": 1,
+            "tasks": {
+                task.id: task_specs.task_spec_digest(task.raw)
+                for task in registry.tasks.values()
+            },
+        }
+    )
+
+
 def authoritative_task_registry(
     registry: Registry, store: StateStore
 ) -> tuple[Registry, dict[str, Any], dict[str, dict[str, Any]]]:
@@ -196,6 +208,9 @@ def authoritative_task_registry(
             "task_count": len(revisions),
             "task_spec_root_sha256": legacy.sha256_json(
                 {task_id: item["spec_sha256"] for task_id, item in sorted(revisions.items())}
+            ),
+            "legacy_git_task_projection_sha256": _legacy_git_task_projection_sha256(
+                initiative_registry
             ),
             "git_projection_only_task_ids": [],
             "initiative_authority": initiative_authority,
@@ -7729,11 +7744,11 @@ def reconcile_initiative_lifecycle(
     changed_initiatives: list[dict[str, Any]] = []
     if apply and (task_candidates or initiative_candidates):
         with store.immediate() as connection:
+            try:
+                current_projection = task_specs.current_projection(connection)
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
             if task_authority.get("kind") == "bureau-state-store-task-specs":
-                try:
-                    current_projection = task_specs.current_projection(connection)
-                except task_specs.TaskSpecError as exc:
-                    raise legacy.StateError(str(exc)) from exc
                 if (
                     task_specs.projection_root(current_projection)
                     != task_authority.get("task_spec_root_sha256")
@@ -7741,6 +7756,17 @@ def reconcile_initiative_lifecycle(
                     raise legacy.StateError(
                         "TaskSpec projection changed during lifecycle reconcile"
                     )
+            elif current_projection["tasks"]:
+                raise legacy.StateError(
+                    "TaskSpec projection changed during lifecycle reconcile"
+                )
+            elif (
+                _legacy_git_task_projection_sha256(Registry.load(registry.root))
+                != task_authority.get("legacy_git_task_projection_sha256")
+            ):
+                raise legacy.StateError(
+                    "legacy Git task projection changed during lifecycle reconcile"
+                )
             elif task_candidates:
                 raise legacy.StateError(
                     "automatic task lifecycle reconciliation requires StateStore TaskSpec authority"

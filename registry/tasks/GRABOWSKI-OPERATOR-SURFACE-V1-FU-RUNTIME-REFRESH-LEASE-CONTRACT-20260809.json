@@ -1,0 +1,125 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein gültiger aktueller Bureau-Runtime-Refresh mit exakt drei receiptgebundenen Ressourcen wird als terminal erkannt und gibt ausschließlich diese drei unveränderten ownergebundenen Leases idempotent frei.",
+      "id": "current-three-resource-contract"
+    },
+    {
+      "assertion": "Historische gültige Runtime-Refresh-Receipts mit fünf gebundenen Ressourcen bleiben kompatibel; die Implementierung codiert keine feste Ressourcenanzahl.",
+      "id": "historical-five-resource-compatibility"
+    },
+    {
+      "assertion": "Die Ressourcenliste wird ausschließlich aus einer verifizierten Intent-/Result-/Receipt-Kette mit Ziel-, Owner-, Task-, State-Root- und Snapshot-Bindung übernommen; frei vom Caller gelieferte Teilmengen oder Obermengen begründen keine Freigabe.",
+      "id": "trusted-resource-source"
+    },
+    {
+      "assertion": "Teilmengen, Obermengen, manipulierte Receipts, Ziel- oder Metadatendrift, erneuerte Leases, Fremdowner und nichtterminale oder mehrdeutige Outcomes stoppen fail-closed ohne Freigabe.",
+      "id": "drift-and-foreign-protection"
+    },
+    {
+      "assertion": "Normalpfad und Recoverypfad verwenden denselben versionsfähigen Ressourcenlistenvertrag und liefern idempotente, receiptgebundene Ergebnisse.",
+      "id": "normal-recovery-convergence"
+    },
+    {
+      "assertion": "Fokussierte Lease-/Grip-/Receipt-Regressionstests und relevante Grabowski-Gates sind auf exakt demselben Head grün; nach Merge und Deployment belegt ein aktueller drei-Ressourcen-Runtime-Refresh die automatische Freigabe und unmittelbare sichere Wiederakquise ohne Force.",
+      "id": "validation-and-live-roundtrip"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.grabowski.runtime"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Runtime-Refresh-Lease-Release/Recovery, dessen Receipt-/Intent-Bindung, Tests und Vertragsdoku ändern. Keine Fremdlease freigeben, kein Force-Fallback, kein Bureau-Receipt-Schema stillschweigend ändern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_grips.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-lease-contract-v2.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Passe den Grabowski Runtime-Refresh-Lease-Release- und Recovery-Vertrag so an, dass die exakt freizugebende Ressourcenmenge aus einer vertrauenswürdig hash- und receiptgebundenen Runtime-Refresh-Intent-/Result-Kette stammt, statt statisch fünf historische Pfade zu erwarten. Aktive, fremde, erneuerte, driftende oder mehrdeutige Leases bleiben fail-closed geschützt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Berechtigung zur Freigabe fremder oder driftender Leases",
+      "Taskbereitschaft",
+      "Merge- oder Deploymentfreigabe",
+      "Berechtigung zu Änderungen im Bureau-Repository"
+    ],
+    "live_evidence": {
+      "bureau_runtime_refresh_target": "3422bae5eacf2a4736e96cf7f1f78d67f1243396",
+      "current_required_resource_count": 3,
+      "current_required_resources": [
+        "path:/home/alex/.local/share/bureau",
+        "path:/home/alex/.local/state/bureau/runtime-refresh",
+        "path:/home/alex/.local/state/bureau/runtime-refresh/workspaces/3422bae5eacf2a4736e96cf7f1f78d67f1243396"
+      ],
+      "fallback_used": "exact direct owner-bound release of the three unchanged leases",
+      "force_release_used": false,
+      "runtime_refresh_result_sha256": "972b960b9137a76802ffe2e6e127e3ac4059e35aa2b04477a44cfbafcadc7f3b",
+      "specialized_cleanup_result": "rejected current three-resource result because historical contract expects five canonical paths"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-80e4184a88e57ca2e2ad9a8d",
+      "event_id": 4790,
+      "event_created_at": "2026-08-09T13:35:21.845534Z",
+      "request_sha256": "19f138940ed3a8e6db7953b467aff27dad0b3fe612397c3387f8c0e2962a67ed",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:abarbeiten:2026-08-09:t019-followup-runtime-refresh-lease-contract",
+        "observed_at": "2026-08-09T13:34:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "predecessor": {
+      "historical_contract": "five canonical runtime-refresh resources",
+      "state": "verified",
+      "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
+    },
+    "registered_at": "2026-08-09T13:43:00Z",
+    "source": "Live-Folgebefund während OPERATOR-INTEGRATION-LOOP-V1-T019"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "runtime-deployment"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den dynamischen receiptgebundenen Ressourcenlistenvertrag und seine Tests/Doku. Bei Unsicherheit bleiben Leases fail-closed erhalten; Force-Release oder TTL-Verkürzung sind kein Rollback."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Runtime-Refresh-Lease-Cleanup an aktuellen Ressourcenvertrag binden"
+}

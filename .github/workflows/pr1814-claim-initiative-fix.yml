@@ -22,12 +22,14 @@ jobs:
           python-version: "3.12"
       - name: Verify exact parent
         env:
-          EXPECTED_PARENT: 6a32a055b7f3a7fe03d3eb140907a2d4bfe4217e
+          EXPECTED_PARENT: 5c9b20509f642ed43deaa57b5b0baa4630ce86e2
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD^)" = "${EXPECTED_PARENT}"
       - name: Apply claim initiative race fix
         run: python .github/pr1814_claim_initiative_fix.py
+      - name: Forward fresh initiative authority through public dispatcher
+        run: python .github/pr1814_broad_scope_fix.py
       - name: Install validation dependencies
         run: python -m pip install -e '.[dev]'
       - name: Validate claim and lifecycle safety
@@ -35,7 +37,7 @@ jobs:
           set -euo pipefail
           python -m pytest tests/test_v2.py -k 'claim_next_rechecks_initiative_state or commit_claim_intent_rechecks_initiative_state or lifecycle_reconcile or close_ready' -q
           python -m pytest tests/test_closure_bridge.py -q
-          python -m ruff check src/bureau/v2.py tests/test_v2.py tests/test_closure_bridge.py
+          python -m ruff check src/bureau/v2.py src/bureau/broad_scope_dispatcher.py tests/test_v2.py tests/test_closure_bridge.py
           git diff --check
       - name: Commit and push only if branch is unchanged
         env:
@@ -44,8 +46,8 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm -f .github/workflows/pr1814-claim-initiative-fix.yml .github/pr1814_claim_initiative_fix.py
-          git add src/bureau/v2.py tests/test_v2.py
+          git rm -f .github/workflows/pr1814-claim-initiative-fix.yml .github/pr1814_claim_initiative_fix.py .github/pr1814_broad_scope_fix.py
+          git add src/bureau/v2.py src/bureau/broad_scope_dispatcher.py tests/test_v2.py
           git diff --cached --quiet && { echo 'no product patch produced'; exit 1; }
           git commit -m 'fix(bureau): refresh initiative authority at claim admission'
           git fetch origin "${BRANCH}"

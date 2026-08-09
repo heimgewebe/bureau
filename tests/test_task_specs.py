@@ -235,6 +235,48 @@ def test_legacy_import_is_lossless_idempotent_and_detects_divergence(tmp_path: P
         store.import_registry_task_specs(divergent)
 
 
+def test_registration_seeds_missing_legacy_specs_and_preserves_state_store_divergence(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    state_owned = _spec("LEGACY-B")
+    state_owned["state"] = "ready"
+    store.put_task_spec(
+        state_owned,
+        idempotency_key="state-owned",
+        expected_revision=None,
+        source="lifecycle-reconcile",
+    )
+    registry = SimpleNamespace(
+        tasks={
+            "LEGACY-A": SimpleNamespace(raw=_spec("LEGACY-A")),
+            "LEGACY-B": SimpleNamespace(raw=_spec("LEGACY-B")),
+        }
+    )
+
+    result = store.register_task_spec_with_legacy_import(
+        registry,
+        _spec("NEW-TASK"),
+        idempotency_key="reviewed-new-task",
+        expected_revision=None,
+        source="reviewed",
+    )
+
+    seeded = result["legacy_task_spec_import"]
+    assert seeded["mode"] == "seed-missing-preserve-state-store"
+    assert seeded["imported"] == 1
+    assert seeded["unchanged"] == 0
+    assert seeded["divergent_preserved_count"] == 1
+    assert seeded["divergent_preserved_sample"] == ["LEGACY-B"]
+    assert seeded["divergent_preserved_truncated"] is False
+    assert store.task_spec("LEGACY-A")["spec"]["state"] == "planned"
+    assert store.task_spec("LEGACY-B")["spec"] == state_owned
+    assert store.task_spec("NEW-TASK")["spec"]["state"] == "planned"
+
+    with pytest.raises(StateError, match="legacy TaskSpec divergence"):
+        store.import_registry_task_specs(registry)
+
+
 def test_registration_and_legacy_import_share_one_transaction(tmp_path: Path) -> None:
     store = _store(tmp_path)
     store.put_task_spec(

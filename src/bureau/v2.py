@@ -3567,10 +3567,10 @@ class StateStore:
         expected_revision: int | None,
         source: str,
     ) -> dict[str, Any]:
-        """Atomically converge legacy specs and register one reviewed TaskSpec revision."""
+        """Atomically seed missing legacy specs and register one reviewed TaskSpec revision."""
         with self.immediate() as connection:
             try:
-                legacy_import = task_specs.import_registry(connection, registry)
+                legacy_import = task_specs.seed_missing_registry(connection, registry)
                 revision = task_specs.put(
                     connection,
                     spec,

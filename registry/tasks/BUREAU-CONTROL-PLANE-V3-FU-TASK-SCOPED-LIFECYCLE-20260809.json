@@ -29,6 +29,10 @@
     },
     {
       "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
       "resource": "state.bureau"
     }
   ],

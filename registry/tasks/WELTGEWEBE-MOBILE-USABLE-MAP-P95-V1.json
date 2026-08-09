@@ -1,0 +1,94 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein exakthash-gebundener Browserbeleg reproduziert den mobilen usable_map-p95 mit demselben repräsentativen Fixture und mindestens der bestehenden Fünf-Läufe-Stichprobe; LCP, INP und Desktop-usable_map werden als Kontrollmetriken mitgeführt.",
+      "evidence_type": "object",
+      "id": "exact-mobile-baseline",
+      "verifier": "exact-revision Playwright runtime evidence artifact"
+    },
+    {
+      "assertion": "Der Kartenstart wird in mindestens Netzwerk/API, MapLibre-Initialisierung, Daten-/Gewebeprojektion und sichtbare Nutzbarkeit zerlegt; die Optimierung zielt nur auf einen reproduzierbar dominanten Anteil statt auf die bloße Vite-Chunkwarnung.",
+      "evidence_type": "object",
+      "id": "causal-breakdown",
+      "verifier": "phase-bound runtime profile with source binding"
+    },
+    {
+      "assertion": "Die report-only 3000-ms-Linie wird nicht gelockert oder Tests werden nicht abgeschwächt, um ein Ergebnis zu erzeugen; eine Codeänderung erfolgt nur bei reproduzierbarem Vorher/Nachher-Nutzen und unveränderter Karten-/Filtersemantik.",
+      "evidence_type": "boolean",
+      "id": "no-threshold-gaming",
+      "verifier": "diff review plus before/after runtime proof"
+    },
+    {
+      "assertion": "Ein erfolgreicher Fix weist auf demselben mobilen Profil eine materielle p95-Verbesserung ohne Regression bei Desktop-usable_map, LCP, INP, Route-Budget und Map-E2E nach; falls kein sicherer Hebel belegt ist, endet die Aufgabe mit einem exakten No-change-Befund statt kosmetischer Optimierung.",
+      "evidence_type": "object",
+      "id": "bounded-outcome",
+      "verifier": "before/after browser evidence and CI receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den im exakten Browser-Runtime-Proof auf Weltgewebe-Revision 8c7178d2e15754df71378448b93a464287507846 gemessenen mobilen usable_map-p95 von 4115.7 ms gegen die derzeit report-only kalibrierte 3000-ms-Linie reproduzieren, den dominanten Anteil im Kartenstartpfad kausal eingrenzen und nur bei belegtem Nutzen eine semantikerhaltende Optimierung umsetzen.",
+  "id": "WELTGEWEBE-MOBILE-USABLE-MAP-P95-V1",
+  "initiative": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
+  "metadata": {
+    "configured_report_only_threshold_ms": 3000,
+    "does_not_establish": [
+      "that PR #1735 caused the mobile p95 measurement",
+      "that the 3000-ms calibration line is already production-blocking",
+      "that MapLibre chunk splitting is beneficial",
+      "permission to raise map data limits or weaken performance tests"
+    ],
+    "measurement_enforcement": "measurement_integrity_only; thresholds_blocking=false",
+    "observed_desktop_usable_map_p95_ms": 904.6,
+    "observed_mobile_usable_map_p95_ms": 4115.7,
+    "observed_revision": "8c7178d2e15754df71378448b93a464287507846",
+    "source": "Exact-head Web runtime performance proof for heimgewebe/weltgewebe PR #1735, GitHub Actions run 31319558856",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b6023ccc496a9ae48c2eda4f",
+      "event_id": 4830,
+      "event_created_at": "2026-08-09T15:11:37.718490Z",
+      "request_sha256": "b315556beabf017994c7a08e3ec32c21bdf97cb0a78de09607e81e7e9bc2b029",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-diagnostic",
+        "locator": "github-actions:heimgewebe/weltgewebe:run:31319558856:job:93261003968:head:8c7178d2e15754df71378448b93a464287507846",
+        "observed_at": "2026-08-09T15:11:37.639652Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "profiling",
+    "browser",
+    "playwright"
+  ],
+  "schema_version": 1,
+  "state": "inbox",
+  "title": "Weltgewebe: mobile usable-map p95 kausal messen und gezielt senken"
+}

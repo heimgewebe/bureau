@@ -1,0 +1,55 @@
+name: pr1814-claim-initiative-fix
+
+on:
+  push:
+    branches:
+      - fix/bureau-control-plane-v3-t006-lifecycle-reconciliation-20260808
+    paths:
+      - .github/workflows/pr1814-claim-initiative-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify exact parent
+        env:
+          EXPECTED_PARENT: 6a32a055b7f3a7fe03d3eb140907a2d4bfe4217e
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "${EXPECTED_PARENT}"
+      - name: Apply claim initiative race fix
+        run: python .github/pr1814_claim_initiative_fix.py
+      - name: Install validation dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Validate claim and lifecycle safety
+        run: |
+          set -euo pipefail
+          python -m pytest tests/test_v2.py -k 'claim_next_rechecks_initiative_state or commit_claim_intent_rechecks_initiative_state or lifecycle_reconcile or close_ready' -q
+          python -m pytest tests/test_closure_bridge.py -q
+          python -m ruff check src/bureau/v2.py tests/test_v2.py tests/test_closure_bridge.py
+          git diff --check
+      - name: Commit and push only if branch is unchanged
+        env:
+          BRANCH: fix/bureau-control-plane-v3-t006-lifecycle-reconciliation-20260808
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f .github/workflows/pr1814-claim-initiative-fix.yml .github/pr1814_claim_initiative_fix.py
+          git add src/bureau/v2.py tests/test_v2.py
+          git diff --cached --quiet && { echo 'no product patch produced'; exit 1; }
+          git commit -m 'fix(bureau): refresh initiative authority at claim admission'
+          git fetch origin "${BRANCH}"
+          expected_remote="$(git rev-parse HEAD^)"
+          actual_remote="$(git rev-parse FETCH_HEAD)"
+          test "${actual_remote}" = "${expected_remote}"
+          git push origin "HEAD:refs/heads/${BRANCH}"

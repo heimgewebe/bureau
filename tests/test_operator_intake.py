@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import shutil
@@ -2343,6 +2344,34 @@ def test_github_slug_rejects_noncanonical_or_ambiguous_remotes(remote):
 class LocalGitPublisher(SubprocessTaskPublisher):
     def __init__(self):
         self.pull_request = None
+        self.registry_open_prs: list[dict] = []
+        self.registry_open_pr_sequence: list[list[dict]] | None = None
+        self.registry_open_pr_error: Exception | None = None
+        self.registry_open_pr_observation_calls = 0
+
+    def _observe_registry_open_pr_identities(self, *, repository, registry, plan):
+        self.registry_open_pr_observation_calls += 1
+        if self.registry_open_pr_error is not None:
+            raise self.registry_open_pr_error
+        if self.registry_open_pr_sequence is None:
+            open_prs = self.registry_open_prs
+        else:
+            index = min(
+                self.registry_open_pr_observation_calls - 1,
+                len(self.registry_open_pr_sequence) - 1,
+            )
+            open_prs = self.registry_open_pr_sequence[index]
+        return {
+            "schema_version": 1,
+            "kind": "bureau_registry_open_pr_identity_observation",
+            "repository": repository,
+            "checked_base_sha": plan["registry"]["commit"],
+            "observed_at_unix": self.registry_open_pr_observation_calls,
+            "complete": True,
+            "open_prs": json.loads(json.dumps(open_prs)),
+            "observation_sha256": "a" * 64,
+            "does_not_establish": ["semantic_duplicate_identity"],
+        }
 
     @staticmethod
     def _github_slug(remote: str) -> str:
@@ -3918,3 +3947,197 @@ def test_task_propose_rejects_broad_bureau_scope_before_plan_write(registry_fact
     assert error.value.code == "broad-bureau-task-scope-forbidden"
     assert error.value.details["scope_assessment"]["exception_status"] == "missing"
     assert not plan_path.exists()
+
+
+
+def _t026_foreign_open_pr(plan: dict, *, number: int = 1112) -> dict:
+    return {
+        "number": number,
+        "head_sha": "d" * 40,
+        "head_ref_name": "foreign/operator-ecosystem-redundancy-v1-t065",
+        "base_sha": plan["registry"]["commit"],
+        "base_ref_name": "main",
+        "task_paths": [plan["target_path"]],
+        "task_ids": [plan["task_id"]],
+        "tasks": [],
+    }
+
+
+def test_t026_pr_1112_1118_foreign_collision_blocks_before_workspace_and_releases_leases(
+    registry_factory, tmp_path
+):
+    root, registry = _committed_registry(registry_factory)
+    _local_remote(root, tmp_path)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    resource_db = _lease_db(preview, tmp_path)
+    publisher = FaultInjectingLocalPublisher(fail_after=("never",))
+    publisher.registry_open_prs = [_t026_foreign_open_pr(plan, number=1112)]
+    workspace_root = tmp_path / "workspaces"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=resource_db,
+            workspace_root=workspace_root,
+            receipt_path=tmp_path / "receipt.json",
+            publisher=publisher,
+        )
+
+    assert caught.value.code == "registry_pr_collision"
+    assert caught.value.publication_phase == "before_workspace"
+    assert caught.value.effect_started is False
+    assert caught.value.ambiguity is False
+    assert caught.value.details["collisions"][0]["pr_number"] == 1112
+    assert caught.value.details["semantic_similarity_consulted"] is False
+    assert caught.value.details["lease_release"]["released"] is True
+    assert _lease_count(resource_db) == 0
+    assert not workspace_root.exists()
+    assert sum(command[:2] == ("git", "clone") for command in publisher.commands) == 0
+    assert _publication_commit_count(publisher.commands) == 0
+    assert sum(command[:2] == ("git", "push") for command in publisher.commands) == 0
+    assert sum(command[:3] == ("gh", "pr", "create") for command in publisher.commands) == 0
+    assert publisher.pull_request is None
+
+
+def test_t026_github_unavailable_is_pre_effect_unknown_and_has_no_publication_effect(
+    registry_factory, tmp_path
+):
+    root, registry = _committed_registry(registry_factory)
+    _local_remote(root, tmp_path)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    resource_db = _lease_db(preview, tmp_path)
+    publisher = FaultInjectingLocalPublisher(fail_after=("never",))
+    publisher.registry_open_pr_error = RuntimeError("GitHub 502")
+    workspace_root = tmp_path / "workspaces"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=resource_db,
+            workspace_root=workspace_root,
+            receipt_path=tmp_path / "receipt.json",
+            publisher=publisher,
+        )
+
+    assert caught.value.code == "pre_effect_unknown"
+    assert caught.value.publication_phase == "before_workspace"
+    assert caught.value.effect_started is False
+    assert caught.value.ambiguity is False
+    assert caught.value.details["observation_phase"] == "pre_workspace"
+    assert caught.value.details["lease_release"]["released"] is True
+    assert _lease_count(resource_db) == 0
+    assert not workspace_root.exists()
+    assert sum(command[:2] == ("git", "push") for command in publisher.commands) == 0
+    assert sum(command[:3] == ("gh", "pr", "create") for command in publisher.commands) == 0
+
+
+def test_t026_toctou_collision_on_second_read_blocks_before_first_remote_effect(
+    registry_factory, tmp_path
+):
+    root, registry = _committed_registry(registry_factory)
+    remote = _local_remote(root, tmp_path)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    resource_db = _lease_db(preview, tmp_path)
+    publisher = FaultInjectingLocalPublisher(fail_after=("never",))
+    publisher.registry_open_pr_sequence = [
+        [],
+        [_t026_foreign_open_pr(plan, number=1112)],
+    ]
+    workspace_root = tmp_path / "workspaces"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=resource_db,
+            workspace_root=workspace_root,
+            receipt_path=tmp_path / "receipt.json",
+            publisher=publisher,
+        )
+
+    assert caught.value.code == "registry_pr_collision"
+    assert caught.value.publication_phase == "committed_locally"
+    assert caught.value.details["observation_phase"] == "pre_remote_effect"
+    assert publisher.registry_open_pr_observation_calls == 2
+    assert _publication_commit_count(publisher.commands) == 1
+    assert sum(command[:2] == ("git", "push") for command in publisher.commands) == 0
+    assert sum(command[:3] == ("gh", "pr", "create") for command in publisher.commands) == 0
+    branch = publication_preview(registry, store, plan_path=plan_path)["branch"]
+    remote_branch = subprocess.run(
+        [
+            "git",
+            "--git-dir",
+            str(remote),
+            "show-ref",
+            "--verify",
+            "--quiet",
+            f"refs/heads/{branch}",
+        ],
+        check=False,
+    )
+    assert remote_branch.returncode != 0
+    assert caught.value.details["lease_release"]["released"] is True
+    assert _lease_count(resource_db) == 0
+
+
+def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
+    registry_factory, tmp_path
+):
+    _root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = _review(plan_path)
+    encoded = base64.b64encode(
+        json.dumps(plan["task_json"]).encode("utf-8")
+    ).decode("ascii")
+    calls: list[list[str]] = []
+
+    def runner(arguments: list[str]) -> str:
+        calls.append(arguments)
+        target = arguments[2]
+        if target.endswith("pulls?state=open&per_page=100"):
+            return (
+                f"1112\t{'d' * 40}\tforeign/operator-ecosystem-redundancy-v1-t065"
+                f"\t{plan['registry']['commit']}\tmain"
+            )
+        if target.endswith("pulls/1112/files?per_page=100"):
+            return plan["target_path"]
+        if target.endswith(f"contents/{plan['target_path']}?ref={'d' * 40}"):
+            return json.dumps({"content": encoded})
+        raise AssertionError(arguments)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publication_preview(
+            registry,
+            store,
+            plan_path=plan_path,
+            github_repository="heimgewebe/bureau",
+            open_pr_runner=runner,
+        )
+
+    assert caught.value.code == "registry_pr_collision"
+    assert caught.value.publication_phase == "before_workspace"
+    assert caught.value.effect_started is False
+    assert caught.value.ambiguity is False
+    assert caught.value.details["observation_phase"] == "pre_lease"
+    assert caught.value.details["collisions"][0]["pr_number"] == 1112
+    assert caught.value.details["semantic_similarity_consulted"] is False
+    assert all(command[:2] != ["git", "push"] for command in calls)
+    assert all(command[:3] != ["gh", "pr", "create"] for command in calls)

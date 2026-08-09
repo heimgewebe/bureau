@@ -1231,6 +1231,92 @@ def test_task_revision_rejects_candidate_bound_to_another_task(registry_factory,
     assert not (tmp_path / "wrong-target.json").exists()
 
 
+def test_task_revision_ignores_terminal_candidate_bound_to_same_task(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    prior = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:terminal-prior-revision",
+        title="Prior completed revision candidate",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:terminal-prior",
+        source_sha256="7" * 64,
+        desired_outcome="Represent an already handled revision request",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title="Prior completed revision candidate",
+        source="operator-intake-test",
+        candidate_id=prior["candidate_id"],
+        supersedes_event_id=prior["event_id"],
+        status="promoted",
+        promotion_required=False,
+        note="Already handled; must not block later reviewed revisions.",
+    )
+
+    plan_path, current, _ = _revision_proposal(
+        registry,
+        store,
+        tmp_path,
+        task_id=task_id,
+        key="source:revision-after-terminal-candidate",
+    )
+
+    plan = json.loads(plan_path.read_text())
+    assert plan["candidate"]["candidate_id"] == current["candidate_id"]
+    assert plan["task_spec"]["operation"] == "revise"
+    assert not any(
+        finding.get("kind") == "candidate-task-id"
+        and finding.get("candidate_id") == prior["candidate_id"]
+        for finding in plan["assessment"]["exact_duplicates"]
+    )
+
+
+def test_task_revision_still_rejects_other_active_candidate_for_same_task(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    prior = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:active-prior-revision",
+        title="Competing active revision candidate",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:active-prior",
+        source_sha256="6" * 64,
+        desired_outcome="Keep this competing revision request open",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        _revision_proposal(
+            registry,
+            store,
+            tmp_path,
+            task_id=task_id,
+            key="source:revision-with-active-competitor",
+        )
+
+    assert caught.value.code == "exact-duplicate"
+    assert any(
+        finding.get("kind") == "candidate-task-id"
+        and finding.get("candidate_id") == prior["candidate_id"]
+        for finding in caught.value.details["findings"]
+    )
+
 def test_task_revision_publication_advances_and_replays_without_receipt(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

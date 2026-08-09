@@ -22,7 +22,7 @@ jobs:
           python-version: "3.12"
       - name: Verify bootstrap parent
         env:
-          EXPECTED_PARENT: dc1c0ef0f5e3c8b315b6ba1bbda48884c608f75d
+          EXPECTED_PARENT: b56206be51088d1473abe02d9991816236d4b14f
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD^)" = "${EXPECTED_PARENT}"
@@ -45,7 +45,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/pr1814-review-fix2.yml .github/pr1814_review_fix2.py .github/pr1814_fix_anchor.py
+          git rm -f .github/workflows/pr1814-review-fix2.yml .github/pr1814_review_fix2.py .github/pr1814_fix_anchor.py
           git add src/bureau/v2.py tests/test_v2.py
           git diff --cached --quiet && { echo 'no patch produced'; exit 1; }
           git commit -m 'fix(bureau): require lifecycle verification evidence'

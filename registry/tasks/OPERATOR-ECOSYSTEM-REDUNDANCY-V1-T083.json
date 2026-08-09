@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Grabowski-Verbraucher akzeptiert ausschließlich schema- und digest-validierte `reposkop_shadow_value_assessment`-v1-Artefakte und bindet Assessment-, Shadow-Transition- sowie relevante Usage-/Outcome-Receipts revisions- und zweckgebunden zusammen.",
+      "id": "shadow-value-consumer-bound"
+    },
+    {
+      "assertion": "Materialität, Recovery-Verbesserung und verhinderte Wrong-Checkout-Wirkung werden ausschließlich aus Grabowski-eigener Betriebs-/Outcome-Evidenz abgeleitet. Fehlt diese Evidenz, bleibt der jeweilige Wert explizit unbekannt; Reposkop selbst wird dafür nicht zur Autorität erklärt.",
+      "id": "consumer-materiality-owned"
+    },
+    {
+      "assertion": "Reale Consumer-Beobachtungen werden in einem expliziten Zeit-/Mengenfenster mit Gesamtzählern, begrenzten Stichproben und Trunkierungsmarkern aggregiert. Synthetische Fault-Injection-Fälle bleiben separat gekennzeichnet und zählen nicht als reale Consumer-Evidenz.",
+      "id": "real-sample-bounded"
+    },
+    {
+      "assertion": "Vor einer Retention-Aussage wird ein deterministischer Suffizienz- und Entscheidungsvertrag definiert, der Mindestmenge/Beobachtungsfenster, Umgang mit `inconclusive`/fehlender Materialität und die Ergebnisse `retain`, `migrate`, `retire` oder `insufficient_evidence` festlegt; bei nicht erfüllter Suffizienz wird keine stärkere Aussage erzeugt.",
+      "id": "retention-contract-predeclared"
+    },
+    {
+      "assertion": "Ein maschinenlesbarer Report trennt mindestens `unique_identity_signal`, `baseline_visible_change`, `no_identity_break` und `inconclusive` und zeigt separat, welche Fälle nach Consumer-Evidenz materiell waren, Recovery verbessert oder eine falsche Checkout-Wirkung verhindert haben.",
+      "id": "differential-outcome-summary"
+    },
+    {
+      "assertion": "Die Integration erweitert Reposkop nicht um Writer-Pfadpolitik, Effektfreigabe, Task-/Lease-/PR-Truth, Deployment-Autorität, Remote-Freshness oder globale Discovery; diese Nicht-Claims sind durch Tests und Dokumentation geschützt.",
+      "id": "authority-boundary-preserved"
+    },
+    {
+      "assertion": "Tests decken mindestens einzigartiges aber immaterielles Signal, einzigartiges materielles Signal, baseline-sichtbares materielles Signal, keinen Identity-Bruch, inconclusive/fehlende Consumer-Evidenz sowie manipulierte oder unpassende Digests fail-closed ab.",
+      "id": "regression-and-falsification-tests"
+    },
+    {
+      "assertion": "Die Verbraucherlogik ist mindestens an Reposkop-Merge `4594d2bd6b82aed87aff5b6dc18656e2ca61328c` / PR #99 und dessen `reposkop_shadow_value_assessment`-v1-Vertrag gebunden; spätere inkompatible Artefakte werden nicht stillschweigend akzeptiert.",
+      "id": "reposkop-source-bound"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowski soll echte, begrenzte Reposkop-Shadow-Value-Artefakte an der Verbrauchergrenze auswerten und mit eigener Betriebs-Evidenz zu Materialität, Recovery-Verbesserung und verhinderter Wrong-Checkout-Wirkung verbinden. Daraus entsteht ein vorab definierter, maschinenlesbarer Retention-Entscheidungsvertrag für Reposkop: eigenständig behalten, als kleine Beobachtungsbibliothek in Grabowski migrieren, stilllegen oder bei unzureichender Evidenz ausdrücklich offenlassen. Reposkop erhält dabei keine zusätzliche Effekt-, Task-, Lease-, PR-, Deployment- oder Remote-Freshness-Autorität.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T083",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "bureau_root_fix_merge": "db3661ad3c0e829de091f6742a2316052d77d26a",
+    "bureau_root_fix_pr": 1838,
+    "bureau_runtime_source_commit": "087d066e9a9ac90d5ead00e835a7ebebaccee1f5",
+    "does_not_establish": [
+      "current_real_reposkop_materiality",
+      "standalone_retention",
+      "claim_authority",
+      "merge_readiness",
+      "runtime_authority"
+    ],
+    "reason": "Reposkop PR #99 schließt die lokale Differential-Messlücke, belegt aber absichtlich noch keinen realen Betriebsnutzen. Dieser gehört an die Grabowski-Verbrauchergrenze.",
+    "reposkop_merge_commit": "4594d2bd6b82aed87aff5b6dc18656e2ca61328c",
+    "reposkop_source_pr": 99,
+    "source": "chatgpt-reposkop-shadow-value-followup-20260809",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-49b32f771d4c509ba417da6a",
+      "event_id": 5074,
+      "event_created_at": "2026-08-09T19:00:23.148377Z",
+      "request_sha256": "816b8e035d9730904c3bd67ee4d28bc976775e2719ecb5caad8c0d61f1a0ab2f",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "heimgewebe/reposkop PR #99 merge 4594d2bd6b82aed87aff5b6dc18656e2ca61328c",
+        "observed_at": "2026-08-09T19:00:23.122064Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 83
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Reposkop-Realnutzen im Grabowski-Verbraucher belegen"
+}

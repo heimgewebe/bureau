@@ -872,7 +872,7 @@ def _candidate_assess(
         other_record = other["record"]
         other_context = _operator_context(other_record)
         if (
-            other_record.get("status") in ACTIVE_LIVE_STATUSES
+            other_record.get("status") not in {"closed", "promoted", "dropped"}
             and record.get("task_id")
             and other_record.get("task_id") == record.get("task_id")
         ):

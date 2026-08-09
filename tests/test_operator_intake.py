@@ -1317,6 +1317,56 @@ def test_task_revision_still_rejects_other_active_candidate_for_same_task(
         for finding in caught.value.details["findings"]
     )
 
+
+def test_task_revision_still_rejects_paused_candidate_for_same_task(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    prior = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:paused-prior-revision",
+        title="Paused competing revision candidate",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:paused-prior",
+        source_sha256="5" * 64,
+        desired_outcome="Keep this revision request on hold without terminating it",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title="Paused competing revision candidate",
+        source="operator-intake-test",
+        candidate_id=prior["candidate_id"],
+        supersedes_event_id=prior["event_id"],
+        status="paused",
+        promotion_required=True,
+        note="Paused is non-terminal and must continue to block competing revisions.",
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        _revision_proposal(
+            registry,
+            store,
+            tmp_path,
+            task_id=task_id,
+            key="source:revision-with-paused-competitor",
+        )
+
+    assert caught.value.code == "exact-duplicate"
+    assert any(
+        finding.get("kind") == "candidate-task-id"
+        and finding.get("candidate_id") == prior["candidate_id"]
+        for finding in caught.value.details["findings"]
+    )
+
+
 def test_task_revision_publication_advances_and_replays_without_receipt(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

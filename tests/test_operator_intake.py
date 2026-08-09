@@ -2365,6 +2365,8 @@ class LocalGitPublisher(SubprocessTaskPublisher):
             "schema_version": 1,
             "kind": "bureau_registry_open_pr_identity_observation",
             "repository": repository,
+            "canonical_repository": repository,
+            "repository_id": 1282253578,
             "checked_base_sha": plan["registry"]["commit"],
             "observed_at_unix": self.registry_open_pr_observation_calls,
             "complete": True,
@@ -3955,6 +3957,8 @@ def _t026_foreign_open_pr(plan: dict, *, number: int = 1112) -> dict:
         "number": number,
         "head_sha": "d" * 40,
         "head_ref_name": "foreign/operator-ecosystem-redundancy-v1-t065",
+        "head_repository_id": 2282253578,
+        "head_repository": "foreign/bureau",
         "base_sha": plan["registry"]["commit"],
         "base_ref_name": "main",
         "task_paths": [plan["target_path"]],
@@ -4112,14 +4116,18 @@ def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
     def runner(arguments: list[str]) -> str:
         calls.append(arguments)
         target = arguments[2]
+        if target == "repos/heimgewebe/bureau":
+            return "1282253578\theimgewebe/bureau"
         if target.endswith("pulls?state=open&per_page=100"):
             return (
                 f"1112\t{'d' * 40}\tforeign/operator-ecosystem-redundancy-v1-t065"
-                f"\t{plan['registry']['commit']}\tmain"
+                f"\t2282253578\tforeign/bureau\t{plan['registry']['commit']}\tmain"
             )
         if target.endswith("pulls/1112/files?per_page=100"):
             return plan["target_path"]
-        if target.endswith(f"contents/{plan['target_path']}?ref={'d' * 40}"):
+        if target.endswith(
+            f"repos/foreign/bureau/contents/{plan['target_path']}?ref={'d' * 40}"
+        ):
             return json.dumps({"content": encoded})
         raise AssertionError(arguments)
 

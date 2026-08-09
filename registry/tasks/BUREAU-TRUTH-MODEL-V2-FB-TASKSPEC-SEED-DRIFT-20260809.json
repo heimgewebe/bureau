@@ -4,7 +4,7 @@
   "initiative": "BUREAU-TRUTH-MODEL-V2",
   "title": "TaskSpec-Neuregistrierung von legitimer StateStore-Drift entkoppeln und Runtime konvergieren",
   "goal": "Den belegten Bootstrap-Blocker beseitigen, bei dem eine legitime neuere StateStore-TaskSpec-Revision von AUDIO-CONTROL-PLANE-V1-T016 jede fremde reviewed Task-Neuregistrierung blockiert. Der bereits geprüfte Root-Fix aus Bureau PR #1836 trennt dafür das lokale Säen fehlender Legacy-TaskSpecs von der weiterhin strikten expliziten Git-StateStore-Konvergenzprüfung. Nach dem eigenständig reviewten Merge dieses Root-Fixes darf die immutable Bureau-Runtime höchstens zweimal über jeweils frisch beobachtete, targetgebundene Break-Glass-Intents konvergiert werden: zuerst auf einen main-Stand, der diesen Task und den Root-Fix enthält, danach auf den main-Stand nach erfolgreicher Registrierung und Merge von OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T083. Es gibt keine Rückschreibung älterer Git-Projektionen über neuere StateStore-Revisionen, keinen Direct-SQL-Bypass und keine Abschwächung von Queue-, Claim-, Lease- oder Registry-Gates.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0
@@ -121,6 +121,13 @@
       "einen künftigen Runtime-target_sha256 vor frischem observe",
       "globale Git-StateStore-Gleichheit aller historischen TaskSpecs",
       "Berechtigung zur Mutation fremder Arbeit"
-    ]
+    ],
+    "superseded_by": "BUREAU-TRUTH-MODEL-V2-T029",
+    "supersession": {
+      "reason": "Actual root fix merged as PR #1838 via merge commit db3661ad3c0e829de091f6742a2316052d77d26a; this Git-only bootstrap task remained bound to superseded PR #1836 and never became an authoritative StateStore TaskSpec. T029 replaces its runtime authority with a generic per-execution target-bound contract.",
+      "root_fix_pr": 1838,
+      "root_fix_merge_commit": "db3661ad3c0e829de091f6742a2316052d77d26a",
+      "state_store_baseline": "absent-before-supersession"
+    }
   }
 }

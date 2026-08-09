@@ -1,0 +1,69 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The drift is demonstrated against current canonical Registry and runtime state.",
+      "id": "registry-reconciliation-1"
+    },
+    {
+      "assertion": "The minimal reconciliation preserves unrelated queue and task semantics.",
+      "id": "registry-reconciliation-2"
+    },
+    {
+      "assertion": "Registry validation and lifecycle readback pass after the change.",
+      "id": "registry-reconciliation-3"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Reconcile one current Registry drift without rewriting historical evidence or weakening fail-closed lifecycle checks.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-REGISTRYRECONCILIATION-B08953371E",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "registry-reconciliation",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "b08953371e213b4f42c8abfa0fd7046ce9d1ab8873f2b90be3b295c1d31dd27e",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "6a994ca242b4f1bbf71606ede342c51a3bfa814875902addcefb44e19133ebbb",
+      "schema_version": 1,
+      "scope_path": "registry",
+      "time_bucket": "20674"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 904
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Reconcile one Bureau Registry drift"
+}

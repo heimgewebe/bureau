@@ -2312,7 +2312,7 @@ def _closure_bridge_contract_applies(
     return (
         task.id in selected_task_ids
         and state == "planned"
-        and initiative.state == "completed"
+        and initiative.state in {"completion-ready", "completed"}
         and initiative.commitment == "completed"
         and task.mode == "interactive-agent"
         and task.policy == "review-before-effect"
@@ -7938,11 +7938,11 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
     operational_registry, task_authority, _ = authoritative_task_registry(registry, store)
     changed: list[dict[str, Any]] = []
     with store.immediate() as connection:
+        try:
+            current_projection = task_specs.current_projection(connection)
+        except task_specs.TaskSpecError as exc:
+            raise legacy.StateError(str(exc)) from exc
         if task_authority.get("kind") == "bureau-state-store-task-specs":
-            try:
-                current_projection = task_specs.current_projection(connection)
-            except task_specs.TaskSpecError as exc:
-                raise legacy.StateError(str(exc)) from exc
             if (
                 task_specs.projection_root(current_projection)
                 != task_authority.get("task_spec_root_sha256")
@@ -7950,6 +7950,17 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
                 raise legacy.StateError(
                     "TaskSpec projection changed during explicit closure"
                 )
+        elif current_projection["tasks"]:
+            raise legacy.StateError(
+                "TaskSpec projection changed during explicit closure"
+            )
+        elif (
+            _legacy_git_task_projection_sha256(Registry.load(registry.root))
+            != task_authority.get("legacy_git_task_projection_sha256")
+        ):
+            raise legacy.StateError(
+                "legacy Git task projection changed during explicit closure"
+            )
 
         fresh_initiative_registry, _ = _state_store_initiative_registry(
             registry, store, connection=connection

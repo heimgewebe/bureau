@@ -954,6 +954,58 @@ def test_close_ready_revalidates_tasks_inside_completion_transaction(
     assert row["state"] == "completion-ready"
 
 
+def test_close_ready_rejects_legacy_git_verified_to_planned_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    preliminary = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+        }
+    }
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+
+    reconciled = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert reconciled["changed"][0]["to_state"] == "completion-ready"
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+
+    original_immediate = store.immediate
+    injected = False
+
+    @contextmanager
+    def reopen_git_task_before_close_transaction():
+        nonlocal injected
+        if not injected:
+            injected = True
+            reopened = json.loads(task_path.read_text())
+            reopened["state"] = "planned"
+            reopened.get("metadata", {}).pop("verification", None)
+            task_path.write_text(json.dumps(reopened))
+        with original_immediate() as connection:
+            yield connection
+
+    monkeypatch.setattr(store, "immediate", reopen_git_task_before_close_transaction)
+    with pytest.raises(StateError, match="legacy Git task projection changed"):
+        close_ready_initiatives(registry, store)
+
+    assert initiative_path.read_bytes() == initiative_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "completion-ready"
+
+
 def test_completed_lifecycle_accepts_mixed_terminal_task_states(
     registry_factory, tmp_path, monkeypatch
 ):

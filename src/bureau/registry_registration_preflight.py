@@ -410,7 +410,9 @@ def _github_open_pr_identity_listing(
         raw = run([
             "gh", "api", f"repos/{repository}/pulls?state=open&per_page=100",
             "--paginate", "--jq",
-            ".[] | [.number, .head.sha, .head.ref, .base.sha, .base.ref] | @tsv",
+            ".[] | select(.base.ref == \"main\") "
+            "| [.number, .head.sha, .head.ref, (.head.repo.full_name // \"\"), "
+            ".base.sha, .base.ref] | @tsv",
         ])
     except Exception as exc:
         raise RegistrationPreflightError("cannot read complete open PR identity listing") from exc
@@ -418,7 +420,7 @@ def _github_open_pr_identity_listing(
     seen_numbers: set[int] = set()
     for line in raw.splitlines():
         parts = line.split("\t")
-        if len(parts) != 5:
+        if len(parts) != 6:
             raise RegistrationPreflightError("cannot parse paginated open PR identity listing")
         try:
             number = int(parts[0])
@@ -430,14 +432,23 @@ def _github_open_pr_identity_listing(
             )
         seen_numbers.add(number)
         head_ref_name = parts[2].strip()
-        base_ref_name = parts[4].strip()
+        head_repository_raw = parts[3].strip()
+        head_repository = (
+            validate_github_repository_slug(head_repository_raw)
+            if head_repository_raw
+            else None
+        )
+        base_ref_name = parts[5].strip()
         if not head_ref_name or not base_ref_name:
             raise RegistrationPreflightError("open PR listing is missing head/base ref identity")
+        if base_ref_name != "main":
+            continue
         listed.append({
             "number": number,
             "head_sha": validate_sha(parts[1], field="open_pr_head_sha"),
             "head_ref_name": head_ref_name,
-            "base_sha": validate_sha(parts[3], field="open_pr_base_sha"),
+            "head_repository": head_repository,
+            "base_sha": validate_sha(parts[4], field="open_pr_base_sha"),
             "base_ref_name": base_ref_name,
         })
     return sorted(listed, key=lambda item: int(item["number"]))
@@ -461,6 +472,8 @@ def github_open_pr_identity_observation(
         number = int(identity["number"])
         if number == current_pr_number:
             continue
+        if identity["base_ref_name"] != "main":
+            continue
         try:
             files_raw = run([
                 "gh", "api", f"repos/{repository}/pulls/{number}/files?per_page=100",
@@ -477,8 +490,15 @@ def github_open_pr_identity_observation(
         task_ids: list[str] = []
         for path in task_paths:
             try:
+                head_repository = identity.get("head_repository")
+                if not head_repository:
+                    raise RegistrationPreflightError(
+                        f"open PR #{number} is missing head repository identity"
+                    )
                 content_raw = run([
-                    "gh", "api", f"repos/{repository}/contents/{path}?ref={identity['head_sha']}"
+                    "gh",
+                    "api",
+                    f"repos/{head_repository}/contents/{path}?ref={identity['head_sha']}",
                 ])
                 content = json.loads(content_raw)
             except Exception as exc:
@@ -528,10 +548,15 @@ def exact_open_pr_identity_collisions(
     task_id: str,
     target_path: str,
     excluded_head_ref: str | None = None,
+    excluded_head_repository: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return only exact task-id/path collisions; semantic similarity is not consulted."""
     task_id = validate_task_id(task_id)
     target_path = validate_task_path(task_id, target_path)
+    if excluded_head_repository is not None:
+        excluded_head_repository = validate_github_repository_slug(
+            excluded_head_repository
+        )
     if (
         not isinstance(observation, dict)
         or observation.get("kind") != "bureau_registry_open_pr_identity_observation"
@@ -547,7 +572,14 @@ def exact_open_pr_identity_collisions(
             )
         if pr.get("base_ref_name") != "main":
             continue
-        if excluded_head_ref and pr.get("head_ref_name") == excluded_head_ref:
+        if (
+            excluded_head_ref
+            and excluded_head_repository
+            and pr.get("head_ref_name") == excluded_head_ref
+            and isinstance(pr.get("head_repository"), str)
+            and pr["head_repository"].casefold()
+            == excluded_head_repository.casefold()
+        ):
             continue
         reasons: list[str] = []
         if target_path in pr.get("task_paths", []):
@@ -559,6 +591,7 @@ def exact_open_pr_identity_collisions(
                 "pr_number": pr.get("number"),
                 "head_sha": pr.get("head_sha"),
                 "head_ref_name": pr.get("head_ref_name"),
+                "head_repository": pr.get("head_repository"),
                 "base_sha": pr.get("base_sha"),
                 "base_ref_name": pr.get("base_ref_name"),
                 "task_paths": list(pr.get("task_paths", [])),

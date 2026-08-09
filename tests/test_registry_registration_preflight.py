@@ -239,10 +239,12 @@ def test_t026_open_pr_identity_observation_is_stable_revision_and_time_bound():
         calls.append(arguments)
         target = arguments[2]
         if target.endswith("pulls?state=open&per_page=100"):
-            return f"11\t{HEAD}\tforeign/task\t{SHA_A}\tmain"
+            return f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork\t{SHA_A}\tmain"
         if target.endswith("pulls/11/files?per_page=100"):
             return "README.md\nregistry/tasks/EXAMPLE-V1-T002.json"
-        if target.endswith(f"contents/registry/tasks/EXAMPLE-V1-T002.json?ref={HEAD}"):
+        if target.endswith(
+            f"repos/heimgewebe/bureau-fork/contents/registry/tasks/EXAMPLE-V1-T002.json?ref={HEAD}"
+        ):
             return json.dumps({"content": encoded})
         raise AssertionError(arguments)
 
@@ -258,6 +260,7 @@ def test_t026_open_pr_identity_observation_is_stable_revision_and_time_bound():
     assert len(observation["observation_sha256"]) == 64
     assert observation["open_prs"][0]["number"] == 11
     assert observation["open_prs"][0]["base_ref_name"] == "main"
+    assert observation["open_prs"][0]["head_repository"] == "heimgewebe/bureau-fork"
     assert observation["open_prs"][0]["task_ids"] == ["EXAMPLE-V1-T002"]
     listing_calls = [
         call for call in calls if call[2].endswith("pulls?state=open&per_page=100")
@@ -275,7 +278,7 @@ def test_t026_open_pr_identity_observation_fails_closed_on_relist_change():
         if target.endswith("pulls?state=open&per_page=100"):
             listing_reads += 1
             return (
-                f"11\t{HEAD}\tforeign/task\t{SHA_A}\tmain"
+                f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork\t{SHA_A}\tmain"
                 if listing_reads == 1
                 else ""
             )
@@ -333,10 +336,12 @@ def test_t026_open_pr_identity_observation_fails_closed_on_unreadable_task_ident
     def runner(arguments: list[str]) -> str:
         target = arguments[2]
         if target.endswith("pulls?state=open&per_page=100"):
-            return f"11\t{HEAD}\tforeign/task\t{SHA_A}\tmain"
+            return f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork\t{SHA_A}\tmain"
         if target.endswith("pulls/11/files?per_page=100"):
             return "registry/tasks/EXAMPLE-V1-T002.json"
-        if target.endswith(f"contents/registry/tasks/EXAMPLE-V1-T002.json?ref={HEAD}"):
+        if target.endswith(
+            f"repos/heimgewebe/bureau-fork/contents/registry/tasks/EXAMPLE-V1-T002.json?ref={HEAD}"
+        ):
             return json.dumps({"content": "not-base64"})
         raise AssertionError(arguments)
 
@@ -344,6 +349,70 @@ def test_t026_open_pr_identity_observation_fails_closed_on_unreadable_task_ident
         github_open_pr_identity_observation(
             "heimgewebe/bureau", checked_base_sha=SHA_A, runner=runner
         )
+
+def test_t026_self_branch_exclusion_requires_same_head_repository():
+    target_path = "registry/tasks/EXAMPLE-V1-T001.json"
+    branch = "operator/register-example-v1-t001-deadbeef00"
+    observation = {
+        "kind": "bureau_registry_open_pr_identity_observation",
+        "complete": True,
+        "open_prs": [
+            {
+                "number": 11,
+                "head_sha": HEAD,
+                "head_ref_name": branch,
+                "head_repository": "foreign/bureau",
+                "base_sha": SHA_A,
+                "base_ref_name": "main",
+                "task_paths": [target_path],
+                "task_ids": ["EXAMPLE-V1-T001"],
+                "tasks": [task("EXAMPLE-V1-T001")],
+            }
+        ],
+    }
+    collision = exact_open_pr_identity_collisions(
+        observation,
+        task_id="EXAMPLE-V1-T001",
+        target_path=target_path,
+        excluded_head_ref=branch,
+        excluded_head_repository="heimgewebe/bureau",
+    )
+    assert collision[0]["pr_number"] == 11
+    assert collision[0]["head_repository"] == "foreign/bureau"
+
+    observation["open_prs"][0]["head_repository"] = "heimgewebe/bureau"
+    assert exact_open_pr_identity_collisions(
+        observation,
+        task_id="EXAMPLE-V1-T001",
+        target_path=target_path,
+        excluded_head_ref=branch,
+        excluded_head_repository="heimgewebe/bureau",
+    ) == []
+
+
+def test_t026_non_main_prs_are_filtered_before_task_identity_reads():
+    calls: list[list[str]] = []
+
+    def runner(arguments: list[str]) -> str:
+        calls.append(arguments)
+        target = arguments[2]
+        if target.endswith("pulls?state=open&per_page=100"):
+            return (
+                f"11\t{HEAD}\tforeign/task\theimgewebe/bureau-fork"
+                f"\t{SHA_A}\trelease"
+            )
+        raise AssertionError(arguments)
+
+    observation = github_open_pr_identity_observation(
+        "heimgewebe/bureau",
+        checked_base_sha=SHA_A,
+        runner=runner,
+        observed_at_unix=123456,
+    )
+    assert observation["open_prs"] == []
+    assert len(calls) == 2
+    assert all(call[2].endswith("pulls?state=open&per_page=100") for call in calls)
+
 
 def _git(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()

@@ -4115,11 +4115,13 @@ def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
         if target.endswith("pulls?state=open&per_page=100"):
             return (
                 f"1112\t{'d' * 40}\tforeign/operator-ecosystem-redundancy-v1-t065"
-                f"\t{plan['registry']['commit']}\tmain"
+                f"\tforeign/bureau\t{plan['registry']['commit']}\tmain"
             )
         if target.endswith("pulls/1112/files?per_page=100"):
             return plan["target_path"]
-        if target.endswith(f"contents/{plan['target_path']}?ref={'d' * 40}"):
+        if target.endswith(
+            f"repos/foreign/bureau/contents/{plan['target_path']}?ref={'d' * 40}"
+        ):
             return json.dumps({"content": encoded})
         raise AssertionError(arguments)
 

@@ -2183,6 +2183,7 @@ def _require_no_registry_pr_collision_observation(
             task_id=str(plan["task_id"]),
             target_path=str(plan["target_path"]),
             excluded_head_ref=branch,
+            excluded_head_repository=repository,
         )
     except Exception as exc:
         raise OperatorIntakeError(

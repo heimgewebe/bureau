@@ -393,6 +393,52 @@ def import_registry(connection: sqlite3.Connection, registry: Any) -> dict[str, 
     return {"imported": imported, "unchanged": unchanged, "total": len(registry.tasks)}
 
 
+def seed_missing_registry(
+    connection: sqlite3.Connection, registry: Any
+) -> dict[str, Any]:
+    """Import only missing Git TaskSpecs while preserving authoritative StateStore revisions.
+
+    This is the transition helper for registering one reviewed TaskSpec. Existing
+    StateStore specs are validated by ``get_current`` but are never overwritten or
+    rejected merely because the Git projection is older. Use ``import_registry``
+    when an explicit strict Git/StateStore equality check is intended.
+    """
+    imported = 0
+    unchanged = 0
+    divergent_preserved: list[str] = []
+    for task_id in sorted(registry.tasks):
+        task = registry.tasks[task_id]
+        current = get_current(connection, task_id)
+        digest = task_spec_digest(task.raw)
+        if current is not None:
+            if current["spec_sha256"] == digest:
+                unchanged += 1
+            else:
+                divergent_preserved.append(task_id)
+            continue
+        result = put(
+            connection,
+            task.raw,
+            idempotency_key=f"legacy-seed:{task_id}:{digest}",
+            expected_revision=None,
+            source="legacy-git-seed",
+        )
+        if result["changed"]:
+            imported += 1
+        else:
+            unchanged += 1
+    sample_limit = 20
+    return {
+        "imported": imported,
+        "unchanged": unchanged,
+        "divergent_preserved_count": len(divergent_preserved),
+        "divergent_preserved_sample": divergent_preserved[:sample_limit],
+        "divergent_preserved_truncated": len(divergent_preserved) > sample_limit,
+        "total": len(registry.tasks),
+        "mode": "seed-missing-preserve-state-store",
+    }
+
+
 def split_event_rows(
     rows: Iterable[Mapping[str, Any]],
 ) -> tuple[list[Mapping[str, Any]], list[Mapping[str, Any]]]:

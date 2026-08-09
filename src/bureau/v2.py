@@ -3928,6 +3928,7 @@ def _compact_what_now_task_card(
         "blocking_child_task_ids",
         "eligible",
         "claim_eligible",
+        "claim_eligible_with_approval",
         "resource_eligible",
         "soft_reasons",
         "blocker_reasons",
@@ -5553,7 +5554,11 @@ class Dispatcher(legacy.Dispatcher):
         }
 
     def _what_now_task_card(
-        self, item: dict[str, Any], capabilities: set[str]
+        self,
+        item: dict[str, Any],
+        capabilities: set[str],
+        *,
+        runtime_execution_blocked: bool = False,
     ) -> dict[str, Any]:
         task = self.registry.tasks[item["task_id"]]
         initiative = self.registry.initiatives[task.initiative]
@@ -5583,6 +5588,14 @@ class Dispatcher(legacy.Dispatcher):
             for reason in claim_reasons
             if not self._what_now_soft_reason(reason)
         ]
+        review_reason = f"execution is {task.mode}/{task.policy}"
+        claim_eligible_with_approval = (
+            item["effective_state"] == "ready"
+            and task.mode == "interactive-agent"
+            and task.policy == "review-before-effect"
+            and set(claim_reasons) == {review_reason}
+            and not runtime_execution_blocked
+        )
         cross_repository_reasons = item.get("cross_repository_reasons", [])
         if not blocker_reasons and cross_repository_reasons:
             blocker_reasons = ["task has blockers outside selected repository"]
@@ -5615,6 +5628,7 @@ class Dispatcher(legacy.Dispatcher):
             "blocking_child_task_ids": item["blocking_child_task_ids"],
             "eligible": what_now_eligible,
             "claim_eligible": item["eligible"],
+            "claim_eligible_with_approval": claim_eligible_with_approval,
             "resource_eligible": item.get("resource_eligible", what_now_eligible),
             "soft_reasons": soft_reasons,
             "blocker_reasons": blocker_reasons,
@@ -5642,7 +5656,21 @@ class Dispatcher(legacy.Dispatcher):
         frontier = self.frontier(capabilities, resource=resource)
         lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         runtime_truth = frontier_runtime_truth(frontier, lifecycle)
-        cards = [self._what_now_task_card(item, capabilities) for item in frontier]
+        runtime_execution_truth = (
+            self._runtime_execution_truth() if self.enforce_runtime_gate else None
+        )
+        runtime_execution_blocked = bool(
+            runtime_execution_truth is not None
+            and runtime_execution_truth.get("execution_blocked") is True
+        )
+        cards = [
+            self._what_now_task_card(
+                item,
+                capabilities,
+                runtime_execution_blocked=runtime_execution_blocked,
+            )
+            for item in frontier
+        ]
         ranked_eligible = [item for item in cards if item["eligible"]]
         blocked = [item for item in cards if not item["eligible"]]
         blocker_counts: dict[str, int] = {}

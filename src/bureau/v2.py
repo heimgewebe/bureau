@@ -4164,9 +4164,11 @@ class Dispatcher(legacy.Dispatcher):
         overlays: dict[str, str],
         *,
         projection_resource: str | None = None,
+        initiative_registry: Registry | None = None,
     ) -> list[str]:
         result: list[str] = []
-        initiative = self.registry.initiatives[task.initiative]
+        initiative_source = initiative_registry or self.registry
+        initiative = initiative_source.initiatives[task.initiative]
         state = overlays.get(task.id, task.state)
         # registry/queue.json is a compatibility projection only. Claim
         # admission is derived from task state, priority and the live gates below.
@@ -4537,6 +4539,10 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                fresh_source_registry, self.store, connection=connection
+            )
             rejected: list[dict[str, Any]] = []
             selected: legacy.Task | None = None
             approval_evidence: dict[str, Any] | None = None
@@ -4547,7 +4553,14 @@ class Dispatcher(legacy.Dispatcher):
                     continue
                 if not self._task_matches_resource(task, resource):
                     continue
-                reasons = self.reasons(task, capabilities_set, runs, reservations, overlays)
+                reasons = self.reasons(
+                    task,
+                    capabilities_set,
+                    runs,
+                    reservations,
+                    overlays,
+                    initiative_registry=fresh_initiative_registry,
+                )
                 review_reason = f"execution is {task.mode}/{task.policy}"
                 if (
                     review_reason in reasons
@@ -4817,6 +4830,10 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + fresh_open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                fresh_source_registry, self.store, connection=connection
+            )
             attempt = (
                 connection.execute(
                     "SELECT COUNT(*) AS n FROM runs WHERE task_id=?", (task.id,)
@@ -4861,7 +4878,14 @@ class Dispatcher(legacy.Dispatcher):
                         "coordinated claim stale attempt CAS: "
                         f"expected {mutation_contract['attempt']!r}, current {attempt!r}"
                     )
-            reasons = self.reasons(task, set(intent["capabilities"]), runs, reservations, overlays)
+            reasons = self.reasons(
+                task,
+                set(intent["capabilities"]),
+                runs,
+                reservations,
+                overlays,
+                initiative_registry=fresh_initiative_registry,
+            )
             review_reason = f"execution is {task.mode}/{task.policy}"
             reasons = [reason for reason in reasons if reason != review_reason]
             if reasons:
@@ -5096,12 +5120,23 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_initiative_registry, _ = _state_store_initiative_registry(
+                fresh_source_registry, self.store, connection=connection
+            )
             rejected: list[dict[str, Any]] = []
             selected: legacy.Task | None = None
             for task in self._ordered_tasks():
                 if not self._task_matches_resource(task, resource):
                     continue
-                reasons = self.reasons(task, worker_capabilities, runs, reservations, overlays)
+                reasons = self.reasons(
+                    task,
+                    worker_capabilities,
+                    runs,
+                    reservations,
+                    overlays,
+                    initiative_registry=fresh_initiative_registry,
+                )
                 if not reasons:
                     selected = task
                     break

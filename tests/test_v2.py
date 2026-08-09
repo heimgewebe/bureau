@@ -3844,3 +3844,48 @@ def test_coordinated_claim_retry_recovers_after_intent_expiry_and_reports_drift(
     assert drifted["blocking"] is True
     assert drifted["lease"]["status"] == "active-binding-drift"
     assert len(store.list_runs()) == 1
+
+
+def test_claim_next_rechecks_initiative_state_inside_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    store.set_initiative_state("BUR-TEST-001", "completed")
+
+    with pytest.raises(NoEligibleTask, match="initiative state is completed"):
+        dispatcher.claim_next(
+            "stale-initiative-worker",
+            ("repository",),
+            reconcile_first=False,
+        )
+
+    assert store.list_runs() == []
+
+
+def test_commit_claim_intent_rechecks_initiative_state_inside_transaction(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+
+    issued = dispatcher.claim_intent(
+        "stale-initiative-operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="initiative-state-race-regression",
+        idempotency_key="initiative-state-race-regression",
+    )
+    store.set_initiative_state("BUR-TEST-001", "completed")
+
+    with pytest.raises(StateError, match="initiative state is completed"):
+        dispatcher.commit_claim_intent(issued["intent"], None)
+
+    assert store.list_runs() == []

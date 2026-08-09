@@ -279,6 +279,7 @@ class Dispatcher(_BaseDispatcher):
         overlays: dict[str, str],
         *,
         projection_resource: str | None = None,
+        initiative_registry: legacy.Registry | None = None,
     ) -> list[str]:
         reasons = super().reasons(
             task,
@@ -287,6 +288,7 @@ class Dispatcher(_BaseDispatcher):
             reservations,
             overlays,
             projection_resource=projection_resource,
+            initiative_registry=initiative_registry,
         )
         assessment = _broad_scope_assessment(
             task,

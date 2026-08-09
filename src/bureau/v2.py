@@ -6861,10 +6861,12 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
 
 def _structural_task_reconcile_candidates(
     registry: Registry,
+    store: StateStore,
     overlays: dict[str, str],
     task_revisions: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
+    closure_bridges = closure_bridge_task_ids()
     for task in registry.tasks.values():
         revision = task_revisions.get(task.id, {})
         current_revision = revision.get("revision")
@@ -6872,6 +6874,9 @@ def _structural_task_reconcile_candidates(
             continue
         effective_state = overlays.get(task.id, task.state)
         if task.state != "planned" or effective_state != "planned":
+            continue
+        initiative = registry.initiatives[task.initiative]
+        if task.id in closure_bridges and initiative.state == "completed":
             continue
         parent_child = registry.parent_child_projection(task, overlays)
         has_child_gate = (
@@ -6885,6 +6890,14 @@ def _structural_task_reconcile_candidates(
             for dependency in task.depends_on
         }
         if any(state != "verified" for state in dependency_states.values()):
+            continue
+        dependency_verification: dict[str, dict[str, Any]] = {}
+        try:
+            for dependency in task.depends_on:
+                dependency_verification[dependency] = verification_stamp(
+                    registry, store, dependency
+                )
+        except legacy.StateError:
             continue
         if parent_child.blocker_reason is not None:
             continue
@@ -6902,6 +6915,7 @@ def _structural_task_reconcile_candidates(
                 "revision": current_revision,
                 "spec_sha256": revision.get("spec_sha256"),
                 "dependency_states": dependency_states,
+                "dependency_verification": dependency_verification,
                 "child_task_states": child_states,
                 "gate": "schema-and-evidence-deterministic-structural-gates",
             }
@@ -7560,7 +7574,7 @@ def reconcile_initiative_lifecycle(
     with store.connect() as connection:
         overlays = store.overlays(connection, operational_registry)
     task_candidates = _structural_task_reconcile_candidates(
-        operational_registry, overlays, task_revisions
+        operational_registry, store, overlays, task_revisions
     )
     projected_overlays = dict(overlays)
     for candidate in task_candidates:
@@ -7606,7 +7620,7 @@ def reconcile_initiative_lifecycle(
 
             fresh_overlays = store.overlays(connection, operational_registry)
             fresh_task_candidates = _structural_task_reconcile_candidates(
-                operational_registry, fresh_overlays, task_revisions
+                operational_registry, store, fresh_overlays, task_revisions
             )
             if fresh_task_candidates != task_candidates:
                 raise legacy.StateError(

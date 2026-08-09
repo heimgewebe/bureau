@@ -605,9 +605,9 @@ def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
     assert dependency is not None
     dependency_spec = dict(dependency["spec"])
     dependency_spec["state"] = "verified"
-    store.put_task_spec(
+    unbound = store.put_task_spec(
         dependency_spec,
-        idempotency_key="lifecycle-dependency-verified",
+        idempotency_key="lifecycle-dependency-verified-without-evidence",
         expected_revision=dependency["revision"],
         source="test",
     )
@@ -624,6 +624,26 @@ def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
         source="test",
     )
 
+    unbound_preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert unbound_preview["task_candidate_count"] == 0
+
+    dependency = store.task_spec(dependency_id)
+    assert dependency is not None
+    assert dependency["revision"] == unbound["revision"]
+    dependency_spec = dict(dependency["spec"])
+    metadata = dict(dependency_spec.get("metadata", {}))
+    metadata["verification"] = {
+        "task_sha256": task_revision_sha256(dependency_spec),
+        "plan_sha256": plan_sha256(registry, dependency_spec["initiative"]),
+    }
+    dependency_spec["metadata"] = metadata
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="lifecycle-dependency-verification-evidence",
+        expected_revision=dependency["revision"],
+        source="test",
+    )
+
     preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
     assert preview["task_candidate_count"] == 1
     candidate = preview["task_candidates"][0]
@@ -632,6 +652,9 @@ def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
     assert candidate["to_state"] == "ready"
     assert candidate["revision"] == planned["revision"]
     assert candidate["dependency_states"] == {dependency_id: "verified"}
+    assert candidate["dependency_verification"][dependency_id]["task_sha256"] == (
+        task_revision_sha256(dependency_spec)
+    )
 
     applied = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
     assert applied["changed_task_count"] == 1
@@ -644,6 +667,52 @@ def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
         path.name: path.read_bytes()
         for path in (root / "registry/tasks").glob("*.json")
     } == task_files_before
+
+
+def test_lifecycle_reconcile_preserves_planned_closure_bridge_for_completed_initiative(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    dependency_id, task_id = sorted(registry.tasks)
+
+    dependency = store.task_spec(dependency_id)
+    assert dependency is not None
+    dependency_spec = dict(dependency["spec"])
+    dependency_spec["state"] = "verified"
+    metadata = dict(dependency_spec.get("metadata", {}))
+    metadata["verification"] = {
+        "task_sha256": task_revision_sha256(dependency_spec),
+        "plan_sha256": plan_sha256(registry, dependency_spec["initiative"]),
+    }
+    dependency_spec["metadata"] = metadata
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="lifecycle-closure-dependency-verified",
+        expected_revision=dependency["revision"],
+        source="test",
+    )
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = dict(current["spec"])
+    task_spec["state"] = "planned"
+    task_spec["depends_on"] = [dependency_id]
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="lifecycle-closure-bridge-planned",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    store.set_initiative_state(task_spec["initiative"], "completed")
+    monkeypatch.setattr(bureau_v2, "closure_bridge_task_ids", lambda: {task_id})
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 0
+    after = store.task_spec(task_id)
+    assert after is not None
+    assert after["spec"]["state"] == "planned"
 
 
 def test_lifecycle_reconcile_promotes_parent_after_terminal_child_gate(

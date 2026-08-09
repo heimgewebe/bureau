@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "title": "TaskSpec-Neuregistrierung von legitimer StateStore-Drift entkoppeln und Runtime konvergieren",
+  "goal": "Den belegten Bootstrap-Blocker beseitigen, bei dem eine legitime neuere StateStore-TaskSpec-Revision von AUDIO-CONTROL-PLANE-V1-T016 jede fremde reviewed Task-Neuregistrierung blockiert. Der bereits geprüfte Root-Fix aus Bureau PR #1836 trennt dafür das lokale Säen fehlender Legacy-TaskSpecs von der weiterhin strikten expliziten Git-StateStore-Konvergenzprüfung. Nach dem eigenständig reviewten Merge dieses Root-Fixes darf die immutable Bureau-Runtime höchstens zweimal über jeweils frisch beobachtete, targetgebundene Break-Glass-Intents konvergiert werden: zuerst auf einen main-Stand, der diesen Task und den Root-Fix enthält, danach auf den main-Stand nach erfolgreicher Registrierung und Merge von OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T083. Es gibt keine Rückschreibung älterer Git-Projektionen über neuere StateStore-Revisionen, keinen Direct-SQL-Bypass und keine Abschwächung von Queue-, Claim-, Lease- oder Registry-Gates.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Der Nutzer hat die Fortsetzung dieses konkreten Reposkop/Bureau-Fixpfads am 2026-08-09 mit 'weiter @grabowski' ausdrücklich beauftragt. Die Runtime-Freigabe ist auf maximal zwei jeweils frisch beobachtete Bureau-runtime-refresh-Vorgänge begrenzt: (1) nach eigenständig reviewtem Merge von Root-Fix PR #1836 und diesem Task, (2) nach eigenständig reviewtem Merge der daraus wieder ermöglichten T083-Registrierung. Jeder Refresh benötigt einen neuen aktuellen main-Readback, grüne Pflichtchecks, einen neuen exakten target_sha256, eine auf diese Task-ID und dieses Target gebundene Break-Glass-Intention sowie die vom Runtime-Refresh-Vertrag exakt geforderten Live-Leases. Historische T028-Targets oder Freigaben dürfen nicht wiederverwendet werden."
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "t016-divergence-bound",
+      "assertion": "Unmittelbar vor dem ersten Runtime-Effekt werden Git-Projektion und autoritative StateStore-TaskSpec von AUDIO-CONTROL-PLANE-V1-T016 frisch gelesen. Der bekannte Ausgangsfall bleibt revisionsgebunden erklärt: Git projiziert den älteren planned-Stand, während der StateStore eine spätere journalisierte lifecycle-reconcile-Revision mit ready enthält. Keine Ausführung darf diesen neueren StateStore-Stand durch die ältere Git-Projektion ersetzen, zurückstufen oder löschen."
+    },
+    {
+      "id": "root-fix-reviewed-separately",
+      "assertion": "Der Root-Fix aus Bureau PR #1836 wird nur unter eigener Repository-Mutationsautorität fortgeführt. Vor seinem Merge werden exakter Head, Diff-Scope, aktuelle Reviews/Kommentare, normale PR-Checks und der nach jedem main-Vorlauf erzeugte Merge-Group-Commit geprüft. Dieser Task liefert keine pauschale Repository-Merge-Autorität. Der relevante Codepfad muss fehlende Legacy-TaskSpecs säen, bereits vorhandene StateStore-Revisionen bewahren und die explizite strikte import_registry-Prüfung unverändert fail-closed lassen."
+    },
+    {
+      "id": "regression-contract-preserved",
+      "assertion": "Gezielte Tests beweisen mindestens: fehlende Git-TaskSpecs werden idempotent gesät; eine neuere StateStore-Revision bleibt byte- und digestgebunden erhalten; ein neuer reviewed Task wird trotzdem atomar registriert; ein expliziter strikter Git-StateStore-Import meldet dieselbe Divergenz weiterhin als Fehler. Vollsuite, Ruff, Systemkatalog-Boundary, Registry-Check und Merge-Group-Pflichtchecks sind grün."
+    },
+    {
+      "id": "first-refresh-fresh-target",
+      "assertion": "Der erste Runtime-Refresh darf erst nach Merge dieses Tasks und des Root-Fixes erfolgen. runtime-refresh observe muss einen aktuellen main-Commit beobachten, der beide Merge-Commits als Vorfahren enthält, einen eindeutig zugeordneten gemergten PR und erfolgreiche Pflichtchecks ausweisen. prepare-intent verwendet ausschließlich den frisch berechneten target_sha256, diese Task-ID und die Break-Glass-Freigabe; apply verwendet ausschließlich die im Intent genannten exakten Live-Leases. Driftet main oder ein Gate, wird neu beobachtet statt ein alter Intent wiederverwendet."
+    },
+    {
+      "id": "t083-publication-recovered",
+      "assertion": "Nach dem ersten Runtime-Refresh wird der bestehende reviewed T083-Plan zuerst nur per Preview gegen die aktuelle Registry-/StateStore-Wahrheit geprüft. Ist seine Registry- oder Proposal-Bindung veraltet, wird er nicht blind wiederholt, sondern aus candidate-49b32f771d4c509ba417da6a frisch neu vorgeschlagen, exakt reviewed und erneut previewed. Die anschließende Publikation darf nicht mehr wegen einer fremden legitimen TaskSpec-Divergenz scheitern. AUDIO-CONTROL-PLANE-V1-T016 bleibt dabei ready im StateStore."
+    },
+    {
+      "id": "t083-merge-bound",
+      "assertion": "Die daraus publizierte OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T083-Registrierung wird nur bei unverändertem Head, grünen Pflichtchecks, leerem ungelöstem Review-Stand und erfolgreicher Merge-Queue-Revalidierung gemergt. Ein geschlossenes, ersetztes oder anderweitig terminales PR-Ergebnis wird frisch gelesen und nicht als Merge interpretiert."
+    },
+    {
+      "id": "second-refresh-fresh-target",
+      "assertion": "Nur wenn T083 tatsächlich auf main gemergt ist, ist genau ein zweiter Runtime-Refresh zulässig. Auch dieser beginnt mit einem neuen observe und neuem target_sha256; der Ziel-main muss den ersten Runtime-Zielstand und den T083-Merge enthalten. Historische Intents, Targets oder Leases werden nicht recycelt. Danach bindet das Deployment-Manifest den aktuellen immutable Release und Registry-Snapshot an diesen frischen main-Stand."
+    },
+    {
+      "id": "postflight-truth",
+      "assertion": "Im Abschluss sind Deployment-Manifest und immutable Release integritätsgültig, die StateStore-Datenbankintegrität ist ok, AUDIO-CONTROL-PLANE-V1-T016 bleibt in seiner neueren StateStore-Revision erhalten und T083 ist sowohl im autoritativen TaskSpec-State als auch in der Git-Registry vorhanden. Doctor, Queue/Frontier und Runtime-Readbacks werden frisch dokumentiert; bereits vorher bestehende fremde Doctor-Findings dürfen weder verborgen noch als durch diesen Task verursacht ausgegeben werden."
+    },
+    {
+      "id": "effect-boundary",
+      "assertion": "Die Ausführung erzeugt höchstens die zwei beschriebenen Bureau-Runtime-Refresh-Effekte. Keine direkte SQL-Mutation, kein Force-Merge/Admin-Merge, keine Queue-Abkürzung, keine Mutation fremder Worktrees/Leases/Prozesse und keine Wirkung auf andere Dienste oder Repositories ist durch diesen Task autorisiert. Bei unklarem Mutationsergebnis wird zuerst der exakte Runtime-/Intent-/Receipt-Zustand gelesen und nicht unverändert wiederholt."
+    }
+  ],
+  "rollback": {
+    "strategy": "Vor jedem Refresh bleibt der letzte integritätsgültige immutable Bureau-Release die Rückfallkante. Bei fehlgeschlagenem oder unklarem Cutover keine Registry-, Queue- oder StateStore-Historie künstlich zurückschreiben; stattdessen den vorhandenen Runtime-Refresh-Receipt/Status lesen und nur den vertraglich vorgesehenen rollback- bzw. verify-then-retry-Pfad verwenden. Der T016-StateStore-Stand wird niemals auf den älteren Git-Stand zurückgesetzt."
+  },
+  "metadata": {
+    "source": "reposkop-real-utility-followup-taskspec-registration-blocker-20260809",
+    "source_candidate": "candidate-56ad2b65a9bf4ad207360e47",
+    "source_event_id": 5076,
+    "blocked_followup_candidate": "candidate-49b32f771d4c509ba417da6a",
+    "blocked_followup_task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T083",
+    "root_cause": {
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T016",
+      "git_state": "planned",
+      "state_store_revision": 2,
+      "state_store_source": "lifecycle-reconcile",
+      "state_store_state": "ready",
+      "failure": "legacy TaskSpec divergence for AUDIO-CONTROL-PLANE-V1-T016: StateStore differs from Git projection"
+    },
+    "implementation_pr": {
+      "repository": "heimgewebe/bureau",
+      "number": 1836,
+      "reviewed_head": "d0752ec8030d7fb49f81b09313fbd1d44a6330d1",
+      "current_state_at_registration": "closed-unmerged-after-parallel-user-account-close",
+      "validated_merge_group_commit": "415b9ba21b14aaa4fba618b696004e6549ca2d11",
+      "validated_merge_group_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ]
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Der operator-native typed Task-Publikationspfad ist gerade genau durch die zu reparierende globale Legacy-TaskSpec-Divergenz blockiert und meldete vor Wirkung task-spec-state-mutation-failed. Wie im bereits kanonisierten Bootstrap-Präzedenzfall BUREAU-TRUTH-MODEL-V2-T028 wird deshalb ausschließlich diese Taskdatei über den normalen geschützten GitHub-PR-Pfad registriert. Dabei werden weder StateStore noch Queue noch Runtime direkt mutiert.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "runtime mutation before task merge",
+        "queue mutation",
+        "repository merge authority for PR #1836"
+      ]
+    },
+    "does_not_establish": [
+      "dass PR #1836 bereits gemergt ist",
+      "dass T083 bereits registriert oder mergebar ist",
+      "einen künftigen Runtime-target_sha256 vor frischem observe",
+      "globale Git-StateStore-Gleichheit aller historischen TaskSpecs",
+      "Berechtigung zur Mutation fremder Arbeit"
+    ]
+  }
+}

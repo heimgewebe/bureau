@@ -4100,7 +4100,7 @@ def test_t026_toctou_collision_on_second_read_blocks_before_first_remote_effect(
 def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
     registry_factory, tmp_path
 ):
-    root, registry = _committed_registry(registry_factory)
+    _root, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
     plan = _review(plan_path)

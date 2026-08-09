@@ -89,17 +89,19 @@
     ],
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-17e2c565fe2b416323e0c315",
-      "event_id": 1749,
-      "event_created_at": "2026-07-30T18:16:56.755946Z",
-      "request_sha256": "33d7d50eb33ef819368801a91756cfdec25db118fd2ce0d7344500164fde591a",
+      "candidate_id": "candidate-5a070fb0598657d0ddc7cbac",
+      "event_id": 4778,
+      "event_created_at": "2026-08-09T13:10:27.993685Z",
+      "request_sha256": "eeaf4ff975b897d8445fba8301230bbfbdf306d92a451103381d01237eac03db",
       "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "live-repository-audit",
-        "locator": "file:/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T2008.json",
-        "observed_at": "2026-07-30T18:08:08.563191Z",
-        "sha256": "659fbd5fe3eceac329c6188cd624329b76aa1565fba5018d0c8a6b6159f2be3f"
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:abarbeiten:2026-08-09:t019-closeout",
+        "observed_at": "2026-08-09T13:09:00Z",
+        "sha256": null
       },
       "does_not_establish": [
         "queue_truth",
@@ -119,6 +121,73 @@
       "registry_head": "23b193a4ed16c792f4a924a770df6600b901bb63",
       "remove_actions": 6,
       "t018_actions": []
+    },
+    "verification": {
+      "acceptance_evidence": {
+        "apply-rederives-same-scope": "Current apply code re-derives the dry-run from the reviewed plan filter and rejects registry/queue/findings/filter/action drift; covered by queue-reconcile regression tests.",
+        "default-behavior-preserved": "The complete focused queue-reconcile suite is 31/31 green, including unfiltered compatibility behavior.",
+        "explicit-action-filter": "Current code and CLI bind versioned action/finding filters; live finding-code-only plan contains exactly three remove_from_queue actions and zero add actions.",
+        "filter-bound-in-artifact": "Live plan schema 3 binds action_filter schema 1 and action_filter_sha256 7f54509b...; regression tests cover missing, unknown and tampered filters fail-closed.",
+        "full-validation": "PR #1813 exact head 528eaebc... merged as eeac521c... with CodeQL, registry freshness and both validate jobs green; current focused tests are 31/31 green; PR records full 1248 passed + 18 subtests and make validate green.",
+        "no-new-authority": true,
+        "removal-only-live-proof": "Plan 50fb8d64... at exact Bureau main bc337e85... has 3/3 terminal-task-in-queue removals, zero add actions, review pending and was not applied.",
+        "rollback-and-post-gates": "Current regression suite covers rollback, byte stability and post-gate failures without partial queue effect."
+      },
+      "canonical_bureau_run": null,
+      "closeout_mode": "direct-user-authorized-fallback-post-merge-reconciliation",
+      "does_not_establish": [
+        "retroactive Bureau claim or run existence",
+        "application of the live queue-reconcile plan",
+        "future correctness after later repository changes",
+        "permission for broad lifecycle-reconcile side effects"
+      ],
+      "execution_reconciliation": {
+        "bureau_run_created": false,
+        "canonical_pickup_attempted": true,
+        "canonical_pickup_result": "claim refused fail-closed because authoritative task state remained planned",
+        "fallback_authority": "direct user authorization in this conversation",
+        "reason": "Implementation was already merged before this operator turn; lifecycle truth lagged code. Closeout is reconciled from exact merged implementation, CI, current tests and live dry-run without fabricating historical execution.",
+        "retroactive_claim_created": false
+      },
+      "frontier_task_sha256": "cd214dc22a06620e4fd796bb68ab6e751790bbe60b2df51d426d6e71fc67f80f",
+      "implementation": {
+        "base_commit": "764348f8cf79b0e45877c3fc993bceed26064453",
+        "current_main_readback": "bc337e85aa7a48304b286ee384df38b979e6d0a3",
+        "head_commit": "528eaebc52305103289cc7a28d7b52d2204bdab6",
+        "merge_commit": "eeac521c4d97f5f938fadb16ad530b16d98693ea",
+        "merged_at": "2026-08-08T21:40:37Z",
+        "pull_request": 1813,
+        "repository": "heimgewebe/bureau"
+      },
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "schema_version": 1,
+      "source": "merged_pr_and_ci_closeout",
+      "task_file_sha256_before_closeout": "3c24addfba6b39243c6003b5f857a629930d4391a3c824422236555dff4258e8",
+      "task_sha256": "cd214dc22a06620e4fd796bb68ab6e751790bbe60b2df51d426d6e71fc67f80f",
+      "validation": {
+        "focused_current_runtime": "31 passed in tests/test_queue_reconcile.py on 2026-08-09; working tree remained clean",
+        "implementation_head_ci": {
+          "Analyze (actions)": "success",
+          "Analyze (python)": "success",
+          "CodeQL": "success",
+          "registry-registration-preflight/freshness": "success",
+          "validate (3.10)": "success",
+          "validate (3.12)": "success"
+        },
+        "implementation_pr_full_suite": "1248 passed + 18 subtests; make validate green as recorded on PR #1813",
+        "terminal_only_live_plan": {
+          "action_count": 3,
+          "action_filter_sha256": "7f54509bb4799957bdbb4f712ebca4ca7be139235b05463261a97214b465a1c4",
+          "actions_sha256": "faa8ed3583e9d2c7bb8e5b42892ad2be25849764fa2b9c9d5145d54e44c6473f",
+          "add_action_count": 0,
+          "applied": false,
+          "artifact_sha256": "50fb8d644dded254aeaedc90d03cd2dec33e593fd0b54e26af00fe6e68fd55b9",
+          "dry_run_report_sha256": "325014514af4cfa6619eb125abb0fb88e272571f8012e4eedae209f41436854b",
+          "path": "/home/alex/.local/state/bureau/recovery/t019-terminal-only-20260809T1315Z.json",
+          "registry_head": "bc337e85aa7a48304b286ee384df38b979e6d0a3"
+        }
+      },
+      "verified_at": "2026-08-09T13:20:22.829551Z"
     }
   },
   "priority": {
@@ -135,6 +204,6 @@
     "strategy": "Revertiere ausschließlich die Filterparameter, Planartefaktfelder, Apply-Reableitung und zugehörigen Tests. Der bisherige vollständige reviewed Queue-Reconcile-Vertrag bleibt erhalten; kanonische Queue-Dateien und Runtime-Overlays werden nicht rückwirkend umgeschrieben."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Queue-Reconcile-Pläne auf Aktionsklassen begrenzen"
 }

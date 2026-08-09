@@ -11,6 +11,8 @@ from bureau import cli
 from bureau.registry_registration_preflight import (
     RegistrationPreflightError,
     evaluate_registration_preflight,
+    exact_open_pr_identity_collisions,
+    github_open_pr_identity_observation,
     github_open_prs,
     repository_registration_preflight,
     task_path_for_id,
@@ -226,6 +228,122 @@ def test_github_open_pr_provider_is_injectable_and_paginated():
     assert len(paginated_calls) == 2
     assert all("--paginate" in call for call in paginated_calls)
 
+
+
+def test_t026_open_pr_identity_observation_is_stable_revision_and_time_bound():
+    calls: list[list[str]] = []
+    proposed = task("EXAMPLE-V1-T002")
+    encoded = base64.b64encode(json.dumps(proposed).encode("utf-8")).decode("ascii")
+
+    def runner(arguments: list[str]) -> str:
+        calls.append(arguments)
+        target = arguments[2]
+        if target.endswith("pulls?state=open&per_page=100"):
+            return f"11\t{HEAD}\tforeign/task\t{SHA_A}\tmain"
+        if target.endswith("pulls/11/files?per_page=100"):
+            return "README.md\nregistry/tasks/EXAMPLE-V1-T002.json"
+        if target.endswith(f"contents/registry/tasks/EXAMPLE-V1-T002.json?ref={HEAD}"):
+            return json.dumps({"content": encoded})
+        raise AssertionError(arguments)
+
+    observation = github_open_pr_identity_observation(
+        "heimgewebe/bureau",
+        checked_base_sha=SHA_A,
+        runner=runner,
+        observed_at_unix=123456,
+    )
+    assert observation["complete"] is True
+    assert observation["checked_base_sha"] == SHA_A
+    assert observation["observed_at_unix"] == 123456
+    assert len(observation["observation_sha256"]) == 64
+    assert observation["open_prs"][0]["number"] == 11
+    assert observation["open_prs"][0]["base_ref_name"] == "main"
+    assert observation["open_prs"][0]["task_ids"] == ["EXAMPLE-V1-T002"]
+    listing_calls = [
+        call for call in calls if call[2].endswith("pulls?state=open&per_page=100")
+    ]
+    assert len(listing_calls) == 2
+    assert all("--paginate" in call for call in listing_calls)
+
+
+def test_t026_open_pr_identity_observation_fails_closed_on_relist_change():
+    listing_reads = 0
+
+    def runner(arguments: list[str]) -> str:
+        nonlocal listing_reads
+        target = arguments[2]
+        if target.endswith("pulls?state=open&per_page=100"):
+            listing_reads += 1
+            return (
+                f"11\t{HEAD}\tforeign/task\t{SHA_A}\tmain"
+                if listing_reads == 1
+                else ""
+            )
+        if target.endswith("pulls/11/files?per_page=100"):
+            return "README.md"
+        raise AssertionError(arguments)
+
+    with pytest.raises(RegistrationPreflightError, match="changed during observation"):
+        github_open_pr_identity_observation(
+            "heimgewebe/bureau", checked_base_sha=SHA_A, runner=runner
+        )
+
+
+def test_t026_exact_identity_axis_does_not_treat_semantic_similarity_as_collision():
+    observation = {
+        "kind": "bureau_registry_open_pr_identity_observation",
+        "complete": True,
+        "open_prs": [
+            {
+                "number": 11,
+                "head_sha": HEAD,
+                "head_ref_name": "foreign/task",
+                "base_sha": SHA_A,
+                "base_ref_name": "main",
+                "task_paths": ["registry/tasks/EXAMPLE-V1-T002.json"],
+                "task_ids": ["EXAMPLE-V1-T002"],
+                "tasks": [
+                    task(
+                        "EXAMPLE-V1-T002",
+                        title="Registry collision guard",
+                        goal="Prevent parallel task registration collisions",
+                    )
+                ],
+            }
+        ],
+    }
+    assert exact_open_pr_identity_collisions(
+        observation,
+        task_id="EXAMPLE-V1-T001",
+        target_path="registry/tasks/EXAMPLE-V1-T001.json",
+    ) == []
+    observation["open_prs"][0]["task_paths"] = [
+        "registry/tasks/EXAMPLE-V1-T001.json"
+    ]
+    observation["open_prs"][0]["task_ids"] = ["EXAMPLE-V1-T001"]
+    collision = exact_open_pr_identity_collisions(
+        observation,
+        task_id="EXAMPLE-V1-T001",
+        target_path="registry/tasks/EXAMPLE-V1-T001.json",
+    )
+    assert collision[0]["collision_axes"] == ["target_path", "task_id"]
+
+
+def test_t026_open_pr_identity_observation_fails_closed_on_unreadable_task_identity():
+    def runner(arguments: list[str]) -> str:
+        target = arguments[2]
+        if target.endswith("pulls?state=open&per_page=100"):
+            return f"11\t{HEAD}\tforeign/task\t{SHA_A}\tmain"
+        if target.endswith("pulls/11/files?per_page=100"):
+            return "registry/tasks/EXAMPLE-V1-T002.json"
+        if target.endswith(f"contents/registry/tasks/EXAMPLE-V1-T002.json?ref={HEAD}"):
+            return json.dumps({"content": "not-base64"})
+        raise AssertionError(arguments)
+
+    with pytest.raises(RegistrationPreflightError, match="incomplete or invalid"):
+        github_open_pr_identity_observation(
+            "heimgewebe/bureau", checked_base_sha=SHA_A, runner=runner
+        )
 
 def _git(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()

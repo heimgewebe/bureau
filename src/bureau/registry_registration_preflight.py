@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 import subprocess
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -399,6 +400,172 @@ def github_open_prs(
             }
         )
     return sorted(result, key=lambda item: int(item["number"]))
+
+
+def _github_open_pr_identity_listing(
+    repository: str,
+    run: Callable[[list[str]], str],
+) -> list[dict[str, Any]]:
+    try:
+        raw = run([
+            "gh", "api", f"repos/{repository}/pulls?state=open&per_page=100",
+            "--paginate", "--jq",
+            ".[] | [.number, .head.sha, .head.ref, .base.sha, .base.ref] | @tsv",
+        ])
+    except Exception as exc:
+        raise RegistrationPreflightError("cannot read complete open PR identity listing") from exc
+    listed: list[dict[str, Any]] = []
+    seen_numbers: set[int] = set()
+    for line in raw.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 5:
+            raise RegistrationPreflightError("cannot parse paginated open PR identity listing")
+        try:
+            number = int(parts[0])
+        except ValueError as exc:
+            raise RegistrationPreflightError("open PR number is not an integer") from exc
+        if number <= 0 or number in seen_numbers:
+            raise RegistrationPreflightError(
+                "open PR listing contains an invalid or duplicate number"
+            )
+        seen_numbers.add(number)
+        head_ref_name = parts[2].strip()
+        base_ref_name = parts[4].strip()
+        if not head_ref_name or not base_ref_name:
+            raise RegistrationPreflightError("open PR listing is missing head/base ref identity")
+        listed.append({
+            "number": number,
+            "head_sha": validate_sha(parts[1], field="open_pr_head_sha"),
+            "head_ref_name": head_ref_name,
+            "base_sha": validate_sha(parts[3], field="open_pr_base_sha"),
+            "base_ref_name": base_ref_name,
+        })
+    return sorted(listed, key=lambda item: int(item["number"]))
+
+
+def github_open_pr_identity_observation(
+    repository: str,
+    *,
+    checked_base_sha: str,
+    current_pr_number: int | None = None,
+    runner: Callable[[list[str]], str] | None = None,
+    observed_at_unix: int | None = None,
+) -> dict[str, Any]:
+    """Read a stable, revision-bound exact Registry identity view from open GitHub PRs."""
+    repository = validate_github_repository_slug(repository)
+    checked_base_sha = validate_sha(checked_base_sha, field="checked_base_sha")
+    run = runner or _run_text
+    listed_before = _github_open_pr_identity_listing(repository, run)
+    open_prs: list[dict[str, Any]] = []
+    for identity in listed_before:
+        number = int(identity["number"])
+        if number == current_pr_number:
+            continue
+        try:
+            files_raw = run([
+                "gh", "api", f"repos/{repository}/pulls/{number}/files?per_page=100",
+                "--paginate", "--jq", ".[].filename",
+            ])
+        except Exception as exc:
+            raise RegistrationPreflightError(
+                f"cannot read complete file listing for open PR #{number}"
+            ) from exc
+        task_paths = sorted(
+            {path for path in files_raw.splitlines() if _TASK_PATH_RE.fullmatch(path)}
+        )
+        tasks: list[dict[str, Any]] = []
+        task_ids: list[str] = []
+        for path in task_paths:
+            try:
+                content_raw = run([
+                    "gh", "api", f"repos/{repository}/contents/{path}?ref={identity['head_sha']}"
+                ])
+                content = json.loads(content_raw)
+            except Exception as exc:
+                raise RegistrationPreflightError(
+                    f"cannot read exact Registry task identity {path} from open PR #{number}"
+                ) from exc
+            task = _decode_gh_content(content) if isinstance(content, dict) else None
+            if task is None:
+                raise RegistrationPreflightError(
+                    f"open PR #{number} Registry task content is incomplete or invalid at {path}"
+                )
+            task_id = validate_task_id(str(task.get("id", "")))
+            if task_path_for_id(task_id) != path:
+                raise RegistrationPreflightError(
+                    f"open PR #{number} Registry task id/path identity is contradictory at {path}"
+                )
+            tasks.append(task)
+            task_ids.append(task_id)
+        open_prs.append({
+            **identity,
+            "task_paths": task_paths,
+            "task_ids": sorted(set(task_ids)),
+            "tasks": tasks,
+        })
+    listed_after = _github_open_pr_identity_listing(repository, run)
+    if listed_after != listed_before:
+        raise RegistrationPreflightError("open PR identity listing changed during observation")
+    unsigned: dict[str, Any] = {
+        "schema_version": 1,
+        "kind": "bureau_registry_open_pr_identity_observation",
+        "repository": repository,
+        "checked_base_sha": checked_base_sha,
+        "observed_at_unix": int(time.time()) if observed_at_unix is None else int(observed_at_unix),
+        "complete": True,
+        "open_prs": open_prs,
+        "does_not_establish": [
+            "queue_truth", "task_readiness", "claim_or_dispatch_authority",
+            "merge_or_deployment_authority", "semantic_duplicate_identity",
+        ],
+    }
+    return {**unsigned, "observation_sha256": decision_digest(unsigned)}
+
+
+def exact_open_pr_identity_collisions(
+    observation: dict[str, Any],
+    *,
+    task_id: str,
+    target_path: str,
+    excluded_head_ref: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return only exact task-id/path collisions; semantic similarity is not consulted."""
+    task_id = validate_task_id(task_id)
+    target_path = validate_task_path(task_id, target_path)
+    if (
+        not isinstance(observation, dict)
+        or observation.get("kind") != "bureau_registry_open_pr_identity_observation"
+        or observation.get("complete") is not True
+        or not isinstance(observation.get("open_prs"), list)
+    ):
+        raise RegistrationPreflightError("open PR identity observation is incomplete")
+    collisions: list[dict[str, Any]] = []
+    for pr in observation["open_prs"]:
+        if not isinstance(pr, dict):
+            raise RegistrationPreflightError(
+                "open PR identity observation contains invalid entries"
+            )
+        if pr.get("base_ref_name") != "main":
+            continue
+        if excluded_head_ref and pr.get("head_ref_name") == excluded_head_ref:
+            continue
+        reasons: list[str] = []
+        if target_path in pr.get("task_paths", []):
+            reasons.append("target_path")
+        if task_id in pr.get("task_ids", []):
+            reasons.append("task_id")
+        if reasons:
+            collisions.append({
+                "pr_number": pr.get("number"),
+                "head_sha": pr.get("head_sha"),
+                "head_ref_name": pr.get("head_ref_name"),
+                "base_sha": pr.get("base_sha"),
+                "base_ref_name": pr.get("base_ref_name"),
+                "task_paths": list(pr.get("task_paths", [])),
+                "task_ids": list(pr.get("task_ids", [])),
+                "collision_axes": reasons,
+            })
+    return collisions
 
 def repository_registration_preflight(
     root: str | Path,

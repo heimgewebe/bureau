@@ -35,6 +35,10 @@ from .live_register import (
     current_candidate_records,
     live_register_record,
 )
+from .registry_registration_preflight import (
+    exact_open_pr_identity_collisions,
+    github_open_pr_identity_observation,
+)
 from .runtime_identity import bureau_runtime_identity
 from .runtime_refresh import (
     DEFAULT_GRABOWSKI_RESOURCE_DB,
@@ -71,6 +75,50 @@ _AT_FDCWD = -100
 _RENAME_NOREPLACE = 1
 _RENAME_EXCHANGE = 2
 MAX_PROPOSAL_BYTES = 4 * 1024 * 1024
+
+
+def _github_repository_slug(remote: str) -> str:
+    value = remote.strip()
+    prefixes = (
+        "git@github.com:",
+        "ssh://git@github.com/",
+        "https://github.com/",
+    )
+    prefix = next((item for item in prefixes if value.startswith(item)), None)
+    if prefix is None:
+        raise OperatorIntakeError(
+            "github-remote-invalid", "origin remote is not a GitHub repository"
+        )
+    slug = value.removeprefix(prefix).removesuffix("/").removesuffix(".git")
+    parts = slug.split("/")
+    if (
+        len(parts) != 2
+        or any(part in {"", ".", ".."} for part in parts)
+        or any(_GITHUB_SLUG_COMPONENT_RE.fullmatch(part) is None for part in parts)
+    ):
+        raise OperatorIntakeError(
+            "github-remote-invalid", "origin remote is not a GitHub repository"
+        )
+    return "/".join(parts)
+
+
+def _github_repository_for_preview(root: Path) -> str | None:
+    try:
+        process = subprocess.run(
+            ["git", "-C", str(root), "remote", "get-url", "origin"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if process.returncode != 0:
+        return None
+    try:
+        return _github_repository_slug(process.stdout)
+    except OperatorIntakeError:
+        return None
 
 
 def _fsync_directory(path: Path) -> None:
@@ -2118,22 +2166,108 @@ def _validated_proposal(
     return plan, plan_bytes, approval_result
 
 
+
+def _require_no_registry_pr_collision_observation(
+    observe: Callable[[], dict[str, Any]],
+    *,
+    plan: dict[str, Any],
+    branch: str,
+    phase: str,
+    observation_phase: str,
+    repository: str,
+) -> dict[str, Any]:
+    try:
+        observation = observe()
+        collisions = exact_open_pr_identity_collisions(
+            observation,
+            task_id=str(plan["task_id"]),
+            target_path=str(plan["target_path"]),
+            excluded_head_ref=branch,
+        )
+    except Exception as exc:
+        raise OperatorIntakeError(
+            "pre_effect_unknown",
+            "fresh GitHub open-PR identity could not be proven before publication effect",
+            retryable=True,
+            effect_started=False,
+            ambiguity=False,
+            publication_phase=phase,
+            details={
+                "observation_phase": observation_phase,
+                "repository": repository,
+                "task_id": plan["task_id"],
+                "target_path": plan["target_path"],
+                "cause_code": getattr(exc, "code", None),
+                "cause_type": type(exc).__name__,
+                "cause": str(exc)[:2000],
+            },
+        ) from exc
+    if collisions:
+        raise OperatorIntakeError(
+            "registry_pr_collision",
+            "an open GitHub pull request already claims the exact Registry task id "
+            "or target path",
+            retryable=True,
+            effect_started=False,
+            ambiguity=False,
+            publication_phase=phase,
+            details={
+                "observation_phase": observation_phase,
+                "collision_axis": "exact_task_id_or_target_path",
+                "semantic_similarity_consulted": False,
+                "collisions": collisions,
+                "open_pr_observation": observation,
+            },
+        )
+    return observation
+
 def publication_preview(
     registry: Registry,
     store: StateStore,
     *,
     plan_path: str | Path,
+    github_repository: str | None = None,
+    open_pr_runner: Callable[[list[str]], str] | None = None,
 ) -> dict[str, Any]:
     path = Path(plan_path).expanduser().absolute()
     plan, plan_bytes, approval_result = _validated_proposal(registry, store, plan_path=path)
     task_id = str(plan["task_id"])
+    branch = _publication_branch(task_id, str(plan["proposal_sha256"]))
+    repository = github_repository or _github_repository_for_preview(registry.root)
+    if repository is None:
+        open_pr_identity_revalidation: dict[str, Any] = {
+            "status": "not_observed",
+            "observation_phase": "pre_lease",
+            "reason": "origin_not_github",
+            "semantic_similarity_consulted": False,
+            "does_not_establish": ["github_open_pr_absence", "lease_authority"],
+        }
+    else:
+        observation = _require_no_registry_pr_collision_observation(
+            lambda: github_open_pr_identity_observation(
+                repository,
+                checked_base_sha=str(plan["registry"]["commit"]),
+                runner=open_pr_runner,
+            ),
+            plan=plan,
+            branch=branch,
+            phase="before_workspace",
+            observation_phase="pre_lease",
+            repository=repository,
+        )
+        open_pr_identity_revalidation = {
+            "status": "clear",
+            "observation_phase": "pre_lease",
+            "collision_axis": "exact_task_id_or_target_path",
+            "semantic_similarity_consulted": False,
+            "observation": observation,
+        }
     required_keys = sorted(
         [
             f"path:{BUREAU_REPOSITORY_ROOT / plan['target_path']}",
             BUREAU_REGISTRY_PUBLICATION_GATE_KEY,
         ]
     )
-    branch = _publication_branch(task_id, str(plan["proposal_sha256"]))
     return {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "kind": "bureau_task_publication_preview",
@@ -2150,6 +2284,7 @@ def publication_preview(
         "target_path": plan["target_path"],
         "branch": branch,
         "required_resource_keys": required_keys,
+        "open_pr_identity_revalidation": open_pr_identity_revalidation,
         "approval": approval_result,
         "does_not_establish": [
             "lease_ownership",
@@ -2159,7 +2294,6 @@ def publication_preview(
             "merge_readiness",
         ],
     }
-
 
 def _publication_branch(task_id: str, proposal_sha256: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", task_id.casefold()).strip("-")
@@ -2670,6 +2804,42 @@ class SubprocessTaskPublisher:
                 publication_phase=phase,
             )
         return process.stdout.strip()
+
+    def _observe_registry_open_pr_identities(
+        self,
+        *,
+        repository: str,
+        registry: Registry,
+        plan: dict[str, Any],
+    ) -> dict[str, Any]:
+        return github_open_pr_identity_observation(
+            repository,
+            checked_base_sha=str(plan["registry"]["commit"]),
+            runner=lambda arguments: self._run(arguments, cwd=registry.root),
+        )
+
+    def _require_no_registry_pr_collision(
+        self,
+        *,
+        repository: str,
+        registry: Registry,
+        plan: dict[str, Any],
+        branch: str,
+        phase: str,
+        observation_phase: str,
+    ) -> dict[str, Any]:
+        return _require_no_registry_pr_collision_observation(
+            lambda: self._observe_registry_open_pr_identities(
+                repository=repository,
+                registry=registry,
+                plan=plan,
+            ),
+            plan=plan,
+            branch=branch,
+            phase=phase,
+            observation_phase=observation_phase,
+            repository=repository,
+        )
 
     def _git_blob_sha256(self, workspace: Path, object_name: str) -> str:
         """Hash exact Git object bytes without consulting the worktree."""
@@ -3796,28 +3966,7 @@ class SubprocessTaskPublisher:
 
     @staticmethod
     def _github_slug(remote: str) -> str:
-        value = remote.strip()
-        prefixes = (
-            "git@github.com:",
-            "ssh://git@github.com/",
-            "https://github.com/",
-        )
-        prefix = next((item for item in prefixes if value.startswith(item)), None)
-        if prefix is None:
-            raise OperatorIntakeError(
-                "github-remote-invalid", "origin remote is not a GitHub repository"
-            )
-        slug = value.removeprefix(prefix).removesuffix("/").removesuffix(".git")
-        parts = slug.split("/")
-        if (
-            len(parts) != 2
-            or any(part in {"", ".", ".."} for part in parts)
-            or any(_GITHUB_SLUG_COMPONENT_RE.fullmatch(part) is None for part in parts)
-        ):
-            raise OperatorIntakeError(
-                "github-remote-invalid", "origin remote is not a GitHub repository"
-            )
-        return "/".join(parts)
+        return _github_repository_slug(remote)
 
     def publish(
         self,
@@ -3874,6 +4023,14 @@ class SubprocessTaskPublisher:
         assert_plan_unchanged()
         remote = self._run(["git", "-C", str(registry.root), "remote", "get-url", "origin"])
         repository = self._github_slug(remote)
+        pre_workspace_open_pr_observation = self._require_no_registry_pr_collision(
+            repository=repository,
+            registry=registry,
+            plan=plan,
+            branch=branch,
+            phase="before_workspace",
+            observation_phase="pre_workspace",
+        )
         expected_reservation = self._reservation_identity(plan, branch, remote, staging, workspace)
         if final_exists:
             assert marker is not None
@@ -4209,6 +4366,14 @@ class SubprocessTaskPublisher:
                 publication_phase=getattr(self, "_publication_phase", None),
             )
         assert_plan_unchanged()
+        pre_remote_open_pr_observation = self._require_no_registry_pr_collision(
+            repository=repository,
+            registry=registry,
+            plan=plan,
+            branch=branch,
+            phase=getattr(self, "_publication_phase", "committed_locally"),
+            observation_phase="pre_remote_effect",
+        )
         remote_branch_output = self._run(
             ["git", "ls-remote", remote, f"refs/heads/{branch}"]
         ).split()
@@ -4405,6 +4570,12 @@ class SubprocessTaskPublisher:
             "readback_complete": True,
             "publication_phase": "pr_confirmed",
             "workspace_reconciled": workspace_reconciled,
+            "open_pr_identity_revalidation": {
+                "collision_axis": "exact_task_id_or_target_path",
+                "semantic_similarity_consulted": False,
+                "pre_workspace": pre_workspace_open_pr_observation,
+                "pre_remote_effect": pre_remote_open_pr_observation,
+            },
             "does_not_establish": [
                 "queue_truth",
                 "task_readiness",

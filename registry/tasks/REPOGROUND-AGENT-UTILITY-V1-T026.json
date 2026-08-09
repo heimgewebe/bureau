@@ -1,0 +1,132 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #1177 ist auf 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 gemergt und alle erforderlichen Exact-Head-Checks sind grün. Runtime-Quellbaum und Runtime-Lock werden an genau diese Revision gebunden; keine spätere main-Revision wird stillschweigend mitaktiviert.",
+      "id": "exact-release-input"
+    },
+    {
+      "assertion": "Unter ~/.local/share/repoground-runtime/1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 liegt ein verifizierter git-freier Release mit commitlokalem .venv; dessen Interpreter ist CPython 3.12.12 und dessen Abhängigkeiten stammen aus dem hashgebundenen RepoGround-Runtime-Lock. /usr/bin/python3 und System-Python bleiben unverändert.",
+      "id": "immutable-python312-runtime"
+    },
+    {
+      "assertion": "Vor jeder Service-Umschaltung sind aktueller Unit-Preimage-Hash, Wrapper-Hash, Prozessidentität, relevante Leases und die vorhandene uv-CPython-3.12.12-Runtime frisch geprüft; Canary und Auth-Negativtest des neuen Releases bestehen. Bei Drift oder Gatefehler erfolgt keine Aktivierung.",
+      "id": "precutover-gates"
+    },
+    {
+      "assertion": "repoground.service bleibt explizit auf Source-Commit 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 gebunden und ExecStart verwendet dessen commitlokalen .venv/bin/python. Nach kontrolliertem Restart ist der Dienst active/running, ohne Restart-Schleife, und Prozess-/Environment-Readback belegt denselben Build-Commit und Python 3.12.12.",
+      "id": "service-cutover-readback"
+    },
+    {
+      "assertion": "Erst nach erfolgreichem Service-Readback zeigt ~/.local/share/repoground-runtime/current atomar auf denselben Commit und /home/alex/.local/bin/repoground entspricht dem für PR #1177 gemergten kanonischen Wrapper. repoground --help funktioniert und repoground doctor --json meldet für den Python-Check die reproduzierte 3.12-Baseline; unabhängige Doctor-Degradierungen werden nicht als behoben behauptet.",
+      "id": "cli-convergence-readback"
+    },
+    {
+      "assertion": "Der vorherige Service-Unit-Zustand SHA-256 9fc965bab8f44b2d7c92f9b55ec66d58f0e185a787b584e1d581c52164832c6e, der vorherige Wrapper SHA-256 6f12e8c0bb598f0d91c83139a7e9bfb3e072af6b43e29a0da9f16d56892a7e16 und der zuvor fehlende current-Zeiger sind reversibel gebunden. Bei fehlgeschlagenem Post-Cutover-Readback werden Unit, Service und CLI-Aktivierung auf dieses Preimage zurückgesetzt; die neue immutable Runtime darf für Diagnose erhalten bleiben.",
+      "id": "rollback-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T024"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Direkter Nutzerauftrag vom 09.08.2026, 16:16 MESZ: nächste Aufgabe zur Optimierung von RepoGround mit @grabowski umsetzen. Break-glass ist ausschließlich für den revisionsgebundenen Post-Merge-Cutover von PR #1177 auf Merge-Commit 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 freigegeben: immutable RepoGround-Runtime, commitgebundener Venv mit vorhandener CPython 3.12.12, exakt gebundene repoground.service-Unit und nachgelagerter CLI-Zeiger/Wrapper. Keine Änderung an /usr/bin/python3, System-Python, fremden Worktrees oder anderen Services.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "host:heim-pc",
+      "path:/home/alex/.config/systemd/user/repoground.service",
+      "path:/home/alex/.local/bin/repoground",
+      "path:/home/alex/.local/share/repoground-runtime"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Den in RepoGround PR #1177 gemergten, commitadressierten Python-3.12-Runtimevertrag auf dem Heim-PC kontrolliert aktivieren: Merge-Commit 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 als git-freie immutable Runtime materialisieren, darin mit der vorhandenen CPython-3.12.12-Runtime einen commitgebundenen Venv aus dem hashgebundenen Runtime-Lock erzeugen, Canary und Auth-Negativtest bestehen lassen, repoground.service auf exakt diesen Source-Commit und dessen Venv-Interpreter umstellen und erst nach erfolgreichem Service-Readback den CLI-Aktivierungszeiger sowie den globalen Wrapper auf dieselbe Revision konvergieren. /usr/bin/python3 und das OS-System-Python bleiben unverändert.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T026",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass unabhängige RepoGround-Doctor-Degradierungen durch den Python-Cutover verschwinden",
+      "dass CPython 3.10.12 unsicher oder defekt ist",
+      "Berechtigung zu Änderungen am OS-System-Python oder an anderen Services",
+      "Abwesenheit späterer Runtime- oder Wrapper-Drift"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-eb1aed44105a6a9ad2f9fbaf",
+      "event_id": 4701,
+      "event_created_at": "2026-08-09T06:20:27.265594Z",
+      "request_sha256": "a6337a3b435813d86812a9c374bfb457bcb2c809d2821168e58012fb7d3ba9e3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-service-runtime-readback",
+        "locator": "/home/alex/.config/systemd/user/repoground.service",
+        "observed_at": "2026-08-09T06:20:27.219862Z",
+        "sha256": "9fc965bab8f44b2d7c92f9b55ec66d58f0e185a787b584e1d581c52164832c6e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "post_merge_evidence": {
+      "all_observed_checks_pass": true,
+      "current_pointer_preimage": "absent",
+      "live_process": "/usr/bin/python3 -m merger.repoground serve",
+      "live_service_preimage_sha256": "9fc965bab8f44b2d7c92f9b55ec66d58f0e185a787b584e1d581c52164832c6e",
+      "live_wrapper_preimage_sha256": "6f12e8c0bb598f0d91c83139a7e9bfb3e072af6b43e29a0da9f16d56892a7e16",
+      "merge_commit": "1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0",
+      "merged_at": "2026-08-09T14:15:57Z",
+      "pull_request": 1177,
+      "uv_python312_sha256": "e082b57e5bd1f4604480fca642cc276ae59b669a0d7b9c87e6b4b5cbf3544ac2"
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "repoground",
+    "diagnostics",
+    "testing",
+    "systemd"
+  ],
+  "rollback": {
+    "procedure": "Keine unbekannten Zustände überschreiben. Den CLI-Zeiger auf das beobachtete Preimage zurücksetzen bzw. entfernen, den globalen Wrapper nur bei exakt gebundenem Postimage auf SHA-256 6f12e8c0bb598f0d91c83139a7e9bfb3e072af6b43e29a0da9f16d56892a7e16 zurückstellen, die Service-Unit nur gegen das gebundene Postimage auf SHA-256 9fc965bab8f44b2d7c92f9b55ec66d58f0e185a787b584e1d581c52164832c6e zurücksetzen, daemon-reload und kontrollierten Restart durchführen und Dienst/Prozess/CLI read-only verifizieren. /usr/bin/python3 und fremde Worktrees bleiben unangetastet.",
+    "trigger": "Canary, Auth-Negativtest, Unit-Validierung, Service-Start, Prozess-/Build-/Python-Readback, CLI-Readback oder Doctor-Python-Readback weichen vom gebundenen Soll ab oder ein fremder aktiver Zustand erscheint."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "stop": {
+    "conditions": [
+      "PR #1177 oder Merge-Commit 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 sind nicht mehr revisionssicher verifizierbar oder gebundene CI-Gates sind nicht grün.",
+      "Service-Unit, Wrapper, laufender Prozess oder relevante Leases weichen vor Mutation vom frisch gebundenen Preimage ab und die Herkunft ist nicht geklärt.",
+      "Die vorhandene uv-CPython-3.12.12-Runtime mit SHA-256 e082b57e5bd1f4604480fca642cc276ae59b669a0d7b9c87e6b4b5cbf3544ac2 kann den hashgebundenen Runtime-Lock oder RepoGround nicht reproduzierbar tragen.",
+      "Canary oder Auth-Negativtest schlägt fehl.",
+      "Die Umsetzung würde eine Änderung an /usr/bin/python3, OS-System-Python, fremdem Worktree oder außerhalb der explizit freigegebenen RepoGround-Runtime-/Service-/Wrapper-Pfade erfordern."
+    ]
+  },
+  "title": "RepoGround Python-3.12-Runtime revisionsgebunden aktivieren"
+}

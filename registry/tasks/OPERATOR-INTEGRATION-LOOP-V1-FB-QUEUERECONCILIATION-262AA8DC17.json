@@ -1,0 +1,69 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Task state, implementation status, and queue position are freshly read back.",
+      "id": "queue-reconciliation-1"
+    },
+    {
+      "assertion": "The patch changes only the proven stale queue projection.",
+      "id": "queue-reconciliation-2"
+    },
+    {
+      "assertion": "Queue and Registry validation pass without broad automatic admission.",
+      "id": "queue-reconciliation-3"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/queue.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Remove or add exactly one queue entry whose current task truth proves the existing queue projection stale.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-QUEUERECONCILIATION-262AA8DC17",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "queue-reconciliation",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "262aa8dc17e8abfc2bce5c4054fd18f8c2fdc8ee711d7b80222b2ca26824f466",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "af642de1eec55194ac780f9a85b5018fd8bb4dfb04b2b7f0fd87da15b873c49a",
+      "schema_version": 1,
+      "scope_path": "registry/queue.json",
+      "time_bucket": "20674"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 905
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Reconcile one Bureau queue drift"
+}

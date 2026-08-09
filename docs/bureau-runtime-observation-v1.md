@@ -1,8 +1,15 @@
 # Bureau Runtime Observation & Projection v1
 
-Status: closes `BUR-2026-005-T002`, `BUR-2026-005-T003`, `BUR-2026-005-T004`.
-Contract: `docs/bureau-runtime-automation-contract-v1.md`
-Plan: `docs/plans/bureau-runtime-automation-baseline-v1.md`
+Status: historical acceptance evidence for verified `BUR-2026-005-T002`, `BUR-2026-005-T003`, `BUR-2026-005-T004`.
+Historical contract: [`docs/bureau-runtime-automation-contract-v1.md`](bureau-runtime-automation-contract-v1.md)
+Active operational contract: [`docs/runtime-automation-contract.md`](runtime-automation-contract.md)
+Current runtime deployment contract: [`docs/bureau-runtime-refresh-v1.md`](bureau-runtime-refresh-v1.md)
+Plan: [`docs/plans/bureau-runtime-automation-baseline-v1.md`](plans/bureau-runtime-automation-baseline-v1.md)
+Registry anchors: [`T002`](../registry/tasks/BUR-2026-005-T002.json), [`T003`](../registry/tasks/BUR-2026-005-T003.json), [`T004`](../registry/tasks/BUR-2026-005-T004.json)
+
+This document preserves the verified observation/projection acceptance surface. Current
+task state and verification metadata come from the canonical Registry; current runtime
+deployment and rollback instructions do not live here.
 
 Bureau gains eyes and a dashboard here, not an autopilot. Everything in this
 document observes and projects; nothing decides, merges, completes, mutates
@@ -138,25 +145,17 @@ hourly, write access restricted to `~/.local/state/bureau` via
 `ReadWritePaths`). Static tests (`tests/test_runtime_observation_systemd.py`)
 pin both units to non-dispatching subcommands.
 
-The units expect a deployment venv symlink at `~/.local/share/bureau/venv` installed from an
-exact committed Git archive, not from mutable working-tree files, plus a `gh` session for the
-projection unit. The independent
-`bureau-status-capsule.{service,timer}` uses no network and writes only the sealed snapshot directory;
-its separate contract is `docs/bureau-status-capsule-v1.md`.
+The current unit files execute the canonical launcher at `~/.local/bin/bureau`. Deployment,
+refresh and rollback of that launcher are owned by
+[`docs/bureau-runtime-refresh-v1.md`](bureau-runtime-refresh-v1.md); this historical acceptance
+record no longer duplicates a second installer. A `gh` session is still required by the
+projection unit. The independent `bureau-status-capsule.{service,timer}` uses no network and
+writes only the sealed snapshot directory; its separate contract is
+[`docs/bureau-status-capsule-v1.md`](bureau-status-capsule-v1.md).
 
-Install and enable:
+Install the checked-in unit definitions and enable them:
 
 ```bash
-release="$(git -C ~/repos/bureau rev-parse origin/main)"
-archive="/tmp/bureau-${release}.tar.gz"
-release_venv="$HOME/.local/share/bureau/venv-${release}"
-git -C ~/repos/bureau archive --format=tar.gz --output="$archive" "$release"
-test ! -e "$release_venv"
-python3 -m venv "$release_venv"
-"$release_venv/bin/pip" install "$archive"
-rm -f "$HOME/.local/share/bureau/venv.next"
-ln -s "$release_venv" "$HOME/.local/share/bureau/venv.next"
-mv -Tf "$HOME/.local/share/bureau/venv.next" "$HOME/.local/share/bureau/venv"
 install -Dm644 ops/systemd/bureau-status-projection.service \
   ~/.config/systemd/user/bureau-status-projection.service
 install -Dm644 ops/systemd/bureau-status-projection.timer \

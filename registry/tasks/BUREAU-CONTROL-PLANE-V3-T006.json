@@ -1,51 +1,51 @@
 {
-  "schema_version": 1,
-  "id": "BUREAU-CONTROL-PLANE-V3-T006",
-  "initiative": "BUREAU-CONTROL-PLANE-V3",
-  "title": "Lifecycle-Reconciliation ohne Registry-PR automatisieren",
-  "goal": "Deterministisch ableitbare Status-, Abhängigkeits-, Queue- und Initiativenübergänge im StateStore automatisch reconciliieren. Inhaltliche Entscheidungen bleiben explizit; rein strukturelle Drift wird in einem Zyklus geschlossen.",
-  "state": "ready",
-  "priority": {
-    "lane": "now",
-    "rank": 50
-  },
+  "acceptance": [
+    {
+      "assertion": "Erfüllte Abhängigkeiten und Child-Gates werden ohne manuelle Status-PRs korrekt projiziert.",
+      "id": "dependency-convergence"
+    },
+    {
+      "assertion": "Initiativenzustände folgen ihren nichtterminalen und terminalen Kindern ohne widersprüchliche Zwischenwahrheit.",
+      "id": "initiative-convergence"
+    },
+    {
+      "assertion": "Terminale Tasks werden in derselben Reconciliation aus ausführbaren Projektionen entfernt.",
+      "id": "terminal-queue-cleanliness"
+    },
+    {
+      "assertion": "Nur schema- und evidenzdeterministische Übergänge werden automatisch angewendet; fachliche Unklarheit bleibt offen.",
+      "id": "bounded-auto-effects"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
   "depends_on": [
     "BUREAU-CONTROL-PLANE-V3-T003",
     "BUREAU-CONTROL-PLANE-V3-T005"
   ],
-  "required_capabilities": [
-    "repository",
-    "python",
-    "testing",
-    "bureau",
-    "grabowski"
-  ],
-  "claims": [
-    {
-      "resource": "component.bureau.core",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "component.bureau.registry",
-      "mode": "read"
-    },
-    {
-      "resource": "state.bureau",
-      "mode": "read"
-    }
-  ],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen.",
+      "required_level": "operator"
     },
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "875b41f7376e70cfe05cc36c91592f740d1e1949",
     "grabowski_resources": [
       "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T006.json",
+      "path:/home/alex/repos/bureau/src/bureau/broad_scope_dispatcher.py",
       "path:/home/alex/repos/bureau/src/bureau/cli.py",
       "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
       "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
@@ -57,36 +57,14 @@
       "path:/home/alex/repos/bureau/tests/test_registry_truth.py",
       "path:/home/alex/repos/bureau/tests/test_v2.py"
     ],
-    "baseline_commit": "875b41f7376e70cfe05cc36c91592f740d1e1949"
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
   },
-  "acceptance": [
-    {
-      "id": "dependency-convergence",
-      "assertion": "Erfüllte Abhängigkeiten und Child-Gates werden ohne manuelle Status-PRs korrekt projiziert."
-    },
-    {
-      "id": "initiative-convergence",
-      "assertion": "Initiativenzustände folgen ihren nichtterminalen und terminalen Kindern ohne widersprüchliche Zwischenwahrheit."
-    },
-    {
-      "id": "terminal-queue-cleanliness",
-      "assertion": "Terminale Tasks werden in derselben Reconciliation aus ausführbaren Projektionen entfernt."
-    },
-    {
-      "id": "bounded-auto-effects",
-      "assertion": "Nur schema- und evidenzdeterministische Übergänge werden automatisch angewendet; fachliche Unklarheit bleibt offen."
-    }
-  ],
+  "goal": "Deterministisch ableitbare Status-, Abhängigkeits-, Queue- und Initiativenübergänge im StateStore automatisch reconciliieren. Inhaltliche Entscheidungen bleiben explizit; rein strukturelle Drift wird in einem Zyklus geschlossen.",
+  "id": "BUREAU-CONTROL-PLANE-V3-T006",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
-    "registered_at": "2026-08-06T11:11:00Z",
-    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
-    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
-    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
-    "does_not_establish": [
-      "Merge- oder Deploymentabschluss",
-      "Freigabe fremder Ressourcen",
-      "direkte main-Mutation"
-    ],
     "activation": {
       "baseline_commit": "875b41f7376e70cfe05cc36c91592f740d1e1949",
       "dependency_basis": [
@@ -96,14 +74,22 @@
       "schema_version": 1,
       "source": "explicit-user-request-next-bureau-optimization-20260808"
     },
+    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
+    "does_not_establish": [
+      "Merge- oder Deploymentabschluss",
+      "Freigabe fremder Ressourcen",
+      "direkte main-Mutation"
+    ],
+    "registered_at": "2026-08-06T11:11:00Z",
     "scope_reconciliation": {
       "absent_paths": [
         "src/bureau/lifecycle.py",
         "tests/test_lifecycle.py"
       ],
       "base_commit": "875b41f7376e70cfe05cc36c91592f740d1e1949",
-      "reason": "Current lifecycle implementation lives in v2.py; StateStore-only apply requires CLI/effect-scope reclassification, and review integration requires an evidence-gated closure-bridge regression so automatic promotion cannot consume explicit closure repair tasks.",
+      "reason": "Current lifecycle implementation lives in v2.py; StateStore-only apply requires CLI/effect-scope reclassification. Review integration additionally requires an evidence-gated closure-bridge regression and fresh initiative authority at claim admission; the public broad-scope Dispatcher forwards that authority into the canonical base admission logic.",
       "replacement_paths": [
+        "src/bureau/broad_scope_dispatcher.py",
         "src/bureau/cli.py",
         "src/bureau/effect_scope.py",
         "src/bureau/v2.py",
@@ -113,6 +99,42 @@
         "tests/test_v2.py"
       ],
       "schema_version": 1
+    },
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-52d3c6e8b3bf4d8020121f54",
+      "event_id": 4753,
+      "event_created_at": "2026-08-09T12:50:53.130155Z",
+      "request_sha256": "48a02923a833df4ddbe3014152b3facfbd9e9f4becbfa1eec469ccbff0c1f94b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "staging PR #1822 merged as 1152f831a7cf1396c6dd4d704c60356a3f435f74; authoritative T006 StateStore revision 5 digest c2e5877b1e5e141ac2f27aae6cee38a1de3c4b6bd25172721a812b887ca75cbd; desired reviewed #1814 spec source commit d11626e19881752a758b281b977cf8141aa70095 digest d4dbee056f6a0c7541afcd93fb0b31b9a0b05cd73e7d2a51114c299c07dd522b",
+        "observed_at": "2026-08-09T12:38:20Z",
+        "sha256": "d4dbee056f6a0c7541afcd93fb0b31b9a0b05cd73e7d2a51114c299c07dd522b"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
     }
-  }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Lifecycle-Reconciliation ohne Registry-PR automatisieren"
 }

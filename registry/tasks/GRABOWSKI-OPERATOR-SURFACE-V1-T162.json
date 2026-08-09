@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest reproduziert einen Task mit gültigem BEFORE-Shadow-Versuch und bereits projected Terminalization, aber ohne persistierte Terminal-Shadow-Observation; _recover_task_terminalization holt die fehlende Terminal-Erfassung nach.",
+      "id": "projected-recovery-replay"
+    },
+    {
+      "assertion": "Wiederholte Recovery desselben projected Übergangs erzeugt keine widersprüchliche oder doppelt gezählte Terminal-Shadow-Evidenz; vorhandene Terminal-/Unavailable-Observation bleibt unverändert wiederverwendbar.",
+      "id": "idempotent-shadow-marker"
+    },
+    {
+      "assertion": "Recovery triggert Terminal-Shadow nur für Tasks, deren gespeicherte Launcher-Evidenz einen gültigen BEFORE-Versuch enthält; read-only, remote, nicht-repository oder sonst nicht teilnahmeberechtigte Tasks werden nicht künstlich als Shadow-Versuch gezählt.",
+      "id": "eligibility-preserved"
+    },
+    {
+      "assertion": "Checkout-Continuity-Verfügbarkeits- und Zustandsmetriken enthalten den reproduzierten Crashfall nach Recovery und korrelieren weiterhin ausschließlich task-/evaluation-gebundene Shadow-Evidenz.",
+      "id": "metrics-preserved"
+    },
+    {
+      "assertion": "Fokussierte Tests für Terminalization/Reposkop-Shadow sowie die relevante vollständige Grabowski-Validierung sind auf dem exakten neuen PR-Head grün; Diff und Self-Review sind revisionsgebunden.",
+      "id": "focused-and-full-validation"
+    },
+    {
+      "assertion": "PR #715 ist an diesen Bureau-Task gebunden, alle offenen revisionsgebundenen Review-Findings sind auf dem exakten Head geschlossen, Pflichtchecks einschließlich Codex review settled sind grün und der PR wird nur mit unverändertem geprüftem Head gemergt.",
+      "id": "pr-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den offenen revisionsgebundenen P1 auf dem bestehenden PR-Branch beheben, Regressionen ergänzen und den PR nach Exact-Head-Review/Pflichtchecks abschließen. Keine fremden Leases/Dirty-States übernehmen; Merge erst nach grünem Review-Gate.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_tasks.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_reposkop_shadow.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_reposkop_effectiveness.py",
+      "path:/home/alex/repos/grabowski/tests/test_tasks.py",
+      "path:/home/alex/repos/grabowski/tests/test_reposkop_shadow.py",
+      "path:/home/alex/repos/grabowski/tests/test_reposkop_effectiveness.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den revisionsgebundenen P1 in Grabowski PR #715 beheben: Wenn ein Task nach persistierter/projizierter Terminalisierung, aber vor der Terminal-Shadow-Persistierung abstürzt, muss _recover_task_terminalization eine fehlende Terminal-Shadow-Erfassung für einen tatsächlich vorhandenen BEFORE-Versuch idempotent nachholen, damit Crashfälle nicht aus Checkout-Continuity-Verfügbarkeits- und Zustandsmetriken verschwinden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T162",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Mergebereitschaft vor erneutem Exact-Head-Review und grünen Pflichtchecks",
+      "Autorität zum Freigeben oder Übernehmen fremder Leases, Worktrees oder Dirty-States",
+      "Deploymentautorität für Grabowski Runtime",
+      "dass der beobachtete PR-Head nach einer Implementierungsänderung unverändert bleibt"
+    ],
+    "pull_request": {
+      "finding": "P1 projected terminalization recovery skips missing terminal-shadow hook",
+      "number": 715,
+      "observed_head": "ed1c752f43fbb307f31fceffce43a339a06a9e25",
+      "repository": "heimgewebe/grabowski",
+      "review_thread": "PRRT_kwDOTElD3s6XoGTc"
+    },
+    "source_candidate": "candidate-207f00c744a15aac566805d3",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-207f00c744a15aac566805d3",
+      "event_id": 4809,
+      "event_created_at": "2026-08-09T14:33:05.593795Z",
+      "request_sha256": "b85f470a60d21dce2132c9fe5c6f1d7a01d13f1331de288c7310a86e49c4a2ab",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pr-review",
+        "locator": "github:heimgewebe/grabowski:pull/715:review-thread:PRRT_kwDOTElD3s6XoGTc",
+        "observed_at": "2026-08-09T14:21:01Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Den ausschließlich für den P1 hinzugefügten Recovery-/Regression-Commit auf dem PR-Branch normal revertieren. Bestehende PR-#715-Shadow-Implementierung, Audit-/Shadow-Historie und fremde Worktrees/Leases nicht löschen oder umdeuten."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "PR #715: Terminal-Shadow bei projected Recovery nachholen"
+}

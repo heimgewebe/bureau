@@ -22,12 +22,14 @@ jobs:
           python-version: "3.12"
       - name: Verify exact review parent
         env:
-          EXPECTED_PARENT: 82649072eac85f91da377558fa67c7f8dc998915
+          EXPECTED_PARENT: 44e08e8097c4d496a49bfc64165a4c2297992e21
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD^)" = "${EXPECTED_PARENT}"
       - name: Apply race fixes
         run: python .github/pr1814_race_fix.py
+      - name: Canonicalize transactional writer and retry test
+        run: python .github/pr1814_race_adjust.py
       - name: Install validation dependencies
         run: python -m pip install -e '.[dev]'
       - name: Validate review races
@@ -44,7 +46,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm -f .github/workflows/pr1814-race-fix.yml .github/pr1814_race_fix.py
+          git rm -f .github/workflows/pr1814-race-fix.yml .github/pr1814_race_fix.py .github/pr1814_race_adjust.py
           git add src/bureau/v2.py tests/test_v2.py tests/test_closure_bridge.py
           git diff --cached --quiet && { echo 'no patch produced'; exit 1; }
           git commit -m 'fix(bureau): bind lifecycle closure races to StateStore'

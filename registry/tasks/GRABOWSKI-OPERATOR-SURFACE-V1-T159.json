@@ -88,6 +88,15 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "672e416ad1a6f8f67f58aa8dc75dac20c6b14a4a41dbc32ccf5d58413bed8fda",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "receipt_sha256": "ef4a640a14ccaeae267c1598c63818d87798222036fca4a53464323b4b39f382",
+      "source": "canonical_operational_verification_stamp",
+      "closeout_mode": "post-merge-live-reconciliation",
+      "verified_at": "2026-08-09T22:57:16.295320Z"
     }
   },
   "priority": {
@@ -109,6 +118,6 @@
     "strategy": "Die Wirkungs-/Scope-Klassifikation und Merge-Guard-Ausnahme per normalem Revert zurücknehmen; unbekannte Operationen fallen dadurch wieder auf die strengere pauschale Konfliktbehandlung zurück. Keine Lease- oder Audit-Historie verändern."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Merge-Guard: disjunkte Operations-Leases parallelisieren"
 }

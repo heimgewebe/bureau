@@ -4638,9 +4638,11 @@ class Dispatcher(legacy.Dispatcher):
                 + ", ".join(overlap)
             )
         approval_evidence = {**approval_evidence, **approval_extensions}
-        current_plan_sha = plan_sha256(self.registry, selected.initiative)
-        baseline = _workspace_baseline_for_task(self.registry, selected)
-        workspace = _planned_workspace(self.registry, selected, run_id, base_dir, baseline)
+        current_plan_sha = plan_sha256(fresh_initiative_registry, selected.initiative)
+        baseline = _workspace_baseline_for_task(fresh_initiative_registry, selected)
+        workspace = _planned_workspace(
+            fresh_initiative_registry, selected, run_id, base_dir, baseline
+        )
         required_keys = sorted(
             _coordinated_grabowski_resource_keys(
                 self.registry.resources, selected, open_pr_scope
@@ -4791,28 +4793,6 @@ class Dispatcher(legacy.Dispatcher):
             raise legacy.StateError("coordinated claim open PR nonconflict evidence is missing")
         if task.sha256 != intent["task_sha256"]:
             raise legacy.StateError("coordinated claim task changed after intent")
-        current_plan_sha = plan_sha256(self.registry, task.initiative)
-        if current_plan_sha != intent["plan_sha256"]:
-            raise legacy.StateError("coordinated claim plan changed after intent")
-        expected_workspace = _planned_workspace(
-            self.registry,
-            task,
-            intent["run_id"],
-            (
-                Path(intent["workspace"]["workspace_path"]).parent
-                if isinstance(intent.get("workspace"), dict)
-                else None
-            ),
-            _workspace_baseline_for_task(self.registry, task),
-        )
-        if expected_workspace != intent["workspace"]:
-            raise legacy.StateError("coordinated claim workspace changed after intent")
-        if isinstance(intent.get("workspace"), dict):
-            observed_source_head = _git(
-                Path(intent["workspace"]["repository"]), "rev-parse", "HEAD"
-            ).stdout.strip()
-            if observed_source_head != intent["workspace"]["source_head_at_intent"]:
-                raise legacy.StateError("workspace repository head changed after intent")
         normalized_lease: dict[str, Any] | None = None
         if required_keys:
             if not isinstance(lease_binding, dict):
@@ -4849,6 +4829,30 @@ class Dispatcher(legacy.Dispatcher):
             fresh_initiative_registry, _ = _state_store_initiative_registry(
                 fresh_source_registry, self.store, connection=connection
             )
+            current_plan_sha = plan_sha256(fresh_initiative_registry, task.initiative)
+            if current_plan_sha != intent["plan_sha256"]:
+                raise legacy.StateError("coordinated claim plan changed after intent")
+            expected_workspace = _planned_workspace(
+                fresh_initiative_registry,
+                task,
+                intent["run_id"],
+                (
+                    Path(intent["workspace"]["workspace_path"]).parent
+                    if isinstance(intent.get("workspace"), dict)
+                    else None
+                ),
+                _workspace_baseline_for_task(fresh_initiative_registry, task),
+            )
+            if expected_workspace != intent["workspace"]:
+                raise legacy.StateError("coordinated claim workspace changed after intent")
+            if isinstance(intent.get("workspace"), dict):
+                observed_source_head = _git(
+                    Path(intent["workspace"]["repository"]), "rev-parse", "HEAD"
+                ).stdout.strip()
+                if observed_source_head != intent["workspace"]["source_head_at_intent"]:
+                    raise legacy.StateError(
+                        "workspace repository head changed after intent"
+                    )
             attempt = (
                 connection.execute(
                     "SELECT COUNT(*) AS n FROM runs WHERE task_id=?", (task.id,)
@@ -4943,7 +4947,7 @@ class Dispatcher(legacy.Dispatcher):
                     now,
                 ),
             )
-            initiative = self.registry.initiatives[task.initiative]
+            initiative = fresh_initiative_registry.initiatives[task.initiative]
             envelope = {
                 "schema_version": 1,
                 "run_id": intent["run_id"],
@@ -5172,8 +5176,8 @@ class Dispatcher(legacy.Dispatcher):
                 + uuid.uuid4().hex[:10]
             )
             now = legacy.utc_now()
-            initiative = self.registry.initiatives[selected.initiative]
-            current_plan_sha = plan_sha256(self.registry, selected.initiative)
+            initiative = fresh_initiative_registry.initiatives[selected.initiative]
+            current_plan_sha = plan_sha256(fresh_initiative_registry, selected.initiative)
             baseline = selected.execution.get("baseline_commit")
             if baseline is None and initiative.current_plan:
                 working = selected.execution.get("working_repository")
@@ -6954,6 +6958,7 @@ def _lifecycle_diagnostics_from_overlays(
     verification_stamps: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
+    bridge_task_ids = closure_bridge_task_ids()
     for initiative in operational_registry.initiatives.values():
         tasks = [
             task
@@ -6964,12 +6969,35 @@ def _lifecycle_diagnostics_from_overlays(
         recommendation = _lifecycle_recommendation(
             initiative.state, states, verification_stamps=verification_stamps
         )
+        source = source_registry.initiatives[initiative.id]
+        if (
+            initiative.state == "completion-ready"
+            and source.state == "completed"
+            and all(
+                state in TERMINAL_TASK_STATES
+                or _closure_bridge_contract_applies(
+                    task,
+                    state,
+                    initiative,
+                    task_ids=bridge_task_ids,
+                )
+                for task in tasks
+                for state in (states[task.id],)
+            )
+            and all(
+                state != "verified" or task_id in verification_stamps
+                for task_id, state in states.items()
+            )
+        ):
+            # A completed Git commitment can precede its StateStore completion
+            # during registry-first recovery. Keep the projected initiative and
+            # its selected repair task in the closure-bridge interval.
+            recommendation = "completion-ready"
         unverified_verified_task_ids = sorted(
             task_id
             for task_id, state in states.items()
             if state == "verified" and task_id not in verification_stamps
         )
-        source = source_registry.initiatives[initiative.id]
         result.append(
             {
                 "initiative_id": initiative.id,
@@ -7760,16 +7788,9 @@ def reconcile_initiative_lifecycle(
                 raise legacy.StateError(
                     "TaskSpec projection changed during lifecycle reconcile"
                 )
-            elif (
-                _legacy_git_task_projection_sha256(Registry.load(registry.root))
-                != task_authority.get("legacy_git_task_projection_sha256")
-            ):
+            elif task_candidates or initiative_candidates:
                 raise legacy.StateError(
-                    "legacy Git task projection changed during lifecycle reconcile"
-                )
-            elif task_candidates:
-                raise legacy.StateError(
-                    "automatic task lifecycle reconciliation requires StateStore TaskSpec authority"
+                    "automatic lifecycle reconciliation requires StateStore TaskSpec authority"
                 )
 
             fresh_initiative_registry, _ = _state_store_initiative_registry(
@@ -7954,12 +7975,9 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
             raise legacy.StateError(
                 "TaskSpec projection changed during explicit closure"
             )
-        elif (
-            _legacy_git_task_projection_sha256(Registry.load(registry.root))
-            != task_authority.get("legacy_git_task_projection_sha256")
-        ):
+        else:
             raise legacy.StateError(
-                "legacy Git task projection changed during explicit closure"
+                "explicit closure requires StateStore TaskSpec authority"
             )
 
         fresh_initiative_registry, _ = _state_store_initiative_registry(
@@ -7981,7 +7999,11 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
         for path in registry._files(registry.root / "registry/initiatives"):
             raw = legacy.read_json(path)
             diagnostic = diagnostics.get(raw.get("id"))
-            if diagnostic is None or diagnostic["recommended_state"] != "completion-ready":
+            if (
+                diagnostic is None
+                or diagnostic["recommended_state"] != "completion-ready"
+                or diagnostic["unverified_verified_task_ids"]
+            ):
                 continue
             raw["state"] = "completed"
             raw["commitment"] = "completed"

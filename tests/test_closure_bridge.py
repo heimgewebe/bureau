@@ -207,6 +207,13 @@ def test_lifecycle_reconcile_preserves_bridge_during_registry_first_recovery(
     assert current is not None
     assert current["spec"]["state"] == "planned"
 
+    applied = reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert applied["changed_task_count"] == 0
+    assert applied["changed_count"] == 0
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "planned"
+
     dispatcher = Dispatcher(Registry.load(root), store)
     explained = dispatcher.explain_next({"repository"})
     assert explained["selected"]["task_id"] == task_id

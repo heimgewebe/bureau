@@ -5,6 +5,7 @@ from pathlib import Path
 
 from bureau import cli as bureau_cli
 from bureau import effect_scope
+from bureau.core import Registry, StateStore
 
 
 def canonical_runtime_identity(root: Path, *, commit: str = "a" * 40) -> dict:
@@ -75,6 +76,8 @@ def test_lifecycle_reconcile_apply_uses_canonical_coordination_store(
     queue["lanes"]["now"] = []
     queue_path.write_text(json.dumps(queue))
     state_root = tmp_path / "coordination-state"
+    store = StateStore(state_root / "bureau.sqlite3")
+    store.import_registry_task_specs(Registry.load(registry_root))
     identity = canonical_runtime_identity(registry_root)
     initiative_path = registry_root / "registry/initiatives/main.json"
     initiative_before = initiative_path.read_bytes()

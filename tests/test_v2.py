@@ -624,6 +624,25 @@ def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
         source="test",
     )
 
+    without_evidence = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert without_evidence["task_candidate_count"] == 0
+
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    current_dependency = store.task_spec(dependency_id)
+    assert current_dependency is not None
+    dependency_spec = json.loads(json.dumps(current_dependency["spec"]))
+    dependency_task = operational.tasks[dependency_id]
+    dependency_spec.setdefault("metadata", {})["verification"] = {
+        "task_sha256": dependency_task.sha256,
+        "plan_sha256": plan_sha256(operational, dependency_task.initiative),
+    }
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="lifecycle-dependency-verification-evidence",
+        expected_revision=current_dependency["revision"],
+        source="test",
+    )
+
     preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
     assert preview["task_candidate_count"] == 1
     candidate = preview["task_candidates"][0]
@@ -676,6 +695,25 @@ def test_lifecycle_reconcile_promotes_parent_after_terminal_child_gate(
         child_spec,
         idempotency_key="lifecycle-child-verified",
         expected_revision=child["revision"],
+        source="test",
+    )
+
+    without_evidence = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert without_evidence["task_candidate_count"] == 0
+
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    current_child = store.task_spec(child_id)
+    assert current_child is not None
+    child_spec = json.loads(json.dumps(current_child["spec"]))
+    child_task = operational.tasks[child_id]
+    child_spec.setdefault("metadata", {})["verification"] = {
+        "task_sha256": child_task.sha256,
+        "plan_sha256": plan_sha256(operational, child_task.initiative),
+    }
+    store.put_task_spec(
+        child_spec,
+        idempotency_key="lifecycle-child-verification-evidence",
+        expected_revision=current_child["revision"],
         source="test",
     )
 

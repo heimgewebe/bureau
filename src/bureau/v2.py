@@ -2279,6 +2279,24 @@ def closure_bridge_task_ids(plan_path: Path | None = None) -> set[str]:
     return result
 
 
+def _closure_bridge_contract_applies(
+    task: legacy.Task,
+    state: str,
+    initiative: legacy.Initiative,
+    *,
+    task_ids: set[str] | None = None,
+) -> bool:
+    selected_task_ids = closure_bridge_task_ids() if task_ids is None else task_ids
+    return (
+        task.id in selected_task_ids
+        and state == "planned"
+        and initiative.state == "completed"
+        and initiative.commitment == "completed"
+        and task.mode == "interactive-agent"
+        and task.policy == "review-before-effect"
+    )
+
+
 TERMINAL_TASK_STATES = legacy.TERMINAL_TASK_STATES
 OPEN_TASK_STATES = frozenset({"inbox", "planned", "ready", "blocked", "stale"})
 
@@ -4041,15 +4059,7 @@ class Dispatcher(legacy.Dispatcher):
     def _closure_bridge_applies(
         self, task: legacy.Task, state: str, initiative: legacy.Initiative
     ) -> bool:
-        if task.id not in closure_bridge_task_ids():
-            return False
-        return (
-            state == "planned"
-            and initiative.state == "completed"
-            and initiative.commitment == "completed"
-            and task.mode == "interactive-agent"
-            and task.policy == "review-before-effect"
-        )
+        return _closure_bridge_contract_applies(task, state, initiative)
 
     def _validate_resource_filter(self, resource: str | None) -> None:
         if resource is not None and resource not in self.registry.resources:
@@ -6778,13 +6788,13 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
     return {**status, "cleanup": "removed"}
 
 
-def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> dict[str, Any]:
+def _current_verification_stamp(
+    registry: Registry, task_id: str, row: sqlite3.Row | None
+) -> dict[str, Any] | None:
     task = registry.tasks.get(task_id)
     if task is None:
-        raise legacy.StateError(f"unknown task {task_id}")
+        return None
     current_plan = plan_sha256(registry, task.initiative)
-    with store.connect() as connection:
-        row = connection.execute("SELECT * FROM task_status WHERE task_id=?", (task_id,)).fetchone()
     if row and (
         row["state"] == "verified"
         and row["task_sha256"] == task.sha256
@@ -6801,6 +6811,34 @@ def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> d
         and verification.get("plan_sha256") == current_plan
     ):
         return dict(verification)
+    return None
+
+
+def _current_verification_stamps(
+    registry: Registry, connection: sqlite3.Connection
+) -> dict[str, dict[str, Any]]:
+    rows = {
+        row["task_id"]: row
+        for row in connection.execute("SELECT * FROM task_status")
+    }
+    return {
+        task_id: stamp
+        for task_id in registry.tasks
+        if (stamp := _current_verification_stamp(registry, task_id, rows.get(task_id)))
+        is not None
+    }
+
+
+def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> dict[str, Any]:
+    if task_id not in registry.tasks:
+        raise legacy.StateError(f"unknown task {task_id}")
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT * FROM task_status WHERE task_id=?", (task_id,)
+        ).fetchone()
+    stamp = _current_verification_stamp(registry, task_id, row)
+    if stamp is not None:
+        return stamp
     raise legacy.StateError(f"task {task_id} has no current verification")
 
 
@@ -6863,8 +6901,10 @@ def _structural_task_reconcile_candidates(
     registry: Registry,
     overlays: dict[str, str],
     task_revisions: dict[str, dict[str, Any]],
+    verification_stamps: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
+    bridge_task_ids = closure_bridge_task_ids()
     for task in registry.tasks.values():
         revision = task_revisions.get(task.id, {})
         current_revision = revision.get("revision")
@@ -6872,6 +6912,14 @@ def _structural_task_reconcile_candidates(
             continue
         effective_state = overlays.get(task.id, task.state)
         if task.state != "planned" or effective_state != "planned":
+            continue
+        initiative = registry.initiatives[task.initiative]
+        if _closure_bridge_contract_applies(
+            task, effective_state, initiative, task_ids=bridge_task_ids
+        ):
+            # The bridge exception itself is defined by planned state.  Promoting
+            # it would make a completed initiative block the very repair task
+            # selected to reconcile that initiative.
             continue
         parent_child = registry.parent_child_projection(task, overlays)
         has_child_gate = (
@@ -6886,6 +6934,8 @@ def _structural_task_reconcile_candidates(
         }
         if any(state != "verified" for state in dependency_states.values()):
             continue
+        if any(dependency not in verification_stamps for dependency in dependency_states):
+            continue
         if parent_child.blocker_reason is not None:
             continue
         child_states = {
@@ -6894,6 +6944,11 @@ def _structural_task_reconcile_candidates(
             )
             for child_task_id in parent_child.child_task_ids
         }
+        if any(
+            state == "verified" and child_task_id not in verification_stamps
+            for child_task_id, state in child_states.items()
+        ):
+            continue
         candidates.append(
             {
                 "task_id": task.id,
@@ -7559,8 +7614,11 @@ def reconcile_initiative_lifecycle(
     )
     with store.connect() as connection:
         overlays = store.overlays(connection, operational_registry)
+        verification_stamps = _current_verification_stamps(
+            operational_registry, connection
+        )
     task_candidates = _structural_task_reconcile_candidates(
-        operational_registry, overlays, task_revisions
+        operational_registry, overlays, task_revisions, verification_stamps
     )
     projected_overlays = dict(overlays)
     for candidate in task_candidates:
@@ -7605,8 +7663,14 @@ def reconcile_initiative_lifecycle(
                 )
 
             fresh_overlays = store.overlays(connection, operational_registry)
+            fresh_verification_stamps = _current_verification_stamps(
+                operational_registry, connection
+            )
             fresh_task_candidates = _structural_task_reconcile_candidates(
-                operational_registry, fresh_overlays, task_revisions
+                operational_registry,
+                fresh_overlays,
+                task_revisions,
+                fresh_verification_stamps,
             )
             if fresh_task_candidates != task_candidates:
                 raise legacy.StateError(

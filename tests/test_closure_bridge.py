@@ -4,7 +4,12 @@ import json
 from pathlib import Path
 
 from bureau.core import Dispatcher, Registry, StateStore
-from bureau.v2 import closure_bridge_task_ids
+from bureau.v2 import (
+    closure_bridge_task_ids,
+    plan_sha256,
+    reconcile_initiative_lifecycle,
+    task_revision_sha256,
+)
 
 
 def _setup(root: Path, tmp_path: Path, monkeypatch):
@@ -112,3 +117,47 @@ def test_closure_selected_review_task_can_be_claimed(registry_factory, tmp_path,
     claimed = dispatcher.claim_next("worker", ("repository",))
     assert claimed["run"]["task_id"] == task_id
     assert registry.tasks[task_id].policy == "review-before-effect"
+
+def test_lifecycle_reconcile_preserves_planned_closure_bridge(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    task_id = _make_completed_review_task(root)
+    dependency_id = "BUR-TEST-001-T002"
+
+    task_path = root / f"registry/tasks/{task_id}.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["depends_on"] = [dependency_id]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    preliminary = Registry.load(root)
+    dependency_path = root / f"registry/tasks/{dependency_id}.json"
+    dependency = json.loads(dependency_path.read_text(encoding="utf-8"))
+    dependency["state"] = "verified"
+    dependency.setdefault("metadata", {})["verification"] = {
+        "task_sha256": task_revision_sha256(dependency),
+        "plan_sha256": plan_sha256(preliminary, dependency["initiative"]),
+    }
+    dependency_path.write_text(json.dumps(dependency), encoding="utf-8")
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    for lane in queue["lanes"].values():
+        while dependency_id in lane:
+            lane.remove(dependency_id)
+    queue_path.write_text(json.dumps(queue), encoding="utf-8")
+
+    plan_path = tmp_path / "closure-plan-reconcile.json"
+    _write_plan(plan_path, task_id)
+    monkeypatch.setenv("BUREAU_CLOSURE_PLAN", str(plan_path))
+    registry, store, dispatcher = _setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+
+    preview = reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 0
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "planned"
+
+    explained = dispatcher.explain_next({"repository"})
+    assert explained["selected"]["task_id"] == task_id
+    assert explained["selected"]["closure_bridge"] is True

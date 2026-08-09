@@ -46,6 +46,7 @@
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
       "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T006.json",
+      "path:/home/alex/repos/bureau/src/bureau/broad_scope_dispatcher.py",
       "path:/home/alex/repos/bureau/src/bureau/cli.py",
       "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
       "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
@@ -102,8 +103,9 @@
         "tests/test_lifecycle.py"
       ],
       "base_commit": "875b41f7376e70cfe05cc36c91592f740d1e1949",
-      "reason": "Current lifecycle implementation lives in v2.py; StateStore-only apply requires CLI/effect-scope reclassification, and review integration requires an evidence-gated closure-bridge regression so automatic promotion cannot consume explicit closure repair tasks.",
+      "reason": "Current lifecycle implementation lives in v2.py; StateStore-only apply requires CLI/effect-scope reclassification. Review integration additionally requires an evidence-gated closure-bridge regression and fresh initiative authority at claim admission; the public broad-scope Dispatcher forwards that authority into the canonical base admission logic.",
       "replacement_paths": [
+        "src/bureau/broad_scope_dispatcher.py",
         "src/bureau/cli.py",
         "src/bureau/effect_scope.py",
         "src/bureau/v2.py",

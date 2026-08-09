@@ -559,6 +559,11 @@ def test_lifecycle_reconcile_plans_and_applies_only_safe_active_waiting_transiti
     assert lifecycle["registry_state"] == "active"
     assert lifecycle["consistent"] is True
 
+    dispatcher = Dispatcher(registry, store)
+    dispatcher_lifecycle = dispatcher.explain_next({"repository"})["lifecycle"][0]
+    assert dispatcher_lifecycle["declared_state"] == "waiting"
+    assert dispatcher_lifecycle["registry_state"] == "active"
+
 
 def test_lifecycle_reconcile_refuses_stale_initiative_task_inputs(
     registry_factory, tmp_path, monkeypatch
@@ -1270,13 +1275,28 @@ def test_close_ready_updates_initiative_atomically(registry_factory, tmp_path, m
     remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     registry, store, _ = setup(root, tmp_path, monkeypatch)
+    reconciled = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert reconciled["changed"][0]["to_state"] == "completion-ready"
+
     changed = close_ready_initiatives(registry, store)
     assert changed[0]["initiative_id"] == "BUR-TEST-001"
     initiative = json.loads((root / "registry/initiatives/main.json").read_text())
     assert initiative["state"] == "completed"
     assert initiative["commitment"] == "completed"
     assert initiative["metadata"]["lifecycle"]["completed_at"].endswith("Z")
-    Registry.load(root)
+    with store.connect() as connection:
+        status = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert status is not None
+    assert status["state"] == "completed"
+
+    current = Registry.load(root)
+    lifecycle = lifecycle_diagnostics(current, store)[0]
+    assert lifecycle["declared_state"] == "completed"
+    assert lifecycle["registry_state"] == "completed"
+    assert lifecycle["consistent"] is True
 
 
 def test_doctor_repairs_receipt_sidecar(registry_factory, tmp_path, monkeypatch):

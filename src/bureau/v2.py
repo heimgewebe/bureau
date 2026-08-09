@@ -5454,7 +5454,7 @@ class Dispatcher(legacy.Dispatcher):
     ) -> dict[str, Any]:
         self._validate_resource_filter(resource)
         frontier = self.frontier(capabilities, resource=resource)
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         eligible = next((item for item in frontier if item["eligible"]), None)
         return {
             "resource": resource,
@@ -5559,7 +5559,7 @@ class Dispatcher(legacy.Dispatcher):
         """
         self._validate_resource_filter(resource)
         frontier = self.frontier(capabilities, resource=resource)
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         runtime_truth = frontier_runtime_truth(frontier, lifecycle)
         cards = [self._what_now_task_card(item, capabilities) for item in frontier]
         ranked_eligible = [item for item in cards if item["eligible"]]
@@ -5625,7 +5625,7 @@ class Dispatcher(legacy.Dispatcher):
 
     def repo_balls(self, capabilities: set[str]) -> dict[str, Any]:
         open_pr_reservations = self._open_pr_reservations(strict=False)
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         with self.store.connect() as connection:
             run_rows = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
@@ -5859,7 +5859,7 @@ class Dispatcher(legacy.Dispatcher):
                                 "issue": "backlog-task-not-actionable",
                             }
                         )
-        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
         lifecycle_findings = [item for item in lifecycle if not item["consistent"]]
         state_root_report = state_root_hygiene(self.store.state_root, self.store.path)
         registry_truth = registry_truth_diagnostics(self.registry.root)
@@ -7765,5 +7765,10 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
         lifecycle = metadata.setdefault("lifecycle", {})
         lifecycle["completed_at"] = legacy.utc_now()
         legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
+        # Explicit closure must advance the StateStore overlay too.  Write the
+        # Registry document first so an interrupted StateStore update remains
+        # retryable: a stale completion-ready overlay will select this closure
+        # again on the next invocation.
+        store.set_initiative_state(raw["id"], "completed")
         changed.append({"initiative_id": raw["id"], "path": str(path)})
     return changed

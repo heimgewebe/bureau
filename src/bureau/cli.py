@@ -237,8 +237,10 @@ def parser() -> argparse.ArgumentParser:
     rlens_policy.add_argument("--strict", action="store_true")
     rlens_policy.add_argument("--task-id")
     sub.add_parser("lifecycle")
-    sub.add_parser("lifecycle-reconcile")
-    sub.add_parser("lifecycle-reconcile-apply")
+    lifecycle_reconcile = sub.add_parser("lifecycle-reconcile")
+    lifecycle_reconcile.add_argument("--task-id")
+    lifecycle_reconcile_apply = sub.add_parser("lifecycle-reconcile-apply")
+    lifecycle_reconcile_apply.add_argument("--task-id")
     source_check = sub.add_parser("source-check")
     source_check.add_argument("source", choices=["weltgewebe"])
     source_check.add_argument("--repo", required=True)
@@ -1252,7 +1254,9 @@ def main(argv: list[str] | None = None) -> int:
             from .v2 import reconcile_initiative_lifecycle
 
             apply_lifecycle = args.command == "lifecycle-reconcile-apply"
-            value = reconcile_initiative_lifecycle(registry, store, apply=apply_lifecycle)
+            value = reconcile_initiative_lifecycle(
+                registry, store, apply=apply_lifecycle, task_id=args.task_id
+            )
         elif args.command == "close-ready":
             value = close_ready_initiatives(registry, store)
         elif args.command == "frontier":

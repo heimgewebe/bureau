@@ -871,7 +871,11 @@ def _candidate_assess(
             continue
         other_record = other["record"]
         other_context = _operator_context(other_record)
-        if record.get("task_id") and other_record.get("task_id") == record.get("task_id"):
+        if (
+            other_record.get("status") not in {"closed", "promoted", "dropped"}
+            and record.get("task_id")
+            and other_record.get("task_id") == record.get("task_id")
+        ):
             exact.append(
                 {
                     "kind": "candidate-task-id",

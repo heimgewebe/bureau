@@ -7781,7 +7781,7 @@ def _initiative_lifecycle_reconcile_candidates(
 
 
 def reconcile_initiative_lifecycle(
-    registry: Registry, store: StateStore, *, apply: bool = False
+    registry: Registry, store: StateStore, *, apply: bool = False, task_id: str | None = None
 ) -> dict[str, Any]:
     source_registry = Registry.load(registry.root)
     operational_registry, task_authority, task_revisions = authoritative_task_registry(
@@ -7795,6 +7795,18 @@ def reconcile_initiative_lifecycle(
     task_candidates = _structural_task_reconcile_candidates(
         operational_registry, overlays, task_revisions, verification_stamps
     )
+    if task_id is not None:
+        if task_id not in operational_registry.tasks:
+            raise legacy.StateError(f"unknown task {task_id}")
+        matching_task_candidates = [
+            candidate for candidate in task_candidates if candidate["task_id"] == task_id
+        ]
+        if len(matching_task_candidates) != 1:
+            raise legacy.StateError(
+                f"task {task_id} has no deterministic lifecycle reconcile candidate"
+            )
+        task_candidates = matching_task_candidates
+
     projected_overlays = dict(overlays)
     for candidate in task_candidates:
         projected_overlays[candidate["task_id"]] = candidate["to_state"]
@@ -7802,7 +7814,11 @@ def reconcile_initiative_lifecycle(
     diagnostics = _lifecycle_diagnostics_from_overlays(
         operational_registry, source_registry, projected_overlays, verification_stamps
     )
-    initiative_candidates = _initiative_lifecycle_reconcile_candidates(diagnostics)
+    initiative_candidates = (
+        []
+        if task_id is not None
+        else _initiative_lifecycle_reconcile_candidates(diagnostics)
+    )
 
     changed_tasks: list[dict[str, Any]] = []
     changed_initiatives: list[dict[str, Any]] = []
@@ -7845,6 +7861,12 @@ def reconcile_initiative_lifecycle(
                 task_revisions,
                 fresh_verification_stamps,
             )
+            if task_id is not None:
+                fresh_task_candidates = [
+                    candidate
+                    for candidate in fresh_task_candidates
+                    if candidate["task_id"] == task_id
+                ]
             if fresh_task_candidates != task_candidates:
                 raise legacy.StateError(
                     "task lifecycle gates changed during lifecycle reconcile"
@@ -7862,18 +7884,20 @@ def reconcile_initiative_lifecycle(
             fresh_diagnostics_by_id = {
                 item["initiative_id"]: item for item in fresh_diagnostics
             }
-            if (
-                _initiative_lifecycle_reconcile_candidates(fresh_diagnostics)
-                != initiative_candidates
-            ):
+            fresh_initiative_candidates = (
+                []
+                if task_id is not None
+                else _initiative_lifecycle_reconcile_candidates(fresh_diagnostics)
+            )
+            if fresh_initiative_candidates != initiative_candidates:
                 raise legacy.StateError(
                     "initiative lifecycle inputs changed during reconcile"
                 )
 
             for candidate in task_candidates:
-                task_id = candidate["task_id"]
+                candidate_task_id = candidate["task_id"]
                 try:
-                    current = task_specs.get_current(connection, task_id)
+                    current = task_specs.get_current(connection, candidate_task_id)
                 except task_specs.TaskSpecError as exc:
                     raise legacy.StateError(str(exc)) from exc
                 if (
@@ -7883,12 +7907,12 @@ def reconcile_initiative_lifecycle(
                     or current["spec"].get("state") != candidate["from_state"]
                 ):
                     raise legacy.StateError(
-                        f"task {task_id} changed during lifecycle reconcile"
+                        f"task {candidate_task_id} changed during lifecycle reconcile"
                     )
                 spec = copy.deepcopy(current["spec"])
                 spec["state"] = candidate["to_state"]
                 key = (
-                    f"lifecycle-reconcile:{task_id}:r{current['revision']}:"
+                    f"lifecycle-reconcile:{candidate_task_id}:r{current['revision']}:"
                     f"{candidate['from_state']}->{candidate['to_state']}:"
                     f"{current['spec_sha256']}"
                 )
@@ -7904,7 +7928,7 @@ def reconcile_initiative_lifecycle(
                     raise legacy.StateError(str(exc)) from exc
                 changed_tasks.append(
                     {
-                        "task_id": task_id,
+                        "task_id": candidate_task_id,
                         "from_state": candidate["from_state"],
                         "to_state": candidate["to_state"],
                         "revision": mutation["revision"],
@@ -7970,6 +7994,11 @@ def reconcile_initiative_lifecycle(
         "schema_version": 2,
         "command": "lifecycle-reconcile",
         "apply": apply,
+        **(
+            {"task_selector": task_id, "scope": "task"}
+            if task_id is not None
+            else {}
+        ),
         "state_store_only": True,
         "registry_mutated": False,
         "safe_transitions": [

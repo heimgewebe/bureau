@@ -2,27 +2,33 @@
   "acceptance": [
     {
       "assertion": "Ein gültiger aktueller Bureau-Runtime-Refresh mit exakt drei receiptgebundenen Ressourcen wird als terminal erkannt und gibt ausschließlich diese drei unveränderten ownergebundenen Leases idempotent frei.",
+      "evidence_type": "object",
       "id": "current-three-resource-contract"
     },
     {
       "assertion": "Historische gültige Runtime-Refresh-Receipts mit fünf gebundenen Ressourcen bleiben kompatibel; die Implementierung codiert keine feste Ressourcenanzahl.",
+      "evidence_type": "object",
       "id": "historical-five-resource-compatibility"
     },
     {
       "assertion": "Die Ressourcenliste wird ausschließlich aus einer verifizierten Intent-/Result-/Receipt-Kette mit Ziel-, Owner-, Task-, State-Root- und Snapshot-Bindung übernommen; frei vom Caller gelieferte Teilmengen oder Obermengen begründen keine Freigabe.",
+      "evidence_type": "object",
       "id": "trusted-resource-source"
     },
     {
       "assertion": "Teilmengen, Obermengen, manipulierte Receipts, Ziel- oder Metadatendrift, erneuerte Leases, Fremdowner und nichtterminale oder mehrdeutige Outcomes stoppen fail-closed ohne Freigabe.",
+      "evidence_type": "object",
       "id": "drift-and-foreign-protection"
     },
     {
       "assertion": "Normalpfad und Recoverypfad verwenden denselben versionsfähigen Ressourcenlistenvertrag und liefern idempotente, receiptgebundene Ergebnisse.",
+      "evidence_type": "object",
       "id": "normal-recovery-convergence"
     },
     {
-      "assertion": "Fokussierte Lease-/Grip-/Receipt-Regressionstests und relevante Grabowski-Gates sind auf exakt demselben Head grün; nach Merge und Deployment belegt ein aktueller drei-Ressourcen-Runtime-Refresh die automatische Freigabe und unmittelbare sichere Wiederakquise ohne Force.",
-      "id": "validation-and-live-roundtrip"
+      "assertion": "Fokussierte Lease-/Grip-/Receipt-Regressionstests und relevante Grabowski-Gates sind auf exakt demselben Head grün; ein exakt an Head und vollständigen Diff gebundener Review belegt die Implementierung. Diese Aufgabe führt weder Merge noch Deployment noch Live-Roundtrip aus; diese Wirkungen gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-MERGE-20260809 und GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-DEPLOY-20260809.",
+      "evidence_type": "object",
+      "id": "implementation-review-proof"
     }
   ],
   "claims": [
@@ -38,7 +44,7 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Nur Runtime-Refresh-Lease-Release/Recovery, dessen Receipt-/Intent-Bindung, Tests und Vertragsdoku ändern. Keine Fremdlease freigeben, kein Force-Fallback, kein Bureau-Receipt-Schema stillschweigend ändern.",
+      "note": "Nur Runtime-Refresh-Lease-Release/Recovery, dessen Receipt-/Intent-Bindung, Tests und Vertragsdoku ändern. Keine Fremdlease freigeben, kein Force-Fallback, kein Bureau-Receipt-Schema stillschweigend ändern. Merge, Deployment und Live-Roundtrip sind ausdrücklich ausgeschlossen.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -60,6 +66,7 @@
       "Berechtigung zur Freigabe fremder oder driftender Leases",
       "Taskbereitschaft",
       "Merge- oder Deploymentfreigabe",
+      "Live-Runtime-Verhalten vor dem Deploymenttask",
       "Berechtigung zu Änderungen im Bureau-Repository"
     ],
     "live_evidence": {
@@ -103,6 +110,18 @@
       "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T134"
     },
     "registered_at": "2026-08-09T13:43:00Z",
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-MERGE-20260809",
+      "deployment_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-DEPLOY-20260809",
+      "verified_semantics": "reviewed implementation only; no merge, deployment or live claim"
+    },
+    "review_origin": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1827,
+      "finding": "Merge, Deployment und Live-Roundtrip müssen gegenüber dem Implementierungstask als exklusive Wirkungsphasen getrennt werden.",
+      "thread_id": "PRRT_kwDOTG2jCs6Xn0II"
+    },
     "source": "Live-Folgebefund während OPERATOR-INTEGRATION-LOOP-V1-T019"
   },
   "priority": {
@@ -114,7 +133,8 @@
     "python",
     "testing",
     "grabowski",
-    "runtime-deployment"
+    "github",
+    "review-evidence"
   ],
   "rollback": {
     "strategy": "Revertiere ausschließlich den dynamischen receiptgebundenen Ressourcenlistenvertrag und seine Tests/Doku. Bei Unsicherheit bleiben Leases fail-closed erhalten; Force-Release oder TTL-Verkürzung sind kein Rollback."

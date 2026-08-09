@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-MERGE-20260809 ist verifiziert und liefert ein typisiertes Receipt für den exakten Mergecommit, Mergebaum, geprüften Head und vollständigen Diff.",
+      "evidence_type": "object",
+      "id": "verified-merge-input"
+    },
+    {
+      "assertion": "Vor dem ersten Hosteffekt werden Runtime-Identität und Integrität, Connectorbindung, Recovery- und Kill-Switch-Status, Tasks, Leases, Worktrees, Prozesse und betroffene Services frisch gelesen; unbekannter, veralteter oder kollidierender Zustand blockiert.",
+      "evidence_type": "object",
+      "id": "fresh-runtime-preflight"
+    },
+    {
+      "assertion": "Ausschließlich der im Merge-Receipt gebundene Commit wird source-identitätsgebunden deployt; ein gültiges Finalisierungsreceipt, unveränderte Quellen und ein expliziter Rollbackpfad werden belegt.",
+      "evidence_type": "object",
+      "id": "exact-source-deployment"
+    },
+    {
+      "assertion": "Ein aktueller drei-Ressourcen-Bureau-Runtime-Refresh belegt nach dem Deployment, dass der spezialisierte Cleanup ausschließlich die drei receiptgebundenen unveränderten Owner-Leases automatisch und idempotent freigibt; Force-Release bleibt unbenutzt.",
+      "evidence_type": "object",
+      "id": "three-resource-live-release"
+    },
+    {
+      "assertion": "Unmittelbar danach ist die sichere Wiederakquise derselben drei Ressourcen ohne Force möglich; Fremdowner, erneuerte oder driftende Leases sowie manipulierte, mehrdeutige, Teilmengen- oder Obermengen-Receipts bleiben fail-closed geschützt.",
+      "evidence_type": "object",
+      "id": "safe-live-reacquire-and-negative-protection"
+    },
+    {
+      "assertion": "Nach dem Nachweis sind Runtime, Connectorbindung und betroffene Services im vorgesehenen Zustand; alle temporären Proof-Effekte sind entfernt oder revisionsgebunden erhalten.",
+      "evidence_type": "object",
+      "id": "postflight-runtime-readback"
+    },
+    {
+      "assertion": "Der Task führt keinen Code-Merge, Rebase oder Force-Push aus und übernimmt keine fremden Deployment-, Task-, Lease- oder Checkout-Effekte als eigene Autorität.",
+      "evidence_type": "object",
+      "id": "runtime-only-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "exclusive",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-MERGE-20260809"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Dieser Task ist ausschließlich für source-identitätsgebundenes Deployment und den begrenzten drei-Ressourcen-Live-Roundtrip zuständig; frische Konflikt- und Recovery-Prüfung ist vor jedem Effekt Pflicht.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc",
+      "service:grabowski-operator.service"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den exakt gemergten Runtime-Refresh-Lease-Contract source-identitätsgebunden deployen und live belegen, dass der aktuelle drei-Ressourcen-Runtime-Refresh automatisch freigegeben und unmittelbar sicher wiederakquiriert wird, ohne Force oder Fremdlease-Effekt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-DEPLOY-20260809",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Code-Merge-Autorität",
+      "Belastbarkeit außerhalb des geprüften Live-Profils",
+      "Erlaubnis zur Übernahme fremder Effekte",
+      "zukünftige Runtime-Verfügbarkeit"
+    ],
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-MERGE-20260809",
+      "deployment_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-DEPLOY-20260809"
+    },
+    "review_origin": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1827,
+      "finding": "Deployment und Live-Roundtrip benötigen eine eigene deployment- und receiptgebundene Wirkungsphase.",
+      "thread_id": "PRRT_kwDOTG2jCs6Xn0II"
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 42
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "systemd",
+    "runtime-observability",
+    "testing",
+    "rollback",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Den im Preflight protokollierten vorherigen gesunden Grabowski-Runtime-Stand source-identitätsgebunden wiederherstellen, nur taskeigene Live-Proof-Effekte entfernen und anschließend Runtime-Identität, Connectorbindung, betroffene Services und einen typisierten Readback erneut prüfen. Fremde Arbeit und fremde Leases bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Runtime-Refresh-Lease-Contract deployen und live beweisen"
+}

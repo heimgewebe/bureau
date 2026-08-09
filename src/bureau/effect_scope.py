@@ -13,6 +13,7 @@ _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
     {
         "claim-commit",
         "claim-intent",
+        "fail",
         "lifecycle-reconcile-apply",
         "receipt-normalize",
     }

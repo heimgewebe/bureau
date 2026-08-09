@@ -1,0 +1,94 @@
+{
+  "acceptance": [
+    {
+      "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809 ist mit exaktem Pull Request, Base-SHA, geprüftem Head-SHA, vollständigem Diff-SHA-256, grüner CI und head-/diffgebundenem Review als reine Implementierung verifiziert.",
+      "evidence_type": "object",
+      "id": "verified-implementation-input"
+    },
+    {
+      "assertion": "Vor dem Merge werden Base-SHA, Head-SHA und der vollständige aktuelle GitHub-Diff revisionsgebunden geprüft; Self-Review, Pflichtchecks und Merge-Readback beziehen sich auf denselben Head.",
+      "evidence_type": "object",
+      "id": "exact-diff-bound"
+    },
+    {
+      "assertion": "Unmittelbar vor dem Effekt bestätigen frische GitHub- und Grabowski-Readbacks: PR offen und nicht Draft, erwarteter Head unverändert, mergebar, Pflichtchecks grün, keine ungelösten handlungsrelevanten Review-Threads und keine kollidierenden fremden Leases, Tasks, Worktrees oder Prozesse.",
+      "evidence_type": "object",
+      "id": "fresh-exclusive-merge-preflight"
+    },
+    {
+      "assertion": "Genau der erwartete Head wird mit der repositorykonformen Merge-Methode gemergt; Rebase, Force-Push, Branch-Umschreibung, Deployment und Runtime-Mutation sind ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "exact-head-merge-only"
+    },
+    {
+      "assertion": "Ein typisiertes Merge-Receipt bindet Repository, PR, Base, Head, vollständigen Diff, Mergecommit, Mergebaum und Post-Merge-Readback auf main. Es ist Voraussetzung für GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-DEPLOY-20260809 und behauptet kein Deployment.",
+      "evidence_type": "object",
+      "id": "typed-merge-receipt"
+    },
+    {
+      "assertion": "Head-, Review-, CI-, Lease- oder Mergebarkeitsdrift führt vor jedem Effekt zu einem belegten Block; es erfolgt kein Ersatzmerge und kein stiller Retry.",
+      "evidence_type": "object",
+      "id": "drift-blocks-effect"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "exclusive",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Dieser Task ist ausschließlich für den exakt revisionsgebundenen Merge der verifizierten Implementierung zuständig. Er darf weder rebasen noch deployen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die verifizierte Runtime-Refresh-Lease-Contract-Implementierung nach frischem Diff-, Review-, CI- und Konflikt-Readback mit exaktem Head-Schutz als einzigen Repositoryeffekt mergen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-MERGE-20260809",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatische Merge-Autorität",
+      "Deployment-Abschluss",
+      "Runtime-Korrektheit",
+      "Erlaubnis zum Rebase oder Force-Push"
+    ],
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-MERGE-20260809",
+      "deployment_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-DEPLOY-20260809"
+    },
+    "review_origin": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1827,
+      "finding": "Merge, Deployment und Live-Roundtrip müssen gegenüber dem Implementierungstask als exklusive Wirkungsphasen getrennt werden.",
+      "thread_id": "PRRT_kwDOTG2jCs6Xn0II"
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 41
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "review-evidence",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Runtime-Refresh-Lease-Contract exklusiv mergen"
+}

@@ -1,0 +1,55 @@
+name: pr1814-race-fix
+
+on:
+  push:
+    branches:
+      - fix/bureau-control-plane-v3-t006-lifecycle-reconciliation-20260808
+    paths:
+      - .github/workflows/pr1814-race-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify exact review parent
+        env:
+          EXPECTED_PARENT: 82649072eac85f91da377558fa67c7f8dc998915
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "${EXPECTED_PARENT}"
+      - name: Apply race fixes
+        run: python .github/pr1814_race_fix.py
+      - name: Install validation dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Validate review races
+        run: |
+          set -euo pipefail
+          python -m pytest tests/test_closure_bridge.py -q
+          python -m pytest tests/test_v2.py -k 'lifecycle_reconcile or close_ready' -q
+          python -m ruff check src/bureau/v2.py tests/test_v2.py tests/test_closure_bridge.py
+          git diff --check
+      - name: Commit and push only if branch is unchanged
+        env:
+          BRANCH: fix/bureau-control-plane-v3-t006-lifecycle-reconciliation-20260808
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f .github/workflows/pr1814-race-fix.yml .github/pr1814_race_fix.py
+          git add src/bureau/v2.py tests/test_v2.py tests/test_closure_bridge.py
+          git diff --cached --quiet && { echo 'no patch produced'; exit 1; }
+          git commit -m 'fix(bureau): bind lifecycle closure races to StateStore'
+          git fetch origin "${BRANCH}"
+          expected_remote="$(git rev-parse HEAD^)"
+          actual_remote="$(git rev-parse FETCH_HEAD)"
+          test "${actual_remote}" = "${expected_remote}"
+          git push origin "HEAD:refs/heads/${BRANCH}"

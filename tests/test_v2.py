@@ -741,6 +741,11 @@ def test_lifecycle_reconcile_promotes_parent_after_terminal_child_gate(
     child_metadata = dict(child_spec.get("metadata", {}))
     child_metadata["parent_task"] = parent_id
     child_spec["metadata"] = child_metadata
+    child_metadata["verification"] = {
+        "task_sha256": task_revision_sha256(child_spec),
+        "plan_sha256": plan_sha256(registry, child_spec["initiative"]),
+    }
+    child_spec["metadata"] = child_metadata
     store.put_task_spec(
         child_spec,
         idempotency_key="lifecycle-child-verified",
@@ -779,6 +784,120 @@ def test_lifecycle_reconcile_leaves_ungated_planned_task_open(
     assert preview["task_candidate_count"] == 0
     assert preview["changed_task_count"] == 0
 
+
+
+def test_lifecycle_reconcile_rejects_unbound_verified_child(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    parent_id, child_id = sorted(registry.tasks)
+
+    parent = store.task_spec(parent_id)
+    assert parent is not None
+    parent_spec = dict(parent["spec"])
+    parent_spec["state"] = "planned"
+    store.put_task_spec(
+        parent_spec,
+        idempotency_key="lifecycle-unbound-child-parent-planned",
+        expected_revision=parent["revision"],
+        source="test",
+    )
+
+    child = store.task_spec(child_id)
+    assert child is not None
+    child_spec = dict(child["spec"])
+    child_spec["state"] = "verified"
+    child_metadata = dict(child_spec.get("metadata", {}))
+    child_metadata["parent_task"] = parent_id
+    child_spec["metadata"] = child_metadata
+    store.put_task_spec(
+        child_spec,
+        idempotency_key="lifecycle-unbound-child-verified",
+        expected_revision=child["revision"],
+        source="test",
+    )
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["task_candidate_count"] == 0
+
+
+def test_lifecycle_completion_requires_verified_task_evidence(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    spec = dict(current["spec"])
+    spec["state"] = "verified"
+    store.put_task_spec(
+        spec,
+        idempotency_key="lifecycle-unbound-verified-for-completion",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative_before = initiative_path.read_bytes()
+
+    diagnostic = lifecycle_diagnostics(registry, store)[0]
+    assert diagnostic["recommended_state"] == "verification-required"
+    assert diagnostic["verification_required_task_ids"] == [task_id]
+    assert diagnostic["completion_verification"] == {}
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["candidate_count"] == 0
+    assert "verification-required" in preview["excluded_recommendations"]
+    assert close_ready_initiatives(registry, store) == []
+    assert initiative_path.read_bytes() == initiative_before
+
+
+def test_close_ready_preserves_completed_at_when_state_store_retry_needed(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    preliminary = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+        }
+    }
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    completed_at = "2026-08-09T00:00:00Z"
+    initiative["state"] = "completed"
+    initiative["commitment"] = "completed"
+    metadata = initiative.setdefault("metadata", {})
+    lifecycle = metadata.setdefault("lifecycle", {})
+    lifecycle["completed_at"] = completed_at
+    initiative_path.write_text(json.dumps(initiative))
+
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.set_initiative_state(initiative["id"], "completion-ready")
+
+    changed = close_ready_initiatives(registry, store)
+    assert changed == [
+        {"initiative_id": initiative["id"], "path": str(initiative_path)}
+    ]
+    persisted = json.loads(initiative_path.read_text())
+    assert persisted["metadata"]["lifecycle"]["completed_at"] == completed_at
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            (initiative["id"],),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "completed"
 
 
 def test_lifecycle_reconcile_projects_completion_ready_without_completing(

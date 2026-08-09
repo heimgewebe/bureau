@@ -6826,6 +6826,7 @@ def _lifecycle_diagnostics_from_overlays(
     operational_registry: Registry,
     source_registry: Registry,
     overlays: dict[str, str],
+    store: StateStore,
 ) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     for initiative in operational_registry.initiatives.values():
@@ -6836,6 +6837,20 @@ def _lifecycle_diagnostics_from_overlays(
         ]
         states = {task.id: overlays.get(task.id, task.state) for task in tasks}
         recommendation = _lifecycle_recommendation(initiative.state, states)
+        completion_verification: dict[str, dict[str, Any]] = {}
+        verification_required_task_ids: list[str] = []
+        if recommendation == "completion-ready":
+            for task_id, state in states.items():
+                if state != "verified":
+                    continue
+                try:
+                    completion_verification[task_id] = verification_stamp(
+                        operational_registry, store, task_id
+                    )
+                except legacy.StateError:
+                    verification_required_task_ids.append(task_id)
+            if verification_required_task_ids:
+                recommendation = "verification-required"
         source = source_registry.initiatives[initiative.id]
         result.append(
             {
@@ -6844,6 +6859,8 @@ def _lifecycle_diagnostics_from_overlays(
                 "registry_state": source.state,
                 "recommended_state": recommendation,
                 "task_states": states,
+                "completion_verification": completion_verification,
+                "verification_required_task_ids": verification_required_task_ids,
                 "consistent": initiative.state == recommendation,
             }
         )
@@ -6855,7 +6872,7 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
     with store.connect() as connection:
         overlays = store.overlays(connection, operational_registry)
     return _lifecycle_diagnostics_from_overlays(
-        operational_registry, registry, overlays
+        operational_registry, registry, overlays, store
     )
 
 
@@ -6907,6 +6924,15 @@ def _structural_task_reconcile_candidates(
             )
             for child_task_id in parent_child.child_task_ids
         }
+        child_verification: dict[str, dict[str, Any]] = {}
+        try:
+            for child_task_id, state in child_states.items():
+                if state == "verified":
+                    child_verification[child_task_id] = verification_stamp(
+                        registry, store, child_task_id
+                    )
+        except legacy.StateError:
+            continue
         candidates.append(
             {
                 "task_id": task.id,
@@ -6917,6 +6943,7 @@ def _structural_task_reconcile_candidates(
                 "dependency_states": dependency_states,
                 "dependency_verification": dependency_verification,
                 "child_task_states": child_states,
+                "child_task_verification": child_verification,
                 "gate": "schema-and-evidence-deterministic-structural-gates",
             }
         )
@@ -7581,7 +7608,7 @@ def reconcile_initiative_lifecycle(
         projected_overlays[candidate["task_id"]] = candidate["to_state"]
 
     diagnostics = _lifecycle_diagnostics_from_overlays(
-        operational_registry, registry, projected_overlays
+        operational_registry, registry, projected_overlays, store
     )
     initiative_candidates: list[dict[str, Any]] = []
     for item in diagnostics:
@@ -7594,6 +7621,7 @@ def reconcile_initiative_lifecycle(
                 "from_state": item["declared_state"],
                 "to_state": item["recommended_state"],
                 "task_states": item["task_states"],
+                "completion_verification": item["completion_verification"],
             }
         )
 
@@ -7672,6 +7700,12 @@ def reconcile_initiative_lifecycle(
             fresh_projected_overlays = dict(fresh_overlays)
             for candidate in fresh_task_candidates:
                 fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
+            fresh_diagnostics = {
+                item["initiative_id"]: item
+                for item in _lifecycle_diagnostics_from_overlays(
+                    operational_registry, registry, fresh_projected_overlays, store
+                )
+            }
 
             for candidate in initiative_candidates:
                 initiative_id = candidate["initiative_id"]
@@ -7688,15 +7722,12 @@ def reconcile_initiative_lifecycle(
                     raise legacy.StateError(
                         f"initiative {initiative_id} changed during lifecycle reconcile"
                     )
-                fresh_task_states = {
-                    task.id: fresh_projected_overlays.get(task.id, task.state)
-                    for task in operational_registry.tasks.values()
-                    if task.initiative == initiative_id
-                }
+                fresh_diagnostic = fresh_diagnostics[initiative_id]
                 if (
-                    fresh_task_states != candidate["task_states"]
-                    or _lifecycle_recommendation(current_state, fresh_task_states)
-                    != candidate["to_state"]
+                    fresh_diagnostic["task_states"] != candidate["task_states"]
+                    or fresh_diagnostic["recommended_state"] != candidate["to_state"]
+                    or fresh_diagnostic["completion_verification"]
+                    != candidate["completion_verification"]
                 ):
                     raise legacy.StateError(
                         f"initiative {initiative_id} lifecycle inputs changed during reconcile"
@@ -7773,11 +7804,18 @@ def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[
         diagnostic = diagnostics.get(raw.get("id"))
         if diagnostic is None or diagnostic["recommended_state"] != "completion-ready":
             continue
+        was_completed = raw.get("state") == "completed"
         raw["state"] = "completed"
         raw["commitment"] = "completed"
         metadata = raw.setdefault("metadata", {})
         lifecycle = metadata.setdefault("lifecycle", {})
-        lifecycle["completed_at"] = legacy.utc_now()
+        completed_at = lifecycle.get("completed_at")
+        if (
+            not was_completed
+            or not isinstance(completed_at, str)
+            or not completed_at.strip()
+        ):
+            lifecycle["completed_at"] = legacy.utc_now()
         legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
         # Explicit closure must advance the StateStore overlay too.  Write the
         # Registry document first so an interrupted StateStore update remains

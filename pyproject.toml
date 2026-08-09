@@ -29,6 +29,8 @@ bureau-review-steward = "bureau.review_steward:main"
 bureau-gemini-preflight = "bureau.gemini_preflight:main"
 bureau-gemini-review-lane = "bureau.gemini_review_lane:main"
 
+[tool.uv]
+managed = false
 [tool.setuptools]
 package-dir = {"" = "src"}
 

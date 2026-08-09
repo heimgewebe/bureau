@@ -22,58 +22,12 @@ jobs:
           python-version: "3.12"
       - name: Verify bootstrap parent
         env:
-          EXPECTED_PARENT: ba196fb01db3b9bc66b7445e7d72f0c782a0110a
+          EXPECTED_PARENT: be9b2df8df44a72cf43126ef9fe898a8141eb9c0
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD^)" = "${EXPECTED_PARENT}"
-      - name: Align transaction-scoped patch anchor
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('.github/pr1814_review_fix2.py')
-          text = path.read_text(encoding='utf-8')
-          old_search = '''"""        fresh_projected_overlays = dict(fresh_overlays)
-        for candidate in fresh_task_candidates:
-            fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
-
-        for candidate in initiative_candidates:"""'''
-          new_search = '''"""            fresh_projected_overlays = dict(fresh_overlays)
-            for candidate in fresh_task_candidates:
-                fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
-
-            for candidate in initiative_candidates:"""'''
-          old_replace = '''"""        fresh_projected_overlays = dict(fresh_overlays)
-        for candidate in fresh_task_candidates:
-            fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
-        fresh_diagnostics = {
-            item["initiative_id"]: item
-            for item in _lifecycle_diagnostics_from_overlays(
-                operational_registry, registry, fresh_projected_overlays, store
-            )
-        }
-
-        for candidate in initiative_candidates:"""'''
-          new_replace = '''"""            fresh_projected_overlays = dict(fresh_overlays)
-            for candidate in fresh_task_candidates:
-                fresh_projected_overlays[candidate["task_id"]] = candidate["to_state"]
-            fresh_diagnostics = {
-                item["initiative_id"]: item
-                for item in _lifecycle_diagnostics_from_overlays(
-                    operational_registry, registry, fresh_projected_overlays, store
-                )
-            }
-
-            for candidate in initiative_candidates:"""'''
-          for old, new, label in (
-              (old_search, new_search, 'search anchor'),
-              (old_replace, new_replace, 'replacement anchor'),
-          ):
-              if text.count(old) != 1:
-                  raise SystemExit(f'{label}: expected exactly one match, found {text.count(old)}')
-              text = text.replace(old, new, 1)
-          path.write_text(text, encoding='utf-8')
-          PY
+      - name: Correct transaction anchor
+        run: python .github/pr1814_fix_anchor.py
       - name: Apply deterministic review patch
         run: python .github/pr1814_review_fix2.py
       - name: Install validation dependencies
@@ -91,7 +45,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/pr1814-review-fix2.yml .github/pr1814_review_fix2.py
+          git rm .github/workflows/pr1814-review-fix2.yml .github/pr1814_review_fix2.py .github/pr1814_fix_anchor.py
           git add src/bureau/v2.py tests/test_v2.py
           git diff --cached --quiet && { echo 'no patch produced'; exit 1; }
           git commit -m 'fix(bureau): require lifecycle verification evidence'

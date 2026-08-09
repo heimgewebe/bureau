@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf aktuellem main wird der ursprüngliche cargo-test-Fehler frisch reproduziert oder revisionsgebunden als inzwischen behoben klassifiziert; rustc/cargo, libsqlite3-sys-Version und exakter Head werden belegt.",
+      "evidence_type": "object",
+      "id": "fresh-baseline-reproduction"
+    },
+    {
+      "assertion": "Die Ursache wird auf Toolchain- oder Dependency-Kompatibilität eingegrenzt und mit der kleinsten reproduzierbaren Änderung behoben; keine Testabschwächung, kein pauschales Dependency-Downgrade.",
+      "evidence_type": "object",
+      "id": "root-cause-bound-fix"
+    },
+    {
+      "assertion": "`cargo test --workspace --locked` sowie relevante fmt/clippy/security/vendor-Gates sind auf exakt demselben finalen Head grün.",
+      "evidence_type": "object",
+      "id": "full-rust-regression"
+    },
+    {
+      "assertion": "Der T040-Sicherheitsstand einschließlich rand >=0.9.3 bleibt erhalten; dieser Follow-up behauptet keine zusätzliche Dependabot-Schließung ohne Live-Readback.",
+      "evidence_type": "object",
+      "id": "t040-separation"
+    },
+    {
+      "assertion": "Finaler Diff und Head sind geprüft, materielle Reviewbefunde geschlossen und erforderliche CI-Gates grün.",
+      "evidence_type": "object",
+      "id": "revision-bound-review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.hauski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T040"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den reproduzierbaren Rust-Toolchain-/libsqlite3-sys-Kompatibilitätsvertrag reparieren. Tests nicht abschwächen und T040-rand-Update nicht zurücknehmen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/hausKI/rust-toolchain.toml",
+      "path:/home/alex/repos/hausKI/Cargo.toml",
+      "path:/home/alex/repos/hausKI/Cargo.lock"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/hausKI"
+  },
+  "goal": "Den HausKI-Rust-Testvertrag revisionsgebunden wiederherstellen, sodass `cargo test --workspace --locked` auf der dokumentierten reproduzierbaren Toolchain grün läuft. Den aktuellen E0658-Fehler in unverändertem libsqlite3-sys 0.38.1 ursächlich beheben, ohne den T040-rand-Sicherheitsfix zurückzunehmen oder Tests abzuschwächen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-FU-HAUSKI-RUST-TOOLCHAIN-20260809",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "T040 merge readiness",
+      "permission to alter unrelated Rust dependencies",
+      "runtime reachability of rand"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1c4881dd6b69bbb0f3ce2035",
+      "event_id": 5179,
+      "event_created_at": "2026-08-09T21:15:54.197449Z",
+      "request_sha256": "5d385dcef2e10036b482ccc86fa8dad90ad7659213e1a62db9696cef7b17b76c",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "test-failure-receipt",
+        "locator": "grabowski-job:30e2f07f70d0:finalization",
+        "observed_at": "2026-08-09T21:02:01Z",
+        "sha256": "ca48c2e6b677576f8ca6fc549636c17e5e93b42d94ccea3b3293e3c8b5254a6c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source": "T040 separater Baselinebefund"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 45
+  },
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "testing",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die Toolchain-/libsqlite3-sys-Kompatibilitätsänderung. Bei unklarer Ursache bleibt der bestehende Testfehler sichtbar; keine Testdeaktivierung und kein Rückbau der T040-Sicherheitsupdates."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "HausKI-Rust-Volltest an libsqlite3-sys cfg_select entblocken"
+}

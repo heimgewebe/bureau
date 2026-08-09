@@ -1,0 +1,116 @@
+{
+  "acceptance": [
+    {
+      "assertion": "classify_command_effect_scope('heartbeat') liefert coordination_state_mutation; die Änderung ist auf heartbeat begrenzt und übernimmt nicht die separate fail-Arbeit aus einem anderen offenen Pull Request.",
+      "evidence_type": "object",
+      "id": "heartbeat-coordination-scope"
+    },
+    {
+      "assertion": "Ein gebundener Run kann heartbeat mit einem aktuellen kanonischen read-only Registry-Snapshot und einem expliziten separaten Coordination-State-Root ausführen, ohne Registry-Schreibrecht zu benötigen.",
+      "evidence_type": "object",
+      "id": "canonical-readonly-registry-heartbeat"
+    },
+    {
+      "assertion": "Relative, überlappende, nicht besitzkontrollierte oder runtime-driftende Coordination-State-Pfade bleiben vor einem heartbeat-Effekt blockiert.",
+      "evidence_type": "object",
+      "id": "unsafe-coordination-state-still-blocked"
+    },
+    {
+      "assertion": "Ein echter Registry-Mutationsbefehl sowie ein unbekannter mutierender Befehl bleiben als registry_mutation fail-closed; die Heartbeat-Korrektur erweitert keine Registry-Schreibautorität.",
+      "evidence_type": "object",
+      "id": "registry-gate-preserved"
+    },
+    {
+      "assertion": "Die gezielten Effektklassifikations- und Heartbeat-Regressionsfälle bestehen auf dem exakten Commit; git diff --check ist sauber.",
+      "evidence_type": "object",
+      "id": "targeted-regression-green"
+    },
+    {
+      "assertion": "Die Korrektur erzeugt keine neue Task-, Queue-, Claim-, Merge-, CI- oder Deployment-Autorität und ändert ausschließlich die bestehende zentrale Effektklassifikation.",
+      "evidence_type": "object",
+      "id": "no-second-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T026"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die zentrale Effektklassifikation für heartbeat und ihre gezielten Regressionen dürfen geändert werden. Der offene fail-Fix aus PR #1837 wird nicht dupliziert oder überschrieben.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_effect_scope.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Klassifiziere den Bureau-CLI-Befehl heartbeat als coordination_state_mutation statt als registry_mutation, sofern der produktive Pfad ausschließlich den kanonischen StateStore-Run-Heartbeat aktualisiert. Dadurch kann ein gebundener Run seinen Heartbeat gegen einen aktuellen read-only Registry-Snapshot und einen expliziten separaten Coordination-State-Root erneuern, ohne einen künstlichen schreibfähigen Registry-Root zu benötigen. Erhalte die fail-closed Defaultklassifikation für unbekannte Mutationen und echte Registry-Mutationen.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T030",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation",
+      "task readiness",
+      "queue or dispatch authority",
+      "merge readiness",
+      "deployment completion"
+    ],
+    "github_main_observed": "0f01e67d26f94dc181eb8d3a405dc6d751529456",
+    "registered_at": "2026-08-09T21:22:00Z",
+    "related_open_pr": 1837,
+    "related_open_pr_scope": "fail only; deliberately excluded from T030",
+    "runtime_registry_commit": "0f01e67d26f94dc181eb8d3a405dc6d751529456",
+    "source": "live T026 heartbeat workaround after runtime/main convergence",
+    "source_candidate_id": "candidate-ee50061dc8d72eb9ae0f0983",
+    "source_event_id": 5119,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ee50061dc8d72eb9ae0f0983",
+      "event_id": 5119,
+      "event_created_at": "2026-08-09T19:59:21.847482Z",
+      "request_sha256": "eba306836e1f58123d1e43446ba9e7fe94b96ccad9db50ab81dee3171faa418e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-runtime-source",
+        "locator": "src/bureau/effect_scope.py:_COORDINATION_STATE_MUTATION_COMMANDS@7fa88e39f5999bed122fb017105ac11e7822bd89",
+        "observed_at": "2026-08-09T19:54:24Z",
+        "sha256": "b2fd7ca286b74ac0227f685e7092151dc7ddfe258583de2186dded7da0322e4d"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 31
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "git"
+  ],
+  "rollback": {
+    "strategy": "Entferne heartbeat wieder aus der Coordination-State-Kommandomenge und revertiere die zugehörigen Regressionen gemeinsam; die fail-closed Defaultklassifikation unbekannter Mutationen bleibt unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Heartbeat als Coordination-State-Mutation klassifizieren"
+}

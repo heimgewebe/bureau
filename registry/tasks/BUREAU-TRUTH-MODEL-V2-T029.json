@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "BUREAU-TRUTH-MODEL-V2-T029",
   "initiative": "BUREAU-TRUTH-MODEL-V2",
-  "title": "Immutable Bureau-Runtime pro Ausführung exakt konvergieren",
-  "goal": "Die installierte immutable Bureau-Runtime bei belegtem Drift auf den jeweils aktuellen reviewten Bureau-main-Stand konvergieren, ohne einen festen Zielcommit in der Task-Autorität zu verewigen. Jede einzelne Ausführung wird frisch an den exakten beobachteten main-Commit, den zugehörigen gemergten PR, erfolgreiche Pflichtchecks, den daraus berechneten target_sha256, eine exakt auf diese Task-ID und dieses Target gebundene Break-Glass-Freigabe sowie die vom Runtime-Refresh-Vertrag geforderten Live-Leases gebunden. Zielgebundene oder terminale Altaufgaben wie BUREAU-TRUTH-MODEL-V2-T028 und BUREAU-TRUTH-MODEL-V2-T015 dürfen nicht als Runtime-Autorität für neue Targets wiederverwendet werden.",
+  "title": "Bureau-Runtime einmalig nach TaskSpec-Seed-Fix konvergieren",
+  "goal": "Diese Task autorisiert genau einen kontrollierten Runtime-Refresh: nach dem Merge ihrer Git-Projektion soll die installierte immutable Bureau-Runtime einmalig auf den dann aktuellen reviewten Bureau-main-Stand konvergieren. Die konkrete Ausführung wird frisch an den exakten beobachteten main-Commit, den zugehörigen gemergten PR, erfolgreiche Pflichtchecks, den daraus berechneten target_sha256, eine exakt auf diese Task-ID und dieses Target gebundene Break-Glass-Freigabe sowie die vom Runtime-Refresh-Vertrag geforderten Live-Leases gebunden. Nach erfolgreichem Closeout wird T029 terminal und darf nie für einen späteren Drift wiederverwendet werden; jeder weitere Runtime-Refresh benötigt einen neuen Nachfolgetask mit eigener Autorität.",
   "state": "ready",
   "priority": {
     "lane": "next",
@@ -36,29 +36,33 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Die TaskSpec ist absichtlich zielgenerisch und allein keine konkrete Deploymentfreigabe. Vor jedem Runtime-Effekt ist eine neue Observation erforderlich. Die konkrete Break-Glass-Freigabe muss task_id BUREAU-TRUTH-MODEL-V2-T029 und reference exakt an den frisch beobachteten target_sha256 binden. Historische Targets, Intents, Freigaben oder Leases werden nicht wiederverwendet."
+      "note": "T029 ist eine einmalige Runtime-Autorität und allein noch keine konkrete Deploymentfreigabe. Vor ihrem einzigen Runtime-Effekt ist eine neue Observation erforderlich. Die konkrete Break-Glass-Freigabe muss task_id BUREAU-TRUTH-MODEL-V2-T029 und reference exakt an den frisch beobachteten target_sha256 binden. Nach erfolgreichem Closeout wird T029 nicht wiederverwendet; spätere Runtime-Drifts benötigen einen neuen Task."
     }
   },
   "acceptance": [
     {
       "id": "fresh-target-per-execution",
-      "assertion": "Unmittelbar vor prepare-intent werden aktueller main-Commit, genau zugehöriger gemergter PR, erforderliche validate-Checks und target_sha256 frisch beobachtet. Driftet main, PR-Zuordnung oder ein Gate, wird der vorhandene Intent verworfen und aus einer neuen Observation erzeugt."
+      "assertion": "Unmittelbar vor der einzigen T029-Ausführung werden aktueller main-Commit, genau zugehöriger gemergter PR, erforderliche validate-Checks und target_sha256 frisch beobachtet. Driftet main, PR-Zuordnung oder ein Gate, wird der vorhandene Intent verworfen und aus einer neuen Observation erzeugt."
     },
     {
       "id": "break-glass-target-binding",
-      "assertion": "Jede konkrete Runtime-Freigabe bindet task_id BUREAU-TRUTH-MODEL-V2-T029 und reference exakt an den frisch beobachteten target_sha256. Die generische TaskSpec liefert ohne diese exakte Bindung keine Deploymentfreigabe."
+      "assertion": "Die einzige konkrete T029-Runtime-Freigabe bindet task_id BUREAU-TRUTH-MODEL-V2-T029 und reference exakt an den frisch beobachteten target_sha256. Die TaskSpec liefert ohne diese exakte Bindung keine Deploymentfreigabe."
     },
     {
       "id": "authoritative-task-preflight",
-      "assertion": "Vor jedem prepare-intent und erneut vor apply wird die aktuelle autoritative StateStore-TaskSpec dieser Task gelesen. Sie muss nichtterminal, für runtime_mutation vorgesehen und mit required_level break_glass vereinbar sein. Zielgebundene oder terminale andere Tasks werden nicht ersatzweise als Freigabequelle verwendet."
+      "assertion": "Vor prepare-intent und erneut vor apply wird die aktuelle autoritative StateStore-TaskSpec T029 gelesen. Sie muss nichtterminal, für runtime_mutation vorgesehen und mit required_level break_glass vereinbar sein. Zielgebundene, terminale oder andere Tasks werden nicht ersatzweise als Freigabequelle verwendet."
     },
     {
       "id": "live-lease-binding",
-      "assertion": "apply verwendet ausschließlich die vom frisch erzeugten Runtime-Refresh-Intent geforderten aktuellen Live-Leases und exakt dieselbe Task-/Target-Bindung. Fehlende, abgelaufene, fremde oder driftende Leases brechen fail-closed ab."
+      "assertion": "apply verwendet ausschließlich die vom frisch erzeugten T029-Runtime-Refresh-Intent geforderten aktuellen Live-Leases und exakt dieselbe Task-/Target-Bindung. Fehlende, abgelaufene, fremde oder driftende Leases brechen fail-closed ab."
     },
     {
       "id": "stale-task-reuse-forbidden",
-      "assertion": "BUREAU-TRUTH-MODEL-V2-T028, BUREAU-TRUTH-MODEL-V2-T015 und andere zielgebundene, supersedete oder terminale Runtime-Aufgaben werden für neue Runtime-Targets nicht wiederverwendet."
+      "assertion": "BUREAU-TRUTH-MODEL-V2-T028, BUREAU-TRUTH-MODEL-V2-T015 und andere zielgebundene, supersedete oder terminale Runtime-Aufgaben werden nicht als Ersatz für T029 verwendet."
+    },
+    {
+      "id": "single-use-lifecycle",
+      "assertion": "T029 darf genau einen erfolgreichen Runtime-Refresh tragen. Nach erfolgreichem Closeout wird T029 terminal und niemals reaktiviert oder wiederverwendet; jeder spätere Runtime-Drift, einschließlich eines Refreshs nach T083, benötigt einen frisch registrierten Nachfolgetask mit eigener targetgebundener Freigabe."
     },
     {
       "id": "immutable-readback",
@@ -89,11 +93,11 @@
       "repository": "heimgewebe/bureau",
       "pull_request": 1840,
       "merge_commit": "857e00ff19ad44483bebea899919eafa3c3c88c3",
-      "note": "PR #1840 lieferte einen engen Git-only Bootstrap-Task, dessen Root-Fix-Bindung noch auf den supersedeten PR #1836 zeigte. T029 ersetzt diese Runtime-Autorität durch einen zielgenerischen, pro Ausführung exakt gebundenen Vertrag."
+      "note": "PR #1840 lieferte einen engen Git-only Bootstrap-Task, dessen Root-Fix-Bindung noch auf den supersedeten PR #1836 zeigte. T029 ersetzt diese Autorität ausschließlich für den ersten Runtime-Refresh nach ihrer eigenen Git-Projektion; spätere Refreshs erhalten neue Nachfolgetasks."
     },
     "runtime_refresh_authority": {
       "schema_version": 1,
-      "mode": "generic-per-execution",
+      "mode": "single-use-target-bound",
       "required_action_class": "runtime_mutation",
       "required_approval_level": "break_glass",
       "required_claim_resource": "component.bureau.runtime",
@@ -103,13 +107,23 @@
         "active"
       ],
       "forbid_foreign_task_substitution": true,
-      "forbid_historical_target_reuse": true
+      "forbid_historical_target_reuse": true,
+      "single_use": true,
+      "successor_task_required_after_terminal": true
     },
     "does_not_establish": [
       "eine konkrete Deploymentfreigabe ohne frischen target_sha256",
       "Berechtigung zur Wiederverwendung von T015 oder T028",
       "Taskbereitschaft außerhalb des autoritativen StateStore",
-      "Freigabe anderer Runtime-, Repository-, Queue-, Claim- oder Lease-Effekte"
-    ]
+      "Freigabe anderer Runtime-, Repository-, Queue-, Claim- oder Lease-Effekte",
+      "wiederverwendbare oder rekurrente Runtime-Autorität nach T029-Closeout"
+    ],
+    "review_resolution": {
+      "pull_request": 1841,
+      "review_comment_id": 3745321203,
+      "reviewed_head": "c6206d8ab0f96dfd69973274e0b19af12e7f0b95",
+      "finding": "Reusable T029 conflicts with normal verified closeout lifecycle.",
+      "decision": "Adopt one-task-per-refresh; T029 is single-use and every later refresh requires a successor task."
+    }
   }
 }

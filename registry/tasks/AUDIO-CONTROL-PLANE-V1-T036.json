@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Tests cover the observed incomplete legacy release-evidence shapes and deterministically classify each as safely migratable, safely quarantinable, protected, or unknown; unknown cases remain fail-closed and undeleted.",
+      "evidence_type": "object",
+      "id": "legacy-format-classification"
+    },
+    {
+      "assertion": "Retention logic proves the active runtime release, configured keep set and rollback-relevant releases cannot be deleted or rewritten by legacy handling.",
+      "evidence_type": "object",
+      "id": "current-and-rollback-protection"
+    },
+    {
+      "assertion": "For known legacy states, repeated unchanged deploys converge without repeating the same unbounded retention warnings; unresolved unknown states remain visible with stable, actionable evidence.",
+      "evidence_type": "object",
+      "id": "warning-convergence"
+    },
+    {
+      "assertion": "T036 changes repository code/tests/documentation only and performs no deletion, migration or mutation of the live Audiozentrale release store.",
+      "evidence_type": "object",
+      "id": "no-live-cleanup-effect"
+    },
+    {
+      "assertion": "Implementation, regression tests, full diff, self-review and required GitHub checks are bound to the same published head; material review findings or red checks block merge.",
+      "evidence_type": "object",
+      "id": "exact-head-review-ci"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository implementation and hermetic tests only. Do not delete or rewrite live release directories under this task; any live cleanup must be separately authorized after exact preimage/readback.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Eliminate repeated Audiozentrale retention warnings from understood legacy release formats while preserving fail-closed deletion, current/rollback release protection and exact evidence binding.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T036",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "discovery": "Fresh live deploy readback after audio PR #89/#90 showed runtime e73d7afae23a9d5b36b2d837698fddea099ec138 healthy and idempotent while release_retention warned about six older releases with incomplete historical evidence and removed none.",
+    "does_not_establish": [
+      "Current serving failure",
+      "Permission to delete live release directories",
+      "Permission to weaken release identity validation"
+    ],
+    "source_candidate": "candidate-2b24b9f9547a82d57a30c3d1",
+    "source_pull_requests": [
+      89,
+      90
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2b24b9f9547a82d57a30c3d1",
+      "event_id": 5648,
+      "event_created_at": "2026-08-10T22:46:56.497309Z",
+      "request_sha256": "10fe7ba041cedf14bac8dfe77ee33dafacadefe37c515fb50e75c1455758ee80",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "chat:audio-pr89-final-live-retention-20260811",
+        "observed_at": "2026-08-10T22:46:56.466319Z",
+        "sha256": "d3629c43500d9cf51796374c6a526424cbd0985abe83e0ad88539d38ac1fbbe4"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 36
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Repair legacy Audiozentrale release retention evidence and bounded cleanup"
+}

@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Einmaligen Bureau-Runtime-Refresh nach Registry-Merge autorisieren",
+  "goal": "Schließe genau einmal den immutable Bureau-Runtime- und Registry-Snapshot-Drift, der durch den reviewten Merge von PR #1850 entstanden ist. Nach Merge dieser TaskSpec darf die aktuell installierte Runtime 68b02903976cac47ec6daaebd4d1438e7078a5a9 genau einmal auf den dann frisch beobachteten, reviewten und grün geprüften aktuellen main-Stand konvergieren. Der Effekt muss an eine neue Observation, den exakten target_sha256, diese Task-ID, Break-Glass-Evidenz und die exakten Live-Leases des Runtime-Refresh-Vertrags gebunden sein. Historische T028/T029- oder supersedete Seed-Drift-Autoritäten dürfen nicht wiederverwendet werden.",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Diese TaskSpec ist nur die einmalige Autoritätsquelle. Unmittelbar vor dem einzigen Effekt sind eine neue Observation, exakte Target-Bindung, explizite Break-Glass-Freigabe und die vom Runtime-Refresh-Intent geforderten aktuellen Live-Leases erforderlich. Sie autorisiert weder Repository-Merge noch Queue-, Claim-, Dispatch- oder Fremdarbeitsmutation."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor der einzigen Ausführung werden aktueller GitHub-main, der zugehörige gemergte PR bzw. die Merge-Historie und die daraus abgeleitete target_sha256 frisch beobachtet. Driftet main oder ein Gate, wird kein historischer Intent weiterverwendet, sondern neu beobachtet."
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810 und approval_reference exakt an den frisch beobachteten target_sha256. Ohne diese Bindung gibt es keinen Runtime-Effekt."
+    },
+    {
+      "id": "historical-authority-reuse-forbidden",
+      "assertion": "BUREAU-TRUTH-MODEL-V2-T028, BUREAU-TRUTH-MODEL-V2-T029 und BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809 werden nicht reaktiviert, umgedeutet oder als Ersatzautorität verwendet."
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frisch erzeugten Runtime-Refresh-Intents unter einem Owner, dessen task_id exakt diese TaskSpec ist. Fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung ab."
+    },
+    {
+      "id": "single-use-lifecycle",
+      "assertion": "Diese TaskSpec trägt höchstens einen erfolgreichen Runtime-Refresh. Nach erfolgreichem Effekt und revisionsgebundenem Closeout wird sie terminal und niemals wiederverwendet; jeder spätere Runtime-Drift braucht eine neue Autoritäts-TaskSpec."
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot auf denselben Source-Commit; StateStore-Integrität bleibt ok und ein frischer Readback belegt die neue Runtime-Identität."
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "Der Lauf lockert keine Runtime-, Registry-, Queue-, Claim-, Dispatch-, Lease-, Review- oder Merge-Gates, schreibt keine ältere Git-Taskprojektion über neuere StateStore-TaskSpecs und verändert keine fremden Worktrees, Leases oder Prozesse."
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keine Registry-, Queue- oder StateStore-Historie zurückschreiben. Der letzte integritätsgültige immutable Release bleibt Rückfallkante; ausschließlich den bestehenden Runtime-Refresh-Readback-/Rollback-/verify-then-retry-Vertrag verwenden."
+  },
+  "metadata": {
+    "source": "Live-Bootstrap-Blocker nach Merge des eigentlichen Closeout-Fix-Tasks am 2026-08-10",
+    "source_candidate": "candidate-2ee0d587c2e13f4cc521c844",
+    "source_event_id": 5251,
+    "blocked_task": "BUREAU-CONTROL-PLANE-V3-FU-COMPLETE-RUN-TASKSPEC-AUTHORITY-20260810",
+    "blocked_registration_pr": 1850,
+    "deployed_source_at_observation": "68b02903976cac47ec6daaebd4d1438e7078a5a9",
+    "main_at_observation": "1aa9914862bdd9e6a7d2af7cfe8e7007a8413a26",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die kanonische typed Task-Publikation ist bei Runtime-/Registry-Snapshot-Drift absichtlich fail-closed. Der dokumentierte Bootstrap-Präzedenzfall BUREAU-TRUTH-MODEL-V2-T026 erlaubt in dieser Lage ausschließlich eine eng gebundene normale geschützte GitHub-PR-Registrierung. Dieser PR darf genau diese eine neue Taskdatei enthalten; Queue, Live Register und StateStore werden durch die Registrierung nicht direkt mutiert.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before task merge"
+      ]
+    },
+    "does_not_establish": [
+      "einen Runtime-target_sha256 vor frischer Observation",
+      "eine konkrete Deploymentfreigabe ohne Break-Glass-Zielbindung",
+      "Berechtigung zur Wiederverwendung historischer Runtime-Tasks",
+      "Merge- oder Fremdarbeitsautorität"
+    ]
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "acceptance": [
+    {
+      "assertion": "classify_command_effect_scope und die CLI-Runtimeidentität klassifizieren bind bei mutierender Ausführung als coordination_state_mutation, nicht als registry_mutation.",
+      "id": "bind-coordination-scope"
+    },
+    {
+      "assertion": "Ein hermetischer und ein revisionsgebundener Runtime-Reproducer belegen, dass bind gegen einen gültigen kanonischen immutable Registry-Snapshot nur die externe Run-Bindung im autoritativen StateStore ändern darf; Registry-Dateien und Registry-Digests bleiben byte- und digestgleich.",
+      "id": "canonical-bind-state-only"
+    },
+    {
+      "assertion": "Unbekannte Runs, ungültige externe Bindungen, State-/Runtime-Identitätsdrift und unzulässige State-Pfade stoppen bind weiterhin vor Wirkung.",
+      "id": "bind-fail-closed"
+    },
+    {
+      "assertion": "Unbekannte mutierende CLI-Befehle bleiben weiterhin als registry_mutation klassifiziert; die Änderung erweitert nur den exakt benannten bind-Pfad.",
+      "id": "unknown-mutations-stay-strict"
+    },
+    {
+      "assertion": "Fokussierte Effect-Scope-/CLI-Regressionstests, git diff --check und make validate sind auf demselben finalen Head grün.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die Effektklassifikation von bind und eng zugehörige Regressionstests ändern. Keine Registry-, Claim-, Lease-, Merge- oder Deployment-Gates lockern; unbekannte Mutationsbefehle bleiben registry_mutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_effect_scope.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Klassifiziere den Bureau-CLI-Befehl bind als coordination_state_mutation, damit ein bereits koordinierter Run seine externe Executor-Bindung gegen den kanonischen immutable Runtime-Snapshot revisionssicher ausschließlich im StateStore schreiben kann. Registry-Dateien, TaskSpec-Wahrheit und unbekannte Mutationspfade bleiben unverändert fail-closed.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-BIND-EFFECT-SCOPE-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "Berechtigung zur Mutation von Registry-Dateien",
+      "Berechtigung zur Übernahme fremder Runs oder Leases",
+      "Merge- oder Deploymentfreigabe"
+    ],
+    "live_reproducer": {
+      "effect_applied": false,
+      "observed_block": "canonical-registry-read-only",
+      "observed_effect_scope": "registry_mutation",
+      "run_id": "BUR-RUN-20260810T123939Z-e62958b73c",
+      "runtime_commit": "c2de13ba5179b87258b3b009d7ae7e7c164e2073"
+    },
+    "source": "Live-Folgebefund beim Closeout des globalen Claim-Blocker-Fixes am 2026-08-10",
+    "source_candidate": "candidate-5a4d844b0d2d83db1cd9cdba",
+    "source_event_id": 5376,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5a4d844b0d2d83db1cd9cdba",
+      "event_id": 5376,
+      "event_created_at": "2026-08-10T13:30:39.832713Z",
+      "request_sha256": "fac0343793cdbc60ceffdbb5295623bb73189b26d4ed0f9754b0f0b9f398fbd6",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-code-observation",
+        "locator": "bureau-runtime:4e81ecd2e95bb8415cb5260f7cc075d12713872b:src/bureau/effect_scope.py#_COORDINATION_STATE_MUTATION_COMMANDS",
+        "observed_at": "2026-08-10T13:29:24Z",
+        "sha256": "3872bb91494f9c064466967d985767a5fb8e79dd2e53494134c7ccdf695cd324"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Entferne ausschließlich bind aus der Coordination-State-Allowlist und die neuen bind-Regressionsfälle; alle übrigen Effektklassifikationen bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "bind als kanonische Coordination-State-Mutation freigeben"
+}

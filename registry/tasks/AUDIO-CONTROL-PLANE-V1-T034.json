@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A regression simulates deploy generation N upgrading to N+1 where N+1 changes the deploy verifier/runtime contract; the upgrade completes autonomously without manually replacing the installed deploy executable.",
+      "evidence_type": "object",
+      "id": "cross-generation-bootstrap"
+    },
+    {
+      "assertion": "Staging the next deploy generation remains exact-head/hash/preimage bound, rejects unsafe path identity or unexpected bytes fail-closed, and preserves rollback semantics when target validation fails.",
+      "evidence_type": "object",
+      "id": "identity-and-rollback-preserved"
+    },
+    {
+      "assertion": "After successful N→N+1 convergence, an unchanged second deploy creates no release, performs no unnecessary service restart, and reports the same exact runtime head.",
+      "evidence_type": "object",
+      "id": "steady-state-idempotence"
+    },
+    {
+      "assertion": "A controlled live acceptance on the Heim-PC proves automatic convergence from a deliberately older compatible deploy generation to the reviewed next generation and leaves the deploy timer, UI, and remote bridge healthy.",
+      "evidence_type": "object",
+      "id": "live-upgrade-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository and deployment-path hardening only; preserve current fail-closed verifier, hash/preimage binding, rollback, and service gates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Make Audiozentrale's self-deploy path capable of safely advancing from deploy generation N to N+1 even when the next release changes verifier/runtime contracts, without a manual bootstrap and without weakening fail-closed rollback or identity checks.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T034",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "discovery": "Post-merge runtime verification of audio PR #89 exposed a self-deploy bootstrap deadlock: the old installed deploy verifier expected 7 remote effects, rejected the new correct 10-effect bridge contract, and rolled back every minute. PR #90 fixed the immediate allowlist drift and added parity CI, but escaping the already-installed old generation still required one controlled hash-bound bootstrap.",
+    "does_not_establish": [
+      "A need to weaken runtime verification",
+      "Permission to bypass reviewed deploy generations",
+      "Physical audio hardware readiness"
+    ],
+    "source_merge_commits": [
+      "b9ba2273df47c56ccdb7ec4668f42d6b83a174a2",
+      "e73d7afae23a9d5b36b2d837698fddea099ec138"
+    ],
+    "source_pull_requests": [
+      89,
+      90
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5701f411bbec33fe6505c817",
+      "event_id": 5625,
+      "event_created_at": "2026-08-10T22:19:48.632270Z",
+      "request_sha256": "7a4bd37e8f224fbfade9439f52a547e9b46181d036b6c5fe79a19517f686619b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "chat:audio-pr89-postmerge-selfdeploy-bootstrap-20260811",
+        "observed_at": "2026-08-10T22:19:48.601393Z",
+        "sha256": "74106b5dcb76268da0de2f3bd4714311319a987aae3c674080e45ca63e083feb"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 34
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "runtime-observability"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make Audiozentrale self-deploy bootstrap-safe across deploy-contract changes"
+}

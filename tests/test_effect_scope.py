@@ -358,3 +358,113 @@ def test_canonical_claim_commit_rechecks_runtime_identity_before_store_open(
     assert value["result"]["status"] == "coordination-runtime-identity-blocked"
     assert "runtime-manifest-invalid" in value["result"]["reason_codes"]
     assert not state_root.exists()
+
+
+def test_heartbeat_is_coordination_state_mutation() -> None:
+    args = bureau_cli.parser().parse_args(
+        ["heartbeat", "BUR-RUN-TEST", "--worker", "worker-a"]
+    )
+
+    assert bureau_cli._command_mutates(args) is True
+    assert bureau_cli._command_effect_scope(args) == "coordination_state_mutation"
+    assert (
+        effect_scope.classify_command_effect_scope("heartbeat", mutates=True)
+        == "coordination_state_mutation"
+    )
+
+
+def test_canonical_heartbeat_uses_explicit_coordination_state_store(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    from bureau.core import Dispatcher
+
+    registry_root = registry_factory(1)
+    state_root = tmp_path / "coordination-state"
+    registry = Registry.load(registry_root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next(
+        "worker-a", ("repository",)
+    )["run"]
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET heartbeat_at='2000-01-01T00:00:00Z' WHERE run_id=?",
+            (run["run_id"],),
+        )
+    identity = canonical_runtime_identity(registry_root)
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
+
+    exit_code = bureau_cli.main(
+        [
+            "--root", str(registry_root),
+            "--state-root", str(state_root),
+            "--json", "heartbeat", run["run_id"],
+            "--worker", "worker-a",
+        ]
+    )
+
+    assert exit_code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["run_id"] == run["run_id"]
+    assert value["result"]["worker_id"] == "worker-a"
+    assert value["result"]["heartbeat_at"] != "2000-01-01T00:00:00Z"
+    assert value["runtime_identity"]["command_effect_scope"] == (
+        "coordination_state_mutation"
+    )
+    assert value["runtime_identity"]["coordination_state_binding"]["state_root"] == str(
+        state_root
+    )
+
+
+def test_canonical_heartbeat_without_explicit_state_root_stops_before_effect(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory()
+    implicit_state_root = tmp_path / "implicit-state"
+    identity = canonical_runtime_identity(registry_root)
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(implicit_state_root))
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
+
+    exit_code = bureau_cli.main(
+        [
+            "--root", str(registry_root),
+            "--json", "heartbeat", "BUR-RUN-TEST",
+            "--worker", "worker-a",
+        ]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "explicit-coordination-state-root-required"
+    assert value["runtime_identity"]["command_effect_scope"] == (
+        "coordination_state_mutation"
+    )
+    assert not implicit_state_root.exists()
+
+
+def test_canonical_heartbeat_rechecks_runtime_identity_before_store_open(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory()
+    state_root = tmp_path / "coordination-state"
+    first = canonical_runtime_identity(registry_root)
+    second = canonical_runtime_identity(registry_root)
+    second["manifest"]["valid"] = False
+    identities = iter([first, second])
+    monkeypatch.setattr(
+        bureau_cli, "bureau_runtime_identity", lambda *a, **k: next(identities)
+    )
+
+    exit_code = bureau_cli.main(
+        [
+            "--root", str(registry_root),
+            "--state-root", str(state_root),
+            "--json", "heartbeat", "BUR-RUN-TEST",
+            "--worker", "worker-a",
+        ]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "coordination-runtime-identity-blocked"
+    assert "runtime-manifest-invalid" in value["result"]["reason_codes"]
+    assert not state_root.exists()

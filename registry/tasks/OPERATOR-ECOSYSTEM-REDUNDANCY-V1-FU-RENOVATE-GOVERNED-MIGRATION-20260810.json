@@ -1,0 +1,90 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Metarepo-Reusable-Workflow-Pin wird nur dann vorgeschlagen, wenn RepoGround-Workflowreferenz, source_content_sha256, transitive_uses und transitive_workflows aus dem gleichen Zielstand atomar regeneriert und validiert sind.",
+      "id": "repoground-contract-atomic"
+    },
+    {
+      "assertion": "WGX-Action-Pins werden nur zusammen mit reproduzierbar neu erzeugter Capability-/Source-Evidenz geändert; ein nackter SHA-Tausch ohne Evidenz bleibt blockiert.",
+      "id": "wgx-evidence-atomic"
+    },
+    {
+      "assertion": "Weltgewebe-Workflow-Dependency-Updates durchlaufen die kanonische R3-Review-Evidenz und erhalten keinen Renovate-Bypass oder pauschale Ausnahme.",
+      "id": "weltgewebe-review-path"
+    },
+    {
+      "assertion": "Python-Interpreter-Linien werden als Runtime-Migration behandelt: Interpreter, Locks, unterstützte Runtime-Policy und CI werden gemeinsam geändert und getestet, nicht durch einen isolierten setup-python-Wert.",
+      "id": "runtime-line-semantic"
+    },
+    {
+      "assertion": "Erst ein revisionsgebundener End-to-End-Test darf die derzeitigen Renovate-Schutzregeln gezielt verengen; bekannte rote PR-Klassen dürfen danach nicht erneut entstehen.",
+      "id": "safe-reenable"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.metarepo"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/metarepo"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo"
+  },
+  "goal": "Einen eigenen, revisionsgebundenen Migrationspfad für Dependency-Änderungen schaffen, die nicht nur einen Pin ändern dürfen: Metarepo-Reusable-Workflow-Pins müssen RepoGround-Verträge und transitive Evidenz atomar aktualisieren; WGX-Action-Pins müssen Capability-/Source-Evidenz atomar regenerieren; Weltgewebe-Workflow-Updates müssen die dort erforderliche Review-Evidenz explizit durchlaufen. Der Pfad darf die in Renovate V1 nun geschützten Lanes erst wieder automatisieren, wenn diese gekoppelten Verträge vollständig und fail-closed eingehalten werden.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-FU-RENOVATE-GOVERNED-MIGRATION-20260810",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-817b3af8b2547bd626766852",
+      "event_id": 5243,
+      "event_created_at": "2026-08-10T08:15:55.026004Z",
+      "request_sha256": "38c198f9bdd49a4ef5fbc13464be1e30769d1e67db5a4b0c8d424a9962c14534",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "https://github.com/heimgewebe/metarepo/pull/705",
+        "observed_at": "2026-08-10T08:15:54.990948Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "origin_head": "0ef1bbc7e6f733d813fe0f8b2c500d6910eaa8c6",
+    "origin_pr": 705,
+    "source": "chatgpt-renovate-root-cause-20260810"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 183
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Governed Renovate-Updates atomar migrieren"
+}

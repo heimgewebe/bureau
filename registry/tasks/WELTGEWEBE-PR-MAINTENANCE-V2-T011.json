@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #1740 wird unmittelbar vor Wirkung frisch gelesen; Intake-Head f8725a0801743eb53a62bb0ec34c4be228ff9f06, Basis 0e77b6e69705f746be17c1abe9b505bcfee38228 und vollständiger Scope werden revisionsgebunden geprüft.",
+      "evidence_type": "object",
+      "id": "exact-pr-identity"
+    },
+    {
+      "assertion": "Der PR ändert ausschließlich apps/api/Dockerfile und aktualisiert dort den beabsichtigten Debian-bookworm-slim-Digest; keine weitere Datei oder semantische Runtimeänderung wird eingeführt.",
+      "evidence_type": "object",
+      "id": "single-file-scope"
+    },
+    {
+      "assertion": "Alle für den finalen Head erforderlichen Weltgewebe-Gates sind terminal grün oder repositoryvertraglich neutral/skipped.",
+      "evidence_type": "object",
+      "id": "required-ci"
+    },
+    {
+      "assertion": "PR #1740 trägt vor Merge exakt `Bureau-Task: WELTGEWEBE-PR-MAINTENANCE-V2-T011` und Bureau erkennt die Bindung ohne Hard Finding.",
+      "evidence_type": "object",
+      "id": "bureau-pr-binding"
+    },
+    {
+      "assertion": "Nur der unmittelbar zuvor erneut geprüfte exakte Head wird gemergt und anschließend auf main zurückgelesen.",
+      "evidence_type": "object",
+      "id": "exact-head-merge"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur der vorhandene Renovate-PR #1740 und die eine Dockerfile-Digestzeile.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/api/Dockerfile"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bestehenden Renovate-PR #1740 ausschließlich als Digest-Aktualisierung in apps/api/Dockerfile prüfen und bei grünem exaktem Head übernehmen; keine weiteren API-, Runtime- oder Deploymentänderungen in diesen Task hineinziehen.",
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T011",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "metadata": {
+    "does_not_establish": [
+      "merge readiness without final readback",
+      "permission outside apps/api/Dockerfile"
+    ],
+    "registered_at": "2026-08-10",
+    "source_base": "0e77b6e69705f746be17c1abe9b505bcfee38228",
+    "source_head": "f8725a0801743eb53a62bb0ec34c4be228ff9f06",
+    "source_pull_request": 1740,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b0a3ac4929f49591e406867f",
+      "event_id": 5272,
+      "event_created_at": "2026-08-10T09:39:08.172885Z",
+      "request_sha256": "535b9adf306a24aa20be02b24b958769128913f07fa64e54be7645bb51eab0f6",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pull-request",
+        "locator": "github:heimgewebe/weltgewebe#1740@f8725a0801743eb53a62bb0ec34c4be228ff9f06;base:0e77b6e69705f746be17c1abe9b505bcfee38228",
+        "observed_at": "2026-08-10T09:37:02Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 11
+  },
+  "required_capabilities": [
+    "repository",
+    "docker",
+    "github",
+    "ci",
+    "review",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Debian-Bookworm-Slim-Digest aus PR #1740 revisionsgebunden übernehmen"
+}

@@ -1,0 +1,106 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Nach Merge dieser TaskSpec und unmittelbar vor prepare-intent werden aktueller GitHub-main, der zugehörige gemergte PR, validate (3.10), validate (3.12) und target_sha256 frisch beobachtet; kein vor dem eigenen Merge beobachteter Targethash wird als Deploymentziel wiederverwendet.",
+      "id": "fresh-target-after-authority-merge"
+    },
+    {
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese Task-ID und approval_reference exakt an den frisch beobachteten target_sha256; ohne diese Bindung gibt es keinen Runtime-Effekt.",
+      "id": "break-glass-target-binding"
+    },
+    {
+      "assertion": "T028, T029, BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810 und andere historische, terminale oder verbrauchte Runtime-Aufgaben werden nicht reaktiviert oder als Ersatzautorität verwendet.",
+      "id": "historical-authority-reuse-forbidden"
+    },
+    {
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frisch erzeugten Runtime-Refresh-Intents unter einem aktuellen Owner; fehlende, fremde, abgelaufene oder driftende Leases blockieren vor Wirkung.",
+      "id": "live-lease-binding"
+    },
+    {
+      "assertion": "Diese TaskSpec trägt höchstens einen erfolgreichen Runtime-Refresh und wird danach terminal; jeder spätere Drift benötigt eine neue Autoritäts-TaskSpec.",
+      "id": "single-use-lifecycle"
+    },
+    {
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot auf denselben Source-Commit; eine zweite Observation meldet already_current bzw. lag_commits=0 und StateStore-Integrität bleibt grün.",
+      "id": "immutable-readback"
+    },
+    {
+      "assertion": "Danach wird GRABOWSKI-OPERATOR-SURFACE-V1-T163 ohne claim-intent-stale-runtime-blocked erneut geprüft und kann bei sonst konfliktfreien Ressourcen normal geclaimt werden.",
+      "id": "t163-unblocked"
+    },
+    {
+      "assertion": "Keine Runtime-, Registry-, Queue-, Claim-, Dispatch-, Lease-, Review- oder Merge-Gates werden gelockert; fremde Worktrees, Leases und Prozesse bleiben unverändert.",
+      "id": "authority-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Einmalige Autoritätsquelle; keine konkrete Deploymentfreigabe ohne frische Target-Bindung und keine Autorität für andere Mutationen.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Autorisiere genau einen kontrollierten Bureau-Runtime-Refresh, damit die installierte immutable Bureau-Runtime und ihr kanonischer Registry-Snapshot nach dem bereits gemergten T163-Registry-PR #1855 auf den nach dem eigenen Merge dieser TaskSpec frisch beobachteten aktuellen Bureau-main-Stand konvergieren. Die konkrete Wirkung wird ausschließlich an frisches main/PR/CI, target_sha256, diese Task-ID, Break-Glass-Evidenz und exakte Live-Leases gebunden; historische Runtime-Autoritäten werden nicht wiederverwendet.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-T163-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_registration_pr": 1855,
+    "blocked_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T163",
+    "bootstrap_observation_sha256": "dddfb6fd3c621a9ccbe7d960f74bbb26597e4c38d74ad7763e67bad250f046ba",
+    "deployed_source_at_observation": "f17b55a6d7b208b0e3ed9b17db39ed200597d510",
+    "does_not_establish": [
+      "post-merge runtime target",
+      "deployment permission without exact break-glass binding",
+      "reuse of historical runtime tasks"
+    ],
+    "live_blocker": {
+      "code": "claim-intent-stale-runtime-blocked",
+      "reason_code": "release-registry-identity-mismatch",
+      "registry_task_spec_sha256": "005dcaf893e1971684ce875da7bdea993b48024d52538b20710b93aa99909b33"
+    },
+    "main_at_bootstrap_checkout": "f3b17e30f5c4a0b3a8ce8cb116a7bb870c58db2f",
+    "publication_path": {
+      "does_not_establish": [
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime mutation before task merge"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "Typed publication and coordinated claim are fail-closed under runtime/registry drift; documented T026 bootstrap precedent permits a narrow protected Git PR. This PR contains only this task file and directly mutates neither Queue nor StateStore."
+    },
+    "source": "Live-T163-Claim-Blocker nach Bureau-PR #1855"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten. Letzten integritätsgültigen Release beibehalten und ausschließlich den bestehenden Runtime-Refresh-Readback-/Rollbackpfad verwenden; keine operative Historie zurückschreiben."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Einmaligen Bureau-Runtime-Refresh nach T163-Registry-Merge autorisieren"
+}

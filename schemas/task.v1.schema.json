@@ -724,7 +724,8 @@
         },
         "working_repository": {
           "minLength": 1,
-          "type": "string"
+          "type": "string",
+          "pattern": "^/"
         }
       },
       "required": [

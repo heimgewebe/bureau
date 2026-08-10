@@ -1200,6 +1200,63 @@ def test_task_revision_proposal_binds_authoritative_baseline(registry_factory, t
     assert publication_preview(registry, store, plan_path=plan_path)["status"] == "ready"
 
 
+def test_task_revision_allows_git_projection_to_lag_authoritative_baseline(
+    registry_factory, tmp_path
+):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    initial = store.task_spec(task_id)
+    assert initial is not None
+    authoritative = json.loads(json.dumps(initial["spec"]))
+    authoritative["state"] = "ready"
+    authoritative["title"] = f"{authoritative['title']} with authoritative StateStore evidence"
+    advanced = store.put_task_spec(
+        authoritative,
+        idempotency_key="authoritative-lifecycle-advance",
+        expected_revision=initial["revision"],
+        source="test-lifecycle-reconcile",
+    )
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:revision-with-lagging-git-projection",
+        title="Revise from authoritative StateStore baseline",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:lagging-git-projection",
+        source_sha256="4" * 64,
+        desired_outcome="Revise the exact task without downgrading authoritative lifecycle truth",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(authoritative))
+    revised["title"] = f"{revised['title']} revised after lifecycle advance"
+    plan_path = tmp_path / "lagging-git-projection.revision.proposal.json"
+
+    task_propose(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        task_json=revised,
+        publishing_task_id="BUR-TEST-001-T001",
+        path=plan_path,
+    )
+
+    plan = json.loads(plan_path.read_text())
+    assert plan["task_spec"]["operation"] == "revise"
+    assert plan["task_spec"]["expected_revision"] == advanced["revision"]
+    assert plan["task_spec"]["expected_spec_sha256"] == advanced["spec_sha256"]
+    assert plan["task_spec"]["expected_spec_sha256"] != initial["spec_sha256"]
+    assert plan["task_json"]["state"] == "ready"
+    target = root / plan["target_path"]
+    assert plan["task_spec"]["expected_task_file_sha256"] == hashlib.sha256(
+        target.read_bytes()
+    ).hexdigest()
+    _review(plan_path)
+    assert publication_preview(registry, store, plan_path=plan_path)["status"] == "ready"
+
+
 def test_task_revision_rejects_candidate_bound_to_another_task(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

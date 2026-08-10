@@ -292,6 +292,127 @@ def test_completion_rejects_task_drift_after_claim(registry_factory, tmp_path, m
         complete_run(changed, store, run["run_id"], {"proof": True})
 
 
+def test_completion_uses_state_store_task_spec_authority_over_stale_git_projection(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["title"] = "StateStore authoritative task contract"
+    updated = store.put_task_spec(
+        revised,
+        idempotency_key="close-state-store-authority-before-claim",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    assert run["task_sha256"] == task_revision_sha256(revised)
+    assert updated["spec_sha256"] != bureau_v2.task_specs.task_spec_digest(
+        registry.tasks[task_id].raw
+    )
+
+    result = complete_run(
+        registry,
+        store,
+        run["run_id"],
+        {"proof": {"result": "passed"}},
+    )
+
+    assert result["idempotent"] is False
+    assert result["current"] is True
+    assert store.run(run["run_id"])["state"] == "succeeded"
+
+
+def test_completion_rejects_state_store_task_spec_drift_after_claim(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    drifted = json.loads(json.dumps(current["spec"]))
+    drifted["state"] = "planned"
+    assert task_revision_sha256(drifted) == run["task_sha256"]
+    store.put_task_spec(
+        drifted,
+        idempotency_key="close-state-store-drift-after-claim",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    with pytest.raises(StateError, match="baseline is stale"):
+        complete_run(
+            registry,
+            store,
+            run["run_id"],
+            {"proof": {"result": "passed"}},
+        )
+
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
+def test_completion_still_rejects_plan_drift_with_state_store_task_authority(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["current_plan"] = {
+        "repository": "test",
+        "path": "plan.md",
+        "commit": "3" * 40,
+        "document_sha256": "4" * 64,
+    }
+    initiative_path.write_text(json.dumps(initiative))
+    changed = Registry.load(root)
+
+    with pytest.raises(StateError, match="baseline is stale"):
+        complete_run(
+            changed,
+            store,
+            run["run_id"],
+            {"proof": {"result": "passed"}},
+        )
+
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
+def test_completion_keeps_legacy_git_bootstrap_without_task_specs(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    task_id = next(iter(registry.tasks))
+    assert store.task_spec(task_id) is None
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+
+    result = complete_run(
+        registry,
+        store,
+        run["run_id"],
+        {"proof": {"result": "passed"}},
+    )
+
+    assert result["current"] is True
+    assert store.run(run["run_id"])["state"] == "succeeded"
+
+
 def stale_bound_run(root: Path, tmp_path: Path, monkeypatch, adapter: FakeAdapter):
     _registry, store, dispatcher = setup(
         root,

@@ -6219,7 +6219,7 @@ class RunStateConflict(legacy.StateError):
 
 @dataclass(frozen=True)
 class _CloseRevision:
-    """One task and plan revision derived from the authoritative registry documents."""
+    """One task and plan revision derived from their authoritative sources."""
 
     task_id: str
     initiative_id: str
@@ -6227,6 +6227,9 @@ class _CloseRevision:
     plan_sha256: str
     task_path: str
     initiative_path: str
+    task_authority: str = "legacy-git-bootstrap"
+    task_spec_revision: int | None = None
+    task_spec_sha256: str | None = None
 
     @property
     def digests(self) -> tuple[str, str]:
@@ -6287,13 +6290,65 @@ def _authoritative_document(
     return matches[0]
 
 
+def _state_store_task_for_close(
+    registry: Registry,
+    connection: sqlite3.Connection,
+    task_id: str,
+    *,
+    run_id: str,
+) -> tuple[dict[str, Any], int, str] | None:
+    """Return the current authoritative TaskSpec, or the legacy-bootstrap sentinel."""
+    try:
+        current = task_specs.get_current(connection, task_id)
+    except task_specs.TaskSpecError as exc:
+        raise RunStateConflict(
+            "registry-revision-unavailable",
+            f"authoritative StateStore TaskSpec for {task_id!r} is unavailable",
+            run_id=run_id,
+            details={"task_id": task_id, "authority": "bureau-state-store-task-specs"},
+        ) from exc
+    if current is not None:
+        spec = dict(current["spec"])
+        canonical_path = registry.root / "registry" / "tasks" / f"{task_id}.json"
+        try:
+            registry.schemas.validate("task", spec, canonical_path)
+        except DocumentSchemaError as exc:
+            raise RunStateConflict(
+                "registry-revision-unavailable",
+                f"authoritative StateStore TaskSpec for {task_id!r} is invalid",
+                run_id=run_id,
+                details={
+                    "task_id": task_id,
+                    "authority": "bureau-state-store-task-specs",
+                    "task_spec_revision": int(current["revision"]),
+                    "task_spec_sha256": str(current["spec_sha256"]),
+                },
+            ) from exc
+        return spec, int(current["revision"]), str(current["spec_sha256"])
+
+    # A non-empty TaskSpec table establishes StateStore authority globally.
+    # Missing tasks must not silently fall back to an older Git projection.
+    state_store_authoritative = connection.execute(
+        "SELECT 1 FROM task_specs LIMIT 1"
+    ).fetchone()
+    if state_store_authoritative is not None:
+        raise RunStateConflict(
+            "registry-revision-unavailable",
+            f"authoritative StateStore TaskSpec for {task_id!r} is missing",
+            run_id=run_id,
+            details={"task_id": task_id, "authority": "bureau-state-store-task-specs"},
+        )
+    return None
+
+
 def _authoritative_close_revision(
     registry: Registry, task_id: str, *, run_id: str
 ) -> _CloseRevision:
     """Re-read the task and its initiative plan from the Git-backed registry.
 
-    Reads only: neither the caller's registry snapshot nor any document on disk
-    is mutated, so a close never disturbs a foreign working state.
+    This remains the bootstrap/legacy helper and its stable private signature is
+    intentionally preserved for existing close-CAS instrumentation. StateStore
+    TaskSpec authority is selected by ``_close_revision`` instead.
     """
     task_path, task_raw = _authoritative_document(
         registry,
@@ -6329,6 +6384,56 @@ def _authoritative_close_revision(
         task_path=str(task_path),
         initiative_path=str(initiative_path),
     )
+
+
+def _close_revision(
+    registry: Registry,
+    connection: sqlite3.Connection,
+    task_id: str,
+    *,
+    run_id: str,
+) -> _CloseRevision:
+    """Select StateStore task truth when available, else the Git bootstrap path."""
+    # Test doubles and legacy non-SQLite stores exercise the historical Git
+    # close contract; production StateStore connections are sqlite3.Connection.
+    if isinstance(connection, sqlite3.Connection):
+        state_store_task = _state_store_task_for_close(
+            registry, connection, task_id, run_id=run_id
+        )
+        if state_store_task is not None:
+            task_raw, task_spec_revision, task_spec_sha256 = state_store_task
+            initiative_id = task_raw.get("initiative")
+            if not isinstance(initiative_id, str) or not initiative_id:
+                raise RunStateConflict(
+                    "registry-revision-unavailable",
+                    f"authoritative StateStore TaskSpec for {task_id!r} names no initiative",
+                    run_id=run_id,
+                    details={
+                        "task_id": task_id,
+                        "authority": "bureau-state-store-task-specs",
+                        "task_spec_revision": task_spec_revision,
+                        "task_spec_sha256": task_spec_sha256,
+                    },
+                )
+            initiative_path, initiative_raw = _authoritative_document(
+                registry,
+                registry.root / "registry" / "initiatives",
+                initiative_id,
+                "initiative",
+                run_id=run_id,
+            )
+            return _CloseRevision(
+                task_id=task_id,
+                initiative_id=initiative_id,
+                task_sha256=task_revision_sha256(task_raw),
+                plan_sha256=legacy.sha256_json(initiative_raw.get("current_plan") or {}),
+                task_path=f"state-store:task-spec:{task_id}@{task_spec_revision}",
+                initiative_path=str(initiative_path),
+                task_authority="bureau-state-store-task-specs",
+                task_spec_revision=task_spec_revision,
+                task_spec_sha256=task_spec_sha256,
+            )
+    return _authoritative_close_revision(registry, task_id, run_id=run_id)
 
 
 def _receipt_binds_current_revision(registry: Registry, receipt: dict[str, Any]) -> bool:
@@ -6435,10 +6540,24 @@ def complete_run(
             registry.schemas.validate("receipt", receipt, f"receipt:{run_id}")
 
             # This is the last precondition read before the first SQLite effect.
-            revision = _authoritative_close_revision(
-                registry, run["task_id"], run_id=run_id
+            revision = _close_revision(
+                registry, connection, run["task_id"], run_id=run_id
             )
-            if revision.digests != (run["task_sha256"], run["plan_sha256"]):
+            observed_task_spec_sha256 = getattr(revision, "task_spec_sha256", None)
+            claimed_task = envelope.get("task")
+            claimed_task_spec_sha256 = (
+                task_specs.task_spec_digest(claimed_task)
+                if observed_task_spec_sha256 is not None and isinstance(claimed_task, dict)
+                else None
+            )
+            task_spec_drift = (
+                observed_task_spec_sha256 is not None
+                and observed_task_spec_sha256 != claimed_task_spec_sha256
+            )
+            if task_spec_drift or revision.digests != (
+                run["task_sha256"],
+                run["plan_sha256"],
+            ):
                 raise RunStateConflict(
                     "stale-baseline",
                     "run baseline is stale; task or plan changed after claim",
@@ -6452,6 +6571,14 @@ def complete_run(
                         "observed_plan_sha256": revision.plan_sha256,
                         "task_path": revision.task_path,
                         "initiative_path": revision.initiative_path,
+                        "task_authority": getattr(
+                            revision, "task_authority", "legacy-git-bootstrap"
+                        ),
+                        "expected_task_spec_sha256": claimed_task_spec_sha256,
+                        "observed_task_spec_sha256": observed_task_spec_sha256,
+                        "observed_task_spec_revision": getattr(
+                            revision, "task_spec_revision", None
+                        ),
                     },
                 )
 
@@ -6501,12 +6628,23 @@ def complete_run(
                 )
 
             # This is the final guard before the context manager commits SQLite.
-            rebound = _authoritative_close_revision(
-                registry, run["task_id"], run_id=run_id
+            rebound = _close_revision(
+                registry, connection, run["task_id"], run_id=run_id
+            )
+            revision_authority = getattr(
+                revision, "task_authority", "legacy-git-bootstrap"
+            )
+            rebound_authority = getattr(
+                rebound, "task_authority", "legacy-git-bootstrap"
             )
             if (
                 rebound.digests != revision.digests
                 or rebound.initiative_id != revision.initiative_id
+                or rebound_authority != revision_authority
+                or getattr(rebound, "task_spec_revision", None)
+                != getattr(revision, "task_spec_revision", None)
+                or getattr(rebound, "task_spec_sha256", None)
+                != getattr(revision, "task_spec_sha256", None)
             ):
                 raise RunStateConflict(
                     "close-revision-drift",
@@ -6522,6 +6660,14 @@ def complete_run(
                         "observed_initiative_id": rebound.initiative_id,
                         "task_path": rebound.task_path,
                         "initiative_path": rebound.initiative_path,
+                        "expected_task_authority": revision_authority,
+                        "observed_task_authority": rebound_authority,
+                        "expected_task_spec_revision": getattr(
+                            revision, "task_spec_revision", None
+                        ),
+                        "observed_task_spec_revision": getattr(rebound, "task_spec_revision", None),
+                        "expected_task_spec_sha256": getattr(revision, "task_spec_sha256", None),
+                        "observed_task_spec_sha256": getattr(rebound, "task_spec_sha256", None),
                     },
                 )
 

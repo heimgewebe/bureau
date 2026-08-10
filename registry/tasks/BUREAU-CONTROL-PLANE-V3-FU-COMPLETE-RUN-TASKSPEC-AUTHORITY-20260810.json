@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Run, dessen Claim auf einer neueren autoritativen StateStore-TaskSpec-Revision basiert, kann auf unveränderter TaskSpec erfolgreich durch complete_run schließen, auch wenn die Git-Taskprojektion noch einen älteren Lifecycle-Stand enthält.",
+      "id": "state-store-authoritative-closeout"
+    },
+    {
+      "assertion": "Ändert sich die autoritative StateStore-TaskSpec nach dem Claim, lehnt complete_run den Abschluss deterministisch vor Wirkung als stale-baseline oder äquivalenten revisionsgebundenen Driftfehler ab.",
+      "id": "real-task-spec-drift-still-blocks"
+    },
+    {
+      "assertion": "Die bestehende Plan-/Initiative-Baseline bleibt revisionsgebunden und echter Plan-Drift blockiert weiterhin vor Wirkung.",
+      "id": "plan-drift-still-blocks"
+    },
+    {
+      "assertion": "Solange keine StateStore-TaskSpec-Autorität existiert, bleibt der dokumentierte Git-Bootstrap-Fallback kompatibel und fail-closed.",
+      "id": "legacy-bootstrap-compatible"
+    },
+    {
+      "assertion": "Der Fix schreibt keine ältere Git-Taskprojektion über neuere StateStore-Revisionen zurück, erzeugt keine zweite Lifecycle-Wahrheit und verändert keine fremden Queue-, Claim-, Lease-, Workspace-, Merge- oder Deployment-Zustände.",
+      "id": "truth-boundary-preserved"
+    },
+    {
+      "assertion": "Ein hermetischer Reproducer für Git planned versus StateStore ready, echte TaskSpec-Drift-Regressionen und die relevanten Bureau-Gates einschließlich make validate sind auf demselben finalen Head grün.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur complete_run-Baseline/Driftprüfung und fokussierte Regressionstests ändern. Keine Queue-, Claim-, Lease-, Registry-Publikations-, Merge- oder Deployment-Gates lockern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Repariere den Bureau-Closeout so, dass complete_run bei vorhandener StateStore-TaskSpec-Autorität dieselbe revisions- und digestgebundene TaskSpec-Wahrheit wie Claim und Dispatch prüft. Eine legitime neuere StateStore-Revision darf nicht gegen eine ältere Git-Taskprojektion als stale-baseline scheitern; echter StateStore-TaskSpec-Drift und Plan-Drift müssen weiterhin vor Wirkung fail-closed abbrechen.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-COMPLETE-RUN-TASKSPEC-AUTHORITY-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "Taskbereitschaft",
+      "Merge- oder Deploymentfreigabe",
+      "Berechtigung zur Mutation fremder Arbeit"
+    ],
+    "live_reproducer": {
+      "closeout_code": "stale-baseline",
+      "effect_applied": false,
+      "git_task_sha256": "eec040e9ebd027f550a6a02afb923715bdd447826d938a6d95c31bbc2f294cb8",
+      "run_id": "BUR-RUN-20260810T073739Z-685bf41938",
+      "state_store_task_sha256": "49a760c51a453d71069f3a06dba9daf221f0b6044fa31c74b1f6f7804493cf6c"
+    },
+    "source": "Live-Befund beim Closeout von BUREAU-CONTROL-PLANE-V3-FU-TASK-SCOPED-LIFECYCLE-20260809 am 2026-08-10",
+    "source_candidate": "candidate-79f6b571964dd134ecd811f7",
+    "source_event_id": 5226,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-79f6b571964dd134ecd811f7",
+      "event_id": 5226,
+      "event_created_at": "2026-08-10T07:58:54.091177Z",
+      "request_sha256": "92918293965cacf9ed84f9be0dad5c665fcab9e062bfa2adee6080360c5debf1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "conversation:bureau-improve:2026-08-10:complete-run-taskspec-authority",
+        "observed_at": "2026-08-10T07:56:17Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die complete_run-Authority-Bindung und zugehörige Tests; bestehende StateStore-TaskSpec-Autorität, CAS- und Plan-Drift-Gates bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "complete_run an autoritative TaskSpec-Wahrheit binden"
+}

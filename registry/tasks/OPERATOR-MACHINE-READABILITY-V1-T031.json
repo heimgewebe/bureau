@@ -1,0 +1,117 @@
+{
+  "acceptance": [
+    {
+      "assertion": "classify_command_effect_scope('fail') liefert coordination_state_mutation; complete bleibt registry_mutation und unbekannte mutierende Befehle bleiben fail-closed registry_mutation.",
+      "evidence_type": "object",
+      "id": "fail-coordination-scope"
+    },
+    {
+      "assertion": "Ein gebundener Run kann fail mit einem aktuellen kanonischen read-only Registry-Snapshot und einem expliziten separaten Coordination-State-Root ausführen, ohne Registry-Schreibrecht zu benötigen.",
+      "evidence_type": "object",
+      "id": "canonical-readonly-registry-fail"
+    },
+    {
+      "assertion": "Relative, überlappende, nicht besitzkontrollierte oder runtime-driftende Coordination-State-Pfade bleiben vor einem fail-Effekt blockiert.",
+      "evidence_type": "object",
+      "id": "unsafe-coordination-state-still-blocked"
+    },
+    {
+      "assertion": "Die Änderung übernimmt nicht die separate heartbeat-Arbeit aus OPERATOR-MACHINE-READABILITY-V1-T030 und erweitert keine andere Befehlsklassifikation.",
+      "evidence_type": "object",
+      "id": "heartbeat-remains-separate"
+    },
+    {
+      "assertion": "Die gezielten Effektklassifikations- und fail-Regressionsfälle bestehen auf dem exakten Commit; git diff --check ist sauber.",
+      "evidence_type": "object",
+      "id": "targeted-regression-green"
+    },
+    {
+      "assertion": "Die Korrektur erzeugt keine neue Task-, Queue-, Claim-, Merge-, CI- oder Deployment-Autorität und ändert ausschließlich die bestehende zentrale Effektklassifikation für fail.",
+      "evidence_type": "object",
+      "id": "no-second-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T026"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur fail und seine gezielten Regressionen dürfen geändert werden. heartbeat bleibt der getrennten Task OPERATOR-MACHINE-READABILITY-V1-T030 zugeordnet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_fail_effect_scope.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Klassifiziere den Bureau-CLI-Befehl fail als coordination_state_mutation statt als registry_mutation, sofern der produktive Pfad ausschließlich den kanonischen StateStore-Run-Fehlerzustand aktualisiert. Dadurch kann ein gebundener Run gegen eine immutable kanonische Registry mit explizitem separatem Coordination-State-Root fail-closed terminalisiert werden, ohne Registry-Schreibrecht zu verlangen. complete und unbekannte Mutationen bleiben unverändert registry_mutation.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T031",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation",
+      "task readiness",
+      "queue or dispatch authority",
+      "merge readiness",
+      "deployment completion"
+    ],
+    "github_main_observed": "5ecbff7111768b9a4b24009256f632840e021f54",
+    "registered_at": "2026-08-10T07:37:00Z",
+    "related_open_pr": 1837,
+    "related_open_pr_head": "15afee4d40473f1f3fbdb135e3afa39288a8cf1f",
+    "related_open_pr_scope": "fail only",
+    "source": "Live-T030-Claim-Blocker durch ungebundenen PR #1837",
+    "source_candidate_id": "candidate-e341aaf4fc248909045b2b93",
+    "source_digest": "a0938715874ed3eb94740194b3a3a5e3a87d8fd80cbeaf0ed74d9e602b6cb8a7",
+    "source_event_id": 5106,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e341aaf4fc248909045b2b93",
+      "event_id": 5106,
+      "event_created_at": "2026-08-09T19:52:00.615721Z",
+      "request_sha256": "dddd65bcd3ce6cd4299a2e8a3a0294716966d85f9d30afddd74f9194d200969e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-runtime-evidence",
+        "locator": "bureau-pickup-orphan-reconcile:BUR-RUN-20260809T173344Z-be33efd349",
+        "observed_at": "2026-08-09T19:52:00.586884Z",
+        "sha256": "a0938715874ed3eb94740194b3a3a5e3a87d8fd80cbeaf0ed74d9e602b6cb8a7"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 32
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "git"
+  ],
+  "rollback": {
+    "strategy": "Entferne fail wieder aus der Coordination-State-Kommandomenge und revertiere die zugehörigen Regressionen gemeinsam; complete und die fail-closed Defaultklassifikation unbekannter Mutationen bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Fail als Coordination-State-Mutation klassifizieren"
+}

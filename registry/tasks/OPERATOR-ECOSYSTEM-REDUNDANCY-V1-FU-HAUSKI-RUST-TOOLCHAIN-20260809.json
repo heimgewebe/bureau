@@ -34,7 +34,7 @@
     }
   ],
   "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T040"
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038"
   ],
   "execution": {
     "approval": {

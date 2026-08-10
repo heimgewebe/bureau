@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der übernommene Pull Request ist heimgewebe/weltgewebe#1737; Basis 0e77b6e69705f746be17c1abe9b505bcfee38228 und Intake-Head 7b3dfe30a1bd1afd47268e1b5b14921042572f7d sowie der vollständige Zwei-Dateien-Scope werden unmittelbar vor Mutation und Merge frisch gelesen.",
+      "evidence_type": "object",
+      "id": "exact-pr-identity"
+    },
+    {
+      "assertion": "Fokussierte Tests belegen, dass stale Auswahl-, Nachrichten- und Lesebestätigungsantworten keine neuere Konversationsauswahl überschreiben und erfolgreiche neue Konversationen/Read-Receipts konsistent im Sidebar-Zustand landen.",
+      "evidence_type": "object",
+      "id": "race-regression"
+    },
+    {
+      "assertion": "Keine Änderung außerhalb apps/web/src/routes/nachrichten/+page.svelte und apps/web/tests/direct-messages.spec.ts wird durch diesen Task eingeführt.",
+      "evidence_type": "object",
+      "id": "scope-bound"
+    },
+    {
+      "assertion": "Der finale Head erfüllt die repositoryvertraglich erforderliche R2-Review-Evidenz; stale oder malformed Evidenz zählt nicht.",
+      "evidence_type": "object",
+      "id": "review-evidence"
+    },
+    {
+      "assertion": "Alle für den finalen Head erforderlichen Weltgewebe-CI-, Test-, CodeQL- und Preview-Gates sind terminal grün oder repositoryvertraglich neutral/skipped.",
+      "evidence_type": "object",
+      "id": "required-ci"
+    },
+    {
+      "assertion": "PR #1737 trägt vor dem Merge exakt `Bureau-Task: WELTGEWEBE-PR-MAINTENANCE-V2-T010`, und Bureau erkennt die Bindung ohne Hard Finding.",
+      "evidence_type": "object",
+      "id": "bureau-pr-binding"
+    },
+    {
+      "assertion": "Unmittelbar vor Merge werden Head, Basis, Mergebarkeit und Checks erneut gelesen; ausschließlich der exakt geprüfte Head wird gemergt und anschließend auf main zurückgelesen.",
+      "evidence_type": "object",
+      "id": "exact-head-merge"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer mit 'weiter @grabowski' zur autonomen Folgearbeit autorisiert; ausschließlich vorhandener PR #1737 und sein exakter Zwei-Dateien-Scope.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/routes/nachrichten/+page.svelte",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/direct-messages.spec.ts"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bestehenden Weltgewebe-PR #1737 ausschließlich in seinem Zwei-Dateien-Scope übernehmen: stale asynchrone Nachrichtenantworten dürfen neuere Auswahlzustände nicht überschreiben; erfolgreich erzeugte Konversationen und Lesebestätigungen werden konsistent in den Sidebar-Zustand zurückgeführt. Merge nur nach exaktem Head-, Review- und CI-Readback.",
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T010",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "metadata": {
+    "does_not_establish": [
+      "merge readiness without final readback",
+      "permission outside the two declared paths"
+    ],
+    "registered_at": "2026-08-10",
+    "source_base": "0e77b6e69705f746be17c1abe9b505bcfee38228",
+    "source_head": "7b3dfe30a1bd1afd47268e1b5b14921042572f7d",
+    "source_pull_request": 1737,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-293bed0fe5dfe1bda6fe313f",
+      "event_id": 5271,
+      "event_created_at": "2026-08-10T09:38:23.250629Z",
+      "request_sha256": "6a505df59663a6799564e50fceb2ded763bb373f613b03deadf6120f851fd434",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-pull-request",
+        "locator": "github:heimgewebe/weltgewebe#1737@7b3dfe30a1bd1afd47268e1b5b14921042572f7d;base:0e77b6e69705f746be17c1abe9b505bcfee38228",
+        "observed_at": "2026-08-10T09:36:26Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "typescript",
+    "testing",
+    "github",
+    "ci",
+    "review",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Direct-Message-Race-Fix aus PR #1737 revisionsgebunden übernehmen"
+}

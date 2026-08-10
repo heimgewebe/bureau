@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Nur erfolgreiche Aktivität mit beweisbarer Bindung an denselben Bureau run_id, task_id und aktuellen execution binding darf dessen Heartbeat erneuern; fremde Tasks, fremde Runs und bloße Prozesssicht bleiben ausgeschlossen.",
+      "id": "exact-run-binding"
+    },
+    {
+      "assertion": "Wenn eine gebundene Wirkung oder Lease-Erneuerung als erfolgreich akzeptiert wird, wird der kanonische Run-Heartbeat in derselben revisionsgebundenen Operation aktualisiert oder die Aktivität fail-closed mit einer expliziten Rebind-Anforderung abgewiesen.",
+      "id": "atomic-heartbeat-or-rebind"
+    },
+    {
+      "assertion": "Gültige oder erneuerte Leases allein gelten nicht als Fortschrittsbeweis und dürfen einen stale, fehlenden oder fremden Execution-Run nicht künstlich aktiv halten.",
+      "id": "no-lease-liveness-inference"
+    },
+    {
+      "assertion": "Regressionstests decken mindestens aktive exakt gebundene Arbeit, verspätete Heartbeats, parallele fremde Arbeit, Lease-Erneuerung ohne Runbindung, bereits terminale Runs und wiederholte idempotente Aktivität ab.",
+      "id": "stale-race-regressions"
+    },
+    {
+      "assertion": "Run-/Doctor-/Reconcile-Ausgaben machen nachvollziehbar, ob Liveness aus kanonischem Heartbeat, gebundener Aktivität oder einer fail-closed Rebind-Anforderung stammt; es wird keine Fortschrittswahrheit erfunden.",
+      "id": "operator-observability"
+    },
+    {
+      "assertion": "Fokussierte Lifecycle-/Heartbeat-Tests, vollständige Bureau-Validierung und git diff --check sind auf demselben Head grün.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Follow-up from T162 live-run observation event 5087. Change Bureau lifecycle/heartbeat semantics only with exact run/task/effect binding; do not infer liveness from unrelated leases.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Verhindern, dass ein Bureau-Run als stale/orphaned erscheint, während exakt an denselben Run gebundene Grabowski-/Operatorarbeit nachweislich fortschreitet und gültige Leases erneuert. Erfolgreiche, rungebundene Aktivität muss den kanonischen Heartbeat atomar mitführen oder fail-closed eine explizite Rebindung verlangen; bloße Lease-Existenz darf fremde oder tote Runs nicht künstlich lebendig halten.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-BOUND-ACTIVITY-HEARTBEAT-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "that every lease implies run liveness",
+      "authority to revive terminal runs",
+      "authority to mutate foreign run state",
+      "automatic dispatch or merge authority"
+    ],
+    "finding": "Exakt gebundene Operatorwirkung und aktive Leases können fortbestehen, während execution_binding/heartbeat stale wird; dadurch kann Bureau produktive Arbeit fälschlich als orphaned interpretieren.",
+    "registered_at": "2026-08-10T17:22:00Z",
+    "source": "T162 live-run observation / candidate event 5087",
+    "source_candidate_event_id": 5087,
+    "source_run_id": "BUR-RUN-20260809T173344Z-be33efd349",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6a8556e9fe428195bf83cd0d",
+      "event_id": 5479,
+      "event_created_at": "2026-08-10T17:19:56.154713Z",
+      "request_sha256": "e4453ef9efb5ade070effe8c5a25ac6ce517e151b4f120bad692aba2a09bbaa4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "bureau-run-live-observation",
+        "locator": "bureau-live-register:event-5087;source-run:BUR-RUN-20260809T173344Z-be33efd349",
+        "observed_at": "2026-08-10T17:21:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "testing",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Änderungen an der Heartbeat-/Lifecycle-Kopplung revisionsgebunden zurücknehmen; bestehende Runs, Auditereignisse und Lease-Historie nicht löschen oder umschreiben. Bei Unklarheit auf die bisherige fail-closed stale-Erkennung zurückfallen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Run-Heartbeat an gebundene aktive Operatorwirkung koppeln"
+}

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.dev/schemas/bureau/repo-scan.v1.schema.json",
+  "title": "Bureau read-only repository scan projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "mode",
+    "read_only",
+    "identity_authority",
+    "planning_evidence_role",
+    "discovery_registry",
+    "repositories",
+    "does_not_establish"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "kind": {"const": "bureau_repo_scan"},
+    "mode": {"const": "dry-run"},
+    "read_only": {"const": true},
+    "identity_authority": {"const": "bureau-registry"},
+    "planning_evidence_role": {"const": "evidence-only"},
+    "discovery_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "status", "schema_version"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "status": {"enum": ["loaded", "missing"]},
+        "schema_version": {"type": ["integer", "null"], "minimum": 1}
+      }
+    },
+    "repositories": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {"$ref": "#/$defs/repository"}
+    },
+    "does_not_establish": {
+      "const": [
+        "repository_mutation_authority",
+        "task_truth_from_evidence_volume",
+        "task_priority",
+        "task_state"
+      ]
+    }
+  },
+  "$defs": {
+    "nullableString": {"type": ["string", "null"]},
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "path",
+        "github_slug",
+        "grabowski_key",
+        "criticality",
+        "status",
+        "source_match",
+        "planning_evidence"
+      ],
+      "properties": {
+        "resource_id": {"type": "string", "minLength": 1},
+        "path": {"$ref": "#/$defs/nullableString"},
+        "github_slug": {"$ref": "#/$defs/nullableString"},
+        "grabowski_key": {"$ref": "#/$defs/nullableString"},
+        "criticality": {"$ref": "#/$defs/nullableString"},
+        "status": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "head_revision"],
+          "properties": {
+            "state": {"enum": ["available", "missing", "not-git-repository"]},
+            "head_revision": {
+              "oneOf": [
+                {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                {"type": "null"}
+              ]
+            }
+          }
+        },
+        "source_match": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/sourceMatch"}
+          ]
+        },
+        "planning_evidence": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {"$ref": "#/$defs/evidence"}
+        }
+      }
+    },
+    "sourceMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "root", "remote", "authority", "match_basis"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "root": {"$ref": "#/$defs/nullableString"},
+        "remote": {"$ref": "#/$defs/nullableString"},
+        "authority": {"$ref": "#/$defs/nullableString"},
+        "match_basis": {"enum": ["root", "remote", "root+remote"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_source",
+        "source_id",
+        "kind",
+        "location",
+        "authority",
+        "present"
+      ],
+      "properties": {
+        "evidence_source": {"const": "discovery-source-registry"},
+        "source_id": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["repository-planning-file", "vault-planning-path"]},
+        "location": {"type": "string", "minLength": 1},
+        "authority": {"$ref": "#/$defs/nullableString"},
+        "present": {"type": "boolean"}
+      }
+    }
+  }
+}

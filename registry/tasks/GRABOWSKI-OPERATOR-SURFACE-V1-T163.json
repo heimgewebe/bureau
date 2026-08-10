@@ -1,0 +1,120 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle deterministischen, garantiert effektfreien Acquisition-Prämissen einschließlich breiter Repository-Scope-Anforderungen und Nonconflict-Eingaben werden vollständig geprüft, bevor request.json, intent.json oder andere rungebundene immutable Request-/Intent-Artefakte erzeugt werden.",
+      "id": "pure-preflight-before-artifacts"
+    },
+    {
+      "assertion": "Ein erster Pickup mit create_workspace=false und breitem Repo-Key ohne vollständigen Scope endet effect_started=false mit repository-scope-required und hinterlässt kein kollidierendes request.json; derselbe Worker/Task kann danach mit gültigem vollständigem Scope fortfahren, ohne pickup-artifact-conflict.",
+      "id": "corrected-request-retry"
+    },
+    {
+      "assertion": "Ein exakt identischer bereits akzeptierter Request nutzt weiterhin die journalgebundene Ausführung deterministisch wieder und erzeugt weder einen zweiten Run noch doppelte Leases.",
+      "id": "exact-replay-idempotent"
+    },
+    {
+      "assertion": "Nach Lease-Akquise, Claim-Commit oder ambigem Mutationsausgang bleiben abweichende Requests unter derselben Ausführungsidentität unverändert durch Request-/Intent-/Registry-Bindungen blockiert und verlangen den vorhandenen Recovery-/Readback-Pfad.",
+      "id": "effectful-state-fail-closed"
+    },
+    {
+      "assertion": "Der neue Preflight ist rein lesend/berechnend: ein Validierungsfehler erzeugt keine Repository-Lease, keinen Teil-Lock und keinen Claim-Effekt; die anschließende echte Akquise konsumiert ausschließlich den validierten Plan oder validiert dessen Bindung erneut.",
+      "id": "no-partial-acquisition-from-preflight"
+    },
+    {
+      "assertion": "Regressionstests decken korrigierten Retry, identischen Replay, fehlenden/valide Scope, mehrere Acquisition-Gruppen sowie effectful/ambige Zustände ab. Relevante Grabowski-Gates sind auf exaktem Head grün; der PR ist revisionsgebunden reviewed, gemergt, commitgenau deployt und der korrigierte Retry wird auf der deployten Runtime live belegt.",
+      "id": "regression-validation-delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den pre-effect Acquisition-/Scope-Preflight und die Reihenfolge der immutable Pickup-Artefakte ändern. Keine Lockerung von Claim-, Lease-, Journal-, Retry-, Nonconflict- oder Recovery-Sicherheitsgrenzen; keine fremden Leases oder Workspaces verändern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-pickup.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den koordinierten Grabowski-Bureau-Pickup so härten, dass alle garantiert effektfreien Acquisition-, Repository-Scope- und Nonconflict-Prämissen vor dem Anlegen immutable Run-Request-Artefakte validiert werden. Ein korrigierter Request nach einem effect_started=false Preflight-Fehler darf unter derselben Worker-/Task-Identität normal fortfahren; identische Replays bleiben idempotent und Zustände mit begonnenem oder ambigem Effekt bleiben strikt fail-closed.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T163",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to rewrite historical run journals",
+      "permission to weaken exact replay semantics",
+      "permission to mutate foreign active work"
+    ],
+    "related_tasks": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T153",
+      "OPERATOR-INTEGRATION-LOOP-V1-T031"
+    ],
+    "source_observation": {
+      "candidate_id": "candidate-c9036ea159587eb37531019b",
+      "control_flow": "request.json and intent artifacts are written before _acquire_groups(); repository-scope-required is raised inside _acquire_groups()",
+      "event_id": 5252,
+      "grabowski_main": "3c47df1b114a88abc07f1f628245c2db7e27a36c",
+      "historical_reproduction": {
+        "corrected_retry_error": "pickup-artifact-conflict",
+        "first_error": "repository-scope-required",
+        "run_id": "BUR-RUN-20260809T193912Z-f6eddd89ee",
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T037"
+      },
+      "module_sha256": "38c1509bb43f3adac8baf8e07cb97e05cf0249b0efa051cd77b9082e0adba024",
+      "observed_at": "2026-08-10T08:24:17Z",
+      "ordering_sha256": "754aff8f94667d3277b697ea0a69b3b377d81687aec9c81d7e9725c0c2c44a04"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c9036ea159587eb37531019b",
+      "event_id": 5252,
+      "event_created_at": "2026-08-10T08:26:38.525053Z",
+      "request_sha256": "94db7b2d35ed8c3bee10705bb07f832e8eb5abde8395c471284b129413ae7f8e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "current-main-source-proof",
+        "locator": "github:heimgewebe/grabowski@3c47df1b114a88abc07f1f628245c2db7e27a36c:src/grabowski_bureau_pickup.py",
+        "observed_at": "2026-08-10T08:24:17Z",
+        "sha256": "38c1509bb43f3adac8baf8e07cb97e05cf0249b0efa051cd77b9082e0adba024"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei jeder Lockerung von Idempotenz, Lease-Sicherheit oder Recovery den revisionsgebundenen Fix zurücknehmen. Bestehende immutable Run-Artefakte und Audit-Historie nicht umschreiben; fremde Leases, Dirty-States und aktive Prozesse nicht verändern."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Pre-Commit-Pickup vor immutable Run-Artefakten validieren"
+}

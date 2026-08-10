@@ -1382,18 +1382,6 @@ def _task_spec_proposal_binding(
             "TaskSpec revision candidate must explicitly bind the exact existing task_id",
             details={"candidate_task_id": explicit_task_id, "task_id": task_id},
         )
-    if projected is not None:
-        projected_sha256 = legacy.sha256_json(projected.raw)
-        if projected_sha256 != current["spec_sha256"]:
-            raise OperatorIntakeError(
-                "task-spec-projection-divergence",
-                "Git task projection differs from the authoritative StateStore TaskSpec baseline",
-                details={
-                    "task_id": task_id,
-                    "state_store_sha256": current["spec_sha256"],
-                    "git_projection_sha256": projected_sha256,
-                },
-            )
     return {
         "operation": "revise",
         "expected_revision": int(current["revision"]),
@@ -1509,12 +1497,6 @@ def _validate_task_spec_proposal_binding(
             raise OperatorIntakeError(
                 "candidate-task-identity-mismatch",
                 "reviewed TaskSpec revision candidate no longer binds the exact task_id",
-            )
-        if projected is not None and legacy.sha256_json(projected.raw) != expected_spec_sha256:
-            raise OperatorIntakeError(
-                "task-spec-projection-divergence",
-                "Git task projection changed from the reviewed TaskSpec baseline",
-                retryable=True,
             )
         if observed_file_sha256 != expected_file_sha256:
             raise OperatorIntakeError(

@@ -1,0 +1,111 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A hermetic regression simulates deploy generation N upgrading to N+1 where N+1 changes verifier/runtime contracts and proves the N+1 deploy implementation is staged and selected before N+1-specific target verification; the test performs no real Heim-PC service or installed-runtime mutation.",
+      "evidence_type": "object",
+      "id": "cross-generation-offline-regression"
+    },
+    {
+      "assertion": "The handoff remains exact reviewed-head/hash/preimage bound, rejects unsafe path identity or unexpected bytes fail-closed, and preserves rollback semantics when the staged next-generation deployer or target validation fails.",
+      "evidence_type": "object",
+      "id": "identity-and-rollback-preserved"
+    },
+    {
+      "assertion": "Repository tests prove that after a successful simulated N→N+1 convergence, an unchanged second deploy creates no release, performs no service action, and reports the same exact runtime head.",
+      "evidence_type": "object",
+      "id": "steady-state-idempotence-offline"
+    },
+    {
+      "assertion": "Repository artifacts and documentation expose all exact inputs, preflight evidence, rollback data and expected receipts needed by dependent live task AUDIO-CONTROL-PLANE-V1-T035; T034 itself performs and claims no host or service mutation.",
+      "evidence_type": "object",
+      "id": "live-proof-delegated"
+    },
+    {
+      "assertion": "Implementation, full diff, self-review, material external reviews, local relevant tests and required GitHub checks are bound to the same published head; open material review findings or red checks block merge.",
+      "evidence_type": "object",
+      "id": "exact-head-review-ci"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository implementation, tests, PR and merge only. No service start/stop/restart, installed-file replacement, deploy-timer mutation or other Heim-PC runtime effect belongs to T034.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Implement and prove in the audio repository a cross-generation self-deploy handoff that lets reviewed deploy generation N+1 replace N's deploy logic before N+1-specific runtime verification is evaluated, without weakening exact-head/hash/preimage binding, fail-closed validation or rollback. This task is repository-only and does not authorize live service or host mutation.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T034",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "discovery": "Post-merge runtime verification of audio PR #89 exposed a self-deploy bootstrap deadlock: the old installed deploy verifier expected 7 remote effects, rejected the new correct 10-effect bridge contract, and rolled back every minute. PR #90 fixed the immediate allowlist drift and added parity CI, but escaping the already-installed old generation still required one controlled hash-bound bootstrap.",
+    "does_not_establish": [
+      "Live deployment success",
+      "Permission to mutate Heim-PC services or installed runtime",
+      "A need to weaken runtime verification",
+      "Physical audio hardware readiness"
+    ],
+    "review_correction": {
+      "reason": "P1 correctly found that the original T034 live acceptance exceeded its repo.audio reservation and repository_mutation approval.",
+      "resolution": "T034 is repository-only; live convergence is split into T035 with host/service scope and break-glass runtime_mutation approval.",
+      "source": "heimgewebe/bureau#1875 discussion_r3753867864"
+    },
+    "source_merge_commits": [
+      "b9ba2273df47c56ccdb7ec4668f42d6b83a174a2",
+      "e73d7afae23a9d5b36b2d837698fddea099ec138"
+    ],
+    "source_pull_requests": [
+      89,
+      90
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f5ee1d9c26be0eccc3ff6f9a",
+      "event_id": 5641,
+      "event_created_at": "2026-08-10T22:33:47.583107Z",
+      "request_sha256": "d3e2e1fd9bbfc30557b305405a8115c2a23a71b48a36f2db8213c55013c58cad",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "github:heimgewebe/bureau#1875:discussion_r3753867864:t034-revision",
+        "observed_at": "2026-08-10T22:33:47.555176Z",
+        "sha256": "b3a97a20c3662fa7522b68e09db37509ca915af8c8ac52881e529863d74ec3cb"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 34
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make Audiozentrale self-deploy bootstrap-safe across deploy-contract changes"
+}

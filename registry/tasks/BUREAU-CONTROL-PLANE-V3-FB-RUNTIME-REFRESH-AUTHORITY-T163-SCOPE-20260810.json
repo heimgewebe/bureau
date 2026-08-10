@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Nach Merge dieser TaskSpec und unmittelbar vor prepare-intent werden aktueller GitHub-main, der zugehörige gemergte PR, validate (3.10), validate (3.12) und target_sha256 frisch beobachtet; kein vor dem eigenen Merge beobachteter Targethash wird als Deploymentziel wiederverwendet.",
+      "id": "fresh-target-after-authority-merge"
+    },
+    {
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese Task-ID und approval_reference exakt an den frisch beobachteten target_sha256; ohne diese Bindung gibt es keinen Runtime-Effekt.",
+      "id": "break-glass-target-binding"
+    },
+    {
+      "assertion": "T028, T029, BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810, BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-T163-20260810 und andere historische, terminale oder verbrauchte Runtime-Aufgaben werden nicht reaktiviert oder als Ersatzautorität verwendet.",
+      "id": "historical-authority-reuse-forbidden"
+    },
+    {
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frisch erzeugten Runtime-Refresh-Intents unter einem aktuellen Owner; fehlende, fremde, abgelaufene oder driftende Leases blockieren vor Wirkung.",
+      "id": "live-lease-binding"
+    },
+    {
+      "assertion": "Diese TaskSpec trägt höchstens einen erfolgreichen Runtime-Refresh und wird danach terminal; jeder spätere Drift benötigt eine neue Autoritäts-TaskSpec.",
+      "id": "single-use-lifecycle"
+    },
+    {
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot auf denselben Source-Commit; eine zweite Observation meldet already_current bzw. lag_commits=0 und StateStore-Integrität bleibt grün.",
+      "id": "immutable-readback"
+    },
+    {
+      "assertion": "Danach kann die revisionsgebundene Scope-Korrektur von GRABOWSKI-OPERATOR-SURFACE-V1-T163 ohne release-registry-identity-mismatch über den typisierten Intake-/Publikationspfad erneut geprüft werden.",
+      "id": "t163-scope-revision-unblocked"
+    },
+    {
+      "assertion": "Keine Runtime-, Registry-, Queue-, Claim-, Dispatch-, Lease-, Review- oder Merge-Gates werden gelockert; fremde Worktrees, Leases und Prozesse bleiben unverändert.",
+      "id": "authority-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Einmalige Autoritätsquelle; keine konkrete Deploymentfreigabe ohne frische Target-Bindung und keine Autorität für andere Mutationen.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Autorisiere genau einen kontrollierten Bureau-Runtime-Refresh, damit die installierte immutable Bureau-Runtime und ihr kanonischer Registry-Snapshot auf den nach dem eigenen Merge dieser TaskSpec frisch beobachteten aktuellen Bureau-main-Stand konvergieren. Der Refresh dient ausschließlich dazu, die revisionsgebundene T163-Scope-Korrektur über den normalen typisierten Bureau-Publikationspfad wieder zu ermöglichen. Die konkrete Wirkung wird nur an frisches main/PR/CI, target_sha256, diese Task-ID, Break-Glass-Evidenz und exakte Live-Leases gebunden; historische Runtime-Autoritäten werden nicht wiederverwendet.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-T163-SCOPE-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_operation": "T163 TaskSpec scope correction for generated operator context resource",
+    "blocked_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T163",
+    "bootstrap_observation_sha256": "c853b30ad07ff1dd7533a80a780c1c753aa170466f553e71e11e438994ea33ba",
+    "deployed_source_at_observation": "f1484420333d707f336fe2c774df1ae201ca28ed",
+    "does_not_establish": [
+      "post-merge runtime target",
+      "deployment permission without exact break-glass binding",
+      "reuse of historical runtime tasks",
+      "authority to mutate the T163 implementation outside its currently bound resources"
+    ],
+    "live_blocker": {
+      "code": "release-registry-identity-mismatch",
+      "main_commit": "4e81ecd2e95bb8415cb5260f7cc075d12713872b",
+      "runtime_commit": "f1484420333d707f336fe2c774df1ae201ca28ed",
+      "target_sha256_at_bootstrap_observation": "6f3ff45308a38ab33077f0b70314ea9ea3174433a157d5656448cc8da310fd11"
+    },
+    "main_at_bootstrap_checkout": "4e81ecd2e95bb8415cb5260f7cc075d12713872b",
+    "publication_path": {
+      "does_not_establish": [
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime mutation before task merge"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "Typed task revision publication is fail-closed under runtime/registry drift; the documented T026 bootstrap precedent permits a narrow protected Git PR containing only this one single-use authority TaskSpec."
+    },
+    "source": "Live release-registry-identity-mismatch while revising T163 resource scope after full Grabowski validation exposed generated operator-context drift",
+    "triggering_main_pr": 1863
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten. Letzten integritätsgültigen Release beibehalten und ausschließlich den bestehenden Runtime-Refresh-Readback-/Rollbackpfad verwenden; keine operative Historie zurückschreiben."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Einmaligen Bureau-Runtime-Refresh für T163-Scope-Korrektur autorisieren"
+}

@@ -1,0 +1,127 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Browser-Kern besitzt eine explizite transportunabhängige Control-Plane für Intent, Effektklasse, Session-/Profilidentität, Leasebindung, Outcome-Readback und Audit; browser- oder protokollspezifische Details liegen hinter einem Adaptervertrag.",
+      "id": "semantic-control-plane"
+    },
+    {
+      "assertion": "Der heutige Chrome-Stable/CDP-Pfad läuft über den Adaptervertrag, bleibt loopback-only und nutzt für Remote-Debugging stets ein separates nicht-standardmäßiges User-Data-Directory; die bestehende öffentliche Browser-Worker-Semantik wird nicht unnötig verbreitert.",
+      "id": "chrome-cdp-adapter"
+    },
+    {
+      "assertion": "Ephemere Profile bleiben Standard. Persistente Profile werden nur als explizite Auth-/Trust-Scopes akzeptiert, kanonisch normalisiert und durch exklusive Profil-Leases gegen parallele Mehrfachnutzung geschützt; Profilinhalte, Cookies und Credentials gelangen nicht in Git, Audit oder Toolausgaben.",
+      "id": "profile-scope-contract"
+    },
+    {
+      "assertion": "Chrome Stable ist der kanonische Operator-Browser. Brave bleibt als expliziter Chromium-Fallback/Testpfad zulässig und der menschliche Desktop-Default wird nicht verändert. Chrome for Testing wird nur als optionaler reproduzierbarer Testadapter behandelt, nicht als Zwang für allgemeines Browsing.",
+      "id": "browser-selection-policy"
+    },
+    {
+      "assertion": "Der Adaptervertrag modelliert Protokoll und Capabilities so, dass WebDriver BiDi und Firefox später als zweite Engine ergänzt werden können; nicht implementierte Adapter scheitern explizit und fail-closed. Dieser Task behauptet keine Firefox-/BiDi-Funktionsgleichheit.",
+      "id": "future-bidi-seam"
+    },
+    {
+      "assertion": "Tests beweisen parallele unterschiedliche ephemere bzw. persistente Profile, Ablehnung derselben persistenten Profilidentität bei Konkurrenz, exakte Leasefreigabe bei terminalen Workern und unveränderte Evidenz-/History-Semantik.",
+      "id": "concurrency-and-isolation-tests"
+    },
+    {
+      "assertion": "Fokussierte Browser-Worker-Tests und vollständige Repository-Validierung bestehen auf exaktem Head; Self-Review bindet Diff und Acceptance revisionsgenau.",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Nach Deployment startet ein frischer Chrome-Stable-Worker über den neuen Adapter, liefert einen loopback-only CDP-Readback, wird terminalisiert und gibt Port-/Profil-Leases exakt frei. Ein separater Readback belegt, dass der Desktop-Default weiterhin Brave ist.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T067"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat den Browser-Architekturauftrag ausdrücklich mit 'registrieren und @grabowski umsetzen' sowie anschließend 'weiter @grabowski' freigegeben. Umsetzung erfolgt isoliert; fremde Dirty-Checkouts und Leases bleiben unangetastet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/workers",
+      "service:grabowski-operator.service"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowskis dauerhafte Browser-Kernlogik von konkreten Browserprotokollen und Vendor-MCPs entkoppeln. Intent, Effektklassifikation, Session-/Profil-/Lease-Lifecycle, Ergebnis-Readback und Audit bleiben Grabowski-Autorität; Chrome/CDP wird als heutiger Adapter hinter diese Grenze gestellt. Die Schnittstelle muss einen späteren WebDriver-BiDi-/Firefox-Adapter ermöglichen, ohne die Control-Plane neu zu entwerfen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-SEMANTIC-CONTROL-PLANE-20260811",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "architecture_boundary": {
+      "control_plane_authority": "grabowski",
+      "future_adapter": "webdriver-bidi",
+      "initial_transport_adapter": "chrome-cdp",
+      "second_engine_followup": "firefox",
+      "vendor_mcp_role": "optional adapter or diagnostic surface, never lifecycle authority"
+    },
+    "does_not_establish": [
+      "Firefox/WebDriver-BiDi implementation",
+      "WebMCP production readiness",
+      "permission to expose remote debugging beyond loopback",
+      "permission to reuse the human default browser profile",
+      "permission to read or export browser credentials"
+    ],
+    "source": "operator-intake",
+    "source_candidate_id": "candidate-adecd046d9b512d86eba3b61",
+    "source_event_id": 5582,
+    "supersedes_event_id": 5580,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-adecd046d9b512d86eba3b61",
+      "event_id": 5582,
+      "event_created_at": "2026-08-10T21:18:16.804702Z",
+      "request_sha256": "1a4f37388daf99cc81fc31531c854cf3f8985bb6ba697fa198f26795294f55ea",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chat:browser-arch-long-term-review-20260810",
+        "observed_at": "2026-08-10T21:18:16.749521Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "systemd",
+    "grabowski",
+    "browser-worker",
+    "testing",
+    "audit",
+    "schemas",
+    "system-architecture"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression Adapteränderungen zurücknehmen bzw. den bisherigen Chrome/CDP-Workerpfad wiederherstellen; persistente Profile und Browser-Evidenz nicht löschen, fremde Leases nicht übernehmen, Desktop-Default unverändert lassen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Browserautomatisierung auf semantische Control-Plane mit austauschbaren Transportadaptern stellen"
+}

@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Wenn für einen Task eine verifizierte autoritative StateStore-TaskSpec existiert, berechnet runtime-drift-check Task- und Receipt-Vergleiche gegen genau diese TaskSpec-Sicht statt gegen eine ältere oder abweichende Git-Kompatibilitätsprojektion.",
+      "id": "state-store-task-authority"
+    },
+    {
+      "assertion": "Ein hermetischer Reproducer mit verifizierter StateStore-TaskSpec und abweichender Git-Kompatibilitätsprojektion erzeugt keinen receipt-drift-Blocker, solange autoritative TaskSpec- und Plan-Digests unverändert sind.",
+      "id": "false-git-projection-drift-eliminated"
+    },
+    {
+      "assertion": "Ändert sich die autoritative StateStore-TaskSpec gegenüber einem gebundenen Receipt oder einer erwarteten Revision, bleibt der Befund blocker/fail-closed und wird nicht aufgrund eines nichtterminalen Registry-Zustands zu Info heruntergestuft.",
+      "id": "real-task-spec-drift-still-blocks"
+    },
+    {
+      "assertion": "Echter plan_sha256- oder Initiative-Baseline-Drift bleibt deterministisch blockierend.",
+      "id": "plan-drift-still-blocks"
+    },
+    {
+      "assertion": "Fehlt StateStore-TaskSpec-Autorität, bleibt der dokumentierte Git-Bootstrap-/Kompatibilitätsfallback erhalten und fail-closed.",
+      "id": "git-bootstrap-compatible"
+    },
+    {
+      "assertion": "Der Fix führt keine zweite Lifecycle-Wahrheit ein und klassifiziert historische Receipt-Mismatches nicht pauschal anhand eines Git-Registry-Zustands als harmlos; die Autoritätsentscheidung erfolgt ausschließlich aus der kanonischen TaskSpec-Sicht.",
+      "id": "no-truth-demotion"
+    },
+    {
+      "assertion": "Fokussierte Regressionstests, relevante Bureau-Gates einschließlich make validate, Deployment auf den finalen Merge-Head und ein erneuter atomarer Claim-Readback für den zuvor betroffenen Task oder einen äquivalenten hermetischen Live-Reproducer sind grün; kein false receipt-drift bleibt.",
+      "id": "validation-and-live-claim"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur runtime-drift-check/_receipt_drift an die bereits vorhandene autoritative TaskSpec-Sicht binden und fokussierte Regressionstests ändern. Keine Receipt-Gates pauschal herunterstufen, keine Queue-, Claim-, Lease-, Registry-, Merge- oder Deployment-Sicherheitsgrenze abschwächen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Repariere runtime-drift-check und die Receipt-Drift-Prüfung so, dass bei vorhandener verifizierter StateStore-TaskSpec-Autorität dieselbe kanonische TaskSpec-Sicht wie für Claim und Dispatch verwendet wird. Eine abweichende oder ältere Git-Kompatibilitätsprojektion darf dann keinen falschen receipt-drift-Blocker erzeugen; echter StateStore-TaskSpec-Drift, Plan-Drift und der Git-Bootstrap-Fallback ohne StateStore-Autorität müssen weiterhin fail-closed bleiben.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-DRIFT-TASKSPEC-AUTHORITY-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "Taskbereitschaft ohne Claim-Readback",
+      "Berechtigung zur Übernahme fremder Leases oder Dirty-States",
+      "Merge- oder Deploymentfreigabe ohne exakte Head-/CI-Evidenz"
+    ],
+    "observed_false_drift_task": "BUREAU-CONTROL-PLANE-V3-FU-TASK-SCOPED-LIFECYCLE-20260809",
+    "root_cause": "runtime-drift-check vergleicht verifizierte StateStore-TaskSpecs gegen die abweichende Git-Kompatibilitätsprojektion und speist diese Sicht in _receipt_drift ein",
+    "source": "Live-Befund beim globalen Claim-Blocker am 2026-08-10",
+    "source_candidate": "candidate-07d7c2404d71808416649de9",
+    "source_event_id": 5326,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-07d7c2404d71808416649de9",
+      "event_id": 5326,
+      "event_created_at": "2026-08-10T11:30:08.699223Z",
+      "request_sha256": "4951337006f855d2c50127e0339757b3f44705e0499cb7f8215642ae5e0440f6",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-runtime-diagnosis",
+        "locator": "bureau-runtime-drift-check:BUREAU-CONTROL-PLANE-V3-FU-TASK-SCOPED-LIFECYCLE-20260809@f13334a1d3b4608402025d490618106de85236af",
+        "observed_at": "2026-08-10T11:29:00Z",
+        "sha256": "8904db8f108ad2632793d3ea2ef06a2e697f89b08c130368371275ad671b2f2e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die Authority-Bindung von runtime-drift-check/_receipt_drift und die zugehörigen Tests; bestehende StateStore-, Claim-, Plan-Drift- und Bootstrap-Gates bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "runtime-drift-check an autoritative TaskSpec-Wahrheit binden"
+}

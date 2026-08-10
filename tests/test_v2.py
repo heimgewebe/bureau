@@ -2358,6 +2358,135 @@ def test_runtime_drift_check_rejects_non_git_root_when_canonical_identity_is_mal
     assert "canonical-snapshot-no-git" not in codes
 
 
+def test_runtime_drift_check_uses_authoritative_task_spec_over_git_projection(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    authoritative = json.loads(json.dumps(current["spec"]))
+    authoritative["title"] = "Newer StateStore task contract"
+    store.put_task_spec(
+        authoritative,
+        idempotency_key="runtime-drift-authoritative-task-spec",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+    store.set_initiative_state(next(iter(registry.initiatives)), "completion-ready")
+
+    report = runtime_drift_check(root, state_db=store.path)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "ok"
+    assert report["receipts"]["stale_tasks"] == []
+    assert "receipt-drift" not in codes
+    assert "receipt-drift-clear" in codes
+
+
+def test_runtime_drift_check_blocks_authoritative_task_spec_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    drifted = json.loads(json.dumps(current["spec"]))
+    drifted["title"] = "Drifted authoritative StateStore task contract"
+    store.put_task_spec(
+        drifted,
+        idempotency_key="runtime-drift-authoritative-task-spec-drift",
+        expected_revision=current["revision"],
+        source="test",
+    )
+
+    report = runtime_drift_check(root, state_db=store.path)
+    stale = report["receipts"]["stale_tasks"]
+
+    assert report["status"] == "blocked"
+    assert {item["code"] for item in report["findings"]} >= {"receipt-drift"}
+    assert stale[0]["task_id"] == task_id
+    assert stale[0]["current_task_sha256"] == task_revision_sha256(drifted)
+    assert stale[0]["stored_plan_sha256"] == stale[0]["current_plan_sha256"]
+
+
+def test_runtime_drift_check_blocks_plan_drift_with_task_spec_authority(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["current_plan"] = {
+        "repository": "test",
+        "path": "plan.md",
+        "commit": "3" * 40,
+        "document_sha256": "4" * 64,
+    }
+    initiative_path.write_text(json.dumps(initiative))
+    git_output(root, "add", ".")
+    git_output(root, "commit", "-m", "change initiative plan")
+    git_output(
+        root, "update-ref", "refs/remotes/origin/main", git_output(root, "rev-parse", "HEAD")
+    )
+
+    report = runtime_drift_check(root, state_db=store.path)
+    stale = report["receipts"]["stale_tasks"]
+
+    assert report["status"] == "blocked"
+    assert {item["code"] for item in report["findings"]} >= {"receipt-drift"}
+    assert stale[0]["stored_task_sha256"] == stale[0]["current_task_sha256"]
+    assert stale[0]["stored_plan_sha256"] != stale[0]["current_plan_sha256"]
+
+
+def test_runtime_drift_check_keeps_git_bootstrap_receipt_gate(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    task_id = next(iter(registry.tasks))
+    assert store.task_spec(task_id) is None
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["title"] = "Git bootstrap task contract drift"
+    task_path.write_text(json.dumps(task))
+    git_output(root, "add", ".")
+    git_output(root, "commit", "-m", "change bootstrap task")
+    git_output(
+        root, "update-ref", "refs/remotes/origin/main", git_output(root, "rev-parse", "HEAD")
+    )
+
+    report = runtime_drift_check(root, state_db=store.path)
+
+    assert report["status"] == "blocked"
+    assert report["receipts"]["stale_tasks"][0]["task_id"] == task_id
+    assert "receipt-drift" in {item["code"] for item in report["findings"]}
+
+
 def test_runtime_drift_check_reports_dirty_checkout_and_receipt_drift(
     registry_factory, tmp_path, monkeypatch
 ):

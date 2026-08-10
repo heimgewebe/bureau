@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+import bureau.review_steward as review_steward
 from bureau.acceptance import (
     EVALUATION_KIND,
     EVIDENCE_KIND,
@@ -370,3 +371,30 @@ def test_review_steward_does_not_promote_typed_unknown_to_pass() -> None:
     )
     assert evidence_signal({**typed, "state": FAILED}) == "failed"
     assert evidence_signal({**typed, "state": PASSED}) == "present"
+
+
+def test_review_steward_requests_supported_merged_at_field(monkeypatch) -> None:
+    observed: list[str] = []
+
+    monkeypatch.setattr(review_steward.shutil, "which", lambda name: "/usr/bin/gh")
+
+    def fake_run_command(cwd, argv, timeout=20):
+        observed.extend(argv)
+        return {
+            "ok": True,
+            "returncode": 0,
+            "stdout": (
+                '{"number":1876,"state":"MERGED","isDraft":false,'
+                '"mergedAt":"2026-08-10T22:00:00Z","reviewDecision":"APPROVED",'
+                '"mergeStateStatus":"CLEAN","statusCheckRollup":[]}'
+            ),
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(review_steward, "run_command", fake_run_command)
+    raw_status = review_steward.gh_pr_status({"pr": 1876, "repo": "/tmp"})
+    fields = observed[observed.index("--json") + 1].split(",")
+
+    assert "mergedAt" in fields
+    assert "merged" not in fields
+    assert review_steward.normalize_pr_status(raw_status)["merged"] is True

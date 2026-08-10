@@ -323,7 +323,11 @@ def normalize_pr_status(raw: dict[str, Any]) -> dict[str, Any]:
     review_decision = raw.get("reviewDecision") or raw.get("review_decision")
     state = raw.get("state")
     is_draft = bool(raw.get("isDraft") or raw.get("draft"))
-    merged = bool(raw.get("merged")) or raw.get("mergeStateStatus") == "MERGED"
+    merged = (
+        bool(raw.get("merged"))
+        or bool(raw.get("mergedAt") or raw.get("merged_at"))
+        or raw.get("mergeStateStatus") == "MERGED"
+    )
     rollup = raw.get("statusCheckRollup") or raw.get("checks") or []
     failures: list[str] = []
     pending: list[str] = []
@@ -392,7 +396,7 @@ def gh_pr_status(lane: dict[str, Any]) -> dict[str, Any]:
             "view",
             str(pr),
             "--json",
-            "number,url,state,isDraft,merged,reviewDecision,mergeStateStatus,statusCheckRollup",
+            "number,url,state,isDraft,mergedAt,reviewDecision,mergeStateStatus,statusCheckRollup",
         ],
         timeout=30,
     )

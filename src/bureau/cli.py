@@ -268,6 +268,10 @@ def parser() -> argparse.ArgumentParser:
     what_now.add_argument("--compact", action="store_true")
     repo_balls = sub.add_parser("repo-balls")
     repo_balls.add_argument("--capability", action="append", default=[])
+    repo_scan = sub.add_parser("repo-scan")
+    repo_scan.add_argument("--discovery-registry", type=Path)
+    repo_scan.add_argument("--repo")
+    repo_scan.add_argument("--dry-run", action="store_true")
     live_register = sub.add_parser("live-register")
     live_register.add_argument(
         "--kind",
@@ -571,6 +575,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "live-retention",
         "operator-candidate-assess",
         "repo-balls",
+        "repo-scan",
         "resource-lifecycle-contract",
         "registry-truth",
         "registry-registration-preflight",
@@ -1272,6 +1277,14 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "repo-balls":
             value = dispatcher.repo_balls(set(args.capability))
+        elif args.command == "repo-scan":
+            from .repo_scan import DEFAULT_DISCOVERY_REGISTRY, scan_repository_registry
+
+            value = scan_repository_registry(
+                registry,
+                discovery_registry_path=(args.discovery_registry or DEFAULT_DISCOVERY_REGISTRY),
+                resource_id=args.repo,
+            )
         elif args.command == "queue-reconcile":
             from .queue_reconcile import (
                 QUEUE_RECONCILE_ACTION_FILTER_SCHEMA_VERSION,

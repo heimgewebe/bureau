@@ -72,19 +72,17 @@
     "source_event_id": 5226,
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-79f6b571964dd134ecd811f7",
-      "event_id": 5226,
-      "event_created_at": "2026-08-10T07:58:54.091177Z",
-      "request_sha256": "92918293965cacf9ed84f9be0dad5c665fcab9e062bfa2adee6080360c5debf1",
+      "candidate_id": "candidate-7a5b4760f129a30d4d83a214",
+      "event_id": 5256,
+      "event_created_at": "2026-08-10T08:52:35.306183Z",
+      "request_sha256": "53d8737f5aefb45fe1a4562deadf250cc7774bb24c7be0f83e10c6a22b504e9c",
       "source": {
-        "does_not_establish": [
-          "source_content_identity"
-        ],
-        "freshness": "unknown",
-        "kind": "conversation",
-        "locator": "conversation:bureau-improve:2026-08-10:complete-run-taskspec-authority",
-        "observed_at": "2026-08-10T07:56:17Z",
-        "sha256": null
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:BUREAU-CONTROL-PLANE-V3-FU-COMPLETE-RUN-TASKSPEC-AUTHORITY-20260810:planned-no-structural-promotion",
+        "observed_at": "2026-08-10T08:52:00Z",
+        "sha256": "766cf5446a650ee8a0d5a7c90ead549b3fcef5b2233a8c99d649312d23425ecb"
       },
       "does_not_establish": [
         "queue_truth",
@@ -108,6 +106,6 @@
     "strategy": "Revertiere ausschließlich die complete_run-Authority-Bindung und zugehörige Tests; bestehende StateStore-TaskSpec-Autorität, CAS- und Plan-Drift-Gates bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "complete_run an autoritative TaskSpec-Wahrheit binden"
 }

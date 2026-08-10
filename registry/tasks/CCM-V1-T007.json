@@ -31,7 +31,7 @@
     "mode": "grabowski-operation",
     "operation": "chronik-cli-discovery-stable-binding",
     "policy": "autonomous",
-    "working_repository": "repo.grabowski"
+    "working_repository": "/home/alex/repos/grabowski"
   },
   "goal": "Die Coding-Memory-Integration von Grabowski von einem zufälligen Entwickler-Checkout der Chronik-CLI entkoppeln und an eine stabile versionierte oder explizit konfigurierte Quelle mit fail-soft Diagnose binden.",
   "id": "CCM-V1-T007",

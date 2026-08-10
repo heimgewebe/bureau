@@ -1,0 +1,119 @@
+{
+  "acceptance": [
+    {
+      "assertion": "classify_command_effect_scope und die CLI-Runtimeidentität klassifizieren complete bei mutierender Ausführung als coordination_state_mutation, nicht als registry_mutation.",
+      "id": "complete-coordination-scope"
+    },
+    {
+      "assertion": "Ein hermetischer und ein revisionsgebundener Runtime-Reproducer belegen, dass complete gegen einen gültigen kanonischen immutable Registry-Snapshot ausschließlich Run-, TaskStatus-, Reservation- und zugehörigen StateStore-Abschlusszustand mutiert; Registry-Dateien und Registry-Digests bleiben byte- und digestgleich.",
+      "id": "canonical-complete-state-only"
+    },
+    {
+      "assertion": "Ungültige Completion-Evidence, echter autoritativer TaskSpec- oder Plan-Drift, Run-/Worker-/CAS-Drift und unzulässige State-Pfade stoppen complete weiterhin deterministisch vor Wirkung.",
+      "id": "real-complete-drift-still-blocks"
+    },
+    {
+      "assertion": "Unbekannte mutierende CLI-Befehle bleiben weiterhin als registry_mutation klassifiziert; die Änderung erweitert nur den exakt benannten complete-Pfad.",
+      "id": "unknown-mutations-stay-strict"
+    },
+    {
+      "assertion": "Nach Merge und Deployment kann der noch offene Claim-Blocker-Run BUR-RUN-20260810T123939Z-e62958b73c oder ein hermetisch äquivalenter revisionsgebundener Run mit gültiger Evidence ohne Registry-Mutation terminalisiert werden; seine StateStore-Reservierungen werden danach nicht mehr als aktive Konflikte projiziert.",
+      "id": "claim-blocker-run-closeout"
+    },
+    {
+      "assertion": "Fokussierte Effect-Scope-/Complete-Regressionstests, git diff --check und make validate sind auf demselben finalen Head grün.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-FU-BIND-EFFECT-SCOPE-20260810"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die Effektklassifikation von complete und eng zugehörige Regressionstests ändern. Complete-Receipt-, TaskSpec-, Plan-, CAS- und StateStore-Drift-Gates nicht lockern; unbekannte Mutationsbefehle bleiben registry_mutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_coordination_state_effect_scope.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Klassifiziere den Bureau-CLI-Befehl complete als coordination_state_mutation, damit ein revisions- und receiptgebundener Run seinen Abschluss ausschließlich im autoritativen StateStore gegen den kanonischen immutable Runtime-Snapshot schreiben kann. Registry-Dateien, TaskSpec-Wahrheit und echte Complete-/Baseline-Drift-Gates bleiben unverändert fail-closed.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-COMPLETE-EFFECT-SCOPE-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "Berechtigung zur Mutation von Registry-Dateien",
+      "Berechtigung zum Abschluss fremder Runs ohne gültige Evidence",
+      "Merge- oder Deploymentfreigabe"
+    ],
+    "live_reproducer": {
+      "effect_applied": false,
+      "evidence_consumed": false,
+      "observed_block": "canonical-registry-read-only",
+      "observed_effect_scope": "registry_mutation",
+      "run_id": "BUR-RUN-20260810T123939Z-e62958b73c",
+      "runtime_commit": "c2de13ba5179b87258b3b009d7ae7e7c164e2073"
+    },
+    "source": "Live-Folgebefund beim formalen Closeout des globalen Claim-Blocker-Fixes am 2026-08-10",
+    "source_candidate": "candidate-95da17957185512f26a545f1",
+    "source_event_id": 5383,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-95da17957185512f26a545f1",
+      "event_id": 5383,
+      "event_created_at": "2026-08-10T13:45:35.175873Z",
+      "request_sha256": "5c1ac545f76b531920dd38ba0464ac1547466242021a784673269ad408ed12b4",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-code-observation",
+        "locator": "bureau-runtime:c2de13ba5179b87258b3b009d7ae7e7c164e2073:src/bureau/effect_scope.py#_COORDINATION_STATE_MUTATION_COMMANDS",
+        "observed_at": "2026-08-10T13:44:50Z",
+        "sha256": "3872bb91494f9c064466967d985767a5fb8e79dd2e53494134c7ccdf695cd324"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Entferne ausschließlich complete aus der Coordination-State-Allowlist und die neuen complete-Regressionsfälle; bestehende Complete-Validierung, StateStore-CAS und alle übrigen Effektklassifikationen bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "complete als kanonische Coordination-State-Mutation freigeben"
+}

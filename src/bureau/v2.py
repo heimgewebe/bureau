@@ -109,7 +109,7 @@ def _task_from_authoritative_spec(spec: dict[str, Any], digest: str) -> legacy.T
 
 def _state_store_initiative_registry(
     registry: Registry,
-    store: StateStore,
+    store: StateStore | None,
     *,
     connection: sqlite3.Connection | None = None,
 ) -> tuple[Registry, dict[str, Any]]:
@@ -124,6 +124,8 @@ def _state_store_initiative_registry(
         "dropped",
     }
     if connection is None:
+        if store is None:
+            raise legacy.StateError("StateStore connection is required")
         with store.connect() as read_connection:
             return _state_store_initiative_registry(
                 registry, store, connection=read_connection
@@ -180,18 +182,17 @@ def _legacy_git_task_projection_sha256(registry: Registry) -> str:
     )
 
 
-def authoritative_task_registry(
-    registry: Registry, store: StateStore
+def _authoritative_task_registry_from_connection(
+    registry: Registry, connection: sqlite3.Connection
 ) -> tuple[Registry, dict[str, Any], dict[str, dict[str, Any]]]:
-    """Overlay Git contracts with StateStore lifecycle truth for operational dispatch."""
+    """Overlay Git contracts with the canonical StateStore view from one connection."""
     initiative_registry, initiative_authority = _state_store_initiative_registry(
-        registry, store
+        registry, None, connection=connection
     )
-    with store.connect() as connection:
-        try:
-            projection = task_specs.current_projection(connection)
-        except task_specs.TaskSpecError as exc:
-            raise legacy.StateError(str(exc)) from exc
+    try:
+        projection = task_specs.current_projection(connection)
+    except task_specs.TaskSpecError as exc:
+        raise legacy.StateError(str(exc)) from exc
 
     state_tasks = projection["tasks"]
     if not state_tasks:
@@ -278,6 +279,14 @@ def authoritative_task_registry(
         "does_not_establish": ["git_task_payload_authority"],
     }
     return projected, authority, revisions
+
+
+def authoritative_task_registry(
+    registry: Registry, store: StateStore
+) -> tuple[Registry, dict[str, Any], dict[str, dict[str, Any]]]:
+    """Overlay Git contracts with StateStore lifecycle truth for operational dispatch."""
+    with store.connect() as connection:
+        return _authoritative_task_registry_from_connection(registry, connection)
 
 
 def coordinated_claim_intent_sha256(intent: dict[str, Any]) -> str:
@@ -7441,7 +7450,9 @@ def _checkout_drift(
     return report
 
 
-def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
+def _read_only_state_rows(
+    state_path: Path, *, registry: Registry | None = None
+) -> dict[str, Any]:
     if not state_path.is_file():
         return {"available": False, "path": str(state_path), "error": "missing"}
     connection: sqlite3.Connection | None = None
@@ -7488,7 +7499,7 @@ def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
                 rows[table] = [dict(row) for row in connection.execute(f"SELECT * FROM {table}")]
             else:
                 rows[table] = []
-        return {
+        result: dict[str, Any] = {
             "available": True,
             "path": str(state_path),
             "integrity": integrity,
@@ -7496,6 +7507,17 @@ def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
             "schema_version": version,
             "rows": rows,
         }
+        if registry is not None:
+            try:
+                operational_registry, task_authority, _ = (
+                    _authoritative_task_registry_from_connection(registry, connection)
+                )
+            except legacy.StateError as exc:
+                result["task_authority_error"] = str(exc)
+            else:
+                result["operational_registry"] = operational_registry
+                result["task_authority"] = task_authority
+        return result
     except sqlite3.Error as exc:
         return {
             "available": False,
@@ -7853,20 +7875,13 @@ def runtime_drift_check(
     findings: list[dict[str, Any]] = []
     checkout = _checkout_drift(resolved_root, findings, runtime_identity)
     state_path = _runtime_state_db_path(state_db, state_root)
-    state = _read_only_state_rows(state_path)
-    runtime = {
-        "root": str(resolved_root),
-        "state_db": str(state_path),
-        "state_available": state.get("available") is True,
-        "state_integrity": state.get("integrity"),
-        "state_schema_version": state.get("schema_version"),
-        "read_only": True,
-    }
     registry_report: dict[str, Any]
     receipt_report: dict[str, Any]
+    state: dict[str, Any]
     try:
         registry = Registry.load(resolved_root)
     except legacy.BureauError as exc:
+        state = _read_only_state_rows(state_path)
         findings.append(
             {
                 "severity": "blocker",
@@ -7878,10 +7893,51 @@ def runtime_drift_check(
         registry_report = {"valid": False, "error": str(exc)}
         receipt_report = {"available": False, "stale_tasks": [], "unknown_task_status_rows": []}
     else:
+        state = _read_only_state_rows(state_path, registry=registry)
         task_status_rows = state.get("rows", {}).get("task_status", [])
-        overlays = _read_only_overlays(registry, task_status_rows)
-        registry_report = _registry_drift(registry, overlays, findings)
-        receipt_report = _receipt_drift(registry, state, findings)
+        authority_error = state.get("task_authority_error")
+        task_authority = state.get("task_authority")
+        operational_registry = state.get("operational_registry")
+        if isinstance(authority_error, str):
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "state-store-task-authority-unavailable",
+                    "message": (
+                        "Bureau StateStore TaskSpec authority could not be verified for "
+                        "runtime drift inspection."
+                    ),
+                    "error": authority_error,
+                }
+            )
+            registry_report = {"valid": False, "error": authority_error}
+            receipt_report = {
+                "available": state.get("available") is True,
+                "stale_tasks": [],
+                "unknown_task_status_rows": [],
+                "inspection": "blocked-by-task-authority",
+            }
+        else:
+            effective_registry = (
+                operational_registry
+                if (
+                    isinstance(operational_registry, Registry)
+                    and isinstance(task_authority, dict)
+                    and task_authority.get("kind") == "bureau-state-store-task-specs"
+                )
+                else registry
+            )
+            overlays = _read_only_overlays(effective_registry, task_status_rows)
+            registry_report = _registry_drift(effective_registry, overlays, findings)
+            receipt_report = _receipt_drift(effective_registry, state, findings)
+    runtime = {
+        "root": str(resolved_root),
+        "state_db": str(state_path),
+        "state_available": state.get("available") is True,
+        "state_integrity": state.get("integrity"),
+        "state_schema_version": state.get("schema_version"),
+        "read_only": True,
+    }
     return {
         "schema_version": 1,
         "command": "runtime-drift-check",

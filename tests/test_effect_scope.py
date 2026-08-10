@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from bureau import cli as bureau_cli
 from bureau import effect_scope
-from bureau.core import Registry, StateStore
+from bureau.core import Dispatcher, Registry, StateStore
+from bureau.registry_snapshot import snapshot_tree_sha256
 
 
-def canonical_runtime_identity(root: Path, *, commit: str = "a" * 40) -> dict:
+def canonical_runtime_identity(
+    root: Path,
+    *,
+    commit: str = "a" * 40,
+    tree_sha256: str = "b" * 64,
+) -> dict:
     resolved = root.resolve()
     return {
         "schema_version": 1,
@@ -34,7 +42,7 @@ def canonical_runtime_identity(root: Path, *, commit: str = "a" * 40) -> dict:
                 "valid": True,
                 "root": str(resolved),
                 "source_commit": commit,
-                "tree_sha256": "b" * 64,
+                "tree_sha256": tree_sha256,
                 "reasons": [],
             },
         },
@@ -47,8 +55,42 @@ def canonical_runtime_identity(root: Path, *, commit: str = "a" * 40) -> dict:
     }
 
 
+def registry_file_evidence(root: Path) -> dict:
+    paths = sorted(
+        path.relative_to(root)
+        for path in (root / "registry").rglob("*")
+        if path.is_file()
+    )
+    files = {}
+    for relative in paths:
+        content = (root / relative).read_bytes()
+        files[relative.as_posix()] = {
+            "bytes": content,
+            "sha256": hashlib.sha256(content).hexdigest(),
+        }
+    tree_sha256 = snapshot_tree_sha256(root, paths)
+    assert tree_sha256 is not None
+    return {"files": files, "tree_sha256": tree_sha256}
+
+
+def run_events(store: StateStore, run_id: str) -> list[dict]:
+    with store.connect() as connection:
+        return [
+            dict(row)
+            for row in connection.execute(
+                "SELECT event_id,event_type,event_schema_version,payload_json,created_at "
+                "FROM events WHERE run_id=? ORDER BY event_id",
+                (run_id,),
+            )
+        ]
+
+
 def test_command_effect_scope_is_explicit_and_fails_closed() -> None:
     assert effect_scope.classify_command_effect_scope("status", mutates=False) == "read_only"
+    assert (
+        effect_scope.classify_command_effect_scope("bind", mutates=True)
+        == "coordination_state_mutation"
+    )
     assert (
         effect_scope.classify_command_effect_scope("claim-commit", mutates=True)
         == "coordination_state_mutation"
@@ -61,6 +103,9 @@ def test_command_effect_scope_is_explicit_and_fails_closed() -> None:
         effect_scope.classify_command_effect_scope("future-command", mutates=True)
         == "registry_mutation"
     )
+    unknown = SimpleNamespace(command="future-command")
+    assert bureau_cli._command_mutates(unknown) is True
+    assert bureau_cli._command_effect_scope(unknown) == "registry_mutation"
 
 
 def test_lifecycle_reconcile_apply_uses_canonical_coordination_store(
@@ -468,3 +513,352 @@ def test_canonical_heartbeat_rechecks_runtime_identity_before_store_open(
     assert value["result"]["status"] == "coordination-runtime-identity-blocked"
     assert "runtime-manifest-invalid" in value["result"]["reason_codes"]
     assert not state_root.exists()
+
+
+def test_bind_is_coordination_state_mutation_in_cli_runtime_identity() -> None:
+    args = bureau_cli.parser().parse_args(
+        [
+            "bind",
+            "BUR-RUN-TEST",
+            "--system",
+            "codex",
+            "--external-id",
+            "session-test",
+        ]
+    )
+
+    assert bureau_cli._command_mutates(args) is True
+    assert bureau_cli._command_effect_scope(args) == "coordination_state_mutation"
+
+
+def test_canonical_bind_mutates_only_revision_bound_coordination_state(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    state_root = tmp_path / "coordination-state"
+    state_db = state_root / "bureau.sqlite3"
+    registry = Registry.load(registry_root)
+    store = StateStore(state_db)
+    run = Dispatcher(registry, store).claim_next(
+        "bind-worker", ("repository",), reconcile_first=False
+    )["run"]
+    run_before = store.run(run["run_id"])
+    events_before = run_events(store, run["run_id"])
+    registry_before = registry_file_evidence(registry_root)
+    source_commit = registry_before["tree_sha256"][:40]
+    identity_calls: list[tuple[Path, Path]] = []
+
+    def runtime_identity(root: Path, *, state_path: Path) -> dict:
+        identity_calls.append((root.resolve(), state_path))
+        return canonical_runtime_identity(
+            registry_root,
+            commit=source_commit,
+            tree_sha256=registry_before["tree_sha256"],
+        )
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", runtime_identity)
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+
+    exit_code = bureau_cli.main(
+        [
+            "--state-root",
+            str(state_root),
+            "--json",
+            "bind",
+            run["run_id"],
+            "--system",
+            "codex",
+            "--external-id",
+            "session-test",
+        ]
+    )
+
+    assert exit_code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["run_id"] == run["run_id"]
+    assert value["result"]["state"] == "running"
+    assert value["result"]["external_system"] == "codex"
+    assert value["result"]["external_id"] == "session-test"
+    assert value["result"]["external_state"] == "running"
+    runtime = value["runtime_identity"]
+    assert runtime["command_effect_scope"] == "coordination_state_mutation"
+    binding = runtime["coordination_state_binding"]
+    assert binding["registry_source_commit"] == source_commit
+    assert binding["registry_tree_sha256"] == registry_before["tree_sha256"]
+    assert binding["state_root"] == str(state_root)
+    assert binding["state_db"] == str(state_db)
+    assert identity_calls == [
+        (registry_root.resolve(), state_db),
+        (registry_root.resolve(), state_db),
+    ]
+
+    run_after = store.run(run["run_id"])
+    changed_run_fields = {
+        key for key in run_before if run_before[key] != run_after[key]
+    }
+    assert {
+        "state",
+        "external_system",
+        "external_id",
+        "external_state",
+        "external_observed_at",
+    } <= changed_run_fields
+    assert changed_run_fields <= {
+        "state",
+        "external_system",
+        "external_id",
+        "external_state",
+        "external_observed_at",
+        "updated_at",
+        "heartbeat_at",
+    }
+    events_after = run_events(store, run["run_id"])
+    assert [event["event_type"] for event in events_after[len(events_before) :]] == [
+        "external-bound",
+        "state-projection-v1",
+    ]
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_bind_unknown_run_fails_without_registry_or_binding_effect(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    state_root = tmp_path / "coordination-state"
+    store = StateStore(state_root / "bureau.sqlite3")
+    registry_before = registry_file_evidence(registry_root)
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(
+        bureau_cli,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: canonical_runtime_identity(registry_root),
+    )
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+
+    exit_code = bureau_cli.main(
+        [
+            "--state-root",
+            str(state_root),
+            "--json",
+            "bind",
+            "BUR-RUN-MISSING",
+            "--system",
+            "codex",
+            "--external-id",
+            "session-missing",
+        ]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "failed"
+    assert value["result"]["command"] == "bind"
+    assert value["result"]["detail"] == "run BUR-RUN-MISSING is not active"
+    assert value["runtime_identity"]["command_effect_scope"] == (
+        "coordination_state_mutation"
+    )
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='external-bound'"
+        ).fetchone()[0] == 0
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_bind_rejects_conflicting_external_bindings_without_effect(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    state_root = tmp_path / "coordination-state"
+    registry = Registry.load(registry_root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next(
+        "binding-conflict-worker", ("repository",), reconcile_first=False
+    )["run"]
+    store.bind(run["run_id"], "executor-a", "external-a")
+    run_before = store.run(run["run_id"])
+    events_before = run_events(store, run["run_id"])
+    registry_before = registry_file_evidence(registry_root)
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(
+        bureau_cli,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: canonical_runtime_identity(registry_root),
+    )
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+
+    conflicts = [
+        ("executor-b", "external-a", "run already targets another external system"),
+        ("executor-a", "external-b", "run already has another external binding"),
+    ]
+    for system, external_id, expected_detail in conflicts:
+        exit_code = bureau_cli.main(
+            [
+                "--state-root",
+                str(state_root),
+                "--json",
+                "bind",
+                run["run_id"],
+                "--system",
+                system,
+                "--external-id",
+                external_id,
+            ]
+        )
+
+        assert exit_code == 2
+        value = json.loads(capsys.readouterr().out)
+        assert value["result"]["status"] == "failed"
+        assert value["result"]["detail"] == expected_detail
+        assert value["runtime_identity"]["command_effect_scope"] == (
+            "coordination_state_mutation"
+        )
+        assert store.run(run["run_id"]) == run_before
+        assert run_events(store, run["run_id"]) == events_before
+
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_bind_runtime_identity_drift_stops_before_binding(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    state_root = tmp_path / "coordination-state"
+    registry = Registry.load(registry_root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next(
+        "runtime-drift-worker", ("repository",), reconcile_first=False
+    )["run"]
+    run_before = store.run(run["run_id"])
+    events_before = run_events(store, run["run_id"])
+    registry_before = registry_file_evidence(registry_root)
+    first = canonical_runtime_identity(registry_root)
+    second = canonical_runtime_identity(registry_root)
+    second["manifest"]["valid"] = False
+    identities = iter([first, second])
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(
+        bureau_cli, "bureau_runtime_identity", lambda *args, **kwargs: next(identities)
+    )
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+
+    exit_code = bureau_cli.main(
+        [
+            "--state-root",
+            str(state_root),
+            "--json",
+            "bind",
+            run["run_id"],
+            "--system",
+            "codex",
+            "--external-id",
+            "session-drift",
+        ]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "coordination-runtime-identity-blocked"
+    assert "runtime-manifest-invalid" in value["result"]["reason_codes"]
+    assert store.run(run["run_id"]) == run_before
+    assert run_events(store, run["run_id"]) == events_before
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_bind_state_binding_drift_stops_before_store_open(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    state_root = tmp_path / "coordination-state"
+    state_db = state_root / "bureau.sqlite3"
+    registry_before = registry_file_evidence(registry_root)
+    identity_call_count = 0
+
+    def drifting_runtime_identity(*args, **kwargs) -> dict:
+        nonlocal identity_call_count
+        identity_call_count += 1
+        if identity_call_count == 2:
+            state_root.mkdir()
+            state_db.touch()
+        return canonical_runtime_identity(registry_root)
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(
+        bureau_cli, "bureau_runtime_identity", drifting_runtime_identity
+    )
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+
+    exit_code = bureau_cli.main(
+        [
+            "--state-root",
+            str(state_root),
+            "--json",
+            "bind",
+            "BUR-RUN-TEST",
+            "--system",
+            "codex",
+            "--external-id",
+            "session-state-drift",
+        ]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "coordination-state-binding-changed"
+    assert value["result"]["reason_codes"] == [
+        "coordination-state-binding-changed-before-open"
+    ]
+    assert identity_call_count == 2
+    assert state_db.read_bytes() == b""
+    assert sorted(path.name for path in state_root.iterdir()) == ["bureau.sqlite3"]
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_bind_rejects_state_path_inside_registry_before_effect(
+    registry_factory, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    unsafe_state_root = registry_root / "coordination-state"
+    registry_before = registry_file_evidence(registry_root)
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(
+        bureau_cli,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: canonical_runtime_identity(registry_root),
+    )
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+
+    exit_code = bureau_cli.main(
+        [
+            "--state-root",
+            str(unsafe_state_root),
+            "--json",
+            "bind",
+            "BUR-RUN-TEST",
+            "--system",
+            "codex",
+            "--external-id",
+            "session-invalid-path",
+        ]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "coordination-state-path-invalid"
+    assert "coordination-state-root-overlaps-registry" in value["result"]["reason_codes"]
+    assert value["runtime_identity"]["command_effect_scope"] == (
+        "coordination_state_mutation"
+    )
+    assert not unsafe_state_root.exists()
+    assert registry_file_evidence(registry_root) == registry_before

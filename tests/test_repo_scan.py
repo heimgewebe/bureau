@@ -12,7 +12,7 @@ import pytest
 
 from bureau.cli import _READ_ONLY_COMMANDS, parser
 from bureau.legacy import Resource, ValidationError
-from bureau.repo_scan import scan_repository_registry
+from bureau.repo_scan import _normalized_github_slug, scan_repository_registry
 
 
 def _resource(
@@ -258,3 +258,14 @@ def test_empty_discovery_remote_means_unknown_not_invalid(tmp_path: Path) -> Non
     assert source_match["source_id"] == "local"
     assert source_match["remote"] is None
     assert source_match["match_basis"] == "root"
+
+
+def test_github_slug_normalization_requires_explicit_url_syntax() -> None:
+    assert _normalized_github_slug("heimgewebe/test") == "heimgewebe/test"
+    assert (
+        _normalized_github_slug("https://github.com/heimgewebe/test.git")
+        == "heimgewebe/test"
+    )
+    assert _normalized_github_slug("git@github.com:heimgewebe/test.git") == "heimgewebe/test"
+    assert _normalized_github_slug("github.com/heimgewebe/test") is None
+    assert _normalized_github_slug("evilgithub.com/heimgewebe/test") is None

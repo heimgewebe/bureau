@@ -41,8 +41,6 @@ def _normalized_github_slug(value: str | None) -> str | None:
         if (parsed.hostname or "").casefold() != "github.com":
             return None
         candidate = parsed.path.lstrip("/")
-    elif candidate.startswith("github.com/"):
-        candidate = candidate.removeprefix("github.com/")
     candidate = candidate.rstrip("/")
     if candidate.endswith(".git"):
         candidate = candidate[:-4]

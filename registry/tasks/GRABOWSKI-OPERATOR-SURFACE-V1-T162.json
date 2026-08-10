@@ -56,33 +56,40 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "does_not_establish": [
-      "Mergebereitschaft vor erneutem Exact-Head-Review und grünen Pflichtchecks",
+      "eine rückwirkende Ausführung des koordinierten T162-Runs vor dem Merge",
+      "dass jeder historische Review-/Gate-Schritt des ursprünglich geplanten T162-Ablaufs durch den späteren Pickup belegt wurde",
       "Autorität zum Freigeben oder Übernehmen fremder Leases, Worktrees oder Dirty-States",
-      "Deploymentautorität für Grabowski Runtime",
-      "dass der beobachtete PR-Head nach einer Implementierungsänderung unverändert bleibt"
+      "Deploymentautorität für Grabowski Runtime"
     ],
-    "pull_request": {
-      "finding": "P1 projected terminalization recovery skips missing terminal-shadow hook",
-      "number": 715,
-      "observed_head": "ed1c752f43fbb307f31fceffce43a339a06a9e25",
-      "repository": "heimgewebe/grabowski",
-      "review_thread": "PRRT_kwDOTElD3s6XoGTc"
+    "implementation_delivery": {
+      "checks": {
+        "CodeQL": "SUCCESS",
+        "Codex review settled": "SUCCESS current-head status present; earlier historical failure/cancel entries also exist",
+        "validate (3.10)": "SUCCESS",
+        "validate (3.12)": "SUCCESS"
+      },
+      "current_state": "MERGED",
+      "head_commit": "8bd0817bcfd4a89fd409fee25b8d2414f829097f",
+      "merge_commit": "9ce242a4fb1ab34ed87c95cb629a9bb96de931a9",
+      "merged_at": "2026-08-09T17:24:28Z",
+      "observed_on": "2026-08-10",
+      "pull_request": 715,
+      "repository": "heimgewebe/grabowski"
     },
-    "source_candidate": "candidate-207f00c744a15aac566805d3",
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-207f00c744a15aac566805d3",
-      "event_id": 4809,
-      "event_created_at": "2026-08-09T14:33:05.593795Z",
-      "request_sha256": "b85f470a60d21dce2132c9fe5c6f1d7a01d13f1331de288c7310a86e49c4a2ab",
+      "candidate_id": "candidate-e0aae9e5a08ec82991378fff",
+      "event_id": 5470,
+      "event_created_at": "2026-08-10T17:12:30.375053Z",
+      "request_sha256": "df3a6402846453372ea7157b0a041052857cd28ae345dae15d4345205de8dd80",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
         "freshness": "unknown",
         "kind": "github-pr-review",
-        "locator": "github:heimgewebe/grabowski:pull/715:review-thread:PRRT_kwDOTElD3s6XoGTc",
-        "observed_at": "2026-08-09T14:21:01Z",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/715",
+        "observed_at": "2026-08-10T17:13:00Z",
         "sha256": null
       },
       "does_not_establish": [
@@ -90,6 +97,22 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "pull_request": {
+      "finding": "P1 projected terminalization recovery skips missing terminal-shadow hook",
+      "number": 715,
+      "observed_head": "8bd0817bcfd4a89fd409fee25b8d2414f829097f",
+      "repository": "heimgewebe/grabowski",
+      "review_thread": "PRRT_kwDOTElD3s6XoGTc"
+    },
+    "source_candidate": "candidate-e0aae9e5a08ec82991378fff",
+    "supersession": {
+      "followups": [
+        "BUREAU-TRUTH-MODEL-V2-T003 deckt die generische Closeout-Lücke für gemergte Implementierung bei offenem Task ab.",
+        "BUREAU-CONTROL-PLANE-V3-FB-BOUND-ACTIVITY-HEARTBEAT-20260810 hält den separat beobachteten Run-Heartbeat-Gap fest; TaskSpec Revision 1 wurde über Bureau PR #1871 publiziert."
+      ],
+      "prior_run_evidence": "Der frühere T162-Run endete stale-at-claim, weil der gebundene PR bereits gemergt war.",
+      "reason": "Die an T162 gebundene Implementierung wurde bereits über PR #715 auf exakt Head 8bd0817bcfd4a89fd409fee25b8d2414f829097f gemergt, bevor der koordinierte T162-Pickup die Implementierungsarbeit übernehmen konnte. Ein erneuter Writer würde bereits gelieferte Arbeit duplizieren. Der Task wird deshalb terminal als superseded geführt statt nachträglich eine koordinierte Vor-Merge-Ausführung oder vollständige Acceptance zu behaupten."
     }
   },
   "priority": {
@@ -106,9 +129,9 @@
     "testing"
   ],
   "rollback": {
-    "strategy": "Den ausschließlich für den P1 hinzugefügten Recovery-/Regression-Commit auf dem PR-Branch normal revertieren. Bestehende PR-#715-Shadow-Implementierung, Audit-/Shadow-Historie und fremde Worktrees/Leases nicht löschen oder umdeuten."
+    "strategy": "Supersession ist reine TaskSpec-Lifecycle-Korrektur. Bei falscher Evidenz eine neue CAS-gebundene TaskSpec-Revision aus der dann autoritativen StateStore-Baseline veröffentlichen; PR #715, Audit-/Shadow-Historie und fremde Worktrees/Leases nicht verändern."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "PR #715: Terminal-Shadow bei projected Recovery nachholen"
 }

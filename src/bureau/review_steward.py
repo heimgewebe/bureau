@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from bureau.acceptance import FAILED as ACCEPTANCE_FAILED
+from bureau.acceptance import PASSED as ACCEPTANCE_PASSED
+from bureau.acceptance import typed_evaluation_signal
 from bureau.closure import (
     CANONICAL_TASK_REQUIRED_STATES,
     atomic_json,
@@ -265,6 +268,13 @@ def evidence_signal(value: Any) -> str:
             return "failed"
         return "present" if truthy_evidence(value) else "missing"
     if isinstance(value, dict):
+        typed_signal = typed_evaluation_signal(value)
+        if typed_signal is not None:
+            if typed_signal == ACCEPTANCE_PASSED:
+                return "passed"
+            if typed_signal == ACCEPTANCE_FAILED:
+                return "failed"
+            return "present"
         explicit = [
             evidence_signal(value[key]) for key in EVIDENCE_RESULT_KEYS if key in value
         ]

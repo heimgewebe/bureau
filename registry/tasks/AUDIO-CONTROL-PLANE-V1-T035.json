@@ -1,0 +1,123 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before effects, read back the exact merged T034 head, current immutable Audiozentrale runtime head, deploy/UI/bridge/timer states, active Grabowski tasks and leases, installed deploy-executable identity and rollback material. Hold the host lease and the four named service scopes exclusively for the bounded live action; any conflicting writer or unknown preimage blocks before mutation.",
+      "evidence_type": "object",
+      "id": "exclusive-live-preflight"
+    },
+    {
+      "assertion": "Using only the reviewed T034 handoff, move the live Audiozentrale from a deliberately older compatible deploy generation N to exact reviewed generation N+1 without manually replacing the installed deploy executable outside that mechanism; the resulting runtime and deploy verifier report the exact N+1 source head.",
+      "evidence_type": "object",
+      "id": "cross-generation-live-upgrade"
+    },
+    {
+      "assertion": "After convergence, audio-control-deploy.timer is enabled/active/waiting and deploy service, UI and remote bridge have successful bounded outcomes with no restart loop, no repeated rollback storm, no unexpected process residue and preserved rollback evidence for the preimage.",
+      "evidence_type": "object",
+      "id": "service-and-rollback-readback"
+    },
+    {
+      "assertion": "A second unchanged deploy against N+1 is terminal success, creates no release, performs no unnecessary service restart or symlink/file replacement, and reports the same exact runtime head.",
+      "evidence_type": "object",
+      "id": "idempotent-second-deploy"
+    },
+    {
+      "assertion": "The live acceptance does not mutate PipeWire defaults or graph, ALSA/MIDI routing, MOTU/Roland device state, recording content or physical audio settings; any such required effect is a separate task.",
+      "evidence_type": "object",
+      "id": "no-audio-routing-effect"
+    },
+    {
+      "assertion": "All task-owned host/service/path leases and transient workspaces are released only after terminal receipts and exact live readback; unknown outcomes are not retried blindly.",
+      "evidence_type": "object",
+      "id": "terminal-cleanup"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "read",
+      "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T034"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Live acceptance may replace the installed deploy executable and start/stop/restart the Audiozentrale deploy timer/service, UI and private remote bridge. It must be bound to the exact merged T034 commit, a fresh host/service/lease readback, explicit rollback material and a bounded maintenance window. PipeWire, ALSA/MIDI routing, MOTU/Roland device state and physical audio hardware are out of scope.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc",
+      "service:audio-control-deploy.service",
+      "service:audio-control-deploy.timer",
+      "service:audio-control-ui-v1.service",
+      "service:audio-remote-bridge-v1.service"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "After T034 is merged, perform one separately authorized and exclusive live acceptance of the reviewed N→N+1 Audiozentrale self-deploy handoff on the Heim-PC, proving exact runtime convergence, rollback safety and steady-state idempotence without broadening audio-routing or hardware effects.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T035",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Permission for general Heim-PC mutation",
+      "Permission to change audio routing or hardware state",
+      "Success before the exact T034 merged implementation is available"
+    ],
+    "relationship": {
+      "AUDIO-CONTROL-PLANE-V1-T034": "Repository-only implementation and hermetic tests. T035 owns all live host/service acceptance effects."
+    },
+    "source_candidate": "candidate-407b9d7d053204c75e226dbd",
+    "source_review": "heimgewebe/bureau#1875 discussion_r3753867864",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-407b9d7d053204c75e226dbd",
+      "event_id": 5638,
+      "event_created_at": "2026-08-10T22:27:37.256580Z",
+      "request_sha256": "de9982152c95c923636020da2072ed8c01773247dd6ef5ecf0e7a4062f23483d",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "github:heimgewebe/bureau#1875:discussion_r3753867864",
+        "observed_at": "2026-08-10T22:27:37.225743Z",
+        "sha256": "b3a97a20c3662fa7522b68e09db37509ca915af8c8ac52881e529863d74ec3cb"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "runtime-observability",
+    "systemd"
+  ],
+  "rollback": {
+    "strategy": "Before mutation, bind the current installed deploy executable, immutable release, service states and generated backup/rollback material. On a clear failed validation, use only the reviewed T034 rollback path and then read back runtime head and all four service states. On an unclear effect, stop and preserve evidence; do not retry."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Validate cross-generation Audiozentrale self-deploy on the live Heim-PC"
+}

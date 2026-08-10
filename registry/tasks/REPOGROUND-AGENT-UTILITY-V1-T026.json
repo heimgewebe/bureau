@@ -57,36 +57,63 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground"
   },
-  "goal": "Den in RepoGround PR #1177 gemergten, commitadressierten Python-3.12-Runtimevertrag auf dem Heim-PC kontrolliert aktivieren: Merge-Commit 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 als git-freie immutable Runtime materialisieren, darin mit der vorhandenen CPython-3.12.12-Runtime einen commitgebundenen Venv aus dem hashgebundenen Runtime-Lock erzeugen, Canary und Auth-Negativtest bestehen lassen, repoground.service auf exakt diesen Source-Commit und dessen Venv-Interpreter umstellen und erst nach erfolgreichem Service-Readback den CLI-Aktivierungszeiger sowie den globalen Wrapper auf dieselbe Revision konvergieren. /usr/bin/python3 und das OS-System-Python bleiben unverändert.",
+  "goal": "Den in RepoGround PR #1177 gemergten, commitadressierten Python-3.12-Runtimevertrag auf dem Heim-PC kontrolliert aktivieren: Merge-Commit 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 als git-freie immutable Runtime materialisieren, darin mit der vorhandenen CPython-3.12.12-Runtime einen commitgebundenen Venv aus dem hashgebundenen RepoGround-Runtime-Lock erzeugen, Canary und Auth-Negativtest bestehen lassen, repoground.service auf exakt diesen Source-Commit und dessen Venv-Interpreter umstellen und erst nach erfolgreichem Service-Readback den CLI-Aktivierungszeiger sowie den globalen Wrapper auf dieselbe Revision konvergieren. /usr/bin/python3 und das OS-System-Python bleiben unverändert.",
   "id": "REPOGROUND-AGENT-UTILITY-V1-T026",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "metadata": {
+    "cancellation": {
+      "acceptance_disposition": "not_verified_and_not_retroactively_satisfied",
+      "authority": "direct-user-authorized-t026-lifecycle-reconciliation-20260810",
+      "cancelled_at": "2026-08-10T17:28:18Z",
+      "classification": "irreversible_precondition_loss_after_unattributed_existing_cutover",
+      "does_not_establish": [
+        "contract-compliant T026 execution",
+        "retroactive precutover-gate satisfaction",
+        "historical mutation actor identity",
+        "historical ordered cutover proof",
+        "historical rollback execution",
+        "absence of all unobserved historical effects",
+        "future RepoGround runtime health"
+      ],
+      "irrecoverable_missing_preconditions": [
+        "timestamped actor-bound readback proving the exact service/wrapper/process/lease preimage immediately before the historical activation",
+        "actor-bound receipt proving Canary and auth-negative gates occurred before the historical service switch",
+        "actor-bound ordered receipt for service cutover followed by current-pointer and CLI-wrapper convergence",
+        "complete historical execution attribution tying the live postimage to a T026-authorized mutation"
+      ],
+      "net_nonterminal_delta": -1,
+      "postcondition_disposition": "exact_target_postimage_observed_without_contract_compliant_execution_attribution",
+      "primary_evidence": {
+        "auth_negative_http_status": 401,
+        "current_runtime_target": "1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0",
+        "health_build_commit": "1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0",
+        "health_status": "ok",
+        "historical_persistent_grabowski_task_match_count": 0,
+        "historical_repoground_service_journal_window_entries": 0,
+        "python_ci_release_baseline": "3.12",
+        "python_doctor_status": "available",
+        "python_version": "3.12.12",
+        "runtime_commit": "1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0",
+        "service_restarts": 0,
+        "service_state": "active/running",
+        "service_unit_sha256": "d89b382d1c8cdf4271ae0aad566c736bd42fc3ae7880d45b200bd768f1a89f7f",
+        "wrapper_sha256": "16a537f4be0ba365eacff1a09bd7912ea1f34a4c3c7442166bd49edb21e227bc"
+      },
+      "reason": "The exact T026 target postimage was already live before the current coordinated T026 run performed any runtime mutation. T026 requires historical pre-cutover gates and ordered cutover/rollback evidence that cannot be recreated after the fact. Re-running the cutover would mutate an already-correct production runtime and violate the task stop contract. The task is therefore terminalized without claiming contract-compliant T026 execution.",
+      "source_bureau_run": {
+        "classification": "preimage-drift",
+        "run_id": "BUR-RUN-20260810T164956Z-a136b3f3b0",
+        "state": "failed",
+        "task_sha256": "16b833061617ce9c223d6f7b7e44a35bc034c2ce5519f60632ca777284e27d27"
+      },
+      "source_task_file_sha256": "e019dce6ad1e83f18d88a96dc4ec4e07aac9687aa12869291482b1de3dcb97ed"
+    },
     "does_not_establish": [
       "dass unabhängige RepoGround-Doctor-Degradierungen durch den Python-Cutover verschwinden",
       "dass CPython 3.10.12 unsicher oder defekt ist",
       "Berechtigung zu Änderungen am OS-System-Python oder an anderen Services",
       "Abwesenheit späterer Runtime- oder Wrapper-Drift"
     ],
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-eb1aed44105a6a9ad2f9fbaf",
-      "event_id": 4701,
-      "event_created_at": "2026-08-09T06:20:27.265594Z",
-      "request_sha256": "a6337a3b435813d86812a9c374bfb457bcb2c809d2821168e58012fb7d3ba9e3",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "live-service-runtime-readback",
-        "locator": "/home/alex/.config/systemd/user/repoground.service",
-        "observed_at": "2026-08-09T06:20:27.219862Z",
-        "sha256": "9fc965bab8f44b2d7c92f9b55ec66d58f0e185a787b584e1d581c52164832c6e"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    },
     "post_merge_evidence": {
       "all_observed_checks_pass": true,
       "current_pointer_preimage": "absent",
@@ -97,6 +124,28 @@
       "merged_at": "2026-08-09T14:15:57Z",
       "pull_request": 1177,
       "uv_python312_sha256": "e082b57e5bd1f4604480fca642cc276ae59b669a0d7b9c87e6b4b5cbf3544ac2"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b20d6e030c4ba912f96041f9",
+      "event_id": 5482,
+      "event_created_at": "2026-08-10T17:24:28.957765Z",
+      "request_sha256": "a62ae5c083e1d86c380183967adf25caa4fc8a436b505f977870343018f22c8d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau-run:BUR-RUN-20260810T164956Z-a136b3f3b0:postimage-reconciliation",
+        "observed_at": "2026-08-10T17:24:28.928561Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
     }
   },
   "priority": {
@@ -118,7 +167,7 @@
     "trigger": "Canary, Auth-Negativtest, Unit-Validierung, Service-Start, Prozess-/Build-/Python-Readback, CLI-Readback oder Doctor-Python-Readback weichen vom gebundenen Soll ab oder ein fremder aktiver Zustand erscheint."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "stop": {
     "conditions": [
       "PR #1177 oder Merge-Commit 1a0b1f2e534f94505286b4a94fd9ccdf6079e7d0 sind nicht mehr revisionssicher verifizierbar oder gebundene CI-Gates sind nicht grün.",

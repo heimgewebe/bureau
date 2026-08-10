@@ -104,7 +104,11 @@ PASS_CASES = [
     (
         "required_ci_green",
         "github",
-        {"checks": [{"name": "validate", "state": "success"}]},
+        {
+            "complete": True,
+            "required_checks": ["validate"],
+            "checks": [{"name": "validate", "state": "success"}],
+        },
     ),
     (
         "deployment_complete",
@@ -290,7 +294,11 @@ def test_explicit_ci_failure_is_failed_without_inventing_missing_facts() -> None
             "ci",
             "required_ci_green",
             authority="github",
-            facts={"checks": [{"name": "validate", "state": "failure"}]},
+            facts={
+                "complete": True,
+                "required_checks": ["validate"],
+                "checks": [{"name": "validate", "state": "failure"}],
+            },
         ),
         task_sha256=TASK_SHA,
         plan_sha256=PLAN_SHA,
@@ -299,6 +307,72 @@ def test_explicit_ci_failure_is_failed_without_inventing_missing_facts() -> None
 
     assert result["state"] == FAILED
     assert result["reason"] == "required-check-failed"
+
+
+def test_required_ci_rejects_incomplete_observation() -> None:
+    result = evaluate_criterion(
+        criterion("ci", "required_ci_green"),
+        primary_evidence(
+            "ci",
+            "required_ci_green",
+            authority="github",
+            facts={
+                "complete": False,
+                "required_checks": ["validate", "codeql"],
+                "checks": [{"name": "validate", "state": "success"}],
+            },
+        ),
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "required-check-observation-incomplete"
+
+
+def test_required_ci_rejects_missing_required_check_even_with_optional_green() -> None:
+    result = evaluate_criterion(
+        criterion("ci", "required_ci_green"),
+        primary_evidence(
+            "ci",
+            "required_ci_green",
+            authority="github",
+            facts={
+                "complete": True,
+                "required_checks": ["validate", "codeql"],
+                "checks": [
+                    {"name": "validate", "state": "success"},
+                    {"name": "optional", "state": "success"},
+                ],
+            },
+        ),
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "required-check-missing"
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf"), True])
+def test_soak_rejects_non_finite_or_boolean_observation(value) -> None:
+    result = evaluate_criterion(
+        criterion("soak", "duration_soak_completed"),
+        primary_evidence(
+            "soak",
+            "duration_soak_completed",
+            authority="target-runtime",
+            facts={"completed": True, "required_seconds": 60, "observed_seconds": value},
+        ),
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "soak-observation-invalid"
 
 
 def test_product_merge_and_deployment_remain_separate_evidence_domains() -> None:

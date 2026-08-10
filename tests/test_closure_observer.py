@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import Any
 
 from bureau.acceptance import EVIDENCE_KIND, PASSED, UNKNOWN
-from bureau.closure_observer import evaluate_run, reconcile_run, reconcile_runs
+from bureau.closure_observer import (
+    EVIDENCE_BUNDLE_KIND,
+    evaluate_run,
+    reconcile_run,
+    reconcile_runs,
+    reconcile_state_evidence,
+)
 from bureau.core import Dispatcher, Registry, StateStore
 
 TASK_SHA = "a" * 64
@@ -238,3 +244,78 @@ def test_typed_pass_uses_real_complete_run_state_store_path(
     assert result["evaluation"]["state"] == PASSED
     assert receipt["evidence"]["manual"]["kind"] == EVIDENCE_KIND
     assert receipt["evidence"]["manual"]["revision"]["task_sha256"] == run["task_sha256"]
+
+
+def test_state_root_evidence_bundle_drives_production_reconcile_writer(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [manual_criterion()]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    state_root = tmp_path / "production-state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]
+    evidence_dir = state_root / "acceptance-evidence"
+    evidence_dir.mkdir()
+    bundle = {
+        "schema_version": 1,
+        "kind": EVIDENCE_BUNDLE_KIND,
+        "run_id": run["run_id"],
+        "task_id": run["task_id"],
+        "task_sha256": run["task_sha256"],
+        "plan_sha256": run["plan_sha256"],
+        "evidence": manual_evidence(
+            task_sha256=run["task_sha256"],
+            plan_sha256=run["plan_sha256"],
+        ),
+    }
+    (evidence_dir / f"{run['run_id']}.json").write_text(json.dumps(bundle), encoding="utf-8")
+
+    result = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert result["writer"] == "bureau-reconcile"
+    assert result["terminalized_count"] == 1
+    assert store.run(run["run_id"])["state"] == "succeeded"
+
+
+def test_state_root_bundle_binding_drift_stays_open(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [manual_criterion()]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    state_root = tmp_path / "drift-state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]
+    evidence_dir = state_root / "acceptance-evidence"
+    evidence_dir.mkdir()
+    bundle = {
+        "schema_version": 1,
+        "kind": EVIDENCE_BUNDLE_KIND,
+        "run_id": run["run_id"],
+        "task_id": run["task_id"],
+        "task_sha256": "9" * 64,
+        "plan_sha256": run["plan_sha256"],
+        "evidence": manual_evidence(
+            task_sha256=run["task_sha256"],
+            plan_sha256=run["plan_sha256"],
+        ),
+    }
+    (evidence_dir / f"{run['run_id']}.json").write_text(json.dumps(bundle), encoding="utf-8")
+
+    result = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    assert result["observations"][0]["reason"] == "evidence-provider-unavailable"
+    assert store.run(run["run_id"])["state"] == "assigned"

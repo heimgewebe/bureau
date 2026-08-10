@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
@@ -174,9 +175,18 @@ def _fact_state(verifier: str, facts: Mapping[str, Any]) -> tuple[str, str]:
 
     if verifier == "required_ci_green":
         checks = facts.get("checks")
+        required_checks = facts.get("required_checks")
+        if facts.get("complete") is not True:
+            return UNKNOWN, "required-check-observation-incomplete"
+        if not isinstance(required_checks, list) or not required_checks:
+            return UNKNOWN, "required-check-set-unavailable"
+        if any(not isinstance(name, str) or not name.strip() for name in required_checks):
+            return UNKNOWN, "required-check-set-invalid"
+        if len(set(required_checks)) != len(required_checks):
+            return UNKNOWN, "required-check-set-duplicated"
         if not isinstance(checks, list) or not checks:
             return UNKNOWN, "required-checks-unavailable"
-        states: list[str] = []
+        observed: dict[str, str] = {}
         for check in checks:
             if not isinstance(check, Mapping):
                 return UNKNOWN, "required-check-row-invalid"
@@ -184,11 +194,19 @@ def _fact_state(verifier: str, facts: Mapping[str, Any]) -> tuple[str, str]:
             state = check.get("state")
             if not isinstance(name, str) or not name or not isinstance(state, str):
                 return UNKNOWN, "required-check-row-incomplete"
-            states.append(state.lower())
-        if any(state in _FAIL_CHECK_STATES for state in states):
+            lowered = state.lower()
+            if name in observed and observed[name] != lowered:
+                return UNKNOWN, "required-check-row-conflict"
+            observed[name] = lowered
+        missing = [name for name in required_checks if name not in observed]
+        if missing:
+            return UNKNOWN, "required-check-missing"
+        required_states = [observed[name] for name in required_checks]
+        if any(state in _FAIL_CHECK_STATES for state in required_states):
             return FAILED, "required-check-failed"
         if any(
-            state in _PENDING_CHECK_STATES or state not in _PASS_CHECK_STATES for state in states
+            state in _PENDING_CHECK_STATES or state not in _PASS_CHECK_STATES
+            for state in required_states
         ):
             return UNKNOWN, "required-check-not-terminal-green"
         return PASSED, "required-checks-green"
@@ -238,9 +256,19 @@ def _fact_state(verifier: str, facts: Mapping[str, Any]) -> tuple[str, str]:
     if verifier == "duration_soak_completed":
         required = facts.get("required_seconds")
         observed = facts.get("observed_seconds")
-        if not isinstance(required, int | float) or required < 0:
+        if (
+            not isinstance(required, int | float)
+            or isinstance(required, bool)
+            or not math.isfinite(float(required))
+            or required < 0
+        ):
             return UNKNOWN, "soak-requirement-invalid"
-        if not isinstance(observed, int | float) or observed < 0:
+        if (
+            not isinstance(observed, int | float)
+            or isinstance(observed, bool)
+            or not math.isfinite(float(observed))
+            or observed < 0
+        ):
             return UNKNOWN, "soak-observation-invalid"
         if facts.get("failed") is True:
             return FAILED, "soak-observed-failed"

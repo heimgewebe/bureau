@@ -1,0 +1,107 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Autorität wird nur verwendet, wenn der beobachtete main-Stand die gemergte Implementierung des Closeout-Authority-Fix enthält; vor dem Code-Merge gibt es keinen Effekt.",
+      "id": "final-code-merge-target"
+    },
+    {
+      "assertion": "Unmittelbar vor Effekt werden GitHub-main, der Code-PR-Head/Merge und dessen grüne Pflichtchecks frisch beobachtet; Drift erzeugt eine neue Observation.",
+      "id": "fresh-target"
+    },
+    {
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese Task-ID und approval_reference exakt an den frisch beobachteten target_sha256.",
+      "id": "exact-break-glass-binding"
+    },
+    {
+      "assertion": "Diese Task trägt höchstens einen erfolgreichen Runtime-Refresh und wird danach nicht wiederverwendet.",
+      "id": "single-use"
+    },
+    {
+      "assertion": "apply verwendet nur die exakt vom Intent verlangten aktuellen Live-Leases; fremde oder abgelaufene Lease-Zustände führen vor Wirkung zum Abbruch.",
+      "id": "live-leases"
+    },
+    {
+      "assertion": "Nach apply stimmen immutable Release, Manifest, Paketbaum, Registry-Snapshot und GitHub-main auf denselben finalen Source-Commit; StateStore-Integrität bleibt ok.",
+      "id": "immutable-readback"
+    },
+    {
+      "assertion": "Der Lauf lockert keine Registry-, Queue-, Claim-, Review-, Merge- oder Deployment-Gates und verändert keine fremden Worktrees, Leases oder Prozesse.",
+      "id": "no-bypass"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Zweite getrennte Einmal-Autorität. Vor Effekt sind frische Observation des späteren Code-Merge-Heads, exakte target_sha256-Bindung, grüne Checks und Intent-Live-Leases nötig.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Erlaube genau einen frisch beobachteten, targetgebundenen Bureau-Runtime-Refresh nach dem späteren Merge der Implementierung von BUREAU-CONTROL-PLANE-V3-FU-COMPLETE-RUN-TASKSPEC-AUTHORITY-20260810. Diese Autorität ist ausschließlich für den finalen Code-Merge bestimmt und darf nicht für den vorgelagerten Registry-only Refresh verbraucht werden.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AFTER-CLOSEOUT-FIX-20260810",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "einen target_sha256 vor dem späteren Code-Merge",
+      "Claim- oder Mergefreigabe",
+      "Berechtigung zur Verwendung für den vorgelagerten Registry-only Refresh"
+    ],
+    "purpose": "second pre-authorized one-shot refresh reserved for the later implementation merge",
+    "source_candidate": "candidate-8f06ec1d6a60c1ba116bffd2",
+    "source_event_id": 5260,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8f06ec1d6a60c1ba116bffd2",
+      "event_id": 5260,
+      "event_created_at": "2026-08-10T08:58:01.817638Z",
+      "request_sha256": "8cb93d18691413b4e0220a8d9ba3e92ac5853b752e661811f8e632d7982b45b4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:BUREAU-CONTROL-PLANE-V3-FU-COMPLETE-RUN-TASKSPEC-AUTHORITY-20260810:future-final-merge",
+        "observed_at": "2026-08-10T08:57:45Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem oder fehlgeschlagenem Cutover keine neue Deployment-Wahrheit behaupten; der letzte integritätsgültige immutable Release bleibt Rückfallkante und nur der bestehende verify-then-retry/Readback-Vertrag wird verwendet."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Runtime nach Closeout-Fix-Merge einmalig konvergieren"
+}

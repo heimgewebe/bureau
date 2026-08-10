@@ -1,0 +1,106 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Unmittelbar vor Wirkung sind kanonischer Branch/HEAD/Dirty-State, die exakten Child-Worktree-Pfade/Heads/Dirty-States, frischer GitHub-main, PR-Terminalität, Prozesse, Leases und Checkout-Lifecycle-Bindungen gebunden.",
+      "id": "exact-preimage"
+    },
+    {
+      "assertion": "Jeder Child-Worktree wird einzeln als aktiv/retained/zu bewahren oder terminal-clean-redundant klassifiziert; entfernt werden nur terminale, saubere, prozessfreie, nicht wirksam geleaste und nicht retained Child-Worktrees, deren Head über einen gemergten PR in main gesichert ist.",
+      "id": "child-classification"
+    },
+    {
+      "assertion": "Es erfolgt kein reset, stash, clean, rebase, force, rm -rf, Branch-Overwrite oder fremdes Lease-Release. Dirty, einzigartige oder fremd gebundene Zustände werden unverändert bewahrt und als Rest belegt.",
+      "id": "no-foreign-loss"
+    },
+    {
+      "assertion": "Nach sicherem Child-Cleanup ist der kanonische Checkout clean; main wird nur per fast-forward auf exakt den frisch verifizierten origin/main/GitHub-main gebracht. Divergenz oder lokale Ahead-Commits stoppen vor Änderung.",
+      "id": "canonical-clean-main"
+    },
+    {
+      "assertion": "Grabowski Runtime bleibt während der reinen Checkout-Hygiene gesund; Deployment-Manifest, Serving Process, Audit und Kill-Switch werden nach den Wirkungen frisch gelesen. Ein Runtime-Deploy wird nicht allein wegen Checkout-Hygiene ausgelöst.",
+      "id": "runtime-stability"
+    },
+    {
+      "assertion": "Nach jeder Wirkung werden Git-Status, Git-Worktree-Inventar, Prozesse/Leases, Current-Work-Projektion und Runtime erneut gelesen; der Bureau-Lauf wird nur mit vollständiger revisionsgebundener Evidenz terminalisiert.",
+      "id": "post-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung am 2026-08-10 ausdrücklich beauftragt. Kein Reset, Stash, Clean, Rebase, Force, fremdes Lease-Release oder Branch-Verlust; nur revisions- und readback-gebundene lossless Checkout-Konvergenz.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/grabowski/.worktrees/deploy-juno-native-c42c6464",
+      "path:/home/alex/repos/grabowski/.worktrees/deploy-main-104873",
+      "path:/home/alex/repos/grabowski/.worktrees/t156-automation-terminal-evidence"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den kanonischen Checkout /home/alex/repos/grabowski verlustfrei auf einen sauberen aktuellen main-Zustand konvergieren. Historische Child-Worktrees werden nur nach frischer Klassifikation von Git-Status, Remote-/PR-Terminalität, Prozessen, Leases und Lifecycle-Bindungen entfernt; fremde, aktive, retained, dirty oder einzigartige Zustände bleiben unverändert. Anschließend wird main ausschließlich per verlustfreiem Fast-Forward auf den frisch belegten origin/main/GitHub-main gebracht und Runtime-Gesundheit erneut geprüft.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-CANONICAL-CHECKOUT-CONVERGENCE-20260810",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to mutate unrelated Grabowski worktrees",
+      "permission to release foreign active leases",
+      "permission to delete retained lifecycle artifacts",
+      "permission to rewrite runtime history"
+    ],
+    "source_candidate": "candidate-67403e747d4fc25e5f244125",
+    "source_event_id": 5404,
+    "source_observation": "Live current_work meldete dirty-main-checkout; der zunächst beobachtete Inhalt von .worktrees änderte sich während des Readbacks extern und wurde deshalb vollständig neu gebunden.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-67403e747d4fc25e5f244125",
+      "event_id": 5404,
+      "event_created_at": "2026-08-10T14:02:21.782606Z",
+      "request_sha256": "1e98646fb27efe07939b34287a21917f245942e3a9375dda1c506fa2cd8c3116",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-system-audit",
+        "locator": "grabowski:current-work:snapshot:4a636454e6159666453a36b31e7bc58bcdaafb31c40eb0d464589ac5c8c8fc83",
+        "observed_at": "2026-08-10T13:56:27Z",
+        "sha256": "4a636454e6159666453a36b31e7bc58bcdaafb31c40eb0d464589ac5c8c8fc83"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "git",
+    "github",
+    "bureau",
+    "resource-leases",
+    "process-lifecycle",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Sobald ein Child-Worktree dirty, aktiv, retained, wirksam geleast oder nicht remote gesichert ist, bleibt er bestehen. Git-Worktree-Removal nur für sicher terminale Child-Worktrees; main ausschließlich per ff-only. Keine Reparatur über reset/stash/clean."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Canonical Grabowski main checkout lossless converge"
+}

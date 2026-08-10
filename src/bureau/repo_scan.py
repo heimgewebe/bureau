@@ -23,7 +23,7 @@ _GIT_TIMEOUT_SECONDS = 3.0
 
 
 def _normalized_path(value: str | Path) -> str:
-    return os.path.normpath(os.path.abspath(os.path.expanduser(str(value))))
+    return os.path.realpath(os.path.abspath(os.path.expanduser(str(value))))
 
 
 def _normalized_github_slug(value: str | None) -> str | None:
@@ -95,11 +95,23 @@ def _inspect_repository(path: str | None) -> dict[str, Any]:
     if not reported_root or _normalized_path(reported_root) != _normalized_path(repo):
         return {"state": "not-git-repository", "head_revision": None}
 
+    object_format = _git_read(repo, "rev-parse", "--show-object-format=storage")
+    if object_format.returncode != 0:
+        raise ValidationError(f"cannot determine Git object format for {repo}")
+    object_format_name = object_format.stdout.strip().casefold()
+    expected_oid_length = {"sha1": 40, "sha256": 64}.get(object_format_name)
+    if expected_oid_length is None:
+        raise ValidationError(
+            f"unsupported Git object format for {repo}: {object_format_name or 'empty'}"
+        )
+
     head = _git_read(repo, "rev-parse", "--verify", "HEAD^{commit}")
     revision = head.stdout.strip() if head.returncode == 0 else None
     if revision is not None:
         lowered = revision.casefold()
-        if len(lowered) != 40 or any(character not in "0123456789abcdef" for character in lowered):
+        if len(lowered) != expected_oid_length or any(
+            character not in "0123456789abcdef" for character in lowered
+        ):
             raise ValidationError(f"unexpected HEAD revision returned for {repo}")
         revision = lowered
     return {"state": "available", "head_revision": revision}
@@ -236,7 +248,12 @@ def _evidence(match: dict[str, Any] | None) -> list[dict[str, Any]]:
 
     for declared in match["planning_files"]:
         location_path = Path(declared).expanduser()
-        if not location_path.is_absolute() and source_root is not None:
+        if not location_path.is_absolute():
+            if source_root is None:
+                raise ValidationError(
+                    f"discovery source {match['source_id']} has a relative planning file "
+                    "without root"
+                )
             location_path = source_root / location_path
         location = _normalized_path(location_path)
         key = ("repository-planning-file", location)
@@ -250,7 +267,12 @@ def _evidence(match: dict[str, Any] | None) -> list[dict[str, Any]]:
         }
 
     for declared in match["vault_paths"]:
-        location = _normalized_path(declared)
+        location_path = Path(declared).expanduser()
+        if not location_path.is_absolute():
+            raise ValidationError(
+                f"discovery source {match['source_id']} has a relative vault path"
+            )
+        location = _normalized_path(location_path)
         key = ("vault-planning-path", location)
         evidence[key] = {
             "evidence_source": "discovery-source-registry",

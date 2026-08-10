@@ -47,9 +47,12 @@ def _git(repo: Path, *args: str) -> str:
     return completed.stdout.strip()
 
 
-def _init_repo(path: Path) -> None:
+def _init_repo(path: Path, *, object_format: str = "sha1") -> None:
     path.mkdir()
-    subprocess.run(["git", "init", "-q", str(path)], check=True)
+    init_command = ["git", "init", "-q"]
+    if object_format != "sha1":
+        init_command.append(f"--object-format={object_format}")
+    subprocess.run([*init_command, str(path)], check=True)
     (path / "tracked.txt").write_text("initial\n", encoding="utf-8")
     _git(path, "add", "tracked.txt")
     _git(
@@ -269,3 +272,83 @@ def test_github_slug_normalization_requires_explicit_url_syntax() -> None:
     assert _normalized_github_slug("git@github.com:heimgewebe/test.git") == "heimgewebe/test"
     assert _normalized_github_slug("github.com/heimgewebe/test") is None
     assert _normalized_github_slug("evilgithub.com/heimgewebe/test") is None
+
+
+def test_sha256_repository_head_is_supported_by_contract(tmp_path: Path) -> None:
+    repo = tmp_path / "sha256-repo"
+    _init_repo(repo, object_format="sha256")
+
+    result = scan_repository_registry(
+        _registry(_resource(repo)), discovery_registry_path=tmp_path / "absent.json"
+    )
+    head = _git(repo, "rev-parse", "HEAD")
+    assert len(head) == 64
+    assert result["repositories"][0]["status"] == {
+        "state": "available",
+        "head_revision": head,
+    }
+    schema_data = json.loads(
+        (Path(__file__).parents[1] / "schemas" / "repo-scan.v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    jsonschema.Draft202012Validator(schema_data).validate(result)
+
+
+def test_symlinked_repository_root_is_recognized(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    _init_repo(repo)
+    linked_repo = tmp_path / "linked-repo"
+    linked_repo.symlink_to(repo, target_is_directory=True)
+
+    result = scan_repository_registry(
+        _registry(_resource(linked_repo)),
+        discovery_registry_path=tmp_path / "absent.json",
+    )
+
+    item = result["repositories"][0]
+    assert item["path"] == str(linked_repo)
+    assert item["status"] == {
+        "state": "available",
+        "head_revision": _git(repo, "rev-parse", "HEAD"),
+    }
+
+
+def test_relative_planning_file_without_source_root_is_rejected(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    _init_repo(repo)
+    discovery = tmp_path / "sources.json"
+    _write_discovery(
+        discovery,
+        [
+            {
+                "source_id": "remote-only",
+                "root": None,
+                "remote": "heimgewebe/test",
+                "planning_files": ["docs/plan.md"],
+            }
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="relative planning file without root"):
+        scan_repository_registry(_registry(_resource(repo)), discovery_registry_path=discovery)
+
+
+def test_relative_vault_path_is_rejected(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    _init_repo(repo)
+    discovery = tmp_path / "sources.json"
+    _write_discovery(
+        discovery,
+        [
+            {
+                "source_id": "repo:test",
+                "root": str(repo),
+                "remote": "heimgewebe/test",
+                "vault_paths": ["vault-relative"],
+            }
+        ],
+    )
+
+    with pytest.raises(ValidationError, match="relative vault path"):
+        scan_repository_registry(_registry(_resource(repo)), discovery_registry_path=discovery)

@@ -1,0 +1,90 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Major-Upgrade wird nur vorgeschlagen, wenn seine Peer-Abhängigkeiten gemeinsam in eine auflösbare Versionenkombination gebracht werden; der Sichter-Fall @vitejs/plugin-react v6 gegen Vite 7 ist als Regressionstest abgedeckt.",
+      "id": "peer-closure"
+    },
+    {
+      "assertion": "Alle betroffenen Lockfiles werden mit der kanonischen Toolchain reproduzierbar neu erzeugt; Artifact-/ERESOLVE-Fehler verhindern die PR-Erzeugung fail-closed.",
+      "id": "lock-reproducible"
+    },
+    {
+      "assertion": "Die Migrationslane führt die repo-spezifisch verpflichtenden Tests und Vertragschecks auf exakt dem vorgeschlagenen Head aus.",
+      "id": "repo-tests"
+    },
+    {
+      "assertion": "Generische Renovate-Major-PRs bleiben zentral deaktiviert, solange der neue Pfad nicht revisionsgebunden End-to-End belegt ist.",
+      "id": "no-generic-major"
+    },
+    {
+      "assertion": "Eine spätere Automatisierung darf nur für Major-Klassen aktiviert werden, für die Peer-Auflösung, Lockfile-Erzeugung und Tests deterministisch grün sind.",
+      "id": "selective-reenable"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.metarepo"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/metarepo"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo"
+  },
+  "goal": "Einen revisionsgebundenen Migrationspfad für Major-Dependency-Updates schaffen, der Breaking Changes und Peer-Abhängigkeiten gemeinsam löst, Lockfiles reproduzierbar regeneriert, repo-spezifische Tests ausführt und nur kohärente PRs veröffentlicht. Die zentrale Renovate-Major-Sperre darf erst nach belegtem End-to-End-Erfolg gezielt verengt werden.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-FU-RENOVATE-MAJOR-MIGRATIONS-20260810",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c79395f4ae913621f218a666",
+      "event_id": 5253,
+      "event_created_at": "2026-08-10T08:46:00.338387Z",
+      "request_sha256": "f2ada2347fd92c1737d0cd9b36b8415f3e9c4c5b56f9318fe69fad451681cba5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "https://github.com/heimgewebe/metarepo/pull/707",
+        "observed_at": "2026-08-10T08:46:00.310968Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "origin_head": "c3da76abd2595a8bb22d5d0e878de49e3aa4a1ab",
+    "origin_pr": 707,
+    "source": "chatgpt-renovate-root-cause-20260810"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 184
+  },
+  "required_capabilities": [
+    "repository",
+    "dependency-management",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Renovate-Major-Updates über Migrationslane ausführen"
+}

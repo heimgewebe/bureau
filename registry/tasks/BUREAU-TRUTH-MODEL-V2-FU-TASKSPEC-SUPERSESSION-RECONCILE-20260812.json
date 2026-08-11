@@ -1,0 +1,128 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein fokussierter Regressionstest bildet den Livefall nach: Die aktuelle Registry-Task ist terminal superseded und nennt einen existierenden eindeutigen Nachfolger, während die autoritative StateStore-TaskSpec derselben Task eine ältere nichtterminale ready-Revision enthält. lifecycle-reconcile preview erzeugt dafür genau einen maschinenlesbaren ready->superseded-Kandidaten mit gebundenen Task-/Nachfolger-/Revision-/Digest-Belegen.",
+      "id": "supersession-candidate-contract"
+    },
+    {
+      "assertion": "Die Korrektur führt keinen Dispatch-Override aus Git ein. Erst lifecycle-reconcile-apply schreibt per bestehendem StateStore-TaskSpec-CAS eine neue autoritative Revision; Frontier, what-now, repo-balls und Claim-Pfade verwenden danach unverändert den StateStore-Zustand und wählen die supersedete Task nicht mehr aus.",
+      "id": "state-store-authority-preserved"
+    },
+    {
+      "assertion": "Der neue Übergang ist nur zulässig, wenn die aktuelle Registry die Task explizit als superseded ausweist, metadata.superseded_by genau einen vorhandenen Nachfolger benennt, die beobachtete StateStore-Revision und ihr spec_sha256 unverändert sind und keine aktive Ausführung der zu terminalisierenden Task besteht. Fehlender oder driftender Nachfolger, abweichende Revision, unklare Supersession, aktive Ausführung oder konkurrierende Änderung brechen vor StateStore-Wirkung mit stabilem Grund ab.",
+      "id": "supersession-gates-fail-closed"
+    },
+    {
+      "assertion": "Der neue Pfad kopiert keine beliebigen Git-TaskSpecs über neuere StateStore-Revisionen und erweitert die automatische Reconciliation nicht auf verified/cancelled oder sonstige Terminalzustände. Die bestehende strikte Git-StateStore-Importprüfung und der seed-missing-Vertrag bleiben unverändert fail-closed.",
+      "id": "no-general-git-import"
+    },
+    {
+      "assertion": "Normale ready-Aufgaben ohne explizite Supersession, planned->ready-Strukturkandidaten, bereits terminale StateStore-Aufgaben sowie TaskSpecs mit legitimer neuerer StateStore-Drift behalten ihr bisheriges Verhalten. Tests decken positive und negative Fälle einschließlich CAS-Drift und aktiver Ausführung ab.",
+      "id": "nonterminal-regression-safety"
+    },
+    {
+      "assertion": "Der reproduzierte Fall BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809 wird revisionsgebunden als Regression verwendet: Registry state superseded mit superseded_by BUREAU-TRUTH-MODEL-V2-T029, StateStore zuvor ready und lifecycle-reconcile zuvor ohne deterministischen Kandidaten. Der Fix behauptet keine rückwirkende Änderung historischer Runtime-Refresh-Effekte.",
+      "id": "live-case-proof"
+    },
+    {
+      "assertion": "Fokussierte Tests, git diff --check und die vollständige Bureau-Validierung laufen auf dem exakten Head grün; Diff und relevante bestehende Semantik werden selbst reviewed, Pflicht-CI-Gates sind grün und ein Merge erfolgt nur regelkonform über einen normalen geschützten PR.",
+      "id": "validation-review-merge"
+    },
+    {
+      "assertion": "Dieser Task verändert bei seiner Implementierung ausschließlich Bureau-Code und Tests. Kein Runtime-Refresh, keine direkte Queue-/StateStore-Historienmutation, kein Force/Admin-Merge und keine Mutation fremder Worktrees, Leases oder Prozesse ist autorisiert. Ein später erforderlicher Runtime-Cutover benötigt weiterhin eine eigene passende Runtime-Autoritäts-Task.",
+      "id": "effect-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat im aktuellen Bureau-Lauf ausdrücklich die nächste Aufgabe samt sinnvoller Root-Fixes und deduplizierter Folgetasks beauftragt. Dieser Task autorisiert ausschließlich den eng begrenzten Repository-Fix mit Tests und normalem Review/PR; keine direkte StateStore-, Queue-, Runtime- oder Fremdarbeitsmutation ist durch die Taskregistrierung selbst freigegeben.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den live reproduzierten Fall beheben, in dem die kanonische Registry eine Bootstrap-Task eindeutig als superseded mit benanntem Nachfolger projiziert, der autoritative StateStore aber eine ältere nichtterminale ready-TaskSpec weiterführt und Bureau sie deshalb erneut claimt. lifecycle-reconcile erhält dafür einen eng begrenzten, CAS-gesicherten Supersession-Pfad: nur bei eindeutig belegter aktueller Registry-Supersession, existierendem Nachfolger, unverändertem StateStore-Preimage und fehlender aktiver Ausführung darf eine veraltete nichtterminale StateStore-TaskSpec auf superseded fortgeschrieben werden. Frontier, what-now und Claim bleiben reine Konsumenten des danach autoritativen StateStore-Zustands; es entsteht kein Git-Status-Override im Dispatch und kein Runtime-Effect-Ledger-Sonderpfad.",
+  "id": "BUREAU-TRUTH-MODEL-V2-FU-TASKSPEC-SUPERSESSION-RECONCILE-20260812",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "dass der bestehende Runtime-Preflight-Folgetask erledigt ist",
+      "Berechtigung zu einem weiteren Runtime-Refresh",
+      "allgemeine Autorität von Git über neuere StateStore-TaskSpecs",
+      "Merge- oder Deploymentbereitschaft"
+    ],
+    "live_reproduction": {
+      "lifecycle_reconcile_result": "no deterministic lifecycle reconcile candidate",
+      "registry_state": "superseded",
+      "run_id": "BUR-RUN-20260811T224817Z-1a933ae868",
+      "run_terminal_state": "failed_without_additional_runtime_effect",
+      "runtime_source_at_reconcile_probe": "fef61c88c48907a2ecd963641930835e745313af",
+      "state_store_state": "ready",
+      "superseded_by": "BUREAU-TRUTH-MODEL-V2-T029",
+      "supersession_commit": "c6206d8ab0f96dfd69973274e0b19af12e7f0b95",
+      "task_id": "BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809"
+    },
+    "related_task": "BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AUTHORITY-PREFLIGHT-20260811",
+    "source": "bureau-live-pickup-consumed-authority-20260812",
+    "source_candidate": "candidate-22a75b9dd8872bce8c506ae0",
+    "source_event_id": 6058,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-22a75b9dd8872bce8c506ae0",
+      "event_id": 6058,
+      "event_created_at": "2026-08-11T23:03:12.092510Z",
+      "request_sha256": "940e9251de6d8d2db6951569fb39ac90013d3ef01d2711f7e727817bccc46483",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "bureau-frontier-live-audit",
+        "locator": "bureau:BUR-RUN-20260811T224817Z-1a933ae868; pickup selected consumed authority BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809",
+        "observed_at": "2026-08-11T23:03:12.056880Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression den exakten Implementierungsmerge über einen normalen Revert-PR zurücknehmen. Bereits journalisierte StateStore-Historie nicht zurückschreiben; der neue Reconcile-Pfad muss vor jeder Wirkung CAS- und Aktivitätsgates erneut prüfen, sodass unklare Fälle ohne Mutation enden."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Stale StateStore-TaskSpecs sicher auf explizite Supersession reconciliieren"
+}

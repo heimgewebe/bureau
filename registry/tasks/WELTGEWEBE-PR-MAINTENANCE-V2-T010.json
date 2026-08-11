@@ -64,7 +64,10 @@
   "metadata": {
     "does_not_establish": [
       "merge readiness without final readback",
-      "permission outside the two declared paths"
+      "permission outside the two declared paths",
+      "contract-compliant T010 execution",
+      "retroactive pre-merge Bureau binding",
+      "retroactive exact-head merge authorization"
     ],
     "registered_at": "2026-08-10",
     "source_base": "0e77b6e69705f746be17c1abe9b505bcfee38228",
@@ -91,6 +94,61 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "observed_merge": {
+      "observed_at": "2026-08-10T23:51:00Z",
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1737,
+      "base_sha": "0e77b6e69705f746be17c1abe9b505bcfee38228",
+      "head_sha": "7b3dfe30a1bd1afd47268e1b5b14921042572f7d",
+      "merge_commit_sha": "47eae6ef1192c80dae1207e2cf459989904af6d2",
+      "merged_at": "2026-08-10T09:55:13Z",
+      "current_weltgewebe_main_sha": "af02912d2a30da5f03a515dc6b77f12ad9873354",
+      "changed_paths": [
+        "apps/web/src/routes/nachrichten/+page.svelte",
+        "apps/web/tests/direct-messages.spec.ts"
+      ],
+      "bureau_task_marker_at_readback": false,
+      "labels_at_readback": [],
+      "does_not_establish": [
+        "pre-merge Bureau task binding",
+        "pre-merge final exact-head gate",
+        "contract-compliant T010 merge"
+      ]
+    },
+    "process_deviation": {
+      "status": "reconciled-by-cancellation",
+      "description": "Weltgewebe PR #1737 war bereits am 2026-08-10T09:55:13Z gemergt, bevor der revisionsgebundene T010-Lauf begann. Der Live-Readback zeigt keinen Bureau-Task-Marker und keine entsprechende Label-Bindung. Die ausdrücklich vor dem Merge geforderte T010-Bindung und der finale Pre-Merge-Readback können nachträglich nicht wahrheitsgemäß hergestellt werden.",
+      "consequence": "T010 wird terminal cancelled statt als verifiziert umgedeutet; die bereits gemergte Produktänderung bleibt davon unberührt."
+    },
+    "cancellation": {
+      "authority": "BUREAU-SUPPLY-01 live reconciliation",
+      "cancelled_at": "2026-08-10T23:51:00Z",
+      "classification": "irreversible_precondition_loss_after_external_merge",
+      "reason": "Der einzige Ziel-PR #1737 wurde vor T010-Ausführung bereits gemergt. Die Acceptance verlangt eine exakte Bureau-Task-Bindung vor dem Merge sowie einen finalen frischen Pre-Merge-Readback. Der aktuelle PR trägt weder den Marker noch ein entsprechendes Label; diese historischen Vorbedingungen sind nach dem Merge nicht reproduzierbar. Ein erneuter Merge oder eine nachträgliche Bindung würde die Acceptance verfälschen.",
+      "source_bureau_base_sha": "b75041a2a9361ca17ae367b069558eb338e12ac3",
+      "failed_run_id": "BUR-RUN-20260810T233956Z-8722d58d88",
+      "primary_evidence": {
+        "repository": "heimgewebe/weltgewebe",
+        "pull_request": 1737,
+        "head_sha": "7b3dfe30a1bd1afd47268e1b5b14921042572f7d",
+        "merge_commit_sha": "47eae6ef1192c80dae1207e2cf459989904af6d2",
+        "merged_at": "2026-08-10T09:55:13Z",
+        "bureau_task_marker_at_readback": false,
+        "current_weltgewebe_main_sha": "af02912d2a30da5f03a515dc6b77f12ad9873354"
+      },
+      "irrecoverable_missing_preconditions": [
+        "Bureau-Task: WELTGEWEBE-PR-MAINTENANCE-V2-T010 on PR #1737 before merge",
+        "fresh final pre-merge head/base/mergeability/check readback for the T010 execution"
+      ],
+      "acceptance_disposition": "not_verified_and_not_retroactively_satisfied",
+      "net_nonterminal_delta": -1,
+      "does_not_establish": [
+        "T010 verification",
+        "retroactive PR binding",
+        "retroactive merge authorization",
+        "retroactive pre-merge readback"
+      ]
     }
   },
   "priority": {
@@ -108,6 +166,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Direct-Message-Race-Fix aus PR #1737 revisionsgebunden übernehmen"
 }

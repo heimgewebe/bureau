@@ -1,0 +1,99 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die vorhandenen channels_analysis-Werte werden schema- und freshness-validiert durch die Telemetrie-API bis zur UI projiziert; fehlende oder inkonsistente Kanalwerte führen nicht zu erfundenen Pegeln.",
+      "evidence_type": "object",
+      "id": "channel-projection"
+    },
+    {
+      "assertion": "Die Pegelkarte zeigt FL/FR beziehungsweise verständlich benannte Eingangskanäle getrennt und kennzeichnet den bisherigen Wert eindeutig als aggregiert; ein nur auf einem Kanal anliegendes Signal wird nicht durch den Stereo-RMS-Wert irreführend bewertet.",
+      "evidence_type": "object",
+      "id": "clear-meter-semantics"
+    },
+    {
+      "assertion": "Live-, stale-, unavailable-, clipping- und active-pipewire-shared-capture-Semantik bleiben erhalten und werden mit Regressionstests gebunden.",
+      "evidence_type": "object",
+      "id": "state-semantics-preserved"
+    },
+    {
+      "assertion": "Betroffene UI/API-Tests und der vollständige Repositorycheck sind auf dem finalen Commit grün; Self-Review und Diff-Bindung liegen vor.",
+      "evidence_type": "object",
+      "id": "regression"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur revisionsgebundene Repositoryänderungen; keine Audio-Defaults, Routen, Profile, Lautstärken oder Gerätewirkung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Die von audio-control-level-observer-v1 bereits real gemessenen FL/FR-Kanalwerte durch den read-only Telemetriekern bis in die Pegelkarte projizieren und so darstellen, dass einzelne aktive Eingänge, aggregierter Stereo-Pegel und Stale-/Unavailable-Zustände nicht verwechselt werden.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T037",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "physische sichere Lautstärke",
+      "analoge Gain-Stellung"
+    ],
+    "registered_from": "Live-Readback nach Audio PR #92",
+    "source_merge_commit": "89ff96230543398e263a048bd0110a8dabd6aab6",
+    "source_pull_request": 92,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-da775bdb8d7486b3e92acaea",
+      "event_id": 5866,
+      "event_created_at": "2026-08-11T07:40:42.577368Z",
+      "request_sha256": "0932a73e6e072332e058a00a1ee5bb8e5835d27b7de2f62cc7a51c7f91e88938",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "github:heimgewebe/audio#pull/92",
+        "observed_at": "2026-08-11T09:38:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 37
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "audio",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Den exakten UI/API-Diff zurücknehmen; der bestehende aggregierte Pegelpfad und der aktive PipeWire-Observer bleiben davon unberührt."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Audiozentrale-Pegel kanalgenau darstellen"
+}

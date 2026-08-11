@@ -14,6 +14,7 @@ _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
         "bind",
         "claim-commit",
         "claim-intent",
+        "complete",
         "fail",
         "heartbeat",
         "lifecycle-reconcile-apply",

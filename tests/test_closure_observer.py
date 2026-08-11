@@ -580,6 +580,7 @@ def test_state_root_github_bundle_terminalizes_only_after_live_authentication(
         calls.append(argv)
         return merged_pr_detail()
 
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
     result = reconcile_state_evidence(registry, store, now=NOW, github=github)
 
     assert result["terminalized_count"] == 1
@@ -597,6 +598,30 @@ def test_state_root_github_bundle_terminalizes_only_after_live_authentication(
         "base_ref": "main",
     }
     assert len(authentication["live_observation_sha256"]) == 64
+    assert result["evidence_retirement"]["after"]["retired_count"] == 1
+    assert result["evidence_retirement"]["retired_count"] == 1
+    assert not evidence_path.exists()
+
+    # Simulate a historical producer bundle left behind by an older runtime.
+    residue = {
+        "schema_version": 1,
+        "kind": EVIDENCE_BUNDLE_KIND,
+        "run_id": run["run_id"],
+        "task_id": run["task_id"],
+        "task_sha256": run["task_sha256"],
+        "plan_sha256": run["plan_sha256"],
+        "evidence": github_merge_evidence(
+            task_sha256=run["task_sha256"], plan_sha256=run["plan_sha256"]
+        ),
+    }
+    evidence_path.write_text(json.dumps(residue), encoding="utf-8")
+
+    repeat = reconcile_state_evidence(registry, store, now=NOW, github=github)
+
+    assert repeat["observed_run_count"] == 0
+    assert repeat["evidence_retirement"]["before"]["retired_count"] == 1
+    assert repeat["evidence_retirement"]["retired_count"] == 1
+    assert not evidence_path.exists()
 
 
 def test_github_adapter_timeout_is_explicit_open_observation(
@@ -628,6 +653,9 @@ def test_github_adapter_timeout_is_explicit_open_observation(
         ],
     }
     assert blocked["mutated"] is False
+    assert result["evidence_retirement"]["retired_count"] == 0
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+    assert evidence_path.exists()
     assert store.run(run["run_id"])["state"] == "assigned"
 
 

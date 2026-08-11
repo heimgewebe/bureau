@@ -319,6 +319,62 @@ def _evidence_bundle_path(store: StateStore, run_id: str) -> Any:
     return store.state_root / EVIDENCE_DIRECTORY / f"{run_id}.json"
 
 
+def retire_terminal_evidence_bundles(store: StateStore) -> dict[str, Any]:
+    """Retire validated receipt-backed bundles for succeeded runs.
+
+    The StateStore receipt is the durable audit record after closeout. Keeping
+    the producer bundle would make the bounded active-evidence directory grow
+    forever, so only a bundle that still validates against the claim-bound run
+    and envelope is removed. Unknown, malformed, nonterminal, or receipt-less
+    entries are preserved for diagnosis rather than deleted speculatively.
+    """
+
+    root = store.state_root / EVIDENCE_DIRECTORY
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "kind": "bureau.acceptance_evidence_retirement",
+        "directory": str(root),
+        "retired_count": 0,
+        "retired_run_ids": [],
+        "preserved_count": 0,
+        "errors": [],
+    }
+    try:
+        entries = sorted(root.iterdir(), key=lambda item: item.name)
+    except FileNotFoundError:
+        return result
+    except OSError as exc:
+        result["errors"].append(f"{type(exc).__name__}: {exc}")
+        return result
+
+    for entry in entries:
+        if entry.suffix != ".json":
+            result["preserved_count"] += 1
+            continue
+        run_id = entry.stem
+        try:
+            run = store.run(run_id)
+            receipt = store.receipt(run_id)
+        except Exception as exc:
+            result["preserved_count"] += 1
+            result["errors"].append(f"{run_id}: {type(exc).__name__}: {exc}")
+            continue
+        if run.get("state") != "succeeded" or receipt is None:
+            result["preserved_count"] += 1
+            continue
+        try:
+            envelope = _load_envelope(store, run_id, run.get("envelope_sha256"))
+            load_state_evidence_bundle(store, run, envelope)
+            entry.unlink()
+        except Exception as exc:
+            result["preserved_count"] += 1
+            result["errors"].append(f"{run_id}: {type(exc).__name__}: {exc}")
+            continue
+        result["retired_count"] += 1
+        result["retired_run_ids"].append(run_id)
+    return result
+
+
 def load_state_evidence_bundle(
     store: StateStore, run: Mapping[str, Any], envelope: Mapping[str, Any]
 ) -> Mapping[str, Any]:
@@ -576,6 +632,8 @@ def reconcile_state_evidence(
     absent or invalid bundles remain open and cannot terminalize a run.
     """
 
+    retirement_before = retire_terminal_evidence_bundles(store)
+
     def provider(run: dict[str, Any], envelope: dict[str, Any]) -> Mapping[str, Any]:
         return load_state_evidence_bundle(store, run, envelope)
 
@@ -592,6 +650,14 @@ def reconcile_state_evidence(
         completion=completion,
         authentication_provider=authentication_provider,
     )
+    retirement_after = retire_terminal_evidence_bundles(store)
     result["evidence_directory"] = str(store.state_root / EVIDENCE_DIRECTORY)
+    result["evidence_retirement"] = {
+        "before": retirement_before,
+        "after": retirement_after,
+        "retired_count": (
+            retirement_before["retired_count"] + retirement_after["retired_count"]
+        ),
+    }
     result["writer"] = "bureau-reconcile"
     return result

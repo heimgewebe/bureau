@@ -9,6 +9,7 @@ from typing import Any
 from bureau import legacy, runtime_refresh
 from bureau.acceptance import PASSED, criterion_contract, evaluate_acceptance
 from bureau.v2 import (
+    TERMINAL_STATES,
     RunStateConflict,
     StateStore,
     _load_validated_stored_receipt,
@@ -16,7 +17,7 @@ from bureau.v2 import (
 )
 
 ACTIVE_CLOSEOUT_STATES = {"assigned", "running", "verifying"}
-TERMINAL_RUN_STATES = {"succeeded"}
+TERMINAL_RUN_STATES = set(TERMINAL_STATES)
 EVIDENCE_BUNDLE_KIND = "bureau.acceptance_evidence_bundle"
 EVIDENCE_DIRECTORY = "acceptance-evidence"
 MAX_EVIDENCE_BUNDLE_BYTES = 1_048_576
@@ -325,13 +326,14 @@ def _evidence_bundle_path(store: StateStore, run_id: str) -> Any:
 
 
 def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[str, Any]:
-    """Retire validated receipt-backed bundles for succeeded runs.
+    """Retire validated producer bundles once their run is terminal.
 
-    The StateStore receipt is the durable audit record after closeout. Keeping
-    the producer bundle would make the bounded active-evidence directory grow
-    forever, so only a bundle that still validates against the claim-bound run
-    and envelope is removed. Unknown, malformed, nonterminal, or receipt-less
-    entries are preserved for diagnosis rather than deleted speculatively.
+    Succeeded runs require a schema-, digest-, and run-bound durable receipt
+    before the producer bundle is removed. Failed, cancelled, and orphaned runs
+    are already terminal in the authoritative StateStore, so their producer
+    bundles may be retired after the claim-bound envelope and bundle bindings
+    validate. Unknown, malformed, or nonterminal entries are preserved for
+    diagnosis rather than deleted speculatively.
     """
 
     root = store.state_root / EVIDENCE_DIRECTORY
@@ -363,29 +365,31 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
             result["preserved_count"] += 1
             result["errors"].append(f"{run_id}: {type(exc).__name__}: {exc}")
             continue
-        if run.get("state") != "succeeded":
+        state = run.get("state")
+        if state not in TERMINAL_RUN_STATES:
             result["preserved_count"] += 1
             continue
         try:
-            with store.connect() as connection:
-                receipt_row = connection.execute(
-                    "SELECT receipt_json,receipt_sha256 FROM receipts WHERE run_id=?",
-                    (run_id,),
-                ).fetchone()
-            if receipt_row is None:
-                result["preserved_count"] += 1
-                continue
-            receipt = _load_validated_stored_receipt(registry, run_id, receipt_row)
-            for field in (
-                "task_id",
-                "task_sha256",
-                "plan_sha256",
-                "envelope_sha256",
-            ):
-                if receipt.get(field) != run.get(field):
-                    raise ValueError(f"stored receipt binding mismatch: {field}")
             envelope = _load_envelope(store, run_id, run.get("envelope_sha256"))
             load_state_evidence_bundle(store, run, envelope)
+            if state == "succeeded":
+                with store.connect() as connection:
+                    receipt_row = connection.execute(
+                        "SELECT receipt_json,receipt_sha256 FROM receipts WHERE run_id=?",
+                        (run_id,),
+                    ).fetchone()
+                if receipt_row is None:
+                    result["preserved_count"] += 1
+                    continue
+                receipt = _load_validated_stored_receipt(registry, run_id, receipt_row)
+                for field in (
+                    "task_id",
+                    "task_sha256",
+                    "plan_sha256",
+                    "envelope_sha256",
+                ):
+                    if receipt.get(field) != run.get(field):
+                        raise ValueError(f"stored receipt binding mismatch: {field}")
             entry.unlink()
         except Exception as exc:
             result["preserved_count"] += 1

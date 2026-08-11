@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from bureau import legacy
 from bureau.acceptance import EVIDENCE_KIND, PASSED, UNKNOWN
 from bureau.closure_observer import (
@@ -15,7 +17,7 @@ from bureau.closure_observer import (
     reconcile_state_evidence,
 )
 from bureau.core import Dispatcher, Registry, StateStore
-from bureau.v2 import RunStateConflict
+from bureau.v2 import RunStateConflict, fail_run
 
 TASK_SHA = "a" * 64
 PLAN_SHA = "b" * 64
@@ -709,6 +711,49 @@ def test_terminal_evidence_retirement_requires_valid_receipt_digest(
     assert any(
         "stored receipt integrity mismatch" in error
         for error in repeat["evidence_retirement"]["before"]["errors"]
+    )
+
+
+@pytest.mark.parametrize("terminal_state", ["failed", "cancelled", "orphaned"])
+def test_non_success_terminal_run_retires_bound_producer_bundle(
+    registry_factory, tmp_path: Path, monkeypatch, terminal_state: str
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+
+    fail_run(store, run["run_id"], f"terminalized as {terminal_state}", terminal_state)
+    assert store.run(run["run_id"])["state"] == terminal_state
+    assert store.receipt(run["run_id"]) is None
+    assert evidence_path.exists()
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert result["observed_run_count"] == 0
+    assert result["terminalized_count"] == 0
+    assert result["evidence_retirement"]["before"]["retired_count"] == 1
+    assert result["evidence_retirement"]["retired_count"] == 1
+    assert not evidence_path.exists()
+
+
+def test_malformed_terminal_bundle_is_preserved_for_diagnosis(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+    fail_run(store, run["run_id"], "worker failed", "failed")
+    evidence_path.write_text("not-json", encoding="utf-8")
+
+    result = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert result["observed_run_count"] == 0
+    assert result["evidence_retirement"]["retired_count"] == 0
+    assert result["evidence_retirement"]["before"]["preserved_count"] == 1
+    assert evidence_path.exists()
+    assert any(
+        "acceptance evidence bundle is unreadable" in error
+        for error in result["evidence_retirement"]["before"]["errors"]
     )
 
 

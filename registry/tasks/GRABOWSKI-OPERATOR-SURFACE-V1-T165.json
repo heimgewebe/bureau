@@ -1,0 +1,143 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der öffentliche koordinierte Pickup akzeptiert eine explizite, typisierte Break-Glass-Anforderung und transportiert sie als Bureau --break-glass bis claim-intent; Operator-Approval bleibt der Default. Ohne explizite Anforderung darf niemals aus Task-Anforderung, Fehlermeldung oder required_level automatisch auf Break-Glass eskaliert werden.",
+      "id": "explicit-break-glass-transport"
+    },
+    {
+      "assertion": "Ein runtime_mutation-Task bleibt ohne explizites Break-Glass mit dem bestehenden approval-required-Vertrag blockiert. Mit explizitem Break-Glass ist nur eine vom Bureau-Approval-Contract tatsächlich akzeptierte, task- und zielgebundene Autorität zulässig; widersprüchliche Approval-Felder und Mischformen werden vor Effekt abgelehnt.",
+      "id": "approval-fail-closed"
+    },
+    {
+      "assertion": "Ein stabiler Operator-Grip exponiert den vorhandenen Checkout-Binding-Terminal-Reconcile ausschließlich checkout-key-gebunden. Preview bleibt read-only; Apply verlangt Owner, exakten Preview-SHA-256, Preview-Zeitbindung und die bestehende exakte Confirmation und delegiert an die vorhandene CAS-/Terminalquellen-Implementierung statt deren Sicherheitslogik zu duplizieren.",
+      "id": "terminal-reconcile-grip"
+    },
+    {
+      "assertion": "Fehlende Worktrees allein begründen keine Terminalisierung. Orphaned Bindings ohne externen Terminalbeweis bleiben unverändert blockiert; vorhandene Worktrees mit Dirty-State, aktiver Koordination, Lease oder Prozess werden nicht terminalisiert. Regressionstests decken diese Stop-Bedingungen sowie Preview-Drift und CAS-Fehler ab.",
+      "id": "orphan-fail-closed"
+    },
+    {
+      "assertion": "Regressionstests belegen, dass eine sicher terminalisierte stale phase=active Checkout-Bindung den aktiven Lifecycle-Kapazitätszähler freigibt, ohne Archive, Branches, fremde Bindings oder physische Worktrees zu löschen. Read-only Reconciliation bleibt als Diagnose getrennt sichtbar.",
+      "id": "capacity-convergence"
+    },
+    {
+      "assertion": "Der Terminal-Reconcile ist über grip_run auf der stabilen Operator-Grip-Surface nutzbar und hängt nicht davon ab, ob die ChatGPT-Connector-Snapshot-Liste alle 192 Runtime-Tools direkt exportiert. Keine neue generische Execute- oder Bypass-Surface wird eingeführt.",
+      "id": "stable-connector-path"
+    },
+    {
+      "assertion": "Fokussierte Pickup-/Grip-Tests und die relevante vollständige Grabowski-Validierung sind auf exaktem Head grün; Diff und Self-Review sind revisionsgebunden. Der PR wird nur mit unverändertem geprüftem Head und grünen Pflichtchecks gemergt und anschließend commitgenau deployt. Live-Postflight reproduziert expliziten Break-Glass-Transport ohne Auto-Eskalation sowie mindestens einen checkout-key-gebundenen Preview-Fall; ein realer Orphan wird nur dann angewendet, wenn der Preview-Vertrag ihn ausdrücklich safe_to_apply beziehungsweise äquivalent terminal-belegt freigibt.",
+      "id": "validation-delivery-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den expliziten Approval-Transport im koordinierten Bureau-Pickup, einen checkout-key-gebundenen Operator-Grip für den bereits vorhandenen Terminal-Reconcile, fokussierte Tests und Dokumentation ändern. Keine automatische Break-Glass-Eskalation, keine generische Terminal-/Shell-Surface, keine fremden Leases/Dirty-States/Worktrees und kein Runtime-Deployment durch diesen Task.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_grips.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_grips.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-pickup.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den koordinierten Grabowski-Bureau-Pickup so erweitern, dass eine explizit angeforderte und taskgebunden zulässige Break-Glass-Freigabe unverändert bis zum Bureau claim-intent transportiert wird, ohne automatische Eskalation. Zusätzlich den bereits vorhandenen evidence-/CAS-gebundenen Checkout-Binding-Terminal-Reconcile über einen stabilen Operator-Grip erreichbar machen, damit extern terminal bewiesene fehlende Worktrees ihre stale active-Lifecycle-Bindings sicher verlassen können. Fremde Dirty-Worktrees, laufende Prozesse, Leases, nicht terminal bewiesene Orphans und generische Shell-/Bypass-Pfade bleiben unangetastet.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T165",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass einer der drei aktuellen orphaned Bindings terminalisiert werden darf",
+      "Runtime-Deploymentautorität",
+      "Permission zur Mutation fremder Dirty-Worktrees oder Leases",
+      "Connector-Snapshot-Vollständigkeit"
+    ],
+    "live_reproduction": {
+      "checkout_binding_snapshot_sha256": "1ed7288049e150403077a014222dca8d7fcf6f720b623ad7dc646f6d23361820",
+      "checkout_binding_summary": {
+        "binding_identity_drift": 1,
+        "blocking_count": 4,
+        "externally_terminal_missing": 1,
+        "orphaned_binding": 3
+      },
+      "connector_snapshot_observable": false,
+      "grabowski_release": "aea1343dfa5cdcd47b8d79baedf191499046ee95",
+      "grip_surface_terminal_binding_reconcile": false,
+      "observed_at": "2026-08-11T05:02:00Z",
+      "orphaned_checkout_keys": [
+        "2bffc8bdef7e4a246ede001a8614737c0c0ffacced9ae6d340d1a1bb3c715a8a",
+        "55dd0145175d3ae6708085d3ee65a07895f2dc3bc3bb46f6c9a96e020436d770",
+        "a42d02845497193a2e85d637a51a85b81772fbf8f2c5abd647345cec34fd8a69"
+      ],
+      "pickup_behavior": "_normalize_request has no Break-Glass field and _claim_intent always appends --approve; --break-glass is not transportable through the coordinated pickup request",
+      "pickup_module_sha256": "b87572c376af5ac43c44c8845ab253e92ae00cefee282356a10d1accb0b74ace",
+      "runtime_contract_tool_count": 192
+    },
+    "related_tasks": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T153",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T157"
+    ],
+    "source_candidate": "candidate-a555dd6781c7e17581863c98",
+    "task_id_allocation": {
+      "note": "T164 was already StateStore revision 1 for an unrelated Chrome DevTools agent integration task and had not yet been Git-projected.",
+      "observed_at": "2026-08-11T05:06:26Z",
+      "state_store_first_free": "GRABOWSKI-OPERATOR-SURFACE-V1-T165"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a555dd6781c7e17581863c98",
+      "event_id": 5565,
+      "event_created_at": "2026-08-10T20:38:17.964737Z",
+      "request_sha256": "b54ec8639c01bfe788d2c43afbcf3e7ae8d75c3f1c2de6a018e139f089a82834",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-reproduction",
+        "locator": "grabowski:aea1343dfa5cdcd47b8d79baedf191499046ee95:src/grabowski_bureau_pickup.py#_claim_intent+src/grabowski_checkout_terminal_reconciliation.py#grabowski_checkout_binding_terminal_preview/apply;observed runtime-contract-tools=192 connector-visible-tools=175 checkout-lifecycle-active=8",
+        "observed_at": "2026-08-10T20:36:26Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei Approval-Ausweitung, Auto-Eskalation, Grip-Scope-Regressions oder unzureichendem Terminalbeweis den revisionsgebundenen Fix normal revertieren. Bestehende Checkout-Bindings, Audit-Historie, fremde Worktrees, Leases und Prozesse nicht rückwirkend umschreiben oder löschen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Break-Glass-Pickup und Checkout-Binding-Reconcile sicher exponieren"
+}

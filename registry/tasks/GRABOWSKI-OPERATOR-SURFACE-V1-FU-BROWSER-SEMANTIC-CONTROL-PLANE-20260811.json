@@ -37,7 +37,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.grabowski"
+      "resource": "component.grabowski.browser-worker-control-plane"
     }
   ],
   "depends_on": [
@@ -50,7 +50,9 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/grabowski/src/grabowski_workers.py",
+      "path:/home/alex/repos/grabowski/tests/test_workers.py",
+      "path:/home/alex/repos/grabowski/docs/browser-control-plane-v1.md",
       "path:/home/alex/.local/state/grabowski/workers",
       "service:grabowski-operator.service"
     ],
@@ -76,24 +78,20 @@
       "permission to reuse the human default browser profile",
       "permission to read or export browser credentials"
     ],
-    "source": "operator-intake",
-    "source_candidate_id": "candidate-adecd046d9b512d86eba3b61",
-    "source_event_id": 5582,
-    "supersedes_event_id": 5580,
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-adecd046d9b512d86eba3b61",
-      "event_id": 5582,
-      "event_created_at": "2026-08-10T21:18:16.804702Z",
-      "request_sha256": "1a4f37388daf99cc81fc31531c854cf3f8985bb6ba697fa198f26795294f55ea",
+      "candidate_id": "candidate-327e0fbea6c5c8037ca4dbc0",
+      "event_id": 5847,
+      "event_created_at": "2026-08-11T06:29:05.188615Z",
+      "request_sha256": "5617438edbf8bf84d96b714248bbde739eb0951fcc5ef60774a9870b44b6bad9",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
         "freshness": "unknown",
         "kind": "conversation",
-        "locator": "chat:browser-arch-long-term-review-20260810",
-        "observed_at": "2026-08-10T21:18:16.749521Z",
+        "locator": "chat:browser-semantic-control-plane-component-claim-20260811",
+        "observed_at": "2026-08-11T06:28:30Z",
         "sha256": null
       },
       "does_not_establish": [
@@ -101,7 +99,11 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "source": "operator-intake",
+    "source_candidate_id": "candidate-adecd046d9b512d86eba3b61",
+    "source_event_id": 5582,
+    "supersedes_event_id": 5580
   },
   "priority": {
     "lane": "now",

@@ -1,0 +1,21 @@
+{
+  "id": "component.grabowski.browser-worker-control-plane",
+  "metadata": {
+    "canonical_paths": [
+      "docs/browser-control-plane-v1.md",
+      "src/grabowski_workers.py",
+      "tests/test_workers.py"
+    ],
+    "does_not_establish": [
+      "repository-wide mutation authority",
+      "ownership of foreign Grabowski worktrees",
+      "scope outside the listed paths",
+      "Firefox or WebDriver BiDi implementation"
+    ],
+    "purpose": "Exact coordination scope for the semantic Grabowski browser control-plane, Chrome/CDP adapter seam and browser-worker profile isolation contract.",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-SEMANTIC-CONTROL-PLANE-20260811"
+  },
+  "parent": "repo.grabowski",
+  "schema_version": 1,
+  "type": "component"
+}

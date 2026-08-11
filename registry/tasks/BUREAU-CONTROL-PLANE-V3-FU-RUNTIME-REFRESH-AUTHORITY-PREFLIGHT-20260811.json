@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AUTHORITY-PREFLIGHT-20260811",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Runtime-Refresh-Autorität gegen stale TaskSpecs härten und affe99f-Provenienz reconciliieren",
+  "goal": "Den am 2026-08-11 beobachteten Autoritätsbruch beim bereits physisch erfolgreichen Bureau-Runtime-Refresh auf affe99f27d482c75ca4ae61735e7d2d69f911c8d ohne Deployment-Replay revisionsgebunden nachbereiten und den Runtime-Refresh-Preflight dauerhaft härten: approval_task_id muss vor prepare-intent und erneut vor apply aus der autoritativen StateStore-TaskSpec geprüft werden; supersedete, terminale, falsche oder bereits verbrauchte Autoritäten müssen vor jeder Wirkung fail-closed abgewiesen werden, auch wenn ein älterer installierter Registry-Snapshot sie noch sichtbar macht.",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "audit"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_refresh.py",
+      "path:/home/alex/repos/bureau/docs/bureau-runtime-refresh-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AUTHORITY-PREFLIGHT-20260811.json"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Dieser Folgetask darf ausschließlich Code, Tests und Dokumentation des Runtime-Refresh-Autoritäts-Preflights ändern und den bereits erfolgten affe99f-Autoritätsbefund revisionsgebunden dokumentieren. Er autorisiert ausdrücklich keinen erneuten Runtime-Refresh, kein Deployment-Replay, keine Queue-/Claim-/Dispatch-Mutation und keine Umdeutung historischer Taskzustände."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "authoritative-state-store-preflight",
+      "evidence_type": "object",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird die aktuelle autoritative StateStore-TaskSpec für approval_task_id gelesen und gegen erwartete Task-ID, zulässigen nichtterminalen Zustand, action_class runtime_mutation, erforderliches Break-Glass-Level und Single-Use-Verbrauch geprüft; ein Registry-Snapshot allein genügt nicht als Autoritätsbeleg."
+    },
+    {
+      "id": "superseded-terminal-rejected-before-effect",
+      "evidence_type": "object",
+      "assertion": "Supersedete, terminale, falsche, bereits verbrauchte oder anderweitig nicht autorisierende TaskSpecs werden deterministisch vor Intent- oder Deployment-Wirkung abgewiesen; die Ablehnung ist maschinenlesbar und verändert weder Runtime noch StateStore-Taskhistorie."
+    },
+    {
+      "id": "stale-snapshot-bootstrap-regression",
+      "evidence_type": "object",
+      "assertion": "Ein hermetischer Regressionstest reproduziert einen installierten Registry-Snapshot, in dem eine alte Seed-Drift-Task noch zulässig erscheint, während der autoritative StateStore bereits eine neuere oder supersedierende TaskSpec kennt; die alte approval_task_id muss fail-closed abgewiesen werden."
+    },
+    {
+      "id": "single-use-authority-enforced",
+      "evidence_type": "object",
+      "assertion": "Ein erfolgreicher Runtime-Refresh kann dieselbe Autoritäts-TaskSpec nicht für ein späteres Target erneut verwenden. Der Verbrauch ist revisions- und targetgebunden nachweisbar; jeder spätere Drift benötigt weiterhin eine neue oder noch unverbrauchte ausdrücklich passende Autoritäts-TaskSpec."
+    },
+    {
+      "id": "affe99f-provenance-reconciled-without-replay",
+      "evidence_type": "object",
+      "assertion": "Der bereits angewendete Refresh auf affe99f27d482c75ca4ae61735e7d2d69f911c8d wird als physisch integritätsgültig, aber mit fehlerhafter approval_task_id-Provenienz dokumentiert. Der Beleg verknüpft stale BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809, BUREAU-TRUTH-MODEL-V2-T029, BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810 und Result-SHA dea2fa1d51a865b1884ad652c43fd6aaf98f10c00c81df6c5ca2cc576088292b, ohne Deployment-Replay oder rückwirkende Taskstatus-Fälschung."
+    },
+    {
+      "id": "existing-target-and-lease-gates-preserved",
+      "evidence_type": "object",
+      "assertion": "Fresh-Observation-, exakte target_sha256-, Break-Glass-, Live-Lease-, immutable Readback- und verify-then-retry-Gates bleiben mindestens so streng wie zuvor; die Lösung führt keinen Registry-, Queue-, Claim-, Dispatch-, Review-, Merge- oder Fremdressourcen-Bypass ein."
+    },
+    {
+      "id": "validation",
+      "evidence_type": "object",
+      "assertion": "Gezielte Runtime-Refresh-/Autoritätstests, negative Drift-/Replay-Fälle, git diff --check und make validate sind auf demselben finalen Head grün; Review und CI sind revisionsgebunden."
+    }
+  ],
+  "rollback": {
+    "strategy": "Revertiere nur die Preflight-/Provenienz-Code-, Test- und Dokumentationsänderungen. Den bereits erfolgten affe99f-Refresh nicht erneut ausführen oder künstlich zurückschreiben; bei unklarer Runtime-Wirkung ausschließlich den bestehenden immutable Readback-/Rollback-/verify-then-retry-Vertrag verwenden."
+  },
+  "metadata": {
+    "source_candidate": "candidate-3fec3d18b348ddeef171c148",
+    "source_event_id": 5953,
+    "incident_refresh_source_commit": "affe99f27d482c75ca4ae61735e7d2d69f911c8d",
+    "incident_refresh_result_sha256": "dea2fa1d51a865b1884ad652c43fd6aaf98f10c00c81df6c5ca2cc576088292b",
+    "stale_approval_task_id": "BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809",
+    "authoritative_successor_task_id": "BUREAU-TRUTH-MODEL-V2-T029",
+    "related_runtime_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3fec3d18b348ddeef171c148",
+      "event_id": 5953,
+      "event_created_at": "2026-08-11T16:21:27.428004Z",
+      "request_sha256": "ede2dbb414ebb15c4d160ba1017bcb3c42f1c65fa99709d1b63c918aba94184b",
+      "source": {
+        "kind": "runtime-refresh-authority-audit",
+        "locator": "bureau-runtime-refresh:affe99f27d48:result-dea2fa1d51a865b1884ad652c43fd6aaf98f10c00c81df6c5ca2cc576088292b",
+        "sha256": null,
+        "observed_at": "2026-08-11T16:21:27.395942Z",
+        "freshness": "unknown",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die kanonische typed Task-Publikation wurde vor Wirkung durch release-registry-identity-mismatch blockiert, weil der immutable Bureau-Release affe99f27d48 hinter dem aktuellen Registry-main 7e221f2e969e liegt. Der dokumentierte Bootstrap-Präzedenzfall BUREAU-TRUTH-MODEL-V2-T026 erlaubt in genau dieser Lage eine eng gebundene normale geschützte GitHub-PR-Registrierung mit einer einzigen Taskdatei, Vollvalidierung, revisionsgebundenem Self-Review und Required Checks; Queue und Live Register werden dadurch nicht direkt mutiert.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority"
+      ]
+    },
+    "does_not_establish": [
+      "Berechtigung zu einem weiteren Runtime-Refresh",
+      "Deployment-Replay-Autorität",
+      "rückwirkende Gültigkeit der stale approval_task_id",
+      "Berechtigung zur Wiederverwendung von T029 oder einer anderen Single-Use-Autorität nach deren Verbrauch",
+      "Queue-, Claim-, Dispatch-, Merge- oder Fremdarbeitsautorität"
+    ]
+  }
+}

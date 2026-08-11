@@ -1,0 +1,104 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die aktuell gemeldeten historischen unvollständigen Releasebelege werden mit reproduzierbarer Fixture oder gebundenem Statusbeleg klassifiziert; aktuelle Releases werden klar von Altformat-, korrupten und weiterhin rollbackrelevanten Releases getrennt.",
+      "evidence_type": "object",
+      "id": "warning-reproduction"
+    },
+    {
+      "assertion": "Retention entfernt oder quarantänisiert nur kryptographisch beziehungsweise vertraglich eindeutig ungültige und nicht mehr rollbackrelevante historische Releases; unbekannte Fälle bleiben fail-closed erhalten.",
+      "evidence_type": "object",
+      "id": "safe-retention-policy"
+    },
+    {
+      "assertion": "Der aktuelle Release sowie die konfigurierte Zahl gültiger Rollback-Releases bleiben unverändert; Current-Link, Runtime-Head und Deployment-Health werden durch die Hygiene nicht verändert.",
+      "evidence_type": "object",
+      "id": "current-release-protected"
+    },
+    {
+      "assertion": "Wiederkehrende Statusausgaben sind nach dem Fix entweder warnungsfrei oder enthalten eine begrenzte, deduplizierte und handlungsrelevante Restwarnung statt dieselben historischen Altbelege bei jedem Sync erneut aufzuzählen.",
+      "evidence_type": "object",
+      "id": "bounded-status"
+    },
+    {
+      "assertion": "Fokussierte Deployment-/Retention-Tests, vollständiger Repositorycheck und Self-Review sind auf dem finalen Commit grün; Runtime-Bereinigung wird nur in einem separat belegten Schritt ausgeführt, falls sie überhaupt nötig ist.",
+      "evidence_type": "object",
+      "id": "regression"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Zuerst ausschließlich Repositorylogik und Tests ändern. Eine spätere Löschung oder Migration realer historischer Releaseverzeichnisse ist eine getrennte, exakt gebundene Runtime-Wirkung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Die vom aktuellen audio-control-deploy weiterhin gemeldeten historischen unvollständigen Releasebelege deterministisch klassifizieren und so bereinigen, dass Status- und Retention-Ausgaben nur handlungsrelevante Warnungen enthalten, ohne gültige Rollback-Releases oder aktuelle Deployments zu löschen.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T039",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "aktuellen Deploymentfehler",
+      "Berechtigung zur Blindlöschung historischer Releases"
+    ],
+    "registered_from": "audio-control-deploy status after PR #92",
+    "source_merge_commit": "89ff96230543398e263a048bd0110a8dabd6aab6",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-285789eb1eb52295ae97a36c",
+      "event_id": 5870,
+      "event_created_at": "2026-08-11T07:48:31.989337Z",
+      "request_sha256": "72d6d0953fe73af6afcf8b3fa420578120aa40dce49913270c1d756bdad8e934",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime",
+        "locator": "heim-pc:audio-control-deploy:status",
+        "observed_at": "2026-08-11T09:47:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 39
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "deployment",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Repositoryänderungen revisionsgebunden zurücknehmen. Historische Releaseverzeichnisse niemals blind löschen; jede spätere Runtime-Hygiene benötigt Preimage, exakte Identität und nachvollziehbare Wiederherstellung oder Quarantäne."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Historische Audio-Releasebelege aus Retention-Warnungen bereinigen"
+}

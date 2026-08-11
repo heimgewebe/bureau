@@ -1,61 +1,84 @@
 {
   "acceptance": [
     {
-      "assertion": "Die aktuell gemeldeten historischen unvollständigen Releasebelege werden mit reproduzierbarer Fixture oder gebundenem Statusbeleg klassifiziert; aktuelle Releases werden klar von Altformat-, korrupten und weiterhin rollbackrelevanten Releases getrennt.",
+      "assertion": "Vor jeder Runtime-Wirkung ist T036 auf einem exakten Audio-Repository-Commit terminal belegt; insbesondere müssen die tatsächlich beobachteten Legacy-Releaseformen durch digest-gebundene Fixtures oder gleichwertige autoritative Evidenz klassifiziert sein. Solange diese Evidenzbindung fehlt, bleibt T039 wirkungslos.",
       "evidence_type": "object",
-      "id": "warning-reproduction"
+      "id": "t036-evidence-gate"
     },
     {
-      "assertion": "Retention entfernt oder quarantänisiert nur kryptographisch beziehungsweise vertraglich eindeutig ungültige und nicht mehr rollbackrelevante historische Releases; unbekannte Fälle bleiben fail-closed erhalten.",
+      "assertion": "Unmittelbar vor einer Hygieneaktion werden Current-Link, Runtime-Head, Deployment-Health, konfigurierte Retention-/Keep-Menge sowie Pfad, Identität und Statusbeleg jedes betroffenen historischen Releases als exakte Preimage-Evidenz gebunden; unbekannte oder widersprüchliche Identitäten blockieren die Wirkung fail-closed.",
       "evidence_type": "object",
-      "id": "safe-retention-policy"
+      "id": "exact-runtime-preimage"
     },
     {
-      "assertion": "Der aktuelle Release sowie die konfigurierte Zahl gültiger Rollback-Releases bleiben unverändert; Current-Link, Runtime-Head und Deployment-Health werden durch die Hygiene nicht verändert.",
+      "assertion": "T039 ändert keine Repositorylogik aus T036 erneut. Es quarantänisiert ausschließlich historische Releases, die durch den terminalen T036-Vertrag eindeutig als nicht aktuell, nicht im konfigurierten Keep-Set, nicht rollbackrelevant und sicher quarantänisierbar klassifiziert sind; unbekannte, korrupt nicht eindeutig klassifizierbare oder geschützte Fälle bleiben unverändert sichtbar.",
       "evidence_type": "object",
-      "id": "current-release-protected"
+      "id": "residual-runtime-only"
     },
     {
-      "assertion": "Wiederkehrende Statusausgaben sind nach dem Fix entweder warnungsfrei oder enthalten eine begrenzte, deduplizierte und handlungsrelevante Restwarnung statt dieselben historischen Altbelege bei jedem Sync erneut aufzuzählen.",
+      "assertion": "Der aktuelle Release, alle konfigurierten gültigen Rollback-Releases, Current-Link, Runtime-Head und Deployment-Health bleiben durch die Quarantäne unverändert; nach jeder Wirkung erfolgt ein frischer Readback statt einer Annahme aus dem vorherigen Status.",
       "evidence_type": "object",
-      "id": "bounded-status"
+      "id": "current-and-rollback-protected"
     },
     {
-      "assertion": "Fokussierte Deployment-/Retention-Tests, vollständiger Repositorycheck und Self-Review sind auf dem finalen Commit grün; Runtime-Bereinigung wird nur in einem separat belegten Schritt ausgeführt, falls sie überhaupt nötig ist.",
+      "assertion": "Wiederholte unveränderte Statusläufe sind nach der begrenzten Quarantäne entweder warnungsfrei oder zeigen nur eine stabile, deduplizierte und handlungsrelevante Restmenge; dieselben bereits klassifizierten Altbelege werden nicht bei jedem Sync erneut ungebremst gemeldet.",
       "evidence_type": "object",
-      "id": "regression"
+      "id": "bounded-status-after-hygiene"
+    },
+    {
+      "assertion": "Jede verschobene Releaseidentität besitzt einen revisions- und preimage-gebundenen Quarantänebeleg mit Quellpfad, Zielpfad, Identitätsdigest und Rückrollweg. Irreversible Löschung historischer Releaseverzeichnisse ist nicht Teil von T039; unbekannte Ergebnisse oder Transportabbrüche werden nicht blind wiederholt.",
+      "evidence_type": "object",
+      "id": "reversible-effect-receipt"
     }
   ],
   "claims": [
     {
       "isolation": "worktree",
-      "mode": "write",
+      "mode": "read",
       "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
     }
   ],
-  "depends_on": [],
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T036"
+  ],
   "execution": {
     "approval": {
-      "action_class": "repository_mutation",
-      "note": "Zuerst ausschließlich Repositorylogik und Tests ändern. Eine spätere Löschung oder Migration realer historischer Releaseverzeichnisse ist eine getrennte, exakt gebundene Runtime-Wirkung.",
-      "required_level": "operator"
+      "action_class": "runtime_mutation",
+      "note": "T039 ist ausschließlich der getrennte post-T036 Runtime-Hygieneschritt. Keine Repositoryimplementierung wiederholen und keine Livewirkung ausführen, bevor T036 inklusive evidenzgebundener Legacy-Klassifikation terminal belegt ist. Jede Wirkung benötigt frischen Preimage-/Lease-/Recovery-Readback und bleibt auf reversible Quarantäne beschränkt.",
+      "required_level": "break_glass"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/audio"
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc",
+      "component:audio-control-deploy"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/audio"
   },
-  "goal": "Die vom aktuellen audio-control-deploy weiterhin gemeldeten historischen unvollständigen Releasebelege deterministisch klassifizieren und so bereinigen, dass Status- und Retention-Ausgaben nur handlungsrelevante Warnungen enthalten, ohne gültige Rollback-Releases oder aktuelle Deployments zu löschen.",
+  "goal": "Nach terminalem AUDIO-CONTROL-PLANE-V1-T036 die dort eindeutig klassifizierten, nicht mehr rollbackrelevanten historischen Audio-Releases auf dem Heim-PC mit exakter Preimage-Evidenz reversibel aus dem aktiven Retention-Sichtfeld quarantänisieren, ohne Repositorylogik doppelt zu implementieren oder aktuelle beziehungsweise geschützte Releases zu verändern.",
   "id": "AUDIO-CONTROL-PLANE-V1-T039",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "metadata": {
     "does_not_establish": [
-      "aktuellen Deploymentfehler",
-      "Berechtigung zur Blindlöschung historischer Releases"
+      "dass T036 bereits terminal oder seine Legacy-Evidenz ausreichend gebunden ist",
+      "Berechtigung zur Blindlöschung historischer Releases",
+      "Berechtigung zur Änderung von Current-Link, Runtime-Head oder gültigen Rollback-Releases",
+      "dass ein unbekannter oder abgebrochener Runtime-Ausgang sicher wiederholbar ist"
     ],
     "registered_from": "audio-control-deploy status after PR #92",
+    "relationship_to_t036": {
+      "kind": "residual-runtime-phase",
+      "predecessor": "AUDIO-CONTROL-PLANE-V1-T036",
+      "repository_remediation_owned_by_predecessor": true,
+      "live_cleanup_owned_by_this_task": true,
+      "effect_scope": "reversible quarantine only"
+    },
     "source_merge_commit": "89ff96230543398e263a048bd0110a8dabd6aab6",
     "operator_intake": {
       "schema_version": 1,
@@ -90,15 +113,14 @@
     "github",
     "grabowski",
     "bureau",
-    "testing",
     "rollback",
     "deployment",
     "runtime-observability"
   ],
   "rollback": {
-    "strategy": "Repositoryänderungen revisionsgebunden zurücknehmen. Historische Releaseverzeichnisse niemals blind löschen; jede spätere Runtime-Hygiene benötigt Preimage, exakte Identität und nachvollziehbare Wiederherstellung oder Quarantäne."
+    "strategy": "Keine irreversible Löschung. Vor jeder Quarantäne Current-Link, Runtime-Head, Health, Keep-Set und Releaseidentitäten exakt erfassen; nur eindeutig freigegebene Alt-Releases in einen taskgebundenen Quarantänepfad verschieben. Bei Abweichung Wirkung stoppen, bereits verschobene taskeigene Releases anhand des gebundenen Preimages zurückführen und anschließend Deployment-/Retention-Status frisch lesen."
   },
   "schema_version": 1,
   "state": "planned",
-  "title": "Historische Audio-Releasebelege aus Retention-Warnungen bereinigen"
+  "title": "Post-T036 Audio-Release-Hygiene reversibel ausführen"
 }

@@ -631,6 +631,21 @@ def evaluate_criterion(
 _SHARED_REVISION_FIELDS = frozenset({"head_sha"})
 
 
+def _shared_revision_scope(contract: Mapping[str, Any], field: str) -> str | None:
+    """Return the target identity within which a revision field must agree."""
+    if field != "head_sha":
+        return None
+    verifier = contract.get("verifier")
+    config = contract.get("verifier_config")
+    if verifier not in {"code_merged", "required_ci_green"} or not isinstance(config, Mapping):
+        return None
+    repository = config.get("repository")
+    pull_request = config.get("pull_request")
+    if not isinstance(repository, str) or not repository or not isinstance(pull_request, int):
+        return None
+    return f"github-pr:{repository}#{pull_request}"
+
+
 def _cross_criterion_revision_consistency(
     criteria: Sequence[Mapping[str, Any]],
     evidence: Mapping[str, Any],
@@ -642,6 +657,7 @@ def _cross_criterion_revision_consistency(
         if item.get("state") == PASSED
     }
     observed: dict[str, dict[str, str]] = {}
+    comparison_groups: dict[tuple[str, str], dict[str, str]] = {}
     for criterion in criteria:
         criterion_id = criterion.get("id")
         if not isinstance(criterion_id, str) or criterion_id not in passed_ids:
@@ -656,11 +672,15 @@ def _cross_criterion_revision_consistency(
             continue
         for field in _SHARED_REVISION_FIELDS.intersection(required):
             value = revision.get(field)
-            if isinstance(value, str) and value:
-                observed.setdefault(field, {})[criterion_id] = value
+            if not isinstance(value, str) or not value:
+                continue
+            observed.setdefault(field, {})[criterion_id] = value
+            scope = _shared_revision_scope(contract, field)
+            if scope is not None:
+                comparison_groups.setdefault((field, scope), {})[criterion_id] = value
     conflicts = [
         {"field": field, "criteria": bindings}
-        for field, bindings in sorted(observed.items())
+        for (field, _scope), bindings in sorted(comparison_groups.items())
         if len(set(bindings.values())) > 1
     ]
     return {

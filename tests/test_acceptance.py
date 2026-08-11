@@ -666,6 +666,60 @@ def test_merge_and_required_ci_must_share_exact_head_revision() -> None:
     ]
 
 
+def test_independent_pull_requests_may_have_distinct_heads() -> None:
+    other_head = "8" * 40
+    other_merge = "7" * 40
+    criteria = [
+        criterion("merge-a", "code_merged"),
+        criterion(
+            "merge-b",
+            "code_merged",
+            {"pull_request": 8, "head_sha": other_head},
+        ),
+    ]
+    merge_a = primary_evidence(
+        "merge-a",
+        "code_merged",
+        authority="github",
+        facts={"merged": True, "head_sha": HEAD_SHA, "merge_commit_sha": MERGE_SHA},
+    )
+    merge_b = primary_evidence(
+        "merge-b",
+        "code_merged",
+        authority="github",
+        facts={"merged": True, "head_sha": other_head, "merge_commit_sha": other_merge},
+    )
+    merge_b["revision"] = {
+        **merge_b["revision"],
+        "head_sha": other_head,
+        "merge_commit_sha": other_merge,
+    }
+    merge_b["facts"] = {
+        **merge_b["facts"],
+        "head_sha": other_head,
+        "merge_commit_sha": other_merge,
+    }
+
+    result = evaluate_acceptance(
+        criteria,
+        {"merge-a": merge_a, "merge-b": merge_b},
+        task_id="TASK-1",
+        run_id="RUN-1",
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert [item["state"] for item in result["criteria"]] == [PASSED, PASSED]
+    assert result["state"] == PASSED
+    assert result["automatic_terminalization"] is True
+    assert result["cross_criterion_revision"]["conflicts"] == []
+    assert result["cross_criterion_revision"]["shared_fields"]["head_sha"] == {
+        "merge-a": HEAD_SHA,
+        "merge-b": other_head,
+    }
+
+
 def test_caller_claimed_authority_without_authentication_is_unknown() -> None:
     evidence = primary_evidence(
         "merge",

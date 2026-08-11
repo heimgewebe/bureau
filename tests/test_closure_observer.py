@@ -789,6 +789,61 @@ def test_malformed_terminal_bundle_is_preserved_for_diagnosis(
     )
 
 
+def _replace_evidence_root_with_symlink(
+    store: StateStore, run: dict[str, Any], tmp_path: Path
+) -> tuple[Path, Path]:
+    root = store.state_root / "acceptance-evidence"
+    source = root / f"{run['run_id']}.json"
+    payload = source.read_text(encoding="utf-8")
+    source.unlink()
+    root.rmdir()
+    external = tmp_path / "external-acceptance-evidence"
+    external.mkdir()
+    external_bundle = external / source.name
+    external_bundle.write_text(payload, encoding="utf-8")
+    root.symlink_to(external, target_is_directory=True)
+    return root, external_bundle
+
+
+def test_symlinked_evidence_root_is_not_scanned_for_terminal_retirement(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    root, external_bundle = _replace_evidence_root_with_symlink(store, run, tmp_path)
+    fail_run(store, run["run_id"], "worker failed", "failed")
+
+    result = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert root.is_symlink()
+    assert external_bundle.exists()
+    assert result["observed_run_count"] == 0
+    assert result["evidence_retirement"]["retired_count"] == 0
+    assert any(
+        "acceptance evidence root must be a real non-symlink directory" in error
+        for error in result["evidence_retirement"]["before"]["errors"]
+    )
+
+
+def test_symlinked_evidence_root_is_not_read_for_active_closeout(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    root, external_bundle = _replace_evidence_root_with_symlink(store, run, tmp_path)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert root.is_symlink()
+    assert external_bundle.exists()
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    blocked = result["observations"][0]
+    assert blocked["reason"] == "evidence-provider-unavailable"
+    assert "acceptance evidence root must be a real non-symlink directory" in blocked["detail"]
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
 def test_github_adapter_timeout_is_explicit_open_observation(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:

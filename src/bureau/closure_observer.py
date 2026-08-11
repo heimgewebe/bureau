@@ -321,8 +321,22 @@ def reconcile_runs(
     }
 
 
-def _evidence_bundle_path(store: StateStore, run_id: str) -> Any:
-    return store.state_root / EVIDENCE_DIRECTORY / f"{run_id}.json"
+def _evidence_directory(store: StateStore) -> Any | None:
+    root = store.state_root / EVIDENCE_DIRECTORY
+    try:
+        metadata = root.lstat()
+    except FileNotFoundError:
+        return None
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
+        raise ValueError("acceptance evidence root must be a real non-symlink directory")
+    return root
+
+
+def _evidence_bundle_path(store: StateStore, run_id: str) -> Any | None:
+    root = _evidence_directory(store)
+    if root is None:
+        return None
+    return root / f"{run_id}.json"
 
 
 def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[str, Any]:
@@ -347,10 +361,11 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
         "errors": [],
     }
     try:
-        entries = sorted(root.iterdir(), key=lambda item: item.name)
-    except FileNotFoundError:
-        return result
-    except OSError as exc:
+        validated_root = _evidence_directory(store)
+        if validated_root is None:
+            return result
+        entries = sorted(validated_root.iterdir(), key=lambda item: item.name)
+    except (OSError, ValueError) as exc:
         result["errors"].append(f"{type(exc).__name__}: {exc}")
         return result
 
@@ -405,6 +420,8 @@ def load_state_evidence_bundle(
 ) -> Mapping[str, Any]:
     run_id = str(run["run_id"])
     path = _evidence_bundle_path(store, run_id)
+    if path is None:
+        return {}
     try:
         metadata = path.lstat()
     except FileNotFoundError:

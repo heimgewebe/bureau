@@ -341,6 +341,69 @@ def test_canonical_claim_commit_without_state_root_is_blocked_before_effect(
     assert not default_state.exists()
 
 
+def test_canonical_doctor_repair_without_state_root_is_blocked_before_effect(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory()
+    default_state = tmp_path / "default-state"
+    registry_before = registry_file_evidence(registry_root)
+    identity = canonical_runtime_identity(registry_root)
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(default_state))
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
+
+    exit_code = bureau_cli.main(["--json", "doctor", "--repair"])
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "explicit-coordination-state-root-required"
+    assert value["runtime_identity"]["command_effect_scope"] == (
+        "coordination_state_mutation"
+    )
+    assert not default_state.exists()
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_doctor_repair_accepts_explicit_safe_state_root(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory()
+    state_root = tmp_path / "coordination-state"
+    state_db = state_root / "bureau.sqlite3"
+    store = StateStore(state_db)
+    run = Dispatcher(Registry.load(registry_root), store).claim_next(
+        "doctor-worker", ("repository",), reconcile_first=False
+    )["run"]
+    envelope_path = store.envelope_path(run["run_id"])
+    envelope_path.unlink()
+    registry_before = registry_file_evidence(registry_root)
+    identity = canonical_runtime_identity(registry_root)
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
+    monkeypatch.setattr(
+        bureau_cli,
+        "adapters",
+        lambda args: SimpleNamespace(status=lambda: {}),
+    )
+
+    exit_code = bureau_cli.main(
+        ["--state-root", str(state_root), "--json", "doctor", "--repair"]
+    )
+
+    assert exit_code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["repaired"] is True
+    runtime = value["runtime_identity"]
+    assert runtime["command_effect_scope"] == "coordination_state_mutation"
+    assert runtime["coordination_state_binding"]["state_root"] == str(state_root)
+    assert runtime["coordination_state_binding"]["state_db"] == str(state_db)
+    assert state_db.is_file()
+    assert envelope_path.is_file()
+    assert registry_file_evidence(registry_root) == registry_before
+
+
 def test_canonical_registry_mutation_remains_blocked_with_separate_state_root(
     registry_factory, tmp_path: Path, monkeypatch, capsys
 ) -> None:

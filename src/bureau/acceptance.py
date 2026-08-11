@@ -13,6 +13,7 @@ PASSED = "passed"
 FAILED = "failed"
 UNKNOWN = "unknown"
 STATES = {PASSED, FAILED, UNKNOWN}
+MAX_SOAK_SECONDS = 315_576_000
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -26,13 +27,19 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "domain": "product",
         "authorities": ("github",),
         "max_age_seconds": 86_400,
-        "revision_binding": ("task_sha256", "plan_sha256", "head_sha", "merge_commit_sha"),
+        "revision_binding": (
+            "task_sha256",
+            "plan_sha256",
+            "head_sha",
+            "base_ref",
+            "merge_commit_sha",
+        ),
     },
     "required_ci_green": {
         "domain": "product",
         "authorities": ("github",),
         "max_age_seconds": 21_600,
-        "revision_binding": ("task_sha256", "plan_sha256", "head_sha"),
+        "revision_binding": ("task_sha256", "plan_sha256", "head_sha", "base_ref"),
     },
     "deployment_complete": {
         "domain": "deployment",
@@ -125,6 +132,16 @@ def _sha256(value: Any) -> bool:
     return isinstance(value, str) and _SHA256_RE.fullmatch(value) is not None
 
 
+def _valid_soak_seconds(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return 0 <= value <= MAX_SOAK_SECONDS
+    if isinstance(value, float):
+        return math.isfinite(value) and 0 <= value <= MAX_SOAK_SECONDS
+    return False
+
+
 def _criterion_verifier_config(
     verifier: str, criterion: Mapping[str, Any]
 ) -> dict[str, Any] | None:
@@ -146,27 +163,37 @@ def _criterion_verifier_config(
         return value
 
     if verifier == "code_merged":
-        if not exact("repository", "pull_request", "head_sha"):
+        if not exact("repository", "pull_request", "head_sha", "base_ref"):
             return None
         repo = repository()
         pull_request = raw.get("pull_request")
         head_sha = raw.get("head_sha")
+        base_ref = nonempty("base_ref")
         if (
             repo is None
             or not isinstance(pull_request, int)
             or isinstance(pull_request, bool)
             or pull_request < 1
             or not _sha(head_sha)
+            or base_ref is None
         ):
             return None
-        return {"repository": repo, "pull_request": pull_request, "head_sha": head_sha}
+        return {
+            "repository": repo,
+            "pull_request": pull_request,
+            "head_sha": head_sha,
+            "base_ref": base_ref,
+        }
 
     if verifier == "required_ci_green":
-        if not exact("repository", "pull_request", "head_sha", "required_checks"):
+        if not exact(
+            "repository", "pull_request", "head_sha", "base_ref", "required_checks"
+        ):
             return None
         repo = repository()
         pull_request = raw.get("pull_request")
         head_sha = raw.get("head_sha")
+        base_ref = nonempty("base_ref")
         required_checks = raw.get("required_checks")
         if (
             repo is None
@@ -174,6 +201,7 @@ def _criterion_verifier_config(
             or isinstance(pull_request, bool)
             or pull_request < 1
             or not _sha(head_sha)
+            or base_ref is None
             or not isinstance(required_checks, list)
             or not required_checks
             or any(not isinstance(name, str) or not name.strip() for name in required_checks)
@@ -184,6 +212,7 @@ def _criterion_verifier_config(
             "repository": repo,
             "pull_request": pull_request,
             "head_sha": head_sha,
+            "base_ref": base_ref,
             "required_checks": list(required_checks),
         }
 
@@ -222,13 +251,7 @@ def _criterion_verifier_config(
             return None
         required_seconds = raw.get("required_seconds")
         scope = nonempty("observation_scope")
-        if (
-            not isinstance(required_seconds, int | float)
-            or isinstance(required_seconds, bool)
-            or not math.isfinite(float(required_seconds))
-            or required_seconds < 0
-            or scope is None
-        ):
+        if not _valid_soak_seconds(required_seconds) or scope is None:
             return None
         return {"required_seconds": required_seconds, "observation_scope": scope}
 
@@ -392,22 +415,12 @@ def _fact_state(
     if verifier == "duration_soak_completed":
         required = verifier_config.get("required_seconds")
         observed = facts.get("observed_seconds")
-        if (
-            not isinstance(required, int | float)
-            or isinstance(required, bool)
-            or not math.isfinite(float(required))
-            or required < 0
-        ):
+        if not _valid_soak_seconds(required):
             return UNKNOWN, "soak-contract-invalid"
         reported_required = facts.get("required_seconds")
         if reported_required is not None and reported_required != required:
             return UNKNOWN, "soak-requirement-mismatch"
-        if (
-            not isinstance(observed, int | float)
-            or isinstance(observed, bool)
-            or not math.isfinite(float(observed))
-            or observed < 0
-        ):
+        if not _valid_soak_seconds(observed):
             return UNKNOWN, "soak-observation-invalid"
         if facts.get("failed") is True:
             return FAILED, "soak-observed-failed"
@@ -477,8 +490,8 @@ def _revision_valid(
     if not isinstance(config, Mapping):
         return False, "verifier-config-invalid"
     target_bindings: dict[str, tuple[tuple[str, str], ...]] = {
-        "code_merged": (("head_sha", "head_sha"),),
-        "required_ci_green": (("head_sha", "head_sha"),),
+        "code_merged": (("head_sha", "head_sha"), ("base_ref", "base_ref")),
+        "required_ci_green": (("head_sha", "head_sha"), ("base_ref", "base_ref")),
         "deployment_complete": (("deployment_revision", "deployment_revision"),),
         "runtime_commit_contains": (("required_commit", "required_commit"),),
         "live_probe_passed": (
@@ -500,8 +513,12 @@ def _facts_match_revision(
     verifier: str, revision: Mapping[str, Any], facts: Mapping[str, Any]
 ) -> tuple[bool, str]:
     bindings: dict[str, tuple[tuple[str, str], ...]] = {
-        "code_merged": (("head_sha", "head_sha"), ("merge_commit_sha", "merge_commit_sha")),
-        "required_ci_green": (("head_sha", "head_sha"),),
+        "code_merged": (
+            ("head_sha", "head_sha"),
+            ("base_ref", "base_ref"),
+            ("merge_commit_sha", "merge_commit_sha"),
+        ),
+        "required_ci_green": (("head_sha", "head_sha"), ("base_ref", "base_ref")),
         "deployment_complete": (("deployment_revision", "deployment_revision"),),
         "runtime_commit_contains": (
             ("required_commit", "required_commit"),

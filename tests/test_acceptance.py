@@ -26,6 +26,7 @@ from bureau.review_steward import evidence_signal
 TASK_SHA = "a" * 64
 PLAN_SHA = "b" * 64
 HEAD_SHA = "c" * 40
+BASE_REF = "main"
 MERGE_SHA = "d" * 40
 RUNTIME_SHA = "e" * 40
 ARTIFACT_SHA = "f" * 64
@@ -54,11 +55,13 @@ def criterion(
             "repository": "heimgewebe/test",
             "pull_request": 7,
             "head_sha": HEAD_SHA,
+            "base_ref": BASE_REF,
         },
         "required_ci_green": {
             "repository": "heimgewebe/test",
             "pull_request": 7,
             "head_sha": HEAD_SHA,
+            "base_ref": BASE_REF,
             "required_checks": ["validate"],
         },
         "deployment_complete": {"deployment_revision": "deployment-42"},
@@ -92,9 +95,9 @@ def criterion(
 def revision_for(verifier: str) -> dict[str, str]:
     value = {"task_sha256": TASK_SHA, "plan_sha256": PLAN_SHA}
     if verifier == "code_merged":
-        value.update(head_sha=HEAD_SHA, merge_commit_sha=MERGE_SHA)
+        value.update(head_sha=HEAD_SHA, base_ref=BASE_REF, merge_commit_sha=MERGE_SHA)
     elif verifier == "required_ci_green":
-        value.update(head_sha=HEAD_SHA)
+        value.update(head_sha=HEAD_SHA, base_ref=BASE_REF)
     elif verifier == "deployment_complete":
         value.update(deployment_revision="deployment-42")
     elif verifier == "runtime_commit_contains":
@@ -124,8 +127,12 @@ def primary_evidence(
     revision = revision_for(verifier)
     bound_facts = dict(facts)
     fact_bindings = {
-        "code_merged": (("head_sha", "head_sha"), ("merge_commit_sha", "merge_commit_sha")),
-        "required_ci_green": (("head_sha", "head_sha"),),
+        "code_merged": (
+            ("head_sha", "head_sha"),
+            ("base_ref", "base_ref"),
+            ("merge_commit_sha", "merge_commit_sha"),
+        ),
+        "required_ci_green": (("head_sha", "head_sha"), ("base_ref", "base_ref")),
         "deployment_complete": (("deployment_revision", "deployment_revision"),),
         "runtime_commit_contains": (
             ("required_commit", "required_commit"),
@@ -452,7 +459,16 @@ def test_required_ci_rejects_missing_required_check_even_with_optional_green() -
     assert result["reason"] == "required-check-missing"
 
 
-@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf"), True])
+@pytest.mark.parametrize(
+    "value",
+    [
+        float("nan"),
+        float("inf"),
+        float("-inf"),
+        True,
+        pytest.param(10**10000, id="oversized-int"),
+    ],
+)
 def test_soak_rejects_non_finite_or_boolean_observation(value) -> None:
     result = evaluate_criterion(
         criterion("soak", "duration_soak_completed"),
@@ -498,6 +514,28 @@ def test_required_ci_rejects_caller_supplied_required_set_drift() -> None:
 
     assert result["state"] == UNKNOWN
     assert result["reason"] == "required-check-set-mismatch"
+
+
+def test_oversized_frozen_soak_requirement_is_invalid_without_exception() -> None:
+    result = evaluate_criterion(
+        criterion(
+            "soak",
+            "duration_soak_completed",
+            {"required_seconds": 10**10000},
+        ),
+        primary_evidence(
+            "soak",
+            "duration_soak_completed",
+            authority="target-runtime",
+            facts={"completed": True, "observed_seconds": 60},
+        ),
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "criterion-is-not-typed"
 
 
 def test_soak_requirement_is_frozen_in_criterion() -> None:

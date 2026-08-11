@@ -555,6 +555,10 @@
                 "pattern": "^[0-9a-f]{64}$",
                 "type": "string"
               },
+              "base_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
               "deployment_revision": {
                 "minLength": 1,
                 "type": "string"
@@ -593,6 +597,7 @@
                 "type": "string"
               },
               "required_seconds": {
+                "maximum": 315576000,
                 "minimum": 0,
                 "type": "number"
               },

@@ -302,12 +302,15 @@ def _github_evidence_matches_live(
     repository = config.get("repository")
     pull_request = config.get("pull_request")
     head_sha = config.get("head_sha")
+    base_ref = config.get("base_ref")
     if (
         not isinstance(repository, str)
         or not isinstance(pull_request, int)
         or not isinstance(head_sha, str)
+        or not isinstance(base_ref, str)
         or detail.get("number") != pull_request
         or detail.get("headRefOid") != head_sha
+        or detail.get("baseRefName") != base_ref
     ):
         return False
     source = evidence.get("source")
@@ -327,6 +330,7 @@ def _github_evidence_matches_live(
         expected = {
             "merged": detail.get("state") == "MERGED" and bool(detail.get("mergedAt")),
             "head_sha": head_sha,
+            "base_ref": base_ref,
             "merge_commit_sha": merge_sha,
         }
         return all(facts.get(key) == value for key, value in expected.items())
@@ -339,6 +343,8 @@ def _github_evidence_matches_live(
     )
     claimed_rows = facts.get("checks")
     if facts.get("complete") is not True or not isinstance(claimed_rows, list):
+        return False
+    if facts.get("base_ref") != base_ref:
         return False
     if facts.get("required_checks") not in (None, required_checks):
         return False
@@ -420,6 +426,7 @@ def authenticate_state_evidence(
                     "merged": detail.get("state") == "MERGED" and bool(detail.get("mergedAt")),
                     "merged_at": detail.get("mergedAt"),
                     "head_sha": detail.get("headRefOid"),
+                    "base_ref": detail.get("baseRefName"),
                     "merge_commit_sha": (
                         merge_commit.get("oid") if isinstance(merge_commit, Mapping) else None
                     ),
@@ -429,6 +436,7 @@ def authenticate_state_evidence(
                 assert isinstance(required_checks, list)
                 live_facts = {
                     "head_sha": detail.get("headRefOid"),
+                    "base_ref": detail.get("baseRefName"),
                     "required_checks": runtime_refresh.summarize_required_checks(
                         detail.get("statusCheckRollup"), required_checks
                     ),
@@ -436,6 +444,7 @@ def authenticate_state_evidence(
             canonical_live = {
                 "repository": repository,
                 "pull_request": pull_request,
+                "base_ref": config["base_ref"],
                 "verifier": verifier,
                 "facts": live_facts,
             }
@@ -452,6 +461,7 @@ def authenticate_state_evidence(
                     "repository": repository,
                     "pull_request": pull_request,
                     "head_sha": config["head_sha"],
+                    "base_ref": config["base_ref"],
                 },
                 "live_facts": live_facts,
                 "live_observation_sha256": hashlib.sha256(

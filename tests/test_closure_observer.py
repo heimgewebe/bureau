@@ -343,6 +343,7 @@ def github_merge_criterion(head_sha: str = "c" * 40) -> dict[str, object]:
             "repository": "heimgewebe/test",
             "pull_request": 7,
             "head_sha": head_sha,
+            "base_ref": "main",
         },
     }
 
@@ -366,11 +367,13 @@ def github_merge_evidence(
                 "task_sha256": task_sha256,
                 "plan_sha256": plan_sha256,
                 "head_sha": head_sha,
+                "base_ref": "main",
                 "merge_commit_sha": merge_sha,
             },
             "facts": {
                 "merged": True,
                 "head_sha": head_sha,
+                "base_ref": "main",
                 "merge_commit_sha": merge_sha,
             },
         }
@@ -445,6 +448,7 @@ def test_state_root_github_bundle_terminalizes_only_after_live_authentication(
         "repository": "heimgewebe/test",
         "pull_request": 7,
         "head_sha": "c" * 40,
+        "base_ref": "main",
     }
     assert len(authentication["live_observation_sha256"]) == 64
 
@@ -456,6 +460,23 @@ def test_forged_github_bundle_stays_open_when_live_source_disagrees(
 
     def github(argv):
         return merged_pr_detail(merge_sha="9" * 40)
+
+    result = reconcile_state_evidence(registry, store, now=NOW, github=github)
+
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    assert result["observations"][0]["evaluation"]["criteria"][0]["reason"] == (
+        "evidence-source-unauthenticated"
+    )
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+def test_retargeted_github_pr_stays_open(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+
+    def github(argv):
+        return {**merged_pr_detail(), "baseRefName": "release"}
 
     result = reconcile_state_evidence(registry, store, now=NOW, github=github)
 

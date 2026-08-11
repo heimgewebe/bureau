@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein produktiver, revisions- und ownergebundener Handoff-Receipt wird erzeugt und verifiziert; ein beliebiger aufrufergelieferter SHA-256 kann keine Checkout-Supersession autorisieren.",
+      "id": "first-class-handoff-receipt"
+    },
+    {
+      "assertion": "work-acquire kann für einen bereits existierenden retained Checkout eine explizite identity_supersession bis zum Checkout-Identity-Guard transportieren; alte Owner/Head/Branch/Generation beziehungsweise Archive und neuer Lane-Owner sind vollständig gebunden.",
+      "id": "work-acquire-supersession"
+    },
+    {
+      "assertion": "Wenn ein Checkout im ALREADY_CORRECT-Pfad keinen Git-Befehl benötigt und die Lifecycle-Bindung anschließend definite vor Effekt an aktiver Retention scheitert, wird das Ergebnis als no-effect/recoverable klassifiziert und eigene kurzlebige Lane-Leases werden evidenzgebunden freigabefähig; outcome_unknown bleibt ausschließlich echten unklaren Wirkungen vorbehalten.",
+      "id": "definite-no-effect-recovery"
+    },
+    {
+      "assertion": "Regressionstests reproduzieren den T161-Fall der Lane d488186bf73054f46d7a690d494c1d48 mit cleanem bereits passendem Checkout und aktiver Retention und beweisen sowohl Fail-Closed ohne Handoff als auch erfolgreichen owner-bound Handoff.",
+      "id": "live-regression"
+    },
+    {
+      "assertion": "Fokussierte Tests, vollständige Grabowski-Validierung und relevante Deployment-/Runtime-Gates sind auf exaktem PR-Head grün; Self-Review und Diff sind revisionsgebunden. Fremde Checkout-Lifecycles bleiben unangetastet.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T161"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den owner-bound Checkout-Handoff-/Supersession- und Recovery-Vertrag ändern. Keine fremden Retentions, Leases, Dirty-States oder Checkouts übernehmen oder bereinigen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_work_acquire.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_worktree_ensure.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_checkout_identity.py",
+      "path:/home/alex/repos/grabowski/tests/test_work_acquire.py",
+      "path:/home/alex/repos/grabowski/tests/test_worktree_ensure.py",
+      "path:/home/alex/repos/grabowski/tests/test_checkout_identity.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den direkten, Bureau-freien work-acquire-Pfad so vervollständigen, dass ein bereits vorhandener retained Checkout explizit und evidenzgebunden an eine neue Work-Lane übergeben werden kann. Identity-Supersession und Handoff-Provenienz müssen first-class sein; definite Retention-Konflikte nach ALREADY_CORRECT und vor jeder Git-Mutation dürfen nicht als outcome_unknown fehlklassifiziert werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DIRECT-LANE-SUPERSESSION-20260812",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "live_evidence": {
+      "known_ordering": "ALREADY_CORRECT path performs no Git command before lifecycle binding; conflict arose at identity guard",
+      "observed_failure": "CheckoutIdentityConflict: checkout path is protected by active_retention; explicit owner-bound supersession is required",
+      "recovery": "only the failed lane's own worktree/branch leases were released after readback; no foreign state changed",
+      "work_lane": "d488186bf73054f46d7a690d494c1d48"
+    },
+    "source_candidate": "candidate-16bcda9b77ebc8d8f2514756",
+    "source_event_id": 6096,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-16bcda9b77ebc8d8f2514756",
+      "event_id": 6096,
+      "event_created_at": "2026-08-11T23:58:04.387595Z",
+      "request_sha256": "9c5977521c2e4759cc41cca50f41704dc7cbff66f5e20c8e57196633bd3a442b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-runtime-evidence",
+        "locator": "grabowski:work-lane:d488186bf73054f46d7a690d494c1d48",
+        "observed_at": "2026-08-11T23:58:04.354245Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Retained Checkouts sicher in direkte Work-Lanes übergeben"
+}

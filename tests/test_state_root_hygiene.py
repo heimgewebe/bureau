@@ -43,6 +43,79 @@ def test_active_state_root_entries_stay_known_only(
     }
 
 
+def test_empty_acceptance_evidence_directory_is_known_active_state(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    (store.state_root / "acceptance-evidence").mkdir()
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["acceptance-evidence"] == "acceptance-evidence-directory"
+
+
+def test_bound_acceptance_evidence_bundle_stays_known(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    evidence_root = store.state_root / "acceptance-evidence"
+    evidence_root.mkdir()
+    run_id = "BUR-RUN-20260811T000000Z-0123456789"
+    bundle = {
+        "schema_version": 1,
+        "kind": "bureau.acceptance_evidence_bundle",
+        "run_id": run_id,
+        "task_id": "BUR-TEST-001-T001",
+        "task_sha256": "a" * 64,
+        "plan_sha256": "b" * 64,
+        "evidence": {},
+    }
+    (evidence_root / f"{run_id}.json").write_text(
+        json.dumps(bundle) + "\n", encoding="utf-8"
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["acceptance-evidence"] == "acceptance-evidence-directory"
+
+
+def test_unbound_acceptance_evidence_bundle_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    evidence_root = store.state_root / "acceptance-evidence"
+    evidence_root.mkdir()
+    run_id = "BUR-RUN-20260811T000000Z-0123456789"
+    bundle = {
+        "schema_version": 1,
+        "kind": "bureau.acceptance_evidence_bundle",
+        "run_id": run_id,
+        "task_id": "BUR-TEST-001-T001",
+        "task_sha256": "not-a-digest",
+        "plan_sha256": "b" * 64,
+        "evidence": {},
+    }
+    (evidence_root / f"{run_id}.json").write_text(
+        json.dumps(bundle) + "\n", encoding="utf-8"
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "acceptance-evidence", "type": "directory", "class": "unknown"}
+    ]
+
+
 def test_configured_state_database_sidecars_stay_known(
     registry_factory, tmp_path
 ):

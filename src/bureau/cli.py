@@ -10,6 +10,7 @@ from typing import Any
 
 from .adapters import AdapterRegistry
 from .approval import ApprovalRequired
+from .closure_observer import reconcile_state_evidence
 from .core import (
     BureauError,
     Claim,
@@ -1500,7 +1501,9 @@ def main(argv: list[str] | None = None) -> int:
                 args.reason,
             )
         elif args.command == "reconcile":
-            value = dispatcher.reconcile(args.stale_after)
+            acceptance_closeout = reconcile_state_evidence(registry, store)
+            runtime_reconcile = dispatcher.reconcile(args.stale_after)
+            value = {**runtime_reconcile, "acceptance_closeout": acceptance_closeout}
         elif args.command == "complete":
             evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
             value = complete_run(registry, store, args.run_id, evidence)

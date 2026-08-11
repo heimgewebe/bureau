@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from bureau.acceptance import FAILED as ACCEPTANCE_FAILED
+from bureau.acceptance import PASSED as ACCEPTANCE_PASSED
+from bureau.acceptance import typed_evaluation_signal
 from bureau.closure import (
     CANONICAL_TASK_REQUIRED_STATES,
     atomic_json,
@@ -265,6 +268,13 @@ def evidence_signal(value: Any) -> str:
             return "failed"
         return "present" if truthy_evidence(value) else "missing"
     if isinstance(value, dict):
+        typed_signal = typed_evaluation_signal(value)
+        if typed_signal is not None:
+            if typed_signal == ACCEPTANCE_PASSED:
+                return "passed"
+            if typed_signal == ACCEPTANCE_FAILED:
+                return "failed"
+            return "present"
         explicit = [
             evidence_signal(value[key]) for key in EVIDENCE_RESULT_KEYS if key in value
         ]
@@ -313,7 +323,11 @@ def normalize_pr_status(raw: dict[str, Any]) -> dict[str, Any]:
     review_decision = raw.get("reviewDecision") or raw.get("review_decision")
     state = raw.get("state")
     is_draft = bool(raw.get("isDraft") or raw.get("draft"))
-    merged = bool(raw.get("merged")) or raw.get("mergeStateStatus") == "MERGED"
+    merged = (
+        bool(raw.get("merged"))
+        or bool(raw.get("mergedAt") or raw.get("merged_at"))
+        or raw.get("mergeStateStatus") == "MERGED"
+    )
     rollup = raw.get("statusCheckRollup") or raw.get("checks") or []
     failures: list[str] = []
     pending: list[str] = []
@@ -382,7 +396,7 @@ def gh_pr_status(lane: dict[str, Any]) -> dict[str, Any]:
             "view",
             str(pr),
             "--json",
-            "number,url,state,isDraft,merged,reviewDecision,mergeStateStatus,statusCheckRollup",
+            "number,url,state,isDraft,mergedAt,reviewDecision,mergeStateStatus,statusCheckRollup",
         ],
         timeout=30,
     )

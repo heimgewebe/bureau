@@ -252,8 +252,12 @@ def canonical_coordination_state_binding(
             reasons.append("coordination-state-ancestor-owner-mismatch")
         if resolved_root.exists() and resolved_root.stat().st_uid != os.geteuid():
             reasons.append("coordination-state-root-owner-mismatch")
-        if resolved_db.exists() and resolved_db.stat().st_uid != os.geteuid():
-            reasons.append("coordination-state-db-owner-mismatch")
+        if resolved_db.exists():
+            db_stat = resolved_db.stat()
+            if db_stat.st_uid != os.geteuid():
+                reasons.append("coordination-state-db-owner-mismatch")
+            if db_stat.st_nlink > 1:
+                reasons.append("coordination-state-db-hardlink-ambiguous")
     except OSError:
         reasons.append("coordination-state-path-stat-failed")
     if reasons:

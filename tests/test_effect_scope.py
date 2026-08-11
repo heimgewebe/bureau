@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -270,6 +271,60 @@ def test_canonical_coordination_binding_accepts_owner_controlled_external_root(
     assert binding["registry_source_commit"] == "a" * 40
 
 
+def test_canonical_coordination_binding_rejects_hard_link_to_file_outside_root(
+    tmp_path: Path,
+) -> None:
+    registry_root = tmp_path / "registry"
+    registry_root.mkdir()
+    state_root = tmp_path / "state"
+    state_root.mkdir()
+    state_db = state_root / "bureau.sqlite3"
+    outside_db = tmp_path / "outside.sqlite3"
+    outside_bytes = b"outside database must remain unchanged"
+    outside_db.write_bytes(outside_bytes)
+    outside_inode = outside_db.stat().st_ino
+    os.link(outside_db, state_db)
+    identity = canonical_runtime_identity(registry_root)
+
+    blocked, binding = effect_scope.canonical_coordination_state_binding(
+        state_root_value=str(state_root),
+        state_db_value=None,
+        registry_root=registry_root,
+        runtime_identity=identity,
+    )
+
+    assert binding is None
+    assert blocked["status"] == "coordination-state-path-invalid"
+    assert blocked["reason_codes"] == ["coordination-state-db-hardlink-ambiguous"]
+    assert outside_db.read_bytes() == outside_bytes
+    assert outside_db.stat().st_ino == outside_inode == state_db.stat().st_ino
+    assert outside_db.stat().st_nlink == 2
+
+
+def test_canonical_coordination_binding_accepts_existing_single_link_database(
+    tmp_path: Path,
+) -> None:
+    registry_root = tmp_path / "registry"
+    registry_root.mkdir()
+    state_root = tmp_path / "state"
+    state_db = state_root / "bureau.sqlite3"
+    StateStore(state_db)
+    assert state_db.stat().st_nlink == 1
+    identity = canonical_runtime_identity(registry_root)
+
+    blocked, binding = effect_scope.canonical_coordination_state_binding(
+        state_root_value=str(state_root),
+        state_db_value=None,
+        registry_root=registry_root,
+        runtime_identity=identity,
+    )
+
+    assert blocked is None
+    assert binding is not None
+    assert binding["state_db"] == str(state_db)
+    assert binding["state_db_existed_at_binding"] is True
+
+
 def test_canonical_coordination_binding_accepts_missing_sidecar_directories(
     tmp_path: Path,
 ) -> None:
@@ -521,6 +576,63 @@ def test_canonical_doctor_repair_recheck_rejects_receipts_symlink_outside_root(
     assert not (state_root / "envelopes").exists()
     assert (state_root / "receipts").is_symlink()
     assert list(outside_root.iterdir()) == []
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_doctor_repair_recheck_rejects_hard_link_before_store_open(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory()
+    state_root = tmp_path / "coordination-state"
+    state_db = state_root / "bureau.sqlite3"
+    outside_db = tmp_path / "outside.sqlite3"
+    outside_bytes = b"foreign database must not be opened or mutated"
+    outside_db.write_bytes(outside_bytes)
+    outside_inode = outside_db.stat().st_ino
+    registry_before = registry_file_evidence(registry_root)
+    identity_calls = 0
+    state_store_calls = 0
+
+    def runtime_identity(*args, **kwargs) -> dict:
+        nonlocal identity_calls
+        identity_calls += 1
+        if identity_calls == 2:
+            state_root.mkdir()
+            os.link(outside_db, state_db)
+        return canonical_runtime_identity(registry_root)
+
+    def unexpected_state_store(*args, **kwargs):
+        nonlocal state_store_calls
+        state_store_calls += 1
+        raise AssertionError("StateStore must not open a hard-linked database")
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", runtime_identity)
+    monkeypatch.setattr(bureau_cli, "StateStore", unexpected_state_store)
+    monkeypatch.setattr(
+        bureau_cli,
+        "adapters",
+        lambda args: SimpleNamespace(status=lambda: {}),
+    )
+
+    exit_code = bureau_cli.main(
+        ["--state-root", str(state_root), "--json", "doctor", "--repair"]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "coordination-state-path-invalid"
+    assert value["result"]["reason_codes"] == [
+        "coordination-state-db-hardlink-ambiguous"
+    ]
+    assert identity_calls == 2
+    assert state_store_calls == 0
+    assert outside_db.read_bytes() == outside_bytes
+    assert outside_db.stat().st_ino == outside_inode == state_db.stat().st_ino
+    assert outside_db.stat().st_nlink == 2
+    assert not (state_root / "envelopes").exists()
+    assert not (state_root / "receipts").exists()
     assert registry_file_evidence(registry_root) == registry_before
 
 

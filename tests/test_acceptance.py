@@ -12,9 +12,13 @@ from bureau.acceptance import (
     PASSED,
     UNKNOWN,
     VERIFIER_CONTRACTS,
-    evaluate_acceptance,
-    evaluate_criterion,
     typed_criterion_contracts,
+)
+from bureau.acceptance import (
+    evaluate_acceptance as _evaluate_acceptance,
+)
+from bureau.acceptance import (
+    evaluate_criterion as _evaluate_criterion,
 )
 from bureau.core import Registry
 from bureau.review_steward import evidence_signal
@@ -30,23 +34,58 @@ NOW = "2026-08-10T20:00:00Z"
 OBSERVED = "2026-08-10T19:59:00Z"
 
 
+def evaluate_criterion(*args, **kwargs):
+    kwargs.setdefault("source_authenticated", True)
+    return _evaluate_criterion(*args, **kwargs)
+
+
+def evaluate_acceptance(criteria, evidence, **kwargs):
+    kwargs.setdefault("authenticated_criterion_ids", set(evidence))
+    return _evaluate_acceptance(criteria, evidence, **kwargs)
+
+
 def criterion(
     criterion_id: str,
     verifier: str,
     verifier_config: dict[str, object] | None = None,
 ) -> dict[str, object]:
+    configs: dict[str, dict[str, object]] = {
+        "code_merged": {
+            "repository": "heimgewebe/test",
+            "pull_request": 7,
+            "head_sha": HEAD_SHA,
+        },
+        "required_ci_green": {
+            "repository": "heimgewebe/test",
+            "pull_request": 7,
+            "head_sha": HEAD_SHA,
+            "required_checks": ["validate"],
+        },
+        "deployment_complete": {"deployment_revision": "deployment-42"},
+        "runtime_commit_contains": {
+            "repository": "heimgewebe/test",
+            "required_commit": HEAD_SHA,
+        },
+        "live_probe_passed": {"runtime_revision": RUNTIME_SHA, "probe_id": "health"},
+        "manual_observation": {"observation_scope": "manual:test"},
+        "duration_soak_completed": {
+            "required_seconds": 60,
+            "observation_scope": "soak:test",
+        },
+        "no_effect_verified": {"scope_sha256": SCOPE_SHA},
+        "artifact_hash_matches": {"artifact_sha256": ARTIFACT_SHA},
+    }
     value: dict[str, object] = {
         "id": criterion_id,
         "assertion": f"prove {criterion_id}",
         "evidence_type": "object",
         "verifier": verifier,
     }
-    if verifier == "required_ci_green":
-        value["verifier_config"] = {"required_checks": ["validate"]}
-    elif verifier == "duration_soak_completed":
-        value["verifier_config"] = {"required_seconds": 60}
+    config = dict(configs.get(verifier, {}))
     if verifier_config is not None:
-        value["verifier_config"] = verifier_config
+        config.update(verifier_config)
+    if config:
+        value["verifier_config"] = config
     return value
 
 
@@ -61,7 +100,11 @@ def revision_for(verifier: str) -> dict[str, str]:
     elif verifier == "runtime_commit_contains":
         value.update(required_commit=HEAD_SHA, observed_commit=RUNTIME_SHA)
     elif verifier == "live_probe_passed":
-        value.update(runtime_revision=RUNTIME_SHA)
+        value.update(runtime_revision=RUNTIME_SHA, probe_id="health")
+    elif verifier == "manual_observation":
+        value.update(observation_scope="manual:test")
+    elif verifier == "duration_soak_completed":
+        value.update(observation_scope="soak:test")
     elif verifier == "no_effect_verified":
         value.update(scope_sha256=SCOPE_SHA)
     elif verifier == "artifact_hash_matches":
@@ -88,7 +131,12 @@ def primary_evidence(
             ("required_commit", "required_commit"),
             ("observed_commit", "observed_commit"),
         ),
-        "live_probe_passed": (("runtime_revision", "runtime_revision"),),
+        "live_probe_passed": (
+            ("runtime_revision", "runtime_revision"),
+            ("probe_id", "probe_id"),
+        ),
+        "manual_observation": (("observation_scope", "observation_scope"),),
+        "duration_soak_completed": (("observation_scope", "observation_scope"),),
         "no_effect_verified": (("scope_sha256", "scope_sha256"),),
         "artifact_hash_matches": (("expected_sha256", "artifact_sha256"),),
     }
@@ -475,9 +523,10 @@ def test_soak_requirement_is_frozen_in_criterion() -> None:
 
 
 def test_merge_and_required_ci_must_share_exact_head_revision() -> None:
+    other_head = "9" * 40
     criteria = [
         criterion("merge", "code_merged"),
-        criterion("ci", "required_ci_green"),
+        criterion("ci", "required_ci_green", {"head_sha": other_head}),
     ]
     merge = primary_evidence(
         "merge",
@@ -494,7 +543,6 @@ def test_merge_and_required_ci_must_share_exact_head_revision() -> None:
             "checks": [{"name": "validate", "state": "success"}],
         },
     )
-    other_head = "9" * 40
     ci["revision"] = {**ci["revision"], "head_sha": other_head}
     ci["facts"] = {**ci["facts"], "head_sha": other_head}
 
@@ -517,6 +565,82 @@ def test_merge_and_required_ci_must_share_exact_head_revision() -> None:
             "criteria": {"merge": HEAD_SHA, "ci": other_head},
         }
     ]
+
+
+def test_caller_claimed_authority_without_authentication_is_unknown() -> None:
+    evidence = primary_evidence(
+        "merge",
+        "code_merged",
+        authority="github",
+        facts={"merged": True, "head_sha": HEAD_SHA, "merge_commit_sha": MERGE_SHA},
+    )
+
+    result = _evaluate_criterion(
+        criterion("merge", "code_merged"),
+        evidence,
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "evidence-source-unauthenticated"
+
+
+def test_timestamp_overflow_is_invalid_evidence_not_exception() -> None:
+    evidence = primary_evidence(
+        "merge",
+        "code_merged",
+        authority="github",
+        facts={"merged": True, "head_sha": HEAD_SHA, "merge_commit_sha": MERGE_SHA},
+        observed_at="9999-12-31T23:59:59-23:59",
+    )
+
+    result = evaluate_criterion(
+        criterion("merge", "code_merged"),
+        evidence,
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "evidence-time-invalid"
+
+
+@pytest.mark.parametrize(
+    ("verifier", "revision_field", "bad_value", "fact_field"),
+    [
+        ("code_merged", "head_sha", "9" * 40, "head_sha"),
+        ("required_ci_green", "head_sha", "9" * 40, "head_sha"),
+        ("deployment_complete", "deployment_revision", "deployment-evil", "deployment_revision"),
+        ("runtime_commit_contains", "required_commit", "9" * 40, "required_commit"),
+        ("live_probe_passed", "runtime_revision", "runtime-evil", "runtime_revision"),
+        ("manual_observation", "observation_scope", "manual:evil", "observation_scope"),
+        ("no_effect_verified", "scope_sha256", "9" * 64, "scope_sha256"),
+        ("artifact_hash_matches", "artifact_sha256", "9" * 64, "expected_sha256"),
+    ],
+)
+def test_verifier_targets_cannot_be_self_selected_by_evidence(
+    verifier: str, revision_field: str, bad_value: str, fact_field: str
+) -> None:
+    pass_case = next(item for item in PASS_CASES if item[0] == verifier)
+    evidence = primary_evidence(
+        "proof", verifier, authority=pass_case[1], facts=dict(pass_case[2])
+    )
+    evidence["revision"] = {**evidence["revision"], revision_field: bad_value}
+    evidence["facts"] = {**evidence["facts"], fact_field: bad_value}
+
+    result = evaluate_criterion(
+        criterion("proof", verifier),
+        evidence,
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == f"criterion-target-mismatch:{revision_field}"
 
 
 def test_product_merge_and_deployment_remain_separate_evidence_domains() -> None:

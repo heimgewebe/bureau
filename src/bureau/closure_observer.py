@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import stat
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from bureau.acceptance import PASSED, evaluate_acceptance
+from bureau import runtime_refresh
+from bureau.acceptance import PASSED, criterion_contract, evaluate_acceptance
 from bureau.v2 import StateStore, complete_run
 
 ACTIVE_CLOSEOUT_STATES = {"assigned", "running", "verifying"}
@@ -16,6 +18,11 @@ MAX_EVIDENCE_BUNDLE_BYTES = 1_048_576
 
 Completion = Callable[[Any, StateStore, str, dict[str, Any]], dict[str, Any]]
 EvidenceProvider = Callable[[dict[str, Any], dict[str, Any]], Mapping[str, Any]]
+AuthenticationRecords = Mapping[str, Mapping[str, Any]]
+AuthenticationProvider = Callable[
+    [dict[str, Any], dict[str, Any], Mapping[str, Any]], AuthenticationRecords
+]
+GitHubReader = Callable[[list[str]], Any]
 
 
 def _load_envelope(store: StateStore, run_id: str) -> dict[str, Any]:
@@ -38,6 +45,7 @@ def evaluate_run(
     evidence: Mapping[str, Any],
     *,
     now: str | None = None,
+    authenticated_criterion_ids: set[str] | frozenset[str] | None = None,
 ) -> dict[str, Any]:
     run = store.run(run_id)
     if run.get("state") in TERMINAL_RUN_STATES:
@@ -85,6 +93,7 @@ def evaluate_run(
         task_sha256=str(run["task_sha256"]),
         plan_sha256=run.get("plan_sha256"),
         now=now,
+        authenticated_criterion_ids=authenticated_criterion_ids,
     )
     return {
         "schema_version": 1,
@@ -105,8 +114,16 @@ def reconcile_run(
     *,
     now: str | None = None,
     completion: Completion = complete_run,
+    authenticated_criterion_ids: set[str] | frozenset[str] | None = None,
+    authentication_records: AuthenticationRecords | None = None,
 ) -> dict[str, Any]:
-    observed = evaluate_run(store, run_id, evidence, now=now)
+    observed = evaluate_run(
+        store,
+        run_id,
+        evidence,
+        now=now,
+        authenticated_criterion_ids=authenticated_criterion_ids,
+    )
     if observed["state"] == "already_terminal":
         return observed
     evaluation = observed.get("evaluation")
@@ -116,7 +133,17 @@ def reconcile_run(
     # The typed evaluator is deliberately not a second writer. It authorizes
     # exactly one call into the existing CAS/idempotent closeout path. That path
     # re-reads the authoritative TaskSpec/plan baseline before mutating state.
-    completion_evidence = dict(evidence)
+    completion_evidence: dict[str, Any] = {}
+    authentication_records = authentication_records or {}
+    for criterion_id, item in evidence.items():
+        if isinstance(item, Mapping):
+            copied = dict(item)
+            authentication = authentication_records.get(str(criterion_id))
+            if isinstance(authentication, Mapping):
+                copied["_source_authentication"] = dict(authentication)
+            completion_evidence[str(criterion_id)] = copied
+        else:
+            completion_evidence[str(criterion_id)] = item
     completion_evidence["_typed_acceptance"] = evaluation
     completed = completion(registry, store, run_id, completion_evidence)
     return {
@@ -135,6 +162,7 @@ def reconcile_runs(
     run_ids: list[str] | None = None,
     now: str | None = None,
     completion: Completion = complete_run,
+    authentication_provider: AuthenticationProvider | None = None,
 ) -> dict[str, Any]:
     if run_ids is None:
         run_ids = [
@@ -175,6 +203,13 @@ def reconcile_runs(
                 }
             )
             continue
+        authentication_records: AuthenticationRecords = {}
+        if authentication_provider is not None:
+            try:
+                authentication_records = authentication_provider(run, envelope, evidence)
+            except Exception:
+                authentication_records = {}
+        authenticated_ids = frozenset(authentication_records)
         observations.append(
             reconcile_run(
                 registry,
@@ -183,6 +218,8 @@ def reconcile_runs(
                 evidence,
                 now=now,
                 completion=completion,
+                authenticated_criterion_ids=authenticated_ids,
+                authentication_records=authentication_records,
             )
         )
     terminalized = sum(item.get("state") == "terminalized" for item in observations)
@@ -246,12 +283,191 @@ def load_state_evidence_bundle(
     return evidence
 
 
+def _github_source_reference(repository: str, pull_request: int, head_sha: str) -> str:
+    return f"github-pr:{repository}#{pull_request}@{head_sha}"
+
+
+def _github_evidence_matches_live(
+    criterion: Mapping[str, Any],
+    evidence: Mapping[str, Any],
+    detail: Mapping[str, Any],
+) -> bool:
+    contract = criterion_contract(criterion)
+    if contract is None:
+        return False
+    verifier = contract.get("verifier")
+    config = contract.get("verifier_config")
+    if verifier not in {"code_merged", "required_ci_green"} or not isinstance(config, Mapping):
+        return False
+    repository = config.get("repository")
+    pull_request = config.get("pull_request")
+    head_sha = config.get("head_sha")
+    if (
+        not isinstance(repository, str)
+        or not isinstance(pull_request, int)
+        or not isinstance(head_sha, str)
+        or detail.get("number") != pull_request
+        or detail.get("headRefOid") != head_sha
+    ):
+        return False
+    source = evidence.get("source")
+    if not isinstance(source, Mapping):
+        return False
+    if source.get("authority") != "github" or source.get("reference") != _github_source_reference(
+        repository, pull_request, head_sha
+    ):
+        return False
+    facts = evidence.get("facts")
+    if not isinstance(facts, Mapping):
+        return False
+
+    if verifier == "code_merged":
+        merge_commit = detail.get("mergeCommit")
+        merge_sha = merge_commit.get("oid") if isinstance(merge_commit, Mapping) else None
+        expected = {
+            "merged": detail.get("state") == "MERGED" and bool(detail.get("mergedAt")),
+            "head_sha": head_sha,
+            "merge_commit_sha": merge_sha,
+        }
+        return all(facts.get(key) == value for key, value in expected.items())
+
+    required_checks = config.get("required_checks")
+    if not isinstance(required_checks, list) or not required_checks:
+        return False
+    summary = runtime_refresh.summarize_required_checks(
+        detail.get("statusCheckRollup"), required_checks
+    )
+    claimed_rows = facts.get("checks")
+    if facts.get("complete") is not True or not isinstance(claimed_rows, list):
+        return False
+    if facts.get("required_checks") not in (None, required_checks):
+        return False
+    claimed: dict[str, str] = {}
+    for row in claimed_rows:
+        if not isinstance(row, Mapping):
+            return False
+        name = row.get("name")
+        state = row.get("state")
+        if not isinstance(name, str) or not isinstance(state, str) or name in claimed:
+            return False
+        claimed[name] = state.lower()
+    return all(claimed.get(name) == summary[name]["state"] for name in required_checks)
+
+
+def authenticate_state_evidence(
+    run: dict[str, Any],
+    envelope: dict[str, Any],
+    evidence: Mapping[str, Any],
+    *,
+    github: GitHubReader = runtime_refresh.gh_json,
+) -> dict[str, dict[str, Any]]:
+    """Authenticate bundle claims against primary observers.
+
+    The bundle itself never grants authority. GitHub-backed criteria are
+    authenticated by a fresh locally authenticated ``gh`` readback against the
+    criterion-frozen repository, PR and head. Other source classes remain
+    unauthenticated until an independent adapter/receipt verifier is available.
+    """
+    task = envelope.get("task")
+    criteria = task.get("acceptance") if isinstance(task, Mapping) else None
+    if not isinstance(criteria, list):
+        return {}
+    authenticated: dict[str, dict[str, Any]] = {}
+    cache: dict[tuple[str, int], Mapping[str, Any] | None] = {}
+    for criterion in criteria:
+        if not isinstance(criterion, Mapping):
+            continue
+        criterion_id = criterion.get("id")
+        contract = criterion_contract(criterion)
+        if not isinstance(criterion_id, str) or contract is None:
+            continue
+        verifier = contract.get("verifier")
+        config = contract.get("verifier_config")
+        claimed = evidence.get(criterion_id)
+        if (
+            verifier not in {"code_merged", "required_ci_green"}
+            or not isinstance(config, Mapping)
+            or not isinstance(claimed, Mapping)
+        ):
+            continue
+        repository = config.get("repository")
+        pull_request = config.get("pull_request")
+        if not isinstance(repository, str) or not isinstance(pull_request, int):
+            continue
+        cache_key = (repository, pull_request)
+        if cache_key not in cache:
+            try:
+                detail = github(
+                    [
+                        "pr",
+                        "view",
+                        str(pull_request),
+                        "--repo",
+                        repository,
+                        "--json",
+                        "number,state,isDraft,mergedAt,mergeCommit,headRefOid,baseRefName,statusCheckRollup,url",
+                    ]
+                )
+            except Exception:
+                detail = None
+            cache[cache_key] = detail if isinstance(detail, Mapping) else None
+        detail = cache[cache_key]
+        if detail is not None and _github_evidence_matches_live(criterion, claimed, detail):
+            live_facts: dict[str, Any]
+            if verifier == "code_merged":
+                merge_commit = detail.get("mergeCommit")
+                live_facts = {
+                    "merged": detail.get("state") == "MERGED" and bool(detail.get("mergedAt")),
+                    "merged_at": detail.get("mergedAt"),
+                    "head_sha": detail.get("headRefOid"),
+                    "merge_commit_sha": (
+                        merge_commit.get("oid") if isinstance(merge_commit, Mapping) else None
+                    ),
+                }
+            else:
+                required_checks = config.get("required_checks")
+                assert isinstance(required_checks, list)
+                live_facts = {
+                    "head_sha": detail.get("headRefOid"),
+                    "required_checks": runtime_refresh.summarize_required_checks(
+                        detail.get("statusCheckRollup"), required_checks
+                    ),
+                }
+            canonical_live = {
+                "repository": repository,
+                "pull_request": pull_request,
+                "verifier": verifier,
+                "facts": live_facts,
+            }
+            authenticated[criterion_id] = {
+                "schema_version": 1,
+                "kind": "bureau.acceptance_source_authentication",
+                "criterion_id": criterion_id,
+                "authority": "github",
+                "observer": "runtime_refresh.gh_json",
+                "source_reference": _github_source_reference(
+                    repository, pull_request, str(config["head_sha"])
+                ),
+                "target": {
+                    "repository": repository,
+                    "pull_request": pull_request,
+                    "head_sha": config["head_sha"],
+                },
+                "live_facts": live_facts,
+                "live_observation_sha256": hashlib.sha256(
+                    runtime_refresh.canonical_bytes(canonical_live)
+                ).hexdigest(),
+            }
+    return authenticated
+
+
 def reconcile_state_evidence(
     registry: Any,
     store: StateStore,
     *,
     now: str | None = None,
     completion: Completion = complete_run,
+    github: GitHubReader = runtime_refresh.gh_json,
 ) -> dict[str, Any]:
     """Consume typed bundles from the canonical StateStore root.
 
@@ -263,12 +479,18 @@ def reconcile_state_evidence(
     def provider(run: dict[str, Any], envelope: dict[str, Any]) -> Mapping[str, Any]:
         return load_state_evidence_bundle(store, run, envelope)
 
+    def authentication_provider(
+        run: dict[str, Any], envelope: dict[str, Any], evidence: Mapping[str, Any]
+    ) -> AuthenticationRecords:
+        return authenticate_state_evidence(run, envelope, evidence, github=github)
+
     result = reconcile_runs(
         registry,
         store,
         provider,
         now=now,
         completion=completion,
+        authentication_provider=authentication_provider,
     )
     result["evidence_directory"] = str(store.state_root / EVIDENCE_DIRECTORY)
     result["writer"] = "bureau-reconcile"

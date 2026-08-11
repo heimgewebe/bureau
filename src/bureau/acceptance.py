@@ -55,19 +55,24 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "domain": "runtime",
         "authorities": ("grabowski", "target-runtime"),
         "max_age_seconds": 900,
-        "revision_binding": ("task_sha256", "plan_sha256", "runtime_revision"),
+        "revision_binding": (
+            "task_sha256",
+            "plan_sha256",
+            "runtime_revision",
+            "probe_id",
+        ),
     },
     "manual_observation": {
         "domain": "observation",
         "authorities": ("manual",),
         "max_age_seconds": 86_400,
-        "revision_binding": ("task_sha256", "plan_sha256"),
+        "revision_binding": ("task_sha256", "plan_sha256", "observation_scope"),
     },
     "duration_soak_completed": {
         "domain": "observation",
         "authorities": ("grabowski", "target-runtime", "manual"),
         "max_age_seconds": 86_400,
-        "revision_binding": ("task_sha256", "plan_sha256"),
+        "revision_binding": ("task_sha256", "plan_sha256", "observation_scope"),
     },
     "no_effect_verified": {
         "domain": "observation",
@@ -93,11 +98,14 @@ def _parse_time(value: Any) -> datetime | None:
         return None
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
+    except (ValueError, OverflowError, OSError):
         return None
     if parsed.tzinfo is None:
         return None
-    return parsed.astimezone(timezone.utc)
+    try:
+        return parsed.astimezone(timezone.utc)
+    except (OverflowError, OSError, ValueError):
+        return None
 
 
 def _now(value: str | None = None) -> datetime:
@@ -121,35 +129,120 @@ def _criterion_verifier_config(
     verifier: str, criterion: Mapping[str, Any]
 ) -> dict[str, Any] | None:
     raw = criterion.get("verifier_config")
-    if verifier == "required_ci_green":
-        if not isinstance(raw, Mapping) or set(raw) != {"required_checks"}:
+    if not isinstance(raw, Mapping):
+        return None
+
+    def exact(*fields: str) -> bool:
+        return set(raw) == set(fields)
+
+    def nonempty(field: str) -> str | None:
+        value = raw.get(field)
+        return value if isinstance(value, str) and value.strip() else None
+
+    def repository() -> str | None:
+        value = nonempty("repository")
+        if value is None or re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", value) is None:
             return None
+        return value
+
+    if verifier == "code_merged":
+        if not exact("repository", "pull_request", "head_sha"):
+            return None
+        repo = repository()
+        pull_request = raw.get("pull_request")
+        head_sha = raw.get("head_sha")
+        if (
+            repo is None
+            or not isinstance(pull_request, int)
+            or isinstance(pull_request, bool)
+            or pull_request < 1
+            or not _sha(head_sha)
+        ):
+            return None
+        return {"repository": repo, "pull_request": pull_request, "head_sha": head_sha}
+
+    if verifier == "required_ci_green":
+        if not exact("repository", "pull_request", "head_sha", "required_checks"):
+            return None
+        repo = repository()
+        pull_request = raw.get("pull_request")
+        head_sha = raw.get("head_sha")
         required_checks = raw.get("required_checks")
         if (
-            not isinstance(required_checks, list)
+            repo is None
+            or not isinstance(pull_request, int)
+            or isinstance(pull_request, bool)
+            or pull_request < 1
+            or not _sha(head_sha)
+            or not isinstance(required_checks, list)
             or not required_checks
             or any(not isinstance(name, str) or not name.strip() for name in required_checks)
             or len(set(required_checks)) != len(required_checks)
         ):
             return None
-        return {"required_checks": list(required_checks)}
+        return {
+            "repository": repo,
+            "pull_request": pull_request,
+            "head_sha": head_sha,
+            "required_checks": list(required_checks),
+        }
+
+    if verifier == "deployment_complete":
+        if not exact("deployment_revision"):
+            return None
+        value = nonempty("deployment_revision")
+        return {"deployment_revision": value} if value is not None else None
+
+    if verifier == "runtime_commit_contains":
+        if not exact("repository", "required_commit"):
+            return None
+        repo = repository()
+        required_commit = raw.get("required_commit")
+        if repo is None or not _sha(required_commit):
+            return None
+        return {"repository": repo, "required_commit": required_commit}
+
+    if verifier == "live_probe_passed":
+        if not exact("runtime_revision", "probe_id"):
+            return None
+        runtime_revision = nonempty("runtime_revision")
+        probe_id = nonempty("probe_id")
+        if runtime_revision is None or probe_id is None:
+            return None
+        return {"runtime_revision": runtime_revision, "probe_id": probe_id}
+
+    if verifier == "manual_observation":
+        if not exact("observation_scope"):
+            return None
+        scope = nonempty("observation_scope")
+        return {"observation_scope": scope} if scope is not None else None
+
     if verifier == "duration_soak_completed":
-        if not isinstance(raw, Mapping) or set(raw) != {"required_seconds"}:
+        if not exact("required_seconds", "observation_scope"):
             return None
         required_seconds = raw.get("required_seconds")
+        scope = nonempty("observation_scope")
         if (
             not isinstance(required_seconds, int | float)
             or isinstance(required_seconds, bool)
             or not math.isfinite(float(required_seconds))
             or required_seconds < 0
+            or scope is None
         ):
             return None
-        return {"required_seconds": required_seconds}
-    if raw is None:
-        return {}
-    if not isinstance(raw, Mapping) or raw:
-        return None
-    return {}
+        return {"required_seconds": required_seconds, "observation_scope": scope}
+
+    if verifier == "no_effect_verified":
+        if not exact("scope_sha256") or not _sha256(raw.get("scope_sha256")):
+            return None
+        return {"scope_sha256": raw["scope_sha256"]}
+
+    if verifier == "artifact_hash_matches":
+        if not exact("artifact_sha256") or not _sha256(raw.get("artifact_sha256")):
+            return None
+        return {"artifact_sha256": raw["artifact_sha256"]}
+
+    return None
 
 
 def criterion_contract(criterion: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -378,6 +471,28 @@ def _revision_valid(
             "observed_commit",
         } and not _sha(value):
             return False, f"revision-field-invalid:{field}"
+
+    verifier = contract.get("verifier")
+    config = contract.get("verifier_config")
+    if not isinstance(config, Mapping):
+        return False, "verifier-config-invalid"
+    target_bindings: dict[str, tuple[tuple[str, str], ...]] = {
+        "code_merged": (("head_sha", "head_sha"),),
+        "required_ci_green": (("head_sha", "head_sha"),),
+        "deployment_complete": (("deployment_revision", "deployment_revision"),),
+        "runtime_commit_contains": (("required_commit", "required_commit"),),
+        "live_probe_passed": (
+            ("runtime_revision", "runtime_revision"),
+            ("probe_id", "probe_id"),
+        ),
+        "manual_observation": (("observation_scope", "observation_scope"),),
+        "duration_soak_completed": (("observation_scope", "observation_scope"),),
+        "no_effect_verified": (("scope_sha256", "scope_sha256"),),
+        "artifact_hash_matches": (("artifact_sha256", "artifact_sha256"),),
+    }
+    for revision_field, config_field in target_bindings.get(str(verifier), ()):
+        if revision.get(revision_field) != config.get(config_field):
+            return False, f"criterion-target-mismatch:{revision_field}"
     return True, "revision-bound"
 
 
@@ -392,7 +507,12 @@ def _facts_match_revision(
             ("required_commit", "required_commit"),
             ("observed_commit", "observed_commit"),
         ),
-        "live_probe_passed": (("runtime_revision", "runtime_revision"),),
+        "live_probe_passed": (
+            ("runtime_revision", "runtime_revision"),
+            ("probe_id", "probe_id"),
+        ),
+        "manual_observation": (("observation_scope", "observation_scope"),),
+        "duration_soak_completed": (("observation_scope", "observation_scope"),),
         "no_effect_verified": (("scope_sha256", "scope_sha256"),),
         "artifact_hash_matches": (("expected_sha256", "artifact_sha256"),),
     }
@@ -409,6 +529,7 @@ def evaluate_criterion(
     task_sha256: str,
     plan_sha256: str | None,
     now: str | None = None,
+    source_authenticated: bool = False,
 ) -> dict[str, Any]:
     criterion_id = criterion.get("id")
     if not isinstance(criterion_id, str) or not criterion_id:
@@ -431,6 +552,8 @@ def evaluate_criterion(
     source_reference = source.get("reference") if isinstance(source, Mapping) else None
     if not isinstance(source_reference, str) or not source_reference.strip():
         return _unknown(criterion_id, verifier, "evidence-source-reference-missing", domain)
+    if not source_authenticated:
+        return _unknown(criterion_id, verifier, "evidence-source-unauthenticated", domain)
     observed_at = _parse_time(evidence.get("observed_at"))
     current = _now(now)
     if observed_at is None:
@@ -533,8 +656,10 @@ def evaluate_acceptance(
     task_sha256: str,
     plan_sha256: str | None,
     now: str | None = None,
+    authenticated_criterion_ids: set[str] | frozenset[str] | None = None,
 ) -> dict[str, Any]:
     evaluated_at = (_now(now)).isoformat().replace("+00:00", "Z")
+    authenticated = authenticated_criterion_ids or frozenset()
     results = [
         evaluate_criterion(
             criterion,
@@ -542,6 +667,7 @@ def evaluate_acceptance(
             task_sha256=task_sha256,
             plan_sha256=plan_sha256,
             now=evaluated_at,
+            source_authenticated=str(criterion.get("id")) in authenticated,
         )
         for criterion in criteria
     ]

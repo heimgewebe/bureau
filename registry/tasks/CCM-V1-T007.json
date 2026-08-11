@@ -36,6 +36,30 @@
   "goal": "Die Coding-Memory-Integration von Grabowski von einem zufälligen Entwickler-Checkout der Chronik-CLI entkoppeln und an eine stabile versionierte oder explizit konfigurierte Quelle mit fail-soft Diagnose binden.",
   "id": "CCM-V1-T007",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "metadata": {
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f191b8c89d06677e9f280a68",
+      "event_id": 6079,
+      "event_created_at": "2026-08-11T23:32:25.966394Z",
+      "request_sha256": "11ff7416dd68ffc4f826aea68113fd9906e6665f437bfbfe4fedda594f7ad417",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github_pull_request",
+        "locator": "github:heimgewebe/bureau#1847@740c2129b3e1b92cf8704be4e3e552088f3889a3",
+        "observed_at": "2026-08-10T12:34:30Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
   "priority": {
     "lane": "later",
     "rank": 7
@@ -46,30 +70,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
-  "title": "Chronik-CLI-Auflösung an stabile Quelle binden",
-  "metadata": {
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-839e63d145f58464f6d5fef3",
-      "event_id": 861,
-      "event_created_at": "2026-07-21T05:25:44.122555Z",
-      "request_sha256": "c6fcca5d138e55ed2f5104c892ff6ec52b17d3610ef532b591a879d91ce830d5",
-      "source": {
-        "does_not_establish": [
-          "source_content_identity"
-        ],
-        "freshness": "unknown",
-        "kind": "operator_finding",
-        "locator": "github:heimgewebe/grabowski#306@d52c5f7933a5b3c02f2a083f90ffc82de37b41a5",
-        "observed_at": "2026-07-21T05:25:44.111199Z",
-        "sha256": null
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
-  }
+  "state": "ready",
+  "title": "Chronik-CLI-Auflösung an stabile Quelle binden"
 }

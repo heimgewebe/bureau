@@ -90,6 +90,37 @@
           "source_ref": "heimgewebe/weltgewebe/actions/runs/31532524913",
           "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
           "workflow_run_id": 31532524913
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/31531147641",
+          "workflow_run_id": 31531147641,
+          "job_id": 93915037435,
+          "check_name": "Required merge gate",
+          "head_sha": "f935dec422184fe12fb5a52277ec2f66ab66c5a9",
+          "conclusion": "success"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/31531386125",
+          "workflow_run_id": 31531386125,
+          "check_name": "Review evidence gate",
+          "head_sha": "f935dec422184fe12fb5a52277ec2f66ab66c5a9",
+          "conclusion": "success"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/31531142504",
+          "workflow_run_id": 31531142504,
+          "check_name": "CodeQL",
+          "head_sha": "f935dec422184fe12fb5a52277ec2f66ab66c5a9",
+          "conclusion": "success"
         }
       ],
       "schema_version": 1,
@@ -99,7 +130,7 @@
       "evidence_observed_at": "2026-08-12T00:57:00+02:00",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
       "pre_closeout_task_sha256": "4e4e268a4daab83142c2d6afd9d2edfc339023f9eac12d70be38787ec40a2dd3",
-      "task_sha256": "6b314843cb42454b474b0041ce8a79ffb412095ac6d01aa6c603aa0cb0364d09"
+      "task_sha256": "34ff000040e9e475fd4e25a8a2587d6ad5d817ee2b6bbf9d8ee4c6e66c5adead"
     },
     "verified_acceptance": {
       "hash-verified-python-bootstrap": "PASS: The merged guard enforces the canonical hash-verified tools/py bootstrap and rejects version-only or host-Python bypasses.",

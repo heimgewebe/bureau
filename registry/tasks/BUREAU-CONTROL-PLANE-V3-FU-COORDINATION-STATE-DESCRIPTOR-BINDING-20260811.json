@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-COORDINATION-STATE-DESCRIPTOR-BINDING-20260811",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Coordination-State-Effektgrenze descriptorgebunden schließen",
+  "goal": "Die verbleibende Filesystem-TOCTOU-Grenze zwischen dem letzten canonical_coordination_state_binding-Recheck und StateStore-Open beziehungsweise -Erzeugung für mutierende Coordination-State-Pfade schließen oder auf Plattformen ohne gleichwertige Primitiven explizit fail-closed klassifizieren.",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 56
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "linux"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "workspace_isolation": "worktree",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_coordination_state_effect_scope.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-FU-COORDINATION-STATE-DESCRIPTOR-BINDING-20260811.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "deterministic-post-recheck-race",
+      "assertion": "Ein deterministischer Test tauscht State-DB oder Sidecar-Pfad nach der letzten pathname-basierten Binding-Prüfung, aber vor StateStore-Open beziehungsweise erster Mutation aus; Bureau darf dadurch keinen substituierten oder außerhalb des gebundenen Roots liegenden Inode mutieren und keinen Erfolg melden."
+    },
+    {
+      "id": "descriptor-or-equivalent-binding",
+      "assertion": "Mutierende Coordination-State-Operationen verankern State-Root, Datenbank und schreibbare Sidecars mit descriptor-relativen No-Follow-/Inode-Prüfungen oder einem nachweislich gleichwertigen atomaren Identitätsvertrag; es gibt keinen stillen schwächeren Pathname-Fallback."
+    },
+    {
+      "id": "hostile-path-matrix",
+      "assertion": "Regressionen decken mindestens Symlink-Austausch, Hardlink-Ambiguität, Root-/Verzeichnisaustausch, Final-Component-Replacement sowie Owner- und Typdrift an der Effektgrenze ab."
+    },
+    {
+      "id": "platform-fail-closed",
+      "assertion": "Fehlen die erforderlichen POSIX/Linux-Primitiven für die gewählte Absicherung, werden mutierende canonical-runtime Coordination-State-Pfade maschinenlesbar vor Wirkung abgewiesen statt mit schwächerer Semantik fortgesetzt."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Sichere explizite externe State-Roots, fehlende neu anzulegende State-DB/Sidecars und read-only Doctor-Modi bleiben funktional; der bestehende Symlink-/Hardlink-Schutz aus PR #1894 wird nicht gelockert."
+    },
+    {
+      "id": "synthetic-only-proof",
+      "assertion": "Adversariale Validierung verwendet ausschließlich temporäre synthetische Roots und Dateien; keine aktive Bureau-Registry, kein produktiver StateStore und keine fremden Worktrees werden mutiert."
+    }
+  ],
+  "metadata": {
+    "source": "Bureau PR #1894 revisionsgebundener Self-Review",
+    "observed_at": "2026-08-11T19:57:00+02:00",
+    "source_candidate": "candidate-8137bf1bf223e308d9c9b2ca",
+    "source_event_id": 5970,
+    "source_ref": "github-pr:heimgewebe/bureau#1894@30af346d953783444921497e8672b04c72bcdad8:dccf6c51ad1980982b7e76454d6af45abb76fe46",
+    "observation": "PR #1894 schließt reproduzierte Sidecar-Symlink- und State-DB-Hardlink-Ausbrüche durch initiale und unmittelbar vor StateStore-Open wiederholte Binding-Prüfungen. Der Binding-Vertrag nennt future_path_identity und filesystem_race_absence weiterhin ausdrücklich als nicht etabliert. Die Registry-Suche fand keinen direkten Coordination-State-Task; OPERATOR-MACHINE-READABILITY-V1-T014 und T015 betreffen state_root_artifacts-Rename beziehungsweise Crash-Recovery und sind nicht äquivalent.",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die typed Task-Publikation ist wegen release-registry-identity-mismatch fail-closed blockiert. Der auf main vorhandene Bootstrap-Präzedenzfall BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AUTHORITY-PREFLIGHT-20260811 dokumentiert für diese Lage die Registrierung über eine eng gebundene normale geschützte PR mit genau einer Taskdatei, Validierung und revisionsgebundenem Review.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority"
+      ]
+    },
+    "does_not_establish": [
+      "aktuelle Exploitierbarkeit unter einem fremden Prozess",
+      "Verfügbarkeit einer bestimmten Kernel-Primitiven auf allen unterstützten Hosts",
+      "Berechtigung zu Live-State-Migrationen oder Runtime-Refresh"
+    ]
+  }
+}

@@ -58,36 +58,64 @@
     {
       "id": "authoritative-state-store-preflight",
       "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:authoritative-state-store-preflight"
+      },
       "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird die aktuelle autoritative StateStore-TaskSpec für approval_task_id gelesen und gegen erwartete Task-ID, zulässigen nichtterminalen Zustand, action_class runtime_mutation, erforderliches Break-Glass-Level und Single-Use-Verbrauch geprüft; ein Registry-Snapshot allein genügt nicht als Autoritätsbeleg."
     },
     {
       "id": "superseded-terminal-rejected-before-effect",
       "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:superseded-terminal-rejected-before-effect"
+      },
       "assertion": "Supersedete, terminale, falsche, bereits verbrauchte oder anderweitig nicht autorisierende TaskSpecs werden deterministisch vor Intent- oder Deployment-Wirkung abgewiesen; die Ablehnung ist maschinenlesbar und verändert weder Runtime noch StateStore-Taskhistorie."
     },
     {
       "id": "stale-snapshot-bootstrap-regression",
       "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:stale-snapshot-bootstrap-regression"
+      },
       "assertion": "Ein hermetischer Regressionstest reproduziert einen installierten Registry-Snapshot, in dem eine alte Seed-Drift-Task noch zulässig erscheint, während der autoritative StateStore bereits eine neuere oder supersedierende TaskSpec kennt; die alte approval_task_id muss fail-closed abgewiesen werden."
     },
     {
       "id": "single-use-authority-enforced",
       "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:single-use-authority-enforced"
+      },
       "assertion": "Ein erfolgreicher Runtime-Refresh kann dieselbe Autoritäts-TaskSpec nicht für ein späteres Target erneut verwenden. Der Verbrauch ist revisions- und targetgebunden nachweisbar; jeder spätere Drift benötigt weiterhin eine neue oder noch unverbrauchte ausdrücklich passende Autoritäts-TaskSpec."
     },
     {
       "id": "affe99f-provenance-reconciled-without-replay",
       "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:affe99f-provenance-reconciled-without-replay"
+      },
       "assertion": "Der bereits angewendete Refresh auf affe99f27d482c75ca4ae61735e7d2d69f911c8d wird als physisch integritätsgültig, aber mit fehlerhafter approval_task_id-Provenienz dokumentiert. Der Beleg verknüpft stale BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809, BUREAU-TRUTH-MODEL-V2-T029, BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810 und Result-SHA dea2fa1d51a865b1884ad652c43fd6aaf98f10c00c81df6c5ca2cc576088292b, ohne Deployment-Replay oder rückwirkende Taskstatus-Fälschung."
     },
     {
       "id": "existing-target-and-lease-gates-preserved",
       "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:existing-target-and-lease-gates-preserved"
+      },
       "assertion": "Fresh-Observation-, exakte target_sha256-, Break-Glass-, Live-Lease-, immutable Readback- und verify-then-retry-Gates bleiben mindestens so streng wie zuvor; die Lösung führt keinen Registry-, Queue-, Claim-, Dispatch-, Review-, Merge- oder Fremdressourcen-Bypass ein."
     },
     {
       "id": "validation",
       "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:validation"
+      },
       "assertion": "Gezielte Runtime-Refresh-/Autoritätstests, negative Drift-/Replay-Fälle, git diff --check und make validate sind auf demselben finalen Head grün; Review und CI sind revisionsgebunden."
     }
   ],

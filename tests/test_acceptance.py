@@ -406,6 +406,67 @@ def test_explicit_ci_failure_is_failed_without_inventing_missing_facts() -> None
     assert result["reason"] == "required-check-failed"
 
 
+def _unmerged_evidence() -> dict[str, object]:
+    evidence = primary_evidence(
+        "merge",
+        "code_merged",
+        authority="github",
+        facts={"merged": False, "merge_commit_sha": None},
+    )
+    evidence["revision"] = {**evidence["revision"], "merge_commit_sha": None}
+    return evidence
+
+
+def test_authenticated_unmerged_pr_is_known_failure() -> None:
+    result = evaluate_criterion(
+        criterion("merge", "code_merged"),
+        _unmerged_evidence(),
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == FAILED
+    assert result["reason"] == "merge-observed-not-complete"
+
+
+def test_negative_merge_with_commit_sha_is_incomplete_not_failure() -> None:
+    evidence = _unmerged_evidence()
+    evidence["revision"] = {**evidence["revision"], "merge_commit_sha": MERGE_SHA}
+    evidence["facts"] = {**evidence["facts"], "merge_commit_sha": MERGE_SHA}
+
+    result = evaluate_criterion(
+        criterion("merge", "code_merged"),
+        evidence,
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "merge-facts-incomplete"
+
+
+def test_known_failure_dominates_unknown_conjunct() -> None:
+    criteria = [
+        criterion("merge", "code_merged"),
+        criterion("deploy", "deployment_complete"),
+    ]
+    result = evaluate_acceptance(
+        criteria,
+        {"merge": _unmerged_evidence()},
+        task_id="TASK-1",
+        run_id="RUN-1",
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert [item["state"] for item in result["criteria"]] == [FAILED, UNKNOWN]
+    assert result["state"] == FAILED
+    assert result["automatic_terminalization"] is False
+
+
 def test_required_ci_rejects_incomplete_observation() -> None:
     result = evaluate_criterion(
         criterion(

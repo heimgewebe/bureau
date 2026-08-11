@@ -326,7 +326,11 @@ def _fact_state(
         merged = facts.get("merged")
         if merged is True and _sha(facts.get("head_sha")) and _sha(facts.get("merge_commit_sha")):
             return PASSED, "merged-head-observed"
-        if merged is False:
+        if (
+            merged is False
+            and _sha(facts.get("head_sha"))
+            and facts.get("merge_commit_sha") is None
+        ):
             return FAILED, "merge-observed-not-complete"
         return UNKNOWN, "merge-facts-incomplete"
 
@@ -469,10 +473,13 @@ def _revision_valid(
     required = contract.get("revision_binding")
     if not isinstance(required, tuple):
         return False, "verifier-revision-contract-invalid"
+    verifier = contract.get("verifier")
     for field in required:
         if field == "plan_sha256" and plan_sha256 is None:
             continue
         value = revision.get(field)
+        if verifier == "code_merged" and field == "merge_commit_sha" and value is None:
+            continue
         if not isinstance(value, str) or not value:
             return False, f"revision-field-missing:{field}"
         if field.endswith("_sha256") and not _sha256(value):
@@ -485,7 +492,6 @@ def _revision_valid(
         } and not _sha(value):
             return False, f"revision-field-invalid:{field}"
 
-    verifier = contract.get("verifier")
     config = contract.get("verifier_config")
     if not isinstance(config, Mapping):
         return False, "verifier-config-invalid"
@@ -690,10 +696,10 @@ def evaluate_acceptance(
     ]
     consistency = _cross_criterion_revision_consistency(criteria, evidence, results)
     states = {item["state"] for item in results}
-    if not results or UNKNOWN in states or consistency["state"] == UNKNOWN:
-        state = UNKNOWN
-    elif FAILED in states:
+    if FAILED in states:
         state = FAILED
+    elif not results or UNKNOWN in states or consistency["state"] == UNKNOWN:
+        state = UNKNOWN
     elif states == {PASSED}:
         state = PASSED
     else:

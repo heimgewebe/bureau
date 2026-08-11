@@ -626,6 +626,38 @@ def test_state_root_github_bundle_terminalizes_only_after_live_authentication(
     assert not evidence_path.exists()
 
 
+def test_state_root_unmerged_github_bundle_authenticates_known_failure(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+    bundle = json.loads(evidence_path.read_text(encoding="utf-8"))
+    merge = bundle["evidence"]["merge"]
+    merge["revision"]["merge_commit_sha"] = None
+    merge["facts"]["merged"] = False
+    merge["facts"]["merge_commit_sha"] = None
+    evidence_path.write_text(json.dumps(bundle), encoding="utf-8")
+
+    def github(argv):
+        return {
+            **merged_pr_detail(),
+            "state": "OPEN",
+            "mergedAt": None,
+            "mergeCommit": None,
+        }
+
+    result = reconcile_state_evidence(registry, store, now=NOW, github=github)
+
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    evaluation = result["observations"][0]["evaluation"]
+    assert evaluation["state"] == "failed"
+    assert evaluation["criteria"][0]["state"] == "failed"
+    assert evaluation["criteria"][0]["reason"] == "merge-observed-not-complete"
+    assert evidence_path.exists()
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
 def _write_terminal_residue(store: StateStore, run: dict[str, Any]) -> Path:
     evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
     evidence_path.write_text(

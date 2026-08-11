@@ -29,6 +29,10 @@ AuthenticationProvider = Callable[
     [dict[str, Any], dict[str, Any], Mapping[str, Any]], AuthenticationRecords
 ]
 GitHubReader = Callable[[list[str]], Any]
+PRODUCTION_AUTHENTICATION_ADAPTERS = {
+    "code_merged": "runtime_refresh.gh_json",
+    "required_ci_green": "runtime_refresh.gh_json",
+}
 
 
 class EvidenceAdapterUnavailable(RuntimeError):
@@ -546,8 +550,9 @@ def authenticate_state_evidence(
 
     The bundle itself never grants authority. GitHub-backed criteria are
     authenticated by a fresh locally authenticated ``gh`` readback against the
-    criterion-frozen repository, PR and head. Other source classes remain
-    unauthenticated until an independent adapter/receipt verifier is available.
+    criterion-frozen repository, PR and head. A claimed criterion whose declared
+    verifier has no production authentication adapter is reported explicitly as
+    adapter-unavailable; it is never silently treated as rejected evidence.
     """
     task = envelope.get("task")
     criteria = task.get("acceptance") if isinstance(task, Mapping) else None
@@ -565,12 +570,29 @@ def authenticate_state_evidence(
         verifier = contract.get("verifier")
         config = contract.get("verifier_config")
         claimed = evidence.get(criterion_id)
-        if (
-            verifier not in {"code_merged", "required_ci_green"}
-            or not isinstance(config, Mapping)
-            or not isinstance(claimed, Mapping)
-        ):
+        if not isinstance(config, Mapping) or not isinstance(claimed, Mapping):
             continue
+        adapter = PRODUCTION_AUTHENTICATION_ADAPTERS.get(str(verifier))
+        if adapter is None:
+            authorities = contract.get("authorities")
+            permitted_authorities = (
+                [str(item) for item in authorities]
+                if isinstance(authorities, tuple)
+                else []
+            )
+            raise EvidenceAdapterUnavailable(
+                authority="unbound",
+                adapter=f"missing:{verifier}",
+                target={
+                    "criterion_id": criterion_id,
+                    "verifier": verifier,
+                    "permitted_authorities": permitted_authorities,
+                },
+                detail=(
+                    "no production authentication adapter is registered for verifier "
+                    f"{verifier}"
+                ),
+            )
         repository = config.get("repository")
         pull_request = config.get("pull_request")
         if not isinstance(repository, str) or not isinstance(pull_request, int):
@@ -641,7 +663,7 @@ def authenticate_state_evidence(
                 "kind": "bureau.acceptance_source_authentication",
                 "criterion_id": criterion_id,
                 "authority": "github",
-                "observer": "runtime_refresh.gh_json",
+                "observer": adapter,
                 "source_reference": _github_source_reference(
                     repository, pull_request, str(config["head_sha"])
                 ),

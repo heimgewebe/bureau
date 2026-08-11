@@ -11,6 +11,7 @@ from bureau.acceptance import EVIDENCE_KIND, PASSED, UNKNOWN
 from bureau.closure_observer import (
     EVIDENCE_BUNDLE_KIND,
     EvidenceAdapterUnavailable,
+    authenticate_state_evidence,
     evaluate_run,
     reconcile_run,
     reconcile_runs,
@@ -403,6 +404,74 @@ def test_typed_pass_uses_real_complete_run_state_store_path(
     assert receipt["evidence"]["manual"]["revision"]["task_sha256"] == run["task_sha256"]
 
 
+@pytest.mark.parametrize(
+    ("verifier", "config", "authorities"),
+    [
+        (
+            "deployment_complete",
+            {"deployment_revision": "deploy-1"},
+            ["grabowski", "target-runtime"],
+        ),
+        (
+            "runtime_commit_contains",
+            {"repository": "heimgewebe/test", "required_commit": "c" * 40},
+            ["grabowski", "target-runtime"],
+        ),
+        (
+            "live_probe_passed",
+            {"runtime_revision": "runtime-1", "probe_id": "health"},
+            ["grabowski", "target-runtime"],
+        ),
+        ("manual_observation", {"observation_scope": "manual:test"}, ["manual"]),
+        (
+            "duration_soak_completed",
+            {"required_seconds": 60, "observation_scope": "soak:test"},
+            ["grabowski", "target-runtime", "manual"],
+        ),
+        ("no_effect_verified", {"scope_sha256": "a" * 64}, ["bureau", "grabowski"]),
+        (
+            "artifact_hash_matches",
+            {"artifact_sha256": "b" * 64},
+            ["artifact-store", "bureau", "grabowski"],
+        ),
+    ],
+)
+def test_unbound_declared_verifiers_report_explicit_adapter_block(
+    verifier: str, config: dict[str, Any], authorities: list[str]
+) -> None:
+    criterion = {
+        "id": "criterion",
+        "assertion": "declared verifier requires a production adapter",
+        "evidence_type": "object",
+        "verifier": verifier,
+        "verifier_config": config,
+    }
+    envelope = {"task": {"acceptance": [criterion]}}
+
+    def github(argv):
+        pytest.fail(f"GitHub adapter must not be used for {verifier}: {argv}")
+
+    with pytest.raises(EvidenceAdapterUnavailable) as caught:
+        authenticate_state_evidence(
+            {},
+            envelope,
+            {"criterion": {}},
+            github=github,
+        )
+
+    payload = caught.value.payload()
+    assert payload["authority"] == "unbound"
+    assert payload["adapter"] == f"missing:{verifier}"
+    assert payload["target"] == {
+        "criterion_id": "criterion",
+        "verifier": verifier,
+        "permitted_authorities": authorities,
+    }
+    assert payload["detail"] == (
+        f"no production authentication adapter is registered for verifier {verifier}"
+    )
+
+
 def test_state_root_manual_bundle_cannot_self_authenticate_production_writer(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:
@@ -438,9 +507,15 @@ def test_state_root_manual_bundle_cannot_self_authenticate_production_writer(
     assert result["writer"] == "bureau-reconcile"
     assert result["terminalized_count"] == 0
     assert result["open_count"] == 1
-    assert result["observations"][0]["evaluation"]["criteria"][0]["reason"] == (
-        "evidence-source-unauthenticated"
-    )
+    blocked = result["observations"][0]
+    assert blocked["reason"] == "evidence-adapter-unavailable"
+    assert blocked["adapter"]["authority"] == "unbound"
+    assert blocked["adapter"]["adapter"] == "missing:manual_observation"
+    assert blocked["adapter"]["target"] == {
+        "criterion_id": "manual",
+        "verifier": "manual_observation",
+        "permitted_authorities": ["manual"],
+    }
     assert store.run(run["run_id"])["state"] == "assigned"
 
 

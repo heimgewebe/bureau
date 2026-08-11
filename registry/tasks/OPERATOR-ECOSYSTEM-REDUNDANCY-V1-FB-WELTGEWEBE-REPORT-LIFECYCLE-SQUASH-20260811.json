@@ -1,0 +1,95 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A correctly generated report-lifecycle artifact remains verifiable after the reviewed branch is squash-merged and the target commit therefore no longer has the branch source_revision as an ancestor; verification is bound to stable source/content evidence rather than accepting arbitrary ancestry loss.",
+      "id": "squash-stable-provenance"
+    },
+    {
+      "assertion": "The validator still rejects tampered generated content, mismatched provenance, unrelated source evidence and malformed or missing truth bindings; the fix must not turn source_revision_not_ancestor into an unconditional warning or bypass.",
+      "id": "fail-closed-provenance"
+    },
+    {
+      "assertion": "Deterministic regression coverage reproduces a branch-generation followed by squash-merge commit-identity change and proves both the valid squash case and negative tamper/unrelated-source cases.",
+      "id": "squash-regression-proof"
+    },
+    {
+      "assertion": "After merge, the exact resulting weltgewebe main commit passes the report-lifecycle strict validation and the required CI/Docs Guard gates without manual regeneration outside the canonical contract.",
+      "id": "exact-main-green"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Unlocker for OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048 / Weltgewebe PR #1748. Fix only the report-lifecycle provenance contract and generated-artifact verification; do not weaken CI or unrelated workflow gates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Replace the ancestry-only truth assumption for Weltgewebe generated report-lifecycle artifacts with a squash-stable, content-bound provenance contract so GitHub squash merges do not invalidate correct generated artifacts while tampered or unrelated provenance still fails closed.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-FB-WELTGEWEBE-REPORT-LIFECYCLE-SQUASH-20260811",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "blocked_pull_request": "heimgewebe/weltgewebe#1748",
+    "does_not_establish": [
+      "permission to weaken report provenance validation",
+      "permission to bypass required CI",
+      "merge readiness of PR #1748 before exact post-fix revalidation"
+    ],
+    "observed_main": "3846ab89d3ff5561e53dffda9baaca1c81bad6dc",
+    "registered_from": "candidate-0f21de66cafa7e07140b3fc4 / main CI blocker inherited by OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+    "unlock_target": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-0f21de66cafa7e07140b3fc4",
+      "event_id": 5939,
+      "event_created_at": "2026-08-11T15:56:58.426588Z",
+      "request_sha256": "d136137c33786921ce583b3e1c0ae6e25d11fc67c81d5bcbcee753e43231ae1c",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-main-ci-failure",
+        "locator": "https://github.com/heimgewebe/weltgewebe/actions/runs/31466653824",
+        "observed_at": "2026-08-11T15:56:58.395553Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Revert only the squash-stable report-lifecycle provenance change and its generated artifacts/tests, then regenerate through the prior canonical generator if rollback is required; do not alter unrelated T048 Kubernetes bootstrap hardening."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make Weltgewebe report provenance squash-stable"
+}

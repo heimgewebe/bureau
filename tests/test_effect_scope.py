@@ -270,6 +270,74 @@ def test_canonical_coordination_binding_accepts_owner_controlled_external_root(
     assert binding["registry_source_commit"] == "a" * 40
 
 
+def test_canonical_coordination_binding_accepts_missing_sidecar_directories(
+    tmp_path: Path,
+) -> None:
+    registry_root = tmp_path / "registry"
+    registry_root.mkdir()
+    state_root = tmp_path / "state"
+    state_root.mkdir()
+    identity = canonical_runtime_identity(registry_root)
+
+    blocked, binding = effect_scope.canonical_coordination_state_binding(
+        state_root_value=str(state_root),
+        state_db_value=None,
+        registry_root=registry_root,
+        runtime_identity=identity,
+    )
+
+    assert blocked is None
+    assert binding is not None
+    assert not (state_root / "envelopes").exists()
+    assert not (state_root / "receipts").exists()
+
+
+def test_canonical_coordination_binding_rejects_envelopes_symlink_into_registry(
+    tmp_path: Path,
+) -> None:
+    registry_root = tmp_path / "registry"
+    registry_root.mkdir()
+    state_root = tmp_path / "state"
+    state_root.mkdir()
+    (state_root / "envelopes").symlink_to(
+        registry_root, target_is_directory=True
+    )
+    identity = canonical_runtime_identity(registry_root)
+
+    blocked, binding = effect_scope.canonical_coordination_state_binding(
+        state_root_value=str(state_root),
+        state_db_value=None,
+        registry_root=registry_root,
+        runtime_identity=identity,
+    )
+
+    assert binding is None
+    assert blocked["status"] == "coordination-state-path-invalid"
+    assert "coordination-state-envelopes-symlink-component" in blocked["reason_codes"]
+
+
+def test_canonical_coordination_binding_rejects_sidecar_with_wrong_type(
+    tmp_path: Path,
+) -> None:
+    registry_root = tmp_path / "registry"
+    registry_root.mkdir()
+    state_root = tmp_path / "state"
+    state_root.mkdir()
+    (state_root / "receipts").write_text("not a directory", encoding="utf-8")
+    identity = canonical_runtime_identity(registry_root)
+
+    blocked, binding = effect_scope.canonical_coordination_state_binding(
+        state_root_value=str(state_root),
+        state_db_value=None,
+        registry_root=registry_root,
+        runtime_identity=identity,
+    )
+
+    assert binding is None
+    assert blocked["status"] == "coordination-state-path-invalid"
+    assert "coordination-state-receipts-not-directory" in blocked["reason_codes"]
+
+
 def test_canonical_claim_commit_uses_separate_state_store(
     registry_factory, tmp_path: Path, monkeypatch, capsys
 ) -> None:
@@ -370,6 +438,7 @@ def test_canonical_doctor_repair_accepts_explicit_safe_state_root(
 ) -> None:
     registry_root = registry_factory()
     state_root = tmp_path / "coordination-state"
+    implicit_state_root = tmp_path / "implicit-state"
     state_db = state_root / "bureau.sqlite3"
     store = StateStore(state_db)
     run = Dispatcher(Registry.load(registry_root), store).claim_next(
@@ -381,6 +450,7 @@ def test_canonical_doctor_repair_accepts_explicit_safe_state_root(
     identity = canonical_runtime_identity(registry_root)
     monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
     monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(implicit_state_root))
     monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
     monkeypatch.setattr(
         bureau_cli,
@@ -401,6 +471,56 @@ def test_canonical_doctor_repair_accepts_explicit_safe_state_root(
     assert runtime["coordination_state_binding"]["state_db"] == str(state_db)
     assert state_db.is_file()
     assert envelope_path.is_file()
+    assert not implicit_state_root.exists()
+    assert registry_file_evidence(registry_root) == registry_before
+
+
+def test_canonical_doctor_repair_recheck_rejects_receipts_symlink_outside_root(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory()
+    state_root = tmp_path / "coordination-state"
+    state_db = state_root / "bureau.sqlite3"
+    outside_root = tmp_path / "outside-state"
+    outside_root.mkdir()
+    registry_before = registry_file_evidence(registry_root)
+    identity_calls = 0
+
+    def runtime_identity(*args, **kwargs) -> dict:
+        nonlocal identity_calls
+        identity_calls += 1
+        if identity_calls == 2:
+            state_root.mkdir()
+            (state_root / "receipts").symlink_to(
+                outside_root, target_is_directory=True
+            )
+        return canonical_runtime_identity(registry_root)
+
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(registry_root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", runtime_identity)
+    monkeypatch.setattr(
+        bureau_cli,
+        "adapters",
+        lambda args: SimpleNamespace(status=lambda: {}),
+    )
+
+    exit_code = bureau_cli.main(
+        ["--state-root", str(state_root), "--json", "doctor", "--repair"]
+    )
+
+    assert exit_code == 2
+    value = json.loads(capsys.readouterr().out)
+    assert value["result"]["status"] == "coordination-state-path-invalid"
+    assert (
+        "coordination-state-receipts-symlink-component"
+        in value["result"]["reason_codes"]
+    )
+    assert identity_calls == 2
+    assert not state_db.exists()
+    assert not (state_root / "envelopes").exists()
+    assert (state_root / "receipts").is_symlink()
+    assert list(outside_root.iterdir()) == []
     assert registry_file_evidence(registry_root) == registry_before
 
 

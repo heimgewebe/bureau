@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import stat
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +71,38 @@ def _nearest_existing_ancestor(path: Path) -> Path | None:
             candidate = parent
         except OSError:
             return None
+
+
+def _coordination_state_sidecar_reasons(resolved_root: Path) -> list[str]:
+    reasons: list[str] = []
+    for name in ("envelopes", "receipts"):
+        sidecar = resolved_root / name
+        if _first_symlink_component(sidecar) is not None:
+            reasons.append(f"coordination-state-{name}-symlink-component")
+            continue
+        try:
+            resolved_sidecar = sidecar.resolve(strict=False)
+        except (OSError, RuntimeError):
+            reasons.append(f"coordination-state-{name}-resolve-failed")
+            continue
+        if (
+            resolved_sidecar.parent != resolved_root
+            or not _path_is_within(resolved_sidecar, resolved_root)
+        ):
+            reasons.append(f"coordination-state-{name}-outside-root")
+            continue
+        try:
+            sidecar_stat = sidecar.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError:
+            reasons.append(f"coordination-state-{name}-stat-failed")
+            continue
+        if not stat.S_ISDIR(sidecar_stat.st_mode):
+            reasons.append(f"coordination-state-{name}-not-directory")
+        elif sidecar_stat.st_uid != os.geteuid():
+            reasons.append(f"coordination-state-{name}-owner-mismatch")
+    return reasons
 
 
 def coordination_state_block(
@@ -208,6 +241,7 @@ def canonical_coordination_state_binding(
         reasons.append("coordination-state-root-not-directory")
     if resolved_db.exists() and not resolved_db.is_file():
         reasons.append("coordination-state-db-not-file")
+    reasons.extend(_coordination_state_sidecar_reasons(resolved_root))
     existing_ancestor = _nearest_existing_ancestor(resolved_root)
     try:
         if existing_ancestor is None:

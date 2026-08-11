@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-FORREST-N8N-CLOSEOUT-20260811",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "state": "blocked",
+  "title": "Forrests n8n Security-/Deployment-Closeout terminal abschließen",
+  "goal": "Sobald Forrest begrenzten Netlify-Zugriff erteilt oder die Secret-Rotation belastbar bestätigt, den bereits funktionierenden Core-Slice unverändert lassen und den verbleibenden Security-/Deployment-Closeout secret-sicher terminal abnehmen: gehärtetes Dashboard deployen, Auth-/Session-Schutz und Proxy-Grenzen beweisen, den n8n-API-Key kontrolliert rotieren und den alten Key widerrufen, APP_PASSWORD und SESSION_SECRET ersetzen, Artefakte von Secrets freihalten, den Core regressionsprüfen und Forrest erst nach vollständiger Acceptance eine kurze Abschlussmail senden.",
+  "priority": {
+    "lane": "next",
+    "rank": 124
+  },
+  "required_capabilities": [
+    "grabowski",
+    "browser",
+    "runtime-observability",
+    "rollback",
+    "bureau"
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/infra",
+      "host:wg-prod-1"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Der Nutzer hat den Forrest-Closeout am 2026-08-11 ausdrücklich autonom autorisiert. Externe Netlify-/n8n-Wirkung trotzdem erst nach frischem kundenseitigem Zugriff oder belastbarer Rotationsbestätigung und exakter Zielbindung. Secrets niemals ausgeben; alten n8n-Key erst nach erfolgreichem neuen Deploy widerrufen; keine kostenpflichtigen Dienste und keine unnötige Core-Neuentwicklung."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.infra",
+      "mode": "read",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "runtime.wg-prod-1",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "customer-access-gate",
+      "assertion": "Vor jeder externen Mutation ist live belegt, dass begrenzter Netlify-Zugriff vorhanden ist oder Forrest die Rotation belastbar bestätigt hat; ohne diesen Nachweis bleibt der Task blockiert und es wird kein Zugang umgangen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "dashboard-live-hardened",
+      "assertion": "Der gehärtete Dashboard-Stand ist auf der richtigen Netlify-Site live deployed, der vorherige bekannte Deploy ist als Rückfallkante identifiziert, und Quell- sowie Deploy-Stand sind gebunden verglichen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "login-session-protection",
+      "assertion": "Login mit dem ersetzten APP_PASSWORD funktioniert, eine gültige Session schützt die Dashboard-Endpunkte und die Session-Cookie-Attribute sind für den produktiven HTTPS-Betrieb sicher gesetzt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "unauth-proxy-denial",
+      "assertion": "Unauthentifizierte Zugriffe auf read- und update-Proxy-Endpunkte werden live abgewiesen; keine offene Route gibt n8n-API-Key, Authorization-Header oder andere Secret-Werte preis.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "new-n8n-key-functional",
+      "assertion": "Ein neu erzeugter oder von Forrest bereitgestellter N8N_API_KEY ist im Netlify-Deploy aktiv und der authentifizierte Dashboard-read-Pfad funktioniert damit, ohne den Wert in Chat, Logs oder Evidenz zu schreiben.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "old-n8n-key-revoked",
+      "assertion": "Erst nach erfolgreicher Umstellung ist der vorherige geleakte N8N_API_KEY widerrufen oder nachweislich inaktiv, und der neue Weg funktioniert danach erneut.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "app-password-replaced",
+      "assertion": "APP_PASSWORD ist in Netlify durch einen neuen Wert ersetzt; Evidenz enthält ausschließlich Existenz/Rotationsstatus, niemals den Wert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "session-secret-set",
+      "assertion": "SESSION_SECRET ist als neuer starker Wert in Netlify gesetzt; Evidenz enthält ausschließlich Existenz/Rotationsstatus, niemals den Wert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "artifact-secret-hygiene",
+      "assertion": "Das ausgelieferte Dashboard-/Handoff-Artefakt enthält weder .env noch .netlify noch .k noch rohe Passwort-, Token-, API-Key- oder Secret-Dateien; dies ist durch einen bounded secret-sicheren Artefaktcheck belegt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "local-helper-secret-hygiene",
+      "assertion": "Die lokale secret-artige Hilfsdatei .k wird nur auf Notwendigkeit und Ausschluss aus Deploy/Handoff geprüft; ihr Wert wird nicht ausgegeben oder unnötig getestet, und sie wird nur dann quarantänisiert oder entfernt, wenn sie nach Closeout nachweislich nicht mehr benötigt wird.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "core-regression-smoke",
+      "assertion": "Nach der Security-Umstellung bleiben der bestehende n8n-Core-Slice, tb5mwp-whisper.service und der kontrollierte Sheets-/Ledger-Pfad in einem minimalen nichtdestruktiven Smoke funktionsfähig; der frühere Fremd-Drive-/Sheets-403 wird nicht als aktueller Blocker reaktiviert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "customer-closeout-mail",
+      "assertion": "Erst nachdem alle übrigen Acceptance-Punkte belegt sind, erhält Forrest eine kurze verständliche Abschlussmail ohne Geheimwerte mit dem erreichten Zustand und ohne unnötige erneute Fragen.",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-08-11T07:55:00+02:00",
+    "source": "Live-Audit des Forrest-n8n-Closeouts am 2026-08-11",
+    "source_candidate": "candidate-e8ee3e4912949a6ddee78f24",
+    "source_event_id": 5841,
+    "current_blocker": {
+      "code": "customer-netlify-access-or-rotation-confirmation-required",
+      "observed_at": "2026-08-11T07:49:00+02:00",
+      "detail": "Blockiert ausschließlich auf kundenseitigen Netlify-/Secret-Zugriff bzw. Bestätigung.",
+      "fresh_facts": [
+        "Keine neuere Forrest-Antwort oder Netlify-Einladung nach der Detailmail von 07:13 CEST gefunden.",
+        "tb5mwp-whisper.service ist aktiv; /health antwortet 200.",
+        "Das kontrollierte Sheet enthält einen echten Datensatz mit History-Note Created by n8n.",
+        "Die n8n-Cloud-Instanz ist erreichbar; das dedizierte Forrest-Browserprofil ist derzeit nicht authentifiziert."
+      ]
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request-bootstrap",
+      "reason": "Die kanonische typed Task-Publikation wurde beim Liveversuch fail-closed mit release-registry-identity-mismatch abgewiesen. Bestehende Bureau-TaskSpec-Präzedenzfälle erlauben in genau dieser Bootstrap-Lage einen engen geschützten Git-PR, der ausschließlich diese eine Taskdatei registriert und Queue/StateStore nicht direkt mutiert.",
+      "does_not_establish": [
+        "Queue-Mutation",
+        "Claim- oder Dispatch-Autorität",
+        "Netlify-/n8n-Zugang",
+        "Mergefreigabe vor exaktem Head und grüner CI"
+      ]
+    },
+    "does_not_establish": [
+      "bereits erfolgte Secret-Rotation",
+      "aktuellen Netlify-Deploystand",
+      "vollständigen aktuellen E2E-Core-Smoke",
+      "Berechtigung zum Umgehen von Forrests Zugang"
+    ]
+  },
+  "rollback": {
+    "strategy": "Vor externer Mutation aktuellen Netlify-Deploy und Konfigurationsnamen dokumentieren. Den vorherigen bekannten Deploy bis zur erfolgreichen neuen Acceptance als Rückfallkante erhalten. Bei fehlgeschlagenem neuen Deploy Konfiguration/Deploy zurückrollen, aber einen bereits widerrufenen geleakten Key nicht reaktivieren."
+  }
+}

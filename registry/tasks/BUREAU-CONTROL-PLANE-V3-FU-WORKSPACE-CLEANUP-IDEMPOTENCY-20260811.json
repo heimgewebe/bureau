@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-WORKSPACE-CLEANUP-IDEMPOTENCY-20260811",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Workspace-Cleanup bei bereits fehlendem Worktree idempotent schließen",
+  "goal": "Den already-missing-Pfad von cleanup_workspace so schließen, dass wiederholter Cleanup eines terminalen Runs eine stabile entfernte Workspace-Projektion und konsistente Lifecycle-Evidenz liefert, ohne updated_at bei echten No-ops fortzuschreiben oder fehlende workspace-removed-Evidenz zu hinterlassen.",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 55
+  },
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T005"
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "workspace_isolation": "worktree",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-FU-WORKSPACE-CLEANUP-IDEMPOTENCY-20260811.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "already-missing-post-state",
+      "assertion": "Wenn der registrierte Worktree bereits physisch fehlt und der Run terminal ist, liefert cleanup_workspace die aktuelle Projektion mit state=removed statt den vor der Mutation gelesenen veralteten Zustand zurück."
+    },
+    {
+      "id": "repeat-idempotency",
+      "assertion": "Eine identische erneute Cleanup-Anforderung auf einem bereits als removed klassifizierten und weiterhin fehlenden Workspace ist ein echter No-op: insbesondere kein updated_at-Drift und keine duplizierte Lifecycle-Wirkung."
+    },
+    {
+      "id": "removal-event-consistency",
+      "assertion": "Der Übergang von einer noch nicht als removed gespeicherten Projektion zu einem bereits physisch fehlenden Workspace erzeugt genau eine kanonische workspace-removed-Evidenz oder eine explizit gleichwertige typisierte Recovery-Evidenz; normale physische Entfernung und already-missing-Reconciliation bleiben semantisch konsistent."
+    },
+    {
+      "id": "terminal-and-preservation-guards",
+      "assertion": "Nichtterminale Runs sowie vorhandene dirty oder ungemergte Worktrees behalten ihre bisherigen Schutzgrenzen; der Idempotenzfix darf keine Cleanup-Gates lockern."
+    },
+    {
+      "id": "regression-matrix",
+      "assertion": "Tests decken mindestens missing-vor-erster-Cleanup-Anforderung, normale Entfernung mit anschließendem Repeat, force/no-force und den Terminal-State-Guard ab; ausschließlich synthetische temporäre Worktrees werden verändert."
+    }
+  ],
+  "metadata": {
+    "source": "Bureau PR #1894 implementation review",
+    "observed_at": "2026-08-11T19:57:00+02:00",
+    "source_candidate": "candidate-7ea8f5cd774761f23761f355",
+    "source_event_id": 5969,
+    "source_ref": "github-pr:heimgewebe/bureau#1894@30af346d953783444921497e8672b04c72bcdad8:dccf6c51ad1980982b7e76454d6af45abb76fe46",
+    "observation": "cleanup_workspace aktualisiert im already-missing-Zweig state und updated_at, gibt aber den vor der Mutation gelesenen status zurück, schreibt bei Wiederholung erneut updated_at und emittiert dort kein workspace-removed-Event. Die Registry-Suche fand keinen bestehenden Task mit cleanup_workspace, workspace-removed oder already-missing als explizitem Gegenstand. BUREAU-CONTROL-PLANE-V3-T005 ist thematisch verwandt, enthält diesen konkreten Lifecycle-Vertrag aber nicht.",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die typed Task-Publikation ist wegen release-registry-identity-mismatch fail-closed blockiert. Der auf main vorhandene Bootstrap-Präzedenzfall BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AUTHORITY-PREFLIGHT-20260811 dokumentiert für diese Lage die Registrierung über eine eng gebundene normale geschützte PR mit genau einer Taskdatei, Validierung und revisionsgebundenem Review.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority"
+      ]
+    },
+    "does_not_establish": [
+      "Fehler in vorhandenen oder fremden Worktrees",
+      "Freigabe zum Löschen aktiver oder fremder Worktrees",
+      "Abschluss von BUREAU-CONTROL-PLANE-V3-T005"
+    ]
+  }
+}

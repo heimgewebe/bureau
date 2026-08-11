@@ -547,6 +547,25 @@
           "verifier": {
             "minLength": 1,
             "type": "string"
+          },
+          "verifier_config": {
+            "additionalProperties": false,
+            "properties": {
+              "required_checks": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "required_seconds": {
+                "minimum": 0,
+                "type": "number"
+              }
+            },
+            "type": "object"
           }
         },
         "required": [

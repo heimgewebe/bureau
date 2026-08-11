@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 import bureau.review_steward as review_steward
@@ -14,6 +16,7 @@ from bureau.acceptance import (
     evaluate_criterion,
     typed_criterion_contracts,
 )
+from bureau.core import Registry
 from bureau.review_steward import evidence_signal
 
 TASK_SHA = "a" * 64
@@ -27,13 +30,24 @@ NOW = "2026-08-10T20:00:00Z"
 OBSERVED = "2026-08-10T19:59:00Z"
 
 
-def criterion(criterion_id: str, verifier: str) -> dict[str, object]:
-    return {
+def criterion(
+    criterion_id: str,
+    verifier: str,
+    verifier_config: dict[str, object] | None = None,
+) -> dict[str, object]:
+    value: dict[str, object] = {
         "id": criterion_id,
         "assertion": f"prove {criterion_id}",
         "evidence_type": "object",
         "verifier": verifier,
     }
+    if verifier == "required_ci_green":
+        value["verifier_config"] = {"required_checks": ["validate"]}
+    elif verifier == "duration_soak_completed":
+        value["verifier_config"] = {"required_seconds": 60}
+    if verifier_config is not None:
+        value["verifier_config"] = verifier_config
+    return value
 
 
 def revision_for(verifier: str) -> dict[str, str]:
@@ -106,7 +120,6 @@ PASS_CASES = [
         "github",
         {
             "complete": True,
-            "required_checks": ["validate"],
             "checks": [{"name": "validate", "state": "success"}],
         },
     ),
@@ -129,7 +142,7 @@ PASS_CASES = [
     (
         "duration_soak_completed",
         "target-runtime",
-        {"completed": True, "required_seconds": 60, "observed_seconds": 61},
+        {"completed": True, "observed_seconds": 61},
     ),
     ("no_effect_verified", "bureau", {"effect_count": 0}),
     (
@@ -168,6 +181,36 @@ def test_all_criteria_require_named_typed_contracts() -> None:
     assert {item["verifier"] for item in contracts["criteria"]} == set(VERIFIER_CONTRACTS)
     assert all(item["revision_binding"] for item in contracts["criteria"])
     assert all(item["max_age_seconds"] > 0 for item in contracts["criteria"])
+
+
+def test_registry_schema_accepts_frozen_verifier_configuration(
+    registry_factory,
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [
+        criterion(
+            "ci",
+            "required_ci_green",
+            {"required_checks": ["validate (3.10)", "validate (3.12)"]},
+        ),
+        criterion(
+            "soak",
+            "duration_soak_completed",
+            {"required_seconds": 3600},
+        ),
+    ]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    registry = Registry.load(root)
+
+    configured = registry.tasks["BUR-TEST-001-T001"].acceptance
+    assert configured[0]["verifier_config"]["required_checks"] == [
+        "validate (3.10)",
+        "validate (3.12)",
+    ]
+    assert configured[1]["verifier_config"]["required_seconds"] == 3600
 
 
 def test_untyped_criterion_is_unknown_not_success() -> None:
@@ -296,7 +339,6 @@ def test_explicit_ci_failure_is_failed_without_inventing_missing_facts() -> None
             authority="github",
             facts={
                 "complete": True,
-                "required_checks": ["validate"],
                 "checks": [{"name": "validate", "state": "failure"}],
             },
         ),
@@ -311,14 +353,17 @@ def test_explicit_ci_failure_is_failed_without_inventing_missing_facts() -> None
 
 def test_required_ci_rejects_incomplete_observation() -> None:
     result = evaluate_criterion(
-        criterion("ci", "required_ci_green"),
+        criterion(
+            "ci",
+            "required_ci_green",
+            {"required_checks": ["validate", "codeql"]},
+        ),
         primary_evidence(
             "ci",
             "required_ci_green",
             authority="github",
             facts={
                 "complete": False,
-                "required_checks": ["validate", "codeql"],
                 "checks": [{"name": "validate", "state": "success"}],
             },
         ),
@@ -333,14 +378,17 @@ def test_required_ci_rejects_incomplete_observation() -> None:
 
 def test_required_ci_rejects_missing_required_check_even_with_optional_green() -> None:
     result = evaluate_criterion(
-        criterion("ci", "required_ci_green"),
+        criterion(
+            "ci",
+            "required_ci_green",
+            {"required_checks": ["validate", "codeql"]},
+        ),
         primary_evidence(
             "ci",
             "required_ci_green",
             authority="github",
             facts={
                 "complete": True,
-                "required_checks": ["validate", "codeql"],
                 "checks": [
                     {"name": "validate", "state": "success"},
                     {"name": "optional", "state": "success"},
@@ -364,7 +412,7 @@ def test_soak_rejects_non_finite_or_boolean_observation(value) -> None:
             "soak",
             "duration_soak_completed",
             authority="target-runtime",
-            facts={"completed": True, "required_seconds": 60, "observed_seconds": value},
+            facts={"completed": True, "observed_seconds": value},
         ),
         task_sha256=TASK_SHA,
         plan_sha256=PLAN_SHA,
@@ -373,6 +421,102 @@ def test_soak_rejects_non_finite_or_boolean_observation(value) -> None:
 
     assert result["state"] == UNKNOWN
     assert result["reason"] == "soak-observation-invalid"
+
+
+def test_required_ci_rejects_caller_supplied_required_set_drift() -> None:
+    result = evaluate_criterion(
+        criterion(
+            "ci",
+            "required_ci_green",
+            {"required_checks": ["validate", "codeql"]},
+        ),
+        primary_evidence(
+            "ci",
+            "required_ci_green",
+            authority="github",
+            facts={
+                "complete": True,
+                "required_checks": ["validate"],
+                "checks": [
+                    {"name": "validate", "state": "success"},
+                    {"name": "codeql", "state": "success"},
+                ],
+            },
+        ),
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "required-check-set-mismatch"
+
+
+def test_soak_requirement_is_frozen_in_criterion() -> None:
+    result = evaluate_criterion(
+        criterion(
+            "soak",
+            "duration_soak_completed",
+            {"required_seconds": 3600},
+        ),
+        primary_evidence(
+            "soak",
+            "duration_soak_completed",
+            authority="target-runtime",
+            facts={"completed": True, "observed_seconds": 0},
+        ),
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert result["state"] == FAILED
+    assert result["reason"] == "soak-duration-too-short"
+
+
+def test_merge_and_required_ci_must_share_exact_head_revision() -> None:
+    criteria = [
+        criterion("merge", "code_merged"),
+        criterion("ci", "required_ci_green"),
+    ]
+    merge = primary_evidence(
+        "merge",
+        "code_merged",
+        authority="github",
+        facts={"merged": True, "head_sha": HEAD_SHA, "merge_commit_sha": MERGE_SHA},
+    )
+    ci = primary_evidence(
+        "ci",
+        "required_ci_green",
+        authority="github",
+        facts={
+            "complete": True,
+            "checks": [{"name": "validate", "state": "success"}],
+        },
+    )
+    other_head = "9" * 40
+    ci["revision"] = {**ci["revision"], "head_sha": other_head}
+    ci["facts"] = {**ci["facts"], "head_sha": other_head}
+
+    result = evaluate_acceptance(
+        criteria,
+        {"merge": merge, "ci": ci},
+        task_id="TASK-1",
+        run_id="RUN-1",
+        task_sha256=TASK_SHA,
+        plan_sha256=PLAN_SHA,
+        now=NOW,
+    )
+
+    assert [item["state"] for item in result["criteria"]] == [PASSED, PASSED]
+    assert result["state"] == UNKNOWN
+    assert result["automatic_terminalization"] is False
+    assert result["cross_criterion_revision"]["conflicts"] == [
+        {
+            "field": "head_sha",
+            "criteria": {"merge": HEAD_SHA, "ci": other_head},
+        }
+    ]
 
 
 def test_product_merge_and_deployment_remain_separate_evidence_domains() -> None:

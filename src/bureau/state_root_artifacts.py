@@ -31,6 +31,10 @@ _COMPLETION_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
 _COMPLETION_MAX_COUNT = 128
 _COMPLETION_DIFF_MAX_BYTES = 16 * 1024 * 1024
 _COMPLETION_REVIEW_MAX_BYTES = 256 * 1024
+_ACCEPTANCE_EVIDENCE_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,191}\.json")
+_ACCEPTANCE_EVIDENCE_MAX_COUNT = 512
+_ACCEPTANCE_EVIDENCE_MAX_BYTES = 1024 * 1024
+_ACCEPTANCE_EVIDENCE_KIND = "bureau.acceptance_evidence_bundle"
 _COMPLETION_REVIEW_AXES = {
     "correctness",
     "integration",
@@ -719,6 +723,117 @@ def _completion_bundle_inventory(bundle: Path, observed_at: str) -> dict[str, An
     except (OSError, legacy.StateError) as exc:
         result["reasons"].append(str(exc))
     return result
+
+
+def _acceptance_evidence_bundle_inventory(
+    bundle: Path, observed_at: str
+) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "name": bundle.name,
+        "type": "file",
+        "content_class": "acceptance-evidence-bundle",
+        "retention_class": "until-run-terminal-or-superseded",
+        "authority": "typed-evidence-input-only",
+        "observed_at": observed_at,
+        "valid": False,
+        "reasons": [],
+        "does_not_establish": [
+            "task_completion_without_verifier_evaluation",
+            "merge_state",
+            "deployment_state",
+        ],
+    }
+    try:
+        if _ACCEPTANCE_EVIDENCE_NAME_RE.fullmatch(bundle.name) is None:
+            raise legacy.StateError("acceptance evidence filename is unsupported")
+        payload, metadata = _json_file(
+            bundle, maximum_bytes=_ACCEPTANCE_EVIDENCE_MAX_BYTES
+        )
+        result.update(metadata)
+        run_id = payload.get("run_id")
+        task_id = payload.get("task_id")
+        task_sha256 = payload.get("task_sha256")
+        plan_sha256 = payload.get("plan_sha256")
+        evidence = payload.get("evidence")
+        checks = [
+            (payload.get("schema_version") == 1, "unsupported acceptance evidence schema"),
+            (
+                payload.get("kind") == _ACCEPTANCE_EVIDENCE_KIND,
+                "unsupported acceptance evidence kind",
+            ),
+            (
+                isinstance(run_id, str)
+                and run_id == bundle.stem
+                and bool(run_id),
+                "acceptance evidence run binding is invalid",
+            ),
+            (
+                isinstance(task_id, str)
+                and legacy.ID_RE.fullmatch(task_id) is not None,
+                "acceptance evidence task binding is invalid",
+            ),
+            (
+                re.fullmatch(r"[0-9a-f]{64}", str(task_sha256 or "")) is not None,
+                "acceptance evidence task digest is invalid",
+            ),
+            (
+                plan_sha256 is None
+                or re.fullmatch(r"[0-9a-f]{64}", str(plan_sha256)) is not None,
+                "acceptance evidence plan digest is invalid",
+            ),
+            (isinstance(evidence, dict), "acceptance evidence payload is not an object"),
+        ]
+        for passed, reason in checks:
+            if not passed:
+                result["reasons"].append(reason)
+        result["producer"] = {
+            "kind": _ACCEPTANCE_EVIDENCE_KIND,
+            "run_id": run_id,
+            "task_id": task_id,
+            "task_sha256": task_sha256,
+            "plan_sha256": plan_sha256,
+        }
+        result["valid"] = not result["reasons"]
+    except (OSError, legacy.StateError) as exc:
+        result["reasons"].append(str(exc))
+    return result
+
+
+def acceptance_evidence_inventory(entry: Path) -> dict[str, Any]:
+    observed_at = legacy.utc_now()
+    result: dict[str, Any] = {
+        "schema_version": INVENTORY_SCHEMA_VERSION,
+        "name": entry.name,
+        "path": str(entry),
+        "content_class": "acceptance-evidence-directory",
+        "observed_at": observed_at,
+        "valid": False,
+        "children": [],
+        "reasons": [],
+    }
+    try:
+        info = entry.lstat()
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+            raise legacy.StateError("acceptance evidence root is not a real directory")
+        bundles = sorted(entry.iterdir(), key=lambda item: item.name)
+        if len(bundles) > _ACCEPTANCE_EVIDENCE_MAX_COUNT:
+            raise legacy.StateError("acceptance evidence bundle count is invalid")
+        result["children"] = [
+            _acceptance_evidence_bundle_inventory(bundle, observed_at) for bundle in bundles
+        ]
+        result["reasons"] = [
+            f"{item['name']}: {reason}"
+            for item in result["children"]
+            for reason in item["reasons"]
+        ]
+        result["valid"] = not result["reasons"]
+    except (OSError, legacy.StateError) as exc:
+        result["reasons"].append(str(exc))
+    return result
+
+
+def acceptance_evidence_directory_valid(entry: Path) -> bool:
+    return bool(acceptance_evidence_inventory(entry)["valid"])
 
 
 def completion_evidence_inventory(entry: Path) -> dict[str, Any]:

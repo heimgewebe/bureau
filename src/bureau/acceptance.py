@@ -117,6 +117,41 @@ def _sha256(value: Any) -> bool:
     return isinstance(value, str) and _SHA256_RE.fullmatch(value) is not None
 
 
+def _criterion_verifier_config(
+    verifier: str, criterion: Mapping[str, Any]
+) -> dict[str, Any] | None:
+    raw = criterion.get("verifier_config")
+    if verifier == "required_ci_green":
+        if not isinstance(raw, Mapping) or set(raw) != {"required_checks"}:
+            return None
+        required_checks = raw.get("required_checks")
+        if (
+            not isinstance(required_checks, list)
+            or not required_checks
+            or any(not isinstance(name, str) or not name.strip() for name in required_checks)
+            or len(set(required_checks)) != len(required_checks)
+        ):
+            return None
+        return {"required_checks": list(required_checks)}
+    if verifier == "duration_soak_completed":
+        if not isinstance(raw, Mapping) or set(raw) != {"required_seconds"}:
+            return None
+        required_seconds = raw.get("required_seconds")
+        if (
+            not isinstance(required_seconds, int | float)
+            or isinstance(required_seconds, bool)
+            or not math.isfinite(float(required_seconds))
+            or required_seconds < 0
+        ):
+            return None
+        return {"required_seconds": required_seconds}
+    if raw is None:
+        return {}
+    if not isinstance(raw, Mapping) or raw:
+        return None
+    return {}
+
+
 def criterion_contract(criterion: Mapping[str, Any]) -> dict[str, Any] | None:
     verifier = criterion.get("verifier")
     if not isinstance(verifier, str):
@@ -124,9 +159,13 @@ def criterion_contract(criterion: Mapping[str, Any]) -> dict[str, Any] | None:
     contract = VERIFIER_CONTRACTS.get(verifier)
     if contract is None or criterion.get("evidence_type") != "object":
         return None
+    verifier_config = _criterion_verifier_config(verifier, criterion)
+    if verifier_config is None:
+        return None
     return {
         "verifier": verifier,
         "evidence_type": "object",
+        "verifier_config": verifier_config,
         **contract,
     }
 
@@ -164,7 +203,9 @@ def _unknown(
     }
 
 
-def _fact_state(verifier: str, facts: Mapping[str, Any]) -> tuple[str, str]:
+def _fact_state(
+    verifier: str, facts: Mapping[str, Any], verifier_config: Mapping[str, Any]
+) -> tuple[str, str]:
     if verifier == "code_merged":
         merged = facts.get("merged")
         if merged is True and _sha(facts.get("head_sha")) and _sha(facts.get("merge_commit_sha")):
@@ -175,15 +216,17 @@ def _fact_state(verifier: str, facts: Mapping[str, Any]) -> tuple[str, str]:
 
     if verifier == "required_ci_green":
         checks = facts.get("checks")
-        required_checks = facts.get("required_checks")
+        required_checks = verifier_config.get("required_checks")
+        if not isinstance(required_checks, list) or not required_checks:
+            return UNKNOWN, "required-check-contract-invalid"
         if facts.get("complete") is not True:
             return UNKNOWN, "required-check-observation-incomplete"
-        if not isinstance(required_checks, list) or not required_checks:
-            return UNKNOWN, "required-check-set-unavailable"
-        if any(not isinstance(name, str) or not name.strip() for name in required_checks):
-            return UNKNOWN, "required-check-set-invalid"
-        if len(set(required_checks)) != len(required_checks):
-            return UNKNOWN, "required-check-set-duplicated"
+        reported_required_checks = facts.get("required_checks")
+        if (
+            reported_required_checks is not None
+            and reported_required_checks != required_checks
+        ):
+            return UNKNOWN, "required-check-set-mismatch"
         if not isinstance(checks, list) or not checks:
             return UNKNOWN, "required-checks-unavailable"
         observed: dict[str, str] = {}
@@ -254,7 +297,7 @@ def _fact_state(verifier: str, facts: Mapping[str, Any]) -> tuple[str, str]:
         return UNKNOWN, "manual-observation-undecided"
 
     if verifier == "duration_soak_completed":
-        required = facts.get("required_seconds")
+        required = verifier_config.get("required_seconds")
         observed = facts.get("observed_seconds")
         if (
             not isinstance(required, int | float)
@@ -262,7 +305,10 @@ def _fact_state(verifier: str, facts: Mapping[str, Any]) -> tuple[str, str]:
             or not math.isfinite(float(required))
             or required < 0
         ):
-            return UNKNOWN, "soak-requirement-invalid"
+            return UNKNOWN, "soak-contract-invalid"
+        reported_required = facts.get("required_seconds")
+        if reported_required is not None and reported_required != required:
+            return UNKNOWN, "soak-requirement-mismatch"
         if (
             not isinstance(observed, int | float)
             or isinstance(observed, bool)
@@ -415,7 +461,7 @@ def evaluate_criterion(
     facts_ok, facts_reason = _facts_match_revision(verifier, revision, facts)
     if not facts_ok:
         return _unknown(criterion_id, verifier, facts_reason, domain)
-    derived_state, reason = _fact_state(verifier, facts)
+    derived_state, reason = _fact_state(verifier, facts, contract["verifier_config"])
     claimed_state = evidence.get("status")
     if claimed_state is not None:
         if claimed_state not in STATES:
@@ -433,6 +479,48 @@ def evaluate_criterion(
         "observed_at": evidence.get("observed_at"),
         "age_seconds": age,
         "revision_reason": revision_reason,
+    }
+
+
+_SHARED_REVISION_FIELDS = frozenset({"head_sha"})
+
+
+def _cross_criterion_revision_consistency(
+    criteria: Sequence[Mapping[str, Any]],
+    evidence: Mapping[str, Any],
+    results: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    passed_ids = {
+        str(item.get("criterion_id"))
+        for item in results
+        if item.get("state") == PASSED
+    }
+    observed: dict[str, dict[str, str]] = {}
+    for criterion in criteria:
+        criterion_id = criterion.get("id")
+        if not isinstance(criterion_id, str) or criterion_id not in passed_ids:
+            continue
+        contract = criterion_contract(criterion)
+        item = evidence.get(criterion_id)
+        revision = item.get("revision") if isinstance(item, Mapping) else None
+        if contract is None or not isinstance(revision, Mapping):
+            continue
+        required = contract.get("revision_binding")
+        if not isinstance(required, tuple):
+            continue
+        for field in _SHARED_REVISION_FIELDS.intersection(required):
+            value = revision.get(field)
+            if isinstance(value, str) and value:
+                observed.setdefault(field, {})[criterion_id] = value
+    conflicts = [
+        {"field": field, "criteria": bindings}
+        for field, bindings in sorted(observed.items())
+        if len(set(bindings.values())) > 1
+    ]
+    return {
+        "state": UNKNOWN if conflicts else PASSED,
+        "shared_fields": observed,
+        "conflicts": conflicts,
     }
 
 
@@ -457,8 +545,9 @@ def evaluate_acceptance(
         )
         for criterion in criteria
     ]
+    consistency = _cross_criterion_revision_consistency(criteria, evidence, results)
     states = {item["state"] for item in results}
-    if not results or UNKNOWN in states:
+    if not results or UNKNOWN in states or consistency["state"] == UNKNOWN:
         state = UNKNOWN
     elif FAILED in states:
         state = FAILED
@@ -478,6 +567,7 @@ def evaluate_acceptance(
         "state": state,
         "automatic_terminalization": state == PASSED,
         "criteria": results,
+        "cross_criterion_revision": consistency,
         "domains": domains,
         "does_not_establish": [
             "merge_authority",

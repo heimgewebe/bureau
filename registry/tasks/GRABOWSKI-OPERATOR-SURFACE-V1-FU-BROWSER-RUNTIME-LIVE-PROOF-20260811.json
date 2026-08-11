@@ -1,17 +1,136 @@
 {
-  "schema_version": 1,
+  "acceptance": [
+    {
+      "assertion": "Der Repository-Vorgängertask ist revisionsgebunden verifiziert; sein Merge-/PR-Beleg bindet den implementierten Browser-Control-Plane-Stand und behauptet selbst keine Runtime-Wirkung.",
+      "evidence_type": "object",
+      "id": "verified-repository-predecessor"
+    },
+    {
+      "assertion": "Vor Runtime-Effekten wird die aktuelle Grabowski-Runtime-Identität frisch gelesen. Falls Deployment erforderlich ist, wird ausschließlich ein exakter gemergter und source-identitätsgebundener Grabowski-Head aus einer cleanen kanonischen Quelle deployt und durch ein gültiges Finalisierungsreceipt plus aktiven Runtime-Identity-Readback belegt.",
+      "evidence_type": "object",
+      "id": "exact-runtime-source"
+    },
+    {
+      "assertion": "Ein frischer, task-eigener ephemerer Chrome-Stable-Worker startet über den implementierten chrome-cdp-Adapter und projiziert Chrome Stable als canonical-operator, ein separates ephemeres User-Data-Directory sowie einen ausschließlich auf 127.0.0.1 gebundenen Control-Plane-Endpoint.",
+      "evidence_type": "object",
+      "id": "chrome-control-plane-live-proof"
+    },
+    {
+      "assertion": "Der reale Chrome-DevTools-Endpunkt des Probe-Workers antwortet auf Loopback und liefert einen vorhandenen WebSocket-Debugger-Endpunkt auf demselben 127.0.0.1-Port; die Control-Plane-Projektion allein genügt nicht als Beleg.",
+      "evidence_type": "object",
+      "id": "real-cdp-loopback-readback"
+    },
+    {
+      "assertion": "Der task-eigene Probe-Worker wird terminalisiert; sein ephemeres Profil wird entfernt und Port- sowie Profil-Lease werden exakt freigegeben. Fremde Ersatz-Leases oder Browser-Worker werden nicht übernommen, gestoppt oder gelöscht.",
+      "evidence_type": "object",
+      "id": "terminal-worker-cleanup"
+    },
+    {
+      "assertion": "Ein separater Postflight-Readback belegt, dass der menschliche Desktop-Default weiterhin Brave ist; der Task ändert weder Desktop-Default noch menschliche Browserprofile.",
+      "evidence_type": "object",
+      "id": "brave-default-preserved"
+    },
+    {
+      "assertion": "Der Task führt keine Repository-Implementierung, keinen Code-Merge, Rebase oder Force-Push und keine Firefox/WebDriver-BiDi-Implementierung aus und übernimmt keine fremden Deployment-, Task-, Lease-, Checkout-, Browser- oder Profil-Effekte als eigene Autorität.",
+      "evidence_type": "object",
+      "id": "runtime-only-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.grabowski.browser-worker-control-plane"
+    },
+    {
+      "isolation": "none",
+      "mode": "exclusive",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-SEMANTIC-CONTROL-PLANE-20260811"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Dieser Nachfolgetask ist ausschließlich für den source-identitätsgebundenen Browser-Control-Plane-Deploy-/Runtime-Nachweis zuständig. Vor jedem Effekt müssen Runtime, konkurrierende Tasks, Leases und Prozesse sowie die exakte Zielrevision frisch geprüft werden; fremde Browser-Worker, Profile, Leases und Prozesse bleiben unangetastet.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "host:heim-pc",
+      "path:/home/alex/.local/state/grabowski/workers",
+      "service:grabowski-operator.service"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den gemergten Browser-Control-Plane-Stand ausschließlich runtime-seitig verifizieren: exakte Grabowski-Runtime-Identität lesen bzw. den gebundenen Merge-Head source-identitätsgebunden deployen, einen frischen ephemeren Chrome-Stable-Worker über den chrome-cdp-Adapter prüfen, realen loopback-only CDP-Readback belegen, den Probe-Worker terminalisieren und die exakte Port-/Profil-Leasefreigabe sowie den unveränderten Brave-Desktop-Default nachweisen. Keine Repository-Implementierung und keine Firefox/BiDi-Implementierung.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-RUNTIME-LIVE-PROOF-20260811",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Browser-Control-Plane deployen und Chrome-Live-Proof revisionsgebunden verifizieren",
-  "goal": "Den gemergten Browser-Control-Plane-Stand ausschließlich runtime-seitig verifizieren: exakte Grabowski-Runtime-Identität lesen bzw. den gebundenen Merge-Head source-identitätsgebunden deployen, einen frischen ephemeren Chrome-Stable-Worker über den chrome-cdp-Adapter prüfen, realen loopback-only CDP-Readback belegen, den Probe-Worker terminalisieren und die exakte Port-/Profil-Leasefreigabe sowie den unveränderten Brave-Desktop-Default nachweisen. Keine Repository-Implementierung und keine Firefox/BiDi-Implementierung.",
-  "state": "planned",
+  "metadata": {
+    "does_not_establish": [
+      "future runtime availability",
+      "browser authentication success",
+      "Firefox/WebDriver-BiDi implementation",
+      "permission to change the human desktop-default browser"
+    ],
+    "runtime_successor": {
+      "does_not_establish": [
+        "permission to modify repository code",
+        "permission to expose CDP beyond loopback",
+        "permission to reuse the human default browser profile",
+        "Firefox/WebDriver-BiDi implementation"
+      ],
+      "effect_scope": [
+        "deployment-if-required",
+        "chrome-stable-cdp-live-proof",
+        "port-and-profile-lease-readback",
+        "brave-desktop-default-readback"
+      ],
+      "predecessor_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-SEMANTIC-CONTROL-PLANE-20260811",
+      "schema_version": 1
+    },
+    "scope_correction": {
+      "blocked_run_id": "BUR-RUN-20260811T232121Z-b584006169",
+      "does_not_establish": [
+        "repository-wide mutation authority",
+        "permission to alter foreign Grabowski leases or branches",
+        "runtime effect before normal coordinated claim"
+      ],
+      "reason": "Der breite read-only Repo-Claim kollidiert mit legitimer fremder Grabowski-Path/Branch-Arbeit, obwohl dieser Task keine Repository-Implementierung ausführt. Die bereits kanonische Browser-Control-Plane-Komponente bildet den fachlich exakten Read-Scope.",
+      "replacement_claim": "component.grabowski.browser-worker-control-plane",
+      "replaces_claim": "repo.grabowski",
+      "schema_version": 1,
+      "source_candidate": "candidate-510dc010aac47f4304fb9ac3",
+      "source_event_id": 6078
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-510dc010aac47f4304fb9ac3",
+      "event_id": 6078,
+      "event_created_at": "2026-08-11T23:28:00.363733Z",
+      "request_sha256": "69d71db68d084a5a7ae933c58d16fda66e0462c101e71f2bb40ab696576902f9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau-pickup:BUR-RUN-20260811T232121Z-b584006169:lease-acquisition-failed",
+        "observed_at": "2026-08-11T23:28:00.330436Z",
+        "sha256": "6dfe3efd19acc4151a6359c6c5899fc69ab7b2de53fffaff9db3688469cee47d"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
   "priority": {
     "lane": "now",
     "rank": 11
   },
-  "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-SEMANTIC-CONTROL-PLANE-20260811"
-  ],
   "required_capabilities": [
     "repository",
     "grabowski",
@@ -23,129 +142,10 @@
     "bureau",
     "audit"
   ],
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
-    },
-    {
-      "resource": "host.heim-pc",
-      "mode": "exclusive",
-      "isolation": "none"
-    }
-  ],
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski",
-      "host:heim-pc",
-      "path:/home/alex/.local/state/grabowski/workers",
-      "service:grabowski-operator.service"
-    ],
-    "approval": {
-      "action_class": "runtime_mutation",
-      "required_level": "break_glass",
-      "note": "Dieser Nachfolgetask ist ausschließlich für den source-identitätsgebundenen Browser-Control-Plane-Deploy-/Runtime-Nachweis zuständig. Vor jedem Effekt müssen Runtime, konkurrierende Tasks, Leases und Prozesse sowie die exakte Zielrevision frisch geprüft werden; fremde Browser-Worker, Profile, Leases und Prozesse bleiben unangetastet."
-    }
-  },
-  "acceptance": [
-    {
-      "id": "verified-repository-predecessor",
-      "evidence_type": "object",
-      "assertion": "Der Repository-Vorgängertask ist revisionsgebunden verifiziert; sein Merge-/PR-Beleg bindet den implementierten Browser-Control-Plane-Stand und behauptet selbst keine Runtime-Wirkung."
-    },
-    {
-      "id": "exact-runtime-source",
-      "evidence_type": "object",
-      "assertion": "Vor Runtime-Effekten wird die aktuelle Grabowski-Runtime-Identität frisch gelesen. Falls Deployment erforderlich ist, wird ausschließlich ein exakter gemergter und source-identitätsgebundener Grabowski-Head aus einer cleanen kanonischen Quelle deployt und durch ein gültiges Finalisierungsreceipt plus aktiven Runtime-Identity-Readback belegt."
-    },
-    {
-      "id": "chrome-control-plane-live-proof",
-      "evidence_type": "object",
-      "assertion": "Ein frischer, task-eigener ephemerer Chrome-Stable-Worker startet über den implementierten chrome-cdp-Adapter und projiziert Chrome Stable als canonical-operator, ein separates ephemeres User-Data-Directory sowie einen ausschließlich auf 127.0.0.1 gebundenen Control-Plane-Endpoint."
-    },
-    {
-      "id": "real-cdp-loopback-readback",
-      "evidence_type": "object",
-      "assertion": "Der reale Chrome-DevTools-Endpunkt des Probe-Workers antwortet auf Loopback und liefert einen vorhandenen WebSocket-Debugger-Endpunkt auf demselben 127.0.0.1-Port; die Control-Plane-Projektion allein genügt nicht als Beleg."
-    },
-    {
-      "id": "terminal-worker-cleanup",
-      "evidence_type": "object",
-      "assertion": "Der task-eigene Probe-Worker wird terminalisiert; sein ephemeres Profil wird entfernt und Port- sowie Profil-Lease werden exakt freigegeben. Fremde Ersatz-Leases oder Browser-Worker werden nicht übernommen, gestoppt oder gelöscht."
-    },
-    {
-      "id": "brave-default-preserved",
-      "evidence_type": "object",
-      "assertion": "Ein separater Postflight-Readback belegt, dass der menschliche Desktop-Default weiterhin Brave ist; der Task ändert weder Desktop-Default noch menschliche Browserprofile."
-    },
-    {
-      "id": "runtime-only-boundary",
-      "evidence_type": "object",
-      "assertion": "Der Task führt keine Repository-Implementierung, keinen Code-Merge, Rebase oder Force-Push und keine Firefox/WebDriver-BiDi-Implementierung aus und übernimmt keine fremden Deployment-, Task-, Lease-, Checkout-, Browser- oder Profil-Effekte als eigene Autorität."
-    }
-  ],
   "rollback": {
     "strategy": "Bei einer durch diesen Task verursachten Runtime-Regression nur den task-eigenen Probe-Worker terminalisieren und, falls tatsächlich ein neues Deployment ausgeführt wurde, den unmittelbar vor dem Effekt revisionsgebunden belegten gesunden Grabowski-Runtime-Stand über den kanonischen Deploypfad wiederherstellen. Danach Runtime-Identität, Connector-/Operator-Health und Browser-Leases erneut lesen; fremde Browserprofile, Worker und Leases bleiben unverändert."
   },
-  "metadata": {
-    "runtime_successor": {
-      "schema_version": 1,
-      "predecessor_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-SEMANTIC-CONTROL-PLANE-20260811",
-      "effect_scope": [
-        "deployment-if-required",
-        "chrome-stable-cdp-live-proof",
-        "port-and-profile-lease-readback",
-        "brave-desktop-default-readback"
-      ],
-      "does_not_establish": [
-        "permission to modify repository code",
-        "permission to expose CDP beyond loopback",
-        "permission to reuse the human default browser profile",
-        "Firefox/WebDriver-BiDi implementation"
-      ]
-    },
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-626c251e6eed3f3661ba807f",
-      "event_id": 5961,
-      "event_created_at": "2026-08-11T16:47:51.439771Z",
-      "request_sha256": "29add3c2e69d893de88367aba2c9666a1922513066d9fc91ceec38ab888e1c2e",
-      "source": {
-        "kind": "conversation",
-        "locator": "chat:browser-semantic-control-plane-runtime-closeout-20260811",
-        "sha256": null,
-        "observed_at": "2026-08-11T16:47:51.409239Z",
-        "freshness": "unknown",
-        "does_not_establish": [
-          "source_content_identity"
-        ]
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    },
-    "publication_path": {
-      "kind": "normal-protected-pull-request",
-      "reason": "Die kanonische typed Task-Publikation wurde vor Wirkung durch release-registry-identity-mismatch blockiert, weil der immutable Bureau-Release affe99f27d482c75ca4ae61735e7d2d69f911c8d hinter dem aktuellen Registry-main 6ee00be0be95a7d280c692820572577b31831d76 liegt. Der dokumentierte Bootstrap-Präzedenzfall BUREAU-TRUTH-MODEL-V2-T026 erlaubt in genau dieser Lage eine eng gebundene normale geschützte GitHub-PR-Registrierung mit einer einzigen Taskdatei, Vollvalidierung, revisionsgebundenem Self-Review und Required Checks; Queue und Live Register werden dadurch nicht direkt mutiert.",
-      "does_not_establish": [
-        "typed publication bypass authority",
-        "queue mutation",
-        "claim or dispatch authority",
-        "merge readiness before exact-head CI",
-        "runtime mutation authority"
-      ]
-    },
-    "does_not_establish": [
-      "future runtime availability",
-      "browser authentication success",
-      "Firefox/WebDriver-BiDi implementation",
-      "permission to change the human desktop-default browser"
-    ]
-  }
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Browser-Control-Plane deployen und Chrome-Live-Proof revisionsgebunden verifizieren"
 }

@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein mindestens 30-minütiger realer Koexistenzlauf mit aktivem Pegelobserver sowie repräsentativem Recorder- und Voice-Capture-Pfad belegt stabile Prozesse, fortschreitende Pegelsequenz, keine zurechenbaren XRuns oder Drops und begrenzte CPU-/Speichernutzung.",
+      "evidence_type": "object",
+      "id": "coexistence-soak"
+    },
+    {
+      "assertion": "Vor-, Während- und Nachreadbacks belegen PipeWire Shared Capture; keine direkte oder exklusive ALSA-Aufnahme und keine Änderung von Routen, Profilen oder Lautstärken. Einziger erlaubter Default-Effekt ist der in loss-and-recovery ausdrücklich verlangte kontrollierte temporäre Default-Source-Wechsel: exakter Preimage wird vorher gebunden, der Test bleibt zeitlich begrenzt und stellt unmittelbar danach exakt den vorherigen Default wieder her.",
+      "evidence_type": "object",
+      "id": "shared-capture-boundary"
+    },
+    {
+      "assertion": "Die ausgelieferte target=auto/Default-Source-Semantik ist revisionsgebunden beschrieben und durch Start, Observer-Restart, Geräteverlust/Wiederkehr und den kontrollierten temporären Default-Source-Wechsel gegen das beobachtete Verhalten verifiziert. Abweichungen zwischen dokumentierter und beobachteter Semantik werden mit typisierter Evidenz als nicht bestanden ausgewiesen; eine Änderung der Quellwahl-Politik erfolgt ausschließlich in einem separaten Repository-Task. T038 ändert keine Quellwahl-Konfiguration und persistiert keine flüchtigen Node-IDs.",
+      "evidence_type": "object",
+      "id": "source-policy"
+    },
+    {
+      "assertion": "Observer-Restart, temporärer Geräteverlust und Wiederkehr sowie ein kontrollierter temporärer Default-Source-Wechsel führen zu ehrlichem stale/unavailable/recovery-Verhalten und hinterlassen nach Wiederherstellung des gebundenen Preimage keine fremden Streams oder Links.",
+      "evidence_type": "object",
+      "id": "loss-and-recovery"
+    },
+    {
+      "assertion": "T038 nimmt keine Repositoryänderung vor, erstellt oder merged keine Implementierungs-PRs und deployt nichts. Ergibt die Verifikation einen Defekt oder Änderungsbedarf, wird T038 mit typisierter Evidenz nicht als bestanden abgeschlossen; Implementierung, Merge, Deployment und erneute Live-Abnahme erfolgen ausschließlich über separate abhängige Tasks.",
+      "evidence_type": "object",
+      "id": "no-repository-effects"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "read",
+      "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Reale Capture-/Recorder-/Voice-Läufe benötigen frische Geräte-, Pegel-, Stop- und Prozessreadbacks. Routen, Profile und Lautstärken bleiben unverändert; als einziger Default-Effekt ist ein vorab preimage-gebundener, kontrollierter temporärer Default-Source-Wechsel mit unmittelbarer Wiederherstellung erlaubt. Das Audio-Repository wird nur revisionsgebunden gelesen; Repository-, Merge-, Deployment- und Quellwahl-Konfigurationsänderungen sind in T038 ausgeschlossen.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc",
+      "service:pipewire"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Den mit PR #92 eingeführten aktiven shared-PipeWire-Pegelobserver auf dem realen Heim-PC unter gleichzeitiger Recorder- und Voice-Capture-Nutzung über längere Zeit abnehmen und seine Quellwahl bei Restart, Geräteverlust und Default-Source-Wechsel explizit verifizieren.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T038",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "sicheren Schalldruck",
+      "analoge Gain-Stellung",
+      "ob target=auto die langfristig gewünschte Quellwahl-Politik ist",
+      "Freigabe von Repository-, Merge- oder Deployment-Änderungen"
+    ],
+    "registered_from": "Live-Readback nach Audio PR #92",
+    "source_merge_commit": "89ff96230543398e263a048bd0110a8dabd6aab6",
+    "source_pull_request": 92,
+    "supersedes_evidence_note": "T031 verifizierte passive Telemetrie ohne Audiostream und deckt den neuen aktiven Pegelobserver daher nicht ab.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f6aa055aca385f60689265bf",
+      "event_id": 5868,
+      "event_created_at": "2026-08-11T07:44:20.619927Z",
+      "request_sha256": "f07590a8fc92dbfa354c03ce18fd54e57154ac1a9a826d963887acf013a2f874",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "github:heimgewebe/audio#pull/92",
+        "observed_at": "2026-08-11T09:43:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 38
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "audio",
+    "pipewire",
+    "systemd",
+    "runtime-observability",
+    "hardware-validation"
+  ],
+  "rollback": {
+    "strategy": "Taskeigene Recorder-/Voice-/Observer-Testläufe beenden. Falls T038 den Default-Source-Test bereits begonnen hat, ausschließlich den vorher exakt gebundenen Default-Source-Preimage wiederherstellen und anschließend Prozess-, PipeWire-, Default-, XRun- und Geräte-Zustände frisch zurücklesen. T038 verändert keine Repositorydateien, Unit-Dateien, Mergezustände oder Deployments; fremde Streams und Leases bleiben unangetastet."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Aktiven Pegelobserver mit Recorder und Voice unter Last verifizieren"
+}

@@ -40,6 +40,7 @@ from .rlens_policy import (
 )
 from .schema_validation import DocumentSchemaError, SchemaSet
 from .state_root_artifacts import (
+    acceptance_evidence_directory_valid,
     completion_evidence_directory_valid,
     reviewed_plan_directory_valid,
 )
@@ -3026,6 +3027,16 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
         return {"name": name, "type": entry_type, "class": "receipt-directory"}
     if name == "reviews" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "review-directory"}
+    if (
+        name == "acceptance-evidence"
+        and entry_type == "directory"
+        and acceptance_evidence_directory_valid(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "acceptance-evidence-directory",
+        }
     if (
         name == "evidence"
         and entry_type == "directory"

@@ -547,6 +547,70 @@
           "verifier": {
             "minLength": 1,
             "type": "string"
+          },
+          "verifier_config": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "base_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "deployment_revision": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "head_sha": {
+                "pattern": "^[0-9a-f]{40,64}$",
+                "type": "string"
+              },
+              "observation_scope": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "probe_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "pull_request": {
+                "minimum": 1,
+                "type": "integer"
+              },
+              "repository": {
+                "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+                "type": "string"
+              },
+              "required_checks": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "required_commit": {
+                "pattern": "^[0-9a-f]{40,64}$",
+                "type": "string"
+              },
+              "required_seconds": {
+                "maximum": 315576000,
+                "minimum": 0,
+                "type": "number"
+              },
+              "runtime_revision": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "scope_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              }
+            },
+            "type": "object"
           }
         },
         "required": [

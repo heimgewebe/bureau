@@ -6,9 +6,9 @@ import stat
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from bureau import runtime_refresh
+from bureau import legacy, runtime_refresh
 from bureau.acceptance import PASSED, criterion_contract, evaluate_acceptance
-from bureau.v2 import StateStore, complete_run
+from bureau.v2 import RunStateConflict, StateStore, complete_run
 
 ACTIVE_CLOSEOUT_STATES = {"assigned", "running", "verifying"}
 TERMINAL_RUN_STATES = {"succeeded"}
@@ -25,7 +25,9 @@ AuthenticationProvider = Callable[
 GitHubReader = Callable[[list[str]], Any]
 
 
-def _load_envelope(store: StateStore, run_id: str) -> dict[str, Any]:
+def _load_envelope(
+    store: StateStore, run_id: str, expected_sha256: str | None
+) -> dict[str, Any]:
     path = store.envelope_path(run_id)
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -36,6 +38,8 @@ def _load_envelope(store: StateStore, run_id: str) -> dict[str, Any]:
     task = value.get("task")
     if not isinstance(task, dict) or task.get("id") != value.get("task_id"):
         raise ValueError("run envelope task binding is invalid")
+    if not isinstance(expected_sha256, str) or legacy.sha256_json(value) != expected_sha256:
+        raise ValueError("run envelope integrity mismatch")
     return value
 
 
@@ -69,7 +73,7 @@ def evaluate_run(
             "mutated": False,
         }
     try:
-        envelope = _load_envelope(store, run_id)
+        envelope = _load_envelope(store, run_id, run.get("envelope_sha256"))
     except ValueError as exc:
         return {
             "schema_version": 1,
@@ -174,7 +178,7 @@ def reconcile_runs(
     for run_id in run_ids:
         run = store.run(run_id)
         try:
-            envelope = _load_envelope(store, run_id)
+            envelope = _load_envelope(store, run_id, run.get("envelope_sha256"))
             evidence = evidence_provider(run, envelope)
         except Exception as exc:  # source outages are unknown, never success/failure
             observations.append(
@@ -210,8 +214,8 @@ def reconcile_runs(
             except Exception:
                 authentication_records = {}
         authenticated_ids = frozenset(authentication_records)
-        observations.append(
-            reconcile_run(
+        try:
+            observation = reconcile_run(
                 registry,
                 store,
                 run_id,
@@ -221,7 +225,21 @@ def reconcile_runs(
                 authenticated_criterion_ids=authenticated_ids,
                 authentication_records=authentication_records,
             )
-        )
+        except RunStateConflict as exc:
+            observations.append(
+                {
+                    "schema_version": 1,
+                    "kind": "bureau.closeout_observation",
+                    "run_id": run_id,
+                    "task_id": run.get("task_id"),
+                    "state": "open",
+                    "reason": "completion-conflict",
+                    "conflict": exc.payload(),
+                    "mutated": False,
+                }
+            )
+            continue
+        observations.append(observation)
     terminalized = sum(item.get("state") == "terminalized" for item in observations)
     return {
         "schema_version": 1,

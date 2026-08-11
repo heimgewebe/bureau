@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from bureau import legacy
 from bureau.acceptance import EVIDENCE_KIND, PASSED, UNKNOWN
 from bureau.closure_observer import (
     EVIDENCE_BUNDLE_KIND,
@@ -13,6 +14,7 @@ from bureau.closure_observer import (
     reconcile_state_evidence,
 )
 from bureau.core import Dispatcher, Registry, StateStore
+from bureau.v2 import RunStateConflict
 
 TASK_SHA = "a" * 64
 PLAN_SHA = "b" * 64
@@ -82,6 +84,7 @@ class FakeStore:
                 "acceptance": criteria if criteria is not None else [manual_criterion()],
             },
         }
+        self._run["envelope_sha256"] = legacy.sha256_json(self._envelope)
         self._path = root / "RUN-1.json"
         self._path.write_text(json.dumps(self._envelope), encoding="utf-8")
 
@@ -182,6 +185,28 @@ def test_unreadable_envelope_is_open_not_failed(tmp_path: Path) -> None:
     assert result["mutated"] is False
 
 
+def test_envelope_sidecar_hash_drift_stays_open(tmp_path: Path) -> None:
+    store = FakeStore(tmp_path)
+    tampered = dict(store._envelope)
+    tampered["task"] = {
+        **store._envelope["task"],
+        "acceptance": [
+            {
+                **manual_criterion(),
+                "verifier_config": {"observation_scope": "manual:tampered"},
+            }
+        ],
+    }
+    store.envelope_path("RUN-1").write_text(json.dumps(tampered), encoding="utf-8")
+
+    result = evaluate_run(store, "RUN-1", manual_evidence(), now=NOW)
+
+    assert result["state"] == "open"
+    assert result["reason"] == "envelope-unreadable"
+    assert "envelope integrity mismatch" in result["detail"]
+    assert result["mutated"] is False
+
+
 def test_terminal_run_is_read_back_without_new_mutation(tmp_path: Path) -> None:
     store = FakeStore(tmp_path, state="succeeded")
 
@@ -215,6 +240,83 @@ def test_evidence_provider_failure_is_unknown_open_state(tmp_path: Path) -> None
     assert result["open_count"] == 1
     assert result["observations"][0]["reason"] == "evidence-provider-unavailable"
     assert calls == []
+
+
+class TwoRunStore:
+    def __init__(self, root: Path) -> None:
+        self._runs: dict[str, dict[str, Any]] = {}
+        self._paths: dict[str, Path] = {}
+        for index in (1, 2):
+            run_id = f"RUN-{index}"
+            task_id = f"TASK-{index}"
+            envelope = {
+                "run_id": run_id,
+                "task_id": task_id,
+                "task": {"id": task_id, "acceptance": [manual_criterion()]},
+            }
+            run = {
+                "run_id": run_id,
+                "task_id": task_id,
+                "state": "assigned",
+                "task_sha256": TASK_SHA,
+                "plan_sha256": PLAN_SHA,
+                "envelope_sha256": legacy.sha256_json(envelope),
+            }
+            path = root / f"{run_id}.json"
+            path.write_text(json.dumps(envelope), encoding="utf-8")
+            self._runs[run_id] = run
+            self._paths[run_id] = path
+
+    def run(self, run_id: str) -> dict[str, Any]:
+        return dict(self._runs[run_id])
+
+    def list_runs(self) -> list[dict[str, Any]]:
+        return [dict(self._runs[run_id]) for run_id in ("RUN-1", "RUN-2")]
+
+    def envelope_path(self, run_id: str) -> Path:
+        return self._paths[run_id]
+
+    def receipt(self, run_id: str) -> dict[str, Any] | None:
+        return None
+
+
+def test_one_completion_conflict_does_not_abort_later_runs(tmp_path: Path) -> None:
+    store = TwoRunStore(tmp_path)
+    completed: list[str] = []
+
+    def provider(run, envelope):
+        return manual_evidence()
+
+    def authenticate(run, envelope, evidence):
+        return {"manual": {"kind": "test-authentication"}}
+
+    def completion(registry, observed_store, run_id, evidence):
+        if run_id == "RUN-1":
+            raise RunStateConflict(
+                "stale-baseline",
+                "run baseline changed",
+                run_id=run_id,
+            )
+        completed.append(run_id)
+        return {"idempotent": False}
+
+    result = reconcile_runs(
+        "registry",
+        store,
+        provider,
+        now=NOW,
+        completion=completion,
+        authentication_provider=authenticate,
+    )
+
+    assert result["observed_run_count"] == 2
+    assert result["open_count"] == 1
+    assert result["terminalized_count"] == 1
+    assert result["observations"][0]["reason"] == "completion-conflict"
+    assert result["observations"][0]["conflict"]["code"] == "stale-baseline"
+    assert result["observations"][0]["mutated"] is False
+    assert result["observations"][1]["state"] == "terminalized"
+    assert completed == ["RUN-2"]
 
 
 def test_typed_pass_uses_real_complete_run_state_store_path(

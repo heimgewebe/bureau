@@ -29,15 +29,15 @@
       "id": "regression-proof"
     },
     {
-      "assertion": "Nach Deployment startet ein frischer Chrome-Stable-Worker über den neuen Adapter, liefert einen loopback-only CDP-Readback, wird terminalisiert und gibt Port-/Profil-Leases exakt frei. Ein separater Readback belegt, dass der Desktop-Default weiterhin Brave ist.",
-      "id": "live-proof"
+      "assertion": "Vor Verifikation dieses Repository-Tasks ist ein separater, von diesem Task abhängiger Bureau-Nachfolgetask registriert, dessen approval.action_class runtime_mutation ist und der ausschließlich Deployment, frischen Chrome-Stable/CDP-Live-Proof, Port-/Profil-Lease-Readback sowie den unveränderten Brave-Desktop-Default verifiziert. Dieser Repository-Task selbst deployt, startet oder stoppt dafür keine Runtime.",
+      "id": "runtime-proof-handoff"
     }
   ],
   "claims": [
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.grabowski"
+      "resource": "component.grabowski.browser-worker-control-plane"
     }
   ],
   "depends_on": [
@@ -46,13 +46,13 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Der Nutzer hat den Browser-Architekturauftrag ausdrücklich mit 'registrieren und @grabowski umsetzen' sowie anschließend 'weiter @grabowski' freigegeben. Umsetzung erfolgt isoliert; fremde Dirty-Checkouts und Leases bleiben unangetastet.",
+      "note": "Der Nutzer hat den Browser-Architekturauftrag ausdrücklich mit 'registrieren und @grabowski umsetzen' sowie anschließend 'weiter @grabowski' freigegeben. Umsetzung erfolgt isoliert; fremde Dirty-Checkouts und Leases bleiben unangetastet. Runtime-Effekte sind aus diesem Task herausgetrennt und benötigen einen separaten runtime_mutation-Nachfolgetask.",
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski",
-      "path:/home/alex/.local/state/grabowski/workers",
-      "service:grabowski-operator.service"
+      "path:/home/alex/repos/grabowski/src/grabowski_workers.py",
+      "path:/home/alex/repos/grabowski/tests/test_workers.py",
+      "path:/home/alex/repos/grabowski/docs/browser-control-plane-v1.md"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -76,24 +76,44 @@
       "permission to reuse the human default browser profile",
       "permission to read or export browser credentials"
     ],
-    "source": "operator-intake",
-    "source_candidate_id": "candidate-adecd046d9b512d86eba3b61",
-    "source_event_id": 5582,
-    "supersedes_event_id": 5580,
+    "effect_boundary_revision": {
+      "candidate_id": "candidate-71ef9ee25f417ac0d62ffff4",
+      "does_not_establish": [
+        "runtime mutation authority",
+        "permission to weaken open-PR conflict gates",
+        "completion of the future runtime successor"
+      ],
+      "event_id": 5858,
+      "reason": "Live claim evidence showed that out-of-repository worker-state and service resources make repository nonconflict proof fail against independent open Grabowski PRs. Repository implementation and runtime proof therefore use separate approval/resource lifecycles.",
+      "repository_resources": [
+        "docs/browser-control-plane-v1.md",
+        "src/grabowski_workers.py",
+        "tests/test_workers.py"
+      ],
+      "runtime_successor_action_class": "runtime_mutation",
+      "runtime_successor_effects": [
+        "deployment",
+        "chrome-stable-cdp-live-proof",
+        "port-and-profile-lease-readback",
+        "brave-desktop-default-readback"
+      ],
+      "runtime_successor_required": true,
+      "schema_version": 1
+    },
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-adecd046d9b512d86eba3b61",
-      "event_id": 5582,
-      "event_created_at": "2026-08-10T21:18:16.804702Z",
-      "request_sha256": "1a4f37388daf99cc81fc31531c854cf3f8985bb6ba697fa198f26795294f55ea",
+      "candidate_id": "candidate-71ef9ee25f417ac0d62ffff4",
+      "event_id": 5858,
+      "event_created_at": "2026-08-11T07:23:29.885579Z",
+      "request_sha256": "efee61bd32aa227958ba90706e709b9866b30ee0468ff0094115525fdd95b555",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
         "freshness": "unknown",
         "kind": "conversation",
-        "locator": "chat:browser-arch-long-term-review-20260810",
-        "observed_at": "2026-08-10T21:18:16.749521Z",
+        "locator": "chat:browser-semantic-control-plane-effect-boundary-20260811",
+        "observed_at": "2026-08-11T07:22:30Z",
         "sha256": null
       },
       "does_not_establish": [
@@ -101,7 +121,11 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "source": "operator-intake",
+    "source_candidate_id": "candidate-adecd046d9b512d86eba3b61",
+    "source_event_id": 5582,
+    "supersedes_event_id": 5580
   },
   "priority": {
     "lane": "now",

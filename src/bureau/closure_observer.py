@@ -25,6 +25,39 @@ AuthenticationProvider = Callable[
 GitHubReader = Callable[[list[str]], Any]
 
 
+class EvidenceAdapterUnavailable(RuntimeError):
+    """A primary evidence adapter could not produce an authoritative observation."""
+
+    def __init__(
+        self,
+        *,
+        authority: str,
+        adapter: str,
+        target: Mapping[str, Any],
+        detail: str,
+    ) -> None:
+        super().__init__(detail)
+        self.authority = authority
+        self.adapter = adapter
+        self.target = dict(target)
+        self.detail = detail
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "kind": "bureau.evidence_adapter_unavailable",
+            "authority": self.authority,
+            "adapter": self.adapter,
+            "target": self.target,
+            "detail": self.detail,
+            "does_not_establish": [
+                "evidence-rejection",
+                "evidence-authenticity",
+                "task-completion",
+            ],
+        }
+
+
 def _load_envelope(
     store: StateStore, run_id: str, expected_sha256: str | None
 ) -> dict[str, Any]:
@@ -211,8 +244,34 @@ def reconcile_runs(
         if authentication_provider is not None:
             try:
                 authentication_records = authentication_provider(run, envelope, evidence)
-            except Exception:
-                authentication_records = {}
+            except EvidenceAdapterUnavailable as exc:
+                observations.append(
+                    {
+                        "schema_version": 1,
+                        "kind": "bureau.closeout_observation",
+                        "run_id": run_id,
+                        "task_id": run.get("task_id"),
+                        "state": "open",
+                        "reason": "evidence-adapter-unavailable",
+                        "adapter": exc.payload(),
+                        "mutated": False,
+                    }
+                )
+                continue
+            except Exception as exc:
+                observations.append(
+                    {
+                        "schema_version": 1,
+                        "kind": "bureau.closeout_observation",
+                        "run_id": run_id,
+                        "task_id": run.get("task_id"),
+                        "state": "open",
+                        "reason": "evidence-authentication-provider-unavailable",
+                        "detail": f"{type(exc).__name__}: {exc}",
+                        "mutated": False,
+                    }
+                )
+                continue
         authenticated_ids = frozenset(authentication_records)
         try:
             observation = reconcile_run(
@@ -420,6 +479,7 @@ def authenticate_state_evidence(
             continue
         cache_key = (repository, pull_request)
         if cache_key not in cache:
+            target = {"repository": repository, "pull_request": pull_request}
             try:
                 detail = github(
                     [
@@ -432,9 +492,21 @@ def authenticate_state_evidence(
                         "number,state,isDraft,mergedAt,mergeCommit,headRefOid,baseRefName,statusCheckRollup,url",
                     ]
                 )
-            except Exception:
-                detail = None
-            cache[cache_key] = detail if isinstance(detail, Mapping) else None
+            except Exception as exc:
+                raise EvidenceAdapterUnavailable(
+                    authority="github",
+                    adapter="runtime_refresh.gh_json",
+                    target=target,
+                    detail=f"{type(exc).__name__}: {exc}",
+                ) from exc
+            if not isinstance(detail, Mapping):
+                raise EvidenceAdapterUnavailable(
+                    authority="github",
+                    adapter="runtime_refresh.gh_json",
+                    target=target,
+                    detail=f"invalid adapter response type: {type(detail).__name__}",
+                )
+            cache[cache_key] = detail
         detail = cache[cache_key]
         if detail is not None and _github_evidence_matches_live(criterion, claimed, detail):
             live_facts: dict[str, Any]

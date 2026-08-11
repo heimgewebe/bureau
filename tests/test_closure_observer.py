@@ -8,6 +8,7 @@ from bureau import legacy
 from bureau.acceptance import EVIDENCE_KIND, PASSED, UNKNOWN
 from bureau.closure_observer import (
     EVIDENCE_BUNDLE_KIND,
+    EvidenceAdapterUnavailable,
     evaluate_run,
     reconcile_run,
     reconcile_runs,
@@ -319,6 +320,49 @@ def test_one_completion_conflict_does_not_abort_later_runs(tmp_path: Path) -> No
     assert completed == ["RUN-2"]
 
 
+def test_adapter_unavailable_does_not_abort_later_runs(tmp_path: Path) -> None:
+    store = TwoRunStore(tmp_path)
+    completed: list[str] = []
+
+    def provider(run, envelope):
+        return manual_evidence()
+
+    def authenticate(run, envelope, evidence):
+        if run["run_id"] == "RUN-1":
+            raise EvidenceAdapterUnavailable(
+                authority="github",
+                adapter="runtime_refresh.gh_json",
+                target={"repository": "heimgewebe/test", "pull_request": 7},
+                detail="TimeoutError: GitHub unavailable",
+            )
+        return {"manual": {"kind": "test-authentication"}}
+
+    def completion(registry, observed_store, run_id, evidence):
+        completed.append(run_id)
+        return {"idempotent": False}
+
+    result = reconcile_runs(
+        "registry",
+        store,
+        provider,
+        now=NOW,
+        completion=completion,
+        authentication_provider=authenticate,
+    )
+
+    assert result["observed_run_count"] == 2
+    assert result["open_count"] == 1
+    assert result["terminalized_count"] == 1
+    blocked = result["observations"][0]
+    assert blocked["reason"] == "evidence-adapter-unavailable"
+    assert blocked["adapter"]["kind"] == "bureau.evidence_adapter_unavailable"
+    assert blocked["adapter"]["authority"] == "github"
+    assert blocked["adapter"]["adapter"] == "runtime_refresh.gh_json"
+    assert blocked["mutated"] is False
+    assert result["observations"][1]["state"] == "terminalized"
+    assert completed == ["RUN-2"]
+
+
 def test_typed_pass_uses_real_complete_run_state_store_path(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:
@@ -553,6 +597,38 @@ def test_state_root_github_bundle_terminalizes_only_after_live_authentication(
         "base_ref": "main",
     }
     assert len(authentication["live_observation_sha256"]) == 64
+
+
+def test_github_adapter_timeout_is_explicit_open_observation(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+
+    def github(argv):
+        raise TimeoutError("GitHub unavailable")
+
+    result = reconcile_state_evidence(registry, store, now=NOW, github=github)
+
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    blocked = result["observations"][0]
+    assert blocked["state"] == "open"
+    assert blocked["reason"] == "evidence-adapter-unavailable"
+    assert blocked["adapter"] == {
+        "schema_version": 1,
+        "kind": "bureau.evidence_adapter_unavailable",
+        "authority": "github",
+        "adapter": "runtime_refresh.gh_json",
+        "target": {"repository": "heimgewebe/test", "pull_request": 7},
+        "detail": "TimeoutError: GitHub unavailable",
+        "does_not_establish": [
+            "evidence-rejection",
+            "evidence-authenticity",
+            "task-completion",
+        ],
+    }
+    assert blocked["mutated"] is False
+    assert store.run(run["run_id"])["state"] == "assigned"
 
 
 def test_forged_github_bundle_stays_open_when_live_source_disagrees(

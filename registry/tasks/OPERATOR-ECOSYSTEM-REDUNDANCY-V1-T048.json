@@ -40,12 +40,92 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
+    "closeout": {
+      "diff_sha256": "21e568745cde5c404db6e062b6b5419c2c279b1209bc4b15bc4b777ea7bd4e30",
+      "followup_note": "Production live contract failures on the same merge SHA are caused by runner network readback failures (Errno 101 Network is unreachable) before any HTTP/commit identity can be observed; separate candidate candidate-2fe6fd9d514ee86233ce97d6 / event 6048 records this operational follow-up.",
+      "head_sha": "f935dec422184fe12fb5a52277ec2f66ab66c5a9",
+      "merge_sha": "c1050ee3d2f25b1ef0419c7dc0f496d2836dd8e0",
+      "merged_pr": "https://github.com/heimgewebe/weltgewebe/pull/1748",
+      "validation": [
+        "Required merge gate SUCCESS on PR head",
+        "Review evidence gate SUCCESS on PR head",
+        "CodeQL SUCCESS on PR head",
+        "Main CI run 31532525101 SUCCESS on merge SHA",
+        "kubernetes-platform-proof run 31532524913 SUCCESS on merge SHA",
+        "Docs Guard SUCCESS on merge SHA"
+      ]
+    },
     "does_not_establish": [
       "that the current PyYAML release is malicious or compromised",
       "permission to broaden workflow permissions",
       "permission to replace the repository dependency authority"
     ],
-    "registered_from": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045 / Weltgewebe PR #1552 security review on 2026-07-23"
+    "registered_from": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045 / Weltgewebe PR #1552 security review on 2026-07-23",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "diff_sha256": "21e568745cde5c404db6e062b6b5419c2c279b1209bc4b15bc4b777ea7bd4e30",
+          "head_sha": "f935dec422184fe12fb5a52277ec2f66ab66c5a9",
+          "kind": "pull_request",
+          "merge_commit_sha": "c1050ee3d2f25b1ef0419c7dc0f496d2836dd8e0",
+          "number": 1748,
+          "source_ref": "heimgewebe/weltgewebe#1748",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048"
+        },
+        {
+          "authority": "github-actions",
+          "commit_sha": "c1050ee3d2f25b1ef0419c7dc0f496d2836dd8e0",
+          "conclusion": "success",
+          "kind": "test_run",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/31532525101",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+          "workflow_run_id": 31532525101
+        },
+        {
+          "authority": "github-actions",
+          "commit_sha": "c1050ee3d2f25b1ef0419c7dc0f496d2836dd8e0",
+          "conclusion": "success",
+          "kind": "test_run",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/31532524913",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+          "workflow_run_id": 31532524913
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "verification": {
+      "evidence_observed_at": "2026-08-12T00:57:00+02:00",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "pre_closeout_task_sha256": "4e4e268a4daab83142c2d6afd9d2edfc339023f9eac12d70be38787ec40a2dd3",
+      "task_sha256": "6b314843cb42454b474b0041ce8a79ffb412095ac6d01aa6c603aa0cb0364d09"
+    },
+    "verified_acceptance": {
+      "hash-verified-python-bootstrap": "PASS: The merged guard enforces the canonical hash-verified tools/py bootstrap and rejects version-only or host-Python bypasses.",
+      "preserve-security-contract": "PASS: Exact-diff R3 review, Required merge gate, CodeQL, main CI, Trivy/Kubernetes proof and post-merge main CI succeeded without broadening workflow permissions or weakening checkout/scan contracts.",
+      "single-bootstrap-contract": "PASS: Relevant Kubernetes validation/security jobs use the same locked bootstrap contract; Trivy remains downstream of the same contract."
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-02c34684a3a9e9624a98101a",
+      "event_id": 6047,
+      "event_created_at": "2026-08-11T22:58:02.261055Z",
+      "request_sha256": "7f7cc2ec4133ec064c64eba968f205a3d9af4b789b443a0507223143bf37327c",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-merge-evidence",
+        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1748",
+        "observed_at": "2026-08-12T00:56:00+02:00",
+        "sha256": "21e568745cde5c404db6e062b6b5419c2c279b1209bc4b15bc4b777ea7bd4e30"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -62,6 +142,6 @@
     "strategy": "Revert only the dependency-bootstrap hardening. The already merged Trivy production path and platform validation contracts remain independently reversible."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Hash-pin Kubernetes Python validator bootstrap"
 }

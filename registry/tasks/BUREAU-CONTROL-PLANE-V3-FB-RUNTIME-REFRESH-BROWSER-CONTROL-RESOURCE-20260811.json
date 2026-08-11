@@ -1,0 +1,130 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor dem einzigen Refresh sind sowohl die Git-Projektion dieser Autorität als auch das neue Resource component.grabowski.browser-worker-control-plane im aktuellen Bureau main enthalten; kein halbfertiger Zwischenstand wird deployt.",
+      "id": "bootstrap-merges-complete"
+    },
+    {
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller main-Commit, zugehöriger gemergter PR, erforderliche Validate-Checks und target_sha256 frisch beobachtet; Drift verwirft den alten Kandidaten.",
+      "id": "fresh-target-per-execution"
+    },
+    {
+      "assertion": "Die konkrete Runtime-Freigabe bindet task_id BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811 und reference exakt an den frisch beobachteten target_sha256.",
+      "id": "break-glass-target-binding"
+    },
+    {
+      "assertion": "Vor prepare-intent und erneut vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation und break_glass sein. Fremde oder historische Tasks werden nicht substituiert.",
+      "id": "authoritative-task-preflight"
+    },
+    {
+      "assertion": "Apply verwendet ausschließlich die vom frischen Intent geforderten Live-Leases mit exakt derselben Owner-/Task-/Target-Bindung; fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed ab.",
+      "id": "live-lease-binding"
+    },
+    {
+      "assertion": "Genau ein erfolgreicher Bureau-Runtime-Refresh darf durch diese Task autorisiert werden; danach ist Wiederverwendung verboten und jeder spätere Drift benötigt eine neue Autoritäts-TaskSpec.",
+      "id": "single-use-lifecycle"
+    },
+    {
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot auf denselben source commit; die StateStore-Integrität bleibt ok und die Live-Leases werden freigegeben.",
+      "id": "immutable-readback"
+    },
+    {
+      "assertion": "Die Task autorisiert keine Grabowski-Runtime-, Queue-, Claim-, Dispatch-, Fremdarbeits- oder weitere Bureau-Runtime-Wirkung und schwächt keine bestehenden Gates ab.",
+      "id": "authority-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-Use-Autorität ausschließlich für den Browser-Control-Plane-Registry-Bootstrap. Diese TaskSpec ist allein noch keine konkrete Deploymentfreigabe. Vor dem einzigen Apply sind frische main-/PR-/Check-Observation, target_sha256-Bindung exakt an diese Task-ID und alle Intent-Live-Leases Pflicht.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Nach Merge der eigenen Git-Projektion und des neuen Resource component.grabowski.browser-worker-control-plane darf genau ein kontrollierter Bureau-Runtime-Refresh den dann aktuellen reviewten Bureau-main-Stand installieren. Die konkrete Wirkung wird frisch an main-Commit, gemergten PR, erfolgreiche Pflichtchecks, target_sha256, diese exakte Task-ID und die vom Runtime-Refresh-Vertrag geforderten Live-Leases gebunden. Nach einem erfolgreichen Apply wird diese Autorität nie wiederverwendet.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "konkrete Deploymentfreigabe ohne frischen target_sha256",
+      "Autorität für Grabowski-Runtime",
+      "wiederverwendbare Runtime-Autorität",
+      "Permission to bypass current Registry or lease validation"
+    ],
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "source": "operator-intake",
+    "source_candidate_id": "candidate-dd82293c6b1accc05cdf2468",
+    "source_event_id": 5823,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-dd82293c6b1accc05cdf2468",
+      "event_id": 5823,
+      "event_created_at": "2026-08-11T04:45:04.178673Z",
+      "request_sha256": "d5da1d32bbf72552ff4b3f47ee0082f63903f143d2bf886f33f2ab78d8294aff",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chat:browser-semantic-control-plane-resource-bootstrap-20260811",
+        "observed_at": "2026-08-11T04:44:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Truth behaupten. Letzten integritätsgültigen immutable Bureau-Release als Rückfallkante beibehalten bzw. den bestehenden Runtime-Refresh-Rollbackpfad verwenden; keine Registry-/StateStore-Historie zurückschreiben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Browser-Control-Resource-Bootstrap einmalig in Bureau-Runtime übernehmen"
+}

@@ -624,6 +624,94 @@ def test_state_root_github_bundle_terminalizes_only_after_live_authentication(
     assert not evidence_path.exists()
 
 
+def _write_terminal_residue(store: StateStore, run: dict[str, Any]) -> Path:
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+    evidence_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": EVIDENCE_BUNDLE_KIND,
+                "run_id": run["run_id"],
+                "task_id": run["task_id"],
+                "task_sha256": run["task_sha256"],
+                "plan_sha256": run["plan_sha256"],
+                "evidence": github_merge_evidence(
+                    task_sha256=run["task_sha256"],
+                    plan_sha256=run["plan_sha256"],
+                ),
+            }
+        ),
+        encoding="utf-8",
+    )
+    return evidence_path
+
+
+def test_terminal_evidence_retirement_requires_receipt_run_binding(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+    assert result["terminalized_count"] == 1
+
+    receipt = store.receipt(run["run_id"])
+    assert receipt is not None
+    receipt["envelope_sha256"] = "9" * 64
+    unsigned = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+    receipt_sha256 = legacy.sha256_json(unsigned)
+    receipt["receipt_sha256"] = receipt_sha256
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE receipts SET receipt_json=?,receipt_sha256=? WHERE run_id=?",
+            (json.dumps(receipt), receipt_sha256, run["run_id"]),
+        )
+
+    evidence_path = _write_terminal_residue(store, run)
+    repeat = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert repeat["observed_run_count"] == 0
+    assert repeat["evidence_retirement"]["retired_count"] == 0
+    assert evidence_path.exists()
+    assert any(
+        "stored receipt binding mismatch: envelope_sha256" in error
+        for error in repeat["evidence_retirement"]["before"]["errors"]
+    )
+
+
+def test_terminal_evidence_retirement_requires_valid_receipt_digest(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+    assert result["terminalized_count"] == 1
+
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE receipts SET receipt_sha256=? WHERE run_id=?",
+            ("0" * 64, run["run_id"]),
+        )
+
+    evidence_path = _write_terminal_residue(store, run)
+    repeat = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert repeat["observed_run_count"] == 0
+    assert repeat["evidence_retirement"]["retired_count"] == 0
+    assert evidence_path.exists()
+    assert any(
+        "stored receipt integrity mismatch" in error
+        for error in repeat["evidence_retirement"]["before"]["errors"]
+    )
+
+
 def test_github_adapter_timeout_is_explicit_open_observation(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:

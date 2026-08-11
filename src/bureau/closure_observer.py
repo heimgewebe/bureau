@@ -8,7 +8,12 @@ from typing import Any
 
 from bureau import legacy, runtime_refresh
 from bureau.acceptance import PASSED, criterion_contract, evaluate_acceptance
-from bureau.v2 import RunStateConflict, StateStore, complete_run
+from bureau.v2 import (
+    RunStateConflict,
+    StateStore,
+    _load_validated_stored_receipt,
+    complete_run,
+)
 
 ACTIVE_CLOSEOUT_STATES = {"assigned", "running", "verifying"}
 TERMINAL_RUN_STATES = {"succeeded"}
@@ -319,7 +324,7 @@ def _evidence_bundle_path(store: StateStore, run_id: str) -> Any:
     return store.state_root / EVIDENCE_DIRECTORY / f"{run_id}.json"
 
 
-def retire_terminal_evidence_bundles(store: StateStore) -> dict[str, Any]:
+def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[str, Any]:
     """Retire validated receipt-backed bundles for succeeded runs.
 
     The StateStore receipt is the durable audit record after closeout. Keeping
@@ -354,15 +359,31 @@ def retire_terminal_evidence_bundles(store: StateStore) -> dict[str, Any]:
         run_id = entry.stem
         try:
             run = store.run(run_id)
-            receipt = store.receipt(run_id)
         except Exception as exc:
             result["preserved_count"] += 1
             result["errors"].append(f"{run_id}: {type(exc).__name__}: {exc}")
             continue
-        if run.get("state") != "succeeded" or receipt is None:
+        if run.get("state") != "succeeded":
             result["preserved_count"] += 1
             continue
         try:
+            with store.connect() as connection:
+                receipt_row = connection.execute(
+                    "SELECT receipt_json,receipt_sha256 FROM receipts WHERE run_id=?",
+                    (run_id,),
+                ).fetchone()
+            if receipt_row is None:
+                result["preserved_count"] += 1
+                continue
+            receipt = _load_validated_stored_receipt(registry, run_id, receipt_row)
+            for field in (
+                "task_id",
+                "task_sha256",
+                "plan_sha256",
+                "envelope_sha256",
+            ):
+                if receipt.get(field) != run.get(field):
+                    raise ValueError(f"stored receipt binding mismatch: {field}")
             envelope = _load_envelope(store, run_id, run.get("envelope_sha256"))
             load_state_evidence_bundle(store, run, envelope)
             entry.unlink()
@@ -632,7 +653,7 @@ def reconcile_state_evidence(
     absent or invalid bundles remain open and cannot terminalize a run.
     """
 
-    retirement_before = retire_terminal_evidence_bundles(store)
+    retirement_before = retire_terminal_evidence_bundles(registry, store)
 
     def provider(run: dict[str, Any], envelope: dict[str, Any]) -> Mapping[str, Any]:
         return load_state_evidence_bundle(store, run, envelope)
@@ -650,7 +671,7 @@ def reconcile_state_evidence(
         completion=completion,
         authentication_provider=authentication_provider,
     )
-    retirement_after = retire_terminal_evidence_bundles(store)
+    retirement_after = retire_terminal_evidence_bundles(registry, store)
     result["evidence_directory"] = str(store.state_root / EVIDENCE_DIRECTORY)
     result["evidence_retirement"] = {
         "before": retirement_before,

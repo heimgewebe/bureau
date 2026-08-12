@@ -1783,7 +1783,6 @@ def test_candidate_assessment_and_review_never_escalate_execution_authority(
         "deployment_authority",
     }
 
-    assert required_nonclaims <= set(candidate["record"]["does_not_establish"])
     assert required_nonclaims <= set(candidate["record"]["candidate_event"]["does_not_establish"])
     assert required_nonclaims <= set(assessment["does_not_establish"])
     assert required_nonclaims <= set(pending["does_not_establish"])

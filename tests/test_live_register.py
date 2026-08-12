@@ -235,7 +235,14 @@ def test_live_promote_plan_requires_review_and_applies_task_file(
         "merge_authority",
         "deployment_authority",
     }
-    assert authority_nonclaims <= set(result["nonclaims"])
+    assert result["nonclaims"] == [
+        "registry_task_truth",
+        "queue_truth",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_readiness",
+    ]
+    assert authority_nonclaims <= set(result["record"]["candidate_event"]["does_not_establish"])
     assert authority_nonclaims <= set(plan["plan"]["does_not_establish"])
     with pytest.raises(StateError, match="requires review"):
         apply_live_promote_plan(registry, path=str(plan_path))

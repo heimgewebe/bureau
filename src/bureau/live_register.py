@@ -240,10 +240,14 @@ def candidate_authority_nonclaims() -> list[str]:
 
 
 def _live_nonclaims() -> list[str]:
+    # Preserve the established top-level live-register consumer contract.
+    # Candidate-specific execution/merge/deployment nonclaims live in the
+    # Candidate Event and promotion/review surfaces below.
     return [
         "registry_task_truth",
         "queue_truth",
-        *candidate_authority_nonclaims(),
+        "claim_authority",
+        "dispatch_authority",
         "merge_readiness",
     ]
 

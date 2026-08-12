@@ -28,6 +28,10 @@
   ],
   "execution": {
     "cwd": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_chronik.py",
+      "path:/home/alex/repos/grabowski/tests/test_tasks.py"
+    ],
     "mode": "grabowski-operation",
     "operation": "chronik-cli-discovery-stable-binding",
     "policy": "autonomous",
@@ -39,18 +43,18 @@
   "metadata": {
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-f191b8c89d06677e9f280a68",
-      "event_id": 6079,
-      "event_created_at": "2026-08-11T23:32:25.966394Z",
-      "request_sha256": "11ff7416dd68ffc4f826aea68113fd9906e6665f437bfbfe4fedda594f7ad417",
+      "candidate_id": "candidate-7d7a4346e6dcce0682ef883f",
+      "event_id": 6161,
+      "event_created_at": "2026-08-12T07:10:22.787028Z",
+      "request_sha256": "090284ca2ce40c8ae02d0a6d2bfc82b2d5713d666c158370b36ca562bfd793e0",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
         "freshness": "unknown",
         "kind": "github_pull_request",
-        "locator": "github:heimgewebe/bureau#1847@740c2129b3e1b92cf8704be4e3e552088f3889a3",
-        "observed_at": "2026-08-10T12:34:30Z",
+        "locator": "github:heimgewebe/grabowski#739@62c8c276ea8e3b28646837e60b8ad100e9b0bfb4",
+        "observed_at": "2026-08-12T07:08:15Z",
         "sha256": null
       },
       "does_not_establish": [

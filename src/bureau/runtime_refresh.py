@@ -23,7 +23,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from . import approval, legacy
+from . import approval, legacy, registry_snapshot, runtime_identity
 
 SCHEMA_VERSION = 1
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
@@ -47,6 +47,8 @@ SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS = frozenset({"1"})
 DEFAULT_GRABOWSKI_RESOURCE_DB = Path("~/.local/state/grabowski/resources.sqlite3").expanduser()
 MAX_JSON_BYTES = 256 * 1024
 MAX_RUNTIME_AUTHORITY_HISTORY_INTENTS = 4096
+MAX_RUNTIME_BACKUP_ARTIFACT_DIRS = 4096
+MAX_HISTORICAL_RUNTIME_ARTIFACT_BYTES = 4 * 1024 * 1024
 RUNTIME_LAUNCHER_MANAGED_MARKER = "# managed-by: heimgewebe-bureau-runtime-v1"
 RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD = "manifest_payload_sha256"
 RUNTIME_LAUNCHER_ENTRYPOINTS = (
@@ -1844,8 +1846,8 @@ def validate_legacy_runtime_refresh_bootstrap(
             "legacy runtime-refresh state root may not be a symlink",
         )
     root = raw_root.resolve()
-    resolved_prefix = prefix.expanduser().resolve()
-    resolved_bin_dir = bin_dir.expanduser().resolve()
+    resolved_prefix = _historical_nonsymlink_path(prefix, label="runtime prefix")
+    resolved_bin_dir = _historical_nonsymlink_path(bin_dir, label="runtime bin directory")
     intents_root = root / "intents"
     if root.is_symlink() or not intents_root.is_dir() or intents_root.is_symlink():
         raise RuntimeRefreshError(
@@ -2264,6 +2266,369 @@ def readback_install(
     }
 
 
+def _historical_nonsymlink_path(path: Path, *, label: str) -> Path:
+    """Normalize one absolute historical path while rejecting symlink components."""
+    raw = path.expanduser()
+    normalized = Path(os.path.abspath(raw))
+    current = normalized
+    while True:
+        if current.is_symlink():
+            raise RuntimeRefreshError(
+                "historical-runtime-path-symlink",
+                f"historical runtime {label} path may not contain a symlink",
+                details={"path": str(current)},
+            )
+        if current == current.parent:
+            break
+        current = current.parent
+    return normalized
+
+
+def _historical_artifact_sha256(path: Path, *, label: str) -> str | None:
+    """Hash one bounded regular historical artifact without following symlinks."""
+    try:
+        if path.is_symlink() or not path.is_file():
+            return None
+        if path.stat().st_size > MAX_HISTORICAL_RUNTIME_ARTIFACT_BYTES:
+            raise RuntimeRefreshError(
+                "historical-runtime-artifact-too-large",
+                f"historical runtime {label} exceeds the bounded read limit",
+                details={"path": str(path), "limit": MAX_HISTORICAL_RUNTIME_ARTIFACT_BYTES},
+            )
+        return sha256_bytes(path.read_bytes())
+    except RuntimeRefreshError:
+        raise
+    except OSError as exc:
+        raise RuntimeRefreshError(
+            "historical-runtime-artifact-unreadable",
+            f"cannot read historical runtime {label}",
+            details={"path": str(path), "error": str(exc)},
+        ) from exc
+
+
+def _validate_historical_install_receipt(
+    *, prefix: Path, install_receipt: dict[str, Any]
+) -> dict[str, Any]:
+    if (
+        install_receipt.get("schema_version") != SCHEMA_VERSION
+        or install_receipt.get("kind") != "bureau_runtime_install_receipt"
+    ):
+        raise RuntimeRefreshError(
+            "historical-install-receipt-invalid",
+            "historical runtime result has no supported installer receipt",
+        )
+    receipt_path_value = install_receipt.get("receipt_path")
+    release_id = install_receipt.get("release_id")
+    manifest_sha256 = install_receipt.get("manifest_sha256")
+    if (
+        not isinstance(receipt_path_value, str)
+        or not isinstance(release_id, str)
+        or not release_id
+        or not isinstance(manifest_sha256, str)
+        or not _is_sha256(manifest_sha256)
+    ):
+        raise RuntimeRefreshError(
+            "historical-install-receipt-invalid",
+            "historical installer receipt identity is incomplete",
+        )
+    receipts_root = _historical_nonsymlink_path(prefix / "receipts", label="receipt root")
+    receipt_path = _historical_nonsymlink_path(
+        Path(receipt_path_value), label="install receipt"
+    )
+    try:
+        receipt_path.relative_to(receipts_root)
+    except ValueError as exc:
+        raise RuntimeRefreshError(
+            "historical-install-receipt-path-invalid",
+            "historical installer receipt escaped the runtime receipt root",
+            details={"path": str(receipt_path), "root": str(receipts_root)},
+        ) from exc
+    expected_name = f"{release_id}-{manifest_sha256[:12]}.json"
+    if receipt_path.name != expected_name:
+        raise RuntimeRefreshError(
+            "historical-install-receipt-path-invalid",
+            "historical installer receipt filename does not match its bound identity",
+            details={"expected": expected_name, "observed": receipt_path.name},
+        )
+    persisted = read_json(receipt_path)
+    expected = dict(install_receipt)
+    expected.pop("receipt_path", None)
+    if persisted != expected or receipt_path.read_bytes() != canonical_bytes(persisted):
+        raise RuntimeRefreshError(
+            "historical-install-receipt-mismatch",
+            "persisted installer receipt differs from the result-bound receipt",
+            details={"path": str(receipt_path)},
+        )
+    return persisted
+
+
+def _historical_runtime_snapshot(
+    *, prefix: Path, bin_dir: Path, install_receipt: dict[str, Any]
+) -> tuple[Path, tuple[Path, Path, Path]]:
+    expected_manifest_sha256 = install_receipt.get("manifest_sha256")
+    launcher_contract = (
+        ("bureau", "launcher_sha256"),
+        ("bureau-runtime-refresh", "runtime_refresh_launcher_sha256"),
+        ("bureau-status-capsule", "status_capsule_launcher_sha256"),
+    )
+    if not isinstance(expected_manifest_sha256, str) or not _is_sha256(expected_manifest_sha256):
+        raise RuntimeRefreshError(
+            "historical-install-receipt-invalid",
+            "historical installer receipt manifest digest is invalid",
+        )
+    for _, field in launcher_contract:
+        value = install_receipt.get(field)
+        if not isinstance(value, str) or not _is_sha256(value):
+            raise RuntimeRefreshError(
+                "historical-install-receipt-invalid",
+                f"historical installer receipt {field} is invalid",
+            )
+
+    manifest_matches = 0
+
+    def matches(
+        manifest_path: Path, launcher_paths: tuple[Path, Path, Path]
+    ) -> bool:
+        nonlocal manifest_matches
+        if (
+            _historical_artifact_sha256(manifest_path, label="manifest")
+            != expected_manifest_sha256
+        ):
+            return False
+        manifest_matches += 1
+        return all(
+            _historical_artifact_sha256(path, label=name) == install_receipt[field]
+            for (name, field), path in zip(launcher_contract, launcher_paths, strict=True)
+        )
+
+    current_manifest = prefix / "deployment-manifest.json"
+    current_launchers = tuple(bin_dir / name for name, _ in launcher_contract)
+    if matches(current_manifest, current_launchers):
+        return current_manifest, current_launchers
+
+    backups_root = prefix / "backups"
+    backup_directories: list[Path] = []
+    if backups_root.exists():
+        if backups_root.is_symlink() or not backups_root.is_dir():
+            raise RuntimeRefreshError(
+                "historical-runtime-backup-root-invalid",
+                "historical runtime backup root is not a regular directory",
+                details={"path": str(backups_root)},
+            )
+        try:
+            backup_directories = sorted(
+                path
+                for path in backups_root.iterdir()
+                if path.is_dir() and not path.is_symlink()
+            )
+        except OSError as exc:
+            raise RuntimeRefreshError(
+                "historical-runtime-backup-root-unreadable",
+                "historical runtime backup root cannot be listed",
+                details={"path": str(backups_root), "error": str(exc)},
+            ) from exc
+        if len(backup_directories) > MAX_RUNTIME_BACKUP_ARTIFACT_DIRS:
+            raise RuntimeRefreshError(
+                "historical-runtime-backup-scan-too-large",
+                "historical runtime backup scan exceeds the bounded limit",
+                details={
+                    "count": len(backup_directories),
+                    "limit": MAX_RUNTIME_BACKUP_ARTIFACT_DIRS,
+                },
+            )
+    for directory in backup_directories:
+        manifest_path = directory / "deployment-manifest.json"
+        launcher_paths = tuple(directory / name for name, _ in launcher_contract)
+        if matches(manifest_path, launcher_paths):
+            return manifest_path, launcher_paths
+    if manifest_matches:
+        raise RuntimeRefreshError(
+            "historical-runtime-launcher-evidence-unavailable",
+            "historical manifest exists but matching launcher evidence is unavailable",
+            details={"manifest_sha256": expected_manifest_sha256},
+        )
+    raise RuntimeRefreshError(
+        "historical-runtime-manifest-evidence-unavailable",
+        "result-bound historical deployment manifest is unavailable",
+        details={"manifest_sha256": expected_manifest_sha256},
+    )
+
+
+def readback_historical_install(
+    *, expected_commit: str, prefix: Path, bin_dir: Path, install_receipt: dict[str, Any]
+) -> dict[str, Any]:
+    """Authenticate one result-bound historical install without consulting the current pointer."""
+    resolved_prefix = prefix.expanduser().resolve()
+    resolved_bin_dir = bin_dir.expanduser().resolve()
+    persisted_receipt = _validate_historical_install_receipt(
+        prefix=resolved_prefix, install_receipt=install_receipt
+    )
+    expected_manifest_path = _historical_nonsymlink_path(
+        resolved_prefix / "deployment-manifest.json", label="manifest pointer"
+    )
+    expected_launcher_paths = {
+        "launcher_path": _historical_nonsymlink_path(
+            resolved_bin_dir / "bureau", label="bureau launcher pointer"
+        ),
+        "runtime_refresh_launcher_path": _historical_nonsymlink_path(
+            resolved_bin_dir / "bureau-runtime-refresh",
+            label="runtime refresh launcher pointer",
+        ),
+        "status_capsule_launcher_path": _historical_nonsymlink_path(
+            resolved_bin_dir / "bureau-status-capsule",
+            label="status capsule launcher pointer",
+        ),
+    }
+    persisted_manifest_path = _historical_nonsymlink_path(
+        Path(str(persisted_receipt.get("manifest_path", ""))),
+        label="receipt manifest pointer",
+    )
+    if persisted_manifest_path != expected_manifest_path:
+        raise RuntimeRefreshError(
+            "historical-install-receipt-path-invalid",
+            "historical installer receipt manifest path differs from the intent prefix",
+        )
+    for field, expected_path in expected_launcher_paths.items():
+        observed_path = _historical_nonsymlink_path(
+            Path(str(persisted_receipt.get(field, ""))), label=f"receipt {field}"
+        )
+        if observed_path != expected_path:
+            raise RuntimeRefreshError(
+                "historical-install-receipt-path-invalid",
+                f"historical installer receipt {field} differs from the intent bin directory",
+            )
+
+    archived_manifest_path, archived_launchers = _historical_runtime_snapshot(
+        prefix=resolved_prefix,
+        bin_dir=resolved_bin_dir,
+        install_receipt=install_receipt,
+    )
+    manifest, manifest_sha256 = load_manifest(archived_manifest_path)
+    if manifest_sha256 != install_receipt["manifest_sha256"]:
+        raise RuntimeRefreshError(
+            "historical-runtime-manifest-mismatch",
+            "historical deployment manifest digest differs from installer receipt",
+        )
+    if manifest.get("source_commit") != expected_commit:
+        raise RuntimeRefreshError(
+            "historical-runtime-source-mismatch",
+            "historical deployment manifest source differs from the authority intent",
+        )
+    receipt_manifest_bindings = (
+        ("release_id", "release_id"),
+        ("package_tree_sha256", "package_tree_sha256"),
+        ("canonical_registry_root", "canonical_registry_root"),
+        ("canonical_registry_tree_sha256", "canonical_registry_tree_sha256"),
+        ("launcher_path", "launcher_path"),
+        ("runtime_refresh_launcher_path", "runtime_refresh_launcher_path"),
+        ("status_capsule_launcher_path", "status_capsule_launcher_path"),
+        ("installed_at", "installed_at"),
+        ("runtime_approval", "runtime_approval"),
+        ("rollback", "rollback"),
+    )
+    for manifest_field, receipt_field in receipt_manifest_bindings:
+        if manifest.get(manifest_field) != persisted_receipt.get(receipt_field):
+            raise RuntimeRefreshError(
+                "historical-runtime-manifest-receipt-mismatch",
+                "historical deployment manifest differs from installer receipt",
+                details={"field": manifest_field},
+            )
+
+    release_id = manifest.get("release_id")
+    if not isinstance(release_id, str) or not release_id:
+        raise RuntimeRefreshError(
+            "historical-runtime-release-invalid", "historical release id is invalid"
+        )
+    expected_release = _historical_nonsymlink_path(
+        resolved_prefix / "releases" / release_id, label="expected immutable release"
+    )
+    release = _historical_nonsymlink_path(
+        Path(str(manifest.get("immutable_release_path", ""))),
+        label="immutable release",
+    )
+    if release != expected_release or not release.is_dir():
+        raise RuntimeRefreshError(
+            "historical-runtime-release-invalid",
+            "historical immutable release path is invalid",
+            details={"expected": str(expected_release), "observed": str(release)},
+        )
+    observed_package_sha256 = runtime_identity._package_tree_sha256(release)
+    if observed_package_sha256 != manifest.get("package_tree_sha256"):
+        raise RuntimeRefreshError(
+            "historical-runtime-package-mismatch",
+            "historical immutable package tree digest mismatch",
+            details={
+                "expected": manifest.get("package_tree_sha256"),
+                "observed": observed_package_sha256,
+            },
+        )
+    module = _historical_nonsymlink_path(
+        Path(str(manifest.get("module_path", ""))), label="runtime module"
+    )
+    try:
+        module.relative_to(release)
+    except ValueError as exc:
+        raise RuntimeRefreshError(
+            "historical-runtime-module-invalid",
+            "historical runtime module escaped the immutable release",
+        ) from exc
+    observed_module_sha256 = _historical_artifact_sha256(module, label="runtime module")
+    if observed_module_sha256 != manifest.get("module_sha256"):
+        raise RuntimeRefreshError(
+            "historical-runtime-module-mismatch",
+            "historical runtime module digest mismatch",
+        )
+    _historical_nonsymlink_path(
+        Path(str(manifest.get("canonical_registry_root", ""))),
+        label="canonical Registry root",
+    )
+    _historical_nonsymlink_path(
+        Path(str(manifest.get("canonical_registry_inventory_path", ""))),
+        label="canonical Registry inventory",
+    )
+    registry_identity = registry_snapshot.canonical_registry_identity(manifest)
+    if registry_identity.get("valid") is not True:
+        raise RuntimeRefreshError(
+            "historical-runtime-registry-snapshot-invalid",
+            "historical canonical Registry snapshot failed immutable readback",
+            details={"reasons": registry_identity.get("reasons", [])},
+        )
+    if registry_identity.get("source_commit") != expected_commit:
+        raise RuntimeRefreshError(
+            "historical-runtime-registry-source-mismatch",
+            "historical Registry snapshot source differs from the authority intent",
+        )
+
+    launcher_fields = (
+        "launcher_sha256",
+        "runtime_refresh_launcher_sha256",
+        "status_capsule_launcher_sha256",
+    )
+    launcher_sha256s = tuple(
+        _historical_artifact_sha256(path, label=field)
+        for path, field in zip(archived_launchers, launcher_fields, strict=True)
+    )
+    if launcher_sha256s != tuple(install_receipt[field] for field in launcher_fields):
+        raise RuntimeRefreshError(
+            "historical-runtime-launcher-mismatch",
+            "historical launcher snapshot differs from installer receipt",
+        )
+    return {
+        "manifest_path": str(expected_manifest_path),
+        "manifest_sha256": manifest_sha256,
+        "source_commit": expected_commit,
+        "release_id": release_id,
+        "package_tree_sha256": manifest.get("package_tree_sha256"),
+        "registry_snapshot_tree_sha256": manifest.get("canonical_registry_tree_sha256"),
+        "bureau_launcher_sha256": launcher_sha256s[0],
+        "runtime_refresh_launcher_sha256": launcher_sha256s[1],
+        "status_capsule_launcher_sha256": launcher_sha256s[2],
+        "check_valid": True,
+        "runtime_identity_valid": True,
+        "rollback": install_receipt.get("rollback"),
+    }
+
+
 def _write_attempt_result(path: Path, value: dict[str, Any]) -> dict[str, Any]:
     result = bind_digest(value, "result_sha256")
     create_only(path, canonical_bytes(result))
@@ -2551,7 +2916,7 @@ def closeout_runtime_refresh_authority(
     resource_db: Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
     now: datetime | None = None,
     authority_store: Any | None = None,
-    readback: Callable[..., dict[str, Any]] = readback_install,
+    readback: Callable[..., dict[str, Any]] = readback_historical_install,
 ) -> dict[str, Any]:
     """CAS-close a successful single-use authority that intentionally has no run."""
     current_time = now or utc_now()

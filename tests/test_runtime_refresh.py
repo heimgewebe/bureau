@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 from runtime_approval import write_runtime_approval_intent
 
+from bureau import registry_snapshot, runtime_identity
 from bureau import runtime_refresh as refresh
 from bureau.v2 import StateStore
 
@@ -459,6 +460,208 @@ def historical_no_run_success(
         },
     )
     return intent, store, result, resource_db
+
+
+def historical_runtime_artifacts(
+    tmp_path: Path, intent: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Path]]:
+    prefix = Path(intent["prefix"])
+    bin_dir = Path(intent["bin_dir"])
+    manifest_path = prefix / "deployment-manifest.json"
+    release_id = f"{intent['main_commit'][:12]}-srcfixture"
+    release = prefix / "releases" / release_id
+    module = release / "src/bureau/runtime_identity.py"
+    module.parent.mkdir(parents=True)
+    module.write_text("RUNTIME_FIXTURE = True\n", encoding="utf-8")
+    cycle = release / "src/bureau_cycle"
+    cycle.mkdir(parents=True)
+    (cycle / "__init__.py").write_text("CYCLE_FIXTURE = True\n", encoding="utf-8")
+    (release / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+    schemas = release / "schemas"
+    schemas.mkdir()
+    (schemas / "task.json").write_text("{}\n", encoding="utf-8")
+    systemd = release / "ops/systemd"
+    libexec = systemd / "libexec"
+    libexec.mkdir(parents=True)
+    for name in runtime_identity.SCHEDULER_NAMES:
+        (systemd / f"{name}.service").write_text("[Service]\n", encoding="utf-8")
+        (systemd / f"{name}.timer").write_text("[Timer]\n", encoding="utf-8")
+        executable = libexec / name
+        executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        executable.chmod(0o755)
+    package_tree_sha256 = runtime_identity._package_tree_sha256(release)
+    assert package_tree_sha256 is not None
+
+    registry_root = prefix / "registry-snapshots" / f"{intent['main_commit'][:12]}-fixture"
+    registry_task = registry_root / "registry/tasks/FIXTURE.json"
+    registry_task.parent.mkdir(parents=True)
+    registry_task.write_text('{"id":"FIXTURE"}\n', encoding="utf-8")
+    registry_paths = [Path("registry/tasks/FIXTURE.json")]
+    registry_tree_sha256 = registry_snapshot.snapshot_tree_sha256(registry_root, registry_paths)
+    assert registry_tree_sha256 is not None
+    inventory = registry_root / ".bureau-runtime-snapshot.json"
+    inventory_value = {
+        "schema_version": 1,
+        "kind": "bureau_registry_snapshot",
+        "source_commit": intent["main_commit"],
+        "tree_sha256": registry_tree_sha256,
+        "paths": [path.as_posix() for path in registry_paths],
+    }
+    inventory.write_bytes(refresh.canonical_bytes(inventory_value))
+    inventory_sha256 = refresh.sha256_bytes(inventory.read_bytes())
+
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    launcher_contents = {
+        "bureau": b"#!/bin/sh\necho historical-bureau\n",
+        "bureau-runtime-refresh": b"#!/bin/sh\necho historical-refresh\n",
+        "bureau-status-capsule": b"#!/bin/sh\necho historical-status\n",
+    }
+    for name, content in launcher_contents.items():
+        path = bin_dir / name
+        path.write_bytes(content)
+        path.chmod(0o755)
+
+    rollback = {
+        "directory": str(prefix / "backups/pre-historical"),
+        "manifest": None,
+        "launcher": None,
+        "runtime_refresh_launcher": None,
+        "status_capsule_launcher": None,
+    }
+    runtime_approval = {
+        "schema_version": 1,
+        "allowed": True,
+        "reference": intent["target_sha256"],
+    }
+    manifest = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_deployment",
+        "release_id": release_id,
+        "source_repository": str(tmp_path / "source"),
+        "source_commit": intent["main_commit"],
+        "package_tree_sha256": package_tree_sha256,
+        "immutable_release_path": str(release),
+        "module_path": str(module),
+        "module_sha256": refresh.sha256_bytes(module.read_bytes()),
+        "canonical_registry_root": str(registry_root),
+        "canonical_registry_inventory_path": str(inventory),
+        "canonical_registry_inventory_sha256": inventory_sha256,
+        "canonical_registry_tree_sha256": registry_tree_sha256,
+        "launcher_path": str(bin_dir / "bureau"),
+        "runtime_refresh_launcher_path": str(bin_dir / "bureau-runtime-refresh"),
+        "status_capsule_launcher_path": str(bin_dir / "bureau-status-capsule"),
+        "installed_at": refresh.isoformat(NOW),
+        "runtime_approval": runtime_approval,
+        "previous_manifest_sha256": None,
+        "rollback": rollback,
+    }
+    manifest[refresh.RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD] = refresh.payload_digest(
+        manifest, refresh.RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD
+    )
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_bytes(refresh.canonical_bytes(manifest))
+    manifest_sha256 = refresh.sha256_bytes(manifest_path.read_bytes())
+    receipt = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_install_receipt",
+        "release_id": release_id,
+        "manifest_path": str(manifest_path),
+        "manifest_sha256": manifest_sha256,
+        "launcher_path": str(bin_dir / "bureau"),
+        "launcher_sha256": refresh.sha256_bytes((bin_dir / "bureau").read_bytes()),
+        "launcher_written": True,
+        "runtime_refresh_launcher_path": str(bin_dir / "bureau-runtime-refresh"),
+        "runtime_refresh_launcher_sha256": refresh.sha256_bytes(
+            (bin_dir / "bureau-runtime-refresh").read_bytes()
+        ),
+        "runtime_refresh_launcher_written": True,
+        "status_capsule_launcher_path": str(bin_dir / "bureau-status-capsule"),
+        "status_capsule_launcher_sha256": refresh.sha256_bytes(
+            (bin_dir / "bureau-status-capsule").read_bytes()
+        ),
+        "status_capsule_launcher_written": True,
+        "package_tree_sha256": package_tree_sha256,
+        "canonical_registry_root": str(registry_root),
+        "canonical_registry_tree_sha256": registry_tree_sha256,
+        "rollback": rollback,
+        "runtime_approval": runtime_approval,
+        "installed_at": refresh.isoformat(NOW),
+    }
+    receipt_path = prefix / "receipts" / f"{release_id}-{manifest_sha256[:12]}.json"
+    receipt_path.parent.mkdir(parents=True)
+    receipt_path.write_bytes(refresh.canonical_bytes(receipt))
+    install_receipt = {**receipt, "receipt_path": str(receipt_path)}
+    historical_readback = refresh.readback_historical_install(
+        expected_commit=intent["main_commit"],
+        prefix=prefix,
+        bin_dir=bin_dir,
+        install_receipt=install_receipt,
+    )
+
+    backup = prefix / "backups" / "successor-deploy"
+    backup.mkdir(parents=True)
+    shutil.copy2(manifest_path, backup / "deployment-manifest.json")
+    for name in launcher_contents:
+        shutil.copy2(bin_dir / name, backup / name)
+    successor_commit = "9" * 40
+    successor_release_id = f"{successor_commit[:12]}-srcfixture"
+    successor_release = prefix / "releases" / successor_release_id
+    shutil.copytree(release, successor_release)
+    successor_module = successor_release / "src/bureau/runtime_identity.py"
+    successor_registry = prefix / "registry-snapshots" / f"{successor_commit[:12]}-fixture"
+    shutil.copytree(registry_root, successor_registry)
+    successor_inventory = successor_registry / ".bureau-runtime-snapshot.json"
+    successor_inventory_value = {**inventory_value, "source_commit": successor_commit}
+    successor_inventory.write_bytes(refresh.canonical_bytes(successor_inventory_value))
+    successor_manifest = {
+        **manifest,
+        "release_id": successor_release_id,
+        "source_commit": successor_commit,
+        "immutable_release_path": str(successor_release),
+        "module_path": str(successor_module),
+        "module_sha256": refresh.sha256_bytes(successor_module.read_bytes()),
+        "canonical_registry_root": str(successor_registry),
+        "canonical_registry_inventory_path": str(successor_inventory),
+        "canonical_registry_inventory_sha256": refresh.sha256_bytes(
+            successor_inventory.read_bytes()
+        ),
+        "previous_manifest_sha256": manifest_sha256,
+    }
+    successor_manifest[refresh.RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD] = refresh.payload_digest(
+        successor_manifest, refresh.RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD
+    )
+    manifest_path.write_bytes(refresh.canonical_bytes(successor_manifest))
+    successor_bytes = manifest_path.read_bytes()
+    assert runtime_identity._package_tree_sha256(successor_release) == package_tree_sha256
+    assert registry_snapshot.canonical_registry_identity(successor_manifest)["valid"] is True
+    for name in launcher_contents:
+        path = bin_dir / name
+        path.write_bytes(f"#!/bin/sh\necho successor-{name}\n".encode())
+        path.chmod(0o755)
+    assert manifest_path.read_bytes() == successor_bytes
+    return install_receipt, historical_readback, {
+        "manifest": manifest_path,
+        "backup": backup,
+        "release": release,
+        "registry_task": registry_task,
+        "receipt": receipt_path,
+    }
+
+
+def replace_historical_result(
+    intent: dict[str, Any],
+    result: dict[str, Any],
+    *,
+    install_receipt: dict[str, Any],
+    readback: dict[str, Any],
+) -> dict[str, Any]:
+    result_path = Path(intent["state_root"]) / "attempts" / intent["target_sha256"] / "result.json"
+    result_path.unlink()
+    payload = dict(result)
+    payload.pop("result_sha256", None)
+    payload["install_receipt"] = install_receipt
+    payload["readback"] = readback
+    return refresh._write_attempt_result(result_path, payload)
 
 
 def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> None:
@@ -1743,6 +1946,114 @@ def test_no_run_closeout_is_receipt_bound_and_idempotent(tmp_path: Path, task_id
     assert replay["idempotent_replay"] is True
     assert store.task_spec(task_id)["revision"] == terminal_revision
     assert store.list_runs() == []
+
+
+def test_no_run_closeout_authenticates_historical_runtime_after_successor_deploy(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    install_receipt, historical_readback, artifacts = historical_runtime_artifacts(tmp_path, intent)
+    result = replace_historical_result(
+        intent,
+        result,
+        install_receipt=install_receipt,
+        readback=historical_readback,
+    )
+    release_test_leases(resource_db)
+    successor_manifest = artifacts["manifest"].read_bytes()
+
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+    )
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "verified"
+    assert closeout["closeout"]["runtime_result_sha256"] == result["result_sha256"]
+    assert artifacts["manifest"].read_bytes() == successor_manifest
+    assert json.loads(successor_manifest)["source_commit"] == "9" * 40
+    assert historical_readback["source_commit"] == intent["main_commit"]
+
+
+@pytest.mark.parametrize(
+    ("damage", "expected_code"),
+    [
+        ("manifest", "historical-runtime-manifest-evidence-unavailable"),
+        ("launcher", "historical-runtime-launcher-evidence-unavailable"),
+        ("release", "historical-runtime-release-invalid"),
+        ("release-symlink", "historical-runtime-path-symlink"),
+        ("package", "historical-runtime-package-mismatch"),
+        ("registry", "historical-runtime-registry-snapshot-invalid"),
+        ("receipt", "historical-install-receipt-mismatch"),
+        ("receipt-symlink", "historical-runtime-path-symlink"),
+    ],
+)
+def test_no_run_closeout_fails_closed_on_damaged_historical_runtime_evidence(
+    tmp_path: Path,
+    damage: str,
+    expected_code: str,
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    install_receipt, historical_readback, artifacts = historical_runtime_artifacts(tmp_path, intent)
+    result = replace_historical_result(
+        intent,
+        result,
+        install_receipt=install_receipt,
+        readback=historical_readback,
+    )
+    release_test_leases(resource_db)
+    before = store.task_spec(task_id)
+    assert before is not None
+
+    if damage == "manifest":
+        (artifacts["backup"] / "deployment-manifest.json").unlink()
+    elif damage == "launcher":
+        (artifacts["backup"] / "bureau").write_text("tampered\n", encoding="utf-8")
+    elif damage == "release":
+        shutil.rmtree(artifacts["release"])
+    elif damage == "release-symlink":
+        moved_release = artifacts["release"].with_name(artifacts["release"].name + "-moved")
+        artifacts["release"].rename(moved_release)
+        artifacts["release"].symlink_to(moved_release, target_is_directory=True)
+    elif damage == "package":
+        (artifacts["release"] / "src/bureau/runtime_identity.py").write_text(
+            "TAMPERED = True\n", encoding="utf-8"
+        )
+    elif damage == "registry":
+        artifacts["registry_task"].write_text('{"id":"TAMPERED"}\n', encoding="utf-8")
+    elif damage == "receipt":
+        persisted_receipt = json.loads(artifacts["receipt"].read_text(encoding="utf-8"))
+        persisted_receipt["installed_at"] = refresh.isoformat(NOW + timedelta(seconds=1))
+        artifacts["receipt"].write_bytes(refresh.canonical_bytes(persisted_receipt))
+    else:
+        moved_receipt = artifacts["receipt"].with_name(artifacts["receipt"].name + ".moved")
+        artifacts["receipt"].rename(moved_receipt)
+        artifacts["receipt"].symlink_to(moved_receipt)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=20),
+            authority_store=store,
+        )
+
+    assert caught.value.code == expected_code
+    assert store.task_spec(task_id) == before
+    assert "runtime_closeout" not in before["spec"]["metadata"]
 
 
 def test_no_run_closeout_rejects_historical_multi_use_of_single_use_authority(

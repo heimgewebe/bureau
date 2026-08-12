@@ -2,23 +2,48 @@
   "acceptance": [
     {
       "assertion": "Die repositorydefinierten Required Checks bleiben exakt fail-closed; fehlend, queued, laufend oder fehlgeschlagen bleibt für Pflichtchecks blockierend.",
-      "id": "required-checks-stay-strict"
+      "evidence_type": "object",
+      "id": "required-checks-stay-strict",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-optional-ci-platform-diagnostics-required-checks-stay-strict"
+      }
     },
     {
       "assertion": "Ein optionaler GitHub-Checkzustand mit terminal fehlgeschlagenem Parent-Run, gleichzeitig queued Child ohne Runner und ohne Annotationen wird maschinenlesbar als Plattform-/Diagnoseinkonsistenz klassifiziert, nicht als Codefund.",
-      "id": "platform-inconsistency-classified"
+      "evidence_type": "object",
+      "id": "platform-inconsistency-classified",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-optional-ci-platform-diagnostics-platform-inconsistency-classified"
+      }
     },
     {
       "assertion": "Optionale Plattformfehler bleiben sichtbar und erzeugen evidenzgebundene Warnung/Folgebefund; sie werden weder stillschweigend verworfen noch zur Abschaltung von CodeQL genutzt.",
-      "id": "no-silent-ignore"
+      "evidence_type": "object",
+      "id": "no-silent-ignore",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-optional-ci-platform-diagnostics-no-silent-ignore"
+      }
     },
     {
       "assertion": "Regressionstests decken den PR-#737-CodeQL-Fall sowie den älteren optionalen Check-Geisterzustand candidate-a7e5f751a584281dd7519b28 dedupliziert ab.",
-      "id": "regression"
+      "evidence_type": "object",
+      "id": "regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-optional-ci-platform-diagnostics-regression"
+      }
     },
     {
       "assertion": "Fokussierte Review-Gate-Tests und vollständige Grabowski-Validierung sind auf exaktem PR-Head grün; Review und Diff sind revisionsgebunden.",
-      "id": "delivery"
+      "evidence_type": "object",
+      "id": "delivery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-optional-ci-platform-diagnostics-delivery"
+      }
     }
   ],
   "claims": [

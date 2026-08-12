@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Legacy-Acceptance-Verträge deterministisch triagieren und migrieren",
+  "goal": "Den nach dem systemischen Typed-Acceptance-Fix verbleibenden Bestand untypisierter Bureau-TaskSpecs ohne pauschale Verifier-Erfindung abbauen. Nichtterminale Legacy-Verträge werden nach rekonstruierbarer Primärquelle klassifiziert; nur eindeutige fachliche Zuordnungen werden revisionsgebunden migriert. Mehrdeutige Kriterien bleiben explizit blockiert und erhalten deduplizierte Diagnose statt manual_observation als Universaldefault. Terminale Historie bleibt lesbar und wird nicht unnötig umgeschrieben.",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-TYPED-ACCEPTANCE-SYSTEMIC-20260812"
+  ],
+  "required_capabilities": [
+    "bureau",
+    "repository",
+    "python",
+    "testing",
+    "audit",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur fachlich deterministische Acceptance-Mappings migrieren. Keine massenhafte Zuordnung auf manual_observation, keine Umschreibung terminaler Historie ohne Lifecycle-Notwendigkeit, keine Gate-Abschwächung und keine direkte SQLite-Mutation; StateStore-Revisionen nur über den kanonischen CAS-Writer."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "inventory-reproduced",
+      "assertion": "Eine frische revisionsgebundene Inventur trennt StateStore und Registry sowie terminale und nichtterminale Legacy-Verträge. Der Ausgangsbefund dieses Auftrags – StateStore 1077 Tasks / 1074 invalid / 411 nichtterminal und Registry 1071 / 1067 invalid / 405 nichtterminal – wird nach Deployment neu gemessen und nicht blind fortgeschrieben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-migration:inventory-reproduced"
+      }
+    },
+    {
+      "id": "deterministic-classification",
+      "assertion": "Jedes betrachtete nichtterminale Legacy-Kriterium wird nach rekonstruierbarer Primärquelle und Verifier-Semantik klassifiziert; Migration erfolgt nur, wenn evidence_type, verifier und verifier_config aus kanonischem Scope reproduzierbar ableitbar sind.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-migration:deterministic-classification"
+      }
+    },
+    {
+      "id": "ambiguous-remains-blocked",
+      "assertion": "Mehrdeutige oder nicht authentifizierbare Kriterien werden nicht auf manual_observation oder einen anderen Default gezwungen, sondern bleiben mit stabiler task-/criterion-/pathgebundener Diagnose offen oder blocked.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-migration:ambiguous-remains-blocked"
+      }
+    },
+    {
+      "id": "cas-and-history-preserved",
+      "assertion": "Jede StateStore-Migration verwendet den kanonischen TaskSpec-CAS-Writer mit erwarteter Revision und Readback; terminale Legacy-Historie und bestehende Receipts bleiben unverändert, soweit kein expliziter Lifecycle-Grund eine neue Revision erfordert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-migration:cas-and-history-preserved"
+      }
+    },
+    {
+      "id": "batch-regressions",
+      "assertion": "Für jede deterministisch migrierte Verifier-Klasse existiert mindestens eine Negativ- und Positivregression, und der vollständige Bureau-Validierungslauf bleibt grün; die Anzahl nichtterminaler invalid Acceptance-Verträge sinkt ohne neue untypisierte Writes.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-migration:batch-regressions"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Fehlerhafte oder uneindeutige Migrationsvorschläge nicht anwenden. Bereits geschriebenen StateStore-Zustand nicht per SQL zurückdrehen; stattdessen eine neue revisionsgebundene TaskSpec-Korrektur über den kanonischen CAS-Pfad schreiben. Git-Historie und terminale Receipts nicht umschreiben."
+  },
+  "metadata": {
+    "registered_at": "2026-08-12",
+    "source": "Frische systemische Typed-Acceptance-Inventur im Zuge von PR #1919.",
+    "inventory_before_systemfix": {
+      "state_store": {
+        "total": 1077,
+        "valid": 3,
+        "invalid": 1074,
+        "invalid_nonterminal": 411,
+        "invalid_terminal": 663
+      },
+      "registry": {
+        "total": 1071,
+        "valid": 4,
+        "invalid": 1067,
+        "invalid_nonterminal": 405,
+        "invalid_terminal": 662
+      },
+      "note": "Nur Ausgangsbeleg; nach Merge/Deployment frisch neu messen."
+    },
+    "deduplication_search": "Kein bestehender kanonischer Task mit Scope typed acceptance / legacy acceptance migration gefunden.",
+    "does_not_establish": [
+      "pauschale Migrationsfreigabe für alle Legacy-Tasks",
+      "manual_observation als Default-Verifier",
+      "Berechtigung zum Umschreiben terminaler Historie",
+      "direkte SQLite-Mutationsautorität"
+    ]
+  }
+}

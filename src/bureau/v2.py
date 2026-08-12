@@ -3541,6 +3541,184 @@ class StateStore:
             "matches_current": True,
         }
 
+    def projection_repair_candidate(self) -> dict[str, Any]:
+        with self.connect() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT event_id,run_id,event_type,event_schema_version,payload_json "
+                    "FROM events ORDER BY event_id"
+                )
+            ]
+            base_rows, task_spec_rows = task_specs.split_event_rows(rows)
+            try:
+                current = state_events.current_projection(connection)
+                task_spec_replay = task_specs.verify_replay(connection, task_spec_rows)
+                assessment = state_events.projection_repair_candidate(base_rows, current)
+            except (state_events.StateEventError, task_specs.TaskSpecError) as exc:
+                raise legacy.StateError(str(exc)) from exc
+        authoritative_projection = {
+            "schema_version": 1,
+            "operational": current,
+            "task_specs": task_spec_replay["projection"],
+        }
+        return {
+            **assessment,
+            "task_spec_root_sha256": task_spec_replay["root_sha256"],
+            "current_authoritative_root_sha256": legacy.sha256_json(
+                authoritative_projection
+            ),
+        }
+
+    def apply_projection_repair(
+        self,
+        *,
+        expected_candidate_sha256: str,
+        reviewer: str,
+        reference: str,
+        reason: str,
+    ) -> dict[str, Any]:
+        if (
+            not isinstance(expected_candidate_sha256, str)
+            or len(expected_candidate_sha256) != 64
+            or any(char not in "0123456789abcdef" for char in expected_candidate_sha256)
+        ):
+            raise legacy.StateError("projection repair candidate digest is invalid")
+        for field, value in (
+            ("reviewer", reviewer),
+            ("reference", reference),
+            ("reason", reason),
+        ):
+            if not isinstance(value, str) or not value.strip() or len(value) > 1000:
+                raise legacy.StateError(f"projection repair {field} is invalid")
+
+        with self.immediate() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT event_id,run_id,event_type,event_schema_version,payload_json "
+                    "FROM events ORDER BY event_id"
+                )
+            ]
+            base_rows, task_spec_rows = task_specs.split_event_rows(rows)
+            try:
+                current = state_events.current_projection(connection)
+                task_spec_replay = task_specs.verify_replay(connection, task_spec_rows)
+            except (state_events.StateEventError, task_specs.TaskSpecError) as exc:
+                raise legacy.StateError(str(exc)) from exc
+
+            for row in base_rows:
+                if row["event_type"] != state_events.PROJECTION_REPAIR_EVENT_TYPE:
+                    continue
+                try:
+                    payload = json.loads(row["payload_json"])
+                    state_events.validate_event(
+                        state_events.PROJECTION_REPAIR_EVENT_TYPE, payload, row.get("run_id")
+                    )
+                except (json.JSONDecodeError, state_events.StateEventError) as exc:
+                    raise legacy.StateError(str(exc)) from exc
+                if payload["candidate_sha256"] != expected_candidate_sha256:
+                    continue
+                try:
+                    replayed = state_events.replay(base_rows)
+                except state_events.StateEventError as exc:
+                    raise legacy.StateError(str(exc)) from exc
+                current_root = state_events.projection_root(current)
+                if replayed["root_sha256"] != current_root:
+                    raise legacy.StateError(
+                        "replayed state projection does not match the current StateStore projection"
+                    )
+                return {
+                    "schema_version": 1,
+                    "kind": "bureau.state_projection_repair_result",
+                    "status": "already-applied",
+                    "event_id": row["event_id"],
+                    "candidate_sha256": expected_candidate_sha256,
+                    "current_root_sha256": current_root,
+                    "task_spec_root_sha256": task_spec_replay["root_sha256"],
+                    "idempotent": True,
+                    "effect_started": False,
+                }
+
+            try:
+                assessment = state_events.projection_repair_candidate(base_rows, current)
+            except state_events.StateEventError as exc:
+                raise legacy.StateError(str(exc)) from exc
+            if assessment["candidate_sha256"] != expected_candidate_sha256:
+                raise legacy.StateError("projection repair candidate changed before apply")
+
+            authority = {
+                "schema_version": state_events.EVENT_SCHEMA_VERSION,
+                "kind": "operator",
+                "reviewer": reviewer.strip(),
+                "reference": reference.strip(),
+                "reason": reason.strip(),
+            }
+            payload = {
+                "schema_version": state_events.EVENT_SCHEMA_VERSION,
+                "kind": state_events.PROJECTION_REPAIR_KIND,
+                "candidate": assessment["candidate"],
+                "candidate_sha256": expected_candidate_sha256,
+                "authority": authority,
+            }
+            self._insert_event(
+                connection, state_events.PROJECTION_REPAIR_EVENT_TYPE, payload, None
+            )
+            event_id = int(
+                connection.execute("SELECT last_insert_rowid()").fetchone()[0]
+            )
+
+            rows_after = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT event_id,run_id,event_type,event_schema_version,payload_json "
+                    "FROM events ORDER BY event_id"
+                )
+            ]
+            base_rows_after, task_spec_rows_after = task_specs.split_event_rows(rows_after)
+            try:
+                replayed = state_events.replay(base_rows_after)
+                current_after = state_events.current_projection(connection)
+                task_spec_after = task_specs.verify_replay(connection, task_spec_rows_after)
+            except (state_events.StateEventError, task_specs.TaskSpecError) as exc:
+                raise legacy.StateError(str(exc)) from exc
+            current_root = state_events.projection_root(current_after)
+            if replayed["root_sha256"] != current_root:
+                raise legacy.StateError(
+                    "projection repair did not restore the current StateStore projection"
+                )
+            authoritative_projection = {
+                "schema_version": 1,
+                "operational": replayed["projection"],
+                "task_specs": task_spec_after["projection"],
+            }
+            current_authoritative = {
+                "schema_version": 1,
+                "operational": current_after,
+                "task_specs": task_spec_after["projection"],
+            }
+            if legacy.sha256_json(authoritative_projection) != legacy.sha256_json(
+                current_authoritative
+            ):
+                raise legacy.StateError(
+                    "projection repair authoritative projection does not match "
+                    "current StateStore projection"
+                )
+            return {
+                "schema_version": 1,
+                "kind": "bureau.state_projection_repair_result",
+                "status": "applied",
+                "event_id": event_id,
+                "candidate_sha256": expected_candidate_sha256,
+                "candidate": assessment["candidate"],
+                "authority": authority,
+                "current_root_sha256": current_root,
+                "task_spec_root_sha256": task_spec_after["root_sha256"],
+                "repair_checkpoint_count": replayed["repair_checkpoint_count"],
+                "idempotent": False,
+                "effect_started": True,
+            }
+
     def task_spec(self, task_id: str) -> dict[str, Any] | None:
         with self.connect() as connection:
             try:

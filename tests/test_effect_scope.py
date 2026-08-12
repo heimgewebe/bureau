@@ -104,6 +104,12 @@ def test_command_effect_scope_is_explicit_and_fails_closed() -> None:
         effect_scope.classify_command_effect_scope("future-command", mutates=True)
         == "registry_mutation"
     )
+    assess = bureau_cli.parser().parse_args(["projection-repair", "--assess"])
+    apply = bureau_cli.parser().parse_args(["projection-repair", "--apply"])
+    assert bureau_cli._command_mutates(assess) is False
+    assert bureau_cli._command_effect_scope(assess) == "read_only"
+    assert bureau_cli._command_mutates(apply) is True
+    assert bureau_cli._command_effect_scope(apply) == "coordination_state_mutation"
     unknown = SimpleNamespace(command="future-command")
     assert bureau_cli._command_mutates(unknown) is True
     assert bureau_cli._command_effect_scope(unknown) == "registry_mutation"

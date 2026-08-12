@@ -10,10 +10,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .acceptance import AcceptanceContractError
 from .approval import validate_declared_task_approval
 from .core import StateError
 from .github_repository import validate_github_repository_slug
 from .lease_contract import assess_task_broad_bureau_scope
+from .schema_validation import DocumentSchemaError, SchemaSet, default_schema_set
 
 REGISTRATION_PREFLIGHT_SCHEMA_VERSION = 1
 REGISTRATION_PREFLIGHT_KIND = "bureau_registry_registration_preflight"
@@ -167,6 +169,7 @@ def evaluate_registration_preflight(
     open_prs: list[dict[str, Any]],
     pr_number: int | None = None,
     head_sha: str | None = None,
+    schemas: SchemaSet | None = None,
 ) -> dict[str, Any]:
     repository = validate_github_repository_slug(repository)
     task_id = validate_task_id(str(proposed_task.get("id", "")))
@@ -178,6 +181,15 @@ def evaluate_registration_preflight(
         head_sha = validate_sha(head_sha, field="head_sha")
     if pr_number is not None and (not isinstance(pr_number, int) or pr_number <= 0):
         raise RegistrationPreflightError("pr_number must be a positive integer")
+
+    task_schema_errors: list[str] = []
+    acceptance_contract_errors: list[dict[str, Any]] = []
+    try:
+        (schemas or default_schema_set()).validate_task_write(proposed_task, proposed_path)
+    except DocumentSchemaError as exc:
+        task_schema_errors = str(exc).splitlines()
+    except AcceptanceContractError as exc:
+        acceptance_contract_errors = exc.diagnostics
 
     collisions: list[dict[str, Any]] = []
     canonical_ids = {
@@ -239,6 +251,10 @@ def evaluate_registration_preflight(
         reasons.append("broad_bureau_scope")
     if approval_contract_errors:
         reasons.append("approval_contract_invalid")
+    if task_schema_errors:
+        reasons.append("task_schema_invalid")
+    if acceptance_contract_errors:
+        reasons.append("acceptance_contract_invalid")
     decision = "allow" if not reasons else "block"
     receipt: dict[str, Any] = {
         "schema_version": REGISTRATION_PREFLIGHT_SCHEMA_VERSION,
@@ -256,6 +272,8 @@ def evaluate_registration_preflight(
         "pr_identity": {"number": pr_number, "head_sha": head_sha},
         "collisions": collisions,
         "approval_contract_errors": approval_contract_errors,
+        "task_schema_errors": task_schema_errors,
+        "acceptance_contract_errors": acceptance_contract_errors,
         "semantic_hints": _semantic_hints(proposed_task, canonical_tasks, open_prs),
         "broad_bureau_scope": broad_scope_assessment,
         "decision": decision,
@@ -709,6 +727,7 @@ def repository_registration_preflight(
         open_prs=open_prs,
         pr_number=pr_number,
         head_sha=head_sha,
+        schemas=SchemaSet(root_path / "schemas"),
     )
 
 

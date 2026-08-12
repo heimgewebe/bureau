@@ -17,10 +17,10 @@ from bureau.core import (
     StateError,
     StateStore,
     ValidationError,
-    complete_run,
     create_workspace,
     grabowski_handoff,
 )
+from bureau.v2 import _complete_run_after_typed_evaluation as complete_run
 
 
 def setup(root: Path, tmp_path: Path, monkeypatch):

@@ -24,6 +24,29 @@ HEAD = "d" * 40
 NOW = "2026-08-05T06:00:00Z"
 LATER_SAME_BUCKET = "2026-08-05T18:00:00Z"
 CAPABILITIES = ("bureau", "grabowski", "python", "repository", "testing")
+TYPED_ACCEPTANCE = {
+    category: [
+        {
+            "id": f"{category}-artifact",
+            "assertion": f"The reviewed {category} artifact matches the expected digest.",
+            "evidence_type": "object",
+            "verifier": "artifact_hash_matches",
+            "verifier_config": {"artifact_sha256": f"{index:x}" * 64},
+        }
+    ]
+    for index, category in enumerate(
+        (
+            "maintenance",
+            "care",
+            "audit",
+            "diagnosis",
+            "registry-reconciliation",
+            "queue-reconciliation",
+            "error-investigation",
+        ),
+        start=1,
+    )
+}
 
 
 def head_reader(_root: Path) -> str:
@@ -148,6 +171,7 @@ def cycle(
         mutation_authority=mutation_authority,
         publish=publish,
         generated_at=generated_at,
+        acceptance_contracts=TYPED_ACCEPTANCE,
         observer=observer or observer_for(frontier),
         head_reader=head_reader,
     )

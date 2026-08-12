@@ -108,7 +108,7 @@ class FakeStore:
         return {"run_id": run_id, "receipt_sha256": "f" * 64}
 
 
-def test_passing_typed_evidence_calls_existing_completion_path_once(tmp_path: Path) -> None:
+def test_passing_typed_evidence_calls_custom_completion_once(tmp_path: Path) -> None:
     store = FakeStore(tmp_path)
     calls: list[dict[str, Any]] = []
 
@@ -138,7 +138,8 @@ def test_passing_typed_evidence_calls_existing_completion_path_once(tmp_path: Pa
     assert result["evaluation"]["state"] == PASSED
     assert len(calls) == 1
     assert calls[0]["run_id"] == "RUN-1"
-    assert calls[0]["evidence"]["_typed_acceptance"]["state"] == PASSED
+    assert calls[0]["evidence"] == manual_evidence()
+    assert "_typed_acceptance" not in calls[0]["evidence"]
 
 
 def test_stale_evidence_stays_open_and_never_calls_completion(tmp_path: Path) -> None:
@@ -165,17 +166,60 @@ def test_stale_evidence_stays_open_and_never_calls_completion(tmp_path: Path) ->
     assert calls == []
 
 
-def test_untyped_acceptance_stays_open(tmp_path: Path) -> None:
+def test_untyped_acceptance_returns_stable_bound_diagnostic_without_terminalization(
+    tmp_path: Path,
+) -> None:
     store = FakeStore(
         tmp_path,
         criteria=[{"id": "legacy", "assertion": "legacy prose criterion"}],
     )
 
     result = evaluate_run(store, "RUN-1", {"legacy": True}, now=NOW)
+    repeated = evaluate_run(store, "RUN-1", {"legacy": True}, now=NOW)
 
     assert result["state"] == "open"
-    assert result["evaluation"]["state"] == UNKNOWN
-    assert result["evaluation"]["criteria"][0]["reason"] == "criterion-is-not-typed"
+    assert result["reason"] == "invalid-acceptance-contract"
+    assert result["mutated"] is False
+    diagnostic = result["diagnostic"]
+    assert diagnostic["task_id"] == "TASK-1"
+    assert diagnostic["run_id"] == "RUN-1"
+    assert diagnostic["task_sha256"] == TASK_SHA
+    assert diagnostic["plan_sha256"] == PLAN_SHA
+    assert diagnostic["diagnostics"][0]["path"] == "$.acceptance[0].evidence_type"
+    assert "Register a new TaskSpec revision" in diagnostic["repair_action"]
+    assert repeated["diagnostic"]["fingerprint"] == diagnostic["fingerprint"]
+
+    calls: list[str] = []
+
+    def completion(registry, observed_store, run_id, evidence):
+        calls.append(run_id)
+        return {"idempotent": False}
+
+    reconciled = reconcile_run(
+        "registry", store, "RUN-1", {"legacy": True}, now=NOW, completion=completion
+    )
+    assert reconciled["state"] == "open"
+    assert reconciled["mutated"] is False
+    assert calls == []
+
+
+def test_untyped_acceptance_is_diagnosed_before_evidence_provider(tmp_path: Path) -> None:
+    store = FakeStore(
+        tmp_path,
+        criteria=[{"id": "legacy", "assertion": "legacy prose criterion"}],
+    )
+    provider_calls: list[str] = []
+
+    def provider(run, envelope):
+        provider_calls.append(str(run["run_id"]))
+        raise AssertionError("invalid acceptance must not reach evidence collection")
+
+    result = reconcile_runs("registry", store, provider, now=NOW)
+
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    assert result["observations"][0]["reason"] == "invalid-acceptance-contract"
+    assert provider_calls == []
 
 
 def test_unreadable_envelope_is_open_not_failed(tmp_path: Path) -> None:
@@ -366,7 +410,7 @@ def test_adapter_unavailable_does_not_abort_later_runs(tmp_path: Path) -> None:
     assert completed == ["RUN-2"]
 
 
-def test_typed_pass_uses_real_complete_run_state_store_path(
+def test_authenticated_typed_pass_uses_real_post_evaluation_cas_writer(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:
     root = registry_factory(1)
@@ -392,6 +436,14 @@ def test_typed_pass_uses_real_complete_run_state_store_path(
         ),
         now=NOW,
         authenticated_criterion_ids={"manual"},
+        authentication_records={
+            "manual": {
+                "schema_version": 1,
+                "kind": "bureau.acceptance_source_authentication",
+                "authority": "manual",
+                "authenticated": True,
+            }
+        },
     )
 
     assert result["state"] == "terminalized"
@@ -402,6 +454,8 @@ def test_typed_pass_uses_real_complete_run_state_store_path(
     assert result["evaluation"]["state"] == PASSED
     assert receipt["evidence"]["manual"]["kind"] == EVIDENCE_KIND
     assert receipt["evidence"]["manual"]["revision"]["task_sha256"] == run["task_sha256"]
+    assert receipt["evidence"]["manual"]["_source_authentication"]["authenticated"] is True
+    assert "_typed_acceptance" not in receipt["evidence"]
 
 
 @pytest.mark.parametrize(

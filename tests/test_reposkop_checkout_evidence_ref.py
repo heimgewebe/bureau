@@ -12,7 +12,8 @@ from jsonschema import Draft202012Validator
 
 from bureau import legacy
 from bureau.schema_validation import DocumentSchemaError, SchemaSet
-from bureau.v2 import complete_run, plan_sha256
+from bureau.v2 import _complete_run_after_typed_evaluation as complete_run
+from bureau.v2 import plan_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads(

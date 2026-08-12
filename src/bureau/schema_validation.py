@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
+
+from .acceptance import validate_acceptance_contract
 
 SCHEMA_FILES = {
     "resource": "resource.v1.schema.json",
@@ -52,3 +55,22 @@ class SchemaSet:
             location = ".".join(str(item) for item in error.absolute_path) or "$"
             rendered.append(f"{source}: {location}: {error.message}")
         raise DocumentSchemaError("\n".join(rendered))
+
+    def validate_task_write(self, value: dict[str, Any], source: Path | str) -> None:
+        """Validate a new/revised TaskSpec structurally and semantically."""
+
+        self.validate("task", value, source)
+        validate_acceptance_contract(value)
+
+
+@lru_cache(maxsize=1)
+def default_schema_set() -> SchemaSet:
+    """Return the schemas shipped beside the Bureau source/release tree."""
+
+    return SchemaSet(Path(__file__).resolve().parents[2] / "schemas")
+
+
+def validate_task_write(value: dict[str, Any], source: Path | str) -> None:
+    """Strict shared TaskSpec write validation for callers without a Registry."""
+
+    default_schema_set().validate_task_write(value, source)

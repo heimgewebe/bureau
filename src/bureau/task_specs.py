@@ -6,6 +6,8 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from . import legacy, state_events
+from .acceptance import AcceptanceContractError
+from .schema_validation import DocumentSchemaError, validate_task_write
 
 TASK_SPEC_SCHEMA_VERSION = 1
 TASK_SPEC_EVENT_TYPE = "task-spec-revision-set"
@@ -247,17 +249,16 @@ def _insert_event(connection: sqlite3.Connection, payload: Mapping[str, Any]) ->
     )
 
 
-def put(
+def _put_validated_material(
     connection: sqlite3.Connection,
-    spec: Mapping[str, Any],
+    canonical: dict[str, Any],
     *,
     idempotency_key: str,
     expected_revision: int | None,
     source: str,
 ) -> dict[str, Any]:
-    """Apply one TaskSpec CAS mutation inside the caller's IMMEDIATE transaction."""
+    """Apply already-selected material inside the caller's IMMEDIATE transaction."""
     validate_schema(connection)
-    canonical = _canonical_spec(spec)
     task_id = canonical["id"]
     digest = task_spec_digest(canonical)
     if not isinstance(idempotency_key, str) or not idempotency_key:
@@ -362,6 +363,52 @@ def put(
     }
 
 
+def put(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+    source: str,
+) -> dict[str, Any]:
+    """Apply one strictly validated TaskSpec CAS mutation.
+
+    ``source`` is provenance only and can never select a compatibility bypass.
+    """
+
+    canonical = _canonical_spec(spec)
+    try:
+        validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
+    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        raise TaskSpecError(str(exc)) from exc
+    return _put_validated_material(
+        connection,
+        canonical,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source=source,
+    )
+
+
+def _put_legacy_registry_import(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+    source: str,
+) -> dict[str, Any]:
+    """Import an exact historical Git projection without revising its semantics."""
+
+    return _put_validated_material(
+        connection,
+        _canonical_spec(spec),
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source=source,
+    )
+
+
 def import_registry(connection: sqlite3.Connection, registry: Any) -> dict[str, Any]:
     """Idempotently import exact Git TaskSpecs without changing their semantics."""
     imported = 0
@@ -379,7 +426,7 @@ def import_registry(connection: sqlite3.Connection, registry: Any) -> dict[str, 
                 )
             unchanged += 1
             continue
-        result = put(
+        result = _put_legacy_registry_import(
             connection,
             task.raw,
             idempotency_key=f"legacy-import:{task_id}:{digest}",
@@ -416,7 +463,7 @@ def seed_missing_registry(
             else:
                 divergent_preserved.append(task_id)
             continue
-        result = put(
+        result = _put_legacy_registry_import(
             connection,
             task.raw,
             idempotency_key=f"legacy-seed:{task_id}:{digest}",

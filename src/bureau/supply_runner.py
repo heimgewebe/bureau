@@ -15,7 +15,7 @@ import argparse
 import json
 import os
 import re
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -177,6 +177,7 @@ def run_supply_cycle(
     environment_blockers: Sequence[str] = (),
     generated_at: str | None = None,
     registry_head: str | None = None,
+    acceptance_contracts: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
     observer: Callable[..., FrontierObservation] = observe_authoritative_frontier,
     head_reader: Callable[[Path], str] = _git_head,
 ) -> dict[str, Any]:
@@ -228,6 +229,7 @@ def run_supply_cycle(
         frontier_registry_head=head,
         frontier_queue_sha256=queue_digest,
         frontier_snapshot_sha256=snapshot_digest,
+        acceptance_contracts=acceptance_contracts,
         head_reader=selected_head_reader,
     )
     atomic_json(report_path(selected_root), report)

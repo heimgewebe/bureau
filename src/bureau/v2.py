@@ -19,6 +19,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from . import github_repository, legacy, runtime_refresh, state_events, task_specs
+from .acceptance import AcceptanceContractError, validate_acceptance_contract
 from .adapters import AdapterRegistry
 from .approval import (
     ApprovalEvidence,
@@ -4209,6 +4210,15 @@ class Dispatcher(legacy.Dispatcher):
         # registry/queue.json is a compatibility projection only. Claim
         # admission is derived from task state, priority and the live gates below.
         closure_bridge = self._closure_bridge_applies(task, state, initiative)
+        if state not in TERMINAL_TASK_STATES:
+            try:
+                validate_acceptance_contract(task.raw)
+            except AcceptanceContractError as exc:
+                first_diagnostic = str(exc).partition("\n")[0]
+                result.append(
+                    f"invalid acceptance contract: {first_diagnostic}; "
+                    "repair the TaskSpec acceptance contract before claim"
+                )
         if state != "ready" and not closure_bridge:
             result.append(f"state is {state}")
         parent_child = self.registry.parent_child_projection(task, overlays)
@@ -6474,13 +6484,18 @@ def _receipt_binds_current_revision(registry: Registry, receipt: dict[str, Any])
     return revision.digests == (receipt.get("task_sha256"), receipt.get("plan_sha256"))
 
 
-def complete_run(
+def _complete_run_after_typed_evaluation(
     registry: Registry,
     store: StateStore,
     run_id: str,
     evidence: dict[str, Any],
 ) -> dict[str, Any]:
-    """Close one run under a single compare-and-swap against authoritative state.
+    """Write a typed-evaluation-authorized close under one authoritative CAS.
+
+    This is an internal mutation boundary for ``closure_observer`` after its
+    in-memory evaluator has produced a PASSED result from authenticated typed
+    evidence. It is intentionally not a public completion authority and does
+    not accept a serializable authorization marker.
 
     Every expectation the close depends on — receipt absence, run state, and the
     claim baseline — is read and enforced inside the same immediate transaction
@@ -6708,6 +6723,82 @@ def complete_run(
         "receipt_path": str(path),
         "idempotent": False,
         "current": True,
+        "lease_release": coordinated_lease_release_projection(envelope),
+    }
+
+
+def complete_run(
+    registry: Registry,
+    store: StateStore,
+    run_id: str,
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    """Replay an existing receipt, but never directly terminalize an active run.
+
+    Typed acceptance is evaluated and authorized only by the canonical closure
+    observer. The public API remains available for safe idempotent receipt
+    replay so an already committed close can be read back after a caller crash.
+    """
+    del evidence
+    replay_receipt: dict[str, Any] | None = None
+    envelope: dict[str, Any] = {}
+    with store.immediate() as connection:
+        run_row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+        duplicate = connection.execute(
+            "SELECT receipt_json,receipt_sha256 FROM receipts WHERE run_id=?",
+            (run_id,),
+        ).fetchone()
+        if duplicate is not None:
+            replay_receipt = _load_validated_stored_receipt(
+                registry, run_id, duplicate
+            )
+            envelope = (
+                json.loads(run_row["envelope_json"]) if run_row is not None else {}
+            )
+        elif run_row is None:
+            raise RunStateConflict(
+                "unknown-run",
+                f"unknown run {run_id}",
+                run_id=run_id,
+            )
+        elif run_row["state"] in legacy.ACTIVE_STATES:
+            raise RunStateConflict(
+                "typed-acceptance-required",
+                (
+                    f"run {run_id} cannot be completed directly; publish authenticated "
+                    "typed acceptance evidence and use the canonical `bureau reconcile` "
+                    "closure path"
+                ),
+                run_id=run_id,
+                details={
+                    "observed_state": run_row["state"],
+                    "required_command": "bureau reconcile",
+                    "required_authority": (
+                        "closure_observer PASSED authenticated typed evaluation"
+                    ),
+                },
+            )
+        else:
+            raise RunStateConflict(
+                "run-not-active",
+                f"run {run_id} is not active and has no completion receipt",
+                run_id=run_id,
+                details={
+                    "observed_state": run_row["state"],
+                    "expected_states": list(legacy.ACTIVE_STATES),
+                },
+            )
+
+    if replay_receipt is None:  # pragma: no cover - every branch assigns or raises
+        raise AssertionError("public completion replay produced no receipt")
+    replay_path = _materialize_receipt(store, replay_receipt)
+    return {
+        "receipt": replay_receipt,
+        "receipt_path": str(replay_path),
+        "idempotent": True,
+        "current": _receipt_binds_current_revision(registry, replay_receipt),
         "lease_release": coordinated_lease_release_projection(envelope),
     }
 

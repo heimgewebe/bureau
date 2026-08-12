@@ -9,12 +9,12 @@ from bureau.core import (
     Dispatcher,
     Registry,
     StateStore,
-    complete_run,
     grabowski_handoff,
 )
 from bureau.legacy import NoEligibleTask
 from bureau.rlens_policy import evaluate_task_rlens_policy
 from bureau.schema_validation import DocumentSchemaError, SchemaSet
+from bureau.v2 import _complete_run_after_typed_evaluation as complete_run
 
 ROOT = Path(__file__).resolve().parents[1]
 HEX64 = "a" * 64

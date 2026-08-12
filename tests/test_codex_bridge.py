@@ -177,6 +177,15 @@ def binding_lane(*, lane_id: str = "lane-grabowski-new", branch: str = "feat/new
         "reasons": ["state:active"],
         "recommended_action": "bind this lane to one canonical Bureau task before dispatch",
         "suggested_worker_profile": "grabowski-local-readonly",
+        "acceptance": [
+            {
+                "id": "closure-artifact",
+                "assertion": "The reviewed closure artifact matches the lane-bound digest.",
+                "evidence_type": "object",
+                "verifier": "artifact_hash_matches",
+                "verifier_config": {"artifact_sha256": "a" * 64},
+            }
+        ],
     }
 
 
@@ -401,6 +410,28 @@ def test_low_confidence_blocks_binding_task_write(tmp_path):
 
     assert result["receipt"]["blocked"] is True
     assert "binding_low_confidence" in blocker_codes(result["receipt"])
+    assert result["receipt"]["mutation_performed"] is False
+    assert sorted((root / "registry/tasks").glob("*.json")) == []
+
+
+def test_untyped_lane_refuses_binding_task_write(tmp_path):
+    root = make_binding_registry(tmp_path / "registry-root")
+    lane = binding_lane()
+    lane.pop("acceptance")
+    fixture = write_decision(tmp_path)
+    selected = config(
+        tmp_path,
+        backend="fixture",
+        fixture=fixture,
+        repo_root=root,
+        binding_gate=True,
+    )
+    write_inputs(selected.state_base, frontier=binding_frontier(lane))
+
+    result = codex_bridge.run_bridge(selected, runner=FakeRunner())
+
+    assert result["receipt"]["blocked"] is True
+    assert "binding_acceptance_contract_invalid" in blocker_codes(result["receipt"])
     assert result["receipt"]["mutation_performed"] is False
     assert sorted((root / "registry/tasks").glob("*.json")) == []
 

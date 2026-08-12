@@ -75,7 +75,17 @@ def registry_factory(tmp_path: Path):
                     },
                     {"resource": "cpu", "mode": "capacity", "amount": 1},
                 ],
-                "acceptance": [{"id": "proof", "assertion": "proof exists"}],
+                "acceptance": [
+                    {
+                        "id": "proof",
+                        "assertion": "proof exists",
+                        "evidence_type": "object",
+                        "verifier": "manual_observation",
+                        "verifier_config": {
+                            "observation_scope": f"test:{task_id}:proof"
+                        },
+                    }
+                ],
             }
             (root / f"registry/tasks/{task_id}.json").write_text(json.dumps(task))
         (root / "registry/queue.json").write_text(

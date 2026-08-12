@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Nachfolger für Bureau-Runtime-Refresh registrieren",
+  "goal": "Nach dem belegten Verbrauch der vorherigen Single-Use-Runtime-Refresh-Autorität genau eine neue, eigenständige und unverbrauchte Break-Glass-Autorität bereitstellen. Nach Merge dieser TaskSpec und autoritativem StateStore-Preflight darf genau ein kontrollierter Bureau-Runtime-Refresh auf den unmittelbar davor frisch beobachteten, reviewten und CI-grünen aktuellen main erfolgen. Ziel ist ausschließlich, den immutable Bureau-Release wieder mit der kanonischen Registry zu konvergieren, damit der stale Run BUR-RUN-20260812T074000Z-a9c26c239c über den bestehenden CAS-gebundenen Orphan-Reconcile-Pfad terminalisiert und anschließend der bereits registrierte Task GRABOWSKI-OPERATOR-SURFACE-V1-FU-PICKUP-EXPIRED-SAME-OWNER-LEASE-RECOVERY-20260812 regulär geclaimt werden kann.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-Use-Autorität ausschließlich für genau einen immutable Bureau-Runtime-Refresh nach Merge dieser eigenen TaskSpec. Vor prepare-intent und erneut vor apply sind frische Main-/Merge-/Required-Check-/target_sha256-Beobachtung, autoritativer StateStore-TaskSpec- und Verbrauchs-Preflight sowie alle exakt Intent-gebundenen Live-Leases zwingend. Kein Grabowski-Runtime-Deploy, keine Queue-/Claim-/Dispatch-Wirkung und keine Mutation fremder Arbeit."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "previous-authority-consumption-proven",
+      "assertion": "Vor Nutzung dieses Nachfolgers ist durch das kanonische Runtime-Refresh-Result fd26b873b2021b3be5d2172f127e774d53c0f6c2d3e7bef3ae4b00d265731dc5 belegt, dass BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-DEPLOY-DIAGNOSTIC-20260812 bereits erfolgreich für target_sha256 6d55b3d7ec4278d971deb79c284a08750a44ca7365c788a4a4e973cb17a63b71 verbraucht wurde; diese historische Autorität wird weder wiederverwendet noch revidiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:previous-authority-consumption-proven"
+      }
+    },
+    {
+      "id": "successor-and-required-merges-present",
+      "assertion": "Vor dem einzigen Refresh liegt diese Nachfolge-TaskSpec selbst im aktuellen Bureau main. Derselbe Zielstand enthält die bereits gemergte Registrierung des Lease-Recovery-Tasks aus Bureau-PR #1913 sowie die für CCM-V1-T007 revisionsgebundene Scope-Korrektur aus Bureau-PR #1912; kein Zwischenstand wird installiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:successor-and-required-merges-present"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller main-Commit, der revisionsgebundene Merge-/PR-Kontext, alle erforderlichen Validate-Checks einschließlich validate (3.10) und validate (3.12) sowie target_sha256 frisch beobachtet. Jede Drift verwirft den Kandidaten vor Wirkung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "authoritative-state-store-single-use-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply bestätigt der aktuelle autoritative StateStore diese exakte TaskSpec als nichtterminal, action_class runtime_mutation, required_level break_glass und noch unverbraucht. Registry-Snapshot, historische TaskSpecs oder fremde Autoritäten dürfen diesen Beleg nicht ersetzen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:authoritative-state-store-single-use-preflight"
+      }
+    },
+    {
+      "id": "break-glass-target-and-lease-binding",
+      "assertion": "Die konkrete Runtime-Freigabe bindet diese exakte Task-ID und reference an den frisch beobachteten target_sha256. Apply verwendet ausschließlich die vom daraus abgeleiteten Intent geforderten Grabowski-Live-Leases mit identischer Owner-/Task-/Target-Bindung; fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed vor Wirkung ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:break-glass-target-and-lease-binding"
+      }
+    },
+    {
+      "id": "single-success-only",
+      "assertion": "Genau ein erfolgreicher Bureau-Runtime-Refresh darf durch diese Task autorisiert werden. Der Erfolg wird task-, target-, intent- und resultgebunden im Single-Use-Ledger belegt; danach ist jede Wiederverwendung dieses Task-IDs für ein späteres oder identisches Target verboten und ein weiterer Drift benötigt eine neue ausdrücklich passende Autorität.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:single-success-only"
+      }
+    },
+    {
+      "id": "immutable-readback-and-release",
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot auf denselben source commit; StateStore-Integrität und Runtime-/Registry-Kompatibilität sind gültig. Die eigenen Refresh-Leases werden erst danach über den resultgebundenen Release-Pfad freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:immutable-readback-and-release"
+      }
+    },
+    {
+      "id": "authority-boundary-and-no-retry-on-ambiguity",
+      "assertion": "Die Task autorisiert keine Grabowski-Runtime-, Queue-, Claim-, Dispatch-, Orphan-Reconcile-, Fremdarbeits- oder sonstige Bureau-Wirkung außer dem einen gebundenen Runtime-Refresh. Bei unklarem oder nach Effect-Start fehlgeschlagenem Apply erfolgt kein Blind-Retry; zuerst wird ausschließlich der vorgeschriebene receipt- und targetgebundene Readback/Reconciliation-Pfad verwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor:authority-boundary-and-no-retry-on-ambiguity"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Truth behaupten und keinen Apply blind wiederholen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten beziehungsweise den bestehenden receipt- und targetgebundenen Reconciliation-/Rollbackpfad verwenden; keine Registry-, StateStore- oder Single-Use-Historie zurückschreiben."
+  },
+  "metadata": {
+    "previous_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-DEPLOY-DIAGNOSTIC-20260812",
+    "previous_runtime_refresh_target_sha256": "6d55b3d7ec4278d971deb79c284a08750a44ca7365c788a4a4e973cb17a63b71",
+    "previous_runtime_refresh_result_sha256": "fd26b873b2021b3be5d2172f127e774d53c0f6c2d3e7bef3ae4b00d265731dc5",
+    "installed_runtime_before_successor": "1d49dbec24955e0328ed227cde1c3624ad3dd7e2",
+    "observed_registry_main_before_successor": "da3a6933a50dda6ef543ea42c0976966405b61d7",
+    "blocked_orphan_run_id": "BUR-RUN-20260812T074000Z-a9c26c239c",
+    "blocked_orphan_reconcile_receipt_sha256": "9a886a99d20e94a0898059cf5992d0120c803723cea9db80f25da702083e82f5",
+    "blocked_orphan_reconcile_reason": "release-registry-identity-mismatch",
+    "required_followup_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-PICKUP-EXPIRED-SAME-OWNER-LEASE-RECOVERY-20260812",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Der installierte immutable Bureau-Release 1d49dbec2495 liegt hinter der kanonischen Registry da3a6933a50d. Der CAS-gebundene Orphan-Reconcile-Versuch für BUR-RUN-20260812T074000Z-a9c26c239c wurde deshalb mit receipt 9a886a99d20e94a0898059cf5992d0120c803723cea9db80f25da702083e82f5 vor StateStore-Wirkung durch release-registry-identity-mismatch gestoppt. Die vorherige Single-Use-Refresh-Autorität ist durch Result fd26b873b2021b3be5d2172f127e774d53c0f6c2d3e7bef3ae4b00d265731dc5 bereits verbraucht und verlangt ausdrücklich einen Nachfolger. Daher wird ausschließlich diese eine neue TaskSpec über einen normalen geschützten GitHub-PR registriert; Queue und Live-StateStore werden dadurch nicht direkt verändert.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority",
+        "StateStore seeding authority"
+      ]
+    },
+    "does_not_establish": [
+      "konkrete Deploymentfreigabe ohne frischen target_sha256",
+      "Autorität für Grabowski-Runtime",
+      "wiederverwendbare Runtime-Autorität",
+      "Orphan-Reconcile-Autorität",
+      "Permission to bypass current StateStore, Registry, CI, lease or immutable readback validation"
+    ]
+  }
+}

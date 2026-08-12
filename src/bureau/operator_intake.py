@@ -30,7 +30,13 @@ from .lease_contract import (
 )
 from .live_register import (
     ACTIVE_LIVE_STATUSES,
+    CANDIDATE_EVENT_SCHEMA_VERSION,
+    candidate_authority_nonclaims,
+    candidate_content_fingerprint,
+    candidate_event_id,
+    candidate_id_for_content,
     candidate_records,
+    candidate_source_fingerprint,
     current_candidate_record,
     current_candidate_records,
     live_register_record,
@@ -559,11 +565,6 @@ def _request_sha256(value: dict[str, Any]) -> str:
     return legacy.sha256_json(value)
 
 
-def _candidate_id_for_key(key: str) -> str:
-    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
-    return f"candidate-{digest[:24]}"
-
-
 def _operator_context(record: dict[str, Any]) -> dict[str, Any]:
     value = record.get("operator_intake")
     return value if isinstance(value, dict) else {}
@@ -594,6 +595,8 @@ def _candidate_idempotency_result(
                 },
             )
         identity = _candidate_identity(event)
+        candidate_event = event["record"].get("candidate_event")
+        candidate_event = candidate_event if isinstance(candidate_event, dict) else {}
         try:
             observed = current_candidate_record(store, candidate_id=identity)
         except StateError:
@@ -609,6 +612,10 @@ def _candidate_idempotency_result(
             "idempotent_replay": True,
             "candidate_id": identity,
             "event_id": observed["event_id"],
+            "source_event_id": event["event_id"],
+            "candidate_event_id": candidate_event.get("event_id"),
+            "source_fingerprint": candidate_event.get("source_fingerprint"),
+            "content_fingerprint": candidate_event.get("content_fingerprint"),
             "created_at": observed["created_at"],
             "request_sha256": request_sha256,
             "record": observed["record"],
@@ -736,33 +743,98 @@ def candidate_record(
         return replayed
 
     bound_registry = registry
-    if registry is not None:
+    if catalog_validation == "strict" and registry is not None:
         bound_registry, _ = _canonical_read_registry_snapshot(registry)
+    elif catalog_validation == "deferred":
+        bound_registry = None
 
     generated_observed_at = checked_observed or legacy.utc_now()
-    selected_candidate_id = (
-        candidate_id
-        if checked_supersedes_event_id is not None
-        else candidate_id or _candidate_id_for_key(key)
+    content_fingerprint = candidate_content_fingerprint(
+        title=str(checked_title),
+        desired_outcome=str(checked_outcome),
+        repo=repo,
+        task_id=task_id,
     )
+    source_fingerprint = candidate_source_fingerprint(
+        source_kind=str(checked_kind),
+        source_locator=checked_locator,
+        source_sha256=checked_sha,
+    )
+    equivalent_candidate_id: str | None = None
+    if candidate_id is None and checked_supersedes_event_id is None:
+        for existing in reversed(current_candidate_records(store)):
+            existing_record = existing["record"]
+            existing_context = _operator_context(existing_record)
+            existing_contract = existing_record.get("candidate_event")
+            existing_fingerprint = (
+                existing_contract.get("content_fingerprint")
+                if isinstance(existing_contract, dict)
+                else candidate_content_fingerprint(
+                    title=str(existing_record.get("title") or ""),
+                    desired_outcome=str(existing_context.get("desired_outcome") or ""),
+                    repo=existing_record.get("repo"),
+                    task_id=existing_record.get("task_id"),
+                )
+            )
+            if existing_fingerprint == content_fingerprint:
+                equivalent_candidate_id = _candidate_identity(existing)
+                break
+    if checked_supersedes_event_id is not None:
+        predecessor = next(
+            (
+                item
+                for item in reversed(candidate_records(store))
+                if int(item["event_id"]) == checked_supersedes_event_id
+            ),
+            None,
+        )
+        selected_candidate_id = (
+            candidate_id
+            or (_candidate_identity(predecessor) if predecessor is not None else None)
+            or candidate_id_for_content(content_fingerprint)
+        )
+    else:
+        selected_candidate_id = (
+            candidate_id or equivalent_candidate_id or candidate_id_for_content(content_fingerprint)
+        )
+    stable_candidate_event_id = candidate_event_id(
+        idempotency_key=key,
+        request_sha256=request_sha,
+    )
+    source_observation = {
+        "kind": checked_kind,
+        "locator": checked_locator,
+        "sha256": checked_sha,
+        "fingerprint": source_fingerprint,
+        "observed_at": generated_observed_at,
+        "freshness": "digest-bound" if checked_sha else "fingerprint-bound",
+        "does_not_establish": [] if checked_sha else ["source_content_identity"],
+    }
+    candidate_event = {
+        "schema_version": CANDIDATE_EVENT_SCHEMA_VERSION,
+        "kind": "bureau_candidate_event",
+        "candidate_id": selected_candidate_id,
+        "event_id": stable_candidate_event_id,
+        "idempotency_key": key,
+        "source_fingerprint": source_fingerprint,
+        "content_fingerprint": content_fingerprint,
+        "does_not_establish": candidate_authority_nonclaims(),
+    }
     context = {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "idempotency_key": key,
         "request_sha256": request_sha,
-        "source": {
-            "kind": checked_kind,
-            "locator": checked_locator,
-            "sha256": checked_sha,
-            "observed_at": generated_observed_at,
-            "freshness": "digest-bound" if checked_sha else "unknown",
-            "does_not_establish": [] if checked_sha else ["source_content_identity"],
-        },
+        "candidate_event_id": stable_candidate_event_id,
+        "source_fingerprint": source_fingerprint,
+        "content_fingerprint": content_fingerprint,
+        "source": source_observation,
+        "source_observations": [source_observation],
         "desired_outcome": checked_outcome,
         "does_not_establish": [
             "registry_task_truth",
             "queue_truth",
             "task_readiness",
-            "claim_or_dispatch_authority",
+            *candidate_authority_nonclaims(),
         ],
     }
     try:
@@ -781,6 +853,8 @@ def candidate_record(
             note=checked_note or str(checked_outcome),
             catalog_validation=catalog_validation,
             operator_context=context,
+            candidate_event=candidate_event,
+            deduplicate_candidate=(candidate_id is None and checked_supersedes_event_id is None),
         )
     except OperatorIntakeError:
         raise
@@ -793,6 +867,14 @@ def candidate_record(
             str(exc),
             details={"catalog_validation": catalog_validation},
         ) from exc
+    if recorded.get("idempotent_replay") is True:
+        replayed = _candidate_idempotency_result(
+            store,
+            key=key,
+            request_sha256=request_sha,
+        )
+        if replayed is not None:
+            return replayed
     recorded_candidate_id = _candidate_identity(recorded)
     return {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
@@ -805,6 +887,10 @@ def candidate_record(
         "idempotent_replay": False,
         "candidate_id": recorded_candidate_id,
         "event_id": recorded["event_id"],
+        "source_event_id": recorded["event_id"],
+        "candidate_event_id": stable_candidate_event_id,
+        "source_fingerprint": source_fingerprint,
+        "content_fingerprint": content_fingerprint,
         "created_at": recorded["created_at"],
         "request_sha256": request_sha,
         "record": recorded["record"],
@@ -875,6 +961,8 @@ def _candidate_assess(
     source_relationships: list[dict[str, Any]] = []
     source = context.get("source") if isinstance(context.get("source"), dict) else {}
     source_sha = source.get("sha256")
+    candidate_event = record.get("candidate_event")
+    candidate_event = candidate_event if isinstance(candidate_event, dict) else {}
     requested_task_id = task_id or record.get("task_id")
     for existing in registry.tasks.values():
         metadata = existing.raw.get("metadata")
@@ -1024,6 +1112,9 @@ def _candidate_assess(
         "status": "assessed",
         "candidate_id": identity,
         "event_id": event["event_id"],
+        "candidate_event_id": candidate_event.get("event_id"),
+        "source_fingerprint": candidate_event.get("source_fingerprint"),
+        "content_fingerprint": candidate_event.get("content_fingerprint"),
         "candidate_status": status,
         "decision": decision,
         "source_freshness": {
@@ -1069,6 +1160,7 @@ def _candidate_assess(
             "automatic_suppression",
             "task_readiness",
             "registry_mutation",
+            *candidate_authority_nonclaims(),
         ],
     }
 
@@ -1519,17 +1611,23 @@ def _inject_candidate_binding(task_json: dict[str, Any], event: dict[str, Any]) 
     if not isinstance(metadata, dict):
         raise OperatorIntakeError("metadata-invalid", "task metadata must be an object")
     context = _operator_context(event["record"])
+    candidate_event = event["record"].get("candidate_event")
+    candidate_event = candidate_event if isinstance(candidate_event, dict) else {}
     metadata["operator_intake"] = {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "candidate_id": _candidate_identity(event),
         "event_id": event["event_id"],
         "event_created_at": event["created_at"],
         "request_sha256": context.get("request_sha256"),
+        "candidate_event_id": candidate_event.get("event_id"),
+        "source_fingerprint": candidate_event.get("source_fingerprint"),
+        "content_fingerprint": candidate_event.get("content_fingerprint"),
         "source": context.get("source"),
+        "source_observations": context.get("source_observations", []),
         "does_not_establish": [
             "queue_truth",
             "task_readiness",
-            "claim_or_dispatch_authority",
+            *candidate_authority_nonclaims(),
         ],
     }
     return result
@@ -1657,6 +1755,7 @@ def task_propose(
             "task_readiness",
             "claim_or_dispatch_authority",
             "merge_or_deployment_authority",
+            *candidate_authority_nonclaims(),
         ],
     }
     unsigned = {
@@ -1788,6 +1887,7 @@ def review_task_proposal(
                 "registry_mutation",
                 "queue_mutation",
                 "publication_effect",
+                *candidate_authority_nonclaims(),
             ],
         }
     if review.get("required") is not True or review.get("status") != "pending":
@@ -2018,6 +2118,7 @@ def review_task_proposal(
             "registry_mutation",
             "queue_mutation",
             "publication_effect",
+            *candidate_authority_nonclaims(),
         ],
     }
 
@@ -2148,7 +2249,6 @@ def _validated_proposal(
     return plan, plan_bytes, approval_result
 
 
-
 def _require_no_registry_pr_collision_observation(
     observe: Callable[[], dict[str, Any]],
     *,
@@ -2188,8 +2288,7 @@ def _require_no_registry_pr_collision_observation(
     if collisions:
         raise OperatorIntakeError(
             "registry_pr_collision",
-            "an open GitHub pull request already claims the exact Registry task id "
-            "or target path",
+            "an open GitHub pull request already claims the exact Registry task id or target path",
             retryable=True,
             effect_started=False,
             ambiguity=False,
@@ -2203,6 +2302,7 @@ def _require_no_registry_pr_collision_observation(
             },
         )
     return observation
+
 
 def publication_preview(
     registry: Registry,
@@ -2275,8 +2375,10 @@ def publication_preview(
             "pull_request_creation",
             "queue_mutation",
             "merge_readiness",
+            *candidate_authority_nonclaims(),
         ],
     }
+
 
 def _publication_branch(task_id: str, proposal_sha256: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", task_id.casefold()).strip("-")

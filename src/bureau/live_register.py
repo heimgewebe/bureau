@@ -15,8 +15,11 @@ LIVE_REGISTER_SCHEMA_VERSION = 2
 LIVE_REGISTER_KINDS = {"thread_focus", "candidate_task", "focus_override"}
 LIVE_REGISTER_STATUSES = {"active", "paused", "closed", "observed", "promoted", "dropped"}
 ACTIVE_LIVE_STATUSES = {"active", "observed"}
+CANDIDATE_EVENT_SCHEMA_VERSION = 1
 _THREAD_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,199}$")
 _CANDIDATE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$")
+_CANDIDATE_EVENT_ID_RE = re.compile(r"^candidate-event-[0-9a-f]{24}$")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 LIVE_REGISTER_RETENTION_POLICY = {
     "schema_version": 1,
@@ -169,7 +172,77 @@ def _candidate_projection(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def candidate_content_fingerprint(
+    *,
+    title: str,
+    desired_outcome: str,
+    repo: str | None = None,
+    task_id: str | None = None,
+) -> str:
+    """Return source-independent exact identity for one reviewable finding."""
+
+    def normalized(value: str | None) -> str | None:
+        if value is None:
+            return None
+        return " ".join(value.split()).strip().casefold() or None
+
+    return legacy.sha256_json(
+        {
+            "schema_version": CANDIDATE_EVENT_SCHEMA_VERSION,
+            "title": normalized(title),
+            "desired_outcome": normalized(desired_outcome),
+            "repo": normalized(repo),
+            "task_id": normalized(task_id),
+        }
+    )
+
+
+def candidate_source_fingerprint(
+    *,
+    source_kind: str,
+    source_locator: str | None,
+    source_sha256: str | None,
+) -> str:
+    """Return deterministic identity for the exact source observation."""
+    return legacy.sha256_json(
+        {
+            "schema_version": CANDIDATE_EVENT_SCHEMA_VERSION,
+            "kind": " ".join(source_kind.split()).strip().casefold(),
+            "locator": (
+                " ".join(source_locator.split()).strip() if source_locator is not None else None
+            ),
+            "sha256": source_sha256,
+        }
+    )
+
+
+def candidate_id_for_content(content_fingerprint: str) -> str:
+    if _SHA256_RE.fullmatch(content_fingerprint) is None:
+        raise StateError("content_fingerprint must be a lowercase SHA-256 digest")
+    return f"candidate-{content_fingerprint[:24]}"
+
+
+def candidate_event_id(*, idempotency_key: str, request_sha256: str) -> str:
+    if _SHA256_RE.fullmatch(request_sha256) is None:
+        raise StateError("request_sha256 must be a lowercase SHA-256 digest")
+    digest = hashlib.sha256(f"{idempotency_key}\0{request_sha256}".encode()).hexdigest()
+    return f"candidate-event-{digest[:24]}"
+
+
+def candidate_authority_nonclaims() -> list[str]:
+    """Authority boundaries shared by intake, assessment, review and promotion."""
+    return [
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority",
+    ]
+
+
 def _live_nonclaims() -> list[str]:
+    # Preserve the established top-level live-register consumer contract.
+    # Candidate-specific execution/merge/deployment nonclaims live in the
+    # Candidate Event and promotion/review surfaces below.
     return [
         "registry_task_truth",
         "queue_truth",
@@ -177,6 +250,73 @@ def _live_nonclaims() -> list[str]:
         "dispatch_authority",
         "merge_readiness",
     ]
+
+
+def _validated_candidate_event(
+    value: dict[str, Any] | None,
+    *,
+    candidate_id: str | None,
+) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise StateError("candidate_event must be an object")
+    allowed = {
+        "schema_version",
+        "kind",
+        "candidate_id",
+        "event_id",
+        "idempotency_key",
+        "source_fingerprint",
+        "content_fingerprint",
+        "does_not_establish",
+    }
+    unknown = sorted(set(value) - allowed)
+    if unknown:
+        raise StateError(f"candidate_event contains unknown fields: {', '.join(unknown)}")
+    if value.get("schema_version") != CANDIDATE_EVENT_SCHEMA_VERSION:
+        raise StateError(f"candidate_event schema_version must be {CANDIDATE_EVENT_SCHEMA_VERSION}")
+    if value.get("kind") != "bureau_candidate_event":
+        raise StateError("candidate_event kind must be bureau_candidate_event")
+    event_candidate_id = _validate_candidate_id(value.get("candidate_id"))
+    if candidate_id is not None and event_candidate_id != candidate_id:
+        raise StateError("candidate_event candidate_id must match candidate_id")
+    event_id = value.get("event_id")
+    if not isinstance(event_id, str) or _CANDIDATE_EVENT_ID_RE.fullmatch(event_id) is None:
+        raise StateError("candidate_event event_id must be a stable candidate-event digest")
+    idempotency_key = value.get("idempotency_key")
+    if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+        raise StateError("candidate_event idempotency_key must be a non-empty string")
+    for field in ("source_fingerprint", "content_fingerprint"):
+        fingerprint = value.get(field)
+        if not isinstance(fingerprint, str) or _SHA256_RE.fullmatch(fingerprint) is None:
+            raise StateError(f"candidate_event {field} must be a lowercase SHA-256 digest")
+    if value.get("does_not_establish") != candidate_authority_nonclaims():
+        raise StateError("candidate_event authority nonclaims are incomplete")
+    return json.loads(legacy.canonical_json(value))
+
+
+def _merge_operator_context(previous: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
+    """Preserve every source observation while one candidate identity advances."""
+    merged = json.loads(legacy.canonical_json(incoming))
+    observations: list[dict[str, Any]] = []
+    for context in (previous, incoming):
+        values = context.get("source_observations")
+        if isinstance(values, list):
+            observations.extend(item for item in values if isinstance(item, dict))
+        elif isinstance(context.get("source"), dict):
+            observations.append(context["source"])
+    unique: dict[str, dict[str, Any]] = {}
+    for observation in observations:
+        fingerprint = observation.get("fingerprint")
+        key = (
+            str(fingerprint)
+            if isinstance(fingerprint, str) and _SHA256_RE.fullmatch(fingerprint)
+            else legacy.sha256_json(observation)
+        )
+        unique[key] = observation
+    merged["source_observations"] = [unique[key] for key in sorted(unique)]
+    return merged
 
 
 def _validated_operator_context(value: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -208,6 +348,8 @@ def live_register_record(
     note: str | None = None,
     catalog_validation: str = "strict",
     operator_context: dict[str, Any] | None = None,
+    candidate_event: dict[str, Any] | None = None,
+    deduplicate_candidate: bool = False,
 ) -> dict[str, Any]:
     """Append one gitless operational Bureau live-register event."""
     if catalog_validation not in {"strict", "deferred"}:
@@ -216,8 +358,13 @@ def live_register_record(
         raise StateError("strict catalog validation requires a loaded Bureau registry")
     validation_registry = registry if catalog_validation == "strict" else None
     checked_kind = _validate_kind(kind)
-    if checked_kind != "candidate_task" and operator_context is not None:
-        raise StateError("operator_context is only valid for candidate_task")
+    if checked_kind != "candidate_task" and (
+        operator_context is not None or candidate_event is not None or deduplicate_candidate
+    ):
+        raise StateError(
+            "operator_context is only valid for candidate_task; candidate_event and "
+            "candidate deduplication are candidate-only"
+        )
     checked_status = _validate_status(checked_kind, status) if status is not None else None
     if catalog_validation == "deferred" and checked_kind == "candidate_task":
         if checked_status == "promoted":
@@ -240,12 +387,59 @@ def live_register_record(
     if supersedes_event_id is not None and supersedes_event_id < 1:
         raise StateError("supersedes_event_id must be a positive integer")
     operator_context = _validated_operator_context(operator_context)
+    if checked_kind == "candidate_task" and candidate_event is None and supersedes_event_id is None:
+        content_fingerprint = candidate_content_fingerprint(
+            title=checked_title,
+            desired_outcome=checked_note or checked_title,
+            repo=checked_repo,
+            task_id=checked_task_id,
+        )
+        source_locator = (
+            f"live-register:{checked_source}:{checked_repo or '-'}:{checked_task_id or '-'}"
+        )
+        source_fingerprint = candidate_source_fingerprint(
+            source_kind=checked_source,
+            source_locator=source_locator,
+            source_sha256=None,
+        )
+        generated_idempotency_key = f"live-register:{source_fingerprint}:{content_fingerprint}"
+        generated_request_sha256 = legacy.sha256_json(
+            {
+                "schema_version": CANDIDATE_EVENT_SCHEMA_VERSION,
+                "source": checked_source,
+                "source_locator": source_locator,
+                "title": checked_title,
+                "desired_outcome": checked_note or checked_title,
+                "repo": checked_repo,
+                "task_id": checked_task_id,
+            }
+        )
+        checked_candidate_id = checked_candidate_id or candidate_id_for_content(content_fingerprint)
+        candidate_event = {
+            "schema_version": CANDIDATE_EVENT_SCHEMA_VERSION,
+            "kind": "bureau_candidate_event",
+            "candidate_id": checked_candidate_id,
+            "event_id": candidate_event_id(
+                idempotency_key=generated_idempotency_key,
+                request_sha256=generated_request_sha256,
+            ),
+            "idempotency_key": generated_idempotency_key,
+            "source_fingerprint": source_fingerprint,
+            "content_fingerprint": content_fingerprint,
+            "does_not_establish": candidate_authority_nonclaims(),
+        }
+        deduplicate_candidate = deduplicate_candidate or candidate_id is None
+    candidate_event = _validated_candidate_event(
+        candidate_event,
+        candidate_id=checked_candidate_id,
+    )
     if checked_kind != "candidate_task" and (
         checked_candidate_id is not None or supersedes_event_id is not None
     ):
         raise StateError("candidate_id and supersedes_event_id are only valid for candidate_task")
 
     with store.immediate() as connection:
+        idempotent_existing: dict[str, Any] | None = None
         if checked_kind == "candidate_task":
             rows = connection.execute(
                 """
@@ -260,7 +454,84 @@ def live_register_record(
             candidates = [
                 item for item in existing if item["record"].get("kind") == "candidate_task"
             ]
-            if supersedes_event_id is not None:
+            incoming_idempotency_key = (
+                operator_context.get("idempotency_key")
+                if isinstance(operator_context, dict)
+                else candidate_event.get("idempotency_key")
+                if isinstance(candidate_event, dict)
+                else None
+            )
+            incoming_request_sha256 = (
+                operator_context.get("request_sha256")
+                if isinstance(operator_context, dict)
+                else candidate_event.get("event_id")
+                if isinstance(candidate_event, dict)
+                else None
+            )
+            if deduplicate_candidate and isinstance(incoming_idempotency_key, str):
+                prior_for_key = next(
+                    (
+                        item
+                        for item in reversed(candidates)
+                        if (
+                            isinstance(item["record"].get("operator_intake"), dict)
+                            and item["record"]["operator_intake"].get("idempotency_key")
+                            == incoming_idempotency_key
+                        )
+                        or (
+                            isinstance(item["record"].get("candidate_event"), dict)
+                            and item["record"]["candidate_event"].get("idempotency_key")
+                            == incoming_idempotency_key
+                        )
+                    ),
+                    None,
+                )
+                if prior_for_key is not None:
+                    prior_context = prior_for_key["record"].get("operator_intake")
+                    prior_candidate_event = prior_for_key["record"].get("candidate_event")
+                    prior_request_identity = (
+                        prior_context.get("request_sha256")
+                        if isinstance(prior_context, dict)
+                        else prior_candidate_event.get("event_id")
+                        if isinstance(prior_candidate_event, dict)
+                        else None
+                    )
+                    if prior_request_identity != incoming_request_sha256:
+                        raise StateError(
+                            "idempotency_key already identifies different candidate input"
+                        )
+                    identity = _candidate_identity(prior_for_key)
+                    idempotent_existing = next(
+                        (
+                            item
+                            for item in reversed(_candidate_projection(candidates)["latest"])
+                            if _candidate_identity(item) == identity
+                        ),
+                        prior_for_key,
+                    )
+            if idempotent_existing is not None:
+                checked_candidate_id = _candidate_identity(idempotent_existing)
+            elif supersedes_event_id is None and checked_candidate_id is not None:
+                current_same_identity = next(
+                    (
+                        item
+                        for item in reversed(_candidate_projection(candidates)["latest"])
+                        if _candidate_identity(item) == checked_candidate_id
+                    ),
+                    None,
+                )
+                if current_same_identity is not None and deduplicate_candidate:
+                    supersedes_event_id = int(current_same_identity["event_id"])
+                    # A new observation may enrich evidence but cannot reopen or
+                    # otherwise advance a reviewed/terminal candidate lifecycle.
+                    checked_status = None
+                    promotion_required = None
+                    previous_context = current_same_identity["record"].get("operator_intake")
+                    if isinstance(previous_context, dict) and isinstance(operator_context, dict):
+                        operator_context = _validated_operator_context(
+                            _merge_operator_context(previous_context, operator_context)
+                        )
+            if idempotent_existing is None and supersedes_event_id is not None:
                 previous = next(
                     (item for item in candidates if int(item["event_id"]) == supersedes_event_id),
                     None,
@@ -303,9 +574,18 @@ def live_register_record(
                     previous_context = previous["record"].get("operator_intake")
                     if isinstance(previous_context, dict):
                         operator_context = _validated_operator_context(previous_context)
+                if candidate_event is None:
+                    previous_candidate_event = previous["record"].get("candidate_event")
+                    if isinstance(previous_candidate_event, dict):
+                        candidate_event = _validated_candidate_event(
+                            previous_candidate_event,
+                            candidate_id=inherited_id,
+                        )
                 checked_candidate_id = inherited_id
-            elif checked_candidate_id is not None and any(
-                _candidate_identity(item) == checked_candidate_id for item in candidates
+            elif (
+                idempotent_existing is None
+                and checked_candidate_id is not None
+                and any(_candidate_identity(item) == checked_candidate_id for item in candidates)
             ):
                 raise StateError(
                     "an existing candidate_id requires supersedes_event_id pointing to "
@@ -313,44 +593,54 @@ def live_register_record(
                 )
             checked_candidate_id = checked_candidate_id or _generated_candidate_id()
 
-        checked_repo = _validate_repo(validation_registry, checked_repo)
-        checked_task_id = _validate_task(validation_registry, checked_task_id)
-        checked_status = checked_status or _validate_status(checked_kind, None)
-        payload: dict[str, Any] = {
-            "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
-            "kind": checked_kind,
-            "title": checked_title,
-            "source": checked_source,
-            "status": checked_status,
-            "promotion_required": bool(promotion_required),
-            "does_not_establish": _live_nonclaims(),
-            "catalog_validation": {
-                "mode": catalog_validation,
-                "status": "validated" if catalog_validation == "strict" else "deferred",
-                "does_not_establish": (
-                    []
-                    if catalog_validation == "strict"
-                    else ["repo_exists", "task_exists", "registry_binding_valid"]
-                ),
-            },
-        }
-        optional = {
-            "thread_id": checked_thread_id,
-            "worker_id": checked_worker_id,
-            "repo": checked_repo,
-            "task_id": checked_task_id,
-            "candidate_id": checked_candidate_id,
-            "supersedes_event_id": supersedes_event_id,
-            "note": checked_note,
-            "operator_intake": operator_context,
-        }
-        payload.update({key: value for key, value in optional.items() if value is not None})
-        created_at = legacy.utc_now()
-        cursor = connection.execute(
-            "INSERT INTO events(run_id,event_type,payload_json,created_at) VALUES(?,?,?,?)",
-            (None, LIVE_REGISTER_EVENT_TYPE, legacy.canonical_json(payload), created_at),
-        )
-        event_id = int(cursor.lastrowid)
+        if idempotent_existing is not None:
+            payload = idempotent_existing["record"]
+            created_at = idempotent_existing["created_at"]
+            event_id = int(idempotent_existing["event_id"])
+        else:
+            checked_repo = _validate_repo(validation_registry, checked_repo)
+            checked_task_id = _validate_task(validation_registry, checked_task_id)
+            checked_status = checked_status or _validate_status(checked_kind, None)
+            candidate_event = _validated_candidate_event(
+                candidate_event,
+                candidate_id=checked_candidate_id,
+            )
+            payload = {
+                "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
+                "kind": checked_kind,
+                "title": checked_title,
+                "source": checked_source,
+                "status": checked_status,
+                "promotion_required": bool(promotion_required),
+                "does_not_establish": _live_nonclaims(),
+                "catalog_validation": {
+                    "mode": catalog_validation,
+                    "status": "validated" if catalog_validation == "strict" else "deferred",
+                    "does_not_establish": (
+                        []
+                        if catalog_validation == "strict"
+                        else ["repo_exists", "task_exists", "registry_binding_valid"]
+                    ),
+                },
+            }
+            optional = {
+                "thread_id": checked_thread_id,
+                "worker_id": checked_worker_id,
+                "repo": checked_repo,
+                "task_id": checked_task_id,
+                "candidate_id": checked_candidate_id,
+                "candidate_event": candidate_event,
+                "supersedes_event_id": supersedes_event_id,
+                "note": checked_note,
+                "operator_intake": operator_context,
+            }
+            payload.update({key: value for key, value in optional.items() if value is not None})
+            created_at = legacy.utc_now()
+            cursor = connection.execute(
+                "INSERT INTO events(run_id,event_type,payload_json,created_at) VALUES(?,?,?,?)",
+                (None, LIVE_REGISTER_EVENT_TYPE, legacy.canonical_json(payload), created_at),
+            )
+            event_id = int(cursor.lastrowid)
     return {
         "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
         "command": "live-register",
@@ -358,6 +648,7 @@ def live_register_record(
         "created_at": created_at,
         "record": payload,
         "nonclaims": payload["does_not_establish"],
+        "idempotent_replay": idempotent_existing is not None,
     }
 
 
@@ -851,6 +1142,8 @@ def _suggested_task_json(
     initiative: str,
 ) -> dict[str, Any]:
     payload = event["record"]
+    candidate_event = payload.get("candidate_event")
+    candidate_event = candidate_event if isinstance(candidate_event, dict) else {}
     repo = payload.get("repo")
     claims = []
     if repo:
@@ -889,6 +1182,9 @@ def _suggested_task_json(
             or _legacy_candidate_id(int(event["event_id"])),
             "live_register_created_at": event["created_at"],
             "live_register_source": payload.get("source"),
+            "candidate_event_id": candidate_event.get("event_id"),
+            "source_fingerprint": candidate_event.get("source_fingerprint"),
+            "content_fingerprint": candidate_event.get("content_fingerprint"),
             "promotion_required_from_event": payload.get("promotion_required", False),
             "does_not_establish": _live_nonclaims(),
         },
@@ -951,8 +1247,7 @@ def write_live_promote_plan(
         "does_not_establish": [
             "queue_mutation",
             "task_verification",
-            "claim_authority",
-            "dispatch_authority",
+            *candidate_authority_nonclaims(),
             "merge_readiness",
         ],
     }
@@ -984,7 +1279,12 @@ def apply_live_promote_plan(registry: Registry, *, path: str) -> dict[str, Any]:
         "task_id": task_id,
         "task_file": str(target),
         "queue_mutated": False,
-        "does_not_establish": ["queue_truth", "task_verification", "merge_readiness"],
+        "does_not_establish": [
+            "queue_truth",
+            "task_verification",
+            "merge_readiness",
+            *candidate_authority_nonclaims(),
+        ],
     }
 
 
@@ -1014,6 +1314,21 @@ def live_register_export(
             "title": payload.get("title"),
             "promotion_required": payload.get("promotion_required", False),
             "candidate_id": payload.get("candidate_id"),
+            "candidate_event_id": (
+                payload.get("candidate_event", {}).get("event_id")
+                if isinstance(payload.get("candidate_event"), dict)
+                else None
+            ),
+            "source_fingerprint": (
+                payload.get("candidate_event", {}).get("source_fingerprint")
+                if isinstance(payload.get("candidate_event"), dict)
+                else None
+            ),
+            "content_fingerprint": (
+                payload.get("candidate_event", {}).get("content_fingerprint")
+                if isinstance(payload.get("candidate_event"), dict)
+                else None
+            ),
             "supersedes_event_id": payload.get("supersedes_event_id"),
             "payload_digest": hashlib.sha256(
                 legacy.canonical_json(payload).encode("utf-8")

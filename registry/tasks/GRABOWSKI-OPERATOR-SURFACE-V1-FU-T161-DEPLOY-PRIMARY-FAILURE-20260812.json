@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Wenn der Tunnel-Service nach dem Start scheitert, enthält der Deploy-Fehler die primäre service-/journalgebundene Ursache; eine spätere argv-/MainPID-Diagnose darf sie nicht ersetzen.",
+      "id": "primary-cause-preserved"
+    },
+    {
+      "assertion": "Result, ExecMainStatus und eine begrenzte relevante Journal-Evidenz werden ohne Secret-Leak revisionsgebunden in die Diagnose aufgenommen.",
+      "id": "bounded-runtime-evidence"
+    },
+    {
+      "assertion": "Ein hermetischer Test reproduziert den T161-Fall mit primärem YAML-Unmarshal-Fehler und beweist, dass dieser vor der sekundären erwarteter-Client-Diagnose sichtbar bleibt.",
+      "id": "regression"
+    },
+    {
+      "assertion": "Bestehende Cutover-/Rollback- und outcome-unknown-Grenzen bleiben unverändert streng.",
+      "id": "rollback-preserved"
+    },
+    {
+      "assertion": "Fokussierte Deploytests, vollständige Validierung, deploy-check und revisionsgebundener Self-Review sind auf demselben finalen Head grün.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T161"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Diagnose-/Fehlerprovenienz des Deploypfads härten; Rollback- und Fail-Closed-Gates nicht abschwächen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/tools/deploy_runtime_dual.py",
+      "path:/home/alex/repos/grabowski/tests/test_dual_service_deploy.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Dual-Runtime-Deploy so härten, dass eine konkrete primäre Tunnel-/Service-Startursache revisions- und journalgebunden erhalten bleibt und nicht durch eine nachgelagerte generische Prozessdiagnose maskiert wird.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DEPLOY-PRIMARY-FAILURE-20260812",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "live_evidence": {
+      "failed_job": "grabowski-job-6c9200ca8655",
+      "masked_by": "Tunnel-Service verwendet nicht exakt den erwarteten Client",
+      "primary_error": "config: yaml: unmarshal errors: line 23: cannot unmarshal !!seq into map[string]string",
+      "rollback": "completed; previous runtime remained valid"
+    },
+    "source_candidate": "candidate-7054832de7197bef599359d4",
+    "source_event_id": 6097,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7054832de7197bef599359d4",
+      "event_id": 6097,
+      "event_created_at": "2026-08-11T23:59:16.018054Z",
+      "request_sha256": "a892724cecf69dd338faa0145efe7b541101c57f7165f58712f026c92116fae3",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-runtime-evidence",
+        "locator": "grabowski:job:grabowski-job-6c9200ca8655",
+        "observed_at": "2026-08-11T23:59:15.985734Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 11
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "testing",
+    "deployment"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Runtime-Deploy muss primäre Tunnel-Fehlerursache erhalten"
+}

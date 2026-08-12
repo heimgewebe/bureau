@@ -28,6 +28,12 @@
   ],
   "execution": {
     "cwd": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_chronik.py",
+      "path:/home/alex/repos/grabowski/tests/test_tasks.py",
+      "path:/home/alex/repos/grabowski/docs/agent-run-events-runbook.md",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json"
+    ],
     "mode": "grabowski-operation",
     "operation": "chronik-cli-discovery-stable-binding",
     "policy": "autonomous",
@@ -39,24 +45,44 @@
   "metadata": {
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-f191b8c89d06677e9f280a68",
-      "event_id": 6079,
-      "event_created_at": "2026-08-11T23:32:25.966394Z",
-      "request_sha256": "11ff7416dd68ffc4f826aea68113fd9906e6665f437bfbfe4fedda594f7ad417",
+      "candidate_id": "candidate-cb78a93b2778e8bf92da15c0",
+      "event_id": 6213,
+      "event_created_at": "2026-08-12T10:24:55.241631Z",
+      "request_sha256": "a19f21d5f6dc30bf2027ccd4e680e71fc7dd13b69e08564c8e55b9809d6a0cd0",
+      "candidate_event_id": "candidate-event-4455194eac29b058d50f28a6",
+      "source_fingerprint": "217b9870fd3cca0faa9d56d60b07702817916b2e29b285e10ff908b930edf6c8",
+      "content_fingerprint": "cb78a93b2778e8bf92da15c0f4df096d8089c41614d3efb6ab454debacdc5f7d",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
-        "freshness": "unknown",
+        "fingerprint": "217b9870fd3cca0faa9d56d60b07702817916b2e29b285e10ff908b930edf6c8",
+        "freshness": "fingerprint-bound",
         "kind": "github_pull_request",
-        "locator": "github:heimgewebe/bureau#1847@740c2129b3e1b92cf8704be4e3e552088f3889a3",
-        "observed_at": "2026-08-10T12:34:30Z",
+        "locator": "github:heimgewebe/grabowski#743@1fd38b77ab5a960455d26b2ec544b6451a1595e6",
+        "observed_at": "2026-08-12T10:24:55.125310Z",
         "sha256": null
       },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "217b9870fd3cca0faa9d56d60b07702817916b2e29b285e10ff908b930edf6c8",
+          "freshness": "fingerprint-bound",
+          "kind": "github_pull_request",
+          "locator": "github:heimgewebe/grabowski#743@1fd38b77ab5a960455d26b2ec544b6451a1595e6",
+          "observed_at": "2026-08-12T10:24:55.125310Z",
+          "sha256": null
+        }
+      ],
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
-        "claim_or_dispatch_authority"
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
       ]
     }
   },

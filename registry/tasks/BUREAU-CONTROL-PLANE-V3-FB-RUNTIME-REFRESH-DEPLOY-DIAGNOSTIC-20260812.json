@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-DEPLOY-DIAGNOSTIC-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Deploy-Diagnose-Task einmalig in Bureau-Runtime übernehmen",
+  "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten Bureau-Runtime-Refresh auf den dann aktuellen, CI-grünen main ausführen, damit der bereits gemergte Task GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DEPLOY-PRIMARY-FAILURE-20260812 in den immutable Registry-Snapshot und damit in die reguläre Bureau-Claim-Autorität gelangt. Die Wirkung bleibt frisch an main, Merge-PR, Pflichtchecks, target_sha256, diese exakte Task-ID und die erforderlichen Live-Leases gebunden.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 8
+  },
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DEPLOY-PRIMARY-FAILURE-20260812"
+  ],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-Use-Autorität ausschließlich für den immutable Bureau-Runtime-Refresh, nachdem diese TaskSpec selbst und GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DEPLOY-PRIMARY-FAILURE-20260812 gemeinsam im aktuellen main liegen. Vor Apply sind frische main-/PR-/Validate-Observation, target_sha256-Bindung an diese Task-ID, autoritativer StateStore-TaskSpec-Preflight und alle Intent-Live-Leases zwingend. Kein Grabowski-Runtime-Deploy."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "bootstrap-merges-complete",
+      "assertion": "Vor dem einzigen Refresh liegen sowohl diese Autoritäts-TaskSpec als auch GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DEPLOY-PRIMARY-FAILURE-20260812 im aktuellen Bureau main; kein Zwischenstand wird installiert."
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller main-Commit, zugehöriger gemergter PR, validate (3.10), validate (3.12) und target_sha256 frisch beobachtet; Drift verwirft den Kandidaten."
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "Die konkrete Runtime-Freigabe bindet diese exakte Task-ID und reference exakt an den frisch beobachteten target_sha256."
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut vor apply bestätigt der aktuelle autoritative StateStore diese TaskSpec als nichtterminal, runtime_mutation, break_glass und unverbraucht; historische oder fremde Autoritäten werden nicht substituiert."
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "Apply verwendet ausschließlich die vom frischen Intent geforderten Grabowski-Live-Leases mit identischer Owner-/Task-/Target-Bindung; fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed ab."
+    },
+    {
+      "id": "single-use-lifecycle",
+      "assertion": "Genau ein erfolgreicher Bureau-Runtime-Refresh darf durch diese Task autorisiert werden; danach ist Wiederverwendung für jedes spätere Target verboten."
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot auf denselben source commit; die StateStore-Integrität bleibt gültig und eigene Refresh-Leases werden receiptgebunden freigegeben."
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "Die Task autorisiert keine Grabowski-Runtime-, Queue-, Claim-, Dispatch-, Fremdarbeits- oder weitere Bureau-Runtime-Wirkung und schwächt keine bestehenden CI-, StateStore-, Lease-, Readback- oder Rollback-Gates ab."
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Truth behaupten und keinen Apply wiederholen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten bzw. den bestehenden receiptgebundenen Reconciliation-/Rollbackpfad verwenden; keine Registry-/StateStore-Historie zurückschreiben."
+  },
+  "metadata": {
+    "related_bureau_pr": 1906,
+    "required_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DEPLOY-PRIMARY-FAILURE-20260812",
+    "installed_runtime_before": "cb969cb4754407e8c962ce9292c06222120374bc",
+    "observed_main_before_authority_registration": "4340ec52f3f4055be4d500d64c59ca2ea998f5fa",
+    "source_candidate_id": "candidate-66842d61eb1ba7c3259c672d",
+    "source_event_id": 6131,
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die kanonische typed Task-Publikation wurde vor Proposal-Wirkung durch release-registry-identity-mismatch blockiert, weil der installierte immutable Bureau-Release cb969cb47544 hinter dem aktuellen Registry-main 4340ec52f3f4 liegt. Der bestehende Bootstrap-Präzedenzfall erlaubt in genau dieser Lage eine eng gebundene normale geschützte GitHub-PR-Registrierung mit einer einzigen Taskdatei, Vollvalidierung, revisionsgebundenem Self-Review und Required Checks; Queue und Live Register werden dadurch nicht direkt mutiert.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority"
+      ]
+    },
+    "does_not_establish": [
+      "konkrete Deploymentfreigabe ohne frischen target_sha256",
+      "Autorität für Grabowski-Runtime",
+      "wiederverwendbare Runtime-Autorität",
+      "Permission to bypass current StateStore, Registry, CI or lease validation"
+    ]
+  }
+}

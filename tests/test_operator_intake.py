@@ -34,6 +34,15 @@ from bureau.operator_intake import (
     task_propose,
 )
 from bureau.registry_snapshot import snapshot_tree_sha256
+from bureau.source_discovery import (
+    candidate_request as source_candidate_request,
+)
+from bureau.source_discovery import (
+    record_candidate as record_source_candidate,
+)
+from bureau.source_discovery import (
+    record_discovery_candidate,
+)
 
 
 def _git(root: Path, *args: str) -> str:
@@ -371,6 +380,233 @@ def test_candidate_record_is_idempotent_and_source_bound(registry_factory, tmp_p
     context = first["record"]["operator_intake"]
     assert context["source"]["sha256"] == "a" * 64
     assert context["source"]["freshness"] == "digest-bound"
+
+
+@pytest.mark.parametrize(
+    "source_kind",
+    [
+        "conversation",
+        "github-issue",
+        "source-observer",
+        "doctor",
+        "local-fallback",
+    ],
+)
+def test_all_source_adapters_emit_the_canonical_candidate_event_identity(source_kind):
+    request = source_candidate_request(
+        source_kind=source_kind,
+        source_locator=f"{source_kind}:stable-locator",
+        source_sha256="1" * 64,
+        title="Canonical candidate identity",
+        desired_outcome="Record one durable candidate event",
+        repo="repo.alpha",
+    )
+
+    assert request["idempotency_key"].startswith("candidate:")
+    assert len(request["idempotency_key"].split(":")) == 3
+    assert request["catalog_validation"] == "deferred"
+
+
+def test_discovery_finding_uses_the_same_candidate_contract(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    title = "Unify the discovered candidate path"
+    outcome = "Route the discovery finding through durable operator intake"
+    observed = record_discovery_candidate(
+        registry,
+        store,
+        {
+            "fingerprint": "8" * 64,
+            "source_id": "repo:bureau",
+            "source_revision": "9" * 40,
+            "source_path": "docs/tasks.md",
+            "source_anchor": "L42",
+            "summary": title,
+            "target_outcome": outcome,
+        },
+        repo="repo.alpha",
+        catalog_validation="strict",
+    )
+    conversation = record_source_candidate(
+        registry,
+        store,
+        source_kind="conversation",
+        source_locator="chat:t008:discovery-equivalent",
+        source_sha256="a" * 64,
+        title=title,
+        desired_outcome=outcome,
+        repo="repo.alpha",
+        catalog_validation="strict",
+    )
+
+    assert observed["candidate_id"] == conversation["candidate_id"]
+    assert observed["content_fingerprint"] == conversation["content_fingerprint"]
+    assert observed["source_fingerprint"] != conversation["source_fingerprint"]
+    assert len(operator_intake_module.current_candidate_records(store)) == 1
+
+
+def test_equivalent_cross_source_findings_share_one_candidate_history(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    finding = {
+        "title": "Repair the deterministic lease readback",
+        "desired_outcome": "Classify the same lease readback failure deterministically",
+        "repo": "repo.alpha",
+        "catalog_validation": "strict",
+    }
+    conversation = record_source_candidate(
+        registry,
+        store,
+        source_kind="conversation",
+        source_locator="chat:t008:lease-readback",
+        source_sha256="2" * 64,
+        **finding,
+    )
+    issue = record_source_candidate(
+        registry,
+        store,
+        source_kind="github-issue",
+        source_locator="github:heimgewebe/bureau#2008",
+        source_sha256="3" * 64,
+        **finding,
+    )
+
+    assert conversation["candidate_id"] == issue["candidate_id"]
+    assert conversation["content_fingerprint"] == issue["content_fingerprint"]
+    assert conversation["source_fingerprint"] != issue["source_fingerprint"]
+    assert conversation["candidate_event_id"] != issue["candidate_event_id"]
+    assert issue["record"]["supersedes_event_id"] == conversation["event_id"]
+    assert len(operator_intake_module.current_candidate_records(store)) == 1
+    observations = issue["record"]["operator_intake"]["source_observations"]
+    assert {item["kind"] for item in observations} == {"conversation", "github-issue"}
+
+    replay = record_source_candidate(
+        registry,
+        store,
+        source_kind="conversation",
+        source_locator="chat:t008:lease-readback",
+        source_sha256="2" * 64,
+        **finding,
+    )
+    assert replay["idempotent_replay"] is True
+    assert replay["event_id"] == issue["event_id"]
+    assert replay["source_event_id"] == conversation["event_id"]
+    assert replay["candidate_event_id"] == conversation["candidate_event_id"]
+    assert len(operator_intake_module.candidate_records(store)) == 2
+
+
+def test_cross_source_evidence_cannot_reopen_a_promoted_candidate(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    finding = {
+        "title": "Preserve reviewed candidate lifecycle",
+        "desired_outcome": "Keep later source evidence from reopening promotion",
+        "repo": "repo.alpha",
+        "catalog_validation": "strict",
+    }
+    first = record_source_candidate(
+        registry,
+        store,
+        source_kind="doctor",
+        source_locator="doctor:t008:lifecycle",
+        source_sha256="6" * 64,
+        **finding,
+    )
+    promoted = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title=first["record"]["title"],
+        candidate_id=first["candidate_id"],
+        supersedes_event_id=first["event_id"],
+        status="promoted",
+        promotion_required=False,
+    )
+    observed_again = record_source_candidate(
+        registry,
+        store,
+        source_kind="github-issue",
+        source_locator="github:heimgewebe/bureau#2010",
+        source_sha256="7" * 64,
+        **finding,
+    )
+
+    assert observed_again["record"]["supersedes_event_id"] == promoted["event_id"]
+    assert observed_again["record"]["status"] == "promoted"
+    assert observed_again["record"]["promotion_required"] is False
+
+
+def test_shared_source_distinct_findings_remain_independently_reviewable(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    shared_source = {
+        "source_kind": "github-issue",
+        "source_locator": "github:heimgewebe/bureau#2009",
+        "source_sha256": "4" * 64,
+        "repo": "repo.alpha",
+        "catalog_validation": "strict",
+    }
+    first = record_source_candidate(
+        registry,
+        store,
+        title="Repair candidate replay",
+        desired_outcome="Make candidate replay idempotent",
+        **shared_source,
+    )
+    second = record_source_candidate(
+        registry,
+        store,
+        title="Bound candidate authority",
+        desired_outcome="Keep candidate assessment advisory",
+        **shared_source,
+    )
+
+    assert first["source_fingerprint"] == second["source_fingerprint"]
+    assert first["content_fingerprint"] != second["content_fingerprint"]
+    assert first["candidate_id"] != second["candidate_id"]
+    assert len(operator_intake_module.current_candidate_records(store)) == 2
+    assert (
+        candidate_assess(registry, store, candidate_id=first["candidate_id"])["decision"]
+        == "promote"
+    )
+    assert (
+        candidate_assess(registry, store, candidate_id=second["candidate_id"])["decision"]
+        == "promote"
+    )
+
+
+def test_local_fallback_survives_offline_intake_and_later_idempotent_sync(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    finding = {
+        "source_kind": "local-fallback",
+        "source_locator": "local:doctor-spool:t008",
+        "source_sha256": "5" * 64,
+        "title": "Persist the offline Doctor finding",
+        "desired_outcome": "Replay the local finding after connectors recover",
+        "repo": "repo.alpha",
+    }
+    offline = record_source_candidate(None, store, **finding)
+
+    def fail_registry_snapshot(_registry):
+        raise AssertionError("deferred synchronization must not require GitHub or Registry I/O")
+
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_canonical_read_registry_snapshot",
+        fail_registry_snapshot,
+    )
+    synchronized = record_source_candidate(registry, store, **finding)
+
+    assert offline["record"]["catalog_validation"]["status"] == "deferred"
+    assert synchronized["idempotent_replay"] is True
+    assert synchronized["event_id"] == offline["event_id"]
+    assert synchronized["candidate_event_id"] == offline["candidate_event_id"]
+    assert len(operator_intake_module.candidate_records(store)) == 1
 
 
 def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
@@ -1250,9 +1486,10 @@ def test_task_revision_allows_git_projection_to_lag_authoritative_baseline(
     assert plan["task_spec"]["expected_spec_sha256"] != initial["spec_sha256"]
     assert plan["task_json"]["state"] == "ready"
     target = root / plan["target_path"]
-    assert plan["task_spec"]["expected_task_file_sha256"] == hashlib.sha256(
-        target.read_bytes()
-    ).hexdigest()
+    assert (
+        plan["task_spec"]["expected_task_file_sha256"]
+        == hashlib.sha256(target.read_bytes()).hexdigest()
+    )
     _review(plan_path)
     assert publication_preview(registry, store, plan_path=plan_path)["status"] == "ready"
 
@@ -1289,9 +1526,7 @@ def test_task_revision_rejects_candidate_bound_to_another_task(registry_factory,
     assert not (tmp_path / "wrong-target.json").exists()
 
 
-def test_task_revision_ignores_terminal_candidate_bound_to_same_task(
-    registry_factory, tmp_path
-):
+def test_task_revision_ignores_terminal_candidate_bound_to_same_task(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     store.import_registry_task_specs(registry)
@@ -1376,9 +1611,7 @@ def test_task_revision_still_rejects_other_active_candidate_for_same_task(
     )
 
 
-def test_task_revision_still_rejects_paused_candidate_for_same_task(
-    registry_factory, tmp_path
-):
+def test_task_revision_still_rejects_paused_candidate_for_same_task(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     store.import_registry_task_specs(registry)
@@ -1523,6 +1756,39 @@ def test_task_review_binds_exact_pending_proposal_and_enables_preview(registry_f
     assert result["plan_file_sha256_before"] != result["plan_file_sha256_after"]
     preview = publication_preview(registry, store, plan_path=plan_path)
     assert preview["status"] == "ready"
+
+
+def test_candidate_assessment_and_review_never_escalate_execution_authority(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    candidate = operator_intake_module.current_candidate_records(store)[0]
+    assessment = candidate_assess(
+        registry,
+        store,
+        candidate_id=candidate["record"]["candidate_id"],
+    )
+    pending = json.loads(plan_path.read_text(encoding="utf-8"))
+    reviewed = review_task_proposal(
+        plan_path=plan_path,
+        reviewer="operator-self-review",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+    required_nonclaims = {
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority",
+    }
+
+    assert required_nonclaims <= set(candidate["record"]["does_not_establish"])
+    assert required_nonclaims <= set(candidate["record"]["candidate_event"]["does_not_establish"])
+    assert required_nonclaims <= set(assessment["does_not_establish"])
+    assert required_nonclaims <= set(pending["does_not_establish"])
+    assert required_nonclaims <= set(reviewed["does_not_establish"])
+    assert assessment["advisory_only"] is True
 
 
 def test_task_review_exact_replay_is_idempotent(registry_factory, tmp_path):
@@ -4008,7 +4274,6 @@ def test_task_propose_rejects_broad_bureau_scope_before_plan_write(registry_fact
     assert not plan_path.exists()
 
 
-
 def _t026_foreign_open_pr(plan: dict, *, number: int = 1112) -> dict:
     return {
         "number": number,
@@ -4165,9 +4430,7 @@ def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
     plan = _review(plan_path)
-    encoded = base64.b64encode(
-        json.dumps(plan["task_json"]).encode("utf-8")
-    ).decode("ascii")
+    encoded = base64.b64encode(json.dumps(plan["task_json"]).encode("utf-8")).decode("ascii")
     calls: list[list[str]] = []
 
     def runner(arguments: list[str]) -> str:
@@ -4182,9 +4445,7 @@ def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
             )
         if target.endswith("pulls/1112/files?per_page=100"):
             return plan["target_path"]
-        if target.endswith(
-            f"repos/foreign/bureau/contents/{plan['target_path']}?ref={'d' * 40}"
-        ):
+        if target.endswith(f"repos/foreign/bureau/contents/{plan['target_path']}?ref={'d' * 40}"):
             return json.dumps({"content": encoded})
         raise AssertionError(arguments)
 

@@ -46,7 +46,16 @@ def test_live_register_records_thread_focus_without_mutating_queue(registry_fact
 def test_live_register_records_candidate_needing_promotion(registry_factory, tmp_path):
     _root, registry, store = setup_live(registry_factory, tmp_path)
 
-    live_register_record(
+    recorded = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title="Potential beta follow-up",
+        repo="repo.beta",
+        source="chat",
+        promotion_required=True,
+    )
+    replayed = live_register_record(
         registry,
         store,
         kind="candidate_task",
@@ -57,6 +66,14 @@ def test_live_register_records_candidate_needing_promotion(registry_factory, tmp
     )
 
     listed = live_register_list(store, kind="candidate_task")
+    contract = recorded["record"]["candidate_event"]
+    assert contract["candidate_id"] == recorded["record"]["candidate_id"]
+    assert contract["event_id"].startswith("candidate-event-")
+    assert len(contract["source_fingerprint"]) == 64
+    assert len(contract["content_fingerprint"]) == 64
+    assert replayed["idempotent_replay"] is True
+    assert replayed["event_id"] == recorded["event_id"]
+    assert listed["summary"]["candidate_history_count"] == 1
     assert listed["summary"]["open_candidate_count"] == 1
     assert listed["summary"]["promotion_required_count"] == 1
     promotion = listed["summary"]["promotion_required"][0]
@@ -212,6 +229,14 @@ def test_live_promote_plan_requires_review_and_applies_task_file(
         path=str(plan_path),
     )
     assert plan["plan"]["task_json"]["metadata"]["live_register_event_id"] == result["event_id"]
+    authority_nonclaims = {
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority",
+    }
+    assert authority_nonclaims <= set(result["nonclaims"])
+    assert authority_nonclaims <= set(plan["plan"]["does_not_establish"])
     with pytest.raises(StateError, match="requires review"):
         apply_live_promote_plan(registry, path=str(plan_path))
 
@@ -222,6 +247,7 @@ def test_live_promote_plan_requires_review_and_applies_task_file(
 
     assert applied["status"] == "applied"
     assert applied["queue_mutated"] is False
+    assert authority_nonclaims <= set(applied["does_not_establish"])
     assert (root / "registry/tasks/BUR-TEST-001-T999.json").is_file()
     queue = json.loads((root / "registry/queue.json").read_text())
     assert "BUR-TEST-001-T999" not in queue["lanes"]["now"]

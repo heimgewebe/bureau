@@ -12,6 +12,7 @@ COORDINATION_STATE_MUTATION = "coordination_state_mutation"
 REGISTRY_MUTATION = "registry_mutation"
 _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
     {
+        "acceptance-authenticate",
         "bind",
         "claim-commit",
         "claim-intent",

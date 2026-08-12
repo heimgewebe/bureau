@@ -1,4 +1,4 @@
-"""Compare-and-swap contract for the Bureau close path (BUREAU-TRUTH-MODEL-V2-T021).
+"""Compare-and-swap contract for the internal Bureau close writer.
 
 The close command must bind its expectations — receipt absence, run state and the
 claim baseline — inside the same transaction that writes the effect. A concurrent
@@ -24,7 +24,8 @@ import pytest
 from test_v2 import setup
 
 import bureau.v2 as bureau_v2
-from bureau.core import Registry, RunStateConflict, StateStore, complete_run, fail_run
+from bureau.core import Registry, RunStateConflict, StateStore, fail_run
+from bureau.v2 import _complete_run_after_typed_evaluation as complete_run
 
 
 def _task_status(store: StateStore, task_id: str) -> str | None:
@@ -121,7 +122,7 @@ def test_close_loses_against_baseline_drift_inside_cas(registry_factory, tmp_pat
 
     changed = Registry.load(root)
     with pytest.raises(RunStateConflict) as error:
-        complete_run(changed, store, run["run_id"], {"proof": True})
+        complete_run(changed, store, run["run_id"], {"proof": {"result": "passed"}})
 
     assert error.value.code == "stale-baseline"
     details = error.value.payload()["details"]

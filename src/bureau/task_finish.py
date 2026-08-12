@@ -183,35 +183,26 @@ def scan(root: Path, evidence_dir: Path) -> list[dict[str, Any]]:
 
 
 def apply_ready(root: Path, findings: list[dict[str, Any]], observed_at: str) -> list[str]:
-    changed: list[str] = []
-    for finding in findings:
-        if not finding.get("ready") or not finding.get("auto_verify"):
-            continue
-        path = root / str(finding["task_path"])
-        task = load_json(path)
-        if str(task.get("state", "")).lower() in TERMINAL_STATES:
-            continue
-        task["state"] = "verified"
-        metadata = task.setdefault("metadata", {})
-        verification = metadata.setdefault("verification", {})
-        receipt = finding["receipt"]
-        evidence = receipt.get("evidence", {})
-        if not receipt.get("receipt_id") or not receipt.get("receipt_sha256"):
-            continue
-        if not isinstance(evidence, dict) or not evidence.get("evidence_sha256"):
-            continue
-        if not evidence.get("source") or not evidence.get("source_ref"):
-            continue
-        verification["pr_completion"] = receipt
-        verification["receipt_id"] = receipt["receipt_id"]
-        verification["receipt_sha256"] = receipt["receipt_sha256"]
-        verification["source"] = evidence["source"]
-        verification["source_ref"] = evidence["source_ref"]
-        verification["evidence_sha256"] = evidence["evidence_sha256"]
-        verification["verified_at"] = observed_at
-        write_json(path, task)
-        changed.append(str(path.relative_to(root)))
-    return changed
+    """Refuse the legacy direct Registry verification path.
+
+    Merge evidence remains useful as a read-only source receipt, but it cannot
+    establish the full typed acceptance contract or authorize a Registry task
+    state transition.  Operational closeout belongs to the StateStore-backed
+    closure observer, which evaluates every criterion against authenticated
+    revision-bound evidence.
+    """
+    del root, observed_at
+    candidates = sorted(
+        str(finding.get("task_id") or finding.get("task_path") or "<unknown-task>")
+        for finding in findings
+        if finding.get("ready") and finding.get("auto_verify")
+    )
+    if candidates:
+        raise RuntimeError(
+            "direct Registry task verification is disabled; use canonical StateStore "
+            "typed acceptance closeout for: " + ", ".join(candidates)
+        )
+    return []
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -384,6 +384,11 @@ def source_promote_plan(root: Path, registry: Any, source: str, task_id: str) ->
         blockers.append("bureau-task-already-exists")
     if not source_task.get("acceptance"):
         blockers.append("source-task-has-no-acceptance")
+    else:
+        # The Weltgewebe source contract currently carries prose strings only.
+        # They are useful planning input but cannot be promoted into executable
+        # Bureau acceptance without an explicit verifier/config decision.
+        blockers.append("source-task-acceptance-contract-untyped")
     manual_decisions = [
         {
             "field": "initiative",
@@ -399,51 +404,6 @@ def source_promote_plan(root: Path, registry: Any, source: str, task_id: str) ->
             "reason": "source priority does not imply autonomous execution permission",
         },
     ]
-    candidate_task = {
-        "schema_version": 1,
-        "id": target_id,
-        "initiative": "WG-WELTGEWEBE",
-        "title": source_task["title"],
-        "state": projected_state,
-        "goal": source_task["title"],
-        "depends_on": [],
-        "required_capabilities": ["repository", "shell"],
-        "priority": {
-            "lane": "later",
-            "rank": {"high": 20, "medium": 50, "low": 80}[source_task["priority"]],
-        },
-        "execution": {
-            "mode": "interactive-agent",
-            "policy": "review-before-effect",
-            "working_repository": "/home/alex/repos/weltgewebe",
-            "baseline_commit": snapshot["commit_sha"],
-        },
-        "claims": [{"resource": "repo.weltgewebe", "mode": "write", "isolation": "worktree"}],
-        "acceptance": [
-            {"id": f"source-{index:02d}", "assertion": assertion}
-            for index, assertion in enumerate(source_task["acceptance"], 1)
-        ],
-        "metadata": {
-            "source": {
-                "system": SOURCE_SYSTEM,
-                "repository": snapshot["repository"],
-                "ref": snapshot["ref"],
-                "commit_sha": snapshot["commit_sha"],
-                "index_path": snapshot["index_path"],
-                "schema_path": snapshot["schema_path"],
-                "index_sha256": snapshot["index_sha256"],
-                "schema_sha256": snapshot["schema_sha256"],
-                "source_task_id": entry["id"],
-                "source_task_sha256": entry["source_task_sha256"],
-                "source_status": entry["status"],
-                "source_priority": entry["priority"],
-                "source_risk": entry["risk"],
-                "source_effort": entry["effort"],
-                "source_owner": entry["owner"],
-                "source_updated_at": entry["updated_at"],
-            }
-        },
-    }
     return {
         "valid": True,
         "source": SOURCE_NAME,
@@ -466,7 +426,8 @@ def source_promote_plan(root: Path, registry: Any, source: str, task_id: str) ->
         "readiness": "blocked" if blockers or manual_decisions else "candidate",
         "blockers": blockers,
         "manual_decisions_required": manual_decisions,
-        "candidate_task": candidate_task,
+        "candidate_task": None,
+        "acceptance_guidance": list(source_task.get("acceptance", [])),
         "does_not_establish": [
             "bureau_task_materialization",
             "bureau_task_readiness",

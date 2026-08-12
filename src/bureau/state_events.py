@@ -9,6 +9,12 @@ from typing import Any
 EVENT_SCHEMA_VERSION = 1
 PROJECTION_SCHEMA_VERSION = 1
 PROJECTION_EVENT_TYPE = "state-projection-v1"
+MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE = (
+    "manual-acceptance-source-authenticated"
+)
+MANUAL_ACCEPTANCE_AUTHENTICATION_KIND = (
+    "bureau.acceptance_source_authentication"
+)
 
 # Version-1 writers are deliberately closed over this vocabulary. Historical
 # rows migrated from schema 3 remain event_schema_version=0 and are replayed
@@ -23,6 +29,7 @@ OPERATIONAL_EVENT_TYPES = frozenset(
         "external-succeeded",
         "external-terminal",
         "initiative-state-set",
+        MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
         "run-claimed",
         "run-claimed-coordinated",
         "run-completed",
@@ -276,6 +283,67 @@ def validate_projection_event_payload(payload: Mapping[str, Any]) -> None:
             raise StateEventError(f"projection delta {key} must be an object")
 
 
+def validate_manual_acceptance_authentication_payload(
+    payload: Mapping[str, Any], run_id: str | None
+) -> None:
+    expected_fields = {
+        "schema_version",
+        "kind",
+        "run_id",
+        "task_id",
+        "task_sha256",
+        "plan_sha256",
+        "envelope_sha256",
+        "criterion_id",
+        "verifier",
+        "observation_scope",
+        "evidence_sha256",
+        "authority",
+        "reviewer",
+        "observer",
+    }
+    if set(payload) != expected_fields:
+        raise StateEventError(
+            "manual acceptance authentication event fields are not exact"
+        )
+    if payload.get("schema_version") != EVENT_SCHEMA_VERSION:
+        raise StateEventError(
+            "manual acceptance authentication schema version is unsupported"
+        )
+    if payload.get("kind") != MANUAL_ACCEPTANCE_AUTHENTICATION_KIND:
+        raise StateEventError("manual acceptance authentication kind is invalid")
+    if run_id is None or payload.get("run_id") != run_id:
+        raise StateEventError("manual acceptance authentication run binding mismatches")
+    for field in ("task_id", "criterion_id", "observation_scope", "reviewer", "observer"):
+        value = payload.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise StateEventError(
+                f"manual acceptance authentication {field} is invalid"
+            )
+    if len(payload["reviewer"]) > 200:
+        raise StateEventError(
+            "manual acceptance authentication reviewer is too long"
+        )
+    if payload.get("reviewer") != payload.get("observer"):
+        raise StateEventError(
+            "manual acceptance authentication reviewer and observer mismatch"
+        )
+    if payload.get("verifier") != "manual_observation":
+        raise StateEventError("manual acceptance authentication verifier is invalid")
+    if payload.get("authority") != "manual":
+        raise StateEventError("manual acceptance authentication authority is invalid")
+    for field in (
+        "task_sha256",
+        "plan_sha256",
+        "envelope_sha256",
+        "evidence_sha256",
+    ):
+        if not _valid_digest(payload.get(field)):
+            raise StateEventError(
+                f"manual acceptance authentication {field} is invalid"
+            )
+
+
 def validate_event(event_type: str, payload: Mapping[str, Any], run_id: str | None) -> None:
     if event_type not in EVENT_TYPES:
         raise StateEventError(f"unknown Bureau state event type: {event_type}")
@@ -285,6 +353,8 @@ def validate_event(event_type: str, payload: Mapping[str, Any], run_id: str | No
         raise StateEventError("Bureau state event run_id is invalid")
     if event_type == PROJECTION_EVENT_TYPE:
         validate_projection_event_payload(payload)
+    elif event_type == MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE:
+        validate_manual_acceptance_authentication_payload(payload, run_id)
 
 
 def _empty_projection() -> dict[str, Any]:

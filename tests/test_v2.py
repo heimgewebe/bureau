@@ -24,11 +24,13 @@ from bureau.core import (
     ValidationError,
     cleanup_workspace,
     close_ready_initiatives,
-    complete_run,
     fail_run,
     lifecycle_diagnostics,
     verification_stamp,
     workspace_status,
+)
+from bureau.v2 import (
+    _complete_run_after_typed_evaluation as complete_run,
 )
 from bureau.v2 import (
     coordinated_claim_status,
@@ -158,6 +160,121 @@ def test_schema_contract_rejects_unknown_task_property(registry_factory):
         Registry.load(root)
 
 
+def test_legacy_untyped_task_is_visible_but_not_claimable(
+    registry_factory, tmp_path, monkeypatch
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [{"id": "legacy", "assertion": "legacy prose"}]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    registry, store, _dispatcher = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    dispatcher = Dispatcher(registry, store)
+
+    item = dispatcher.frontier({"repository"})[0]
+
+    assert registry.tasks[task["id"]].acceptance[0]["assertion"] == "legacy prose"
+    assert item["eligible"] is False
+    assert item["claim_reasons"] == [
+        f"invalid acceptance contract: task {task['id']} criterion legacy at "
+        "$.acceptance[0].evidence_type: evidence_type is required and must be exactly "
+        "'object'; missing=evidence_type; "
+        "repair the TaskSpec acceptance contract before claim"
+    ]
+    with pytest.raises(NoEligibleTask):
+        dispatcher.claim_next("worker", ("repository",))
+
+
+def test_terminal_legacy_untyped_task_remains_readable_without_claim_reason(
+    registry_factory, tmp_path, monkeypatch
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["state"] = "cancelled"
+    task["acceptance"] = [{"id": "legacy", "assertion": "legacy prose"}]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    queue["lanes"]["now"] = []
+    queue_path.write_text(json.dumps(queue), encoding="utf-8")
+    registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    item = dispatcher.frontier({"repository"})[0]
+
+    assert registry.tasks[task["id"]].state == "cancelled"
+    assert item["eligible"] is False
+    assert "invalid acceptance contract" not in " ".join(item["claim_reasons"])
+
+
+@pytest.mark.parametrize(
+    ("verifier", "verifier_config"),
+    [
+        ("manual_observation", {"observation_scope": "manual:test"}),
+        (
+            "required_ci_green",
+            {
+                "repository": "heimgewebe/test",
+                "pull_request": 7,
+                "head_sha": "a" * 40,
+                "base_ref": "main",
+                "required_checks": ["validate"],
+            },
+        ),
+    ],
+)
+def test_public_complete_run_cannot_bypass_typed_acceptance(
+    registry_factory,
+    tmp_path,
+    monkeypatch,
+    verifier: str,
+    verifier_config: dict[str, object],
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [
+        {
+            "id": "proof",
+            "assertion": "typed evidence must be verified",
+            "evidence_type": "object",
+            "verifier": verifier,
+            "verifier_config": verifier_config,
+        }
+    ]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+
+    assert bureau_cli.complete_run is bureau_v2.complete_run
+    with pytest.raises(bureau_v2.RunStateConflict) as caught:
+        bureau_cli.complete_run(
+            registry,
+            store,
+            run["run_id"],
+            {
+                "proof": {"arbitrary": "object"},
+                "_typed_acceptance": {
+                    "state": "passed",
+                    "automatic_terminalization": True,
+                },
+            },
+        )
+
+    assert caught.value.code == "typed-acceptance-required"
+    assert caught.value.details == {
+        "observed_state": "assigned",
+        "required_command": "bureau reconcile",
+        "required_authority": (
+            "closure_observer PASSED authenticated typed evaluation"
+        ),
+    }
+    assert "canonical `bureau reconcile` closure path" in str(caught.value)
+    assert store.run(run["run_id"])["state"] == "assigned"
+    assert store.receipt(run["run_id"]) is None
+
+
 def test_state_root_controls_database_and_sidecars(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     state_root = tmp_path / "isolated-state"
@@ -257,7 +374,7 @@ def test_plan_revision_makes_operational_receipt_stale(registry_factory, tmp_pat
 def test_completion_is_idempotent(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     registry, store, run, first = claim_and_complete(root, tmp_path, monkeypatch)
-    second = complete_run(registry, store, run["run_id"], {})
+    second = bureau_v2.complete_run(registry, store, run["run_id"], {})
     assert second["idempotent"] is True
     assert second["receipt"]["receipt_sha256"] == first["receipt"]["receipt_sha256"]
 
@@ -302,7 +419,7 @@ def test_completion_rejects_task_drift_after_claim(registry_factory, tmp_path, m
     task_path.write_text(json.dumps(task))
     changed = Registry.load(root)
     with pytest.raises(StateError, match="baseline is stale"):
-        complete_run(changed, store, run["run_id"], {"proof": True})
+        complete_run(changed, store, run["run_id"], {"proof": {"result": "passed"}})
 
 
 def test_completion_uses_state_store_task_spec_authority_over_stale_git_projection(
@@ -2046,7 +2163,9 @@ def test_idempotent_receipt_reports_when_registry_revision_is_stale(
     task["title"] = "Changed after verification"
     task_path.write_text(json.dumps(task))
     changed = Registry.load(root)
-    repeated = complete_run(changed, store, run["run_id"], {"proof": {"result": "passed"}})
+    repeated = bureau_v2.complete_run(
+        changed, store, run["run_id"], {"proof": {"result": "passed"}}
+    )
     assert repeated["idempotent"] is True
     assert repeated["current"] is False
 

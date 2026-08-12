@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die repositorydefinierten Required Checks bleiben exakt fail-closed; fehlend, queued, laufend oder fehlgeschlagen bleibt für Pflichtchecks blockierend.",
+      "id": "required-checks-stay-strict"
+    },
+    {
+      "assertion": "Ein optionaler GitHub-Checkzustand mit terminal fehlgeschlagenem Parent-Run, gleichzeitig queued Child ohne Runner und ohne Annotationen wird maschinenlesbar als Plattform-/Diagnoseinkonsistenz klassifiziert, nicht als Codefund.",
+      "id": "platform-inconsistency-classified"
+    },
+    {
+      "assertion": "Optionale Plattformfehler bleiben sichtbar und erzeugen evidenzgebundene Warnung/Folgebefund; sie werden weder stillschweigend verworfen noch zur Abschaltung von CodeQL genutzt.",
+      "id": "no-silent-ignore"
+    },
+    {
+      "assertion": "Regressionstests decken den PR-#737-CodeQL-Fall sowie den älteren optionalen Check-Geisterzustand candidate-a7e5f751a584281dd7519b28 dedupliziert ab.",
+      "id": "regression"
+    },
+    {
+      "assertion": "Fokussierte Review-Gate-Tests und vollständige Grabowski-Validierung sind auf exaktem PR-Head grün; Review und Diff sind revisionsgebunden.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T161"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Required Checks nicht lockern und CodeQL Actions nicht deaktivieren. Nur Diagnose/Klassifikation optionaler Plattformzustände verbessern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/tools/pr_review_gate.py",
+      "path:/home/alex/repos/grabowski/tests/test_pr_review_gate.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "PR-Review- und Merge-Gates so präzisieren, dass erforderliche Checks strikt fail-closed bleiben, während inkonsistente optionale GitHub-Plattformdiagnostik als eigener evidenzgebundener Plattformzustand klassifiziert wird statt als Codefund oder stillschweigend ignoriert zu werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-OPTIONAL-CI-PLATFORM-DIAGNOSTICS-20260812",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "deduplicates_candidate": "candidate-a7e5f751a584281dd7519b28",
+    "live_evidence": {
+      "actions_job": {
+        "annotations": 0,
+        "runner_id": null,
+        "status": "queued"
+      },
+      "codeql_run": 31547080905,
+      "default_codeql_languages": [
+        "actions",
+        "python"
+      ],
+      "parent_run": "failure",
+      "pr": 737,
+      "python_codeql": "success",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)"
+      ],
+      "rerun": "rejected by GitHub"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-82ee01b618f63d10e4020800",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-08-11T23:59:36.498961Z",
+      "event_id": 6098,
+      "request_sha256": "ec2b4b001356ef12dd842c29332fe49111a32193c9fced9e9e90bdddbf8167c8",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-github-evidence",
+        "locator": "github:heimgewebe/grabowski:pr:737:codeql-run:31547080905",
+        "observed_at": "2026-08-11T23:59:36.470253Z",
+        "sha256": null
+      }
+    },
+    "source_candidate": "candidate-82ee01b618f63d10e4020800",
+    "source_event_id": 6098
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 12
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Optionale CI-Plattformfehler von Pflichtchecks trennen"
+}

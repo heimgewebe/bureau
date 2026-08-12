@@ -27,6 +27,7 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "domain": "product",
         "authorities": ("github",),
         "max_age_seconds": 86_400,
+        "config_fields": ("repository", "pull_request", "head_sha", "base_ref"),
         "revision_binding": (
             "task_sha256",
             "plan_sha256",
@@ -39,18 +40,27 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "domain": "product",
         "authorities": ("github",),
         "max_age_seconds": 21_600,
+        "config_fields": (
+            "repository",
+            "pull_request",
+            "head_sha",
+            "base_ref",
+            "required_checks",
+        ),
         "revision_binding": ("task_sha256", "plan_sha256", "head_sha", "base_ref"),
     },
     "deployment_complete": {
         "domain": "deployment",
         "authorities": ("grabowski", "target-runtime"),
         "max_age_seconds": 86_400,
+        "config_fields": ("deployment_revision",),
         "revision_binding": ("task_sha256", "plan_sha256", "deployment_revision"),
     },
     "runtime_commit_contains": {
         "domain": "runtime",
         "authorities": ("grabowski", "target-runtime"),
         "max_age_seconds": 3_600,
+        "config_fields": ("repository", "required_commit"),
         "revision_binding": (
             "task_sha256",
             "plan_sha256",
@@ -62,6 +72,7 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "domain": "runtime",
         "authorities": ("grabowski", "target-runtime"),
         "max_age_seconds": 900,
+        "config_fields": ("runtime_revision", "probe_id"),
         "revision_binding": (
             "task_sha256",
             "plan_sha256",
@@ -73,27 +84,48 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "domain": "observation",
         "authorities": ("manual",),
         "max_age_seconds": 86_400,
+        "config_fields": ("observation_scope",),
         "revision_binding": ("task_sha256", "plan_sha256", "observation_scope"),
     },
     "duration_soak_completed": {
         "domain": "observation",
         "authorities": ("grabowski", "target-runtime", "manual"),
         "max_age_seconds": 86_400,
+        "config_fields": ("required_seconds", "observation_scope"),
         "revision_binding": ("task_sha256", "plan_sha256", "observation_scope"),
     },
     "no_effect_verified": {
         "domain": "observation",
         "authorities": ("bureau", "grabowski"),
         "max_age_seconds": 3_600,
+        "config_fields": ("scope_sha256",),
         "revision_binding": ("task_sha256", "plan_sha256", "scope_sha256"),
     },
     "artifact_hash_matches": {
         "domain": "product",
         "authorities": ("artifact-store", "bureau", "grabowski"),
         "max_age_seconds": 86_400,
+        "config_fields": ("artifact_sha256",),
         "revision_binding": ("task_sha256", "plan_sha256", "artifact_sha256"),
     },
 }
+
+# A named contract is executable only when the evaluator below has bounded
+# semantics for it.  Keep this explicit rather than treating additions to the
+# descriptive contract table as executable by default.
+_EXECUTABLE_VERIFIERS = frozenset(
+    {
+        "code_merged",
+        "required_ci_green",
+        "deployment_complete",
+        "runtime_commit_contains",
+        "live_probe_passed",
+        "manual_observation",
+        "duration_soak_completed",
+        "no_effect_verified",
+        "artifact_hash_matches",
+    }
+)
 
 _PASS_CHECK_STATES = {"success", "passed", "neutral", "skipped"}
 _FAIL_CHECK_STATES = {"failure", "failed", "error", "cancelled", "timed_out"}
@@ -148,9 +180,9 @@ def _criterion_verifier_config(
     raw = criterion.get("verifier_config")
     if not isinstance(raw, Mapping):
         return None
-
-    def exact(*fields: str) -> bool:
-        return set(raw) == set(fields)
+    contract = VERIFIER_CONTRACTS.get(verifier)
+    if contract is None or set(raw) != set(contract["config_fields"]):
+        return None
 
     def nonempty(field: str) -> str | None:
         value = raw.get(field)
@@ -163,8 +195,6 @@ def _criterion_verifier_config(
         return value
 
     if verifier == "code_merged":
-        if not exact("repository", "pull_request", "head_sha", "base_ref"):
-            return None
         repo = repository()
         pull_request = raw.get("pull_request")
         head_sha = raw.get("head_sha")
@@ -186,10 +216,6 @@ def _criterion_verifier_config(
         }
 
     if verifier == "required_ci_green":
-        if not exact(
-            "repository", "pull_request", "head_sha", "base_ref", "required_checks"
-        ):
-            return None
         repo = repository()
         pull_request = raw.get("pull_request")
         head_sha = raw.get("head_sha")
@@ -217,14 +243,10 @@ def _criterion_verifier_config(
         }
 
     if verifier == "deployment_complete":
-        if not exact("deployment_revision"):
-            return None
         value = nonempty("deployment_revision")
         return {"deployment_revision": value} if value is not None else None
 
     if verifier == "runtime_commit_contains":
-        if not exact("repository", "required_commit"):
-            return None
         repo = repository()
         required_commit = raw.get("required_commit")
         if repo is None or not _sha(required_commit):
@@ -232,8 +254,6 @@ def _criterion_verifier_config(
         return {"repository": repo, "required_commit": required_commit}
 
     if verifier == "live_probe_passed":
-        if not exact("runtime_revision", "probe_id"):
-            return None
         runtime_revision = nonempty("runtime_revision")
         probe_id = nonempty("probe_id")
         if runtime_revision is None or probe_id is None:
@@ -241,14 +261,10 @@ def _criterion_verifier_config(
         return {"runtime_revision": runtime_revision, "probe_id": probe_id}
 
     if verifier == "manual_observation":
-        if not exact("observation_scope"):
-            return None
         scope = nonempty("observation_scope")
         return {"observation_scope": scope} if scope is not None else None
 
     if verifier == "duration_soak_completed":
-        if not exact("required_seconds", "observation_scope"):
-            return None
         required_seconds = raw.get("required_seconds")
         scope = nonempty("observation_scope")
         if not _valid_soak_seconds(required_seconds) or scope is None:
@@ -256,12 +272,12 @@ def _criterion_verifier_config(
         return {"required_seconds": required_seconds, "observation_scope": scope}
 
     if verifier == "no_effect_verified":
-        if not exact("scope_sha256") or not _sha256(raw.get("scope_sha256")):
+        if not _sha256(raw.get("scope_sha256")):
             return None
         return {"scope_sha256": raw["scope_sha256"]}
 
     if verifier == "artifact_hash_matches":
-        if not exact("artifact_sha256") or not _sha256(raw.get("artifact_sha256")):
+        if not _sha256(raw.get("artifact_sha256")):
             return None
         return {"artifact_sha256": raw["artifact_sha256"]}
 
@@ -284,6 +300,274 @@ def criterion_contract(criterion: Mapping[str, Any]) -> dict[str, Any] | None:
         "verifier_config": verifier_config,
         **contract,
     }
+
+
+class AcceptanceContractError(ValueError):
+    """One TaskSpec cannot be executed under the typed acceptance contract."""
+
+    def __init__(self, diagnostics: Sequence[Mapping[str, Any]]) -> None:
+        self.diagnostics = [dict(item) for item in diagnostics]
+        rendered: list[str] = []
+        for item in self.diagnostics:
+            missing = item.get("missing_fields") or []
+            invalid = item.get("invalid_fields") or []
+            suffix: list[str] = []
+            if missing:
+                suffix.append("missing=" + ",".join(str(field) for field in missing))
+            if invalid:
+                suffix.append("invalid=" + ",".join(str(field) for field in invalid))
+            detail = f"; {'; '.join(suffix)}" if suffix else ""
+            rendered.append(
+                f"task {item['task_id']} criterion {item['criterion_id']} "
+                f"at {item['path']}: {item['message']}{detail}"
+            )
+        super().__init__("\n".join(rendered))
+
+
+def _acceptance_diagnostic(
+    *,
+    task_id: str,
+    criterion_id: str,
+    path: str,
+    code: str,
+    message: str,
+    missing_fields: Sequence[str] = (),
+    invalid_fields: Sequence[str] = (),
+) -> dict[str, Any]:
+    return {
+        "task_id": task_id,
+        "criterion_id": criterion_id,
+        "path": path,
+        "code": code,
+        "message": message,
+        "missing_fields": list(missing_fields),
+        "invalid_fields": list(invalid_fields),
+    }
+
+
+def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
+    """Validate the complete executable acceptance contract for one TaskSpec.
+
+    This is deliberately stricter than ``task.v1`` structural validation.  Old
+    Registry documents and replayed events remain readable, while every caller
+    that can admit, execute, or write work can use this single semantic gate.
+    """
+
+    raw_task_id = task.get("id") if isinstance(task, Mapping) else None
+    task_id = raw_task_id if isinstance(raw_task_id, str) and raw_task_id else "<missing-task-id>"
+    criteria = task.get("acceptance") if isinstance(task, Mapping) else None
+    diagnostics: list[dict[str, Any]] = []
+    if not isinstance(criteria, list) or not criteria:
+        invalid = () if isinstance(criteria, list) else ("acceptance",)
+        diagnostics.append(
+            _acceptance_diagnostic(
+                task_id=task_id,
+                criterion_id="<acceptance>",
+                path="$.acceptance",
+                code="acceptance-empty" if isinstance(criteria, list) else "acceptance-invalid",
+                message="acceptance must contain at least one executable typed criterion",
+                missing_fields=("acceptance",) if criteria is None else (),
+                invalid_fields=invalid,
+            )
+        )
+        raise AcceptanceContractError(diagnostics)
+
+    seen_ids: dict[str, int] = {}
+    for index, raw_criterion in enumerate(criteria):
+        criterion_path = f"$.acceptance[{index}]"
+        if not isinstance(raw_criterion, Mapping):
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=f"<criterion-{index}>",
+                    path=criterion_path,
+                    code="criterion-invalid",
+                    message="criterion must be an object",
+                    invalid_fields=("criterion",),
+                )
+            )
+            continue
+
+        raw_criterion_id = raw_criterion.get("id")
+        criterion_id = (
+            raw_criterion_id
+            if isinstance(raw_criterion_id, str) and raw_criterion_id
+            else f"<criterion-{index}>"
+        )
+        criterion_has_error = False
+        if not isinstance(raw_criterion_id, str) or not raw_criterion_id:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.id",
+                    code=(
+                        "criterion-id-missing"
+                        if raw_criterion_id is None
+                        else "criterion-id-invalid"
+                    ),
+                    message="criterion id must be a non-empty string",
+                    missing_fields=("id",) if raw_criterion_id is None else (),
+                    invalid_fields=() if raw_criterion_id is None else ("id",),
+                )
+            )
+            criterion_has_error = True
+        else:
+            first_index = seen_ids.get(raw_criterion_id)
+            if first_index is not None:
+                diagnostics.append(
+                    _acceptance_diagnostic(
+                        task_id=task_id,
+                        criterion_id=criterion_id,
+                        path=f"{criterion_path}.id",
+                        code="duplicate-criterion-id",
+                        message=(
+                            f"criterion id duplicates $.acceptance[{first_index}].id"
+                        ),
+                        invalid_fields=("id",),
+                    )
+                )
+                criterion_has_error = True
+            else:
+                seen_ids[raw_criterion_id] = index
+
+        evidence_type = raw_criterion.get("evidence_type")
+        if evidence_type is None:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.evidence_type",
+                    code="evidence-type-missing",
+                    message="evidence_type is required and must be exactly 'object'",
+                    missing_fields=("evidence_type",),
+                )
+            )
+            criterion_has_error = True
+        elif evidence_type != "object":
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.evidence_type",
+                    code="evidence-type-invalid",
+                    message="evidence_type must be exactly 'object'",
+                    invalid_fields=("evidence_type",),
+                )
+            )
+            criterion_has_error = True
+
+        verifier = raw_criterion.get("verifier")
+        if verifier is None:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.verifier",
+                    code="verifier-missing",
+                    message="verifier is required",
+                    missing_fields=("verifier",),
+                )
+            )
+            criterion_has_error = True
+        elif not isinstance(verifier, str) or verifier not in VERIFIER_CONTRACTS:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.verifier",
+                    code="verifier-unknown",
+                    message=f"verifier {verifier!r} is not a known bounded verifier",
+                    invalid_fields=("verifier",),
+                )
+            )
+            criterion_has_error = True
+        elif verifier not in _EXECUTABLE_VERIFIERS:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.verifier",
+                    code="verifier-not-executable",
+                    message=f"verifier {verifier!r} has no executable evaluator",
+                    invalid_fields=("verifier",),
+                )
+            )
+            criterion_has_error = True
+
+        verifier_config = raw_criterion.get("verifier_config")
+        if verifier_config is None:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.verifier_config",
+                    code="verifier-config-missing",
+                    message="verifier_config is required and must exactly match the verifier",
+                    missing_fields=("verifier_config",),
+                )
+            )
+            criterion_has_error = True
+        elif not isinstance(verifier_config, Mapping):
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.verifier_config",
+                    code="verifier-config-invalid",
+                    message="verifier_config must be an object",
+                    invalid_fields=("verifier_config",),
+                )
+            )
+            criterion_has_error = True
+        elif isinstance(verifier, str) and verifier in VERIFIER_CONTRACTS:
+            if _criterion_verifier_config(verifier, raw_criterion) is None:
+                expected_fields = frozenset(
+                    VERIFIER_CONTRACTS[verifier]["config_fields"]
+                )
+                observed_fields = {str(field) for field in verifier_config}
+                missing_config_fields = tuple(
+                    f"verifier_config.{field}"
+                    for field in sorted(expected_fields - observed_fields)
+                )
+                unexpected_config_fields = tuple(
+                    f"verifier_config.{field}"
+                    for field in sorted(observed_fields - expected_fields)
+                )
+                invalid_config_fields = unexpected_config_fields
+                if not missing_config_fields and not invalid_config_fields:
+                    invalid_config_fields = tuple(
+                        f"verifier_config.{field}" for field in sorted(expected_fields)
+                    )
+                diagnostics.append(
+                    _acceptance_diagnostic(
+                        task_id=task_id,
+                        criterion_id=criterion_id,
+                        path=f"{criterion_path}.verifier_config",
+                        code="verifier-config-mismatch",
+                        message=(
+                            f"verifier_config does not exactly match verifier {verifier!r}"
+                        ),
+                        missing_fields=missing_config_fields,
+                        invalid_fields=invalid_config_fields or ("verifier_config",),
+                    )
+                )
+                criterion_has_error = True
+
+        if not criterion_has_error and criterion_contract(raw_criterion) is None:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=criterion_path,
+                    code="criterion-not-executable",
+                    message="criterion does not resolve to an executable typed contract",
+                    invalid_fields=("evidence_type", "verifier", "verifier_config"),
+                )
+            )
+
+    if diagnostics:
+        raise AcceptanceContractError(diagnostics)
 
 
 def typed_criterion_contracts(criteria: Sequence[Mapping[str, Any]]) -> dict[str, Any]:

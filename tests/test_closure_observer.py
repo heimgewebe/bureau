@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import copy
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from bureau import legacy
+from bureau import cli as bureau_cli
+from bureau import legacy, state_events
 from bureau.acceptance import EVIDENCE_KIND, PASSED, UNKNOWN
 from bureau.closure_observer import (
     EVIDENCE_BUNDLE_KIND,
@@ -16,8 +19,15 @@ from bureau.closure_observer import (
     reconcile_run,
     reconcile_runs,
     reconcile_state_evidence,
+    record_manual_acceptance_authentication,
 )
-from bureau.core import Dispatcher, Registry, StateStore
+from bureau.core import (
+    Dispatcher,
+    Registry,
+    StateError,
+    StateStore,
+    task_revision_sha256,
+)
 from bureau.v2 import RunStateConflict, fail_run
 
 TASK_SHA = "a" * 64
@@ -108,7 +118,7 @@ class FakeStore:
         return {"run_id": run_id, "receipt_sha256": "f" * 64}
 
 
-def test_passing_typed_evidence_calls_existing_completion_path_once(tmp_path: Path) -> None:
+def test_passing_typed_evidence_calls_custom_completion_once(tmp_path: Path) -> None:
     store = FakeStore(tmp_path)
     calls: list[dict[str, Any]] = []
 
@@ -138,7 +148,8 @@ def test_passing_typed_evidence_calls_existing_completion_path_once(tmp_path: Pa
     assert result["evaluation"]["state"] == PASSED
     assert len(calls) == 1
     assert calls[0]["run_id"] == "RUN-1"
-    assert calls[0]["evidence"]["_typed_acceptance"]["state"] == PASSED
+    assert calls[0]["evidence"] == manual_evidence()
+    assert "_typed_acceptance" not in calls[0]["evidence"]
 
 
 def test_stale_evidence_stays_open_and_never_calls_completion(tmp_path: Path) -> None:
@@ -165,17 +176,60 @@ def test_stale_evidence_stays_open_and_never_calls_completion(tmp_path: Path) ->
     assert calls == []
 
 
-def test_untyped_acceptance_stays_open(tmp_path: Path) -> None:
+def test_untyped_acceptance_returns_stable_bound_diagnostic_without_terminalization(
+    tmp_path: Path,
+) -> None:
     store = FakeStore(
         tmp_path,
         criteria=[{"id": "legacy", "assertion": "legacy prose criterion"}],
     )
 
     result = evaluate_run(store, "RUN-1", {"legacy": True}, now=NOW)
+    repeated = evaluate_run(store, "RUN-1", {"legacy": True}, now=NOW)
 
     assert result["state"] == "open"
-    assert result["evaluation"]["state"] == UNKNOWN
-    assert result["evaluation"]["criteria"][0]["reason"] == "criterion-is-not-typed"
+    assert result["reason"] == "invalid-acceptance-contract"
+    assert result["mutated"] is False
+    diagnostic = result["diagnostic"]
+    assert diagnostic["task_id"] == "TASK-1"
+    assert diagnostic["run_id"] == "RUN-1"
+    assert diagnostic["task_sha256"] == TASK_SHA
+    assert diagnostic["plan_sha256"] == PLAN_SHA
+    assert diagnostic["diagnostics"][0]["path"] == "$.acceptance[0].evidence_type"
+    assert "Register a new TaskSpec revision" in diagnostic["repair_action"]
+    assert repeated["diagnostic"]["fingerprint"] == diagnostic["fingerprint"]
+
+    calls: list[str] = []
+
+    def completion(registry, observed_store, run_id, evidence):
+        calls.append(run_id)
+        return {"idempotent": False}
+
+    reconciled = reconcile_run(
+        "registry", store, "RUN-1", {"legacy": True}, now=NOW, completion=completion
+    )
+    assert reconciled["state"] == "open"
+    assert reconciled["mutated"] is False
+    assert calls == []
+
+
+def test_untyped_acceptance_is_diagnosed_before_evidence_provider(tmp_path: Path) -> None:
+    store = FakeStore(
+        tmp_path,
+        criteria=[{"id": "legacy", "assertion": "legacy prose criterion"}],
+    )
+    provider_calls: list[str] = []
+
+    def provider(run, envelope):
+        provider_calls.append(str(run["run_id"]))
+        raise AssertionError("invalid acceptance must not reach evidence collection")
+
+    result = reconcile_runs("registry", store, provider, now=NOW)
+
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    assert result["observations"][0]["reason"] == "invalid-acceptance-contract"
+    assert provider_calls == []
 
 
 def test_unreadable_envelope_is_open_not_failed(tmp_path: Path) -> None:
@@ -366,7 +420,7 @@ def test_adapter_unavailable_does_not_abort_later_runs(tmp_path: Path) -> None:
     assert completed == ["RUN-2"]
 
 
-def test_typed_pass_uses_real_complete_run_state_store_path(
+def test_authenticated_typed_pass_uses_real_post_evaluation_cas_writer(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:
     root = registry_factory(1)
@@ -392,6 +446,14 @@ def test_typed_pass_uses_real_complete_run_state_store_path(
         ),
         now=NOW,
         authenticated_criterion_ids={"manual"},
+        authentication_records={
+            "manual": {
+                "schema_version": 1,
+                "kind": "bureau.acceptance_source_authentication",
+                "authority": "manual",
+                "authenticated": True,
+            }
+        },
     )
 
     assert result["state"] == "terminalized"
@@ -402,6 +464,8 @@ def test_typed_pass_uses_real_complete_run_state_store_path(
     assert result["evaluation"]["state"] == PASSED
     assert receipt["evidence"]["manual"]["kind"] == EVIDENCE_KIND
     assert receipt["evidence"]["manual"]["revision"]["task_sha256"] == run["task_sha256"]
+    assert receipt["evidence"]["manual"]["_source_authentication"]["authenticated"] is True
+    assert "_typed_acceptance" not in receipt["evidence"]
 
 
 @pytest.mark.parametrize(
@@ -422,7 +486,6 @@ def test_typed_pass_uses_real_complete_run_state_store_path(
             {"runtime_revision": "runtime-1", "probe_id": "health"},
             ["grabowski", "target-runtime"],
         ),
-        ("manual_observation", {"observation_scope": "manual:test"}, ["manual"]),
         (
             "duration_soak_completed",
             {"required_seconds": 60, "observation_scope": "soak:test"},
@@ -472,9 +535,7 @@ def test_unbound_declared_verifiers_report_explicit_adapter_block(
     )
 
 
-def test_state_root_manual_bundle_cannot_self_authenticate_production_writer(
-    registry_factory, tmp_path: Path, monkeypatch
-) -> None:
+def _manual_production_fixture(registry_factory, tmp_path: Path, monkeypatch):
     root = registry_factory(1)
     task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
     task = json.loads(task_path.read_text(encoding="utf-8"))
@@ -500,7 +561,24 @@ def test_state_root_manual_bundle_cannot_self_authenticate_production_writer(
             plan_sha256=run["plan_sha256"],
         ),
     }
-    (evidence_dir / f"{run['run_id']}.json").write_text(json.dumps(bundle), encoding="utf-8")
+    bundle_path = evidence_dir / f"{run['run_id']}.json"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    return registry, store, run, bundle, bundle_path
+
+
+def test_state_root_manual_bundle_cannot_self_authenticate_production_writer(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, _ = _manual_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    bundle["evidence"]["manual"]["_source_authentication"] = {
+        "authority": "manual",
+        "reviewer": "producer-forgery",
+        "authenticated": True,
+    }
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+    evidence_path.write_text(json.dumps(bundle), encoding="utf-8")
 
     result = reconcile_state_evidence(registry, store, now=NOW)
 
@@ -508,15 +586,365 @@ def test_state_root_manual_bundle_cannot_self_authenticate_production_writer(
     assert result["terminalized_count"] == 0
     assert result["open_count"] == 1
     blocked = result["observations"][0]
-    assert blocked["reason"] == "evidence-adapter-unavailable"
-    assert blocked["adapter"]["authority"] == "unbound"
-    assert blocked["adapter"]["adapter"] == "missing:manual_observation"
+    assert blocked["reason"] == "evidence-authentication-unavailable"
+    assert blocked["adapter"]["authority"] == "manual"
+    assert blocked["adapter"]["adapter"] == (
+        "StateStore.events:manual-acceptance-source-authenticated"
+    )
     assert blocked["adapter"]["target"] == {
+        "run_id": run["run_id"],
+        "task_id": run["task_id"],
+        "task_sha256": run["task_sha256"],
+        "plan_sha256": run["plan_sha256"],
+        "envelope_sha256": run["envelope_sha256"],
         "criterion_id": "manual",
         "verifier": "manual_observation",
-        "permitted_authorities": ["manual"],
+        "observation_scope": "manual:test",
+        "evidence_sha256": legacy.sha256_json(bundle["evidence"]["manual"]),
+        "authority": "manual",
     }
+    assert blocked["evaluation"]["criteria"][0]["reason"] == (
+        "evidence-source-unauthenticated"
+    )
     assert store.run(run["run_id"])["state"] == "assigned"
+
+
+def test_manual_authentication_event_is_revision_bound_and_idempotent(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, _ = _manual_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    evidence_sha256 = legacy.sha256_json(bundle["evidence"]["manual"])
+
+    first = record_manual_acceptance_authentication(
+        store,
+        run["run_id"],
+        "manual",
+        expected_evidence_sha256=evidence_sha256,
+        reviewer="  independent-reviewer  ",
+    )
+    repeated = record_manual_acceptance_authentication(
+        store,
+        run["run_id"],
+        "manual",
+        expected_evidence_sha256=evidence_sha256,
+        reviewer="independent-reviewer",
+    )
+
+    assert first["idempotent"] is False
+    assert repeated["idempotent"] is True
+    assert repeated["authentication"] == first["authentication"]
+    authentication = first["authentication"]
+    assert authentication["kind"] == "bureau.acceptance_source_authentication"
+    assert authentication["run_id"] == run["run_id"]
+    assert authentication["task_id"] == run["task_id"]
+    assert authentication["task_sha256"] == run["task_sha256"]
+    assert authentication["plan_sha256"] == run["plan_sha256"]
+    assert authentication["envelope_sha256"] == run["envelope_sha256"]
+    assert authentication["criterion_id"] == "manual"
+    assert authentication["verifier"] == "manual_observation"
+    assert authentication["observation_scope"] == "manual:test"
+    assert authentication["evidence_sha256"] == evidence_sha256
+    assert authentication["reviewer"] == "independent-reviewer"
+    assert authentication["observer"] == "independent-reviewer"
+    assert authentication["authority"] == "manual"
+    assert authentication["journal"]["event_type"] == (
+        state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE
+    )
+    with store.connect() as connection:
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type=?",
+            (
+                run["run_id"],
+                state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+            ),
+        ).fetchone()[0]
+    assert event_count == 1
+
+    result = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert result["terminalized_count"] == 1
+    receipt = store.receipt(run["run_id"])
+    assert receipt is not None
+    assert receipt["evidence"]["manual"]["_source_authentication"] == authentication
+    with pytest.raises(StateError, match="is not active for acceptance authentication"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=evidence_sha256,
+            reviewer="independent-reviewer",
+        )
+
+
+def test_acceptance_authenticate_cli_records_manual_journal_event(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry, store, run, bundle, _ = _manual_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    identity = {
+        "registry": {"bureau_project": False},
+        "manifest": {"canonical_registry": {}},
+        "compatibility": {
+            "status": "compatible",
+            "mutation_allowed": True,
+            "reason_codes": [],
+        },
+    }
+    monkeypatch.setattr(
+        bureau_cli, "bureau_runtime_identity", lambda *args, **kwargs: copy.deepcopy(identity)
+    )
+
+    exit_code = bureau_cli.main(
+        [
+            "--root",
+            str(registry.root),
+            "--state-root",
+            str(store.state_root),
+            "--json",
+            "acceptance-authenticate",
+            run["run_id"],
+            "manual",
+            "--expected-evidence-sha256",
+            legacy.sha256_json(bundle["evidence"]["manual"]),
+            "--reviewer",
+            "cli-independent-reviewer",
+        ]
+    )
+
+    assert exit_code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["status"] == "authenticated"
+    assert value["authentication"]["reviewer"] == "cli-independent-reviewer"
+    assert value["authentication"]["criterion_id"] == "manual"
+    assert value["runtime_identity"]["command_effect_scope"] == (
+        "coordination_state_mutation"
+    )
+
+
+def test_changed_manual_evidence_digest_requires_a_new_attestation(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, bundle_path = _manual_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    original_sha256 = legacy.sha256_json(bundle["evidence"]["manual"])
+    record_manual_acceptance_authentication(
+        store,
+        run["run_id"],
+        "manual",
+        expected_evidence_sha256=original_sha256,
+        reviewer="independent-reviewer",
+    )
+    bundle["evidence"]["manual"]["facts"]["observation"] = "different current observation"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    changed_sha256 = legacy.sha256_json(bundle["evidence"]["manual"])
+    assert changed_sha256 != original_sha256
+
+    blocked = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert blocked["terminalized_count"] == 0
+    observation = blocked["observations"][0]
+    assert observation["reason"] == "evidence-authentication-unavailable"
+    assert observation["adapter"]["target"]["evidence_sha256"] == changed_sha256
+    assert observation["evaluation"]["criteria"][0]["reason"] == (
+        "evidence-source-unauthenticated"
+    )
+    record_manual_acceptance_authentication(
+        store,
+        run["run_id"],
+        "manual",
+        expected_evidence_sha256=changed_sha256,
+        reviewer="independent-reviewer",
+    )
+    with store.connect() as connection:
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type=?",
+            (
+                run["run_id"],
+                state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+            ),
+        ).fetchone()[0]
+    assert event_count == 2
+
+    completed = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert completed["terminalized_count"] == 1
+
+
+def test_manual_authentication_journal_bound_fails_closed(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    import bureau.closure_observer as observer
+
+    registry, store, run, bundle, _ = _manual_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    monkeypatch.setattr(observer, "MAX_MANUAL_AUTHENTICATION_EVENTS_PER_RUN", 2)
+    evidence_sha256 = legacy.sha256_json(bundle["evidence"]["manual"])
+    record_manual_acceptance_authentication(
+        store,
+        run["run_id"],
+        "manual",
+        expected_evidence_sha256=evidence_sha256,
+        reviewer="reviewer-one",
+    )
+    record_manual_acceptance_authentication(
+        store,
+        run["run_id"],
+        "manual",
+        expected_evidence_sha256=evidence_sha256,
+        reviewer="reviewer-two",
+    )
+    with pytest.raises(StateError, match="journal capacity reached"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=evidence_sha256,
+            reviewer="reviewer-three",
+        )
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO events(run_id,event_type,event_schema_version,payload_json,created_at) "
+            "SELECT run_id,event_type,event_schema_version,payload_json,created_at "
+            "FROM events WHERE run_id=? AND event_type=? ORDER BY event_id DESC LIMIT 1",
+            (run["run_id"], state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE),
+        )
+    result = reconcile_state_evidence(registry, store, now=NOW)
+    assert result["terminalized_count"] == 0
+    assert result["observations"][0]["reason"] == (
+        "evidence-authentication-provider-unavailable"
+    )
+    assert "journal bound exceeded" in result["observations"][0]["detail"]
+
+
+def test_authenticated_stale_manual_evidence_remains_open(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, bundle_path = _manual_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    bundle["evidence"]["manual"]["observed_at"] = "2026-08-08T19:59:00Z"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    record_manual_acceptance_authentication(
+        store,
+        run["run_id"],
+        "manual",
+        expected_evidence_sha256=legacy.sha256_json(bundle["evidence"]["manual"]),
+        reviewer="independent-reviewer",
+    )
+
+    result = reconcile_state_evidence(registry, store, now=NOW)
+
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    criterion = result["observations"][0]["evaluation"]["criteria"][0]
+    assert criterion["state"] == UNKNOWN
+    assert criterion["reason"] == "evidence-stale"
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
+def test_manual_authentication_rejects_wrong_criterion_digest_scope_and_revision(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, bundle_path = _manual_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    item = bundle["evidence"]["manual"]
+    digest = legacy.sha256_json(item)
+
+    with pytest.raises(StateError, match="unknown acceptance criterion 'missing'"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "missing",
+            expected_evidence_sha256=digest,
+            reviewer="reviewer",
+        )
+    with pytest.raises(StateError, match="manual evidence digest mismatch"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256="0" * 64,
+            reviewer="reviewer",
+        )
+    with pytest.raises(StateError, match="reviewer must differ"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=digest,
+            reviewer="operator",
+        )
+    with pytest.raises(StateError, match="reviewer must differ"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=digest,
+            reviewer="  operator  ",
+        )
+
+    item["revision"]["observation_scope"] = "manual:wrong"
+    item["facts"]["observation_scope"] = "manual:wrong"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    with pytest.raises(StateError, match="observation scope mismatch"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=legacy.sha256_json(item),
+            reviewer="reviewer",
+        )
+
+    item["revision"]["observation_scope"] = "manual:test"
+    item["facts"]["observation_scope"] = "manual:test"
+    item["revision"]["plan_sha256"] = "8" * 64
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    with pytest.raises(StateError, match="plan revision mismatch"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=legacy.sha256_json(item),
+            reviewer="reviewer",
+        )
+
+    item["revision"]["plan_sha256"] = run["plan_sha256"]
+    item["revision"]["task_sha256"] = "9" * 64
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    with pytest.raises(StateError, match="task revision mismatch"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=legacy.sha256_json(item),
+            reviewer="reviewer",
+        )
+    result = reconcile_state_evidence(registry, store, now=NOW)
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+    assert result["observations"][0]["reason"] == (
+        "evidence-authentication-unavailable"
+    )
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+    envelope_path = store.envelope_path(run["run_id"])
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    envelope["worker_id"] = "tampered-worker"
+    envelope_path.write_text(json.dumps(envelope), encoding="utf-8")
+    with pytest.raises(StateError, match="run envelope integrity mismatch"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "manual",
+            expected_evidence_sha256=legacy.sha256_json(item),
+            reviewer="reviewer",
+        )
 
 
 def test_state_root_bundle_binding_drift_stays_open(
@@ -645,6 +1073,352 @@ def _github_production_fixture(registry_factory, tmp_path: Path, monkeypatch):
         json.dumps(bundle), encoding="utf-8"
     )
     return registry, store, run
+
+
+def test_manual_authentication_api_rejects_non_manual_verifier(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    _, store, run = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+    bundle = json.loads(evidence_path.read_text(encoding="utf-8"))
+    digest = legacy.sha256_json(bundle["evidence"]["merge"])
+
+    with pytest.raises(StateError, match="verifier mismatch"):
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            "merge",
+            expected_evidence_sha256=digest,
+            reviewer="reviewer",
+        )
+
+
+PR1907_TASK_ID = (
+    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-OPTIONAL-CI-PLATFORM-DIAGNOSTICS-20260812"
+)
+PR1907_HEAD = "1000dc0af21f9ddeacd1823e264a5826c9a1ded6"
+PR1907_REQUIRED_CHECKS = ["validate (3.10)", "validate (3.12)"]
+PR1907_MANUAL_SCOPES = {
+    "platform-inconsistency-classified": (
+        "grabowski:pr-review-gate:pr737:optional-actions-platform-inconsistency"
+    ),
+    "no-silent-ignore": (
+        "grabowski:pr-review-gate:pr737:optional-platform-warning-follow-up"
+    ),
+    "regression": (
+        "grabowski:pr-review-gate:pr737-and-candidate-a7e5f751a584281dd7519b28"
+    ),
+    "delivery": (
+        "grabowski:pr-review-gate:pr737-head-1000dc0af21f:review-tests-validation"
+    ),
+}
+
+
+def corrected_pr1907_task() -> dict[str, Any]:
+    fixture = Path(__file__).with_name("fixtures") / "pr1907-untyped-task.json"
+    task = json.loads(fixture.read_text(encoding="utf-8"))
+    for criterion in task["acceptance"]:
+        criterion["evidence_type"] = "object"
+        if criterion["id"] == "required-checks-stay-strict":
+            criterion["verifier"] = "required_ci_green"
+            criterion["verifier_config"] = {
+                "repository": "heimgewebe/grabowski",
+                "pull_request": 737,
+                "head_sha": PR1907_HEAD,
+                "base_ref": "main",
+                "required_checks": list(PR1907_REQUIRED_CHECKS),
+            }
+        else:
+            criterion["verifier"] = "manual_observation"
+            criterion["verifier_config"] = {
+                "observation_scope": PR1907_MANUAL_SCOPES[criterion["id"]]
+            }
+    return task
+
+
+def _seed_pr1907_state_run(registry_factory, tmp_path: Path, monkeypatch):
+    root = registry_factory(1)
+    base_initiative = json.loads(
+        (root / "registry/initiatives/main.json").read_text(encoding="utf-8")
+    )
+    initiative = {
+        **base_initiative,
+        "id": "GRABOWSKI-OPERATOR-SURFACE-V1",
+        "title": "Grabowski operator surface",
+    }
+    (root / "registry/initiatives/pr1907.json").write_text(
+        json.dumps(initiative), encoding="utf-8"
+    )
+    registry = Registry.load(root)
+    state_root = tmp_path / "pr1907-production-state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
+    store = StateStore(state_root / "bureau.sqlite3")
+    task = corrected_pr1907_task()
+    store.put_task_spec(
+        task,
+        idempotency_key="test:pr1907:typed-revision-1",
+        expected_revision=None,
+        source="test-authoritative-state-store",
+    )
+    run_id = "BUR-RUN-20260812T120000Z-1907abc123"
+    task_sha256 = task_revision_sha256(task)
+    plan_sha256 = legacy.sha256_json({})
+    created_at = "2026-08-10T19:58:00Z"
+    envelope = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "task_id": task["id"],
+        "worker_id": "pr1907-producer",
+        "task_sha256": task_sha256,
+        "plan_sha256": plan_sha256,
+        "created_at": created_at,
+        "task": task,
+        "claims": copy.deepcopy(task["claims"]),
+        "plan": {},
+    }
+    registry.schemas.validate("execution-envelope", envelope, f"test-run:{run_id}")
+    envelope_sha256 = legacy.sha256_json(envelope)
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO workers(worker_id,kind,capabilities_json,heartbeat_at) "
+            "VALUES(?,?,?,?)",
+            (
+                "pr1907-producer",
+                "interactive-agent",
+                legacy.canonical_json(task["required_capabilities"]),
+                created_at,
+            ),
+        )
+        connection.execute(
+            "INSERT INTO runs(run_id,task_id,worker_id,attempt,state,task_sha256,"
+            "plan_sha256,envelope_json,envelope_sha256,dispatch_request_id,created_at,"
+            "updated_at,heartbeat_at) VALUES(?,?,?,1,'assigned',?,?,?,?,?,?,?,?)",
+            (
+                run_id,
+                task["id"],
+                "pr1907-producer",
+                task_sha256,
+                plan_sha256,
+                legacy.canonical_json(envelope),
+                envelope_sha256,
+                f"{run_id}:dispatch-1",
+                created_at,
+                created_at,
+                created_at,
+            ),
+        )
+        connection.execute(
+            "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+            "VALUES(?,?,?,?,?)",
+            (run_id, "repo.grabowski", "write", 1, created_at),
+        )
+        store.event(connection, "run-claimed", {"task_id": task["id"]}, run_id)
+    legacy.atomic_write(
+        store.envelope_path(run_id),
+        json.dumps(envelope, indent=2, ensure_ascii=False) + "\n",
+    )
+    run = store.run(run_id)
+    return registry, store, run, task
+
+
+def _pr1907_evidence(run: Mapping[str, Any], task: Mapping[str, Any]) -> dict[str, Any]:
+    evidence: dict[str, Any] = {
+        "required-checks-stay-strict": {
+            "schema_version": 1,
+            "kind": EVIDENCE_KIND,
+            "criterion_id": "required-checks-stay-strict",
+            "evidence_type": "required_ci_green",
+            "source": {
+                "authority": "github",
+                "reference": f"github-pr:heimgewebe/grabowski#737@{PR1907_HEAD}",
+            },
+            "observed_at": "2026-08-10T19:59:00Z",
+            "revision": {
+                "task_sha256": run["task_sha256"],
+                "plan_sha256": run["plan_sha256"],
+                "head_sha": PR1907_HEAD,
+                "base_ref": "main",
+            },
+            "facts": {
+                "complete": True,
+                "head_sha": PR1907_HEAD,
+                "base_ref": "main",
+                "required_checks": list(PR1907_REQUIRED_CHECKS),
+                "checks": [
+                    {"name": name, "state": "success"}
+                    for name in PR1907_REQUIRED_CHECKS
+                ],
+            },
+        }
+    }
+    criteria = {
+        criterion["id"]: criterion for criterion in task["acceptance"]
+    }
+    for criterion_id, observation_scope in PR1907_MANUAL_SCOPES.items():
+        assert criteria[criterion_id]["verifier_config"] == {
+            "observation_scope": observation_scope
+        }
+        evidence[criterion_id] = {
+            "schema_version": 1,
+            "kind": EVIDENCE_KIND,
+            "criterion_id": criterion_id,
+            "evidence_type": "manual_observation",
+            "source": {
+                "authority": "manual",
+                "reference": f"producer-observation:{criterion_id}",
+            },
+            "observed_at": "2026-08-10T19:59:00Z",
+            "revision": {
+                "task_sha256": run["task_sha256"],
+                "plan_sha256": run["plan_sha256"],
+                "observation_scope": observation_scope,
+            },
+            "facts": {
+                "accepted": True,
+                "observer": "pr1907-producer",
+                "observation": f"independently reviewable observation for {criterion_id}",
+                "observation_scope": observation_scope,
+            },
+        }
+    return evidence
+
+
+def test_pr1907_corrected_task_preserves_authoritative_content_and_exact_check_set() -> None:
+    fixture = Path(__file__).with_name("fixtures") / "pr1907-untyped-task.json"
+    untyped = json.loads(fixture.read_text(encoding="utf-8"))
+    typed = corrected_pr1907_task()
+
+    assert legacy.sha256_json(untyped) == (
+        "42667ab0105e1aea61b834d192e368016f3faa31a3ff9f366ba0d0da37884946"
+    )
+    assert {key: value for key, value in typed.items() if key != "acceptance"} == {
+        key: value for key, value in untyped.items() if key != "acceptance"
+    }
+    assert [item["id"] for item in typed["acceptance"]] == [
+        "required-checks-stay-strict",
+        "platform-inconsistency-classified",
+        "no-silent-ignore",
+        "regression",
+        "delivery",
+    ]
+    required = typed["acceptance"][0]
+    assert required["verifier"] == "required_ci_green"
+    assert required["verifier_config"] == {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 737,
+        "head_sha": PR1907_HEAD,
+        "base_ref": "main",
+        "required_checks": PR1907_REQUIRED_CHECKS,
+    }
+    assert "Analyze (actions)" not in required["verifier_config"]["required_checks"]
+    manual_scopes = [
+        item["verifier_config"]["observation_scope"]
+        for item in typed["acceptance"][1:]
+    ]
+    assert len(set(manual_scopes)) == 4
+
+
+def test_pr1907_real_production_reconcile_requires_four_manual_attestations(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, task = _seed_pr1907_state_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    evidence = _pr1907_evidence(run, task)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    evidence_dir.mkdir()
+    evidence_path = evidence_dir / f"{run['run_id']}.json"
+    evidence_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": EVIDENCE_BUNDLE_KIND,
+                "run_id": run["run_id"],
+                "task_id": run["task_id"],
+                "task_sha256": run["task_sha256"],
+                "plan_sha256": run["plan_sha256"],
+                "evidence": evidence,
+            }
+        ),
+        encoding="utf-8",
+    )
+    github_calls: list[list[str]] = []
+
+    def github(argv):
+        github_calls.append(argv)
+        return {
+            "number": 737,
+            "state": "OPEN",
+            "isDraft": False,
+            "mergedAt": None,
+            "mergeCommit": None,
+            "headRefOid": PR1907_HEAD,
+            "baseRefName": "main",
+            "statusCheckRollup": [
+                {"name": "validate (3.10)", "conclusion": "SUCCESS"},
+                {"name": "validate (3.12)", "conclusion": "SUCCESS"},
+                {"name": "Analyze (actions)", "conclusion": "FAILURE"},
+            ],
+            "url": "https://github.com/heimgewebe/grabowski/pull/737",
+        }
+
+    producer_only = reconcile_state_evidence(registry, store, now=NOW, github=github)
+
+    assert producer_only["terminalized_count"] == 0
+    assert store.run(run["run_id"])["state"] == "assigned"
+    observation = producer_only["observations"][0]
+    assert observation["reason"] == "evidence-authentication-unavailable"
+    assert len(observation["authentication_unavailable"]) == 4
+    states = {
+        item["criterion_id"]: (item["state"], item["reason"])
+        for item in observation["evaluation"]["criteria"]
+    }
+    assert states["required-checks-stay-strict"] == (
+        "passed",
+        "required-checks-green",
+    )
+    assert all(
+        states[criterion_id] == ("unknown", "evidence-source-unauthenticated")
+        for criterion_id in PR1907_MANUAL_SCOPES
+    )
+    assert all(reason != "criterion-is-not-typed" for _, reason in states.values())
+
+    for criterion_id in PR1907_MANUAL_SCOPES:
+        record_manual_acceptance_authentication(
+            store,
+            run["run_id"],
+            criterion_id,
+            expected_evidence_sha256=legacy.sha256_json(evidence[criterion_id]),
+            reviewer="pr1907-independent-reviewer",
+        )
+
+    completed = reconcile_state_evidence(registry, store, now=NOW, github=github)
+
+    assert completed["terminalized_count"] == 1
+    assert completed["observations"][0]["state"] == "terminalized"
+    assert completed["observations"][0]["evaluation"]["state"] == PASSED
+    completed_criteria = completed["observations"][0]["evaluation"]["criteria"]
+    assert len(completed_criteria) == 5
+    assert all(item["state"] == PASSED for item in completed_criteria)
+    assert all(item["reason"] != "criterion-is-not-typed" for item in completed_criteria)
+    assert store.run(run["run_id"])["state"] == "succeeded"
+    receipt = store.receipt(run["run_id"])
+    assert receipt is not None
+    for criterion_id, scope in PR1907_MANUAL_SCOPES.items():
+        authentication = receipt["evidence"][criterion_id]["_source_authentication"]
+        assert authentication["authority"] == "manual"
+        assert authentication["reviewer"] == "pr1907-independent-reviewer"
+        assert authentication["observation_scope"] == scope
+        assert authentication["evidence_sha256"] == legacy.sha256_json(
+            evidence[criterion_id]
+        )
+        assert authentication["journal"]["event_type"] == (
+            state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE
+        )
+    required_config = task["acceptance"][0]["verifier_config"]
+    assert required_config["required_checks"] == PR1907_REQUIRED_CHECKS
+    assert "Analyze (actions)" not in required_config["required_checks"]
+    assert len(github_calls) == 2
 
 
 def test_state_root_github_bundle_terminalizes_only_after_live_authentication(

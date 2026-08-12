@@ -10,7 +10,10 @@ from typing import Any
 
 from .adapters import AdapterRegistry
 from .approval import ApprovalRequired
-from .closure_observer import reconcile_state_evidence
+from .closure_observer import (
+    reconcile_state_evidence,
+    record_manual_acceptance_authentication,
+)
 from .core import (
     BureauError,
     Claim,
@@ -408,6 +411,11 @@ def parser() -> argparse.ArgumentParser:
     expand.add_argument("--reason", required=True)
     reconcile = sub.add_parser("reconcile")
     reconcile.add_argument("--stale-after", type=int, default=900)
+    acceptance_authenticate = sub.add_parser("acceptance-authenticate")
+    acceptance_authenticate.add_argument("run_id")
+    acceptance_authenticate.add_argument("criterion_id")
+    acceptance_authenticate.add_argument("--expected-evidence-sha256", required=True)
+    acceptance_authenticate.add_argument("--reviewer", required=True)
     complete = sub.add_parser("complete")
     complete.add_argument("run_id")
     complete.add_argument("--evidence", required=True)
@@ -1504,6 +1512,14 @@ def main(argv: list[str] | None = None) -> int:
             acceptance_closeout = reconcile_state_evidence(registry, store)
             runtime_reconcile = dispatcher.reconcile(args.stale_after)
             value = {**runtime_reconcile, "acceptance_closeout": acceptance_closeout}
+        elif args.command == "acceptance-authenticate":
+            value = record_manual_acceptance_authentication(
+                store,
+                args.run_id,
+                args.criterion_id,
+                expected_evidence_sha256=args.expected_evidence_sha256,
+                reviewer=args.reviewer,
+            )
         elif args.command == "complete":
             evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
             value = complete_run(registry, store, args.run_id, evidence)

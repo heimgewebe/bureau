@@ -2,18 +2,51 @@
   "acceptance": [
     {
       "assertion": "Die Coding-Memory-Integration löst die Chronik-CLI standardmäßig aus einer stabilen versionierten Release- oder Snapshot-Quelle oder einer explizit konfigurierten Quelle auf und hängt nicht vom aktuell ausgecheckten Branch in /home/alex/repos/chronik ab.",
+      "evidence_type": "object",
       "id": "stable-cli-binding",
-      "verifier": "Regressionstest mit abweichendem oder veraltetem Chronik-Entwickler-Checkout"
+      "verifier": "required_ci_green",
+      "verifier_config": {
+        "base_ref": "main",
+        "head_sha": "5ee684677067b71949fdf47cb2b9d285f530b4c5",
+        "pull_request": 743,
+        "repository": "heimgewebe/grabowski",
+        "required_checks": [
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
+      }
     },
     {
       "assertion": "Eine fehlende oder inkompatible Chronik-CLI führt fail-soft zu einem expliziten unavailable- oder config-mismatch-Ergebnis statt zu einem Crash oder einer stillen Fehlbindung.",
+      "evidence_type": "object",
       "id": "fail-soft-diagnostics",
-      "verifier": "Automatisierte Tests für fehlende CLI sowie Versions- und Vertragsabweichung"
+      "verifier": "required_ci_green",
+      "verifier_config": {
+        "base_ref": "main",
+        "head_sha": "5ee684677067b71949fdf47cb2b9d285f530b4c5",
+        "pull_request": 743,
+        "repository": "heimgewebe/grabowski",
+        "required_checks": [
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
+      }
     },
     {
       "assertion": "Eine explizit konfigurierte CLI-Quelle bleibt möglich und wird validiert, ohne die stabile Defaultbindung stillschweigend zu umgehen.",
+      "evidence_type": "object",
       "id": "operator-override",
-      "verifier": "Gezielte Tests für gültigen Override sowie ungültige oder nicht vertrauenswürdige Pfade"
+      "verifier": "required_ci_green",
+      "verifier_config": {
+        "base_ref": "main",
+        "head_sha": "5ee684677067b71949fdf47cb2b9d285f530b4c5",
+        "pull_request": 743,
+        "repository": "heimgewebe/grabowski",
+        "required_checks": [
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
+      }
     }
   ],
   "claims": [
@@ -45,22 +78,22 @@
   "metadata": {
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-cb78a93b2778e8bf92da15c0",
-      "event_id": 6213,
-      "event_created_at": "2026-08-12T10:24:55.241631Z",
-      "request_sha256": "a19f21d5f6dc30bf2027ccd4e680e71fc7dd13b69e08564c8e55b9809d6a0cd0",
-      "candidate_event_id": "candidate-event-4455194eac29b058d50f28a6",
-      "source_fingerprint": "217b9870fd3cca0faa9d56d60b07702817916b2e29b285e10ff908b930edf6c8",
-      "content_fingerprint": "cb78a93b2778e8bf92da15c0f4df096d8089c41614d3efb6ab454debacdc5f7d",
+      "candidate_id": "candidate-add1e202b741cc57de1ae9d3",
+      "event_id": 6253,
+      "event_created_at": "2026-08-12T12:37:53.332836Z",
+      "request_sha256": "cc9be1e04a12863ddfe21bb55e8cfb1c409c109c5d4ea22e020423cc61510259",
+      "candidate_event_id": "candidate-event-48f1285a5171c725663bbdb4",
+      "source_fingerprint": "3f6ba3278fed65f90b789d1d0e53baeea7513fbca8641320056d5f901122fac0",
+      "content_fingerprint": "add1e202b741cc57de1ae9d35f5b96b4e547e0c33142b313af4ac9c32aa50070",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
-        "fingerprint": "217b9870fd3cca0faa9d56d60b07702817916b2e29b285e10ff908b930edf6c8",
+        "fingerprint": "3f6ba3278fed65f90b789d1d0e53baeea7513fbca8641320056d5f901122fac0",
         "freshness": "fingerprint-bound",
-        "kind": "github_pull_request",
-        "locator": "github:heimgewebe/grabowski#743@1fd38b77ab5a960455d26b2ec544b6451a1595e6",
-        "observed_at": "2026-08-12T10:24:55.125310Z",
+        "kind": "operator-runtime-evidence",
+        "locator": "runtime:grabowski-chronik-coding-memory-dependencies@pr743",
+        "observed_at": "2026-08-12T11:19:00Z",
         "sha256": null
       },
       "source_observations": [
@@ -68,11 +101,11 @@
           "does_not_establish": [
             "source_content_identity"
           ],
-          "fingerprint": "217b9870fd3cca0faa9d56d60b07702817916b2e29b285e10ff908b930edf6c8",
+          "fingerprint": "3f6ba3278fed65f90b789d1d0e53baeea7513fbca8641320056d5f901122fac0",
           "freshness": "fingerprint-bound",
-          "kind": "github_pull_request",
-          "locator": "github:heimgewebe/grabowski#743@1fd38b77ab5a960455d26b2ec544b6451a1595e6",
-          "observed_at": "2026-08-12T10:24:55.125310Z",
+          "kind": "operator-runtime-evidence",
+          "locator": "runtime:grabowski-chronik-coding-memory-dependencies@pr743",
+          "observed_at": "2026-08-12T11:19:00Z",
           "sha256": null
         }
       ],

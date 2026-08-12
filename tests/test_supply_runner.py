@@ -53,11 +53,55 @@ def head_reader(_root: Path) -> str:
     return HEAD
 
 
+def fallback_inventory_closure(task_dir: Path) -> set[str]:
+    """Return fallback tasks plus every task transitively depending on them."""
+    documents = {
+        path.stem: json.loads(path.read_text(encoding="utf-8"))
+        for path in task_dir.glob("*.json")
+    }
+    removed = {task_id for task_id in documents if "-FB-" in task_id}
+    while True:
+        dependents = {
+            task_id
+            for task_id, document in documents.items()
+            if task_id not in removed
+            and any(dependency in removed for dependency in document.get("depends_on", []))
+        }
+        if not dependents:
+            return removed
+        removed.update(dependents)
+
+
+def test_fallback_inventory_closure_removes_transitive_dependents(tmp_path: Path) -> None:
+    task_dir = tmp_path / "tasks"
+    task_dir.mkdir()
+    documents = {
+        "DEMO-FB-ONE": [],
+        "DEMO-FU-DIRECT": ["DEMO-FB-ONE"],
+        "DEMO-FU-TRANSITIVE": ["DEMO-FU-DIRECT"],
+        "DEMO-REAL": [],
+        "DEMO-FU-UNRELATED": ["DEMO-REAL"],
+    }
+    for task_id, depends_on in documents.items():
+        (task_dir / f"{task_id}.json").write_text(
+            json.dumps({"id": task_id, "depends_on": depends_on}),
+            encoding="utf-8",
+        )
+
+    assert fallback_inventory_closure(task_dir) == {
+        "DEMO-FB-ONE",
+        "DEMO-FU-DIRECT",
+        "DEMO-FU-TRANSITIVE",
+    }
+
+
 def registry_copy(tmp_path: Path) -> Path:
     """Copy the canonical Registry without its current fallback inventory.
 
     Supply behaviour must be reproducible from the catalog alone, not from whichever
-    fallbacks the live Registry happens to carry when the suite runs.
+    fallbacks the live Registry happens to carry when the suite runs. Tasks that
+    transitively depend on removed fallback work are excluded as well so this
+    synthetic catalog remains dependency-valid without weakening dependency edges.
     """
     project_root = Path(__file__).resolve().parents[1]
     root = tmp_path / "registry-copy"
@@ -65,11 +109,12 @@ def registry_copy(tmp_path: Path) -> Path:
     shutil.copytree(project_root / "schemas", root / "schemas")
     queue_path = root / "registry/queue.json"
     queue = json.loads(queue_path.read_text(encoding="utf-8"))
-    for path in (root / "registry/tasks").glob("*-FB-*.json"):
+    task_dir = root / "registry/tasks"
+    for task_id in sorted(fallback_inventory_closure(task_dir)):
         for lane in queue["lanes"].values():
-            if path.stem in lane:
-                lane.remove(path.stem)
-        path.unlink()
+            if task_id in lane:
+                lane.remove(task_id)
+        (task_dir / f"{task_id}.json").unlink()
     queue_path.write_text(json.dumps(queue, indent=2) + "\n", encoding="utf-8")
     Registry.load(root)
     return root

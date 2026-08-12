@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-WELTGEWEBE-T085-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Runtime-Refresh für Weltgewebe-T085-Publikation",
+  "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den dann frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen, damit der durch release-registry-identity-mismatch blockierte normale typed Operator-Intake für OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T085 wieder revisionsgebunden funktioniert. T085 selbst wird danach neu gegen den frischen Registry-Stand vorgeschlagen, reviewt und über den normalen Publisher veröffentlicht; diese Autorität publiziert oder implementiert T085 nicht direkt.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-Use-Autorität ausschließlich für genau einen immutable Bureau-Runtime-Refresh nach Merge dieser TaskSpec. Ziel ist nur der unmittelbar vor Ausführung frisch beobachtete aktuelle main mit grünen Required Checks. Kein Grabowski-Runtime-Deploy, keine Queue-/Claim-/Dispatch-Wirkung und keine direkte T085-Publikation."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "bootstrap-registration-and-seed",
+      "assertion": "Diese TaskSpec wird als genau eine neue Datei über einen normalen geschützten Pull Request gegen den aktuellen Bureau-main gemergt und anschließend ausschließlich über den kanonischen seed-missing-preserve-state-store-Pfad als im StateStore fehlende TaskSpec registriert; vorhandene StateStore-Specs werden nicht überschrieben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t085-runtime-refresh:bootstrap-registration-and-seed"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller main-Commit, der revisionsgebundene Merge-/PR-Kontext, alle Required Checks einschließlich validate (3.10) und validate (3.12) sowie target_sha256 frisch beobachtet; jede Main-, Check-, Manifest- oder Registry-Drift verwirft den Kandidaten vor Wirkung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t085-runtime-refresh:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "authoritative-state-store-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply bestätigt der autoritative StateStore diese exakte Task-ID als positive unverbrauchte Revision im Zustand ready oder active mit runtime_refresh_authority single-use-target-bound und ohne target_binding_receipt, consumption oder runtime_closeout.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t085-runtime-refresh:authoritative-state-store-preflight"
+      }
+    },
+    {
+      "id": "target-and-lease-binding",
+      "assertion": "Die Break-Glass-Freigabe bindet diese exakte Task-ID und reference an den frisch beobachteten target_sha256; apply verwendet ausschließlich alle vom Intent geforderten Grabowski-Live-Leases mit identischem Owner und Task-Kontext. Fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed vor Wirkung ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t085-runtime-refresh:target-and-lease-binding"
+      }
+    },
+    {
+      "id": "single-effect-and-closeout",
+      "assertion": "Genau ein effect_started=true-Runtime-Refresh ist dieser Task-ID zulässig. Nach eindeutig erfolgreichem immutable Readback und Lease-Release wird die Autorität mit exakter Task-ID, target_sha256, intent_sha256 und result_sha256 geschlossen; jede Wiederverwendung ist ausgeschlossen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t085-runtime-refresh:single-effect-and-closeout"
+      }
+    },
+    {
+      "id": "runtime-readback",
+      "assertion": "Nach apply zeigen Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben Zielcommit; bureau check, runtime-identity und StateStore-Integrität sind gültig. Anschließend lässt sich der T085-Operator-Intake gegen den frischen Registry-Stand ohne release-registry-identity-mismatch erneut erzeugen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t085-runtime-refresh:runtime-readback"
+      }
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "Die Task autorisiert ausschließlich den einen gebundenen Bureau-Runtime-Refresh. Sie autorisiert weder Grabowski-Runtime-Deployments noch Queue-, Claim-, Dispatch-, Merge- oder Weltgewebe-Produktionswirkungen und darf nicht als allgemeine Runtime-Freigabe wiederverwendet werden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t085-runtime-refresh:authority-boundary"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem oder fehlgeschlagenem Refresh keine neue Deployment-Wahrheit behaupten und keinen Apply blind wiederholen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten und ausschließlich den receipt-, target- und StateStore-gebundenen Reconciliation-Pfad verwenden; StateStore- oder Registry-Historie nicht zurückschreiben."
+  },
+  "metadata": {
+    "registered_at": "2026-08-12",
+    "source": "Live-Closeout der Weltgewebe-Produktionsreparatur und T085-Operator-Intake.",
+    "blocked_followup_task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T085",
+    "blocked_candidate_id": "candidate-e323ddeaa70cb5ec63149048",
+    "blocked_proposal_sha256": "c30f5560bfe7f6d20b34f0367d3630642b52a9f81908423c09892eda17e9b513",
+    "observed_blocker": "release-registry-identity-mismatch",
+    "installed_runtime_before": "7493ba57edcd9e5854764936ed8d7709ff460a43",
+    "observed_main_before_registration": "09d9054c1fd63b3c85be5c217e645ff334c8b529",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "target_binding": "candidate.target_sha256",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Der normale typed Operator-Intake ist vor Registry-Wirkung durch release-registry-identity-mismatch blockiert. Der bestehende Bootstrap-Vertrag erlaubt in genau dieser Lage eine eng gebundene einzelne TaskSpec über einen geschützten PR; Queue und StateStore werden dadurch nicht direkt mutiert.",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "does_not_establish": [
+      "typed publication bypass authority for ordinary TaskSpecs",
+      "queue mutation",
+      "claim or dispatch authority",
+      "T085 merge or implementation authority",
+      "runtime mutation authority before StateStore seed and fresh target binding"
+    ]
+  }
+}

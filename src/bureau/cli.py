@@ -461,6 +461,15 @@ def parser() -> argparse.ArgumentParser:
     projection.add_argument("--skip-github", action="store_true")
     projection.add_argument("--github-max-age", type=int, default=3600)
     
+    projection_repair = sub.add_parser("projection-repair")
+    projection_repair_mode = projection_repair.add_mutually_exclusive_group(required=True)
+    projection_repair_mode.add_argument("--assess", action="store_true")
+    projection_repair_mode.add_argument("--apply", action="store_true")
+    projection_repair.add_argument("--candidate-sha256")
+    projection_repair.add_argument("--reviewer")
+    projection_repair.add_argument("--authority-reference")
+    projection_repair.add_argument("--reason")
+
     receipt_normalize = sub.add_parser("receipt-normalize")
     receipt_normalize_mode = receipt_normalize.add_mutually_exclusive_group(required=True)
     receipt_normalize_mode.add_argument("--dry-run", action="store_true")
@@ -627,6 +636,8 @@ def _command_mutates(args: argparse.Namespace) -> bool:
     if command == "live-promote-plan":
         return bool(args.write_plan or args.apply_plan)
     if command == "operator-task-publish":
+        return bool(args.apply)
+    if command == "projection-repair":
         return bool(args.apply)
     if command == "receipt-normalize":
         return bool(args.apply)
@@ -903,6 +914,35 @@ def main(argv: list[str] | None = None) -> int:
             if blocked is not None:
                 emit(blocked, args.json)
                 return 2
+        if args.command == "projection-repair":
+            store = StateStore(state_path, state_root)
+            if args.assess:
+                value = store.projection_repair_candidate()
+            else:
+                missing = [
+                    name
+                    for name, value in (
+                        ("candidate-sha256", args.candidate_sha256),
+                        ("reviewer", args.reviewer),
+                        ("authority-reference", args.authority_reference),
+                        ("reason", args.reason),
+                    )
+                    if not value
+                ]
+                if missing:
+                    raise StateError(
+                        "projection repair apply requires " + ", ".join(missing)
+                    )
+                value = store.apply_projection_repair(
+                    expected_candidate_sha256=args.candidate_sha256,
+                    reviewer=args.reviewer,
+                    reference=args.authority_reference,
+                    reason=args.reason,
+                )
+            if coordination_binding is not None:
+                value["coordination_state_binding"] = coordination_binding
+            emit(value, args.json)
+            return 0
         if args.command == "receipt-normalize":
             from .receipt_normalization import receipt_normalize
             value = receipt_normalize(

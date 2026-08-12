@@ -20,6 +20,7 @@ _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
         "doctor",
         "fail",
         "heartbeat",
+        "projection-repair",
         "lifecycle-reconcile-apply",
         "receipt-normalize",
     }

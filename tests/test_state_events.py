@@ -9,6 +9,17 @@ from bureau import state_events
 from bureau.core import StateError, StateStore
 
 
+def _store_with_unjournaled_projection_drift(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    store.set_initiative_state("INIT-A", "active")
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE initiative_status SET state='waiting' WHERE initiative_id='INIT-A'"
+        )
+    store.set_initiative_state("INIT-B", "active")
+    return store
+
+
 def test_events_by_run_type_index_exists_on_fresh_store(tmp_path):
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
     with store.connect() as connection:
@@ -132,3 +143,184 @@ def test_projection_schema_drift_fails_closed():
 
     with pytest.raises(state_events.StateEventError, match="state projection schema drift"):
         state_events.current_projection(connection)
+
+def test_projection_repair_assesses_exact_unjournaled_state_drift(tmp_path):
+    store = _store_with_unjournaled_projection_drift(tmp_path)
+
+    with pytest.raises(StateError, match="projection replay root digest mismatch"):
+        store.replay_projection()
+
+    assessment = store.projection_repair_candidate()
+    candidate = assessment["candidate"]
+    assert "projection" not in candidate
+    assert assessment["repairable"] is True
+    assert assessment["mismatch_count"] == 1
+    assert candidate["mismatch_event_ids"] == [candidate["first_mismatch_event_id"]]
+    assert candidate["diff"]["initiatives"] == {
+        "INIT-A": {
+            "replayed": {"initiative_id": "INIT-A", "state": "active"},
+            "current": {"initiative_id": "INIT-A", "state": "waiting"},
+        }
+    }
+    assert all(
+        not candidate["diff"][key]
+        for key in state_events.PROJECTION_KEYS
+        if key != "initiatives"
+    )
+    assert assessment["candidate_sha256"] == store.projection_repair_candidate()[
+        "candidate_sha256"
+    ]
+
+
+def test_projection_repair_is_append_only_and_restores_strict_replay(tmp_path):
+    store = _store_with_unjournaled_projection_drift(tmp_path)
+    assessment = store.projection_repair_candidate()
+    with store.connect() as connection:
+        before = [
+            dict(row)
+            for row in connection.execute(
+                "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+                "FROM events ORDER BY event_id"
+            )
+        ]
+    max_before = max(row["event_id"] for row in before)
+
+    result = store.apply_projection_repair(
+        expected_candidate_sha256=assessment["candidate_sha256"],
+        reviewer="test-operator",
+        reference="test-repair-1",
+        reason="reconcile a deliberately unjournaled test transition",
+    )
+
+    assert result["status"] == "applied"
+    assert result["idempotent"] is False
+    assert result["effect_started"] is True
+    assert result["repair_checkpoint_count"] == 1
+    replayed = store.replay_projection()
+    assert replayed["matches_current"] is True
+    assert replayed["repair_checkpoint_count"] == 1
+    assert replayed["projection"]["initiatives"]["INIT-A"]["state"] == "waiting"
+    with store.connect() as connection:
+        historical = [
+            dict(row)
+            for row in connection.execute(
+                "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+                "FROM events WHERE event_id<=? ORDER BY event_id",
+                (max_before,),
+            )
+        ]
+        repair_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (state_events.PROJECTION_REPAIR_EVENT_TYPE,),
+        ).fetchone()[0]
+    assert historical == before
+    assert repair_count == 1
+
+    second = store.apply_projection_repair(
+        expected_candidate_sha256=assessment["candidate_sha256"],
+        reviewer="test-operator",
+        reference="test-repair-1",
+        reason="idempotent replay",
+    )
+    assert second["status"] == "already-applied"
+    assert second["idempotent"] is True
+    assert second["effect_started"] is False
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (state_events.PROJECTION_REPAIR_EVENT_TYPE,),
+        ).fetchone()[0] == 1
+
+
+def test_projection_repair_rejects_stale_candidate_without_effect(tmp_path):
+    store = _store_with_unjournaled_projection_drift(tmp_path)
+    assessment = store.projection_repair_candidate()
+    store.set_initiative_state("INIT-C", "active")
+
+    with pytest.raises(StateError, match="projection repair candidate changed before apply"):
+        store.apply_projection_repair(
+            expected_candidate_sha256=assessment["candidate_sha256"],
+            reviewer="test-operator",
+            reference="stale-candidate",
+            reason="must fail CAS",
+        )
+
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (state_events.PROJECTION_REPAIR_EVENT_TYPE,),
+        ).fetchone()[0] == 0
+
+
+def test_projection_repair_rejects_hash_tamper_without_state_drift(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    store.set_initiative_state("INIT-1", "active")
+    with store.immediate() as connection:
+        row = connection.execute(
+            "SELECT event_id,payload_json FROM events WHERE event_type=? "
+            "ORDER BY event_id DESC LIMIT 1",
+            (state_events.PROJECTION_EVENT_TYPE,),
+        ).fetchone()
+        payload = json.loads(row["payload_json"])
+        payload["root_sha256"] = "0" * 64
+        connection.execute(
+            "UPDATE events SET payload_json=? WHERE event_id=?",
+            (json.dumps(payload, sort_keys=True, separators=(",", ":")), row["event_id"]),
+        )
+
+    with pytest.raises(
+        StateError, match="state projection mismatch has no repairable StateStore drift"
+    ):
+        store.projection_repair_candidate()
+
+
+def test_projection_repair_checkpoint_is_tamper_evident(tmp_path):
+    store = _store_with_unjournaled_projection_drift(tmp_path)
+    assessment = store.projection_repair_candidate()
+    result = store.apply_projection_repair(
+        expected_candidate_sha256=assessment["candidate_sha256"],
+        reviewer="test-operator",
+        reference="tamper-test",
+        reason="create checkpoint before tamper",
+    )
+    with store.immediate() as connection:
+        row = connection.execute(
+            "SELECT payload_json FROM events WHERE event_id=?", (result["event_id"],)
+        ).fetchone()
+        payload = json.loads(row["payload_json"])
+        payload["candidate_sha256"] = "0" * 64
+        connection.execute(
+            "UPDATE events SET payload_json=? WHERE event_id=?",
+            (json.dumps(payload, sort_keys=True, separators=(",", ":")), result["event_id"]),
+        )
+
+    with pytest.raises(StateError, match="projection repair event candidate digest mismatches"):
+        store.replay_projection()
+
+
+def test_projection_repair_does_not_mask_later_projection_corruption(tmp_path):
+    store = _store_with_unjournaled_projection_drift(tmp_path)
+    assessment = store.projection_repair_candidate()
+    store.apply_projection_repair(
+        expected_candidate_sha256=assessment["candidate_sha256"],
+        reviewer="test-operator",
+        reference="later-corruption",
+        reason="repair only the preceding mismatch segment",
+    )
+    store.set_initiative_state("INIT-C", "active")
+    assert store.replay_projection()["matches_current"] is True
+    with store.immediate() as connection:
+        row = connection.execute(
+            "SELECT event_id,payload_json FROM events WHERE event_type=? "
+            "ORDER BY event_id DESC LIMIT 1",
+            (state_events.PROJECTION_EVENT_TYPE,),
+        ).fetchone()
+        payload = json.loads(row["payload_json"])
+        payload["root_sha256"] = "f" * 64
+        connection.execute(
+            "UPDATE events SET payload_json=? WHERE event_id=?",
+            (json.dumps(payload, sort_keys=True, separators=(",", ":")), row["event_id"]),
+        )
+
+    with pytest.raises(StateError, match="projection replay root digest mismatch"):
+        store.replay_projection()

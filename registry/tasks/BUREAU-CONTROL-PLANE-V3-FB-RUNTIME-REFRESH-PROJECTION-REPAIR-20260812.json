@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PROJECTION-REPAIR-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Runtime-Refresh für Projection-Repair-Checkpoint",
+  "goal": "Nach geschütztem Merge des append-only Projection-Repair-Checkpoint-Mechanismus genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, CI-grünen aktuellen main autorisieren. Zweck ist ausschließlich, den neuen state-projection-repair-v1-Eventvertrag und die projection-repair CLI in die kanonische Runtime zu bringen, damit der seit Event 4459 bestehende historische Replay-Drift anschließend kandidatengebunden repariert und die bereits erfolgreichen Runtime-Refresh-Authorities sauber geschlossen werden können. Die Authority ist single-use und targetgebunden; sie autorisiert selbst keinen Projection-Repair-Event und keine Queue-, Claim-, Dispatch- oder Grabowski-Runtime-Wirkung.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-Use-Autorität ausschließlich für genau einen immutable Bureau-Runtime-Refresh auf einen frisch beobachteten current main, der den Projection-Repair-Checkpoint-Mechanismus enthält. StateStore-/Target-/Intent-/Lease-CAS und immutable Readback bleiben Pflicht. Kein Projection-Repair-Apply in dieser Authority."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "repair-mechanism-protected-and-green",
+      "assertion": "Der aktuelle Ziel-main enthält den geschützten, reviewten Projection-Repair-Checkpoint-Mechanismus mit state-projection-repair-v1, projection-repair --assess/--apply, append-only Eventsemantik sowie Tests für stale candidate, Tamper-Evidenz, Idempotenz und spätere Korruption; die erforderlichen CI-Gates des Zielstands sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "projection-repair-runtime-refresh:mechanism-green"
+      }
+    },
+    {
+      "id": "authority-state-store-preflight",
+      "assertion": "Vor prepare-intent und erneut vor apply bestätigt der autoritative StateStore diese exakte TaskSpec mit positiver Revision und Digest, state ready oder active, runtime_refresh_authority single-use-target-bound und ohne fremde target_binding_receipt oder runtime_closeout.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "projection-repair-runtime-refresh:state-store-preflight"
+      }
+    },
+    {
+      "id": "fresh-target-bound",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller main, erforderliche Checks, Deployment-Manifest, Registry-Snapshot und target_sha256 frisch beobachtet. Der Zielstand enthält AUDIO-CONTROL-PLANE-V1-T040 und den Projection-Repair-Code; jede Drift verwirft den Intent vor Wirkung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "projection-repair-runtime-refresh:fresh-target"
+      }
+    },
+    {
+      "id": "single-effect-leases",
+      "assertion": "Apply nutzt ausschließlich die im Intent geforderten Grabowski-Live-Leases mit identischem Owner-/Task-Kontext. Genau ein effect_started=true-Runtime-Refresh ist dieser Task-ID zugeordnet; fehlende, fremde oder abgelaufene Leases brechen vor Wirkung ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "projection-repair-runtime-refresh:single-effect-leases"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot auf denselben source commit; runtime-identity und bureau check sind gültig und projection-repair --assess ist aus der installierten Runtime verfügbar.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "projection-repair-runtime-refresh:immutable-readback"
+      }
+    },
+    {
+      "id": "repair-effect-separate",
+      "assertion": "Diese Authority erzeugt selbst keinen state-projection-repair-v1-Event. Der anschließende Repair benötigt einen frisch gelesenen Candidate-Digest sowie explizite reviewer/reference/reason-Autorität und wird separat readbackgebunden ausgeführt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "projection-repair-runtime-refresh:repair-separate"
+      }
+    },
+    {
+      "id": "closeout-after-repair",
+      "assertion": "Da der historische Replay-Drift Authority-Closeouts blockiert, wird nach erfolgreichem Runtime-Refresh zuerst der kandidatengebundene append-only Projection-Repair ausgeführt und strict replay verifiziert; anschließend werden diese und die vorherige erfolgreiche Runtime-Refresh-Authority jeweils mit exakten target-, intent- und result-Digests geschlossen. Kein Blind-Retry bei unklarem Effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "projection-repair-runtime-refresh:closeout-after-repair"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Runtime-Refresh keine neue Deployment-Wahrheit behaupten und keinen Apply blind wiederholen. Den letzten integritätsgültigen immutable Release beibehalten und ausschließlich receipt-/target-/StateStore-gebunden reconciliieren. Vor erfolgreichem Runtime-Readback keinen Projection-Repair-Event schreiben."
+  },
+  "metadata": {
+    "blocked_followup_task_id": "AUDIO-CONTROL-PLANE-V1-T040",
+    "installed_runtime_before_authority": "7493ba57edcd9e5854764936ed8d7709ff460a43",
+    "projection_drift_first_event_id": 4459,
+    "projection_drift_current_candidate_sha256": "007a8055a37d2f52d24aeaf43c0c6578a994446aa5f360f8bb0399d551be1978",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true
+    },
+    "publication_path": {
+      "kind": "protected-code-and-authority-pr",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Die installierte Runtime 7493ba57 kann den neuen Projection-Repair-Eventvertrag noch nicht ausführen und der Registry-Stand kann bis zum Code-Merge vorauslaufen. Nach geschütztem Merge wird ausschließlich diese neue fehlende Authority-TaskSpec mit seed_missing_registry importiert; bestehende StateStore-Revisionen bleiben autoritativ."
+    },
+    "does_not_establish": [
+      "Projection-Repair-Apply-Autorität",
+      "Grabowski runtime authority",
+      "queue or dispatch authority",
+      "reusable Bureau runtime authority"
+    ]
+  }
+}

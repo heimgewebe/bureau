@@ -9,6 +9,9 @@ from typing import Any
 EVENT_SCHEMA_VERSION = 1
 PROJECTION_SCHEMA_VERSION = 1
 PROJECTION_EVENT_TYPE = "state-projection-v1"
+PROJECTION_REPAIR_EVENT_TYPE = "state-projection-repair-v1"
+PROJECTION_REPAIR_KIND = "bureau.state_projection_repair_checkpoint"
+PROJECTION_REPAIR_CANDIDATE_KIND = "bureau.state_projection_repair_candidate"
 MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE = (
     "manual-acceptance-source-authenticated"
 )
@@ -41,7 +44,7 @@ OPERATIONAL_EVENT_TYPES = frozenset(
         "workspace-removed",
     }
 )
-EVENT_TYPES = OPERATIONAL_EVENT_TYPES | {PROJECTION_EVENT_TYPE}
+EVENT_TYPES = OPERATIONAL_EVENT_TYPES | {PROJECTION_EVENT_TYPE, PROJECTION_REPAIR_EVENT_TYPE}
 PROJECTION_KEYS = ("tasks", "initiatives", "claims", "runs", "acceptances")
 
 _RUN_FIELDS = (
@@ -248,6 +251,216 @@ def delta_payload(
     }
 
 
+def projection_diff(
+    replayed: Mapping[str, Any], current: Mapping[str, Any]
+) -> dict[str, dict[str, dict[str, Any]]]:
+    validate_projection_value(replayed)
+    validate_projection_value(current)
+    diff: dict[str, dict[str, dict[str, Any]]] = {key: {} for key in PROJECTION_KEYS}
+    for key in PROJECTION_KEYS:
+        replayed_values = replayed[key]
+        current_values = current[key]
+        for entity_id in sorted(set(replayed_values) | set(current_values)):
+            replayed_value = replayed_values.get(entity_id)
+            current_value = current_values.get(entity_id)
+            if replayed_value != current_value:
+                diff[key][entity_id] = {
+                    "replayed": replayed_value,
+                    "current": current_value,
+                }
+    return diff
+
+
+def _projection_diff_has_changes(diff: Mapping[str, Any]) -> bool:
+    return any(bool(diff.get(key)) for key in PROJECTION_KEYS)
+
+
+def _event_stream_row_sha256(
+    *,
+    event_id: int,
+    run_id: Any,
+    event_type: str,
+    event_schema_version: int,
+    payload_json: str,
+) -> str:
+    return sha256_json(
+        {
+            "event_id": event_id,
+            "run_id": run_id,
+            "event_type": event_type,
+            "event_schema_version": event_schema_version,
+            "payload_json": payload_json,
+        }
+    )
+
+
+def _validate_projection_diff(diff: Any) -> None:
+    if not isinstance(diff, Mapping) or set(diff) != set(PROJECTION_KEYS):
+        raise StateEventError("projection repair diff fields are not exact")
+    for key in PROJECTION_KEYS:
+        values = diff[key]
+        if not isinstance(values, Mapping):
+            raise StateEventError(f"projection repair diff {key} must be an object")
+        for entity_id, value in values.items():
+            if not isinstance(entity_id, str) or not entity_id:
+                raise StateEventError("projection repair diff entity id is invalid")
+            if not isinstance(value, Mapping) or set(value) != {"replayed", "current"}:
+                raise StateEventError("projection repair diff entry fields are not exact")
+
+
+def _apply_projection_repair_diff(
+    projection: Mapping[str, Any], diff: Mapping[str, Any]
+) -> dict[str, Any]:
+    validate_projection_value(projection)
+    _validate_projection_diff(diff)
+    repaired = json.loads(json.dumps(projection))
+    for key in PROJECTION_KEYS:
+        for entity_id, entry in diff[key].items():
+            observed = repaired[key].get(entity_id)
+            if observed != entry["replayed"]:
+                raise StateEventError(
+                    "projection repair checkpoint replayed value differs"
+                )
+            current = entry["current"]
+            if current is None:
+                repaired[key].pop(entity_id, None)
+            else:
+                repaired[key][entity_id] = json.loads(json.dumps(current))
+    validate_projection_value(repaired)
+    return repaired
+
+
+def validate_projection_repair_candidate(candidate: Mapping[str, Any]) -> None:
+    expected_fields = {
+        "schema_version",
+        "kind",
+        "previous_repair_event_id",
+        "previous_repair_candidate_sha256",
+        "repair_through_event_id",
+        "segment_event_stream_sha256",
+        "first_mismatch_event_id",
+        "last_mismatch_event_id",
+        "mismatch_count",
+        "mismatch_event_ids",
+        "mismatch_evidence_sha256",
+        "first_mismatch_stored_root_sha256",
+        "first_mismatch_observed_root_sha256",
+        "historical_replayed_root_sha256",
+        "current_root_sha256",
+        "diff",
+        "diff_sha256",
+    }
+    if set(candidate) != expected_fields:
+        raise StateEventError("projection repair candidate fields are not exact")
+    if candidate.get("schema_version") != EVENT_SCHEMA_VERSION:
+        raise StateEventError("projection repair candidate schema version is unsupported")
+    if candidate.get("kind") != PROJECTION_REPAIR_CANDIDATE_KIND:
+        raise StateEventError("projection repair candidate kind is invalid")
+    previous_event = candidate.get("previous_repair_event_id")
+    previous_sha = candidate.get("previous_repair_candidate_sha256")
+    if (previous_event is None) != (previous_sha is None):
+        raise StateEventError("projection repair candidate previous anchor is incomplete")
+    if previous_event is not None:
+        if (
+            isinstance(previous_event, bool)
+            or not isinstance(previous_event, int)
+            or previous_event < 0
+        ):
+            raise StateEventError("projection repair candidate previous event id is invalid")
+        if not _valid_digest(previous_sha):
+            raise StateEventError("projection repair candidate previous digest is invalid")
+    repair_through = candidate.get("repair_through_event_id")
+    if (
+        isinstance(repair_through, bool)
+        or not isinstance(repair_through, int)
+        or repair_through < 0
+    ):
+        raise StateEventError("projection repair candidate repair horizon is invalid")
+    if previous_event is not None and repair_through <= previous_event:
+        raise StateEventError("projection repair candidate repair horizon is not after anchor")
+    if not _valid_digest(candidate.get("segment_event_stream_sha256")):
+        raise StateEventError("projection repair candidate segment digest is invalid")
+    mismatch_ids = candidate.get("mismatch_event_ids")
+    if not isinstance(mismatch_ids, list) or not mismatch_ids:
+        raise StateEventError("projection repair candidate mismatch ids are invalid")
+    if any(
+        isinstance(value, bool) or not isinstance(value, int) or value < 0
+        for value in mismatch_ids
+    ):
+        raise StateEventError("projection repair candidate mismatch id is invalid")
+    if mismatch_ids != sorted(set(mismatch_ids)):
+        raise StateEventError(
+            "projection repair candidate mismatch ids are not strictly increasing"
+        )
+    if candidate.get("mismatch_count") != len(mismatch_ids):
+        raise StateEventError("projection repair candidate mismatch count is invalid")
+    if candidate.get("first_mismatch_event_id") != mismatch_ids[0]:
+        raise StateEventError("projection repair candidate first mismatch id is invalid")
+    if candidate.get("last_mismatch_event_id") != mismatch_ids[-1]:
+        raise StateEventError("projection repair candidate last mismatch id is invalid")
+    if mismatch_ids[-1] > repair_through:
+        raise StateEventError("projection repair candidate mismatch exceeds repair horizon")
+    for field in (
+        "mismatch_evidence_sha256",
+        "first_mismatch_stored_root_sha256",
+        "first_mismatch_observed_root_sha256",
+        "historical_replayed_root_sha256",
+        "current_root_sha256",
+        "diff_sha256",
+    ):
+        if not _valid_digest(candidate.get(field)):
+            raise StateEventError(f"projection repair candidate {field} is invalid")
+    _validate_projection_diff(candidate.get("diff"))
+    if not _projection_diff_has_changes(candidate["diff"]):
+        raise StateEventError("projection repair candidate has no StateStore drift")
+    if sha256_json(candidate["diff"]) != candidate["diff_sha256"]:
+        raise StateEventError("projection repair candidate diff digest mismatches")
+
+
+def validate_projection_repair_event_payload(
+    payload: Mapping[str, Any], run_id: str | None
+) -> None:
+    if run_id is not None:
+        raise StateEventError("projection repair event must not be run-bound")
+    expected_fields = {
+        "schema_version",
+        "kind",
+        "candidate",
+        "candidate_sha256",
+        "authority",
+    }
+    if set(payload) != expected_fields:
+        raise StateEventError("projection repair event fields are not exact")
+    if payload.get("schema_version") != EVENT_SCHEMA_VERSION:
+        raise StateEventError("projection repair event schema version is unsupported")
+    if payload.get("kind") != PROJECTION_REPAIR_KIND:
+        raise StateEventError("projection repair event kind is invalid")
+    candidate = payload.get("candidate")
+    if not isinstance(candidate, Mapping):
+        raise StateEventError("projection repair event candidate is invalid")
+    validate_projection_repair_candidate(candidate)
+    candidate_sha256 = payload.get("candidate_sha256")
+    if not _valid_digest(candidate_sha256) or sha256_json(candidate) != candidate_sha256:
+        raise StateEventError("projection repair event candidate digest mismatches")
+    authority = payload.get("authority")
+    if not isinstance(authority, Mapping) or set(authority) != {
+        "schema_version",
+        "kind",
+        "reviewer",
+        "reference",
+        "reason",
+    }:
+        raise StateEventError("projection repair authority fields are not exact")
+    if authority.get("schema_version") != EVENT_SCHEMA_VERSION:
+        raise StateEventError("projection repair authority schema version is unsupported")
+    if authority.get("kind") != "operator":
+        raise StateEventError("projection repair authority kind is invalid")
+    for field in ("reviewer", "reference", "reason"):
+        value = authority.get(field)
+        if not isinstance(value, str) or not value.strip() or len(value) > 1000:
+            raise StateEventError(f"projection repair authority {field} is invalid")
+
+
 def _valid_digest(value: Any) -> bool:
     return (
         isinstance(value, str)
@@ -353,6 +566,8 @@ def validate_event(event_type: str, payload: Mapping[str, Any], run_id: str | No
         raise StateEventError("Bureau state event run_id is invalid")
     if event_type == PROJECTION_EVENT_TYPE:
         validate_projection_event_payload(payload)
+    elif event_type == PROJECTION_REPAIR_EVENT_TYPE:
+        validate_projection_repair_event_payload(payload, run_id)
     elif event_type == MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE:
         validate_manual_acceptance_authentication_payload(payload, run_id)
 
@@ -377,27 +592,135 @@ def _apply_delta(projection: dict[str, Any], changes: Mapping[str, Any]) -> None
                 projection[key][entity_id] = value
 
 
-def replay(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+def _replay_internal(
+    rows: Iterable[Mapping[str, Any]], *, allow_unrepaired_mismatch: bool
+) -> dict[str, Any]:
+    row_list = list(rows)
+    repair_positions: set[int] = set()
+    for index, row in enumerate(row_list):
+        try:
+            if (
+                int(row["event_schema_version"]) == EVENT_SCHEMA_VERSION
+                and str(row["event_type"]) == PROJECTION_REPAIR_EVENT_TYPE
+            ):
+                repair_positions.add(index)
+        except (KeyError, TypeError, ValueError):
+            pass
+
     projection = _empty_projection()
     baseline_seen = False
     projection_event_count = 0
+    repair_checkpoint_count = 0
     last_event_id = -1
-    for row in rows:
+    last_repair_event_id: int | None = None
+    last_repair_candidate_sha256: str | None = None
+    segment_row_sha256s: list[str] = []
+    segment_last_event_id: int | None = None
+    pending_mismatches: list[dict[str, Any]] = []
+
+    for index, row in enumerate(row_list):
         try:
             version = int(row["event_schema_version"])
             event_id = int(row["event_id"])
             event_type = str(row["event_type"])
-            payload = json.loads(row["payload_json"])
+            payload_json = row["payload_json"]
+            if not isinstance(payload_json, str):
+                raise TypeError("payload_json must be a string")
+            payload = json.loads(payload_json)
+            run_id = row.get("run_id")
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise StateEventError("state event row is malformed") from exc
         if event_id <= last_event_id:
             raise StateEventError("state event ordering is not strictly increasing")
         last_event_id = event_id
+
         if version == 0:
+            segment_row_sha256s.append(
+                _event_stream_row_sha256(
+                    event_id=event_id,
+                    run_id=run_id,
+                    event_type=event_type,
+                    event_schema_version=version,
+                    payload_json=payload_json,
+                )
+            )
+            segment_last_event_id = event_id
             continue
         if version != EVENT_SCHEMA_VERSION:
             raise StateEventError(f"unsupported state event schema version: {version}")
-        validate_event(event_type, payload, row.get("run_id"))
+        validate_event(event_type, payload, run_id)
+
+        if event_type == PROJECTION_REPAIR_EVENT_TYPE:
+            if not baseline_seen:
+                raise StateEventError("projection repair checkpoint precedes migration baseline")
+            if not pending_mismatches:
+                raise StateEventError("projection repair checkpoint has no preceding mismatch")
+            candidate = payload["candidate"]
+            if candidate["previous_repair_event_id"] != last_repair_event_id:
+                raise StateEventError("projection repair checkpoint previous event mismatches")
+            if (
+                candidate["previous_repair_candidate_sha256"]
+                != last_repair_candidate_sha256
+            ):
+                raise StateEventError("projection repair checkpoint previous digest mismatches")
+            if segment_last_event_id is None:
+                raise StateEventError("projection repair checkpoint segment is empty")
+            if candidate["repair_through_event_id"] != segment_last_event_id:
+                raise StateEventError("projection repair checkpoint horizon mismatches")
+            if (
+                candidate["segment_event_stream_sha256"]
+                != sha256_json(segment_row_sha256s)
+            ):
+                raise StateEventError("projection repair checkpoint segment digest mismatches")
+            observed_historical_root = projection_root(projection)
+            if (
+                candidate["historical_replayed_root_sha256"]
+                != observed_historical_root
+            ):
+                raise StateEventError("projection repair checkpoint historical root mismatches")
+            mismatch_ids = [item["event_id"] for item in pending_mismatches]
+            if candidate["mismatch_event_ids"] != mismatch_ids:
+                raise StateEventError("projection repair checkpoint mismatch ids differ")
+            if candidate["mismatch_count"] != len(pending_mismatches):
+                raise StateEventError("projection repair checkpoint mismatch count differs")
+            if (
+                candidate["mismatch_evidence_sha256"]
+                != sha256_json(pending_mismatches)
+            ):
+                raise StateEventError("projection repair checkpoint mismatch evidence differs")
+            first = pending_mismatches[0]
+            if (
+                candidate["first_mismatch_stored_root_sha256"]
+                != first["stored_root_sha256"]
+                or candidate["first_mismatch_observed_root_sha256"]
+                != first["observed_root_sha256"]
+            ):
+                raise StateEventError("projection repair checkpoint first mismatch differs")
+            projection = _apply_projection_repair_diff(
+                projection, candidate["diff"]
+            )
+            if projection_root(projection) != candidate["current_root_sha256"]:
+                raise StateEventError(
+                    "projection repair checkpoint target root mismatches"
+                )
+            last_repair_event_id = event_id
+            last_repair_candidate_sha256 = payload["candidate_sha256"]
+            segment_row_sha256s = []
+            segment_last_event_id = None
+            pending_mismatches = []
+            repair_checkpoint_count += 1
+            continue
+
+        segment_row_sha256s.append(
+            _event_stream_row_sha256(
+                event_id=event_id,
+                run_id=run_id,
+                event_type=event_type,
+                event_schema_version=version,
+                payload_json=payload_json,
+            )
+        )
+        segment_last_event_id = event_id
         if event_type != PROJECTION_EVENT_TYPE:
             continue
         projection_event_count += 1
@@ -412,13 +735,99 @@ def replay(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
             _apply_delta(projection, payload["changes"])
         observed_root = projection_root(projection)
         if observed_root != payload["root_sha256"]:
-            raise StateEventError("projection replay root digest mismatch")
+            pending_mismatches.append(
+                {
+                    "event_id": event_id,
+                    "stored_root_sha256": payload["root_sha256"],
+                    "observed_root_sha256": observed_root,
+                }
+            )
+            if not allow_unrepaired_mismatch and not any(
+                repair_index > index for repair_index in repair_positions
+            ):
+                raise StateEventError("projection replay root digest mismatch")
+
     if not baseline_seen:
         raise StateEventError("projection migration baseline is missing")
+    if pending_mismatches and not allow_unrepaired_mismatch:
+        raise StateEventError("projection replay root digest mismatch")
     return {
         "schema_version": PROJECTION_SCHEMA_VERSION,
         "projection": projection,
         "root_sha256": projection_root(projection),
         "projection_event_count": projection_event_count,
+        "repair_checkpoint_count": repair_checkpoint_count,
         "last_event_id": last_event_id,
+        "_pending_mismatches": pending_mismatches,
+        "_last_repair_event_id": last_repair_event_id,
+        "_last_repair_candidate_sha256": last_repair_candidate_sha256,
+        "_segment_row_sha256s": segment_row_sha256s,
+        "_segment_last_event_id": segment_last_event_id,
+    }
+
+
+def projection_repair_candidate(
+    rows: Iterable[Mapping[str, Any]], current: Mapping[str, Any]
+) -> dict[str, Any]:
+    validate_projection_value(current)
+    replayed = _replay_internal(rows, allow_unrepaired_mismatch=True)
+    mismatches = replayed["_pending_mismatches"]
+    if not mismatches:
+        raise StateEventError("state projection has no unrepaired root mismatch")
+    diff = projection_diff(replayed["projection"], current)
+    if not _projection_diff_has_changes(diff):
+        raise StateEventError(
+            "state projection mismatch has no repairable StateStore drift"
+        )
+    repair_through_event_id = replayed["_segment_last_event_id"]
+    if repair_through_event_id is None:
+        raise StateEventError("state projection repair segment is empty")
+    first = mismatches[0]
+    candidate = {
+        "schema_version": EVENT_SCHEMA_VERSION,
+        "kind": PROJECTION_REPAIR_CANDIDATE_KIND,
+        "previous_repair_event_id": replayed["_last_repair_event_id"],
+        "previous_repair_candidate_sha256": replayed[
+            "_last_repair_candidate_sha256"
+        ],
+        "repair_through_event_id": repair_through_event_id,
+        "segment_event_stream_sha256": sha256_json(
+            replayed["_segment_row_sha256s"]
+        ),
+        "first_mismatch_event_id": first["event_id"],
+        "last_mismatch_event_id": mismatches[-1]["event_id"],
+        "mismatch_count": len(mismatches),
+        "mismatch_event_ids": [item["event_id"] for item in mismatches],
+        "mismatch_evidence_sha256": sha256_json(mismatches),
+        "first_mismatch_stored_root_sha256": first["stored_root_sha256"],
+        "first_mismatch_observed_root_sha256": first["observed_root_sha256"],
+        "historical_replayed_root_sha256": replayed["root_sha256"],
+        "current_root_sha256": projection_root(current),
+        "diff": diff,
+        "diff_sha256": sha256_json(diff),
+    }
+    validate_projection_repair_candidate(candidate)
+    return {
+        "schema_version": EVENT_SCHEMA_VERSION,
+        "kind": "bureau.state_projection_repair_assessment",
+        "candidate": candidate,
+        "candidate_sha256": sha256_json(candidate),
+        "mismatch_count": len(mismatches),
+        "first_mismatch_event_id": first["event_id"],
+        "last_mismatch_event_id": mismatches[-1]["event_id"],
+        "repairable": True,
+        "does_not_establish": [
+            "repair_authority",
+            "checkpoint_append",
+            "future_projection_integrity",
+        ],
+    }
+
+
+def replay(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+    replayed = _replay_internal(rows, allow_unrepaired_mismatch=False)
+    return {
+        key: value
+        for key, value in replayed.items()
+        if not key.startswith("_")
     }

@@ -186,7 +186,7 @@
       "Orphan-Reconcile-Autoritaet",
       "Permission to bypass current StateStore, Registry, CI, lease or immutable readback validation"
     ],
-    "superseded_by": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-TYPED-ACCEPTANCE-SYSTEMIC-20260812",
-    "supersession_reason": "Der für diese Bootstrap-Autorität vorgesehene d0ee→PR-#1918-Effekt ist bereits separat und erfolgreich erfolgt; die installierte Runtime steht auf 42f10178c2d77e293f106cd7c1fd656f5b811edd. Eine Wiederverwendung für PR #1919 wäre semantisch falsch."
+    "superseded_by": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SCHEMA-PACKAGING-20260812",
+    "supersession_reason": "Der vorgesehene Bootstrap ist überholt: PR #1919 wurde produktiv ausgerollt, der dabei entdeckte immutable Schema-Paketfehler über PR #1922 behoben und der kontrollierte Nachfolge-Refresh über die einmalig konsumierte Authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SCHEMA-PACKAGING-20260812 auf main 1cb52d8bd111c372696fa116a4000d655d60742d abgeschlossen. Diese alte Authority bleibt superseded und darf nicht reaktiviert werden."
   }
 }

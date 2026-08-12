@@ -1,0 +1,158 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Wenn eine single-use Runtime-Refresh-Authority genau einen eindeutig erfolgreichen, resultgebundenen historischen Deploy besitzt und danach ein anderer gültiger Bureau-Runtime-Deploy den stabilen aktuellen Pointer weiterbewegt hat, verifiziert closeout-authority die ursprüngliche immutable Release-/Manifest-/Install-Evidenz gegen den historischen Intent und Result-Receipt statt den aktuellen Deployment-Pointer fälschlich auf den alten source_commit festzunageln.",
+      "evidence_type": "object",
+      "id": "historical-immutable-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-runtime-authority-closeout:historical-immutable-readback"
+      }
+    },
+    {
+      "assertion": "Der Closeout verändert, ersetzt oder rollt den aktuell deployten Bureau-Runtime-Pointer nicht zurück. Ein legitimer neuerer aktueller Runtime-Stand darf vom historischen Intent abweichen; der Closeout erzeugt keinen neuen Runtime-Refresh-Effekt und autorisiert keinen historischen Effekt erneut.",
+      "evidence_type": "object",
+      "id": "current-runtime-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-runtime-authority-closeout:current-runtime-preserved"
+      }
+    },
+    {
+      "assertion": "Fehlt der historische immutable Release oder stimmen Manifest-, Paketbaum-, Registry-Snapshot-, Launcher-, Install-Receipt-, Intent-, Target- oder Result-Bindungen nicht mehr, bricht closeout-authority vor StateStore-Terminalisierung fail-closed mit maschinenlesbarer Ursache ab. Persistierte historische Readback-Evidenz allein darf ohne erneute Authentifizierung der immutable Artefakte keinen Erfolg begründen.",
+      "evidence_type": "object",
+      "id": "tamper-and-missing-history-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-runtime-authority-closeout:tamper-and-missing-history-fail-closed"
+      }
+    },
+    {
+      "assertion": "Bestehende Guards für genau einen effect_started=true-Deploy, conflicting historical effects, aktive oder fremde Lease-Bindungen, vorhandene Runs, konsumierte Target-Bindung und widersprüchlichen terminalen TaskSpec-Zustand bleiben mindestens so streng wie vor dem Fix.",
+      "evidence_type": "object",
+      "id": "single-use-and-lease-guards-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-runtime-authority-closeout:single-use-and-lease-guards-preserved"
+      }
+    },
+    {
+      "assertion": "Ein hermetischer Regressionstest reproduziert den T040-Nachfolge-Deploy-Fall: historischer erfolgreicher Deploy auf Commit A, anschließend gültiger aktueller Runtime-Deploy auf Commit B, danach closeout der Authority für A. Vor dem Fix scheitert der Pfad am aktuellen Pointer mit readback-source-mismatch; nach dem Fix terminalisiert nur die Authority für A, während B aktuell bleibt. Der Test verwendet keine echten Runtime-Mutationen.",
+      "evidence_type": "object",
+      "id": "t040-source-mismatch-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-runtime-authority-closeout:t040-source-mismatch-regression"
+      }
+    },
+    {
+      "assertion": "Fokussierte Runtime-Refresh-Tests, vollständige relevante Bureau-Validierung, git diff --check, Self-Review sowie geschützte GitHub-Pflichtchecks sind auf demselben finalen Head grün. Merge und Post-Merge-main-Readback erfolgen revisionsgebunden; offene fremde PRs oder Worktrees werden nicht übernommen.",
+      "evidence_type": "object",
+      "id": "regression-and-delivery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-runtime-authority-closeout:regression-and-delivery"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den No-Run-Runtime-Authority-Closeout und fokussierte Regressionen ändern. Keine Runtime zurückrollen, keinen historischen Deploy wiederholen, keine Queue-/Claim-/Dispatch-Gates lockern und keine fremde Arbeit übernehmen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_refresh.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Repariere den receiptgebundenen No-Run-Closeout für bereits eindeutig erfolgreich konsumierte Bureau-Runtime-Refresh-Authorities so, dass deren historische immutable Release-, Manifest-, Install-, Intent-, Target-, Result- und Lease-Evidenz auch nach einem späteren gültigen Bureau-Runtime-Deploy verifiziert und die ursprüngliche Authority terminalisiert werden kann. Der aktuelle stabile Runtime-Pointer darf dabei neuer als der historische Intent sein und wird weder zurückgesetzt noch als historische Evidenz umgedeutet. Fehlende, manipulierte, mehrdeutige oder mehrfach verwendete historische Effekte bleiben fail-closed; kein Runtime-Refresh wird durch diesen Closeout neu autorisiert oder wiederholt.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-HISTORICAL-RUNTIME-AUTHORITY-CLOSEOUT-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "permission to replay a historical runtime refresh",
+      "permission to roll back the current Bureau runtime",
+      "permission to weaken single-use authority checks",
+      "permission to mutate unrelated Bureau task or queue state"
+    ],
+    "observed_failure": "readback-source-mismatch after later valid Bureau runtime deployment",
+    "regression_authority": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-AUDIO-T040-20260812",
+    "related_candidate": "candidate-146db9f23b1a872aeb3b4892",
+    "source_candidate": "candidate-a00744d9709a4e9690a6d4f3",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a00744d9709a4e9690a6d4f3",
+      "event_id": 6372,
+      "event_created_at": "2026-08-12T19:30:47.235549Z",
+      "request_sha256": "7a3155667d80c8277d6c9e1edd3c55bf09c0afa45519cf0978043abd5cc9d6dc",
+      "candidate_event_id": "candidate-event-4080ba92124306e53a53c8f3",
+      "source_fingerprint": "82d41a9cf396626f3c93cb7ed914cd7015c844f976bc6baecb35725883ce540e",
+      "content_fingerprint": "a00744d9709a4e9690a6d4f39804116aee25a4b29c789e7584763aa1017e5d89",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "82d41a9cf396626f3c93cb7ed914cd7015c844f976bc6baecb35725883ce540e",
+        "freshness": "fingerprint-bound",
+        "kind": "source-observer",
+        "locator": "bureau-state://runtime-refresh-authority/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-AUDIO-T040-20260812",
+        "observed_at": "2026-08-12T19:25:39Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "82d41a9cf396626f3c93cb7ed914cd7015c844f976bc6baecb35725883ce540e",
+          "freshness": "fingerprint-bound",
+          "kind": "source-observer",
+          "locator": "bureau-state://runtime-refresh-authority/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-AUDIO-T040-20260812",
+          "observed_at": "2026-08-12T19:25:39Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "bureau",
+    "python",
+    "repository",
+    "testing",
+    "github",
+    "grabowski",
+    "runtime-refresh",
+    "audit",
+    "resource-leases"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die historische Closeout-Readback-Logik und ihre Regressionstests. Keine bereits terminalisierten Runtime-Authorities, Deployment-Manifeste oder Runtime-Pointer zurückschreiben; bei Unsicherheit bleibt der bisherige fail-closed Closeout aktiv."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Historischen Runtime-Authority-Closeout nach Nachfolge-Deploy reparieren"
+}

@@ -50,11 +50,12 @@ def test_source_promote_plan_is_read_only_candidate(
     assert not state.exists()
     assert report["bureau_task_id"] == "WG-TASK-ONE-001"
     assert report["projected_state"] == "planned"
-    assert report["materialization_allowed"] is True
+    assert report["materialization_allowed"] is False
     assert report["readiness"] == "blocked"
+    assert "source-task-acceptance-contract-untyped" in report["blockers"]
     assert report["manual_decisions_required"]
-    assert report["candidate_task"]["execution"]["policy"] == "review-before-effect"
-    assert report["candidate_task"]["metadata"]["source"]["source_task_id"] == "TASK-ONE-001"
+    assert report["candidate_task"] is None
+    assert report["acceptance_guidance"] == ["criterion"]
 
 
 def test_source_promote_plan_blocks_terminal_source_task(registry_factory, tmp_path):

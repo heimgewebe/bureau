@@ -15,7 +15,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .acceptance import AcceptanceContractError
 from .cycle_contract import atomic_json, utc_now
+from .schema_validation import DocumentSchemaError, SchemaSet
 
 BRIDGE_SCHEMA_VERSION = 1
 DECISION_SCHEMA_VERSION = 1
@@ -860,6 +862,10 @@ def _binding_task(
     }
     if isinstance(frontier_data, dict) and isinstance(frontier_data.get("report_sha256"), str):
         metadata["frontier_report_sha256"] = frontier_data["report_sha256"]
+    acceptance = lane.get("acceptance")
+    typed_acceptance = (
+        json.loads(json.dumps(acceptance)) if isinstance(acceptance, list) else []
+    )
     return {
         "schema_version": 1,
         "id": task_id,
@@ -875,22 +881,7 @@ def _binding_task(
         "priority": {"lane": "next", "rank": priority_rank},
         "execution": execution,
         "claims": [{"resource": resource, "mode": "write", "isolation": "worktree"}],
-        "acceptance": [
-            {
-                "id": "closure-lane-bound",
-                "assertion": "The matching closure lane records this canonical Bureau task id.",
-            },
-            {
-                "id": "branch-reviewed",
-                "assertion": "The branch status, relevant tests, and merge path are checked.",
-            },
-            {
-                "id": "handoff-safe",
-                "assertion": (
-                    "A valid brief and this task binding exist before external execution continues."
-                ),
-            },
-        ],
+        "acceptance": typed_acceptance,
         "metadata": metadata,
     }
 
@@ -995,6 +986,17 @@ def _apply_binding_gate(
             context=context,
             config=config,
         )
+        try:
+            SchemaSet(root / "schemas").validate_task_write(task, task_path)
+        except (DocumentSchemaError, AcceptanceContractError) as exc:
+            result["status"] = "blocked"
+            result["blockers"] = [
+                _binding_blocker(
+                    "binding_acceptance_contract_invalid",
+                    f"typed acceptance is required before binding materialization: {exc}",
+                )
+            ]
+            return result
         atomic_json(task_path, task)
     except (OSError, ValueError) as exc:
         result["status"] = "blocked"

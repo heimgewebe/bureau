@@ -12,7 +12,9 @@ from bureau.acceptance import (
     PASSED,
     UNKNOWN,
     VERIFIER_CONTRACTS,
+    AcceptanceContractError,
     typed_criterion_contracts,
+    validate_acceptance_contract,
 )
 from bureau.acceptance import (
     evaluate_acceptance as _evaluate_acceptance,
@@ -22,6 +24,7 @@ from bureau.acceptance import (
 )
 from bureau.core import Registry
 from bureau.review_steward import evidence_signal
+from bureau.schema_validation import SchemaSet
 
 TASK_SHA = "a" * 64
 PLAN_SHA = "b" * 64
@@ -236,6 +239,101 @@ def test_all_criteria_require_named_typed_contracts() -> None:
     assert {item["verifier"] for item in contracts["criteria"]} == set(VERIFIER_CONTRACTS)
     assert all(item["revision_binding"] for item in contracts["criteria"])
     assert all(item["max_age_seconds"] > 0 for item in contracts["criteria"])
+    for contract in contracts["criteria"]:
+        expected_fields = VERIFIER_CONTRACTS[contract["verifier"]]["config_fields"]
+        assert contract["config_fields"] == expected_fields
+        assert tuple(contract["verifier_config"]) == expected_fields
+
+
+def test_acceptance_contract_validator_accepts_valid_contracts() -> None:
+    validate_acceptance_contract(
+        {"id": "TASK-TYPED", "acceptance": [criterion("proof", "manual_observation")]}
+    )
+
+
+@pytest.mark.parametrize(
+    ("mutate", "code", "path", "field"),
+    [
+        (
+            lambda item: item.pop("evidence_type"),
+            "evidence-type-missing",
+            "evidence_type",
+            "evidence_type",
+        ),
+        (
+            lambda item: item.__setitem__("evidence_type", "string"),
+            "evidence-type-invalid",
+            "evidence_type",
+            "evidence_type",
+        ),
+        (lambda item: item.pop("verifier"), "verifier-missing", "verifier", "verifier"),
+        (
+            lambda item: item.__setitem__("verifier", "fantasy"),
+            "verifier-unknown",
+            "verifier",
+            "verifier",
+        ),
+        (
+            lambda item: item.pop("verifier_config"),
+            "verifier-config-missing",
+            "verifier_config",
+            "verifier_config",
+        ),
+        (
+            lambda item: item.__setitem__("verifier_config", {"artifact_sha256": ARTIFACT_SHA}),
+            "verifier-config-mismatch",
+            "verifier_config",
+            "verifier_config",
+        ),
+    ],
+)
+def test_acceptance_contract_validator_reports_task_criterion_path_and_fields(
+    mutate, code: str, path: str, field: str
+) -> None:
+    item = criterion("proof", "manual_observation")
+    mutate(item)
+
+    with pytest.raises(AcceptanceContractError) as caught:
+        validate_acceptance_contract({"id": "TASK-BAD", "acceptance": [item]})
+
+    diagnostic = next(
+        diagnostic for diagnostic in caught.value.diagnostics if diagnostic["code"] == code
+    )
+    assert diagnostic["task_id"] == "TASK-BAD"
+    assert diagnostic["criterion_id"] == "proof"
+    assert diagnostic["path"] == f"$.acceptance[0].{path}"
+    reported_fields = diagnostic["missing_fields"] + diagnostic["invalid_fields"]
+    assert any(item == field or item.startswith(f"{field}.") for item in reported_fields)
+
+
+def test_verifier_config_exactness_diagnostic_uses_canonical_contract_fields() -> None:
+    item = criterion("proof", "manual_observation")
+    item["verifier_config"] = {"unexpected": "value"}
+
+    with pytest.raises(AcceptanceContractError) as caught:
+        validate_acceptance_contract({"id": "TASK-BAD", "acceptance": [item]})
+
+    diagnostic = caught.value.diagnostics[0]
+    assert diagnostic["code"] == "verifier-config-mismatch"
+    assert diagnostic["missing_fields"] == ["verifier_config.observation_scope"]
+    assert diagnostic["invalid_fields"] == ["verifier_config.unexpected"]
+
+
+def test_acceptance_contract_validator_rejects_empty_and_duplicate_ids() -> None:
+    with pytest.raises(AcceptanceContractError) as empty:
+        validate_acceptance_contract({"id": "TASK-EMPTY", "acceptance": []})
+    assert empty.value.diagnostics[0]["path"] == "$.acceptance"
+    assert empty.value.diagnostics[0]["code"] == "acceptance-empty"
+
+    duplicate = criterion("same", "manual_observation")
+    with pytest.raises(AcceptanceContractError) as caught:
+        validate_acceptance_contract(
+            {"id": "TASK-DUPE", "acceptance": [duplicate, dict(duplicate)]}
+        )
+    diagnostic = caught.value.diagnostics[0]
+    assert diagnostic["code"] == "duplicate-criterion-id"
+    assert diagnostic["criterion_id"] == "same"
+    assert diagnostic["path"] == "$.acceptance[1].id"
 
 
 def test_registry_schema_accepts_frozen_verifier_configuration(
@@ -266,6 +364,20 @@ def test_registry_schema_accepts_frozen_verifier_configuration(
         "validate (3.12)",
     ]
     assert configured[1]["verifier_config"]["required_seconds"] == 3600
+
+
+def test_structural_task_validation_remains_legacy_readable_but_write_is_strict(
+    registry_factory,
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [{"id": "legacy", "assertion": "legacy prose"}]
+    schemas = SchemaSet(root / "schemas")
+
+    schemas.validate("task", task, task_path)
+    with pytest.raises(AcceptanceContractError, match="evidence_type"):
+        schemas.validate_task_write(task, task_path)
 
 
 def test_untyped_criterion_is_unknown_not_success() -> None:

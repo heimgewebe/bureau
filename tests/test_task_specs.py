@@ -14,19 +14,33 @@ from bureau.v2 import StateStore
 
 def _spec(task_id: str = "TEST-T001", *, title: str = "first", marker: str = "a") -> dict:
     return {
+        "schema_version": 1,
         "id": task_id,
-        "initiative": "TEST",
+        "initiative": "TEST-V1",
         "title": title,
         "state": "planned",
         "priority": {"lane": "later", "rank": 1},
         "depends_on": [],
-        "mode": "manual",
-        "policy": "review-before-effect",
+        "execution": {"mode": "manual", "policy": "review-before-effect"},
         "claims": [],
         "required_capabilities": [],
-        "acceptance": [],
+        "acceptance": [
+            {
+                "id": "proof",
+                "assertion": "bound proof exists",
+                "evidence_type": "object",
+                "verifier": "manual_observation",
+                "verifier_config": {"observation_scope": f"test:{task_id}:proof"},
+            }
+        ],
         "metadata": {"marker": marker, "nested": {"keep": [1, 2, 3]}},
     }
+
+
+def _legacy_spec(task_id: str = "LEGACY-T001", **kwargs) -> dict:
+    value = _spec(task_id, **kwargs)
+    value["acceptance"] = [{"id": "legacy", "assertion": "legacy prose"}]
+    return value
 
 
 def _store(tmp_path: Path) -> StateStore:
@@ -218,7 +232,7 @@ def test_digest_tampering_is_rejected(tmp_path: Path) -> None:
 
 def test_legacy_import_is_lossless_idempotent_and_detects_divergence(tmp_path: Path) -> None:
     store = _store(tmp_path)
-    raw = _spec("LEGACY-T001", title="legacy", marker="preserve")
+    raw = _legacy_spec("LEGACY-T001", title="legacy", marker="preserve")
     registry = SimpleNamespace(tasks={"LEGACY-T001": SimpleNamespace(raw=raw)})
     first = store.import_registry_task_specs(registry)
     assert first["imported"] == 1
@@ -229,7 +243,7 @@ def test_legacy_import_is_lossless_idempotent_and_detects_divergence(tmp_path: P
     assert second["imported"] == 0
     assert second["unchanged"] == 1
 
-    changed = _spec("LEGACY-T001", title="git changed")
+    changed = _legacy_spec("LEGACY-T001", title="git changed")
     divergent = SimpleNamespace(tasks={"LEGACY-T001": SimpleNamespace(raw=changed)})
     with pytest.raises(StateError, match="legacy TaskSpec divergence"):
         store.import_registry_task_specs(divergent)
@@ -249,8 +263,8 @@ def test_registration_seeds_missing_legacy_specs_and_preserves_state_store_diver
     )
     registry = SimpleNamespace(
         tasks={
-            "LEGACY-A": SimpleNamespace(raw=_spec("LEGACY-A")),
-            "LEGACY-B": SimpleNamespace(raw=_spec("LEGACY-B")),
+            "LEGACY-A": SimpleNamespace(raw=_legacy_spec("LEGACY-A")),
+            "LEGACY-B": SimpleNamespace(raw=_legacy_spec("LEGACY-B")),
         }
     )
 
@@ -321,3 +335,36 @@ def test_revision_row_missing_or_corrupt_fails_closed(tmp_path: Path) -> None:
         connection.execute("DELETE FROM task_spec_revisions WHERE task_id='TEST-T001'")
     with pytest.raises(StateError, match="unknown TaskSpec revision"):
         store.task_spec("TEST-T001")
+
+
+def test_regular_put_rejects_untyped_acceptance_regardless_of_source(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+
+    for source in ("test", "legacy-git-import", "legacy-git-seed"):
+        with pytest.raises(
+            StateError,
+            match=r"task LEGACY-T001 criterion legacy at \$\.acceptance\[0\]\.evidence_type",
+        ):
+            store.put_task_spec(
+                _legacy_spec(),
+                idempotency_key=f"regular-{source}",
+                expected_revision=None,
+                source=source,
+            )
+
+    assert store.task_spec("LEGACY-T001") is None
+
+
+def test_legacy_import_remains_readable_and_replayable(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    legacy_spec = _legacy_spec("LEGACY-REPLAY")
+    registry = SimpleNamespace(
+        tasks={"LEGACY-REPLAY": SimpleNamespace(raw=legacy_spec)}
+    )
+
+    store.import_registry_task_specs(registry)
+
+    assert store.task_spec("LEGACY-REPLAY")["spec"] == legacy_spec
+    replay = store.replay_projection()
+    assert replay["task_specs"]["matches_current"] is True
+    assert replay["task_specs"]["projection"]["tasks"]["LEGACY-REPLAY"]["spec"] == legacy_spec

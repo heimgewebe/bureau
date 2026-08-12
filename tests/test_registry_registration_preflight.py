@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -31,7 +32,28 @@ def task(
     title: str = "Registry collision guard",
     goal: str = "Prevent parallel task registration collisions",
 ) -> dict:
-    return {"id": task_id, "title": title, "goal": goal}
+    return {
+        "schema_version": 1,
+        "id": task_id,
+        "initiative": "EXAMPLE-V1",
+        "title": title,
+        "goal": goal,
+        "state": "planned",
+        "depends_on": [],
+        "required_capabilities": [],
+        "priority": {"lane": "later", "rank": 1},
+        "execution": {"mode": "manual", "policy": "review-before-effect"},
+        "claims": [],
+        "acceptance": [
+            {
+                "id": "proof",
+                "assertion": "The bounded outcome is observed.",
+                "evidence_type": "object",
+                "verifier": "manual_observation",
+                "verifier_config": {"observation_scope": f"task:{task_id}:proof"},
+            }
+        ],
+    }
 
 
 def evaluate(**overrides):
@@ -70,6 +92,28 @@ def test_base_change_during_preflight_blocks_fail_closed():
     result = evaluate(current_base_sha_after=SHA_B)
     assert result["decision"] == "block"
     assert "base_changed_during_preflight" in result["reasons"]
+
+
+def test_pr1907_shaped_five_untyped_criteria_block_before_merge() -> None:
+    fixture = Path(__file__).with_name("fixtures") / "pr1907-untyped-task.json"
+    proposed = json.loads(fixture.read_text(encoding="utf-8"))
+
+    result = evaluate(
+        proposed_task=proposed,
+        proposed_path=f"registry/tasks/{proposed['id']}.json",
+        pr_number=1907,
+    )
+
+    assert result["decision"] == "block"
+    assert result["reasons"] == ["acceptance_contract_invalid"]
+    diagnostics = result["acceptance_contract_errors"]
+    assert len(diagnostics) == 15
+    assert {item["task_id"] for item in diagnostics} == {proposed["id"]}
+    assert {item["criterion_id"] for item in diagnostics} == {
+        item["id"] for item in proposed["acceptance"]
+    }
+    assert "$.acceptance[0].evidence_type" in {item["path"] for item in diagnostics}
+    assert "$.acceptance[4].verifier_config" in {item["path"] for item in diagnostics}
 
 
 def test_canonical_collision_is_distinct():
@@ -460,6 +504,7 @@ def _git(root: Path, *args: str) -> str:
 def test_repository_preflight_reads_canonical_tasks_from_checked_revision(tmp_path: Path):
     repo = tmp_path / "repo"
     (repo / "registry/tasks").mkdir(parents=True)
+    shutil.copytree(Path(__file__).parents[1] / "schemas", repo / "schemas")
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
     subprocess.run(
         ["git", "-C", str(repo), "config", "user.email", "test@invalid.local"],

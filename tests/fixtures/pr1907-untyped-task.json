@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-OPTIONAL-CI-PLATFORM-DIAGNOSTICS-20260812",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Separate optional CI platform diagnostics from Required Checks",
+  "goal": "Keep exact Required Checks authoritative while reporting optional platform failures separately.",
+  "state": "planned",
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "testing"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "optional-ci-classified",
+      "assertion": "Optional CI failures are classified."
+    },
+    {
+      "id": "required-checks-preserved",
+      "assertion": "Required Checks remain exact."
+    },
+    {
+      "id": "platform-diagnostic-bound",
+      "assertion": "Platform diagnostics are revision-bound."
+    },
+    {
+      "id": "preflight-rejects-stale",
+      "assertion": "Stale registration proposals fail closed."
+    },
+    {
+      "id": "focused-tests-green",
+      "assertion": "Focused tests pass."
+    }
+  ]
+}

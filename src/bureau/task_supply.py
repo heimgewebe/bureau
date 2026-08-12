@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .acceptance import AcceptanceContractError
+from .schema_validation import DocumentSchemaError, default_schema_set
 from .v2 import Registry
 
 SUPPLY_SCHEMA_VERSION = 1
@@ -373,6 +375,7 @@ def _fallback_task(
     open_key: str,
     bucket: str,
     rank: int,
+    acceptance: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
     exact_scope = repository / spec.scope_path
     return {
@@ -406,10 +409,7 @@ def _fallback_task(
                 "isolation": "worktree" if spec.claim_mode == "write" else "none",
             }
         ],
-        "acceptance": [
-            {"id": f"{spec.category}-{index}", "assertion": assertion}
-            for index, assertion in enumerate(spec.acceptance, start=1)
-        ],
+        "acceptance": json.loads(json.dumps(list(acceptance))),
         "metadata": {
             FALLBACK_METADATA_KEY: {
                 "schema_version": SUPPLY_SCHEMA_VERSION,
@@ -446,6 +446,7 @@ def build_supply_report(
     environment_blockers: Iterable[str] = (),
     catalog_blockers: Mapping[str, Sequence[str]] | None = None,
     frontier_snapshot_sha256: str | None = None,
+    acceptance_contracts: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     policy = policy or DEFAULT_SUPPLY_POLICY
     now = generated_at or utc_now()
@@ -484,6 +485,7 @@ def build_supply_report(
     if not runtime_healthy:
         global_blockers.append("required-runtime-unhealthy")
     category_blocks = catalog_blockers or {}
+    explicit_acceptance = acceptance_contracts or {}
     frontier_by_task = {
         str(item["task_id"]): item
         for item in classification["items"]
@@ -548,32 +550,47 @@ def build_supply_report(
             # bucket. Creating the identical id again would abort the whole publication,
             # so this category waits for the next bucket instead of deadlocking the rest.
             blockers.add("fallback-task-id-already-canonical-in-current-bucket")
-        task = _fallback_task(
-            task_id=task_id,
-            initiative_id=initiative_id,
-            spec=spec,
-            repository=repository_path,
-            fingerprint=fingerprint,
-            open_key=open_key,
-            bucket=bucket,
-            rank=900 + index,
-        )
-        proposals.append(
-            {
-                "category": spec.category,
-                "action": "create",
-                "task_id": task_id,
-                "open_key": open_key,
-                "fingerprint": fingerprint,
-                "time_bucket": bucket,
-                "blockers": sorted(blockers),
-                "claimable": False,
-                "canonical_publication_required": True,
-                "task_path": f"registry/tasks/{task_id}.json",
-                "queue_lane": "later",
-                "task": task,
-            }
-        )
+        typed_criteria = explicit_acceptance.get(spec.category)
+        task: dict[str, Any] | None = None
+        if not isinstance(typed_criteria, Sequence) or isinstance(
+            typed_criteria, (str, bytes)
+        ) or not typed_criteria:
+            blockers.add("acceptance-contract-unresolved")
+        else:
+            task = _fallback_task(
+                task_id=task_id,
+                initiative_id=initiative_id,
+                spec=spec,
+                repository=repository_path,
+                fingerprint=fingerprint,
+                open_key=open_key,
+                bucket=bucket,
+                rank=900 + index,
+                acceptance=typed_criteria,
+            )
+            try:
+                default_schema_set().validate_task_write(
+                    task, f"task-supply:{spec.category}:{task_id}"
+                )
+            except (DocumentSchemaError, AcceptanceContractError):
+                blockers.add("acceptance-contract-invalid")
+                task = None
+        proposal = {
+            "category": spec.category,
+            "action": "create",
+            "task_id": task_id,
+            "open_key": open_key,
+            "fingerprint": fingerprint,
+            "time_bucket": bucket,
+            "blockers": sorted(blockers),
+            "claimable": False,
+            "canonical_publication_required": True,
+            "task_path": f"registry/tasks/{task_id}.json",
+            "queue_lane": "later",
+        }
+        if task is not None:
+            proposal["task"] = task
+        proposals.append(proposal)
         if not blockers:
             created_count += 1
     publishable_proposals = [
@@ -810,6 +827,12 @@ def publish_supply_plan(
                 raise SupplyError("publication target escapes the Registry task directory")
             if target.exists():
                 raise SupplyError(f"publication target already exists: {relative_path}")
+            try:
+                default_schema_set().validate_task_write(
+                    task, f"task-supply-publication:{task_id}"
+                )
+            except (DocumentSchemaError, AcceptanceContractError) as exc:
+                raise SupplyError(f"publication task contract is invalid: {exc}") from exc
             created_paths.append(target)
             _atomic_write_json(target, task)
             if task_id not in lanes["later"]:
@@ -899,6 +922,7 @@ def build_registry_supply_report(
     frontier_registry_head: str | None = None,
     frontier_queue_sha256: str | None = None,
     frontier_snapshot_sha256: str | None = None,
+    acceptance_contracts: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
     head_reader: Callable[[Path], str] = _git_head,
 ) -> dict[str, Any]:
     policy = policy or DEFAULT_SUPPLY_POLICY
@@ -935,6 +959,7 @@ def build_registry_supply_report(
         mutation_authority=mutation_authority,
         environment_blockers=blockers,
         frontier_snapshot_sha256=frontier_snapshot_sha256,
+        acceptance_contracts=acceptance_contracts,
     )
 
 

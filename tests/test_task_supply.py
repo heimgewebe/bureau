@@ -30,6 +30,29 @@ QUEUE_SHA = "b" * 64
 SNAPSHOT_SHA = "c" * 64
 NOW = "2026-08-02T10:00:00Z"
 NEXT_BUCKET = "2026-08-03T10:00:00Z"
+TYPED_ACCEPTANCE = {
+    category: [
+        {
+            "id": f"{category}-artifact",
+            "assertion": f"The reviewed {category} validation artifact has the expected digest.",
+            "evidence_type": "object",
+            "verifier": "artifact_hash_matches",
+            "verifier_config": {"artifact_sha256": f"{index:x}" * 64},
+        }
+    ]
+    for index, category in enumerate(
+        (
+            "maintenance",
+            "care",
+            "audit",
+            "diagnosis",
+            "registry-reconciliation",
+            "queue-reconciliation",
+            "error-investigation",
+        ),
+        start=1,
+    )
+}
 
 
 def frontier_item(
@@ -66,6 +89,7 @@ def report(
     queue_sha256: str = QUEUE_SHA,
     registry_root: Path | None = None,
     repository: Path | None = None,
+    acceptance_contracts: dict[str, list[dict]] | None = TYPED_ACCEPTANCE,
 ) -> dict:
     root = registry_root or tmp_path
     repo = repository or tmp_path
@@ -84,6 +108,7 @@ def report(
         mutation_authority=mutation_authority,
         environment_blockers=environment_blockers,
         catalog_blockers=catalog_blockers,
+        acceptance_contracts=acceptance_contracts,
     )
 
 
@@ -205,6 +230,21 @@ def test_missing_mutation_authority_is_explicit_blocker(tmp_path: Path) -> None:
     assert result["blockers"] == ["registry-mutation-authority-unavailable"]
     assert result["publication_plan"]["status"] == "preview-only"
     assert result["proposals"]
+
+
+def test_untyped_fallback_catalog_refuses_task_proposal_and_publication(
+    tmp_path: Path,
+) -> None:
+    result = report(tmp_path, [], acceptance_contracts={})
+
+    assert result["status"] == "blocked"
+    assert result["publication_plan"]["actions"] == []
+    assert result["proposals"]
+    assert all(
+        proposal["blockers"] == ["acceptance-contract-unresolved"]
+        for proposal in result["proposals"]
+    )
+    assert all("task" not in proposal for proposal in result["proposals"])
 
 
 def test_runtime_and_environment_blockers_are_preserved(tmp_path: Path) -> None:
@@ -681,6 +721,38 @@ def test_publish_rejects_unknown_action_before_mutation(tmp_path: Path) -> None:
     assert registry_snapshot(root) == before
 
 
+def test_publish_revalidates_typed_acceptance_before_any_mutation(tmp_path: Path) -> None:
+    project_root = Path(__file__).parents[1]
+    root = copy_registry(project_root, tmp_path / "registry-copy")
+    queue_path = root / "registry/queue.json"
+    before = registry_snapshot(root)
+    result = report(
+        tmp_path,
+        [],
+        registry_root=root,
+        repository=root,
+        registry_head=HEAD,
+        queue_sha256=file_sha256(queue_path),
+    )
+    plan = json.loads(json.dumps(result["publication_plan"]))
+    plan["actions"][0]["task"]["acceptance"] = [
+        {"id": "legacy", "assertion": "legacy prose"}
+    ]
+    plan["plan_sha256"] = sha256_json(
+        {key: value for key, value in plan.items() if key != "plan_sha256"}
+    )
+
+    with pytest.raises(SupplyError, match="publication task contract is invalid"):
+        publish_supply_plan(
+            plan,
+            mutation_authorized=True,
+            expected_plan_sha256=plan["plan_sha256"],
+            head_reader=lambda _root: HEAD,
+        )
+
+    assert registry_snapshot(root) == before
+
+
 @pytest.mark.parametrize(
     "payload",
     [
@@ -717,6 +789,7 @@ def test_registry_preview_defaults_runtime_unhealthy_and_is_read_only(
     result = build_registry_supply_report(
         registry_root=root,
         frontier=[],
+        acceptance_contracts=TYPED_ACCEPTANCE,
         head_reader=lambda _root: HEAD,
     )
     assert result["status"] == "blocked"
@@ -747,6 +820,7 @@ def test_registry_preview_requires_explicit_runtime_and_authority_for_plan(
         frontier_queue_sha256=queue_digest,
         frontier_snapshot_sha256=SNAPSHOT_SHA,
         head_reader=lambda _root: HEAD,
+        acceptance_contracts=TYPED_ACCEPTANCE,
     )
     assert result["status"] == "refill-proposed"
     assert result["publication_plan"]["status"] == "authorized"
@@ -802,6 +876,7 @@ def test_registry_preview_rejects_stale_frontier_bindings(tmp_path: Path) -> Non
         frontier_queue_sha256="e" * 64,
         frontier_snapshot_sha256=SNAPSHOT_SHA,
         head_reader=lambda _root: HEAD,
+        acceptance_contracts=TYPED_ACCEPTANCE,
     )
     assert result["status"] == "blocked"
     assert result["blockers"] == [

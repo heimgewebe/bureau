@@ -7,13 +7,19 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from bureau import legacy, runtime_refresh
-from bureau.acceptance import PASSED, criterion_contract, evaluate_acceptance
+from bureau.acceptance import (
+    PASSED,
+    AcceptanceContractError,
+    criterion_contract,
+    evaluate_acceptance,
+    validate_acceptance_contract,
+)
 from bureau.v2 import (
     TERMINAL_STATES,
     RunStateConflict,
     StateStore,
+    _complete_run_after_typed_evaluation,
     _load_validated_stored_receipt,
-    complete_run,
 )
 
 ACTIVE_CLOSEOUT_STATES = {"assigned", "running", "verifying"}
@@ -21,6 +27,7 @@ TERMINAL_RUN_STATES = set(TERMINAL_STATES)
 EVIDENCE_BUNDLE_KIND = "bureau.acceptance_evidence_bundle"
 EVIDENCE_DIRECTORY = "acceptance-evidence"
 MAX_EVIDENCE_BUNDLE_BYTES = 1_048_576
+INVALID_ACCEPTANCE_DIAGNOSTIC_KIND = "bureau.invalid_acceptance_contract_diagnostic"
 
 Completion = Callable[[Any, StateStore, str, dict[str, Any]], dict[str, Any]]
 EvidenceProvider = Callable[[dict[str, Any], dict[str, Any]], Mapping[str, Any]]
@@ -86,6 +93,45 @@ def _load_envelope(
     return value
 
 
+def _invalid_acceptance_observation(
+    run: Mapping[str, Any],
+    task: Mapping[str, Any],
+    error: AcceptanceContractError,
+) -> dict[str, Any]:
+    repair_action = (
+        "Register a new TaskSpec revision with non-empty executable typed acceptance, "
+        "then explicitly disposition this legacy run through the normal run lifecycle "
+        "and create a new revision-bound run; do not edit the active envelope or treat "
+        "this diagnostic as terminal evidence."
+    )
+    diagnostic: dict[str, Any] = {
+        "schema_version": 1,
+        "kind": INVALID_ACCEPTANCE_DIAGNOSTIC_KIND,
+        "task_id": str(run.get("task_id") or task.get("id") or ""),
+        "run_id": str(run.get("run_id") or ""),
+        "task_sha256": run.get("task_sha256"),
+        "plan_sha256": run.get("plan_sha256"),
+        "diagnostics": error.diagnostics,
+        "repair_action": repair_action,
+        "does_not_establish": [
+            "task-completion",
+            "terminal-run-state",
+            "permission-to-edit-active-envelope",
+        ],
+    }
+    diagnostic["fingerprint"] = legacy.sha256_json(diagnostic)
+    return {
+        "schema_version": 1,
+        "kind": "bureau.closeout_observation",
+        "run_id": run.get("run_id"),
+        "task_id": run.get("task_id"),
+        "state": "open",
+        "reason": "invalid-acceptance-contract",
+        "diagnostic": diagnostic,
+        "mutated": False,
+    }
+
+
 def evaluate_run(
     store: StateStore,
     run_id: str,
@@ -129,6 +175,10 @@ def evaluate_run(
             "mutated": False,
         }
     task = envelope["task"]
+    try:
+        validate_acceptance_contract(task)
+    except AcceptanceContractError as exc:
+        return _invalid_acceptance_observation(run, task, exc)
     criteria = task.get("acceptance")
     if not isinstance(criteria, list):
         criteria = []
@@ -160,7 +210,7 @@ def reconcile_run(
     evidence: Mapping[str, Any],
     *,
     now: str | None = None,
-    completion: Completion = complete_run,
+    completion: Completion = _complete_run_after_typed_evaluation,
     authenticated_criterion_ids: set[str] | frozenset[str] | None = None,
     authentication_records: AuthenticationRecords | None = None,
 ) -> dict[str, Any]:
@@ -191,7 +241,6 @@ def reconcile_run(
             completion_evidence[str(criterion_id)] = copied
         else:
             completion_evidence[str(criterion_id)] = item
-    completion_evidence["_typed_acceptance"] = evaluation
     completed = completion(registry, store, run_id, completion_evidence)
     return {
         **observed,
@@ -208,7 +257,7 @@ def reconcile_runs(
     *,
     run_ids: list[str] | None = None,
     now: str | None = None,
-    completion: Completion = complete_run,
+    completion: Completion = _complete_run_after_typed_evaluation,
     authentication_provider: AuthenticationProvider | None = None,
 ) -> dict[str, Any]:
     if run_ids is None:
@@ -222,6 +271,14 @@ def reconcile_runs(
         run = store.run(run_id)
         try:
             envelope = _load_envelope(store, run_id, run.get("envelope_sha256"))
+            task = envelope.get("task")
+            if not isinstance(task, Mapping):
+                raise ValueError("run envelope task is not an object")
+            try:
+                validate_acceptance_contract(task)
+            except AcceptanceContractError as exc:
+                observations.append(_invalid_acceptance_observation(run, task, exc))
+                continue
             evidence = evidence_provider(run, envelope)
         except Exception as exc:  # source outages are unknown, never success/failure
             observations.append(
@@ -686,7 +743,7 @@ def reconcile_state_evidence(
     store: StateStore,
     *,
     now: str | None = None,
-    completion: Completion = complete_run,
+    completion: Completion = _complete_run_after_typed_evaluation,
     github: GitHubReader = runtime_refresh.gh_json,
 ) -> dict[str, Any]:
     """Consume typed bundles from the canonical StateStore root.

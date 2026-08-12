@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from bureau.task_finish import apply_ready, scan
 
 HEAD_SHA = "1" * 40
@@ -85,7 +87,7 @@ def test_scan_blocks_head_sha_mismatch(tmp_path: Path) -> None:
     assert findings[0]["blockers"] == ["pull request head sha does not match"]
 
 
-def test_apply_ready_verifies_only_auto_verify_tasks(tmp_path: Path) -> None:
+def test_apply_ready_rejects_direct_auto_verify_without_mutation(tmp_path: Path) -> None:
     write_task(
         tmp_path,
         {
@@ -105,11 +107,13 @@ def test_apply_ready_verifies_only_auto_verify_tasks(tmp_path: Path) -> None:
     evidence_dir.mkdir()
     write_evidence(evidence_dir, merged_evidence())
     findings = scan(tmp_path, evidence_dir)
-    changed = apply_ready(tmp_path, findings, "2026-07-05T16:00:00Z")
-    assert changed == ["registry/tasks/DEMO-T004.json"]
-    task = json.loads((tmp_path / changed[0]).read_text(encoding="utf-8"))
-    assert task["state"] == "verified"
-    assert task["metadata"]["verification"]["pr_completion"]["kind"]
+    before = (tmp_path / "registry/tasks/DEMO-T004.json").read_bytes()
+    with pytest.raises(RuntimeError, match="canonical StateStore typed acceptance closeout"):
+        apply_ready(tmp_path, findings, "2026-07-05T16:00:00Z")
+    assert (tmp_path / "registry/tasks/DEMO-T004.json").read_bytes() == before
+    task = json.loads(before)
+    assert task["state"] == "ready"
+    assert "verification" not in task["metadata"]
 
 
 def test_apply_ready_leaves_non_auto_verify_task_unchanged(tmp_path: Path) -> None:
@@ -177,7 +181,7 @@ def test_scan_blocks_ai_or_prose_only_evidence(tmp_path: Path) -> None:
     assert finding["blockers"] == ["AI or prose-only evidence is insufficient"]
 
 
-def test_apply_ready_writes_top_level_evidence_fields(tmp_path: Path) -> None:
+def test_apply_ready_never_projects_merge_receipt_into_task_state(tmp_path: Path) -> None:
     write_task(
         tmp_path,
         {
@@ -197,12 +201,16 @@ def test_apply_ready_writes_top_level_evidence_fields(tmp_path: Path) -> None:
     evidence_dir.mkdir()
     write_evidence(evidence_dir, merged_evidence())
 
-    changed = apply_ready(tmp_path, scan(tmp_path, evidence_dir), "2026-07-05T16:00:00Z")
+    task_path = tmp_path / "registry/tasks/DEMO-T008.json"
+    before = task_path.read_bytes()
+    findings = scan(tmp_path, evidence_dir)
+    assert findings[0]["receipt"]["receipt_id"] == (
+        f"pr-completion:heimgewebe/example#7:{HEAD_SHA}"
+    )
+    with pytest.raises(RuntimeError, match="direct Registry task verification is disabled"):
+        apply_ready(tmp_path, findings, "2026-07-05T16:00:00Z")
 
-    task = json.loads((tmp_path / changed[0]).read_text(encoding="utf-8"))
-    verification = task["metadata"]["verification"]
-    assert verification["receipt_id"] == f"pr-completion:heimgewebe/example#7:{HEAD_SHA}"
-    assert len(verification["receipt_sha256"]) == 64
-    assert verification["source"] == "github_pull_request"
-    assert verification["source_ref"] == f"github-pr:heimgewebe/example#7@{HEAD_SHA}:{MERGE_SHA}"
-    assert len(verification["evidence_sha256"]) == 64
+    assert task_path.read_bytes() == before
+    task = json.loads(before)
+    assert task["state"] == "ready"
+    assert "verification" not in task["metadata"]

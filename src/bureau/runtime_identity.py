@@ -74,10 +74,15 @@ def _scheduler_fragment_paths(root: Path) -> list[Path]:
 def _package_tree_sha256(root: Path) -> str | None:
     pyproject = root / "pyproject.toml"
     packages = [root / "src" / name for name in MANAGED_PACKAGES]
+    schemas = root / "schemas"
     systemd = root / "ops/systemd"
+    schema_paths = sorted(schemas.glob("*.json")) if schemas.is_dir() else []
     if (
         pyproject.is_symlink()
         or not pyproject.is_file()
+        or schemas.is_symlink()
+        or not schemas.is_dir()
+        or not schema_paths
         or systemd.is_symlink()
         or not systemd.is_dir()
         or any(package.is_symlink() or not package.is_dir() for package in packages)
@@ -85,6 +90,7 @@ def _package_tree_sha256(root: Path) -> str | None:
         return None
     paths = [
         pyproject,
+        *schema_paths,
         *(path for package in packages for path in sorted(package.rglob("*.py"))),
         *_scheduler_fragment_paths(root),
     ]

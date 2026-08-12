@@ -190,10 +190,15 @@ except ValueError:
     raise SystemExit("bureau runtime module escaped immutable release")
 pyproject = release / "pyproject.toml"
 packages = [release / "src/bureau", release / "src/bureau_cycle"]
+schemas = release / "schemas"
 systemd = release / "ops/systemd"
+schema_paths = sorted(schemas.glob("*.json")) if schemas.is_dir() else []
 if (
     pyproject.is_symlink()
     or not pyproject.is_file()
+    or schemas.is_symlink()
+    or not schemas.is_dir()
+    or not schema_paths
     or systemd.is_symlink()
     or not systemd.is_dir()
     or any(package.is_symlink() or not package.is_dir() for package in packages)
@@ -203,6 +208,7 @@ digest = hashlib.sha256()
 scheduler_names = {RUNTIME_SCHEDULER_NAMES!r}
 paths = [
     pyproject,
+    *schema_paths,
     *(path for package in packages for path in sorted(package.rglob("*.py"))),
     *(systemd / (name + ".service") for name in scheduler_names),
     *(systemd / (name + ".timer") for name in scheduler_names),

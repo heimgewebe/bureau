@@ -33,6 +33,7 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
     shims.mkdir()
 
     _copy(REPO_ROOT / "pyproject.toml", release_build / "pyproject.toml")
+    shutil.copytree(REPO_ROOT / "schemas", release_build / "schemas")
     shutil.copytree(
         REPO_ROOT / "src/bureau",
         release_build / "src/bureau",

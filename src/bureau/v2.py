@@ -7218,20 +7218,97 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
     )
 
 
+def _active_run_ids_by_task(runs: list[Any]) -> dict[str, tuple[str, ...]]:
+    by_task: dict[str, list[str]] = {}
+    for row in runs:
+        task_id = str(row["task_id"])
+        run_id = str(row["run_id"])
+        by_task.setdefault(task_id, []).append(run_id)
+    return {
+        task_id: tuple(sorted(run_ids))
+        for task_id, run_ids in by_task.items()
+    }
+
+
 def _structural_task_reconcile_candidates(
     registry: Registry,
     overlays: dict[str, str],
     task_revisions: dict[str, dict[str, Any]],
     verification_stamps: dict[str, dict[str, Any]],
+    *,
+    source_registry: Registry | None = None,
+    active_runs_by_task: dict[str, tuple[str, ...]] | None = None,
+    rejection_reasons: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     bridge_task_ids = closure_bridge_task_ids()
+    canonical_registry = source_registry or registry
+    active_runs = active_runs_by_task or {}
     for task in registry.tasks.values():
         revision = task_revisions.get(task.id, {})
         current_revision = revision.get("revision")
         if not isinstance(current_revision, int):
             continue
         effective_state = overlays.get(task.id, task.state)
+        source_task = canonical_registry.tasks.get(task.id)
+        if source_task is not None and source_task.state == "superseded":
+            if effective_state != "ready":
+                if rejection_reasons is not None:
+                    rejection_reasons[task.id] = (
+                        f"StateStore state is {effective_state}, expected ready"
+                    )
+                continue
+            metadata = source_task.raw.get("metadata")
+            successor_id = (
+                metadata.get("superseded_by") if isinstance(metadata, dict) else None
+            )
+            if not isinstance(successor_id, str) or not successor_id.strip():
+                if rejection_reasons is not None:
+                    rejection_reasons[task.id] = (
+                        "registry metadata.superseded_by must name exactly one successor"
+                    )
+                continue
+            successor_id = successor_id.strip()
+            if successor_id == task.id:
+                if rejection_reasons is not None:
+                    rejection_reasons[task.id] = (
+                        "registry supersession successor must not reference the same task"
+                    )
+                continue
+            successor = canonical_registry.tasks.get(successor_id)
+            if successor is None:
+                if rejection_reasons is not None:
+                    rejection_reasons[task.id] = (
+                        f"registry supersession successor {successor_id} is missing"
+                    )
+                continue
+            spec_sha256 = revision.get("spec_sha256")
+            if not isinstance(spec_sha256, str) or not spec_sha256:
+                if rejection_reasons is not None:
+                    rejection_reasons[task.id] = "StateStore TaskSpec digest is missing"
+                continue
+            active_run_ids = active_runs.get(task.id, ())
+            if active_run_ids:
+                if rejection_reasons is not None:
+                    rejection_reasons[task.id] = (
+                        "active run exists: " + ", ".join(active_run_ids)
+                    )
+                continue
+            candidates.append(
+                {
+                    "task_id": task.id,
+                    "from_state": "ready",
+                    "to_state": "superseded",
+                    "revision": current_revision,
+                    "spec_sha256": spec_sha256,
+                    "successor_task_id": successor_id,
+                    "registry_task_sha256": source_task.sha256,
+                    "successor_task_sha256": successor.sha256,
+                    "active_run_ids": [],
+                    "gate": "explicit-registry-supersession-no-active-run-cas",
+                }
+            )
+            continue
         if task.state != "planned" or effective_state != "planned":
             continue
         initiative = registry.initiatives[task.initiative]
@@ -7971,7 +8048,12 @@ SAFE_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset(
         ("completion-ready", "waiting"),
     }
 )
-SAFE_TASK_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset({("planned", "ready")})
+SAFE_TASK_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset(
+    {
+        ("planned", "ready"),
+        ("ready", "superseded"),
+    }
+)
 
 
 def _initiative_lifecycle_reconcile_candidates(
@@ -8005,8 +8087,16 @@ def reconcile_initiative_lifecycle(
         verification_stamps = _current_verification_stamps(
             operational_registry, connection
         )
+        active_runs_by_task = _active_run_ids_by_task(store.active_runs(connection))
+    task_rejection_reasons: dict[str, str] = {}
     task_candidates = _structural_task_reconcile_candidates(
-        operational_registry, overlays, task_revisions, verification_stamps
+        operational_registry,
+        overlays,
+        task_revisions,
+        verification_stamps,
+        source_registry=source_registry,
+        active_runs_by_task=active_runs_by_task,
+        rejection_reasons=task_rejection_reasons,
     )
     if task_id is not None:
         if task_id not in operational_registry.tasks:
@@ -8015,8 +8105,11 @@ def reconcile_initiative_lifecycle(
             candidate for candidate in task_candidates if candidate["task_id"] == task_id
         ]
         if len(matching_task_candidates) != 1:
+            rejection = task_rejection_reasons.get(task_id)
+            suffix = f": {rejection}" if rejection else ""
             raise legacy.StateError(
                 f"task {task_id} has no deterministic lifecycle reconcile candidate"
+                f"{suffix}"
             )
         task_candidates = matching_task_candidates
 
@@ -8068,11 +8161,18 @@ def reconcile_initiative_lifecycle(
             fresh_verification_stamps = _current_verification_stamps(
                 fresh_operational_registry, connection
             )
+            fresh_active_runs_by_task = _active_run_ids_by_task(
+                store.active_runs(connection)
+            )
+            fresh_task_rejection_reasons: dict[str, str] = {}
             fresh_task_candidates = _structural_task_reconcile_candidates(
                 fresh_operational_registry,
                 fresh_overlays,
                 task_revisions,
                 fresh_verification_stamps,
+                source_registry=fresh_source_registry,
+                active_runs_by_task=fresh_active_runs_by_task,
+                rejection_reasons=fresh_task_rejection_reasons,
             )
             if task_id is not None:
                 fresh_task_candidates = [
@@ -8081,8 +8181,12 @@ def reconcile_initiative_lifecycle(
                     if candidate["task_id"] == task_id
                 ]
             if fresh_task_candidates != task_candidates:
+                rejection = (
+                    fresh_task_rejection_reasons.get(task_id) if task_id else None
+                )
+                suffix = f": {rejection}" if rejection else ""
                 raise legacy.StateError(
-                    "task lifecycle gates changed during lifecycle reconcile"
+                    "task lifecycle gates changed during lifecycle reconcile" + suffix
                 )
 
             fresh_projected_overlays = dict(fresh_overlays)
@@ -8124,6 +8228,18 @@ def reconcile_initiative_lifecycle(
                     )
                 spec = copy.deepcopy(current["spec"])
                 spec["state"] = candidate["to_state"]
+                if candidate["to_state"] == "superseded":
+                    successor_task_id = candidate.get("successor_task_id")
+                    if not isinstance(successor_task_id, str) or not successor_task_id:
+                        raise legacy.StateError(
+                            f"task {candidate_task_id} supersession candidate is incomplete"
+                        )
+                    metadata = spec.get("metadata")
+                    metadata = (
+                        copy.deepcopy(metadata) if isinstance(metadata, dict) else {}
+                    )
+                    metadata["superseded_by"] = successor_task_id
+                    spec["metadata"] = metadata
                 key = (
                     f"lifecycle-reconcile:{candidate_task_id}:r{current['revision']}:"
                     f"{candidate['from_state']}->{candidate['to_state']}:"

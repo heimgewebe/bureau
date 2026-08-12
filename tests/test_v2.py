@@ -94,6 +94,19 @@ def remove_from_queue(root: Path, task_id: str) -> None:
             lane.remove(task_id)
     queue_path.write_text(json.dumps(queue))
 
+def mark_registry_task_superseded(
+    root: Path, task_id: str, successor_task_id: object
+) -> None:
+    task_path = root / f"registry/tasks/{task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["state"] = "superseded"
+    metadata = dict(task.get("metadata", {}))
+    metadata["superseded_by"] = successor_task_id
+    task["metadata"] = metadata
+    task_path.write_text(json.dumps(task))
+    remove_from_queue(root, task_id)
+
+
 def setup(root: Path, tmp_path: Path, monkeypatch, adapters: AdapterRegistry | None = None):
     state = tmp_path / "state"
     monkeypatch.setenv("BUREAU_STATE_DIR", str(state))
@@ -791,6 +804,198 @@ def test_lifecycle_reconcile_promotes_planned_task_after_verified_dependency(
         path.name: path.read_bytes()
         for path in (root / "registry/tasks").glob("*.json")
     } == task_files_before
+
+
+def test_lifecycle_reconcile_supersedes_stale_ready_taskspec_from_explicit_registry(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write", max_active=2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id, successor_task_id = sorted(registry.tasks)
+    before = store.task_spec(task_id)
+    assert before is not None
+
+    mark_registry_task_superseded(root, task_id, successor_task_id)
+    registry_bytes = (root / f"registry/tasks/{task_id}.json").read_bytes()
+    source_registry = Registry.load(root)
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(
+        source_registry, store, task_id=task_id
+    )
+    assert preview["task_candidate_count"] == 1
+    candidate = preview["task_candidates"][0]
+    assert candidate == {
+        "task_id": task_id,
+        "from_state": "ready",
+        "to_state": "superseded",
+        "revision": before["revision"],
+        "spec_sha256": before["spec_sha256"],
+        "successor_task_id": successor_task_id,
+        "registry_task_sha256": source_registry.tasks[task_id].sha256,
+        "successor_task_sha256": source_registry.tasks[successor_task_id].sha256,
+        "active_run_ids": [],
+        "gate": "explicit-registry-supersession-no-active-run-cas",
+    }
+
+    applied = bureau_v2.reconcile_initiative_lifecycle(
+        source_registry, store, apply=True, task_id=task_id
+    )
+    assert applied["changed_task_count"] == 1
+    assert applied["changed_tasks"][0]["task_id"] == task_id
+    after = store.task_spec(task_id)
+    assert after is not None
+    assert after["revision"] == before["revision"] + 1
+    assert after["spec"]["state"] == "superseded"
+    assert after["spec"]["metadata"]["superseded_by"] == successor_task_id
+    assert (root / f"registry/tasks/{task_id}.json").read_bytes() == registry_bytes
+
+    dispatcher = Dispatcher(Registry.load(root), store)
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    assert frontier[task_id]["effective_state"] == "superseded"
+    assert frontier[task_id]["eligible"] is False
+    assert "state is superseded" in frontier[task_id]["reasons"]
+    claimed = dispatcher.claim_next("worker", ("repository",))["run"]
+    assert claimed["task_id"] == successor_task_id
+
+
+@pytest.mark.parametrize(
+    ("superseded_by", "message"),
+    [
+        (None, "metadata.superseded_by must name exactly one successor"),
+        (["BUR-TEST-001-T002"], "metadata.superseded_by must name exactly one successor"),
+        ("BUR-TEST-001-T999", "successor BUR-TEST-001-T999 is missing"),
+    ],
+)
+def test_lifecycle_reconcile_supersession_requires_one_existing_successor(
+    registry_factory, tmp_path, monkeypatch, superseded_by, message
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = sorted(registry.tasks)[0]
+    before = store.task_spec(task_id)
+    assert before is not None
+    mark_registry_task_superseded(root, task_id, superseded_by)
+
+    with pytest.raises(StateError, match=message):
+        bureau_v2.reconcile_initiative_lifecycle(
+            Registry.load(root), store, task_id=task_id
+        )
+    assert store.task_spec(task_id) == before
+
+
+def test_lifecycle_reconcile_supersession_rejects_active_run(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write", max_active=2)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id, successor_task_id = sorted(registry.tasks)
+    before = store.task_spec(task_id)
+    assert before is not None
+    run = dispatcher.claim_next("active-worker", ("repository",))["run"]
+    assert run["task_id"] == task_id
+    mark_registry_task_superseded(root, task_id, successor_task_id)
+
+    with pytest.raises(StateError, match="active run exists"):
+        bureau_v2.reconcile_initiative_lifecycle(
+            Registry.load(root), store, task_id=task_id
+        )
+    assert store.task_spec(task_id) == before
+
+
+def test_lifecycle_reconcile_supersession_rechecks_active_run_inside_apply(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id, successor_task_id = sorted(registry.tasks)
+    before = store.task_spec(task_id)
+    assert before is not None
+    mark_registry_task_superseded(root, task_id, successor_task_id)
+
+    observations = iter(
+        [
+            [],
+            [{"task_id": task_id, "run_id": "BUR-RUN-RACE"}],
+        ]
+    )
+    monkeypatch.setattr(store, "active_runs", lambda connection: next(observations))
+
+    with pytest.raises(
+        StateError,
+        match="task lifecycle gates changed during lifecycle reconcile: active run exists",
+    ):
+        bureau_v2.reconcile_initiative_lifecycle(
+            Registry.load(root), store, apply=True, task_id=task_id
+        )
+    assert store.task_spec(task_id) == before
+
+
+def test_lifecycle_reconcile_supersession_rechecks_successor_digest_inside_apply(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id, successor_task_id = sorted(registry.tasks)
+    before = store.task_spec(task_id)
+    assert before is not None
+    mark_registry_task_superseded(root, task_id, successor_task_id)
+    selected_registry = Registry.load(root)
+
+    original_load = bureau_v2.Registry.load
+    loads = 0
+
+    def drifting_load(path):
+        nonlocal loads
+        loads += 1
+        if loads == 2:
+            successor_path = root / f"registry/tasks/{successor_task_id}.json"
+            successor = json.loads(successor_path.read_text())
+            successor["title"] += " drift"
+            successor_path.write_text(json.dumps(successor))
+        return original_load(path)
+
+    monkeypatch.setattr(bureau_v2.Registry, "load", staticmethod(drifting_load))
+
+    with pytest.raises(
+        StateError, match="task lifecycle gates changed during lifecycle reconcile"
+    ):
+        bureau_v2.reconcile_initiative_lifecycle(
+            selected_registry, store, apply=True, task_id=task_id
+        )
+    assert store.task_spec(task_id) == before
+
+
+def test_lifecycle_reconcile_supersession_leaves_already_terminal_taskspec_unchanged(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id, successor_task_id = sorted(registry.tasks)
+    current = store.task_spec(task_id)
+    assert current is not None
+    terminal_spec = json.loads(json.dumps(current["spec"]))
+    terminal_spec["state"] = "superseded"
+    store.put_task_spec(
+        terminal_spec,
+        idempotency_key="already-superseded",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    terminal = store.task_spec(task_id)
+    assert terminal is not None
+    mark_registry_task_superseded(root, task_id, successor_task_id)
+
+    with pytest.raises(StateError, match="StateStore state is superseded, expected ready"):
+        bureau_v2.reconcile_initiative_lifecycle(
+            Registry.load(root), store, task_id=task_id
+        )
+    assert store.task_spec(task_id) == terminal
 
 
 def test_lifecycle_reconcile_promotes_parent_after_terminal_child_gate(

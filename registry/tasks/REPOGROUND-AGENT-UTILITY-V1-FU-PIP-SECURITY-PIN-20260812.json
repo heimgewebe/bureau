@@ -1,0 +1,161 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor der Änderung wird der aktuelle GitHub-Dependabot-Stand frisch gelesen und nach eindeutigen Advisories dedupliziert. Mindestens die heute belegten GHSA-wf93-45jw-7689, GHSA-jp4c-xjxw-mgf9, GHSA-58qw-9mgm-455v und GHSA-6vgw-5pg2-w6jp sowie ihr aktueller Fixstand werden revisionsgebunden dokumentiert; verschwundene oder neu hinzugekommene Alerts werden nicht blind aus dem alten Befund fortgeschrieben.",
+      "evidence_type": "object",
+      "id": "fresh-alert-inventory",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-pip-security-pin:fresh-alert-inventory"
+      }
+    },
+    {
+      "assertion": "requirements/repoground-lock-tools.in pinnt pip nicht mehr auf die verwundbare Version 25.3, sondern auf einen aktuell kompatiblen gepatchten Stand, der alle frisch bestätigten Advisories abdeckt und mindestens 26.1.2 erreicht. Die Versionswahl und Kompatibilitätsgrenze sind aus Primärquellen bzw. der Paket-/Lockauflösung belegt.",
+      "evidence_type": "object",
+      "id": "patched-pin",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-pip-security-pin:patched-pin"
+      }
+    },
+    {
+      "assertion": "requirements/repoground-lock-tools.lock.txt wird über den bestehenden kanonischen Lockgenerator aus der Inputdatei neu erzeugt; Hashes, Header und Provenienz bleiben reproduzierbar. Die Lockdatei wird nicht ad hoc editiert und kein Hash-/Require-Hashes-Vertrag wird abgeschwächt.",
+      "evidence_type": "object",
+      "id": "canonical-lock-regenerated",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-pip-security-pin:canonical-lock-regenerated"
+      }
+    },
+    {
+      "assertion": "Die fokussierten Lock-/Bootstrap-/Installationsregressionen und die vollständige relevante RepoGround-Validierung laufen mit dem neuen Pin grün; unterstützte Python-Versionen und bestehende Offline-/Hash-Installationspfade bleiben innerhalb ihres dokumentierten Vertrags funktionsfähig.",
+      "evidence_type": "object",
+      "id": "bootstrap-and-lock-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-pip-security-pin:bootstrap-and-lock-regression"
+      }
+    },
+    {
+      "assertion": "Nach Merge zeigt ein frischer GitHub-Dependabot-Readback für die beiden betroffenen Manifeste keine offenen Instanzen der vier bestätigten pip-Advisories mehr. Neue, sachlich unabhängige Advisories werden separat registriert statt als Erfolg dieses Tasks ausgegeben.",
+      "evidence_type": "object",
+      "id": "alerts-cleared",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-pip-security-pin:alerts-cleared"
+      }
+    },
+    {
+      "assertion": "Diff, Self-Review, geschützte GitHub-Pflichtchecks, Mergeability und Post-Merge-main-Readback sind auf denselben finalen Head gebunden; keine fremde Dirty-Arbeit oder parallele Dependency-Aktualisierung wird übernommen.",
+      "evidence_type": "object",
+      "id": "delivery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-pip-security-pin:delivery"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur gepatchten pip-Pin und kanonisch regenerierte Lock-/Hash-Evidenz plus zwingend nötige fokussierte Tests ändern. Keine Dependabot-, Hash-, Lock- oder CI-Gates abschwächen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/repoground/requirements/repoground-lock-tools.in",
+      "path:/home/alex/repos/repoground/requirements/repoground-lock-tools.lock.txt"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Beseitige die aktuell acht offenen RepoGround-Dependabot-Alerts, die vier eindeutige pip-Advisories in requirements/repoground-lock-tools.in und der daraus erzeugten Hash-Lockdatei spiegeln. Aktualisiere den derzeitigen Pin pip==25.3 auf einen kompatiblen gepatchten Stand von mindestens 26.1.2, erzeuge den Lock ausschließlich über den kanonischen reproduzierbaren Lockpfad neu und beweise, dass Bootstrap-, Hash-, Installations- und CI-Verträge unverändert streng bleiben. Ein ggf. neuerer stabiler pip-Stand darf nur nach aktueller Kompatibilitätsprüfung gewählt werden.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-FU-PIP-SECURITY-PIN-20260812",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass 26.1.2 im August 2026 zwingend der beste aktuelle Pin ist",
+      "dass die Advisories über den konkreten RepoGround-Installationspfad ausnutzbar sind",
+      "dass andere Dependabot-Alerts ausgeschlossen sind",
+      "dass ein Lockfile-Edit ohne Regeneration zulässig ist"
+    ],
+    "finding": "GitHub Dependabot meldete beim Branch-Cleanup am 2026-08-12 acht offene RepoGround-Warnungen: vier eindeutige pip-GHSAs jeweils in requirements/repoground-lock-tools.in und .lock.txt. Live-API: GHSA-wf93-45jw-7689 medium fixed 26.1.2; GHSA-jp4c-xjxw-mgf9 medium fixed 26.1; GHSA-58qw-9mgm-455v medium fixed 26.1; GHSA-6vgw-5pg2-w6jp low fixed 26.0. Aktueller Pin in beiden Dateien: pip==25.3.",
+    "source_candidate": "candidate-26a2122183d093627a6f0eea",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-26a2122183d093627a6f0eea",
+      "event_id": 6344,
+      "event_created_at": "2026-08-12T18:46:32.001643Z",
+      "request_sha256": "abc2c7e12bb1de7147bde92a8a07935832b34e52f02982cb108c75baa4eeb087",
+      "candidate_event_id": "candidate-event-351d9015849eac0cba4f8183",
+      "source_fingerprint": "08e1fcd6f2bdb48077bfda5ec46660dbfc6a47a845424fa3877c7d92b7a0e935",
+      "content_fingerprint": "26a2122183d093627a6f0eea7aa5e8b6c51aad26a73000d0291df8946bb36e3b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "08e1fcd6f2bdb48077bfda5ec46660dbfc6a47a845424fa3877c7d92b7a0e935",
+        "freshness": "fingerprint-bound",
+        "kind": "github-security-alerts",
+        "locator": "github:heimgewebe/repoground:dependabot:open@2026-08-12",
+        "observed_at": "2026-08-12T18:46:31.910669Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "08e1fcd6f2bdb48077bfda5ec46660dbfc6a47a845424fa3877c7d92b7a0e935",
+          "freshness": "fingerprint-bound",
+          "kind": "github-security-alerts",
+          "locator": "github:heimgewebe/repoground:dependabot:open@2026-08-12",
+          "observed_at": "2026-08-12T18:46:31.910669Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "repoground",
+    "dependency-management",
+    "github",
+    "security"
+  ],
+  "rollback": {
+    "strategy": "Revertiere nur Pin- und kanonisch erzeugte Lockänderungen. Keine Sicherheitswarnungen schließen oder ignorieren, um den Zustand optisch grün zu machen. Bei inkompatiblem gepatchten Stand den letzten reproduzierbaren Lock wiederherstellen und einen engeren Kompatibilitätsbefund registrieren."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "stop": {
+    "conditions": [
+      "Ein offener fremder PR oder aktiver Claim ändert dieselben Lockdateien; keine parallele Übernahme oder Überschreibung.",
+      "Die aktuelle pip-Version verlangt eine Änderung des unterstützten Python-Vertrags oder einen nichttrivialen Lock-Toolchain-Umbau; dann Scope neu bewerten statt Gates zu lockern.",
+      "Der GitHub-Readback zeigt, dass die Advisories nicht mehr auf dem aktuellen main reproduzierbar sind; keine sinnlose Pin-Mutation nur wegen historischer Alerts."
+    ]
+  },
+  "title": "RepoGround pip-Toolchain gegen offene Advisories aktualisieren"
+}

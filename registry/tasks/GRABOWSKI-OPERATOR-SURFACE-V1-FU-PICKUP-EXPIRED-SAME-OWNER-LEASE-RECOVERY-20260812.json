@@ -1,0 +1,163 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest mit real-store-artigem persistiertem expired Same-Owner-Lease-Datensatz belegt, dass existing-assignment recovery die Lease als abgelaufen erkennt und über den kanonischen Erwerbspfad wiederakquiriert, statt wegen inspect_resource != None als no-op zu enden.",
+      "evidence_type": "object",
+      "id": "expired-present-reacquires",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-pickup-expired-present-same-owner-reacquisition-regression"
+      }
+    },
+    {
+      "assertion": "Reacquisition ist nur zulässig, wenn Run-ID, Task-ID, Claim-Intent, erwartete Ressourcenmenge, Owner, Purpose und sanitizierte Metadatenidentität exakt zum historischen Lease-Binding passen; Drift blockiert vor Wirkung.",
+      "evidence_type": "object",
+      "id": "identity-binding-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-pickup-expired-lease-identity-binding"
+      }
+    },
+    {
+      "assertion": "Fremdowner sowie bereits erneuerte oder anderweitig live gewordene Leases werden niemals übernommen, überschrieben oder unnötig neu erworben; konkurrierende Zustandsänderung führt fail-closed zum Abbruch oder sicheren Readback.",
+      "evidence_type": "object",
+      "id": "foreign-and-live-lease-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-pickup-foreign-live-lease-fail-closed"
+      }
+    },
+    {
+      "assertion": "Ein nicht mehr aktiv gebundener oder mehrdeutiger Bureau-Run erhält durch den Recovery-Pfad keine neue Lease; die bestehende frische Execution-Bindung bleibt notwendige Vorbedingung.",
+      "evidence_type": "object",
+      "id": "execution-binding-required",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-pickup-expired-lease-execution-binding-gate"
+      }
+    },
+    {
+      "assertion": "Ein koordinierter Pickup-Readback reproduziert den expired-but-present-Fall nach dem Fix ohne Low-Level-Bypass und endet mit konsistentem active-bound Lease-/Run-Zustand oder einem expliziten fail-closed Driftresultat.",
+      "evidence_type": "object",
+      "id": "end-to-end-recovery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-pickup-expired-present-end-to-end-recovery"
+      }
+    },
+    {
+      "assertion": "Fokussierte Pickup-Tests und die relevante vollständige Grabowski-Validierung sind auf dem exakten finalen Head grün; Diff und Self-Review sind revisionsgebunden, und ein PR wird nur mit unverändert geprüftem Head und grünen Pflichtchecks gemergt.",
+      "evidence_type": "object",
+      "id": "validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-pickup-expired-lease-final-validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den existing-assignment Lease-Recovery-Pfad, fokussierte Regressionstests und unmittelbar notwendige Dokumentation ändern. Keine Force-Releases, keine Fremdowner-Mutation, keine automatische Autoritätseskalation und keine Abschwächung von Run-/Task-/Claim-Intent-/Purpose-/Metadata- oder Execution-Bindungen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Repariere den existing-assignment-Recovery-Pfad des koordinierten Grabowski-Bureau-Pickups so, dass ein weiterhin autoritativ gebundener eigener Run eine persistierte, bereits abgelaufene Same-Owner-Lease als abgelaufen und kanonisch wiederakquirierbar behandelt. Run-, Task-, Claim-Intent-, Ressourcen-, Purpose- und sanitizierte Metadatenidentität müssen exakt gebunden bleiben; Fremdowner, erneuerte Leases, Drift, inaktive Ausführung und mehrdeutige Zustände bleiben strikt fail-closed.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-PICKUP-EXPIRED-SAME-OWNER-LEASE-RECOVERY-20260812",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "deduplicated_predecessors": [
+      {
+        "candidate_id": "CAND-GRABOWSKI-PICKUP-EXPIRED-LEASE-RECOVERY-20260811",
+        "event_id": 5666,
+        "status": "dropped"
+      },
+      {
+        "candidate_id": "candidate-1b8a40b66cc8ad8111daae61",
+        "event_id": 5791,
+        "status": "observed"
+      },
+      {
+        "candidate_id": "candidate-b9e6cf0a27cec47c9de8d5b0",
+        "event_id": 5667,
+        "status": "observed"
+      }
+    ],
+    "does_not_establish": [
+      "task claimability after future repository drift",
+      "permission to mutate a foreign owner lease",
+      "permission to reuse stale metadata or purpose",
+      "merge or deployment readiness"
+    ],
+    "live_reproduction": {
+      "failure_mode": "inspect_resource returns persisted expired same-owner row; recovery treats resource as present, leaves missing_before empty and cannot reacquire before claim readback",
+      "run_id": "BUR-RUN-20260811T215807Z-240dec9421",
+      "source_evidence_sha256": "1193d30c177842f6b2872aebdeb81a943bd13766d4cd922d6f85ba9b165dc923",
+      "typed_manual_recovery": "Exact same-owner reacquisition with historical metadata identity restored active-bound without force or foreign mutation."
+    },
+    "publication_recovery": {
+      "bureau_runtime_source_commit": "1d49dbec24955e0328ed227cde1c3624ad3dd7e2",
+      "previous_adapter_proposal_id": "374293fad346b210aef5e26315cf6ae3ddee05589a0dd9a677842062a815cc9d",
+      "previous_block_reason": "release-registry-identity-mismatch",
+      "runtime_refresh_lease_release_receipt_sha256": "d509b93e26a246780ef7da1f8734913042e053200f24add009f5182d05afc72a",
+      "runtime_refresh_result_sha256": "fd26b873b2021b3be5d2172f127e774d53c0f6c2d3e7bef3ae4b00d265731dc5",
+      "runtime_refresh_target_sha256": "6d55b3d7ec4278d971deb79c284a08750a44ca7365c788a4a4e973cb17a63b71"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d1f38abcefc3e0377c6ece78",
+      "event_id": 6072,
+      "event_created_at": "2026-08-11T23:19:58.603362Z",
+      "request_sha256": "cf510747eacc7f34be2d243eda64f533a1216f7d344a726b0690722d3193d8b5",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "file:/home/alex/.local/state/bureau/followup-evidence/grabowski-bureau-pickup-expired-same-owner-lease-recovery-20260812.json",
+        "observed_at": "2026-08-12T01:17:51+02:00",
+        "sha256": "1193d30c177842f6b2872aebdeb81a943bd13766d4cd922d6f85ba9b165dc923"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 6
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "bureau",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "resource-leases",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die Lease-Liveness-Erkennung/Reacquisition und zugehörige Tests, falls Owner-/Purpose-/Metadata-/Execution-Bindungen gelockert werden oder Regressionen auftreten. Historische Lease- und Run-Belege werden nicht umgeschrieben; fremde Zustände bleiben unangetastet."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Expired Same-Owner-Leases im koordinierten Pickup sicher wiederakquirieren"
+}

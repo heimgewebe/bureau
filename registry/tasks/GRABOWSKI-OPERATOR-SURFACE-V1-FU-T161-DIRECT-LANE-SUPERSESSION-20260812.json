@@ -2,23 +2,48 @@
   "acceptance": [
     {
       "assertion": "Ein produktiver, revisions- und ownergebundener Handoff-Receipt wird erzeugt und verifiziert; ein beliebiger aufrufergelieferter SHA-256 kann keine Checkout-Supersession autorisieren.",
-      "id": "first-class-handoff-receipt"
+      "evidence_type": "object",
+      "id": "first-class-handoff-receipt",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-t161-direct-lane-first-class-handoff-receipt"
+      }
     },
     {
       "assertion": "work-acquire kann für einen bereits existierenden retained Checkout eine explizite identity_supersession bis zum Checkout-Identity-Guard transportieren; alte Owner/Head/Branch/Generation beziehungsweise Archive und neuer Lane-Owner sind vollständig gebunden.",
-      "id": "work-acquire-supersession"
+      "evidence_type": "object",
+      "id": "work-acquire-supersession",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-t161-direct-lane-work-acquire-identity-supersession"
+      }
     },
     {
       "assertion": "Wenn ein Checkout im ALREADY_CORRECT-Pfad keinen Git-Befehl benötigt und die Lifecycle-Bindung anschließend definite vor Effekt an aktiver Retention scheitert, wird das Ergebnis als no-effect/recoverable klassifiziert und eigene kurzlebige Lane-Leases werden evidenzgebunden freigabefähig; outcome_unknown bleibt ausschließlich echten unklaren Wirkungen vorbehalten.",
-      "id": "definite-no-effect-recovery"
+      "evidence_type": "object",
+      "id": "definite-no-effect-recovery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-t161-direct-lane-definite-no-effect-recovery"
+      }
     },
     {
       "assertion": "Regressionstests reproduzieren den T161-Fall der Lane d488186bf73054f46d7a690d494c1d48 mit cleanem bereits passendem Checkout und aktiver Retention und beweisen sowohl Fail-Closed ohne Handoff als auch erfolgreichen owner-bound Handoff.",
-      "id": "live-regression"
+      "evidence_type": "object",
+      "id": "live-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-t161-direct-lane-live-regression"
+      }
     },
     {
       "assertion": "Fokussierte Tests, vollständige Grabowski-Validierung und relevante Deployment-/Runtime-Gates sind auf exaktem PR-Head grün; Self-Review und Diff sind revisionsgebunden. Fremde Checkout-Lifecycles bleiben unangetastet.",
-      "id": "delivery"
+      "evidence_type": "object",
+      "id": "delivery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-t161-direct-lane-final-delivery-validation"
+      }
     }
   ],
   "claims": [

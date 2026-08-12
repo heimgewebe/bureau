@@ -6,8 +6,9 @@ import stat
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from bureau import legacy, runtime_refresh
+from bureau import legacy, runtime_refresh, state_events
 from bureau.acceptance import (
+    EVIDENCE_KIND,
     PASSED,
     AcceptanceContractError,
     criterion_contract,
@@ -28,6 +29,8 @@ EVIDENCE_BUNDLE_KIND = "bureau.acceptance_evidence_bundle"
 EVIDENCE_DIRECTORY = "acceptance-evidence"
 MAX_EVIDENCE_BUNDLE_BYTES = 1_048_576
 INVALID_ACCEPTANCE_DIAGNOSTIC_KIND = "bureau.invalid_acceptance_contract_diagnostic"
+MAX_MANUAL_REVIEWER_LENGTH = 200
+MAX_MANUAL_AUTHENTICATION_EVENTS_PER_RUN = 1000
 
 Completion = Callable[[Any, StateStore, str, dict[str, Any]], dict[str, Any]]
 EvidenceProvider = Callable[[dict[str, Any], dict[str, Any]], Mapping[str, Any]]
@@ -519,6 +522,299 @@ def load_state_evidence_bundle(
     return evidence
 
 
+def _manual_authentication_record(row: Mapping[str, Any]) -> dict[str, Any]:
+    try:
+        payload = json.loads(str(row["payload_json"]))
+        event_schema_version = int(row["event_schema_version"])
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError("manual acceptance authentication event row is invalid") from exc
+    if event_schema_version != state_events.EVENT_SCHEMA_VERSION:
+        raise ValueError(
+            "manual acceptance authentication event schema version is unsupported"
+        )
+    try:
+        state_events.validate_event(
+            str(row["event_type"]), payload, row["run_id"]
+        )
+    except state_events.StateEventError as exc:
+        raise ValueError(f"manual acceptance authentication event is invalid: {exc}") from exc
+    return {
+        **payload,
+        "journal": {
+            "event_id": int(row["event_id"]),
+            "event_type": str(row["event_type"]),
+            "event_schema_version": event_schema_version,
+            "created_at": str(row["created_at"]),
+        },
+    }
+
+
+def _manual_authentication_payload(
+    *,
+    run: Mapping[str, Any],
+    criterion_id: str,
+    observation_scope: str,
+    evidence_sha256: str,
+    reviewer: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": state_events.EVENT_SCHEMA_VERSION,
+        "kind": state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_KIND,
+        "run_id": str(run["run_id"]),
+        "task_id": str(run["task_id"]),
+        "task_sha256": str(run["task_sha256"]),
+        "plan_sha256": str(run["plan_sha256"]),
+        "envelope_sha256": str(run["envelope_sha256"]),
+        "criterion_id": criterion_id,
+        "verifier": "manual_observation",
+        "observation_scope": observation_scope,
+        "evidence_sha256": evidence_sha256,
+        "authority": "manual",
+        "reviewer": reviewer,
+        "observer": reviewer,
+    }
+
+
+def _manual_criterion(
+    task: Mapping[str, Any], criterion_id: str
+) -> tuple[Mapping[str, Any], str]:
+    try:
+        validate_acceptance_contract(task)
+    except AcceptanceContractError as exc:
+        raise legacy.StateError(
+            f"run acceptance contract is invalid: {exc}"
+        ) from exc
+    criteria = task.get("acceptance")
+    assert isinstance(criteria, list)
+    criterion = next(
+        (
+            item
+            for item in criteria
+            if isinstance(item, Mapping) and item.get("id") == criterion_id
+        ),
+        None,
+    )
+    if criterion is None:
+        raise legacy.StateError(
+            f"unknown acceptance criterion {criterion_id!r} for run task"
+        )
+    contract = criterion_contract(criterion)
+    assert contract is not None
+    verifier = contract["verifier"]
+    if verifier != "manual_observation":
+        raise legacy.StateError(
+            f"acceptance criterion {criterion_id!r} verifier mismatch: "
+            f"expected 'manual_observation', observed {verifier!r}"
+        )
+    config = contract["verifier_config"]
+    assert isinstance(config, Mapping)
+    observation_scope = config["observation_scope"]
+    assert isinstance(observation_scope, str)
+    return criterion, observation_scope
+
+
+def _validate_manual_evidence_item(
+    item: Mapping[str, Any],
+    *,
+    run: Mapping[str, Any],
+    criterion_id: str,
+    observation_scope: str,
+) -> None:
+    if item.get("schema_version") != 1 or item.get("kind") != EVIDENCE_KIND:
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} schema/kind mismatch"
+        )
+    if item.get("criterion_id") != criterion_id:
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} criterion binding mismatch"
+        )
+    if item.get("evidence_type") != "manual_observation":
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} verifier binding mismatch"
+        )
+    source = item.get("source")
+    if not isinstance(source, Mapping) or source.get("authority") != "manual":
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} source authority mismatch"
+        )
+    revision = item.get("revision")
+    if not isinstance(revision, Mapping):
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} revision binding is missing"
+        )
+    if revision.get("task_sha256") != run.get("task_sha256"):
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} task revision mismatch"
+        )
+    if revision.get("plan_sha256") != run.get("plan_sha256"):
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} plan revision mismatch"
+        )
+    if revision.get("observation_scope") != observation_scope:
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} observation scope mismatch"
+        )
+    facts = item.get("facts")
+    if not isinstance(facts, Mapping) or facts.get("observation_scope") != observation_scope:
+        raise legacy.StateError(
+            f"manual evidence item {criterion_id!r} fact observation scope mismatch"
+        )
+
+
+def record_manual_acceptance_authentication(
+    store: StateStore,
+    run_id: str,
+    criterion_id: str,
+    *,
+    expected_evidence_sha256: str,
+    reviewer: str,
+) -> dict[str, Any]:
+    """Append one independent, revision-bound authentication of producer evidence."""
+    if (
+        not isinstance(expected_evidence_sha256, str)
+        or len(expected_evidence_sha256) != 64
+        or any(char not in "0123456789abcdef" for char in expected_evidence_sha256)
+    ):
+        raise legacy.StateError("expected evidence SHA-256 is invalid")
+    if not isinstance(reviewer, str):
+        raise legacy.StateError("reviewer identity must contain 1-200 characters")
+    reviewer = reviewer.strip()
+    if not reviewer or len(reviewer) > MAX_MANUAL_REVIEWER_LENGTH:
+        raise legacy.StateError("reviewer identity must contain 1-200 characters")
+    with store.immediate() as connection:
+        row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+        if row is None:
+            raise legacy.StateError(f"unknown run {run_id}")
+        run = store.public_run(row)
+        if run.get("state") not in ACTIVE_CLOSEOUT_STATES:
+            raise legacy.StateError(
+                f"run {run_id} is not active for acceptance authentication: "
+                f"{run.get('state')}"
+            )
+        try:
+            stored_envelope = json.loads(str(row["envelope_json"]))
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise legacy.StateError(f"run {run_id} stored envelope JSON is invalid") from exc
+        if (
+            not isinstance(stored_envelope, dict)
+            or legacy.sha256_json(stored_envelope) != run.get("envelope_sha256")
+        ):
+            raise legacy.StateError(f"run {run_id} stored envelope integrity mismatch")
+        try:
+            envelope = _load_envelope(store, run_id, str(run["envelope_sha256"]))
+        except ValueError as exc:
+            raise legacy.StateError(str(exc)) from exc
+        if envelope != stored_envelope:
+            raise legacy.StateError(f"run {run_id} envelope differs from authoritative state")
+        task = envelope.get("task")
+        if not isinstance(task, Mapping):
+            raise legacy.StateError(f"run {run_id} envelope task is invalid")
+        _, observation_scope = _manual_criterion(task, criterion_id)
+        try:
+            evidence = load_state_evidence_bundle(store, run, envelope)
+        except ValueError as exc:
+            raise legacy.StateError(str(exc)) from exc
+        item = evidence.get(criterion_id)
+        if not isinstance(item, Mapping):
+            raise legacy.StateError(
+                f"current evidence bundle has no object item for criterion {criterion_id!r}"
+            )
+        evidence_sha256 = legacy.sha256_json(item)
+        if evidence_sha256 != expected_evidence_sha256:
+            raise legacy.StateError(
+                f"manual evidence digest mismatch for criterion {criterion_id!r}: "
+                f"expected {expected_evidence_sha256}, observed {evidence_sha256}"
+            )
+        _validate_manual_evidence_item(
+            item,
+            run=run,
+            criterion_id=criterion_id,
+            observation_scope=observation_scope,
+        )
+        facts = item["facts"]
+        assert isinstance(facts, Mapping)
+        if reviewer in {facts.get("observer"), run.get("worker_id")}:
+            raise legacy.StateError(
+                "manual acceptance reviewer must differ from the evidence producer "
+                "and run worker"
+            )
+        payload = _manual_authentication_payload(
+            run=run,
+            criterion_id=criterion_id,
+            observation_scope=observation_scope,
+            evidence_sha256=evidence_sha256,
+            reviewer=reviewer,
+        )
+        canonical_payload = legacy.canonical_json(payload)
+        identical = connection.execute(
+            "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+            "FROM events WHERE run_id=? AND event_type=? AND payload_json=? "
+            "ORDER BY event_id DESC LIMIT 2",
+            (
+                run_id,
+                state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+                canonical_payload,
+            ),
+        ).fetchall()
+        for event_row in identical:
+            _manual_authentication_record(event_row)
+        if len(identical) > 1:
+            raise legacy.StateError(
+                "manual acceptance authentication journal contains duplicate attestations"
+            )
+        idempotent = bool(identical)
+        if not identical:
+            rows = connection.execute(
+                "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+                "FROM events WHERE run_id=? AND event_type=? ORDER BY event_id DESC LIMIT ?",
+                (
+                    run_id,
+                    state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+                    MAX_MANUAL_AUTHENTICATION_EVENTS_PER_RUN + 1,
+                ),
+            ).fetchall()
+            for event_row in rows:
+                _manual_authentication_record(event_row)
+            if len(rows) > MAX_MANUAL_AUTHENTICATION_EVENTS_PER_RUN:
+                raise legacy.StateError(
+                    "manual acceptance authentication journal bound exceeded"
+                )
+            if len(rows) == MAX_MANUAL_AUTHENTICATION_EVENTS_PER_RUN:
+                raise legacy.StateError(
+                    "manual acceptance authentication journal capacity reached"
+                )
+            store.event(
+                connection,
+                state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+                payload,
+                run_id,
+            )
+            identical = connection.execute(
+                "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+                "FROM events WHERE run_id=? AND event_type=? AND payload_json=? "
+                "ORDER BY event_id DESC LIMIT 2",
+                (
+                    run_id,
+                    state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+                    canonical_payload,
+                ),
+            ).fetchall()
+        if len(identical) != 1:
+            raise legacy.StateError(
+                "manual acceptance authentication journal write did not read back uniquely"
+            )
+        authentication = _manual_authentication_record(identical[0])
+    return {
+        "schema_version": 1,
+        "kind": "bureau.manual_acceptance_authentication_receipt",
+        "status": "authenticated",
+        "idempotent": idempotent,
+        "authentication": authentication,
+    }
+
+
 def _github_source_reference(repository: str, pull_request: int, head_sha: str) -> str:
     return f"github-pr:{repository}#{pull_request}@{head_sha}"
 
@@ -602,14 +898,18 @@ def authenticate_state_evidence(
     evidence: Mapping[str, Any],
     *,
     github: GitHubReader = runtime_refresh.gh_json,
+    store: StateStore | None = None,
+    authentication_unavailable: list[dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Authenticate bundle claims against primary observers.
 
     The bundle itself never grants authority. GitHub-backed criteria are
     authenticated by a fresh locally authenticated ``gh`` readback against the
-    criterion-frozen repository, PR and head. A claimed criterion whose declared
-    verifier has no production authentication adapter is reported explicitly as
-    adapter-unavailable; it is never silently treated as rejected evidence.
+    criterion-frozen repository, PR and head. Manual observations are
+    authenticated only by an exact digest- and revision-bound StateStore journal
+    attestation. A claimed criterion whose declared verifier has no production
+    authentication adapter is reported explicitly as adapter-unavailable; it is
+    never silently treated as rejected evidence.
     """
     task = envelope.get("task")
     criteria = task.get("acceptance") if isinstance(task, Mapping) else None
@@ -628,6 +928,61 @@ def authenticate_state_evidence(
         config = contract.get("verifier_config")
         claimed = evidence.get(criterion_id)
         if not isinstance(config, Mapping) or not isinstance(claimed, Mapping):
+            continue
+        if verifier == "manual_observation":
+            evidence_sha256 = legacy.sha256_json(claimed)
+            observation_scope = config.get("observation_scope")
+            expected_payload = {
+                "run_id": run.get("run_id"),
+                "task_id": run.get("task_id"),
+                "task_sha256": run.get("task_sha256"),
+                "plan_sha256": run.get("plan_sha256"),
+                "envelope_sha256": run.get("envelope_sha256"),
+                "criterion_id": criterion_id,
+                "verifier": "manual_observation",
+                "observation_scope": observation_scope,
+                "evidence_sha256": evidence_sha256,
+                "authority": "manual",
+            }
+            matches: list[Mapping[str, Any]] = []
+            if store is not None:
+                with store.connect() as connection:
+                    rows = connection.execute(
+                        "SELECT event_id,run_id,event_type,event_schema_version,"
+                        "payload_json,created_at FROM events "
+                        "WHERE run_id=? AND event_type=? ORDER BY event_id DESC LIMIT ?",
+                        (
+                            run.get("run_id"),
+                            state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+                            MAX_MANUAL_AUTHENTICATION_EVENTS_PER_RUN + 1,
+                        ),
+                    ).fetchall()
+                if len(rows) > MAX_MANUAL_AUTHENTICATION_EVENTS_PER_RUN:
+                    raise legacy.StateError(
+                        "manual acceptance authentication journal bound exceeded"
+                    )
+                for row in rows:
+                    record = _manual_authentication_record(row)
+                    if all(record.get(key) == value for key, value in expected_payload.items()):
+                        matches.append(record)
+            if matches:
+                authenticated[criterion_id] = dict(matches[-1])
+                continue
+            unavailable = EvidenceAdapterUnavailable(
+                authority="manual",
+                adapter=(
+                    "StateStore.events:"
+                    f"{state_events.MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE}"
+                ),
+                target=expected_payload,
+                detail=(
+                    "no matching manual acceptance source attestation exists for "
+                    "the exact current evidence digest and run revision"
+                ),
+            )
+            if authentication_unavailable is None:
+                raise unavailable
+            authentication_unavailable.append(unavailable.payload())
             continue
         adapter = PRODUCTION_AUTHENTICATION_ADAPTERS.get(str(verifier))
         if adapter is None:
@@ -758,10 +1113,23 @@ def reconcile_state_evidence(
     def provider(run: dict[str, Any], envelope: dict[str, Any]) -> Mapping[str, Any]:
         return load_state_evidence_bundle(store, run, envelope)
 
+    unavailable_by_run: dict[str, list[dict[str, Any]]] = {}
+
     def authentication_provider(
         run: dict[str, Any], envelope: dict[str, Any], evidence: Mapping[str, Any]
     ) -> AuthenticationRecords:
-        return authenticate_state_evidence(run, envelope, evidence, github=github)
+        unavailable: list[dict[str, Any]] = []
+        records = authenticate_state_evidence(
+            run,
+            envelope,
+            evidence,
+            github=github,
+            store=store,
+            authentication_unavailable=unavailable,
+        )
+        if unavailable:
+            unavailable_by_run[str(run["run_id"])] = unavailable
+        return records
 
     result = reconcile_runs(
         registry,
@@ -771,6 +1139,13 @@ def reconcile_state_evidence(
         completion=completion,
         authentication_provider=authentication_provider,
     )
+    for observation in result["observations"]:
+        unavailable = unavailable_by_run.get(str(observation.get("run_id")))
+        if unavailable and observation.get("state") == "open":
+            observation["reason"] = "evidence-authentication-unavailable"
+            observation["authentication_unavailable"] = unavailable
+            if len(unavailable) == 1:
+                observation["adapter"] = unavailable[0]
     retirement_after = retire_terminal_evidence_bundles(registry, store)
     result["evidence_directory"] = str(store.state_root / EVIDENCE_DIRECTORY)
     result["evidence_retirement"] = {

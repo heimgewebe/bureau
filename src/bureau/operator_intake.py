@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from . import legacy
+from .acceptance import AcceptanceContractError
 from .approval import (
     approval_decision,
     require_approval,
@@ -51,6 +52,7 @@ from .runtime_refresh import (
     RuntimeRefreshError,
     validate_live_lease_binding,
 )
+from .schema_validation import DocumentSchemaError
 from .worktree_hygiene import _process_references
 
 OPERATOR_INTAKE_SCHEMA_VERSION = 1
@@ -1388,11 +1390,30 @@ def _validate_task_semantics(
     *,
     allow_existing_task_id: bool = False,
 ) -> None:
+    raw_task_id = task_json.get("id")
+    task_id = raw_task_id if isinstance(raw_task_id, str) and raw_task_id else "<missing-task-id>"
+    source = f"operator-intake-task:{task_id}"
     try:
-        registry.schemas.validate("task", task_json, "operator-intake-task")
-    except Exception as exc:
+        registry.schemas.validate_task_write(task_json, source)
+    except AcceptanceContractError as exc:
+        diagnostics = [dict(item) for item in exc.diagnostics]
         raise OperatorIntakeError(
-            "task-schema-invalid", f"task JSON does not satisfy the task schema: {exc}"
+            "task-acceptance-contract-invalid",
+            f"task JSON does not have an executable typed acceptance contract: {exc}",
+            details={
+                "task_id": task_id,
+                "acceptance_contract_errors": diagnostics,
+            },
+        ) from exc
+    except DocumentSchemaError as exc:
+        raise OperatorIntakeError(
+            "task-schema-invalid",
+            f"task {task_id} JSON does not satisfy the task schema: {exc}",
+            details={
+                "task_id": task_id,
+                "source": source,
+                "schema_errors": str(exc).splitlines(),
+            },
         ) from exc
     from .lease_contract import assess_task_broad_bureau_scope
 

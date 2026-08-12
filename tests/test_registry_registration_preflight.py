@@ -110,7 +110,11 @@ def test_pr1907_shaped_five_untyped_criteria_block_before_merge() -> None:
     assert len(diagnostics) == 15
     assert {item["task_id"] for item in diagnostics} == {proposed["id"]}
     assert {item["criterion_id"] for item in diagnostics} == {
-        item["id"] for item in proposed["acceptance"]
+        "required-checks-stay-strict",
+        "platform-inconsistency-classified",
+        "no-silent-ignore",
+        "regression",
+        "delivery",
     }
     assert "$.acceptance[0].evidence_type" in {item["path"] for item in diagnostics}
     assert "$.acceptance[4].verifier_config" in {item["path"] for item in diagnostics}

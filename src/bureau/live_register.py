@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from . import legacy
+from .acceptance import AcceptanceContractError
 from .core import Registry, StateError, StateStore
+from .schema_validation import DocumentSchemaError
 
 LIVE_REGISTER_EVENT_TYPE = "live-register"
 LIVE_REGISTER_SCHEMA_VERSION = 2
@@ -1140,6 +1142,7 @@ def _suggested_task_json(
     *,
     task_id: str,
     initiative: str,
+    acceptance: list[dict[str, Any]] | None,
 ) -> dict[str, Any]:
     payload = event["record"]
     candidate_event = payload.get("candidate_event")
@@ -1160,21 +1163,6 @@ def _suggested_task_json(
         "claims": claims,
         "required_capabilities": ["repository", "shell", "grabowski"],
         "depends_on": [],
-        "acceptance": [
-            {
-                "id": "source-event-bound",
-                "assertion": (
-                    "Task metadata preserves the originating live-register event id and source."
-                ),
-            },
-            {
-                "id": "reviewed-before-effect",
-                "assertion": (
-                    "Any repository effect remains review-before-effect and does not "
-                    "follow from the live event alone."
-                ),
-            },
-        ],
         "metadata": {
             "source": "bureau_live_register",
             "live_register_event_id": event["event_id"],
@@ -1189,6 +1177,8 @@ def _suggested_task_json(
             "does_not_establish": _live_nonclaims(),
         },
     }
+    if acceptance is not None:
+        task["acceptance"] = json.loads(legacy.canonical_json(acceptance))
     if not claims:
         if "component.bureau.registry" not in registry.resources:
             raise StateError(
@@ -1215,6 +1205,7 @@ def write_live_promote_plan(
     initiative: str,
     task_id: str | None,
     path: str,
+    acceptance: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if initiative not in registry.initiatives:
         raise StateError(f"unknown initiative {initiative}")
@@ -1232,9 +1223,38 @@ def write_live_promote_plan(
         raise StateError("task_id must match Bureau task id syntax")
     if candidate_task_id in registry.tasks:
         raise StateError(f"task {candidate_task_id} already exists")
-    task_json = _suggested_task_json(
-        registry, event, task_id=candidate_task_id, initiative=initiative
+    task_draft = _suggested_task_json(
+        registry,
+        event,
+        task_id=candidate_task_id,
+        initiative=initiative,
+        acceptance=acceptance,
     )
+    task_json: dict[str, Any] | None = None
+    blockers: list[dict[str, str]] = []
+    unresolved_fields: list[str] = []
+    if acceptance is None:
+        blockers.append(
+            {
+                "code": "typed-acceptance-required",
+                "path": "$.task_json.acceptance",
+                "message": (
+                    "an explicit fully typed acceptance contract is required before "
+                    "this candidate can become a writable TaskSpec"
+                ),
+            }
+        )
+        unresolved_fields.append("task_json.acceptance")
+    else:
+        try:
+            registry.schemas.validate_task_write(
+                task_draft, f"live-promote-plan:{candidate_task_id}"
+            )
+        except (AcceptanceContractError, DocumentSchemaError) as exc:
+            raise StateError(
+                f"live promotion task {candidate_task_id} is not writable: {exc}"
+            ) from exc
+        task_json = task_draft
     plan = {
         "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
         "command": "live-promote-plan",
@@ -1243,6 +1263,9 @@ def write_live_promote_plan(
         "task_id": candidate_task_id,
         "source_event": event,
         "task_json": task_json,
+        "task_draft": task_draft if task_json is None else None,
+        "blockers": blockers,
+        "unresolved_fields": unresolved_fields,
         "review": {"required": True, "status": "pending"},
         "does_not_establish": [
             "queue_mutation",
@@ -1261,6 +1284,13 @@ def write_live_promote_plan(
 def apply_live_promote_plan(registry: Registry, *, path: str) -> dict[str, Any]:
     plan_path = Path(path).expanduser()
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    blockers = plan.get("blockers")
+    unresolved_fields = plan.get("unresolved_fields")
+    if blockers or unresolved_fields:
+        raise StateError(
+            "live promotion plan is unresolved; an explicit fully typed acceptance "
+            "contract is required in task_json.acceptance"
+        )
     review = plan.get("review", {})
     if review.get("status") != "reviewed" or not review.get("reviewer"):
         raise StateError("live promotion plan requires review.status=reviewed and reviewer")
@@ -1273,6 +1303,10 @@ def apply_live_promote_plan(registry: Registry, *, path: str) -> dict[str, Any]:
     target = registry.root / "registry" / "tasks" / f"{task_id}.json"
     if target.exists():
         raise StateError(f"target task file already exists: {target}")
+    try:
+        registry.schemas.validate_task_write(task_json, f"live-promote-apply:{task_id}")
+    except (AcceptanceContractError, DocumentSchemaError) as exc:
+        raise StateError(f"live promotion task {task_id} is not writable: {exc}") from exc
     legacy.atomic_write(target, json.dumps(task_json, indent=2, ensure_ascii=False) + "\n")
     return {
         "status": "applied",

@@ -9,6 +9,13 @@ from bureau import state_events
 from bureau.core import StateError, StateStore
 
 
+def test_events_by_run_type_index_exists_on_fresh_store(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    with store.connect() as connection:
+        rows = connection.execute("PRAGMA index_info('events_by_run_type')").fetchall()
+    assert [row["name"] for row in rows] == ["run_id", "event_type", "event_id"]
+
+
 def test_initiative_transition_is_idempotent_and_replayable(tmp_path):
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
 

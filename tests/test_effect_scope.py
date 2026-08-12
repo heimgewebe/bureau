@@ -1118,7 +1118,7 @@ def test_canonical_bind_state_binding_drift_stops_before_store_open(
     assert registry_file_evidence(registry_root) == registry_before
 
 
-def test_canonical_complete_mutates_only_revision_bound_coordination_state(
+def test_canonical_complete_is_coordination_gated_but_rejects_active_run(
     registry_factory, tmp_path: Path, monkeypatch, capsys
 ) -> None:
     registry_root = registry_factory(1)
@@ -1164,8 +1164,11 @@ def test_canonical_complete_mutates_only_revision_bound_coordination_state(
         ]
     )
 
-    assert exit_code == 0
+    assert exit_code == 2
     value = json.loads(capsys.readouterr().out)
+    error = value["result"]
+    assert error["code"] == "typed-acceptance-required"
+    assert error["effect_applied"] is False
     runtime = value["runtime_identity"]
     assert runtime["command_effect_scope"] == "coordination_state_mutation"
     binding = runtime["coordination_state_binding"]
@@ -1181,14 +1184,13 @@ def test_canonical_complete_mutates_only_revision_bound_coordination_state(
     run_after = store.run(run["run_id"])
     assert run_before["state"] == "assigned"
     assert run_before["reservations"]
-    assert run_after["state"] == "succeeded"
-    assert run_after["reservations"] == []
-    assert store.receipt(run["run_id"]) is not None
-    assert len(run_events(store, run["run_id"])) > len(events_before)
+    assert run_after == run_before
+    assert store.receipt(run["run_id"]) is None
+    assert run_events(store, run["run_id"]) == events_before
     assert registry_file_evidence(registry_root) == registry_before
 
 
-def test_canonical_complete_preserves_stale_baseline_gate_before_effect(
+def test_canonical_complete_rejects_direct_close_before_stale_baseline_check(
     registry_factory, tmp_path: Path, monkeypatch, capsys
 ) -> None:
     registry_root = registry_factory(1)
@@ -1237,7 +1239,8 @@ def test_canonical_complete_preserves_stale_baseline_gate_before_effect(
     assert exit_code == 2
     value = json.loads(capsys.readouterr().out)
     error = value.get("result", value)
-    assert error["code"] == "stale-baseline"
+    assert error["code"] == "typed-acceptance-required"
+    assert error["effect_applied"] is False
     assert value["runtime_identity"]["command_effect_scope"] == (
         "coordination_state_mutation"
     )

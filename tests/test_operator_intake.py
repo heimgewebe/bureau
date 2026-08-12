@@ -170,9 +170,15 @@ def _task(root: Path, task_id: str = "BUR-TEST-001-T099") -> dict:
         "acceptance": [
             {
                 "id": "typed-result",
-                "assertion": "The exact candidate is published with a typed receipt.",
-                "verifier": "tests",
+                "assertion": "The exact reviewed candidate implementation is merged.",
                 "evidence_type": "object",
+                "verifier": "code_merged",
+                "verifier_config": {
+                    "repository": "heimgewebe/bureau",
+                    "pull_request": 7,
+                    "head_sha": "a" * 40,
+                    "base_ref": "main",
+                },
             }
         ],
     }
@@ -2264,6 +2270,59 @@ def test_task_proposal_rejects_generic_acceptance_without_justification(registry
             path=tmp_path / "proposal.json",
         )
     assert caught.value.code == "generic-placeholder-rejected"
+
+
+def test_task_proposal_rejects_pr1907_untyped_acceptance_before_write(
+    registry_factory,
+    tmp_path,
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store)
+    fixture = Path(__file__).with_name("fixtures") / "pr1907-untyped-task.json"
+    task = _task(registry.root)
+    task["acceptance"] = json.loads(fixture.read_text(encoding="utf-8"))["acceptance"]
+    proposal_path = tmp_path / "proposal.json"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=task,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=proposal_path,
+        )
+
+    assert caught.value.code == "task-acceptance-contract-invalid"
+    diagnostics = caught.value.details["acceptance_contract_errors"]
+    assert caught.value.details["task_id"] == task["id"]
+    assert len(diagnostics) == 15
+    assert {item["task_id"] for item in diagnostics} == {task["id"]}
+    assert {item["criterion_id"] for item in diagnostics} == {
+        "required-checks-stay-strict",
+        "platform-inconsistency-classified",
+        "no-silent-ignore",
+        "regression",
+        "delivery",
+    }
+    first = diagnostics[0]
+    assert first == {
+        "task_id": task["id"],
+        "criterion_id": "required-checks-stay-strict",
+        "path": "$.acceptance[0].evidence_type",
+        "code": "evidence-type-missing",
+        "message": "evidence_type is required and must be exactly 'object'",
+        "missing_fields": ["evidence_type"],
+        "invalid_fields": [],
+    }
+    assert (
+        f"task {task['id']} criterion required-checks-stay-strict "
+        "at $.acceptance[0].evidence_type"
+    ) in str(caught.value)
+    assert "missing=evidence_type" in str(caught.value)
+    assert not proposal_path.exists()
+    assert store.task_spec(task["id"]) is None
 
 
 def test_publication_preview_rejects_dirty_registry_worktree(registry_factory, tmp_path):

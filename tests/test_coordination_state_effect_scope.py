@@ -31,6 +31,27 @@ def test_complete_is_coordination_state_mutation() -> None:
     )
 
 
+def test_acceptance_authenticate_is_coordination_state_mutation() -> None:
+    args = bureau_cli._parse_arguments(
+        [
+            "acceptance-authenticate",
+            "BUR-RUN-20260812T120000Z-0123456789",
+            "criterion",
+            "--expected-evidence-sha256",
+            "a" * 64,
+            "--reviewer",
+            "reviewer",
+        ]
+    )
+
+    assert bureau_cli._command_mutates(args) is True
+    assert bureau_cli._command_effect_scope(args) == COORDINATION_STATE_MUTATION
+    assert (
+        classify_command_effect_scope("acceptance-authenticate", mutates=True)
+        == COORDINATION_STATE_MUTATION
+    )
+
+
 def test_doctor_repair_is_coordination_state_mutation() -> None:
     args = bureau_cli._parse_arguments(["doctor", "--repair"])
 

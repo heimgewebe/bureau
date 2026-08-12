@@ -3294,6 +3294,8 @@ class StateStore:
                     payload_json TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+                CREATE INDEX IF NOT EXISTS events_by_run_type
+                    ON events(run_id,event_type,event_id);
                 CREATE UNIQUE INDEX IF NOT EXISTS one_active_run_per_task
                     ON runs(task_id) WHERE state IN ('assigned','running','verifying');
                 CREATE UNIQUE INDEX IF NOT EXISTS one_active_run_per_worker

@@ -1,17 +1,136 @@
 {
-  "schema_version": 1,
+  "acceptance": [
+    {
+      "assertion": "A fresh production live-contract run from the intended runner context reaches the designated Weltgewebe frontend and API endpoints far enough to obtain HTTP responses; generic runner-level Network is unreachable no longer prevents observation.",
+      "evidence_type": "object",
+      "id": "network-path-observable",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-production-live-contract:network-path-observable"
+      }
+    },
+    {
+      "assertion": "The live-contract check records and validates the production web/API commit or version identity against the expected revision, so a green result proves the intended production revision rather than merely network reachability.",
+      "evidence_type": "object",
+      "id": "commit-bound-live-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-production-live-contract:commit-bound-live-readback"
+      }
+    },
+    {
+      "assertion": "The fix does not weaken production authentication, firewall, private-network, deployment, or GitHub permission boundaries; if the previous runner context is intentionally unable to reach production, the check is moved to an explicitly authorized observation context instead of opening production access.",
+      "evidence_type": "object",
+      "id": "preserve-security-boundaries",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-production-live-contract:preserve-security-boundaries"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Registered from candidate candidate-2fe6fd9d514ee86233ce97d6 / event 6048 after T048 closeout. Repeated production-live-contract runs failed with Errno 101 Network is unreachable before any HTTP status or commit identity could be observed. Fix the observation path, not the production security boundary.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Restore the Weltgewebe production live-contract check so it can reach the intended production frontend and API, read their HTTP/version identity, and distinguish an actual production contract failure from runner-network unreachability without weakening production network or authentication boundaries.",
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T084",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Restore Weltgewebe production live-contract network readback",
-  "goal": "Restore the Weltgewebe production live-contract check so it can reach the intended production frontend and API, read their HTTP/version identity, and distinguish an actual production contract failure from runner-network unreachability without weakening production network or authentication boundaries.",
-  "state": "planned",
+  "metadata": {
+    "does_not_establish": [
+      "that GitHub-hosted runners are necessarily the correct long-term observation context",
+      "permission to relax production network controls",
+      "permission to mark production healthy without a commit-bound live readback"
+    ],
+    "observed_failure": {
+      "class": "runner-network-readback-failure",
+      "does_not_establish": [
+        "frontend outage",
+        "API outage",
+        "production regression in T048",
+        "permission to expose private production endpoints"
+      ],
+      "error": "Errno 101 Network is unreachable",
+      "scope": "Weltgewebe production live contract"
+    },
+    "publication_path": {
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "The canonical typed publication path is fail-closed while the installed immutable Bureau runtime snapshot trails current main. The documented runtime-drift bootstrap precedent permits a narrow protected PR containing exactly this one task file; Queue and StateStore are not directly mutated."
+    },
+    "registered_from": "candidate-2fe6fd9d514ee86233ce97d6 / event 6048 during OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048 closeout on 2026-08-12",
+    "source_candidate": "candidate-2fe6fd9d514ee86233ce97d6",
+    "source_event_id": 6048,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2959bc1dbf2450ef822a7273",
+      "event_id": 6346,
+      "event_created_at": "2026-08-12T18:48:27.935199Z",
+      "request_sha256": "61eed6ef548fe155001c45570ffa41ffb3c29297c6bed8529287fb4811400cdf",
+      "candidate_event_id": "candidate-event-93ef4c0ba45c9333f602c93b",
+      "source_fingerprint": "d0f2877eca53943c1c410798e439aeae3256d991efc38d3126ce3964c2f49615",
+      "content_fingerprint": "2959bc1dbf2450ef822a72735145afab8ff4925de1f52c26ac85d5bf1fb658a4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "d0f2877eca53943c1c410798e439aeae3256d991efc38d3126ce3964c2f49615",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-live-diagnostic",
+        "locator": "bureau:claim-intent:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T084:claim-intent-no-eligible-task:2026-08-12",
+        "observed_at": "2026-08-12T18:40:00Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "d0f2877eca53943c1c410798e439aeae3256d991efc38d3126ce3964c2f49615",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-live-diagnostic",
+          "locator": "bureau:claim-intent:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T084:claim-intent-no-eligible-task:2026-08-12",
+          "observed_at": "2026-08-12T18:40:00Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
   "priority": {
     "lane": "now",
     "rank": 7
   },
-  "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048"
-  ],
   "required_capabilities": [
     "repository",
     "shell",
@@ -19,72 +138,10 @@
     "grabowski",
     "bureau"
   ],
-  "claims": [
-    {
-      "resource": "repo.weltgewebe",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/weltgewebe"
-    ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Registered from candidate candidate-2fe6fd9d514ee86233ce97d6 / event 6048 after T048 closeout. Repeated production-live-contract runs failed with Errno 101 Network is unreachable before any HTTP status or commit identity could be observed. Fix the observation path, not the production security boundary."
-    }
-  },
-  "acceptance": [
-    {
-      "id": "network-path-observable",
-      "assertion": "A fresh production live-contract run from the intended runner context reaches the designated Weltgewebe frontend and API endpoints far enough to obtain HTTP responses; generic runner-level Network is unreachable no longer prevents observation."
-    },
-    {
-      "id": "commit-bound-live-readback",
-      "assertion": "The live-contract check records and validates the production web/API commit or version identity against the expected revision, so a green result proves the intended production revision rather than merely network reachability."
-    },
-    {
-      "id": "preserve-security-boundaries",
-      "assertion": "The fix does not weaken production authentication, firewall, private-network, deployment, or GitHub permission boundaries; if the previous runner context is intentionally unable to reach production, the check is moved to an explicitly authorized observation context instead of opening production access."
-    }
-  ],
   "rollback": {
     "strategy": "Revert only the live-contract observation-path change. Do not alter the already merged T048 supply-chain hardening or production security boundaries."
   },
-  "metadata": {
-    "registered_from": "candidate-2fe6fd9d514ee86233ce97d6 / event 6048 during OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048 closeout on 2026-08-12",
-    "source_candidate": "candidate-2fe6fd9d514ee86233ce97d6",
-    "source_event_id": 6048,
-    "observed_failure": {
-      "class": "runner-network-readback-failure",
-      "error": "Errno 101 Network is unreachable",
-      "scope": "Weltgewebe production live contract",
-      "does_not_establish": [
-        "frontend outage",
-        "API outage",
-        "production regression in T048",
-        "permission to expose private production endpoints"
-      ]
-    },
-    "publication_path": {
-      "kind": "normal-protected-pull-request",
-      "reason": "The canonical typed publication path is fail-closed while the installed immutable Bureau runtime snapshot trails current main. The documented runtime-drift bootstrap precedent permits a narrow protected PR containing exactly this one task file; Queue and StateStore are not directly mutated.",
-      "does_not_establish": [
-        "typed publication bypass authority",
-        "queue mutation",
-        "claim or dispatch authority",
-        "merge readiness before exact-head CI"
-      ]
-    },
-    "does_not_establish": [
-      "that GitHub-hosted runners are necessarily the correct long-term observation context",
-      "permission to relax production network controls",
-      "permission to mark production healthy without a commit-bound live readback"
-    ]
-  }
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Restore Weltgewebe production live-contract network readback"
 }

@@ -9,9 +9,7 @@
     "lane": "later",
     "rank": 40
   },
-  "depends_on": [
-    "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-TYPED-ACCEPTANCE-SYSTEMIC-20260812"
-  ],
+  "depends_on": [],
   "required_capabilities": [
     "bureau",
     "repository",
@@ -117,7 +115,16 @@
       "pauschale Migrationsfreigabe für alle Legacy-Tasks",
       "manual_observation als Default-Verifier",
       "Berechtigung zum Umschreiben terminaler Historie",
-      "direkte SQLite-Mutationsautorität"
-    ]
+      "direkte SQLite-Mutationsautorität",
+      "neue oder wiederverwendbare Runtime-Refresh-Autorität"
+    ],
+    "runtime_prerequisite_evidence": {
+      "status": "completed-before-registration",
+      "authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SCHEMA-PACKAGING-20260812",
+      "authority_revision": 3,
+      "authority_consumed_at": "2026-08-12T14:24:29.903124Z",
+      "deployed_source_commit": "1cb52d8bd111c372696fa116a4000d655d60742d",
+      "reason": "Der systemische Typed-Acceptance-Fix und der danach notwendige Schema-Packaging-Refresh sind vor Registrierung dieser Migration produktiv abgeschlossen. Dies ist historische Voraussetzung, keine noch ausstehende Dependency."
+    }
   }
 }

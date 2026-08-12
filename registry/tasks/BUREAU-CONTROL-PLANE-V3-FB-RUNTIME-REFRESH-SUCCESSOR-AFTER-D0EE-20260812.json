@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-AFTER-D0EE-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Nachfolger nach d0ee-Refresh registrieren",
+  "goal": "Nach dem belegten einmaligen Verbrauch von BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-20260812 fuer den erfolgreichen Refresh auf d0ee9a3c genau eine neue, eigenstaendige und unverbrauchte Break-Glass-Autoritaet bereitstellen. Sie darf ausschliesslich einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausfuehrung frisch beobachteten, reviewten und CI-gruenen aktuellen main autorisieren. Dieser Bootstrap muss die mit Bureau-PR #1918 gemergte StateStore-/Single-Use-Preflight-Implementierung in die immutable Runtime bringen; nach dem Deployment muss die neue Runtime denselben Effekt receiptgebunden mit closeout-authority verifizieren und diese TaskSpec terminalisieren. Danach kann der durch release-registry-identity-mismatch blockierte reviewed T007-Scope-Intake regulaer fortgesetzt werden.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-Use-Autoritaet ausschliesslich fuer genau einen immutable Bureau-Runtime-Refresh, nachdem diese eigene TaskSpec gemergt und ueber den seed-missing-preserve-state-store-Uebergangshelper autoritativ im StateStore vorhanden ist. Der Zielstand muss Bureau-PR #1918 enthalten. Vor prepare-intent und erneut vor apply sind frische Main-/Merge-/Required-Check-/target_sha256-Beobachtung, autoritativer StateStore-TaskSpec-/Verbrauchs-Preflight und alle exakt Intent-gebundenen Live-Leases zwingend. Nach Erfolg ist closeout-authority unter der neuen Runtime Pflicht. Kein Grabowski-Runtime-Deploy, keine Queue-/Claim-/Dispatch-Wirkung und keine Mutation fremder Arbeit."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "previous-successor-consumption-proven",
+      "assertion": "Vor Nutzung dieses Nachfolgers ist durch das kanonische Runtime-Refresh-Result 35a2195495c09c76485b511ecea911de227d8894684c5869ad8c65e111524e5d belegt, dass BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-20260812 genau den Effekt auf main d0ee9a3c7d373ad6c5871ab6d91d4124148bc6da mit Intent 442392a264873264aa8fe3b3f7927aa3f9cf4a1d41373938a4be82fad7d58aad und Target dd77122c1f2b4a79fe76baae8620ac53135ea5f115fa4fcb2e2f8f3dbf333516 ausgefuehrt hat. Diese alte Autoritaet wird weder wiederverwendet noch revidiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:previous-successor-consumption-proven"
+      }
+    },
+    {
+      "id": "reviewed-bootstrap-registration-and-seed",
+      "assertion": "Diese TaskSpec wird als genau eine neue Datei ueber einen normalen geschuetzten Pull Request gegen den dann aktuellen Bureau-main gemergt. Anschliessend importiert ausschliesslich der kanonische seed_missing_registry-Uebergangshelper die im StateStore noch fehlende TaskSpec mit source legacy-git-seed; vorhandene StateStore-TaskSpecs werden weder ueberschrieben noch auf eine aeltere Git-Projektion zurueckgesetzt. Ein Readback belegt exakte Task-ID, Revision, Digest, state=ready und den strukturierten runtime_refresh_authority-Vertrag.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:reviewed-bootstrap-registration-and-seed"
+      }
+    },
+    {
+      "id": "preflight-implementation-present-in-target",
+      "assertion": "Der frisch beobachtete Refresh-Zielstand enthaelt Bureau-PR #1918 beziehungsweise dessen gemergte Implementierung fuer autoritativen StateStore-Preflight, Target-Bindungs-CAS, Single-Use-Consumption und receiptgebundenen No-Run-Closeout. Kein aelterer Zwischenstand wird als Ziel akzeptiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:preflight-implementation-present-in-target"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller main-Commit, der revisionsgebundene Merge-/PR-Kontext, alle erforderlichen Validate-Checks einschliesslich validate (3.10) und validate (3.12) sowie target_sha256 frisch beobachtet. Jede Main-, Check-, Manifest- oder Registry-Drift verwirft den Kandidaten vor Wirkung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "bootstrap-authority-preflight",
+      "assertion": "Weil die vor diesem Bootstrap installierte d0ee-Runtime die mit PR #1918 gemergte neue Preflight-Implementierung noch nicht enthalten kann, wird vor prepare-intent und erneut unmittelbar vor apply die aktuelle autoritative StateStore-TaskSpec read-only gegen diese exakte Task-ID, positive Revision/Digest, state ready oder active, den strukturierten Single-Use-Vertrag sowie Abwesenheit von target_binding_receipt, consumption und runtime_closeout geprueft. Zusaetzlich darf die Runtime-Refresh-Historie fuer diese neue Task-ID noch keinen effect_started=true-Effekt enthalten. Diese enge Bootstrap-Grenze autorisiert keine Wiederverwendung nach dem ersten Effekt und keinen weiteren Legacy-Runner-Einsatz nach erfolgreichem Deployment.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:bootstrap-authority-preflight"
+      }
+    },
+    {
+      "id": "break-glass-target-and-lease-binding",
+      "assertion": "Die konkrete Runtime-Freigabe bindet diese exakte Task-ID und reference an den frisch beobachteten target_sha256. Apply verwendet ausschliesslich die vom daraus abgeleiteten Intent geforderten Grabowski-Live-Leases mit identischer Owner-/Task-/Target-Bindung; fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed vor Wirkung ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:break-glass-target-and-lease-binding"
+      }
+    },
+    {
+      "id": "single-effect-and-post-deploy-closeout",
+      "assertion": "Genau ein effect_started=true-Runtime-Refresh darf dieser Task-ID zugeordnet sein. Nach erfolgreichem immutable Readback und Lease-Release wird unter der neu installierten PR-#1918-Runtime closeout-authority mit exakter Task-ID, target_sha256, intent_sha256 und result_sha256 ausgefuehrt. Der StateStore-Readback muss die Task als verified mit passender target_binding_receipt-, consumption- und runtime_closeout-Evidenz zeigen. Ein zweiter oder abweichender Effekt, fehlende Evidenz oder historische Mehrfachnutzung blockiert fail-closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:single-effect-and-post-deploy-closeout"
+      }
+    },
+    {
+      "id": "immutable-readback-and-release",
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot auf denselben source commit; bureau check, runtime-identity und StateStore-Integritaet sind gueltig. Die eigenen Refresh-Leases werden erst nach eindeutigem Ergebnis ueber den resultgebundenen Release-Pfad freigegeben und der No-Run-Closeout bestaetigt deren Abwesenheit.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:immutable-readback-and-release"
+      }
+    },
+    {
+      "id": "authority-boundary-and-no-retry-on-ambiguity",
+      "assertion": "Die Task autorisiert keine Grabowski-Runtime-, Queue-, Claim-, Dispatch-, Orphan-Reconcile-, Fremdarbeits- oder sonstige Bureau-Wirkung ausser dem einen gebundenen Runtime-Refresh und dessen receiptgebundenem Authority-Closeout. Bei unklarem oder nach Effect-Start fehlgeschlagenem Apply erfolgt kein Blind-Retry; zuerst wird ausschliesslich der vorgeschriebene receipt-, target- und StateStore-gebundene Readback/Reconciliation-Pfad verwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-successor-after-d0ee:authority-boundary-and-no-retry-on-ambiguity"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Truth behaupten und keinen Apply blind wiederholen. Den letzten integritaetsgueltigen immutable Bureau-Release beibehalten beziehungsweise den bestehenden receipt-, target- und StateStore-gebundenen Reconciliation-/Rollbackpfad verwenden. Keine Registry-, StateStore-, Consumption- oder Single-Use-Historie zurueckschreiben."
+  },
+  "metadata": {
+    "source_candidate_id": "candidate-cc88852b6e344f44f37fd103",
+    "source_candidate_event_id": 6241,
+    "previous_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-20260812",
+    "previous_runtime_refresh_main_commit": "d0ee9a3c7d373ad6c5871ab6d91d4124148bc6da",
+    "previous_runtime_refresh_target_sha256": "dd77122c1f2b4a79fe76baae8620ac53135ea5f115fa4fcb2e2f8f3dbf333516",
+    "previous_runtime_refresh_intent_sha256": "442392a264873264aa8fe3b3f7927aa3f9cf4a1d41373938a4be82fad7d58aad",
+    "previous_runtime_refresh_result_sha256": "35a2195495c09c76485b511ecea911de227d8894684c5869ad8c65e111524e5d",
+    "installed_runtime_before_successor": "d0ee9a3c7d373ad6c5871ab6d91d4124148bc6da",
+    "observed_registry_main_before_successor": "42f10178c2d77e293f106cd7c1fd656f5b811edd",
+    "required_preflight_merge_pr": 1918,
+    "required_preflight_merge_commit": "42f10178c2d77e293f106cd7c1fd656f5b811edd",
+    "blocked_followup_task_id": "CCM-V1-T007",
+    "blocked_followup_candidate_id": "candidate-add1e202b741cc57de1ae9d3",
+    "blocked_followup_reason": "release-registry-identity-mismatch",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Der installierte immutable Bureau-Release d0ee9a3c liegt hinter der kanonischen Registry und blockiert deshalb den typisierten Operator-Intake mit release-registry-identity-mismatch. Die unmittelbar vorherige Single-Use-Autoritaet ist durch Result 35a2195495c09c76485b511ecea911de227d8894684c5869ad8c65e111524e5d bereits verbraucht. Wie beim vorherigen Successor wird deshalb ausschliesslich diese eine neue TaskSpec ueber einen normalen geschuetzten GitHub-PR registriert. Nach Merge darf nur seed_missing_registry die im StateStore fehlende TaskSpec importieren; vorhandene StateStore-Specs bleiben autoritativ und unangetastet.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary TaskSpecs",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority before StateStore seed readback",
+        "direct SQLite mutation authority"
+      ]
+    },
+    "bootstrap_boundary": {
+      "schema_version": 1,
+      "installed_runner_predates_required_preflight": true,
+      "manual_authoritative_state_store_preflight_required_before_effect": true,
+      "target_must_include_pr_1918": true,
+      "post_deploy_closeout_authority_required": true,
+      "legacy_runner_reuse_after_success_forbidden": true
+    },
+    "does_not_establish": [
+      "konkrete Deploymentfreigabe ohne frischen target_sha256",
+      "Autoritaet fuer Grabowski-Runtime",
+      "wiederverwendbare Runtime-Autoritaet",
+      "Orphan-Reconcile-Autoritaet",
+      "Permission to bypass current StateStore, Registry, CI, lease or immutable readback validation"
+    ]
+  }
+}

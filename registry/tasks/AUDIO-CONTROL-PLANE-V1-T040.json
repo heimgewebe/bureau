@@ -1,0 +1,148 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Heim-PC-ASR-Vertrag besitzt einen realen Adapter für nvidia/parakeet-tdt-0.6b-v3 mit revisions- oder versionsgebundener Installationsidentität; Setup ist explizit, Inferenz fail-closed und es existiert kein Simulations- oder Dummy-Erfolgspfad.",
+      "evidence_type": "object",
+      "id": "parakeet-real-adapter",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t040:parakeet-real-adapter"
+      }
+    },
+    {
+      "assertion": "Parakeet-Inferenz läuft nach explizitem Setup lokal ohne metered API oder Pay-as-you-go-Pfad; doctor, transcribe und benchmark laden während der Inferenz keine Modellgewichte nach und vorhandene Nullkosten-/Offline-Gates für Qwen und faster-whisper bleiben erhalten.",
+      "evidence_type": "object",
+      "id": "local-zero-cost-offline",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t040:local-zero-cost-offline"
+      }
+    },
+    {
+      "assertion": "Der Parakeet-Pfad verarbeitet unterstützte Medien reproduzierbar mit der benötigten 16-kHz-Mono-Normalisierung, ohne Roh-Audio, Referenztext oder Transkriptinhalt als Benchmark-Evidenz zu persistieren; technische Evidenz enthält nur Digests, Modell-/Adapteridentität, Laufzeit- und Ressourcenmetriken sowie optional WER/CER.",
+      "evidence_type": "object",
+      "id": "private-media-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t040:private-media-contract"
+      }
+    },
+    {
+      "assertion": "Parakeet wird auf mindestens einer repräsentativen privaten deutschen Medienprobe real auf der Heim-PC-GPU ausgeführt; Erfolg, erkannte Sprache soweit verfügbar, RTF/Laufzeit und beobachtete Ressourcen werden revisionsgebunden erfasst und mit Qwen3-ASR-1.7B sowie faster-whisper large-v3 auf derselben Probe technisch verglichen.",
+      "evidence_type": "object",
+      "id": "real-german-smoke",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t040:real-german-smoke"
+      }
+    },
+    {
+      "assertion": "Eine Aussage zur Erkennungsqualität oder Änderung des Default-Modells erfolgt ausschließlich auf Basis eines privaten menschlich korrigierten deutschen Referenzkorpus. WER/CER, Referenz-Digest und exakte Modell-/Adapteridentitäten werden gebunden; fehlt Ground Truth, bleibt die Qualitätsentscheidung ausdrücklich offen und Qwen bleibt unverändert Default.",
+      "evidence_type": "object",
+      "id": "reference-quality-gate",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t040:reference-quality-gate"
+      }
+    },
+    {
+      "assertion": "ASR-Fokustests, relevante Heim-PC-Repo-Validatoren und die geschützten GitHub-Pflichtchecks sind auf dem exakten finalen Head grün; Qwen- und faster-whisper-Pfade bleiben regressionsfrei.",
+      "evidence_type": "object",
+      "id": "regression-and-ci",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t040:regression-and-ci"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repositoryänderungen, isolierte lokale Modellumgebungen und private ASR-Smokes sind durch den aktuellen Nutzerauftrag autorisiert. Keine metered API, keine kostenpflichtige Zusatznutzung und keine Änderung des Default-Modells ohne referenzgebundene Qualitätsmessung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc"
+  },
+  "goal": "Den bestehenden kostenfreien lokalen ASR-Pfad im Heim-PC um einen realen, revisionsgepinnten Adapter für nvidia/parakeet-tdt-0.6b-v3 erweitern, Parakeet zusammen mit Qwen3-ASR-1.7B und faster-whisper large-v3 auf repräsentativem deutschem Audio technisch und ressourcenseitig messen und eine Qualitätsrangfolge beziehungsweise Änderung des Default-Modells ausschließlich aus einem privaten menschlich korrigierten Referenzkorpus mit WER/CER ableiten. Ohne solche Ground Truth bleibt Qwen Default und es wird keine Qualitätsüberlegenheit behauptet.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T040",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "cost_constraint": "Keine metered API, keine gekauften Credits und keine kostenpflichtige Zusatznutzung.",
+    "privacy_constraint": "Keine Roh-Audio-, Referenz- oder Transkriptinhalte in Git, Bureau oder Benchmark-Evidenz persistieren.",
+    "quality_constraint": "Kein maschinell erzeugtes Transkript als Ground Truth verwenden; Qualitätsentscheidungen benötigen menschlich korrigierte Referenz.",
+    "source": "Candidate 6270 nach realer lokaler Qwen-/faster-whisper-Implementierung und reparierter Grabowski-Bureau-Lease-Kompatibilität.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2662e036e02d87816c07b168",
+      "event_id": 6270,
+      "event_created_at": "2026-08-12T13:46:14.693615Z",
+      "request_sha256": "e28db360f51d5167243384e5f467c16068d61fcf2a2719a5cd88b32dbc4a656c",
+      "candidate_event_id": "candidate-event-2eed744daf5fab13ab4f3c0e",
+      "source_fingerprint": "5d64d7fc997679bcaf69f2378044478b57c9fc6fb4232d5c444665f0eca57751",
+      "content_fingerprint": "2662e036e02d87816c07b168a8ea08444c4786ed3360dd8d7c32286160f1020b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "5d64d7fc997679bcaf69f2378044478b57c9fc6fb4232d5c444665f0eca57751",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-follow-up",
+        "locator": "https://github.com/heimgewebe/heim-pc/pull/99",
+        "observed_at": "2026-08-12T15:46:00+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "5d64d7fc997679bcaf69f2378044478b57c9fc6fb4232d5c444665f0eca57751",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-follow-up",
+          "locator": "https://github.com/heimgewebe/heim-pc/pull/99",
+          "observed_at": "2026-08-12T15:46:00+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Parakeet bleibt additive Engine. Bei Setup-, CUDA-, Modell-, Medien- oder Qualitätsfehlern keine bestehende Engine entfernen und den Default nicht ändern; Parakeet fail-closed als nicht bereit markieren beziehungsweise den Adapter-Commit zurücknehmen. Lokale Modellcaches nur taskgebunden und reversibel behandeln. Qwen und faster-whisper bleiben unverändert nutzbar."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Parakeet lokal anbinden und deutschen ASR-Qualitätsvergleich referenzbinden"
+}

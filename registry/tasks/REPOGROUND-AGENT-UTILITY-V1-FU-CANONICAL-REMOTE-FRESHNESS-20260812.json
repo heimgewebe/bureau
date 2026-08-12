@@ -1,0 +1,163 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Für eine kanonische RepoGround-Publikation mit Branch-Ref ist die Frischeentscheidung an eine frische autoritative Beobachtung des exakten Ziel-Branch-Heads gebunden. Ergebnis und Evidenz weisen mindestens Publikationscommit, Branch-Ref, beobachteten Branch-Head, Beobachtungsbasis und Vergleichsgrund maschinenlesbar aus; der revisionsgebundene Publication-Source-Checkout allein ist keine aktuelle Branch-Autorität.",
+      "evidence_type": "object",
+      "id": "canonical-branch-head-authority",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-canonical-remote-freshness:canonical-branch-head-authority"
+      }
+    },
+    {
+      "assertion": "Ein hermetischer Regressionstest reproduziert den beobachteten Fehler: Bundle und Publication-Source-Checkout stehen auf Commit A, dessen lokales origin/main ebenfalls A zeigt, während der autoritative Branch-Head bereits B ist. Das Ergebnis darf nicht `fresh_exact`/`fresh` sein und muss die Abweichung A gegen B explizit ausweisen.",
+      "evidence_type": "object",
+      "id": "advanced-remote-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-canonical-remote-freshness:advanced-remote-regression"
+      }
+    },
+    {
+      "assertion": "Wenn der autoritative Branch-Head nicht frisch beobachtet werden kann, behauptet der Consumer weder aktuelle Frische noch Staleness. Er liefert einen stabilen unverifizierten/source-unavailable Zustand mit Ursache und Nonclaim; vorhandene Offline-/Unavailable-Fälle bleiben deterministisch und fail-closed.",
+      "evidence_type": "object",
+      "id": "unavailable-does-not-invent-truth",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-canonical-remote-freshness:unavailable-does-not-invent-truth"
+      }
+    },
+    {
+      "assertion": "Dirty Overlay, fehlende Bundle-Provenienz, fehlende Publikation und ungültige Source-Checkouts bleiben mindestens so streng klassifiziert wie zuvor. Ein Remote- oder Branch-Head-Beleg darf keinen dirty oder provenance-missing Zustand zu `fresh` hochstufen.",
+      "evidence_type": "object",
+      "id": "dirty-and-provenance-semantics-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-canonical-remote-freshness:dirty-and-provenance-semantics-preserved"
+      }
+    },
+    {
+      "assertion": "Die zusätzliche Autoritätsbeobachtung ist read-only und bounded: kein Fetch, Checkout, Reset, Ref-Update oder anderer Git-Schreibeffekt im Source-Checkout; Fehler und Timeouts sind begrenzt und maschinenlesbar. Es werden keine Secrets oder Remote-Credentials ausgegeben.",
+      "evidence_type": "object",
+      "id": "bounded-read-only-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-canonical-remote-freshness:bounded-read-only-contract"
+      }
+    },
+    {
+      "assertion": "Fokussierte RepoGround-Bundle/Freshness-Tests, relevante Grabowski-Validierung, git diff --check und geschützte GitHub-Pflichtchecks sind auf demselben finalen Head grün; Self-Review, Merge und Post-Merge-Readback sind revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "regression-and-delivery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground-canonical-remote-freshness:regression-and-delivery"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T001"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur RepoGround-Freshnessauflösung und fokussierte Regressionen ändern. Keine Publikationsinhalte, keine RepoGround-Generatorlogik, keine Repository-Mutation durch Freshness-Reads und keine Abschwächung fail-closed Zustände.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/tests/test_repoground_bundles.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Verhindere, dass Grabowskis RepoGround-Consumer eine veraltete kanonische Branch-Publikation als `fresh_exact` klassifiziert, nur weil ihr revisionsgebundener Publication-Source-Checkout und dessen möglicherweise ungefetchtes lokales `origin/<ref>` denselben alten Commit tragen. Für kanonische Branch-Publikationen muss `fresh_exact` auf einer frischen, autoritativen und maschinenlesbar ausgewiesenen Beobachtung des Ziel-Branch-Heads beruhen. Ist diese Beobachtung nicht möglich, bleibt die Frische explizit unverifiziert statt `fresh` oder `stale` zu erfinden. Dirty-, Provenienz-, Offline-/Unavailable- und Read-only-Grenzen bleiben mindestens so streng wie bisher.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-FU-CANONICAL-REMOTE-FRESHNESS-20260812",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass jede Freshness-Abfrage zwingend einen Netzwerkzugriff benötigt",
+      "dass die Publikation 8e824ce inhaltlich defekt ist",
+      "dass lokale Publication-Source-Checkouts als Reproduktionsquelle ungeeignet sind",
+      "dass Remote-Unverfügbarkeit als Stale gewertet werden darf"
+    ],
+    "finding": "Nach RepoGround PR #1192 ist GitHub-main revisionsgebunden auf 1a88ddc36836294209248e28054c3d0a41cb3361. Grabowskis repoground_preflight wählte weiterhin die kanonische Publikation 8e824ce55079b17330bb1a75a34bacca866f9fd0 und meldete `fresh_exact`, weil deren Publication-Source-Checkout und lokales origin/main ebenfalls auf 8e824ce standen. Der aktuelle Code in src/grabowski_mcp.py vergleicht bei publication_source_checkout gegen `rev-parse origin/<publication_ref>` ohne frische Remote-Branch-Beobachtung.",
+    "source_candidate": "candidate-04c2e43d1a5ee3ffdada3ef5",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-04c2e43d1a5ee3ffdada3ef5",
+      "event_id": 6340,
+      "event_created_at": "2026-08-12T18:40:53.177756Z",
+      "request_sha256": "ba4ef3e2009d167e8d33bb75bcf5f8b3097b50f33e0b19ca9edb1b3e7854d2b9",
+      "candidate_event_id": "candidate-event-701ab673a3eccc4337cbc4cd",
+      "source_fingerprint": "fc396c2b8c297546020fafeb0779799ee1c2eb53738948a5886a4c45339ffb52",
+      "content_fingerprint": "04c2e43d1a5ee3ffdada3ef5957802093772cd4ec3cc5b611ee7fa9fc611e3b1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "fc396c2b8c297546020fafeb0779799ee1c2eb53738948a5886a4c45339ffb52",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "github:heimgewebe/repoground:main@1a88ddc36836294209248e28054c3d0a41cb3361#repoground_preflight-old-publication-8e824ce55079b17330bb1a75a34bacca866f9fd0",
+        "observed_at": "2026-08-12T18:40:53.093102Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "fc396c2b8c297546020fafeb0779799ee1c2eb53738948a5886a4c45339ffb52",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "github:heimgewebe/repoground:main@1a88ddc36836294209248e28054c3d0a41cb3361#repoground_preflight-old-publication-8e824ce55079b17330bb1a75a34bacca866f9fd0",
+          "observed_at": "2026-08-12T18:40:53.093102Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "repoground",
+    "github",
+    "bounded-io"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die Freshness-Consumer- und Teständerungen. Bestehende Publikationen, Source-Checkouts und RepoGround-Generatorzustände werden nicht verändert. Bei neuer False-Fresh/False-Stale-Klassifikation auf den bisherigen fail-closed Consumer zurückgehen und den Autoritätsbeleg separat neu entwerfen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "stop": {
+    "conditions": [
+      "Eine bereits offene fremde Arbeit ändert dieselben Freshness-Funktionen oder Tests; keine Übernahme oder Überschreibung fremder Arbeit.",
+      "Eine belastbare aktuelle Branch-Autorität ist ohne neuen schreibenden oder unbeschränkt netzwerkabhängigen Pfad nicht verfügbar; dann Architekturpfad separat entscheiden statt `fresh_exact` umzudefinieren.",
+      "Die Diagnose zeigt, dass der falsche Frischebeleg in einer anderen kanonischen Consumer-Schicht entsteht; Scope nicht künstlich auf grabowski_mcp.py erzwingen."
+    ]
+  },
+  "title": "RepoGround-Freshness an kanonischen Branch-Head binden"
+}

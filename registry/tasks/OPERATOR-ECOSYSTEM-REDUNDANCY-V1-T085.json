@@ -1,0 +1,156 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Produktionsdeploy misst den relevanten freien Speicher und Docker-Build-Cache vor dem teuren Build; ein Zustand wie 7.8 GB frei bei gleichzeitig starkem reclaimable Build-Cache wird vor dem Build maschinenlesbar erkannt und führt nicht erst spät zu einem unklaren Deploymentabbruch.",
+      "evidence_type": "object",
+      "id": "disk-pressure-preflight",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-vps-disk-pressure-preflight"
+      }
+    },
+    {
+      "assertion": "Eine kanonische Retention- oder Housekeeping-Policy begrenzt ausschließlich unbenutzten/reclaimable Docker-Build-Cache; aktive Container, laufend referenzierte Images, Datenbankdaten und persistente Docker-Volumes sind ausdrücklich außerhalb des automatischen Löschscope.",
+      "evidence_type": "object",
+      "id": "safe-cache-retention",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-docker-build-cache-safe-retention"
+      }
+    },
+    {
+      "assertion": "Wenn Housekeeping automatisch eingreift, ist die Bereinigung begrenzt, auditierbar und fail-closed; danach wird der Disk-Preflight erneut ausgeführt und der Deploy nur bei ausreichendem freien Speicher fortgesetzt.",
+      "evidence_type": "object",
+      "id": "bounded-automatic-recovery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-build-cache-bounded-recovery"
+      }
+    },
+    {
+      "assertion": "Tests reproduzieren den am 12. August 2026 beobachteten Fall mit großem vollständig reclaimable Build-Cache und zu wenig freiem Speicher sowie Gegenfälle mit nicht reclaimable beziehungsweise in Benutzung befindlichen Docker-Ressourcen.",
+      "evidence_type": "object",
+      "id": "regression-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-build-cache-regression-proof"
+      }
+    },
+    {
+      "assertion": "Der Produktions-Reconciler protokolliert Disk-Pressure-, Cache-Housekeeping- und Post-Cleanup-Preflight-Ergebnisse so, dass ein künftiger Abbruch ohne manuelle Docker-Forensik als Speicher-, Cache- oder anderer Deployfehler klassifiziert werden kann.",
+      "evidence_type": "object",
+      "id": "production-observability",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe-build-cache-production-observability"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T084"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Post-production follow-up aus T084. Housekeeping muss Docker-Build-Cache begrenzen und Disk Pressure vor Deploys behandeln, ohne aktive Container, laufend referenzierte Images oder persistente Volumes automatisiert zu löschen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den Weltgewebe-VPS-Deploy so härten, dass stark wachsender unbenutzter Docker-Build-Cache früh erkannt und sicher begrenzt wird, bevor der revisionsgebundene Produktionsreconciler wegen zu wenig freien Speichers stoppt. Aktive Container, Images in Benutzung und persistente Volumes dürfen durch automatisches Housekeeping nicht gelöscht werden.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T085",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to prune Docker volumes",
+      "permission to remove active containers",
+      "permission to delete images required by running workloads",
+      "that docker builder prune -af should be the permanent implementation"
+    ],
+    "live_evidence": {
+      "build_cache_active": "0",
+      "free_space_after": "approximately 40 GB",
+      "free_space_before": "7.8 GB",
+      "observed_at": "2026-08-12",
+      "production_merge_commit": "6748501291306e6d94167db27429df21742d9119",
+      "production_result": "reconciler success; public 80/443 listeners restored; frontend exact commit readback HTTP 200; API container healthy",
+      "reclaimable_build_cache": "196.4 GB",
+      "root_usage_after": "84%",
+      "root_usage_before": "97%"
+    },
+    "source_candidate": "candidate-e323ddeaa70cb5ec63149048",
+    "source_event_id": 6280,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e323ddeaa70cb5ec63149048",
+      "event_id": 6280,
+      "event_created_at": "2026-08-12T16:22:49.256369Z",
+      "request_sha256": "130b08ccd1852f5b12be5680faaa625914230a1ff40e3b250cd5666dbd1562d3",
+      "candidate_event_id": "candidate-event-ac6f1e1db180801bcba7309d",
+      "source_fingerprint": "2f4e8411df5e9994ba3fb372035cb895a095f712ea9c0be26d65746bcd8508ba",
+      "content_fingerprint": "e323ddeaa70cb5ec6314904812087f05fba13c8de1e46f9865a51a9ba02a4ef0",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "2f4e8411df5e9994ba3fb372035cb895a095f712ea9c0be26d65746bcd8508ba",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-production-evidence",
+        "locator": "production:wg-prod-1:weltgewebe-reconcile:2026-08-12",
+        "observed_at": "2026-08-12T16:00:00Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "2f4e8411df5e9994ba3fb372035cb895a095f712ea9c0be26d65746bcd8508ba",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-production-evidence",
+          "locator": "production:wg-prod-1:weltgewebe-reconcile:2026-08-12",
+          "observed_at": "2026-08-12T16:00:00Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 8
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "deployment",
+    "testing",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Housekeeping-Automatik deaktivieren und auf den bisherigen fail-closed Disk-Preflight zurückfallen. Keine Datenbank-, Volume-, DNS- oder Netzwerkänderung ist Teil des Tasks."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Weltgewebe-Produktionsdeploy gegen Docker-Build-Cache-Druck absichern"
+}

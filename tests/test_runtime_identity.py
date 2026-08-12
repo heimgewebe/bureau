@@ -50,6 +50,8 @@ def init_repo(root: Path) -> None:
     git(root, "config", "user.email", "test@example.invalid")
     git(root, "config", "user.name", "Test")
     (root / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    (root / "schemas").mkdir()
+    (root / "schemas/resource.v1.schema.json").write_text("{}\n", encoding="utf-8")
     (root / "src/bureau").mkdir(parents=True)
     (root / "src/bureau/runtime_identity.py").write_text("# test\n", encoding="utf-8")
     (root / "src/bureau_cycle").mkdir(parents=True)
@@ -103,6 +105,8 @@ def test_manifest_bound_release_matches_registry(tmp_path: Path, monkeypatch) ->
     module.parent.mkdir(parents=True)
     module.write_text("# release\n", encoding="utf-8")
     (release / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    (release / "schemas").mkdir()
+    (release / "schemas/resource.v1.schema.json").write_text("{}\n", encoding="utf-8")
     (release / "src/bureau_cycle").mkdir(parents=True)
     (release / "src/bureau_cycle/__init__.py").write_text("# cycle\n", encoding="utf-8")
     write_scheduler_fragments(release)
@@ -192,6 +196,20 @@ def test_package_tree_digest_includes_cycle_scheduler_sources(tmp_path: Path) ->
 
     cycle = root / "src/bureau_cycle/__init__.py"
     cycle.write_text("# changed cycle source\n", encoding="utf-8")
+
+    after = _package_tree_sha256(root)
+    assert after is not None
+    assert after != before
+
+
+def test_package_tree_digest_includes_schema_sources(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    schema = root / "schemas/resource.v1.schema.json"
+    before = _package_tree_sha256(root)
+    assert before is not None
+
+    schema.write_text('{"type":"object"}\n', encoding="utf-8")
 
     after = _package_tree_sha256(root)
     assert after is not None
@@ -322,6 +340,7 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     shutil.copytree(project_root / "src/bureau", source / "src/bureau")
     shutil.copytree(project_root / "src/bureau_cycle", source / "src/bureau_cycle")
     shutil.copytree(project_root / "ops/systemd", source / "ops/systemd")
+    shutil.copytree(project_root / "schemas", source / "schemas")
     shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
     git(source, "init", "-b", "main")
     git(source, "config", "user.email", "test@example.invalid")
@@ -366,7 +385,29 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     assert deployment_manifest["status_capsule_launcher_path"] == str(
         status_capsule_launcher
     )
-    release_systemd = Path(deployment_manifest["immutable_release_path"]) / "ops/systemd"
+    release_root = Path(deployment_manifest["immutable_release_path"])
+    release_schemas = release_root / "schemas"
+    expected_schema_names = {path.name for path in (project_root / "schemas").glob("*.json")}
+    assert {path.name for path in release_schemas.glob("*.json")} == expected_schema_names
+    assert (release_schemas / "resource.v1.schema.json").is_file()
+    schema_probe = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from bureau.schema_validation import default_schema_set; default_schema_set()",
+        ],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            **os.environ,
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONPATH": str(release_root / "src"),
+        },
+    )
+    assert schema_probe.returncode == 0, schema_probe.stderr
+    release_systemd = release_root / "ops/systemd"
     actual = {
         path.relative_to(release_systemd).as_posix()
         for path in release_systemd.rglob("*")
@@ -471,6 +512,7 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     shutil.copytree(project_root / "src/bureau", source / "src/bureau")
     shutil.copytree(project_root / "src/bureau_cycle", source / "src/bureau_cycle")
     shutil.copytree(project_root / "ops/systemd", source / "ops/systemd")
+    shutil.copytree(project_root / "schemas", source / "schemas")
     shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
     git(source, "init", "-b", "main")
     git(source, "config", "user.email", "test@example.invalid")

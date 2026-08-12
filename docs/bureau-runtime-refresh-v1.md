@@ -22,6 +22,7 @@ das im Manifest gebundene immutable Release.
 | --- | --- |
 | aktueller `main`-Commit, zugehöriger Merge-PR, Pflicht-CI | GitHub |
 | aktuell installierter Commit, Paket- und Snapshot-Hashes | Bureau-Deployment-Manifest und Runtime-Identity |
+| aktuelle Runtime-Autoritäts-Task, Revision, Zustand und Verbrauch | autoritative Bureau-StateStore-TaskSpec; ein installierter Registry-Snapshot ist dafür niemals hinreichend |
 | expliziter Ziel- und Zeitrahmen | create-only Runtime-Refresh-Intent |
 | Wirkungserlaubnis für Runtime-Mutationen | typisierte `break_glass`-Freigabe, exakt an Zielhash und Bureau-Task gebunden |
 | Konfliktfreiheit der Effektpfade | live gelesene Grabowski-Leases |
@@ -36,6 +37,14 @@ Nicht behauptet werden:
 - sichere Wiederholbarkeit nach einem unklaren Effekt;
 - semantische Richtigkeit jeder Registry-Aussage;
 - zukünftige Runtime-Gesundheit.
+
+Eine Autoritäts-TaskSpec ist nur zulässig, wenn ihr strukturierter
+`metadata.runtime_refresh_authority`-Vertrag exakt `single-use-target-bound` deklariert.
+Er muss `runtime_mutation`, `break_glass`, den Write-Claim
+`component.bureau.runtime`, die erlaubten Zustände `ready` und `active`, die Bindung
+`candidate.target_sha256` sowie das Verbot fremder Task- und historischer
+Target-Substitution enthalten. Prosa, Acceptance-Text und ein alter Registry-Snapshot
+ersetzen keinen dieser maschinenlesbaren Werte.
 
 ## Zustandsmaschine
 
@@ -104,6 +113,17 @@ Taskbindung fehlen oder nicht exakt zusammenpassen. Der Intent ist trotzdem kein
 Wirkungserlaubnis: `apply` revalidiert die typisierte Freigabe und verlangt zusätzlich die
 live Grabowski-Leases.
 
+Unmittelbar vor dem create-only Intent liest `prepare-intent` außerdem
+`approval_task_id` über die typisierte `StateStore.task_spec()`-API. Die aktuelle
+TaskSpec muss die exakte Task-ID, eine positive Revision samt Digest, einen erlaubten
+nichtterminalen Zustand und den oben beschriebenen Single-Use-Vertrag besitzen. Sie darf
+weder bereits an einen anderen Target/Intent gebunden noch verbraucht oder durch einen
+`runtime_closeout` geschlossen sein. Revision und TaskSpec-Digest sowie der exakte
+StateStore-Pfad werden in den Intent aufgenommen. Fehlt die autoritative TaskSpec, ist sie
+terminal/supersedet, semantisch falsch oder widerspricht sie dem Snapshot, endet der Aufruf
+vor einer Intent-Datei. Die Registry-Projektion kann eine Task auffindbar machen, begründet
+aber keine Runtime-Autorität.
+
 ### 3. Grabowski-Leases
 
 Vor `apply` müssen alle im Intent genannten Ressourcen atomar mit demselben Owner geleast
@@ -146,10 +166,13 @@ Ergebnisreceipt aufgenommen.
 ### 4. `apply`
 
 `apply` prüft zuerst den Intent-Digest und revalidiert die gespeicherte
-`runtime_mutation`-Entscheidung gegen die aktuelle Approval-Policy. Erst danach werden
-Ablaufzeit und Live-Leases geprüft. Anschließend wird GitHub erneut beobachtet.
-Zielhash, `main`, Pflicht-CI sowie installierter Ausgangscommit und Manifest-Hash müssen
-unverändert sein.
+`runtime_mutation`-Entscheidung gegen die aktuelle Approval-Policy. Danach liest es erneut
+die aktuelle autoritative TaskSpec und verlangt exakt die im Intent gespeicherte Revision
+und denselben Digest. Bereits verbrauchte Autorität, terminaler/supersedeter Zustand,
+Target-Bindung eines anderen Intents oder jede TaskSpec-Revision dazwischen blockiert vor
+Observation, Attempt-Receipt und Runtime-Wirkung. Erst danach werden Ablaufzeit und
+Live-Leases geprüft. Anschließend wird GitHub erneut beobachtet. Zielhash, `main`,
+Pflicht-CI sowie installierter Ausgangscommit und Manifest-Hash müssen unverändert sein.
 
 ```bash
 bureau-runtime-refresh apply \
@@ -160,25 +183,42 @@ bureau-runtime-refresh apply \
 
 Der Runner:
 
-1. legt für `target_sha256` ein create-only Startreceipt an;
-2. klont ausschließlich `main` in den intentgebundenen Workspace;
-3. verlangt `origin/main == intent.main_commit`;
-4. checkt exakt diesen Commit detached aus und verlangt einen sauberen Status;
-5. startet den bestehenden immutable Installer mit exakt gebundenem Prefix, Bin-Pfad und Approval-Intent;
-6. liest Manifest, beide Launcher, Paketbaum, Registry-Snapshot,
+1. bindet die noch unverbrauchte TaskSpec über `StateStore.put_task_spec()` und
+   Revision-CAS an Task-ID, ursprüngliche Autoritätsrevision/-digest,
+   `target_sha256` und `intent_sha256`;
+2. liest diese Bindung über `StateStore.task_spec()` unverändert zurück;
+3. legt für `target_sha256` ein create-only Startreceipt an;
+4. klont ausschließlich `main` in den intentgebundenen Workspace;
+5. verlangt `origin/main == intent.main_commit`;
+6. checkt exakt diesen Commit detached aus und verlangt einen sauberen Status;
+7. startet den bestehenden immutable Installer mit exakt gebundenem Prefix, Bin-Pfad und Approval-Intent;
+8. liest Manifest, alle Launcher, Paketbaum, Registry-Snapshot,
    `bureau --json check` und `bureau --json runtime-identity` zurück;
-7. schreibt ein create-only Ergebnisreceipt;
-8. entfernt nur nach bewiesenem Erfolg den eigenen Workspace.
+9. schreibt ein create-only Ergebnisreceipt;
+10. bindet den erfolgreichen Verbrauch per TaskSpec-CAS dauerhaft an ursprüngliche
+    Autoritätsrevision/-digest, Task-ID, Target, Intent und den finalen `result_sha256`
+    und liest ihn aus der TaskSpec zurück;
+11. entfernt nur nach bewiesenem Erfolg und Consumption-Readback den eigenen Workspace.
+
+Die Target-Bindungs-CAS ist die letzte Autoritätsoperation vor Attempt- und Runtime-Wirkung.
+Scheitert die Consumption-CAS nach einem physisch erfolgreichen, immutable gelesenen
+Result, bleibt das Result kanonisch erhalten und der Workspace wird bewahrt. Ein erneuter
+Aufruf darf dann ausschließlich dasselbe digestgültige Result gegen dieselbe Task-/Target-/
+Intent-Bindung konsumieren; Installer, Source-Checkout und Runtime-Wirkung werden nicht
+wiederholt. Ein abweichender oder manipulierter Result-/Consumption-Digest blockiert.
 
 Der konventionelle Checkout wird nicht gelesen, aktualisiert, zurückgesetzt, gestasht,
 gesäubert oder entfernt.
 
 ## Einmaligkeit und unklare Ergebnisse
 
-Die Effektledger sind nach `target_sha256`, nicht nach Intent, adressiert. Mehrere Intents
-für dasselbe exakte Ziel teilen daher einen Versuch. Ein vorhandenes terminales Ergebnis
-wird zurückgegeben; ein Startreceipt ohne Ergebnis wird als
-`unclear_existing_attempt` gemeldet.
+Die Effektledger sind nach `target_sha256`, nicht nach Intent, adressiert. Mehrere vor der
+Target-CAS erzeugte Intents derselben Task für dasselbe exakte Ziel teilen daher einen
+Versuch. Ein vorhandenes terminales Ergebnis wird nur nach Digestprüfung und exakter
+Task-/Target-/StateStore-Bindung zurückgegeben; ein Startreceipt ohne Ergebnis wird als
+`unclear_existing_attempt` gemeldet. Erfolgsreplay ist wirkungsfrei. Dieselbe konsumierte
+Single-Use-Autorität kann weder für einen späteren Target-Hash noch für eine fremde Task
+verwendet werden.
 
 Nach Beginn der Installerphase führt jeder Timeout, unerwartete Abbruch oder ungültige
 Readback zu `unclear`. Der Workspace bleibt erhalten. Es gibt keinen Retry und keine
@@ -187,6 +227,80 @@ Selbstheilung. Ein neuer Intent für denselben Zielhash darf keinen zweiten Effe
 Eine Fortsetzung ist erst nach einer gesonderten, operatorautorisierten Reconciliation
 zulässig, die den realen Manifest-, Launcher-, Paket- und Snapshotzustand beweist. Dieser
 Vertrag implementiert absichtlich keine automatische Reconciliation.
+
+## Receiptgebundener Closeout ohne Bureau-Run
+
+Ein Runtime-Refresh kann als Bootstrap stattfinden, bevor die neue Runtime einen normalen
+Bureau-Claim bilden kann. Nur für eine solche bereits erfolgreiche Single-Use-Autorität
+existiert `closeout-authority`. Der Befehl erzeugt keinen nachträglichen Claim, keine
+Reservation und keinen synthetischen Run. Sobald irgendein Bureau-Run für die Task
+existiert, verweigert er den No-Run-Pfad zugunsten des normalen Run-Closeouts.
+
+```bash
+bureau-runtime-refresh --state-root ~/.local/state/bureau/runtime-refresh \
+  closeout-authority \
+  --approval-task-id '<exact task id>' \
+  --target-sha256 '<exact target digest>' \
+  --intent-sha256 '<persisted intent digest>' \
+  --result-sha256 '<terminal deployed result digest>'
+```
+
+Vor der einzigen TaskSpec-Wirkung werden konsistent geprüft:
+
+- aktuelle autoritative TaskSpec und strukturierter Single-Use-Vertrag;
+- exakte Task-, ursprüngliche Revision-/Digest-, Target-, Intent- und Consumption-Bindung;
+- persistierter digestgültiger Intent und dessen damals gültige typisierte Break-Glass-Freigabe;
+- kanonisches `deployed`-Result mit `effect_started=true` und exaktem Result-Digest;
+- bounded, digestverifizierte Intent-/Result-Historie derselben `approval_task_id`: der
+  angeforderte Effekt muss genau einmal vorkommen und **jede weitere** historische
+  `effect_started=true`-Wirkung blockiert als `authority-closeout-historical-multi-use`;
+- erneuter immutable Manifest-, Launcher-, Paket-, Registry-, `check`- und
+  `runtime-identity`-Readback, bytegleich zur Result-Evidenz;
+- `StateStore.integrity()` und vollständiger Event-/TaskSpec-Replay gegen die aktuelle Projektion;
+- Abwesenheit jedes Bureau-Runs für diese Task;
+- Freigabe aller exakt im Resultreceipt gebundenen Grabowski-Leases aus demselben
+  Lease-Store und unverändertem Lease-Vertrag.
+
+Nur dann setzt ein einziger `StateStore.put_task_spec()`-CAS den Zustand auf `verified` und
+persistiert `metadata.runtime_closeout` mit Task-ID, ursprünglicher Autoritätsrevision und
+-digest, Target, Intent, Runtime-Result, Source-Commit, Manifest-/Readback- sowie
+Lease-Binding-/Release-Digests. Der anschließende TaskSpec-Readback und ein erneuter
+StateStore-Replay müssen passen. Ein identischer Replay ist wirkungsfrei; fremde, fehlende,
+nicht deployte, driftende oder manipulierte Evidenz blockiert. Terminalität wird nie aus
+Notizen, Goal- oder Acceptance-Prosa abgeleitet, und es gibt weder Direct-SQL auf Bureau
+StateStore noch Queue-/Claim-/Dispatch-Wirkung.
+
+Der historische Browser-Control-Bootstrap ist dadurch bewusst **nicht** aus einem einzelnen
+Receipt terminalisierbar. Für
+`BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811`
+existieren mehrere unterschiedliche, bereits `effect_started=true` ausgeführte
+Runtime-Refresh-Targets; darunter der in der Follow-up-Evidenz gebundene Erfolg auf
+`5c5746a980fe035661074b4a9a85d3e52634d153` mit Result
+`9b6afa43ad97b0056e7ac011c5f334e479eff2a739325d70d6b15c25f3ef6459`.
+Ein Closeout nur dieses einen Effekts würde die deklarierte Single-Use-Semantik rückwirkend
+fälschen und wird daher fail-closed abgewiesen. Die Mehrfachnutzung benötigt eine eigene
+Provenienz-/Lifecycle-Reconciliation; sie autorisiert weder einen weiteren Refresh noch
+einen Fake-Run. `BUREAU-TRUTH-MODEL-V2-T029` ist bereits mit seinem älteren
+`runtime_closeout` terminal und dient ausschließlich als Präzedenz-/Negativfall, nicht als
+erneut zu schließende Autorität.
+
+## Historische Provenienzgrenze `affe99f…`
+
+Der am 2026-08-11 bereits ausgeführte Refresh auf
+`affe99f27d482c75ca4ae61735e7d2d69f911c8d` bleibt physisch durch seinen immutable
+Readback integritätsgültig. Seine Autoritätsprovenienz ist jedoch fehlerhaft: als
+`approval_task_id` wurde die im installierten Snapshot noch plausibel wirkende, aber
+autoritätlich stale Task
+`BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809` verwendet. Die relevante
+Single-Use-Nachfolgersemantik lag in `BUREAU-TRUTH-MODEL-V2-T029`; zusätzlich existierte
+`BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810`. Das terminale
+Runtime-Result ist an
+`dea2fa1d51a865b1884ad652c43fd6aaf98f10c00c81df6c5ca2cc576088292b` gebunden.
+
+Diese Feststellung autorisiert weder Deployment-Replay noch rückwirkende Gültigkeit der
+stale Task-ID, reaktiviert keine terminale Task und schreibt keinen historischen Status
+künstlich um. Sie ist die dokumentierte Provenienzgrenze, die der neue StateStore-Preflight
+für künftige Refreshes vor jeder Wirkung schließt.
 
 ## Automationsmodell
 
@@ -225,6 +339,11 @@ Die fokussierten Tests decken unter anderem ab:
 - fehlgeschlagene, fehlende und übersprungene Pflicht-CI;
 - Drift von `main` während der Beobachtung;
 - manipulierte Kandidaten, abgelaufene Intents und unzureichende Runtime-Freigaben;
+- stale Registry-Snapshot gegen neuere/supersedete autoritative StateStore-TaskSpec;
+- TaskSpec-Revision zwischen Prepare und Apply sowie terminale, fremde und falsch
+  targetgebundene Autorität vor Wirkung;
+- revisions-/target-/resultgebundene Single-Use-Consumption, Post-Binding-TaskSpec-CAS,
+  wirkungsfreien Replay und manipulierte Result-/Consumption-Readbacks;
 - fehlende, fremde, zu kurze oder öffentlich lesbare Lease-Datenbanken;
 - sauberer detached Clone und Origin-Drift;
 - intentübergreifende Deduplizierung desselben Zielhashes;
@@ -232,6 +351,9 @@ Die fokussierten Tests decken unter anderem ab:
 - Erhaltung eines fremden Dirty-Checkouts;
 - beide Launcher, Rollbackkopien und vollständiger Runtime-Readback;
 - direkten Installeraufruf ohne Approval-Intent ohne Dateiwirkung;
+- Browser-Control- und T029-artigen No-Run-Closeout, historische Mehrfachnutzung einer
+  deklarierten Single-Use-Autorität, fehlende Lease-Freigabe, falsche Task/Target-Bindung,
+  manipuliertes Result und widersprüchlichen terminalen Zustand;
 - echten synthetischen Installerlauf mit exakt source-gebundener `break_glass`-Freigabe in temporären Git-Repositories.
 
 Der Livebeweis muss nach Merge auf einem exakten neuen Bureau-`main`-Commit erfolgen: ein

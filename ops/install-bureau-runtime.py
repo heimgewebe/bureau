@@ -87,10 +87,15 @@ def scheduler_fragment_paths(root: Path) -> list[Path]:
 def package_source_paths(root: Path) -> list[Path]:
     pyproject = root / "pyproject.toml"
     packages = [root / "src" / name for name in MANAGED_PACKAGES]
+    schemas = root / "schemas"
     systemd = root / "ops/systemd"
+    schema_paths = sorted(schemas.glob("*.json")) if schemas.is_dir() else []
     if (
         pyproject.is_symlink()
         or not pyproject.is_file()
+        or schemas.is_symlink()
+        or not schemas.is_dir()
+        or not schema_paths
         or systemd.is_symlink()
         or not systemd.is_dir()
         or any(package.is_symlink() or not package.is_dir() for package in packages)
@@ -98,6 +103,7 @@ def package_source_paths(root: Path) -> list[Path]:
         raise SystemExit(f"invalid Bureau package tree: {root}")
     paths = [
         pyproject,
+        *schema_paths,
         *(path for package in packages for path in sorted(package.rglob("*.py"))),
         *scheduler_fragment_paths(root),
     ]
@@ -131,6 +137,7 @@ def copy_managed_package(source: Path, destination: Path) -> None:
 def validate_managed_release_tree(root: Path) -> None:
     managed_roots = [
         *(root / "src" / name for name in MANAGED_PACKAGES),
+        root / "schemas",
         root / "ops/systemd",
     ]
     expected = {path.resolve() for path in package_source_paths(root)}

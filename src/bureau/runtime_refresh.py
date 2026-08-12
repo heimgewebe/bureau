@@ -1846,8 +1846,8 @@ def validate_legacy_runtime_refresh_bootstrap(
             "legacy runtime-refresh state root may not be a symlink",
         )
     root = raw_root.resolve()
-    resolved_prefix = prefix.expanduser().resolve()
-    resolved_bin_dir = bin_dir.expanduser().resolve()
+    resolved_prefix = _historical_nonsymlink_path(prefix, label="runtime prefix")
+    resolved_bin_dir = _historical_nonsymlink_path(bin_dir, label="runtime bin directory")
     intents_root = root / "intents"
     if root.is_symlink() or not intents_root.is_dir() or intents_root.is_symlink():
         raise RuntimeRefreshError(
@@ -2266,6 +2266,24 @@ def readback_install(
     }
 
 
+def _historical_nonsymlink_path(path: Path, *, label: str) -> Path:
+    """Normalize one absolute historical path while rejecting symlink components."""
+    raw = path.expanduser()
+    normalized = Path(os.path.abspath(raw))
+    current = normalized
+    while True:
+        if current.is_symlink():
+            raise RuntimeRefreshError(
+                "historical-runtime-path-symlink",
+                f"historical runtime {label} path may not contain a symlink",
+                details={"path": str(current)},
+            )
+        if current == current.parent:
+            break
+        current = current.parent
+    return normalized
+
+
 def _historical_artifact_sha256(path: Path, *, label: str) -> str | None:
     """Hash one bounded regular historical artifact without following symlinks."""
     try:
@@ -2313,8 +2331,10 @@ def _validate_historical_install_receipt(
             "historical-install-receipt-invalid",
             "historical installer receipt identity is incomplete",
         )
-    receipts_root = (prefix / "receipts").resolve()
-    receipt_path = Path(receipt_path_value).expanduser().resolve()
+    receipts_root = _historical_nonsymlink_path(prefix / "receipts", label="receipt root")
+    receipt_path = _historical_nonsymlink_path(
+        Path(receipt_path_value), label="install receipt"
+    )
     try:
         receipt_path.relative_to(receipts_root)
     except ValueError as exc:
@@ -2443,14 +2463,25 @@ def readback_historical_install(
     persisted_receipt = _validate_historical_install_receipt(
         prefix=resolved_prefix, install_receipt=install_receipt
     )
-    expected_manifest_path = (resolved_prefix / "deployment-manifest.json").resolve()
+    expected_manifest_path = _historical_nonsymlink_path(
+        resolved_prefix / "deployment-manifest.json", label="manifest pointer"
+    )
     expected_launcher_paths = {
-        "launcher_path": (resolved_bin_dir / "bureau").resolve(),
-        "runtime_refresh_launcher_path": (resolved_bin_dir / "bureau-runtime-refresh").resolve(),
-        "status_capsule_launcher_path": (resolved_bin_dir / "bureau-status-capsule").resolve(),
+        "launcher_path": _historical_nonsymlink_path(
+            resolved_bin_dir / "bureau", label="bureau launcher pointer"
+        ),
+        "runtime_refresh_launcher_path": _historical_nonsymlink_path(
+            resolved_bin_dir / "bureau-runtime-refresh",
+            label="runtime refresh launcher pointer",
+        ),
+        "status_capsule_launcher_path": _historical_nonsymlink_path(
+            resolved_bin_dir / "bureau-status-capsule",
+            label="status capsule launcher pointer",
+        ),
     }
-    persisted_manifest_path = (
-        Path(str(persisted_receipt.get("manifest_path", ""))).expanduser().resolve()
+    persisted_manifest_path = _historical_nonsymlink_path(
+        Path(str(persisted_receipt.get("manifest_path", ""))),
+        label="receipt manifest pointer",
     )
     if persisted_manifest_path != expected_manifest_path:
         raise RuntimeRefreshError(
@@ -2458,7 +2489,10 @@ def readback_historical_install(
             "historical installer receipt manifest path differs from the intent prefix",
         )
     for field, expected_path in expected_launcher_paths.items():
-        if Path(str(persisted_receipt.get(field, ""))).expanduser().resolve() != expected_path:
+        observed_path = _historical_nonsymlink_path(
+            Path(str(persisted_receipt.get(field, ""))), label=f"receipt {field}"
+        )
+        if observed_path != expected_path:
             raise RuntimeRefreshError(
                 "historical-install-receipt-path-invalid",
                 f"historical installer receipt {field} differs from the intent bin directory",
@@ -2505,9 +2539,14 @@ def readback_historical_install(
         raise RuntimeRefreshError(
             "historical-runtime-release-invalid", "historical release id is invalid"
         )
-    expected_release = (resolved_prefix / "releases" / release_id).resolve()
-    release = Path(str(manifest.get("immutable_release_path", ""))).expanduser().resolve()
-    if release != expected_release or release.is_symlink() or not release.is_dir():
+    expected_release = _historical_nonsymlink_path(
+        resolved_prefix / "releases" / release_id, label="expected immutable release"
+    )
+    release = _historical_nonsymlink_path(
+        Path(str(manifest.get("immutable_release_path", ""))),
+        label="immutable release",
+    )
+    if release != expected_release or not release.is_dir():
         raise RuntimeRefreshError(
             "historical-runtime-release-invalid",
             "historical immutable release path is invalid",
@@ -2523,7 +2562,9 @@ def readback_historical_install(
                 "observed": observed_package_sha256,
             },
         )
-    module = Path(str(manifest.get("module_path", ""))).expanduser().resolve()
+    module = _historical_nonsymlink_path(
+        Path(str(manifest.get("module_path", ""))), label="runtime module"
+    )
     try:
         module.relative_to(release)
     except ValueError as exc:
@@ -2537,6 +2578,14 @@ def readback_historical_install(
             "historical-runtime-module-mismatch",
             "historical runtime module digest mismatch",
         )
+    _historical_nonsymlink_path(
+        Path(str(manifest.get("canonical_registry_root", ""))),
+        label="canonical Registry root",
+    )
+    _historical_nonsymlink_path(
+        Path(str(manifest.get("canonical_registry_inventory_path", ""))),
+        label="canonical Registry inventory",
+    )
     registry_identity = registry_snapshot.canonical_registry_identity(manifest)
     if registry_identity.get("valid") is not True:
         raise RuntimeRefreshError(

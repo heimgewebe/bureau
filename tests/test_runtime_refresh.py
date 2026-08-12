@@ -1989,9 +1989,11 @@ def test_no_run_closeout_authenticates_historical_runtime_after_successor_deploy
         ("manifest", "historical-runtime-manifest-evidence-unavailable"),
         ("launcher", "historical-runtime-launcher-evidence-unavailable"),
         ("release", "historical-runtime-release-invalid"),
+        ("release-symlink", "historical-runtime-path-symlink"),
         ("package", "historical-runtime-package-mismatch"),
         ("registry", "historical-runtime-registry-snapshot-invalid"),
         ("receipt", "historical-install-receipt-mismatch"),
+        ("receipt-symlink", "historical-runtime-path-symlink"),
     ],
 )
 def test_no_run_closeout_fails_closed_on_damaged_historical_runtime_evidence(
@@ -2018,16 +2020,24 @@ def test_no_run_closeout_fails_closed_on_damaged_historical_runtime_evidence(
         (artifacts["backup"] / "bureau").write_text("tampered\n", encoding="utf-8")
     elif damage == "release":
         shutil.rmtree(artifacts["release"])
+    elif damage == "release-symlink":
+        moved_release = artifacts["release"].with_name(artifacts["release"].name + "-moved")
+        artifacts["release"].rename(moved_release)
+        artifacts["release"].symlink_to(moved_release, target_is_directory=True)
     elif damage == "package":
         (artifacts["release"] / "src/bureau/runtime_identity.py").write_text(
             "TAMPERED = True\n", encoding="utf-8"
         )
     elif damage == "registry":
         artifacts["registry_task"].write_text('{"id":"TAMPERED"}\n', encoding="utf-8")
-    else:
+    elif damage == "receipt":
         persisted_receipt = json.loads(artifacts["receipt"].read_text(encoding="utf-8"))
         persisted_receipt["installed_at"] = refresh.isoformat(NOW + timedelta(seconds=1))
         artifacts["receipt"].write_bytes(refresh.canonical_bytes(persisted_receipt))
+    else:
+        moved_receipt = artifacts["receipt"].with_name(artifacts["receipt"].name + ".moved")
+        artifacts["receipt"].rename(moved_receipt)
+        artifacts["receipt"].symlink_to(moved_receipt)
 
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.closeout_runtime_refresh_authority(

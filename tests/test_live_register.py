@@ -10,6 +10,23 @@ from bureau.core import Registry, StateError, StateStore
 from bureau.live_register import live_register_list, live_register_record
 
 
+def typed_acceptance() -> list[dict]:
+    return [
+        {
+            "id": "promotion-merge-bound",
+            "assertion": "The reviewed promotion implementation is merged.",
+            "evidence_type": "object",
+            "verifier": "code_merged",
+            "verifier_config": {
+                "repository": "heimgewebe/bureau",
+                "pull_request": 7,
+                "head_sha": "a" * 40,
+                "base_ref": "main",
+            },
+        }
+    ]
+
+
 def setup_live(registry_factory, tmp_path):
     root = registry_factory(2)
     registry = Registry.load(root)
@@ -227,8 +244,12 @@ def test_live_promote_plan_requires_review_and_applies_task_file(
         initiative="BUR-TEST-001",
         task_id="BUR-TEST-001-T999",
         path=str(plan_path),
+        acceptance=typed_acceptance(),
     )
     assert plan["plan"]["task_json"]["metadata"]["live_register_event_id"] == result["event_id"]
+    assert plan["plan"]["task_draft"] is None
+    assert plan["plan"]["blockers"] == []
+    assert plan["plan"]["unresolved_fields"] == []
     authority_nonclaims = {
         "claim_authority",
         "dispatch_authority",
@@ -258,6 +279,83 @@ def test_live_promote_plan_requires_review_and_applies_task_file(
     assert (root / "registry/tasks/BUR-TEST-001-T999.json").is_file()
     queue = json.loads((root / "registry/queue.json").read_text())
     assert "BUR-TEST-001-T999" not in queue["lanes"]["now"]
+
+
+def test_live_promote_plan_missing_or_untyped_acceptance_cannot_write(
+    registry_factory,
+    tmp_path,
+):
+    root, registry, store = setup_live(registry_factory, tmp_path)
+    result = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Blocked untyped promotion",
+        promotion_required=True,
+    )
+    plan_path = tmp_path / "blocked-promote.json"
+
+    from bureau.live_register import apply_live_promote_plan, write_live_promote_plan
+
+    written = write_live_promote_plan(
+        registry,
+        store,
+        event_id=result["event_id"],
+        initiative="BUR-TEST-001",
+        task_id="BUR-TEST-001-T995",
+        path=str(plan_path),
+    )
+    plan = written["plan"]
+    assert plan["task_json"] is None
+    assert "acceptance" not in plan["task_draft"]
+    assert plan["unresolved_fields"] == ["task_json.acceptance"]
+    assert plan["blockers"] == [
+        {
+            "code": "typed-acceptance-required",
+            "path": "$.task_json.acceptance",
+            "message": (
+                "an explicit fully typed acceptance contract is required before "
+                "this candidate can become a writable TaskSpec"
+            ),
+        }
+    ]
+
+    value = json.loads(plan_path.read_text(encoding="utf-8"))
+    value["review"] = {"required": True, "status": "reviewed", "reviewer": "test"}
+    plan_path.write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(StateError, match="explicit fully typed acceptance"):
+        apply_live_promote_plan(registry, path=str(plan_path))
+    target = root / "registry/tasks/BUR-TEST-001-T995.json"
+    assert not target.exists()
+
+    value["task_json"] = {
+        **value["task_draft"],
+        "acceptance": [{"id": "legacy-proof", "assertion": "Legacy prose only."}],
+    }
+    value["task_draft"] = None
+    value["blockers"] = []
+    value["unresolved_fields"] = []
+    plan_path.write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(
+        StateError,
+        match=r"criterion legacy-proof at \$\.acceptance\[0\]\.evidence_type",
+    ):
+        apply_live_promote_plan(registry, path=str(plan_path))
+    assert not target.exists()
+
+    invalid_plan_path = tmp_path / "invalid-explicit-promote.json"
+    with pytest.raises(StateError, match="criterion legacy-proof"):
+        write_live_promote_plan(
+            registry,
+            store,
+            event_id=result["event_id"],
+            initiative="BUR-TEST-001",
+            task_id="BUR-TEST-001-T994",
+            path=str(invalid_plan_path),
+            acceptance=[{"id": "legacy-proof", "assertion": "Legacy prose only."}],
+        )
+    assert not invalid_plan_path.exists()
 
 
 def test_candidate_supersession_projects_latest_and_preserves_history(
@@ -627,9 +725,10 @@ def test_live_promote_plan_rejects_superseded_candidate_event(
         path=str(tmp_path / "current-plan.json"),
     )
     assert (
-        current["plan"]["task_json"]["metadata"]["live_register_candidate_id"]
+        current["plan"]["task_draft"]["metadata"]["live_register_candidate_id"]
         == latest["record"]["candidate_id"]
     )
+    assert current["plan"]["blockers"][0]["code"] == "typed-acceptance-required"
 
 
 def test_live_register_cli_corrects_and_closes_candidate(

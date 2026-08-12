@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Nachfolger nach d0ee-Refresh registrieren",
   "goal": "Nach dem belegten einmaligen Verbrauch von BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-20260812 fuer den erfolgreichen Refresh auf d0ee9a3c genau eine neue, eigenstaendige und unverbrauchte Break-Glass-Autoritaet bereitstellen. Sie darf ausschliesslich einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausfuehrung frisch beobachteten, reviewten und CI-gruenen aktuellen main autorisieren. Dieser Bootstrap muss die mit Bureau-PR #1918 gemergte StateStore-/Single-Use-Preflight-Implementierung in die immutable Runtime bringen; nach dem Deployment muss die neue Runtime denselben Effekt receiptgebunden mit closeout-authority verifizieren und diese TaskSpec terminalisieren. Danach kann der durch release-registry-identity-mismatch blockierte reviewed T007-Scope-Intake regulaer fortgesetzt werden.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1
@@ -185,6 +185,8 @@
       "wiederverwendbare Runtime-Autoritaet",
       "Orphan-Reconcile-Autoritaet",
       "Permission to bypass current StateStore, Registry, CI, lease or immutable readback validation"
-    ]
+    ],
+    "superseded_by": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-TYPED-ACCEPTANCE-SYSTEMIC-20260812",
+    "supersession_reason": "Der für diese Bootstrap-Autorität vorgesehene d0ee→PR-#1918-Effekt ist bereits separat und erfolgreich erfolgt; die installierte Runtime steht auf 42f10178c2d77e293f106cd7c1fd656f5b811edd. Eine Wiederverwendung für PR #1919 wäre semantisch falsch."
   }
 }

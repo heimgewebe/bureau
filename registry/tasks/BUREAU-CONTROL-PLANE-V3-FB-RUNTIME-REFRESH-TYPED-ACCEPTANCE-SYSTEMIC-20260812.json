@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-TYPED-ACCEPTANCE-SYSTEMIC-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Runtime-Refresh für systemische Typed-Acceptance-Härtung",
+  "goal": "Nach dem Merge von Bureau-PR #1919 genau einen kontrollierten immutable Bureau-Runtime-Refresh vom bereits installierten PR-#1918-Stand 42f10178c2d77e293f106cd7c1fd656f5b811edd auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren. Der Zielstand muss #1919 und damit die systemische Typed-Acceptance-Schreibgrenze, den authentifizierten Closeout, die #1907-Semantikkorrektur und den entfernten Legacy-task_finish-Bypass enthalten. Genau ein Effekt ist zulässig; danach wird die Autorität receiptgebunden geschlossen und nie wiederverwendet.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-Use-Autorität ausschließlich für genau einen immutable Bureau-Runtime-Refresh nach Merge von PR #1919 und strikter Registrierung dieser exakten TaskSpec im autoritativen StateStore. Vor prepare-intent und erneut vor apply sind frische Main-/PR-/Required-Check-/target_sha256-Beobachtung, StateStore-TaskSpec-/Verbrauchs-Preflight und alle exakt Intent-gebundenen Live-Leases Pflicht. Keine Grabowski-Runtime-, Queue-, Claim- oder Dispatch-Mutation."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "baseline-and-stale-authority-separated",
+      "assertion": "Vor Nutzung ist belegt, dass die installierte Bureau-Runtime bereits auf 42f10178c2d77e293f106cd7c1fd656f5b811edd mit der durch PR #1918 gehärteten StateStore-/Single-Use-Preflight-Implementierung läuft; die inzwischen sachlich überholte AFTER-D0EE-Autorität wird für diesen Effekt weder verwendet noch in den StateStore als aktive Autorität eingebracht.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-typed-acceptance-systemic:baseline-and-stale-authority-separated"
+      }
+    },
+    {
+      "id": "systemfix-merge-and-checks-bound",
+      "assertion": "Der frisch beobachtete Zielstand ist der aktuelle main nach Merge von Bureau-PR #1919; dessen exakter PR-Head und die Required Checks validate (3.10) und validate (3.12) sind erfolgreich und jede Main-, Check- oder Manifest-Drift verwirft den Kandidaten vor Wirkung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-typed-acceptance-systemic:systemfix-merge-and-checks-bound"
+      }
+    },
+    {
+      "id": "authoritative-state-store-preflight",
+      "assertion": "Vor prepare-intent und unmittelbar vor apply bestätigt der autoritative StateStore diese exakte Task-ID als positive unverbrauchte Revision im Zustand ready oder active mit runtime_refresh_authority single-use-target-bound, ohne target_binding_receipt, consumption oder runtime_closeout.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-typed-acceptance-systemic:authoritative-state-store-preflight"
+      }
+    },
+    {
+      "id": "target-and-lease-binding",
+      "assertion": "Die Break-Glass-Freigabe bindet diese exakte Task-ID und reference an den frisch beobachteten target_sha256; apply verwendet ausschließlich alle vom Intent geforderten Grabowski-Live-Leases mit identischem Owner und Task-Kontext. Fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed vor Wirkung ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-typed-acceptance-systemic:target-and-lease-binding"
+      }
+    },
+    {
+      "id": "single-effect-and-closeout",
+      "assertion": "Genau ein effect_started=true-Runtime-Refresh ist dieser Task-ID zugeordnet. Nach eindeutig erfolgreichem immutable Readback und Lease-Release wird closeout-authority mit exakter Task-ID, target_sha256, intent_sha256 und result_sha256 ausgeführt; danach ist die Task verified und jede Wiederverwendung ausgeschlossen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-typed-acceptance-systemic:single-effect-and-closeout"
+      }
+    },
+    {
+      "id": "runtime-readback",
+      "assertion": "Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot zeigen denselben gemergten #1919-source commit; bureau check, runtime identity und StateStore-Integrität sind gültig und die #1907-StateStore-Revision ist nach der separaten revisionsgebundenen CAS-Synchronisierung typisiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-typed-acceptance-systemic:runtime-readback"
+      }
+    },
+    {
+      "id": "no-retry-on-ambiguity",
+      "assertion": "Bei unklarem oder nach Effect-Start fehlgeschlagenem Apply erfolgt kein Blind-Retry; ausschließlich der receipt-, target- und StateStore-gebundene Readback/Reconciliation-Pfad entscheidet über das weitere Vorgehen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-typed-acceptance-systemic:no-retry-on-ambiguity"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem oder fehlgeschlagenem Refresh keine neue Deployment-Wahrheit behaupten, keinen Blind-Retry ausführen und keine StateStore-/Consumption-Historie zurückschreiben. Den letzten integritätsgültigen immutable Release beibehalten und ausschließlich den receipt-/targetgebundenen Reconciliation-Pfad verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-12",
+    "source": "Systemischer Typed-Acceptance-Fix und Live-Readback nach produktivem PR-#1918-Runtime-Refresh.",
+    "installed_runtime_before_authority": "42f10178c2d77e293f106cd7c1fd656f5b811edd",
+    "required_systemic_pull_request": 1919,
+    "required_runtime_preflight_pull_request": 1918,
+    "stale_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-AFTER-D0EE-20260812",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true
+    },
+    "does_not_establish": [
+      "konkrete Deploymentfreigabe ohne frischen target_sha256",
+      "Autorität für Grabowski-Runtime",
+      "wiederverwendbare Runtime-Autorität",
+      "Queue-, Claim- oder Dispatch-Autorität",
+      "Permission to bypass StateStore, CI, leases or immutable readback"
+    ]
+  }
+}

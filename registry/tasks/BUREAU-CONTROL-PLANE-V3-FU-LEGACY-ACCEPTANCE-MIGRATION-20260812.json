@@ -125,6 +125,43 @@
       "authority_consumed_at": "2026-08-12T14:24:29.903124Z",
       "deployed_source_commit": "1cb52d8bd111c372696fa116a4000d655d60742d",
       "reason": "Der systemische Typed-Acceptance-Fix und der danach notwendige Schema-Packaging-Refresh sind vor Registrierung dieser Migration produktiv abgeschlossen. Dies ist historische Voraussetzung, keine noch ausstehende Dependency."
-    }
+    },
+    "closeout_inventory_refresh": {
+      "state_store": {
+        "total": 1085,
+        "valid": 13,
+        "invalid": 1072,
+        "invalid_nonterminal": 409,
+        "active_invalid_runs": 0
+      },
+      "registry_pr1921_head": {
+        "head_sha": "a82a2befce3fbbe3d94ad50113b0129d72d3e944",
+        "total": 1080,
+        "valid": 14,
+        "invalid": 1066,
+        "invalid_nonterminal": 404
+      },
+      "note": "Fresh read during PR #1921 closeout; execution must remeasure and CAS-bind any later migration."
+    },
+    "initial_ambiguous_seed": [
+      {
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DIRECT-LANE-SUPERSESSION-20260812",
+        "state_store_revision": 1,
+        "state_store_spec_sha256": "3af5294cd66fdf8e75c30c99ddc52395826fb9fbd94ea5aabc2ba790940f0f7e",
+        "source_event_id": 6096,
+        "source_kind": "operator-runtime-evidence",
+        "source_locator": "grabowski:work-lane:d488186bf73054f46d7a690d494c1d48",
+        "source_content_sha256": null,
+        "criteria": [
+          "first-class-handoff-receipt",
+          "work-acquire-supersession",
+          "definite-no-effect-recovery",
+          "live-regression",
+          "delivery"
+        ],
+        "required_decision": "Reconstruct criterion-specific evidence_type/verifier/verifier_config from authoritative Grabowski receipt, identity-supersession, no-effect recovery, regression and delivery contracts. The source has no content hash, so no verifier may be inferred by default.",
+        "forbidden_default": "manual_observation"
+      }
+    ]
   }
 }

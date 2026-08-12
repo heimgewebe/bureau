@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SCHEMA-PACKAGING-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Runtime-Refresh für immutable Schema-Paketfix",
+  "goal": "Nach Merge des fokussierten Schema-Paketfixes genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren. Der Zielstand muss Bureau-PR #1922 enthalten und damit schemas/*.json in den hashgebundenen immutable Paketbaum aufnehmen. Wegen des aktuell unvollständigen f527-Release-Baums wird diese Authority als geschützte Ein-Datei-TaskSpec registriert und ausschließlich über seed_missing_registry in den StateStore aufgenommen. Apply läuft danach aus einem sauberen expliziten main-Checkout unter dem normalen StateStore-/Target-/Lease-CAS; der Installer bleibt kein Standalone-Shortcut.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-Use-Autorität ausschließlich für genau einen immutable Bureau-Runtime-Refresh nach Merge von PR #1922 und StateStore-Seed dieser exakten TaskSpec. Vor prepare-intent und apply sind frische Main-/PR-/Required-Check-/target_sha256-Beobachtung, autoritativer StateStore-Preflight und exakt intentgebundene Live-Leases Pflicht. Der CAS-Apply darf wegen des kaputten f527-Schema-Paketbaums aus einem sauberen expliziten current-main-Checkout laufen; kein direkter Installer-Shortcut und keine Grabowski-Runtime-Wirkung."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "schema-packaging-fix-merged",
+      "assertion": "Bureau-PR #1922 ist mit Head c875ae83cf136006e2063ebb21a2a9563334a1f9 als Merge-Commit 49a03eb0c1089e4d2dd7e936487b410df47a5c22 gemergt. validate (3.10), validate (3.12), CodeQL und der Merge-Group-Integrationslauf 31603632311 sind grün und der aktuelle main enthält den Schema-Paketfix.",
+      "evidence_type": "object",
+      "verifier": "required_ci_green",
+      "verifier_config": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1922,
+        "head_sha": "c875ae83cf136006e2063ebb21a2a9563334a1f9",
+        "base_ref": "main",
+        "required_checks": [
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
+      }
+    },
+    {
+      "id": "merge-group-integration-green",
+      "assertion": "Der durch die Merge Queue erzeugte Integrationsstand 49a03eb0c1089e4d2dd7e936487b410df47a5c22 wurde im merge_group-Run 31603632311 mit validate (3.10) und validate (3.12) erfolgreich geprüft und ist der tatsächliche #1922-Merge-Commit.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:merge-group-31603632311"
+      }
+    },
+    {
+      "id": "reviewed-bootstrap-registration-and-seed",
+      "assertion": "Diese Authority wird als genau eine neue TaskSpec-Datei über einen geschützten Pull Request registriert. Danach bestätigt ein Preflight, dass im autoritativen StateStore genau diese reviewte Registry-TaskSpec fehlt; ausschließlich seed_missing_registry importiert sie mit legacy-git-seed, ohne vorhandene StateStore-Specs zu überschreiben. Readback bindet Task-ID, Revision, Digest, state=ready und den strukturierten Single-Use-Vertrag.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:reviewed-bootstrap-registration-and-seed"
+      }
+    },
+    {
+      "id": "authoritative-state-store-preflight",
+      "assertion": "Vor prepare-intent und unmittelbar vor apply bestätigt die autoritative StateStore-TaskSpec diese exakte Task-ID mit positiver Revision und Digest, state ready oder active, runtime_refresh_authority single-use-target-bound sowie ohne fremde target_binding_receipt, consumption oder runtime_closeout.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:authoritative-state-store-preflight"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller main-Commit, zugehöriger gemergter PR, validate (3.10), validate (3.12) und target_sha256 frisch beobachtet; jede Main-, Check-, Manifest- oder Registry-Drift verwirft den Kandidaten vor Wirkung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "source-mode-cas-bootstrap",
+      "assertion": "Weil der installierte f527-Release den für TaskSpec-CAS nötigen Schema-Baum nicht enthält, wird der normale runtime_refresh apply ausschließlich aus einem sauberen expliziten Bureau-Checkout ausgeführt, dessen HEAD exakt origin/main entspricht und dessen Modulquelle und Registry derselbe Checkout sind. Der vollständige StateStore-/Target-/Intent-/Lease-CAS bleibt erhalten; ops/install-bureau-runtime.py wird nicht als Standalone-Mutationsshortcut aufgerufen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:source-mode-cas-bootstrap"
+      }
+    },
+    {
+      "id": "target-and-lease-binding",
+      "assertion": "Die Break-Glass-Freigabe bindet diese exakte Task-ID und reference an den frisch beobachteten target_sha256; apply verwendet ausschließlich alle im Intent geforderten Grabowski-Live-Leases mit identischem Owner-/Task-Kontext. Fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed vor Wirkung ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:target-and-lease-binding"
+      }
+    },
+    {
+      "id": "single-effect-and-closeout",
+      "assertion": "Genau ein effect_started=true-Runtime-Refresh ist dieser Task-ID zugeordnet. Nach eindeutig erfolgreichem immutable Readback und Lease-Release wird closeout-authority mit exakter Task-ID, target_sha256, intent_sha256 und result_sha256 ausgeführt; danach ist die Authority verified und jede Wiederverwendung ausgeschlossen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:single-effect-and-closeout"
+      }
+    },
+    {
+      "id": "immutable-readback-includes-schemas",
+      "assertion": "Nach apply stimmen Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot auf denselben source commit. Das Release enthält die kanonischen schemas/*.json einschließlich resource.v1.schema.json; default_schema_set(), bureau check und runtime-identity sind aus dem installierten Release gültig.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:immutable-readback-includes-schemas"
+      }
+    },
+    {
+      "id": "authority-boundary-and-no-retry",
+      "assertion": "Die Task autorisiert keine Grabowski-Runtime-, Queue-, Claim-, Dispatch-, Fremdarbeits- oder weitere Bureau-Wirkung. Bei unklarem Ergebnis oder Fehler nach Effect-Start erfolgt kein Blind-Retry; ausschließlich receipt-, target- und StateStore-gebundener Readback/Reconciliation entscheidet über das weitere Vorgehen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-schema-packaging:authority-boundary-and-no-retry"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Wahrheit behaupten und keinen Apply blind wiederholen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten beziehungsweise den bestehenden receipt-, target- und StateStore-gebundenen Reconciliation-/Rollbackpfad verwenden; keine StateStore-, Consumption- oder Registry-Historie zurückschreiben."
+  },
+  "metadata": {
+    "source_candidate_id": "candidate-1d50440b64f02ab098a5bb8d",
+    "source_candidate_event_id": 6269,
+    "packaging_candidate_id": "candidate-69a5201b813ce99c13845d36",
+    "packaging_candidate_event_id": 6256,
+    "required_packaging_pull_request": 1922,
+    "required_packaging_pr_head": "c875ae83cf136006e2063ebb21a2a9563334a1f9",
+    "required_packaging_merge_commit": "49a03eb0c1089e4d2dd7e936487b410df47a5c22",
+    "required_merge_group_run_id": 31603632311,
+    "installed_runtime_before_authority": "f5271fd1ee2f2a11044b7f685ada39b2b7b0a503",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Der installierte f527-Release enthält den durch PR #1919 für reguläre TaskSpec-Writes benötigten Schema-Baum nicht. Deshalb wird ausschließlich diese neue reviewte Authority-TaskSpec per geschütztem Ein-Datei-PR registriert und anschließend mit seed_missing_registry als fehlende Spec importiert; vorhandene StateStore-Revisionen bleiben autoritativ und unverändert.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary TaskSpecs",
+        "direct SQLite mutation authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime mutation authority before StateStore seed readback"
+      ]
+    },
+    "does_not_establish": [
+      "konkrete Deploymentfreigabe ohne frischen target_sha256",
+      "wiederverwendbare Runtime-Autorität",
+      "Autorität für Grabowski-Runtime",
+      "Permission to bypass StateStore, CI, leases or immutable readback"
+    ]
+  }
+}

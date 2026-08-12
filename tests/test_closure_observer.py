@@ -1318,6 +1318,18 @@ def test_pr1907_corrected_task_preserves_authoritative_content_and_exact_check_s
     assert len(set(manual_scopes)) == 4
 
 
+def test_canonical_pr1907_registry_task_matches_corrected_contract() -> None:
+    task_path = (
+        Path(__file__).parents[1]
+        / "registry"
+        / "tasks"
+        / f"{PR1907_TASK_ID}.json"
+    )
+    canonical = json.loads(task_path.read_text(encoding="utf-8"))
+
+    assert canonical == corrected_pr1907_task()
+
+
 def test_pr1907_real_production_reconcile_requires_four_manual_attestations(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:

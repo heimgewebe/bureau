@@ -51,7 +51,15 @@ def runtime_authority_spec(task_id: str, *, state: str = "ready") -> dict[str, A
                 "note": "Hermetic single-use runtime authority.",
             },
         },
-        "acceptance": [],
+        "acceptance": [
+            {
+                "id": "runtime-authority-proof",
+                "assertion": "The hermetic runtime authority remains target-bound.",
+                "evidence_type": "object",
+                "verifier": "manual_observation",
+                "verifier_config": {"observation_scope": f"test:{task_id}:runtime-authority"},
+            }
+        ],
         "rollback": {"strategy": "Preserve the last immutable runtime."},
         "metadata": {
             "runtime_refresh_authority": {
@@ -71,9 +79,7 @@ def runtime_authority_spec(task_id: str, *, state: str = "ready") -> dict[str, A
     }
 
 
-def seed_authority_store(
-    root: Path, task_id: str, *, state: str = "ready"
-) -> StateStore:
+def seed_authority_store(root: Path, task_id: str, *, state: str = "ready") -> StateStore:
     state_root = root.resolve()
     store = StateStore(state_root / "bureau.sqlite3", state_root)
     spec = runtime_authority_spec(task_id, state=state)
@@ -199,9 +205,7 @@ def prepare_candidate_intent(
 ) -> tuple[dict[str, Any], Path, dict[str, Any], Path]:
     observed, manifest_path = candidate(tmp_path)
     state_root = (tmp_path / "state").resolve()
-    authority_store = seed_authority_store(
-        tmp_path / "bureau-state", task_id
-    )
+    authority_store = seed_authority_store(tmp_path / "bureau-state", task_id)
     intent, intent_path = refresh.prepare_intent(
         candidate=observed,
         state_root=state_root,
@@ -304,13 +308,9 @@ def prepare_legacy_cutover(
     legacy["expires_at"] = refresh.isoformat(current + timedelta(minutes=15))
     legacy["nonce"] = "legacy-cutover-test"
     legacy = refresh.bind_digest(legacy, "intent_sha256")
-    intent_path = (
-        Path(legacy["state_root"]) / "intents" / f"{legacy['intent_sha256']}.json"
-    )
+    intent_path = Path(legacy["state_root"]) / "intents" / f"{legacy['intent_sha256']}.json"
     refresh.create_only(intent_path, refresh.canonical_bytes(legacy))
-    binding, resource_db = lease_for(
-        tmp_path / "legacy-leases", legacy, current=current
-    )
+    binding, resource_db = lease_for(tmp_path / "legacy-leases", legacy, current=current)
     normalized = refresh.validate_live_lease_binding(
         legacy, binding, resource_db=resource_db, now=current
     )
@@ -328,10 +328,7 @@ def prepare_legacy_cutover(
         "start_sha256",
     )
     refresh.create_only(
-        Path(legacy["state_root"])
-        / "attempts"
-        / legacy["target_sha256"]
-        / "started.json",
+        Path(legacy["state_root"]) / "attempts" / legacy["target_sha256"] / "started.json",
         refresh.canonical_bytes(started),
     )
     return legacy, intent_path, manifest_path, resource_db, started
@@ -410,9 +407,7 @@ def historical_no_run_success(
     intent.pop("authority_task_spec")
     intent["nonce"] = "historical-no-run-bootstrap"
     intent = refresh.bind_digest(intent, "intent_sha256")
-    intent_path = (
-        Path(intent["state_root"]) / "intents" / f"{intent['intent_sha256']}.json"
-    )
+    intent_path = Path(intent["state_root"]) / "intents" / f"{intent['intent_sha256']}.json"
     refresh.create_only(intent_path, refresh.canonical_bytes(intent))
     lease_binding, resource_db = lease_for(tmp_path / "historical-leases", intent)
     normalized_binding = refresh.validate_live_lease_binding(
@@ -432,9 +427,7 @@ def historical_no_run_success(
         "start_sha256",
     )
     attempt_dir = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
-    refresh.create_only(
-        attempt_dir / "started.json", refresh.canonical_bytes(started)
-    )
+    refresh.create_only(attempt_dir / "started.json", refresh.canonical_bytes(started))
     readback = {
         "source_commit": intent["main_commit"],
         "manifest_sha256": "a" * 64,
@@ -690,9 +683,7 @@ def test_apply_rechecks_exact_authoritative_revision_before_any_effect(
         )
 
     assert error.value.code == "authority-task-drift"
-    assert not (
-        Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
-    ).exists()
+    assert not (Path(intent["state_root"]) / "attempts" / intent["target_sha256"]).exists()
 
 
 @pytest.mark.parametrize(
@@ -808,8 +799,7 @@ def test_prepare_intent_omits_stable_launchers_and_requires_only_drift(tmp_path:
     assert f"path:{status_capsule}" in drift_intent["required_resource_keys"]
     assert f"path:{bin_dir / 'bureau'}" not in drift_intent["required_resource_keys"]
     assert (
-        f"path:{bin_dir / 'bureau-runtime-refresh'}"
-        not in drift_intent["required_resource_keys"]
+        f"path:{bin_dir / 'bureau-runtime-refresh'}" not in drift_intent["required_resource_keys"]
     )
 
 
@@ -823,9 +813,7 @@ def test_apply_blocks_launcher_drift_absent_from_intent_before_observer(tmp_path
         path.write_bytes(refresh.stable_launcher_bytes(manifest_path, entrypoint))
         path.chmod(0o755)
     state_root = (tmp_path / "state").resolve()
-    authority_store = seed_authority_store(
-        tmp_path / "bureau-state", "BUR-STABLE-LAUNCHER-DRIFT"
-    )
+    authority_store = seed_authority_store(tmp_path / "bureau-state", "BUR-STABLE-LAUNCHER-DRIFT")
     intent, intent_path = refresh.prepare_intent(
         candidate=observed,
         state_root=state_root,
@@ -859,9 +847,7 @@ def test_apply_blocks_launcher_drift_absent_from_intent_before_observer(tmp_path
 
 def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
     observed, _ = candidate(tmp_path)
-    authority_store = seed_authority_store(
-        tmp_path / "bureau-state", "BUR-2026-003-T009"
-    )
+    authority_store = seed_authority_store(tmp_path / "bureau-state", "BUR-2026-003-T009")
     intent, intent_path = refresh.prepare_intent(
         candidate=observed,
         state_root=(tmp_path / "short-state").resolve(),
@@ -890,9 +876,7 @@ def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) ->
         "remaining_seconds": 599,
         "minimum_remaining_seconds": 600,
     }
-    assert not (
-        Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
-    ).exists()
+    assert not (Path(intent["state_root"]) / "attempts" / intent["target_sha256"]).exists()
 
 
 def test_prepare_intent_rejects_tampered_or_blocked_candidate(tmp_path: Path) -> None:
@@ -949,12 +933,7 @@ def test_legacy_cutover_requires_started_attempt_manifest_and_live_leases(
     assert decision["legacy_cutover"]["intent_sha256"] == legacy["intent_sha256"]
     assert decision["legacy_cutover"]["start_sha256"] == started["start_sha256"]
 
-    result_path = (
-        Path(legacy["state_root"])
-        / "attempts"
-        / legacy["target_sha256"]
-        / "result.json"
-    )
+    result_path = Path(legacy["state_root"]) / "attempts" / legacy["target_sha256"] / "result.json"
     refresh.create_only(
         result_path,
         refresh.canonical_bytes({"status": "failed-before-cutover"}),
@@ -1037,9 +1016,7 @@ def test_apply_requires_status_capsule_launcher_lease_before_effect(tmp_path: Pa
     status_key = f"path:{Path(intent['bin_dir']) / 'bureau-status-capsule'}"
     assert status_key in intent["required_resource_keys"]
 
-    binding, missing_db = lease_for(
-        tmp_path / "status-missing", intent, omit={status_key}
-    )
+    binding, missing_db = lease_for(tmp_path / "status-missing", intent, omit={status_key})
     with pytest.raises(refresh.RuntimeRefreshError) as missing:
         refresh.apply_runtime_refresh(
             intent_path=intent_path,
@@ -1444,6 +1421,46 @@ def test_success_consumes_authority_and_exact_result_replay_is_idempotent(
     assert error.value.code == "authority-already-consumed"
 
 
+def test_consumption_rejects_task_spec_drift_after_target_binding(
+    tmp_path: Path,
+) -> None:
+    observed, _manifest_path, intent, _intent_path = prepare_candidate_intent(tmp_path)
+    store = authority_store_for_intent(intent)
+    bound = refresh.bind_runtime_refresh_authority(store=store, intent=intent, now=NOW)
+    result = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "deployed",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound,
+            "finished_at": refresh.isoformat(NOW),
+            "effect_started": True,
+            "lease_binding": {"lease_binding_sha256": "a" * 64},
+        },
+        "result_sha256",
+    )
+    revise_authority(
+        store,
+        intent["approval_task_id"],
+        lambda spec: spec.__setitem__("title", "Concurrent post-binding drift"),
+        key="post-binding-drift",
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.consume_runtime_refresh_authority(
+            store=store, intent=intent, result=result, now=NOW
+        )
+
+    assert caught.value.code == "authority-task-drift-after-effect"
+    current = store.task_spec(intent["approval_task_id"])
+    assert current is not None
+    assert current["spec"]["metadata"]["runtime_refresh_authority"].get("consumption") is None
+    assert observed["target_sha256"] == intent["target_sha256"]
+
+
 def test_tampered_result_and_consumption_are_rejected_on_replay(tmp_path: Path) -> None:
     (
         _,
@@ -1454,12 +1471,7 @@ def test_tampered_result_and_consumption_are_rejected_on_replay(tmp_path: Path) 
         result,
         resource_db,
     ) = apply_successfully(tmp_path)
-    result_path = (
-        Path(intent["state_root"])
-        / "attempts"
-        / intent["target_sha256"]
-        / "result.json"
-    )
+    result_path = Path(intent["state_root"]) / "attempts" / intent["target_sha256"] / "result.json"
     tampered_result = dict(result)
     tampered_result["status"] = "failed"
     result_path.write_bytes(refresh.canonical_bytes(tampered_result))
@@ -1477,9 +1489,7 @@ def test_tampered_result_and_consumption_are_rejected_on_replay(tmp_path: Path) 
     result_path.write_bytes(refresh.canonical_bytes(result))
 
     def tamper_consumption(spec: dict[str, Any]) -> None:
-        spec["metadata"]["runtime_refresh_authority"]["consumption"][
-            "result_sha256"
-        ] = "f" * 64
+        spec["metadata"]["runtime_refresh_authority"]["consumption"]["result_sha256"] = "f" * 64
 
     revise_authority(
         store,
@@ -1686,12 +1696,8 @@ def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) ->
         "BUREAU-TRUTH-MODEL-V2-T029",
     ],
 )
-def test_no_run_closeout_is_receipt_bound_and_idempotent(
-    tmp_path: Path, task_id: str
-) -> None:
-    intent, store, result, resource_db = historical_no_run_success(
-        tmp_path, task_id=task_id
-    )
+def test_no_run_closeout_is_receipt_bound_and_idempotent(tmp_path: Path, task_id: str) -> None:
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
     assert "authority_state_store" not in intent
     assert "authority_task_spec" not in intent
     assert store.list_runs() == []
@@ -1736,6 +1742,83 @@ def test_no_run_closeout_is_receipt_bound_and_idempotent(
     )
     assert replay["idempotent_replay"] is True
     assert store.task_spec(task_id)["revision"] == terminal_revision
+    assert store.list_runs() == []
+
+
+def test_no_run_closeout_rejects_historical_multi_use_of_single_use_authority(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    state_root = Path(intent["state_root"])
+    second_intent = json.loads(json.dumps(intent))
+    second_intent["target_sha256"] = "e" * 64
+    second_intent["main_commit"] = "4" * 40
+    second_intent["nonce"] = "historical-second-use"
+    second_intent = refresh.bind_digest(second_intent, "intent_sha256")
+    refresh.create_only(
+        state_root / "intents" / f"{second_intent['intent_sha256']}.json",
+        refresh.canonical_bytes(second_intent),
+    )
+    second_attempt = state_root / "attempts" / second_intent["target_sha256"]
+    second_started = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "intent_sha256": second_intent["intent_sha256"],
+            "target_sha256": second_intent["target_sha256"],
+            "main_commit": second_intent["main_commit"],
+            "lease_binding": result["lease_binding"],
+            "started_at": refresh.isoformat(NOW + timedelta(minutes=1)),
+            "effect_started": False,
+        },
+        "start_sha256",
+    )
+    refresh.create_only(second_attempt / "started.json", refresh.canonical_bytes(second_started))
+    second_result = refresh._write_attempt_result(
+        second_attempt / "result.json",
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "deployed",
+            "intent_sha256": second_intent["intent_sha256"],
+            "target_sha256": second_intent["target_sha256"],
+            "main_commit": second_intent["main_commit"],
+            "source_identity": {"head": second_intent["main_commit"]},
+            "install_receipt": result["install_receipt"],
+            "readback": {**result["readback"], "source_commit": second_intent["main_commit"]},
+            "lease_binding": result["lease_binding"],
+            "finished_at": refresh.isoformat(NOW + timedelta(minutes=1)),
+            "effect_started": True,
+        },
+    )
+    release_test_leases(resource_db)
+    before = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=state_root,
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=20),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-historical-multi-use"
+    assert caught.value.details["conflicts"] == [
+        {
+            "intent_sha256": second_intent["intent_sha256"],
+            "target_sha256": second_intent["target_sha256"],
+            "result_sha256": second_result["result_sha256"],
+            "status": "deployed",
+            "main_commit": second_intent["main_commit"],
+        }
+    ]
+    assert store.task_spec(task_id) == before
     assert store.list_runs() == []
 
 
@@ -1797,12 +1880,7 @@ def test_no_run_closeout_rejects_missing_release_and_wrong_or_tampered_evidence(
         )
     assert target_error.value.code == "authority-closeout-intent-mismatch"
 
-    result_path = (
-        Path(intent["state_root"])
-        / "attempts"
-        / intent["target_sha256"]
-        / "result.json"
-    )
+    result_path = Path(intent["state_root"]) / "attempts" / intent["target_sha256"] / "result.json"
     tampered = dict(result)
     tampered["readback"] = {"source_commit": "f" * 40}
     result_path.write_bytes(refresh.canonical_bytes(tampered))
@@ -1920,9 +1998,7 @@ else:
     assert result["check_valid"] is True
     assert result["runtime_identity_valid"] is True
     assert result["source_commit"] == MAIN
-    assert result["status_capsule_launcher_sha256"] == receipt[
-        "status_capsule_launcher_sha256"
-    ]
+    assert result["status_capsule_launcher_sha256"] == receipt["status_capsule_launcher_sha256"]
     assert result["rollback"] == {"directory": "/rollback"}
 
     status_capsule.unlink()
@@ -2318,12 +2394,8 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         },
         "intent_sha256",
     )
-    legacy_intent_path = (
-        legacy_state / "intents" / f"{legacy_intent['intent_sha256']}.json"
-    )
-    refresh.create_only(
-        legacy_intent_path, refresh.canonical_bytes(legacy_intent)
-    )
+    legacy_intent_path = legacy_state / "intents" / f"{legacy_intent['intent_sha256']}.json"
+    refresh.create_only(legacy_intent_path, refresh.canonical_bytes(legacy_intent))
     legacy_binding, legacy_resource_db = lease_for(
         tmp_path / "legacy-installer-leases",
         legacy_intent,
@@ -2376,10 +2448,7 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         path.name: refresh.sha256_bytes(path.read_bytes())
         for path in (bureau, runner, status_capsule)
     }
-    assert (
-        legacy_receipt["runtime_approval"]["required_level"]
-        == "legacy_runtime_operator_gate"
-    )
+    assert legacy_receipt["runtime_approval"]["required_level"] == "legacy_runtime_operator_gate"
     legacy_cutover = legacy_receipt["runtime_approval"]["legacy_cutover"]
     assert legacy_cutover["intent_sha256"] == legacy_intent["intent_sha256"]
     assert legacy_cutover["start_sha256"] == legacy_started["start_sha256"]

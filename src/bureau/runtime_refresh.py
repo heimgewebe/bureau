@@ -46,6 +46,7 @@ GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY = "resource_lease_contract_versio
 SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS = frozenset({"1"})
 DEFAULT_GRABOWSKI_RESOURCE_DB = Path("~/.local/state/grabowski/resources.sqlite3").expanduser()
 MAX_JSON_BYTES = 256 * 1024
+MAX_RUNTIME_AUTHORITY_HISTORY_INTENTS = 4096
 RUNTIME_LAUNCHER_MANAGED_MARKER = "# managed-by: heimgewebe-bureau-runtime-v1"
 RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD = "manifest_payload_sha256"
 RUNTIME_LAUNCHER_ENTRYPOINTS = (
@@ -1010,9 +1011,7 @@ def validate_authoritative_runtime_refresh_task(
         )
     binding_value = authority.get("target_binding_receipt")
     binding = (
-        _validated_authority_target_binding(binding_value)
-        if binding_value is not None
-        else None
+        _validated_authority_target_binding(binding_value) if binding_value is not None else None
     )
     if binding is not None:
         if binding["task_id"] != approval_task_id or binding["target_sha256"] != target_sha256:
@@ -1108,18 +1107,15 @@ def bind_runtime_refresh_authority(
         source="runtime-refresh-authority-target-binding",
     )
     readback = _read_authority_task(store, expected["task_id"])
-    if (
-        readback.get("revision") != changed.get("revision")
-        or readback.get("spec_sha256") != changed.get("spec_sha256")
-    ):
+    if readback.get("revision") != changed.get("revision") or readback.get(
+        "spec_sha256"
+    ) != changed.get("spec_sha256"):
         raise RuntimeRefreshError(
             "authority-target-binding-readback-failed",
             "target-bound TaskSpec readback differs from the CAS result",
         )
     _validated_authority_target_binding(
-        readback["spec"]["metadata"]["runtime_refresh_authority"].get(
-            "target_binding_receipt"
-        )
+        readback["spec"]["metadata"]["runtime_refresh_authority"].get("target_binding_receipt")
     )
     return {
         "task_id": expected["task_id"],
@@ -1131,9 +1127,7 @@ def bind_runtime_refresh_authority(
     }
 
 
-def _validate_result_for_intent(
-    result: dict[str, Any], intent: dict[str, Any]
-) -> dict[str, Any]:
+def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) -> dict[str, Any]:
     verify_digest(result, "result_sha256")
     if (
         result.get("schema_version") != SCHEMA_VERSION
@@ -1194,6 +1188,54 @@ def consume_runtime_refresh_authority(
             "consumption": existing,
             "idempotent_replay": True,
         }
+    bound_authority = result.get("authority_task_spec")
+    if not isinstance(bound_authority, dict):
+        raise RuntimeRefreshError(
+            "authority-consumption-binding-invalid",
+            "successful result has no post-binding TaskSpec authority record",
+        )
+    bound_binding = _validated_authority_target_binding(
+        bound_authority.get("target_binding_receipt")
+    )
+    if (
+        bound_authority.get("task_id") != expected["task_id"]
+        or not isinstance(bound_authority.get("revision"), int)
+        or isinstance(bound_authority.get("revision"), bool)
+        or bound_authority["revision"] < 1
+        or not _is_sha256(bound_authority.get("spec_sha256"))
+        or bound_authority.get("authority_revision") != expected["revision"]
+        or bound_authority.get("authority_spec_sha256") != expected["spec_sha256"]
+        or bound_binding["task_id"] != expected["task_id"]
+        or bound_binding["target_sha256"] != intent["target_sha256"]
+        or bound_binding["intent_sha256"] != intent["intent_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "authority-consumption-binding-invalid",
+            "successful result TaskSpec binding differs from the original authority intent",
+        )
+    if (
+        current.get("revision") != bound_authority["revision"]
+        or current.get("spec_sha256") != bound_authority["spec_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "authority-task-drift-after-effect",
+            "authoritative TaskSpec changed after target binding and before consumption",
+            details={
+                "expected_revision": bound_authority["revision"],
+                "observed_revision": current.get("revision"),
+                "expected_spec_sha256": bound_authority["spec_sha256"],
+                "observed_spec_sha256": current.get("spec_sha256"),
+            },
+        )
+    validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=expected["task_id"],
+        target_sha256=intent["target_sha256"],
+        expected_revision=bound_authority["revision"],
+        expected_spec_sha256=bound_authority["spec_sha256"],
+        expected_intent_sha256=intent["intent_sha256"],
+        allow_bound_intent=True,
+    )
     binding = _validated_authority_target_binding(authority.get("target_binding_receipt"))
     if (
         binding["task_id"] != expected["task_id"]
@@ -1835,9 +1877,7 @@ def validate_legacy_runtime_refresh_bootstrap(
             continue
         if intent.get("main_commit") != expected_source_commit:
             continue
-        if expires <= current + timedelta(
-            seconds=DEFAULT_MIN_LEGACY_CUTOVER_REMAINING_SECONDS
-        ):
+        if expires <= current + timedelta(seconds=DEFAULT_MIN_LEGACY_CUTOVER_REMAINING_SECONDS):
             continue
         if (
             not isinstance(intent.get("authorized_by"), str)
@@ -1859,8 +1899,7 @@ def validate_legacy_runtime_refresh_bootstrap(
         if Path(raw_bin_dir).expanduser().resolve() != resolved_bin_dir:
             continue
         if (
-            intent.get("expected_deployed_source_commit")
-            != deployed_manifest.get("source_commit")
+            intent.get("expected_deployed_source_commit") != deployed_manifest.get("source_commit")
             or intent.get("expected_manifest_sha256") != deployed_manifest_sha
         ):
             continue
@@ -1934,12 +1973,10 @@ def validate_legacy_runtime_refresh_bootstrap(
             stored_by_key[key].get("owner_id") == live_by_key[key].get("owner_id")
             and stored_by_key[key].get("acquired_at_unix")
             == live_by_key[key].get("acquired_at_unix")
-            and stored_by_key[key].get("metadata_sha256")
-            == live_by_key[key].get("metadata_sha256")
+            and stored_by_key[key].get("metadata_sha256") == live_by_key[key].get("metadata_sha256")
             and isinstance(stored_by_key[key].get("expires_at_unix"), int)
             and isinstance(live_by_key[key].get("expires_at_unix"), int)
-            and live_by_key[key]["expires_at_unix"]
-            >= stored_by_key[key]["expires_at_unix"]
+            and live_by_key[key]["expires_at_unix"] >= stored_by_key[key]["expires_at_unix"]
             for key in stored_by_key
         )
         if not same_lease_lineage:
@@ -2276,8 +2313,7 @@ def validate_released_lease_binding(
         connection.execute("PRAGMA query_only=ON")
         connection.execute("BEGIN")
         metadata_rows = connection.execute(
-            "SELECT key,value FROM metadata "
-            "WHERE key IN ('schema_version',?) ORDER BY key",
+            "SELECT key,value FROM metadata WHERE key IN ('schema_version',?) ORDER BY key",
             (GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY,),
         ).fetchall()
         rows = connection.execute(
@@ -2296,19 +2332,19 @@ def validate_released_lease_binding(
         if "connection" in locals():
             connection.close()
     metadata = {str(row["key"]): str(row["value"]) for row in metadata_rows}
-    if len(metadata_rows) != 2 or metadata.get(
-        GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY
-    ) not in SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS:
+    if (
+        len(metadata_rows) != 2
+        or metadata.get(GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY)
+        not in SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS
+    ):
         raise RuntimeRefreshError(
             "authority-closeout-lease-contract-invalid",
             "Grabowski lease store does not expose the supported release-readback contract",
             details={"metadata": metadata},
         )
-    if (
-        metadata.get("schema_version") != binding.get("resource_db_schema_version")
-        or metadata.get(GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY)
-        != binding.get("resource_lease_contract_version")
-    ):
+    if metadata.get("schema_version") != binding.get("resource_db_schema_version") or metadata.get(
+        GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY
+    ) != binding.get("resource_lease_contract_version"):
         raise RuntimeRefreshError(
             "authority-closeout-lease-contract-drift",
             "Grabowski lease store contract drifted after the runtime result",
@@ -2316,9 +2352,7 @@ def validate_released_lease_binding(
                 "expected_schema": binding.get("resource_db_schema_version"),
                 "observed_schema": metadata.get("schema_version"),
                 "expected_contract": binding.get("resource_lease_contract_version"),
-                "observed_contract": metadata.get(
-                    GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY
-                ),
+                "observed_contract": metadata.get(GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY),
             },
         )
     if rows:
@@ -2427,6 +2461,80 @@ def _validate_state_store_health(store: Any) -> dict[str, Any]:
     }
 
 
+def _runtime_authority_effect_history(
+    state_root: Path, approval_task_id: str
+) -> list[dict[str, Any]]:
+    """Return bounded, digest-verified effects attributed to one approval TaskSpec."""
+    intents_root = state_root / "intents"
+    if not intents_root.exists():
+        return []
+    if intents_root.is_symlink() or not intents_root.is_dir():
+        raise RuntimeRefreshError(
+            "authority-history-root-invalid",
+            "runtime-refresh intent history root is not a regular directory",
+        )
+    try:
+        entries = sorted(intents_root.iterdir(), key=lambda item: item.name)
+    except OSError as exc:
+        raise RuntimeRefreshError(
+            "authority-history-read-failed",
+            "runtime-refresh intent history cannot be listed",
+            details={"error": str(exc)},
+        ) from exc
+    if len(entries) > MAX_RUNTIME_AUTHORITY_HISTORY_INTENTS:
+        raise RuntimeRefreshError(
+            "authority-history-too-large",
+            "runtime-refresh intent history exceeds the bounded closeout scan",
+            details={
+                "limit": MAX_RUNTIME_AUTHORITY_HISTORY_INTENTS,
+                "observed": len(entries),
+            },
+        )
+    effects: list[dict[str, Any]] = []
+    for path in entries:
+        if path.suffix != ".json":
+            continue
+        intent = read_json(path)
+        verify_digest(intent, "intent_sha256")
+        intent_sha256 = intent.get("intent_sha256")
+        if path.name != f"{intent_sha256}.json":
+            raise RuntimeRefreshError(
+                "authority-history-intent-path-mismatch",
+                "persisted runtime-refresh intent filename differs from its digest",
+                details={"path": str(path)},
+            )
+        if intent.get("approval_task_id") != approval_task_id:
+            continue
+        target_sha256 = intent.get("target_sha256")
+        if not _is_sha256(target_sha256):
+            raise RuntimeRefreshError(
+                "authority-history-intent-invalid",
+                "runtime-refresh authority history contains an invalid target digest",
+                details={"intent_sha256": intent_sha256},
+            )
+        result_path = state_root / "attempts" / target_sha256 / "result.json"
+        if not result_path.exists():
+            continue
+        raw_result = read_json(result_path)
+        # Multiple intents for one target intentionally share one attempt ledger.
+        # Attribute the effect only to the intent that actually produced the result.
+        if raw_result.get("intent_sha256") != intent_sha256:
+            continue
+        result = _validate_result_for_intent(raw_result, intent)
+        if result.get("effect_started") is not True:
+            continue
+        effects.append(
+            {
+                "intent_sha256": intent_sha256,
+                "target_sha256": target_sha256,
+                "result_sha256": result["result_sha256"],
+                "status": result.get("status"),
+                "main_commit": intent.get("main_commit"),
+            }
+        )
+    return effects
+
+
 def closeout_runtime_refresh_authority(
     *,
     state_root: Path,
@@ -2456,8 +2564,7 @@ def closeout_runtime_refresh_authority(
         intent.get("intent_sha256") != intent_sha256
         or intent.get("approval_task_id") != approval_task_id
         or intent.get("target_sha256") != target_sha256
-        or Path(str(intent.get("state_root", ""))).expanduser().resolve()
-        != resolved_state_root
+        or Path(str(intent.get("state_root", ""))).expanduser().resolve() != resolved_state_root
     ):
         raise RuntimeRefreshError(
             "authority-closeout-intent-mismatch",
@@ -2484,6 +2591,37 @@ def closeout_runtime_refresh_authority(
             "authority-closeout-result-not-deployed",
             "no-run closeout requires a terminal deployed result",
             details={"status": result.get("status")},
+        )
+    effect_history = _runtime_authority_effect_history(resolved_state_root, approval_task_id)
+    requested_effect = {
+        "intent_sha256": intent_sha256,
+        "target_sha256": target_sha256,
+        "result_sha256": result_sha256,
+    }
+    matching_effects = [
+        item
+        for item in effect_history
+        if all(item.get(key) == value for key, value in requested_effect.items())
+    ]
+    conflicting_effects = [
+        item
+        for item in effect_history
+        if not all(item.get(key) == value for key, value in requested_effect.items())
+    ]
+    if len(matching_effects) != 1:
+        raise RuntimeRefreshError(
+            "authority-closeout-history-mismatch",
+            "requested deployed result is not uniquely represented in authority history",
+            details={"requested": requested_effect, "effects": effect_history},
+        )
+    if conflicting_effects:
+        raise RuntimeRefreshError(
+            "authority-closeout-historical-multi-use",
+            (
+                "single-use runtime authority has other effect-started attempts and "
+                "cannot be verified by one no-run closeout"
+            ),
+            details={"requested": requested_effect, "conflicts": conflicting_effects},
         )
     if (
         started.get("schema_version") != SCHEMA_VERSION
@@ -2517,9 +2655,7 @@ def closeout_runtime_refresh_authority(
         )
     store = _closeout_authority_store(intent, authority_store)
     try:
-        task_runs = [
-            run for run in store.list_runs() if run.get("task_id") == approval_task_id
-        ]
+        task_runs = [run for run in store.list_runs() if run.get("task_id") == approval_task_id]
     except (legacy.StateError, OSError, sqlite3.Error) as exc:
         raise RuntimeRefreshError(
             "authority-closeout-run-read-failed",
@@ -2599,9 +2735,7 @@ def closeout_runtime_refresh_authority(
     }
     existing_consumption_value = authority.get("consumption")
     if existing_consumption_value is not None:
-        existing_consumption = _validated_authority_consumption(
-            existing_consumption_value
-        )
+        existing_consumption = _validated_authority_consumption(existing_consumption_value)
         comparable = dict(expected_consumption)
         comparable["consumed_at"] = existing_consumption["consumed_at"]
         if existing_consumption != comparable:
@@ -2751,8 +2885,7 @@ def apply_runtime_refresh(
                 result_intent.get("approval_task_id") != intent.get("approval_task_id")
                 or result_intent.get("target_sha256") != intent.get("target_sha256")
                 or result_intent.get("main_commit") != intent.get("main_commit")
-                or result_intent.get("authority_state_store")
-                != intent.get("authority_state_store")
+                or result_intent.get("authority_state_store") != intent.get("authority_state_store")
             ):
                 raise RuntimeRefreshError(
                     "result-intent-binding-invalid",
@@ -2806,9 +2939,7 @@ def apply_runtime_refresh(
     prefix = Path(intent["prefix"]).expanduser().resolve()
     bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
     intent_resource_keys = set(intent.get("required_resource_keys", []))
-    live_launcher_keys = set(
-        launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir)
-    )
+    live_launcher_keys = set(launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir))
     unleased_launcher_drift = sorted(live_launcher_keys - intent_resource_keys)
     if unleased_launcher_drift:
         raise RuntimeRefreshError(
@@ -2831,9 +2962,7 @@ def apply_runtime_refresh(
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")
     if live.get("status") == "already_current":
-        bound_authority = bind_runtime_refresh_authority(
-            store=store, intent=intent, now=current
-        )
+        bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
         started = bind_digest(
             {
                 "schema_version": SCHEMA_VERSION,
@@ -2864,9 +2993,7 @@ def apply_runtime_refresh(
                 "lease_binding": binding,
             },
         )
-        consume_runtime_refresh_authority(
-            store=store, intent=intent, result=result, now=current
-        )
+        consume_runtime_refresh_authority(store=store, intent=intent, result=result, now=current)
         return result
     if live.get("status") not in {"candidate", "alert"}:
         raise RuntimeRefreshError(
@@ -2891,9 +3018,7 @@ def apply_runtime_refresh(
 
     # This CAS is the last authority operation before the attempt ledger and
     # runtime effects. It prevents two targets from racing on one TaskSpec.
-    bound_authority = bind_runtime_refresh_authority(
-        store=store, intent=intent, now=current
-    )
+    bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
     started = bind_digest(
         {
             "schema_version": SCHEMA_VERSION,
@@ -2972,9 +3097,7 @@ def apply_runtime_refresh(
         error = {"code": "unexpected-error", "message": repr(exc), "details": {}}
         status = "unclear" if effect_started else "failed"
     else:
-        consume_runtime_refresh_authority(
-            store=store, intent=intent, result=result, now=current
-        )
+        consume_runtime_refresh_authority(store=store, intent=intent, result=result, now=current)
         shutil.rmtree(workspace)
         return result
     return _write_attempt_result(

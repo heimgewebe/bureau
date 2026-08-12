@@ -251,6 +251,9 @@ Vor der einzigen TaskSpec-Wirkung werden konsistent geprüft:
 - exakte Task-, ursprüngliche Revision-/Digest-, Target-, Intent- und Consumption-Bindung;
 - persistierter digestgültiger Intent und dessen damals gültige typisierte Break-Glass-Freigabe;
 - kanonisches `deployed`-Result mit `effect_started=true` und exaktem Result-Digest;
+- bounded, digestverifizierte Intent-/Result-Historie derselben `approval_task_id`: der
+  angeforderte Effekt muss genau einmal vorkommen und **jede weitere** historische
+  `effect_started=true`-Wirkung blockiert als `authority-closeout-historical-multi-use`;
 - erneuter immutable Manifest-, Launcher-, Paket-, Registry-, `check`- und
   `runtime-identity`-Readback, bytegleich zur Result-Evidenz;
 - `StateStore.integrity()` und vollständiger Event-/TaskSpec-Replay gegen die aktuelle Projektion;
@@ -266,6 +269,20 @@ StateStore-Replay müssen passen. Ein identischer Replay ist wirkungsfrei; fremd
 nicht deployte, driftende oder manipulierte Evidenz blockiert. Terminalität wird nie aus
 Notizen, Goal- oder Acceptance-Prosa abgeleitet, und es gibt weder Direct-SQL auf Bureau
 StateStore noch Queue-/Claim-/Dispatch-Wirkung.
+
+Der historische Browser-Control-Bootstrap ist dadurch bewusst **nicht** aus einem einzelnen
+Receipt terminalisierbar. Für
+`BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811`
+existieren mehrere unterschiedliche, bereits `effect_started=true` ausgeführte
+Runtime-Refresh-Targets; darunter der in der Follow-up-Evidenz gebundene Erfolg auf
+`5c5746a980fe035661074b4a9a85d3e52634d153` mit Result
+`9b6afa43ad97b0056e7ac011c5f334e479eff2a739325d70d6b15c25f3ef6459`.
+Ein Closeout nur dieses einen Effekts würde die deklarierte Single-Use-Semantik rückwirkend
+fälschen und wird daher fail-closed abgewiesen. Die Mehrfachnutzung benötigt eine eigene
+Provenienz-/Lifecycle-Reconciliation; sie autorisiert weder einen weiteren Refresh noch
+einen Fake-Run. `BUREAU-TRUTH-MODEL-V2-T029` ist bereits mit seinem älteren
+`runtime_closeout` terminal und dient ausschließlich als Präzedenz-/Negativfall, nicht als
+erneut zu schließende Autorität.
 
 ## Historische Provenienzgrenze `affe99f…`
 
@@ -325,8 +342,8 @@ Die fokussierten Tests decken unter anderem ab:
 - stale Registry-Snapshot gegen neuere/supersedete autoritative StateStore-TaskSpec;
 - TaskSpec-Revision zwischen Prepare und Apply sowie terminale, fremde und falsch
   targetgebundene Autorität vor Wirkung;
-- revisions-/target-/resultgebundene Single-Use-Consumption, wirkungsfreien Replay und
-  manipulierte Result-/Consumption-Readbacks;
+- revisions-/target-/resultgebundene Single-Use-Consumption, Post-Binding-TaskSpec-CAS,
+  wirkungsfreien Replay und manipulierte Result-/Consumption-Readbacks;
 - fehlende, fremde, zu kurze oder öffentlich lesbare Lease-Datenbanken;
 - sauberer detached Clone und Origin-Drift;
 - intentübergreifende Deduplizierung desselben Zielhashes;
@@ -334,8 +351,9 @@ Die fokussierten Tests decken unter anderem ab:
 - Erhaltung eines fremden Dirty-Checkouts;
 - beide Launcher, Rollbackkopien und vollständiger Runtime-Readback;
 - direkten Installeraufruf ohne Approval-Intent ohne Dateiwirkung;
-- Browser-Control- und T029-artigen No-Run-Closeout, fehlende Lease-Freigabe,
-  falsche Task/Target-Bindung, manipuliertes Result und widersprüchlichen terminalen Zustand;
+- Browser-Control- und T029-artigen No-Run-Closeout, historische Mehrfachnutzung einer
+  deklarierten Single-Use-Autorität, fehlende Lease-Freigabe, falsche Task/Target-Bindung,
+  manipuliertes Result und widersprüchlichen terminalen Zustand;
 - echten synthetischen Installerlauf mit exakt source-gebundener `break_glass`-Freigabe in temporären Git-Repositories.
 
 Der Livebeweis muss nach Merge auf einem exakten neuen Bureau-`main`-Commit erfolgen: ein

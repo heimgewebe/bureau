@@ -4,9 +4,16 @@
       "assertion": "Die repositorydefinierten Required Checks bleiben exakt fail-closed; fehlend, queued, laufend oder fehlgeschlagen bleibt für Pflichtchecks blockierend.",
       "evidence_type": "object",
       "id": "required-checks-stay-strict",
-      "verifier": "manual_observation",
+      "verifier": "required_ci_green",
       "verifier_config": {
-        "observation_scope": "grabowski-optional-ci-platform-diagnostics-required-checks-stay-strict"
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 737,
+        "head_sha": "1000dc0af21f9ddeacd1823e264a5826c9a1ded6",
+        "base_ref": "main",
+        "required_checks": [
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
       }
     },
     {
@@ -15,7 +22,7 @@
       "id": "platform-inconsistency-classified",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "grabowski-optional-ci-platform-diagnostics-platform-inconsistency-classified"
+        "observation_scope": "grabowski:pr-review-gate:pr737:optional-actions-platform-inconsistency"
       }
     },
     {
@@ -24,7 +31,7 @@
       "id": "no-silent-ignore",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "grabowski-optional-ci-platform-diagnostics-no-silent-ignore"
+        "observation_scope": "grabowski:pr-review-gate:pr737:optional-platform-warning-follow-up"
       }
     },
     {
@@ -33,7 +40,7 @@
       "id": "regression",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "grabowski-optional-ci-platform-diagnostics-regression"
+        "observation_scope": "grabowski:pr-review-gate:pr737-and-candidate-a7e5f751a584281dd7519b28"
       }
     },
     {
@@ -42,7 +49,7 @@
       "id": "delivery",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "grabowski-optional-ci-platform-diagnostics-delivery"
+        "observation_scope": "grabowski:pr-review-gate:pr737-head-1000dc0af21f:review-tests-validation"
       }
     }
   ],

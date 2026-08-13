@@ -2,15 +2,30 @@
   "acceptance": [
     {
       "assertion": "The drift is demonstrated against current canonical Registry and runtime state.",
-      "id": "registry-reconciliation-1"
+      "evidence_type": "object",
+      "id": "registry-reconciliation-1",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:registry-reconciliation-b08953371e:drift"
+      }
     },
     {
       "assertion": "The minimal reconciliation preserves unrelated queue and task semantics.",
-      "id": "registry-reconciliation-2"
+      "evidence_type": "object",
+      "id": "registry-reconciliation-2",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:registry-reconciliation-b08953371e:minimal-reconciliation"
+      }
     },
     {
       "assertion": "Registry validation and lifecycle readback pass after the change.",
-      "id": "registry-reconciliation-3"
+      "evidence_type": "object",
+      "id": "registry-reconciliation-3",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:registry-reconciliation-b08953371e:postchange-validation"
+      }
     }
   ],
   "claims": [
@@ -51,6 +66,44 @@
       "schema_version": 1,
       "scope_path": "registry",
       "time_bucket": "20674"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-210648c31bda18b0afb96fd6",
+      "event_id": 6731,
+      "event_created_at": "2026-08-13T10:26:28.229754Z",
+      "request_sha256": "7ca01cba316768458cd12611f47c8af021253a10fa02a8e978c43edfd0af02a8",
+      "candidate_event_id": "candidate-event-966b058e9f724e23bab3ef6c",
+      "source_fingerprint": "171360fe56a33fb7bc8fbdcbc58ed4121476bdcbb48c415e1cc5e3c43a0c8e0c",
+      "content_fingerprint": "210648c31bda18b0afb96fd677dc9f27d8d3a73e8f91a7ba51ead6c72599ff0f",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "171360fe56a33fb7bc8fbdcbc58ed4121476bdcbb48c415e1cc5e3c43a0c8e0c",
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:task:OPERATOR-INTEGRATION-LOOP-V1-FB-REGISTRYRECONCILIATION-B08953371E@107b30edd68b74aef963a4d55a304adda2f5cbfb",
+        "observed_at": "2026-08-13T10:26:28.163135Z",
+        "sha256": "d47a258cbd153c68792373c91eb10a6258718271c46b5959be501bc16ff7543d"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "171360fe56a33fb7bc8fbdcbc58ed4121476bdcbb48c415e1cc5e3c43a0c8e0c",
+          "freshness": "digest-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau:task:OPERATOR-INTEGRATION-LOOP-V1-FB-REGISTRYRECONCILIATION-B08953371E@107b30edd68b74aef963a4d55a304adda2f5cbfb",
+          "observed_at": "2026-08-13T10:26:28.163135Z",
+          "sha256": "d47a258cbd153c68792373c91eb10a6258718271c46b5959be501bc16ff7543d"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
     }
   },
   "priority": {

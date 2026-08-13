@@ -1,0 +1,158 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der maschinenlesbare Coding-Agent-/Competition-Routenkatalog bewirbt nur Provider-/Modellrouten, deren lokaler Provider- und Versions-Preflight aktuell ausführbar ist; nicht verfügbare Gemini-, Grok-, Codex- oder Claude-Routen werden präzise als unavailable/degraded klassifiziert statt als ausführbar angeboten.",
+      "evidence_type": "object",
+      "id": "advertised-routes-are-executable",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-routing:advertised-vs-executable-route-health"
+      }
+    },
+    {
+      "assertion": "Der während der Commonworld-Hindi-Umsetzung beobachtete Codex-Provider-Versions-/Preflightfehler ist als reproduzierbare Regression abgedeckt und liefert eine konkrete Ursache sowie nächste maschinenlesbare Aktion, ohne Repo- oder Kandidateneffekt.",
+      "evidence_type": "object",
+      "id": "codex-version-preflight-diagnostic",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-routing:codex-provider-version-preflight-regression"
+      }
+    },
+    {
+      "assertion": "Claude-Timeouts beziehungsweise Exit 1 ohne stderr erzeugen einen receiptgebundenen Providerfehler mit Phase, Exit-/Timeoutstatus und vorhandener Providerdiagnostik; ein leeres stderr darf nicht zu einer inhaltsleeren Fehlerklassifikation führen.",
+      "evidence_type": "object",
+      "id": "claude-exit-diagnostic",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-routing:claude-timeout-exit-diagnostics"
+      }
+    },
+    {
+      "assertion": "Regressionstests vergleichen beworbene Routen gegen den tatsächlichen Runtime-/Provider-Preflight und schlagen fail-closed fehl, wenn Katalog und ausführbare Realität auseinanderlaufen.",
+      "evidence_type": "object",
+      "id": "route-catalog-runtime-parity",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-routing:catalog-runtime-parity-tests"
+      }
+    },
+    {
+      "assertion": "Die Abnahme kann vollständig ohne kostenpflichtige Agentenausführung erfolgen; Tests verwenden Preflight, lokale Fixtures oder explizit kostenlose Pfade und verändern keine Commonworld- oder fremden Repository-Lanes.",
+      "evidence_type": "object",
+      "id": "no-paid-side-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-routing:no-paid-side-effect-validation"
+      }
+    },
+    {
+      "assertion": "Fokussierte Routing-/Competition-Tests und die vollständige Grabowski-Validierung sind auf dem exakten Implementierungs-Head grün; Diff und Review sind revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "full-validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-routing:exact-head-tests-review-validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Routing-, Preflight- und Diagnosesemantik härten; keine kostenpflichtige Agentenausführung aktivieren und keine Providerzugänge vortäuschen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_agent_competition.py",
+      "path:/home/alex/repos/grabowski/tests"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowskis Coding-Agent- und Competition-Routing so härten, dass der veröffentlichte Routenkatalog nur tatsächlich ausführbare Provider/Modelle anbietet und Provider-Preflight-, Timeout- und Exit-Fehler mit verwertbarer, receiptgebundener Diagnose fail-closed zurückliefert statt als leere oder irreführende Kandidatenfehler zu erscheinen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-AGENT-PROVIDER-ROUTE-HEALTH-20260813",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current provider outage permanence",
+      "paid-provider authorization",
+      "merge or deployment authority",
+      "Commonworld release failure"
+    ],
+    "observations": [
+      "Claude combined and split competition runs timed out or exited 1 without usable stderr/receipt.",
+      "Codex route failed provider-version preflight before candidate execution.",
+      "Advertised Gemini/Grok route choices were not actually available through the active provider surface.",
+      "Commonworld implementation continued through an independent structure-preserving translation path, so this finding remains a Grabowski-system task rather than a Commonworld blocker."
+    ],
+    "observed_during": "commonworld Hindi Core locale release 2026-08-13",
+    "source_candidate": "candidate-7a9a5051ed5a0c91dc8e99bb",
+    "source_event_id": 6749,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7a9a5051ed5a0c91dc8e99bb",
+      "event_id": 6749,
+      "event_created_at": "2026-08-13T10:51:46.363495Z",
+      "request_sha256": "65ea0b55a6f4cdd94355482d2f680dbe981e58f3534d33f5699d8b711d3d4772",
+      "candidate_event_id": "candidate-event-b404222357f6085cdb7a7ac7",
+      "source_fingerprint": "3dbde6e03ab167f559393fad9db954e04782c953cf8bef5cd8d9d139e0d49012",
+      "content_fingerprint": "7a9a5051ed5a0c91dc8e99bb2d4339e7ff542fb7390e257468ca08ae9fc6c3fe",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "3dbde6e03ab167f559393fad9db954e04782c953cf8bef5cd8d9d139e0d49012",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-observation",
+        "locator": "grabowski:commonworld-hindi-core-locale-20260813:agent-routing-failures",
+        "observed_at": "2026-08-13T12:48:00+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "3dbde6e03ab167f559393fad9db954e04782c953cf8bef5cd8d9d139e0d49012",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-observation",
+          "locator": "grabowski:commonworld-hindi-core-locale-20260813:agent-routing-failures",
+          "observed_at": "2026-08-13T12:48:00+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 15
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "coding-agent-routing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Agent-Provider-Routen nur ausführbar bewerben und Fehler diagnostisch binden"
+}

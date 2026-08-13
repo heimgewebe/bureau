@@ -1,0 +1,11 @@
+[Unit]
+Description=Verify the latest Bureau StateStore backup daily
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+RandomizedDelaySec=10m
+Persistent=true
+Unit=bureau-state-restore-test.service
+
+[Install]
+WantedBy=timers.target

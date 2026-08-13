@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Bureau coherent StateStore backup daily
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+RandomizedDelaySec=10m
+Persistent=true
+Unit=bureau-state-backup.service
+
+[Install]
+WantedBy=timers.target

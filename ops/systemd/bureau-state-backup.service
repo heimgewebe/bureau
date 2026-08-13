@@ -1,0 +1,31 @@
+[Unit]
+Description=Bureau coherent StateStore backup with required encrypted replication
+Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/operations.md
+ConditionFileIsExecutable=%h/.local/bin/bureau
+ConditionPathIsDirectory=%h/.local/state/bureau
+ConditionPathIsDirectory=%h/.local/state/bureau-backup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bureau --json state-backup backup --state-root %h/.local/state/bureau --backup-root %h/.local/state/bureau-backup --require-replication
+EnvironmentFile=-%h/.config/bureau/state-backup.env
+Environment=PYTHONUNBUFFERED=1
+TimeoutStartSec=15min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=%h/.local/state/bureau
+ReadWritePaths=%h/.local/state/bureau-backup
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+UMask=0077

@@ -576,3 +576,47 @@ bureau --json lease-contract \
 Doctor reports nonterminal legacy tasks that still request the broad repository key. Planned tasks
 produce a migration warning; a ready task or a task in `now` produces a blocker until its scope is
 narrowed. Historical terminal evidence is not rewritten.
+
+
+## Coherent StateStore backup and restore proof
+
+`bureau --json state-backup` is a manifest-bound runtime surface for Bureau coordination-state
+backups. It must run through `%h/.local/bin/bureau`; a mutable checkout, `PYTHONPATH`, or the
+historical `%h/.local/share/bureau/venv` is not an execution authority. The backup bundle contains
+one SQLite Online Backup plus envelopes and receipts materialized from that same database snapshot.
+The writer accepts the bundle only when SQLite `integrity_check` and `foreign_key_check`, event
+replay, TaskSpec replay, the authoritative projection root, envelope hashes, and signed receipt
+hashes all agree. The live sidecar directories are not copied as a second truth source.
+
+A local bundle is stored outside the coordination StateRoot under
+`~/.local/state/bureau-backup`. `ops/systemd/bureau-state-backup.service` invokes the backup with
+`--require-replication`: missing or incomplete private Restic configuration is therefore a visible
+service failure, even though an already completed coherent local bundle is retained for diagnosis.
+The public repository never contains the concrete private backup host, endpoint, or password. The
+optional private file `~/.config/bureau/state-backup.env` supplies only these runtime bindings:
+
+```text
+BUREAU_RESTIC_REPOSITORY=<private authenticated Restic handoff>
+BUREAU_RESTIC_PASSWORD_FILE=<absolute path to a current-user-owned mode-0600 password file>
+```
+
+The replication path uses a unique `bureau-state-*` tag, requires exactly one matching snapshot,
+and reads `manifest.json` back from that exact snapshot before reporting success. It deliberately
+uses `--no-cache` and never runs `forget` or `prune`; retention changes require separate authority.
+Do not enable the backup timer until `service.private_backup_repository` and the private handoff are
+reviewed for the concrete runtime effect.
+
+`bureau --json state-backup restore-test` restores the latest local bundle into an empty temporary
+StateRoot, re-runs SQLite and replay verification, and then reads Grabowski's current resource DB
+read-only. Restored nonterminal runs are reported as requiring fresh reconciliation. The restore
+test never imports historical Grabowski leases, never resumes a run, and always reports
+`leases_reactivated=false`. External executor state must be freshly observed before any resumed
+work.
+
+The reference timers run the coherent backup daily at 02:30 with bounded random delay and the
+isolated restore proof daily at 04:30. Both are `Persistent=true`. Installation must create
+`~/.local/state/bureau-backup` mode `0700` and the private configuration directory/file before the
+backup timer is enabled. The restore timer may be enabled only after at least one verified bundle
+exists. A failed backup, replication, restore, digest check, or external-state readback is a hard
+operational finding; do not delete the last known-good bundle or retry an ambiguous external effect
+without first reading back the exact Restic snapshot state.

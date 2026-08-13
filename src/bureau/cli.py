@@ -176,6 +176,8 @@ def parser() -> argparse.ArgumentParser:
     cycle_deployment.add_argument("--shim-root", type=Path)
     source_pr_bridge = sub.add_parser("source-pr-bridge")
     source_pr_bridge.add_argument("bridge_args", nargs=argparse.REMAINDER)
+    state_backup = sub.add_parser("state-backup")
+    state_backup.add_argument("backup_args", nargs=argparse.REMAINDER)
     sub.add_parser("status")
     doctor = sub.add_parser("doctor")
     doctor_mode = doctor.add_mutually_exclusive_group()
@@ -837,6 +839,38 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             emit(value, args.json)
             return 0 if value["status"] == "ok" else 1
+        if args.command == "state-backup":
+            module_value = _CLI_RUNTIME_IDENTITY.get("module")
+            manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")
+            registry_value = _CLI_RUNTIME_IDENTITY.get("registry")
+            module_identity = module_value if isinstance(module_value, dict) else {}
+            manifest_identity = manifest_value if isinstance(manifest_value, dict) else {}
+            registry_identity = registry_value if isinstance(registry_value, dict) else {}
+            canonical_value = manifest_identity.get("canonical_registry")
+            canonical_registry = canonical_value if isinstance(canonical_value, dict) else {}
+            if (
+                module_identity.get("source_kind") != "immutable-release"
+                or manifest_identity.get("valid") is not True
+                or canonical_registry.get("valid") is not True
+                or _CLI_RUNTIME_IDENTITY.get("registry_selection") != "canonical-runtime-default"
+                or registry_identity.get("root") != canonical_registry.get("root")
+                or str(root) != canonical_registry.get("root")
+            ):
+                emit(
+                    {
+                        "schema_version": 1,
+                        "status": "immutable-runtime-required",
+                        "reason_codes": ["state-backup-outside-manifest-release"],
+                        "does_not_establish": ["backup_execution", "safe_retry"],
+                    },
+                    args.json,
+                )
+                return 2
+            from .state_backup import execute as execute_state_backup
+
+            value = execute_state_backup(args.backup_args, adapter_registry=adapters(args))
+            emit(value, args.json)
+            return 0
         if args.command in {"live-register", "operator-candidate-record"}:
             append_registry = (
                 Registry.load(root)

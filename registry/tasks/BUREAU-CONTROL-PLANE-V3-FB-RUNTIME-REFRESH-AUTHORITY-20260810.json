@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Einmaligen Bureau-Runtime-Refresh nach Registry-Merge autorisieren",
   "goal": "Schließe genau einmal den immutable Bureau-Runtime- und Registry-Snapshot-Drift, der durch den reviewten Merge von PR #1850 entstanden ist. Nach Merge dieser TaskSpec darf die aktuell installierte Runtime 68b02903976cac47ec6daaebd4d1438e7078a5a9 genau einmal auf den dann frisch beobachteten, reviewten und grün geprüften aktuellen main-Stand konvergieren. Der Effekt muss an eine neue Observation, den exakten target_sha256, diese Task-ID, Break-Glass-Evidenz und die exakten Live-Leases des Runtime-Refresh-Vertrags gebunden sein. Historische T028/T029- oder supersedete Seed-Drift-Autoritäten dürfen nicht wiederverwendet werden.",
-  "state": "planned",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0
@@ -96,6 +96,21 @@
       "eine konkrete Deploymentfreigabe ohne Break-Glass-Zielbindung",
       "Berechtigung zur Wiederverwendung historischer Runtime-Tasks",
       "Merge- oder Fremdarbeitsautorität"
-    ]
+    ],
+    "superseded_by": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR1963-WELTGEWEBE-T080-20260813",
+    "reconciliation_20260813": {
+      "reason": "Historical single-use runtime authority remained nonterminal and was selected again by claim-next after multiple successful later runtime-refresh intents had already reused it. Terminal Registry projection prevents further reuse without rewriting historical runtime evidence.",
+      "evidence_refs": [
+        "runtime-refresh:intent:39513214f80675c3ba6c3604d4af5edd5c7df460b267818d717f33015d7824a3",
+        "runtime-refresh:intent:59d8205e25cc176b23965a9b8462621eef16cd1c6eec3b0ade486ce69a46ab99",
+        "runtime-refresh:intent:8b30cc5678def773dcb314980929f0c1027da0dbe774cea0f9f77da5669eb0d5",
+        "bureau:claim-intent-approval-required:2026-08-13T20:16Z"
+      ],
+      "does_not_establish": [
+        "retroactive invalidation of historical runtime effects",
+        "permission to reuse any terminal runtime authority",
+        "StateStore history rewrite"
+      ]
+    }
   }
 }

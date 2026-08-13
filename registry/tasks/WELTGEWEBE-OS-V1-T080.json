@@ -1,0 +1,161 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf einem frisch beobachteten aktuellen Weltgewebe-main wird der Runes-Migrationsbereich gezielt nach rein internen Buchhaltungsmerkern untersucht. Ein Treffer wird erst dann als Fehler behandelt, wenn eine konkrete Selbstreaktion, Lifecycle-Regressionsgefahr oder reproduzierbare Funktionsabweichung belegt ist; Namensmuster allein begründen keine Änderung.",
+      "evidence_type": "object",
+      "id": "baseline-and-scope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:svelte5-bookkeeping-audit:baseline-and-scope"
+      }
+    },
+    {
+      "assertion": "Die in PR #1754 belegten Fehlerklassen bleiben durch Tests geschützt: Suchzustand darf keine effect_update_depth_exceeded-Schleife erzeugen, die Suche muss Requests/Ergebnisse wieder auslösen, und das einmal geladene SearchOverlay muss den Fokus-Restore beim Schließen zuverlässig ermöglichen.",
+      "evidence_type": "object",
+      "id": "known-regression-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:svelte5-bookkeeping-audit:known-regression-contract"
+      }
+    },
+    {
+      "assertion": "Weitere gefundene Stellen werden nur geändert, wenn der Fehler revisionsgebunden reproduziert oder durch einen direkten Lifecycle-/Reaktivitätsvertrag eindeutig bewiesen ist. Reine Stilbereinigung wie pauschales run→$effect, createEventDispatcher→Callback-Props oder vollständige svelte/legacy-Entfernung bleibt außerhalb dieses Tasks.",
+      "evidence_type": "object",
+      "id": "proven-findings-only",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:svelte5-bookkeeping-audit:proven-findings-only"
+      }
+    },
+    {
+      "assertion": "Jeder tatsächlich behobene Befund erhält einen fokussierten Regressionstest, der vor dem Fix scheitert oder die verletzte Reaktivitäts-/Lifecycle-Invariante direkt prüft und auf dem finalen Head grün ist.",
+      "evidence_type": "object",
+      "id": "focused-regressions",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:svelte5-bookkeeping-audit:focused-regressions"
+      }
+    },
+    {
+      "assertion": "Auf dem exakten finalen Head sind die einschlägigen Svelte-/Type-/Lint-/Build-Prüfungen sowie die direkt betroffenen Web-/Playwright-Tests grün. Vor Merge werden Base, Head, kompletter Diff, Required Checks und Review-Evidenz frisch gelesen; fremde Dirty-States, Leases, Prozesse und Worktrees werden nicht übernommen oder zurückgesetzt.",
+      "evidence_type": "object",
+      "id": "integration-gates",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:svelte5-bookkeeping-audit:integration-gates"
+      }
+    },
+    {
+      "assertion": "Der Abschluss trennt behobene reproduzierbare Fehler von bewusst nicht angefasstem Migrations-Tech-Debt. Sinnvolle Restpunkte außerhalb des Scopes werden dedupliziert als eigene Bureau-Kandidaten oder Tasks erhalten statt den Audit-PR zu verbreitern.",
+      "evidence_type": "object",
+      "id": "bounded-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:svelte5-bookkeeping-audit:bounded-closeout"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Fortsetzung und Umsetzung dieses aus PR #1754 abgeleiteten Folgebefunds mit '@grabowski umsetzen' ausdrücklich autorisiert. Jede spätere Codeänderung bleibt an frischen Livezustand, isolierten Worktree, exakten Scope und revisionsgebundene Tests gebunden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Nach der mit Weltgewebe-PR #1754 sichtbar gewordenen Svelte-5-Runes-Regressionsklasse gezielt prüfen, ob weitere rein interne Buchhaltungsmerker wie previous*, was*, last* oder Lazy-Lifecycle-Merker fälschlich als reaktiver $state modelliert wurden und dadurch Effects selbst erneut auslösen oder Komponenten zu früh aushängen. Nur reproduzierbare funktionale Fehler beheben und mit fokussierten Regressionstests absichern; keinen pauschalen Runes-, Event- oder svelte/legacy-Refactor aus diesem Audit ableiten.",
+  "id": "WELTGEWEBE-OS-V1-T080",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass weitere gleichartige Fehler tatsächlich existieren",
+      "Berechtigung für einen pauschalen Svelte-5-Rewrite",
+      "Berechtigung zur Entfernung aller Legacy-Events oder svelte/legacy-Brücken",
+      "Merge-Bereitschaft ohne revisionsgebundene Tests und CI"
+    ],
+    "known_fixed_reference": {
+      "merge_commit": "6ea2270b",
+      "pull_request": 1754,
+      "regression_classes": [
+        "non-reactive bookkeeping markers incorrectly modeled as $state",
+        "lazy SearchOverlay lifetime shortened so focus restore cannot run"
+      ]
+    },
+    "registered_at": "2026-08-13",
+    "source": "PR #1754 Svelte-5-Runes-Migration follow-up",
+    "source_candidate_event_id": 6838,
+    "source_candidate_id": "candidate-cce3d3d9e843bc81eb75328e",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-cce3d3d9e843bc81eb75328e",
+      "event_id": 6838,
+      "event_created_at": "2026-08-13T17:23:50.590383Z",
+      "request_sha256": "7a81f16d640a79d02cadc25fd0da4b1880cf0c5055c55fefad478b25455abcc0",
+      "candidate_event_id": "candidate-event-e4c8eb4cee35a96750650a53",
+      "source_fingerprint": "785441b8256385d4cff1365e613839ccfa7bfbcbde858663bb586db9f31b1d84",
+      "content_fingerprint": "cce3d3d9e843bc81eb75328eac00bec36650612ac478c6c1aa667e670c8d3530",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "785441b8256385d4cff1365e613839ccfa7bfbcbde858663bb586db9f31b1d84",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "chatgpt:weltgewebe-pr-1754-stabilization-20260813",
+        "observed_at": "2026-08-13T17:23:00Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "785441b8256385d4cff1365e613839ccfa7bfbcbde858663bb586db9f31b1d84",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "chatgpt:weltgewebe-pr-1754-stabilization-20260813",
+          "observed_at": "2026-08-13T17:23:00Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Falls ein Audit-Fix neues Reaktivitäts-, Fokus-, SSR-, HMR- oder Suchverhalten verschlechtert, den betreffenden isolierten Fix nicht mergen beziehungsweise auf den letzten revisionsgebunden grün geprüften Zustand zurücknehmen; belegte Restbefunde als separate Folgearbeit erhalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Svelte-5-Buchhaltungszustände auf falsche Reaktivität auditieren"
+}

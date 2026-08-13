@@ -2906,6 +2906,181 @@ def _runtime_authority_effect_history(
     return effects
 
 
+def _validated_terminal_authority_run(
+    *, store: Any, approval_task_id: str, task_runs: list[dict[str, Any]]
+) -> dict[str, Any] | None:
+    """Allow only one fully authenticated succeeded run to coexist with authority closeout."""
+    if not task_runs:
+        return None
+    run_ids = [run.get("run_id") for run in task_runs]
+    if len(task_runs) != 1:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-count-invalid",
+            "historical runtime authority closeout requires zero or exactly one succeeded run",
+            details={"run_ids": run_ids},
+        )
+    run_id = task_runs[0].get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-invalid", "Bureau run identity is invalid"
+        )
+    try:
+        run = store.run(run_id)
+        receipt = store.receipt(run_id)
+        envelope_path = store.envelope_path(run_id)
+    except (legacy.StateError, OSError, sqlite3.Error, AttributeError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-read-failed",
+            "Bureau terminal run evidence could not be read",
+            details={"run_id": run_id, "error": str(exc)},
+        ) from exc
+    if run.get("task_id") != approval_task_id or run.get("state") != "succeeded":
+        raise RuntimeRefreshError(
+            "authority-closeout-run-not-succeeded",
+            "only one task-bound succeeded run may coexist with historical authority closeout",
+            details={"run_id": run_id, "state": run.get("state")},
+        )
+    reservations = run.get("reservations")
+    if not isinstance(reservations, list) or reservations:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-reservations-present",
+            "succeeded authority run still has reservations",
+            details={"run_id": run_id, "reservations": reservations},
+        )
+    if not isinstance(receipt, dict):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-receipt-missing",
+            "succeeded authority run has no canonical receipt",
+            details={"run_id": run_id},
+        )
+    unsigned_receipt = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+    if receipt.get("receipt_sha256") != legacy.sha256_json(unsigned_receipt):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-receipt-digest-mismatch",
+            "succeeded authority run receipt digest is invalid",
+            details={"run_id": run_id},
+        )
+    bindings = {
+        "run_id": run_id,
+        "task_id": approval_task_id,
+        "task_sha256": run.get("task_sha256"),
+        "plan_sha256": run.get("plan_sha256"),
+        "envelope_sha256": run.get("envelope_sha256"),
+    }
+    if any(receipt.get(key) != value for key, value in bindings.items()):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-receipt-binding-mismatch",
+            "succeeded authority run receipt does not match the frozen run revision",
+            details={"run_id": run_id},
+        )
+    if receipt.get("schema_version") != 1 or not isinstance(receipt.get("verified_at"), str):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-receipt-invalid",
+            "succeeded authority run receipt contract is invalid",
+            details={"run_id": run_id},
+        )
+    try:
+        parse_time(receipt["verified_at"])
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-receipt-invalid",
+            "succeeded authority run receipt verification timestamp is invalid",
+            details={"run_id": run_id},
+        ) from exc
+    try:
+        envelope = read_json(Path(envelope_path))
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-envelope-invalid",
+            "succeeded authority run envelope could not be authenticated",
+            details={"run_id": run_id, "reason": exc.code},
+        ) from exc
+    if envelope.get("schema_version") != 1:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-envelope-invalid",
+            "succeeded authority run envelope contract is invalid",
+            details={"run_id": run_id},
+        )
+    if legacy.sha256_json(envelope) != run.get("envelope_sha256"):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-envelope-digest-mismatch",
+            "succeeded authority run envelope digest is invalid",
+            details={"run_id": run_id},
+        )
+    if any(
+        envelope.get(key) != value
+        for key, value in bindings.items()
+        if key != "envelope_sha256"
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-envelope-binding-mismatch",
+            "succeeded authority run envelope does not match the frozen run revision",
+            details={"run_id": run_id},
+        )
+    task = envelope.get("task")
+    acceptance = task.get("acceptance") if isinstance(task, dict) else None
+    if not isinstance(acceptance, list) or not acceptance:
+        raise RuntimeRefreshError(
+            "authority-closeout-run-envelope-acceptance-invalid",
+            "succeeded authority run envelope has no acceptance contract",
+            details={"run_id": run_id},
+        )
+    criterion_ids = [item.get("id") for item in acceptance if isinstance(item, dict)]
+    if (
+        len(criterion_ids) != len(acceptance)
+        or any(not isinstance(value, str) or not value for value in criterion_ids)
+        or len(set(criterion_ids)) != len(criterion_ids)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-envelope-acceptance-invalid",
+            "succeeded authority run acceptance criterion identities are invalid",
+            details={"run_id": run_id},
+        )
+    evidence = receipt.get("evidence")
+    if not isinstance(evidence, dict) or set(evidence) != set(criterion_ids):
+        raise RuntimeRefreshError(
+            "authority-closeout-run-receipt-acceptance-incomplete",
+            "succeeded authority run receipt does not cover the frozen acceptance contract",
+            details={"run_id": run_id},
+        )
+    for criterion_id in criterion_ids:
+        item = evidence.get(criterion_id)
+        authentication = item.get("_source_authentication") if isinstance(item, dict) else None
+        unsigned_evidence = (
+            {key: value for key, value in item.items() if key != "_source_authentication"}
+            if isinstance(item, dict)
+            else {}
+        )
+        if (
+            not isinstance(item, dict)
+            or item.get("schema_version") != 1
+            or item.get("kind") != "bureau.acceptance_evidence"
+            or item.get("criterion_id") != criterion_id
+            or not isinstance(authentication, dict)
+            or authentication.get("schema_version") != 1
+            or authentication.get("kind") != "bureau.acceptance_source_authentication"
+            or authentication.get("criterion_id") != criterion_id
+            or authentication.get("run_id") != run_id
+            or authentication.get("task_id") != approval_task_id
+            or authentication.get("task_sha256") != run.get("task_sha256")
+            or authentication.get("plan_sha256") != run.get("plan_sha256")
+            or authentication.get("envelope_sha256") != run.get("envelope_sha256")
+            or authentication.get("evidence_sha256") != legacy.sha256_json(unsigned_evidence)
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-run-receipt-authentication-invalid",
+                "succeeded authority run contains unauthenticated acceptance evidence",
+                details={"run_id": run_id, "criterion_id": criterion_id},
+            )
+    return {
+        "run_id": run_id,
+        "receipt_sha256": receipt["receipt_sha256"],
+        "task_sha256": run.get("task_sha256"),
+        "plan_sha256": run.get("plan_sha256"),
+        "envelope_sha256": run.get("envelope_sha256"),
+    }
+
+
 def closeout_runtime_refresh_authority(
     *,
     state_root: Path,
@@ -3033,12 +3208,9 @@ def closeout_runtime_refresh_authority(
             "Bureau run readback failed closed",
             details={"error": str(exc)},
         ) from exc
-    if task_runs:
-        raise RuntimeRefreshError(
-            "authority-closeout-run-present",
-            "no-run closeout cannot replace the canonical run closeout path",
-            details={"run_ids": [run.get("run_id") for run in task_runs]},
-        )
+    _validated_terminal_authority_run(
+        store=store, approval_task_id=approval_task_id, task_runs=task_runs
+    )
     _validate_state_store_health(store)
     release = validate_released_lease_binding(
         intent=intent,

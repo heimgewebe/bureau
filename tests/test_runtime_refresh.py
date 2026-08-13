@@ -769,7 +769,10 @@ def add_authority_run_receipt(
         )
         if with_reservation:
             connection.execute(
-                "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) VALUES(?,?,?,?,?)",
+                (
+                    "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+                    "VALUES(?,?,?,?,?)"
+                ),
                 (run_id, "component.bureau.core", "write", 1, observed_at),
             )
         connection.execute(
@@ -2928,7 +2931,9 @@ def test_no_run_closeout_allows_one_authenticated_succeeded_run(tmp_path: Path) 
     assert store.receipt(run_id) == receipt_before
 
 
-@pytest.mark.parametrize("state", ["assigned", "running", "verifying", "orphaned", "failed", "cancelled"])
+@pytest.mark.parametrize(
+    "state", ["assigned", "running", "verifying", "orphaned", "failed", "cancelled"]
+)
 def test_no_run_closeout_rejects_non_succeeded_run(tmp_path: Path, state: str) -> None:
     task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
     intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
@@ -2971,10 +2976,18 @@ def test_no_run_closeout_rejects_succeeded_run_with_reservation(tmp_path: Path) 
 @pytest.mark.parametrize(
     ("mutation", "code"),
     [
-        (lambda r: r.__setitem__("task_sha256", "c" * 64), "authority-closeout-run-receipt-binding-mismatch"),
-        (lambda r: r.__setitem__("evidence", {}), "authority-closeout-run-receipt-acceptance-incomplete"),
         (
-            lambda r: r["evidence"]["terminal-run-proof"]["_source_authentication"].__setitem__("plan_sha256", "c" * 64),
+            lambda r: r.__setitem__("task_sha256", "c" * 64),
+            "authority-closeout-run-receipt-binding-mismatch",
+        ),
+        (
+            lambda r: r.__setitem__("evidence", {}),
+            "authority-closeout-run-receipt-acceptance-incomplete",
+        ),
+        (
+            lambda r: r["evidence"]["terminal-run-proof"][
+                "_source_authentication"
+            ].__setitem__("plan_sha256", "c" * 64),
             "authority-closeout-run-receipt-authentication-invalid",
         ),
     ],

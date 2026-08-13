@@ -3007,7 +3007,11 @@ def _validated_terminal_authority_run(
             "succeeded authority run envelope digest is invalid",
             details={"run_id": run_id},
         )
-    if any(envelope.get(key) != value for key, value in bindings.items() if key != "envelope_sha256"):
+    if any(
+        envelope.get(key) != value
+        for key, value in bindings.items()
+        if key != "envelope_sha256"
+    ):
         raise RuntimeRefreshError(
             "authority-closeout-run-envelope-binding-mismatch",
             "succeeded authority run envelope does not match the frozen run revision",

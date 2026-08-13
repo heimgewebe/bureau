@@ -1,0 +1,174 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor Verwendung ist der aktuelle GitHub-main frisch beobachtet und enthält den Merge dieser Authority-Projektion sowie den geprüften PR-#1965-Head 379d36e6f433634be2a90b5f1e49aa259b100498; alle für beide Projektionen erforderlichen Checks sind grün.",
+      "evidence_type": "object",
+      "id": "bootstrap-and-final-target",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1966-pr1965-repoground-t018:bootstrap-and-final-target"
+      }
+    },
+    {
+      "assertion": "Vor prepare-intent und erneut vor apply ist diese exakte Authority im autoritativen StateStore ready oder active, mit positiver Revision und exaktem Digest, runtime_refresh_authority single-use-target-bound sowie ohne target_binding_receipt, consumption oder runtime_closeout.",
+      "evidence_type": "object",
+      "id": "single-use-preflight",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1966-pr1965-repoground-t018:single-use-preflight"
+      }
+    },
+    {
+      "assertion": "Approval reference und Intent binden Task-ID und target_sha256 exakt. Apply verwendet nur die vom Intent geforderten Live-Leases; der immutable Readback muss denselben finalen Zielcommit bestätigen.",
+      "evidence_type": "object",
+      "id": "target-lease-and-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1966-pr1965-repoground-t018:target-lease-readback"
+      }
+    },
+    {
+      "assertion": "Nach erfolgreichem immutable Readback werden nur die exakt result-bound Leases freigegeben und die Authority gegen Target-, Intent- und Result-Digests terminal geschlossen; Wiederverwendung bleibt blockiert.",
+      "evidence_type": "object",
+      "id": "authority-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1966-pr1965-repoground-t018:authority-closeout"
+      }
+    },
+    {
+      "assertion": "Erst nach erfolgreicher Runtime-Konvergenz auf einen Main, der PR #1965 enthält, darf REPOGROUND-AGENT-UTILITY-V1-T018 normal geclaimt werden. Diese Authority begründet keine T018-Verifikation oder Completion.",
+      "evidence_type": "object",
+      "id": "repoground-t018-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1966-pr1965-repoground-t018:followup-boundary"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-use authority for one final current-main target that contains both this authority projection and the reviewed RepoGround T018 TaskSpec projection PR #1965.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Vor dem Merge von Bureau PR #1965 genau eine neue single-use-target-bound Runtime-Refresh-Authority bereitstellen. Nach Merge dieser Authority-Projektion und PR #1965 die Bureau-Runtime einmal auf den dann frisch bestätigten aktuellen main konvergieren; REPOGROUND-AGENT-UTILITY-V1-T018 bleibt separat und wird erst danach normal geclaimt.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR1966-AND-PR1965-REPOGROUND-T018-20260813",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_followup_task_id": "REPOGROUND-AGENT-UTILITY-V1-T018",
+    "does_not_establish": [
+      "reusable runtime authority",
+      "historical target reuse",
+      "rollback authority outside this cutover",
+      "queue or claim authority",
+      "RepoGround T018 verification or completion",
+      "permission to override foreign work"
+    ],
+    "installed_runtime_before": "71b9057288376687ad1660bebdac36deee27e52d",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Runtime 71b9057288376687ad1660bebdac36deee27e52d liegt nach Registry-Merge PR #1966 hinter main b27d7ea6d5f4fc3a8078e566e142e734d092868a. Die neue Authority wird vor PR #1965 autoritativ bereitgestellt, damit beide öffentlichen Projektionen vor genau einem finalen Runtime-Cutover zusammengeführt werden können.",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "registered_at": "2026-08-13",
+    "required_followup_head_commit": "379d36e6f433634be2a90b5f1e49aa259b100498",
+    "required_followup_pull_request": 1965,
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "trigger_merge_commit": "b27d7ea6d5f4fc3a8078e566e142e734d092868a",
+    "trigger_pull_request": 1966,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7478dbefa42f44e6c50b29a7",
+      "event_id": 6891,
+      "event_created_at": "2026-08-13T20:35:29.862559Z",
+      "request_sha256": "abb3ba60945a20c8e0f18c446959eac72455c70ebf0f220355e286930b18ca71",
+      "candidate_event_id": "candidate-event-1718a64841f103e249703005",
+      "source_fingerprint": "8739e64c31279254af66cd13bb443b23070c4712ef252e03fdf22cb7ab8ace8d",
+      "content_fingerprint": "7478dbefa42f44e6c50b29a7da2593159305c834a98325b03aec8068ebacc897",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "8739e64c31279254af66cd13bb443b23070c4712ef252e03fdf22cb7ab8ace8d",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-readback",
+        "locator": "grabowski:runtime-manifest-71b90572:origin-main-b27d7ea6:open-pr1965",
+        "observed_at": "2026-08-13T20:35:29.756565Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "8739e64c31279254af66cd13bb443b23070c4712ef252e03fdf22cb7ab8ace8d",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-readback",
+          "locator": "grabowski:runtime-manifest-71b90572:origin-main-b27d7ea6:open-pr1965",
+          "observed_at": "2026-08-13T20:35:29.756565Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem oder fehlgeschlagenem Apply keinen Blind-Retry ausführen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten und receipt-, target- und StateStore-gebunden reconciliieren. PR #1965 und T018 bleiben separat nachweisbar."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-Use-Runtime-Refresh nach PR #1966 und PR #1965 / RepoGround T018"
+}

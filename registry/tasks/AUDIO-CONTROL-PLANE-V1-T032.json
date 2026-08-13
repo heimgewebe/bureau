@@ -1,87 +1,217 @@
 {
-  "schema_version": 1,
-  "id": "AUDIO-CONTROL-PLANE-V1-T032",
-  "initiative": "AUDIO-CONTROL-PLANE-V1",
-  "title": "Physische Audio-Systemwahrheit und Referenzmessungen am Heim-PC abnehmen",
-  "state": "blocked",
-  "goal": "MOTU M2, RØDE NT1-A, Lake People G111, Focal Clear MG, Pioneer VSX-830-K und Roland FP-30X am realen Heim-PC mit menschlich bestätigten Regler-, Kabel- und 48-V-Fakten sicher abnehmen und Hörpegel, Stimmreferenz, Round-Trip-Latenz, XRun-Stabilität sowie Geräteverlust belegen.",
+  "acceptance": [
+    {
+      "assertion": "MOTU M2 und Roland FP-30X sind über die vorgesehenen ALSA-, PipeWire- und MIDI-Identitäten frisch sichtbar; Rate, Quantum, Defaults, Routen, Dienste und Graph-Fingerprint sind gebunden.",
+      "evidence_type": "object",
+      "id": "fresh-device-and-graph-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:fresh-device-and-graph-readback"
+      }
+    },
+    {
+      "assertion": "Kabelwege, MOTU-Eingang und -Ausgang, RØDE-Verbindung, 48 V, Gains, Lake-People-Einstellung, Focal-Ausgang sowie Pioneer- und Senderzustände sind menschlich bestätigt und signiert.",
+      "evidence_type": "object",
+      "id": "signed-physical-facts",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:signed-physical-facts"
+      }
+    },
+    {
+      "assertion": "MOTU M2, Lake People G111, Focal Clear MG und Pioneer besitzen profilgebundene Referenz- und Maximalpegelbelege; vor jedem Stimulus ist die analoge Lautstärke sicher gesetzt.",
+      "evidence_type": "object",
+      "id": "safe-listening-calibration",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:safe-listening-calibration"
+      }
+    },
+    {
+      "assertion": "RØDE-NT1-A-Gain, 48-V-Ablauf, Rauschabstand und Zielspitzen sind mit realer lautester Darbietung belegt, ohne Clipping oder erfundene physische Fakten.",
+      "evidence_type": "object",
+      "id": "voice-reference",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:voice-reference"
+      }
+    },
+    {
+      "assertion": "Round-Trip-Latenz und XRun-Stabilität sind mit Graph-Fingerprint, Samplerate und Quantum gemessen; Pufferdauer wird nicht als Round-Trip-Latenz ausgegeben.",
+      "evidence_type": "object",
+      "id": "latency-xrun-baseline",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:latency-xrun-baseline"
+      }
+    },
+    {
+      "assertion": "Kontrollierter MOTU- und Roland-Verlust, Wiederkehr und Identitätswechsel führen zu Stop oder eindeutigem Degraded-Zustand; keine verwaisten Prozesse, Links, Töne oder Aufnahmen bleiben zurück.",
+      "evidence_type": "object",
+      "id": "device-loss-baseline",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:device-loss-baseline"
+      }
+    },
+    {
+      "assertion": "Kopfhörerhören, Stimmaufnahme und Piano-Softwaremonitoring besitzen jeweils einen vollständigen Software- und Physikbeleg oder bleiben ausdrücklich nicht bereit.",
+      "evidence_type": "object",
+      "id": "profile-readiness",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:profile-readiness"
+      }
+    },
+    {
+      "assertion": "Alle Stimuli, Loopbacks und Aufnahmen sind zeit-, pegel-, datei- und prozessbegrenzt; der Vorzustand wird danach wiederhergestellt und frisch zurückgelesen.",
+      "evidence_type": "object",
+      "id": "bounded-effects-and-rollback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-t032:bounded-effects-and-rollback"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "read",
+      "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T001"
   ],
-  "priority": {
-    "lane": "later",
-    "rank": 999
-  },
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/audio",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Vor jedem Ton, Loopback, Geräteverlust oder 48-V-Schritt sind aktuelle Geräteidentität, sichere manuelle Pegelstellung, Stop-Pfad und Nutzerfreigabe erforderlich. Keine globale PipeWire-, Default- oder Profiländerung ohne separaten exakten Plan.",
+      "required_level": "break_glass"
+    },
     "grabowski_resources": [
       "repo:/home/alex/repos/audio",
       "host:heim-pc",
       "service:pipewire",
       "component:audio-host-observation"
     ],
-    "approval": {
-      "action_class": "runtime_mutation",
-      "required_level": "break_glass",
-      "note": "Vor jedem Ton, Loopback, Geräteverlust oder 48-V-Schritt sind aktuelle Geräteidentität, sichere manuelle Pegelstellung, Stop-Pfad und Nutzerfreigabe erforderlich. Keine globale PipeWire-, Default- oder Profiländerung ohne separaten exakten Plan."
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "MOTU M2, RØDE NT1-A, Lake People G111, Focal Clear MG, Pioneer VSX-830-K und Roland FP-30X am realen Heim-PC mit menschlich bestätigten Regler-, Kabel- und 48-V-Fakten sicher abnehmen und Hörpegel, Stimmreferenz, Round-Trip-Latenz, XRun-Stabilität sowie Geräteverlust belegen.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T032",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "acceptance_contract_migration": {
+      "migrated_at": "2026-08-13T09:51:00Z",
+      "reason": "Legacy-T032-Kriterien wurden unverändert auf den aktuellen typisierten manual_observation-Vertrag abgebildet; Assertions und Evidenztyp wurden nicht gelockert.",
+      "schema_version": 1
+    },
+    "does_not_establish": [
+      "automatische Wiederaufnahme ohne neuen Live-Readback",
+      "Freigabe globaler Audio- oder Routingänderungen",
+      "dauerhafte Driftfreiheit nach späteren Kernel-, PipeWire-, Paket- oder Geräteänderungen"
+    ],
+    "readiness_reconciliation": {
+      "default_sink": "motu-m2",
+      "default_source": "motu-m2",
+      "does_not_establish": [
+        "physische Verkabelungswahrheit",
+        "sicheren analogen Hörpegel",
+        "abgeschlossene Stimmreferenz",
+        "gemessene Round-Trip-Latenz",
+        "XRun-Freiheit",
+        "Geräteverlustabnahme"
+      ],
+      "motu_m2_present": true,
+      "previous_blocker_code": "physical-audio-hardware-and-human-readback-required",
+      "previous_blocker_observed_at": "2026-08-06T03:01:30.562425+00:00",
+      "reason": "Der alte Blocker band T032 an fehlende MOTU-/Roland-Anwesenheit und zugleich an Messungen, die T032 selbst erbringen soll. Die Hardware-Anwesenheit ist frisch erfüllt; die verbleibenden menschlichen und messenden Kriterien bleiben Acceptance der nun ausführbaren Task und werden durch ready nicht als erfüllt behauptet.",
+      "reconciled_at": "2026-08-13T09:15:02Z",
+      "remaining_interactive_gates": [
+        "signed-physical-facts",
+        "safe-listening-calibration",
+        "voice-reference",
+        "latency-xrun-baseline",
+        "device-loss-baseline",
+        "profile-readiness",
+        "bounded-effects-and-rollback"
+      ],
+      "roland_alsa_midi": true,
+      "roland_fp_30x_present": true,
+      "schema_version": 1,
+      "software_profiles_ready": [
+        "headphone_listening",
+        "voice_recording",
+        "piano_software_monitoring"
+      ],
+      "source": "fresh-audio-doctor-and-current-state-store"
+    },
+    "registered_at": "2026-08-06T05:19:30+02:00",
+    "repository_delivery": {
+      "documentation_paths": [
+        "docs/system-truth-workflow.md",
+        "docs/laboratory-gates.md"
+      ],
+      "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
+      "pull_request": 37,
+      "repository": "heimgewebe/audio"
+    },
+    "source_task": "AUDIO-CONTROL-PLANE-V1-T001",
+    "split_reason": "Reale Geräte-, Pegel- und Nutzerbelege sind Hostevidenz und können weder durch Repositorytests noch durch einen strukturell gültigen Truth-Report ersetzt werden.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-dfcd2d8bd51c3cdc1634eb1b",
+      "event_id": 6694,
+      "event_created_at": "2026-08-13T09:29:21.400663Z",
+      "request_sha256": "de575c0881f55306d531099183c5a2f6a72add436c99a54b3a28d512bf4c6a20",
+      "candidate_event_id": "candidate-event-d2447506b2d7af16b112769d",
+      "source_fingerprint": "befe4e6f4d8e914f0b38a47120c9da46e1af7d73afaccc7931cac3532d40eda6",
+      "content_fingerprint": "dfcd2d8bd51c3cdc1634eb1b2725729dfcb6d28618a2c9473edfd032a91af840",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "befe4e6f4d8e914f0b38a47120c9da46e1af7d73afaccc7931cac3532d40eda6",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation-live-readback",
+        "locator": "heim-pc:audio-doctor:2026-08-13T09:15:02Z",
+        "observed_at": "2026-08-13T09:15:02Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "befe4e6f4d8e914f0b38a47120c9da46e1af7d73afaccc7931cac3532d40eda6",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation-live-readback",
+          "locator": "heim-pc:audio-doctor:2026-08-13T09:15:02Z",
+          "observed_at": "2026-08-13T09:15:02Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
     }
   },
-  "claims": [
-    {
-      "resource": "repo.audio",
-      "mode": "read",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "host.heim-pc",
-      "mode": "write",
-      "isolation": "none"
-    }
-  ],
-  "acceptance": [
-    {
-      "id": "fresh-device-and-graph-readback",
-      "assertion": "MOTU M2 und Roland FP-30X sind über die vorgesehenen ALSA-, PipeWire- und MIDI-Identitäten frisch sichtbar; Rate, Quantum, Defaults, Routen, Dienste und Graph-Fingerprint sind gebunden.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "signed-physical-facts",
-      "assertion": "Kabelwege, MOTU-Eingang und -Ausgang, RØDE-Verbindung, 48 V, Gains, Lake-People-Einstellung, Focal-Ausgang sowie Pioneer- und Senderzustände sind menschlich bestätigt und signiert.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "safe-listening-calibration",
-      "assertion": "MOTU M2, Lake People G111, Focal Clear MG und Pioneer besitzen profilgebundene Referenz- und Maximalpegelbelege; vor jedem Stimulus ist die analoge Lautstärke sicher gesetzt.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "voice-reference",
-      "assertion": "RØDE-NT1-A-Gain, 48-V-Ablauf, Rauschabstand und Zielspitzen sind mit realer lautester Darbietung belegt, ohne Clipping oder erfundene physische Fakten.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "latency-xrun-baseline",
-      "assertion": "Round-Trip-Latenz und XRun-Stabilität sind mit Graph-Fingerprint, Samplerate und Quantum gemessen; Pufferdauer wird nicht als Round-Trip-Latenz ausgegeben.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "device-loss-baseline",
-      "assertion": "Kontrollierter MOTU- und Roland-Verlust, Wiederkehr und Identitätswechsel führen zu Stop oder eindeutigem Degraded-Zustand; keine verwaisten Prozesse, Links, Töne oder Aufnahmen bleiben zurück.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "profile-readiness",
-      "assertion": "Kopfhörerhören, Stimmaufnahme und Piano-Softwaremonitoring besitzen jeweils einen vollständigen Software- und Physikbeleg oder bleiben ausdrücklich nicht bereit.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "bounded-effects-and-rollback",
-      "assertion": "Alle Stimuli, Loopbacks und Aufnahmen sind zeit-, pegel-, datei- und prozessbegrenzt; der Vorzustand wird danach wiederhergestellt und frisch zurückgelesen.",
-      "evidence_type": "object"
-    }
-  ],
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
   "required_capabilities": [
     "repository",
     "git",
@@ -98,40 +228,7 @@
   "rollback": {
     "strategy": "Vor jeder Wirkung werden Geräte-, Dienst-, Graph-, Default-, Routen-, Pegel- und Prozesszustand erfasst. Bei Fehler werden ausschließlich taskeigene Stimuli, Loopbacks und Aufnahmen beendet; danach erfolgt ein vollständiger Doctor- und Prozessreadback."
   },
-  "metadata": {
-    "registered_at": "2026-08-06T05:19:30+02:00",
-    "source_task": "AUDIO-CONTROL-PLANE-V1-T001",
-    "repository_delivery": {
-      "repository": "heimgewebe/audio",
-      "pull_request": 37,
-      "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
-      "documentation_paths": [
-        "docs/system-truth-workflow.md",
-        "docs/laboratory-gates.md"
-      ]
-    },
-    "current_blocker": {
-      "code": "physical-audio-hardware-and-human-readback-required",
-      "observed_at": "2026-08-06T03:01:30.562425+00:00",
-      "audio_commit": "230052d6f10760632a90a63dd94ab602f5de3415",
-      "motu_m2_present": false,
-      "roland_fp_30x_present": false,
-      "default_sink": "spdif",
-      "default_source": "spdif",
-      "physical_unknown_count": 16,
-      "required_to_unblock": [
-        "MOTU M2 physisch anschließen und über ALSA/PipeWire sichtbar machen",
-        "Roland FP-30X physisch anschließen und über ALSA/MIDI sichtbar machen",
-        "Gain-, Routing-, 48-V- und analoge Hörreglerzustände menschlich bestätigen",
-        "reale Stimm-, Loopback-, Stabilitäts- und Geräteverlustmessungen unter den versionierten Labor-Gates durchführen"
-      ],
-      "host_mutation": false
-    },
-    "split_reason": "Reale Geräte-, Pegel- und Nutzerbelege sind Hostevidenz und können weder durch Repositorytests noch durch einen strukturell gültigen Truth-Report ersetzt werden.",
-    "does_not_establish": [
-      "automatische Wiederaufnahme ohne neuen Live-Readback",
-      "Freigabe globaler Audio- oder Routingänderungen",
-      "dauerhafte Driftfreiheit nach späteren Kernel-, PipeWire-, Paket- oder Geräteänderungen"
-    ]
-  }
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Physische Audio-Systemwahrheit und Referenzmessungen am Heim-PC abnehmen"
 }

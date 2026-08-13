@@ -589,12 +589,11 @@ The daily `bureau-state-restore-test.timer` restores the newest verified bundle 
 Manual revision-bound checks after the immutable Bureau release containing this module is active:
 
 ```bash
-~/.local/share/bureau/venv/bin/python -m bureau.state_backup backup \
-  --state-root ~/.local/state/bureau \
+~/.local/bin/bureau --state-root ~/.local/state/bureau state-backup \
   --backup-root ~/artifacts/merges/bureau-state-backups
-~/.local/share/bureau/venv/bin/python -m bureau.state_backup restore-test \
+~/.local/bin/bureau state-restore-test \
   --backup-root ~/artifacts/merges/bureau-state-backups \
   --receipt ~/artifacts/merges/bureau-state-backups/restore-tests/latest.json
 ```
 
-A green restore receipt proves local recovery consistency plus a fresh, fail-closed reconciliation simulation in the empty restored root. Runtime activation of the supplied units and an actual Restic snapshot remain separate effects with their own readback.
+Both service commands deliberately enter through the stable manifest-validating `~/.local/bin/bureau` launcher; they never import from a mutable checkout or historical virtualenv. A green restore receipt proves local recovery consistency plus a fresh, fail-closed reconciliation simulation in the empty restored root. Runtime activation of the supplied units and an actual Restic snapshot remain separate effects with their own readback.

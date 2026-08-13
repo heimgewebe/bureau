@@ -174,6 +174,12 @@ def parser() -> argparse.ArgumentParser:
     cycle_deployment.add_argument("--canonical-root", type=Path)
     cycle_deployment.add_argument("--unit-root", type=Path)
     cycle_deployment.add_argument("--shim-root", type=Path)
+    state_backup_command = sub.add_parser("state-backup")
+    state_backup_command.add_argument("--backup-root", type=Path)
+    state_restore_test = sub.add_parser("state-restore-test")
+    state_restore_test.add_argument("--backup-root", type=Path)
+    state_restore_test.add_argument("--scratch-root", type=Path)
+    state_restore_test.add_argument("--receipt", type=Path)
     source_pr_bridge = sub.add_parser("source-pr-bridge")
     source_pr_bridge.add_argument("bridge_args", nargs=argparse.REMAINDER)
     sub.add_parser("status")
@@ -460,7 +466,7 @@ def parser() -> argparse.ArgumentParser:
     projection.add_argument("--github-observations")
     projection.add_argument("--skip-github", action="store_true")
     projection.add_argument("--github-max-age", type=int, default=3600)
-    
+
     projection_repair = sub.add_parser("projection-repair")
     projection_repair_mode = projection_repair.add_mutually_exclusive_group(required=True)
     projection_repair_mode.add_argument("--assess", action="store_true")
@@ -741,6 +747,72 @@ def main(argv: list[str] | None = None) -> int:
             )
             emit(value, args.json)
             return 0 if value["complete"] else 2
+        if args.command in {"state-backup", "state-restore-test"}:
+            module_value = _CLI_RUNTIME_IDENTITY.get("module")
+            manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")
+            registry_value = _CLI_RUNTIME_IDENTITY.get("registry")
+            module_identity = module_value if isinstance(module_value, dict) else {}
+            manifest_identity = manifest_value if isinstance(manifest_value, dict) else {}
+            registry_identity = registry_value if isinstance(registry_value, dict) else {}
+            canonical_value = manifest_identity.get("canonical_registry")
+            canonical_registry = canonical_value if isinstance(canonical_value, dict) else {}
+            if (
+                module_identity.get("source_kind") != "immutable-release"
+                or manifest_identity.get("valid") is not True
+                or canonical_registry.get("valid") is not True
+                or _CLI_RUNTIME_IDENTITY.get("registry_selection") != "canonical-runtime-default"
+                or registry_identity.get("root") != canonical_registry.get("root")
+                or str(root) != canonical_registry.get("root")
+            ):
+                emit(
+                    {
+                        "schema_version": 1,
+                        "status": "immutable-runtime-required",
+                        "reason_codes": ["state-backup-outside-manifest-release"],
+                        "does_not_establish": ["backup_execution", "safe_retry"],
+                    },
+                    args.json,
+                )
+                return 2
+            from . import state_backup as state_backup_module
+
+            try:
+                if args.command == "state-backup":
+                    effective_state_root = (
+                        state_root
+                        if state_root is not None
+                        else state_backup_module.DEFAULT_STATE_ROOT
+                    )
+                    effective_backup_root = (
+                        args.backup_root
+                        if args.backup_root is not None
+                        else state_backup_module.DEFAULT_BACKUP_ROOT
+                    )
+                    value = state_backup_module.create_backup(
+                        state_root=effective_state_root,
+                        backup_root=effective_backup_root,
+                    )
+                else:
+                    effective_backup_root = (
+                        args.backup_root
+                        if args.backup_root is not None
+                        else state_backup_module.DEFAULT_BACKUP_ROOT
+                    )
+                    effective_receipt = (
+                        args.receipt
+                        if args.receipt is not None
+                        else state_backup_module.DEFAULT_RESTORE_RECEIPT_ROOT / "latest.json"
+                    )
+                    value = state_backup_module.restore_test(
+                        backup_root=effective_backup_root,
+                        scratch_root=args.scratch_root,
+                        receipt_path=effective_receipt,
+                        registry_root=root,
+                    )
+            except state_backup_module.StateBackupError as exc:
+                raise StateError(str(exc)) from exc
+            emit(value, args.json)
+            return 0
         if args.command == "source-pr-bridge":
             module_value = _CLI_RUNTIME_IDENTITY.get("module")
             manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")

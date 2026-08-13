@@ -117,7 +117,9 @@ def emit(value: Any, as_json: bool) -> None:
         print(value)
 
 
-def _cli_error_payload(args: argparse.Namespace, exc: BureauError, *, code: str) -> dict[str, Any]:
+def _cli_error_payload(
+    args: argparse.Namespace, exc: BureauError, *, code: str
+) -> dict[str, Any]:
     command = str(getattr(args, "command", "unknown"))
     mutates = _command_mutates(args)
     return {
@@ -131,12 +133,18 @@ def _cli_error_payload(args: argparse.Namespace, exc: BureauError, *, code: str)
         "effect_started": mutates,
         "ambiguity": mutates,
         "retryable": False,
-        "required_readback": ([f"bureau-command:{command}"] if mutates else []),
-        "does_not_establish": (["effect_absence", "safe_retry"] if mutates else []),
+        "required_readback": (
+            [f"bureau-command:{command}"] if mutates else []
+        ),
+        "does_not_establish": (
+            ["effect_absence", "safe_retry"] if mutates else []
+        ),
     }
 
 
-def _emit_cli_error(args: argparse.Namespace, exc: BureauError, *, code: str) -> None:
+def _emit_cli_error(
+    args: argparse.Namespace, exc: BureauError, *, code: str
+) -> None:
     if bool(getattr(args, "json", False) or getattr(args, "json_envelope", False)):
         emit(_cli_error_payload(args, exc, code=code), True)
         return
@@ -661,6 +669,7 @@ def _canonical_coordination_state_binding(
     )
 
 
+
 def _parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     raw = list(sys.argv[1:] if argv is None else argv)
     value_options = {"--root", "--state-db", "--state-root", "--grabowski-source"}
@@ -993,7 +1002,9 @@ def main(argv: list[str] | None = None) -> int:
                     if not value
                 ]
                 if missing:
-                    raise StateError("projection repair apply requires " + ", ".join(missing))
+                    raise StateError(
+                        "projection repair apply requires " + ", ".join(missing)
+                    )
                 value = store.apply_projection_repair(
                     expected_candidate_sha256=args.candidate_sha256,
                     reviewer=args.reviewer,
@@ -1006,7 +1017,6 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "receipt-normalize":
             from .receipt_normalization import receipt_normalize
-
             value = receipt_normalize(
                 Registry.load(root),
                 StateStore(state_path, state_root),
@@ -1523,7 +1533,9 @@ def main(argv: list[str] | None = None) -> int:
                 idempotency_key=args.idempotency_key,
             )
         elif args.command == "claim-intent-readback":
-            value = coordinated_claim_intent_readback(store, args.idempotency_key)
+            value = coordinated_claim_intent_readback(
+                store, args.idempotency_key
+            )
         elif args.command == "claim-commit":
             intent = read_json_object_file(args.intent, field="intent")
             lease_binding = (

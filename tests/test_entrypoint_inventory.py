@@ -36,7 +36,8 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
         == "bureau-status-capsule"
     )
     assert (
-        units["ops/systemd/bureau-source-pr-bridge.service"]["matched_console_script"] == "bureau"
+        units["ops/systemd/bureau-source-pr-bridge.service"]["matched_console_script"]
+        == "bureau"
     )
     assert (
         units["ops/systemd/bureau-review-steward.service"]["matched_console_script"]

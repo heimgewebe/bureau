@@ -23,6 +23,7 @@ _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
         "projection-repair",
         "lifecycle-reconcile-apply",
         "receipt-normalize",
+        "workspace-cleanup",
     }
 )
 

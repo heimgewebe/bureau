@@ -1,49 +1,67 @@
 {
-  "schema_version": 1,
-  "id": "BUREAU-CONTROL-PLANE-V3-T010",
-  "initiative": "BUREAU-CONTROL-PLANE-V3",
-  "title": "Backup, Restore und Replay regelmäßig beweisen",
-  "goal": "SQLite-Online-Backup, Envelopes und Receipts kohärent sichern, verschlüsselt über den vorhandenen Restic-Pfad replizieren und regelmäßig in ein leeres temporäres State-Root restaurieren. Restore muss Integrität, Ereigniswurzel, Projektionen und sichere Reconciliation nichtterminaler Runs belegen.",
-  "state": "planned",
-  "priority": {
-    "lane": "later",
-    "rank": 50
-  },
-  "depends_on": [
-    "BUREAU-CONTROL-PLANE-V3-T002"
-  ],
-  "required_capabilities": [
-    "repository",
-    "python",
-    "testing",
-    "bureau",
-    "grabowski"
+  "acceptance": [
+    {
+      "assertion": "Backup nutzt SQLite Online Backup und akzeptiert nur integrity_check=ok sowie vollständige Envelope-/Receipt-Bindung.",
+      "evidence_type": "object",
+      "id": "coherent-online-backup",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-control-plane-v3-t010:coherent-online-backup"
+      }
+    },
+    {
+      "assertion": "Vollständige Sicherungen werden verschlüsselt über bestehende kostenlose Infrastruktur repliziert; keine State-Datenbank wird öffentlich auf GitHub gespeichert.",
+      "evidence_type": "object",
+      "id": "encrypted-offsite-copy",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-control-plane-v3-t010:encrypted-offsite-copy"
+      }
+    },
+    {
+      "assertion": "Ein regelmäßiger Restore in leeres State-Root erzeugt dieselbe Ereignis- und Receipt-Wurzel.",
+      "evidence_type": "object",
+      "id": "tested-restore",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-control-plane-v3-t010:tested-restore"
+      }
+    },
+    {
+      "assertion": "Keine alte Lease wird ungeprüft reaktiviert; externe Zustände werden frisch gelesen und nichtterminale Runs fail-closed reconciliiert.",
+      "evidence_type": "object",
+      "id": "safe-post-restore-reconcile",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-control-plane-v3-t010:safe-post-restore-reconcile"
+      }
+    }
   ],
   "claims": [
     {
-      "resource": "component.bureau.core",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "component.bureau.core"
     },
     {
-      "resource": "component.bureau.docs",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "component.bureau.docs"
     },
     {
-      "resource": "state.bureau",
-      "mode": "read"
+      "mode": "read",
+      "resource": "state.bureau"
     }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T002"
   ],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen.",
+      "required_level": "operator"
     },
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
       "path:/home/alex/repos/bureau/src/bureau/state_backup.py",
       "path:/home/alex/repos/bureau/ops/systemd/bureau-state-backup.service",
@@ -53,35 +71,79 @@
       "path:/home/alex/repos/bureau/tests/test_state_backup.py",
       "path:/home/alex/repos/bureau/docs/operations.md",
       "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T010.json"
-    ]
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
   },
-  "acceptance": [
-    {
-      "id": "coherent-online-backup",
-      "assertion": "Backup nutzt SQLite Online Backup und akzeptiert nur integrity_check=ok sowie vollständige Envelope-/Receipt-Bindung."
-    },
-    {
-      "id": "encrypted-offsite-copy",
-      "assertion": "Vollständige Sicherungen werden verschlüsselt über bestehende kostenlose Infrastruktur repliziert; keine State-Datenbank wird öffentlich auf GitHub gespeichert."
-    },
-    {
-      "id": "tested-restore",
-      "assertion": "Ein regelmäßiger Restore in leeres State-Root erzeugt dieselbe Ereignis- und Receipt-Wurzel."
-    },
-    {
-      "id": "safe-post-restore-reconcile",
-      "assertion": "Keine alte Lease wird ungeprüft reaktiviert; externe Zustände werden frisch gelesen und nichtterminale Runs fail-closed reconciliiert."
-    }
-  ],
+  "goal": "SQLite-Online-Backup, Envelopes und Receipts kohärent sichern, verschlüsselt über den vorhandenen Restic-Pfad replizieren und regelmäßig in ein leeres temporäres State-Root restaurieren. Restore muss Integrität, Ereigniswurzel, Projektionen und sichere Reconciliation nichtterminaler Runs belegen.",
+  "id": "BUREAU-CONTROL-PLANE-V3-T010",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
-    "registered_at": "2026-08-06T11:11:00Z",
-    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
-    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
     "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
     "does_not_establish": [
       "Merge- oder Deploymentabschluss",
       "Freigabe fremder Ressourcen",
       "direkte main-Mutation"
-    ]
-  }
+    ],
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-c876c8447b9e24b2af883fda",
+      "candidate_id": "candidate-ccec4cc90788d4d3639f5f23",
+      "content_fingerprint": "4efe07f1a7921e7dba7542ce8553091aac5652271b4bde2a32673e06b1eafece",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-08-12T18:20:52.492559Z",
+      "event_id": 6323,
+      "request_sha256": "a2cdb5be1f24eed5b4e321641a2e0b70c13bb89ddc1e9222f059334f66a49e8b",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "337c5b1f5953d861cdc6b5ab12d4038e1fe8bbb35ecbc2b6b8c8488e6fdd85df",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "chatgpt:bureau-control-plane-v3-t010:2026-08-12",
+        "observed_at": "2026-08-12T20:20:00+02:00",
+        "sha256": null
+      },
+      "source_fingerprint": "337c5b1f5953d861cdc6b5ab12d4038e1fe8bbb35ecbc2b6b8c8488e6fdd85df",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "337c5b1f5953d861cdc6b5ab12d4038e1fe8bbb35ecbc2b6b8c8488e6fdd85df",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "chatgpt:bureau-control-plane-v3-t010:2026-08-12",
+          "observed_at": "2026-08-12T20:20:00+02:00",
+          "sha256": null
+        }
+      ]
+    },
+    "registered_at": "2026-08-06T11:11:00Z",
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Backup, Restore und Replay regelmäßig beweisen"
 }

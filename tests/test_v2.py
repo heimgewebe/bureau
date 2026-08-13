@@ -656,6 +656,96 @@ def test_dirty_workspace_is_preserved(registry_factory, tmp_path, monkeypatch):
 
 
 
+@pytest.mark.parametrize("force", [False, True])
+def test_missing_workspace_cleanup_reconciles_once(
+    registry_factory, tmp_path, monkeypatch, force
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    checkout = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+    run_id = checkout["run"]["run_id"]
+    workspace = Path(checkout["run"]["workspace_path"])
+    fail_run(store, run_id, "test")
+    subprocess.run(
+        ["git", "-C", str(root), "worktree", "remove", "--force", str(workspace)],
+        check=True,
+        capture_output=True,
+    )
+
+    first = cleanup_workspace(store, run_id, force=force)
+    assert first["state"] == "removed"
+    assert first["exists"] is False
+    assert first["cleanup"] == "already-missing"
+    first_updated_at = first["updated_at"]
+
+    second = cleanup_workspace(store, run_id, force=force)
+    assert second["state"] == "removed"
+    assert second["exists"] is False
+    assert second["cleanup"] == "already-missing"
+    assert second["updated_at"] == first_updated_at
+
+    with store.connect() as connection:
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='workspace-removed'",
+            (run_id,),
+        ).fetchone()[0]
+    assert event_count == 1
+
+
+def test_normal_workspace_cleanup_returns_removed_projection_and_repeat_is_noop(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    checkout = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+    run_id = checkout["run"]["run_id"]
+    workspace = Path(checkout["run"]["workspace_path"])
+    fail_run(store, run_id, "test")
+
+    first = cleanup_workspace(store, run_id)
+    assert first["state"] == "removed"
+    assert first["exists"] is False
+    assert first["cleanup"] == "removed"
+    assert not workspace.exists()
+    first_updated_at = first["updated_at"]
+
+    second = cleanup_workspace(store, run_id)
+    assert second["state"] == "removed"
+    assert second["exists"] is False
+    assert second["cleanup"] == "already-missing"
+    assert second["updated_at"] == first_updated_at
+
+    with store.connect() as connection:
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='workspace-removed'",
+            (run_id,),
+        ).fetchone()[0]
+    assert event_count == 1
+
+
+def test_workspace_cleanup_still_requires_terminal_run(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    checkout = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+    run_id = checkout["run"]["run_id"]
+    workspace = Path(checkout["run"]["workspace_path"])
+
+    with pytest.raises(StateError, match="workspace cleanup requires a terminal run"):
+        cleanup_workspace(store, run_id)
+    assert workspace.is_dir()
+
+
 def test_queue_json_is_compatibility_only_for_unqueued_ready_task(registry_factory, tmp_path):
     root = registry_factory(2, mode="write", max_active=2)
     queue_path = root / "registry/queue.json"

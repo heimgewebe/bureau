@@ -7296,11 +7296,24 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
         raise legacy.StateError("workspace cleanup requires a terminal run")
     if not status["exists"]:
         with store.immediate() as connection:
-            connection.execute(
-                "UPDATE workspaces SET state='removed',updated_at=? WHERE run_id=?",
-                (legacy.utc_now(), run_id),
-            )
-        return {**status, "cleanup": "already-missing"}
+            row = connection.execute(
+                "SELECT state FROM workspaces WHERE run_id=?", (run_id,)
+            ).fetchone()
+            if row is None:
+                raise legacy.StateError(f"run {run_id} has no workspace")
+            if row["state"] != "removed":
+                connection.execute(
+                    "UPDATE workspaces SET state='removed',updated_at=? WHERE run_id=?",
+                    (legacy.utc_now(), run_id),
+                )
+                store.event(
+                    connection,
+                    "workspace-removed",
+                    {"force": force},
+                    run_id,
+                )
+        current = workspace_status(store, run_id)
+        return {**current, "cleanup": "already-missing"}
     if status["dirty"] and not force:
         return preserve_workspace(store, run_id, "dirty workspace")
     if not status["merged"] and not force:
@@ -7321,7 +7334,8 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
             (legacy.utc_now(), run_id),
         )
         store.event(connection, "workspace-removed", {"force": force}, run_id)
-    return {**status, "cleanup": "removed"}
+    current = workspace_status(store, run_id)
+    return {**current, "cleanup": "removed"}
 
 
 def _current_verification_stamp(

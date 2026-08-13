@@ -1,0 +1,139 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Bei vorhandener StateStore-TaskSpec-Autorität liefert verification-stamp für einen aktuell verifizierten Task denselben revisionsgebundenen Stamp wie verification_stamp gegen authoritative_task_registry.",
+      "evidence_type": "object",
+      "id": "authoritative-state-store-stamp",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:verification-stamp-taskspec-authority:authoritative-state-store-stamp"
+      }
+    },
+    {
+      "assertion": "Eine abweichende rohe Git-Taskprojektion verursacht keinen falschen no-current-verification-Befund, solange die autoritative StateStore-TaskSpec zum verifizierten task_status passt.",
+      "evidence_type": "object",
+      "id": "git-drift-does-not-false-negative",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:verification-stamp-taskspec-authority:git-drift-no-false-negative"
+      }
+    },
+    {
+      "assertion": "Echter TaskSpec- oder Plan-Digest-Drift bleibt unverifiziert und wird nicht durch die neue Registry-Auswahl überdeckt.",
+      "evidence_type": "object",
+      "id": "real-drift-remains-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:verification-stamp-taskspec-authority:real-drift-fail-closed"
+      }
+    },
+    {
+      "assertion": "Fokussierte Regressionstests und make validate sind auf dem finalen Head grün; der Fix ändert keine mutierende CLI-Semantik.",
+      "evidence_type": "object",
+      "id": "validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:verification-stamp-taskspec-authority:validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-FU-COMPLETE-RUN-TASKSPEC-AUTHORITY-20260810"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die read-only verification-stamp-Registry-Bindung und fokussierte Regressionstests ändern. Keine Queue-, Claim-, Lease-, Runtime-, Merge- oder andere Lifecycle-Gates lockern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/tests/test_canonical_registry_runtime.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Die read-only verification-stamp-CLI muss bei vorhandener StateStore-TaskSpec-Autorität dieselbe authoritative_task_registry wie Dispatch und Lifecycle verwenden. Ein aktuell verifizierter Task darf nicht wegen einer abweichenden Legacy-Git-Projektion fälschlich als unverifiziert erscheinen; echter TaskSpec- oder Plan-Drift muss weiterhin fail-closed bleiben.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-VERIFICATION-STAMP-TASKSPEC-AUTHORITY-20260813",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "T010-Reopening",
+      "Merge- oder Deploymentfreigabe",
+      "Berechtigung zur Mutation fremder Arbeit"
+    ],
+    "registered_at": "2026-08-13",
+    "source": "Live reproduzierter T010-Closeout-Befund: öffentliche verification-stamp-CLI meldete no current verification, während derselbe deployte verification_stamp gegen authoritative_task_registry den Revision-5-gebundenen Receipt korrekt lieferte.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-68260f3407478117c202728b",
+      "event_id": 6780,
+      "event_created_at": "2026-08-13T12:25:54.659497Z",
+      "request_sha256": "332fb226d375583a21b3d66756af4b2ce3b8e2a069b67f1fa45362a742c7aa45",
+      "candidate_event_id": "candidate-event-6893063e21df72e669ab9132",
+      "source_fingerprint": "4908323f289178516c24a32b375fc7e3567e836a75ccb8563503809f7b2197b7",
+      "content_fingerprint": "68260f3407478117c202728be2900b048272ea10ecc7c78c963f2b7a5b54875d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "4908323f289178516c24a32b375fc7e3567e836a75ccb8563503809f7b2197b7",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:T010-closeout:verification-stamp-authority-mismatch:2026-08-13",
+        "observed_at": "2026-08-13T12:20:00Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "4908323f289178516c24a32b375fc7e3567e836a75ccb8563503809f7b2197b7",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau:T010-closeout:verification-stamp-authority-mismatch:2026-08-13",
+          "observed_at": "2026-08-13T12:20:00Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die verification-stamp-Registry-Auswahl und zugehörige Regressionstests; bestehende StateStore-TaskSpec-Autorität, Digest-Gates und alle mutierenden Befehle bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "verification-stamp an autoritative TaskSpec-Registry binden"
+}

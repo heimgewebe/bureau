@@ -1,0 +1,152 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Zeitstempel-Fähigkeit wird auf der exakten in der heim-pc-Policy gepinnten Parakeet-Modellrevision und der tatsächlich verwendeten Transformers-Version/API geprüft; Dokumentation oder Modell-Metadaten allein gelten nicht als Ausführungsbeweis.",
+      "evidence_type": "object",
+      "id": "timestamp-capability-grounded",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t041:timestamp-capability-grounded"
+      }
+    },
+    {
+      "assertion": "Der Adapter erzeugt ausschließlich Segment- oder Wort-Zeitstempel, die aus realem Backend-Output stammen. Fehlen verlässliche Zeitstempel in der aktuellen API, bleiben Segmente beziehungsweise Zeitfelder leer und Policy/Dokumentation werden entsprechend präzisiert.",
+      "evidence_type": "object",
+      "id": "no-invented-segments",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t041:no-invented-segments"
+      }
+    },
+    {
+      "assertion": "Mindestens eine repräsentative private Medienprobe wird real lokal mit Parakeet auf dem Heim-PC ausgeführt; Erfolg und technische Adapter-/Modellidentität werden revisionsgebunden belegt, ohne Roh-Audio, Referenztext oder Transkriptinhalt in Git oder Bureau zu persistieren.",
+      "evidence_type": "object",
+      "id": "local-real-smoke",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t041:local-real-smoke"
+      }
+    },
+    {
+      "assertion": "Falls Zeitstempel verfügbar sind, werden sie in das bestehende heim-pc.asr-transcript-Format mit start, end, speaker=null und text normalisiert; bestehende Qwen- und faster-whisper-Ergebnisse bleiben kompatibel.",
+      "evidence_type": "object",
+      "id": "common-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t041:common-contract"
+      }
+    },
+    {
+      "assertion": "T041 bleibt vollständig lokal und löst keine metered Cloud-ASR-Nutzung aus; Qwen bleibt Default und automatische Cloud-Eskalation bleibt deaktiviert.",
+      "evidence_type": "object",
+      "id": "cost-and-cloud-invariants",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t041:cost-and-cloud-invariants"
+      }
+    },
+    {
+      "assertion": "ASR-Fokustests, relevante Repo-Validatoren und geschützte GitHub-Pflichtchecks sind auf dem exakten finalen Head grün.",
+      "evidence_type": "object",
+      "id": "regression-and-ci",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-asr-t041:regression-and-ci"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den lokalen Parakeet-Adapter, seine Policy/Dokumentation und fokussierte Tests ändern. Keine metered API, kein Default-Modellwechsel und keine Persistenz privater Audio- oder Transkriptinhalte.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc"
+  },
+  "goal": "Auf dem exakten revisionsgepinnten nvidia/parakeet-tdt-0.6b-v3-Pfad verifizieren, ob die derzeit verwendete Transformers-TDT-Oberfläche verlässliche Wort- oder Segment-Zeitstempel liefert. Falls ja, diese ohne erfundene Metadaten in das gemeinsame heim-pc.asr-transcript-Segmentformat übernehmen und mit echter lokaler Inferenz belegen; falls nein, Policy und Dokumentation explizit auf die tatsächlich verfügbare Adapterfähigkeit begrenzen.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T041",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "cost_constraint": "Keine metered API, keine gekauften Credits und keine kostenpflichtige Zusatznutzung.",
+    "does_not_establish": [
+      "dass Parakeet im aktuellen Adapter tatsächlich Zeitstempel ausgibt",
+      "dass Parakeet qualitativ besser als Qwen oder faster-whisper ist",
+      "Berechtigung zu einem Default-Modellwechsel"
+    ],
+    "privacy_constraint": "Keine Roh-Audio-, Referenz- oder Transkriptinhalte in Git, Bureau oder Benchmark-Evidenz persistieren.",
+    "source": "Follow-up aus heim-pc PR #102 nach Local-first-ASR-Policy-Hardening.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-92eecc1766d3c0e9e1f275a1",
+      "event_id": 6677,
+      "event_created_at": "2026-08-13T09:03:11.967653Z",
+      "request_sha256": "1217835e6229c67c63e05a7fc8c355c2c14074108478546659c0fc0e0d430d23",
+      "candidate_event_id": "candidate-event-101cf75f12b6576facb3738b",
+      "source_fingerprint": "e1fbe5cfa7e7cc8ee665ab305292de9eba845e78614b27508a65bf638cdc3d1f",
+      "content_fingerprint": "92eecc1766d3c0e9e1f275a15d3c7abec4088269811af3aa464f158b5fdf37e5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "e1fbe5cfa7e7cc8ee665ab305292de9eba845e78614b27508a65bf638cdc3d1f",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-follow-up",
+        "locator": "https://github.com/heimgewebe/heim-pc/pull/102",
+        "observed_at": "2026-08-13T09:03:11.864496Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "e1fbe5cfa7e7cc8ee665ab305292de9eba845e78614b27508a65bf638cdc3d1f",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-follow-up",
+          "locator": "https://github.com/heimgewebe/heim-pc/pull/102",
+          "observed_at": "2026-08-13T09:03:11.864496Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 41
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Änderung bleibt additiv und fail-closed. Wenn reale Parakeet-Inferenz keine verlässlichen Zeitstempel liefert oder Regressionen auftreten, keine Zeitstempel erfinden, Adapterverhalten auf den bisherigen text-only-Parakeet-Pfad zurückführen und nur Policy/Dokumentation an die belegte Fähigkeit angleichen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Parakeet-Zeitstempel im lokalen ASR-Adapter verifizieren und anbinden"
+}

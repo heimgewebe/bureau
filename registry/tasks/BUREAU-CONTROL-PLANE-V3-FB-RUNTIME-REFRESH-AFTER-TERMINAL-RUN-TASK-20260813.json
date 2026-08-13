@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-TERMINAL-RUN-TASK-20260813",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Runtime-Refresh nach Terminal-Run-Closeout-Task",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen current main autorisieren, der PR #1941 / Merge-Commit 2d4f9f6ec8fb9d414c2a5655fa6d990f33e2ef82 enthält. Zweck ist ausschließlich, BUREAU-CONTROL-PLANE-V3-FU-HISTORICAL-CLOSEOUT-TERMINAL-RUN-20260813 über den normalen koordinierten Pickup claimbar zu machen.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use only. Fresh main/PR #1941/required-check/StateStore/target/live-lease evidence before prepare/apply; immutable readback, lease release and closeout-authority after success. No historical refresh replay, runtime rollback, Grabowski runtime, Queue, claim or dispatch effect."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "bootstrap-and-target",
+      "assertion": "TaskSpec is merged through protected PR and selectively seeded if missing. Immediately before execution current main includes PR #1941 / 2d4f9f6ec8fb9d414c2a5655fa6d990f33e2ef82, required checks are green and target_sha256 is fresh.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-terminal-run-task:bootstrap-and-target"
+      }
+    },
+    {
+      "id": "single-use-preflight",
+      "assertion": "Before prepare and apply the exact authoritative TaskSpec is ready/active, positive revision/digest, single-use-target-bound and has no prior target binding, consumption or runtime_closeout.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-terminal-run-task:single-use-preflight"
+      }
+    },
+    {
+      "id": "lease-and-immutable-readback",
+      "assertion": "Apply uses only exact intent-bound live leases. Exactly one effect_started=true deploy is allowed; manifest, immutable release, package tree, launchers, Registry snapshot, bureau check and StateStore integrity agree on the target commit.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-terminal-run-task:lease-and-readback"
+      }
+    },
+    {
+      "id": "authority-closeout",
+      "assertion": "After successful immutable readback the runtime leases are released and closeout-authority terminalizes this exact task with matching target/intent/result. No second effect or unrelated state mutation occurs.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-terminal-run-task:authority-closeout"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "On ambiguous/failed apply do not retry blindly; preserve last valid immutable runtime and reconcile only from target/result/receipt/StateStore evidence."
+  },
+  "metadata": {
+    "registered_at": "2026-08-13",
+    "source_candidate": "candidate-e79f21fd6ed47833dee452e7",
+    "source_event_id": 6588,
+    "required_task": "BUREAU-CONTROL-PLANE-V3-FU-HISTORICAL-CLOSEOUT-TERMINAL-RUN-20260813",
+    "required_task_merge_commit": "2d4f9f6ec8fb9d414c2a5655fa6d990f33e2ef82",
+    "installed_runtime_before": "627016316d2bdb3736b9a24235142e765c047ddb",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Installed immutable runtime predates the just-merged TaskSpec and normal pickup failed pre-effect with release-registry-identity-mismatch."
+    },
+    "does_not_establish": [
+      "reusable runtime authority",
+      "historical refresh replay",
+      "runtime rollback",
+      "Grabowski runtime mutation",
+      "Queue/claim/dispatch authority"
+    ]
+  }
+}

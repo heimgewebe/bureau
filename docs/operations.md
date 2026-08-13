@@ -576,3 +576,25 @@ bureau --json lease-contract \
 Doctor reports nonterminal legacy tasks that still request the broad repository key. Planned tasks
 produce a migration warning; a ready task or a task in `now` produces a blocker until its scope is
 narrowed. Historical terminal evidence is not rewritten.
+
+
+## StateStore backup and restore proof
+
+`bureau.state_backup` creates a coherent StateStore snapshot without copying a live WAL file. It uses SQLite Online Backup, requires `PRAGMA integrity_check=ok` and an empty `foreign_key_check`, replays the append-only operational and TaskSpec event streams, and binds the resulting authoritative projection root to every materialised execution envelope and receipt. The manifest also seals aggregate envelope and receipt roots. Missing, extra or digest-mismatched materialisation makes the backup fail closed.
+
+The supplied `bureau-state-backup.timer` stages a bundle every 15 minutes under `%h/artifacts/merges/bureau-state-backups/`. That path is already inside the enabled `heim-pc-restic-backup` source `artifacts/merges`; Restic remains the encrypted off-host transport. Bureau neither reads nor stores Restic credentials, and a local bundle receipt deliberately does not claim that an offsite snapshot completed. Verify the existing transport separately with `heim-pc-restic-backup status` or its normal backup receipt.
+
+The daily `bureau-state-restore-test.timer` restores the newest verified bundle into an empty temporary state root and first proves the same authoritative event/TaskSpec, envelope and receipt roots. Grabowski leases and external process/GitHub state are deliberately absent from the bundle. It then runs Bureau's normal reconciler only against the temporary restored StateStore: local non-external workers are orphaned fail-closed, external runs are freshly observed through the current adapter, and any unavailable or unknown external observation makes the restore drill fail. No historical Grabowski lease is restored or reactivated.
+
+Manual revision-bound checks after the immutable Bureau release containing this module is active:
+
+```bash
+~/.local/share/bureau/venv/bin/python -m bureau.state_backup backup \
+  --state-root ~/.local/state/bureau \
+  --backup-root ~/artifacts/merges/bureau-state-backups
+~/.local/share/bureau/venv/bin/python -m bureau.state_backup restore-test \
+  --backup-root ~/artifacts/merges/bureau-state-backups \
+  --receipt ~/artifacts/merges/bureau-state-backups/restore-tests/latest.json
+```
+
+A green restore receipt proves local recovery consistency plus a fresh, fail-closed reconciliation simulation in the empty restored root. Runtime activation of the supplied units and an actual Restic snapshot remain separate effects with their own readback.

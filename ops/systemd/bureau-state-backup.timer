@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Bureau coherent StateStore backup every 15 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+AccuracySec=30s
+RandomizedDelaySec=45s
+Persistent=true
+Unit=bureau-state-backup.service
+
+[Install]
+WantedBy=timers.target

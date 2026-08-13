@@ -25,8 +25,8 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     inventory = build_inventory(ROOT)
     units = {unit["unit"]: unit for unit in inventory["systemd_units"]}
 
-    assert inventory["summary"]["systemd_services"] == 12
-    assert inventory["summary"]["systemd_timers"] == 12
+    assert inventory["summary"]["systemd_services"] == 14
+    assert inventory["summary"]["systemd_timers"] == 14
     assert (
         units["ops/systemd/bureau-status-projection.service"]["matched_console_script"] == "bureau"
     )
@@ -49,6 +49,8 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     assert units["ops/systemd/bureau-codex-bridge.service"]["command_basename"] == (
         "bureau-codex-bridge"
     )
+    assert units["ops/systemd/bureau-state-backup.service"]["command_basename"] == "python"
+    assert units["ops/systemd/bureau-state-restore-test.service"]["command_basename"] == "python"
 
 
 def test_inventory_records_hidden_or_module_entrypoints_without_promoting_them() -> None:

@@ -3,11 +3,11 @@ Description=Bureau coherent StateStore backup staging
 Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/operations.md
 ConditionPathExists=%h/.local/state/bureau/bureau.sqlite3
 ConditionPathIsDirectory=%h/artifacts/merges
-ConditionPathExists=%h/.local/share/bureau/venv/bin/python
+ConditionPathExists=%h/.local/bin/bureau
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/share/bureau/venv/bin/python -m bureau.state_backup backup --state-root %h/.local/state/bureau --backup-root %h/artifacts/merges/bureau-state-backups
+ExecStart=%h/.local/bin/bureau --state-root %h/.local/state/bureau state-backup --backup-root %h/artifacts/merges/bureau-state-backups
 Environment=PYTHONUNBUFFERED=1
 TimeoutStartSec=5min
 Nice=5
@@ -17,7 +17,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadOnlyPaths=%h/.local/state/bureau %h/.local/share/bureau/venv
+ReadOnlyPaths=%h/.local/state/bureau %h/.local/share/bureau
 ReadWritePaths=%h/artifacts/merges
 RestrictAddressFamilies=AF_UNIX
 LockPersonality=true

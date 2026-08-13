@@ -36,8 +36,7 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
         == "bureau-status-capsule"
     )
     assert (
-        units["ops/systemd/bureau-source-pr-bridge.service"]["matched_console_script"]
-        == "bureau"
+        units["ops/systemd/bureau-source-pr-bridge.service"]["matched_console_script"] == "bureau"
     )
     assert (
         units["ops/systemd/bureau-review-steward.service"]["matched_console_script"]
@@ -49,8 +48,10 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     assert units["ops/systemd/bureau-codex-bridge.service"]["command_basename"] == (
         "bureau-codex-bridge"
     )
-    assert units["ops/systemd/bureau-state-backup.service"]["command_basename"] == "python"
-    assert units["ops/systemd/bureau-state-restore-test.service"]["command_basename"] == "python"
+    assert units["ops/systemd/bureau-state-backup.service"]["matched_console_script"] == "bureau"
+    assert (
+        units["ops/systemd/bureau-state-restore-test.service"]["matched_console_script"] == "bureau"
+    )
 
 
 def test_inventory_records_hidden_or_module_entrypoints_without_promoting_them() -> None:
@@ -98,4 +99,11 @@ def test_retired_system_catalog_candidate_commands_are_absent() -> None:
     }
 
     assert retired.isdisjoint(command_choices)
-    assert {"frontier", "what-now", "repo-balls", "live-register"} <= command_choices
+    assert {
+        "frontier",
+        "what-now",
+        "repo-balls",
+        "live-register",
+        "state-backup",
+        "state-restore-test",
+    } <= command_choices

@@ -2,23 +2,48 @@
   "acceptance": [
     {
       "assertion": "Zeit-, Größen- und Anzahlbudgets sind pro Artefaktklasse explizit; Default bleibt konservativ und eine automatische Löschung ist ohne bewusste Aktivierung ausgeschlossen.",
-      "id": "policy-profiles"
+      "evidence_type": "object",
+      "id": "policy-profiles",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t018:policy-profiles"
+      }
     },
     {
       "assertion": "Ein deterministischer Dry-run listet Kandidaten, Gründe, Referenzen, Pins und erwartete Freigabe; Apply ist an den exakten Planhash gebunden.",
-      "id": "plan-before-effect"
+      "evidence_type": "object",
+      "id": "plan-before-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t018:plan-before-effect"
+      }
     },
     {
       "assertion": "Aktive Sessions, Bureau-/PR-Belege, gepinnte Artefakte und nichtterminal referenzierte Objekte sind geschützt; unbekannte Referenzlage blockiert.",
-      "id": "reference-protection"
+      "evidence_type": "object",
+      "id": "reference-protection",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t018:reference-protection"
+      }
     },
     {
       "assertion": "GC ist race-sicher, no-follow, eigentumsgebunden und erzeugt pro Wirkung einen Receipt; Unterbrechung und Wiederholung sind idempotent.",
-      "id": "safe-gc"
+      "evidence_type": "object",
+      "id": "safe-gc",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t018:safe-gc"
+      }
     },
     {
       "assertion": "Nach Apply werden Storeintegrität, geschützte Referenzen, freigegebene Bytes/Objekte und weiterhin lesbare aktive Artefakte erneut geprüft.",
-      "id": "retention-readback"
+      "evidence_type": "object",
+      "id": "retention-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t018:retention-readback"
+      }
     }
   ],
   "claims": [
@@ -54,27 +79,49 @@
       "absence of retained artifacts",
       "runtime correctness"
     ],
-    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-9f4b2a1e511641b05f2d13be",
-      "event_id": 1321,
-      "event_created_at": "2026-07-27T09:34:34.192261Z",
-      "request_sha256": "faccedb77058de1af3ac02c3baba4ff544dcf2755c868b35da7e080b679476e1",
+      "candidate_id": "candidate-5edb5ce984606805c47b2c17",
+      "event_id": 6803,
+      "event_created_at": "2026-08-13T14:42:59.840169Z",
+      "request_sha256": "f555c1748e187c668d46349b5d449bd8e57f2f81dfe97642776cbccf46ba8ab3",
+      "candidate_event_id": "candidate-event-483c4cfd1125bd3ffe627dbb",
+      "source_fingerprint": "13dff2459a399724f9d55d0a229badfa42367b264f85893f61e9c022c23e7c45",
+      "content_fingerprint": "5edb5ce984606805c47b2c178063f1de368e50f978270d806194d75721584d5d",
       "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "conversation",
-        "locator": "conversation:repoground-complete-audit-2026-07-27",
-        "observed_at": "2026-07-27T09:34:34.180341Z",
-        "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "13dff2459a399724f9d55d0a229badfa42367b264f85893f61e9c022c23e7c45",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "grabowski:claim-intent:REPOGROUND-AGENT-UTILITY-V1-T018:2026-08-13",
+        "observed_at": "2026-08-13T16:20:00+02:00",
+        "sha256": null
       },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "13dff2459a399724f9d55d0a229badfa42367b264f85893f61e9c022c23e7c45",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "grabowski:claim-intent:REPOGROUND-AGENT-UTILITY-V1-T018:2026-08-13",
+          "observed_at": "2026-08-13T16:20:00+02:00",
+          "sha256": null
+        }
+      ],
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
-        "claim_or_dispatch_authority"
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
       ]
-    }
+    },
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27"
   },
   "priority": {
     "lane": "later",
@@ -88,6 +135,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Runtime-Artefakt-Retention mit sicheren Budgets praktisch umsetzen"
 }

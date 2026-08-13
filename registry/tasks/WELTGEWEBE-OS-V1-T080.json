@@ -100,22 +100,22 @@
     "source_candidate_id": "candidate-cce3d3d9e843bc81eb75328e",
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-cce3d3d9e843bc81eb75328e",
-      "event_id": 6838,
-      "event_created_at": "2026-08-13T17:23:50.590383Z",
-      "request_sha256": "7a81f16d640a79d02cadc25fd0da4b1880cf0c5055c55fefad478b25455abcc0",
-      "candidate_event_id": "candidate-event-e4c8eb4cee35a96750650a53",
-      "source_fingerprint": "785441b8256385d4cff1365e613839ccfa7bfbcbde858663bb586db9f31b1d84",
-      "content_fingerprint": "cce3d3d9e843bc81eb75328eac00bec36650612ac478c6c1aa667e670c8d3530",
+      "candidate_id": "candidate-43c6c6ca33571dcc440c6560",
+      "event_id": 6937,
+      "event_created_at": "2026-08-13T21:48:56.758273Z",
+      "request_sha256": "56219918d151fb3c45dc10db1c085c2c321c65eda7b9864ed5316ec86cb3d22d",
+      "candidate_event_id": "candidate-event-a12a9998e7c28de61a79a379",
+      "source_fingerprint": "29fe83ef9a22eb6c95f515727b6e289e1fedc5bdebd22735394c250d0d3530ed",
+      "content_fingerprint": "43c6c6ca33571dcc440c6560f772136f9b9a28c4c5b6c10942d368e5de96fdea",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
-        "fingerprint": "785441b8256385d4cff1365e613839ccfa7bfbcbde858663bb586db9f31b1d84",
+        "fingerprint": "29fe83ef9a22eb6c95f515727b6e289e1fedc5bdebd22735394c250d0d3530ed",
         "freshness": "fingerprint-bound",
         "kind": "conversation",
-        "locator": "chatgpt:weltgewebe-pr-1754-stabilization-20260813",
-        "observed_at": "2026-08-13T17:23:00Z",
+        "locator": "chatgpt:weltgewebe-t080-audit-closeout-20260813",
+        "observed_at": "2026-08-13T21:42:00Z",
         "sha256": null
       },
       "source_observations": [
@@ -123,11 +123,11 @@
           "does_not_establish": [
             "source_content_identity"
           ],
-          "fingerprint": "785441b8256385d4cff1365e613839ccfa7bfbcbde858663bb586db9f31b1d84",
+          "fingerprint": "29fe83ef9a22eb6c95f515727b6e289e1fedc5bdebd22735394c250d0d3530ed",
           "freshness": "fingerprint-bound",
           "kind": "conversation",
-          "locator": "chatgpt:weltgewebe-pr-1754-stabilization-20260813",
-          "observed_at": "2026-08-13T17:23:00Z",
+          "locator": "chatgpt:weltgewebe-t080-audit-closeout-20260813",
+          "observed_at": "2026-08-13T21:42:00Z",
           "sha256": null
         }
       ],
@@ -156,6 +156,6 @@
     "strategy": "Falls ein Audit-Fix neues Reaktivitäts-, Fokus-, SSR-, HMR- oder Suchverhalten verschlechtert, den betreffenden isolierten Fix nicht mergen beziehungsweise auf den letzten revisionsgebunden grün geprüften Zustand zurücknehmen; belegte Restbefunde als separate Folgearbeit erhalten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Svelte-5-Buchhaltungszustände auf falsche Reaktivität auditieren"
 }

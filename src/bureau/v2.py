@@ -7992,6 +7992,45 @@ def _registry_drift(
     }
 
 
+def _validated_task_runtime_closeout(task: legacy.Task) -> dict[str, Any] | None:
+    if task.state != "verified":
+        return None
+    metadata = task.raw.get("metadata")
+    if not isinstance(metadata, dict) or "runtime_closeout" not in metadata:
+        return None
+    authority = metadata.get("runtime_refresh_authority")
+    if not isinstance(authority, dict):
+        return None
+    try:
+        closeout = runtime_refresh._validated_runtime_closeout(metadata["runtime_closeout"])
+        target_binding = runtime_refresh._validated_authority_target_binding(
+            authority.get("target_binding_receipt")
+        )
+        consumption = runtime_refresh._validated_authority_consumption(
+            authority.get("consumption")
+        )
+    except runtime_refresh.RuntimeRefreshError:
+        return None
+    if closeout.get("task_id") != task.id:
+        return None
+    shared_fields = (
+        "task_id",
+        "authority_revision",
+        "authority_spec_sha256",
+        "target_sha256",
+        "intent_sha256",
+    )
+    if any(
+        record.get(field) != closeout.get(field)
+        for record in (target_binding, consumption)
+        for field in shared_fields
+    ):
+        return None
+    if consumption.get("result_sha256") != closeout.get("runtime_result_sha256"):
+        return None
+    return closeout
+
+
 def _receipt_drift(
     registry: Registry,
     state: dict[str, Any],
@@ -8022,6 +8061,7 @@ def _receipt_drift(
     task_status_rows = state["rows"]["task_status"]
     stale_tasks: list[dict[str, Any]] = []
     terminal_receipt_tasks: list[dict[str, Any]] = []
+    runtime_closeout_receipt_tasks: list[dict[str, Any]] = []
     superseded_receipt_tasks: list[dict[str, Any]] = []
     unknown_status_rows: list[str] = []
     for row in task_status_rows:
@@ -8052,16 +8092,29 @@ def _receipt_drift(
                         "terminal_state": task.state,
                     }
                 )
-            elif (
-                task.state == "verified"
-                and verification.get("task_sha256") == task.sha256
-                and verification.get("plan_sha256") == current_plan
-            ):
-                superseded_receipt_tasks.append(
-                    {**drift, "reason": "embedded-verification-current"}
-                )
             else:
-                stale_tasks.append(drift)
+                runtime_closeout = _validated_task_runtime_closeout(task)
+                if runtime_closeout is not None:
+                    runtime_closeout_receipt_tasks.append(
+                        {
+                            **drift,
+                            "reason": "validated-runtime-closeout",
+                            "runtime_result_sha256": runtime_closeout[
+                                "runtime_result_sha256"
+                            ],
+                            "target_sha256": runtime_closeout["target_sha256"],
+                        }
+                    )
+                elif (
+                    task.state == "verified"
+                    and verification.get("task_sha256") == task.sha256
+                    and verification.get("plan_sha256") == current_plan
+                ):
+                    superseded_receipt_tasks.append(
+                        {**drift, "reason": "embedded-verification-current"}
+                    )
+                else:
+                    stale_tasks.append(drift)
     active_run_drift: list[dict[str, Any]] = []
     for row in state["rows"]["runs"]:
         if row.get("state") not in legacy.ACTIVE_STATES:
@@ -8109,6 +8162,23 @@ def _receipt_drift(
                 "task_ids": [item["task_id"] for item in terminal_receipt_tasks],
             }
         )
+    if runtime_closeout_receipt_tasks:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "receipt-drift-superseded-by-runtime-closeout",
+                "message": (
+                    "Historical verified task_status receipts no longer match current task "
+                    "revisions, but each affected authoritative TaskSpec is terminally "
+                    "verified by a structurally valid runtime-refresh closeout bound to the "
+                    "same task. The older task_status rows are historical and do not block "
+                    "runtime health."
+                ),
+                "task_ids": [
+                    item["task_id"] for item in runtime_closeout_receipt_tasks
+                ],
+            }
+        )
     if superseded_receipt_tasks:
         findings.append(
             {
@@ -8123,7 +8193,12 @@ def _receipt_drift(
                 "task_ids": [item["task_id"] for item in superseded_receipt_tasks],
             }
         )
-    if not stale_tasks and not terminal_receipt_tasks and not superseded_receipt_tasks:
+    if (
+        not stale_tasks
+        and not terminal_receipt_tasks
+        and not runtime_closeout_receipt_tasks
+        and not superseded_receipt_tasks
+    ):
         findings.append(
             {
                 "severity": "info",
@@ -8156,6 +8231,7 @@ def _receipt_drift(
         "available": True,
         "stale_tasks": stale_tasks,
         "terminal_receipt_tasks": terminal_receipt_tasks,
+        "runtime_closeout_receipt_tasks": runtime_closeout_receipt_tasks,
         "superseded_receipt_tasks": superseded_receipt_tasks,
         "active_run_drift": active_run_drift,
         "unknown_task_status_rows": unknown_status_rows,

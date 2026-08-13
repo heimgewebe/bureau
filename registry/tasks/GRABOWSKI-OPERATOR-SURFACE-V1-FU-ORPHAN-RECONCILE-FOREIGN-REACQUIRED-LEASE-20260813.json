@@ -1,0 +1,173 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein fokussierter Regressionstest reproduziert BUR-RUN-20260813T042440Z-678dd081ac: historischer Lease-Snapshot owner A ist abgelaufen, derselbe Resource-Key wurde strikt nach dessen expires_at_unix von owner B neu akquiriert, der Bureau-Run ist stale und ungebunden. Orphan-Reconcile darf den Run terminalisieren und weist den fremd re-akquirierten Key als preserved aus, ohne dessen Lease zu mutieren.",
+      "evidence_type": "object",
+      "id": "foreign-reacquire-positive-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:orphan-reconcile:foreign-reacquire-positive"
+      }
+    },
+    {
+      "assertion": "Eine fremde aktuelle Lease wird weiterhin vor jeder Run-Mutation abgewiesen, wenn acquired_at_unix nicht strikt nach dem historischen expires_at_unix liegt, Zeitfelder fehlen/ungültig sind oder die Lineage anderweitig mehrdeutig ist. Bestehende same-owner metadata-drift-Gates bleiben unverändert fail-closed.",
+      "evidence_type": "object",
+      "id": "overlap-and-ambiguous-lineage-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:orphan-reconcile:foreign-reacquire-negative"
+      }
+    },
+    {
+      "assertion": "Der terminale Release-Pfad gibt ausschließlich noch live vorhandene Leases frei, deren owner_id und terminale Same-Owner-Lineage dem alten Acquisition-Snapshot entsprechen. Fehlende/abgelaufene und beweisbar später fremd re-akquirierte Keys sind no-op/preserved; resources.release_resources erhält niemals einen Key, der aktuell einem fremden Owner gehört.",
+      "evidence_type": "object",
+      "id": "release-only-old-owner-live-lineage",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:orphan-reconcile:release-scope"
+      }
+    },
+    {
+      "assertion": "Tests binden den vollständigen aktuellen fremden Lease-Snapshot vor und nach Reconcile/Release und beweisen, dass owner_id, acquired_at_unix, updated_at_unix, expires_at_unix und metadata_sha256 unverändert bleiben.",
+      "evidence_type": "object",
+      "id": "foreign-lease-byte-for-byte-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:orphan-reconcile:foreign-lease-preservation"
+      }
+    },
+    {
+      "assertion": "Bestehende Tests für missing leases, renewed same-owner lineage, changed same-owner metadata, foreign overlapping owner, CAS-Digest-Drift, Dirty-Worktree-Preservation, Terminal-Readback und idempotenten Reconcile bleiben grün.",
+      "evidence_type": "object",
+      "id": "existing-semantics-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:orphan-reconcile:existing-regression"
+      }
+    },
+    {
+      "assertion": "Fokussierte test_bureau_pickup-Tests, vollständige relevante Grabowski-Validierung und git diff --check laufen auf exaktem Head grün; Diff wird revisionsgebunden selbst reviewed, Required CI ist grün und Merge erfolgt nur über den normalen geschützten PR-Pfad.",
+      "evidence_type": "object",
+      "id": "validation-review-merge",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:orphan-reconcile:validation-review-merge"
+      }
+    },
+    {
+      "assertion": "Dieser Implementierungstask verändert ausschließlich src/grabowski_bureau_pickup.py und tests/test_bureau_pickup.py. Während der Implementierung werden weder der stale Bureau-Run noch fremde Leases/Worktrees/Prozesse verändert. Ein späterer Runtime-Deploy und der erneute receiptgebundene Live-Reconcile benötigen eigene frische Gates.",
+      "evidence_type": "object",
+      "id": "effect-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:orphan-reconcile:effect-boundary"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur der eng begrenzte Grabowski-Code-/Test-Fix ist autorisiert. Keine fremde Lease darf freigegeben oder verändert werden; keine Mutation des stale Bureau-Runs während der Implementierung; normaler geschützter PR/Review/Merge. Ein späterer Grabowski-Runtime-Cutover bleibt eine separate Wirkung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den live reproduzierten Orphan-Reconcile-Blocker dauerhaft beheben: Ein eindeutig stale und nicht extern gebundener Bureau-Run darf terminalisiert werden, wenn ein historisch von ihm geleaster Path-Key nach Ablauf der alten Lease später legitim von einem anderen Owner neu akquiriert wurde. Die fremde neue Lease wird niemals freigegeben, verkürzt, übernommen oder verändert. Nur current same-owner/same-lineage-Leases des alten Runs dürfen im terminalen Release freigegeben werden; missing/expired oder exakt nach dem alten expires_at_unix fremd neu akquirierte Keys werden als preserved/no-op evidenziert. Fehlt der zeitliche Lineage-Beweis oder überlappt die fremde Akquisition die alte Lease, bleibt der Pfad fail-closed.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-ORPHAN-RECONCILE-FOREIGN-REACQUIRED-LEASE-20260813",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to release or modify the current foreign browser lease",
+      "permission to mutate the stale Bureau run during implementation",
+      "Grabowski runtime deployment authority",
+      "automatic merge authority"
+    ],
+    "live_reproduction": {
+      "acquisition_sha256": "adf5d008f4797f445b049cb209fbc83c8a34fb78f95e5fcc3492e8dcd1f8b012",
+      "coordination_sha256": "4cf5def4bba9d2a7529d8254cbb4153dbf10e185136ccf8e03acb4cbab68860c",
+      "current_acquired_at_unix": 1786604358,
+      "current_owner_id": "controller:chatgpt:browser-semantic-public-tools-v1-20260813",
+      "observed_failure": "orphan-reconcile-foreign-lease before effect",
+      "old_expires_at_unix": 1786598701,
+      "old_owner_id": "bureau-run:BUR-RUN-20260813T042440Z-678dd081ac",
+      "old_resource_key": "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "registry_binding_sha256": "879cbf0e02881c1fe4d11c90edea8ba0b5ee7f76b1796907bbd3be14bb3d99b6",
+      "run_id": "BUR-RUN-20260813T042440Z-678dd081ac",
+      "run_state": "assigned_stale_unbound"
+    },
+    "source_candidate": "candidate-5597487ec64c7983b6e012ad",
+    "source_event_id": 6660,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5597487ec64c7983b6e012ad",
+      "event_id": 6660,
+      "event_created_at": "2026-08-13T07:34:08.955292Z",
+      "request_sha256": "4781842b261bb17cdf84c2e5cf59f84a40c418897b0d972f8f46dcd3c892b7a8",
+      "candidate_event_id": "candidate-event-b46683ee11de3843a596e470",
+      "source_fingerprint": "8653cd5e399a414b873934a3f1cf9d2ea554b5d67a1348afdfae3127ac9dc152",
+      "content_fingerprint": "5597487ec64c7983b6e012ad281038cc4ecc933f2d06bfc4b135c0032b083245",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "8653cd5e399a414b873934a3f1cf9d2ea554b5d67a1348afdfae3127ac9dc152",
+        "freshness": "fingerprint-bound",
+        "kind": "bureau-pickup-live-audit",
+        "locator": "bureau:BUR-RUN-20260813T042440Z-678dd081ac; orphan-reconcile blocked by foreign re-acquired expired path lease",
+        "observed_at": "2026-08-13T07:34:08.867962Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "8653cd5e399a414b873934a3f1cf9d2ea554b5d67a1348afdfae3127ac9dc152",
+          "freshness": "fingerprint-bound",
+          "kind": "bureau-pickup-live-audit",
+          "locator": "bureau:BUR-RUN-20260813T042440Z-678dd081ac; orphan-reconcile blocked by foreign re-acquired expired path lease",
+          "observed_at": "2026-08-13T07:34:08.867962Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Bei Regression den exakten Implementierungsmerge über einen normalen Revert-PR zurücknehmen. Keine historische Bureau-Run-, Acquisition- oder Lease-Evidenz umschreiben. Der Live-Reconcile bleibt bis zu einem separat bewiesenen Runtime-Cutover unverändert blockiert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Orphan-Reconcile bewahrt später fremd re-akquirierte Leases"
+}

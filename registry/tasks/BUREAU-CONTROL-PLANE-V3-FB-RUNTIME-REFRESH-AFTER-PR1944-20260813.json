@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR1944-20260813",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Runtime-Refresh nach Terminal-Run-Closeout-Fix #1944",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, der PR #1944 / Merge-Commit bab96cab3139433ed123de0a87ccd2f0201f5f72 enthält. Zweck ist ausschließlich, den terminal-succeeded-run Historical-Closeout-Fix produktiv zu aktivieren und danach den echten historischen T040-Closeout zu beweisen.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use only. Vor prepare-intent und erneut vor apply: frischer current-main-Commit, Nachweis dass PR #1944 / bab96cab3139433ed123de0a87ccd2f0201f5f72 enthalten ist, grüne Required Checks, autoritativer StateStore-TaskSpec-Preflight, frischer target_sha256 und exakt intentgebundene Live-Leases. Danach immutable Readback, Lease-Release und closeout-authority. Kein historischer Refresh-Replay, Runtime-Rollback, Grabowski-Runtime-, Queue-, Claim- oder Dispatch-Effekt."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "bootstrap-and-fresh-target",
+      "assertion": "Diese TaskSpec wird als genau eine neue Datei über einen geschützten PR registriert und selektiv als fehlende StateStore-Spec importiert. Unmittelbar vor prepare-intent ist current main frisch, enthält PR #1944 / bab96cab3139433ed123de0a87ccd2f0201f5f72 und alle Required Checks sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1944:bootstrap-and-target"
+      }
+    },
+    {
+      "id": "single-use-preflight",
+      "assertion": "Vor prepare-intent und erneut vor apply ist diese exakte Authority im autoritativen StateStore ready/active, positive Revision/Digest, single-use-target-bound und ohne target_binding_receipt, consumption oder runtime_closeout.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1944:single-use-preflight"
+      }
+    },
+    {
+      "id": "target-lease-and-readback",
+      "assertion": "Break-Glass reference und intent binden task_id und target_sha256 exakt. Apply verwendet nur die geforderten Live-Leases. Genau ein effect_started=true-Deploy ist erlaubt; Manifest, immutable Release, Paketbaum, Launcher, Registry-Snapshot, bureau check und StateStore-Integrität stimmen danach auf denselben Zielcommit.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1944:target-lease-readback"
+      }
+    },
+    {
+      "id": "authority-closeout",
+      "assertion": "Nach eindeutig erfolgreichem immutable Readback werden die Runtime-Leases freigegeben und closeout-authority terminalisiert diese Authority mit exakt target_sha256, intent_sha256 und result_sha256. Ein zweiter Effekt oder eine Wiederverwendung bleibt gesperrt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1944:authority-closeout"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem oder fehlgeschlagenem Apply keinen Blind-Retry ausführen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten und ausschließlich receipt-, target- und StateStore-gebunden reconciliieren."
+  },
+  "metadata": {
+    "registered_at": "2026-08-13",
+    "source_candidate": "candidate-83687e7da65553ab32d27d0c",
+    "source_event_id": 6616,
+    "required_implementation_pr": 1944,
+    "required_implementation_merge_commit": "bab96cab3139433ed123de0a87ccd2f0201f5f72",
+    "installed_runtime_before": "b2330c0f44df1700778c626f0e4ecfac0424a5e3",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Installed immutable runtime predates merged PR #1944. The established bootstrap contract allows only this one new Runtime-Authority TaskSpec through a protected PR, preserving existing StateStore revisions."
+    },
+    "does_not_establish": [
+      "reusable runtime authority",
+      "historical runtime refresh replay",
+      "runtime rollback",
+      "Grabowski runtime mutation",
+      "Queue/claim/dispatch authority"
+    ]
+  }
+}

@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 from runtime_approval import write_runtime_approval_intent
 
-from bureau import registry_snapshot, runtime_identity
+from bureau import legacy, registry_snapshot, runtime_identity
 from bureau import runtime_refresh as refresh
 from bureau.v2 import StateStore
 
@@ -662,6 +662,124 @@ def replace_historical_result(
     payload["install_receipt"] = install_receipt
     payload["readback"] = readback
     return refresh._write_attempt_result(result_path, payload)
+
+
+def add_authority_run_receipt(
+    store: StateStore,
+    task_id: str,
+    *,
+    state: str = "succeeded",
+    run_suffix: str = "one",
+    with_reservation: bool = False,
+    mutate_receipt: Any | None = None,
+) -> tuple[str, dict[str, Any]]:
+    run_id = f"BUR-RUN-TEST-{run_suffix}"
+    worker_id = f"worker-{run_suffix}"
+    task_sha256 = "a" * 64
+    plan_sha256 = "b" * 64
+    criterion_id = "terminal-run-proof"
+    task = runtime_authority_spec(task_id)
+    task["acceptance"] = [
+        {
+            "id": criterion_id,
+            "assertion": "Terminal run evidence remains authenticated.",
+            "evidence_type": "object",
+            "verifier": "manual_observation",
+            "verifier_config": {"observation_scope": f"test:{run_id}"},
+        }
+    ]
+    envelope = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "task_id": task_id,
+        "task_sha256": task_sha256,
+        "plan_sha256": plan_sha256,
+        "task": task,
+    }
+    envelope_sha256 = legacy.sha256_json(envelope)
+    observed_at = refresh.isoformat(NOW)
+    evidence_unsigned = {
+        "schema_version": 1,
+        "kind": "bureau.acceptance_evidence",
+        "criterion_id": criterion_id,
+        "evidence_type": "manual_observation",
+        "facts": {"accepted": True},
+        "observed_at": observed_at,
+        "revision": {
+            "task_sha256": task_sha256,
+            "plan_sha256": plan_sha256,
+            "observation_scope": f"test:{run_id}",
+        },
+        "source": {"authority": "manual", "reference": "test"},
+    }
+    authentication = {
+        "schema_version": 1,
+        "kind": "bureau.acceptance_source_authentication",
+        "criterion_id": criterion_id,
+        "run_id": run_id,
+        "task_id": task_id,
+        "task_sha256": task_sha256,
+        "plan_sha256": plan_sha256,
+        "envelope_sha256": envelope_sha256,
+        "evidence_sha256": legacy.sha256_json(evidence_unsigned),
+        "verifier": "manual_observation",
+        "observation_scope": f"test:{run_id}",
+        "authority": "manual",
+    }
+    evidence = {**evidence_unsigned, "_source_authentication": authentication}
+    receipt = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "task_id": task_id,
+        "task_sha256": task_sha256,
+        "plan_sha256": plan_sha256,
+        "envelope_sha256": envelope_sha256,
+        "evidence": {criterion_id: evidence},
+        "verified_at": observed_at,
+    }
+    if mutate_receipt is not None:
+        mutate_receipt(receipt)
+    receipt["receipt_sha256"] = legacy.sha256_json(receipt)
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO workers(worker_id,kind,capabilities_json,heartbeat_at) VALUES(?,?,?,?)",
+            (worker_id, "test", "[]", observed_at),
+        )
+        connection.execute(
+            """
+            INSERT INTO runs(
+                run_id,task_id,worker_id,attempt,state,task_sha256,plan_sha256,
+                envelope_json,envelope_sha256,created_at,updated_at,heartbeat_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                run_id,
+                task_id,
+                worker_id,
+                1,
+                state,
+                task_sha256,
+                plan_sha256,
+                legacy.canonical_json(envelope),
+                envelope_sha256,
+                observed_at,
+                observed_at,
+                observed_at,
+            ),
+        )
+        if with_reservation:
+            connection.execute(
+                "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) VALUES(?,?,?,?,?)",
+                (run_id, "component.bureau.core", "write", 1, observed_at),
+            )
+        connection.execute(
+            "INSERT INTO receipts(run_id,receipt_json,receipt_sha256,created_at) VALUES(?,?,?,?)",
+            (run_id, legacy.canonical_json(receipt), receipt["receipt_sha256"], observed_at),
+        )
+    store.envelope_path(run_id).write_text(
+        json.dumps(envelope, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    return run_id, receipt
 
 
 def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> None:
@@ -2775,3 +2893,164 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         capture_output=True,
     )
     assert json.loads(upgraded_status.stdout)["deployed_source_commit"] == target_head
+
+
+
+def test_no_run_closeout_allows_one_authenticated_succeeded_run(tmp_path: Path) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    run_id, _ = add_authority_run_receipt(store, task_id)
+    release_test_leases(resource_db)
+    run_before = store.run(run_id)
+    receipt_before = store.receipt(run_id)
+    # The run/receipt fixture is inserted directly to exercise only this guard;
+    # preserve the production replay gate while declaring this synthetic projection healthy.
+    store.replay_projection = lambda: {
+        "matches_current": True,
+        "authoritative_root_sha256": "c" * 64,
+    }
+
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+
+    assert closeout["closeout"]["status"] == "verified"
+    assert store.task_spec(task_id)["spec"]["state"] == "verified"
+    assert store.run(run_id) == run_before
+    assert store.receipt(run_id) == receipt_before
+
+
+@pytest.mark.parametrize("state", ["assigned", "running", "verifying", "orphaned", "failed", "cancelled"])
+def test_no_run_closeout_rejects_non_succeeded_run(tmp_path: Path, state: str) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    add_authority_run_receipt(store, task_id, state=state)
+    release_test_leases(resource_db)
+    before = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=20),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+    assert caught.value.code == "authority-closeout-run-not-succeeded"
+    assert store.task_spec(task_id) == before
+
+
+def test_no_run_closeout_rejects_succeeded_run_with_reservation(tmp_path: Path) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    add_authority_run_receipt(store, task_id, with_reservation=True)
+    release_test_leases(resource_db)
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+    assert caught.value.code == "authority-closeout-run-reservations-present"
+
+
+@pytest.mark.parametrize(
+    ("mutation", "code"),
+    [
+        (lambda r: r.__setitem__("task_sha256", "c" * 64), "authority-closeout-run-receipt-binding-mismatch"),
+        (lambda r: r.__setitem__("evidence", {}), "authority-closeout-run-receipt-acceptance-incomplete"),
+        (
+            lambda r: r["evidence"]["terminal-run-proof"]["_source_authentication"].__setitem__("plan_sha256", "c" * 64),
+            "authority-closeout-run-receipt-authentication-invalid",
+        ),
+    ],
+)
+def test_no_run_closeout_rejects_bad_succeeded_run_receipt(
+    tmp_path: Path, mutation: Any, code: str
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    add_authority_run_receipt(store, task_id, mutate_receipt=mutation)
+    release_test_leases(resource_db)
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+    assert caught.value.code == code
+
+
+def test_no_run_closeout_rejects_multiple_runs(tmp_path: Path) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    add_authority_run_receipt(store, task_id, run_suffix="one")
+    add_authority_run_receipt(store, task_id, run_suffix="two")
+    release_test_leases(resource_db)
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+    assert caught.value.code == "authority-closeout-run-count-invalid"
+
+
+
+def test_no_run_closeout_rejects_missing_succeeded_run_receipt(tmp_path: Path) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    run_id, _ = add_authority_run_receipt(store, task_id)
+    with store.immediate() as connection:
+        connection.execute("DELETE FROM receipts WHERE run_id=?", (run_id,))
+    release_test_leases(resource_db)
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+    assert caught.value.code == "authority-closeout-run-receipt-missing"
+
+
+def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: Path) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    run_id, receipt = add_authority_run_receipt(store, task_id)
+    tampered = dict(receipt)
+    tampered["receipt_sha256"] = "0" * 64
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE receipts SET receipt_json=? WHERE run_id=?",
+            (legacy.canonical_json(tampered), run_id),
+        )
+    release_test_leases(resource_db)
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+    assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"

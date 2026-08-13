@@ -1,0 +1,163 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein hermetischer Regressionstest reproduziert den heutigen Konflikt: zwei fachlich disjunkte Änderungen an verschiedenen gebundenen Source-Modulen benötigen unter dem aktuellen Vertrag jeweils eine Änderung derselben Operator-Context-Aggregatdatei und kollidieren dadurch am Writer-Scope, obwohl ihre Produktdateien nicht überlappen.",
+      "evidence_type": "object",
+      "id": "false-serialization-reproduced",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-context-serialization:false-serialization-reproduced"
+      }
+    },
+    {
+      "assertion": "Der neue Vertrag behält revisionsgebundene Staleness- und Tamper-Erkennung für alle bisher gebundenen Source-Identitäten mindestens bei. Kein Source-Hash wird stillschweigend ignoriert, kein Mismatch zu einer Warnung herabgestuft und kein `context-check`-/Validate-Gate abgeschwächt.",
+      "evidence_type": "object",
+      "id": "integrity-not-weakened",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-context-serialization:integrity-not-weakened"
+      }
+    },
+    {
+      "assertion": "Zwei nicht überlappende Source-Änderungen können ihre jeweilige Integritätsevidenz ohne gleichzeitigen exklusiven Schreibanspruch auf dieselbe kanonische Aggregatdatei vorbereiten. Falls eine Aggregation weiterhin nötig ist, erfolgt sie ausschließlich an einer expliziten deterministischen Integrations-/Mergegrenze mit frischem Readback statt in jedem disjunkten Implementierungsslice.",
+      "evidence_type": "object",
+      "id": "disjoint-slices-no-shared-writer",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-context-serialization:disjoint-slices-no-shared-writer"
+      }
+    },
+    {
+      "assertion": "Gleiche Source-Inputs erzeugen byteidentische Integritätsevidenz; veränderte gebundene Source-Inhalte werden weiterhin deterministisch erkannt. Positive und negative Tests decken Idempotenz, stale Evidence, manipulierte Digests und zwei parallele disjunkte Source-Slices ab.",
+      "evidence_type": "object",
+      "id": "deterministic-currentness",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-context-serialization:deterministic-currentness"
+      }
+    },
+    {
+      "assertion": "Veröffentlichte Operator-Context-/Capability-Consumer bleiben kompatibel oder werden innerhalb desselben revisionsgebundenen Changes explizit migriert. Die Änderung erzeugt keine zweite Autorität für Tool-Surface, Capability-Katalog oder Source-Identität.",
+      "evidence_type": "object",
+      "id": "consumer-contract-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-context-serialization:consumer-contract-preserved"
+      }
+    },
+    {
+      "assertion": "Fokussierte Generator-/Operator-Context-Regressions, vollständiges `make validate`, git diff --check, geschützte GitHub-Pflichtchecks, revisionsgebundener Self-Review und Post-Merge-Readback sind auf demselben finalen Head grün.",
+      "evidence_type": "object",
+      "id": "delivery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-context-serialization:delivery"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Operator-Context-Generator, dessen Integritäts-/Currentness-Tests und zwingend zugehörige generierte Verträge ändern. Keine Source-Hash-Prüfung entfernen oder in eine Warnung umwandeln; keine CI-/Review-Gates abschwächen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/tools/build_operator_context.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_context.py",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.md",
+      "path:/home/alex/repos/grabowski/contracts/capability-catalog.v1.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Entkopple die aktuelle Operator-Context-Integritätsbindung von einer unnötigen gemeinsamen Writer-Kollision: fachlich disjunkte Änderungen an unterschiedlichen Grabowski-Quellmodulen sollen nicht allein deshalb dieselbe exklusive Generated-Datei vor dem Merge schreiben müssen, weil `docs/generated/operator-context.v1.json` vollständige Source-SHA-256-Bindungen aggregiert. Die Staleness-/Tamper-Erkennung muss mindestens so streng bleiben. Erarbeite und implementiere einen revisionsgebundenen Vertrag, der disjunkte Source-Slices parallel zulässt und nur an einer klaren, deterministischen Integrationsgrenze serialisiert, beispielsweise über per-source/content-addressed Evidenz oder eine gesicherte Merge-/Post-Merge-Aggregation.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-OPERATOR-CONTEXT-WRITER-SERIALIZATION-20260813",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass Source-Hash-Bindungen unnötig sind",
+      "dass Shared Aggregation generell falsch ist",
+      "dass fremde aktive Generator-Leases übernommen werden dürfen",
+      "dass Post-Merge-Regeneration ohne Integritätsgate automatisch die richtige Lösung ist"
+    ],
+    "finding": "Live während REPOGROUND-AGENT-UTILITY-V1-FU-CANONICAL-REMOTE-FRESHNESS-20260812/PR #760: die Produktänderung betrifft ausschließlich src/grabowski_mcp.py und tests/test_repoground_bundles.py, während Event 6421/PR #758 andere Source-Komponenten ändert. Dennoch benötigen beide für grünes `make validate` dieselbe `docs/generated/operator-context.v1.json`, weil der Generator vollständige Source-Datei-SHA-256 aggregiert. Ein aktiver fremder Lease auf dieser Datei blockiert dadurch den ansonsten disjunkten Freshness-Closeout.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3d5a229d6d949ae19c122150",
+      "event_id": 6600,
+      "event_created_at": "2026-08-13T05:09:34.428392Z",
+      "request_sha256": "64d5469ac440476668e6e2e0648a3b92e6344b71886e90329ca99e9fe6efa1af",
+      "candidate_event_id": "candidate-event-7e596af5ad57e2be6adc1920",
+      "source_fingerprint": "15c07f89179e1665642c2c176c68394a53d476146e502ffd0b30067d19d7014f",
+      "content_fingerprint": "3d5a229d6d949ae19c122150795265a226879d493fa70cd7058a09f070e2a083",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "15c07f89179e1665642c2c176c68394a53d476146e502ffd0b30067d19d7014f",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "conversation:repoground-freshness-implementation:2026-08-13#operator-context-shared-generated-file",
+        "observed_at": "2026-08-13T05:09:00Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "15c07f89179e1665642c2c176c68394a53d476146e502ffd0b30067d19d7014f",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "conversation:repoground-freshness-implementation:2026-08-13#operator-context-shared-generated-file",
+          "observed_at": "2026-08-13T05:09:00Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 25
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "architecture-refactoring",
+    "concurrency",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "Bei geschwächter Integrität, nichtdeterministischer Evidenz oder Consumer-Inkompatibilität den Generator-/Vertragsdiff zurücknehmen und den bisherigen strikten Aggregatvertrag wiederherstellen. Fremde Source-Branches, Leases und generierte Evidenz nicht resetten oder überschreiben."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "stop": {
+    "conditions": [
+      "Eine Lösung würde Source-Hash-/Currentness-Prüfung lediglich entfernen, ignorieren oder auf Warnung herabstufen.",
+      "Eine fremde aktive Lease oder ein offener Writer berührt Generator, Operator-Context-Tests oder die betroffenen generierten Verträge; keine Übernahme fremder Arbeit.",
+      "Die Reproduktion zeigt, dass die Writer-Kollision bereits durch einen aktuellen anderen Vertrag gelöst ist; dann Task ohne unnötigen Rewrite schließen beziehungsweise superseden."
+    ]
+  },
+  "title": "Operator-Context-Integrität ohne falsche Shared-Writer-Serialisierung erhalten"
+}

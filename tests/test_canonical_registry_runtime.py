@@ -14,8 +14,10 @@ import pytest
 from runtime_approval import write_runtime_approval_intent
 
 from bureau import cli as bureau_cli
+from bureau.core import Registry
 from bureau.cycle_deployment import STAGES
 from bureau.read_only_state import ReadOnlyStateStore
+from bureau.v2 import StateStore, authoritative_task_registry, plan_sha256
 
 
 def git(root: Path, *args: str) -> str:
@@ -292,6 +294,99 @@ def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) ->
     tampered_result = json.loads(tampered.stdout)
     assert tampered_result["result"]["status"] == "canonical-registry-invalid"
     assert "tree-digest-mismatch" in tampered_result["result"]["reason_codes"]
+
+
+def test_verification_stamp_uses_authoritative_state_store_task_spec(tmp_path: Path) -> None:
+    source = make_installable_source(tmp_path)
+    launcher, prefix, _receipt = install_runtime(tmp_path, source)
+    manifest = json.loads((prefix / "deployment-manifest.json").read_text(encoding="utf-8"))
+    snapshot = Path(manifest["canonical_registry_root"])
+
+    state_root = tmp_path / "verification-authority-state"
+    registry = Registry.load(source)
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    store.import_registry_task_specs(registry)
+
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR1953-AUDIO-T032-20260813"
+    authoritative_spec = json.loads(
+        (source / f"registry/tasks/{task_id}.json").read_text(encoding="utf-8")
+    )
+    authoritative_spec["title"] = f"{authoritative_spec['title']} (StateStore authoritative)"
+    revision = store.put_task_spec(
+        authoritative_spec,
+        idempotency_key="test:verification-stamp:authoritative-task-spec",
+        expected_revision=1,
+        source="test-state-store-authority",
+    )
+    assert revision["revision"] == 2
+
+    operational_registry, authority, revisions = authoritative_task_registry(registry, store)
+    operational_task = operational_registry.tasks[task_id]
+    assert authority["kind"] == "bureau-state-store-task-specs"
+    assert revisions[task_id]["revision"] == 2
+    assert operational_task.sha256 != Registry.load(snapshot).tasks[task_id].sha256
+
+    expected = {
+        "task_sha256": operational_task.sha256,
+        "plan_sha256": plan_sha256(operational_registry, operational_task.initiative),
+        "receipt_sha256": "a" * 64,
+    }
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO task_status("
+            "task_id,state,task_sha256,plan_sha256,receipt_sha256,updated_at"
+            ") VALUES(?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET "
+            "state=excluded.state,task_sha256=excluded.task_sha256,"
+            "plan_sha256=excluded.plan_sha256,receipt_sha256=excluded.receipt_sha256,"
+            "updated_at=excluded.updated_at",
+            (
+                task_id,
+                "verified",
+                expected["task_sha256"],
+                expected["plan_sha256"],
+                expected["receipt_sha256"],
+                "2026-08-13T12:00:00Z",
+            ),
+        )
+
+    verification = subprocess.run(
+        [
+            str(launcher),
+            "--state-root",
+            str(state_root),
+            "--json",
+            "verification-stamp",
+            task_id,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert verification.returncode == 0
+    assert json.loads(verification.stdout)["result"] == expected
+
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE task_status SET task_sha256=? WHERE task_id=?",
+            ("f" * 64, task_id),
+        )
+    drifted = subprocess.run(
+        [
+            str(launcher),
+            "--state-root",
+            str(state_root),
+            "--json",
+            "verification-stamp",
+            task_id,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert drifted.returncode == 2
+    failure = json.loads(drifted.stdout)["result"]
+    assert failure["code"] == "state-error"
+    assert "has no current verification" in failure["detail"]
 
 
 def test_runtime_release_excludes_unmanaged_package_artifacts(tmp_path: Path) -> None:

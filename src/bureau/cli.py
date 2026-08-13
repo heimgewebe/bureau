@@ -1649,7 +1649,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "workspace-preserve":
             value = preserve_workspace(store, args.run_id, args.reason)
         elif args.command == "verification-stamp":
-            value = verification_stamp(registry, store, args.task_id)
+            value = verification_stamp(dispatcher.registry, store, args.task_id)
         else:
             raise AssertionError(args.command)
         emit(value, args.json)

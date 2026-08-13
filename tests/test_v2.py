@@ -2838,6 +2838,131 @@ def test_runtime_drift_check_blocks_authoritative_task_spec_drift(
     assert stale[0]["stored_plan_sha256"] == stale[0]["current_plan_sha256"]
 
 
+def _runtime_closeout_fixture(task_id: str) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_closeout",
+        "status": "verified",
+        "task_id": task_id,
+        "authority_revision": 1,
+        "authority_spec_sha256": "a" * 64,
+        "target_sha256": "b" * 64,
+        "intent_sha256": "c" * 64,
+        "runtime_result_sha256": "d" * 64,
+        "source_commit": "e" * 40,
+        "manifest_sha256": "f" * 64,
+        "readback_sha256": "1" * 64,
+        "lease_binding_sha256": "2" * 64,
+        "lease_release_sha256": "3" * 64,
+        "closed_at": "2026-08-13T07:00:00Z",
+        "does_not_establish": ["future runtime health"],
+    }
+
+
+def _runtime_authority_receipts_fixture(task_id: str) -> dict[str, object]:
+    return {
+        "target_binding_receipt": {
+            "schema_version": 1,
+            "kind": "bureau_runtime_refresh_authority_target_binding",
+            "task_id": task_id,
+            "authority_revision": 1,
+            "authority_spec_sha256": "a" * 64,
+            "target_sha256": "b" * 64,
+            "intent_sha256": "c" * 64,
+            "bound_at": "2026-08-13T06:50:00Z",
+        },
+        "consumption": {
+            "schema_version": 1,
+            "kind": "bureau_runtime_refresh_authority_consumption",
+            "status": "consumed",
+            "task_id": task_id,
+            "authority_revision": 1,
+            "authority_spec_sha256": "a" * 64,
+            "target_sha256": "b" * 64,
+            "intent_sha256": "c" * 64,
+            "result_sha256": "d" * 64,
+            "consumed_at": "2026-08-13T06:55:00Z",
+        },
+    }
+
+
+def test_runtime_drift_check_accepts_validated_runtime_closeout_supersession(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    closed = json.loads(json.dumps(current["spec"]))
+    closed["state"] = "verified"
+    metadata = closed.setdefault("metadata", {})
+    metadata.pop("verification", None)
+    metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
+    store.put_task_spec(
+        closed,
+        idempotency_key="runtime-drift-terminal-runtime-closeout",
+        expected_revision=current["revision"],
+        source="runtime-refresh-no-run-closeout",
+    )
+    store.set_initiative_state(next(iter(registry.initiatives)), "completion-ready")
+
+    report = runtime_drift_check(root, state_db=store.path)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "ok"
+    assert report["receipts"]["stale_tasks"] == []
+    superseded = report["receipts"]["runtime_closeout_receipt_tasks"]
+    assert superseded[0]["task_id"] == task_id
+    assert superseded[0]["reason"] == "validated-runtime-closeout"
+    assert superseded[0]["runtime_result_sha256"] == "d" * 64
+    assert "receipt-drift" not in codes
+    assert "receipt-drift-superseded-by-runtime-closeout" in codes
+
+
+def test_runtime_drift_check_rejects_runtime_closeout_for_different_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+
+    current = store.task_spec(task_id)
+    assert current is not None
+    drifted = json.loads(json.dumps(current["spec"]))
+    drifted["state"] = "verified"
+    metadata = drifted.setdefault("metadata", {})
+    metadata.pop("verification", None)
+    metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture("different-task")
+    store.put_task_spec(
+        drifted,
+        idempotency_key="runtime-drift-foreign-runtime-closeout",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    store.set_initiative_state(next(iter(registry.initiatives)), "completion-ready")
+
+    report = runtime_drift_check(root, state_db=store.path)
+
+    assert report["status"] == "blocked"
+    assert report["receipts"]["runtime_closeout_receipt_tasks"] == []
+    assert report["receipts"]["stale_tasks"][0]["task_id"] == task_id
+    assert "receipt-drift" in {item["code"] for item in report["findings"]}
+
+
 def test_runtime_drift_check_blocks_plan_drift_with_task_spec_authority(
     registry_factory, tmp_path, monkeypatch
 ):

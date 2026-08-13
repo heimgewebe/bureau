@@ -1,0 +1,172 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein hermetischer Test reproduziert den realen T040-Fall: genau ein taskgebundener Run ist state=succeeded, besitzt ein gültiges revisionsgebundenes Acceptance-Receipt, hat keine Reservations mehr, und die historische Runtime-Authority hat genau einen consumed effect_started=true-Deploy ohne runtime_closeout. closeout-authority authentifiziert weiterhin alle historischen immutable Artefakte und schreibt danach genau den normalen runtime_closeout; der bestehende Run und sein Receipt bleiben byte-/state-semantisch unverändert.",
+      "evidence_type": "object",
+      "id": "terminal-succeeded-run-allowed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-closeout-terminal-run:terminal-succeeded-run-allowed"
+      }
+    },
+    {
+      "assertion": "Regressionen zeigen fail-closed für assigned/running/verifying/orphaned/failed/cancelled oder anderweitig nicht succeeded terminale Runs sowie für Runs mit verbleibenden Reservations. Kein solcher Fall darf eine TaskSpec-Revision oder runtime_closeout-Evidenz erzeugen.",
+      "evidence_type": "object",
+      "id": "nonterminal-and-failed-runs-block",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-closeout-terminal-run:nonterminal-and-failed-runs-block"
+      }
+    },
+    {
+      "assertion": "Ein succeeded Run ohne Receipt, mit ungültigem Receipt-Digest, falscher run_id/task_id, driftender task_sha256/plan_sha256-/Envelope-Bindung oder nicht vollständig authentifizierter Acceptance-Evidenz blockiert fail-closed vor TaskSpec-Terminalisierung.",
+      "evidence_type": "object",
+      "id": "receipt-binding-required",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-closeout-terminal-run:receipt-binding-required"
+      }
+    },
+    {
+      "assertion": "Mehr als ein Run für dieselbe Runtime-Authority bleibt fail-closed, auch wenn einzelne Runs succeeded sind. Der Fix begründet keine Auswahlheuristik zwischen konkurrierenden Runs und keine retroaktive Run-Supersession.",
+      "evidence_type": "object",
+      "id": "multiple-runs-block",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-closeout-terminal-run:multiple-runs-block"
+      }
+    },
+    {
+      "assertion": "Der bestehende echte No-Run-Closeout ohne irgendeinen Bureau-Run bleibt unverändert idempotent und receiptgebunden; Single-Use-, Lease-, Consumption-, Target-/Intent-/Result- und historische Immutable-Readback-Gates bleiben mindestens so streng wie zuvor.",
+      "evidence_type": "object",
+      "id": "no-run-path-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-closeout-terminal-run:no-run-path-preserved"
+      }
+    },
+    {
+      "assertion": "Nach Merge und kontrolliertem Runtime-Rollout reproduziert der echte historische T040-Fall nicht mehr authority-closeout-run-present. Der vorhandene succeeded Run BUR-RUN-20260812T230738Z-428b32e378 bleibt unverändert erhalten, die Authority wird mit exakt target 25d7374d61a34c530ac8dfae57e7f1015535b7a9aad3e571b320b2e15b80cde1, intent 528a8fff62e05511b8e02a95864d8ef3dfec35f025be7d1055dd3ff5d78ea142 und result 13362abde38fa7ea696b6a07f3f668a324918b5fe9dd848099c518a92ccfc8de auf verified geschlossen, und der aktuelle neuere Bureau-Runtime-Pointer bleibt unverändert.",
+      "evidence_type": "object",
+      "id": "t040-live-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-closeout-terminal-run:t040-live-regression"
+      }
+    },
+    {
+      "assertion": "Fokussierte Runtime-Refresh-Tests, vollständige Bureau-Validierung, git diff --check, revisionsgebundener Self-Review und geschützte GitHub-Pflichtchecks sind auf demselben finalen Head grün; Merge und eventueller Runtime-Rollout erfolgen separat und revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "regression-and-delivery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:historical-closeout-terminal-run:regression-and-delivery"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den historischen Runtime-Authority-Closeout-Run-Guard und fokussierte Regressionen ändern. Keine Runs/Receipts löschen oder umschreiben, keine Runtime deployen, keine Queue-/Claim-/Dispatch-Gates lockern und keine fremde Arbeit übernehmen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_refresh.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Präzisiere den receiptgebundenen historischen Runtime-Authority-Closeout so, dass genau ein vorhandener, derselben Authority revisionsgebunden zugeordneter und terminal erfolgreicher Bureau-Run den Closeout nicht dauerhaft blockiert. Der Run muss state=succeeded sein, ein gültiges Acceptance-Receipt mit identischer run_id/task_id und revisionsgebundener task_sha256/plan_sha256-/Envelope-Bindung besitzen und keine aktiven Reservations/Claims mehr halten. Aktive, nichtterminale, failed, cancelled, orphaned oder mehrere Runs sowie fehlende, driftende oder unpassende Receipts bleiben fail-closed. Der Closeout bleibt zusätzlich exakt an historischen target_sha256, intent_sha256, result_sha256, Consumption, immutable Runtime-Artefakte und freigegebene Runtime-Leases gebunden. Kein bestehender Run wird gelöscht, umgeschrieben oder synthetisch ersetzt.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-HISTORICAL-CLOSEOUT-TERMINAL-RUN-20260813",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "permission to delete or rewrite historical runs or receipts",
+      "permission to accept multiple competing runs",
+      "permission to weaken historical immutable readback",
+      "permission to replay a runtime refresh",
+      "runtime deployment authority"
+    ],
+    "live_blocked_run": "BUR-RUN-20260812T230738Z-428b32e378",
+    "live_blocked_task": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-AUDIO-T040-20260812",
+    "live_error": "authority-closeout-run-present",
+    "live_run_receipt_sha256": "35e8e3f866d08f58486dbcb1d22dde9e629cd191a9903e932bb9586021785dc2",
+    "required_historical_intent_sha256": "528a8fff62e05511b8e02a95864d8ef3dfec35f025be7d1055dd3ff5d78ea142",
+    "required_historical_result_sha256": "13362abde38fa7ea696b6a07f3f668a324918b5fe9dd848099c518a92ccfc8de",
+    "required_historical_target_sha256": "25d7374d61a34c530ac8dfae57e7f1015535b7a9aad3e571b320b2e15b80cde1",
+    "source_candidate": "candidate-04189827869132913dbb64a1",
+    "source_event_id": 6585,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-04189827869132913dbb64a1",
+      "event_id": 6585,
+      "event_created_at": "2026-08-13T04:40:54.763923Z",
+      "request_sha256": "240fe16adc51bedf7a6a8b1ce01aab9d8f0fe12dd98065f23aa020d4076bbb62",
+      "candidate_event_id": "candidate-event-24b729f886e6715501e49517",
+      "source_fingerprint": "cb56f0e48fa5022503e29b99f32c06f43d30275c11a1116f969a74905740e6c1",
+      "content_fingerprint": "04189827869132913dbb64a16c3d04ee96bd20723fddba918a974b2ba85c530c",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "cb56f0e48fa5022503e29b99f32c06f43d30275c11a1116f969a74905740e6c1",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-runtime-evidence",
+        "locator": "bureau-state://run/BUR-RUN-20260812T230738Z-428b32e378/authority/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-AUDIO-T040-20260812",
+        "observed_at": "2026-08-13T04:38:30Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "cb56f0e48fa5022503e29b99f32c06f43d30275c11a1116f969a74905740e6c1",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-runtime-evidence",
+          "locator": "bureau-state://run/BUR-RUN-20260812T230738Z-428b32e378/authority/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-AUDIO-T040-20260812",
+          "observed_at": "2026-08-13T04:38:30Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "bureau",
+    "python",
+    "repository",
+    "testing",
+    "github",
+    "grabowski",
+    "audit",
+    "resource-leases"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die terminal-succeeded-run Ausnahme und ihre Regressionen. Historische Runs/Receipts und bereits vorhandene Runtime-Refresh-Consumption niemals zurückschreiben; bei Unsicherheit bleibt der bisherige fail-closed run-present Guard aktiv."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Historischen Runtime-Authority-Closeout bei terminalem Run ermöglichen"
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run a daily Bureau StateStore restore proof
+
+[Timer]
+OnCalendar=*-*-* 04:25:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=bureau-state-restore-test.service
+
+[Install]
+WantedBy=timers.target

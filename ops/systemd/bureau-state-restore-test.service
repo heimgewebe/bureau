@@ -1,0 +1,27 @@
+[Unit]
+Description=Bureau StateStore restore proof in an empty temporary root
+Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/operations.md
+ConditionPathIsDirectory=%h/artifacts/merges/bureau-state-backups
+ConditionPathExists=%h/.local/share/bureau/venv/bin/python
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/bureau/venv/bin/python -m bureau.state_backup restore-test --backup-root %h/artifacts/merges/bureau-state-backups --receipt %h/artifacts/merges/bureau-state-backups/restore-tests/latest.json
+Environment=PYTHONUNBUFFERED=1
+TimeoutStartSec=10min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=%h/.local/share/bureau/venv
+ReadWritePaths=%h/artifacts/merges/bureau-state-backups
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+UMask=0077

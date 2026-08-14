@@ -641,6 +641,50 @@ def _create_quarantine_transaction(
     return transaction, manifest
 
 
+def _replace_quarantine_transaction_manifest(
+    transaction: Any, manifest: Mapping[str, Any]
+) -> None:
+    payload = (
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=".manifest-rebind-", suffix=".tmp", dir=transaction
+    )
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(descriptor, 0o600)
+        view = memoryview(payload)
+        while view:
+            written = os.write(descriptor, view)
+            if written <= 0:
+                raise OSError("short quarantine manifest rebind write")
+            view = view[written:]
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    os.replace(temporary, transaction / "manifest.json")
+    _sync_directory(transaction)
+    for stale in transaction.glob(".manifest-rebind-*.tmp"):
+        with suppress(OSError):
+            stale.unlink()
+    _sync_directory(transaction)
+
+
+def _rebind_quarantine_transaction_to_payload(
+    store: StateStore,
+    transaction: Any,
+    source_path: Any,
+    run_id: str,
+    payload_sha256: str,
+    payload_identity: tuple[int, int, int],
+) -> dict[str, Any]:
+    manifest = _quarantine_transaction_manifest(
+        store, source_path, run_id, payload_sha256, payload_identity
+    )
+    _replace_quarantine_transaction_manifest(transaction, manifest)
+    return manifest
+
+
 def _read_quarantine_transaction_manifest(store: StateStore, transaction: Any) -> dict[str, Any]:
     metadata = transaction.lstat()
     if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
@@ -740,15 +784,30 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
             manifest = _read_quarantine_transaction_manifest(store, transaction)
             source = source_root / str(manifest["source_name"])
             if payload.exists():
-                actual = _finalize_quarantine_transaction(
-                    root, transaction, manifest
+                _, _, actual_sha256, actual_identity = _read_unknown_run_evidence_entry(
+                    payload
                 )
+                rebound = actual_sha256 != manifest["source_sha256"]
+                if rebound:
+                    manifest = _rebind_quarantine_transaction_to_payload(
+                        store,
+                        transaction,
+                        source,
+                        str(manifest["run_id"]),
+                        actual_sha256,
+                        actual_identity,
+                    )
+                actual = _finalize_quarantine_transaction(root, transaction, manifest)
                 result["recovered_count"] += 1
                 result["recovered_entries"].append(
                     {
                         "source_name": manifest["source_name"],
                         "source_sha256": manifest["source_sha256"],
-                        "reason": "interrupted-quarantine-recovered",
+                        "reason": (
+                            "mismatched-quarantine-payload-recovered"
+                            if rebound
+                            else "interrupted-quarantine-recovered"
+                        ),
                         "quarantine_path": str(actual),
                     }
                 )
@@ -803,6 +862,7 @@ def _quarantine_unknown_run_evidence(
             f"unknown-run acceptance evidence changed during quarantine ({state})"
         ) from exc
 
+    race_resolution: str | None = None
     if (
         moved_identity[:2] != source_identity[:2]
         or moved_payload != payload
@@ -811,10 +871,20 @@ def _quarantine_unknown_run_evidence(
         restored = _restore_mismatched_quarantine_entry(
             transaction, entry, source_directory
         )
-        state = "restored" if restored else f"preserved-at:{staged_payload}"
-        raise ValueError(
-            f"unknown-run acceptance evidence changed during quarantine ({state})"
+        if restored:
+            raise ValueError(
+                "unknown-run acceptance evidence changed during quarantine (restored)"
+            )
+        manifest = _rebind_quarantine_transaction_to_payload(
+            store,
+            transaction,
+            entry,
+            run_id,
+            moved_sha256,
+            moved_identity,
         )
+        source_sha256 = moved_sha256
+        race_resolution = "staged-payload-preserved"
 
     if moved_identity[2] == 1:
         os.chmod(staged_payload, 0o600, follow_symlinks=False)
@@ -828,7 +898,7 @@ def _quarantine_unknown_run_evidence(
         and isinstance(declared_run_id, str)
         and bool(declared_run_id)
     )
-    return {
+    result = {
         "run_id": run_id,
         "source_name": entry.name,
         "source_sha256": source_sha256,
@@ -839,6 +909,9 @@ def _quarantine_unknown_run_evidence(
         "declared_run_id": declared_run_id if isinstance(declared_run_id, str) else None,
         "quarantine_path": str(destination),
     }
+    if race_resolution is not None:
+        result["race_resolution"] = race_resolution
+    return result
 
 
 def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[str, Any]:

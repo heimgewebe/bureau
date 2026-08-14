@@ -1886,6 +1886,68 @@ def test_unknown_run_atomic_replacement_is_restored_instead_of_unlinked(
     assert not residue.exists()
 
 
+def test_unknown_run_mismatched_payload_is_finalized_when_source_is_repopulated(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-raceoccupied.json"
+    original = json.dumps({"generation": 1}).encode()
+    moved = json.dumps({"generation": 2}).encode()
+    repopulated = json.dumps({"generation": 3}).encode()
+    residue.write_bytes(original)
+    real_move = closure_observer._atomic_quarantine_move
+    raced = False
+
+    def replace_move_and_repopulate(source, destination):
+        nonlocal raced
+        if Path(source) == residue and not raced:
+            producer = residue.with_name(residue.name + ".producer")
+            producer.write_bytes(moved)
+            closure_observer.os.replace(producer, residue)
+            real_move(source, destination)
+            residue.write_bytes(repopulated)
+            raced = True
+            return None
+        return real_move(source, destination)
+
+    monkeypatch.setattr(
+        closure_observer, "_atomic_quarantine_move", replace_move_and_repopulate
+    )
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert raced is True
+    retirement = result["evidence_retirement"]
+    assert retirement["before"]["quarantined_count"] == 1
+    before_record = retirement["before"]["quarantined_entries"][0]
+    assert before_record["race_resolution"] == "staged-payload-preserved"
+    assert before_record["source_sha256"] == hashlib.sha256(moved).hexdigest()
+    assert Path(before_record["quarantine_path"]).read_bytes() == moved
+    assert retirement["after"]["quarantined_count"] == 1
+    after_record = retirement["after"]["quarantined_entries"][0]
+    assert after_record.get("race_resolution") is None
+    assert after_record["source_sha256"] == hashlib.sha256(repopulated).hexdigest()
+    assert Path(after_record["quarantine_path"]).read_bytes() == repopulated
+    assert retirement["quarantined_count"] == 2
+    assert not residue.exists()
+    quarantine_root = closure_observer._evidence_quarantine_path(store)
+    assert not any(
+        item.name.startswith(".pending-") for item in quarantine_root.iterdir()
+    )
+
+    repeat = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+    assert repeat["evidence_retirement"]["quarantined_count"] == 0
+    assert not any(
+        "staged payload digest mismatch" in error
+        for phase in ("before", "after")
+        for error in repeat["evidence_retirement"][phase]["errors"]
+    )
+
+
 def test_unknown_run_canonical_bundle_is_classified_and_quarantined(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:

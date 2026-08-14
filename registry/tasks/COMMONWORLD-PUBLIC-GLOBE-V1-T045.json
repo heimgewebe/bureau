@@ -1,0 +1,181 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Fresh evidence on the exact implementation base records the 94-entry compact bootstrap size, current warning and hard limits, startup project-request count, runtime-ready browser measurements and the current delivery architecture before any optimization; the previous 28,572-byte gzip bootstrap with only 100 bytes to the 28,672-byte warning threshold is treated as the motivating baseline, not silently rewritten.",
+      "evidence_type": "object",
+      "id": "baseline-bound",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonworld:bootstrap-headroom-t045:baseline-bound"
+      }
+    },
+    {
+      "assertion": "At least one materially different catalog-startup architecture is implemented or measured against the current compact bootstrap using the same canonical 94-entry project truth. The decision records size, startup request behavior, runtime-ready impact, no-JavaScript recovery implications, implementation complexity and future catalog-growth behavior; simply raising the warning or hard limit does not satisfy this criterion.",
+      "evidence_type": "object",
+      "id": "alternative-compared",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonworld:bootstrap-headroom-t045:alternative-compared"
+      }
+    },
+    {
+      "assertion": "The chosen design restores at least 2,048 gzip bytes of margin below the existing 28,672-byte compact-bootstrap warning threshold on the exact 94-entry tree, or replaces the linear bootstrap-size bottleneck with a bounded architecture whose fresh evidence demonstrates equivalent or stronger multi-batch growth reserve without moving the threshold. The 32,768-byte hard limit remains unchanged.",
+      "evidence_type": "object",
+      "id": "material-headroom",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonworld:bootstrap-headroom-t045:material-headroom"
+      }
+    },
+    {
+      "assertion": "Public startup still performs zero per-project JSON requests, catalog intent search and initial discovery remain functional, and canonical catalog/projects/*.json files remain the source of project truth rather than generated bootstrap artifacts.",
+      "evidence_type": "object",
+      "id": "startup-contract-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonworld:bootstrap-headroom-t045:startup-contract-preserved"
+      }
+    },
+    {
+      "assertion": "The bounded German and English no-JavaScript recovery pages remain complete and usable, all released locale overlays remain valid, and locale lifecycle/accessibility smoke evidence stays green without claiming native-speaker approval that was not performed.",
+      "evidence_type": "object",
+      "id": "recovery-and-locales-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonworld:bootstrap-headroom-t045:recovery-and-locales-preserved"
+      }
+    },
+    {
+      "assertion": "Fresh catalog delivery budget, public browser smoke, low-power browser measurement, scale, recovery and hierarchy evidence are regenerated against the exact final tree and pass their existing contracts. No budget threshold is weakened to obtain a pass.",
+      "evidence_type": "object",
+      "id": "scale-and-browser-gates",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonworld:bootstrap-headroom-t045:scale-and-browser-gates"
+      }
+    },
+    {
+      "assertion": "git diff --check and the complete repository validation suite pass on the exact final head; the full nontrivial PR diff receives a head-bound self-review, required GitHub CI is green on that head, merge is guarded against head drift, and successful Pages deployment plus production readback confirm the exact merged commit before closeout.",
+      "evidence_type": "object",
+      "id": "revision-bound-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonworld:bootstrap-headroom-t045:revision-bound-closeout"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly instructed @grabowski on 2026-08-14 to implement the previously defined Commonworld bootstrap-headroom follow-up. Work is limited to Commonworld repository changes, validation, PR/merge on green gates, deployment and production readback under the repository's existing contracts.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Restore material growth headroom in Commonworld's compact startup catalog before the next larger Commons batch, without weakening the existing delivery budget, reintroducing per-project startup fetches, or sacrificing the bounded DE/EN no-JavaScript recovery path. Compare the current bootstrap architecture with at least one materially different alternative, implement the smallest robust design that removes the immediate 100-byte warning-margin bottleneck, and bind the result to fresh delivery, browser, scale, recovery and hierarchy evidence.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T045",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to raise delivery thresholds",
+      "permission to weaken zero-startup-project-request behavior",
+      "permission to remove DE/EN no-JavaScript recovery",
+      "automatic merge without exact-head green gates",
+      "native-language approval"
+    ],
+    "motivation": {
+      "bootstrap_gzip_bytes": 28572,
+      "catalog_entries": 94,
+      "hard_limit_bytes": 32768,
+      "startup_project_json_requests": 0,
+      "warning_headroom_bytes": 100,
+      "warning_threshold_bytes": 28672
+    },
+    "publication_rebase": {
+      "current_registry_commit": "068d2fbc16b689ba28ea137bb78dd32538918414",
+      "previous_proposal_id": "dbc8b0e27ee2ee3b6485cd71c27a11ce5e880ae9ee147418c1ab1b9ca028423e",
+      "previous_registry_commit": "6a971e27ea60c4b357bf644402ad77d9d28d69ef",
+      "reason": "The previous immutable plan became stale while legitimate Bureau Registry work advanced main. Bureau runtime was then immutably refreshed to current main and the single-use authority was consumed and verified closed before this reproposal."
+    },
+    "source": "Commonworld 94-entry post-PR-208 delivery evidence and Bureau candidate candidate-bcefe84908510ca17b72f9bb",
+    "source_locator": "commonworld:docs/evidence/catalog-delivery-benchmark-v1.json#94-entry-2026-08-13",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bcefe84908510ca17b72f9bb",
+      "event_id": 6897,
+      "event_created_at": "2026-08-13T21:04:52.658975Z",
+      "request_sha256": "1785a420a9718b8e6364c8b56d64ee7c8362b25b7421f56b9f1856e21b693bf1",
+      "candidate_event_id": "candidate-event-5067640917c18cc88cd6bb51",
+      "source_fingerprint": "eed983b1315021743f7d5cfcd8085b2659ec7075e12aaed5b6ed170b756a2897",
+      "content_fingerprint": "4883945bd4ff8f9e4005de03f3cf850140d4723c168e7e2eea8180cf2f20c580",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "eed983b1315021743f7d5cfcd8085b2659ec7075e12aaed5b6ed170b756a2897",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "commonworld:docs/evidence/catalog-delivery-benchmark-v1.json#94-entry-2026-08-13",
+        "observed_at": "2026-08-13T21:04:52.586994Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "eed983b1315021743f7d5cfcd8085b2659ec7075e12aaed5b6ed170b756a2897",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "commonworld:docs/evidence/catalog-delivery-benchmark-v1.json#94-entry-2026-08-13",
+          "observed_at": "2026-08-13T21:04:52.586994Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "javascript",
+    "python",
+    "testing",
+    "browser",
+    "performance",
+    "catalog-architecture",
+    "localization",
+    "ci"
+  ],
+  "rollback": {
+    "strategy": "Revert only the bootstrap-architecture optimization and its generated/evidence consequences, restoring the previously validated 94-entry startup path and unchanged warning/hard limits. Do not remove the three newly merged Commons, loosen catalog budgets, or rewrite canonical project truth as rollback."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Restore compact catalog bootstrap growth headroom"
+}

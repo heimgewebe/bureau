@@ -1,0 +1,180 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor der Änderung wird auf dem dann aktuellen origin/main frisch belegt: PR #1189 bzw. seine language_structure-Implementierung ist enthalten; ExtrasConfig.language_structure ist weiterhin opt-in; der kanonische Fleet-Erzeugungspfad aktiviert das Extra nicht; und in den aktuell retained Fleet-Publikationen fehlt ein *language_structure*-Artefakt. Frühere Chat-Zusammenfassungen gelten nicht als Autorität.",
+      "evidence_type": "object",
+      "id": "live-gap-reproduced",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t027:live-gap-reproduced"
+      }
+    },
+    {
+      "assertion": "Die Aktivierung wird an den Snapshot-/Publikationsprofilvertrag gebunden und nicht durch ein blindes globales Default-True gelöst: fleet-context/full-max und sonstige dafür zulässige interne Profile können language_structure erzeugen; public-share bleibt ausgeschlossen; direkte Aufrufer von ExtrasConfig ohne explizite Aktivierung behalten den bisherigen opt-in-Vertrag.",
+      "evidence_type": "object",
+      "id": "profile-aware-activation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t027:profile-aware-activation"
+      }
+    },
+    {
+      "assertion": "Der konkrete von scripts/ops/repoground-publish-fleet verwendete external-manifest-refresh-Pfad transportiert die Profilentscheidung bis write_reports_v2/_write_language_structure_artifact. Ein Regressionstest schlägt fehl, wenn der Flag erneut nur im Code existiert, aber auf dem Fleet-Pfad nicht gesetzt wird.",
+      "evidence_type": "object",
+      "id": "fleet-path-is-real",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t027:fleet-path-is-real"
+      }
+    },
+    {
+      "assertion": "Nach Merge erzeugt der kanonische Fleet-Publisher für mindestens einen revisionsgebundenen internen Bundle-Lauf ein language_structure-Artefakt; Bundle-Manifest, Rollenregistrierung, SHA-256/Provenienz und language-structure.v1-Schema sind konsistent. Der Readback bindet Source-SHA, Generator-SHA und Publikationsverzeichnis exakt.",
+      "evidence_type": "object",
+      "id": "fresh-bundle-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t027:fresh-bundle-readback"
+      }
+    },
+    {
+      "assertion": "Das Vorhandensein des Sidecars aktiviert weder natural-language-query noch Taskprofil-Routing noch Rust-/Bash-Antworten automatisch. Eine breitere Consumer-Promotion bleibt separat an gemessenen Agentennutzen und den bestehenden T021-Promotion-Gate-Vertrag gebunden.",
+      "evidence_type": "object",
+      "id": "no-broad-consumer-promotion",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t027:no-broad-consumer-promotion"
+      }
+    },
+    {
+      "assertion": "Vorher/Nachher werden Erzeugungszeit, Artefaktgröße und Bundle-Gesamtgröße für einen repräsentativen Lauf erfasst. Bestehende bundle-health-, post-emit-health-, export-safety-, freshness- und surface-validation-Gates bleiben grün; relevante RepoGround-Tests und GitHub-Pflichtchecks sind auf dem exakten PR-Head erfolgreich.",
+      "evidence_type": "object",
+      "id": "cost-and-health-bounded",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:t027:cost-and-health-bounded"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.repoground.publication"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/repoground/scripts/ops/repoground-publish-fleet",
+      "path:/home/alex/repos/repoground/merger/repoground/cli/cmd_ground.py",
+      "path:/home/alex/repos/repoground/merger/repoground/core/snapshot_profiles.py",
+      "path:/home/alex/repos/repoground/merger/repoground/core/merge.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_fleet_runtime.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_language_structure_integration.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_snapshot_profiles.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Den mit PR #1189 bereits implementierten Rust-/Bash-language_structure-Sidecar in der kanonischen RepoGround-Fleet-Publikation tatsächlich verfügbar machen. Die Aktivierung muss profilbewusst erfolgen: agenteninterne Fleet-/Max-Bundles dürfen das optionale Artefakt erzeugen, public-share bleibt ausgeschlossen und RepoGrounds allgemeiner ExtrasConfig-Default bleibt opt-in. Danach soll ein frischer, revisionsgebundener Fleet-Bundle-Readback belegen, dass das Artefakt im Manifest registriert, schema- und hashgültig und ohne Regression der bestehenden Health-/Freshness-Gates publiziert wird.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T027",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass Rust-/Bash-Taskprofile breit aktiviert werden sollten",
+      "dass language_structure bereits messbaren Agentennutzen über die vorhandenen drei RepoGround-Kernwerkzeuge hinaus liefert",
+      "dass alle Rust-/Bash-Semantiken vollständig abgedeckt sind",
+      "Merge- oder Deployment-Readiness",
+      "Berechtigung zum Stören fremder Publication-Läufe oder Leases"
+    ],
+    "finding": "PR #1189 hat Rust- und Bash-Strukturadapter samt language_structure-Sidecar implementiert, aber der produktive Fleet-Erzeugungspfad baut ExtrasConfig aktuell nur mit json_sidecar=True und augment_sidecar=True. Dadurch bleibt language_structure=False und die neue Sprachstruktur fehlt in allen retained Fleet-Bundles.",
+    "live_evidence": {
+      "extras_default": "language_structure=false",
+      "fleet_language_structure_artifact_count": 0,
+      "fleet_snapshot_extras": "json_sidecar=true, augment_sidecar=true",
+      "main_ci": "green",
+      "observed_repo_head": "72d2acc8341f00546cadf8298c58ff310942fc20",
+      "open_repoground_pull_requests": 0,
+      "pull_request": 1189,
+      "pull_request_state": "MERGED"
+    },
+    "source_candidate": "candidate-5e89f3982c0ef7bbeaee9a92",
+    "source_event": 7111,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5e89f3982c0ef7bbeaee9a92",
+      "event_id": 7111,
+      "event_created_at": "2026-08-14T10:01:44.072847Z",
+      "request_sha256": "ed69687a9b95a42338c0861be89b7a40b566e9ccdddafef862ef1adab1ef1ba4",
+      "candidate_event_id": "candidate-event-04ba26e3d7d05c79193eb39e",
+      "source_fingerprint": "255389e6e762badac2aba490af1d9162e1279e936239f79876938a8297e1930f",
+      "content_fingerprint": "5e89f3982c0ef7bbeaee9a92e1e4695fa876dec5aa6cd29f136be0385217d8b3",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "255389e6e762badac2aba490af1d9162e1279e936239f79876938a8297e1930f",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "conversation:2026-08-14:repoground-language-structure-publication-gap",
+        "observed_at": "2026-08-14T11:54:00+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "255389e6e762badac2aba490af1d9162e1279e936239f79876938a8297e1930f",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "conversation:2026-08-14:repoground-language-structure-publication-gap",
+          "observed_at": "2026-08-14T11:54:00+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "repoground",
+    "testing",
+    "diagnostics"
+  ],
+  "rollback": {
+    "procedure": "Den exakten RepoGround-Diff reversieren und die bisherigen Profil-/Extras-Defaults wiederherstellen. Bereits publizierte immutable Bundles und fremde Runtime-Zustände werden nicht gelöscht oder umgeschrieben; ein neuer revisionsgebundener Fleet-Readback belegt die Rückkehr zum vorherigen Vertrag.",
+    "trigger": "Die profilbewusste Aktivierung erzeugt unerwartete Consumer-Semantik, public-share-Drift, Health-/Freshness-Regressionen oder nicht akzeptable Publikationskosten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "stop": {
+    "conditions": [
+      "Eine korrekte Aktivierung würde public-share entgegen dessen REQ_EXCLUDED-Vertrag das language_structure-Artefakt liefern oder sensible/explizit ausgeschlossene Inhalte exportieren.",
+      "Die Lösung würde Rust-/Bash-Consumer oder Taskprofile ohne den bestehenden Nutzen-/Promotion-Gate automatisch breit aktivieren.",
+      "Frische Live-Evidenz zeigt eine fremde aktive Mutation, Lease oder einen Publication-Lauf im selben Wirkungsscope; diese Arbeit wird weder übernommen noch gestoppt.",
+      "Der Sidecar-Pfad verursacht neue Health-/Freshness-Fehler oder überschreitet bestehende Bundle-/Laufzeitgrenzen so, dass eine gesonderte Architekturentscheidung nötig wird."
+    ]
+  },
+  "title": "RepoGround language_structure in Fleet-Bundles aktivieren"
+}

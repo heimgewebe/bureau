@@ -726,9 +726,19 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
         if not transaction.name.startswith(".pending-"):
             continue
         try:
+            manifest_path = transaction / "manifest.json"
+            payload = transaction / "payload.json"
+            if not manifest_path.exists():
+                if payload.exists():
+                    raise ValueError(
+                        "pending quarantine transaction has payload without manifest"
+                    )
+                _cleanup_pre_move_transaction(transaction)
+                _sync_directory(root)
+                result["abandoned_pre_move_count"] += 1
+                continue
             manifest = _read_quarantine_transaction_manifest(store, transaction)
             source = source_root / str(manifest["source_name"])
-            payload = transaction / "payload.json"
             if payload.exists():
                 actual = _finalize_quarantine_transaction(
                     root, transaction, manifest

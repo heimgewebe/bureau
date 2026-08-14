@@ -1766,6 +1766,32 @@ def test_unknown_run_quarantine_rejects_unbound_private_path_collision(
     )
 
 
+def test_unknown_run_manifestless_pre_move_transaction_is_cleaned(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-premanifest.json"
+    raw = json.dumps({"accepted": True}).encode()
+    residue.write_bytes(raw)
+    quarantine_root = closure_observer._evidence_quarantine_directory(store)
+    assert quarantine_root is not None
+    orphan = quarantine_root / ".pending-orphan-pre-manifest"
+    orphan.mkdir(mode=0o700)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    retirement = result["evidence_retirement"]
+    assert retirement["before"]["abandoned_pre_move_count"] == 1
+    assert not orphan.exists()
+    assert retirement["quarantined_count"] == 1
+    record = retirement["before"]["quarantined_entries"][0]
+    assert Path(record["quarantine_path"]).read_bytes() == raw
+    assert not residue.exists()
+
+
 def test_unknown_run_interrupted_staging_is_recovered_on_next_reconcile(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:

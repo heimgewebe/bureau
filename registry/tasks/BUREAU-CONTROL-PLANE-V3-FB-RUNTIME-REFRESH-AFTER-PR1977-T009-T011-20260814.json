@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR1977-T009-T011-20260814",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Bureau-Runtime-Refresh nach PR #1977 für Orphan-Reconcile und T009/T011",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten source-/Registry-Stand 068d2fbc16b689ba28ea137bb78dd32538918414 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ist ausschließlich, den erneut entstandenen release-registry-identity-mismatch zu beseitigen, damit der stale und ungebundene Run BUR-RUN-20260814T065430Z-dedd7803c5 über den bestehenden CAS-gebundenen bureau-pickup-orphan-reconcile terminalisiert und seine logischen Bureau-Reservations freigegeben werden können, ohne den fremden Dirty-Worktree zu verändern. Danach soll der reguläre Typed-Acceptance-Migrationspfad BUREAU-CONTROL-PLANE-V3-T009 claimbar machen und anschließend T009 → T011 fortgesetzt werden. Die Autorität ist single-use und targetgebunden; zweckgebundene Browser-Control-, Deploy-Diagnostic-, historische oder bereits verbrauchte Runtime-Authorities werden nicht substituiert.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use only. Vor prepare-intent und erneut vor apply: frischer current-main-Commit samt gemergtem PR, grüne validate (3.10)/(3.12), autoritativer StateStore-TaskSpec-Preflight, frischer target_sha256 und exakt intentgebundene Live-Leases. Danach immutable Readback, Lease-Release und closeout-authority. Anschließend nur CAS-Orphan-Reconcile für BUR-RUN-20260814T065430Z-dedd7803c5; Dirty-Worktree unverändert."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "bootstrap-and-fresh-target",
+      "assertion": "Diese TaskSpec wird als genau eine neue Datei über einen geschützten PR registriert und selektiv als fehlende StateStore-Spec importiert. Unmittelbar vor prepare-intent ist current main frisch, enthält PR #1977 / 9e5085f676fd12a4f6eb531137c01032888e8575 sowie den Merge dieser eigenen Authority-TaskSpec und alle Required Checks sind grün; target_sha256 wird frisch neu beobachtet und der Registrierungswert nicht wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1977-t009-t011:bootstrap-and-target"
+      }
+    },
+    {
+      "id": "single-use-preflight",
+      "assertion": "Vor prepare-intent und erneut vor apply ist diese exakte Authority im autoritativen StateStore ready oder active, mit positiver Revision und exaktem Digest, runtime_refresh_authority single-use-target-bound sowie ohne target_binding_receipt, consumption oder runtime_closeout. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1977-t009-t011:single-use-preflight"
+      }
+    },
+    {
+      "id": "target-lease-and-readback",
+      "assertion": "Break-Glass reference und Intent binden Task-ID und target_sha256 exakt. Apply verwendet nur die vom Intent geforderten Live-Leases. Genau ein effect_started=true-Deploy ist erlaubt; Manifest, immutable Release, Paketbaum, Launcher, Registry-Snapshot, bureau check und StateStore-Integrität stimmen danach auf denselben Zielcommit.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1977-t009-t011:target-lease-readback"
+      }
+    },
+    {
+      "id": "authority-closeout",
+      "assertion": "Nach eindeutig erfolgreichem immutable Readback werden die exakt resultgebundenen Runtime-Leases freigegeben und closeout-authority terminalisiert diese Authority mit exakt target_sha256, intent_sha256 und result_sha256. Ein zweiter Effekt oder eine Wiederverwendung bleibt gesperrt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1977-t009-t011:authority-closeout"
+      }
+    },
+    {
+      "id": "stale-run-reconcile-boundary",
+      "assertion": "Erst nach erfolgreicher Runtime-Konvergenz wird BUR-RUN-20260814T065430Z-dedd7803c5 frisch gelesen. Nur wenn er weiterhin stale, nicht aktiv gebunden und CAS-identisch ist, darf der bestehende bureau-pickup-orphan-reconcile genau diesen Run terminalisieren und seine logische Reservation beziehungsweise unveränderte Owner-Leases freigeben. Sein Dirty-Worktree, Branch und fremde Änderungen werden nicht verändert, gelöscht, gestasht oder übernommen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1977-t009-t011:stale-run-reconcile-boundary"
+      }
+    },
+    {
+      "id": "t009-t011-path-restored",
+      "assertion": "Nach terminalem Orphan-Reconcile scheitert der reguläre Claim-Pfad für BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812 und danach BUREAU-CONTROL-PLANE-V3-T009 nicht mehr an der stale Reservation oder release-registry-identity-mismatch. T011 wird erst nach terminalem T009 begonnen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr1977-t009-t011:t009-t011-path-restored"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem oder fehlgeschlagenem Apply keinen Blind-Retry ausführen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten und ausschließlich receipt-, target- und StateStore-gebunden reconciliieren. Bei einem späteren Orphan-Reconcile-Fehler bleibt der Dirty-Run-Worktree erhalten; keine Reservation oder Lease wird force-freigegeben."
+  },
+  "metadata": {
+    "registered_at": "2026-08-14",
+    "source_candidate": "candidate-e9eafc0e5706a98afb965b77",
+    "source_event_id": 7102,
+    "trigger_pull_request": 1977,
+    "trigger_merge_commit": "9e5085f676fd12a4f6eb531137c01032888e8575",
+    "fresh_observation_sha256": "c3080dee1f465be7e229f4f5cd1ce29437b2d05ed9007f60ac2c04b71d8580cb",
+    "fresh_target_sha256_at_registration": "6b7afbd3423c6b8a310742ef2babff4287f07f7910fe2cfbcf2485a98288f3b0",
+    "installed_runtime_before": "068d2fbc16b689ba28ea137bb78dd32538918414",
+    "blocked_run_id": "BUR-RUN-20260814T065430Z-dedd7803c5",
+    "blocked_followup_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812",
+      "BUREAU-CONTROL-PLANE-V3-T009",
+      "BUREAU-CONTROL-PLANE-V3-T011"
+    ],
+    "prior_orphan_reconcile": {
+      "coordination_sha256": "d80ea5c44b66dd33adcbcd02925fe46f0dba5b8a7adbb8dee940b0480782d19c",
+      "lease_acquisition_sha256": "cb9edb5a870907b6097e452ec0f5b2802bb97d56b0c58c00cc96f8ca86259e08",
+      "grip_receipt_sha256": "8fd54b9f5ef47a59aed14b932a00595368cbe272d1740b1dd8c6e60cab0d4bd2",
+      "readback_state": "assigned",
+      "effect_after_readback": "none"
+    },
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Die installierte immutable Bureau-Runtime 068d2fbc16b689ba28ea137bb78dd32538918414 liegt hinter dem nach PR #1977 aktuellen main; der normale typed Publication-Pfad blockiert deshalb fail-closed. Der dokumentierte Runtime-Drift-Bootstrap erlaubt ausschließlich diese neue Authority-TaskSpec als Ein-Datei-PR und danach den konservativen seed-missing-preserve-state-store Übergang."
+    },
+    "forbidden_authority_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-DEPLOY-DIAGNOSTIC-20260812",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T011-UNLOCK-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-RUNTIMECLOSEOUT-20260814"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e9eafc0e5706a98afb965b77",
+      "event_id": 7102,
+      "event_created_at": "2026-08-14T09:22:46.427014Z",
+      "request_sha256": "74e3aa6f5ccb0de33645ff6d0cffe941ebfe6b0853bb5333199366d2d9b53aa2",
+      "candidate_event_id": "candidate-event-6ff1975f8ab5a61ed95af092",
+      "source_fingerprint": "d2ae3ec11c3fe6c74ae34e63b1d4a9fffe5c79ec63288e4b3fd94b9582dbed69",
+      "content_fingerprint": "e9eafc0e5706a98afb965b777001d3ed6eb5828bb409ad7c76833e5f2b492aef",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "d2ae3ec11c3fe6c74ae34e63b1d4a9fffe5c79ec63288e4b3fd94b9582dbed69",
+        "freshness": "digest-bound",
+        "kind": "bureau-runtime-refresh-observation",
+        "locator": "bureau-runtime-refresh:observation=c3080dee1f465be7e229f4f5cd1ce29437b2d05ed9007f60ac2c04b71d8580cb;main=9e5085f676fd12a4f6eb531137c01032888e8575;pr=1977;target=6b7afbd3423c6b8a310742ef2babff4287f07f7910fe2cfbcf2485a98288f3b0;blocked_run=BUR-RUN-20260814T065430Z-dedd7803c5",
+        "observed_at": "2026-08-14T09:18:17.024501Z",
+        "sha256": "c3080dee1f465be7e229f4f5cd1ce29437b2d05ed9007f60ac2c04b71d8580cb"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "d2ae3ec11c3fe6c74ae34e63b1d4a9fffe5c79ec63288e4b3fd94b9582dbed69",
+          "freshness": "digest-bound",
+          "kind": "bureau-runtime-refresh-observation",
+          "locator": "bureau-runtime-refresh:observation=c3080dee1f465be7e229f4f5cd1ce29437b2d05ed9007f60ac2c04b71d8580cb;main=9e5085f676fd12a4f6eb531137c01032888e8575;pr=1977;target=6b7afbd3423c6b8a310742ef2babff4287f07f7910fe2cfbcf2485a98288f3b0;blocked_run=BUR-RUN-20260814T065430Z-dedd7803c5",
+          "observed_at": "2026-08-14T09:18:17.024501Z",
+          "sha256": "c3080dee1f465be7e229f4f5cd1ce29437b2d05ed9007f60ac2c04b71d8580cb"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "typed_proposal_attempt": {
+      "adapter_proposal_id": "85cad7d251070e4f8bfc80f943a971613400d493b9d338cc0004aded9a38a8f7",
+      "status": "stale-runtime-blocked",
+      "reason_code": "release-registry-identity-mismatch",
+      "effect_started": false
+    },
+    "does_not_establish": [
+      "reusable runtime authority",
+      "historical runtime refresh replay",
+      "runtime rollback",
+      "Grabowski runtime mutation",
+      "Queue/claim/dispatch authority",
+      "T009/T011 implementation authority",
+      "permission to delete, reset, stash or adopt the stale run workspace",
+      "permission to override foreign work"
+    ]
+  }
+}

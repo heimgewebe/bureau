@@ -1,0 +1,167 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Registry enthält genau eine neue Ressource repo.fotoatelier mit lokalem Pfad /home/alex/repos/fotoatelier und passendem Grabowski-Key; ein GitHub-Remote wird nicht erfunden.",
+      "evidence_type": "object",
+      "id": "repo-resource",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:fotoatelier-onboarding:repo-resource"
+      }
+    },
+    {
+      "assertion": "FOTOATELIER-V1 ist als eigene Initiative registriert; keine bestehende fremde Initiative wird zur Aufnahme der Fotoatelier-Arbeit umgedeutet.",
+      "evidence_type": "object",
+      "id": "initiative-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:fotoatelier-onboarding:initiative-boundary"
+      }
+    },
+    {
+      "assertion": "Drei getrennte Tasks sind registriert: kanonischer Bibliothekspfad plus Backup/Restore, deterministische Altbestandsinventur plus reversible Migration mit optionaler einmaliger KI nur als Vorschlag, sowie sichere iPad-/TV-/Netzwerkfreigabe mit serverseitigem Privat/Öffentlich-Gate.",
+      "evidence_type": "object",
+      "id": "three-followups",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:fotoatelier-onboarding:three-followups"
+      }
+    },
+    {
+      "assertion": "Jeder der drei Fotoatelier-Tasks bindet den passenden bereits aufgenommenen Candidate/Event-Nachweis 7172, 7173 oder 7175 maschinenlesbar in den Metadaten.",
+      "evidence_type": "object",
+      "id": "candidate-provenance",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:fotoatelier-onboarding:candidate-provenance"
+      }
+    },
+    {
+      "assertion": "Bureau Registry- und Schema-Validierung ist auf dem exakten Implementierungs-Head grün; es werden keine Queue-, Claim-, StateStore-, Runtime- oder fremden Registry-Zustände als Nebenwirkung mutiert.",
+      "evidence_type": "object",
+      "id": "registry-validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:fotoatelier-onboarding:registry-validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T008"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "registry_mutation",
+      "note": "Die Wirkung ist auf neue deklarative Fotoatelier-Registrydateien begrenzt. Keine bestehende Initiative, Queue, Taskprojektion, Runtime oder fremde Ressource wird umgeschrieben.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/resources/fotoatelier.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/FOTOATELIER-V1.json",
+      "path:/home/alex/repos/bureau/registry/tasks/FOTOATELIER-V1-T001.json",
+      "path:/home/alex/repos/bureau/registry/tasks/FOTOATELIER-V1-T002.json",
+      "path:/home/alex/repos/bureau/registry/tasks/FOTOATELIER-V1-T003.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Registriere die neue lokale Codebasis /home/alex/repos/fotoatelier als kanonische Ressource repo.fotoatelier und Initiative FOTOATELIER-V1. Lege anschließend drei getrennte Folgetasks für Bibliothek/Backup, Altbestandsmigration und sichere iPad-/TV-/Netzwerkfreigabe an, jeweils mit Provenienz zu den bereits aufgenommenen Fotoatelier-Kandidaten. Keine fremde Initiative als Ersatz verwenden und keine KI in den normalen Fotoatelier-Laufzeitpfad einführen.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-FOTOATELIER-ONBOARDING-20260814",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "child_candidates": [
+      {
+        "candidate_id": "candidate-f62fcac989cf07d91f585cff",
+        "event_id": 7172,
+        "purpose": "sichere Netzwerkfreigabe"
+      },
+      {
+        "candidate_id": "candidate-dbd0586e1e08bbe64bdda957",
+        "event_id": 7173,
+        "purpose": "Altbestandsinventur und Migration"
+      },
+      {
+        "candidate_id": "candidate-ed00dd0cb98e66bb571e08e4",
+        "event_id": 7175,
+        "purpose": "Bibliothekspfad und Backup/Restore"
+      }
+    ],
+    "constraints": [
+      "genau zwei Foto-Sichtbarkeiten private/public",
+      "keine KI im normalen Runtime-/Importpfad",
+      "keine erfundene GitHub-Remote-Bindung"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-219c68f5d955056391b899f3",
+      "event_id": 7176,
+      "event_created_at": "2026-08-14T12:53:31.637146Z",
+      "request_sha256": "2654f832e3a4e916179f5c65d216ee3af64779c10a79cb23c3b31632dc1e547f",
+      "candidate_event_id": "candidate-event-6a39e7d13ef8e6ab5effd9ad",
+      "source_fingerprint": "c4987e619e0537a5f7d7253886cf02534a4ee71e836adba00281ab15d7715242",
+      "content_fingerprint": "219c68f5d955056391b899f3a6eca4ef0e6c623d611504bc62c09e25d62530b5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "c4987e619e0537a5f7d7253886cf02534a4ee71e836adba00281ab15d7715242",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "repo:/home/alex/repos/fotoatelier@3ed849f07de24d48607579115b63b488870d6103",
+        "observed_at": "2026-08-14T14:41:02+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "c4987e619e0537a5f7d7253886cf02534a4ee71e836adba00281ab15d7715242",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "repo:/home/alex/repos/fotoatelier@3ed849f07de24d48607579115b63b488870d6103",
+          "observed_at": "2026-08-14T14:41:02+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "source": "Direkter Nutzerauftrag zum digitalen Fotoatelier und Live-Assessment der vier Operator-Intake-Kandidaten am 2026-08-14."
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 58
+  },
+  "required_capabilities": [
+    "repository",
+    "json-schema",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die neue repo.fotoatelier-Ressource, FOTOATELIER-V1-Initiative und die drei neuen Fotoatelier-Taskdateien, sofern sie noch keine nachgelagerte autoritative Nutzung besitzen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Fotoatelier als eigene Bureau-Initiative onboarden"
+}

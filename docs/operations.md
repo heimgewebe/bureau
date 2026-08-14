@@ -578,6 +578,36 @@ produce a migration warning; a ready task or a task in `now` produces a blocker 
 narrowed. Historical terminal evidence is not rewritten.
 
 
+## Redacted public StateStore snapshot
+
+`BUREAU-CONTROL-PLANE-V3-T009` publishes a deliberately non-authoritative public projection at `registry/public-state.json`. The producer reads the manifest-bound Registry and local SQLite StateStore through `ReadOnlyStateStore`, verifies event/TaskSpec replay, and emits only the exact v1 top-level allowlist: `schema_version`, `kind`, `generated_at`, `repository`, `release`, `counts`, `frontier`, `event_checkpoint`, `roots`, `redaction`, and `snapshot_sha256`. The release identity contains only commit and schema version; the event checkpoint contains only its monotone integer ID. There are no task, event, receipt or log payloads in the artifact.
+
+The two Merkle roots are built from canonically serialized public TaskSpec identities and receipt-digest identities; the underlying identities are not exported. `snapshot_sha256` is SHA-256 over canonical JSON with only that digest field removed, so release, aggregates, checkpoint, roots and the fixed redaction contract are one commitment. Immediately before every write, the exporter recursively scans all keys and values for local-path, secret/credential, prompt, raw-log/trace and PII markers and fails closed. Validation repeats the exact schema, redaction and digest checks without opening a StateStore. The local frontier calculation deliberately excludes GitHub open-PR observations; normal claim/dispatch gates remain authoritative and are not replaced by this aggregate.
+
+Generate and transport the owner-only snapshot through the single manifest-validating local entrypoint:
+
+```bash
+~/.local/bin/bureau source-pr-bridge --kind state-snapshot --auto-merge --publish \
+  --root ~/repos/bureau \
+  --state-root ~/.local/state/bureau \
+  --runtime-manifest ~/.local/share/bureau/deployment-manifest.json
+```
+
+When `--snapshot` is omitted, the bridge creates the redacted snapshot locally in an owner-private temporary directory, validates it, then gives those exact bytes to the authenticated transport. Supplying an existing `--snapshot` remains an explicit transport path, but never grants import or writeback authority. Publication copies the validated bytes unchanged into a detached `origin/main` worktree, rejects every changed path except `registry/public-state.json`, and force-updates the dedicated `automation/bureau-state-snapshot` branch with an exact remote lease. Reconcile also reads back the GitHub blob and requires byte-for-byte identity before creating or refreshing the review PR. GitHub is therefore file transport only: it never receives StateStore, queue, claim, dispatch, closeout or writeback authority. There is deliberately no snapshot import/apply API.
+
+Install the reviewed user units only from the checked-out/released Bureau source that contains this implementation:
+
+```bash
+install -Dm644 ops/systemd/bureau-state-snapshot.service \
+  ~/.config/systemd/user/bureau-state-snapshot.service
+install -Dm644 ops/systemd/bureau-state-snapshot.timer \
+  ~/.config/systemd/user/bureau-state-snapshot.timer
+systemctl --user daemon-reload
+systemctl --user enable --now bureau-state-snapshot.timer
+```
+
+`bureau-state-snapshot.service` invokes the stable manifest-validating `bureau` launcher once every 15 minutes. The bridge generates its owner-private temporary snapshot inside the unit's private temporary namespace before transport; no separate `bureau-state-snapshot` launcher or persistent staging directory is required. StateStore and release paths remain read-only and only the Bureau Git checkout is writable, with `UMask=0077` and the same systemd hardening as the other Bureau oneshots. The snapshot is transparency evidence only; it is not a backup, restore point, runtime-health receipt, signature or operational authority. Encrypted full backup and restore proof remain the separate T010 path below.
+
 ## StateStore backup and restore proof
 
 `bureau.state_backup` creates a coherent StateStore snapshot without copying a live WAL file. It uses SQLite Online Backup, requires `PRAGMA integrity_check=ok` and an empty `foreign_key_check`, replays the append-only operational and TaskSpec event streams, and binds the resulting authoritative projection root to every materialised execution envelope and receipt. The manifest also seals aggregate envelope and receipt roots. Missing, extra or digest-mismatched materialisation makes the backup fail closed.

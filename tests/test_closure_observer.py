@@ -1665,9 +1665,10 @@ def test_unknown_run_json_residue_is_quarantined_once_with_digest_evidence(
     binding_path = closure_observer._evidence_quarantine_binding_path(store)
     assert binding_path.is_file()
     assert binding_path.stat().st_mode & 0o777 == 0o600
-    assert binding_path.parent == store.state_root.parent
-    assert quarantine_root.parent == store.state_root.parent
-    assert not quarantine_root.is_relative_to(store.state_root)
+    assert binding_path.parent == store.state_root / "receipts"
+    assert quarantine_root.parent == store.state_root / "receipts"
+    assert quarantine_root.is_relative_to(store.state_root)
+    assert quarantine_root.is_relative_to(store.state_root / "receipts")
     assert not residue.exists()
     hygiene = state_root_hygiene(store.state_root, store.path)
     assert hygiene["healthy"] is True
@@ -1823,6 +1824,13 @@ def test_unknown_run_interrupted_staging_is_recovered_on_next_reconcile(
     assert not residue.exists()
     assert (pending[0] / "manifest.json").is_file()
     assert (pending[0] / "payload.json").read_bytes() == raw
+    # The quarantine lives under receipts, so loss of the producer-directory
+    # pathname cannot strand a durable moved payload. Preserve unrelated fixture
+    # evidence by moving the whole directory outside the StateRoot.
+    detached_evidence = tmp_path / "detached-acceptance-evidence"
+    evidence_dir.rename(detached_evidence)
+    assert not evidence_dir.exists()
+    assert list(detached_evidence.glob("*.json"))
 
     monkeypatch.setattr(
         closure_observer, "_finalize_quarantine_transaction", real_finalize

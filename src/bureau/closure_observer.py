@@ -444,10 +444,24 @@ def _evidence_quarantine_binding(store: StateStore) -> dict[str, Any]:
     }
 
 
+def _evidence_quarantine_container(store: StateStore) -> Any:
+    container = store.state_root / "receipts"
+    metadata = container.lstat()
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
+        raise ValueError(
+            "acceptance evidence quarantine container must be a real directory"
+        )
+    if stat.S_IMODE(metadata.st_mode) & 0o077:
+        raise ValueError("acceptance evidence quarantine container must be private")
+    return container
+
+
 def _evidence_quarantine_path(store: StateStore) -> Any:
     binding = _evidence_quarantine_binding(store)
     binding_key = _sha256_json(binding)[:24]
-    return store.state_root.parent / f".bureau-acceptance-evidence-quarantine-{binding_key}"
+    return _evidence_quarantine_container(store) / (
+        f".acceptance-evidence-quarantine-{binding_key}"
+    )
 
 
 def _evidence_quarantine_binding_path(store: StateStore) -> Any:
@@ -850,10 +864,11 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
     root = _evidence_quarantine_directory(store, create=False)
     if root is None:
         return result
-    source_root = _evidence_directory(store)
-    if source_root is None:
-        result["errors"].append("active acceptance evidence directory is unavailable")
-        return result
+    # Recovery must not depend on the producer directory still existing. A
+    # payload-bearing transaction already owns its staged bytes and can be
+    # finalized from the durable manifest alone. The lexical source path is
+    # needed only for name binding and the no-payload diagnostic below.
+    source_root = store.state_root / EVIDENCE_DIRECTORY
     for transaction in sorted(root.iterdir(), key=lambda item: item.name):
         if not transaction.name.startswith(".pending-"):
             continue
@@ -1090,14 +1105,16 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
         "errors": [],
     }
     try:
-        validated_root = _evidence_directory(store)
-        if validated_root is None:
-            return result
+        # Durable transactions are independent of the producer directory and
+        # therefore recover before the active evidence root is inspected.
         recovery = _recover_quarantine_transactions(store)
         result["recovered_quarantine_count"] = recovery["recovered_count"]
         result["recovered_quarantine_entries"] = recovery["recovered_entries"]
         result["abandoned_pre_move_count"] = recovery["abandoned_pre_move_count"]
         result["errors"].extend(recovery["errors"])
+        validated_root = _evidence_directory(store)
+        if validated_root is None:
+            return result
         entries = sorted(validated_root.iterdir(), key=lambda item: item.name)
     except (OSError, ValueError) as exc:
         result["errors"].append(f"{type(exc).__name__}: {exc}")

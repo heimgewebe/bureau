@@ -1,0 +1,147 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein reguläres, digest-gebundenes Acceptance-Evidence-Bundle, dessen run_id im autoritativen StateStore unbekannt ist, wird nicht still gelöscht und bleibt nicht im aktiven Evidence-Verzeichnis hängen, sondern in einen expliziten evidenzerhaltenden Quarantäne-/Retirement-Zustand überführt.",
+      "evidence_type": "object",
+      "id": "unknown-run-quarantine",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:orphan-acceptance-evidence:unknown-run-quarantine"
+      }
+    },
+    {
+      "assertion": "Eine identische erneute Reconcile-Ausführung nach erfolgreicher Quarantänisierung ist ein echter No-op und erzeugt weder wiederholte unknown-run-Fehler noch doppelte Quarantäne-/Lifecycle-Evidenz.",
+      "evidence_type": "object",
+      "id": "repeat-idempotency",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:orphan-acceptance-evidence:repeat-idempotency"
+      }
+    },
+    {
+      "assertion": "Bundles bekannter aktiver, succeeded, failed, cancelled oder orphaned Runs behalten die bisherigen Validierungs-, Receipt- und Retention-Gates; der Fix lockert keine bekannten Run-Schutzgrenzen.",
+      "evidence_type": "object",
+      "id": "known-run-preservation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:orphan-acceptance-evidence:known-run-preservation"
+      }
+    },
+    {
+      "assertion": "Unlesbare, symlink-basierte, übergroße oder sonst nicht sicher klassifizierbare Evidence-Einträge werden weiterhin fail-closed erhalten und nicht aufgrund des Unknown-Run-Pfads verschoben oder gelöscht.",
+      "evidence_type": "object",
+      "id": "malformed-preservation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:orphan-acceptance-evidence:malformed-preservation"
+      }
+    },
+    {
+      "assertion": "Der Quarantäne-/Retirement-Pfad liefert maschinenlesbare Evidenz mit mindestens ursprünglichem Pfad oder Dateinamen, Digest soweit sicher bestimmbar, Grund unknown-run und idempotentem Readback.",
+      "evidence_type": "object",
+      "id": "diagnostic-evidence",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:orphan-acceptance-evidence:diagnostic-evidence"
+      }
+    },
+    {
+      "assertion": "Tests decken mindestens Unknown-Run, Wiederholung nach Quarantäne, bekannte aktive und terminale Runs sowie einen malformed/preservation-Fall ab.",
+      "evidence_type": "object",
+      "id": "regression-matrix",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:orphan-acceptance-evidence:regression-matrix"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T007"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/closure_observer.py",
+      "path:/home/alex/repos/bureau/tests/test_closure_observer.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-FU-ORPHAN-ACCEPTANCE-EVIDENCE-20260814.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "workspace_isolation": "worktree"
+  },
+  "goal": "Den Acceptance-Evidence-Retirement-Pfad so härten, dass Bundles mit im autoritativen StateStore unbekannter run_id nicht bei jedem Reconcile denselben unknown-run-Fehler erzeugen, sondern deterministisch, idempotent und evidenzerhaltend aus dem aktiven Evidence-Verzeichnis quarantänisiert werden; bekannte aktive und terminale Runs bleiben unverändert geschützt.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-ORPHAN-ACCEPTANCE-EVIDENCE-20260814",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "does_not_establish": [
+      "Freigabe zum stillen Löschen unbekannter Evidence-Bundles",
+      "Änderung an bekannten Run-Closeout-Gates",
+      "Abschluss von BUREAU-CONTROL-PLANE-V3-T007 oder T008"
+    ],
+    "observation": "retire_terminal_evidence_bundles bewahrt ein Evidence-Bundle mit unbekannter run_id im aktiven acceptance-evidence-Verzeichnis und emittiert bei jedem Reconcile erneut StateError: unknown run. Registry- und Candidate-Assessment fanden keinen exakten oder semantischen Duplikat-Task.",
+    "observed_at": "2026-08-14T17:04:02Z",
+    "source": "Bureau T084 closeout reconcile observation",
+    "source_candidate": "candidate-b31add808592e3ca34179565",
+    "source_event_id": 7251,
+    "source_ref": "state-file:/home/alex/.local/state/bureau/acceptance-evidence/BUR-RUN-20260811T215807Z-240dec9421-user-closeout.json@sha256:fe5c32f2d181cbcbac6ad896b7bf2841362586e0a6457fe196ef7d550e81b9eb",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b31add808592e3ca34179565",
+      "event_id": 7251,
+      "event_created_at": "2026-08-14T17:29:50.429774Z",
+      "request_sha256": "b092da25c70abab748beeda321cc52155a5f4c08b05a69770e36b02dbbf6b61b",
+      "candidate_event_id": "candidate-event-0f8184252120bbbc42ab545a",
+      "source_fingerprint": "d7407f34ee40fa09fd7d35e922051f5d9de566292ce8a97e3a22f10654821695",
+      "content_fingerprint": "b31add808592e3ca34179565fe5b1952d137ae55f70a776015d2ed89a720af20",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "d7407f34ee40fa09fd7d35e922051f5d9de566292ce8a97e3a22f10654821695",
+        "freshness": "digest-bound",
+        "kind": "bureau-reconcile-observation",
+        "locator": "state-file:/home/alex/.local/state/bureau/acceptance-evidence/BUR-RUN-20260811T215807Z-240dec9421-user-closeout.json",
+        "observed_at": "2026-08-14T17:04:02Z",
+        "sha256": "fe5c32f2d181cbcbac6ad896b7bf2841362586e0a6457fe196ef7d550e81b9eb"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "d7407f34ee40fa09fd7d35e922051f5d9de566292ce8a97e3a22f10654821695",
+          "freshness": "digest-bound",
+          "kind": "bureau-reconcile-observation",
+          "locator": "state-file:/home/alex/.local/state/bureau/acceptance-evidence/BUR-RUN-20260811T215807Z-240dec9421-user-closeout.json",
+          "observed_at": "2026-08-14T17:04:02Z",
+          "sha256": "fe5c32f2d181cbcbac6ad896b7bf2841362586e0a6457fe196ef7d550e81b9eb"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 56
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Verwaiste Acceptance-Evidence-Bundles ohne Run evidenzerhaltend quarantänisieren"
+}

@@ -3,37 +3,65 @@
     {
       "assertion": "Ein Grant entsteht ausschließlich nach sichtbarer Auswahl genau eines Ordners im iPadOS-Systempicker in Juno im Vordergrund; Chat- oder Fernfreigaben, direkte Systempfade und private App-Container erzeugen keinen Grant.",
       "evidence_type": "object",
-      "id": "local-consent-only"
+      "id": "local-consent-only",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "juno-t124-closeout-20260814:local-consent-only"
+      }
     },
     {
-      "assertion": "Das lokale Skript in Junos Documents-Verzeichnis ist create-only, besitzt Modus 0600 und SHA-256 7d91c3664edd3c38ed57fb96e946f98c44391b7cab26e971141c3314ed308ba5; kein vorhandener Inhalt wurde ersetzt.",
+      "assertion": "Revision 1 dokumentiert die ursprüngliche create-only Picker-Bereitstellung mit Modus 0600 und SHA-256 7d91c3664edd3c38ed57fb96e946f98c44391b7cab26e971141c3314ed308ba5. Für den Closeout darf eine spätere Helper-Revision nur akzeptiert werden, wenn ihr exakter SHA-256 revisionsgebunden auf einen Grabowski-main-Vorfahren zurückgeführt ist und der Diff die Ein-Ordner-, Security-Scope-, Sandbox- und Fail-Closed-Grenzen erhält oder verschärft; der spätere Helper wird nicht rückwirkend als ursprünglicher create-only Deploy ausgegeben.",
       "evidence_type": "object",
-      "id": "deployed-picker-bound"
+      "id": "deployed-picker-bound",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "juno-t124-closeout-20260814:deployed-picker-bound"
+      }
     },
     {
       "assertion": "Grant-Status und Storage-Inventar liefern eine gültige Grant-ID, Evidence-SHA-256 und einen Provider-Hinweis, ohne Bookmark-Bytes offenzulegen.",
       "evidence_type": "object",
-      "id": "grant-readback"
+      "id": "grant-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "juno-t124-closeout-20260814:grant-readback"
+      }
     },
     {
       "assertion": "Die exakte Grant-ID wird mit erwarteter Evidence-SHA-256 und erwartetem Provider gebunden; die Permission-Probe belegt aktuellen Lese- und Schreibzugriff oder meldet providerseitige Einschränkungen fail-closed.",
       "evidence_type": "object",
-      "id": "permission-probe"
+      "id": "permission-probe",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "juno-t124-closeout-20260814:permission-probe"
+      }
     },
     {
       "assertion": "Eine klar benannte Sentinel-Datei wird nur bei Vorzustand absent create-only geschrieben, mit Payload-SHA-256 gelesen, nur bei passendem Vorinhalt-SHA-256 ersetzt und erneut mit SHA-256 zurückgelesen. Delete, Move, Rename und rekursiver Zugriff bleiben ausgeschlossen.",
       "evidence_type": "object",
-      "id": "hash-roundtrip"
+      "id": "hash-roundtrip",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "juno-t124-closeout-20260814:hash-roundtrip"
+      }
     },
     {
-      "assertion": "Nach einem sichtbaren Juno-Agent-Neustart wird derselbe Grant erneut aufgelöst und Permission- sowie Readback-Evidenz an die neue started_at-Instanz gebunden.",
+      "assertion": "Ein späterer Juno-Agent-Neustart ist durch eine neue started_at-Instanz belegt; derselbe persistente Grant wird erneut aufgelöst und Permission- sowie Dateireadback-Evidenz an diese neue Instanz gebunden.",
       "evidence_type": "object",
-      "id": "juno-restart-persistence"
+      "id": "juno-restart-persistence",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "juno-t124-closeout-20260814:juno-restart-persistence"
+      }
     },
     {
       "assertion": "Alle Job-, Grant-, Read-, Create-, Replace- und Neustart-Receipts werden mit Kandidat candidate-07cedcc740ecd972f1de66d7, Event 1789 und Obligation goo-juno-ipad-storage-grant-roundtrip-20260730 korreliert; die Aufgabe wird erst bei vollständigem Readback verifiziert.",
       "evidence_type": "object",
-      "id": "receipts-closeout"
+      "id": "receipts-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "juno-t124-closeout-20260814:receipts-closeout"
+      }
     }
   ],
   "claims": [
@@ -61,18 +89,19 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T124",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "blocking_condition": "local_iPadOS_folder_picker_selection",
     "candidate_id": "candidate-07cedcc740ecd972f1de66d7",
     "does_not_establish": [
-      "remote_iPadOS_consent",
-      "access_to_unselected_folders",
-      "grant_persistence_before_restart_readback",
+      "screen_recording_of_the_original_2026_08_07_picker_selection",
       "device_reboot_persistence",
+      "access_to_unselected_folders",
       "permission_to_bypass_sandbox_or_private_app_containers",
-      "task_completion_before_hash_roundtrip"
+      "google_drive_provider_grant",
+      "google_drive_ipad_roundtrip",
+      "that_the_current_bc758_helper_was_itself_create_only_deployed"
     ],
     "event_id": 1789,
-    "live_evidence": {
+    "former_blocking_condition": "local_iPadOS_folder_picker_selection",
+    "historical_live_evidence_20260730": {
       "agent_id": "ipad-10th-gen-wifi",
       "agent_started_at": "2026-07-29T06:33:22.796658+00:00",
       "foreground_scene_present": false,
@@ -88,28 +117,111 @@
       "picker_script_sha256": "7d91c3664edd3c38ed57fb96e946f98c44391b7cab26e971141c3314ed308ba5",
       "scene_activation_state": 2
     },
+    "live_evidence": {
+      "agent_id": "ipad-10th-gen-wifi",
+      "agent_started_at": "2026-08-14T09:38:30.610571+00:00",
+      "device_restart_persistent": false,
+      "grant_created_at": "2026-08-07T20:19:41.902514+00:00",
+      "grant_evidence_hash": "1367150e26264185644d0b4e9f9fe283adae4c511548d15ccfb9aca2ea4c5f9d",
+      "grant_id": "grant-1df582bd189a4538b2c7a494b7e8755d",
+      "juno_restart_persistent": true,
+      "provider": "apple_mobile_documents_or_file_provider",
+      "readable_now": true,
+      "selected_path": "/private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/Grabowski",
+      "sentinel_created_sha256": "864c6272e69c2ef67f73e883d0e2faf3b8127a8a32805b76f6108f1b69adeec1",
+      "sentinel_final_read_sha256": "4bafc83f562c6fdb590ca283c99c652756acd3c98bdd4b9642b6db994f1a141b",
+      "sentinel_relative_path": "GRABOWSKI-T124-ROUNDTRIP-20260814.txt",
+      "sentinel_replaced_sha256": "4bafc83f562c6fdb590ca283c99c652756acd3c98bdd4b9642b6db994f1a141b",
+      "writable_now": true
+    },
     "obligation": "goo-juno-ipad-storage-grant-roundtrip-20260730",
-    "unblock_condition": "Ein sichtbarer Juno-Foreground-Picker-Callback hat genau einen gültigen Security-Scoped-Bookmark-Grant persistent gespeichert.",
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-07cedcc740ecd972f1de66d7",
-      "event_id": 1789,
-      "event_created_at": "2026-07-30T22:36:29.176494Z",
-      "request_sha256": "6a31620364b44422e09feae43eb8eacb0e1e43126cc873123440180e7cdb3462",
+      "candidate_id": "candidate-210f3a1a99ab53bc4debbdbb",
+      "event_id": 7108,
+      "event_created_at": "2026-08-14T09:57:52.906025Z",
+      "request_sha256": "1ad6697e238b9a9533651e710546e21a56c22850d68f5897b3977a6ba73be1f8",
+      "candidate_event_id": "candidate-event-a35d173325f864a50a738b53",
+      "source_fingerprint": "c90552b0fed8b4f4922434939c2d96b5ca828398013b81e521cac44721ee8b11",
+      "content_fingerprint": "210f3a1a99ab53bc4debbdbb3576e09f9b5f1508d88c27db01e5f18b04715c7b",
       "source": {
         "does_not_establish": [],
+        "fingerprint": "c90552b0fed8b4f4922434939c2d96b5ca828398013b81e521cac44721ee8b11",
         "freshness": "digest-bound",
         "kind": "live_runtime_audit",
-        "locator": "juno-ipad:ipad-10th-gen-wifi:capability-manifest:2026-07-30T22:33:53Z",
-        "observed_at": "2026-07-30T22:33:53Z",
-        "sha256": "2251d3fac4f311822f7f1249961e3ebed35a233bf4f5c2eadcb6ee1fa16adb78"
+        "locator": "/home/alex/.local/state/grabowski/juno-ipad/t124-closeout-20260814.json",
+        "observed_at": "2026-08-14T09:56:44Z",
+        "sha256": "108d4ca88e769b9345c01aa710627fd4b9951080b255749be24888bcc3a729a3"
       },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "c90552b0fed8b4f4922434939c2d96b5ca828398013b81e521cac44721ee8b11",
+          "freshness": "digest-bound",
+          "kind": "live_runtime_audit",
+          "locator": "/home/alex/.local/state/grabowski/juno-ipad/t124-closeout-20260814.json",
+          "observed_at": "2026-08-14T09:56:44Z",
+          "sha256": "108d4ca88e769b9345c01aa710627fd4b9951080b255749be24888bcc3a729a3"
+        }
+      ],
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
-        "claim_or_dispatch_authority"
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
       ]
-    }
+    },
+    "picker_supersession": {
+      "current_grabowski_main": "7cea3e1af1d7f6d56450143eaaf995c7d499863a",
+      "current_helper_create_only_deployment_claimed": false,
+      "current_main_helper_sha256": "000bf46d15edc0bd1bd7cde5031c44cb4c83e78b00098f57298dc51a2c53213a",
+      "historical_deploy_job_live_readback": "not_available_job_404",
+      "matching_git_commit": "46c87da1",
+      "matching_git_commit_is_ancestor_of_current_main": true,
+      "matching_git_commit_title": "fix(juno): fail cleanly without foreground UI",
+      "observed_on_ipad_mode": "0600",
+      "observed_on_ipad_sha256": "bc75871f185399ebb108c22305b2af7ad15f1c3d5ff363a01ca9c9eeccbfecdb",
+      "revision_1_deploy_receipt_sha256": "30c22e154b6e29cab7f0f3b970265007ca62b801b6693f615e1f1ee136b22243",
+      "revision_1_expected_sha256": "7d91c3664edd3c38ed57fb96e946f98c44391b7cab26e971141c3314ed308ba5",
+      "revision_1_git_commit": "ef6c8f99"
+    },
+    "receipt_chain": {
+      "grant_status": "15b44f68ccd7897e686ff837d9f8da98f8caddf2ad75ddeae37a36fc8a87d162",
+      "permission_probe": "6a8aee865eb54e5453e51582a7637dd97a9b9753ecdaa99e66e2b555ec3257e8",
+      "picker_journal_read": "86a24d39a4aeec4fd39a2fffe999a5d8e36e70cecbcbe58bba50f1ccfb327e92",
+      "picker_read": "9cb9ac67a2617779bf95e81e6d082f8136c3a7748b8131781c1da917a46898ea",
+      "picker_stat": "3967a5d86de7e48c0bf5aa1f5c2d45ac3d1a70c80e5d55b3a64103e275f1dee8",
+      "post_restart_capability_manifest": "4a53bf72583d78b6c6495930e66b4cea7e8f1e3d9074ae684074cd8c010d24d5",
+      "root_directory_list": "f386d1545827641c066e5163af379b3890fab1cfe2d7e9a2dd364f74bd41f7f3",
+      "sentinel_cas_replace": "78a0dea64b7b0eceb027949d54199bf2073ae3b64499caca88e4d8b8ecd4ba4e",
+      "sentinel_create": "fa20bcae5cef178241d9ed774c1c092124f27b91f18cbb1bbf047142f0f12aa4",
+      "sentinel_final_read": "149234ca9755ab537194d8ea42a4ade08cb720e237313edc5e2636bb7208db6c",
+      "sentinel_initial_read": "03fa720b01f1d1743696a4ba8815d2ae663b82e2f962f2895d1784ed66557233",
+      "storage_inventory": "9361a97e9ed9cada0285e8b3862d0a50ad0a552f7bc8db3e8f17286a5cf6a496"
+    },
+    "resolved_unblock_condition": "Ein sichtbarer Juno-Foreground-Picker-Callback hat genau einen gültigen Security-Scoped-Bookmark-Grant persistent gespeichert.",
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "29cb0bf8ff251fa402261b390b7de5efc29f0b41c977d2b2ecce46b8bdd5b68b"
+    },
+    "verification_note": "T124 verifies the bounded Juno/iPad security-scoped storage-grant roundtrip for the user-selected iCloud Drive/Grabowski folder. It does not establish a Google Drive provider grant or a physical Google-Drive iPad roundtrip.",
+    "verification_source": {
+      "kind": "juno_t124_closeout_evidence",
+      "locator": "/home/alex/.local/state/grabowski/juno-ipad/t124-closeout-20260814.json",
+      "sha256": "108d4ca88e769b9345c01aa710627fd4b9951080b255749be24888bcc3a729a3"
+    },
+    "verified_acceptance": {
+      "deployed-picker-bound": "PASS by transparent supersession: Revision 1 preserves the historical 7d91c3... deploy receipt; the observed 0600 helper is exactly bc7587..., matching main ancestor 46c87da1 whose reviewed delta hardens compatibility, foreground failure handling and picker/delegate lifetime without broadening scope.",
+      "grant-readback": "PASS: grant-1df582bd189a4538b2c7a494b7e8755d and evidence hash 136715... resolve without exposing bookmark bytes.",
+      "hash-roundtrip": "PASS: absent prestate -> create 864c62... -> read same -> CAS replace to 4bafc8... -> final read same; no delete, move or rename.",
+      "juno-restart-persistence": "PASS: grant created 2026-08-07; current Juno instance started 2026-08-14T09:38:30.610571Z; same grant resolves read/write and the sentinel reads back on the new instance.",
+      "local-consent-only": "PASS with boundary: the persisted record is a security-scoped externally_granted one-folder grant; reviewed helper revisions persist grants only from UIDocumentPicker didPick callbacks. No screen recording of the original 2026-08-07 selection is claimed.",
+      "permission-probe": "PASS: exact grant/evidence/provider readback reports readable=true and writable=true with no write during probe.",
+      "receipts-closeout": "PASS: the exact receipt chain is bound in metadata.receipt_chain and source artifact 108d4ca8...; Candidate Event 7108 is the current revision source."
+    },
+    "verified_at": "2026-08-14T09:56:44Z"
   },
   "priority": {
     "lane": "now",
@@ -120,6 +232,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "blocked",
+  "state": "verified",
   "title": "Juno-Ordnerfreigabe lokal bestätigen und Roundtrip belegen"
 }

@@ -4,7 +4,10 @@ import hashlib
 import json
 import os
 import stat
+import tempfile
 from collections.abc import Callable, Mapping
+from contextlib import suppress
+from pathlib import Path
 from typing import Any
 
 from bureau import legacy, runtime_refresh, state_events
@@ -405,8 +408,14 @@ def _evidence_bundle_path(store: StateStore, run_id: str) -> Any | None:
     return root / f"{run_id}.json"
 
 
+def _evidence_quarantine_path(store: StateStore) -> Any:
+    return store.state_root.with_name(
+        f"{store.state_root.name}-{EVIDENCE_QUARANTINE_DIRECTORY}"
+    )
+
+
 def _evidence_quarantine_directory(store: StateStore) -> Any:
-    root = store.state_root / EVIDENCE_QUARANTINE_DIRECTORY
+    root = _evidence_quarantine_path(store)
     try:
         metadata = root.lstat()
     except FileNotFoundError:
@@ -416,10 +425,14 @@ def _evidence_quarantine_directory(store: StateStore) -> Any:
         raise ValueError(
             "acceptance evidence quarantine root must be a real non-symlink directory"
         )
+    if stat.S_IMODE(metadata.st_mode) & 0o077:
+        raise ValueError("acceptance evidence quarantine root must be private")
     return root
 
 
-def _read_unknown_run_evidence_entry(entry: Any) -> tuple[bytes, Mapping[str, Any], str]:
+def _read_unknown_run_evidence_entry(
+    entry: Any,
+) -> tuple[bytes, Mapping[str, Any], str, tuple[int, int, int]]:
     flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
         descriptor = os.open(entry, flags)
@@ -449,58 +462,127 @@ def _read_unknown_run_evidence_entry(entry: Any) -> tuple[bytes, Mapping[str, An
         ) from exc
     if not isinstance(value, Mapping):
         raise ValueError("unknown-run acceptance evidence must be a JSON object")
-    return payload, value, hashlib.sha256(payload).hexdigest()
+    identity = (metadata.st_dev, metadata.st_ino, metadata.st_nlink)
+    return payload, value, hashlib.sha256(payload).hexdigest(), identity
 
 
-def _write_quarantine_copy(destination: Any, payload: bytes) -> bool:
-    flags = (
-        os.O_WRONLY
-        | os.O_CREAT
-        | os.O_EXCL
-        | getattr(os, "O_CLOEXEC", 0)
-        | getattr(os, "O_NOFOLLOW", 0)
+def _read_matching_quarantine_entry(
+    path: Any, payload: bytes, source_sha256: str
+) -> None:
+    existing, _, existing_sha256, _ = _read_unknown_run_evidence_entry(path)
+    if existing != payload or existing_sha256 != source_sha256:
+        raise ValueError("acceptance evidence quarantine digest collision")
+
+
+def _canonical_quarantine_path(root: Any, entry: Any, source_sha256: str) -> Any:
+    source_name_sha256 = hashlib.sha256(entry.name.encode("utf-8")).hexdigest()[:16]
+    return root / f"{source_name_sha256}.{source_sha256}.json"
+
+
+def _reserve_quarantine_staging(root: Any, source_sha256: str) -> Any:
+    descriptor, staging_name = tempfile.mkstemp(
+        prefix=f".incoming-{source_sha256[:16]}-",
+        suffix=".json",
+        dir=root,
     )
+    os.close(descriptor)
+    return Path(staging_name)
+
+
+def _publish_quarantine_destination(
+    root: Any,
+    entry: Any,
+    staging: Any,
+    payload: bytes,
+    source_sha256: str,
+) -> tuple[Any, Any, bool]:
+    canonical = _canonical_quarantine_path(root, entry, source_sha256)
     try:
-        descriptor = os.open(destination, flags, 0o600)
+        os.link(staging, canonical, follow_symlinks=False)
     except FileExistsError:
-        return False
+        _read_matching_quarantine_entry(canonical, payload, source_sha256)
+        # Preserve the reappeared source inode independently; its content may
+        # match the canonical copy while its producer history is distinct.
+        return staging, canonical, True
+    except OSError as exc:
+        raise ValueError(
+            f"acceptance evidence quarantine publication failed; preserved-at:{staging}"
+        ) from exc
+    with suppress(OSError):
+        staging.unlink()
+    return canonical, canonical, False
+
+
+def _atomic_quarantine_move(source: Any, destination: Any) -> None:
+    os.replace(source, destination)
+
+
+def _restore_mismatched_quarantine_entry(destination: Any, entry: Any) -> bool:
     try:
-        view = memoryview(payload)
-        while view:
-            written = os.write(descriptor, view)
-            if written <= 0:
-                raise OSError("short acceptance evidence quarantine write")
-            view = view[written:]
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
+        os.link(destination, entry, follow_symlinks=False)
+    except (FileExistsError, OSError):
+        return False
+    # The active path is already restored. Keeping an additional private
+    # quarantine link is evidenzerhaltend and safer than a second mutation.
+    with suppress(OSError):
+        destination.unlink()
     return True
 
 
 def _quarantine_unknown_run_evidence(
     store: StateStore, entry: Any, run_id: str
 ) -> dict[str, Any]:
-    payload, value, source_sha256 = _read_unknown_run_evidence_entry(entry)
+    payload, _, source_sha256, source_identity = _read_unknown_run_evidence_entry(entry)
     root = _evidence_quarantine_directory(store)
-    destination = root / f"{entry.stem}.{source_sha256}.json"
-    created = _write_quarantine_copy(destination, payload)
-    if not created:
-        existing, _, existing_sha256 = _read_unknown_run_evidence_entry(destination)
-        if existing != payload or existing_sha256 != source_sha256:
-            raise ValueError("acceptance evidence quarantine digest collision")
+    staging = _reserve_quarantine_staging(root, source_sha256)
 
-    # Validate the producer entry again before removing it. Writing the
-    # quarantine copy first means interruption can only leave two copies, never
-    # destroy the sole evidence copy.
-    current_payload, _, current_sha256 = _read_unknown_run_evidence_entry(entry)
-    if current_payload != payload or current_sha256 != source_sha256:
-        raise ValueError("unknown-run acceptance evidence changed during quarantine")
-    entry.unlink()
+    try:
+        # Move the active pathname into a private staging inode atomically. The
+        # canonical content-addressed name is not exposed until this moved inode
+        # has been revalidated, so crashes cannot leave a partial canonical
+        # quarantine artifact.
+        _atomic_quarantine_move(entry, staging)
+    except Exception:
+        with suppress(OSError):
+            staging.unlink()
+        raise
 
-    declared_run_id = value.get("run_id")
+    try:
+        moved_payload, moved_value, moved_sha256, moved_identity = (
+            _read_unknown_run_evidence_entry(staging)
+        )
+    except Exception as exc:
+        restored = _restore_mismatched_quarantine_entry(staging, entry)
+        state = "restored" if restored else f"preserved-at:{staging}"
+        raise ValueError(
+            f"unknown-run acceptance evidence changed during quarantine ({state})"
+        ) from exc
+
+    if (
+        moved_identity[:2] != source_identity[:2]
+        or moved_payload != payload
+        or moved_sha256 != source_sha256
+    ):
+        restored = _restore_mismatched_quarantine_entry(staging, entry)
+        state = "restored" if restored else f"preserved-at:{staging}"
+        raise ValueError(
+            f"unknown-run acceptance evidence changed during quarantine ({state})"
+        )
+
+    # Keep the moved inode private before publication. When it has no other
+    # hard links, narrow its mode; the 0700 quarantine parent remains the
+    # boundary for pre-existing hard links.
+    if moved_identity[2] == 1:
+        os.chmod(staging, 0o600, follow_symlinks=False)
+
+    destination, canonical, idempotent_replay = _publish_quarantine_destination(
+        root, entry, staging, moved_payload, source_sha256
+    )
+
+    declared_run_id = moved_value.get("run_id")
     canonical_bundle = (
-        value.get("schema_version") == 1
-        and value.get("kind") == EVIDENCE_BUNDLE_KIND
+        moved_value.get("schema_version") == 1
+        and moved_value.get("kind") == EVIDENCE_BUNDLE_KIND
         and isinstance(declared_run_id, str)
         and bool(declared_run_id)
     )
@@ -514,7 +596,8 @@ def _quarantine_unknown_run_evidence(
         ),
         "declared_run_id": declared_run_id if isinstance(declared_run_id, str) else None,
         "quarantine_path": str(destination),
-        "idempotent_replay": not created,
+        "canonical_quarantine_path": str(canonical),
+        "idempotent_replay": idempotent_replay,
     }
 
 
@@ -539,7 +622,7 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
         "retired_run_ids": [],
         "quarantined_count": 0,
         "quarantined_entries": [],
-        "quarantine_directory": str(store.state_root / EVIDENCE_QUARANTINE_DIRECTORY),
+        "quarantine_directory": str(_evidence_quarantine_path(store)),
         "preserved_count": 0,
         "errors": [],
     }

@@ -1,0 +1,198 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der koordinierte Claim-Versuch für den Control-Plane-V3-Pfad wurde vor jeder Wirkung mit release-registry-identity-mismatch abgewiesen; die frisch beobachtete installierte Bureau-Runtime 56d2451cee336802bda2628f10dbac85e7232bd9 liegt hinter dem reviewten, CI-grünen main. Die Runtime-Observation ist digestgebunden und nennt einen prepare-intent-fähigen Kandidaten.",
+      "evidence_type": "object",
+      "id": "t011-runtime-blocker-proven",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-t011-unlock:t011-runtime-blocker-proven"
+      }
+    },
+    {
+      "assertion": "Bereits verbrauchte, supersedete oder zweckgebundene alte Runtime-Refresh-Authorities werden nicht verwendet. Insbesondere BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811 und BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-DEPLOY-DIAGNOSTIC-20260812 bleiben ihrem ursprünglichen Zweck vorbehalten.",
+      "evidence_type": "object",
+      "id": "historical-authority-substitution-forbidden",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-t011-unlock:historical-authority-substitution-forbidden"
+      }
+    },
+    {
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller heimgewebe/bureau main-Commit, zugehöriger gemergter PR, validate (3.10), validate (3.12), installierter Deployment-Manifest-Stand und target_sha256 frisch beobachtet. Jede Main-, Check-, Manifest- oder Target-Drift verwirft den bisherigen Kandidaten vor Wirkung und erfordert einen neuen Intent.",
+      "evidence_type": "object",
+      "id": "fresh-target-per-execution",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-t011-unlock:fresh-target-per-execution"
+      }
+    },
+    {
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply bestätigt der autoritative Bureau-StateStore diese exakte Task-ID mit positiver Revision und Spec-Digest, state ready oder active, action_class runtime_mutation, required_level break_glass, Claim component.bureau.runtime sowie ohne consumption, target_binding_receipt oder runtime_closeout. Fremde oder historische Authority-Tasks werden nicht substituiert.",
+      "evidence_type": "object",
+      "id": "authoritative-single-use-preflight",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-t011-unlock:authoritative-single-use-preflight"
+      }
+    },
+    {
+      "assertion": "Die konkrete Break-Glass-Freigabe bindet diese exakte Task-ID und reference an den unmittelbar davor frisch beobachteten target_sha256. Apply verwendet ausschließlich die vom daraus abgeleiteten Intent geforderten Grabowski-Live-Leases mit identischer Owner-/Task-/Target-Bindung; fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed vor Wirkung ab.",
+      "evidence_type": "object",
+      "id": "break-glass-target-and-lease-binding",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-t011-unlock:break-glass-target-and-lease-binding"
+      }
+    },
+    {
+      "assertion": "Nach apply stimmen Bureau-Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot auf denselben frisch gewählten source commit; StateStore-Integrität und Runtime-/Registry-Kompatibilität sind gültig. Danach wird der koordinierte Bureau-Pickup für den Control-Plane-V3-Pfad erneut frisch geprüft und darf nicht mehr am release-registry-identity-mismatch scheitern.",
+      "evidence_type": "object",
+      "id": "immutable-readback-restores-claim-path",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-t011-unlock:immutable-readback-restores-claim-path"
+      }
+    },
+    {
+      "assertion": "Genau ein effect_started=true-Runtime-Refresh ist dieser Task-ID zugeordnet. Nach eindeutig erfolgreichem immutable Readback und Lease-Release wird die Authority task-/target-/intent-/resultgebunden geschlossen. Bei unklarem Ergebnis oder Fehler nach Effect-Start erfolgt kein Blind-Retry; zuerst entscheidet ausschließlich der kanonische receipt- und StateStore-Readback.",
+      "evidence_type": "object",
+      "id": "single-effect-closeout-no-blind-retry",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-t011-unlock:single-effect-closeout-no-blind-retry"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-Use-Autorität ausschließlich für genau einen immutable Bureau-Runtime-Refresh, der den release-registry-identity-mismatch für den T009/T011-Control-Plane-Pfad beseitigt. Vor prepare-intent und erneut vor apply sind frische main-/PR-/Required-Check-/target_sha256-Beobachtung, autoritativer StateStore-Preflight dieser exakten TaskSpec und alle intentgebundenen Live-Leases Pflicht. Keine Grabowski-Runtime-, Queue-, Claim-, Dispatch-, T009-/T011-Code- oder Fremdarbeitswirkung.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten source-/Registry-Stand 56d2451cee336802bda2628f10dbac85e7232bd9 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ist ausschließlich, den belegten release-registry-identity-mismatch zu beseitigen, der den koordinierten Bureau-Claim-Pfad für BUREAU-CONTROL-PLANE-V3-T009 und anschließend T011 vor jeder Wirkung blockiert. Die Autorität ist single-use und targetgebunden; historische Browser-Control-, Deploy-Diagnose- oder bereits verbrauchte Runtime-Authorities werden nicht substituiert.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T011-UNLOCK-20260814",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_followup_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-T009",
+      "BUREAU-CONTROL-PLANE-V3-T011"
+    ],
+    "blocked_reason": "release-registry-identity-mismatch",
+    "does_not_establish": [
+      "konkrete Deploymentfreigabe ohne frischen target_sha256",
+      "Autorität für Grabowski-Runtime",
+      "wiederverwendbare Bureau-Runtime-Autorität",
+      "Queue-, Claim- oder Dispatch-Autorität",
+      "T009- oder T011-Implementierungsautorität",
+      "Permission to bypass StateStore, Registry, CI, lease or immutable readback validation"
+    ],
+    "fresh_main_commit_at_registration": "6a971e27ea60c4b357bf644402ad77d9d28d69ef",
+    "fresh_main_pull_request_at_registration": 1974,
+    "fresh_observation_sha256": "9367692c1c90b79c3cb55e692fee6a9d37cbddc5c31b9eef2d6c6467c4a3b612",
+    "fresh_target_sha256_at_registration": "26935e1a3eeb719de7e63e9a3aa7864a0651a681b1ad08d11f2c5eab5adfebf6",
+    "installed_runtime_before_authority": "56d2451cee336802bda2628f10dbac85e7232bd9",
+    "publication_path": {
+      "does_not_establish": [
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority before fresh target-bound break-glass preflight",
+        "direct SQLite mutation authority"
+      ],
+      "kind": "operator-native-reviewed-publication",
+      "reason": "Der normale koordinierte Bureau-Pickup ist wegen release-registry-identity-mismatch vor jeder Wirkung blockiert. Der reviewte Operator-Intake darf die neue TaskSpec CAS-gebunden in den StateStore registrieren und anschließend genau die eine Git-Projektionsdatei über einen geschützten PR veröffentlichen; vorhandene StateStore-Specs bleiben autoritativ.",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5577ad89f9fb1e1db6618c96",
+      "event_id": 7073,
+      "event_created_at": "2026-08-14T06:48:14.476906Z",
+      "request_sha256": "a1fa51c9a7ee9b3f55ebf42b05cc4c2aedc56443173e0f33295286058a40f4d3",
+      "candidate_event_id": "candidate-event-bacc77b4ade2f18f6f945a0f",
+      "source_fingerprint": "e9602f46de46d94f93f07468ef4c0415f1889f7cb1dc493b9e53f04db9f41fd4",
+      "content_fingerprint": "5577ad89f9fb1e1db6618c96aeb0ed4caae28b310c8fde2ee00b5403712e7c32",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "e9602f46de46d94f93f07468ef4c0415f1889f7cb1dc493b9e53f04db9f41fd4",
+        "freshness": "digest-bound",
+        "kind": "bureau-runtime-refresh-observation",
+        "locator": "bureau-runtime-refresh:observation=9367692c1c90b79c3cb55e692fee6a9d37cbddc5c31b9eef2d6c6467c4a3b612;main=6a971e27ea60c4b357bf644402ad77d9d28d69ef;pr=1974;target=26935e1a3eeb719de7e63e9a3aa7864a0651a681b1ad08d11f2c5eab5adfebf6",
+        "observed_at": "2026-08-14T06:44:10.474690Z",
+        "sha256": "9367692c1c90b79c3cb55e692fee6a9d37cbddc5c31b9eef2d6c6467c4a3b612"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "e9602f46de46d94f93f07468ef4c0415f1889f7cb1dc493b9e53f04db9f41fd4",
+          "freshness": "digest-bound",
+          "kind": "bureau-runtime-refresh-observation",
+          "locator": "bureau-runtime-refresh:observation=9367692c1c90b79c3cb55e692fee6a9d37cbddc5c31b9eef2d6c6467c4a3b612;main=6a971e27ea60c4b357bf644402ad77d9d28d69ef;pr=1974;target=26935e1a3eeb719de7e63e9a3aa7864a0651a681b1ad08d11f2c5eab5adfebf6",
+          "observed_at": "2026-08-14T06:44:10.474690Z",
+          "sha256": "9367692c1c90b79c3cb55e692fee6a9d37cbddc5c31b9eef2d6c6467c4a3b612"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Wahrheit behaupten und Apply nicht blind wiederholen. Den letzten integritätsgültigen immutable Bureau-Release als Rückfallkante beibehalten und ausschließlich den kanonischen receipt-/target-/StateStore-gebundenen Reconciliation- beziehungsweise Rollbackpfad verwenden; keine Registry-, StateStore-, Consumption- oder Single-Use-Historie zurückschreiben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-Use-Bureau-Runtime-Refresh für T009/T011-Unlock"
+}

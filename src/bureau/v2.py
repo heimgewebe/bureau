@@ -7088,6 +7088,593 @@ def _claim_bound_envelope(
     return envelope
 
 
+def _runtime_closeout_validate_lease(
+    intent: dict[str, Any],
+    *,
+    owner_id: str,
+    task_id: str,
+    run_id: str,
+    resource_db: Path,
+    min_remaining_seconds: int,
+    required_metadata: dict[str, Any],
+    failure_code: str,
+    failure_message: str,
+) -> dict[str, Any]:
+    try:
+        return runtime_refresh.validate_live_lease_binding(
+            intent,
+            {"owner_id": owner_id, "task_id": task_id},
+            resource_db=resource_db,
+            min_remaining_seconds=min_remaining_seconds,
+            required_metadata=required_metadata,
+        )
+    except runtime_refresh.RuntimeRefreshError as exc:
+        raise RunStateConflict(
+            failure_code,
+            failure_message,
+            run_id=run_id,
+            details={"lease_error": exc.as_dict()},
+        ) from exc
+
+
+def _runtime_closeout_release_bindings(
+    bindings: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Release only exact, unchanged lease rows after terminal readback."""
+    concrete = [binding for binding in bindings if binding.get("lease_snapshots")]
+    if not concrete:
+        return {"released": True, "resource_keys": [], "bindings": []}
+
+    database_paths = {str(binding.get("resource_db")) for binding in concrete}
+    if len(database_paths) != 1:
+        raise legacy.StateError(
+            "runtime closeout lease bindings use different resource stores"
+        )
+    resource_db = runtime_refresh._validate_resource_database_path(
+        Path(database_paths.pop())
+    )
+
+    snapshots: list[dict[str, Any]] = []
+    for binding in concrete:
+        value = binding.get("lease_snapshots")
+        if not isinstance(value, list):
+            raise legacy.StateError(
+                "runtime closeout lease binding has invalid snapshots"
+            )
+        snapshots.extend(value)
+    keys = [str(item.get("resource_key", "")) for item in snapshots]
+    if any(not key for key in keys) or len(keys) != len(set(keys)):
+        raise legacy.StateError(
+            "runtime closeout lease bindings contain invalid or duplicate resources"
+        )
+
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(resource_db, timeout=5, isolation_level=None)
+        connection.execute("BEGIN IMMEDIATE")
+        for snapshot in snapshots:
+            row = connection.execute(
+                "SELECT owner_id,acquired_at_unix,updated_at_unix,expires_at_unix,"
+                "metadata_sha256 FROM leases WHERE resource_key=?",
+                (snapshot["resource_key"],),
+            ).fetchone()
+            expected = (
+                snapshot["owner_id"],
+                snapshot["acquired_at_unix"],
+                snapshot["updated_at_unix"],
+                snapshot["expires_at_unix"],
+                snapshot["metadata_sha256"],
+            )
+            if row != expected:
+                raise legacy.StateError(
+                    "runtime closeout lease changed before release: "
+                    f"{snapshot['resource_key']}"
+                )
+        for snapshot in snapshots:
+            cursor = connection.execute(
+                "DELETE FROM leases WHERE resource_key=? AND owner_id=? "
+                "AND acquired_at_unix=? AND updated_at_unix=? AND expires_at_unix=? "
+                "AND metadata_sha256=?",
+                (
+                    snapshot["resource_key"],
+                    snapshot["owner_id"],
+                    snapshot["acquired_at_unix"],
+                    snapshot["updated_at_unix"],
+                    snapshot["expires_at_unix"],
+                    snapshot["metadata_sha256"],
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise legacy.StateError(
+                    "runtime closeout lease disappeared during release: "
+                    f"{snapshot['resource_key']}"
+                )
+        connection.commit()
+    except legacy.StateError:
+        if connection is not None:
+            with suppress(sqlite3.Error):
+                connection.rollback()
+        raise
+    except sqlite3.Error as exc:
+        if connection is not None:
+            with suppress(sqlite3.Error):
+                connection.rollback()
+        raise legacy.StateError(
+            f"runtime closeout lease release failed: {exc}"
+        ) from exc
+    finally:
+        if connection is not None:
+            connection.close()
+
+    return {
+        "released": True,
+        "resource_keys": sorted(keys),
+        "bindings": [
+            binding.get("lease_binding_sha256") for binding in concrete
+        ],
+    }
+
+
+def _runtime_closeout_read_evidence(path: Path, *, run_id: str) -> dict[str, Any]:
+    """Read one bounded evidence object through a no-follow file descriptor."""
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    if nofollow is None:
+        raise RunStateConflict(
+            "runtime-closeout-evidence-invalid",
+            "secure no-follow evidence reads are unavailable on this platform",
+            run_id=run_id,
+        )
+    descriptor: int | None = None
+    try:
+        descriptor = os.open(path, os.O_RDONLY | nofollow)
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > 1_048_576:
+            raise RunStateConflict(
+                "runtime-closeout-evidence-invalid",
+                "completion evidence must be a bounded regular non-symlink JSON file",
+                run_id=run_id,
+            )
+        with os.fdopen(descriptor, "rb", closefd=True) as stream:
+            descriptor = None
+            payload = stream.read(1_048_577)
+    except RunStateConflict:
+        raise
+    except OSError as exc:
+        raise RunStateConflict(
+            "runtime-closeout-evidence-invalid",
+            f"completion evidence is unavailable: {exc}",
+            run_id=run_id,
+        ) from exc
+    finally:
+        if descriptor is not None:
+            with suppress(OSError):
+                os.close(descriptor)
+    if len(payload) > 1_048_576:
+        raise RunStateConflict(
+            "runtime-closeout-evidence-invalid",
+            "completion evidence exceeds the 1 MiB closeout limit",
+            run_id=run_id,
+        )
+    try:
+        evidence = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RunStateConflict(
+            "runtime-closeout-evidence-invalid",
+            str(exc),
+            run_id=run_id,
+        ) from exc
+    if not isinstance(evidence, dict):
+        raise RunStateConflict(
+            "runtime-closeout-evidence-invalid",
+            "completion evidence must be a JSON object",
+            run_id=run_id,
+        )
+    return evidence
+
+
+def runtime_closeout(
+    store: StateStore,
+    run_id: str,
+    evidence_path: Path,
+    *,
+    resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
+) -> dict[str, Any]:
+    """Close one active run through the deployed runtime's typed closure authority.
+
+    Exact Registry truth comes from the digest-bound canonical snapshot already
+    named by the deployed runtime manifest. Evidence must be the canonical
+    revision-bound StateStore bundle for this run. This path never deploys Bureau,
+    rewrites Git refs, invents source authentication, or force-releases leases.
+    """
+    from . import closure_observer
+    from . import runtime_identity as runtime_identity_module
+
+    run = store.run(run_id)
+    if run.get("state") not in legacy.ACTIVE_STATES:
+        raise RunStateConflict(
+            "runtime-closeout-run-not-active",
+            f"run {run_id} is not active for exact-runtime closeout",
+            run_id=run_id,
+            details={"state": run.get("state")},
+        )
+
+    envelope = _claim_bound_envelope(
+        store, run_id, str(run["envelope_sha256"])
+    )
+    intent = envelope.get("claim_intent")
+    if not isinstance(intent, dict):
+        raise RunStateConflict(
+            "runtime-closeout-pickup-lease-required",
+            "exact-runtime closeout requires a coordinated pickup lease binding",
+            run_id=run_id,
+        )
+    _validate_coordinated_claim_intent(intent)
+
+    expected_evidence_path = (
+        store.state_root.resolve()
+        / closure_observer.EVIDENCE_DIRECTORY
+        / f"{run_id}.json"
+    )
+    provided_evidence_path = evidence_path.expanduser()
+    if (
+        not provided_evidence_path.is_absolute()
+        or provided_evidence_path != expected_evidence_path
+    ):
+        raise RunStateConflict(
+            "runtime-closeout-evidence-path-invalid",
+            "exact-runtime closeout requires the canonical StateStore evidence bundle path",
+            run_id=run_id,
+            details={
+                "expected_path": str(expected_evidence_path),
+                "observed_path": str(provided_evidence_path),
+            },
+        )
+    try:
+        evidence_root_stat = expected_evidence_path.parent.lstat()
+    except OSError as exc:
+        raise RunStateConflict(
+            "runtime-closeout-evidence-path-invalid",
+            f"canonical acceptance evidence directory is unavailable: {exc}",
+            run_id=run_id,
+        ) from exc
+    if (
+        stat.S_ISLNK(evidence_root_stat.st_mode)
+        or not stat.S_ISDIR(evidence_root_stat.st_mode)
+        or evidence_root_stat.st_uid != os.geteuid()
+    ):
+        raise RunStateConflict(
+            "runtime-closeout-evidence-path-invalid",
+            "canonical acceptance evidence directory is not a trusted real directory",
+            run_id=run_id,
+        )
+    bundle = _runtime_closeout_read_evidence(provided_evidence_path, run_id=run_id)
+    expected_bundle = {
+        "schema_version": 1,
+        "kind": closure_observer.EVIDENCE_BUNDLE_KIND,
+        "run_id": run_id,
+        "task_id": run.get("task_id"),
+        "task_sha256": run.get("task_sha256"),
+        "plan_sha256": run.get("plan_sha256"),
+    }
+    mismatched_bundle_fields = {
+        key: {"expected": value, "observed": bundle.get(key)}
+        for key, value in expected_bundle.items()
+        if bundle.get(key) != value
+    }
+    if mismatched_bundle_fields:
+        raise RunStateConflict(
+            "runtime-closeout-evidence-binding-invalid",
+            "completion evidence bundle does not match the active run revision",
+            run_id=run_id,
+            details={"mismatched": mismatched_bundle_fields},
+        )
+    evidence = bundle.get("evidence")
+    if not isinstance(evidence, dict):
+        raise RunStateConflict(
+            "runtime-closeout-evidence-invalid",
+            "completion evidence bundle must contain an evidence object",
+            run_id=run_id,
+        )
+    context = runtime_identity_module.deployed_runtime_closeout_context(
+        state_path=store.path
+    )
+    if context.get("status") != "ready":
+        raise RunStateConflict(
+            "runtime-closeout-runtime-identity-invalid",
+            "deployed Bureau runtime identity is not valid for closeout",
+            run_id=run_id,
+            details={"runtime_context": context},
+        )
+    deployed_commit = str(context["source_commit"])
+    canonical_value = context.get("canonical_registry_root")
+    if not isinstance(canonical_value, str) or not canonical_value:
+        raise RunStateConflict(
+            "runtime-closeout-canonical-registry-unavailable",
+            "deployed runtime has no canonical Registry snapshot for closeout",
+            run_id=run_id,
+        )
+    canonical_registry_root = Path(canonical_value).expanduser().resolve()
+
+    def exact_registry_binding() -> tuple[dict[str, Any], Registry]:
+        identity = runtime_identity_module.bureau_runtime_identity(
+            canonical_registry_root,
+            state_path=store.path,
+            module_path=Path(str(context["module_path"])),
+        )
+        registry_identity = identity.get("registry", {})
+        compatibility = identity.get("compatibility", {})
+        if (
+            identity.get("manifest", {}).get("valid") is not True
+            or registry_identity.get("role") != "canonical-runtime-snapshot"
+            or compatibility.get("status") != "canonical-read-only"
+            or registry_identity.get("head") != deployed_commit
+            or registry_identity.get("dirty") is not False
+        ):
+            raise RunStateConflict(
+                "runtime-closeout-exact-identity-mismatch",
+                "canonical runtime Registry snapshot no longer matches the deployed runtime",
+                run_id=run_id,
+                details={"runtime_identity": identity},
+            )
+        exact_registry = Registry.load(canonical_registry_root)
+        revision = _authoritative_close_revision(
+            exact_registry, str(run["task_id"]), run_id=run_id
+        )
+        if revision.task_sha256 != run.get("task_sha256"):
+            raise RunStateConflict(
+                "task-revision-changed",
+                "deployed Registry task revision differs from the run baseline",
+                run_id=run_id,
+                details={
+                    "expected_task_sha256": run.get("task_sha256"),
+                    "observed_task_sha256": revision.task_sha256,
+                },
+            )
+        if revision.plan_sha256 != run.get("plan_sha256"):
+            raise RunStateConflict(
+                "plan-revision-changed",
+                "deployed Registry plan revision differs from the run baseline",
+                run_id=run_id,
+                details={
+                    "expected_plan_sha256": run.get("plan_sha256"),
+                    "observed_plan_sha256": revision.plan_sha256,
+                },
+            )
+        return identity, exact_registry
+
+    exact_registry_binding()
+
+    pickup_metadata = {
+        "task_id": intent["task_id"],
+        "run_id": intent["run_id"],
+        "claim_intent_sha256": intent["intent_sha256"],
+    }
+    pickup_binding = _runtime_closeout_validate_lease(
+        intent,
+        owner_id=intent["lease_owner_id"],
+        task_id=intent["task_id"],
+        run_id=run_id,
+        resource_db=resource_db,
+        min_remaining_seconds=180,
+        required_metadata=pickup_metadata,
+        failure_code="runtime-closeout-pickup-lease-invalid",
+        failure_message="required coordinated pickup leases are missing or drifted",
+    )
+
+    state_root = store.state_root.resolve()
+    closeout_parent = state_root / "runtime-closeout"
+    closeout_root = closeout_parent / run_id
+    if closeout_parent.is_symlink() or closeout_root.is_symlink():
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-invalid",
+            "runtime closeout path may not contain a symlink",
+            run_id=run_id,
+        )
+    resolved_closeout_root = closeout_root.resolve(strict=False)
+    if (
+        resolved_closeout_root.parent != closeout_parent.resolve(strict=False)
+        or state_root not in resolved_closeout_root.parents
+    ):
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-invalid",
+            "runtime closeout path escaped the canonical StateStore root",
+            run_id=run_id,
+        )
+
+    closeout_owner = f"bureau-runtime-closeout:{run_id}"
+    closeout_key = f"path:{resolved_closeout_root}"
+    closeout_intent = {"required_resource_keys": [closeout_key]}
+    closeout_metadata = {
+        "task_id": str(run["task_id"]),
+        "run_id": run_id,
+        "operation": "runtime-closeout",
+    }
+    closeout_binding = _runtime_closeout_validate_lease(
+        closeout_intent,
+        owner_id=closeout_owner,
+        task_id=str(run["task_id"]),
+        run_id=run_id,
+        resource_db=resource_db,
+        min_remaining_seconds=180,
+        required_metadata=closeout_metadata,
+        failure_code="runtime-closeout-temporary-lease-invalid",
+        failure_message="required temporary closeout lease is missing or drifted",
+    )
+
+    try:
+        closeout_parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        closeout_root.mkdir(mode=0o700, exist_ok=True)
+    except OSError as exc:
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-invalid",
+            f"runtime closeout path could not be prepared: {exc}",
+            run_id=run_id,
+        ) from exc
+    if (
+        closeout_parent.is_symlink()
+        or closeout_root.is_symlink()
+        or not closeout_root.is_dir()
+        or closeout_parent.stat().st_uid != os.geteuid()
+        or closeout_root.stat().st_uid != os.geteuid()
+    ):
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-invalid",
+            "runtime closeout path is not owned by the current user",
+            run_id=run_id,
+        )
+    if any(closeout_root.iterdir()):
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-not-empty",
+            "runtime closeout root contains pre-existing artifacts",
+            run_id=run_id,
+        )
+
+    success_payload: dict[str, Any] | None = None
+    try:
+        exact_identity, exact_registry = exact_registry_binding()
+        pickup_binding = _runtime_closeout_validate_lease(
+            intent,
+            owner_id=intent["lease_owner_id"],
+            task_id=intent["task_id"],
+            run_id=run_id,
+            resource_db=resource_db,
+            min_remaining_seconds=120,
+            required_metadata=pickup_metadata,
+            failure_code="runtime-closeout-pickup-lease-invalid",
+            failure_message="required coordinated pickup leases changed before completion",
+        )
+        closeout_binding = _runtime_closeout_validate_lease(
+            closeout_intent,
+            owner_id=closeout_owner,
+            task_id=str(run["task_id"]),
+            run_id=run_id,
+            resource_db=resource_db,
+            min_remaining_seconds=120,
+            required_metadata=closeout_metadata,
+            failure_code="runtime-closeout-temporary-lease-invalid",
+            failure_message="temporary closeout lease changed before completion",
+        )
+
+        unavailable: list[dict[str, Any]] = []
+        try:
+            authentication_records = closure_observer.authenticate_state_evidence(
+                run,
+                envelope,
+                evidence,
+                store=store,
+                authentication_unavailable=unavailable,
+            )
+        except closure_observer.EvidenceAdapterUnavailable as exc:
+            raise RunStateConflict(
+                "runtime-closeout-evidence-authentication-unavailable",
+                "a typed acceptance evidence source could not be authenticated",
+                run_id=run_id,
+                details={"adapter": exc.payload()},
+            ) from exc
+        if unavailable:
+            raise RunStateConflict(
+                "runtime-closeout-evidence-authentication-unavailable",
+                "typed acceptance evidence lacks independent source authentication",
+                run_id=run_id,
+                details={"unavailable": unavailable},
+            )
+
+        observation = closure_observer.reconcile_run(
+            exact_registry,
+            store,
+            run_id,
+            evidence,
+            authenticated_criterion_ids=frozenset(authentication_records),
+            authentication_records=authentication_records,
+        )
+        if observation.get("state") != "terminalized":
+            raise RunStateConflict(
+                "runtime-closeout-evidence-not-terminalizing",
+                "typed acceptance did not authorize terminalization",
+                run_id=run_id,
+                details={"observation": observation},
+            )
+
+        readback = store.run(run_id)
+        if readback.get("state") != "succeeded":
+            raise legacy.StateError(
+                "runtime closeout did not reach authoritative succeeded state"
+            )
+        with store.connect() as connection:
+            receipt_row = connection.execute(
+                "SELECT receipt_json,receipt_sha256 FROM receipts WHERE run_id=?",
+                (run_id,),
+            ).fetchone()
+        if receipt_row is None:
+            raise legacy.StateError(
+                "runtime closeout succeeded without a durable completion receipt"
+            )
+        receipt = _load_validated_stored_receipt(
+            exact_registry, run_id, receipt_row
+        )
+        for field in (
+            "task_id",
+            "task_sha256",
+            "plan_sha256",
+            "envelope_sha256",
+        ):
+            if receipt.get(field) != run.get(field):
+                raise legacy.StateError(
+                    f"runtime closeout receipt binding mismatch: {field}"
+                )
+
+        try:
+            closeout_root.rmdir()
+        except OSError as exc:
+            raise legacy.StateError(
+                "runtime closeout succeeded but temporary root cleanup failed: "
+                f"{exc}"
+            ) from exc
+        if closeout_root.exists():
+            raise legacy.StateError(
+                "runtime closeout succeeded but temporary resources remain"
+            )
+        lease_release = _runtime_closeout_release_bindings(
+            [pickup_binding, closeout_binding]
+        )
+        success_payload = {
+            "schema_version": 1,
+            "kind": "bureau_runtime_closeout_receipt",
+            "status": "succeeded",
+            "run_id": run_id,
+            "task_id": run["task_id"],
+            "deployed_source_commit": deployed_commit,
+            "runtime_release_id": context["release_id"],
+            "exact_registry_head": exact_identity["registry"]["head"],
+            "exact_registry_dirty": exact_identity["registry"]["dirty"],
+            "canonical_registry_root": str(canonical_registry_root),
+            "canonical_registry_tree_sha256": context.get(
+                "canonical_registry_tree_sha256"
+            ),
+            "evidence_bundle_sha256": legacy.sha256_json(bundle),
+            "authenticated_criterion_ids": sorted(authentication_records),
+            "completion_receipt_sha256": receipt["receipt_sha256"],
+            "authoritative_run_state": readback["state"],
+            "lease_release": lease_release,
+            "temporary_resources_removed": True,
+            "does_not_establish": [
+                "runtime-deployment",
+                "deployment-intent-mutation",
+                "registry-checkout-mutation",
+                "foreign-lease-release-authority",
+                "force-release-authority",
+                "manual-evidence-authentication-authority",
+            ],
+        }
+    finally:
+        if success_payload is None:
+            with suppress(OSError):
+                closeout_root.rmdir()
+
+    if success_payload is None:
+        raise legacy.StateError("runtime closeout ended without a result")
+    return success_payload
+
 def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dict[str, Any]:
     run = store.run(run_id)
     envelope = _claim_bound_envelope(store, run_id, run["envelope_sha256"])

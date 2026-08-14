@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import sqlite3
 import subprocess
 import threading
@@ -13,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
+from bureau import closure_observer, legacy
 from bureau import v2 as bureau_v2
 from bureau.adapters import AdapterRegistry, Observation
 from bureau.core import (
@@ -5110,3 +5112,631 @@ def test_commit_claim_intent_rechecks_initiative_state_inside_transaction(
         dispatcher.commit_claim_intent(issued["intent"], None)
 
     assert store.list_runs() == []
+
+
+def _insert_runtime_closeout_lease(
+    database: Path,
+    *,
+    state_root: Path,
+    run_id: str,
+    task_id: str,
+) -> tuple[str, str]:
+    resource_key = f"path:{(state_root.resolve() / 'runtime-closeout' / run_id)}"
+    owner_id = f"bureau-runtime-closeout:{run_id}"
+    metadata = {
+        "task_id": task_id,
+        "run_id": run_id,
+        "operation": "runtime-closeout",
+    }
+    metadata_json = json.dumps(
+        metadata,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+    digest = hashlib.sha256(metadata_json.encode()).hexdigest()
+    now = int(time.time())
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "INSERT INTO leases VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+        (
+            resource_key,
+            owner_id,
+            "runtime closeout test",
+            now - 10,
+            now - 10,
+            now + 3600,
+            digest,
+            metadata_json,
+        ),
+    )
+    connection.commit()
+    connection.close()
+    return resource_key, owner_id
+
+
+def _prepare_runtime_closeout_case(
+    registry_factory,
+    tmp_path: Path,
+    monkeypatch,
+    *,
+    with_closeout_lease: bool = True,
+    authenticate_evidence: bool = True,
+):
+    from bureau import runtime_identity as runtime_identity_module
+
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    deployed_commit = git_output(root, "rev-parse", "HEAD")
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+    )["intent"]
+    binding, database = coordinated_lease_database(
+        tmp_path / "leases", intent
+    )
+    claimed = dispatcher.commit_claim_intent(
+        intent, binding, resource_db=database
+    )
+    run_id = intent["run_id"]
+
+    if with_closeout_lease:
+        _insert_runtime_closeout_lease(
+            database,
+            state_root=store.state_root,
+            run_id=run_id,
+            task_id=task_id,
+        )
+
+    snapshot_root = tmp_path / "runtime-registry-snapshot"
+    shutil.copytree(root, snapshot_root, ignore=shutil.ignore_patterns(".git"))
+
+    lag_marker = root / "deploy-lag.txt"
+    lag_marker.write_text("main advanced after deployed runtime\n", encoding="utf-8")
+    git_output(root, "add", lag_marker.name)
+    git_output(root, "commit", "-m", "advance main beyond deployed runtime")
+    current_head = git_output(root, "rev-parse", "HEAD")
+    git_output(
+        root,
+        "update-ref",
+        "refs/remotes/origin/main",
+        current_head,
+    )
+    assert current_head != deployed_commit
+    assert git_output(root, "status", "--porcelain") == ""
+
+    context = {
+        "status": "ready",
+        "source_commit": deployed_commit,
+        "release_id": "test-deployed-release",
+        "module_path": str(tmp_path / "release/src/bureau/runtime_identity.py"),
+        "launcher_path": str(tmp_path / "bin/bureau"),
+        "manifest_path": str(tmp_path / "deployment-manifest.json"),
+        "canonical_registry_root": str(snapshot_root),
+        "canonical_registry_tree_sha256": "f" * 64,
+    }
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "deployed_runtime_closeout_context",
+        lambda *, state_path=None: context,
+    )
+
+    def exact_identity(registry_root, *, state_path=None, module_path=None):
+        exact = Path(registry_root).resolve() == snapshot_root.resolve()
+        return {
+            "manifest": {"valid": exact},
+            "compatibility": {
+                "status": "canonical-read-only" if exact else "stale",
+                "mutation_allowed": False,
+                "reason_codes": ["canonical-registry-read-only"] if exact else ["test-mismatch"],
+            },
+            "registry": {
+                "role": "canonical-runtime-snapshot" if exact else None,
+                "head": deployed_commit if exact else current_head,
+                "dirty": False,
+            },
+        }
+
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "bureau_runtime_identity",
+        exact_identity,
+    )
+
+    observation_scope = f"test:{task_id}:proof"
+    evidence_item = {
+        "schema_version": 1,
+        "kind": closure_observer.EVIDENCE_KIND,
+        "criterion_id": "proof",
+        "evidence_type": "manual_observation",
+        "source": {
+            "authority": "manual",
+            "reference": "operator:runtime-closeout-test",
+        },
+        "observed_at": legacy.utc_now(),
+        "revision": {
+            "task_sha256": claimed["run"]["task_sha256"],
+            "plan_sha256": claimed["run"]["plan_sha256"],
+            "observation_scope": observation_scope,
+        },
+        "facts": {
+            "accepted": True,
+            "observer": "evidence-producer",
+            "observation": "runtime closeout behavior confirmed",
+            "observation_scope": observation_scope,
+        },
+    }
+    evidence_directory = store.state_root / closure_observer.EVIDENCE_DIRECTORY
+    evidence_directory.mkdir(parents=True, exist_ok=True)
+    evidence_path = evidence_directory / f"{run_id}.json"
+    evidence_bundle = {
+        "schema_version": 1,
+        "kind": closure_observer.EVIDENCE_BUNDLE_KIND,
+        "run_id": run_id,
+        "task_id": task_id,
+        "task_sha256": claimed["run"]["task_sha256"],
+        "plan_sha256": claimed["run"]["plan_sha256"],
+        "evidence": {"proof": evidence_item},
+    }
+    evidence_path.write_text(json.dumps(evidence_bundle), encoding="utf-8")
+    if authenticate_evidence:
+        closure_observer.record_manual_acceptance_authentication(
+            store,
+            run_id,
+            "proof",
+            expected_evidence_sha256=legacy.sha256_json(evidence_item),
+            reviewer="independent-reviewer",
+        )
+    return {
+        "root": root,
+        "store": store,
+        "intent": intent,
+        "claimed": claimed,
+        "database": database,
+        "run_id": run_id,
+        "task_id": task_id,
+        "deployed_commit": deployed_commit,
+        "current_head": current_head,
+        "snapshot_root": snapshot_root,
+        "evidence_path": evidence_path,
+        "evidence_bundle": evidence_bundle,
+        "runtime_identity_module": runtime_identity_module,
+        "initial_state": claimed["run"]["state"],
+    }
+
+
+def test_normal_complete_stays_fail_closed_during_deploy_lag(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    evidence_path = tmp_path / "normal-completion-evidence.json"
+    evidence_path.write_text(
+        json.dumps({"proof": {"result": "passed"}}),
+        encoding="utf-8",
+    )
+    blocked_identity = {
+        "registry": {
+            "bureau_project": True,
+            "dirty": False,
+            "root": str(case["root"]),
+        },
+        "compatibility": {
+            "status": "stale",
+            "mutation_allowed": False,
+            "reason_codes": ["release-registry-identity-mismatch"],
+        },
+    }
+    monkeypatch.setattr(
+        bureau_cli, "bureau_runtime_identity", lambda *args, **kwargs: blocked_identity
+    )
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(case["root"]),
+            "--state-root",
+            str(case["store"].state_root),
+            "--json",
+            "complete",
+            case["run_id"],
+            "--evidence",
+            str(evidence_path),
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 2
+    assert output["result"]["status"] == "stale-runtime-blocked"
+    assert output["result"]["reason_codes"] == [
+        "release-registry-identity-mismatch"
+    ]
+    assert output["runtime_identity"]["compatibility"]["reason_codes"] == [
+        "release-registry-identity-mismatch"
+    ]
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_uses_typed_closure_and_releases_own_leases(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    preexisting_closeout_root = (
+        case["store"].state_root / "runtime-closeout" / case["run_id"]
+    )
+    preexisting_closeout_root.mkdir(parents=True)
+
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+
+    assert result["status"] == "succeeded"
+    assert result["deployed_source_commit"] == case["deployed_commit"]
+    assert result["exact_registry_head"] == case["deployed_commit"]
+    assert result["exact_registry_dirty"] is False
+    assert result["canonical_registry_root"] == str(case["snapshot_root"])
+    assert result["authenticated_criterion_ids"] == ["proof"]
+    assert result["authoritative_run_state"] == "succeeded"
+    assert result["temporary_resources_removed"] is True
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+    connection = sqlite3.connect(case["database"])
+    assert connection.execute("SELECT COUNT(*) FROM leases").fetchone()[0] == 0
+    connection.close()
+    assert not preexisting_closeout_root.exists()
+
+
+def test_runtime_closeout_cli_routes_through_canonical_runtime_snapshot(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    canonical_identity = {
+        "registry": {
+            "bureau_project": True,
+            "role": "canonical-runtime-snapshot",
+            "root": str(case["snapshot_root"]),
+            "head": case["deployed_commit"],
+            "origin_main": case["deployed_commit"],
+            "head_equals_origin_main": True,
+            "dirty": False,
+        },
+        "manifest": {
+            "valid": True,
+            "source_commit": case["deployed_commit"],
+            "canonical_registry": {
+                "valid": True,
+                "root": str(case["snapshot_root"]),
+                "source_commit": case["deployed_commit"],
+            },
+        },
+        "compatibility": {
+            "status": "canonical-read-only",
+            "mutation_allowed": False,
+            "reason_codes": ["canonical-registry-read-only"],
+        },
+    }
+    monkeypatch.setattr(
+        bureau_cli,
+        "resolve_registry_root",
+        lambda _value: (case["snapshot_root"], "canonical-runtime-default"),
+    )
+    monkeypatch.setattr(
+        bureau_cli,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: json.loads(json.dumps(canonical_identity)),
+    )
+    monkeypatch.setattr(
+        bureau_cli,
+        "runtime_closeout",
+        lambda store, run_id, evidence_path: bureau_v2.runtime_closeout(
+            store,
+            run_id,
+            evidence_path,
+            resource_db=case["database"],
+        ),
+    )
+
+    result = bureau_cli.main(
+        [
+            "--state-root",
+            str(case["store"].state_root),
+            "--json",
+            "complete",
+            case["run_id"],
+            "--evidence",
+            str(case["evidence_path"]),
+            "--exact-runtime",
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert output["result"]["status"] == "succeeded"
+    assert output["result"]["canonical_registry_root"] == str(case["snapshot_root"])
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
+def test_runtime_closeout_requires_canonical_evidence_path(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    copied = tmp_path / "copied-evidence.json"
+    copied.write_text(
+        json.dumps(case["evidence_bundle"]),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            copied,
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-evidence-path-invalid"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_symlink_canonical_evidence(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    target = case["evidence_path"].with_name("evidence-target.json")
+    case["evidence_path"].rename(target)
+    case["evidence_path"].symlink_to(target)
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-evidence-invalid"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_revision_drifted_evidence_bundle(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    bundle = dict(case["evidence_bundle"])
+    bundle["task_sha256"] = "0" * 64
+    case["evidence_path"].write_text(json.dumps(bundle), encoding="utf-8")
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-evidence-binding-invalid"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_requires_independent_evidence_authentication(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory,
+        tmp_path,
+        monkeypatch,
+        authenticate_evidence=False,
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-evidence-authentication-unavailable"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert not (
+        case["store"].state_root / "runtime-closeout" / case["run_id"]
+    ).exists()
+
+
+def test_runtime_closeout_missing_temporary_lease_stops_before_state_mutation(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory,
+        tmp_path,
+        monkeypatch,
+        with_closeout_lease=False,
+    )
+
+    with pytest.raises(
+        bureau_v2.RunStateConflict,
+        match="temporary closeout lease",
+    ) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-temporary-lease-invalid"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_missing_pickup_lease_stops_before_state_mutation(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    missing_key = case["intent"]["required_resource_keys"][0]
+    connection = sqlite3.connect(case["database"])
+    connection.execute(
+        "DELETE FROM leases WHERE resource_key=?",
+        (missing_key,),
+    )
+    connection.commit()
+    connection.close()
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-pickup-lease-invalid"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_dirty_canonical_identity_stops_before_state_mutation(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    runtime_identity_module = case["runtime_identity_module"]
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: {
+            "manifest": {"valid": True},
+            "compatibility": {
+                "status": "canonical-read-only",
+                "mutation_allowed": False,
+                "reason_codes": ["canonical-registry-read-only"],
+            },
+            "registry": {
+                "role": "canonical-runtime-snapshot",
+                "head": case["deployed_commit"],
+                "dirty": True,
+            },
+        },
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-exact-identity-mismatch"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_exact_identity_mismatch_stops_before_state_mutation(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    runtime_identity_module = case["runtime_identity_module"]
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: {
+            "manifest": {"valid": False},
+            "compatibility": {
+                "status": "stale",
+                "mutation_allowed": False,
+                "reason_codes": ["release-registry-identity-mismatch"],
+            },
+            "registry": {
+                "head": case["deployed_commit"],
+                "dirty": False,
+            },
+        },
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "runtime-closeout-exact-identity-mismatch"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+@pytest.mark.parametrize(
+    ("field", "expected_code"),
+    [
+        ("task_sha256", "task-revision-changed"),
+        ("plan_sha256", "plan-revision-changed"),
+    ],
+)
+def test_runtime_closeout_revision_drift_stops_before_state_mutation(
+    registry_factory, tmp_path, monkeypatch, field, expected_code
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    original = bureau_v2._authoritative_close_revision
+
+    def drifted_revision(registry, task_id, *, run_id=None):
+        revision = original(registry, task_id, run_id=run_id)
+        return bureau_v2.replace(
+            revision,
+            **{field: "0" * 64},
+        )
+
+    monkeypatch.setattr(
+        bureau_v2,
+        "_authoritative_close_revision",
+        drifted_revision,
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == expected_code
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+def test_runtime_closeout_cli_contract_parses_exact_runtime_options():
+    args = bureau_cli.parser().parse_args(
+        [
+            "complete",
+            "BUR-RUN-TEST",
+            "--evidence",
+            "/tmp/evidence.json",
+            "--exact-runtime",
+        ]
+    )
+    assert args.command == "complete"
+    assert args.exact_runtime is True
+
+    with pytest.raises(SystemExit):
+        bureau_cli.parser().parse_args(
+            [
+                "complete",
+                "BUR-RUN-TEST",
+                "--evidence",
+                "/tmp/evidence.json",
+                "--exact-runtime",
+                "--resource-db",
+                "/tmp/fake-resources.sqlite3",
+            ]
+        )

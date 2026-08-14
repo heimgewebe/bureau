@@ -14,6 +14,7 @@ from runtime_approval import write_runtime_approval_intent
 
 from bureau import cli as bureau_cli
 from bureau import runtime_identity as runtime_identity_module
+from bureau.registry_snapshot import snapshot_tree_sha256
 from bureau.runtime_identity import (
     SCHEDULER_NAMES,
     _package_tree_sha256,
@@ -606,3 +607,127 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
         "path": str(status_launcher),
         "target": raw_status_target,
     }
+
+
+def test_deployed_runtime_closeout_context_preserves_old_release_binding(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    deployed_commit = git(root, "rev-parse", "HEAD")
+    snapshot = tmp_path / "runtime-snapshot"
+    snapshot_paths: list[Path] = []
+    for candidate in sorted(root.rglob("*")):
+        relative = candidate.relative_to(root)
+        if ".git" in relative.parts or not candidate.is_file():
+            continue
+        destination = snapshot / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(candidate, destination)
+        snapshot_paths.append(relative)
+    snapshot_tree = snapshot_tree_sha256(snapshot, snapshot_paths)
+    assert snapshot_tree is not None
+    inventory = snapshot / ".bureau-runtime-snapshot.json"
+    inventory.write_text(
+        json.dumps({
+            "schema_version": 1,
+            "kind": "bureau_registry_snapshot",
+            "source_commit": deployed_commit,
+            "tree_sha256": snapshot_tree,
+            "paths": [path.as_posix() for path in snapshot_paths],
+        }, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    inventory_sha256 = hashlib.sha256(inventory.read_bytes()).hexdigest()
+    release = tmp_path / "release"
+    module = release / "src/bureau/runtime_identity.py"
+    module.parent.mkdir(parents=True)
+    module.write_text("# release\n", encoding="utf-8")
+    (release / "pyproject.toml").write_text(
+        "[project]\nname='x'\n", encoding="utf-8"
+    )
+    (release / "schemas").mkdir()
+    (release / "schemas/resource.v1.schema.json").write_text(
+        "{}\n", encoding="utf-8"
+    )
+    (release / "src/bureau_cycle").mkdir(parents=True)
+    (release / "src/bureau_cycle/__init__.py").write_text(
+        "# cycle\n", encoding="utf-8"
+    )
+    write_scheduler_fragments(release)
+    tree_sha256 = _package_tree_sha256(release)
+    assert tree_sha256 is not None
+
+    launcher = tmp_path / "bin/bureau"
+    launcher.parent.mkdir()
+    launcher.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    launcher.chmod(0o700)
+    manifest = tmp_path / "deployment-manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bureau_runtime_deployment",
+                "release_id": "old-release",
+                "immutable_release_path": str(release),
+                "module_path": str(module),
+                "module_sha256": hashlib.sha256(
+                    module.read_bytes()
+                ).hexdigest(),
+                "package_tree_sha256": tree_sha256,
+                "source_commit": deployed_commit,
+                "launcher_path": str(launcher),
+                "canonical_registry_root": str(snapshot),
+                "canonical_registry_inventory_path": str(inventory),
+                "canonical_registry_inventory_sha256": inventory_sha256,
+                "canonical_registry_tree_sha256": snapshot_tree,
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST", str(manifest))
+    git(
+        root,
+        "remote",
+        "set-url",
+        "origin",
+        "git@github.com:heimgewebe/bureau.git",
+    )
+
+    (root / "advanced.txt").write_text("new main\n", encoding="utf-8")
+    git(root, "add", "advanced.txt")
+    git(root, "commit", "-m", "advance main")
+    current_head = git(root, "rev-parse", "HEAD")
+    assert current_head != deployed_commit
+
+    normal = bureau_runtime_identity(root, module_path=module)
+    assert normal["compatibility"]["status"] == "stale"
+    assert normal["compatibility"]["mutation_allowed"] is False
+    assert normal["compatibility"]["reason_codes"] == [
+        "release-registry-identity-mismatch"
+    ]
+
+    context = runtime_identity_module.deployed_runtime_closeout_context()
+    assert context["status"] == "ready"
+    assert context["source_commit"] == deployed_commit
+    assert context["release_id"] == "old-release"
+    assert context["launcher_path"] == str(launcher.resolve())
+    assert context["canonical_registry_root"] == str(snapshot.resolve())
+    assert context["canonical_registry_tree_sha256"] == snapshot_tree
+    assert "runtime-deployment-authority" in context["does_not_establish"]
+
+    real_snapshot = snapshot.with_name("runtime-snapshot-real")
+    snapshot.rename(real_snapshot)
+    snapshot.symlink_to(real_snapshot, target_is_directory=True)
+    blocked_snapshot = runtime_identity_module.deployed_runtime_closeout_context()
+    assert blocked_snapshot["status"] == "blocked"
+    assert "runtime-canonical-registry-symlink" in blocked_snapshot["reason_codes"]
+    snapshot.unlink()
+    real_snapshot.rename(snapshot)
+
+    real_launcher = launcher.with_name("bureau-real")
+    launcher.rename(real_launcher)
+    launcher.symlink_to(real_launcher)
+    blocked = runtime_identity_module.deployed_runtime_closeout_context()
+    assert blocked["status"] == "blocked"
+    assert "runtime-launcher-symlink" in blocked["reason_codes"]

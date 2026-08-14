@@ -1,0 +1,36 @@
+[Unit]
+Description=Bureau redacted public StateStore snapshot publication
+Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/operations.md
+ConditionPathExists=%h/.local/state/bureau/bureau.sqlite3
+ConditionPathExists=%h/.local/share/bureau/deployment-manifest.json
+ConditionPathExists=%h/.local/bin/bureau
+ConditionFileIsExecutable=%h/.local/bin/bureau-state-snapshot
+ConditionPathIsDirectory=%h/repos/bureau
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bureau-state-snapshot export --output %h/.local/state/bureau-state-snapshot/public-state.json --state-root %h/.local/state/bureau --runtime-manifest %h/.local/share/bureau/deployment-manifest.json
+ExecStart=%h/.local/bin/bureau source-pr-bridge --kind state-snapshot --auto-merge --publish --root %h/repos/bureau --snapshot %h/.local/state/bureau-state-snapshot/public-state.json
+Environment=GH_HOST=github.com
+Environment=PYTHONUNBUFFERED=1
+TimeoutStartSec=5min
+Nice=5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=%h/.local/state/bureau %h/.local/share/bureau
+StateDirectory=bureau-state-snapshot
+StateDirectoryMode=0700
+ReadWritePaths=%h/repos/bureau %h/.local/state/bureau-state-snapshot
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+UMask=0077

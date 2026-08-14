@@ -1,0 +1,12 @@
+[Unit]
+Description=Publish redacted Bureau StateStore snapshot every fifteen minutes
+
+[Timer]
+OnCalendar=*-*-* *:0/15:00
+Persistent=true
+RandomizedDelaySec=60
+AccuracySec=30s
+Unit=bureau-state-snapshot.service
+
+[Install]
+WantedBy=timers.target

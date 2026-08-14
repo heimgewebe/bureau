@@ -1,0 +1,115 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das Entry-Point-Inventar erwartet 15 systemd Services und ordnet bureau-state-snapshot.service ausdrücklich dem bestehenden console script bureau zu; die übrigen erwarteten Entry-Points bleiben unverändert.",
+      "evidence_type": "object",
+      "id": "snapshot-service-inventory-bound",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t009-entrypoint-inventory:snapshot-service-bound"
+      }
+    },
+    {
+      "assertion": "tests/test_entrypoint_inventory.py, tests/test_systemkatalog_boundary.py und tests/test_source_pr_bridge_systemd.py laufen gemeinsam grün; der Diff enthält ausschließlich tests/test_entrypoint_inventory.py.",
+      "evidence_type": "object",
+      "id": "focused-inventory-tests-green",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t009-entrypoint-inventory:focused-tests-green"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur tests/test_entrypoint_inventory.py an die bereits im T009-WIP belegte neue Snapshot-Service-Unit anpassen. Keine T009-Implementierungsdatei, keine Runtime und keine weiteren Entry-Point-Verträge verändern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/tests/test_entrypoint_inventory.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den durch T009 neu eingeführten bureau-state-snapshot.service im bestehenden Entry-Point-Inventar exakt abbilden, ohne den T009-Implementierungsscope auszuweiten. tests/test_entrypoint_inventory.py wird so angepasst, dass die reale Servicezahl 15 erwartet und bureau-state-snapshot.service ausdrücklich dem bestehenden console script bureau zugeordnet wird. Danach laufen die fokussierten Entry-Point-/Systemkatalog-/Source-PR-Bridge-Systemd-Tests grün. Keine T009-Code-, Unit-, Runtime-, Queue- oder anderen Inventory-Dateien verändern.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-T009-ENTRYPOINT-INVENTORY-ADOPTION-20260814",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_task_id": "BUREAU-CONTROL-PLANE-V3-T009",
+    "does_not_establish": [
+      "T009 completion",
+      "permission to change T009 implementation files",
+      "runtime or deployment authority",
+      "generic entrypoint inventory rewrite"
+    ],
+    "live_finding": "T009 adds bureau-state-snapshot.service/timer. Existing entrypoint inventory correctly observes 15 services while tests/test_entrypoint_inventory.py still hardcodes 14; after the already-authorized consolidation-plan update this is the only remaining focused inventory test failure.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-15a14e90140cb1db2280b353",
+      "event_id": 7163,
+      "event_created_at": "2026-08-14T12:27:54.014275Z",
+      "request_sha256": "664b16f496206d129b45751233908681055412e7fb9edbc5bfdf69e6aa7198fc",
+      "candidate_event_id": "candidate-event-dfb6c9acf3595aded2647482",
+      "source_fingerprint": "3a458afd727e149460e86e863bb2f267267238e11227e87ca1bc73413606828c",
+      "content_fingerprint": "15a14e90140cb1db2280b35367770b0f0a13855a76523fe13e20f66a5845f316",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "3a458afd727e149460e86e863bb2f267267238e11227e87ca1bc73413606828c",
+        "freshness": "digest-bound",
+        "kind": "operator-live-diagnostic",
+        "locator": "grabowski:t009:BUR-RUN-20260814T120316Z-0dad2e3b9f:entrypoint-inventory;finding=systemd_services_15_expected_14+missing_plan_unit",
+        "observed_at": "2026-08-14T12:25:49.897697Z",
+        "sha256": "8e9a5d3201d038ee2d1262cbab75a8d7a4a4b3e636fe0c35a67a8cc79258f611"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "3a458afd727e149460e86e863bb2f267267238e11227e87ca1bc73413606828c",
+          "freshness": "digest-bound",
+          "kind": "operator-live-diagnostic",
+          "locator": "grabowski:t009:BUR-RUN-20260814T120316Z-0dad2e3b9f:entrypoint-inventory;finding=systemd_services_15_expected_14+missing_plan_unit",
+          "observed_at": "2026-08-14T12:25:49.897697Z",
+          "sha256": "8e9a5d3201d038ee2d1262cbab75a8d7a4a4b3e636fe0c35a67a8cc79258f611"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "source_candidate_id": "candidate-15a14e90140cb1db2280b353",
+    "source_event_id": 7163,
+    "t009_wip_branch": "bureau/bureau-control-plane-v3-t009/0dad2e3b9f",
+    "t009_wip_commit": "34e525c1"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "bureau",
+    "repository",
+    "python",
+    "testing",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "Falls der T009-Snapshot-Service vor Merge des Follow-ups entfällt oder umbenannt wird, diesen Ein-Datei-Testpatch nicht mergen. Nach Merge spätere Entry-Point-Änderungen nur durch eine neue revisionsgebundene Korrektur nachziehen; keine Test-Gates abschwächen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "T009 Snapshot-Unit im Entry-Point-Inventar nachziehen"
+}

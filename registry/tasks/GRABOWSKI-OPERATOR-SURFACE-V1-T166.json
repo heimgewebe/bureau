@@ -1,0 +1,154 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein neuer Grant entsteht ausschließlich nach sichtbarer lokaler Auswahl genau des Google-Drive-Ordners grabowski-inbox im iPadOS-Systempicker. Provider- und Pfadreadback müssen Google Drive beziehungsweise den ausgewählten Ordner eindeutig belegen; apple_mobile_documents/iCloud, direkte Systempfade und private App-Container sind kein Ersatzbeweis.",
+      "evidence_type": "object",
+      "id": "local-google-drive-picker-consent",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "gdrive-ipad-t166:local-google-drive-picker-consent"
+      }
+    },
+    {
+      "assertion": "Grant-ID, Evidence-SHA-256 und Provider werden ohne Bookmark-Bytes zurückgelesen und exakt an Permission-Probe sowie alle folgenden Dateiwirkungen gebunden. Die Probe belegt readable=true und writable=true oder stoppt fail-closed.",
+      "evidence_type": "object",
+      "id": "grant-and-permission-binding",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "gdrive-ipad-t166:grant-and-permission-binding"
+      }
+    },
+    {
+      "assertion": "Im ausgewählten Google-Drive-Ordner wird eine eindeutig benannte Sentinel-Datei nur bei Vorzustand absent create-only geschrieben, mit SHA-256 zurückgelesen, nur bei exaktem Vorinhalt-SHA-256 CAS-ersetzt und erneut mit demselben erwarteten End-SHA-256 gelesen. Delete, Move, Rename und rekursiver Zugriff bleiben ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "google-drive-hash-roundtrip",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "gdrive-ipad-t166:google-drive-hash-roundtrip"
+      }
+    },
+    {
+      "assertion": "Nach der iPad-Dateiwirkung erscheint dieselbe Sentinel-Datei unter /home/alex/GDrive/grabowski-inbox und über gdrive: mit identischem End-SHA-256. Der Readback muss die aktuelle google-drive-rclone.service-/Mount-Identität frisch prüfen und darf kein iCloud-Artefakt als Google-Drive-Beweis verwenden.",
+      "evidence_type": "object",
+      "id": "heim-pc-cross-device-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "gdrive-ipad-t166:heim-pc-cross-device-readback"
+      }
+    },
+    {
+      "assertion": "Nach einem späteren Juno-Agent-Neustart wird derselbe Google-Drive-Grant an die neue started_at-Instanz gebunden erneut aufgelöst; Permission-Probe und Sentinel-Readback bleiben erfolgreich. Ein Geräte-Reboot wird dadurch nicht behauptet.",
+      "evidence_type": "object",
+      "id": "juno-restart-persistence",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "gdrive-ipad-t166:juno-restart-persistence"
+      }
+    },
+    {
+      "assertion": "Closeout bindet Picker-/Grant-/Permission-/Create-/Read-/CAS-/Restart-/Heim-PC-Receipts an diesen Task und dokumentiert ausdrücklich die Nichtansprüche: kein Zugriff auf andere Google-Drive-Ordner, kein Geräte-Reboot-Beweis, keine Sandboxumgehung und keine Lösch-/Move-/Rename-Autorität.",
+      "evidence_type": "object",
+      "id": "bounded-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "gdrive-ipad-t166:bounded-closeout"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T124"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Der Nutzer hat am 14. August 2026 die autonome Umsetzung des verbleibenden iPad-Roundtrips beauftragt. Diese Freigabe autorisiert nicht automatisch den späteren Runtime-Effekt: unmittelbar vor Picker-/Sentinel-Wirkung ist eine task- und targetgebundene Break-Glass-Freigabe für T166 erforderlich. Die lokale iPadOS-Systempicker-Auswahl bleibt zusätzlich zwingend und darf nicht remote umgangen werden.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den noch fehlenden physischen iPad-Leg des kanonischen Google-Drive-Pfads revisions- und receiptgebunden belegen, ohne den bereits verifizierten iCloud-Grant aus T124 als Google-Drive-Evidenz umzudeuten. Juno soll im iPadOS-Systempicker lokal genau den Google-Drive-Ordner grabowski-inbox auswählen. Danach sind Provideridentität, Security-Scope-Grant, aktueller Lese-/Schreibzugriff, eine create/read/CAS-replace/read-Sentinel-Hashkette, Juno-Neustart-Persistenz und der identische Heim-PC-Readback unter /home/alex/GDrive/grabowski-inbox zu belegen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T166",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "blocking_condition": "local_iPadOS_google_drive_grabowski_inbox_picker_selection",
+    "canonical_heim_pc_path": "/home/alex/GDrive/grabowski-inbox",
+    "canonical_rclone_remote": "gdrive:grabowski-inbox",
+    "does_not_establish": [
+      "google_drive_grant_before_local_picker_selection",
+      "access_to_other_google_drive_folders",
+      "device_reboot_persistence",
+      "sandbox_or_private_app_container_bypass",
+      "permission_to_delete_move_or_rename_files",
+      "google_drive_roundtrip_before_hash_bound_readback"
+    ],
+    "least_privilege_scope": "one_google_drive_folder_grabowski-inbox",
+    "predecessor_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T124",
+    "source_candidate_event_id": 7119,
+    "source_candidate_id": "candidate-5a71c4ae617b4fb235dc6504",
+    "unblock_condition": "Juno ist im Vordergrund und der Nutzer wählt im iPadOS-Systempicker sichtbar genau Google Drive/grabowski-inbox aus; daraus entsteht ein persistenter providergebundener Security-Scoped-Bookmark-Grant.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-44b083fd49aa04f1ec22e40a",
+      "event_id": 7126,
+      "event_created_at": "2026-08-14T10:44:26.108961Z",
+      "request_sha256": "85c103d1c2163a6fc40b05f37086723221d5280c01025114efc0a1707d4a8d3b",
+      "candidate_event_id": "candidate-event-1e7953560d91a3bb456e2ef9",
+      "source_fingerprint": "ba272dba6df1144cade4b57caac5d17ac0e50bc1fdfb9cffa0a6ff63a149c284",
+      "content_fingerprint": "44b083fd49aa04f1ec22e40af4391b427aa051033a603a54a99cbd2e35ef92b3",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "ba272dba6df1144cade4b57caac5d17ac0e50bc1fdfb9cffa0a6ff63a149c284",
+        "freshness": "digest-bound",
+        "kind": "live_runtime_audit",
+        "locator": "/home/alex/.local/state/grabowski/juno-ipad/t166-approval-contract-correction-20260814.json",
+        "observed_at": "2026-08-14T10:43:10Z",
+        "sha256": "fa4afc0f6b07856abf51b8569294200255f969ac320a850718a4010b0dacd09d"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "ba272dba6df1144cade4b57caac5d17ac0e50bc1fdfb9cffa0a6ff63a149c284",
+          "freshness": "digest-bound",
+          "kind": "live_runtime_audit",
+          "locator": "/home/alex/.local/state/grabowski/juno-ipad/t166-approval-contract-correction-20260814.json",
+          "observed_at": "2026-08-14T10:43:10Z",
+          "sha256": "fa4afc0f6b07856abf51b8569294200255f969ac320a850718a4010b0dacd09d"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 6
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Vor lokaler Google-Drive-Ordnerauswahl keine Grant- oder Dateiwirkung. Bei falschem Provider, falschem Ordner, driftender Evidence-SHA-256, fehlendem Schreibrecht oder unklarem Effekt sofort fail-closed stoppen. Keine fremden Grants ersetzen, keine Bookmark-Bytes offenlegen und keinen iCloud-Grant umetikettieren. Sentinel-Dateien nicht löschen, verschieben oder umbenennen, sofern dafür kein gesonderter revisionsgebundener Cleanup-Vertrag besteht."
+  },
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "Google-Drive-iPad-Providergrant und echten Cross-Device-Roundtrip belegen"
+}

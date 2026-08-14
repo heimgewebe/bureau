@@ -25,8 +25,18 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     inventory = build_inventory(ROOT)
     units = {unit["unit"]: unit for unit in inventory["systemd_units"]}
 
-    assert inventory["summary"]["systemd_services"] == 14
-    assert inventory["summary"]["systemd_timers"] == 14
+    snapshot_service = ROOT / "ops/systemd/bureau-state-snapshot.service"
+    snapshot_timer = ROOT / "ops/systemd/bureau-state-snapshot.timer"
+    assert snapshot_service.is_file() is snapshot_timer.is_file()
+    expected_unit_count = 15 if snapshot_service.is_file() else 14
+
+    assert inventory["summary"]["systemd_services"] == expected_unit_count
+    assert inventory["summary"]["systemd_timers"] == expected_unit_count
+    if snapshot_service.is_file():
+        assert (
+            units["ops/systemd/bureau-state-snapshot.service"]["matched_console_script"]
+            == "bureau"
+        )
     assert (
         units["ops/systemd/bureau-status-projection.service"]["matched_console_script"] == "bureau"
     )

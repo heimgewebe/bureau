@@ -430,7 +430,8 @@ def test_snapshot_systemd_units_are_local_readonly_and_fifteen_minute() -> None:
     assert "Type=oneshot" in service
     assert "ConditionFileIsExecutable=%h/.local/bin/bureau" in service
     assert service.count("ExecStart=") == 1
-    assert "source-pr-bridge --kind state-snapshot --auto-merge --publish" in service
+    assert "source-pr-bridge --kind state-snapshot --publish" in service
+    assert "--auto-merge" not in service
     assert "--state-root %h/.local/state/bureau" in service
     assert "--runtime-manifest %h/.local/share/bureau/deployment-manifest.json" in service
     assert "bureau-state-snapshot export" not in service

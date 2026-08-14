@@ -1,114 +1,101 @@
 {
-  "schema_version": 1,
-  "id": "BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812",
-  "initiative": "BUREAU-CONTROL-PLANE-V3",
-  "title": "Legacy-Acceptance-Verträge deterministisch triagieren und migrieren",
-  "goal": "Den nach dem systemischen Typed-Acceptance-Fix verbleibenden Bestand untypisierter Bureau-TaskSpecs ohne pauschale Verifier-Erfindung abbauen. Nichtterminale Legacy-Verträge werden nach rekonstruierbarer Primärquelle klassifiziert; nur eindeutige fachliche Zuordnungen werden revisionsgebunden migriert. Mehrdeutige Kriterien bleiben explizit blockiert und erhalten deduplizierte Diagnose statt manual_observation als Universaldefault. Terminale Historie bleibt lesbar und wird nicht unnötig umgeschrieben.",
-  "state": "planned",
-  "priority": {
-    "lane": "later",
-    "rank": 40
-  },
-  "depends_on": [],
-  "required_capabilities": [
-    "bureau",
-    "repository",
-    "python",
-    "testing",
-    "audit",
-    "grabowski"
-  ],
-  "claims": [
-    {
-      "resource": "component.bureau.registry",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "state.bureau",
-      "mode": "write",
-      "isolation": "none"
-    }
-  ],
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/bureau",
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Nur fachlich deterministische Acceptance-Mappings migrieren. Keine massenhafte Zuordnung auf manual_observation, keine Umschreibung terminaler Historie ohne Lifecycle-Notwendigkeit, keine Gate-Abschwächung und keine direkte SQLite-Mutation; StateStore-Revisionen nur über den kanonischen CAS-Writer."
-    }
-  },
   "acceptance": [
     {
-      "id": "inventory-reproduced",
       "assertion": "Eine frische revisionsgebundene Inventur trennt StateStore und Registry sowie terminale und nichtterminale Legacy-Verträge. Der Ausgangsbefund dieses Auftrags – StateStore 1077 Tasks / 1074 invalid / 411 nichtterminal und Registry 1071 / 1067 invalid / 405 nichtterminal – wird nach Deployment neu gemessen und nicht blind fortgeschrieben.",
       "evidence_type": "object",
+      "id": "inventory-reproduced",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "bureau:legacy-acceptance-migration:inventory-reproduced"
       }
     },
     {
-      "id": "deterministic-classification",
       "assertion": "Jedes betrachtete nichtterminale Legacy-Kriterium wird nach rekonstruierbarer Primärquelle und Verifier-Semantik klassifiziert; Migration erfolgt nur, wenn evidence_type, verifier und verifier_config aus kanonischem Scope reproduzierbar ableitbar sind.",
       "evidence_type": "object",
+      "id": "deterministic-classification",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "bureau:legacy-acceptance-migration:deterministic-classification"
       }
     },
     {
-      "id": "ambiguous-remains-blocked",
       "assertion": "Mehrdeutige oder nicht authentifizierbare Kriterien werden nicht auf manual_observation oder einen anderen Default gezwungen, sondern bleiben mit stabiler task-/criterion-/pathgebundener Diagnose offen oder blocked.",
       "evidence_type": "object",
+      "id": "ambiguous-remains-blocked",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "bureau:legacy-acceptance-migration:ambiguous-remains-blocked"
       }
     },
     {
-      "id": "cas-and-history-preserved",
       "assertion": "Jede StateStore-Migration verwendet den kanonischen TaskSpec-CAS-Writer mit erwarteter Revision und Readback; terminale Legacy-Historie und bestehende Receipts bleiben unverändert, soweit kein expliziter Lifecycle-Grund eine neue Revision erfordert.",
       "evidence_type": "object",
+      "id": "cas-and-history-preserved",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "bureau:legacy-acceptance-migration:cas-and-history-preserved"
       }
     },
     {
-      "id": "batch-regressions",
       "assertion": "Für jede deterministisch migrierte Verifier-Klasse existiert mindestens eine Negativ- und Positivregression, und der vollständige Bureau-Validierungslauf bleibt grün; die Anzahl nichtterminaler invalid Acceptance-Verträge sinkt ohne neue untypisierte Writes.",
       "evidence_type": "object",
+      "id": "batch-regressions",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "bureau:legacy-acceptance-migration:batch-regressions"
       }
     }
   ],
-  "rollback": {
-    "strategy": "Fehlerhafte oder uneindeutige Migrationsvorschläge nicht anwenden. Bereits geschriebenen StateStore-Zustand nicht per SQL zurückdrehen; stattdessen eine neue revisionsgebundene TaskSpec-Korrektur über den kanonischen CAS-Pfad schreiben. Git-Historie und terminale Receipts nicht umschreiben."
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur fachlich deterministische Acceptance-Mappings migrieren. Keine massenhafte Zuordnung auf manual_observation, keine Umschreibung terminaler Historie ohne Lifecycle-Notwendigkeit, keine Gate-Abschwächung und keine direkte SQLite-Mutation; StateStore-Revisionen nur über den kanonischen CAS-Writer.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-FB-DIAGNOSIS-9B3700EF53.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-FB-ERRORINVESTIGATION-1C9B1DC516.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-FB-MAINTENANCE-642DB38F34.json",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T009.json",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T011.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
   },
+  "goal": "Den nach dem systemischen Typed-Acceptance-Fix verbleibenden Bestand untypisierter Bureau-TaskSpecs ohne pauschale Verifier-Erfindung abbauen. Nichtterminale Legacy-Verträge werden nach rekonstruierbarer Primärquelle klassifiziert; nur eindeutige fachliche Zuordnungen werden revisionsgebunden migriert. Mehrdeutige Kriterien bleiben explizit blockiert und erhalten deduplizierte Diagnose statt manual_observation als Universaldefault. Terminale Historie bleibt lesbar und wird nicht unnötig umgeschrieben.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
-    "registered_at": "2026-08-12",
-    "source": "Frische systemische Typed-Acceptance-Inventur im Zuge von PR #1919.",
-    "inventory_before_systemfix": {
+    "closeout_inventory_refresh": {
+      "note": "Fresh read during PR #1921 closeout; execution must remeasure and CAS-bind any later migration.",
+      "registry_pr1921_head": {
+        "head_sha": "a82a2befce3fbbe3d94ad50113b0129d72d3e944",
+        "invalid": 1066,
+        "invalid_nonterminal": 404,
+        "total": 1080,
+        "valid": 14
+      },
       "state_store": {
-        "total": 1077,
-        "valid": 3,
-        "invalid": 1074,
-        "invalid_nonterminal": 411,
-        "invalid_terminal": 663
-      },
-      "registry": {
-        "total": 1071,
-        "valid": 4,
-        "invalid": 1067,
-        "invalid_nonterminal": 405,
-        "invalid_terminal": 662
-      },
-      "note": "Nur Ausgangsbeleg; nach Merge/Deployment frisch neu messen."
+        "active_invalid_runs": 0,
+        "invalid": 1072,
+        "invalid_nonterminal": 409,
+        "total": 1085,
+        "valid": 13
+      }
     },
     "deduplication_search": "Kein bestehender kanonischer Task mit Scope typed acceptance / legacy acceptance migration gefunden.",
     "does_not_establish": [
@@ -118,40 +105,8 @@
       "direkte SQLite-Mutationsautorität",
       "neue oder wiederverwendbare Runtime-Refresh-Autorität"
     ],
-    "runtime_prerequisite_evidence": {
-      "status": "completed-before-registration",
-      "authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SCHEMA-PACKAGING-20260812",
-      "authority_revision": 3,
-      "authority_consumed_at": "2026-08-12T14:24:29.903124Z",
-      "deployed_source_commit": "1cb52d8bd111c372696fa116a4000d655d60742d",
-      "reason": "Der systemische Typed-Acceptance-Fix und der danach notwendige Schema-Packaging-Refresh sind vor Registrierung dieser Migration produktiv abgeschlossen. Dies ist historische Voraussetzung, keine noch ausstehende Dependency."
-    },
-    "closeout_inventory_refresh": {
-      "state_store": {
-        "total": 1085,
-        "valid": 13,
-        "invalid": 1072,
-        "invalid_nonterminal": 409,
-        "active_invalid_runs": 0
-      },
-      "registry_pr1921_head": {
-        "head_sha": "a82a2befce3fbbe3d94ad50113b0129d72d3e944",
-        "total": 1080,
-        "valid": 14,
-        "invalid": 1066,
-        "invalid_nonterminal": 404
-      },
-      "note": "Fresh read during PR #1921 closeout; execution must remeasure and CAS-bind any later migration."
-    },
     "initial_ambiguous_seed": [
       {
-        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DIRECT-LANE-SUPERSESSION-20260812",
-        "state_store_revision": 1,
-        "state_store_spec_sha256": "3af5294cd66fdf8e75c30c99ddc52395826fb9fbd94ea5aabc2ba790940f0f7e",
-        "source_event_id": 6096,
-        "source_kind": "operator-runtime-evidence",
-        "source_locator": "grabowski:work-lane:d488186bf73054f46d7a690d494c1d48",
-        "source_content_sha256": null,
         "criteria": [
           "first-class-handoff-receipt",
           "work-acquire-supersession",
@@ -159,9 +114,119 @@
           "live-regression",
           "delivery"
         ],
+        "forbidden_default": "manual_observation",
         "required_decision": "Reconstruct criterion-specific evidence_type/verifier/verifier_config from authoritative Grabowski receipt, identity-supersession, no-effect recovery, regression and delivery contracts. The source has no content hash, so no verifier may be inferred by default.",
-        "forbidden_default": "manual_observation"
+        "source_content_sha256": null,
+        "source_event_id": 6096,
+        "source_kind": "operator-runtime-evidence",
+        "source_locator": "grabowski:work-lane:d488186bf73054f46d7a690d494c1d48",
+        "state_store_revision": 1,
+        "state_store_spec_sha256": "3af5294cd66fdf8e75c30c99ddc52395826fb9fbd94ea5aabc2ba790940f0f7e",
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DIRECT-LANE-SUPERSESSION-20260812"
       }
-    ]
-  }
+    ],
+    "inventory_before_systemfix": {
+      "note": "Nur Ausgangsbeleg; nach Merge/Deployment frisch neu messen.",
+      "registry": {
+        "invalid": 1067,
+        "invalid_nonterminal": 405,
+        "invalid_terminal": 662,
+        "total": 1071,
+        "valid": 4
+      },
+      "state_store": {
+        "invalid": 1074,
+        "invalid_nonterminal": 411,
+        "invalid_terminal": 663,
+        "total": 1077,
+        "valid": 3
+      }
+    },
+    "registered_at": "2026-08-12",
+    "runtime_prerequisite_evidence": {
+      "authority_consumed_at": "2026-08-12T14:24:29.903124Z",
+      "authority_revision": 3,
+      "authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SCHEMA-PACKAGING-20260812",
+      "deployed_source_commit": "1cb52d8bd111c372696fa116a4000d655d60742d",
+      "reason": "Der systemische Typed-Acceptance-Fix und der danach notwendige Schema-Packaging-Refresh sind vor Registrierung dieser Migration produktiv abgeschlossen. Dies ist historische Voraussetzung, keine noch ausstehende Dependency.",
+      "status": "completed-before-registration"
+    },
+    "scope_refinement_20260814": {
+      "does_not_establish": [
+        "permission to modify PR #1983",
+        "generic nonconflict bypass",
+        "additional Registry write scope",
+        "runtime or deployment authority"
+      ],
+      "observed_open_pr": 1983,
+      "observed_open_pr_head": "5aa84c8c0d0ea6ac7d7298262eab864a55cd2647",
+      "observed_open_pr_path": "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T166.json",
+      "reason": "Live pickup after orphan reconciliation and runtime convergence was correctly blocked by unrelated open PR #1983 because this task had no execution.grabowski_resources. The five declared paths are the complete Git projection scope for this migration slice: three already StateStore-CAS-migrated supply fallbacks plus T009 and T011 typed acceptance. No code, tests, runtime, queue, foreign PR or other Registry path is authorized.",
+      "source_candidate_id": "candidate-4275bc72dd82bdecb71de34f",
+      "source_event_id": 7129,
+      "state_store_parent_revision": 2,
+      "state_store_parent_spec_sha256": "7a00507582851640e0f1985ad253d96c07d9e3a8e42d67f76d987e6a8490b80d"
+    },
+    "source": "Frische systemische Typed-Acceptance-Inventur im Zuge von PR #1919.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4275bc72dd82bdecb71de34f",
+      "event_id": 7129,
+      "event_created_at": "2026-08-14T10:49:41.571744Z",
+      "request_sha256": "5aa927351a0b4f85bf54ec7e75b9c3a0f9d878ae11ad20bbd137d2f61e6f5820",
+      "candidate_event_id": "candidate-event-516a6a3bb3faef80a1aef963",
+      "source_fingerprint": "9ce79014e9dbe9ddec7b0dd5c7ec383f056a88c30c84b16c5ab0ab5ef1b93eae",
+      "content_fingerprint": "4275bc72dd82bdecb71de34fad6c425791a75351f3abd25785169e61713c0763",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "9ce79014e9dbe9ddec7b0dd5c7ec383f056a88c30c84b16c5ab0ab5ef1b93eae",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-live-diagnostic",
+        "locator": "grabowski:bureau-pickup:BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812:open-pr-scope-required:pr=1983;pr_head=5aa84c8c0d0ea6ac7d7298262eab864a55cd2647;pr_file=registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T166.json;state_revision=2;state_spec=7a00507582851640e0f1985ad253d96c07d9e3a8e42d67f76d987e6a8490b80d",
+        "observed_at": "2026-08-14T10:49:20Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "9ce79014e9dbe9ddec7b0dd5c7ec383f056a88c30c84b16c5ab0ab5ef1b93eae",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-live-diagnostic",
+          "locator": "grabowski:bureau-pickup:BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812:open-pr-scope-required:pr=1983;pr_head=5aa84c8c0d0ea6ac7d7298262eab864a55cd2647;pr_file=registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T166.json;state_revision=2;state_spec=7a00507582851640e0f1985ad253d96c07d9e3a8e42d67f76d987e6a8490b80d",
+          "observed_at": "2026-08-14T10:49:20Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "bureau",
+    "repository",
+    "python",
+    "testing",
+    "audit",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Fehlerhafte oder uneindeutige Migrationsvorschläge nicht anwenden. Bereits geschriebenen StateStore-Zustand nicht per SQL zurückdrehen; stattdessen eine neue revisionsgebundene TaskSpec-Korrektur über den kanonischen CAS-Pfad schreiben. Git-Historie und terminale Receipts nicht umschreiben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Legacy-Acceptance-Verträge deterministisch triagieren und migrieren"
 }

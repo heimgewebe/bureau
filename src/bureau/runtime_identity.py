@@ -472,6 +472,148 @@ def bureau_runtime_identity(
     }
 
 
+def deployed_runtime_closeout_context(
+    *, state_path: Path | None = None
+) -> dict[str, Any]:
+    """Validate and expose only the currently deployed immutable runtime binding.
+
+    This helper is deliberately read-only. It does not refresh or deploy Bureau
+    or grant mutation authority. It validates and exposes the immutable canonical
+    Registry snapshot already bound to the deployed runtime.
+    """
+    configured = _manifest_path()
+    reasons: list[str] = []
+    if configured.is_symlink():
+        return {
+            "schema_version": 1,
+            "kind": "bureau_runtime_closeout_context",
+            "status": "blocked",
+            "reason_codes": ["runtime-manifest-symlink"],
+            "manifest_path": str(configured),
+        }
+    path = configured.resolve()
+    if not path.is_file():
+        return {
+            "schema_version": 1,
+            "kind": "bureau_runtime_closeout_context",
+            "status": "blocked",
+            "reason_codes": ["runtime-manifest-missing"],
+            "manifest_path": str(path),
+        }
+    try:
+        manifest_bytes = path.read_bytes()
+        raw = json.loads(manifest_bytes)
+        if not isinstance(raw, dict):
+            raise ValueError("manifest root is not an object")
+        if raw.get("schema_version") != 1 or raw.get("kind") != "bureau_runtime_deployment":
+            raise ValueError("unsupported manifest contract")
+        payload_digest = raw.get("manifest_payload_sha256")
+        if payload_digest is not None:
+            canonical_manifest = (
+                json.dumps(raw, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                + "\n"
+            ).encode()
+            if canonical_manifest != manifest_bytes:
+                reasons.append("runtime-manifest-noncanonical")
+            payload = dict(raw)
+            payload.pop("manifest_payload_sha256", None)
+            canonical_payload = (
+                json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                + "\n"
+            ).encode()
+            if (
+                not isinstance(payload_digest, str)
+                or len(payload_digest) != 64
+                or any(ch not in "0123456789abcdef" for ch in payload_digest)
+                or hashlib.sha256(canonical_payload).hexdigest() != payload_digest
+            ):
+                reasons.append("runtime-manifest-payload-digest-mismatch")
+        module_path = Path(str(raw["module_path"])).expanduser().resolve()
+        launcher_configured = Path(str(raw["launcher_path"])).expanduser()
+        launcher_is_symlink = launcher_configured.is_symlink()
+        launcher_path = launcher_configured.resolve()
+        canonical_registry_configured = Path(
+            str(raw["canonical_registry_root"])
+        ).expanduser()
+        canonical_inventory_configured = Path(
+            str(raw["canonical_registry_inventory_path"])
+        ).expanduser()
+        source_commit = str(raw["source_commit"])
+        release_id = str(raw["release_id"])
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return {
+            "schema_version": 1,
+            "kind": "bureau_runtime_closeout_context",
+            "status": "blocked",
+            "reason_codes": [f"runtime-manifest-invalid:{type(exc).__name__}"],
+            "manifest_path": str(path),
+        }
+    manifest = _manifest_identity(module_path)
+    try:
+        if path.read_bytes() != manifest_bytes:
+            reasons.append("runtime-manifest-changed-during-read")
+    except OSError:
+        reasons.append("runtime-manifest-changed-during-read")
+    if manifest.get("valid") is not True:
+        reasons.append("runtime-release-identity-invalid")
+    canonical_registry = manifest.get("canonical_registry", {})
+    if canonical_registry_configured.is_symlink():
+        reasons.append("runtime-canonical-registry-symlink")
+    if canonical_inventory_configured.is_symlink():
+        reasons.append("runtime-canonical-registry-inventory-symlink")
+    if (
+        canonical_registry.get("valid") is not True
+        or not canonical_registry.get("root")
+    ):
+        reasons.append("runtime-canonical-registry-invalid")
+    elif canonical_registry.get("source_commit") != source_commit:
+        reasons.append("runtime-canonical-registry-commit-mismatch")
+    if (
+        len(source_commit) != 40
+        or any(ch not in "0123456789abcdef" for ch in source_commit)
+        or manifest.get("source_commit") != source_commit
+    ):
+        reasons.append("runtime-source-commit-invalid")
+    if launcher_is_symlink:
+        reasons.append("runtime-launcher-symlink")
+    elif not launcher_path.is_file():
+        reasons.append("runtime-launcher-invalid")
+    else:
+        try:
+            launcher_stat = launcher_path.stat()
+            if launcher_stat.st_uid != os.geteuid() or not os.access(launcher_path, os.X_OK):
+                reasons.append("runtime-launcher-untrusted")
+        except OSError:
+            reasons.append("runtime-launcher-untrusted")
+    state = _state_identity(state_path)
+    if state_path is not None and (
+        state.get("available") is not True or state.get("integrity") != "ok"
+    ):
+        reasons.append("runtime-closeout-state-invalid")
+    return {
+        "schema_version": 1,
+        "kind": "bureau_runtime_closeout_context",
+        "status": "ready" if not reasons else "blocked",
+        "reason_codes": sorted(set(reasons)),
+        "manifest_path": str(path),
+        "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+        "release_id": release_id,
+        "source_commit": source_commit,
+        "module_path": str(module_path),
+        "launcher_path": str(launcher_path),
+        "canonical_registry_root": canonical_registry.get("root"),
+        "canonical_registry_tree_sha256": canonical_registry.get("tree_sha256"),
+        "manifest": manifest,
+        "state": state,
+        "does_not_establish": [
+            "runtime-deployment-authority",
+            "registry-mutation-authority",
+            "lease-ownership",
+            "completion-success",
+        ],
+    }
+
+
 def require_mutation_compatible(identity: dict[str, Any]) -> dict[str, Any] | None:
     compatibility = identity.get("compatibility", {})
     if compatibility.get("mutation_allowed") is True:

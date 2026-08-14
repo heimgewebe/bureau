@@ -72,7 +72,11 @@ from .read_only_state import ReadOnlyStateStore
 from .resource_lifecycle import resource_lifecycle_contract
 from .rlens_policy import evaluate_registry_rlens_policy
 from .runtime_identity import bureau_runtime_identity, require_mutation_compatible
-from .v2 import coordinated_claim_intent_readback, coordinated_claim_status
+from .v2 import (
+    coordinated_claim_intent_readback,
+    coordinated_claim_status,
+    runtime_closeout,
+)
 
 _CLI_RUNTIME_IDENTITY: dict[str, Any] | None = None
 _CLI_JSON_ENVELOPE = False
@@ -425,6 +429,7 @@ def parser() -> argparse.ArgumentParser:
     complete = sub.add_parser("complete")
     complete.add_argument("run_id")
     complete.add_argument("--evidence", required=True)
+    complete.add_argument("--exact-runtime", action="store_true")
     fail = sub.add_parser("fail")
     fail.add_argument("run_id")
     fail.add_argument("--error", required=True)
@@ -1633,8 +1638,15 @@ def main(argv: list[str] | None = None) -> int:
                 reviewer=args.reviewer,
             )
         elif args.command == "complete":
-            evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
-            value = complete_run(registry, store, args.run_id, evidence)
+            if args.exact_runtime:
+                value = runtime_closeout(
+                    store,
+                    args.run_id,
+                    Path(args.evidence),
+                )
+            else:
+                evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
+                value = complete_run(registry, store, args.run_id, evidence)
         elif args.command == "fail":
             value = fail_run(store, args.run_id, args.error)
         elif args.command == "handoff":

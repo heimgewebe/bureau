@@ -349,11 +349,13 @@ def test_state_snapshot_reconcile_verifies_remote_bytes(
             {"ahead_by": 0},
         ]
     )
-    monkeypatch.setattr(
-        source_pr_bridge,
-        "_json",
-        lambda _arguments, *, allow_not_found=False: next(responses),
-    )
+    observed_calls: list[list[str]] = []
+
+    def fake_json(arguments, *, allow_not_found=False):
+        observed_calls.append(arguments)
+        return next(responses)
+
+    monkeypatch.setattr(source_pr_bridge, "_json", fake_json)
 
     result = source_pr_bridge.reconcile(
         branch=source_pr_bridge.STATE_SNAPSHOT_BRANCH,
@@ -361,6 +363,15 @@ def test_state_snapshot_reconcile_verifies_remote_bytes(
         snapshot=snapshot_path,
     )
     assert result["status"] == "no_change"
+    assert observed_calls[1] == [
+        "api",
+        f"repos/{source_pr_bridge.DEFAULT_REPOSITORY}/contents/"
+        f"{state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()}",
+        "--method",
+        "GET",
+        "-f",
+        f"ref={source_pr_bridge.STATE_SNAPSHOT_BRANCH}",
+    ]
 
 
 def test_checked_in_public_snapshot_is_valid_if_present() -> None:

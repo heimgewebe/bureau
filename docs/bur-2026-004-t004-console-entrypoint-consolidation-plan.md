@@ -52,6 +52,8 @@ Current reference units under `ops/systemd/`:
 | `bureau-status-capsule.timer` | refreshes `bureau-status-capsule.service` every five minutes | Keep explicit freshness scheduling; no network or source mutation. |
 | `bureau-state-backup.service` | `%h/.local/bin/bureau --state-root %h/.local/state/bureau state-backup ...` | Creates only a verified local StateStore bundle under the existing Restic source; no network or Restic credential access. |
 | `bureau-state-backup.timer` | refreshes `bureau-state-backup.service` every 15 minutes | Keeps bounded recovery-point freshness while leaving encrypted off-host transfer to the existing Restic timer. |
+| `bureau-state-snapshot.service` | `%h/.local/bin/bureau source-pr-bridge --kind state-snapshot --auto-merge --publish ...` | Locally produces the public-safe StateStore snapshot, then reuses the bounded PR transport; GitHub validates/relays only and has no StateStore writeback authority. |
+| `bureau-state-snapshot.timer` | refreshes `bureau-state-snapshot.service` every 15 minutes | Keeps public transparency evidence fresh without making the snapshot a queue, claim, closeout, backup or runtime authority. |
 | `bureau-state-restore-test.service` | `%h/.local/bin/bureau state-restore-test ...` | Restores only into an empty temporary root and runs fresh fail-closed reconciliation there. |
 | `bureau-state-restore-test.timer` | runs `bureau-state-restore-test.service` daily | Continuously proves event, TaskSpec, envelope and receipt roots without reactivating historical leases. |
 | `bureau-reconcile.service` | `%h/.local/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900` | Uses the same immutable Bureau launcher as interactive operator calls. |

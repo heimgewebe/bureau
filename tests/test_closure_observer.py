@@ -1655,16 +1655,17 @@ def test_unknown_run_json_residue_is_quarantined_once_with_digest_evidence(
     assert record["classification"] == "unknown-run-json-residue"
     assert record["source_name"] == residue.name
     assert record["source_sha256"] == hashlib.sha256(raw).hexdigest()
-    assert record["idempotent_replay"] is False
     quarantine = Path(record["quarantine_path"])
     quarantine_root = Path(retirement["before"]["quarantine_directory"])
     assert quarantine.read_bytes() == raw
     assert quarantine.stat().st_mode & 0o777 == 0o600
-    assert quarantine_root == store.state_root.with_name(
-        f"{store.state_root.name}-acceptance-evidence-quarantine"
-    )
-    assert quarantine.parent == quarantine_root
+    assert quarantine_root == closure_observer._evidence_quarantine_path(store)
+    assert quarantine.parent.parent == quarantine_root
     assert quarantine_root.stat().st_mode & 0o777 == 0o700
+    binding_path = closure_observer._evidence_quarantine_binding_path(store)
+    assert binding_path.is_file()
+    assert binding_path.stat().st_mode & 0o777 == 0o600
+    assert binding_path.parent == store.state_root.parent
     assert quarantine_root.parent == store.state_root.parent
     assert not quarantine_root.is_relative_to(store.state_root)
     assert not residue.exists()
@@ -1672,29 +1673,12 @@ def test_unknown_run_json_residue_is_quarantined_once_with_digest_evidence(
     assert hygiene["healthy"] is True
     assert hygiene["unknown_entries"] == []
 
-    # If an identical producer file reappears, preserve that exact inode in a
-    # separate quarantine path rather than overwriting the canonical copy.
-    residue.write_bytes(raw)
-    replay = reconcile_state_evidence(
-        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
-    )
-    assert replay["evidence_retirement"]["quarantined_count"] == 1
-    replay_record = replay["evidence_retirement"]["before"]["quarantined_entries"][0]
-    assert replay_record["idempotent_replay"] is True
-    assert replay_record["canonical_quarantine_path"] == str(quarantine)
-    replay_quarantine = Path(replay_record["quarantine_path"])
-    assert replay_quarantine != quarantine
-    assert replay_quarantine.read_bytes() == raw
-    assert quarantine.read_bytes() == raw
-    assert not residue.exists()
-
     repeat = reconcile_state_evidence(
         registry, store, now=NOW, github=lambda argv: merged_pr_detail()
     )
 
     assert repeat["evidence_retirement"]["quarantined_count"] == 0
     assert quarantine.read_bytes() == raw
-    assert replay_quarantine.read_bytes() == raw
     assert not any(
         "deadbeef-user-closeout" in error
         for error in repeat["evidence_retirement"]["before"]["errors"]
@@ -1720,14 +1704,115 @@ def test_unknown_run_quarantine_move_failure_keeps_source_and_no_partial_destina
 
     assert result["evidence_retirement"]["quarantined_count"] == 0
     assert residue.read_bytes() == raw
-    quarantine_root = store.state_root.with_name(
-        f"{store.state_root.name}-acceptance-evidence-quarantine"
-    )
+    quarantine_root = closure_observer._evidence_quarantine_path(store)
     assert list(quarantine_root.iterdir()) == []
     assert any(
         "simulated atomic move failure" in error
         for error in result["evidence_retirement"]["before"]["errors"]
     )
+
+
+def test_unknown_run_binding_receipt_survives_pre_root_crash_window(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-pre-root000.json"
+    raw = json.dumps({"accepted": True}).encode()
+    residue.write_bytes(raw)
+    quarantine_root = closure_observer._evidence_quarantine_path(store)
+    binding_path = closure_observer._evidence_quarantine_binding_path(store)
+    binding_path.write_text(
+        json.dumps(closure_observer._evidence_quarantine_binding(store)),
+        encoding="utf-8",
+    )
+    binding_path.chmod(0o600)
+    assert not quarantine_root.exists()
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert result["evidence_retirement"]["quarantined_count"] == 1
+    assert quarantine_root.is_dir()
+    record = result["evidence_retirement"]["before"]["quarantined_entries"][0]
+    assert Path(record["quarantine_path"]).read_bytes() == raw
+    assert not residue.exists()
+
+
+def test_unknown_run_quarantine_rejects_unbound_private_path_collision(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-binding0000.json"
+    raw = json.dumps({"accepted": True}).encode()
+    residue.write_bytes(raw)
+    quarantine_root = closure_observer._evidence_quarantine_path(store)
+    quarantine_root.mkdir(mode=0o700)
+    (quarantine_root / "foreign.json").write_text("{}", encoding="utf-8")
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert result["evidence_retirement"]["quarantined_count"] == 0
+    assert residue.read_bytes() == raw
+    assert (quarantine_root / "foreign.json").read_text(encoding="utf-8") == "{}"
+    assert any(
+        "acceptance evidence quarantine binding is missing" in error
+        or "unbound acceptance evidence quarantine root is not empty" in error
+        for error in result["evidence_retirement"]["before"]["errors"]
+    )
+
+
+def test_unknown_run_interrupted_staging_is_recovered_on_next_reconcile(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-crash00000.json"
+    raw = json.dumps({"accepted": True, "generation": 1}).encode()
+    residue.write_bytes(raw)
+    real_finalize = closure_observer._finalize_quarantine_transaction
+
+    def simulate_process_loss(root, transaction, manifest):
+        raise SystemExit("simulated crash after durable move")
+
+    monkeypatch.setattr(
+        closure_observer, "_finalize_quarantine_transaction", simulate_process_loss
+    )
+    with pytest.raises(SystemExit, match="simulated crash after durable move"):
+        reconcile_state_evidence(
+            registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+        )
+
+    quarantine_root = closure_observer._evidence_quarantine_path(store)
+    pending = [
+        item for item in quarantine_root.iterdir() if item.name.startswith(".pending-")
+    ]
+    assert len(pending) == 1
+    assert not residue.exists()
+    assert (pending[0] / "manifest.json").is_file()
+    assert (pending[0] / "payload.json").read_bytes() == raw
+
+    monkeypatch.setattr(
+        closure_observer, "_finalize_quarantine_transaction", real_finalize
+    )
+    recovered = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    retirement = recovered["evidence_retirement"]
+    assert retirement["before"]["recovered_quarantine_count"] == 1
+    recovery_record = retirement["before"]["recovered_quarantine_entries"][0]
+    assert recovery_record["reason"] == "interrupted-quarantine-recovered"
+    assert recovery_record["source_name"] == residue.name
+    assert Path(recovery_record["quarantine_path"]).read_bytes() == raw
+    assert not any(
+        item.name.startswith(".pending-") for item in quarantine_root.iterdir()
+    )
+    assert retirement["quarantined_count"] == 0
 
 
 def test_unknown_run_atomic_replacement_is_restored_instead_of_unlinked(

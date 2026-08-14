@@ -1658,7 +1658,22 @@ def test_unknown_run_json_residue_is_quarantined_once_with_digest_evidence(
     assert record["idempotent_replay"] is False
     quarantine = Path(record["quarantine_path"])
     assert quarantine.read_bytes() == raw
+    assert quarantine.stat().st_mode & 0o777 == 0o600
     assert quarantine.parent.stat().st_mode & 0o777 == 0o700
+    assert not residue.exists()
+
+    # Simulate interruption after the durable quarantine copy was written but
+    # before the producer source was removed. The next reconcile must consume
+    # the duplicate without creating or overwriting quarantine evidence.
+    residue.write_bytes(raw)
+    replay = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+    assert replay["evidence_retirement"]["quarantined_count"] == 1
+    replay_record = replay["evidence_retirement"]["before"]["quarantined_entries"][0]
+    assert replay_record["idempotent_replay"] is True
+    assert replay_record["quarantine_path"] == str(quarantine)
+    assert quarantine.read_bytes() == raw
     assert not residue.exists()
 
     repeat = reconcile_state_evidence(

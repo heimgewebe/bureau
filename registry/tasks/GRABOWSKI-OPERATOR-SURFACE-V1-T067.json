@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T067",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Browser- und GUI-Workerzustände frisch konvergieren",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 10
@@ -85,6 +85,34 @@
         "deployment success",
         "task verification"
       ]
+    },
+    "verification": {
+      "current_head": "aea1343dfa5cdcd47b8d79baedf191499046ee95",
+      "implementation": {
+        "merge_commit": "50765d14683fd3139cd374f81006ffcce9804e51",
+        "pr_body_evidence": "PR #305 explicitly identifies the T067 worker-state-convergence diff and documents bounded current/history views, fresh read-only systemd projection, exact status/stop reconciliation, foreign-lease preservation, evidence preservation, shared browser/GUI lifecycle core and validation.",
+        "pull_request": 305,
+        "url": "https://github.com/heimgewebe/grabowski/pull/305"
+      },
+      "live_proof": {
+        "browser_port": 9325,
+        "browser_worker_id": "3f44aaa4f63442e591f2",
+        "current_projection": "both freshly observed running without list persistence",
+        "gui_display": 77,
+        "gui_worker_id": "2b9359ba5b684b7e8f6c",
+        "terminalization": "both stopped explicitly; browser port/profile and GUI display leases released exactly; ephemeral paths removed; instance evidence preserved"
+      },
+      "tests": {
+        "result": "57 passed, 11 subtests passed",
+        "suite": "tests/test_workers.py",
+        "task_id": "0269043513254378a6797885"
+      },
+      "verified_at": "2026-08-10T22:05:50Z",
+      "schema_version": 1,
+      "source": "state_store_task_spec_revision",
+      "source_ref": "bureau-task-spec:GRABOWSKI-OPERATOR-SURFACE-V1-T067@revision-3",
+      "task_sha256": "6b35740e690eef1798fccfa19e9a1817ae789148dabd052bad30df1fa6dc3124",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   }
 }

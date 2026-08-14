@@ -2,15 +2,30 @@
   "acceptance": [
     {
       "assertion": "The selected defect is reproduced before repair and bound to an exact revision.",
-      "id": "maintenance-1"
+      "evidence_type": "object",
+      "id": "maintenance-1",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:maintenance-642db38f34:reproduction"
+      }
     },
     {
       "assertion": "The patch stays inside the declared scope and does not reset foreign work.",
-      "id": "maintenance-2"
+      "evidence_type": "object",
+      "id": "maintenance-2",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:maintenance-642db38f34:scope-preservation"
+      }
     },
     {
       "assertion": "Focused tests and the relevant Bureau validation gate pass.",
-      "id": "maintenance-3"
+      "evidence_type": "object",
+      "id": "maintenance-3",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:maintenance-642db38f34:validation"
+      }
     }
   ],
   "claims": [

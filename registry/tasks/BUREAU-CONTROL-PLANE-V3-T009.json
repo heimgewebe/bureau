@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Redigierte öffentliche State-Snapshots publizieren",
   "goal": "Einen lokalen, revisionsgebundenen Export erzeugen, der Schema, Release, Task- und Frontierzählungen, Ereignischeckpoint, Merkle-Wurzeln und Redaction-Vertrag veröffentlicht. GitHub transportiert den unveränderten Snapshot, entscheidet aber keine operative Wahrheit.",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 50
@@ -62,19 +62,39 @@
   "acceptance": [
     {
       "id": "allowlisted-export",
-      "assertion": "Der Export enthält nur explizit erlaubte Felder und keine lokalen Pfade, Secrets, Prompts, Rohlogs oder personenbezogenen Inhalte."
+      "assertion": "Der Export enthält nur explizit erlaubte Felder und keine lokalen Pfade, Secrets, Prompts, Rohlogs oder personenbezogenen Inhalte.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t009:allowlisted-export"
+      }
     },
     {
       "id": "hash-bound-snapshot",
-      "assertion": "Snapshot, State-Checkpoint, Receipt-Wurzel, Bureau-Release und Schema sind kryptografisch gebunden."
+      "assertion": "Snapshot, State-Checkpoint, Receipt-Wurzel, Bureau-Release und Schema sind kryptografisch gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t009:hash-bound-snapshot"
+      }
     },
     {
       "id": "local-authority-only",
-      "assertion": "Nur der lokale authentisierte Exporteur erzeugt den Snapshot; Hosted CI validiert ausschließlich Schema, Redaction und Hashes."
+      "assertion": "Nur der lokale authentisierte Exporteur erzeugt den Snapshot; Hosted CI validiert ausschließlich Schema, Redaction und Hashes.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t009:local-authority-only"
+      }
     },
     {
       "id": "no-writeback-authority",
-      "assertion": "Import oder Anzeige eines Snapshots kann keinen lokalen Task-, Queue-, Claim- oder Closeoutzustand verändern."
+      "assertion": "Import oder Anzeige eines Snapshots kann keinen lokalen Task-, Queue-, Claim- oder Closeoutzustand verändern.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t009:no-writeback-authority"
+      }
     }
   ],
   "metadata": {

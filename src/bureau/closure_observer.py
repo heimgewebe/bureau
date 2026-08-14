@@ -787,7 +787,11 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
                 _, _, actual_sha256, actual_identity = _read_unknown_run_evidence_entry(
                     payload
                 )
-                rebound = actual_sha256 != manifest["source_sha256"]
+                rebound = (
+                    actual_sha256 != manifest["source_sha256"]
+                    or actual_identity[:2]
+                    != (manifest["source_device"], manifest["source_inode"])
+                )
                 if rebound:
                     manifest = _rebind_quarantine_transaction_to_payload(
                         store,

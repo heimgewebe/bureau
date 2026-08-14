@@ -1841,6 +1841,49 @@ def test_unknown_run_interrupted_staging_is_recovered_on_next_reconcile(
     assert retirement["quarantined_count"] == 0
 
 
+def test_unknown_run_recovery_rebinds_same_digest_different_inode(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-samebytes00.json"
+    raw = json.dumps({"generation": 1}).encode()
+    residue.write_bytes(raw)
+    source_sha256 = hashlib.sha256(raw).hexdigest()
+    source_stat = residue.stat()
+    root = closure_observer._evidence_quarantine_directory(store)
+    assert root is not None
+    transaction, _ = closure_observer._create_quarantine_transaction(
+        store,
+        root,
+        residue,
+        residue.stem,
+        source_sha256,
+        (source_stat.st_dev, source_stat.st_ino, source_stat.st_nlink),
+    )
+    staged = transaction / "payload.json"
+    staged.write_bytes(raw)
+    staged_stat = staged.stat()
+    assert staged_stat.st_ino != source_stat.st_ino
+    residue.unlink()
+
+    recovered = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    retirement = recovered["evidence_retirement"]["before"]
+    assert retirement["recovered_quarantine_count"] == 1
+    record = retirement["recovered_quarantine_entries"][0]
+    assert record["reason"] == "mismatched-quarantine-payload-recovered"
+    payload = Path(record["quarantine_path"])
+    assert payload.read_bytes() == raw
+    final_manifest = json.loads((payload.parent / "manifest.json").read_text(encoding="utf-8"))
+    assert final_manifest["source_sha256"] == source_sha256
+    assert final_manifest["source_device"] == payload.stat().st_dev
+    assert final_manifest["source_inode"] == payload.stat().st_ino
+    assert not any(item.name.startswith(".pending-") for item in root.iterdir())
+
+
 def test_unknown_run_atomic_replacement_is_restored_instead_of_unlinked(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:

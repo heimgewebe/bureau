@@ -685,6 +685,85 @@ def _rebind_quarantine_transaction_to_payload(
     return manifest
 
 
+def _freeze_quarantine_payload(
+    transaction: Any, payload: bytes
+) -> tuple[int, int, int]:
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=".payload-freeze-", suffix=".tmp", dir=transaction
+    )
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(descriptor, 0o600)
+        view = memoryview(payload)
+        while view:
+            written = os.write(descriptor, view)
+            if written <= 0:
+                raise OSError("short quarantine payload freeze write")
+            view = view[written:]
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    os.replace(temporary, transaction / "payload.json")
+    _sync_directory(transaction)
+    for stale in transaction.glob(".payload-freeze-*.tmp"):
+        with suppress(OSError):
+            stale.unlink()
+    frozen, _, _, frozen_identity = _read_unknown_run_evidence_entry(
+        transaction / "payload.json"
+    )
+    if frozen != payload or frozen_identity[2] != 1:
+        raise ValueError("acceptance evidence quarantine payload freeze mismatch")
+    _sync_directory(transaction)
+    return frozen_identity
+
+
+def _finalize_preserved_quarantine_transaction(root: Any, transaction: Any) -> Any:
+    transaction_id = transaction.name.removeprefix(".pending-")
+    destination = root / f"preserved-{transaction_id}"
+    if destination.exists():
+        raise ValueError("acceptance evidence preservation destination already exists")
+    os.rename(transaction, destination)
+    _sync_directory(root)
+    return destination / "payload.json"
+
+
+def _preserve_unreadable_quarantine_transaction(
+    root: Any, transaction: Any, *, reason: str
+) -> Any:
+    payload_path = transaction / "payload.json"
+    metadata = payload_path.lstat()
+    preservation = {
+        "schema_version": 1,
+        "kind": "bureau.acceptance_evidence_quarantine_preservation",
+        "reason": reason,
+        "planned_manifest_only": True,
+        "payload_device": metadata.st_dev,
+        "payload_inode": metadata.st_ino,
+        "payload_mode": oct(stat.S_IMODE(metadata.st_mode)),
+        "payload_size": metadata.st_size,
+        "payload_nlink": metadata.st_nlink,
+        "payload_type": (
+            "regular"
+            if stat.S_ISREG(metadata.st_mode)
+            else "symlink"
+            if stat.S_ISLNK(metadata.st_mode)
+            else "directory"
+            if stat.S_ISDIR(metadata.st_mode)
+            else "other"
+        ),
+        "does_not_establish": [
+            "payload-content-digest",
+            "payload-json-validity",
+            "payload-immutability-through-external-links-or-open-descriptors",
+        ],
+    }
+    preservation_path = transaction / "preservation.json"
+    if not preservation_path.exists():
+        _write_private_json(preservation_path, preservation)
+    _sync_directory(transaction)
+    return _finalize_preserved_quarantine_transaction(root, transaction)
+
+
 def _read_quarantine_transaction_manifest(store: StateStore, transaction: Any) -> dict[str, Any]:
     metadata = transaction.lstat()
     if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
@@ -709,18 +788,27 @@ def _final_quarantine_directory(
 
 
 def _finalize_quarantine_transaction(
-    root: Any, transaction: Any, manifest: Mapping[str, Any]
-) -> Any:
+    store: StateStore,
+    root: Any,
+    transaction: Any,
+    source_path: Any,
+    run_id: str,
+    manifest: Mapping[str, Any],
+) -> tuple[Any, dict[str, Any]]:
     payload_path = transaction / "payload.json"
-    _, _, payload_sha256, _ = _read_unknown_run_evidence_entry(payload_path)
+    payload, _, payload_sha256, _ = _read_unknown_run_evidence_entry(payload_path)
     if payload_sha256 != manifest["source_sha256"]:
         raise ValueError("acceptance evidence quarantine staged payload digest mismatch")
+    frozen_identity = _freeze_quarantine_payload(transaction, payload)
+    manifest = _rebind_quarantine_transaction_to_payload(
+        store, transaction, source_path, run_id, payload_sha256, frozen_identity
+    )
     destination = _final_quarantine_directory(root, transaction, manifest)
     if destination.exists():
         raise ValueError("acceptance evidence quarantine destination already exists")
     os.rename(transaction, destination)
     _sync_directory(root)
-    return destination / "payload.json"
+    return destination / "payload.json", manifest
 
 
 def _restore_mismatched_quarantine_entry(
@@ -783,10 +871,50 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
                 continue
             manifest = _read_quarantine_transaction_manifest(store, transaction)
             source = source_root / str(manifest["source_name"])
-            if payload.exists():
-                _, _, actual_sha256, actual_identity = _read_unknown_run_evidence_entry(
-                    payload
+            preservation_path = transaction / "preservation.json"
+            if preservation_path.exists():
+                preservation = _read_private_json(preservation_path)
+                if preservation.get("kind") != (
+                    "bureau.acceptance_evidence_quarantine_preservation"
+                ):
+                    raise ValueError(
+                        "pending quarantine preservation receipt kind mismatch"
+                    )
+                actual = _finalize_preserved_quarantine_transaction(root, transaction)
+                result["recovered_count"] += 1
+                result["recovered_entries"].append(
+                    {
+                        "source_name": manifest["source_name"],
+                        "source_sha256": None,
+                        "reason": "unreadable-quarantine-payload-preserved",
+                        "quarantine_path": str(actual),
+                    }
                 )
+                continue
+            if payload.exists() or payload.is_symlink():
+                try:
+                    _, _, actual_sha256, actual_identity = (
+                        _read_unknown_run_evidence_entry(payload)
+                    )
+                except Exception as payload_exc:
+                    actual = _preserve_unreadable_quarantine_transaction(
+                        root,
+                        transaction,
+                        reason=(
+                            "interrupted unreadable staged payload: "
+                            f"{type(payload_exc).__name__}: {payload_exc}"
+                        ),
+                    )
+                    result["recovered_count"] += 1
+                    result["recovered_entries"].append(
+                        {
+                            "source_name": manifest["source_name"],
+                            "source_sha256": None,
+                            "reason": "unreadable-quarantine-payload-preserved",
+                            "quarantine_path": str(actual),
+                        }
+                    )
+                    continue
                 rebound = (
                     actual_sha256 != manifest["source_sha256"]
                     or actual_identity[:2]
@@ -801,7 +929,14 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
                         actual_sha256,
                         actual_identity,
                     )
-                actual = _finalize_quarantine_transaction(root, transaction, manifest)
+                actual, manifest = _finalize_quarantine_transaction(
+                    store,
+                    root,
+                    transaction,
+                    source,
+                    str(manifest["run_id"]),
+                    manifest,
+                )
                 result["recovered_count"] += 1
                 result["recovered_entries"].append(
                     {
@@ -861,9 +996,18 @@ def _quarantine_unknown_run_evidence(
         restored = _restore_mismatched_quarantine_entry(
             transaction, entry, source_directory
         )
-        state = "restored" if restored else f"preserved-at:{staged_payload}"
+        if restored:
+            raise ValueError(
+                "unknown-run acceptance evidence changed during quarantine (restored)"
+            ) from exc
+        preserved = _preserve_unreadable_quarantine_transaction(
+            root,
+            transaction,
+            reason=f"unreadable staged payload: {type(exc).__name__}: {exc}",
+        )
         raise ValueError(
-            f"unknown-run acceptance evidence changed during quarantine ({state})"
+            "unknown-run acceptance evidence changed during quarantine "
+            f"(opaque-preserved-at:{preserved})"
         ) from exc
 
     race_resolution: str | None = None
@@ -890,10 +1034,9 @@ def _quarantine_unknown_run_evidence(
         source_sha256 = moved_sha256
         race_resolution = "staged-payload-preserved"
 
-    if moved_identity[2] == 1:
-        os.chmod(staged_payload, 0o600, follow_symlinks=False)
-    _sync_directory(transaction)
-    destination = _finalize_quarantine_transaction(root, transaction, manifest)
+    destination, manifest = _finalize_quarantine_transaction(
+        store, root, transaction, entry, run_id, manifest
+    )
 
     declared_run_id = moved_value.get("run_id")
     canonical_bundle = (

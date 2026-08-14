@@ -1802,7 +1802,9 @@ def test_unknown_run_interrupted_staging_is_recovered_on_next_reconcile(
     residue.write_bytes(raw)
     real_finalize = closure_observer._finalize_quarantine_transaction
 
-    def simulate_process_loss(root, transaction, manifest):
+    def simulate_process_loss(
+        store_arg, root, transaction, source_path, run_id, manifest
+    ):
         raise SystemExit("simulated crash after durable move")
 
     monkeypatch.setattr(
@@ -1989,6 +1991,98 @@ def test_unknown_run_mismatched_payload_is_finalized_when_source_is_repopulated(
         for phase in ("before", "after")
         for error in repeat["evidence_retirement"][phase]["errors"]
     )
+
+
+def test_unknown_run_unreadable_race_payload_is_preserved_without_pending_loop(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-raceopaque00.json"
+    original = json.dumps({"generation": 1}).encode()
+    malformed = b"not-json"
+    repopulated = json.dumps({"generation": 3}).encode()
+    residue.write_bytes(original)
+    real_move = closure_observer._atomic_quarantine_move
+    raced = False
+
+    def move_malformed_and_repopulate(source, destination):
+        nonlocal raced
+        if Path(source) == residue and not raced:
+            producer = residue.with_name(residue.name + ".producer")
+            producer.write_bytes(malformed)
+            closure_observer.os.replace(producer, residue)
+            real_move(source, destination)
+            residue.write_bytes(repopulated)
+            raced = True
+            return None
+        return real_move(source, destination)
+
+    monkeypatch.setattr(
+        closure_observer, "_atomic_quarantine_move", move_malformed_and_repopulate
+    )
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert raced is True
+    retirement = result["evidence_retirement"]
+    assert any(
+        "opaque-preserved-at:" in error
+        for error in retirement["before"]["errors"]
+    )
+    quarantine_root = closure_observer._evidence_quarantine_path(store)
+    preserved = [
+        item for item in quarantine_root.iterdir() if item.name.startswith("preserved-")
+    ]
+    assert len(preserved) == 1
+    assert (preserved[0] / "payload.json").read_bytes() == malformed
+    preservation = json.loads(
+        (preserved[0] / "preservation.json").read_text(encoding="utf-8")
+    )
+    assert preservation["kind"] == "bureau.acceptance_evidence_quarantine_preservation"
+    assert "payload-content-digest" in preservation["does_not_establish"]
+    assert not any(
+        item.name.startswith(".pending-") for item in quarantine_root.iterdir()
+    )
+    assert retirement["after"]["quarantined_count"] == 1
+    after_record = retirement["after"]["quarantined_entries"][0]
+    assert Path(after_record["quarantine_path"]).read_bytes() == repopulated
+
+    repeat = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+    assert repeat["evidence_retirement"]["quarantined_count"] == 0
+    assert not any(
+        "staged payload" in error
+        for phase in ("before", "after")
+        for error in repeat["evidence_retirement"][phase]["errors"]
+    )
+
+
+def test_unknown_run_hardlinked_source_is_frozen_into_private_inode(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-hardlink000.json"
+    raw = json.dumps({"accepted": True}).encode()
+    residue.write_bytes(raw)
+    external_link = tmp_path / "external-hardlink.json"
+    closure_observer.os.link(residue, external_link)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    record = result["evidence_retirement"]["before"]["quarantined_entries"][0]
+    quarantine = Path(record["quarantine_path"])
+    assert quarantine.read_bytes() == raw
+    assert quarantine.stat().st_nlink == 1
+    assert quarantine.stat().st_mode & 0o777 == 0o600
+    external_link.write_bytes(json.dumps({"accepted": False}).encode())
+    assert quarantine.read_bytes() == raw
+    assert hashlib.sha256(quarantine.read_bytes()).hexdigest() == record["source_sha256"]
 
 
 def test_unknown_run_canonical_bundle_is_classified_and_quarantined(

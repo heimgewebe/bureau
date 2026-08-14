@@ -31,6 +31,19 @@ def test_complete_is_coordination_state_mutation() -> None:
     )
 
 
+def test_workspace_cleanup_is_coordination_state_mutation() -> None:
+    args = bureau_cli._parse_arguments(
+        ["workspace-cleanup", "BUR-RUN-20260813T120000Z-0123456789"]
+    )
+
+    assert bureau_cli._command_mutates(args) is True
+    assert bureau_cli._command_effect_scope(args) == COORDINATION_STATE_MUTATION
+    assert (
+        classify_command_effect_scope("workspace-cleanup", mutates=True)
+        == COORDINATION_STATE_MUTATION
+    )
+
+
 def test_acceptance_authenticate_is_coordination_state_mutation() -> None:
     args = bureau_cli._parse_arguments(
         [

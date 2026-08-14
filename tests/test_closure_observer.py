@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from collections.abc import Mapping
 from pathlib import Path
@@ -1628,6 +1629,124 @@ def test_non_success_terminal_run_retires_bound_producer_bundle(
     assert result["evidence_retirement"]["before"]["retired_count"] == 1
     assert result["evidence_retirement"]["retired_count"] == 1
     assert not evidence_path.exists()
+
+
+def test_unknown_run_json_residue_is_quarantined_once_with_digest_evidence(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-deadbeef-user-closeout.json"
+    payload = {
+        "queue-reconciliation-1": {"accepted": True},
+        "queue-reconciliation-2": {"accepted": True},
+    }
+    raw = (json.dumps(payload, sort_keys=True) + "\n").encode()
+    residue.write_bytes(raw)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    retirement = result["evidence_retirement"]
+    assert retirement["quarantined_count"] == 1
+    record = retirement["before"]["quarantined_entries"][0]
+    assert record["reason"] == "unknown-run"
+    assert record["classification"] == "unknown-run-json-residue"
+    assert record["source_name"] == residue.name
+    assert record["source_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert record["idempotent_replay"] is False
+    quarantine = Path(record["quarantine_path"])
+    assert quarantine.read_bytes() == raw
+    assert quarantine.parent.stat().st_mode & 0o777 == 0o700
+    assert not residue.exists()
+
+    repeat = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert repeat["evidence_retirement"]["quarantined_count"] == 0
+    assert quarantine.read_bytes() == raw
+    assert not any(
+        "deadbeef-user-closeout" in error
+        for error in repeat["evidence_retirement"]["before"]["errors"]
+    )
+
+
+def test_unknown_run_canonical_bundle_is_classified_and_quarantined(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    unknown_run_id = "BUR-RUN-20990101T000000Z-cafebabe00"
+    residue = evidence_dir / f"{unknown_run_id}.json"
+    residue.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": EVIDENCE_BUNDLE_KIND,
+                "run_id": unknown_run_id,
+                "task_id": "UNKNOWN-T001",
+                "task_sha256": "1" * 64,
+                "plan_sha256": "2" * 64,
+                "evidence": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    record = result["evidence_retirement"]["before"]["quarantined_entries"][0]
+    assert record["classification"] == "unknown-run-bundle"
+    assert record["declared_run_id"] == unknown_run_id
+    assert Path(record["quarantine_path"]).is_file()
+    assert not residue.exists()
+
+
+def test_malformed_unknown_run_evidence_is_preserved_for_diagnosis(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-badbadbad0.json"
+    residue.write_text("not-json", encoding="utf-8")
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert result["evidence_retirement"]["quarantined_count"] == 0
+    assert residue.exists()
+    assert any(
+        "unknown-run acceptance evidence is unreadable" in error
+        for error in result["evidence_retirement"]["before"]["errors"]
+    )
+
+
+def test_symlinked_unknown_run_evidence_is_preserved_for_diagnosis(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    external = tmp_path / "unknown-run-evidence.json"
+    external.write_text(json.dumps({"accepted": True}), encoding="utf-8")
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-symlink000.json"
+    residue.symlink_to(external)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert result["evidence_retirement"]["quarantined_count"] == 0
+    assert residue.is_symlink()
+    assert external.is_file()
+    assert any(
+        "unknown-run acceptance evidence is unreadable" in error
+        for error in result["evidence_retirement"]["before"]["errors"]
+    )
 
 
 def test_malformed_terminal_bundle_is_preserved_for_diagnosis(

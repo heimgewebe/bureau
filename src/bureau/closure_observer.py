@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import stat
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -27,6 +28,7 @@ ACTIVE_CLOSEOUT_STATES = {"assigned", "running", "verifying"}
 TERMINAL_RUN_STATES = set(TERMINAL_STATES)
 EVIDENCE_BUNDLE_KIND = "bureau.acceptance_evidence_bundle"
 EVIDENCE_DIRECTORY = "acceptance-evidence"
+EVIDENCE_QUARANTINE_DIRECTORY = "acceptance-evidence-quarantine"
 MAX_EVIDENCE_BUNDLE_BYTES = 1_048_576
 INVALID_ACCEPTANCE_DIAGNOSTIC_KIND = "bureau.invalid_acceptance_contract_diagnostic"
 MAX_MANUAL_REVIEWER_LENGTH = 200
@@ -403,6 +405,119 @@ def _evidence_bundle_path(store: StateStore, run_id: str) -> Any | None:
     return root / f"{run_id}.json"
 
 
+def _evidence_quarantine_directory(store: StateStore) -> Any:
+    root = store.state_root / EVIDENCE_QUARANTINE_DIRECTORY
+    try:
+        metadata = root.lstat()
+    except FileNotFoundError:
+        root.mkdir(mode=0o700)
+        metadata = root.lstat()
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
+        raise ValueError(
+            "acceptance evidence quarantine root must be a real non-symlink directory"
+        )
+    return root
+
+
+def _read_unknown_run_evidence_entry(entry: Any) -> tuple[bytes, Mapping[str, Any], str]:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(entry, flags)
+    except OSError as exc:
+        raise ValueError(
+            f"unknown-run acceptance evidence is unreadable: {type(exc).__name__}: {exc}"
+        ) from exc
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise ValueError(
+                "unknown-run acceptance evidence must be a regular non-symlink file"
+            )
+        if metadata.st_size > MAX_EVIDENCE_BUNDLE_BYTES:
+            raise ValueError("unknown-run acceptance evidence exceeds size limit")
+        with os.fdopen(descriptor, "rb", closefd=False) as handle:
+            payload = handle.read(MAX_EVIDENCE_BUNDLE_BYTES + 1)
+    finally:
+        os.close(descriptor)
+    if len(payload) > MAX_EVIDENCE_BUNDLE_BYTES:
+        raise ValueError("unknown-run acceptance evidence exceeds size limit")
+    try:
+        value = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            f"unknown-run acceptance evidence is unreadable: {type(exc).__name__}: {exc}"
+        ) from exc
+    if not isinstance(value, Mapping):
+        raise ValueError("unknown-run acceptance evidence must be a JSON object")
+    return payload, value, hashlib.sha256(payload).hexdigest()
+
+
+def _write_quarantine_copy(destination: Any, payload: bytes) -> bool:
+    flags = (
+        os.O_WRONLY
+        | os.O_CREAT
+        | os.O_EXCL
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
+    try:
+        descriptor = os.open(destination, flags, 0o600)
+    except FileExistsError:
+        return False
+    try:
+        view = memoryview(payload)
+        while view:
+            written = os.write(descriptor, view)
+            if written <= 0:
+                raise OSError("short acceptance evidence quarantine write")
+            view = view[written:]
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    return True
+
+
+def _quarantine_unknown_run_evidence(
+    store: StateStore, entry: Any, run_id: str
+) -> dict[str, Any]:
+    payload, value, source_sha256 = _read_unknown_run_evidence_entry(entry)
+    root = _evidence_quarantine_directory(store)
+    destination = root / f"{entry.stem}.{source_sha256}.json"
+    created = _write_quarantine_copy(destination, payload)
+    if not created:
+        existing, _, existing_sha256 = _read_unknown_run_evidence_entry(destination)
+        if existing != payload or existing_sha256 != source_sha256:
+            raise ValueError("acceptance evidence quarantine digest collision")
+
+    # Validate the producer entry again before removing it. Writing the
+    # quarantine copy first means interruption can only leave two copies, never
+    # destroy the sole evidence copy.
+    current_payload, _, current_sha256 = _read_unknown_run_evidence_entry(entry)
+    if current_payload != payload or current_sha256 != source_sha256:
+        raise ValueError("unknown-run acceptance evidence changed during quarantine")
+    entry.unlink()
+
+    declared_run_id = value.get("run_id")
+    canonical_bundle = (
+        value.get("schema_version") == 1
+        and value.get("kind") == EVIDENCE_BUNDLE_KIND
+        and isinstance(declared_run_id, str)
+        and bool(declared_run_id)
+    )
+    return {
+        "run_id": run_id,
+        "source_name": entry.name,
+        "source_sha256": source_sha256,
+        "reason": "unknown-run",
+        "classification": (
+            "unknown-run-bundle" if canonical_bundle else "unknown-run-json-residue"
+        ),
+        "declared_run_id": declared_run_id if isinstance(declared_run_id, str) else None,
+        "quarantine_path": str(destination),
+        "idempotent_replay": not created,
+    }
+
+
 def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[str, Any]:
     """Retire validated producer bundles once their run is terminal.
 
@@ -410,8 +525,9 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
     before the producer bundle is removed. Failed, cancelled, and orphaned runs
     are already terminal in the authoritative StateStore, so their producer
     bundles may be retired after the claim-bound envelope and bundle bindings
-    validate. Unknown, malformed, or nonterminal entries are preserved for
-    diagnosis rather than deleted speculatively.
+    validate. Safely classifiable JSON entries whose filename names no
+    authoritative run are moved to a content-addressed quarantine. Malformed,
+    unsafe, and nonterminal entries remain preserved in place.
     """
 
     root = store.state_root / EVIDENCE_DIRECTORY
@@ -421,6 +537,9 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
         "directory": str(root),
         "retired_count": 0,
         "retired_run_ids": [],
+        "quarantined_count": 0,
+        "quarantined_entries": [],
+        "quarantine_directory": str(store.state_root / EVIDENCE_QUARANTINE_DIRECTORY),
         "preserved_count": 0,
         "errors": [],
     }
@@ -440,6 +559,22 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
         run_id = entry.stem
         try:
             run = store.run(run_id)
+        except legacy.StateError as exc:
+            if str(exc) != f"unknown run {run_id}":
+                result["preserved_count"] += 1
+                result["errors"].append(f"{run_id}: {type(exc).__name__}: {exc}")
+                continue
+            try:
+                quarantine = _quarantine_unknown_run_evidence(store, entry, run_id)
+            except Exception as quarantine_exc:
+                result["preserved_count"] += 1
+                result["errors"].append(
+                    f"{run_id}: {type(quarantine_exc).__name__}: {quarantine_exc}"
+                )
+                continue
+            result["quarantined_count"] += 1
+            result["quarantined_entries"].append(quarantine)
+            continue
         except Exception as exc:
             result["preserved_count"] += 1
             result["errors"].append(f"{run_id}: {type(exc).__name__}: {exc}")
@@ -1153,6 +1288,10 @@ def reconcile_state_evidence(
         "after": retirement_after,
         "retired_count": (
             retirement_before["retired_count"] + retirement_after["retired_count"]
+        ),
+        "quarantined_count": (
+            retirement_before["quarantined_count"]
+            + retirement_after["quarantined_count"]
         ),
     }
     result["writer"] = "bureau-reconcile"

@@ -65,19 +65,39 @@
   "acceptance": [
     {
       "id": "single-control-plane-view",
-      "assertion": "Doctor zeigt alle V3-Organe mit Source, Freshness, Begrenzung und Autorität in einer konsistenten Projektion."
+      "assertion": "Doctor zeigt alle V3-Organe mit Source, Freshness, Begrenzung und Autorität in einer konsistenten Projektion.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t011:single-control-plane-view"
+      }
     },
     {
       "id": "repair-plan-not-effect",
-      "assertion": "Diagnose und Reparaturplan erzeugen ohne separaten Apply-Vertrag keine Wirkung."
+      "assertion": "Diagnose und Reparaturplan erzeugen ohne separaten Apply-Vertrag keine Wirkung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t011:repair-plan-not-effect"
+      }
     },
     {
       "id": "flow-metrics",
-      "assertion": "Intake, ready, claimbar, in flight, closeout, Drift, Backupalter und Restorestatus sind messbar."
+      "assertion": "Intake, ready, claimbar, in flight, closeout, Drift, Backupalter und Restorestatus sind messbar.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t011:flow-metrics"
+      }
     },
     {
       "id": "bounded-dashboard-adoption",
-      "assertion": "Dashboard liest ausschließlich die begrenzte Doctor-/Snapshotoberfläche und schafft keine zweite Wahrheit."
+      "assertion": "Dashboard liest ausschließlich die begrenzte Doctor-/Snapshotoberfläche und schafft keine zweite Wahrheit.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t011:bounded-dashboard-adoption"
+      }
     }
   ],
   "metadata": {

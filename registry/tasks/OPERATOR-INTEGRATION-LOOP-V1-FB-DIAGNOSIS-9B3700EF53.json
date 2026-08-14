@@ -2,15 +2,30 @@
   "acceptance": [
     {
       "assertion": "The bottleneck is reproduced from current state rather than historical summary.",
-      "id": "diagnosis-1"
+      "id": "diagnosis-1",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:diagnosis-9b3700ef53:current-state-reproduction"
+      }
     },
     {
       "assertion": "The diagnosis names causal evidence, uncertainty, and excluded explanations.",
-      "id": "diagnosis-2"
+      "id": "diagnosis-2",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:diagnosis-9b3700ef53:causal-diagnosis"
+      }
     },
     {
       "assertion": "The outcome is either a tested repair or one bounded canonical follow-up.",
-      "id": "diagnosis-3"
+      "id": "diagnosis-3",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:diagnosis-9b3700ef53:bounded-outcome"
+      }
     }
   ],
   "claims": [

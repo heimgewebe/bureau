@@ -2,15 +2,30 @@
   "acceptance": [
     {
       "assertion": "A deterministic reproduction or explicit non-reproducibility boundary exists.",
-      "id": "error-investigation-1"
+      "id": "error-investigation-1",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:error-investigation-1c9b1dc516:reproduction-boundary"
+      }
     },
     {
       "assertion": "The causal claim is separated from symptoms and unrelated warnings.",
-      "id": "error-investigation-2"
+      "id": "error-investigation-2",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:error-investigation-1c9b1dc516:causal-isolation"
+      }
     },
     {
       "assertion": "A regression test fails before the repair and passes afterwards when applicable.",
-      "id": "error-investigation-3"
+      "id": "error-investigation-3",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:error-investigation-1c9b1dc516:regression-proof"
+      }
     }
   ],
   "claims": [

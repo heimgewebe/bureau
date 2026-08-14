@@ -2,31 +2,66 @@
   "acceptance": [
     {
       "assertion": "Ein Regressionstest reproduziert einen gültigen Bureau-Run, dessen Implementierung bereits gemergt ist, während die immutable Bureau-Runtime auf einem älteren Commit steht; ein normaler versionsfremder Closeout bleibt mit release-registry-identity-mismatch fail-closed.",
-      "id": "reproduce-deploy-lag-closeout"
+      "evidence_type": "object",
+      "id": "reproduce-deploy-lag-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "runtimecloseout:reproduce-deploy-lag-closeout"
+      }
     },
     {
       "assertion": "Ein kanonischer Operator-/CLI-Pfad leitet den deployten Runtime-Commit und dessen gültige Registry-Identität ab und führt den Completion-Schritt über einen sauberen, exakt daran gebundenen Kontext aus, ohne dass ein Operator manuell Git-Refs umschreiben oder einen Checkout zusammenbauen muss.",
-      "id": "first-class-exact-runtime-closeout"
+      "evidence_type": "object",
+      "id": "first-class-exact-runtime-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "runtimecloseout:first-class-exact-runtime-closeout"
+      }
     },
     {
       "assertion": "Completion-Evidence kann revisionsgebunden übergeben werden, ohne den expliziten Registry-Checkout dirty zu machen; der Pfad funktioniert für Releases, deren CLI Evidence als Dateipfad erwartet.",
-      "id": "evidence-does-not-dirty-registry"
+      "evidence_type": "object",
+      "id": "evidence-does-not-dirty-registry",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "runtimecloseout:evidence-does-not-dirty-registry"
+      }
     },
     {
       "assertion": "Dirty-State, Runtime-/Registry-Identitätsabweichung, Task-/Plan-Revision-Drift oder fehlende erforderliche Leases stoppen vor StateStore-Mutation; Tests belegen die jeweiligen Blocker.",
-      "id": "identity-and-lease-fail-closed"
+      "evidence_type": "object",
+      "id": "identity-and-lease-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "runtimecloseout:identity-and-lease-fail-closed"
+      }
     },
     {
       "assertion": "Der Closeout-Pfad deployt keine Bureau-Runtime, ändert keine Deployment-Intents und erlangt keine fremde Lease- oder Force-Release-Autorität.",
-      "id": "no-deployment-authority"
+      "evidence_type": "object",
+      "id": "no-deployment-authority",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "runtimecloseout:no-deployment-authority"
+      }
     },
     {
       "assertion": "Nach erfolgreichem Completion-Receipt wird der Run autoritativ als succeeded gelesen; erst danach werden exakt die eigenen unveränderten Pickup- und temporären Closeout-Leases freigegeben und temporäre Ressourcen entfernt.",
-      "id": "terminal-readback-and-cleanup"
+      "evidence_type": "object",
+      "id": "terminal-readback-and-cleanup",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "runtimecloseout:terminal-readback-and-cleanup"
+      }
     },
     {
       "assertion": "Implementierung, Regressionstests und Review sind an einen exakten Head gebunden; relevante Bureau-Validatoren und CI sind grün.",
-      "id": "exact-review-ci"
+      "evidence_type": "object",
+      "id": "exact-review-ci",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "runtimecloseout:exact-review-ci"
+      }
     }
   ],
   "claims": [
@@ -45,7 +80,7 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Follow-up aus einem realen successful closeout: release-registry-identity-mismatch blieb korrekt fail-closed, erforderte aber manuelle Konstruktion eines sauberen exact-runtime Checkouts. Schutzgrenzen erhalten; nur den sicheren Closeout-Pfad first-class machen.",
+      "note": "Follow-up aus realen Closeout-Blockern: release-registry-identity-mismatch muss fail-closed bleiben, aber der sichere exact-runtime Closeout soll first-class und ohne manuelle Checkout-Konstruktion werden.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -67,31 +102,55 @@
     "observed_run": "BUR-RUN-20260807T102921Z-85a6c7d62e",
     "observed_runtime_commit": "89d334f134e8ae43f45d07b8e4ec234013a869fc",
     "registered_from_candidate": "candidate-a40d857113ef008a6f07aa5d",
+    "revision_candidate": "candidate-ac0f51bf615b162ffbcdbe8f",
+    "revision_reason": "Alte TaskSpec auf typed Acceptance und ready/now modernisiert, nachdem die Bureau-Runtime auf 6a971e27 konvergiert wurde.",
     "scope_boundary": "Kein automatischer Deploy, kein Bypass von runtime identity, kein Force-Release fremder Leases und keine Abschwächung von Task-/Plan-Revision-Checks. Der sichere exact-runtime Closeout soll aus kanonischer Runtime-Identität reproduzierbar erzeugt und nach terminalem Readback wieder vollständig aufgeräumt werden.",
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-a40d857113ef008a6f07aa5d",
-      "event_id": 3043,
-      "event_created_at": "2026-08-07T11:08:40.063757Z",
-      "request_sha256": "01cc0de226931f669fdf5e18633e1cd09ad38fe0393d227e334fdddc41e45319",
+      "candidate_id": "candidate-ac0f51bf615b162ffbcdbe8f",
+      "event_id": 7066,
+      "event_created_at": "2026-08-14T05:37:22.660064Z",
+      "request_sha256": "da0ca5705c09fab1b8fafa328edc6852d78aec53ceb6e1b56a03c36a447c37da",
+      "candidate_event_id": "candidate-event-ab7df5774119438eb6893b30",
+      "source_fingerprint": "2bdf926e58979fd0a06192ae6eeb5ad36b7a37d51c2f7d904328621754ae8817",
+      "content_fingerprint": "ac0f51bf615b162ffbcdbe8f05f2d05076ad98d259c07eaf8ddc16bf66de38c3",
       "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "live_runtime_finding",
-        "locator": "bureau-run:BUR-RUN-20260807T102921Z-85a6c7d62e@receipt:8d0c6e24db9afa656baeabf01e041e3ead1d1a187b98479eb767fcbb6a00d0e0",
-        "observed_at": "2026-08-07T11:03:56Z",
-        "sha256": "8d0c6e24db9afa656baeabf01e041e3ead1d1a187b98479eb767fcbb6a00d0e0"
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "2bdf926e58979fd0a06192ae6eeb5ad36b7a37d51c2f7d904328621754ae8817",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-live-diagnostic",
+        "locator": "bureau:claim-intent:OPERATOR-INTEGRATION-LOOP-V1-FU-RUNTIMECLOSEOUT-8D0C6E24:claim-intent-no-eligible-task:2026-08-14",
+        "observed_at": "2026-08-14T05:32:00Z",
+        "sha256": null
       },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "2bdf926e58979fd0a06192ae6eeb5ad36b7a37d51c2f7d904328621754ae8817",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-live-diagnostic",
+          "locator": "bureau:claim-intent:OPERATOR-INTEGRATION-LOOP-V1-FU-RUNTIMECLOSEOUT-8D0C6E24:claim-intent-no-eligible-task:2026-08-14",
+          "observed_at": "2026-08-14T05:32:00Z",
+          "sha256": null
+        }
+      ],
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
-        "claim_or_dispatch_authority"
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
       ]
     }
   },
   "priority": {
-    "lane": "later",
-    "rank": 905
+    "lane": "now",
+    "rank": 1
   },
   "required_capabilities": [
     "repository",
@@ -100,7 +159,10 @@
     "bureau",
     "grabowski"
   ],
+  "rollback": {
+    "strategy": "Änderungen am Closeout-Pfad ausschließlich über normalen Git-Revert zurücknehmen; niemals Runtime-Identity-, StateStore-Revision-, Lease- oder Receipt-Historie zurückschreiben. Bei unklarem Completion-Effekt nur Readback/Reconciliation, kein Blind-Retry."
+  },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Runtime-kompatiblen Bureau-Closeout bei Deploy-Lag automatisieren"
 }

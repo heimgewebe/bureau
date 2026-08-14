@@ -526,7 +526,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Before reconciling the pull request, publish one bounded local proposal. "
-            "State snapshots must already exist and pass public verification."
+            "For state snapshots, omit --snapshot to generate the redacted artifact locally "
+            "from the bound StateStore and runtime manifest before transport."
         ),
     )
     parser.add_argument(

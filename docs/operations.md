@@ -584,19 +584,16 @@ narrowed. Historical terminal evidence is not rewritten.
 
 The two Merkle roots are built from canonically serialized public TaskSpec identities and receipt-digest identities; the underlying identities are not exported. `snapshot_sha256` is SHA-256 over canonical JSON with only that digest field removed, so release, aggregates, checkpoint, roots and the fixed redaction contract are one commitment. Immediately before every write, the exporter recursively scans all keys and values for local-path, secret/credential, prompt, raw-log/trace and PII markers and fails closed. Validation repeats the exact schema, redaction and digest checks without opening a StateStore. The local frontier calculation deliberately excludes GitHub open-PR observations; normal claim/dispatch gates remain authoritative and are not replaced by this aggregate.
 
-Generate the owner-only local artifact first, then give exactly that file to the authenticated transport:
+Generate and transport the owner-only snapshot through the single manifest-validating local entrypoint:
 
 ```bash
-~/.local/bin/bureau-state-snapshot export \
-  --output ~/.local/state/bureau-state-snapshot/public-state.json \
+~/.local/bin/bureau source-pr-bridge --kind state-snapshot --auto-merge --publish \
+  --root ~/repos/bureau \
   --state-root ~/.local/state/bureau \
   --runtime-manifest ~/.local/share/bureau/deployment-manifest.json
-~/.local/bin/bureau source-pr-bridge --kind state-snapshot --publish \
-  --root ~/repos/bureau \
-  --snapshot ~/.local/state/bureau-state-snapshot/public-state.json
 ```
 
-The bridge never generates or imports the snapshot. It verifies the supplied content and canonical digest, copies the bytes unchanged into a detached `origin/main` worktree, rejects every changed path except `registry/public-state.json`, and force-updates the dedicated `automation/bureau-state-snapshot` branch with an exact remote lease. Reconcile also reads back the GitHub blob and requires byte-for-byte identity before creating or refreshing the review PR. GitHub is therefore file transport only: it never receives StateStore, queue, claim, dispatch, closeout or writeback authority. There is deliberately no snapshot import/apply API.
+When `--snapshot` is omitted, the bridge creates the redacted snapshot locally in an owner-private temporary directory, validates it, then gives those exact bytes to the authenticated transport. Supplying an existing `--snapshot` remains an explicit transport path, but never grants import or writeback authority. Publication copies the validated bytes unchanged into a detached `origin/main` worktree, rejects every changed path except `registry/public-state.json`, and force-updates the dedicated `automation/bureau-state-snapshot` branch with an exact remote lease. Reconcile also reads back the GitHub blob and requires byte-for-byte identity before creating or refreshing the review PR. GitHub is therefore file transport only: it never receives StateStore, queue, claim, dispatch, closeout or writeback authority. There is deliberately no snapshot import/apply API.
 
 Install the reviewed user units only from the checked-out/released Bureau source that contains this implementation:
 
@@ -609,7 +606,7 @@ systemctl --user daemon-reload
 systemctl --user enable --now bureau-state-snapshot.timer
 ```
 
-`bureau-state-snapshot.service` performs those two commands in order every 15 minutes. Its StateStore and release paths are read-only; only the owner-only staging directory and the Bureau Git checkout are writable, with `UMask=0077` and the same systemd hardening as the other Bureau oneshots. Install `bureau-state-snapshot` as a manifest-bound immutable-release launcher alongside `bureau` before enabling the timer. The snapshot is transparency evidence only; it is not a backup, restore point, runtime-health receipt, signature or operational authority. Encrypted full backup and restore proof remain the separate T010 path below.
+`bureau-state-snapshot.service` invokes the stable manifest-validating `bureau` launcher once every 15 minutes. The bridge generates its owner-private temporary snapshot inside the unit's private temporary namespace before transport; no separate `bureau-state-snapshot` launcher or persistent staging directory is required. StateStore and release paths remain read-only and only the Bureau Git checkout is writable, with `UMask=0077` and the same systemd hardening as the other Bureau oneshots. The snapshot is transparency evidence only; it is not a backup, restore point, runtime-health receipt, signature or operational authority. Encrypted full backup and restore proof remain the separate T010 path below.
 
 ## StateStore backup and restore proof
 

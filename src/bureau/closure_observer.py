@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
+import secrets
 import stat
 import tempfile
 from collections.abc import Callable, Mapping
@@ -470,7 +472,12 @@ def _evidence_quarantine_binding_path(store: StateStore) -> Any:
 
 
 def _read_private_json(path: Any, *, maximum_bytes: int = 16_384) -> Mapping[str, Any]:
-    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    flags = (
+        os.O_RDONLY
+        | getattr(os, "O_NONBLOCK", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
     descriptor = os.open(path, flags)
     try:
         metadata = os.fstat(descriptor)
@@ -530,8 +537,11 @@ def _evidence_quarantine_directory(store: StateStore, *, create: bool = True) ->
             raise ValueError("acceptance evidence quarantine binding is missing") from None
         if not create:
             return None
-        _write_private_json(binding_path, binding)
-        _sync_directory(root.parent)
+        _write_private_json_atomic(
+            binding_path,
+            binding,
+            temporary_prefix=".acceptance-evidence-binding-",
+        )
     else:
         if dict(observed_binding) != binding:
             raise ValueError("acceptance evidence quarantine binding mismatch")
@@ -752,27 +762,80 @@ def _write_private_json_atomic(
     payload = (
         json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("utf-8")
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=temporary_prefix, suffix=".tmp", dir=path.parent
+    if not temporary_prefix or "/" in temporary_prefix:
+        raise ValueError("private JSON temporary prefix must be a simple name prefix")
+    parent = Path(path).parent
+    parent_flags = (
+        os.O_RDONLY
+        | getattr(os, "O_DIRECTORY", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
     )
-    temporary = Path(temporary_name)
+    parent_descriptor = os.open(parent, parent_flags)
+    temporary_name: str | None = None
     try:
-        os.fchmod(descriptor, 0o600)
-        view = memoryview(payload)
-        while view:
-            written = os.write(descriptor, view)
-            if written <= 0:
-                raise OSError("short private JSON atomic write")
-            view = view[written:]
-        os.fsync(descriptor)
+        opened_parent = os.fstat(parent_descriptor)
+        linked_parent = parent.lstat()
+        if (
+            not stat.S_ISDIR(opened_parent.st_mode)
+            or stat.S_ISLNK(linked_parent.st_mode)
+            or opened_parent.st_dev != linked_parent.st_dev
+            or opened_parent.st_ino != linked_parent.st_ino
+        ):
+            raise ValueError("private JSON parent directory identity is unsafe")
+        # Serialize publishers per directory. The kernel releases this lock on
+        # process exit, so a crash cannot strand a lock or let one writer clean
+        # another writer's in-flight temporary file.
+        fcntl.flock(parent_descriptor, fcntl.LOCK_EX)
+        file_flags = (
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        descriptor = -1
+        for _ in range(32):
+            candidate = f"{temporary_prefix}{secrets.token_hex(16)}.tmp"
+            try:
+                descriptor = os.open(
+                    candidate, file_flags, 0o600, dir_fd=parent_descriptor
+                )
+                temporary_name = candidate
+                break
+            except FileExistsError:
+                continue
+        if descriptor < 0 or temporary_name is None:
+            raise FileExistsError("unable to allocate private JSON temporary file")
+        try:
+            os.fchmod(descriptor, 0o600)
+            view = memoryview(payload)
+            while view:
+                written = os.write(descriptor, view)
+                if written <= 0:
+                    raise OSError("short private JSON atomic write")
+                view = view[written:]
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        os.replace(
+            temporary_name,
+            Path(path).name,
+            src_dir_fd=parent_descriptor,
+            dst_dir_fd=parent_descriptor,
+        )
+        temporary_name = None
+        os.fsync(parent_descriptor)
+        for stale_name in os.listdir(parent_descriptor):
+            if stale_name.startswith(temporary_prefix) and stale_name.endswith(".tmp"):
+                with suppress(OSError):
+                    os.unlink(stale_name, dir_fd=parent_descriptor)
+        os.fsync(parent_descriptor)
     finally:
-        os.close(descriptor)
-    os.replace(temporary, path)
-    _sync_directory(path.parent)
-    for stale in path.parent.glob(f"{temporary_prefix}*.tmp"):
-        with suppress(OSError):
-            stale.unlink()
-    _sync_directory(path.parent)
+        if temporary_name is not None:
+            with suppress(OSError):
+                os.unlink(temporary_name, dir_fd=parent_descriptor)
+        os.close(parent_descriptor)
 
 
 def _preserve_unreadable_quarantine_transaction(
@@ -820,12 +883,17 @@ def _preserve_unreadable_quarantine_transaction(
     return _finalize_preserved_quarantine_transaction(root, transaction)
 
 
-def _read_quarantine_transaction_manifest(store: StateStore, transaction: Any) -> dict[str, Any]:
+def _validate_quarantine_transaction_directory(transaction: Any) -> os.stat_result:
     metadata = transaction.lstat()
     if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode):
         raise ValueError("acceptance evidence quarantine transaction is not a real directory")
     if stat.S_IMODE(metadata.st_mode) & 0o077:
         raise ValueError("acceptance evidence quarantine transaction is not private")
+    return metadata
+
+
+def _read_quarantine_transaction_manifest(store: StateStore, transaction: Any) -> dict[str, Any]:
+    _validate_quarantine_transaction_directory(transaction)
     return _validate_quarantine_transaction_manifest(
         store, _read_private_json(transaction / "manifest.json")
     )
@@ -887,12 +955,36 @@ def _atomic_quarantine_move(source: Any, destination: Any) -> None:
 
 
 def _cleanup_pre_move_transaction(transaction: Any) -> None:
-    allowed = {"manifest.json", ".manifest.tmp"}
-    entries = {item.name for item in transaction.iterdir()}
-    if not entries <= allowed:
-        raise ValueError("pre-move quarantine transaction contains unexpected artifacts")
-    for name in sorted(entries):
-        (transaction / name).unlink()
+    flags = (
+        os.O_RDONLY
+        | getattr(os, "O_DIRECTORY", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
+    descriptor = os.open(transaction, flags)
+    try:
+        opened = os.fstat(descriptor)
+        linked = transaction.lstat()
+        if (
+            not stat.S_ISDIR(opened.st_mode)
+            or stat.S_ISLNK(linked.st_mode)
+            or opened.st_dev != linked.st_dev
+            or opened.st_ino != linked.st_ino
+            or stat.S_IMODE(opened.st_mode) & 0o077
+        ):
+            raise ValueError("pre-move quarantine transaction directory is unsafe")
+        allowed = {"manifest.json", ".manifest.tmp"}
+        entries = set(os.listdir(descriptor))
+        if not entries <= allowed:
+            raise ValueError("pre-move quarantine transaction contains unexpected artifacts")
+        for name in sorted(entries):
+            os.unlink(name, dir_fd=descriptor)
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    linked_after = transaction.lstat()
+    if (linked_after.st_dev, linked_after.st_ino) != (opened.st_dev, opened.st_ino):
+        raise ValueError("pre-move quarantine transaction identity changed during cleanup")
     transaction.rmdir()
 
 
@@ -915,6 +1007,7 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
         if not transaction.name.startswith(".pending-"):
             continue
         try:
+            _validate_quarantine_transaction_directory(transaction)
             manifest_path = transaction / "manifest.json"
             payload = transaction / "payload.json"
             if not manifest_path.exists():
@@ -1029,13 +1122,19 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
                     }
                 )
                 continue
-            # A manifest-only transaction has no quarantined bytes left to recover.
-            # It can represent either a pre-move crash or a completed restoration.
-            # Do not make retirement depend on the producer directory still existing.
-            _cleanup_pre_move_transaction(transaction)
-            _sync_directory(root)
-            result["abandoned_pre_move_count"] += 1
-            continue
+            # A manifest-only transaction is safe to retire only while a source
+            # entry still exists. If both source and staged payload are absent,
+            # preserve the manifest: older fsync ordering could otherwise turn a
+            # crash window into silent evidence loss.
+            if source.exists() or source.is_symlink():
+                _cleanup_pre_move_transaction(transaction)
+                _sync_directory(root)
+                result["abandoned_pre_move_count"] += 1
+                continue
+            raise ValueError(
+                "manifest-only quarantine transaction has neither source nor staged payload; "
+                "preserving transaction for diagnosis"
+            )
         except Exception as exc:
             result["errors"].append(
                 f"{transaction.name}: {type(exc).__name__}: {exc}"
@@ -1057,8 +1156,10 @@ def _quarantine_unknown_run_evidence(
     source_directory = entry.parent
     try:
         _atomic_quarantine_move(entry, staged_payload)
-        _sync_directory(source_directory)
+        # Persist the destination link before persisting source removal. Otherwise
+        # a crash between the two directory fsyncs can lose both directory entries.
         _sync_directory(transaction)
+        _sync_directory(source_directory)
     except Exception:
         with suppress(OSError):
             _cleanup_pre_move_transaction(transaction)
@@ -1162,11 +1263,12 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
         "recovered_quarantine_count": 0,
         "recovered_quarantine_entries": [],
         "abandoned_pre_move_count": 0,
-        "quarantine_directory": str(_evidence_quarantine_path(store)),
+        "quarantine_directory": None,
         "preserved_count": 0,
         "errors": [],
     }
     try:
+        result["quarantine_directory"] = str(_evidence_quarantine_path(store))
         # Durable transactions are independent of the producer directory and
         # therefore recover before the active evidence root is inspected.
         recovery = _recover_quarantine_transactions(store)

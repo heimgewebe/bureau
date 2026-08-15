@@ -42,31 +42,66 @@
   "acceptance": [
     {
       "id": "fresh-target-per-execution",
-      "assertion": "Immediately before the single execution, current GitHub main, the relevant merge history and required checks are freshly observed. Any drift invalidates older observations or intents."
+      "assertion": "Immediately before the single execution, current GitHub main, the relevant merge history and required checks are freshly observed. Any drift invalidates older observations or intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:fresh-target-per-execution"
+      }
     },
     {
       "id": "break-glass-target-binding",
-      "assertion": "prepare-intent binds approval_task_id exactly to this TaskSpec and approval_reference exactly to the freshly observed target_sha256; without both bindings no runtime effect is permitted."
+      "assertion": "prepare-intent binds approval_task_id exactly to this TaskSpec and approval_reference exactly to the freshly observed target_sha256; without both bindings no runtime effect is permitted.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:break-glass-target-binding"
+      }
     },
     {
       "id": "single-use-lifecycle",
-      "assertion": "This TaskSpec can authorize at most one successful runtime refresh. After successful effect and result-bound closeout it becomes terminal and is never reused; later runtime drift requires a new authority TaskSpec."
+      "assertion": "This TaskSpec can authorize at most one successful runtime refresh. After successful effect and result-bound closeout it becomes terminal and is never reused; later runtime drift requires a new authority TaskSpec.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:single-use-lifecycle"
+      }
     },
     {
       "id": "live-lease-binding",
-      "assertion": "apply uses only the exact Resource-Keys from the fresh runtime-refresh intent under one matching owner; missing, foreign, expired or drifted leases abort before effect."
+      "assertion": "apply uses only the exact Resource-Keys from the fresh runtime-refresh intent under one matching owner; missing, foreign, expired or drifted leases abort before effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:live-lease-binding"
+      }
     },
     {
       "id": "immutable-readback",
-      "assertion": "After apply, deployment manifest, immutable release, package tree and canonical registry snapshot bind the same source commit; StateStore integrity remains valid and fresh readback proves the new runtime identity."
+      "assertion": "After apply, deployment manifest, immutable release, package tree and canonical registry snapshot bind the same source commit; StateStore integrity remains valid and fresh readback proves the new runtime identity.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:immutable-readback"
+      }
     },
     {
       "id": "navigate-publication-unblock-only",
-      "assertion": "The refresh exists only to restore the normal typed publication path for candidate-ff4df9441862804e26cc28b0 / event 7612. It does not itself publish, ready, claim, dispatch, merge or implement the Navigate task."
+      "assertion": "The refresh exists only to restore the normal typed publication path for candidate-ff4df9441862804e26cc28b0 / event 7612. It does not itself publish, ready, claim, dispatch, merge or implement the Navigate task.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:navigate-publication-unblock-only"
+      }
     },
     {
       "id": "authority-boundary",
-      "assertion": "The execution does not weaken Runtime, Registry, Queue, Claim, Dispatch, Lease, Review or Merge gates and does not mutate foreign worktrees, leases or processes."
+      "assertion": "The execution does not weaken Runtime, Registry, Queue, Claim, Dispatch, Lease, Review or Merge gates and does not mutate foreign worktrees, leases or processes.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:authority-boundary"
+      }
     }
   ],
   "rollback": {
@@ -89,7 +124,8 @@
         "claim or dispatch authority",
         "merge readiness before exact-head CI",
         "runtime mutation before task merge"
-      ]
+      ],
+      "state_store_transition": "seed-missing-preserve-state-store"
     },
     "does_not_establish": [
       "a runtime target before fresh observation",
@@ -97,6 +133,22 @@
       "permission to reuse terminal runtime authorities",
       "Navigate implementation or merge authority",
       "foreign-work mutation authority"
-    ]
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    }
   }
 }

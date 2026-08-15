@@ -1793,6 +1793,173 @@ def test_unknown_run_manifestless_pre_move_transaction_is_cleaned(
     assert not residue.exists()
 
 
+def test_unknown_run_temp_manifest_pre_move_transaction_is_cleaned(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-tempmanifest.json"
+    raw = json.dumps({"accepted": True}).encode()
+    residue.write_bytes(raw)
+    quarantine_root = closure_observer._evidence_quarantine_directory(store)
+    assert quarantine_root is not None
+    orphan = quarantine_root / ".pending-orphan-temp-manifest"
+    orphan.mkdir(mode=0o700)
+    temporary_manifest = orphan / ".manifest.tmp"
+    temporary_manifest.write_text("{}\n", encoding="utf-8")
+    temporary_manifest.chmod(0o600)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    retirement = result["evidence_retirement"]
+    assert retirement["before"]["abandoned_pre_move_count"] == 1
+    assert not orphan.exists()
+    assert retirement["quarantined_count"] == 1
+    assert not residue.exists()
+
+
+def test_unknown_run_fifo_is_rejected_without_blocking_reconcile(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-fifo000000.json"
+    closure_observer.os.mkfifo(residue, 0o600)
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    retirement = result["evidence_retirement"]
+    assert retirement["quarantined_count"] == 0
+    assert residue.exists()
+    assert any(
+        "must be a regular non-symlink file" in error
+        for phase in ("before", "after")
+        for error in retirement[phase]["errors"]
+    )
+
+
+def test_unknown_run_interrupted_atomic_preservation_publish_recovers(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    _, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-preservecrash.json"
+    malformed = b"not-json"
+    residue.write_bytes(malformed)
+    root = closure_observer._evidence_quarantine_directory(store)
+    assert root is not None
+    source_stat = residue.stat()
+    transaction, _ = closure_observer._create_quarantine_transaction(
+        store,
+        root,
+        residue,
+        residue.stem,
+        hashlib.sha256(malformed).hexdigest(),
+        (source_stat.st_dev, source_stat.st_ino, source_stat.st_nlink),
+    )
+    staged = transaction / "payload.json"
+    closure_observer.os.replace(residue, staged)
+    real_replace = closure_observer.os.replace
+
+    def crash_before_preservation_publish(source, destination):
+        if Path(destination) == transaction / "preservation.json":
+            raise SystemExit("simulated crash before preservation publish")
+        return real_replace(source, destination)
+
+    monkeypatch.setattr(
+        closure_observer.os, "replace", crash_before_preservation_publish
+    )
+    with pytest.raises(SystemExit, match="simulated crash before preservation publish"):
+        closure_observer._recover_quarantine_transactions(store)
+
+    assert transaction.is_dir()
+    assert not (transaction / "preservation.json").exists()
+    assert list(transaction.glob(".preservation-*.tmp"))
+
+    monkeypatch.setattr(closure_observer.os, "replace", real_replace)
+    recovered = closure_observer._recover_quarantine_transactions(store)
+
+    assert recovered["recovered_count"] == 1
+    assert recovered["errors"] == []
+    preserved = [item for item in root.iterdir() if item.name.startswith("preserved-")]
+    assert len(preserved) == 1
+    assert (preserved[0] / "payload.json").read_bytes() == malformed
+    receipt = json.loads((preserved[0] / "preservation.json").read_text(encoding="utf-8"))
+    assert receipt["kind"] == "bureau.acceptance_evidence_quarantine_preservation"
+    assert not list(preserved[0].glob(".preservation-*.tmp"))
+    assert not any(item.name.startswith(".pending-") for item in root.iterdir())
+
+
+def test_unknown_run_partial_preservation_receipt_is_replaced_and_finalized(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    _, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-partialreceipt.json"
+    malformed = b"not-json"
+    residue.write_bytes(malformed)
+    root = closure_observer._evidence_quarantine_directory(store)
+    assert root is not None
+    source_stat = residue.stat()
+    transaction, _ = closure_observer._create_quarantine_transaction(
+        store,
+        root,
+        residue,
+        residue.stem,
+        hashlib.sha256(malformed).hexdigest(),
+        (source_stat.st_dev, source_stat.st_ino, source_stat.st_nlink),
+    )
+    closure_observer.os.replace(residue, transaction / "payload.json")
+    preservation_path = transaction / "preservation.json"
+    preservation_path.write_bytes(b'{"schema_version":1')
+    preservation_path.chmod(0o600)
+
+    recovered = closure_observer._recover_quarantine_transactions(store)
+
+    assert recovered["recovered_count"] == 1
+    assert recovered["errors"] == []
+    preserved = [item for item in root.iterdir() if item.name.startswith("preserved-")]
+    assert len(preserved) == 1
+    receipt = json.loads((preserved[0] / "preservation.json").read_text(encoding="utf-8"))
+    assert receipt["kind"] == "bureau.acceptance_evidence_quarantine_preservation"
+    assert "interrupted preservation receipt recovered" in receipt["reason"]
+    assert (preserved[0] / "payload.json").read_bytes() == malformed
+
+
+def test_unknown_run_manifest_only_transaction_is_retired_without_source(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    _, store, _ = _github_production_fixture(registry_factory, tmp_path, monkeypatch)
+    evidence_dir = store.state_root / "acceptance-evidence"
+    residue = evidence_dir / "BUR-RUN-20990101T000000Z-manifestonly.json"
+    raw = json.dumps({"accepted": True}).encode()
+    residue.write_bytes(raw)
+    root = closure_observer._evidence_quarantine_directory(store)
+    assert root is not None
+    source_stat = residue.stat()
+    transaction, _ = closure_observer._create_quarantine_transaction(
+        store,
+        root,
+        residue,
+        residue.stem,
+        hashlib.sha256(raw).hexdigest(),
+        (source_stat.st_dev, source_stat.st_ino, source_stat.st_nlink),
+    )
+    residue.unlink()
+
+    recovered = closure_observer._recover_quarantine_transactions(store)
+
+    assert recovered["abandoned_pre_move_count"] == 1
+    assert recovered["recovered_count"] == 0
+    assert recovered["errors"] == []
+    assert not transaction.exists()
+    assert not any(item.name.startswith(".pending-") for item in root.iterdir())
+
+
 def test_unknown_run_interrupted_staging_is_recovered_on_next_reconcile(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:

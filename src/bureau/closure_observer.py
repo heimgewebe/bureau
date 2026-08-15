@@ -556,7 +556,12 @@ def _evidence_quarantine_directory(store: StateStore, *, create: bool = True) ->
 def _read_unknown_run_evidence_entry(
     entry: Any,
 ) -> tuple[bytes, Mapping[str, Any], str, tuple[int, int, int]]:
-    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    flags = (
+        os.O_RDONLY
+        | getattr(os, "O_NONBLOCK", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+    )
     try:
         descriptor = os.open(entry, flags)
     except OSError as exc:
@@ -741,8 +746,41 @@ def _finalize_preserved_quarantine_transaction(root: Any, transaction: Any) -> A
     return destination / "payload.json"
 
 
+def _write_private_json_atomic(
+    path: Any, value: Mapping[str, Any], *, temporary_prefix: str
+) -> None:
+    payload = (
+        json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=temporary_prefix, suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(descriptor, 0o600)
+        view = memoryview(payload)
+        while view:
+            written = os.write(descriptor, view)
+            if written <= 0:
+                raise OSError("short private JSON atomic write")
+            view = view[written:]
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    os.replace(temporary, path)
+    _sync_directory(path.parent)
+    for stale in path.parent.glob(f"{temporary_prefix}*.tmp"):
+        with suppress(OSError):
+            stale.unlink()
+    _sync_directory(path.parent)
+
+
 def _preserve_unreadable_quarantine_transaction(
-    root: Any, transaction: Any, *, reason: str
+    root: Any,
+    transaction: Any,
+    *,
+    reason: str,
+    replace_existing_receipt: bool = False,
 ) -> Any:
     payload_path = transaction / "payload.json"
     metadata = payload_path.lstat()
@@ -772,8 +810,12 @@ def _preserve_unreadable_quarantine_transaction(
         ],
     }
     preservation_path = transaction / "preservation.json"
-    if not preservation_path.exists():
-        _write_private_json(preservation_path, preservation)
+    if replace_existing_receipt or not preservation_path.exists():
+        _write_private_json_atomic(
+            preservation_path,
+            preservation,
+            temporary_prefix=".preservation-",
+        )
     _sync_directory(transaction)
     return _finalize_preserved_quarantine_transaction(root, transaction)
 
@@ -888,7 +930,28 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
             source = source_root / str(manifest["source_name"])
             preservation_path = transaction / "preservation.json"
             if preservation_path.exists():
-                preservation = _read_private_json(preservation_path)
+                try:
+                    preservation = _read_private_json(preservation_path)
+                except ValueError as preservation_exc:
+                    actual = _preserve_unreadable_quarantine_transaction(
+                        root,
+                        transaction,
+                        reason=(
+                            "interrupted preservation receipt recovered: "
+                            f"{type(preservation_exc).__name__}: {preservation_exc}"
+                        ),
+                        replace_existing_receipt=True,
+                    )
+                    result["recovered_count"] += 1
+                    result["recovered_entries"].append(
+                        {
+                            "source_name": manifest["source_name"],
+                            "source_sha256": None,
+                            "reason": "unreadable-quarantine-payload-preserved",
+                            "quarantine_path": str(actual),
+                        }
+                    )
+                    continue
                 if preservation.get("kind") != (
                     "bureau.acceptance_evidence_quarantine_preservation"
                 ):
@@ -966,14 +1029,13 @@ def _recover_quarantine_transactions(store: StateStore) -> dict[str, Any]:
                     }
                 )
                 continue
-            if source.exists() or source.is_symlink():
-                _cleanup_pre_move_transaction(transaction)
-                _sync_directory(root)
-                result["abandoned_pre_move_count"] += 1
-                continue
-            raise ValueError(
-                "pending quarantine transaction has neither staged payload nor active source"
-            )
+            # A manifest-only transaction has no quarantined bytes left to recover.
+            # It can represent either a pre-move crash or a completed restoration.
+            # Do not make retirement depend on the producer directory still existing.
+            _cleanup_pre_move_transaction(transaction)
+            _sync_directory(root)
+            result["abandoned_pre_move_count"] += 1
+            continue
         except Exception as exc:
             result["errors"].append(
                 f"{transaction.name}: {type(exc).__name__}: {exc}"

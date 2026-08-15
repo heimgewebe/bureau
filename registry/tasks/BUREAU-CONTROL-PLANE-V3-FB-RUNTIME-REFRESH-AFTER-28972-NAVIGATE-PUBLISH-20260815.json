@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-28972-NAVIGATE-PUBLISH-20260815",
+  "title": "Einmaligen Bureau-Runtime-Refresh für Navigate-Publikation autorisieren",
+  "state": "planned",
+  "goal": "Schließe genau einmal den aktuellen immutable Bureau-Runtime- und Registry-Snapshot-Drift, der die typisierte Publikation des bereits deduplizierten Semantic-Navigate-Candidates 7612 blockiert. Unmittelbar vor dem einzigen Runtime-Effekt müssen aktueller GitHub-main, dessen grüne Pflichtchecks, eine frische Runtime-Refresh-Observation und der daraus abgeleitete target_sha256 neu gebunden werden. Diese Authority darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use bootstrap authority only. The effect additionally requires a fresh target observation, target-bound break-glass evidence and the exact live leases demanded by the runtime-refresh intent. No repository merge, queue, claim, dispatch, StateStore-history or foreign-work authority is granted."
+    }
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Immediately before the single execution, current GitHub main, the relevant merge history and required checks are freshly observed. Any drift invalidates older observations or intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent binds approval_task_id exactly to this TaskSpec and approval_reference exactly to the freshly observed target_sha256; without both bindings no runtime effect is permitted.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "single-use-lifecycle",
+      "assertion": "This TaskSpec can authorize at most one successful runtime refresh. After successful effect and result-bound closeout it becomes terminal and is never reused; later runtime drift requires a new authority TaskSpec.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:single-use-lifecycle"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply uses only the exact Resource-Keys from the fresh runtime-refresh intent under one matching owner; missing, foreign, expired or drifted leases abort before effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:live-lease-binding"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "After apply, deployment manifest, immutable release, package tree and canonical registry snapshot bind the same source commit; StateStore integrity remains valid and fresh readback proves the new runtime identity.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:immutable-readback"
+      }
+    },
+    {
+      "id": "navigate-publication-unblock-only",
+      "assertion": "The refresh exists only to restore the normal typed publication path for candidate-ff4df9441862804e26cc28b0 / event 7612. It does not itself publish, ready, claim, dispatch, merge or implement the Navigate task.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:navigate-publication-unblock-only"
+      }
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "The execution does not weaken Runtime, Registry, Queue, Claim, Dispatch, Lease, Review or Merge gates and does not mutate foreign worktrees, leases or processes.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-28972-navigate-publish:authority-boundary"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "If cutover fails or has an ambiguous outcome, do not assert a new deployment truth and do not rewrite Registry, Queue or StateStore history. Preserve the last integrity-valid immutable release and use only the existing result/readback/release/verify-then-retry runtime-refresh contract."
+  },
+  "metadata": {
+    "source": "documented BUREAU-TRUTH-MODEL-V2-T026 protected-PR bootstrap precedent",
+    "bootstrap_reason": "Typed Bureau task publication is fail-closed because deployed runtime source 0ad76828ab403027cdc721a7a616cdb233dfa081 lags current main 28972b4ad6d1c15c5aa36c5d030fae665cde8d24.",
+    "main_at_registration": "28972b4ad6d1c15c5aa36c5d030fae665cde8d24",
+    "deployed_source_at_registration": "0ad76828ab403027cdc721a7a616cdb233dfa081",
+    "blocked_candidate_id": "candidate-ff4df9441862804e26cc28b0",
+    "blocked_candidate_event_id": 7612,
+    "blocked_adapter_proposal_id": "4e46a6348372acea067cb38d6013ba5b89a08f7af4556a9b2deed520a44f42d5",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before task merge"
+      ],
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal runtime authorities",
+      "Navigate implementation or merge authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    }
+  }
+}

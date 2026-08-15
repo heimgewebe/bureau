@@ -1,0 +1,149 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der normale authentifizierte Proxy-Hotpath routet mit einem bereits gebundenen, generationidentischen Selector-Snapshot und führt nicht pro Request einen vollständigen Selector-Datei-Read samt Validierung aus.",
+      "evidence_type": "object",
+      "id": "proxy-hotpath-no-selector-file-read",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:transport-ingress-selector:proxy-hotpath"
+      }
+    },
+    {
+      "assertion": "Auch /health liefert die exakte aktuelle Selector-Generation und Runtime-Bindung, ohne bei jedem Aufruf die Selector-Datei vollständig neu zu lesen und zu validieren.",
+      "evidence_type": "object",
+      "id": "health-hotpath-no-selector-file-read",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:transport-ingress-selector:health-hotpath"
+      }
+    },
+    {
+      "assertion": "Ein erfolgreicher Selector-Publish/Cutover macht die neue Generation deterministisch im laufenden Ingress sichtbar; nach bestätigtem Switch darf kein Request mehr auf die alte Generation geroutet werden.",
+      "evidence_type": "object",
+      "id": "deterministic-cutover-reload",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:transport-ingress-selector:deterministic-cutover"
+      }
+    },
+    {
+      "assertion": "Ungültige, manipulierte oder nicht generationgebundene Selector-Zustände bleiben fail-closed; keine stale oder zuletzt-gültige Route wird als stiller Fallback benutzt.",
+      "evidence_type": "object",
+      "id": "invalid-selector-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:transport-ingress-selector:invalid-fail-closed"
+      }
+    },
+    {
+      "assertion": "Ein reproduzierbarer Test oder Messbeleg zeigt, dass wiederholte Proxy- und Health-Aufrufe im stabilen Zustand keine vollständigen Selector-Dateizugriffe pro Request mehr erzeugen und die Dateisystemzugriffe gegenüber dem Ausgangszustand messbar sinken.",
+      "evidence_type": "object",
+      "id": "filesystem-io-measurement",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:transport-ingress-selector:io-measurement"
+      }
+    },
+    {
+      "assertion": "Die Lösung führt keinen allgemeinen Cache-/StateStore-Layer ein, bewahrt atomaren Publish und CAS, enthält Regressionstests für Cutover und Fehlerfälle und besteht fokussierte Tests, vollständiges make validate, git diff --check, revisionsgebundenen Self-Review und geschützte CI auf demselben finalen Head.",
+      "evidence_type": "object",
+      "id": "bounded-architecture-and-validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:transport-ingress-selector:bounded-validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die Selector-Lese-/Reload-Semantik im Transport-Ingress und zwingend zugehörige Regressionstests ändern. Selector-Autorität, CAS/Atomic-Publish, Generation/Identity, Fail-Closed-Verhalten und Blue-Green-Cutover-Vertrag nicht abschwächen; kein zweiter StateStore und keine allgemeine Cache-Abstraktion einführen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/tools/grabowski_transport_ingress.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_ingress_oauth_discovery.py",
+      "path:/home/alex/repos/grabowski/tests/test_transport_one_call.py",
+      "path:/home/alex/repos/grabowski/tests/test_dual_service_deploy.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den autoritativen Routing-Selector des Grabowski TransportIngress aus dem Request-Hotpath entkoppeln, ohne seine Cutover-, Generation-, CAS- oder Fail-Closed-Semantik abzuschwächen. Proxy- und Health-Requests sollen nicht bei jedem Aufruf die Selector-Datei vollständig öffnen und validieren; ein bestätigter Cutover muss die neue Generation deterministisch und ohne stale Routing sichtbar machen. Kein TTL-Cache als Autoritätsersatz, kein zweiter StateStore und keine neue allgemeine Cache-Schicht.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T167",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass ein TTL-Cache die richtige Lösung ist",
+      "dass Polling oder ein File-Watcher erforderlich ist",
+      "dass Selector-Datei-I/O die einzige Transport-Performancegrenze ist",
+      "dass PR #780 wegen dieses Befunds fehlerhaft oder nicht deploybar ist"
+    ],
+    "finding": "Auf Grabowski main 7ec0ef358b3505ae99a7ada7567afdc9595d1e88 ruft TransportIngress._route() im Selector-Modus read_routing_selector() auf; health() und proxy() rufen _route() je Request auf. Das ist korrektheitsseitig fail-closed, erzeugt aber synchrone Dateisystem-I/O und vollständige Selector-Validierung im Request-Hotpath.",
+    "source_candidate": "candidate-f8238fc62cc8a28ed7de4782",
+    "source_event_id": 7292,
+    "source_file": "tools/grabowski_transport_ingress.py",
+    "source_file_sha256": "c426df6a08c7d5ca74e128ed8638151179b1327d6726929c88e7cf8c5d305289",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f8238fc62cc8a28ed7de4782",
+      "event_id": 7292,
+      "event_created_at": "2026-08-14T19:37:47.717244Z",
+      "request_sha256": "eb1a6db7eb616eaad43a962240ccc735cb5de7ebff7086ba5f7f78f86654ff49",
+      "candidate_event_id": "candidate-event-0b3fb14b8d44efab794cc720",
+      "source_fingerprint": "86a6a67ad91429f523ab822516f16c9a14e49afced1a0148c68deef774234b85",
+      "content_fingerprint": "bfec6afc61628490da5bfa71ee1ae9f47b2cbf644f95f2d6a4d1d9e9251dfe0f",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "86a6a67ad91429f523ab822516f16c9a14e49afced1a0148c68deef774234b85",
+        "freshness": "digest-bound",
+        "kind": "repository-observation",
+        "locator": "tools/grabowski_transport_ingress.py@7ec0ef358b3505ae99a7ada7567afdc9595d1e88:_route/health/proxy",
+        "observed_at": "2026-08-14T19:37:47.643929Z",
+        "sha256": "c426df6a08c7d5ca74e128ed8638151179b1327d6726929c88e7cf8c5d305289"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "86a6a67ad91429f523ab822516f16c9a14e49afced1a0148c68deef774234b85",
+          "freshness": "digest-bound",
+          "kind": "repository-observation",
+          "locator": "tools/grabowski_transport_ingress.py@7ec0ef358b3505ae99a7ada7567afdc9595d1e88:_route/health/proxy",
+          "observed_at": "2026-08-14T19:37:47.643929Z",
+          "sha256": "c426df6a08c7d5ca74e128ed8638151179b1327d6726929c88e7cf8c5d305289"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 16
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Selector-Hotpath deterministisch aus Dateisystem entkoppeln"
+}

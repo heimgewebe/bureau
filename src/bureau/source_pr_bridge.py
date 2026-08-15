@@ -261,6 +261,8 @@ def _verified_remote_state_snapshot(
         [
             "api",
             f"repos/{repository}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()}",
+            "--method",
+            "GET",
             "-f",
             f"ref={branch}",
         ]

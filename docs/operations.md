@@ -587,13 +587,13 @@ The two Merkle roots are built from canonically serialized public TaskSpec ident
 Generate and transport the owner-only snapshot through the single manifest-validating local entrypoint:
 
 ```bash
-~/.local/bin/bureau source-pr-bridge --kind state-snapshot --auto-merge --publish \
+~/.local/bin/bureau source-pr-bridge --kind state-snapshot --publish \
   --root ~/repos/bureau \
   --state-root ~/.local/state/bureau \
   --runtime-manifest ~/.local/share/bureau/deployment-manifest.json
 ```
 
-When `--snapshot` is omitted, the bridge creates the redacted snapshot locally in an owner-private temporary directory, validates it, then gives those exact bytes to the authenticated transport. Supplying an existing `--snapshot` remains an explicit transport path, but never grants import or writeback authority. Publication copies the validated bytes unchanged into a detached `origin/main` worktree, rejects every changed path except `registry/public-state.json`, and force-updates the dedicated `automation/bureau-state-snapshot` branch with an exact remote lease. Reconcile also reads back the GitHub blob and requires byte-for-byte identity before creating or refreshing the review PR. GitHub is therefore file transport only: it never receives StateStore, queue, claim, dispatch, closeout or writeback authority. There is deliberately no snapshot import/apply API.
+When `--snapshot` is omitted, the bridge creates the redacted snapshot locally in an owner-private temporary directory, validates it, then gives those exact bytes to the authenticated transport. Supplying an existing `--snapshot` remains an explicit transport path, but never grants import or writeback authority. Publication copies the validated bytes unchanged into a detached `origin/main` worktree, rejects every changed path except `registry/public-state.json`, and force-updates the dedicated `automation/bureau-state-snapshot` branch with an exact remote lease. Reconcile also reads back the GitHub blob and requires byte-for-byte identity before creating or refreshing the review PR. The periodic snapshot path deliberately does not request auto-merge: `automation/bureau-state-snapshot` plus its review PR are the public transparency surface, while `main` remains the commit identity bound to the installed immutable Bureau runtime. Auto-merging each refreshed snapshot would advance `main` without a corresponding runtime release and correctly trigger `release-registry-identity-mismatch`, so that effect is outside this timer contract. GitHub is therefore file transport and hosted validation only: it never receives StateStore, queue, claim, dispatch, closeout or writeback authority. There is deliberately no snapshot import/apply API.
 
 Install the reviewed user units only from the checked-out/released Bureau source that contains this implementation:
 

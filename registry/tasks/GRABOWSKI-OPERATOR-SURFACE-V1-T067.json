@@ -1,91 +1,111 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T067",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Browser- und GUI-Workerzustände frisch konvergieren",
-  "state": "verified",
-  "priority": {
-    "lane": "now",
-    "rank": 10
-  },
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski",
-      "path:/home/alex/.local/state/grabowski/workers",
-      "service:grabowski-operator.service"
-    ]
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Before browser or GUI worker list output claims an entry is active, launching or ambiguous, the read-only list performs one bounded current systemd observation and projects the observed state transiently without changing the stored registry state, releasing leases or deleting ephemeral paths.",
+      "evidence_type": "object",
+      "id": "fresh-active-reconciliation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-surface-v1-t067:fresh-active-reconciliation"
+      }
+    },
+    {
+      "assertion": "Default worker-list output is bounded and contains current active, ambiguous or operator-actionable records only; completed, stopped and interrupted history is available through an explicit bounded history view with pagination.",
+      "evidence_type": "object",
+      "id": "actionable-default-view",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-surface-v1-t067:actionable-default-view"
+      }
+    },
+    {
+      "assertion": "An explicit worker status or successful stop reconciliation persists the observed terminal lifecycle and releases only exact unchanged worker-owned port, profile and display leases; foreign or ambiguous leases remain untouched and visible.",
+      "evidence_type": "object",
+      "id": "terminal-lease-release",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-surface-v1-t067:terminal-lease-release"
+      }
+    },
+    {
+      "assertion": "Worker manifests, launcher identity, final systemd observation and receipts remain preserved; convergence changes projections and exact terminal leases, not historical evidence.",
+      "evidence_type": "object",
+      "id": "evidence-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-surface-v1-t067:evidence-preserved"
+      }
+    },
+    {
+      "assertion": "Browser and GUI workers use one tested lifecycle core for systemd observation, timestamps and terminal classification; list uses its read-only projection path while status and stop use the explicit persistent reconciliation path, retaining type-specific profile, port and display validation.",
+      "evidence_type": "object",
+      "id": "shared-lifecycle-core",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-surface-v1-t067:shared-lifecycle-core"
+      }
+    },
+    {
+      "assertion": "Tests cover missing transient units, completed and interrupted units, stale running records, same-second state changes, unknown systemd results, foreign leases, pagination and preservation of historical receipts.",
+      "evidence_type": "object",
+      "id": "tests",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-surface-v1-t067:tests"
+      }
+    },
+    {
+      "assertion": "After deployment, fresh read-only list output no longer reports the observed absent browser units as running, explicit status readback persists their terminal convergence and exact lease release, and one bounded new worker lifecycle proves active-to-terminal behavior.",
+      "evidence_type": "object",
+      "id": "live-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-operator-surface-v1-t067:live-proof"
+      }
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "python",
-    "systemd",
-    "grabowski",
-    "browser-worker",
-    "gui-worker"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
   ],
   "depends_on": [
     "HEIMGEWEBE-RESILIENZ-V1-T005"
   ],
-  "acceptance": [
-    {
-      "id": "fresh-active-reconciliation",
-      "assertion": "Before browser or GUI worker list output claims an entry is active, launching or ambiguous, the read-only list performs one bounded current systemd observation and projects the observed state transiently without changing the stored registry state, releasing leases or deleting ephemeral paths."
-    },
-    {
-      "id": "actionable-default-view",
-      "assertion": "Default worker-list output is bounded and contains current active, ambiguous or operator-actionable records only; completed, stopped and interrupted history is available through an explicit bounded history view with pagination."
-    },
-    {
-      "id": "terminal-lease-release",
-      "assertion": "An explicit worker status or successful stop reconciliation persists the observed terminal lifecycle and releases only exact unchanged worker-owned port, profile and display leases; foreign or ambiguous leases remain untouched and visible."
-    },
-    {
-      "id": "evidence-preserved",
-      "assertion": "Worker manifests, launcher identity, final systemd observation and receipts remain preserved; convergence changes projections and exact terminal leases, not historical evidence."
-    },
-    {
-      "id": "shared-lifecycle-core",
-      "assertion": "Browser and GUI workers use one tested lifecycle core for systemd observation, timestamps and terminal classification; list uses its read-only projection path while status and stop use the explicit persistent reconciliation path, retaining type-specific profile, port and display validation."
-    },
-    {
-      "id": "tests",
-      "assertion": "Tests cover missing transient units, completed and interrupted units, stale running records, same-second state changes, unknown systemd results, foreign leases, pagination and preservation of historical receipts."
-    },
-    {
-      "id": "live-proof",
-      "assertion": "After deployment, fresh read-only list output no longer reports the observed absent browser units as running, explicit status readback persists their terminal convergence and exact lease release, and one bounded new worker lifecycle proves active-to-terminal behavior."
-    }
-  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/workers",
+      "service:grabowski-operator.service"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T067",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "source": "bureau_operator_intake",
-    "source_event_id": 749,
-    "source_candidate_id": "candidate-d27c1d152f2a003918c35e6d",
-    "source_observation": "The 2026-07-19 audit found 75 browser and 8 GUI history records. At least two browser records were projected as running although fresh systemd readback returned LoadState=not-found, ActiveState=inactive and SubState=dead.",
+    "contract_amendment": {
+      "amended_at": "2026-07-19T11:30:00Z",
+      "does_not_establish": [
+        "implementation completion",
+        "deployment success",
+        "task verification"
+      ],
+      "reason": "The browser and GUI worker list tools are immutable baseline read-only surfaces. Persistent registry convergence and lease release therefore remain on the existing status and stop surfaces; list performs fresh transient projection only."
+    },
     "does_not_establish": [
       "permission to delete worker history",
       "permission to release foreign leases",
       "absence of future systemd observation ambiguity",
       "worker action success from registry state alone"
     ],
-    "contract_amendment": {
-      "amended_at": "2026-07-19T11:30:00Z",
-      "reason": "The browser and GUI worker list tools are immutable baseline read-only surfaces. Persistent registry convergence and lease release therefore remain on the existing status and stop surfaces; list performs fresh transient projection only.",
-      "does_not_establish": [
-        "implementation completion",
-        "deployment success",
-        "task verification"
-      ]
-    },
+    "source": "bureau_operator_intake",
+    "source_candidate_id": "candidate-d27c1d152f2a003918c35e6d",
+    "source_event_id": 749,
+    "source_observation": "The 2026-07-19 audit found 75 browser and 8 GUI history records. At least two browser records were projected as running although fresh systemd readback returned LoadState=not-found, ActiveState=inactive and SubState=dead.",
     "verification": {
       "current_head": "aea1343dfa5cdcd47b8d79baedf191499046ee95",
       "implementation": {
@@ -102,17 +122,74 @@
         "gui_worker_id": "2b9359ba5b684b7e8f6c",
         "terminalization": "both stopped explicitly; browser port/profile and GUI display leases released exactly; ephemeral paths removed; instance evidence preserved"
       },
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "schema_version": 1,
+      "source": "state_store_task_spec_revision",
+      "source_ref": "bureau-task-spec:GRABOWSKI-OPERATOR-SURFACE-V1-T067@revision-4",
+      "task_sha256": "860ed631ad4e9f9f630c9a5599c69b292f71e3e6643123854310c3c9e8f77844",
       "tests": {
         "result": "57 passed, 11 subtests passed",
         "suite": "tests/test_workers.py",
         "task_id": "0269043513254378a6797885"
       },
-      "verified_at": "2026-08-10T22:05:50Z",
+      "verified_at": "2026-08-10T22:05:50Z"
+    },
+    "operator_intake": {
       "schema_version": 1,
-      "source": "state_store_task_spec_revision",
-      "source_ref": "bureau-task-spec:GRABOWSKI-OPERATOR-SURFACE-V1-T067@revision-3",
-      "task_sha256": "6b35740e690eef1798fccfa19e9a1817ae789148dabd052bad30df1fa6dc3124",
-      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+      "candidate_id": "candidate-e0187404cc98d7b05607d753",
+      "event_id": 7302,
+      "event_created_at": "2026-08-14T19:48:13.967779Z",
+      "request_sha256": "014073f83b4261ba94549cc6e45be53dec35d5994e51981cbb5022f42053254b",
+      "candidate_event_id": "candidate-event-25c48877155f7dc3f406e675",
+      "source_fingerprint": "10d43b0e3bacd5f04bc111577e99e472951d1a87de7bfb6cdf75622b2945a9b8",
+      "content_fingerprint": "e0187404cc98d7b05607d7534e33481ef73823a4f10f6d816d6da70a3f31d7d5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "10d43b0e3bacd5f04bc111577e99e472951d1a87de7bfb6cdf75622b2945a9b8",
+        "freshness": "fingerprint-bound",
+        "kind": "bureau-runtime-readback",
+        "locator": "bureau-runtime://c05948576338c8095a493b7e216c8521c1cfd0cb/verification-stamp/GRABOWSKI-OPERATOR-SURFACE-V1-T067",
+        "observed_at": "2026-08-14T19:48:13.793732Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "10d43b0e3bacd5f04bc111577e99e472951d1a87de7bfb6cdf75622b2945a9b8",
+          "freshness": "fingerprint-bound",
+          "kind": "bureau-runtime-readback",
+          "locator": "bureau-runtime://c05948576338c8095a493b7e216c8521c1cfd0cb/verification-stamp/GRABOWSKI-OPERATOR-SURFACE-V1-T067",
+          "observed_at": "2026-08-14T19:48:13.793732Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
     }
-  }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "systemd",
+    "grabowski",
+    "browser-worker",
+    "gui-worker"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Browser- und GUI-Workerzustände frisch konvergieren"
 }

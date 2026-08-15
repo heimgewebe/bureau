@@ -10,7 +10,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/bin/bureau source-pr-bridge --kind state-snapshot --auto-merge --publish --root %h/repos/bureau --state-root %h/.local/state/bureau --runtime-manifest %h/.local/share/bureau/deployment-manifest.json
+ExecStart=%h/.local/bin/bureau source-pr-bridge --kind state-snapshot --publish --root %h/repos/bureau --state-root %h/.local/state/bureau --runtime-manifest %h/.local/share/bureau/deployment-manifest.json
 Environment=GH_HOST=github.com
 Environment=PYTHONUNBUFFERED=1
 TimeoutStartSec=5min

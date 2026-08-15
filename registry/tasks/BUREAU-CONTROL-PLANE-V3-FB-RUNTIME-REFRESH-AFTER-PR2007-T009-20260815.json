@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2007-T009-20260815",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "title": "Single-Use-Bureau-Runtime-Refresh nach PR #2007 für T009",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten Stand 0e80135c1755eec44026cfe78cc2ad62e0ef0cda auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Auslöser ist der Merge von PR #2007 auf 08d67e98b1d2569addc9357584fd9c43e0ddf792. Zweck ausschließlich: die dadurch erneut entstandene release-registry-identity-mismatch-Barriere beseitigen, damit der bereits koordinierte T009-Run BUR-RUN-20260814T235554Z-2f16466f99 regulär bis Runtime-Readback, Acceptance und Closeout fortgeführt werden kann. Keine T009-Code-, Queue-, Claim-, Dispatch-, Grabowski-Runtime- oder fremde Mutation innerhalb dieses Runtime-Effekts; keine Wiederverwendung nach Closeout.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "deployment",
+    "resource-leases",
+    "audit",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use only. Vor prepare-intent und erneut vor apply: frischer current-main-Commit samt gemergtem PR #2007, grüne Pflichtchecks, autoritativer StateStore-TaskSpec-Preflight, frischer target_sha256 und exakt intentgebundene Live-Leases. Danach immutable Readback, Lease-Release und closeout-authority. Dieser Refresh ändert T009 nicht selbst."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "bootstrap-and-fresh-target",
+      "assertion": "Diese TaskSpec wird als genau eine neue Datei über einen geschützten PR registriert und selektiv als fehlende StateStore-Spec importiert. Unmittelbar vor prepare-intent ist current main frisch, enthält PR #2007 / 08d67e98b1d2569addc9357584fd9c43e0ddf792 sowie den Merge dieser eigenen Authority-TaskSpec und alle Required Checks sind grün; target_sha256 wird frisch neu beobachtet und kein Registrierungswert wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2007-t009:bootstrap-target"
+      }
+    },
+    {
+      "id": "single-use-preflight",
+      "assertion": "Vor prepare-intent und erneut vor apply ist diese exakte Authority im autoritativen StateStore ready oder active, positiv revisioniert, single-use-target-bound und ohne vorherige Consumption oder Closeout. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2007-t009:single-use-preflight"
+      }
+    },
+    {
+      "id": "target-leases",
+      "assertion": "Apply hält exakt die vom Intent geforderten Runtime-Ressourcen unter einem eindeutigen Owner mit ausreichender Rest-TTL; fremde aktive Runtime-Arbeit wird nicht übernommen oder verändert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2007-t009:target-leases"
+      }
+    },
+    {
+      "id": "readback-closeout",
+      "assertion": "Genau ein effect_started=true-Deploy ist erlaubt. Manifest, immutable Release, Paketbaum, Registry-Snapshot, bureau check und StateStore-Integrität stimmen danach auf denselben Zielcommit; anschließend werden die Runtime-Leases freigegeben und closeout-authority bindet exakt Target, Intent und Result.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2007-t009:readback-closeout"
+      }
+    },
+    {
+      "id": "t009-continuation-restored",
+      "assertion": "Nach erfolgreichem Runtime-Closeout kann der bereits koordinierte Run BUR-RUN-20260814T235554Z-2f16466f99 von BUREAU-CONTROL-PLANE-V3-T009 regulär fortgesetzt werden. Sein eigener Worktree, Branch, Claims und Leases bleiben bis dahin unverändert; Runtime-Refresh und T009-Implementierung/Acceptance bleiben separate owner- und revisionsgebundene Effekte.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2007-t009:t009-continuation-restored"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei unklarem oder fehlgeschlagenem Apply keinen Blind-Retry. Den letzten integritätsgültigen immutable Bureau-Release beibehalten und ausschließlich receipt-, target- und StateStore-gebunden reconciliieren. T009 und seine eigenen Claims, Leases und Arbeitsartefakte bleiben getrennt und unverändert."
+  },
+  "metadata": {
+    "registered_at": "2026-08-15",
+    "source_candidate": "candidate-f3f065a6d305f2ce433291f1",
+    "source_event_id": 7447,
+    "trigger_pull_request": 2007,
+    "trigger_merge_commit": "08d67e98b1d2569addc9357584fd9c43e0ddf792",
+    "installed_runtime_before": "0e80135c1755eec44026cfe78cc2ad62e0ef0cda",
+    "blocked_task_id": "BUREAU-CONTROL-PLANE-V3-T009",
+    "blocked_run_id": "BUR-RUN-20260814T235554Z-2f16466f99",
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Die installierte immutable Bureau-Runtime 0e80135c1755eec44026cfe78cc2ad62e0ef0cda liegt hinter dem durch PR #2007 aktuellen main 08d67e98b1d2569addc9357584fd9c43e0ddf792. Der Runtime-Drift-Bootstrap darf ausschließlich diese neue Authority-TaskSpec als Ein-Datei-PR registrieren und danach konservativ als fehlende StateStore-Spec säen."
+    },
+    "forbidden_authority_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR1996-T009-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR1994-T009-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T009-FINAL-EXECUTE-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T009-INVENTORY-EXECUTE-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T009-INVENTORY-PUBLISH-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T009-INVENTORY-UNLOCK-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T011-UNLOCK-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-RUNTIMECLOSEOUT-20260814",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-DEPLOY-DIAGNOSTIC-20260812",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f3f065a6d305f2ce433291f1",
+      "event_id": 7447,
+      "event_created_at": "2026-08-15T00:34:25.210752Z",
+      "request_sha256": "2aa161797e966a7eb59d5befc5bdf3c209835e6321deeadff1ab330253e6cbe6",
+      "candidate_event_id": "candidate-event-90fa8034f06519eb5f7640f9",
+      "source_fingerprint": "8cde709d098e1774c27b975adfc54fd6e744227bc42e7ec50eda7ae19177dcd3",
+      "content_fingerprint": "9e83bdc5ea8c367b1921a1a487162af79e95e3a4dbe1a9cb70eae2488e7c786d",
+      "source": {
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/bureau#2007",
+        "sha256": null,
+        "fingerprint": "8cde709d098e1774c27b975adfc54fd6e744227bc42e7ec50eda7ae19177dcd3",
+        "observed_at": "2026-08-15T00:34:25.128711Z",
+        "freshness": "fingerprint-bound",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "source_observations": [
+        {
+          "kind": "pull-request-diff",
+          "locator": "github:heimgewebe/bureau#2007",
+          "sha256": null,
+          "fingerprint": "8cde709d098e1774c27b975adfc54fd6e744227bc42e7ec50eda7ae19177dcd3",
+          "observed_at": "2026-08-15T00:34:25.128711Z",
+          "freshness": "fingerprint-bound",
+          "does_not_establish": [
+            "source_content_identity"
+          ]
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "does_not_establish": [
+      "reusable runtime authority",
+      "runtime rollback",
+      "Grabowski runtime mutation",
+      "Queue/claim/dispatch authority",
+      "T009 implementation authority",
+      "permission to modify foreign work"
+    ]
+  }
+}

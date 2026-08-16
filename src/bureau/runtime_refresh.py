@@ -29,6 +29,10 @@ SCHEMA_VERSION = 1
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
 DEFAULT_REMOTE_URL = "git@github.com:heimgewebe/bureau.git"
 DEFAULT_REQUIRED_CHECKS = ("validate (3.10)", "validate (3.12)")
+DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS = (
+    *DEFAULT_REQUIRED_CHECKS,
+    "registry-registration-preflight/freshness",
+)
 DEFAULT_SLO_SECONDS = 5400
 DEFAULT_INTENT_TTL_SECONDS = 900
 DEFAULT_MIN_LEASE_REMAINING_SECONDS = 600
@@ -873,6 +877,89 @@ def _runtime_authority_metadata(spec: dict[str, Any]) -> tuple[dict[str, Any], d
     return metadata, authority
 
 
+def _validate_runtime_refresh_authority_contract(
+    *,
+    spec: dict[str, Any],
+    approval_task_id: str,
+    allow_planned: bool,
+) -> tuple[dict[str, Any], dict[str, Any], str]:
+    if spec.get("id") != approval_task_id:
+        raise RuntimeRefreshError(
+            "authority-task-id-mismatch",
+            "TaskSpec does not match approval_task_id",
+            details={"expected": approval_task_id, "observed": spec.get("id")},
+        )
+    state = spec.get("state")
+    if state in legacy.TERMINAL_TASK_STATES:
+        raise RuntimeRefreshError(
+            "authority-task-terminal",
+            "terminal TaskSpec cannot authorize or bootstrap a runtime refresh",
+            details={"task_id": approval_task_id, "state": state},
+        )
+    metadata, authority = _runtime_authority_metadata(spec)
+    required_values = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "mode": RUNTIME_AUTHORITY_MODE,
+        "single_use": True,
+        "required_action_class": "runtime_mutation",
+        "required_approval_level": "break_glass",
+        "required_claim_resource": "component.bureau.runtime",
+        "target_binding": RUNTIME_AUTHORITY_TARGET_BINDING,
+        "forbid_foreign_task_substitution": True,
+        "forbid_historical_target_reuse": True,
+        "successor_task_required_after_terminal": True,
+    }
+    mismatched = {
+        key: {"expected": value, "observed": authority.get(key)}
+        for key, value in required_values.items()
+        if authority.get(key) != value
+    }
+    if mismatched:
+        raise RuntimeRefreshError(
+            "authority-contract-invalid",
+            "TaskSpec runtime_refresh_authority contract is not single-use and target-bound",
+            details={"mismatched": mismatched},
+        )
+    required_states = authority.get("required_task_state")
+    if required_states != list(RUNTIME_AUTHORITY_ALLOWED_STATES):
+        raise RuntimeRefreshError(
+            "authority-state-contract-invalid",
+            "runtime authority allowed-state contract is invalid",
+            details={"observed": required_states},
+        )
+    allowed_states = set(required_states)
+    if allow_planned:
+        allowed_states.add("planned")
+    if state not in allowed_states:
+        raise RuntimeRefreshError(
+            "authority-task-state-invalid",
+            "TaskSpec is not in an allowed runtime-authority state",
+            details={"task_id": approval_task_id, "state": state},
+        )
+    declared = spec.get("execution")
+    declared = declared.get("approval") if isinstance(declared, dict) else None
+    if not isinstance(declared, dict) or (
+        declared.get("action_class") != "runtime_mutation"
+        or declared.get("required_level") != "break_glass"
+    ):
+        raise RuntimeRefreshError(
+            "authority-approval-contract-invalid",
+            "TaskSpec approval contract is not runtime_mutation/break_glass",
+        )
+    claims = spec.get("claims")
+    if not isinstance(claims, list) or not any(
+        isinstance(claim, dict)
+        and claim.get("resource") == "component.bureau.runtime"
+        and claim.get("mode") == "write"
+        for claim in claims
+    ):
+        raise RuntimeRefreshError(
+            "authority-claim-contract-invalid",
+            "TaskSpec does not claim the required Bureau runtime resource",
+        )
+    return metadata, authority, str(state)
+
+
 def validate_authoritative_runtime_refresh_task(
     *,
     store: Any,
@@ -931,71 +1018,11 @@ def validate_authoritative_runtime_refresh_task(
                 "observed_spec_sha256": digest,
             },
         )
-    state = spec.get("state")
-    if state in legacy.TERMINAL_TASK_STATES:
-        raise RuntimeRefreshError(
-            "authority-task-terminal",
-            "terminal TaskSpec cannot authorize a runtime refresh",
-            details={"task_id": approval_task_id, "state": state},
-        )
-    metadata, authority = _runtime_authority_metadata(spec)
-    required_values = {
-        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
-        "mode": RUNTIME_AUTHORITY_MODE,
-        "single_use": True,
-        "required_action_class": "runtime_mutation",
-        "required_approval_level": "break_glass",
-        "required_claim_resource": "component.bureau.runtime",
-        "target_binding": RUNTIME_AUTHORITY_TARGET_BINDING,
-        "forbid_foreign_task_substitution": True,
-        "forbid_historical_target_reuse": True,
-        "successor_task_required_after_terminal": True,
-    }
-    mismatched = {
-        key: {"expected": value, "observed": authority.get(key)}
-        for key, value in required_values.items()
-        if authority.get(key) != value
-    }
-    if mismatched:
-        raise RuntimeRefreshError(
-            "authority-contract-invalid",
-            "TaskSpec runtime_refresh_authority contract is not single-use and target-bound",
-            details={"mismatched": mismatched},
-        )
-    required_states = authority.get("required_task_state")
-    if required_states != list(RUNTIME_AUTHORITY_ALLOWED_STATES):
-        raise RuntimeRefreshError(
-            "authority-state-contract-invalid",
-            "runtime authority allowed-state contract is invalid",
-            details={"observed": required_states},
-        )
-    if state not in required_states:
-        raise RuntimeRefreshError(
-            "authority-task-state-invalid",
-            "authoritative TaskSpec is not in an allowed nonterminal state",
-            details={"task_id": approval_task_id, "state": state},
-        )
-    declared = spec.get("execution")
-    declared = declared.get("approval") if isinstance(declared, dict) else None
-    if not isinstance(declared, dict) or (
-        declared.get("action_class") != "runtime_mutation"
-        or declared.get("required_level") != "break_glass"
-    ):
-        raise RuntimeRefreshError(
-            "authority-approval-contract-invalid",
-            "TaskSpec approval contract is not runtime_mutation/break_glass",
-        )
-    claims = spec.get("claims")
-    if not isinstance(claims, list) or not any(
-        isinstance(claim, dict)
-        and claim.get("resource") == "component.bureau.runtime"
-        and claim.get("mode") == "write"
-        for claim in claims
-    ):
-        raise RuntimeRefreshError(
-            "authority-claim-contract-invalid",
-            "TaskSpec does not claim the required Bureau runtime resource",
-        )
+    metadata, authority, state = _validate_runtime_refresh_authority_contract(
+        spec=spec,
+        approval_task_id=approval_task_id,
+        allow_planned=False,
+    )
     consumption_value = authority.get("consumption")
     consumption = (
         _validated_authority_consumption(consumption_value)
@@ -1048,6 +1075,395 @@ def validate_authoritative_runtime_refresh_task(
         "state": state,
         "target_sha256": target_sha256,
         "target_binding_receipt": binding,
+    }
+
+
+def _validate_runtime_refresh_authority_adoption_spec(
+    *,
+    spec: dict[str, Any],
+    approval_task_id: str,
+) -> dict[str, Any]:
+    metadata, authority, state = _validate_runtime_refresh_authority_contract(
+        spec=spec,
+        approval_task_id=approval_task_id,
+        allow_planned=True,
+    )
+    publication = metadata.get("publication_path")
+    if not isinstance(publication, dict) or (
+        publication.get("kind") != "normal-protected-pull-request"
+        or publication.get("state_store_transition")
+        != "seed-missing-preserve-state-store"
+    ):
+        raise RuntimeRefreshError(
+            "authority-adoption-publication-contract-invalid",
+            "runtime authority is not marked for protected missing-only StateStore adoption",
+        )
+    if (
+        authority.get("consumption") is not None
+        or authority.get("target_binding_receipt") is not None
+        or metadata.get("runtime_closeout") is not None
+    ):
+        raise RuntimeRefreshError(
+            "authority-adoption-already-used",
+            "runtime authority already contains target, consumption or closeout evidence",
+        )
+    return {
+        "state": state,
+        "publication_path": dict(publication),
+    }
+
+
+def _runtime_authority_task_path(approval_task_id: str) -> Path:
+    if (
+        not isinstance(approval_task_id, str)
+        or not approval_task_id
+        or "/" in approval_task_id
+        or "\\" in approval_task_id
+        or ".." in approval_task_id
+    ):
+        raise RuntimeRefreshError(
+            "authority-adoption-task-id-invalid",
+            "approval_task_id is unsafe for exact Registry lookup",
+        )
+    return Path("registry/tasks") / f"{approval_task_id}.json"
+
+
+def _git_stdout(registry_root: Path, arguments: list[str]) -> str:
+    argv = ["git", "-C", str(registry_root), *arguments]
+    return _require_command(_run(argv), argv)
+
+
+def verify_runtime_refresh_authority_publication(
+    *,
+    registry_root: Path,
+    repository: str,
+    approval_task_id: str,
+    publication_pr: int,
+    publication_merge_commit: str,
+    expected_main_commit: str,
+    expected_task_file_sha256: str,
+    required_checks: tuple[str, ...] = DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS,
+    github: Callable[[list[str]], Any] = gh_json,
+    registry: Any | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    root = registry_root.expanduser().resolve()
+    relative = _runtime_authority_task_path(approval_task_id)
+    task_path = root / relative
+    if root.is_symlink() or not root.is_dir():
+        raise RuntimeRefreshError(
+            "authority-adoption-registry-root-invalid",
+            "Registry root is not a regular directory",
+        )
+    if task_path.is_symlink() or not task_path.is_file():
+        raise RuntimeRefreshError(
+            "authority-adoption-task-file-missing",
+            "exact runtime authority TaskSpec file is absent",
+            details={"path": str(relative)},
+        )
+    if not _is_sha256(expected_task_file_sha256):
+        raise RuntimeRefreshError(
+            "authority-adoption-file-digest-invalid",
+            "expected TaskSpec file digest is invalid",
+        )
+    observed_file_sha256 = sha256_bytes(task_path.read_bytes())
+    if observed_file_sha256 != expected_task_file_sha256:
+        raise RuntimeRefreshError(
+            "authority-adoption-file-digest-mismatch",
+            "runtime authority TaskSpec file digest changed",
+            details={
+                "expected": expected_task_file_sha256,
+                "observed": observed_file_sha256,
+            },
+        )
+    try:
+        raw_spec = json.loads(task_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeRefreshError(
+            "authority-adoption-task-file-invalid",
+            "runtime authority TaskSpec file is not valid JSON",
+        ) from exc
+    if not isinstance(raw_spec, dict):
+        raise RuntimeRefreshError(
+            "authority-adoption-task-file-invalid",
+            "runtime authority TaskSpec payload is not an object",
+        )
+    adoption_contract = _validate_runtime_refresh_authority_adoption_spec(
+        spec=raw_spec,
+        approval_task_id=approval_task_id,
+    )
+
+    if (
+        not isinstance(publication_pr, int)
+        or isinstance(publication_pr, bool)
+        or publication_pr < 1
+        or not isinstance(publication_merge_commit, str)
+        or len(publication_merge_commit) != 40
+        or not isinstance(expected_main_commit, str)
+        or len(expected_main_commit) != 40
+    ):
+        raise RuntimeRefreshError(
+            "authority-adoption-publication-binding-invalid",
+            "publication PR/main/merge binding is invalid",
+        )
+
+    observed_head = _git_stdout(root, ["rev-parse", "HEAD"])
+    if observed_head != expected_main_commit:
+        raise RuntimeRefreshError(
+            "authority-adoption-checkout-head-mismatch",
+            "Registry checkout is not bound to expected current main",
+            details={"expected": expected_main_commit, "observed": observed_head},
+        )
+    status = _git_stdout(root, ["status", "--porcelain", "--untracked-files=no"])
+    if status:
+        raise RuntimeRefreshError(
+            "authority-adoption-checkout-dirty",
+            "Registry checkout has tracked local changes",
+        )
+
+    protection = github(["api", f"repos/{repository}/branches/main/protection"])
+    protected_status = (
+        protection.get("required_status_checks")
+        if isinstance(protection, dict)
+        else None
+    )
+    protected_contexts = (
+        protected_status.get("contexts") if isinstance(protected_status, dict) else None
+    )
+    force_pushes = protection.get("allow_force_pushes") if isinstance(protection, dict) else None
+    deletions = protection.get("allow_deletions") if isinstance(protection, dict) else None
+    if (
+        not isinstance(protected_status, dict)
+        or protected_status.get("strict") is not True
+        or not isinstance(protected_contexts, list)
+        or any(
+            not isinstance(context, str) or not context for context in protected_contexts
+        )
+        or not set(required_checks).issubset(set(protected_contexts))
+        or not isinstance(force_pushes, dict)
+        or force_pushes.get("enabled") is not False
+        or not isinstance(deletions, dict)
+        or deletions.get("enabled") is not False
+    ):
+        raise RuntimeRefreshError(
+            "authority-adoption-main-protection-invalid",
+            "GitHub main protection does not preserve the required publication gates",
+            details={
+                "required_checks": list(required_checks),
+                "protected_contexts": protected_contexts,
+            },
+        )
+
+    first_main = github(["api", f"repos/{repository}/commits/main"])
+    if not isinstance(first_main, dict) or first_main.get("sha") != expected_main_commit:
+        raise RuntimeRefreshError(
+            "authority-adoption-main-drift",
+            "GitHub main differs from the adoption checkout",
+        )
+    detail = github(
+        [
+            "pr",
+            "view",
+            str(publication_pr),
+            "--repo",
+            repository,
+            "--json",
+            "number,state,isDraft,mergedAt,mergeCommit,headRefOid,baseRefName,statusCheckRollup,url,files",
+        ]
+    )
+    merge = detail.get("mergeCommit") if isinstance(detail, dict) else None
+    merge_oid = merge.get("oid") if isinstance(merge, dict) else None
+    files = detail.get("files") if isinstance(detail, dict) else None
+    file_paths = (
+        [
+            item["path"]
+            for item in files
+            if isinstance(item, dict) and isinstance(item.get("path"), str)
+        ]
+        if isinstance(files, list)
+        else []
+    )
+    if (
+        not isinstance(detail, dict)
+        or detail.get("number") != publication_pr
+        or detail.get("state") != "MERGED"
+        or detail.get("isDraft") is True
+        or detail.get("baseRefName") != "main"
+        or merge_oid != publication_merge_commit
+        or not isinstance(detail.get("headRefOid"), str)
+        or not detail.get("mergedAt")
+    ):
+        raise RuntimeRefreshError(
+            "authority-adoption-publication-pr-invalid",
+            "publication PR is not the exact protected merged PR",
+        )
+    if file_paths != [relative.as_posix()]:
+        raise RuntimeRefreshError(
+            "authority-adoption-publication-scope-invalid",
+            "publication PR changed files outside the exact authority TaskSpec",
+            details={"observed_files": file_paths},
+        )
+    check_summary = summarize_required_checks(detail.get("statusCheckRollup"), required_checks)
+    bad_checks = [name for name, item in check_summary.items() if item["state"] != "success"]
+    if bad_checks:
+        raise RuntimeRefreshError(
+            "authority-adoption-required-ci-not-green",
+            "publication PR required checks are not green",
+            details={"checks": check_summary},
+        )
+
+    publication_parent = _git_stdout(root, ["rev-parse", f"{publication_merge_commit}^1"])
+    prior_task_path = _git_stdout(
+        root,
+        ["ls-tree", "--name-only", publication_parent, "--", relative.as_posix()],
+    )
+    if prior_task_path:
+        if prior_task_path != relative.as_posix():
+            raise RuntimeRefreshError(
+                "authority-adoption-prior-task-read-invalid",
+                "prior TaskSpec path observation is ambiguous",
+                details={"observed": prior_task_path},
+            )
+        raise RuntimeRefreshError(
+            "authority-adoption-task-not-introduced",
+            "publication PR did not introduce a new runtime authority TaskSpec",
+        )
+
+    ancestry = _run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "merge-base",
+            "--is-ancestor",
+            publication_merge_commit,
+            expected_main_commit,
+        ]
+    )
+    if ancestry.returncode != 0:
+        raise RuntimeRefreshError(
+            "authority-adoption-publication-not-ancestor",
+            "publication merge is not an ancestor of current main",
+        )
+    merge_blob = _git_stdout(
+        root, ["rev-parse", f"{publication_merge_commit}:{relative.as_posix()}"]
+    )
+    main_blob = _git_stdout(
+        root, ["rev-parse", f"{expected_main_commit}:{relative.as_posix()}"]
+    )
+    if merge_blob != main_blob:
+        raise RuntimeRefreshError(
+            "authority-adoption-task-file-drift",
+            "runtime authority TaskSpec changed after its publication merge",
+        )
+    second_main = github(["api", f"repos/{repository}/commits/main"])
+    if not isinstance(second_main, dict) or second_main.get("sha") != expected_main_commit:
+        raise RuntimeRefreshError(
+            "authority-adoption-main-drift",
+            "GitHub main changed during authority adoption preflight",
+        )
+
+    if registry is None:
+        from .v2 import Registry
+        try:
+            registry = Registry.load(root)
+        except (legacy.ValidationError, OSError) as exc:
+            raise RuntimeRefreshError(
+                "authority-adoption-registry-invalid",
+                "Registry validation failed during authority adoption",
+                details={"error": str(exc)},
+            ) from exc
+    task = getattr(registry, "tasks", {}).get(approval_task_id)
+    task_raw = getattr(task, "raw", None)
+    if task_raw != raw_spec:
+        raise RuntimeRefreshError(
+            "authority-adoption-registry-task-mismatch",
+            "validated Registry TaskSpec differs from the exact task file",
+        )
+    return registry, {
+        "repository": repository,
+        "main_commit": expected_main_commit,
+        "publication_pr": publication_pr,
+        "publication_merge_commit": publication_merge_commit,
+        "task_path": relative.as_posix(),
+        "task_file_sha256": observed_file_sha256,
+        "check_summary": check_summary,
+        "task_state": adoption_contract["state"],
+    }
+
+
+def adopt_runtime_refresh_authority(
+    *,
+    registry_root: Path,
+    repository: str,
+    approval_task_id: str,
+    publication_pr: int,
+    publication_merge_commit: str,
+    expected_main_commit: str,
+    expected_task_file_sha256: str,
+    required_checks: tuple[str, ...] = DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS,
+    authority_store: Any | None = None,
+    github: Callable[[list[str]], Any] = gh_json,
+    registry: Any | None = None,
+) -> dict[str, Any]:
+    store = authority_store or _default_authority_store()
+    state_store_binding = _authority_store_binding(store)
+    validated_registry, publication = verify_runtime_refresh_authority_publication(
+        registry_root=registry_root,
+        repository=repository,
+        approval_task_id=approval_task_id,
+        publication_pr=publication_pr,
+        publication_merge_commit=publication_merge_commit,
+        expected_main_commit=expected_main_commit,
+        expected_task_file_sha256=expected_task_file_sha256,
+        required_checks=required_checks,
+        github=github,
+        registry=registry,
+    )
+    try:
+        result = store.seed_missing_registry_task_spec(validated_registry, approval_task_id)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-adoption-state-store-failed",
+            "exact runtime authority StateStore adoption failed closed",
+            details={"task_id": approval_task_id, "error": str(exc)},
+        ) from exc
+    current = _read_authority_task(store, approval_task_id)
+    spec = current.get("spec")
+    if not isinstance(spec, dict):
+        raise RuntimeRefreshError(
+            "authority-adoption-readback-invalid",
+            "adopted runtime authority readback is invalid",
+        )
+    adoption = _validate_runtime_refresh_authority_adoption_spec(
+        spec=spec,
+        approval_task_id=approval_task_id,
+    )
+    if (
+        current.get("revision") != result.get("revision")
+        or current.get("spec_sha256") != result.get("spec_sha256")
+    ):
+        raise RuntimeRefreshError(
+            "authority-adoption-readback-drift",
+            "adopted runtime authority differs from the exact mutation receipt",
+        )
+    return {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": "bureau_runtime_refresh_authority_adoption",
+        "status": "adopted" if result.get("changed") else "already_present",
+        "task_id": approval_task_id,
+        "revision": current["revision"],
+        "spec_sha256": current["spec_sha256"],
+        "state": adoption["state"],
+        "state_store": state_store_binding,
+        "task_spec_root_sha256": result.get("task_spec_root_sha256"),
+        "authoritative_root_sha256": result.get("authoritative_root_sha256"),
+        "publication": publication,
+        "does_not_establish": [
+            "runtime mutation authority while task state is not ready or active",
+            "queue mutation",
+            "claim or dispatch authority",
+            "adoption authority for any other Registry task",
+        ],
     }
 
 
@@ -3724,6 +4140,16 @@ def parser() -> argparse.ArgumentParser:
     observe.add_argument("--required-check", action="append", default=[])
     observe.add_argument("--slo-seconds", type=int, default=DEFAULT_SLO_SECONDS)
 
+    adopt = sub.add_parser("adopt-authority")
+    adopt.add_argument("--registry-root", required=True, type=Path)
+    adopt.add_argument("--repository", default=DEFAULT_REPOSITORY)
+    adopt.add_argument("--approval-task-id", required=True)
+    adopt.add_argument("--publication-pr", required=True, type=int)
+    adopt.add_argument("--publication-merge-commit", required=True)
+    adopt.add_argument("--expected-main-commit", required=True)
+    adopt.add_argument("--task-file-sha256", required=True)
+    adopt.add_argument("--required-check", action="append", default=[])
+
     intent = sub.add_parser("prepare-intent")
     intent.add_argument("--candidate", required=True, type=Path)
     intent.add_argument("--prefix", default="~/.local/share/bureau", type=Path)
@@ -3771,6 +4197,23 @@ def main(argv: list[str] | None = None) -> int:
             path = persist_observation(state_root, observation)
             output = {**observation, "observation_path": str(path)}
             print(json.dumps(output, sort_keys=True))
+            return 0
+        if args.command == "adopt-authority":
+            checks = (
+                tuple(args.required_check)
+                or DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS
+            )
+            result = adopt_runtime_refresh_authority(
+                registry_root=_resolved(args.registry_root),
+                repository=args.repository,
+                approval_task_id=args.approval_task_id,
+                publication_pr=args.publication_pr,
+                publication_merge_commit=args.publication_merge_commit,
+                expected_main_commit=args.expected_main_commit,
+                expected_task_file_sha256=args.task_file_sha256,
+                required_checks=checks,
+            )
+            print(json.dumps(result, sort_keys=True))
             return 0
         if args.command == "prepare-intent":
             candidate = read_json(_resolved(args.candidate))

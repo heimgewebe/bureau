@@ -3759,6 +3759,24 @@ class StateStore:
             "authoritative_root_sha256": replay["authoritative_root_sha256"],
         }
 
+    def seed_missing_registry_task_spec(
+        self,
+        registry: Registry,
+        task_id: str,
+    ) -> dict[str, Any]:
+        """Atomically import exactly one missing Registry TaskSpec."""
+        with self.immediate() as connection:
+            try:
+                result = task_specs.seed_missing_registry_task(connection, registry, task_id)
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+        replay = self.replay_projection()
+        return {
+            **result,
+            "task_spec_root_sha256": replay["task_specs"]["root_sha256"],
+            "authoritative_root_sha256": replay["authoritative_root_sha256"],
+        }
+
     def register_task_spec_with_legacy_import(
         self,
         registry: Registry,

@@ -1,0 +1,169 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein langlebiger Grabowski-Testlauf vergleicht dieselbe begrenzte semantische Projektion für eine extern receipt-gebundene Chrome/CDP-Referenz, Chrome/WebDriver-BiDi und Firefox/WebDriver-BiDi. Semantische Gleichheit wird über einen deterministischen Digest statt über Browser-/Protokollnamen bewertet.",
+      "evidence_type": "object",
+      "id": "triple-semantic-matrix",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-bidi-shadow-matrix:semantic"
+      }
+    },
+    {
+      "assertion": "Chrome/BiDi und Firefox/BiDi werden jeweils mindestens drei Mal unter derselben Testsemantik vermessen. Ergebnisse trennen Sessionaufbau und Gesamtmessung so, dass Engine- und Protokolleffekte später analysiert werden können; Timingwerte bleiben advisory und bestimmen keine Promotion.",
+      "evidence_type": "object",
+      "id": "repeated-engine-protocol-separation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-bidi-shadow-matrix:repeated-measurement"
+      }
+    },
+    {
+      "assertion": "Die Matrix erzeugt oder behauptet keine eigene Produktions-CDP-Autorität. Die Chrome/CDP-Referenz muss außerhalb des Tools aus einer produktiven Semantic-Gateway-/Outcome-Evidenz gebunden werden; fehlende oder unklare Referenzprovenienz blockiert fail-closed.",
+      "evidence_type": "object",
+      "id": "external-cdp-reference-provenance",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-bidi-shadow-matrix:reference-provenance"
+      }
+    },
+    {
+      "assertion": "Der Repository-Code lädt oder installiert keine Browserdriver und verändert keine Systempakete. Driverpfade und Browseridentitäten sind explizite Testinputs; temporäre Profile/Prozesse werden nach dem Test vollständig kompensiert.",
+      "evidence_type": "object",
+      "id": "driver-and-runtime-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-bidi-shadow-matrix:driver-boundary"
+      }
+    },
+    {
+      "assertion": "Der Benchmark ändert weder Chrome/CDP als Produktionsdefault noch Router-, Retry-, Firefox-Backend- oder BiDi-Promotionstatus. Eine spätere Promotion benötigt einen separaten revisionsgebundenen Entscheidungs- und Liveproof-Pfad.",
+      "evidence_type": "object",
+      "id": "no-production-promotion",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-bidi-shadow-matrix:no-promotion"
+      }
+    },
+    {
+      "assertion": "Fokussierte Legacy- und Matrix-Tests sowie die vollständige relevante Repository-Validierung bestehen auf exaktem Head. Ein revisionsgebundener Liveproof mit mindestens drei Wiederholungen pro BiDi-Engine zeigt semantische Parität oder dokumentiert Abweichungen fail-closed.",
+      "evidence_type": "object",
+      "id": "regression-and-live-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-bidi-shadow-matrix:regression-live"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Tooling-only Shadow-Benchmark. Keine automatische Driver-Installation, kein Produktionsrouting, kein BiDi-Cutover, keine Retry- oder Promotion-Autorität. Fremde Browser-/Worker-/Checkout-Zustände bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bestehenden tooling-only WebDriver-BiDi-Shadow-Benchmark zu einer deterministischen Dreifachmatrix erweitern. Eine extern receipt-gebundene Chrome/CDP-Produktionsreferenz wird gegen Chrome/WebDriver-BiDi und Firefox/WebDriver-BiDi auf derselben semantischen Testseite und mit wiederholten Läufen verglichen, sodass Browserengine- und Protokolleffekte getrennt sichtbar werden. Die Matrix bleibt ausschließlich Messinstrument: Produktionsrouting, Retry-Autorität, Browserdefault und Backend-Promotion werden dadurch nicht verändert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-BIDI-SHADOW-MATRIX-20260816",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "WebDriver-BiDi production readiness",
+      "Firefox production backend",
+      "browser routing authority",
+      "automatic retry authority",
+      "protocol performance superiority",
+      "promotion authority"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8145cd731e6a7d1163b4ed0f",
+      "event_id": 7748,
+      "event_created_at": "2026-08-16T13:24:19.211673Z",
+      "request_sha256": "b08bd05d069e65c89cfabd1bddd2990f72d3556dc89ef657dd61806f6627353b",
+      "candidate_event_id": "candidate-event-7d73fda6b149ed1cbaff90ae",
+      "source_fingerprint": "f030e64e3206e1736336f4b41a861c6cb34db949c40f655ae02bf53127bdccc3",
+      "content_fingerprint": "acf82ed5223859bfb69cf049690defd5ddba9163fa00b01b7c8e675358a357aa",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "f030e64e3206e1736336f4b41a861c6cb34db949c40f655ae02bf53127bdccc3",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "conversation:browser-control-plane-wave-b-triple-shadow-20260816",
+        "observed_at": "2026-08-16T13:24:19.096106Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "f030e64e3206e1736336f4b41a861c6cb34db949c40f655ae02bf53127bdccc3",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "conversation:browser-control-plane-wave-b-triple-shadow-20260816",
+          "observed_at": "2026-08-16T13:24:19.096106Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "prior_live_evidence": {
+      "base_commit": "aec02bd5bba4da1f47f7138d0d53fddc8c5b89b9",
+      "chrome_bidi": {
+        "browser": "Chrome 151.0.7922.108",
+        "driver": "ChromeDriver 151.0.7922.108",
+        "median_session_create_ms": 291.734,
+        "median_total_ms": 365.761
+      },
+      "firefox_bidi": {
+        "browser": "Firefox 153.0",
+        "driver": "geckodriver 0.37.1",
+        "median_session_create_ms": 1266.446,
+        "median_total_ms": 1368.475
+      },
+      "focused_tests": "34/34 pass on original and independently reapplied scratch snapshot",
+      "repetitions_per_bidi_engine": 3.0,
+      "scratch_patch_bytes": 34069.0,
+      "scratch_patch_sha256": "efba921b6b2d1b5a1d12088cdfb9b1729bc04c1c41cbdc0f6e096b32faa5b8e7",
+      "semantic_digest": "e0de3112b79bb49b43ab6a8a50697653a5564bc223ceacff53291a5a51c03bce",
+      "timing_interpretation": "advisory only; no winner or promotion"
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 190.0
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "browser",
+    "testing"
+  ],
+  "schema_version": 1.0,
+  "state": "ready",
+  "title": "Chrome/CDP, Chrome/BiDi und Firefox/BiDi gemeinsam im Shadow vermessen"
+}

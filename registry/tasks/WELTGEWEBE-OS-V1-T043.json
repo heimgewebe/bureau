@@ -4,37 +4,55 @@
       "assertion": "Alle proofkritischen OCI-Images besitzen einen kontrollierten Quell-, Cache- oder Mirrorpfad mit dokumentierter Eigentümerschaft, Retention und Ausfallgrenze.",
       "evidence_type": "object",
       "id": "controlled-source",
-      "verifier": "registry contract and inventory"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t043:controlled-source"
+      }
     },
     {
       "assertion": "Proofs verwenden ausschließlich vollständig aufgelöste Digests; Mirror und kanonische Quelle müssen denselben Inhalt belegen, und Tagdrift bleibt ausgeschlossen.",
       "evidence_type": "object",
       "id": "digest-only",
-      "verifier": "digest parity and negative drift tests"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t043:digest-only"
+      }
     },
     {
       "assertion": "Mirror-Ausfall, öffentliche Rate-Limits und vollständige Quell-Nichterreichbarkeit werden getrennt klassifiziert; Fallback ist begrenzt, beobachtbar und kann keinen Integritätsfehler übergehen.",
       "evidence_type": "object",
       "id": "bounded-fallback",
-      "verifier": "outage and integrity failure injection"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t043:bounded-fallback"
+      }
     },
     {
       "assertion": "Ein leerer Runner besteht kind- und HA-Proof bei absichtlich blockierter öffentlicher Registry allein aus dem kontrollierten Pfad; ein falscher Digest scheitert fail-closed.",
       "evidence_type": "object",
       "id": "cold-run-proof",
-      "verifier": "cold runner proof receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t043:cold-run-proof"
+      }
     },
     {
       "assertion": "Speicher-, Egress-, Cleanup- und Retentionbudgets sind gemessen und verhindern unbegrenztes Wachstum oder verdeckte laufende Kosten.",
       "evidence_type": "object",
       "id": "cost-retention",
-      "verifier": "capacity and lifecycle receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t043:cost-retention"
+      }
     },
     {
       "assertion": "Finaler Diff, CI, Supply-Chain-Prüfungen und reale Proofs sind an denselben Head gebunden.",
       "evidence_type": "object",
       "id": "exact-review",
-      "verifier": "review and proof evidence"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t043:exact-review"
+      }
     }
   ],
   "claims": [
@@ -69,7 +87,45 @@
     "reason": "PR #1570 begrenzt transiente OCI-Registryfehler durch Retry, stellt aber bewusst keinen kontrollierten Node-Image-Mirror bereit.",
     "registered_at": "2026-07-24T17:55:00Z",
     "source_head": "211d0fd47d124cb239cf5548b294fa19a9007a4f",
-    "source_pr": "heimgewebe/weltgewebe#1570"
+    "source_pr": "heimgewebe/weltgewebe#1570",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-0dd1b9ecdde7a008737a3cca",
+      "event_id": 7697,
+      "event_created_at": "2026-08-16T06:22:18.477444Z",
+      "request_sha256": "0d021a3556c4121f0b1a98f6a9d5eb55837e03a63294d9d57094316e6ef1a8ed",
+      "candidate_event_id": "candidate-event-6685090dadedbe2617eae946",
+      "source_fingerprint": "24022777af06ff7a52c02cde0185d260a1aa0e202dfabf86f2e4d2af1a3040f4",
+      "content_fingerprint": "0dd1b9ecdde7a008737a3ccaba0ea486630f41e90e83e74dd75cdb8e498063fe",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "24022777af06ff7a52c02cde0185d260a1aa0e202dfabf86f2e4d2af1a3040f4",
+        "freshness": "digest-bound",
+        "kind": "live_runtime_audit",
+        "locator": "grabowski_bureau_pickup_execute:WELTGEWEBE-OS-V1-T043:invalid-acceptance-contract@2026-08-16",
+        "observed_at": "2026-08-16T06:22:18.373622Z",
+        "sha256": "9c52da748bcc16d49c5b0d04533e2d696942968331a18bc57bc45f3f3b61e3e3"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "24022777af06ff7a52c02cde0185d260a1aa0e202dfabf86f2e4d2af1a3040f4",
+          "freshness": "digest-bound",
+          "kind": "live_runtime_audit",
+          "locator": "grabowski_bureau_pickup_execute:WELTGEWEBE-OS-V1-T043:invalid-acceptance-contract@2026-08-16",
+          "observed_at": "2026-08-16T06:22:18.373622Z",
+          "sha256": "9c52da748bcc16d49c5b0d04533e2d696942968331a18bc57bc45f3f3b61e3e3"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
   },
   "priority": {
     "lane": "next",

@@ -1,0 +1,136 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die öffentliche Semantic-Browser-Surface akzeptiert navigate ausschließlich als backend-neutralen Intent; Zielsyntax wird vor Workerzugriff und Effekt konservativ validiert und Browser-/CDP-Methodennamen bleiben außerhalb des Caller-Vertrags.",
+      "evidence_type": "object",
+      "id": "semantic-navigate-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-semantic-navigate:contract"
+      }
+    },
+    {
+      "assertion": "Eine erfolgreiche Navigation liefert eine frische autoritative Post-Observation mit neuer snapshot_id; der vorherige Snapshot ist danach stale und kann keinen weiteren Effekt auslösen.",
+      "evidence_type": "object",
+      "id": "snapshot-and-stale-binding",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-semantic-navigate:snapshot-binding"
+      }
+    },
+    {
+      "assertion": "Navigation gilt erst nach korreliertem Outcome-Readback als observed. Bei Transportverlust, fehlender Korrelation oder fehlgeschlagenem Post-Readback bleibt der Effekt unknown und retry_authorized=false; ein späterer Readback autorisiert keinen automatischen Retry.",
+      "evidence_type": "object",
+      "id": "effect-readback-no-retry",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-semantic-navigate:effect-readback"
+      }
+    },
+    {
+      "assertion": "Redirects und Originwechsel sind über die begrenzte autoritative Observation bewertbar, ohne Credentials, Cookies, Formularwerte, Klartext-Ziel-URL im Audit oder öffentliche Backend-IDs auszugeben. Chrome/CDP bleibt Produktivdefault; Router und BiDi-Cutover sind nicht Teil dieses Tasks.",
+      "evidence_type": "object",
+      "id": "privacy-and-routing-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-semantic-navigate:privacy-boundary"
+      }
+    },
+    {
+      "assertion": "Fokussierte Browser-Semantic-Tests, Repository-Validierung und ein revisionsgebundener Liveproof belegen observe → navigate → frische Observation sowie die fail-closed Ablehnung eines absichtlich stale Snapshots.",
+      "evidence_type": "object",
+      "id": "regression-and-live-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-semantic-navigate:regression-live"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Enger Semantic-Navigate-Folgetask. Keine öffentliche CDP-Kommandosurface, kein Router, kein BiDi-Cutover, keine Credential-/Cookie-Ausgabe und keine Änderung des Chrome/CDP-Produktivdefaults.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die bestehende Semantic Browser Control Plane um genau einen backend-neutralen navigate-Intent erweitern. Das Ziel wird vor Transport validiert, die Worker-/Sessionbindung bleibt erhalten, Chrome/CDP bleibt internes Produktionsbackend und nach Navigation entsteht zwingend ein autoritativer frischer Snapshot. Transportverlust nach möglicherweise erfolgter Navigation gewährt keine automatische Retry-Autorität.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-SEMANTIC-NAVIGATE-20260815",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "WebDriver-BiDi production adapter",
+      "browser routing authority",
+      "permission to expose CDP publicly",
+      "credential or cookie read authority",
+      "automatic retry authority"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ff4df9441862804e26cc28b0",
+      "event_id": 7612,
+      "event_created_at": "2026-08-15T03:45:31.133689Z",
+      "request_sha256": "b32cb0944c26f8fc0335c0531589d848533bb0418bb6f4d392d44ca0600b56d3",
+      "candidate_event_id": "candidate-event-552d75345a8bbc6e73aea7f9",
+      "source_fingerprint": "aa58bfc1968e2ccc48e1013bd6ef8ac0129c45ed2039ff323399486f48822402",
+      "content_fingerprint": "ff4df9441862804e26cc28b0b0815ff1edebb4bbb02514abbc60976709e9eb9f",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "aa58bfc1968e2ccc48e1013bd6ef8ac0129c45ed2039ff323399486f48822402",
+        "freshness": "fingerprint-bound",
+        "kind": "user-authorized-browser-control-plane-followup",
+        "locator": "chat:browser-control-plane-semantic-navigate-20260815",
+        "observed_at": "2026-08-15T05:35:00+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "aa58bfc1968e2ccc48e1013bd6ef8ac0129c45ed2039ff323399486f48822402",
+          "freshness": "fingerprint-bound",
+          "kind": "user-authorized-browser-control-plane-followup",
+          "locator": "chat:browser-control-plane-semantic-navigate-20260815",
+          "observed_at": "2026-08-15T05:35:00+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 180
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Semantic Browser Control Plane um navigate erweitern"
+}

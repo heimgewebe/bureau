@@ -1,0 +1,86 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The audited contract, revision, method, and evidence sources are explicit.",
+      "evidence_type": "object",
+      "id": "audit-01",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-task-supply:audit:01"
+      }
+    },
+    {
+      "assertion": "Belegt, plausibel, and unresolved findings remain separated.",
+      "evidence_type": "object",
+      "id": "audit-02",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-task-supply:audit:02"
+      }
+    },
+    {
+      "assertion": "Any repair has a negative regression test or the no-change closeout is justified.",
+      "evidence_type": "object",
+      "id": "audit-03",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-task-supply:audit:03"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/docs/evidence"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Audit one current Bureau contract against live code, Registry, runtime, and tests; repair only a proven gap or close out with reproducible evidence.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-AUDIT-B90EE27F9B",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "audit",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "b90ee27f9b08c9d0bbe34391d03503d9f872dde7210bf2d3368a05ff456e2c6d",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "a94c9cac2a240c546e93bc7ea5e4095d4097d54bf79c7aa883a19ac4ed86ac02",
+      "schema_version": 1,
+      "scope_path": "docs/evidence",
+      "time_bucket": "20681"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 902
+  },
+  "required_capabilities": [
+    "repository",
+    "audit",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Audit one bounded Bureau contract"
+}

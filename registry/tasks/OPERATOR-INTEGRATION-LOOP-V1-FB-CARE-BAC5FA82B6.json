@@ -1,0 +1,84 @@
+{
+  "acceptance": [
+    {
+      "assertion": "One current care burden and its operational consequence are evidenced.",
+      "evidence_type": "object",
+      "id": "care-01",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-task-supply:care:01"
+      }
+    },
+    {
+      "assertion": "The change removes or consolidates material instead of duplicating it.",
+      "evidence_type": "object",
+      "id": "care-02",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-task-supply:care:02"
+      }
+    },
+    {
+      "assertion": "The resulting documentation remains linked to canonical Registry truth.",
+      "evidence_type": "object",
+      "id": "care-03",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-task-supply:care:03"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/docs"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Reduce one concrete hygiene, documentation, or operability burden without creating a second source of truth.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-CARE-BAC5FA82B6",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "care",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "bac5fa82b648448dcf6a69685985f50e49827af14509a851bbafd151cf2b36f9",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "490acfdbb83c7bf1354792a6f8cce2dd529a3ea71caf3b1ddc1b3dc629c3cefa",
+      "schema_version": 1,
+      "scope_path": "docs",
+      "time_bucket": "20681"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 901
+  },
+  "required_capabilities": [
+    "repository",
+    "documentation",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Perform one bounded Bureau care pass"
+}

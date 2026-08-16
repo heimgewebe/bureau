@@ -292,6 +292,35 @@ def test_snapshot_is_revision_bound_and_readable_by_the_preview_contract(tmp_pat
     assert len(_load_frontier_snapshot(snapshot_path(tmp_path / "supply-state"))) == 8
 
 
+def test_runner_uses_catalog_typed_acceptance_without_injected_mapping(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    frontier = [unbound_candidate(index) for index in range(8)]
+
+    summary = run_supply_cycle(
+        registry_root=root,
+        capabilities=CAPABILITIES,
+        state_root=tmp_path / "supply-state",
+        mutation_authority=True,
+        publish=False,
+        generated_at=NOW,
+        observer=observer_for(frontier),
+        head_reader=head_reader,
+    )
+
+    assert summary["status"] == "refill-proposed"
+    assert summary["publication"]["attempted"] is False
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    assert persisted["publication_plan"]["status"] == "authorized"
+    assert persisted["publication_plan"]["actions"]
+    for proposal in persisted["proposals"]:
+        assert proposal["blockers"] == []
+        criteria = proposal["task"]["acceptance"]
+        assert all(criterion["evidence_type"] == "object" for criterion in criteria)
+        assert all(criterion["verifier"] == "manual_observation" for criterion in criteria)
+
+
 def test_manifest_bound_registry_head_refreshes_snapshot_without_git(tmp_path: Path) -> None:
     root = registry_copy(tmp_path)
     frontier = [unbound_candidate(index) for index in range(8)]

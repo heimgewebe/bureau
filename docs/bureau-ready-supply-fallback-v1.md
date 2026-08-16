@@ -99,6 +99,8 @@ A changed head, changed queue, retained blocker, existing target file, malformed
 
 Publication itself still does **not** establish claimability. The canonical dispatcher must re-read the task and apply its unchanged claim gates. The regression suite proves that an unpublished proposal is absent from the dispatcher, while a published task enters the ordinary pickup frontier and remains blocked by missing capabilities or review approval until those normal gates are satisfied.
 
+Fallback TaskSpecs do not depend on an out-of-band caller to invent an acceptance contract. When no explicit acceptance mapping is supplied, the server-owned fallback catalog materializes each catalog assertion as a typed `object` criterion using a category- and criterion-bound `manual_observation` verifier scope. This is intentionally limited to semantic fallback acceptance because no implementation PR or artifact exists when the TaskSpec is created; repository, CI, merge and runtime gates remain separate lifecycle authorities. An explicit caller-provided mapping still overrides the catalog default and is validated unchanged, so an explicit empty or malformed mapping remains fail-closed.
+
 ## Safety gates
 
 The supply report preserves exact blockers rather than flattening them into a generic unavailable state. Relevant blockers include:

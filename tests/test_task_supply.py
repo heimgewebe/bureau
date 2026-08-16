@@ -19,6 +19,7 @@ from bureau.task_supply import (
     build_registry_supply_report,
     build_supply_report,
     classify_frontier,
+    default_fallback_acceptance_contracts,
     file_sha256,
     publish_supply_plan,
     sha256_json,
@@ -222,6 +223,32 @@ def test_empty_frontier_refills_toward_target_but_is_bounded(tmp_path: Path) -> 
     ]
     assert all(item["claimable"] is False for item in result["proposals"])
     assert all(item["canonical_publication_required"] for item in result["proposals"])
+
+
+def test_default_fallback_acceptance_is_typed_and_publishable(tmp_path: Path) -> None:
+    result = report(tmp_path, [], acceptance_contracts=None)
+
+    assert result["status"] == "refill-proposed"
+    assert result["publication_plan"]["status"] == "authorized"
+    assert result["publication_plan"]["actions"]
+    contracts = default_fallback_acceptance_contracts()
+    assert set(contracts) == {spec["category"] for spec in result["proposals"]} | {
+        "registry-reconciliation",
+        "queue-reconciliation",
+        "error-investigation",
+    }
+    for proposal in result["proposals"]:
+        assert proposal["blockers"] == []
+        criteria = proposal["task"]["acceptance"]
+        assert criteria == contracts[proposal["category"]]
+        assert all(criterion["evidence_type"] == "object" for criterion in criteria)
+        assert all(criterion["verifier"] == "manual_observation" for criterion in criteria)
+        assert all(
+            criterion["verifier_config"]["observation_scope"].startswith(
+                f"bureau-task-supply:{proposal['category']}:"
+            )
+            for criterion in criteria
+        )
 
 
 def test_missing_mutation_authority_is_explicit_blocker(tmp_path: Path) -> None:

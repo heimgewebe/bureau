@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2020-WELTGEWEBE-T043-20260816",
+  "title": "Single-Use-Runtime-Refresh nach Weltgewebe-T043-Publikation #2020",
+  "state": "ready",
+  "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Zweck ist ausschließlich, die nach PR #2020 entstandene Release-/Registry-Identitätsdifferenz zu schließen, damit der bereits geclaimte und vollständig authentifizierte Run BUR-RUN-20260816T171516Z-b41050c16c für WELTGEWEBE-OS-V1-T043 durch den normalen typisierten Closure-Observer bewertet werden kann. Diese Authority verändert keine T043-Evidenz, verifiziert oder terminalisiert T043 nicht selbst und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use bootstrap authority only. Vor dem einzigen Runtime-Effekt sind eine frische main-/PR-/Required-Checks-Observation, target_sha256-Bindung exakt an diese Task-ID und die exakten Live-Leases des Runtime-Refresh-Intents Pflicht. Keine T043-Evidenz-, Queue-, Claim-, Dispatch-, Grabowski-Repo- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "bootstrap-merge-present",
+      "assertion": "Vor dem einzigen Refresh enthält der frisch beobachtete GitHub-main sowohl PR #2020 / Merge-Commit 8919bd9e1eb5a653649ce7ef083893e8629b82c5 als auch diese neue Authority-TaskSpec. Ein älterer Zwischenstand wird nicht deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:bootstrap-merge-present"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehöriger gemergter PR, die erforderlichen Validate-Checks und target_sha256 frisch beobachtet. Jede Drift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; ohne beide Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation/break_glass, single-use und unverbraucht sein. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:authoritative-task-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter einem identischen Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:live-lease-binding"
+      }
+    },
+    {
+      "id": "single-use-lifecycle",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Runtime-Refresh. Nach resultgebundenem Closeout wird sie terminal und niemals für ein späteres Target wiederverwendet; weitere Drift benötigt eine neue Authority-TaskSpec.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:single-use-lifecycle"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; StateStore-Integrität und Runtime-Identity bleiben gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:immutable-readback"
+      }
+    },
+    {
+      "id": "t043-closeout-unblock-only",
+      "assertion": "Der Refresh dient ausschließlich dazu, den normalen typed Acceptance-/Closure-Pfad für WELTGEWEBE-OS-V1-T043 und Run BUR-RUN-20260816T171516Z-b41050c16c wieder freizuschalten. Er verändert das Evidence-Bundle nicht, authentifiziert keine Kriterien, führt keinen T043-Closure selbst aus und verändert keinen Weltgewebe-Code.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:unblock-only"
+      }
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "Die Ausführung schwächt keine Runtime-, Registry-, Queue-, Claim-, Dispatch-, Lease-, Review- oder Merge-Gates und mutiert keine fremden Worktrees, Leases oder Prozesse. Die bereits verbrauchte Authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2016-BROWSER-FOLLOWUPS-20260816 und die ältere Navigate-Authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-28972-NAVIGATE-PUBLISH-20260815 werden nicht wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2020-t043:authority-boundary"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden."
+  },
+  "metadata": {
+    "source": "documented BUREAU-TRUTH-MODEL-V2-T026 protected-PR bootstrap precedent",
+    "bootstrap_reason": "Typed Bureau Registry mutation is fail-closed with release-registry-identity-mismatch because the deployed immutable Bureau runtime is e8a07f0259d2c74507c14dc2352d91f47b139711 while current Registry/main is 8919bd9e1eb5a653649ce7ef083893e8629b82c5 after PR #2020.",
+    "main_at_registration": "8919bd9e1eb5a653649ce7ef083893e8629b82c5",
+    "deployed_source_at_registration": "e8a07f0259d2c74507c14dc2352d91f47b139711",
+    "trigger_merge": {
+      "pull_request": 2020,
+      "merge_commit": "8919bd9e1eb5a653649ce7ef083893e8629b82c5",
+      "registered_task_id": "WELTGEWEBE-OS-V1-T043"
+    },
+    "blocked_run": {
+      "run_id": "BUR-RUN-20260816T171516Z-b41050c16c",
+      "task_id": "WELTGEWEBE-OS-V1-T043",
+      "state": "assigned",
+      "evidence_bundle_sha256": "e64a81d48d45cf5b5edf24ca1b0cd2b67f66b0d3bc3d768ea936ce14cca03cb6",
+      "authenticated_criterion_count": 6
+    },
+    "forbidden_authority_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2016-BROWSER-FOLLOWUPS-20260816",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-28972-NAVIGATE-PUBLISH-20260815",
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2012-FRONTIER-20260816"
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed immutable Bureau release e8a07f0259d2 lags Registry/main 8919bd9e1eb5 after PR #2020, so Registry-mutating reconcile blocks fail-closed. The installed exact-one bootstrap permits only this new Authority TaskSpec as a one-file protected PR followed by conservative seed-missing-preserve-state-store adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "T043 evidence mutation",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before task merge"
+      ]
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal or purpose-mismatched runtime authorities",
+      "T043 verification or terminalization authority",
+      "Weltgewebe mutation authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    }
+  }
+}

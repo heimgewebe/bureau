@@ -2,23 +2,48 @@
   "acceptance": [
     {
       "assertion": "Genau eine maschinenlesbare Quelle definiert Metrik, Einheit, Perzentil, Szenario, Testgerät, Netzwerkprofil, Datensatz, Konkurrenzlast, Grenzwert und Releasewirkung; bestehende Dateien leiten daraus ab oder entfallen.",
-      "id": "canonical-contract"
+      "evidence_type": "object",
+      "id": "canonical-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t048:canonical-contract"
+      }
     },
     {
       "assertion": "Ein reproduzierbarer Browserlauf misst mindestens erzeugte JavaScript-/CSS-Größe, LCP, INP und Zeit bis zur benutzbaren Karte für dokumentierte Desktop- und Mobilprofile.",
-      "id": "real-web-measurement"
+      "evidence_type": "object",
+      "id": "real-web-measurement",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t048:real-web-measurement"
+      }
     },
     {
       "assertion": "Reproduzierbare Lastläufe messen API-p50/p95/p99, Fehlerrate, Datenbanklatenz und Abfragezahl unter einem definierten Datensatz und einer definierten Konkurrenzlast.",
-      "id": "real-api-database-measurement"
+      "evidence_type": "object",
+      "id": "real-api-database-measurement",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t048:real-api-database-measurement"
+      }
     },
     {
       "assertion": "CPU und Speicher pro API-Replik werden gemessen; ein kontrolliert künstlich verlangsamter oder vergrößerter Prüffall lässt das Gate nachweislich scheitern.",
-      "id": "resource-and-regression-proof"
+      "evidence_type": "object",
+      "id": "resource-and-regression-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t048:resource-and-regression-proof"
+      }
     },
     {
       "assertion": "Messartefakte, Grenzwerte und finaler Diff sind an denselben exakten Head gebunden; relevante Tests und GitHub-Prüfungen sind grün und unbelegte Produktionskapazität wird nicht behauptet.",
-      "id": "revision-bound-review"
+      "evidence_type": "object",
+      "id": "revision-bound-review",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t048:revision-bound-review"
+      }
     }
   ],
   "claims": [
@@ -46,31 +71,49 @@
     "candidate_id": "candidate-8fb4290c853ec6ec00da070c",
     "deduplication": "Bureau-Live-Assessment vom 26. Juli 2026: promote, keine exakten Dubletten.",
     "event_id": 1201,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bfc546d2b54ec75688c577ba",
+      "event_id": 7821,
+      "event_created_at": "2026-08-16T18:49:09.883339Z",
+      "request_sha256": "6d17c3a097bfb804eab295959181b980926649b1e90532c87eb65789f24a7a0c",
+      "candidate_event_id": "candidate-event-5bec725ff20f2ab2c07fc2bc",
+      "source_fingerprint": "2f4033b58038850c6fdd2a05f8c9a71db3ce21c88f6123f669e334f6a58e114b",
+      "content_fingerprint": "98807d3869a2fcaa1725ac72be05076e6311d8b2546682db733fba1ef3b5433a",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "2f4033b58038850c6fdd2a05f8c9a71db3ce21c88f6123f669e334f6a58e114b",
+        "freshness": "digest-bound",
+        "kind": "bureau_task_spec_audit",
+        "locator": "bureau:registry/tasks/WELTGEWEBE-OS-V1-T048.json@ae275fc895e6ab460172f479fa7ba30c62dfff91",
+        "observed_at": "2026-08-16T18:49:09.776009Z",
+        "sha256": "499739b59fbd40b549df9427b934874f81c5e6a026338ac12b26cb4869e820b5"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "2f4033b58038850c6fdd2a05f8c9a71db3ce21c88f6123f669e334f6a58e114b",
+          "freshness": "digest-bound",
+          "kind": "bureau_task_spec_audit",
+          "locator": "bureau:registry/tasks/WELTGEWEBE-OS-V1-T048.json@ae275fc895e6ab460172f479fa7ba30c62dfff91",
+          "observed_at": "2026-08-16T18:49:09.776009Z",
+          "sha256": "499739b59fbd40b549df9427b934874f81c5e6a026338ac12b26cb4869e820b5"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
     "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
     "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
     "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
     "source_finding": "F-002",
-    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-8fb4290c853ec6ec00da070c",
-      "event_id": 1201,
-      "event_created_at": "2026-07-26T08:05:35.325527Z",
-      "request_sha256": "467b7022809c2f77ea1b85d1f670d1091617e2c24946f34387dbac90f1df7972",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "operator_audit_finding",
-        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-002@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
-        "observed_at": "2026-07-26T08:05:35.315772Z",
-        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
   },
   "priority": {
     "lane": "now",

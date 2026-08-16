@@ -429,6 +429,35 @@ def _fallback_task(
     }
 
 
+def default_fallback_acceptance_contracts() -> dict[str, list[dict[str, Any]]]:
+    """Build executable typed acceptance from the server-owned fallback catalog.
+
+    Fallback TaskSpecs are created before a concrete implementation PR or artifact
+    exists, so their semantic criteria use the bounded manual-observation verifier.
+    Repository, CI, merge and runtime gates remain separate lifecycle authorities.
+    Explicit caller-provided acceptance mappings still override this default and are
+    validated unchanged; an explicit empty mapping therefore remains fail-closed.
+    """
+
+    return {
+        spec.category: [
+            {
+                "id": f"{spec.category}-{index:02d}",
+                "assertion": assertion,
+                "evidence_type": "object",
+                "verifier": "manual_observation",
+                "verifier_config": {
+                    "observation_scope": (
+                        f"bureau-task-supply:{spec.category}:{index:02d}"
+                    )
+                },
+            }
+            for index, assertion in enumerate(spec.acceptance, start=1)
+        ]
+        for spec in FALLBACK_CATALOG
+    }
+
+
 def build_supply_report(
     frontier: Sequence[Mapping[str, Any]],
     *,
@@ -485,7 +514,11 @@ def build_supply_report(
     if not runtime_healthy:
         global_blockers.append("required-runtime-unhealthy")
     category_blocks = catalog_blockers or {}
-    explicit_acceptance = acceptance_contracts or {}
+    explicit_acceptance = (
+        default_fallback_acceptance_contracts()
+        if acceptance_contracts is None
+        else acceptance_contracts
+    )
     frontier_by_task = {
         str(item["task_id"]): item
         for item in classification["items"]

@@ -62,6 +62,7 @@ from .operator_intake import (
     OperatorIntakeError,
     candidate_assess,
     candidate_record_request,
+    promote_task_ready,
     publication_preview,
     publish_task_proposal,
     read_json_object_file,
@@ -367,6 +368,13 @@ def parser() -> argparse.ArgumentParser:
     task_publish_parser.add_argument("--resource-db")
     task_publish_parser.add_argument("--workspace-root")
     task_publish_parser.add_argument("--receipt")
+    task_ready_parser = sub.add_parser("operator-task-ready")
+    task_ready_parser.add_argument("--publication-receipt", required=True)
+    task_ready_mode = task_ready_parser.add_mutually_exclusive_group(required=True)
+    task_ready_mode.add_argument("--preview", action="store_true")
+    task_ready_mode.add_argument("--apply", action="store_true")
+    task_ready_mode.add_argument("--readback", action="store_true")
+    task_ready_parser.add_argument("--promotion-receipt")
     claim_intent = sub.add_parser("claim-intent")
     claim_intent.add_argument("--worker", required=True)
     claim_intent.add_argument("--kind", default="interactive-agent")
@@ -648,6 +656,8 @@ def _command_mutates(args: argparse.Namespace) -> bool:
         return bool(args.write_plan or args.apply_plan)
     if command == "operator-task-publish":
         return bool(args.apply)
+    if command == "operator-task-ready":
+        return bool(args.apply)
     if command == "projection-repair":
         return bool(args.apply)
     if command == "receipt-normalize":
@@ -658,7 +668,12 @@ def _command_mutates(args: argparse.Namespace) -> bool:
 
 
 def _command_effect_scope(args: argparse.Namespace) -> str:
-    return classify_command_effect_scope(args.command, mutates=_command_mutates(args))
+    mutates = _command_mutates(args)
+    if args.command == "operator-task-ready" and mutates:
+        # This command changes only authoritative coordination StateStore state.
+        # It never mutates Registry/Queue truth, so use the canonical state binding.
+        return _COMMAND_EFFECT_COORDINATION_STATE_MUTATION
+    return classify_command_effect_scope(args.command, mutates=mutates)
 
 
 def _canonical_coordination_state_binding(
@@ -1524,6 +1539,19 @@ def main(argv: list[str] | None = None) -> int:
                 if args.lease_binding or args.resource_db or args.workspace_root or args.receipt:
                     raise StateError("publication effect arguments require --apply")
                 value = publication_preview(registry, store, plan_path=args.plan)
+        elif args.command == "operator-task-ready":
+            mode = "apply" if args.apply else "readback" if args.readback else "preview"
+            if mode == "preview" and args.promotion_receipt:
+                raise StateError("--promotion-receipt is valid only with --apply or --readback")
+            if mode in {"apply", "readback"} and not args.promotion_receipt:
+                raise StateError(f"--{mode} requires --promotion-receipt")
+            value = promote_task_ready(
+                registry,
+                store,
+                publication_receipt_path=args.publication_receipt,
+                promotion_receipt_path=args.promotion_receipt,
+                mode=mode,
+            )
         elif args.command == "claim-intent":
             value = dispatcher.claim_intent(
                 args.worker,

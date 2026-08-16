@@ -4525,3 +4525,354 @@ def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
     assert caught.value.details["semantic_similarity_consulted"] is False
     assert all(command[:2] != ["git", "push"] for command in calls)
     assert all(command[:3] != ["gh", "pr", "create"] for command in calls)
+
+
+def _merged_task_promotion_fixture(registry_factory, tmp_path, monkeypatch):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = _record(registry, store, key="source:promotion")
+    task = _task(root)
+    task["depends_on"] = []
+    plan_path = tmp_path / "promotion-proposal.json"
+    task_propose(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        task_json=task,
+        publishing_task_id="BUR-TEST-001-T001",
+        path=plan_path,
+    )
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    publication_receipt = tmp_path / "publication-receipt.json"
+    published = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=publication_receipt,
+        publisher=FakePublisher(),
+    )
+    task_path = root / published["target_path"]
+    task_path.parent.mkdir(parents=True, exist_ok=True)
+    exact_plan = json.loads(plan_path.read_text())
+    task_path.write_bytes(operator_intake_module._render_task(exact_plan["task_json"]))
+    _git(root, "add", published["target_path"])
+    _git(root, "commit", "-m", "merge published standalone task fixture")
+    merged_registry = Registry.load(root)
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_github_repository_for_preview",
+        lambda _root: "example/bureau",
+    )
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_promotion_pull_request_readback",
+        lambda repository, number: {
+            "number": number,
+            "state": "MERGED",
+            "mergedAt": "2026-08-16T15:00:00Z",
+            "mergeCommit": {"oid": "a" * 40},
+            "headRefOid": published["publication"]["head"],
+            "headRefName": published["publication"]["branch"],
+            "baseRefName": "main",
+            "url": f"https://example.invalid/pull/{number}",
+        },
+    )
+    return root, merged_registry, store, publication_receipt, published
+
+
+def test_promote_task_ready_preview_apply_readback_and_exact_replay(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry, store, publication_receipt, published = _merged_task_promotion_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    unrelated_before = store.task_spec("BUR-TEST-001-T001")
+    assert unrelated_before is not None
+
+    preview = operator_intake_module.promote_task_ready(
+        registry,
+        store,
+        publication_receipt_path=publication_receipt,
+        mode="preview",
+    )
+    assert preview["status"] == "ready"
+    assert preview["read_only"] is True
+    assert preview["before"] == {
+        "revision": 1,
+        "spec_sha256": published["task_spec_revision"]["spec_sha256"],
+        "state": "planned",
+    }
+    assert store.task_spec(published["task_id"])["revision"] == 1
+
+    promotion_receipt = tmp_path / "promotion-receipt.json"
+    applied = operator_intake_module.promote_task_ready(
+        registry,
+        store,
+        publication_receipt_path=publication_receipt,
+        promotion_receipt_path=promotion_receipt,
+        mode="apply",
+    )
+    promoted = store.task_spec(published["task_id"])
+    assert promoted is not None
+    assert promoted["revision"] == 2
+    assert promoted["spec"]["state"] == "ready"
+    assert promoted["spec_sha256"] == applied["after"]["spec_sha256"]
+    assert applied["queue_mutated"] is False
+    assert applied["readback_verified"] is True
+    assert unrelated_before == store.task_spec("BUR-TEST-001-T001")
+
+    readback = operator_intake_module.promote_task_ready(
+        registry,
+        store,
+        publication_receipt_path=publication_receipt,
+        promotion_receipt_path=promotion_receipt,
+        mode="readback",
+    )
+    replay = operator_intake_module.promote_task_ready(
+        registry,
+        store,
+        publication_receipt_path=publication_receipt,
+        promotion_receipt_path=promotion_receipt,
+        mode="apply",
+    )
+    assert readback["idempotent_replay"] is True
+    assert replay["idempotent_replay"] is True
+    assert replay["receipt_sha256"] == applied["receipt_sha256"]
+    assert store.task_spec(published["task_id"])["revision"] == 2
+
+
+def test_promote_task_ready_rejects_unmerged_pr_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry, store, publication_receipt, published = _merged_task_promotion_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_promotion_pull_request_readback",
+        lambda repository, number: {
+            "number": number,
+            "state": "OPEN",
+            "mergedAt": None,
+            "mergeCommit": None,
+            "headRefOid": published["publication"]["head"],
+            "headRefName": published["publication"]["branch"],
+            "baseRefName": "main",
+            "url": f"https://example.invalid/pull/{number}",
+        },
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module.promote_task_ready(
+            registry,
+            store,
+            publication_receipt_path=publication_receipt,
+            mode="preview",
+        )
+    assert caught.value.code == "promotion-pr-identity-mismatch"
+    current = store.task_spec(published["task_id"])
+    assert current is not None
+    assert current["revision"] == 1
+    assert current["spec"]["state"] == "planned"
+
+
+def test_promote_task_ready_rejects_exact_head_drift_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry, store, publication_receipt, published = _merged_task_promotion_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_promotion_pull_request_readback",
+        lambda repository, number: {
+            "number": number,
+            "state": "MERGED",
+            "mergedAt": "2026-08-16T15:00:00Z",
+            "mergeCommit": {"oid": "a" * 40},
+            "headRefOid": "0" * 40,
+            "headRefName": published["publication"]["branch"],
+            "baseRefName": "main",
+            "url": f"https://example.invalid/pull/{number}",
+        },
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module.promote_task_ready(
+            registry,
+            store,
+            publication_receipt_path=publication_receipt,
+            mode="preview",
+        )
+    assert caught.value.code == "promotion-pr-identity-mismatch"
+    assert store.task_spec(published["task_id"])["revision"] == 1
+
+
+def test_promote_task_ready_rejects_task_file_and_state_revision_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, registry, store, publication_receipt, published = _merged_task_promotion_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    task_path = root / published["target_path"]
+    task_path.write_bytes(task_path.read_bytes() + b"\n")
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module.promote_task_ready(
+            registry,
+            store,
+            publication_receipt_path=publication_receipt,
+            mode="preview",
+        )
+    assert caught.value.code == "promotion-task-file-drift"
+    _git(root, "restore", "--source=HEAD", "--", published["target_path"])
+
+    current = store.task_spec(published["task_id"])
+    assert current is not None
+    blocked_spec = json.loads(json.dumps(current["spec"]))
+    blocked_spec["state"] = "blocked"
+    blocked_revision = store.put_task_spec(
+        blocked_spec,
+        idempotency_key="promotion-intermediate-blocked-revision",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    assert blocked_revision["revision"] == 2
+    planned_again = json.loads(json.dumps(blocked_spec))
+    planned_again["state"] = "planned"
+    same_spec_later_revision = store.put_task_spec(
+        planned_again,
+        idempotency_key="promotion-same-spec-later-revision",
+        expected_revision=blocked_revision["revision"],
+        source="test",
+    )
+    assert same_spec_later_revision["revision"] == 3
+    assert same_spec_later_revision["spec_sha256"] == current["spec_sha256"]
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module.promote_task_ready(
+            registry,
+            store,
+            publication_receipt_path=publication_receipt,
+            mode="preview",
+        )
+    assert caught.value.code == "promotion-state-preimage-mismatch"
+
+
+def test_promote_task_ready_rejects_parent_or_child_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, _, store, publication_receipt, published = _merged_task_promotion_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    child_path = root / "registry" / "tasks" / "BUR-TEST-001-T002.json"
+    child = json.loads(child_path.read_text())
+    child.setdefault("metadata", {})["parent_task"] = published["task_id"]
+    child_path.write_text(json.dumps(child, indent=2) + "\n")
+    _git(root, "add", str(child_path.relative_to(root)))
+    _git(root, "commit", "-m", "attach child to promotion fixture")
+    registry = Registry.load(root)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module.promote_task_ready(
+            registry,
+            store,
+            publication_receipt_path=publication_receipt,
+            mode="preview",
+        )
+    assert caught.value.code == "promotion-standalone-task-required"
+    assert caught.value.details["child_task_ids"] == ["BUR-TEST-001-T002"]
+    assert store.task_spec(published["task_id"])["revision"] == 1
+
+
+def test_promote_task_ready_rejects_state_store_only_child_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry, store, publication_receipt, published = _merged_task_promotion_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    child = store.task_spec("BUR-TEST-001-T002")
+    assert child is not None
+    child_spec = json.loads(json.dumps(child["spec"]))
+    child_spec.setdefault("metadata", {})["parent_task"] = published["task_id"]
+    child_revision = store.put_task_spec(
+        child_spec,
+        idempotency_key="promotion-state-only-child",
+        expected_revision=child["revision"],
+        source="test",
+    )
+    assert child_revision["revision"] == child["revision"] + 1
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module.promote_task_ready(
+            registry,
+            store,
+            publication_receipt_path=publication_receipt,
+            mode="preview",
+        )
+    assert caught.value.code == "promotion-standalone-task-required"
+    assert caught.value.details["state_store_child_task_ids"] == ["BUR-TEST-001-T002"]
+    assert caught.value.details["child_task_ids"] == ["BUR-TEST-001-T002"]
+    assert store.task_spec(published["task_id"])["revision"] == 1
+
+
+def test_promote_task_ready_replay_rejects_receipt_binding_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry, store, publication_receipt, _ = _merged_task_promotion_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    promotion_receipt = tmp_path / "promotion-receipt.json"
+    operator_intake_module.promote_task_ready(
+        registry,
+        store,
+        publication_receipt_path=publication_receipt,
+        promotion_receipt_path=promotion_receipt,
+        mode="apply",
+    )
+    tampered = json.loads(promotion_receipt.read_text())
+    tampered["publication"]["merge_commit"] = "b" * 40
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    promotion_receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module.promote_task_ready(
+            registry,
+            store,
+            publication_receipt_path=publication_receipt,
+            promotion_receipt_path=promotion_receipt,
+            mode="readback",
+        )
+    assert caught.value.code == "promotion-receipt-binding-mismatch"
+
+
+def test_operator_task_ready_effect_scope_is_read_only_except_apply():
+    parser = bureau_cli.parser()
+    preview = parser.parse_args(
+        ["operator-task-ready", "--publication-receipt", "pub.json", "--preview"]
+    )
+    readback = parser.parse_args(
+        [
+            "operator-task-ready",
+            "--publication-receipt",
+            "pub.json",
+            "--readback",
+            "--promotion-receipt",
+            "promotion.json",
+        ]
+    )
+    apply = parser.parse_args(
+        [
+            "operator-task-ready",
+            "--publication-receipt",
+            "pub.json",
+            "--apply",
+            "--promotion-receipt",
+            "promotion.json",
+        ]
+    )
+    assert bureau_cli._command_effect_scope(preview) == "read_only"
+    assert bureau_cli._command_effect_scope(readback) == "read_only"
+    assert bureau_cli._command_effect_scope(apply) == "coordination_state_mutation"

@@ -178,6 +178,46 @@ bureau --root /path/to/clean/bureau --json operator-task-publish \
 
 `lease-binding.json` enthält nur Owner und registrierte Publishing-Task-ID. Die tatsächlichen Leases werden nicht daraus geglaubt, sondern live aus Grabowskis privater Resource-Datenbank gelesen.
 
+### 6. `operator-task-ready`
+
+Schließt ausschließlich die Readiness-Lücke für **standalone** TaskSpecs nach ihrer bereits belegten Publication. `operator-task-publish` bleibt absichtlich pre-merge und schreibt den neuen Task nur als `planned`; erst dieser zweite, mergegebundene Schritt darf genau diesen Task im autoritativen StateStore auf `ready` setzen.
+
+Der Vertrag ist eng und fail-closed. Er verlangt:
+
+- ein intaktes `bureau_task_publication_receipt` mit exakter Task-ID, Proposal-Digest, TaskSpec-Revision und Taskdatei-Digest;
+- aktuelle Registry-Bytes und den kanonischen TaskSpec-Digest exakt wie im Publication-Receipt;
+- einen frischen GitHub-Readback desselben PR mit `MERGED`, exakt demselben Head, Branch und Base `main`;
+- einen standalone Task ohne `depends_on`, Parent oder Children;
+- im StateStore exakt die im Receipt gebundene Revision, denselben Spec-Digest, dieselbe Spec und `state=planned`.
+
+Vor jeder Wirkung kann der vollständige Vertrag read-only geprüft werden:
+
+```bash
+bureau --json operator-task-ready \
+  --publication-receipt /path/to/publication-receipt.json \
+  --preview
+```
+
+Der Effekt besteht aus genau einem revisionsgebundenen CAS `planned -> ready`. Queue, Claims, Dispatch, Registry-Dateien und Runtime bleiben unverändert. Der erfolgreiche CAS wird sofort revisions- und digestgebunden zurückgelesen und anschließend in einem create-only Promotion-Receipt festgehalten:
+
+```bash
+bureau --json operator-task-ready \
+  --publication-receipt /path/to/publication-receipt.json \
+  --apply \
+  --promotion-receipt /path/to/promotion-receipt.json
+```
+
+Ein späterer Readback oder exakter Replay akzeptiert nur dieses Receipt, wenn Publication-/Merge-Bindung und die aktuelle promovierte StateStore-Revision weiterhin exakt übereinstimmen:
+
+```bash
+bureau --json operator-task-ready \
+  --publication-receipt /path/to/publication-receipt.json \
+  --readback \
+  --promotion-receipt /path/to/promotion-receipt.json
+```
+
+Drift bei PR, Head, Branch, Taskdatei, Registry-Spec, StateStore-Revision oder Receipt stoppt fail-closed. Eine fehlgeschlagene oder unklare CAS-/Receipt-Phase begründet keinen Blind-Retry, sondern verlangt exakten StateStore-/Receipt-Readback.
+
 ## Nichtbehauptungen
 
 Diese Oberfläche begründet nicht:

@@ -16,7 +16,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any, Protocol
 
-from . import legacy
+from . import legacy, task_specs
 from .acceptance import AcceptanceContractError
 from .approval import (
     approval_decision,
@@ -2837,6 +2837,571 @@ def publish_task_proposal(
             publication_phase=phase,
         ) from exc
     return {**value, "idempotent_replay": False, "receipt_path": str(receipt)}
+
+
+
+def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]:
+    receipt_path = Path(path).expanduser().absolute()
+    raw, _ = _read_bounded_regular_file(receipt_path, field="publication_receipt")
+    try:
+        value = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise OperatorIntakeError(
+            "promotion-publication-receipt-invalid",
+            f"cannot parse publication receipt: {exc}",
+            details={"path": str(receipt_path)},
+        ) from exc
+    if not isinstance(value, dict):
+        raise OperatorIntakeError(
+            "promotion-publication-receipt-invalid",
+            "publication receipt JSON must be an object",
+            details={"path": str(receipt_path)},
+        )
+    unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}
+    if (
+        value.get("kind") != "bureau_task_publication_receipt"
+        or value.get("status") != "published"
+        or value.get("receipt_sha256") != legacy.sha256_json(unsigned)
+    ):
+        raise OperatorIntakeError(
+            "promotion-publication-receipt-integrity-invalid",
+            "publication receipt identity or digest is invalid",
+            details={"path": str(receipt_path)},
+        )
+    publication = value.get("publication")
+    revision = value.get("task_spec_revision")
+    pull_request = publication.get("pull_request") if isinstance(publication, dict) else None
+    task_id = value.get("task_id")
+    proposal_sha256 = value.get("proposal_sha256")
+    target_path = value.get("target_path")
+    if (
+        not isinstance(task_id, str)
+        or not task_id
+        or not isinstance(proposal_sha256, str)
+        or not isinstance(target_path, str)
+        or target_path != f"registry/tasks/{task_id}.json"
+        or not isinstance(publication, dict)
+        or publication.get("readback_complete") is not True
+        or not isinstance(publication.get("repository"), str)
+        or not isinstance(publication.get("branch"), str)
+        or not isinstance(publication.get("head"), str)
+        or not isinstance(publication.get("target_file_sha256"), str)
+        or not isinstance(pull_request, dict)
+        or not isinstance(pull_request.get("number"), int)
+        or pull_request["number"] < 1
+        or not isinstance(revision, dict)
+        or revision.get("task_id") != task_id
+        or not isinstance(revision.get("revision"), int)
+        or revision["revision"] < 1
+        or not isinstance(revision.get("spec_sha256"), str)
+        or not isinstance(revision.get("spec"), dict)
+    ):
+        raise OperatorIntakeError(
+            "promotion-publication-receipt-shape-invalid",
+            "publication receipt is missing exact task, publication or revision bindings",
+        )
+    if revision["spec"].get("id") != task_id or revision["spec"].get("state") != "planned":
+        raise OperatorIntakeError(
+            "promotion-publication-spec-invalid",
+            "publication receipt must bind the exact planned TaskSpec",
+        )
+    try:
+        receipt_spec_sha256 = task_specs.task_spec_digest(revision["spec"])
+    except task_specs.TaskSpecError as exc:
+        raise OperatorIntakeError(
+            "promotion-publication-spec-invalid",
+            f"publication receipt TaskSpec is invalid: {exc}",
+        ) from exc
+    if receipt_spec_sha256 != revision["spec_sha256"]:
+        raise OperatorIntakeError(
+            "promotion-publication-spec-digest-mismatch",
+            "publication receipt TaskSpec bytes do not match its bound digest",
+        )
+    return value
+
+
+def _promotion_pull_request_readback(repository: str, number: int) -> dict[str, Any]:
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    command = [
+        binary,
+        "pr",
+        "view",
+        str(number),
+        "--repo",
+        repository,
+        "--json",
+        "number,state,mergedAt,mergeCommit,headRefOid,headRefName,baseRefName,url",
+    ]
+    try:
+        process = subprocess.run(
+            command,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OperatorIntakeError(
+            "promotion-pr-readback-unavailable",
+            f"cannot read merged pull request: {type(exc).__name__}: {exc}",
+            retryable=True,
+            required_readback=["exact merged pull request identity"],
+        ) from exc
+    if process.returncode != 0:
+        diagnostic = process.stderr.strip() or process.stdout.strip() or "no diagnostic"
+        raise OperatorIntakeError(
+            "promotion-pr-readback-unavailable",
+            f"gh pr view failed: {diagnostic}",
+            retryable=True,
+            required_readback=["exact merged pull request identity"],
+        )
+    try:
+        value = json.loads(process.stdout)
+    except json.JSONDecodeError as exc:
+        raise OperatorIntakeError(
+            "promotion-pr-readback-invalid",
+            f"gh pr view returned invalid JSON: {exc}",
+            required_readback=["exact merged pull request identity"],
+        ) from exc
+    if not isinstance(value, dict):
+        raise OperatorIntakeError(
+            "promotion-pr-readback-invalid",
+            "gh pr view returned a non-object payload",
+            required_readback=["exact merged pull request identity"],
+        )
+    return value
+
+
+def _promotion_merge_identity(
+    publication_receipt: dict[str, Any],
+) -> dict[str, Any]:
+    publication = publication_receipt["publication"]
+    pull_request = publication["pull_request"]
+    repository = publication["repository"]
+    number = pull_request["number"]
+    readback = _promotion_pull_request_readback(repository, number)
+    merge_commit = readback.get("mergeCommit")
+    merge_commit_oid = merge_commit.get("oid") if isinstance(merge_commit, dict) else None
+    if (
+        readback.get("number") != number
+        or readback.get("state") != "MERGED"
+        or not isinstance(readback.get("mergedAt"), str)
+        or not readback["mergedAt"]
+        or readback.get("headRefOid") != publication["head"]
+        or readback.get("headRefName") != publication["branch"]
+        or readback.get("baseRefName") != "main"
+        or not isinstance(merge_commit_oid, str)
+        or not merge_commit_oid
+    ):
+        raise OperatorIntakeError(
+            "promotion-pr-identity-mismatch",
+            "pull request is not an exact merged readback of the published task branch",
+            details={
+                "expected": {
+                    "number": number,
+                    "head": publication["head"],
+                    "branch": publication["branch"],
+                    "base": "main",
+                },
+                "observed": readback,
+            },
+            required_readback=["exact merged pull request identity"],
+        )
+    return {
+        "repository": repository,
+        "number": number,
+        "head": publication["head"],
+        "branch": publication["branch"],
+        "base": "main",
+        "merged_at": readback["mergedAt"],
+        "merge_commit": merge_commit_oid,
+        "url": readback.get("url"),
+    }
+
+
+def _task_promotion_binding(
+    registry: Registry,
+    store: StateStore,
+    publication_receipt: dict[str, Any],
+) -> dict[str, Any]:
+    task_id = publication_receipt["task_id"]
+    publication = publication_receipt["publication"]
+    revision = publication_receipt["task_spec_revision"]
+    repository = _github_repository_for_preview(registry.root)
+    if repository is None or repository != publication["repository"]:
+        raise OperatorIntakeError(
+            "promotion-repository-identity-mismatch",
+            "current Registry origin does not match the publication receipt repository",
+            details={"expected": publication["repository"], "observed": repository},
+        )
+    task = registry.tasks.get(task_id)
+    if task is None:
+        raise OperatorIntakeError(
+            "promotion-task-missing-in-registry",
+            f"task {task_id} is missing from the current Registry",
+        )
+    target_path = publication_receipt["target_path"]
+    target_file = registry.root / target_path
+    target_bytes, _ = _read_bounded_regular_file(target_file, field="promotion_task_file")
+    target_sha256 = hashlib.sha256(target_bytes).hexdigest()
+    if target_sha256 != publication["target_file_sha256"]:
+        raise OperatorIntakeError(
+            "promotion-task-file-drift",
+            "current Registry task-file bytes differ from the publication receipt",
+            details={
+                "expected": publication["target_file_sha256"],
+                "observed": target_sha256,
+            },
+        )
+    try:
+        registry_spec_sha256 = task_specs.task_spec_digest(task.raw)
+    except task_specs.TaskSpecError as exc:
+        raise OperatorIntakeError(
+            "promotion-registry-task-invalid",
+            f"current Registry TaskSpec is invalid: {exc}",
+        ) from exc
+    if registry_spec_sha256 != revision["spec_sha256"] or task.raw != revision["spec"]:
+        raise OperatorIntakeError(
+            "promotion-registry-spec-drift",
+            "current Registry TaskSpec differs from the exact published planned spec",
+        )
+    family = registry.parent_child_projection(task_id)
+    try:
+        with store.connect() as connection:
+            state_projection = task_specs.current_projection(connection)
+    except (task_specs.TaskSpecError, sqlite3.Error) as exc:
+        raise OperatorIntakeError(
+            "promotion-state-projection-invalid",
+            f"cannot read authoritative TaskSpec projection: {exc}",
+        ) from exc
+    state_tasks = state_projection["tasks"]
+    state_target = state_tasks.get(task_id)
+    state_target_spec = state_target.get("spec", {}) if state_target is not None else {}
+    state_target_metadata = state_target_spec.get("metadata")
+    state_parent_task_id = (
+        state_target_metadata.get("parent_task")
+        if isinstance(state_target_metadata, dict)
+        else None
+    )
+    state_child_task_ids = []
+    for candidate_id, candidate in state_tasks.items():
+        if candidate_id == task_id:
+            continue
+        candidate_spec = candidate.get("spec", {})
+        candidate_metadata = candidate_spec.get("metadata")
+        if (
+            isinstance(candidate_metadata, dict)
+            and candidate_metadata.get("parent_task") == task_id
+        ):
+            state_child_task_ids.append(candidate_id)
+    parent_task_id = family.parent_task_id or state_parent_task_id
+    child_task_ids = sorted(set(family.child_task_ids) | set(state_child_task_ids))
+    if revision["spec"].get("depends_on") or parent_task_id or child_task_ids:
+        raise OperatorIntakeError(
+            "promotion-standalone-task-required",
+            "post-merge direct readiness is allowed only for tasks without "
+            "dependencies, parent or children",
+            details={
+                "depends_on": list(revision["spec"].get("depends_on") or []),
+                "parent_task_id": parent_task_id,
+                "child_task_ids": child_task_ids,
+                "registry_parent_task_id": family.parent_task_id,
+                "registry_child_task_ids": list(family.child_task_ids),
+                "state_store_parent_task_id": state_parent_task_id,
+                "state_store_child_task_ids": state_child_task_ids,
+            },
+        )
+    merge = _promotion_merge_identity(publication_receipt)
+    ready_spec = json.loads(json.dumps(revision["spec"]))
+    ready_spec["state"] = "ready"
+    try:
+        ready_sha256 = task_specs.task_spec_digest(ready_spec)
+    except task_specs.TaskSpecError as exc:
+        raise OperatorIntakeError(
+            "promotion-ready-spec-invalid",
+            f"planned-to-ready TaskSpec is invalid: {exc}",
+        ) from exc
+    return {
+        "task_id": task_id,
+        "proposal_sha256": publication_receipt["proposal_sha256"],
+        "publication_receipt_sha256": publication_receipt["receipt_sha256"],
+        "target_path": target_path,
+        "target_file_sha256": target_sha256,
+        "merge": merge,
+        "before": {
+            "revision": revision["revision"],
+            "spec_sha256": revision["spec_sha256"],
+            "state": "planned",
+        },
+        "after": {
+            "revision": revision["revision"] + 1,
+            "spec_sha256": ready_sha256,
+            "state": "ready",
+        },
+        "planned_spec": revision["spec"],
+        "ready_spec": ready_spec,
+    }
+
+
+def _task_promotion_preflight(
+    registry: Registry,
+    store: StateStore,
+    publication_receipt: dict[str, Any],
+) -> dict[str, Any]:
+    binding = _task_promotion_binding(registry, store, publication_receipt)
+    current = store.task_spec(binding["task_id"])
+    before = binding["before"]
+    if (
+        current is None
+        or current.get("revision") != before["revision"]
+        or current.get("spec_sha256") != before["spec_sha256"]
+        or current.get("spec") != binding["planned_spec"]
+        or current.get("spec", {}).get("state") != "planned"
+    ):
+        raise OperatorIntakeError(
+            "promotion-state-preimage-mismatch",
+            "authoritative StateStore no longer matches the exact published planned revision",
+            details={
+                "expected_revision": before["revision"],
+                "expected_spec_sha256": before["spec_sha256"],
+                "observed_revision": current.get("revision") if current else None,
+                "observed_spec_sha256": current.get("spec_sha256") if current else None,
+                "observed_state": current.get("spec", {}).get("state") if current else None,
+            },
+        )
+    return binding
+
+
+def _read_task_promotion_receipt(path: Path) -> dict[str, Any]:
+    raw, _ = _read_bounded_regular_file(path, field="promotion_receipt")
+    try:
+        value = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise OperatorIntakeError(
+            "promotion-receipt-invalid",
+            f"cannot parse promotion receipt: {exc}",
+        ) from exc
+    if not isinstance(value, dict):
+        raise OperatorIntakeError(
+            "promotion-receipt-invalid",
+            "promotion receipt JSON must be an object",
+        )
+    unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}
+    if (
+        value.get("kind") != "bureau_task_readiness_promotion_receipt"
+        or value.get("status") != "promoted"
+        or value.get("receipt_sha256") != legacy.sha256_json(unsigned)
+    ):
+        raise OperatorIntakeError(
+            "promotion-receipt-integrity-invalid",
+            "promotion receipt identity or digest is invalid",
+        )
+    return value
+
+
+def _task_promotion_replay(
+    registry: Registry,
+    store: StateStore,
+    publication_receipt: dict[str, Any],
+    promotion_receipt_path: Path,
+) -> dict[str, Any]:
+    binding = _task_promotion_binding(registry, store, publication_receipt)
+    receipt = _read_task_promotion_receipt(promotion_receipt_path)
+    expected_publication = {
+        **binding["merge"],
+        "target_path": binding["target_path"],
+        "target_file_sha256": binding["target_file_sha256"],
+    }
+    if (
+        receipt.get("task_id") != binding["task_id"]
+        or receipt.get("proposal_sha256") != binding["proposal_sha256"]
+        or receipt.get("publication_receipt_sha256") != binding["publication_receipt_sha256"]
+        or receipt.get("publication") != expected_publication
+        or receipt.get("before") != binding["before"]
+        or receipt.get("after") != binding["after"]
+        or receipt.get("queue_mutated") is not False
+    ):
+        raise OperatorIntakeError(
+            "promotion-receipt-binding-mismatch",
+            "promotion receipt does not bind the exact current publication "
+            "and readiness transition",
+        )
+    current = store.task_spec(binding["task_id"])
+    after = binding["after"]
+    if (
+        current is None
+        or current.get("revision") != after["revision"]
+        or current.get("spec_sha256") != after["spec_sha256"]
+        or current.get("spec") != binding["ready_spec"]
+        or current.get("spec", {}).get("state") != "ready"
+    ):
+        raise OperatorIntakeError(
+            "promotion-readback-mismatch",
+            "StateStore no longer matches the exact receipt-bound promoted revision",
+            details={
+                "expected_revision": after["revision"],
+                "expected_spec_sha256": after["spec_sha256"],
+                "observed_revision": current.get("revision") if current else None,
+                "observed_spec_sha256": current.get("spec_sha256") if current else None,
+                "observed_state": current.get("spec", {}).get("state") if current else None,
+            },
+        )
+    return {
+        **receipt,
+        "idempotent_replay": True,
+        "readback_verified": True,
+        "receipt_path": str(promotion_receipt_path),
+    }
+
+
+def promote_task_ready(
+    registry: Registry,
+    store: StateStore,
+    *,
+    publication_receipt_path: str | Path,
+    promotion_receipt_path: str | Path | None = None,
+    mode: str = "preview",
+) -> dict[str, Any]:
+    """Preview, apply or read back one exact standalone post-merge readiness promotion."""
+    if mode not in {"preview", "apply", "readback"}:
+        raise OperatorIntakeError("promotion-mode-invalid", f"unsupported promotion mode: {mode}")
+    publication_receipt = _read_task_promotion_publication_receipt(publication_receipt_path)
+    receipt_path = (
+        Path(promotion_receipt_path).expanduser().absolute()
+        if promotion_receipt_path is not None
+        else None
+    )
+    if mode == "preview":
+        if receipt_path is not None:
+            raise OperatorIntakeError(
+                "promotion-preview-receipt-forbidden",
+                "preview does not accept a promotion receipt path",
+            )
+        binding = _task_promotion_preflight(registry, store, publication_receipt)
+        return {
+            "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+            "kind": "bureau_task_readiness_promotion_preview",
+            "status": "ready",
+            "task_id": binding["task_id"],
+            "proposal_sha256": binding["proposal_sha256"],
+            "publication_receipt_sha256": binding["publication_receipt_sha256"],
+            "publication": {
+                **binding["merge"],
+                "target_path": binding["target_path"],
+                "target_file_sha256": binding["target_file_sha256"],
+            },
+            "before": binding["before"],
+            "after": binding["after"],
+            "read_only": True,
+            "effect_started": False,
+            "does_not_establish": ["promotion_effect", "queue_membership", "claimability"],
+        }
+    if receipt_path is None:
+        raise OperatorIntakeError(
+            "promotion-receipt-required",
+            f"{mode} requires a promotion receipt path",
+        )
+    if os.path.lexists(receipt_path):
+        return _task_promotion_replay(registry, store, publication_receipt, receipt_path)
+    if mode == "readback":
+        raise OperatorIntakeError(
+            "promotion-receipt-missing",
+            "readback requires an existing promotion receipt",
+            details={"path": str(receipt_path)},
+        )
+
+    binding = _task_promotion_preflight(registry, store, publication_receipt)
+    try:
+        written = store.put_task_spec(
+            binding["ready_spec"],
+            idempotency_key=f"operator-intake-ready:{binding['publication_receipt_sha256']}",
+            expected_revision=binding["before"]["revision"],
+            source="operator-intake-postmerge-readiness",
+        )
+    except StateError as exc:
+        raise OperatorIntakeError(
+            "promotion-state-cas-conflict",
+            f"planned-to-ready CAS was rejected: {exc}",
+            required_readback=[f"StateStore TaskSpec {binding['task_id']}"],
+        ) from exc
+    after = binding["after"]
+    if (
+        written.get("revision") != after["revision"]
+        or written.get("parent_revision") != binding["before"]["revision"]
+        or written.get("spec_sha256") != after["spec_sha256"]
+        or written.get("spec") != binding["ready_spec"]
+        or written.get("changed") is not True
+        or written.get("idempotent_replay") is not False
+    ):
+        raise OperatorIntakeError(
+            "promotion-state-write-ambiguous",
+            "StateStore write returned an unexpected promoted revision",
+            effect_started=True,
+            ambiguity=True,
+            retryable=False,
+            required_readback=[f"StateStore TaskSpec {binding['task_id']}"],
+            details={"write_result": written},
+        )
+    current = store.task_spec(binding["task_id"])
+    if (
+        current is None
+        or current.get("revision") != after["revision"]
+        or current.get("spec_sha256") != after["spec_sha256"]
+        or current.get("spec") != binding["ready_spec"]
+    ):
+        raise OperatorIntakeError(
+            "promotion-state-readback-ambiguous",
+            "StateStore post-CAS readback does not match the promoted revision",
+            effect_started=True,
+            ambiguity=True,
+            retryable=False,
+            required_readback=[f"StateStore TaskSpec {binding['task_id']}"],
+        )
+    publication_binding = {
+        **binding["merge"],
+        "target_path": binding["target_path"],
+        "target_file_sha256": binding["target_file_sha256"],
+    }
+    value = {
+        "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+        "kind": "bureau_task_readiness_promotion_receipt",
+        "status": "promoted",
+        "task_id": binding["task_id"],
+        "proposal_sha256": binding["proposal_sha256"],
+        "publication_receipt_sha256": binding["publication_receipt_sha256"],
+        "publication": publication_binding,
+        "before": binding["before"],
+        "after": binding["after"],
+        "queue_mutated": False,
+        "effect_started": True,
+        "created_at": legacy.utc_now(),
+        "does_not_establish": ["queue_membership", "claim", "dispatch", "task_completion"],
+    }
+    unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}
+    value["receipt_sha256"] = legacy.sha256_json(unsigned)
+    encoded = (
+        json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    try:
+        _write_create_only(receipt_path, encoded)
+    except (OSError, OperatorIntakeError) as exc:
+        raise OperatorIntakeError(
+            "promotion-receipt-write-ambiguous",
+            f"readiness promotion succeeded but receipt publication failed: {exc}",
+            effect_started=True,
+            ambiguity=True,
+            retryable=False,
+            required_readback=[
+                f"StateStore TaskSpec {binding['task_id']}",
+                f"promotion receipt at {receipt_path}",
+            ],
+        ) from exc
+    return {
+        **value,
+        "idempotent_replay": False,
+        "readback_verified": True,
+        "receipt_path": str(receipt_path),
+    }
 
 
 class SubprocessTaskPublisher:

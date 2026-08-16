@@ -1,0 +1,175 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Supply-Messung bindet den Floor an das konkret beobachtete Worker-Capability-Profil und zählt Fallbacks mit fehlenden erforderlichen Capabilities nicht als erreichbare Floor-Kapazität.",
+      "evidence_type": "object",
+      "id": "worker-profile-bound",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t034:worker-profile-bound"
+      }
+    },
+    {
+      "assertion": "Die Feasibility berücksichtigt nicht nur individuelle Claimability, sondern auch relevante paarweise Ressourcen-, Lease- und offene-PR-Konflikte, so dass die ausgewiesene Supply-Kapazität tatsächlich gemeinsam nutzbar ist.",
+      "evidence_type": "object",
+      "id": "joint-packability",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t034:joint-packability"
+      }
+    },
+    {
+      "assertion": "Ist der konfigurierte Floor unter aktuellen Capability- und Konfliktbedingungen strukturell nicht erreichbar, liefert der Vertrag einen expliziten unreachable/blocked-Befund mit den dominanten Ursachen statt wiederholt ungeeignete Fallbacks zu erzeugen.",
+      "evidence_type": "object",
+      "id": "unreachable-floor-explicit",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t034:unreachable-floor-explicit"
+      }
+    },
+    {
+      "assertion": "Wenn zusätzliche Fallbacks den Floor tatsächlich herstellen können, wählt der Replenisher nur bounded Kategorien und Scopes, die zum Worker-Profil passen und keine bestehenden Lease-, PR-, Registry- oder Capability-Gates abschwächen.",
+      "evidence_type": "object",
+      "id": "bounded-feasible-selection",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t034:bounded-feasible-selection"
+      }
+    },
+    {
+      "assertion": "Regressionen bilden den am 2026-08-16 beobachteten Fall ab: Basiscapabilities repository/python/testing/bureau/grabowski, care nur wegen documentation blockiert, audit nur wegen audit blockiert, registry-reconciliation wegen des absichtlich offenen PR #2010 blockiert und queue-reconciliation claimbar; ein Floor von acht darf dabei nicht als durch bloßes Nachpublizieren erreichbar gelten.",
+      "evidence_type": "object",
+      "id": "observed-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t034:observed-regression"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/task_supply.py",
+      "path:/home/alex/repos/bureau/src/bureau/agent_frontier.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T034.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den Claimable-Supply-Vertrag so korrigieren, dass ein konfigurierter Floor tatsächlich gemeinsam ausführbare Versorgung für das beobachtete Worker-Profil bezeichnet. Capability-Lücken sowie paarweise Ressourcen-, Lease- und offene-PR-Konflikte müssen in die Feasibility eingehen; ein strukturell unerreichbarer Floor wird explizit ausgewiesen statt durch weitere ungeeignete Fallbacks scheinbar aufgefüllt.",
+  "id": "BUREAU-CONTROL-PLANE-V3-T034",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "candidate_id": "candidate-a91b4d18a6c9db7e617c13ce",
+    "does_not_establish": [
+      "task readiness",
+      "claim authority",
+      "merge authority",
+      "deployment authority"
+    ],
+    "observed_frontier": {
+      "audit_missing": [
+        "audit"
+      ],
+      "base_capabilities": [
+        "repository",
+        "python",
+        "testing",
+        "bureau",
+        "grabowski"
+      ],
+      "care_missing": [
+        "documentation"
+      ],
+      "claimable": 5,
+      "configured_floor": 8,
+      "queue_reconciliation": "claimable",
+      "registry_reconciliation_blocker": "open PR #2010"
+    },
+    "scope_boundary": [
+      "no capability gate weakening",
+      "no PR-conflict bypass",
+      "no lease weakening",
+      "no unbounded fallback generation"
+    ],
+    "source_event_id": 7750,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a91b4d18a6c9db7e617c13ce",
+      "event_id": 7750,
+      "event_created_at": "2026-08-16T13:32:02.993221Z",
+      "request_sha256": "314525515025830cb77c0544180ccc7bc77b9e7a7ad5f3c818a455b0b3abf551",
+      "candidate_event_id": "candidate-event-9dfd022bca74a0c998949585",
+      "source_fingerprint": "a04f2f774f7e15e5a9acea3b20eb760b19ee79f1af265d50acf8b7656a425c72",
+      "content_fingerprint": "a91b4d18a6c9db7e617c13ce0375436d339d8a5523b87a6880e6fb193c72c3b4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "a04f2f774f7e15e5a9acea3b20eb760b19ee79f1af265d50acf8b7656a425c72",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-observation",
+        "locator": "runtime:bureau-task-supply:post-seed-floor-readback",
+        "observed_at": "2026-08-16T13:32:02.849066Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "a04f2f774f7e15e5a9acea3b20eb760b19ee79f1af265d50acf8b7656a425c72",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-observation",
+          "locator": "runtime:bureau-task-supply:post-seed-floor-readback",
+          "observed_at": "2026-08-16T13:32:02.849066Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 34
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Feasibility bleibt zunächst eine zusätzliche fail-closed Planungs-/Diagnoseebene. Bei Regression auf das bisherige Auswahlverhalten zurückgehen, ohne Queue-, Claim-, Lease-, Capability- oder PR-Gates zu lockern und ohne bestehende TaskSpecs zu löschen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Claimable-Supply-Floor capability- und konfliktfeasible machen"
+}

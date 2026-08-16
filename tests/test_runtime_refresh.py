@@ -10,6 +10,7 @@ import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -91,6 +92,219 @@ def seed_authority_store(root: Path, task_id: str, *, state: str = "ready") -> S
         source="test",
     )
     return store
+
+
+def test_runtime_authority_adoption_is_exact_idempotent_and_not_execution_authority(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-ADOPTION-TEST"
+    spec = runtime_authority_spec(task_id, state="planned")
+    spec["metadata"]["publication_path"] = {
+        "kind": "normal-protected-pull-request",
+        "state_store_transition": "seed-missing-preserve-state-store",
+    }
+    root = tmp_path / "registry-repo"
+    task_dir = root / "registry/tasks"
+    task_dir.mkdir(parents=True)
+    task_path = task_dir / f"{task_id}.json"
+    task_path.write_text(json.dumps(spec, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Bureau Test"], cwd=root, check=True)
+    (root / "README.md").write_text("base\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-m", "base"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "add", task_path.relative_to(root).as_posix()], cwd=root, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "add runtime authority"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    task_file_sha256 = hashlib.sha256(task_path.read_bytes()).hexdigest()
+    other_id = "BUREAU-UNRELATED-MISSING"
+    registry = SimpleNamespace(
+        tasks={
+            task_id: SimpleNamespace(raw=spec),
+            other_id: SimpleNamespace(raw=runtime_authority_spec(other_id, state="planned")),
+        }
+    )
+    store = StateStore(tmp_path / "state/bureau.sqlite3", tmp_path / "state")
+
+    def github(arguments: list[str]) -> Any:
+        if arguments == ["api", "repos/test/bureau/branches/main/protection"]:
+            return {
+                "required_status_checks": {
+                    "strict": True,
+                    "contexts": [
+                        "validate (3.10)",
+                        "validate (3.12)",
+                        "registry-registration-preflight/freshness",
+                    ],
+                },
+                "allow_force_pushes": {"enabled": False},
+                "allow_deletions": {"enabled": False},
+            }
+        if arguments == ["api", "repos/test/bureau/commits/main"]:
+            return {"sha": head}
+        if arguments[:3] == ["pr", "view", "7"]:
+            return {
+                "number": 7,
+                "state": "MERGED",
+                "isDraft": False,
+                "mergedAt": "2026-08-16T12:00:00Z",
+                "mergeCommit": {"oid": head},
+                "headRefOid": head,
+                "baseRefName": "main",
+                "statusCheckRollup": [
+                    {"name": "validate (3.10)", "conclusion": "SUCCESS"},
+                    {"name": "validate (3.12)", "conclusion": "SUCCESS"},
+                    {
+                        "name": "registry-registration-preflight/freshness",
+                        "conclusion": "SUCCESS",
+                    },
+                ],
+                "url": "https://example.invalid/pr/7",
+                "files": [{"path": task_path.relative_to(root).as_posix()}],
+            }
+        raise AssertionError(arguments)
+
+    first = refresh.adopt_runtime_refresh_authority(
+        registry_root=root,
+        repository="test/bureau",
+        approval_task_id=task_id,
+        publication_pr=7,
+        publication_merge_commit=head,
+        expected_main_commit=head,
+        expected_task_file_sha256=task_file_sha256,
+        authority_store=store,
+        github=github,
+        registry=registry,
+    )
+    assert first["status"] == "adopted"
+    assert first["state"] == "planned"
+    assert first["revision"] == 1
+    assert store.task_spec(other_id) is None
+
+    second = refresh.adopt_runtime_refresh_authority(
+        registry_root=root,
+        repository="test/bureau",
+        approval_task_id=task_id,
+        publication_pr=7,
+        publication_merge_commit=head,
+        expected_main_commit=head,
+        expected_task_file_sha256=task_file_sha256,
+        authority_store=store,
+        github=github,
+        registry=registry,
+    )
+    assert second["status"] == "already_present"
+    assert second["revision"] == 1
+
+    with pytest.raises(refresh.RuntimeRefreshError) as blocked:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store, approval_task_id=task_id, target_sha256="a" * 64
+        )
+    assert blocked.value.code == "authority-task-state-invalid"
+
+
+def test_runtime_authority_adoption_rejects_nonexact_pr_scope_and_missing_marker(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-ADOPTION-SCOPE"
+    spec = runtime_authority_spec(task_id, state="planned")
+    spec["metadata"]["publication_path"] = {
+        "kind": "normal-protected-pull-request",
+        "state_store_transition": "seed-missing-preserve-state-store",
+    }
+    root = tmp_path / "registry-repo"
+    task_dir = root / "registry/tasks"
+    task_dir.mkdir(parents=True)
+    task_path = task_dir / f"{task_id}.json"
+    task_path.write_text(json.dumps(spec, sort_keys=True) + "\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Bureau Test"], cwd=root, check=True)
+    (root / "README.md").write_text("base\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-m", "base"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "add", task_path.relative_to(root).as_posix()], cwd=root, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "add runtime authority"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    digest = hashlib.sha256(task_path.read_bytes()).hexdigest()
+    registry = SimpleNamespace(tasks={task_id: SimpleNamespace(raw=spec)})
+
+    def github(arguments: list[str]) -> Any:
+        if arguments == ["api", "repos/test/bureau/branches/main/protection"]:
+            return {
+                "required_status_checks": {
+                    "strict": True,
+                    "contexts": [
+                        "validate (3.10)",
+                        "validate (3.12)",
+                        "registry-registration-preflight/freshness",
+                    ],
+                },
+                "allow_force_pushes": {"enabled": False},
+                "allow_deletions": {"enabled": False},
+            }
+        if arguments == ["api", "repos/test/bureau/commits/main"]:
+            return {"sha": head}
+        if arguments[:3] == ["pr", "view", "8"]:
+            return {
+                "number": 8,
+                "state": "MERGED",
+                "isDraft": False,
+                "mergedAt": "2026-08-16T12:00:00Z",
+                "mergeCommit": {"oid": head},
+                "headRefOid": head,
+                "baseRefName": "main",
+                "statusCheckRollup": [
+                    {"name": "validate (3.10)", "conclusion": "SUCCESS"},
+                    {"name": "validate (3.12)", "conclusion": "SUCCESS"},
+                    {
+                        "name": "registry-registration-preflight/freshness",
+                        "conclusion": "SUCCESS",
+                    },
+                ],
+                "url": "https://example.invalid/pr/8",
+                "files": [
+                    {"path": task_path.relative_to(root).as_posix()},
+                    {"path": "registry/queue.json"},
+                ],
+            }
+        raise AssertionError(arguments)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as scope_error:
+        refresh.verify_runtime_refresh_authority_publication(
+            registry_root=root,
+            repository="test/bureau",
+            approval_task_id=task_id,
+            publication_pr=8,
+            publication_merge_commit=head,
+            expected_main_commit=head,
+            expected_task_file_sha256=digest,
+            github=github,
+            registry=registry,
+        )
+    assert scope_error.value.code == "authority-adoption-publication-scope-invalid"
+
+    unmarked = runtime_authority_spec("BUREAU-UNMARKED", state="planned")
+    with pytest.raises(refresh.RuntimeRefreshError) as marker_error:
+        refresh._validate_runtime_refresh_authority_adoption_spec(
+            spec=unmarked, approval_task_id="BUREAU-UNMARKED"
+        )
+    assert marker_error.value.code == "authority-adoption-publication-contract-invalid"
 
 
 def authority_store_for_intent(intent: dict[str, Any]) -> StateStore:

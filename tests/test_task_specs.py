@@ -291,6 +291,54 @@ def test_registration_seeds_missing_legacy_specs_and_preserves_state_store_diver
         store.import_registry_task_specs(registry)
 
 
+def test_exact_missing_seed_imports_only_requested_task_and_replays(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    first_spec = _legacy_spec("EXACT-A", marker="first")
+    registry = SimpleNamespace(
+        tasks={
+            "EXACT-A": SimpleNamespace(raw=first_spec),
+            "EXACT-B": SimpleNamespace(raw=_legacy_spec("EXACT-B", marker="unrelated")),
+        }
+    )
+
+    first = store.seed_missing_registry_task_spec(registry, "EXACT-A")
+    assert first["mode"] == "seed-exact-missing-preserve-state-store"
+    assert first["changed"] is True
+    assert first["revision"] == 1
+    assert store.task_spec("EXACT-A")["spec"] == first_spec
+    assert store.task_spec("EXACT-B") is None
+
+    replay = store.seed_missing_registry_task_spec(registry, "EXACT-A")
+    assert replay["changed"] is False
+    assert replay["idempotent_replay"] is True
+    assert replay["revision"] == 1
+    assert replay["spec_sha256"] == first["spec_sha256"]
+    assert store.task_spec("EXACT-B") is None
+
+
+def test_exact_missing_seed_refuses_unknown_or_divergent_task(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    registry = SimpleNamespace(
+        tasks={"EXACT-A": SimpleNamespace(raw=_legacy_spec("EXACT-A", title="git"))}
+    )
+
+    with pytest.raises(StateError, match="unknown exact Registry TaskSpec"):
+        store.seed_missing_registry_task_spec(registry, "EXACT-MISSING")
+
+    state_owned = _legacy_spec("EXACT-A", title="state")
+    with store.immediate() as connection:
+        task_specs._put_legacy_registry_import(
+            connection,
+            state_owned,
+            idempotency_key="state-owned-exact-a",
+            expected_revision=None,
+            source="test-state-owned",
+        )
+    with pytest.raises(StateError, match="exact TaskSpec divergence"):
+        store.seed_missing_registry_task_spec(registry, "EXACT-A")
+    assert store.task_spec("EXACT-A")["spec"] == state_owned
+
+
 def test_registration_and_legacy_import_share_one_transaction(tmp_path: Path) -> None:
     store = _store(tmp_path)
     store.put_task_spec(

@@ -486,6 +486,62 @@ def seed_missing_registry(
     }
 
 
+def seed_missing_registry_task(
+    connection: sqlite3.Connection,
+    registry: Any,
+    task_id: str,
+) -> dict[str, Any]:
+    """Import exactly one missing Git TaskSpec and refuse any divergence.
+
+    Unlike ``seed_missing_registry`` this helper never iterates over the Registry.
+    It exists for tightly scoped bootstrap callers that have independently proven
+    authority for one exact task. Existing StateStore truth is either an exact
+    digest match (idempotent replay) or a hard error; it is never overwritten.
+    """
+    if not isinstance(task_id, str) or not task_id:
+        raise TaskSpecError("exact Registry TaskSpec id must be non-empty")
+    tasks = getattr(registry, "tasks", None)
+    if not isinstance(tasks, Mapping) or task_id not in tasks:
+        raise TaskSpecError(f"unknown exact Registry TaskSpec: {task_id}")
+    raw = getattr(tasks[task_id], "raw", None)
+    canonical = _canonical_spec(raw)
+    if canonical["id"] != task_id:
+        raise TaskSpecError("exact Registry TaskSpec id does not match requested task")
+
+    digest = task_spec_digest(canonical)
+    current = get_current(connection, task_id)
+    if current is not None:
+        if current["spec_sha256"] != digest:
+            raise TaskSpecError(
+                f"exact TaskSpec divergence for {task_id}: "
+                "StateStore differs from Git projection"
+            )
+        return {
+            "mode": "seed-exact-missing-preserve-state-store",
+            "task_id": task_id,
+            "revision": current["revision"],
+            "spec_sha256": digest,
+            "changed": False,
+            "idempotent_replay": True,
+        }
+
+    result = _put_legacy_registry_import(
+        connection,
+        canonical,
+        idempotency_key=f"legacy-seed-exact:{task_id}:{digest}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    return {
+        "mode": "seed-exact-missing-preserve-state-store",
+        "task_id": task_id,
+        "revision": result["revision"],
+        "spec_sha256": result["spec_sha256"],
+        "changed": result["changed"],
+        "idempotent_replay": result["idempotent_replay"],
+    }
+
+
 def split_event_rows(
     rows: Iterable[Mapping[str, Any]],
 ) -> tuple[list[Mapping[str, Any]], list[Mapping[str, Any]]]:

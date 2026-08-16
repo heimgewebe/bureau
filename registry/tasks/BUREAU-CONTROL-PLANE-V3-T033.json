@@ -1,0 +1,163 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Konvergenzschritt akzeptiert nur einen terminal gemergten Supply-Publikationsbeleg mit exaktem PR, Merge-Commit und den erwarteten TaskSpec-Digests; lokale oder ungemergte Projektionen starten keinen StateStore-Effekt.",
+      "evidence_type": "object",
+      "id": "merge-bound-input",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t033:merge-bound-input"
+      }
+    },
+    {
+      "assertion": "Es werden ausschließlich die durch den gebundenen Merge fehlenden TaskSpecs importiert. Vorhandene gleiche Revisionen bleiben unverändert, divergente bestehende StateStore-Revisionen werden erhalten und als Divergenz ausgewiesen.",
+      "evidence_type": "object",
+      "id": "missing-only-state-store",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t033:missing-only-state-store"
+      }
+    },
+    {
+      "assertion": "Head-, Merge-, TaskSpec-Digest-, Queue- oder Receipt-Drift stoppt vor einer falschen Materialisierung; es gibt keinen Blind-Retry nach unklarem StateStore-Effekt.",
+      "evidence_type": "object",
+      "id": "drift-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t033:drift-fail-closed"
+      }
+    },
+    {
+      "assertion": "Nach erfolgreicher Materialisierung wird die normale Dispatcher-/Claimability-Projektion neu gelesen und der Effekt der exakt importierten Specs revisionsgebunden ausgewiesen.",
+      "evidence_type": "object",
+      "id": "dispatcher-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t033:dispatcher-readback"
+      }
+    },
+    {
+      "assertion": "Automatisierte Regressionen decken den heute beobachteten Fall ab: mehrere in Git gemergte Fallback-TaskSpecs fehlen zunächst im StateStore, werden erst nach Merge missing-only importiert und vorhandene divergente StateStore-Revisionen bleiben unangetastet.",
+      "evidence_type": "object",
+      "id": "regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t033:regression-tests"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/task_supply.py",
+      "path:/home/alex/repos/bureau/src/bureau/supply_runner.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T033.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den bestehenden Task-Supply-Publikationspfad so ergänzen, dass ausschließlich nach einem belegten Merge eines receipt- und revisionsgebundenen Supply-PRs genau die dadurch neu publizierten TaskSpecs konservativ in den autoritativen StateStore materialisiert werden und anschließend der normale Dispatcher-Readback läuft. Unmerged lokale oder PR-only TaskSpecs dürfen niemals claimbar werden; bestehende divergente StateStore-Revisionen werden nicht überschrieben.",
+  "id": "BUREAU-CONTROL-PLANE-V3-T033",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "candidate_id": "candidate-05002ab2a02663d844bbbc43",
+    "does_not_establish": [
+      "task readiness",
+      "claim authority",
+      "merge authority",
+      "deployment authority"
+    ],
+    "observed_manual_seed": {
+      "claimable_after": 5,
+      "claimable_before": 4,
+      "imported": 4
+    },
+    "scope_boundary": [
+      "no pre-merge StateStore publication",
+      "no queue gate weakening",
+      "no overwrite of divergent StateStore revisions",
+      "no generic registry rewrite"
+    ],
+    "source_event_id": 7749,
+    "trigger_merge_commit": "51a2f3b19d1d0f16216bd030f6e4073dc983a0d0",
+    "trigger_pull_request": 2012,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-05002ab2a02663d844bbbc43",
+      "event_id": 7749,
+      "event_created_at": "2026-08-16T13:31:42.516422Z",
+      "request_sha256": "89d667427d75b74958aa54be28e6dd1f24034373aef5dd4baab6ae20e16bf9fa",
+      "candidate_event_id": "candidate-event-a5e7c9bb7eb2f468b89688d1",
+      "source_fingerprint": "6a2a73917c3525c9bb8a070eae7931ba6c765898c64e14577a00274cfb697744",
+      "content_fingerprint": "05002ab2a02663d844bbbc431f07d5e773402199a3c5f4930cabd4b26c24487e",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "6a2a73917c3525c9bb8a070eae7931ba6c765898c64e14577a00274cfb697744",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-observation",
+        "locator": "runtime:bureau-task-supply:pr2012-postmerge-readback",
+        "observed_at": "2026-08-16T13:31:42.357180Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "6a2a73917c3525c9bb8a070eae7931ba6c765898c64e14577a00274cfb697744",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-observation",
+          "locator": "runtime:bureau-task-supply:pr2012-postmerge-readback",
+          "observed_at": "2026-08-16T13:31:42.357180Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 33
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Keinen vorhandenen StateStore-Stand aus Git zurückschreiben. Bei fehlgeschlagenem oder unklarem Post-Merge-Schritt den gemergten Git-Stand beibehalten, den StateStore read-only reconciliieren und nur anhand exakter Receipt-/Digest-Evidenz fortsetzen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Task-Supply-Publikation nach Merge automatisch in den StateStore konvergieren"
+}

@@ -460,6 +460,66 @@ def test_observe_falls_back_to_bounded_first_parent_walk_on_compare_404(
     assert ["api", f"repos/heimgewebe/bureau/commits/{MAIN}"] in calls
 
 
+def test_first_parent_fallback_counts_multiple_fresh_commit_objects() -> None:
+    middle = "c" * 40
+    commits = {
+        MAIN: {"sha": MAIN, "parents": [{"sha": middle}]},
+        middle: {"sha": middle, "parents": [{"sha": DEPLOYED}]},
+    }
+    calls: list[list[str]] = []
+
+    def github(arguments: list[str]) -> Any:
+        calls.append(arguments)
+        commit = arguments[-1].rsplit("/", 1)[-1]
+        return commits[commit]
+
+    assert (
+        refresh._first_parent_lag_commits(
+            repository="heimgewebe/bureau",
+            deployed=DEPLOYED,
+            main_commit=MAIN,
+            github=github,
+        )
+        == 2
+    )
+    assert len(calls) == 2
+
+
+def test_first_parent_fallback_rejects_cycle_and_budget_exhaustion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    middle = "c" * 40
+    cycle = {
+        MAIN: {"sha": MAIN, "parents": [{"sha": middle}]},
+        middle: {"sha": middle, "parents": [{"sha": MAIN}]},
+    }
+
+    def cyclic_github(arguments: list[str]) -> Any:
+        commit = arguments[-1].rsplit("/", 1)[-1]
+        return cycle[commit]
+
+    assert (
+        refresh._first_parent_lag_commits(
+            repository="heimgewebe/bureau",
+            deployed=DEPLOYED,
+            main_commit=MAIN,
+            github=cyclic_github,
+        )
+        is None
+    )
+
+    monkeypatch.setattr(refresh, "MAX_GITHUB_FIRST_PARENT_LAG_COMMITS", 1)
+    assert (
+        refresh._first_parent_lag_commits(
+            repository="heimgewebe/bureau",
+            deployed=DEPLOYED,
+            main_commit=MAIN,
+            github=cyclic_github,
+        )
+        is None
+    )
+
+
 def test_observe_compare_404_fallback_fails_closed_on_unusable_parent(
     tmp_path: Path,
 ) -> None:

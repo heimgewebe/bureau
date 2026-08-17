@@ -1,0 +1,151 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Für jede verwendete Unit-Annotationsquelle sind explizite Wiederverwendungsrechte, Attribution, unveränderliche Quellidentität und kryptografische Bindung belegt. Widersprüchliche oder unklare eingebettete Rechtehinweise führen zum Ausschluss der Quelle; ein belegtes Nichtfinden einer geeigneten Quelle ist als negatives Ergebnis zulässig.",
+      "evidence_type": "object",
+      "id": "licensed-source-decision",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-unit-timing-t042:licensed-source-decision"
+      }
+    },
+    {
+      "assertion": "Als Unit-Ground-Truth werden ausschließlich tatsächlich veröffentlichte oder menschlich annotierte Unit-Grenzen beziehungsweise Unit-Sequenzen übernommen. Automatische Segmentierung, numerische Category-Suffixe oder Modellinferenz dürfen höchstens separat als explorativ gekennzeichnet werden und niemals stillschweigend die Ground Truth erzeugen.",
+      "evidence_type": "object",
+      "id": "observed-unit-boundaries-only",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-unit-timing-t042:observed-unit-boundaries-only"
+      }
+    },
+    {
+      "assertion": "Wenn geeignete Annotationen verfügbar sind, berichtet ein revisionsgebundener Evaluator Unit-Dauer, Unit-Abstände und verfügbare Unit-Sequenzstruktur getrennt von Phrase-, Theme- und Songmetriken und bindet jedes Ergebnis an die exakten Quell- und Code-Revisionen. Wenn keine geeignete Quelle verfügbar ist, existiert kein erfundener Ersatzscore.",
+      "evidence_type": "object",
+      "id": "unit-scale-evaluation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-unit-timing-t042:unit-scale-evaluation"
+      }
+    },
+    {
+      "assertion": "Jede aus Unit-Daten abgeleitete Parameterwahl verwendet ausschließlich einen vorab deklarierten Entwicklungssplit; eine unabhängige spätere oder anderweitig getrennte Auswertungsmenge wird nicht zur Auswahl verwendet. Ist kein belastbarer unabhängiger Split möglich, wird keine Generalisierung behauptet.",
+      "evidence_type": "object",
+      "id": "independent-evaluation-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-unit-timing-t042:independent-evaluation-boundary"
+      }
+    },
+    {
+      "assertion": "T042 verändert weder den aktiven Wal-Dienst noch PipeWire-, MIDI-, Geräte- oder Profilzustand und promoted keinen neuen Live- oder Grammar-Default. Bestehende Live-Modi und Defaultverträge bleiben unverändert.",
+      "evidence_type": "object",
+      "id": "no-live-default-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-unit-timing-t042:no-live-default-effect"
+      }
+    },
+    {
+      "assertion": "Fokussierte Korpus-/Waltests, relevante Repository-Validatoren und geschützte GitHub-Pflichtchecks sind auf dem exakten finalen Head grün; generierte Evidenzartefakte sind revisions- und soweit vorgesehen byte-reproduzierbar.",
+      "evidence_type": "object",
+      "id": "regression-and-ci",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-unit-timing-t042:regression-and-ci"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur revisionsgebundene Quellen-, Parser-, Evaluator-, Test- und Dokumentationsänderungen im Audio-Repository. Keine physische Wiedergabe, kein Live-Audioeffekt und kein automatischer Defaultwechsel.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Eine rechtlich eindeutig wiederverwendbare und revisionsgebundene Quelle mit verlässlichen einzelnen Buckelwal-Unit-Zeitgrenzen beziehungsweise Unit-Sequenzannotation finden und, falls vorhanden, als unabhängige Evidenz in das Audio-Repository integrieren. Daraus Unit-Dauer, Unit-Abstände und Unit-interne Struktur getrennt von der bereits gemergten Phrase-/Song-Makrostruktur evaluieren, ohne automatische Segmentierung oder numerische Wiederholungscodes als menschliche Ground Truth auszugeben. Falls keine geeignete Quelle belegbar ist, dies als negatives Ergebnis revisionsgebunden schließen statt Annotationen zu erfinden.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T042",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass eine geeignete offen lizenzierte Unit-Zeitannotation existiert",
+      "dass automatische Segmentierung menschlicher Unit-Ground-Truth gleichwertig ist",
+      "subjektive Walähnlichkeit",
+      "population-wide biologische Optimalität",
+      "Berechtigung zu einem Live- oder Defaultwechsel"
+    ],
+    "source": "Post-Merge-Folgetask aus Audio PR #106 / Merge 009e62c6703313168b27ed99577845466b9c7528.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ab59de66dfb4e9809dc6940e",
+      "event_id": 7976,
+      "event_created_at": "2026-08-17T15:05:39.436477Z",
+      "request_sha256": "0b96739b7386e7c4f79ef35b9e75bf4d50621bb616e32376c93ca5c27292024e",
+      "candidate_event_id": "candidate-event-74208c4878aaffb442435488",
+      "source_fingerprint": "87eb6f3a2b5b5ee0a174a56b4b702d439ce017070500fd8f66dd7e040ec6d4a6",
+      "content_fingerprint": "ab59de66dfb4e9809dc6940e9dfd5ed9523ab2a9bd9c021d810351612059c7e5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "87eb6f3a2b5b5ee0a174a56b4b702d439ce017070500fd8f66dd7e040ec6d4a6",
+        "freshness": "fingerprint-bound",
+        "kind": "post_merge_followup",
+        "locator": "https://github.com/heimgewebe/audio/pull/106",
+        "observed_at": "2026-08-17T15:05:39.306311Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "87eb6f3a2b5b5ee0a174a56b4b702d439ce017070500fd8f66dd7e040ec6d4a6",
+          "freshness": "fingerprint-bound",
+          "kind": "post_merge_followup",
+          "locator": "https://github.com/heimgewebe/audio/pull/106",
+          "observed_at": "2026-08-17T15:05:39.306311Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 42
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Die Arbeit bleibt additiv und fail-closed. Bei unklaren Rechten, instabiler Quellidentität, nicht reproduzierbarer Annotation oder Evidenzdrift wird die betroffene Quelle beziehungsweise Auswertung nicht übernommen; die gemergte Phrase-/Song-Korpus-Evaluation und alle Live-Defaults bleiben unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Buckelwal-Unit-Zeitannotation revisionsgebunden erschließen"
+}

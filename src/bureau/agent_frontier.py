@@ -425,6 +425,9 @@ def load_task_supply_summary(
                 "normal_claimable_count",
                 "fallback_claimable_count",
                 "total_claimable_count",
+                "joint_claimable_count",
+                "projected_joint_claimable_count",
+                "structural_capacity_upper_bound",
                 "blocked_ready_count",
                 "floor",
                 "refill_target",
@@ -434,12 +437,50 @@ def load_task_supply_summary(
             )
             if key in metrics
         }
+    feasibility = value.get("feasibility")
+    compact_feasibility = None
+    if isinstance(feasibility, dict):
+        worker_profile = feasibility.get("worker_profile")
+        compact_feasibility = {
+            "required": feasibility.get("required"),
+            "floor_reachable": feasibility.get("floor_reachable"),
+            "joint_claimable_task_ids": feasibility.get("joint_claimable_task_ids", []),
+            "pairwise_excluded": feasibility.get("pairwise_excluded", {}),
+            "structural_additional_capacity": feasibility.get(
+                "structural_additional_capacity"
+            ),
+            "structural_capacity_upper_bound": feasibility.get(
+                "structural_capacity_upper_bound"
+            ),
+            "projected_joint_claimable_count": feasibility.get(
+                "projected_joint_claimable_count"
+            ),
+            "catalog_capability_blockers": feasibility.get(
+                "catalog_capability_blockers", {}
+            ),
+            "worker_profile": (
+                {
+                    key: worker_profile.get(key)
+                    for key in (
+                        "bound",
+                        "source",
+                        "capabilities",
+                        "missing_capabilities",
+                        "conflicting_capabilities",
+                    )
+                    if key in worker_profile
+                }
+                if isinstance(worker_profile, dict)
+                else None
+            ),
+        }
     return {
         "available": True,
         "path": str(path),
         "status": value.get("status"),
         "report_sha256": value.get("report_sha256"),
         "metrics": compact_metrics,
+        "feasibility": compact_feasibility,
         "blockers": [
             blocker
             for blocker in value.get("blockers", [])
@@ -739,17 +780,31 @@ def build_frontier_report(
         )
     if supply_summary.get("available") and supply_status in {"blocked", "refill-proposed"}:
         supply_metrics = supply_summary.get("metrics", {})
+        supply_feasibility = supply_summary.get("feasibility")
+        floor_unreachable = (
+            isinstance(supply_feasibility, dict)
+            and supply_feasibility.get("floor_reachable") is False
+        )
         bottlenecks.append(
             {
                 "kind": (
-                    "claimable_task_supply_blocked"
-                    if supply_status == "blocked"
-                    else "claimable_task_supply_below_floor"
+                    "claimable_task_supply_unreachable"
+                    if floor_unreachable
+                    else (
+                        "claimable_task_supply_blocked"
+                        if supply_status == "blocked"
+                        else "claimable_task_supply_below_floor"
+                    )
                 ),
                 "severity": "high",
                 "detail": (
-                    "authoritative claimable supply is below its configured floor; "
-                    "fallback proposals remain non-authoritative until canonical publication"
+                    "the current worker profile and joint resource feasibility cannot "
+                    "reach the configured claimable supply floor"
+                    if floor_unreachable
+                    else (
+                        "authoritative claimable supply is below its configured floor; "
+                        "fallback proposals remain non-authoritative until canonical publication"
+                    )
                 ),
                 "normal_claimable_count": supply_metrics.get("normal_claimable_count"),
                 "fallback_claimable_count": supply_metrics.get("fallback_claimable_count"),
@@ -759,6 +814,7 @@ def build_frontier_report(
                 "proposal_count": supply_metrics.get("proposal_count"),
                 "blockers": supply_summary.get("blockers", []),
                 "publication_plan_sha256": supply_summary.get("publication_plan_sha256"),
+                "feasibility": supply_feasibility,
             }
         )
     scanner_metrics = scanner_summary.get("metrics") if isinstance(scanner_summary, dict) else None
@@ -835,6 +891,11 @@ def next_action(selected: list[dict[str, Any]], bottlenecks: list[dict[str, Any]
         return "review selected_frontier[0] and promote at most one bounded task this cycle"
     if any(item.get("kind") == "claimable_task_supply_report_invalid" for item in bottlenecks):
         return "regenerate and verify the revision-bound task-supply report before fallback work"
+    if any(item.get("kind") == "claimable_task_supply_unreachable" for item in bottlenecks):
+        return (
+            "treat the supply floor as currently unreachable; resolve the reported "
+            "capability or resource-packability causes before generating more fallbacks"
+        )
     if any(item.get("kind") == "claimable_task_supply_blocked" for item in bottlenecks):
         return "resolve the exact supply blockers before reviewing any fallback publication plan"
     if any(item.get("kind") == "claimable_task_supply_below_floor" for item in bottlenecks):

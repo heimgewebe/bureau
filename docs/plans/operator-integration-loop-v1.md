@@ -32,17 +32,20 @@ Diese Reihenfolge ist **kein Qualitätsurteil ohne Messung**. Sie ist eine Routi
 
 Die Route gilt nur, wenn Eingabekontext, Patchumfang, Risikoklasse und Prüfbarkeit zur gewählten Stufe passen.
 
-## Live-Ausgangslage
+## Historische Ausgangslage, keine Live-Wahrheit
 
-Belegt am 2026-07-10:
+Der Plan wurde am 2026-07-10 aus einem damals frisch geprüften Snapshot abgeleitet. Die dabei beobachteten Task-Zahlen, Dienstzustände und Runtime-Metriken werden hier bewusst **nicht** weiterkopiert oder von Hand aktualisiert. Ein aktiver Plan darf keine zweite Live-Projektion neben den kanonischen Quellen pflegen.
 
-- Grabowski ist gesund, 100 von 100 Tools stimmen mit dem Runtime-Vertrag überein, Auditkette und Deployment-Identität sind gültig.
-- Die letzten 50 Friction-Ereignisse enthalten 23 Plattformfilter-Ereignisse; die Friction-Sammlung ist jedoch keine Erfolgsquoten-Grundgesamtheit.
-- Bureau enthält 265 Tasks: 188 `verified`, 74 `planned`, 2 `blocked`, 1 `ready`.
-- `wgx validate` existiert bereits; ein paralleles `wgx verify` würde Semantik verdoppeln.
-- `chronik.service` und `plexer.service` existieren nicht als laufende User-Dienste.
-- Aktuelle RepoBrief-Bundles werden wieder gefunden und Context Packs funktionieren; bei Bundles ohne Source-Commit bleibt die Frische jedoch `unknown`.
-- Das Recovery-Gate ist aktuell grün. Backup-Reparatur ist deshalb kein Bestandteil dieser Initiative.
+Für aktuelle Entscheidungen gilt stattdessen:
+
+- dauerhafte Taskdefinitionen, Acceptance und Registry-Anker werden direkt aus der kanonischen Registry gelesen;
+- aktuelle Runtime-Autoritäts-TaskSpec, Revision und Zustand kommen aus dem autoritativen Bureau-StateStore; ein installierter Registry-Snapshot allein reicht dafür nicht aus;
+- Claim-, Run- und Lease-Zustand wird über die koordinierte Bureau-/Grabowski-Laufzeit frisch gelesen;
+- PR-, Merge- und CI-Zustand bleibt GitHub-Autorität;
+- installierter Bureau-Commit und Runtime-Identität folgen dem Deployment-Manifest und dem Runtime-Refresh-Vertrag;
+- Repo-Kontext gilt nur mit quellengebundener Frischeevidenz.
+
+Die konkreten Beobachtungen vom 2026-07-10 bleiben über die Git-Historie nachvollziehbar, besitzen aber keine operative Autorität für spätere Läufe. Die aktuelle Autoritätsaufteilung ist in [`bureau-runtime-refresh-v1.md`](../bureau-runtime-refresh-v1.md) und die Beobachtungsgrenze in [`bureau-runtime-observation-v1.md`](../bureau-runtime-observation-v1.md) dokumentiert. Damit bleibt dieser Plan an der kanonischen Wahrheit verankert, ohne volatile Zustände zu duplizieren.
 
 ## Nicht-Ziele
 
@@ -154,6 +157,6 @@ Die Initiative ist abgeschlossen, wenn:
 
 ## Unsicherheit
 
-Unsicherheit: 0,18. Die Live-Ausgangslage ist direkt geprüft; Kosten- und Qualitätsreihenfolge der Modellbackends bleibt bis zur Messreihe eine Hypothese.
+Unsicherheit: 0,18. Die historische Ausgangslage war am 2026-07-10 direkt geprüft; aktuelle operative Zustände müssen frisch aus den oben genannten Autoritäten gelesen werden. Kosten- und Qualitätsreihenfolge der Modellbackends bleibt bis zur Messreihe eine Hypothese.
 
 Interpolationsgrad: 0,31. Systemgrenzen sind aus bestehenden Verträgen abgeleitet; konkrete Schwellen für Kosten, Patchgröße und Eskalation müssen empirisch festgelegt werden.

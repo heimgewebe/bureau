@@ -20,6 +20,8 @@ from .github_observer import (
     CI_UNKNOWN,
     observation_is_stale,
 )
+from .live_register import current_candidate_records
+from .read_only_state import ReadOnlyStateStore
 from .v2 import (
     TERMINAL_TASK_STATES,
     Registry,
@@ -143,8 +145,6 @@ def _public_receipt(run_id: str, row: dict[str, Any]) -> dict[str, Any]:
 
 def _public_github(observation: dict[str, Any]) -> dict[str, Any]:
     return {field: observation.get(field) for field in GITHUB_FIELDS}
-
-
 
 
 def _repository_resources(registry: Registry) -> list[legacy.Resource]:
@@ -319,11 +319,353 @@ def _next_actions(
         )
     return actions
 
+
 def _queue_lane(registry: Registry, task_id: str) -> str | None:
     for lane, task_ids in registry.queue.items():
         if task_id in task_ids:
             return lane
     return None
+
+
+def _read_runtime_counts(state_path: Path) -> dict[str, Any]:
+    """Read bounded aggregate runtime counts without taking write locks."""
+    if not state_path.is_file():
+        return {"available": False, "error": "state-store-unavailable"}
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(f"file:{state_path}?mode=ro", uri=True, timeout=5)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA query_only=ON")
+        tables = {
+            str(row["name"])
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        run_states: dict[str, int] = {}
+        latest_updates: list[str] = []
+        if "runs" in tables:
+            run_states = {
+                str(row["state"]): int(row["count"])
+                for row in connection.execute(
+                    "SELECT state,COUNT(*) AS count FROM runs GROUP BY state ORDER BY state"
+                )
+            }
+            row = connection.execute("SELECT MAX(updated_at) AS value FROM runs").fetchone()
+            if row is not None and isinstance(row["value"], str):
+                latest_updates.append(row["value"])
+        if "task_status" in tables:
+            row = connection.execute("SELECT MAX(updated_at) AS value FROM task_status").fetchone()
+            if row is not None and isinstance(row["value"], str):
+                latest_updates.append(row["value"])
+        reservation_count = (
+            int(connection.execute("SELECT COUNT(*) FROM reservations").fetchone()[0])
+            if "reservations" in tables
+            else None
+        )
+        active_workspace_count = (
+            int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM workspaces WHERE state<>'removed'"
+                ).fetchone()[0]
+            )
+            if "workspaces" in tables
+            else None
+        )
+        receipt_count = (
+            int(connection.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
+            if "receipts" in tables
+            else None
+        )
+        try:
+            candidate_count: int | None = len(
+                current_candidate_records(ReadOnlyStateStore(state_path, state_path.parent))
+            )
+        except (legacy.StateError, sqlite3.Error, OSError):
+            candidate_count = None
+        return {
+            "available": True,
+            "run_states": run_states,
+            "active_run_count": sum(run_states.get(state, 0) for state in ACTIVE_RUN_STATES),
+            "reservation_count": reservation_count,
+            "active_workspace_count": active_workspace_count,
+            "receipt_count": receipt_count,
+            "candidate_count": candidate_count,
+            "latest_update": max(latest_updates) if latest_updates else None,
+        }
+    except sqlite3.Error as exc:
+        return {"available": False, "error": f"{type(exc).__name__}: {exc}"}
+    finally:
+        if connection is not None:
+            connection.close()
+
+
+def _metric(value: Any, *, definition: str, source: str) -> dict[str, Any]:
+    return {"value": value, "definition": definition, "source": source}
+
+
+def control_plane_summary(
+    projection: dict[str, Any],
+    *,
+    backup: dict[str, Any] | None = None,
+    restore: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Render the bounded consumer view used by T011 Doctor and dashboards."""
+    tasks = [item for item in projection.get("tasks", []) if isinstance(item, dict)]
+    runtime_counts = projection.get("runtime_counts")
+    runtime_counts = runtime_counts if isinstance(runtime_counts, dict) else {}
+    github = projection.get("github_observation")
+    github = github if isinstance(github, dict) else {}
+    generated_at = projection.get("generated_at")
+
+    def has_blocker(task: dict[str, Any]) -> bool:
+        return bool(task.get("blocked_reasons") or task.get("stale_reasons")) or any(
+            isinstance(item, dict) and item.get("severity") == "blocker"
+            for item in task.get("findings", [])
+        )
+
+    candidate_count = runtime_counts.get("candidate_count")
+    intake_from_live_register = isinstance(candidate_count, int)
+    intake = (
+        candidate_count
+        if intake_from_live_register
+        else sum(1 for task in tasks if task.get("effective_state") == "inbox")
+    )
+    ready = sum(1 for task in tasks if task.get("effective_state") == "ready")
+    claimable = sum(
+        1
+        for task in tasks
+        if task.get("effective_state") == "ready"
+        and task.get("active_run") is None
+        and not has_blocker(task)
+    )
+    in_flight = runtime_counts.get("active_run_count")
+    if not isinstance(in_flight, int):
+        in_flight = sum(1 for task in tasks if task.get("active_run") is not None)
+    closeout_pending = sum(
+        1
+        for task in tasks
+        if task.get("receipts") and task.get("effective_state") not in TERMINAL_TASK_STATES
+    )
+    drift = sum(1 for task in tasks if task.get("blocked_reasons") or task.get("stale_reasons"))
+    drift += sum(
+        1
+        for finding in projection.get("findings", [])
+        if isinstance(finding, dict) and finding.get("severity") == "blocker"
+    )
+    drift += sum(
+        1
+        for item in projection.get("repository_balls", {}).values()
+        if isinstance(item, dict) and item.get("status") == "ambiguous"
+    )
+
+    backup_observation = backup or {
+        "observed": False,
+        "status": "unobserved",
+        "source": "state-backup-manifest",
+        "freshness": {"observed_at": generated_at},
+        "authority": "verified-backup-bundle",
+        "bounds": "latest verified bundle only",
+    }
+    restore_observation = restore or {
+        "observed": False,
+        "status": "unobserved",
+        "source": "restore-test-receipt",
+        "freshness": {"observed_at": generated_at},
+        "authority": "hash-bound-restore-test-receipt",
+        "bounds": "latest receipt only",
+    }
+    backup_freshness = backup_observation.get("freshness")
+    backup_freshness = backup_freshness if isinstance(backup_freshness, dict) else {}
+
+    github_status = "unobserved"
+    if github.get("observed"):
+        if not github.get("healthy") or github.get("binding_healthy") is False:
+            github_status = "blocked"
+        elif github.get("stale"):
+            github_status = "stale"
+        else:
+            github_status = "fresh"
+
+    state_store = projection.get("state_store")
+    state_store = state_store if isinstance(state_store, dict) else {}
+    state_ok = bool(state_store.get("available")) and runtime_counts.get("available") is not False
+    metrics = {
+        "intake": _metric(
+            intake,
+            definition=(
+                "current candidate identities in the StateStore Live Register; "
+                "inbox tasks are the fallback when candidate projection is unavailable"
+            ),
+            source=(
+                "StateStore Live Register candidate projection"
+                if intake_from_live_register
+                else "authoritative TaskSpec effective_state=inbox fallback"
+            ),
+        ),
+        "ready": _metric(
+            ready,
+            definition="authoritative tasks whose effective state is ready",
+            source="StateStore TaskSpec projection",
+        ),
+        "claimable": _metric(
+            claimable,
+            definition="ready tasks without active run or projected blocker",
+            source="bounded status projection; final claimability remains atomic claim authority",
+        ),
+        "in_flight": _metric(
+            in_flight,
+            definition="runs in assigned/running/verifying state",
+            source="StateStore runs",
+        ),
+        "closeout_pending": _metric(
+            closeout_pending,
+            definition="nonterminal tasks with one or more run receipts",
+            source="StateStore receipts plus authoritative task state",
+        ),
+        "drift": _metric(
+            drift,
+            definition=(
+                "stale/blocked task signals plus top-level blockers and repository "
+                "ambiguity"
+            ),
+            source="bounded status projection",
+        ),
+        "claims": _metric(
+            runtime_counts.get("reservation_count"),
+            definition=(
+                "StateStore resource reservations; concrete host leases remain "
+                "Grabowski authority"
+            ),
+            source="StateStore reservations",
+        ),
+        "workspaces": _metric(
+            runtime_counts.get("active_workspace_count"),
+            definition="workspace records not marked removed",
+            source="StateStore workspaces",
+        ),
+        "backup_age_seconds": _metric(
+            backup_freshness.get("age_seconds"),
+            definition="age of newest verified coherent StateStore backup",
+            source="verified backup manifest",
+        ),
+        "restore_status": _metric(
+            restore_observation.get("status"),
+            definition="status of latest hash-bound restore test receipt",
+            source="restore test receipt",
+        ),
+    }
+    organs = {
+        "state_store": {
+            "source": "bureau-state-store",
+            "freshness": {
+                "observed_at": generated_at,
+                "latest_update": runtime_counts.get("latest_update"),
+            },
+            "bounds": (
+                "schema/integrity plus aggregate "
+                "task/run/receipt/reservation/workspace reads"
+            ),
+            "authority": "task revisions, task state, claims, runs, acceptance and closeout",
+            "status": "ok" if state_ok else "unavailable",
+        },
+        "task_flow": {
+            "source": "authoritative-task-projection",
+            "freshness": {"observed_at": generated_at},
+            "bounds": "current task set and effective states only",
+            "authority": "Bureau StateStore",
+            "status": "ok" if state_ok else "unknown",
+        },
+        "frontier": {
+            "source": "status-projection",
+            "freshness": {"observed_at": generated_at},
+            "bounds": "read-only deterministic claimability approximation; no claim effect",
+            "authority": "StateStore dynamic frontier and atomic claim path",
+            "status": "ok" if state_ok else "unknown",
+        },
+        "claims": {
+            "source": "state-store-reservations",
+            "freshness": {"observed_at": generated_at},
+            "bounds": "reservation counts only; Grabowski concrete lease liveness is not inferred",
+            "authority": "Bureau reservations / Grabowski concrete leases",
+            "status": "ok" if runtime_counts.get("reservation_count") is not None else "unknown",
+        },
+        "backup": dict(backup_observation),
+        "restore": dict(restore_observation),
+        "github_bridge": {
+            "source": "github-observation",
+            "freshness": {
+                "observed_at": github.get("observed_at"),
+                "stale": github.get("stale"),
+            },
+            "bounds": "bound PR/check observation only; never task completion authority",
+            "authority": "GitHub for PR, review, CI and merge facts",
+            "status": github_status,
+        },
+        "closeout": {
+            "source": "state-store-receipts-and-task-state",
+            "freshness": {"observed_at": generated_at},
+            "bounds": (
+                "receipt presence plus authoritative terminal state; "
+                "no synthetic verification"
+            ),
+            "authority": "Bureau acceptance/closeout",
+            "status": "attention" if closeout_pending else "ok",
+        },
+        "workspaces": {
+            "source": "state-store-workspaces",
+            "freshness": {"observed_at": generated_at},
+            "bounds": "recorded workspace state only; process liveness remains Grabowski authority",
+            "authority": "Bureau binding / Grabowski process and filesystem effects",
+            "status": "ok"
+            if runtime_counts.get("active_workspace_count") is not None
+            else "unknown",
+        },
+        "drift": {
+            "source": "status-projection-findings",
+            "freshness": {"observed_at": generated_at},
+            "bounds": "known projection blockers/staleness only; unknown remains unknown",
+            "authority": "derived diagnostic only",
+            "status": "attention" if drift else "ok",
+        },
+    }
+    successful_organ_statuses = {"ok", "fresh", "verified"}
+    healthy = (
+        bool(projection.get("healthy"))
+        and state_ok
+        and all(
+            isinstance(organ, dict)
+            and organ.get("status") in successful_organ_statuses
+            for organ in organs.values()
+        )
+    )
+    return {
+        "schema_version": 1,
+        "kind": "bureau_control_plane_view",
+        "generated_at": generated_at,
+        "read_only": True,
+        "healthy": healthy,
+        "metrics": metrics,
+        "organs": organs,
+        "bounds": {
+            "task_count": len(tasks),
+            "repository_count": len(projection.get("repository_balls", {})),
+            "next_action_count": len(projection.get("next_actions", [])),
+            "dashboard_contract": "consume this control_plane view or Doctor.dashboard only",
+        },
+        "authority": {
+            "operational": "Bureau StateStore",
+            "process_and_concrete_leases": "Grabowski",
+            "pr_ci_merge": "GitHub",
+            "backup": "verified backup bundle and restore-test receipt",
+        },
+        "does_not_establish": [
+            "repair_effect",
+            "claim_authority",
+            "dispatch_authority",
+            "task_completion",
+            "merge_readiness",
+            "runtime_correctness",
+        ],
+    }
 
 
 def status_projection(
@@ -537,8 +879,9 @@ def status_projection(
         if finding.get("severity") == "blocker"
     )
     next_actions = _next_actions(tasks, repository_balls, projection_findings)
+    runtime_counts = _read_runtime_counts(state_path)
     healthy = hard_findings == 0
-    return {
+    projection = {
         "schema_version": STATUS_PROJECTION_SCHEMA_VERSION,
         "generated_at": generated_at,
         "root": str(Path(root).resolve()),
@@ -563,8 +906,11 @@ def status_projection(
         "tasks": tasks,
         "repository_balls": repository_balls,
         "next_actions": next_actions,
+        "runtime_counts": runtime_counts,
         "authority_boundary": {
             "ai": copy.deepcopy(AI_AUTHORITY_BOUNDARY),
         },
         "does_not_establish": list(PROJECTION_DOES_NOT_ESTABLISH),
     }
+    projection["control_plane"] = control_plane_summary(projection)
+    return projection

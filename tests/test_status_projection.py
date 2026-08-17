@@ -544,3 +544,25 @@ def test_projection_repository_ball_ambiguity_is_actionable(
     assert projection["next_actions"][0]["action"] == "reconcile-active-repository-balls"
     assert projection["next_actions"][0]["repository"] == "repo.alpha"
     assert projection["healthy"] is False
+
+
+def test_projection_exposes_bounded_control_plane_metrics(registry_factory) -> None:
+    root = registry_factory(2, mode="write")
+    state_root = make_state(root)
+    add_run(state_root, "BUR-RUN-CONTROL", TASK_1, state="running")
+
+    projection = project(root)
+    control = projection["control_plane"]
+
+    assert control["kind"] == "bureau_control_plane_view"
+    assert control["read_only"] is True
+    assert control["metrics"]["ready"]["value"] == 2
+    assert control["metrics"]["in_flight"]["value"] == 1
+    assert control["metrics"]["intake"]["value"] == 0
+    assert control["organs"]["state_store"]["authority"].startswith("task revisions")
+    assert control["organs"]["github_bridge"]["status"] == "unobserved"
+    assert "repair_effect" in control["does_not_establish"]
+    assert control["healthy"] is False
+    assert control["metrics"]["intake"]["source"] == (
+        "StateStore Live Register candidate projection"
+    )

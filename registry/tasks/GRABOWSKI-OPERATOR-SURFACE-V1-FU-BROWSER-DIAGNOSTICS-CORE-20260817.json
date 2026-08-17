@@ -1,0 +1,153 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Diagnostics-Core exponiert ausschließlich Leseoperationen und enthält keine Navigation-, Click-, Type-, Scroll-, Form-, Retry-, Routing-, Profile- oder Backend-Promotion-Wirkung. Produktions-Semantic-Gateway und Browserdefault bleiben unverändert.",
+      "evidence_type": "object",
+      "id": "read-only-construction",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-diagnostics:read-only-construction"
+      }
+    },
+    {
+      "assertion": "Jeder Diagnosezugriff bindet an genau einen live Grabowski-managed Browserworker und lehnt unbekannte, terminale oder während der Diagnose terminalisierte Worker fail-closed ab; fremde Profile oder frei angegebene CDP-Endpunkte sind nicht als Authority akzeptiert.",
+      "evidence_type": "object",
+      "id": "live-worker-binding",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-diagnostics:worker-binding"
+      }
+    },
+    {
+      "assertion": "Console- und Network-Ausgaben sind hart begrenzt und normalisiert. Cookies, Credentials, Authorization-Werte, Request-/Response-Bodies, beliebige Raw-Headers und Query-/Fragment-Secrets werden nicht ausgegeben; URLs werden mindestens auf sichere strukturelle Metadaten reduziert.",
+      "evidence_type": "object",
+      "id": "bounded-redacted-console-network",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-diagnostics:redaction"
+      }
+    },
+    {
+      "assertion": "Falls Screenshot-Diagnostik Bestandteil dieser Slice ist, gelangen keine unbounded Bildbytes in Semantic-Gateway oder normale Textdiagnostik; ausgegeben werden nur bounded Metadaten bzw. eine lokale Artefaktreferenz mit Digest. Fehlt ein sicherer Artefaktpfad, bleibt Screenshot fail-closed außerhalb der Slice.",
+      "evidence_type": "object",
+      "id": "screenshot-artifact-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-diagnostics:screenshot-boundary"
+      }
+    },
+    {
+      "assertion": "Der Diagnostics-Core funktioniert ohne DevTools MCP. Ein optionaler späterer DevTools-MCP-Adapter kann keine neue Control-Plane-, Session-, Lease-, Outcome- oder Effect-Authority begründen.",
+      "evidence_type": "object",
+      "id": "optional-backend-independence",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-diagnostics:backend-independence"
+      }
+    },
+    {
+      "assertion": "Fokussierte Security-/Lifecycle-Tests und die vollständige relevante Repository-Validierung bestehen auf exaktem Head. Mindestens ein isolierter live Chrome-Worker-Proof zeigt bounded read-only Console-/Network-Diagnostik, fail-closed Workerbindung und vollständige Worker-/Profil-/Lease-Kompensation.",
+      "evidence_type": "object",
+      "id": "regression-live-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-diagnostics:regression-live"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.grabowski.browser-worker-control-plane"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Tooling-only diagnostics core. Keine MCP-/Capability-Catalog-/Generated-Context-Änderung, keine Browseraktion, kein Retry-/Routing-/Credential-/Profil-/BiDi-Promotionseffekt. Exakte Pfadleasing und isolierter Worktree sind Pflicht. Der Component-Claim gruppiert die Browser-Control-Plane fachlich; Mutationsautorität stammt ausschließlich aus den exakten execution.grabowski_resources.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_browser_diagnostics.py",
+      "path:/home/alex/repos/grabowski/tools/browser_diagnostics.py",
+      "path:/home/alex/repos/grabowski/tests/test_browser_diagnostics.py",
+      "path:/home/alex/repos/grabowski/docs/browser-control-plane-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Eine strikt read-only, tooling-only Browser-Diagnostics-Slice oberhalb des bestehenden Grabowski-managed Chrome/CDP-Worker-Lifecycles implementieren. Der Core liest gebundene Console-/Network-Diagnostik und optional Screenshot-Artefaktmetadaten ausschließlich für einen live Grabowski-Worker, normalisiert und begrenzt sie sicher und besitzt keinerlei Browseraktions-, Retry-, Routing-, Credential-, Profil- oder Backend-Promotion-Autorität. Die Slice verändert weder das Semantic Browser API noch den öffentlichen MCP-/Capability-Surface; eine spätere Exposition über Grip/MCP wird separat entschieden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-DIAGNOSTICS-CORE-20260817",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "DevTools MCP production dependency",
+      "browser action authority",
+      "semantic gateway expansion",
+      "retry authority",
+      "credential access authority",
+      "profile mutation authority",
+      "WebDriver BiDi promotion",
+      "production backend promotion"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-45736534c7efdf3778a86d5e",
+      "event_id": 7856,
+      "event_created_at": "2026-08-17T07:26:50.567715Z",
+      "request_sha256": "ef0333d2ad8b162fcef99064e28963342eb4f401d1c733239a03c61553db0a3b",
+      "candidate_event_id": "candidate-event-e21f72016f4b7be367e731dd",
+      "source_fingerprint": "9f79e78db63f1f5ccc1b69218997a51918e28b3aa8e2f7a5c6dbf9b02a5a2e16",
+      "content_fingerprint": "45736534c7efdf3778a86d5e0a6affbe54913c5b8af71b4164e5ca2d561afeb9",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "9f79e78db63f1f5ccc1b69218997a51918e28b3aa8e2f7a5c6dbf9b02a5a2e16",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "conversation:browser-control-plane-diagnostics-only-20260817",
+        "observed_at": "2026-08-17T09:11:00+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "9f79e78db63f1f5ccc1b69218997a51918e28b3aa8e2f7a5c6dbf9b02a5a2e16",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "conversation:browser-control-plane-diagnostics-only-20260817",
+          "observed_at": "2026-08-17T09:11:00+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 191
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "browser",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Bounded read-only browser diagnostics core"
+}

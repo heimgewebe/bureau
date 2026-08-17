@@ -53,6 +53,7 @@ MAX_JSON_BYTES = 256 * 1024
 MAX_RUNTIME_AUTHORITY_HISTORY_INTENTS = 4096
 MAX_RUNTIME_BACKUP_ARTIFACT_DIRS = 4096
 MAX_HISTORICAL_RUNTIME_ARTIFACT_BYTES = 4 * 1024 * 1024
+MAX_GITHUB_FIRST_PARENT_LAG_COMMITS = 100
 RUNTIME_LAUNCHER_MANAGED_MARKER = "# managed-by: heimgewebe-bureau-runtime-v1"
 RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD = "manifest_payload_sha256"
 RUNTIME_LAUNCHER_ENTRYPOINTS = (
@@ -380,6 +381,46 @@ def gh_json(arguments: list[str], *, timeout: float = 60) -> Any:
         ) from exc
 
 
+def _github_compare_not_found(error: RuntimeRefreshError) -> bool:
+    if error.code != "command-failed":
+        return False
+    argv = error.details.get("argv")
+    if not isinstance(argv, list) or not any(
+        isinstance(item, str) and "/compare/" in item for item in argv
+    ):
+        return False
+    text = f"{error.details.get('stdout', '')}\n{error.details.get('stderr', '')}"
+    return "HTTP 404" in text or ("Not Found" in text and '"status":"404"' in text)
+
+
+def _first_parent_lag_commits(
+    *,
+    repository: str,
+    deployed: str,
+    main_commit: str,
+    github: Callable[[list[str]], Any],
+) -> int | None:
+    current = main_commit
+    seen: set[str] = set()
+    for lag in range(MAX_GITHUB_FIRST_PARENT_LAG_COMMITS + 1):
+        if current == deployed:
+            return lag
+        if lag == MAX_GITHUB_FIRST_PARENT_LAG_COMMITS or current in seen:
+            return None
+        seen.add(current)
+        detail = github(["api", f"repos/{repository}/commits/{current}"])
+        if not isinstance(detail, dict) or detail.get("sha") != current:
+            return None
+        parents = detail.get("parents")
+        if not isinstance(parents, list) or not parents or not isinstance(parents[0], dict):
+            return None
+        parent = parents[0].get("sha")
+        if not isinstance(parent, str) or len(parent) != 40:
+            return None
+        current = parent
+    return None
+
+
 def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
     value = read_json(path)
     if value.get("kind") != "bureau_runtime_deployment":
@@ -544,11 +585,24 @@ def observe_runtime_refresh(
                 }
                 merged_at = detail["mergedAt"]
 
-        compare = github(["api", f"repos/{repository}/compare/{deployed}...{main_commit}"])
-        if isinstance(compare, dict) and isinstance(compare.get("ahead_by"), int):
-            lag_commits = compare["ahead_by"]
+        try:
+            compare = github(["api", f"repos/{repository}/compare/{deployed}...{main_commit}"])
+        except RuntimeRefreshError as exc:
+            if not _github_compare_not_found(exc):
+                raise
+            lag_commits = _first_parent_lag_commits(
+                repository=repository,
+                deployed=deployed,
+                main_commit=main_commit,
+                github=github,
+            )
+            if lag_commits is None:
+                reasons.append("commit-lag-unavailable")
         else:
-            reasons.append("commit-lag-unavailable")
+            if isinstance(compare, dict) and isinstance(compare.get("ahead_by"), int):
+                lag_commits = compare["ahead_by"]
+            else:
+                reasons.append("commit-lag-unavailable")
 
         second_main = github(["api", f"repos/{repository}/commits/main"])
         if not isinstance(second_main, dict) or second_main.get("sha") != main_commit:

@@ -14,7 +14,10 @@ bureau --root . explain-next --capability repository --capability shell --json
 
 ## Queue freshness reconcile
 
-`registry/queue.json` is the dispatch canon. `task.priority` is advisory metadata. Use
+`registry/queue.json` is still the legacy dispatcher-order surface during the T012/T013
+transition; it is not the long-term V3 operational state authority. Current TaskSpec revisions,
+lifecycle state, runs, reservations, acceptance and closeout remain StateStore truth.
+`task.priority` is advisory metadata. Use
 `queue-reconcile` to compare the two without mutating queue state:
 
 ```bash
@@ -190,9 +193,10 @@ bureau --root . --json claim-next --worker worker-repo-bureau \
   --resource repo.bureau --capability repository --capability shell
 ```
 
-A resource-scoped ball does not create a second queue canon. `registry/queue.json` remains the
-dispatch queue. The resource filter limits observation, explanation and selection to tasks whose
-claims overlap the requested resource.
+A resource-scoped ball does not create a second queue authority. During the T012/T013 transition,
+`registry/queue.json` remains only the legacy dispatcher-order surface. It does not override
+StateStore lifecycle truth. The resource filter limits observation, explanation and selection to
+tasks whose claims overlap the requested resource.
 
 Worker ownership is still one active assignment per worker ID. Use stable resource-scoped worker
 IDs, such as `worker-repo-bureau` or `worker-repo-lenskit`, when operating multiple repository
@@ -482,6 +486,38 @@ bureau --root . --json status-projection
 Both commands observe and project only. They never verify tasks, mutate the
 queue, merge, delete branches or clean up worktrees.
 
+### Bounded Control Plane Doctor (T011)
+
+The T011 Control Plane Doctor is separate from the legacy dispatcher `bureau doctor` command. It is
+fully read-only and composes the existing status projection with bounded backup and restore
+observations:
+
+```bash
+PYTHONPATH=src python3 -m bureau.doctor --root . --state-root ~/.local/state/bureau
+```
+
+Its `control_plane` object is the bounded V3 consumer surface. Every organ reports `source`,
+`freshness`, `bounds`, `authority` and `status`. The projection covers StateStore, task flow,
+frontier, claims/reservations, backup, restore, GitHub bridge, closeout, workspaces and drift. Flow
+metrics include intake, ready, claimable, in-flight, closeout-pending, drift, reservation count,
+workspace count, backup age and restore status. `claimable` is deliberately only a read-only
+approximation; final claimability belongs to the atomic claim path. StateStore reservations do not
+prove concrete Grabowski lease liveness. Unknown, stale or blocked evidence is never promoted to a
+success state.
+
+`repair_plan` is a proposal, not an effect. Every proposal names the finding and impact, required
+authority, a separate typed `apply_contract`, expected readback and a `dry_run_sha256`, while the
+proposal itself reports `effect: none`. No repair is executed by this Doctor. An effect requires a
+separate, explicitly authorized apply path followed by its own readback.
+
+Dashboard and other read-only consumers must consume only `control_plane` or the Doctor's bounded
+`dashboard` projection. They must not reconstruct task, queue, claim, completion or lease truth from
+diagnostic output. Operational task/run/acceptance/closeout truth stays in Bureau StateStore;
+concrete process and lease liveness stays with Grabowski; PR/review/CI/merge facts stay with GitHub;
+backup and restore status comes only from their verified artifacts. This does not pre-empt T012/T013:
+legacy Git-backed queue/registry writers may still exist during the transition, but they do not gain
+a second V3 authority from this diagnostic surface.
+
 For a Grabowski-independent last-known-good read path, publish and read the sealed capsule:
 
 ```bash
@@ -557,9 +593,11 @@ baseline is not the intended revision, stop and repair the task or claim path; d
 adopt a foreign checkout. The coordinator-created worktree remains bound to the run and does not by
 itself establish test sufficiency, merge readiness or deployment authority.
 
-Canonical scope stays in `registry/tasks/*.json`; queue order stays in `registry/queue.json`; the
-run envelope binds the exact task and plan revisions. Diagnose intended resources without acquiring
-them:
+`registry/tasks/*.json` remains the Git publication/input surface, while the current StateStore
+TaskSpec revision and lifecycle state are operational authority. `registry/queue.json` remains a
+transitional legacy dispatcher-order surface until T012/T013 remove the old writers; it must not
+be treated as a second V3 state authority. The run envelope binds the exact task and plan revisions.
+Diagnose intended resources without acquiring them:
 
 ```bash
 bureau --json lease-contract \

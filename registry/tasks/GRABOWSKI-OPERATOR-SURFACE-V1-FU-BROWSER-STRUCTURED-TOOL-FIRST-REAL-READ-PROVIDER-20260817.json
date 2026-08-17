@@ -1,0 +1,162 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The exact slice defines one provider_id github.public-rest with origin https://api.github.com and exactly one operation repository.read whose effect_class is read. Provider execution remains explicitly named by the caller; no select, route, rank, fallback, default or browser-worker start path is introduced anywhere in the slice.",
+      "evidence_type": "object",
+      "id": "single-real-provider-no-router",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider-github:single-provider"
+      }
+    },
+    {
+      "assertion": "The provider accepts no token, cookie, Authorization value, caller header map, browser profile or session identity. Only fixed non-secret provider-owned HTTP headers needed for the public GitHub API may be emitted. Tests prove unknown credential/header inputs are rejected or structurally impossible and no secret access surface is invoked.",
+      "evidence_type": "object",
+      "id": "anonymous-credential-free",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider-github:credential-boundary"
+      }
+    },
+    {
+      "assertion": "Execution first reuses the existing StructuredToolProvider eligibility contract and then permits only canonical https://api.github.com/repos/<owner>/<repo> targets with bounded conservative owner/repository path segments. Query, fragment, userinfo, non-HTTPS, alternate origins, path traversal, empty/extra segments and redirects fail closed before a successful provider outcome.",
+      "evidence_type": "object",
+      "id": "canonical-repository-target",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider-github:target-scope"
+      }
+    },
+    {
+      "assertion": "A provider call performs at most one bounded anonymous HTTPS repository-metadata read with finite timeout and response-size limit. Success requires an expected JSON response and returns only an explicit bounded metadata projection plus digests/status; raw response body, arbitrary headers and unbounded provider data are never returned. Transport, HTTP, content-type, decode or bound violations fail closed with retry_authorized=false.",
+      "evidence_type": "object",
+      "id": "bounded-public-read",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider-github:bounded-read"
+      }
+    },
+    {
+      "assertion": "The real provider receipt is bound to provider ID, operation, existing read effect class, freshly resolved effect-contract digest and target digest, then normalized through the existing StructuredToolProvider normalize_receipt path. The provider creates no second Effect/Lifecycle/Retry authority; normalizer_execution_performed=false, automatic_route_selected=false, retry_authorized=false and authoritative_readback_required=true remain invariant.",
+      "evidence_type": "object",
+      "id": "receipt-normalized-existing-authority",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider-github:receipt"
+      }
+    },
+    {
+      "assertion": "Focused security/contract tests, py_compile/diff checks and the full relevant Grabowski validation are green on the exact PR head; normal GitHub required checks are green; after merge a fresh live anonymous call to the public heimgewebe/grabowski repository through this exact provider succeeds and its bounded normalized outcome is read back. No Grabowski runtime deploy or public capability exposure is claimed unless this slice actually changes a deployed runtime contract.",
+      "evidence_type": "object",
+      "id": "exact-head-live-regression-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider-github:regression-live"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.grabowski.browser-worker-control-plane"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-STRUCTURED-TOOL-PROVIDER-CONTRACT-20260817"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly continued the Browser Control Plane work. Scope is one tooling/core read-only public REST provider only. No credentials, browser action, router, public MCP/Grip exposure, default change, retry authority or backend promotion effect is authorized.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_browser_structured_provider_github.py",
+      "path:/home/alex/repos/grabowski/tools/browser_structured_provider_github.py",
+      "path:/home/alex/repos/grabowski/tests/test_browser_structured_provider_github.py",
+      "path:/home/alex/repos/grabowski/docs/browser-control-plane-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Implement exactly one real, explicit, anonymous read-only StructuredToolProvider backend above the verified StructuredToolProvider contract. The backend is provider_id github.public-rest, declares only operation repository.read with the existing authoritative browser effect class read, accepts only canonical targets of the form https://api.github.com/repos/<owner>/<repo>, performs one bounded anonymous HTTPS GET without caller-supplied headers, credentials, query or fragment, returns only a bounded selected repository-metadata projection plus a contract-bound provider receipt, and normalizes that receipt through the existing provider-neutral normalizer. This slice must not add automatic provider selection, ranking, fallback, default changes, browser-worker/session authority, credential/profile access, retry authority, MCP/Grip exposure or production router/promotion. After accepted live proof it counts as exactly one real backend; a router remains forbidden until at least two real revision-bound accepted backends exist.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-STRUCTURED-TOOL-FIRST-REAL-READ-PROVIDER-20260817",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "architecture_position": "First real StructuredToolProvider backend after the contract-only slice. It is intentionally anonymous/read-only and explicit-provider-only so execution semantics can be proven before any routing policy exists.",
+    "backend_count_after_acceptance": 1,
+    "does_not_establish": [
+      "automatic provider routing",
+      "provider ranking or fallback authority",
+      "credential or browser-profile authority",
+      "browser session authority",
+      "retry authority",
+      "public MCP or Grip exposure",
+      "production backend default or promotion",
+      "router readiness from one backend",
+      "generic GitHub mutation authority"
+    ],
+    "router_minimum_real_accepted_backends": 2,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-41f0181c8f0abf0bf36cf742",
+      "event_id": 8046,
+      "event_created_at": "2026-08-17T18:49:39.136129Z",
+      "request_sha256": "48b4735ed8cfb795476ebf17fbf6ac2d478bbb3bd0e832d798a6a32c3f3ed36f",
+      "candidate_event_id": "candidate-event-46a115d775cb07c8eb9d552b",
+      "source_fingerprint": "73a3db8c553541c92ca7e3e67edc5b506537e9b101033351b35edf3c538a2b56",
+      "content_fingerprint": "41f0181c8f0abf0bf36cf7423a38e9e71a5791df8fbbbb8548c8451dac119977",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "73a3db8c553541c92ca7e3e67edc5b506537e9b101033351b35edf3c538a2b56",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "conversation:browser-control-plane-first-real-structured-provider-20260817",
+        "observed_at": "2026-08-17T18:49:39.009852Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "73a3db8c553541c92ca7e3e67edc5b506537e9b101033351b35edf3c538a2b56",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "conversation:browser-control-plane-first-real-structured-provider-20260817",
+          "observed_at": "2026-08-17T18:49:39.009852Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 193
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "network",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Revert only the GitHub provider source/tool/test/doc slice through a normal PR. The underlying StructuredToolProvider contract and semantic Browser Control Plane remain unchanged; no router/default/fallback is enabled by rollback."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "First real StructuredToolProvider backend: anonymous GitHub REST read"
+}

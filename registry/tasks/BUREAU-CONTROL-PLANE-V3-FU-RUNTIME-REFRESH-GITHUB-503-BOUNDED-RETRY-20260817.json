@@ -1,0 +1,153 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A safely classified read-only GitHub preflight that fails transiently with HTTP 503 is retried only a small fixed number of times and succeeds if a later read returns valid JSON; retry count is deterministic and bounded.",
+      "evidence_type": "object",
+      "id": "bounded-readonly-503-retry",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-github-503:bounded-readonly-retry"
+      }
+    },
+    {
+      "assertion": "Nicht-read-only GitHub command shapes and non-transient GitHub failures are never retried by the new mechanism and retain the existing fail-closed RuntimeRefreshError semantics.",
+      "evidence_type": "object",
+      "id": "unsafe-and-nontransient-no-retry",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-github-503:unsafe-nontransient"
+      }
+    },
+    {
+      "assertion": "The retry surface remains wholly before authority binding, attempt-ledger creation and runtime effect start; an existing started.json/result.json or any post-effect uncertainty continues to use the existing no-blind-retry path.",
+      "evidence_type": "object",
+      "id": "pre-effect-only",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-github-503:pre-effect-only"
+      }
+    },
+    {
+      "assertion": "Deterministic tests reproduce repeated HTTP 503 then success, retry exhaustion, non-503 failure, and unsafe command shape without depending on live GitHub flakiness; full Bureau validation remains green.",
+      "evidence_type": "object",
+      "id": "deterministic-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-github-503:regression"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "User requested the already-promoted GitHub-GraphQL-503 finding to be fixed; scope is limited to runtime-refresh read-only preflight retry semantics and deterministic tests.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_refresh.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Transiente HTTP-503-Ausfälle bei ausschließlich read-only GitHub-Preflights des Bureau-Runtime-Refresh bounded abfangen, ohne exakte Main-/PR-/CI-Bindungen zu lockern und ohne irgendeinen Runtime-Effekt, Authority-CAS oder bereits begonnenen Attempt erneut auszuführen. Retry ist ausschließlich vor Effektbeginn und nur für sicher klassifizierte Leseoperationen zulässig; nicht-transiente Fehler, nicht-read-only GitHub-Aufrufe, Retry-Erschöpfung sowie jeder bereits persistierte Attempt bleiben fail-closed.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-GITHUB-503-BOUNDED-RETRY-20260817",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "candidate_id": "candidate-bd8e621204b949fe3a8bdaa5",
+    "discovered_from_task": "BUREAU-CONTROL-PLANE-V3-FU-QUEUE-RUNTIME-IDENTITY-LIVELOCK-20260817",
+    "does_not_establish": [
+      "generic GitHub retry authority",
+      "runtime mutation authority",
+      "permission to retry after attempt ledger creation",
+      "permission to retry ambiguous effects"
+    ],
+    "implementation_evidence": {
+      "changed_paths": [
+        "src/bureau/runtime_refresh.py",
+        "tests/test_runtime_refresh.py"
+      ],
+      "head_sha": "3f1fc9ed57928e0265c1558be596c12e415a061f",
+      "local_validation": {
+        "bureau_check": true,
+        "ruff": "passed",
+        "state_store_integrity": "ok",
+        "subtests_passed": 18,
+        "tests_passed": 1646
+      },
+      "pull_request": 2052
+    },
+    "source": "runtime-refresh PR #2044 live execution on 2026-08-17",
+    "trigger_evidence": {
+      "failed_apply_task_1": "59c21915e10640558257846f",
+      "failed_apply_task_2": "1c8802321bf041bda24a34c8",
+      "failure": "gh pr view GraphQL HTTP 503 before attempt ledger creation",
+      "source_sha256": "ce21b735e7ba8521e8f94bffa5bb4896bb147ceb258f88bc622d4b8559452484"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bd8e621204b949fe3a8bdaa5",
+      "event_id": 8025,
+      "event_created_at": "2026-08-17T17:26:54.248226Z",
+      "request_sha256": "c8630dd33c743eb894460029618295bd582c2538e180d5a325bc2eb26e9a66ce",
+      "candidate_event_id": "candidate-event-a00b4fdc1477c165f25e4aeb",
+      "source_fingerprint": "a5fdeb64e07bc3a6c942ae9b0e2606aa10b3d6e66dc9dbc3f238bd6a0cd24e69",
+      "content_fingerprint": "bd8e621204b949fe3a8bdaa5be6097e7b1be4d325ecc2324f77ca4a6c7e7d890",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "a5fdeb64e07bc3a6c942ae9b0e2606aa10b3d6e66dc9dbc3f238bd6a0cd24e69",
+        "freshness": "digest-bound",
+        "kind": "operator_observation",
+        "locator": "bureau-runtime-refresh apply for PR #2044; tasks 59c21915e10640558257846f and 1c8802321bf041bda24a34c8 both failed before attempt ledger on gh pr view GraphQL HTTP 503",
+        "observed_at": "2026-08-17T17:26:54.110922Z",
+        "sha256": "ce21b735e7ba8521e8f94bffa5bb4896bb147ceb258f88bc622d4b8559452484"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "a5fdeb64e07bc3a6c942ae9b0e2606aa10b3d6e66dc9dbc3f238bd6a0cd24e69",
+          "freshness": "digest-bound",
+          "kind": "operator_observation",
+          "locator": "bureau-runtime-refresh apply for PR #2044; tasks 59c21915e10640558257846f and 1c8802321bf041bda24a34c8 both failed before attempt ledger on gh pr view GraphQL HTTP 503",
+          "observed_at": "2026-08-17T17:26:54.110922Z",
+          "sha256": "ce21b735e7ba8521e8f94bffa5bb4896bb147ceb258f88bc622d4b8559452484"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Bei jeder Ausweitung auf GitHub-Mutationen, unbounded Retry, oder Retry nach Attempt-/Effect-Beginn Änderung nicht mergen bzw. revertieren; bisherige fail-closed Einmal-Ausführung bleibt Fallback."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau Runtime-Refresh gegen transiente GitHub-GraphQL-503s härten"
+}

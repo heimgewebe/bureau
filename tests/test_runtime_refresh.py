@@ -26,6 +26,103 @@ MAIN = "2" * 40
 HEAD = "3" * 40
 
 
+def _github_result(
+    *, returncode: int, stdout: str = "", stderr: str = ""
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.CompletedProcess(["gh"], returncode, stdout=stdout, stderr=stderr)
+
+
+def test_github_preflight_retries_readonly_503_then_succeeds(monkeypatch) -> None:
+    outcomes = [
+        _github_result(returncode=1, stderr="HTTP 503: Service Unavailable"),
+        _github_result(returncode=1, stderr="non-200 OK status code: 503 Service Unavailable"),
+        _github_result(returncode=0, stdout='{"number": 2044}'),
+    ]
+    calls: list[list[str]] = []
+    sleeps: list[float] = []
+
+    def run(argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        calls.append(argv)
+        return outcomes.pop(0)
+
+    monkeypatch.setattr(refresh, "_run", run)
+    result = refresh.gh_preflight_json(
+        ["pr", "view", "2044", "--repo", "heimgewebe/bureau", "--json", "number"],
+        sleeper=sleeps.append,
+    )
+
+    assert result == {"number": 2044}
+    assert len(calls) == 3
+    assert sleeps == list(refresh.GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS)
+
+
+def test_github_preflight_503_retry_is_bounded(monkeypatch) -> None:
+    calls = 0
+    sleeps: list[float] = []
+
+    def run(argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        nonlocal calls
+        calls += 1
+        return _github_result(returncode=1, stderr="HTTP 503: Service Unavailable")
+
+    monkeypatch.setattr(refresh, "_run", run)
+    with pytest.raises(refresh.RuntimeRefreshError) as error:
+        refresh.gh_preflight_json(
+            ["api", "repos/heimgewebe/bureau/commits/main"], sleeper=sleeps.append
+        )
+
+    assert error.value.code == "command-failed"
+    assert calls == len(refresh.GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS) + 1
+    assert sleeps == list(refresh.GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS)
+
+
+def test_github_preflight_non_503_failure_is_not_retried(monkeypatch) -> None:
+    calls = 0
+
+    def run(argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        nonlocal calls
+        calls += 1
+        return _github_result(returncode=1, stderr="HTTP 404: Not Found")
+
+    monkeypatch.setattr(refresh, "_run", run)
+    with pytest.raises(refresh.RuntimeRefreshError):
+        refresh.gh_preflight_json(
+            ["api", "repos/heimgewebe/bureau/commits/main"],
+            sleeper=lambda _delay: pytest.fail("non-503 failure must not sleep"),
+        )
+
+    assert calls == 1
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["api", "--method", "POST", "repos/heimgewebe/bureau/issues"],
+        ["api", "-XPOST", "repos/heimgewebe/bureau/issues"],
+        ["api", "repos/heimgewebe/bureau/issues", "-ftitle=test"],
+        ["api", "--method", "GET", "--method", "GET", "repos/heimgewebe/bureau"],
+    ],
+)
+def test_github_preflight_unsafe_command_shape_is_never_retried(
+    monkeypatch, arguments: list[str]
+) -> None:
+    calls = 0
+
+    def run(argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        nonlocal calls
+        calls += 1
+        return _github_result(returncode=1, stderr="HTTP 503: Service Unavailable")
+
+    monkeypatch.setattr(refresh, "_run", run)
+    with pytest.raises(refresh.RuntimeRefreshError):
+        refresh.gh_preflight_json(
+            arguments,
+            sleeper=lambda _delay: pytest.fail("unsafe command must not sleep"),
+        )
+
+    assert calls == 1
+
+
 def runtime_authority_spec(task_id: str, *, state: str = "ready") -> dict[str, Any]:
     return {
         "schema_version": 1,

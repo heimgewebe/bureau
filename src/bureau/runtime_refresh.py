@@ -17,6 +17,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import time
 import uuid
 from collections.abc import Callable, Iterable
 from datetime import datetime, timedelta, timezone
@@ -54,6 +55,7 @@ MAX_RUNTIME_AUTHORITY_HISTORY_INTENTS = 4096
 MAX_RUNTIME_BACKUP_ARTIFACT_DIRS = 4096
 MAX_HISTORICAL_RUNTIME_ARTIFACT_BYTES = 4 * 1024 * 1024
 MAX_GITHUB_FIRST_PARENT_LAG_COMMITS = 100
+GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS = (0.5, 1.5)
 RUNTIME_LAUNCHER_MANAGED_MARKER = "# managed-by: heimgewebe-bureau-runtime-v1"
 RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD = "manifest_payload_sha256"
 RUNTIME_LAUNCHER_ENTRYPOINTS = (
@@ -381,6 +383,80 @@ def gh_json(arguments: list[str], *, timeout: float = 60) -> Any:
         ) from exc
 
 
+def _github_arguments_are_read_only(arguments: list[str]) -> bool:
+    if len(arguments) >= 2 and arguments[:2] == ["pr", "view"]:
+        return True
+    if not arguments or arguments[0] != "api":
+        return False
+
+    explicit_method_seen = False
+    index = 1
+    while index < len(arguments):
+        item = arguments[index]
+        method: str | None = None
+        if item in {"-X", "--method"}:
+            if index + 1 >= len(arguments):
+                return False
+            method = arguments[index + 1].upper()
+            index += 2
+        elif item.startswith("--method="):
+            method = item.split("=", 1)[1].upper()
+            index += 1
+        elif item.startswith("-X") and item != "-X":
+            method = item[2:].upper()
+            index += 1
+        else:
+            if (
+                item in {"-f", "-F", "--field", "--raw-field", "--input"}
+                or item.startswith(("-f", "-F", "--field=", "--raw-field=", "--input="))
+            ):
+                return False
+            index += 1
+            continue
+        if explicit_method_seen or method != "GET":
+            return False
+        explicit_method_seen = True
+    return True
+
+
+def _github_http_503(error: RuntimeRefreshError) -> bool:
+    if error.code != "command-failed":
+        return False
+    text = f"{error.details.get('stdout', '')}\n{error.details.get('stderr', '')}"
+    return any(
+        marker in text
+        for marker in (
+            "HTTP 503",
+            "503 Service Unavailable",
+            '"status": "503"',
+            '"status":"503"',
+        )
+    )
+
+
+def gh_preflight_json(
+    arguments: list[str],
+    *,
+    timeout: float = 60,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> Any:
+    """Read GitHub with bounded 503 retry only for positively read-only command shapes."""
+    if not _github_arguments_are_read_only(arguments):
+        return gh_json(arguments, timeout=timeout)
+
+    for attempt in range(len(GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS) + 1):
+        try:
+            return gh_json(arguments, timeout=timeout)
+        except RuntimeRefreshError as exc:
+            if (
+                not _github_http_503(exc)
+                or attempt >= len(GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS)
+            ):
+                raise
+            sleeper(GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS[attempt])
+    raise AssertionError("bounded GitHub preflight retry loop exhausted unexpectedly")
+
+
 def _github_compare_not_found(error: RuntimeRefreshError) -> bool:
     if error.code != "command-failed":
         return False
@@ -505,7 +581,7 @@ def observe_runtime_refresh(
     required_checks: tuple[str, ...] = DEFAULT_REQUIRED_CHECKS,
     slo_seconds: int = DEFAULT_SLO_SECONDS,
     now: datetime | None = None,
-    github: Callable[[list[str]], Any] = gh_json,
+    github: Callable[[list[str]], Any] = gh_preflight_json,
 ) -> dict[str, Any]:
     observed_at = now or utc_now()
     reasons: list[str] = []
@@ -1197,7 +1273,7 @@ def verify_runtime_refresh_authority_publication(
     expected_main_commit: str,
     expected_task_file_sha256: str,
     required_checks: tuple[str, ...] = DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS,
-    github: Callable[[list[str]], Any] = gh_json,
+    github: Callable[[list[str]], Any] = gh_preflight_json,
     registry: Any | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     root = registry_root.expanduser().resolve()
@@ -1456,7 +1532,7 @@ def adopt_runtime_refresh_authority(
     expected_task_file_sha256: str,
     required_checks: tuple[str, ...] = DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS,
     authority_store: Any | None = None,
-    github: Callable[[list[str]], Any] = gh_json,
+    github: Callable[[list[str]], Any] = gh_preflight_json,
     registry: Any | None = None,
 ) -> dict[str, Any]:
     store = authority_store or _default_authority_store()

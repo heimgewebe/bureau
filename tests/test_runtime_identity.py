@@ -64,6 +64,158 @@ def init_repo(root: Path) -> None:
     git(root, "fetch", "origin", "main:refs/remotes/origin/main")
 
 
+def release_drift_case(tmp_path: Path, monkeypatch):
+    root = tmp_path / "repo"
+    init_repo(root)
+    queue = root / "registry/queue.json"
+    task = root / "registry/tasks/BUR-TEST-T001.json"
+    task.parent.mkdir(parents=True)
+    queue.write_text('{"schema_version":1,"lanes":{"now":[]}}\n', encoding="utf-8")
+    task.write_text('{"schema_version":1,"id":"BUR-TEST-T001"}\n', encoding="utf-8")
+    git(root, "add", "registry")
+    git(root, "commit", "-m", "add registry projection")
+    deployed_commit = git(root, "rev-parse", "HEAD")
+    git(root, "update-ref", "refs/remotes/origin/main", deployed_commit)
+    git(root, "remote", "set-url", "origin", "git@github.com:heimgewebe/bureau.git")
+    module = tmp_path / "release/src/bureau/runtime_identity.py"
+    module.parent.mkdir(parents=True)
+    module.write_text("# immutable release\n", encoding="utf-8")
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "_manifest_identity",
+        lambda _module: {
+            "available": True,
+            "valid": True,
+            "source_commit": deployed_commit,
+            "canonical_registry": {},
+        },
+    )
+    return root, module, deployed_commit, queue, task
+
+
+def commit_current_main(root: Path, *paths: Path, message: str) -> str:
+    git(root, "add", *(path.relative_to(root).as_posix() for path in paths))
+    git(root, "commit", "-m", message)
+    head = git(root, "rev-parse", "HEAD")
+    git(root, "update-ref", "refs/remotes/origin/main", head)
+    return head
+
+
+def test_queue_only_forward_drift_preserves_release_compatibility(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, deployed_commit, queue, _task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    queue.write_text(
+        '{"schema_version":1,"lanes":{"now":[],"next":[]}}\n',
+        encoding="utf-8",
+    )
+    head = commit_current_main(root, queue, message="advance legacy queue projection")
+    assert head != deployed_commit
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"] == {
+        "status": "compatible",
+        "mutation_allowed": True,
+        "reason_codes": [],
+    }
+    assert identity["module"]["source_kind"] == "immutable-release"
+    assert identity["claim_root"]["status"] == "local-preflight-clear"
+    assert identity["claim_root"]["local_preconditions_met"] is True
+    assert identity["claim_root"]["reason_codes"] == [
+        "external-github-main-not-observed"
+    ]
+
+
+def test_taskspec_drift_remains_fail_closed(tmp_path: Path, monkeypatch) -> None:
+    root, module, _deployed_commit, _queue, task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    task.write_text(
+        '{"schema_version":1,"id":"BUR-TEST-T001","title":"changed"}\n',
+        encoding="utf-8",
+    )
+    commit_current_main(root, task, message="change task spec")
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert identity["compatibility"]["reason_codes"] == [
+        "release-registry-identity-mismatch"
+    ]
+    assert identity["claim_root"]["status"] == "blocked"
+    assert "registry-head-differs-deployed-source" in identity["claim_root"][
+        "reason_codes"
+    ]
+
+
+def test_mixed_queue_and_taskspec_drift_remains_fail_closed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, queue, task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    queue.write_text(
+        '{"schema_version":1,"lanes":{"now":[],"next":[]}}\n',
+        encoding="utf-8",
+    )
+    task.write_text(
+        '{"schema_version":1,"id":"BUR-TEST-T001","title":"changed"}\n',
+        encoding="utf-8",
+    )
+    commit_current_main(root, queue, task, message="change queue and task spec")
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert "registry-head-differs-deployed-source" in identity["claim_root"][
+        "reason_codes"
+    ]
+
+
+def test_divergent_queue_only_history_remains_fail_closed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, baseline, queue, _task = release_drift_case(tmp_path, monkeypatch)
+    git(root, "checkout", "-b", "deployed-side")
+    queue.write_text(
+        '{"schema_version":1,"lanes":{"now":["side"]}}\n',
+        encoding="utf-8",
+    )
+    git(root, "add", queue.relative_to(root).as_posix())
+    git(root, "commit", "-m", "deployed side")
+    deployed_side = git(root, "rev-parse", "HEAD")
+    git(root, "checkout", "main")
+    assert git(root, "rev-parse", "HEAD") == baseline
+    queue.write_text(
+        '{"schema_version":1,"lanes":{"now":[],"next":[]}}\n',
+        encoding="utf-8",
+    )
+    commit_current_main(root, queue, message="divergent queue projection")
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "_manifest_identity",
+        lambda _module: {
+            "available": True,
+            "valid": True,
+            "source_commit": deployed_side,
+            "canonical_registry": {},
+        },
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert "registry-head-differs-deployed-source" in identity["claim_root"][
+        "reason_codes"
+    ]
+
+
 def test_same_checkout_runtime_is_compatible(tmp_path: Path) -> None:
     root = tmp_path / "repo"
     init_repo(root)

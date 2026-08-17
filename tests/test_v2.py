@@ -1902,6 +1902,122 @@ def test_heartbeat_refreshes_owned_active_run(registry_factory, tmp_path, monkey
         store.heartbeat(run["run_id"], "worker-b")
 
 
+def test_cli_heartbeat_allows_only_queue_projection_release_drift(
+    registry_factory, tmp_path, monkeypatch, capsys
+) -> None:
+    from bureau import runtime_identity as runtime_identity_module
+
+    root = registry_factory(1)
+    (root / "pyproject.toml").write_text(
+        "[project]\nname = 'bureau-fixture'\nversion = '0'\n", encoding="utf-8"
+    )
+    (root / "src/bureau").mkdir(parents=True)
+    deployed_commit = init_clean_origin_main(root)
+    git_output(root, "remote", "add", "origin", "git@github.com:heimgewebe/bureau.git")
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker-a", ("repository",))["run"]
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET heartbeat_at='2000-01-01T00:00:00Z' WHERE run_id=?",
+            (run["run_id"],),
+        )
+
+    module = tmp_path / "release/src/bureau/runtime_identity.py"
+    module.parent.mkdir(parents=True)
+    module.write_text("# immutable release\n", encoding="utf-8")
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "_manifest_identity",
+        lambda _module: {
+            "available": True,
+            "valid": True,
+            "source_commit": deployed_commit,
+            "canonical_registry": {},
+        },
+    )
+
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    queue_path.write_text(
+        json.dumps(queue, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    git_output(root, "add", "registry/queue.json")
+    git_output(root, "commit", "-m", "advance legacy queue projection")
+    queue_head = git_output(root, "rev-parse", "HEAD")
+    git_output(root, "update-ref", "refs/remotes/origin/main", queue_head)
+    queue_identity = runtime_identity_module.bureau_runtime_identity(
+        root, state_path=store.path, module_path=module
+    )
+    assert queue_identity["compatibility"]["mutation_allowed"] is True
+    assert queue_identity["claim_root"]["status"] == "local-preflight-clear"
+    monkeypatch.setattr(
+        bureau_cli,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: json.loads(json.dumps(queue_identity)),
+    )
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(store.state_root),
+            "--json",
+            "heartbeat",
+            "--worker",
+            "worker-a",
+            run["run_id"],
+        ]
+    )
+    capsys.readouterr()
+    assert result == 0
+    assert store.run(run["run_id"])["heartbeat_at"] != "2000-01-01T00:00:00Z"
+
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET heartbeat_at='2000-01-01T00:00:00Z' WHERE run_id=?",
+            (run["run_id"],),
+        )
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["title"] = "authoritative drift"
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    git_output(root, "add", "registry/tasks/BUR-TEST-001-T001.json")
+    git_output(root, "commit", "-m", "advance authoritative task spec")
+    task_head = git_output(root, "rev-parse", "HEAD")
+    git_output(root, "update-ref", "refs/remotes/origin/main", task_head)
+    blocked_identity = runtime_identity_module.bureau_runtime_identity(
+        root, state_path=store.path, module_path=module
+    )
+    assert blocked_identity["compatibility"]["mutation_allowed"] is False
+    monkeypatch.setattr(
+        bureau_cli,
+        "bureau_runtime_identity",
+        lambda *args, **kwargs: json.loads(json.dumps(blocked_identity)),
+    )
+
+    blocked = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(store.state_root),
+            "--json",
+            "heartbeat",
+            "--worker",
+            "worker-a",
+            run["run_id"],
+        ]
+    )
+    blocked_output = json.loads(capsys.readouterr().out)
+    blocked_result = blocked_output.get("result", blocked_output)
+    assert blocked == 2
+    assert blocked_result["status"] == "stale-runtime-blocked"
+    assert blocked_result["reason_codes"] == ["release-registry-identity-mismatch"]
+    assert store.run(run["run_id"])["heartbeat_at"] == "2000-01-01T00:00:00Z"
+
+
 def test_heartbeat_reduces_successful_full_run_reads_by_half(
     registry_factory, tmp_path, monkeypatch
 ):

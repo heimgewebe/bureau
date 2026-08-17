@@ -413,6 +413,164 @@ def candidate(tmp_path: Path, **github_options: Any) -> tuple[dict[str, Any], Pa
     return value, manifest_path
 
 
+def _compare_command_error(*, status: int) -> refresh.RuntimeRefreshError:
+    message = "Not Found" if status == 404 else "Service Unavailable"
+    return refresh.RuntimeRefreshError(
+        "command-failed",
+        "command failed: gh",
+        details={
+            "argv": [
+                "gh",
+                "api",
+                f"repos/heimgewebe/bureau/compare/{DEPLOYED}...{MAIN}",
+            ],
+            "returncode": 1,
+            "stdout": json.dumps({"message": message, "status": str(status)}),
+            "stderr": f"gh: {message} (HTTP {status})",
+        },
+    )
+
+
+def test_observe_falls_back_to_bounded_first_parent_walk_on_compare_404(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_manifest(manifest_path)
+    base_github, calls = github_fixture()
+
+    def github(arguments: list[str]) -> Any:
+        joined = " ".join(arguments)
+        if joined == f"api repos/heimgewebe/bureau/compare/{DEPLOYED}...{MAIN}":
+            calls.append(arguments)
+            raise _compare_command_error(status=404)
+        if joined == f"api repos/heimgewebe/bureau/commits/{MAIN}":
+            calls.append(arguments)
+            return {"sha": MAIN, "parents": [{"sha": DEPLOYED}]}
+        return base_github(arguments)
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+
+    assert result["status"] == "candidate"
+    assert result["lag_commits"] == 1
+    assert ["api", f"repos/heimgewebe/bureau/commits/{MAIN}"] in calls
+
+
+def test_first_parent_fallback_counts_multiple_fresh_commit_objects() -> None:
+    middle = "c" * 40
+    commits = {
+        MAIN: {"sha": MAIN, "parents": [{"sha": middle}]},
+        middle: {"sha": middle, "parents": [{"sha": DEPLOYED}]},
+    }
+    calls: list[list[str]] = []
+
+    def github(arguments: list[str]) -> Any:
+        calls.append(arguments)
+        commit = arguments[-1].rsplit("/", 1)[-1]
+        return commits[commit]
+
+    assert (
+        refresh._first_parent_lag_commits(
+            repository="heimgewebe/bureau",
+            deployed=DEPLOYED,
+            main_commit=MAIN,
+            github=github,
+        )
+        == 2
+    )
+    assert len(calls) == 2
+
+
+def test_first_parent_fallback_rejects_cycle_and_budget_exhaustion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    middle = "c" * 40
+    cycle = {
+        MAIN: {"sha": MAIN, "parents": [{"sha": middle}]},
+        middle: {"sha": middle, "parents": [{"sha": MAIN}]},
+    }
+
+    def cyclic_github(arguments: list[str]) -> Any:
+        commit = arguments[-1].rsplit("/", 1)[-1]
+        return cycle[commit]
+
+    assert (
+        refresh._first_parent_lag_commits(
+            repository="heimgewebe/bureau",
+            deployed=DEPLOYED,
+            main_commit=MAIN,
+            github=cyclic_github,
+        )
+        is None
+    )
+
+    monkeypatch.setattr(refresh, "MAX_GITHUB_FIRST_PARENT_LAG_COMMITS", 1)
+    assert (
+        refresh._first_parent_lag_commits(
+            repository="heimgewebe/bureau",
+            deployed=DEPLOYED,
+            main_commit=MAIN,
+            github=cyclic_github,
+        )
+        is None
+    )
+
+
+def test_observe_compare_404_fallback_fails_closed_on_unusable_parent(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_manifest(manifest_path)
+    base_github, calls = github_fixture()
+
+    def github(arguments: list[str]) -> Any:
+        joined = " ".join(arguments)
+        if joined == f"api repos/heimgewebe/bureau/compare/{DEPLOYED}...{MAIN}":
+            calls.append(arguments)
+            raise _compare_command_error(status=404)
+        if joined == f"api repos/heimgewebe/bureau/commits/{MAIN}":
+            calls.append(arguments)
+            return {"sha": MAIN, "parents": []}
+        return base_github(arguments)
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+
+    assert result["status"] == "blocked"
+    assert result["lag_commits"] is None
+    assert "commit-lag-unavailable" in result["reason_codes"]
+
+
+def test_observe_does_not_fallback_for_non_404_compare_failure(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_manifest(manifest_path)
+    base_github, _ = github_fixture()
+
+    def github(arguments: list[str]) -> Any:
+        joined = " ".join(arguments)
+        if joined == f"api repos/heimgewebe/bureau/compare/{DEPLOYED}...{MAIN}":
+            raise _compare_command_error(status=503)
+        return base_github(arguments)
+
+    with pytest.raises(refresh.RuntimeRefreshError, match="command failed: gh") as caught:
+        refresh.observe_runtime_refresh(
+            repository="heimgewebe/bureau",
+            manifest_path=manifest_path,
+            now=NOW,
+            github=github,
+        )
+
+    assert caught.value.code == "command-failed"
+
+
 def prepare_candidate_intent(
     tmp_path: Path,
     *,

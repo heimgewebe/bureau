@@ -1,0 +1,177 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein autorisierter bounded Coding-Auftrag kann über genau einen bestehenden Controller-Frontdoor gestartet werden. Source, kanonische Route Decision und immutable ExecutionPlan.v1 sind revisions- und digestgebunden; der Frontdoor führt keinen neuen öffentlichen MCP-Toolnamen, Scheduler oder StateStore ein.",
+      "evidence_type": "object",
+      "id": "single-frontdoor-source-route-plan",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:frontdoor-route-plan"
+      }
+    },
+    {
+      "assertion": "Der Start akquiriert genau eine Work Lane und erzeugt genau einen lane-backed Agent Workspace. Work Lane und Workspace starten niemals konkurrierende Writer; je überlappendem Scope existiert höchstens ein mutierender Actor. Doppel-Lease, zweiter Worktree und unabhängiger Checkout-Lifecycle sind durch Negativtests blockiert.",
+      "evidence_type": "object",
+      "id": "single-lane-single-writer",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:single-lane-writer"
+      }
+    },
+    {
+      "assertion": "Normale asynchrone Writer-/Verifier-Fortschritte benötigen nach dem Start keinen manuellen repeat/continue-Aufruf. Vorhandene durable Task-/Job- und Receipt-Infrastruktur setzt status -> collect -> gegebenenfalls bounded Revision -> close -> Adoption -> integration_ready monoton fort, ohne eine zweite Lifecycle-Wahrheit einzuführen.",
+      "evidence_type": "object",
+      "id": "durable-monotone-continuation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:durable-continuation"
+      }
+    },
+    {
+      "assertion": "Golden Path A ist Ende-zu-Ende belegt: Source -> Route -> Plan -> Lane -> Workspace -> Writer -> Candidate -> parallele Pflicht-Verification -> deterministischer Reduce PASS -> Adoption -> frühes Lane-Close -> exakter ready PR/integration_ready. Merge und Deploy werden nicht automatisch ausgeführt.",
+      "evidence_type": "object",
+      "id": "golden-first-pass",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:golden-first-pass"
+      }
+    },
+    {
+      "assertion": "Golden Path B ist Ende-zu-Ende belegt: Candidate 1 erhält einen echten NEEDS_CHANGE-Befund, genau ein policy-gebundenes RevisionRequest.v1 startet den zulässigen nächsten Writer-Attempt, Candidate 2 wird frisch verifiziert und ausschließlich Candidate 2 kann adoptiert werden.",
+      "evidence_type": "object",
+      "id": "golden-revision",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:golden-revision"
+      }
+    },
+    {
+      "assertion": "Golden Path C ist Ende-zu-Ende belegt: Ein unklarer mutierender Effekt führt zu outcome_unknown/reconcile_required, exaktem Readback und deterministischer Fortsetzung oder Blockade; derselbe Effekt wird niemals blind wiederholt.",
+      "evidence_type": "object",
+      "id": "golden-reconcile",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:golden-reconcile"
+      }
+    },
+    {
+      "assertion": "Wenn die kanonische Route executor=controller ergibt oder eine echte Controller-/Authority-Entscheidung nötig ist, endet beziehungsweise übergibt der Frontdoor explizit an diese Grenze. Er erfindet keinen zweiten Controller-Actor und delegiert Merge, Deployment oder Source-Close nicht an den Writer.",
+      "evidence_type": "object",
+      "id": "controller-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:controller-boundary"
+      }
+    },
+    {
+      "assertion": "P1-P4-Contracts, PR-#818-Grip und candidate-integration-ready bleiben rückwärtskompatibel. Fokustests, relevante vollständige Grabowski-Validierung, git diff --check, revisionsgebundener Self-Review und geschützte CI sind auf demselben finalen Head grün; erforderliche Runtimeänderung wird commitgenau deployt und live zurückgelesen.",
+      "evidence_type": "object",
+      "id": "scope-and-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-execution-p5-one-shot:validation-release"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 17. August 2026 die autonome Umsetzung des Agent Execution Fabric ausdrücklich mit '@grabowski umsetzen' autorisiert. Die Task schließt ausschließlich die verbliebene P5-One-Shot-/Continuation-Naht. P6 Delivery, P7 Learning, Merge und Deployment bleiben außerhalb dieser Task. Vor jeder Mutation sind Live-Repo, Dirty-State, Worktrees, Lanes, Leases, Writer, PRs, CI und outcome_unknown frisch zu prüfen; fremde Arbeit bleibt unangetastet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die nach PR #818 verbliebene P5-Autonomielücke schließen: Ein controller-owned bestehender Operator-/Grip-Frontdoor nimmt einen autorisierten, bounded Coding-Auftrag entgegen, bindet Source und kanonische Route, erzeugt genau einen immutable ExecutionPlan.v1, akquiriert genau eine Work Lane, erstellt genau einen lane-backed Agent Workspace und setzt die bestehende Coordinator-/Candidate-/Verification-/Revision-/Adoption-/integration_ready-Kette ohne normale manuelle continue-Aufrufe bis zu einer echten Authority- oder Reconcile-Grenze fort. Bestehende Task-/Job-/Receipt-Infrastruktur wird wiederverwendet; kein neuer Scheduler, StateStore, Universal-DAG, Merge- oder Deploymentpfad.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FU-AGENT-EXECUTION-P5-ONE-SHOT-20260817",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "P6 delivery authority",
+      "P7 adaptive routing authority",
+      "automatic merge",
+      "automatic deployment",
+      "new universal orchestrator",
+      "new lifecycle state store",
+      "permission to mutate foreign active lanes"
+    ],
+    "phase": "agent-execution-fabric-p5-terminalization",
+    "source_candidate": "candidate-8a69abe68eb22b6d04d32eea",
+    "source_event_id": 8132,
+    "source_merge_commit": "5339e0e0c71983856de10eeff16863ead184261c",
+    "source_pr": "heimgewebe/grabowski#818",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8a69abe68eb22b6d04d32eea",
+      "event_id": 8132,
+      "event_created_at": "2026-08-17T20:53:47.538846Z",
+      "request_sha256": "c1ee41eef7b1ac2e83c840ea224654020846f4821a666f837e651538fef89b2c",
+      "candidate_event_id": "candidate-event-6a09112c695fb51d7a2ba5cd",
+      "source_fingerprint": "290ea45606a9b8481f7f151e4c1b49d49b60c8ec5b604be6e0f68f69418b0fa1",
+      "content_fingerprint": "8a69abe68eb22b6d04d32eea669ada7b92146e515ab5eab9691c04b88d566ab1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "290ea45606a9b8481f7f151e4c1b49d49b60c8ec5b604be6e0f68f69418b0fa1",
+        "freshness": "fingerprint-bound",
+        "kind": "github_pr_followup",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/818",
+        "observed_at": "2026-08-17T20:53:47.424948Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "290ea45606a9b8481f7f151e4c1b49d49b60c8ec5b604be6e0f68f69418b0fa1",
+          "freshness": "fingerprint-bound",
+          "kind": "github_pr_followup",
+          "locator": "https://github.com/heimgewebe/grabowski/pull/818",
+          "observed_at": "2026-08-17T20:53:47.424948Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 34
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau",
+    "agent-routing",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Bei Authority-, Lifecycle-, Retry- oder Provenance-Drift den neuen Frontdoor nicht mergen beziehungsweise den Slice zurücknehmen. Die bereits deployten P1-P4-Contracts, PR-#818-Grip und candidate-integration-ready bleiben unverändert nutzbar; keine bestehende Lane oder Candidate-Evidenz wird rückwirkend umgeschrieben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Agent Execution Fabric bis zum echten One-Shot-Start schließen"
+}

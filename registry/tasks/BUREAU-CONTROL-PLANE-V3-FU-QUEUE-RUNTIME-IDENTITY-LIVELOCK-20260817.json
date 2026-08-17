@@ -1,0 +1,144 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Main-Fortschritt, dessen relevanter Registry-Delta ausschließlich die als transitional legacy dispatcher-order surface klassifizierte registry/queue.json betrifft, macht eine ansonsten integrity-valide immutable Bureau-Runtime nicht allein wegen vollständiger Registry-Tree-Ungleichheit mutationsinkompatibel.",
+      "evidence_type": "object",
+      "id": "queue-only-drift-does-not-global-block",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:queue-runtime-identity-livelock:queue-only-drift"
+      }
+    },
+    {
+      "assertion": "Code-, Paket-, Schema-, TaskSpec-, Autoritäts- oder sonstige operative Registry-Drift bleibt revisionsgebunden fail-closed; die Änderung schwächt nicht die Sicherheitsgrenze und erhebt queue.json nicht zur zweiten Wahrheit.",
+      "evidence_type": "object",
+      "id": "authoritative-drift-still-fails-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:queue-runtime-identity-livelock:authoritative-drift"
+      }
+    },
+    {
+      "assertion": "Ein Regressionstest reproduziert deployter Release = Basiscommit, danach queue.json-only Main-Commit; Coordination-State-Mutation darf an diesem Queue-only-Delta nicht livelocken, während ein kontrollierter autoritativer Delta-Fall weiterhin blockiert.",
+      "evidence_type": "object",
+      "id": "reproduction-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:queue-runtime-identity-livelock:regression"
+      }
+    },
+    {
+      "assertion": "Betriebsdokumentation erklärt explizit, welche Registry-Bestandteile in die immutable Runtime-Identität eingehen und warum legacy queue order nicht operative StateStore-Autorität ist.",
+      "evidence_type": "object",
+      "id": "authority-boundary-documented",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:queue-runtime-identity-livelock:docs"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Scope ist auf Runtime-Identity-Vertrag, zugehörige Regressionstests und Betriebsdokumentation begrenzt; keine Queue-, Claim-, Deploy- oder fremde Taskmutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/runtime_identity.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_identity.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py",
+      "path:/home/alex/repos/bureau/docs/operations.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-QUEUE-RUNTIME-IDENTITY-LIVELOCK-20260817",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "candidate_id": "candidate-ea405842741168fe3a6ff8c2",
+    "discovered_from_task": "BUREAU-CONTROL-PLANE-V3-T011",
+    "does_not_establish": [
+      "permission to weaken code/schema/task authority checks",
+      "runtime deployment authority",
+      "queue authority"
+    ],
+    "scope_rationale": "Live-Livelock wurde auf release-registry-identity-mismatch in src/bureau/runtime_identity.py zurückgeführt. Änderungen sollen ausschließlich runtime_identity.py, seine bestehenden Regressionstests in test_runtime_identity.py/test_v2.py und die Authority-Dokumentation in docs/operations.md betreffen.",
+    "source": "T011 post-merge live acceptance 2026-08-17",
+    "trigger_evidence": {
+      "failed_heartbeat_receipt": "0d2d97cd1f48cec19e7ea0d93d0afe86676515938feb90f46c5aa7e595c98cb6",
+      "queue_only_changed_path": "registry/queue.json",
+      "queue_only_drift_commit": "f512601ffdd1d722945c8ca7f1daadf2925a36f9",
+      "t011_final_runtime_commit": "93050dfb7e8e128b45081e123eb9f47694653971",
+      "t011_receipt_sha256": "570678b58ddf8ffdf3cec2ba20075c15bb0b8a7a5ef88e741b9759982e22747d"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ea405842741168fe3a6ff8c2",
+      "event_id": 7890,
+      "event_created_at": "2026-08-17T09:05:13.334483Z",
+      "request_sha256": "cea0991dd623bec885101a8dedb204c2206d6f00ca42fbe152cc2bee4af9540c",
+      "candidate_event_id": "candidate-event-c606a57ae85e89dccb0748d8",
+      "source_fingerprint": "4d070f3bdcd8023ba4e9cff1721ee9e04e5eeee85ae4e354d21e32e511255619",
+      "content_fingerprint": "ea405842741168fe3a6ff8c23bf630b8ee541af9e647547a9091455931b602a4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "4d070f3bdcd8023ba4e9cff1721ee9e04e5eeee85ae4e354d21e32e511255619",
+        "freshness": "fingerprint-bound",
+        "kind": "operator_observation",
+        "locator": "BUREAU-CONTROL-PLANE-V3-T011 post-merge live acceptance after PR #2031; queue-only PR #2033 advanced main after successful runtime refresh",
+        "observed_at": "2026-08-17T09:03:18Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "4d070f3bdcd8023ba4e9cff1721ee9e04e5eeee85ae4e354d21e32e511255619",
+          "freshness": "fingerprint-bound",
+          "kind": "operator_observation",
+          "locator": "BUREAU-CONTROL-PLANE-V3-T011 post-merge live acceptance after PR #2031; queue-only PR #2033 advanced main after successful runtime refresh",
+          "observed_at": "2026-08-17T09:03:18Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Bei jeder unerwarteten Erweiterung der Mutationszulässigkeit Änderung nicht mergen bzw. revertieren; vollständige fail-closed Registry-Bindung bleibt Fallback."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Queue-only Drift von der Bureau Runtime-Identitätsgrenze entkoppeln"
+}

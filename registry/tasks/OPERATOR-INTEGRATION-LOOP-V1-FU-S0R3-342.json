@@ -1,0 +1,150 @@
+{
+  "acceptance": [
+    {
+      "assertion": "S0-R3 bindet vor jeder Klassifikation einen expliziten Target-Effekt oder Target-State-Delta. Das bloße Erzeugen des später bearbeiteten Objekts gilt nicht automatisch als materieller Sub-Effekt; der Grenzfall aus R2-02/R2-08 ist dadurch deterministisch prüfbar.",
+      "evidence_type": "object",
+      "id": "target-effect-predicate",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3:target-effect-predicate"
+      }
+    },
+    {
+      "assertion": "Die Registrierung beschreibt genau die tatsächlich ausgeführte Review-Messung. Falls S0/R3 als gepaarter Vergleich registriert wird, existieren für alle Paare eingefrorene S0- und R3-Beobachtungen; andernfalls wird stattdessen die tatsächlich beabsichtigte Author/Reviewer-Replikation preregistriert.",
+      "evidence_type": "object",
+      "id": "matched-registration",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3:matched-registration"
+      }
+    },
+    {
+      "assertion": "Die feste Paper-Fallmenge enthält positive und negative Kontrollen einschließlich Analogien zu R2-02 und R2-08 sowie mindestens einen Residualisierungs-/Renaming-Angriff.",
+      "evidence_type": "object",
+      "id": "adversarial-controls",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3:adversarial-controls"
+      }
+    },
+    {
+      "assertion": "Ein unabhängiger exact-head Review ist vor Ausführung gebunden. Materielle Klassifikationsmehrdeutigkeit oder ein Registrierungs-/Verfahrenswiderspruch lehnt die Revision ab, ohne die eingefrorenen Eingaben nachträglich zu reparieren.",
+      "evidence_type": "object",
+      "id": "independent-gate",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3:independent-gate"
+      }
+    },
+    {
+      "assertion": "S0-R3 autorisiert weder S1 oder natürliche Kohorten noch Validator, Bureau-/Grabowski-Runtimeänderungen, Chronik, Leitstand, Queue, Policy, Deployment, S2, P2 oder P3. Solche Schritte benötigen einen separaten späteren Entscheid.",
+      "evidence_type": "object",
+      "id": "authority-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3:authority-boundary"
+      }
+    },
+    {
+      "assertion": "Der exakte Implementierungshead besteht Vibe-Labs relevante Schema-, Promotion-Readiness- und vollständige Pflichtvalidierung; Self-Review bestätigt, dass S0 und S0-R2 historische Wahrheit bleiben.",
+      "evidence_type": "object",
+      "id": "validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3:validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.vibe-lab"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur neue prospektiv eingefrorene Vibe-Lab-Experimentartefakte für S0-R3 erstellen. S0, S0-R2 und deren eingefrorene Eingaben bleiben unverändert; keine Produktions- oder Control-Plane-Autorität.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab"
+  },
+  "goal": "Entwirf nach der terminalen Ablehnung von Vibe-Lab S0-R2 eine getrennte, prospektiv eingefrorene S0-R3-Paper-Revision. Die neue Regel muss explizit zwischen dem Erzeugen des später bearbeiteten Interventionsobjekts und dem bereits erreichten materiellen Target-Effekt unterscheiden. Die Registrierung muss exakt zur tatsächlich vorgesehenen Review-Messung passen. Kein S1, natürlicher Kohortenlauf, Validator oder Produktionspfad darf vor einem neuen unabhängigen Paper-Gate entstehen.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FU-S0R3-342",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "S0-R3-Wirksamkeit",
+      "S1-Autorisierung",
+      "Validator-Bedarf",
+      "Produktionsintegration",
+      "Änderung historischer S0- oder S0-R2-Evidenz"
+    ],
+    "independently_executable": true,
+    "source_head": "076da709a9e938aa39ca31e1f94655fab7b4e591",
+    "source_pr": "heimgewebe/vibe-lab#342",
+    "source_review_comments": [
+      "3792553284",
+      "3792553287"
+    ],
+    "source_review_id": "4947056280",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9af4174a6ff15cdada8a38e5",
+      "event_id": 7858,
+      "event_created_at": "2026-08-17T07:31:54.387164Z",
+      "request_sha256": "89d90200a34ce0847eafa3fd75265aa117c8874b774d0ccc57b2843c3735dfef",
+      "candidate_event_id": "candidate-event-3a1633664fe46f270f0e8c7b",
+      "source_fingerprint": "17415c6678e7e828aca472cd23b94031e763dd57e2b1e8faac5644eb574f9d01",
+      "content_fingerprint": "9af4174a6ff15cdada8a38e5250d35935ef8ec603f433cc916f36eddab8adc6e",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "17415c6678e7e828aca472cd23b94031e763dd57e2b1e8faac5644eb574f9d01",
+        "freshness": "fingerprint-bound",
+        "kind": "github-pr-review",
+        "locator": "github:heimgewebe/vibe-lab#342@076da709a9e938aa39ca31e1f94655fab7b4e591/review/4947056280",
+        "observed_at": "2026-08-16T18:46:09Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "17415c6678e7e828aca472cd23b94031e763dd57e2b1e8faac5644eb574f9d01",
+          "freshness": "fingerprint-bound",
+          "kind": "github-pr-review",
+          "locator": "github:heimgewebe/vibe-lab#342@076da709a9e938aa39ca31e1f94655fab7b4e591/review/4947056280",
+          "observed_at": "2026-08-16T18:46:09Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 33
+  },
+  "required_capabilities": [
+    "repository",
+    "experiment-design",
+    "review",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "S0-R3 Outcome-Admission semantisch sauber preregistrieren"
+}

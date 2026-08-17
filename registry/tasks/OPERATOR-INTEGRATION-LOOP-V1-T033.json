@@ -1,0 +1,171 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor dem ersten betrachteten produktiven Effekt existiert eine revisionsgebundene Registrierung mit C/S/B/E/T/Q-Regel, deterministischer Fallauswahl, maximal drei natürlichen Fällen, sequenziellem Stop-Gate und expliziter Null-Autorität gegenüber Routing, Queue, Claim, Implementierung, Closeout, Merge und Deployment.",
+      "evidence_type": "object",
+      "id": "prospective-freeze",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3-natural-shadow:prospective-freeze"
+      }
+    },
+    {
+      "assertion": "Mindestens ein echter natürlicher Fall wird nur dann aufgenommen, wenn C, Zielsubjekt S, Baseline B, Zielprädikat E und Transition T vor der produktiven Mutation revisionsgebunden eingefroren werden können; andernfalls wird der Fall fail-closed als nicht zulässig dokumentiert und zählt als External-Validity-Signal.",
+      "evidence_type": "object",
+      "id": "first-natural-case",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3-natural-shadow:first-natural-case"
+      }
+    },
+    {
+      "assertion": "Nach Fall 1 und erneut nach Fall 2 wird vor jeder Fortsetzung entschieden. Materielle Bindungsmehrdeutigkeit, Regeländerungsbedarf, nachträgliches Rebasing, produktive Autoritätswirkung oder unverhältnismäßiger Handling-Aufwand stoppen den Shadow sofort; es gibt keine Reparatur der eingefrorenen Regel im selben Lauf.",
+      "evidence_type": "object",
+      "id": "sequential-stop",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3-natural-shadow:sequential-stop"
+      }
+    },
+    {
+      "assertion": "Für jeden aufgenommenen Fall werden mindestens Zeit für C/S/B/E/T-Bindung, Zahl notwendiger Readbacks, Mehrdeutigkeitsstatus und ob die Shadow-Bewertung eine reale Entscheidung verändert hätte, bounded festgehalten.",
+      "evidence_type": "object",
+      "id": "overhead-measurement",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3-natural-shadow:overhead"
+      }
+    },
+    {
+      "assertion": "Jeder terminal betrachtete Fall erhält einen revisionsgebundenen unabhängigen semantischen Gegencheck gegen die vorab eingefrorene Bindung; Abweichungen bleiben Evidenz und werden nicht durch nachträgliches Umschreiben beseitigt.",
+      "evidence_type": "object",
+      "id": "independent-review",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3-natural-shadow:independent-review"
+      }
+    },
+    {
+      "assertion": "Das Ergebnis behauptet weder Outcome-Case-Effektivität noch P1-Wiedereröffnung, Validatorbedarf, P2/P3-Freigabe oder Produktionsintegration. Eine weitere Stufe erfordert einen neuen separaten Entscheid.",
+      "evidence_type": "object",
+      "id": "nonclaims",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3-natural-shadow:nonclaims"
+      }
+    },
+    {
+      "assertion": "Alle geänderten Vibe-Lab-Artefakte sind schema- und repository-validiert; generierte Projektionen werden nur über vorhandene Repo-Werkzeuge aktualisiert; exakter Head, Review und CI sind vor Merge gebunden.",
+      "evidence_type": "object",
+      "id": "validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:s0r3-natural-shadow:validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.vibe-lab"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Fortsetzung am 2026-08-17 mit 'weiter @grabowski' autorisiert. Scope bleibt ausschließlich Vibe-Lab Shadow-Evidenz; keine produktive Control-Plane-Wirkung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab"
+  },
+  "goal": "Prüfe die externe Validität der in Vibe-Lab PR #344 paper-stabilisierten C/S/B/E/T/Q-Grenze mit einem strikt sequenziellen, höchstens drei Fälle großen Natural-Shadow. Fall 1 wird nur verwendet, wenn zum Freeze-Zeitpunkt noch keine produktive Mutation für den Fall begonnen hat; nach jedem Fall gilt ein harter Stop-/Fortsetzungsentscheid. Gemessen werden Bindbarkeit, Mehrdeutigkeit und Operator-Aufwand. Der Shadow darf weder Routing, Claim, Queue, Implementierung, Closeout, Merge noch Deployment beeinflussen und erteilt keine P1-, Validator-, P2/P3- oder Runtime-Integrationsautorität.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T033",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "P1 reopening",
+      "Outcome Case efficacy",
+      "validator justification",
+      "P2 or P3 authorization",
+      "Bureau or Grabowski runtime integration",
+      "routing or queue authority",
+      "merge or deployment authority from shadow evidence alone"
+    ],
+    "hard_bounds": {
+      "max_natural_cases": 3,
+      "productive_authority": false,
+      "sequential": true
+    },
+    "paper_gate": "PASS_THIS_REVISION",
+    "paper_merge": "66508a215e445c0759826f6c33b14b491dd61960",
+    "source_candidate": "candidate-eb5c99b849e1b125cc0f8d1e",
+    "source_event_id": 8038,
+    "source_pr": "heimgewebe/vibe-lab#344",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-eb5c99b849e1b125cc0f8d1e",
+      "event_id": 8038,
+      "event_created_at": "2026-08-17T18:04:40.308595Z",
+      "request_sha256": "90203a9cec5bf2245074b2e80496a68c9c774c585380c39c27f24ae6b3a7f82f",
+      "candidate_event_id": "candidate-event-bb5f1b5b5e933506c2bb6510",
+      "source_fingerprint": "1dfef0c51705f56a107665b746b4be6e81e02b3c14b93054350de6652eee8880",
+      "content_fingerprint": "eb5c99b849e1b125cc0f8d1eb9ff9f32742203f8ae383d5f9d7ad3ee2320e4a9",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "1dfef0c51705f56a107665b746b4be6e81e02b3c14b93054350de6652eee8880",
+        "freshness": "fingerprint-bound",
+        "kind": "github_pr",
+        "locator": "github:heimgewebe/vibe-lab#344",
+        "observed_at": "2026-08-17T18:04:40.168098Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "1dfef0c51705f56a107665b746b4be6e81e02b3c14b93054350de6652eee8880",
+          "freshness": "fingerprint-bound",
+          "kind": "github_pr",
+          "locator": "github:heimgewebe/vibe-lab#344",
+          "observed_at": "2026-08-17T18:04:40.168098Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 33
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Der Shadow ist Evidenz-only. Bei Falsifikation oder unverhältnismäßigem Aufwand endet er durch Ergebnisdokumentation; keine produktive Runtime-, Queue-, Routing- oder Registry-Wirkung muss zurückgerollt werden."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "S0-R3 externe Validität in einem sequenziellen Natural-Shadow prüfen"
+}

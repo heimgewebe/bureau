@@ -1,0 +1,154 @@
+{
+  "acceptance": [
+    {
+      "assertion": "StructuredToolProvider-Specs besitzen stabile begrenzte Provider-IDs, mindestens eine exakt benannte Operation, eine begrenzte Menge kanonischer HTTP(S)-Origins und pro Operation eine deklarierte Effect-Class. Ungültige IDs, doppelte Operationen/Origins, Userinfo, Query/Fragment, nicht-kanonische Origins und unbekannte Felder werden fail-closed abgewiesen.",
+      "evidence_type": "object",
+      "id": "provider-contract-bounded",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider:contract"
+      }
+    },
+    {
+      "assertion": "Eligibility wird ausschließlich für einen explizit benannten Provider geprüft. Die Slice besitzt weder automatische Providerwahl noch Ranking, Fallback, Default-Umschaltung, Browserstart oder Provider-Ausführung; mehrere registrierte Provider erzeugen keinerlei implizite Route.",
+      "evidence_type": "object",
+      "id": "explicit-provider-no-router",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider:no-router"
+      }
+    },
+    {
+      "assertion": "Provider-Operationen führen keine eigene Effect-Semantik ein. Jede deklarierte Effect-Class muss über einen injizierten bzw. lazy gebundenen Resolver im bestehenden autoritativen Browser-Effect-Katalog existieren; fehlender Resolver, unbekannte Klasse oder unvollständiger Contract endet fail-closed.",
+      "evidence_type": "object",
+      "id": "authoritative-effect-catalog",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider:effect-authority"
+      }
+    },
+    {
+      "assertion": "Eligibility bindet die angeforderte absolute HTTP(S)-Ziel-URL ausschließlich an den kanonischen Origin-Scope des expliziten Providers. Falscher Origin, Userinfo, ungültiger Port, nicht-HTTP(S), Kontrollzeichen oder außerhalb der Provider-Operation liegende Ziele werden vor jeder Outcome-Normalisierung abgewiesen; Klartext-Query/Fragment wird nicht in Eligibility-/Outcome-Projektionen übernommen.",
+      "evidence_type": "object",
+      "id": "target-scope-fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider:target-binding"
+      }
+    },
+    {
+      "assertion": "Ein caller-geliefertes Provider-Receipt wird nur nach Provider-, Operation-, Effect-Class- und Target-Digest-Bindung in einen begrenzten provider-neutralen Outcome normalisiert. Raw Headers, Bodies, Credentials oder providerfremde Zusatzfelder werden nicht projiziert. retry_authorized=false und authoritative_readback_required=true bleiben invariant; Receipt-Normalisierung führt selbst keinen Effekt aus.",
+      "evidence_type": "object",
+      "id": "receipt-normalization-no-retry",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider:receipt"
+      }
+    },
+    {
+      "assertion": "Fokussierte Contract-/Security-Tests sowie die vollständige relevante Repository-Validierung bestehen auf exaktem Head. Tests belegen mindestens Duplicate-/Scope-/Effect-Rejection, zwei gleichzeitig registrierte Provider ohne automatische Route, Receipt-Bindungsfehler und invariant fehlende Provider-Ausführung/Retry-Autorität.",
+      "evidence_type": "object",
+      "id": "regression-contract-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:browser-structured-provider:regression"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.grabowski.browser-worker-control-plane"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Core-contract only. Keine Provider-Ausführung, keine automatische Auswahl/Rangbildung, keine MCP-/Capability-/Generated-Context-Änderung, keine Browseraktion, kein Routing/Default/Retry/Credential/Profile/Backend-Promotionseffekt. Der fachliche Component-Claim gruppiert die Browser-Control-Plane; Schreibautorität stammt ausschließlich aus den vier exakten execution.grabowski_resources.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_browser_structured_tools.py",
+      "path:/home/alex/repos/grabowski/tools/browser_structured_tools.py",
+      "path:/home/alex/repos/grabowski/tests/test_browser_structured_tools.py",
+      "path:/home/alex/repos/grabowski/docs/browser-control-plane-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Einen reinen, tooling-/core-only StructuredToolProvider-Vertrag oberhalb der Browser-Control-Plane implementieren. Provider werden durch stabile IDs, exakt deklarierte Operationen, begrenzte HTTP(S)-Origin-Scope und providerseitig deklarierte Effektklassen beschrieben. Genau ein explizit benannter Provider kann für eine Operation und ein Ziel deterministisch auf Eligibility geprüft werden; ein caller-geliefertes Provider-Receipt kann anschließend in einen begrenzten provider-neutralen Outcome normalisiert werden. Die Slice führt keinen Provider aus, wählt keinen Provider automatisch aus, startet keinen Browserworker, verändert kein Routing/Default und führt keine zweite Effect-, Lifecycle- oder Retry-Authority ein. Effektklassen werden ausschließlich gegen den bestehenden autoritativen Browser-Effect-Katalog validiert; eine echte Site/API-Provider-Implementierung sowie Router/Promotion folgen separat.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-STRUCTURED-TOOL-PROVIDER-CONTRACT-20260817",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "structured provider production execution",
+      "automatic provider routing",
+      "provider ranking or fallback authority",
+      "site/API adapter readiness",
+      "browser session authority",
+      "retry authority",
+      "credential access authority",
+      "production backend promotion",
+      "public MCP capability exposure"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f5ab16fb795cf51f18c5e096",
+      "event_id": 7924,
+      "event_created_at": "2026-08-17T09:50:41.043360Z",
+      "request_sha256": "2fe8002d4a67973075fa28136a0b6a30c0f7b36f65dbfd208f5767a4508f7a8f",
+      "candidate_event_id": "candidate-event-01e214995461e3db94a663dc",
+      "source_fingerprint": "be03f2eed9dd9abdd40700779f13602e85f896f699edb00e011dee69091efecc",
+      "content_fingerprint": "f5ab16fb795cf51f18c5e0965331bef71a1b4e0ac1b3a755542ab29c2a07df34",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "be03f2eed9dd9abdd40700779f13602e85f896f699edb00e011dee69091efecc",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "conversation:browser-control-plane-structured-tool-provider-contract-20260817",
+        "observed_at": "2026-08-17T09:50:40.898422Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "be03f2eed9dd9abdd40700779f13602e85f896f699edb00e011dee69091efecc",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "conversation:browser-control-plane-structured-tool-provider-contract-20260817",
+          "observed_at": "2026-08-17T09:50:40.898422Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 192
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "browser",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "StructuredToolProvider contract without router authority"
+}

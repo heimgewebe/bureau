@@ -1,0 +1,169 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein frischer externer Readback bestätigt heimgewebe/vibe-lab#332 als CLOSED/COMPLETED; Source-Status allein erteilt noch keine Checkout-Mutationsautorität.",
+      "evidence_type": "object",
+      "id": "terminal-source",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:p1-checkout-lifecycle:terminal-source"
+      }
+    },
+    {
+      "assertion": "Vor jeder Wirkung werden Checkout-Key 35d65a141d3f0cb336e6ea2668b27d621bdb2c952cecf87ec3f5b5617243c442, Pfad, Branch, realer HEAD, bestehender Lifecycle-Owner sowie Dirty-, Task-, Prozess- und Lease-Zustand frisch gelesen. Dirty-State, fremde aktive Koordination oder unerklärte Identitätsdrift blockieren die Mutation.",
+      "evidence_type": "object",
+      "id": "identity-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:p1-checkout-lifecycle:identity-readback"
+      }
+    },
+    {
+      "assertion": "Der bestehende Lifecycle-Owner lane:f4bd3256cdc8ec904cef92b76fc9b5c7 wird weder ersetzt noch übernommen. Es gibt keinen Force-Release, keinen Owner-Wechsel und keine Mutation fremder laufender Arbeit.",
+      "evidence_type": "object",
+      "id": "owner-preservation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:p1-checkout-lifecycle:owner-preservation"
+      }
+    },
+    {
+      "assertion": "Die aktive veraltete Lifecycle-Wahrheit wird nur dann über kanonische Checkout-Lifecycle-Werkzeuge terminalisiert oder archiviert, wenn Source-, Checkout- und Koordinationsevidenz revisionsgenau zusammenpassen; andernfalls bleibt sie unverändert und der exakte Blocker wird festgehalten.",
+      "evidence_type": "object",
+      "id": "canonical-terminal-reconcile",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:p1-checkout-lifecycle:terminal-reconcile"
+      }
+    },
+    {
+      "assertion": "Bei zulässiger Terminalisierung erzeugt das kanonische Checkout-Archiv dauerhafte Recovery-Refs für den exakten realen Checkout-HEAD und Branch unter dem bestehenden Owner. Checkout-Cleanup, Branch-Löschung und irreversible Entfernung bleiben ausdrücklich außerhalb des Scopes.",
+      "evidence_type": "object",
+      "id": "archive-recovery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:p1-checkout-lifecycle:archive-recovery"
+      }
+    },
+    {
+      "assertion": "Vibe-Lab-Inhalte bleiben unverändert; es wird weder ein P1-Experiment reaktiviert noch ein neuer Experiment-, Validator-, Routing-, Queue- oder Runtime-Pfad eröffnet.",
+      "evidence_type": "object",
+      "id": "no-content-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:p1-checkout-lifecycle:no-content-effect"
+      }
+    },
+    {
+      "assertion": "Ein frischer Abschluss-Readback zeigt die kanonische terminale/archivierte Lifecycle-Wahrheit oder einen exakt begründeten Fail-Closed-Blocker; von T034 selbst bleiben keine Tasks, Prozesse oder Leases offen.",
+      "evidence_type": "object",
+      "id": "final-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:p1-checkout-lifecycle:final-readback"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.vibe-lab"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Fortsetzung am 2026-08-17 erneut mit 'weiter @grabowski' autorisiert. Scope ist ausschließlich Lifecycle-Reconcile/Archive des bestehenden P1-Checkouts; keine Inhaltsänderung und keine Löschung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab",
+      "path:/home/alex/repos/.vibe-lab-worktrees/outcome-bound-operator-loop-p1-v1"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab"
+  },
+  "goal": "Reconcile die veraltete aktive Lifecycle-Bindung des sauberen Outcome-Bound-Operator-Loop-P1-Checkouts gegen die terminale Source-Wahrheit von heimgewebe/vibe-lab#332. Wenn die exakte Checkout-, Branch-, Head-, Owner- und Koordinationslage weiterhin sicher ist, terminalisiere den alten Lifecycle ausschließlich über kanonische Grabowski-Lifecycle-Werkzeuge und archiviere den vorhandenen Checkout unter seinem bestehenden Owner mit dauerhaften Recovery-Refs. Der Checkout und der Branch bleiben erhalten. Keine Vibe-Lab-Inhaltsänderung, keine P1-Reaktivierung, keine Experimentfortsetzung und kein Cleanup/Delete.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T034",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "checkout_branch": "experiment/outcome-bound-operator-loop-p1-v1",
+    "checkout_key": "35d65a141d3f0cb336e6ea2668b27d621bdb2c952cecf87ec3f5b5617243c442",
+    "checkout_path": "/home/alex/repos/.vibe-lab-worktrees/outcome-bound-operator-loop-p1-v1",
+    "does_not_establish": [
+      "P1 reopening",
+      "checkout deletion",
+      "branch deletion",
+      "Vibe-Lab content mutation",
+      "new experiment authority",
+      "validator justification",
+      "routing or queue authority",
+      "runtime or deployment authority"
+    ],
+    "lifecycle_owner": "lane:f4bd3256cdc8ec904cef92b76fc9b5c7",
+    "source_candidate": "candidate-ba09cb603f24f2c236423f79",
+    "source_event_id": 8039,
+    "source_issue": "heimgewebe/vibe-lab#332",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ba09cb603f24f2c236423f79",
+      "event_id": 8039,
+      "event_created_at": "2026-08-17T18:11:33.637235Z",
+      "request_sha256": "782980c575c50dc60215992873e2b7930e46b6d6e4747d4c54840c5cc068196a",
+      "candidate_event_id": "candidate-event-96e2824fa1ec0698d1e4e278",
+      "source_fingerprint": "8d912b4db9098ebae2ca8aa1ae12030093f5783919dfad4b58681508fb603151",
+      "content_fingerprint": "ba09cb603f24f2c236423f797d8721fe72440a13a389e4073dbb59ed3b30e2c3",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "8d912b4db9098ebae2ca8aa1ae12030093f5783919dfad4b58681508fb603151",
+        "freshness": "fingerprint-bound",
+        "kind": "checkout_inventory",
+        "locator": "checkout:35d65a141d3f0cb336e6ea2668b27d621bdb2c952cecf87ec3f5b5617243c442",
+        "observed_at": "2026-08-17T18:11:33.499618Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "8d912b4db9098ebae2ca8aa1ae12030093f5783919dfad4b58681508fb603151",
+          "freshness": "fingerprint-bound",
+          "kind": "checkout_inventory",
+          "locator": "checkout:35d65a141d3f0cb336e6ea2668b27d621bdb2c952cecf87ec3f5b5617243c442",
+          "observed_at": "2026-08-17T18:11:33.499618Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 34
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Bei jeder Identitäts-, Source-, Dirty-, Lease-, Prozess- oder Owner-Drift vor Wirkung abbrechen. Ein erfolgreiches Archive bewahrt den Checkout und erzeugt Recovery-Refs; Cleanup/Delete ist nicht autorisiert und daher nicht Teil eines Rollbacks."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Alte P1-Checkout-Bindung terminalisieren und revisionssicher archivieren"
+}

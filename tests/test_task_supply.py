@@ -14,15 +14,19 @@ from bureau.core import Dispatcher, StateStore
 from bureau.cycle_contract import CONTRACT_VERSION, SCHEMA_VERSION
 from bureau.supply_runner import FrontierObservation, reconcile_merged_supply_publication
 from bureau.task_supply import (
+    FALLBACK_CATALOG,
     FALLBACK_METADATA_KEY,
     REVIEW_REASON,
+    STRUCTURAL_UNREACHABLE_BLOCKER,
     SupplyError,
     SupplyPolicy,
+    _catalog_open_key,
     _load_frontier_snapshot,
     build_registry_supply_report,
     build_supply_report,
     classify_frontier,
     default_fallback_acceptance_contracts,
+    derive_worker_capability_profile,
     file_sha256,
     publish_supply_plan,
     sha256_json,
@@ -94,6 +98,9 @@ def report(
     registry_root: Path | None = None,
     repository: Path | None = None,
     acceptance_contracts: dict[str, list[dict]] | None = TYPED_ACCEPTANCE,
+    worker_profile: dict | None = None,
+    feasibility_required: bool = False,
+    resource_definitions: dict | None = None,
 ) -> dict:
     root = registry_root or tmp_path
     repo = repository or tmp_path
@@ -113,6 +120,9 @@ def report(
         environment_blockers=environment_blockers,
         catalog_blockers=catalog_blockers,
         acceptance_contracts=acceptance_contracts,
+        worker_profile=worker_profile,
+        feasibility_required=feasibility_required,
+        resource_definitions=resource_definitions,
     )
 
 
@@ -128,6 +138,245 @@ def task_documents(root: Path) -> dict[str, dict]:
         value = json.loads(path.read_text(encoding="utf-8"))
         result[value["id"]] = value
     return result
+
+
+BASE_WORKER_CAPABILITIES = ("repository", "python", "testing", "bureau", "grabowski")
+
+
+def capability_profile(
+    capabilities: tuple[str, ...] = BASE_WORKER_CAPABILITIES,
+    *,
+    missing: tuple[str, ...] = (),
+) -> dict:
+    return {
+        "schema_version": 1,
+        "bound": True,
+        "source": "test-worker-profile",
+        "capabilities": list(capabilities),
+        "missing_capabilities": list(missing),
+        "conflicting_capabilities": [],
+        "evidence_task_ids": ["TEST-PROFILE"],
+    }
+
+
+def fallback_document(
+    *,
+    category: str,
+    repository: Path,
+    task_id: str,
+) -> dict:
+    spec = next(item for item in FALLBACK_CATALOG if item.category == category)
+    return {
+        "id": task_id,
+        "state": "ready",
+        "required_capabilities": list(spec.capabilities),
+        "claims": [{"resource": spec.claim_resource, "mode": spec.claim_mode}],
+        "metadata": {
+            FALLBACK_METADATA_KEY: {
+                "schema_version": 1,
+                "category": category,
+                "open_key": _catalog_open_key(
+                    spec, str(repository.resolve()), "OPERATOR-INTEGRATION-LOOP-V1"
+                ),
+            }
+        },
+    }
+
+
+def normal_document(task_id: str) -> dict:
+    return {
+        "id": task_id,
+        "state": "ready",
+        "required_capabilities": list(BASE_WORKER_CAPABILITIES),
+        "claims": [{"resource": "state.bureau", "mode": "read"}],
+    }
+
+
+def test_worker_profile_is_derived_from_authoritative_capability_reasons() -> None:
+    documents = {
+        "BASE": normal_document("BASE"),
+        "CARE": {
+            **normal_document("CARE"),
+            "required_capabilities": [*BASE_WORKER_CAPABILITIES, "documentation"],
+        },
+        "AUDIT": {
+            **normal_document("AUDIT"),
+            "required_capabilities": [*BASE_WORKER_CAPABILITIES, "audit"],
+        },
+    }
+    profile = derive_worker_capability_profile(
+        [
+            frontier_item("BASE"),
+            frontier_item("CARE", reasons=["missing capabilities: documentation"]),
+            frontier_item("AUDIT", reasons=["missing capabilities: audit"]),
+        ],
+        documents,
+    )
+    assert profile["bound"] is True
+    assert profile["capabilities"] == sorted(BASE_WORKER_CAPABILITIES)
+    assert profile["missing_capabilities"] == ["audit", "documentation"]
+    assert profile["conflicting_capabilities"] == []
+
+
+def test_joint_claimable_count_excludes_pairwise_resource_conflicts(
+    tmp_path: Path,
+) -> None:
+    registry = Registry.load(Path(__file__).parents[1])
+    documents = {
+        task_id: {
+            **normal_document(task_id),
+            "claims": [{"resource": "component.bureau.core", "mode": "write"}],
+        }
+        for task_id in ("REAL-T001", "REAL-T002")
+    }
+    result = report(
+        tmp_path,
+        [frontier_item("REAL-T001"), frontier_item("REAL-T002")],
+        task_documents=documents,
+        mutation_authority=True,
+        worker_profile=capability_profile(
+            (*BASE_WORKER_CAPABILITIES, "documentation", "audit")
+        ),
+        feasibility_required=True,
+        resource_definitions=registry.resources,
+    )
+    assert result["metrics"]["total_claimable_count"] == 2
+    assert result["metrics"]["joint_claimable_count"] == 1
+    assert result["feasibility"]["joint_claimable_task_ids"] == ["REAL-T001"]
+    assert result["feasibility"]["pairwise_excluded"] == {
+        "REAL-T002": (
+            "pairwise-resource-conflict:component.bureau.core:component.bureau.core"
+        )
+    }
+
+
+def test_unbound_worker_profile_does_not_prove_floor_unreachable(
+    tmp_path: Path,
+) -> None:
+    registry = Registry.load(Path(__file__).parents[1])
+    frontier = [frontier_item(f"REAL-T{index:03d}") for index in range(1, 8)]
+    documents = {item["task_id"]: normal_document(item["task_id"]) for item in frontier}
+    result = report(
+        tmp_path,
+        frontier,
+        task_documents=documents,
+        mutation_authority=True,
+        worker_profile=None,
+        feasibility_required=True,
+        resource_definitions=registry.resources,
+    )
+    assert result["metrics"]["total_claimable_count"] == 7
+    assert result["metrics"]["joint_claimable_count"] == 7
+    assert result["feasibility"]["structural_additional_capacity"] >= 1
+    assert result["feasibility"]["structural_capacity_upper_bound"] >= 8
+    assert result["feasibility"]["floor_reachable"] is True
+    assert "worker-capability-profile-unbound" in result["blockers"]
+    assert STRUCTURAL_UNREACHABLE_BLOCKER not in result["blockers"]
+    assert result["status"] == "blocked"
+
+
+def test_feasible_fallback_selection_is_bounded_and_pairwise_compatible(
+    tmp_path: Path,
+) -> None:
+    registry = Registry.load(Path(__file__).parents[1])
+    frontier = [frontier_item(f"REAL-T{index:03d}") for index in range(1, 8)]
+    documents = {item["task_id"]: normal_document(item["task_id"]) for item in frontier}
+    result = report(
+        tmp_path,
+        frontier,
+        task_documents=documents,
+        mutation_authority=True,
+        worker_profile=capability_profile(
+            (*BASE_WORKER_CAPABILITIES, "documentation", "audit")
+        ),
+        feasibility_required=True,
+        resource_definitions=registry.resources,
+    )
+    assert result["status"] == "refill-proposed"
+    assert result["feasibility"]["floor_reachable"] is True
+    assert result["metrics"]["joint_claimable_count"] == 7
+    assert result["metrics"]["projected_joint_claimable_count"] == 10
+    actions = result["publication_plan"]["actions"]
+    assert [item["category"] for item in actions] == [
+        "maintenance",
+        "care",
+        "registry-reconciliation",
+    ]
+    assert len(actions) <= result["policy"]["max_new_per_cycle"]
+    assert any(
+        "pairwise-resource-conflict" in blocker
+        for proposal in result["proposals"]
+        for blocker in proposal["blockers"]
+    )
+
+
+def test_historical_base_worker_profile_reports_floor_structurally_unreachable(
+    tmp_path: Path,
+) -> None:
+    registry = Registry.load(Path(__file__).parents[1])
+    repository = tmp_path.resolve()
+    normal_ids = [f"REAL-T{index:03d}" for index in range(1, 5)]
+    documents = {task_id: normal_document(task_id) for task_id in normal_ids}
+    frontier = [frontier_item(task_id) for task_id in normal_ids]
+    existing = {
+        "care": ("FB-CARE", ["missing capabilities: documentation"]),
+        "audit": ("FB-AUDIT", ["missing capabilities: audit"]),
+        "registry-reconciliation": (
+            "FB-REGISTRY",
+            ["repo write blocked by open PR: open-pr:heimgewebe/bureau#2010"],
+        ),
+        "queue-reconciliation": ("FB-QUEUE", []),
+    }
+    for category, (task_id, reasons) in existing.items():
+        documents[task_id] = fallback_document(
+            category=category, repository=repository, task_id=task_id
+        )
+        frontier.append(frontier_item(task_id, reasons=reasons))
+    result = report(
+        tmp_path,
+        frontier,
+        task_documents=documents,
+        repository=repository,
+        mutation_authority=True,
+        worker_profile=capability_profile(
+            missing=("audit", "documentation")
+        ),
+        feasibility_required=True,
+        resource_definitions=registry.resources,
+    )
+    assert result["metrics"]["total_claimable_count"] == 5
+    assert result["metrics"]["joint_claimable_count"] == 5
+    assert result["metrics"]["structural_capacity_upper_bound"] == 6
+    assert result["feasibility"]["structural_additional_capacity"] == 1
+    assert result["feasibility"]["floor_reachable"] is False
+    assert STRUCTURAL_UNREACHABLE_BLOCKER in result["blockers"]
+    assert result["status"] == "blocked"
+    assert result["publication_plan"]["actions"] == []
+    assert result["feasibility"]["catalog_capability_blockers"] == {
+        "audit": ["missing-worker-capabilities:audit"],
+        "care": ["missing-worker-capabilities:documentation"],
+    }
+    registry_proposal = next(
+        proposal
+        for proposal in result["proposals"]
+        if proposal["category"] == "registry-reconciliation"
+    )
+    assert any("#2010" in blocker for blocker in registry_proposal["blockers"])
+
+    supply_path = tmp_path / "historical-supply.json"
+    supply_path.write_text(json.dumps(result), encoding="utf-8")
+    frontier_report = build_frontier_report(
+        empty_source_state(),
+        task_supply_report_path=supply_path,
+        generated_at=NOW,
+    )
+    assert any(
+        item["kind"] == "claimable_task_supply_unreachable"
+        for item in frontier_report["bottlenecks"]
+    )
+    assert frontier_report["next_action"].startswith(
+        "treat the supply floor as currently unreachable"
+    )
 
 
 def test_policy_requires_real_floor_and_hysteresis() -> None:
@@ -825,12 +1074,15 @@ def test_registry_preview_defaults_runtime_unhealthy_and_is_read_only(
     assert result["status"] == "blocked"
     assert result["runtime_healthy"] is False
     assert result["blockers"] == [
+        STRUCTURAL_UNREACHABLE_BLOCKER,
         "frontier-queue-sha256-unbound",
         "frontier-registry-head-unbound",
         "frontier-snapshot-sha256-unbound",
         "registry-mutation-authority-unavailable",
         "required-runtime-unhealthy",
+        "worker-capability-profile-unbound",
     ]
+    assert result["feasibility"]["floor_reachable"] is False
     assert registry_snapshot(root) == before
 
 
@@ -852,8 +1104,12 @@ def test_registry_preview_requires_explicit_runtime_and_authority_for_plan(
         head_reader=lambda _root: HEAD,
         acceptance_contracts=TYPED_ACCEPTANCE,
     )
-    assert result["status"] == "refill-proposed"
-    assert result["publication_plan"]["status"] == "authorized"
+    assert result["status"] == "blocked"
+    assert result["publication_plan"]["status"] == "preview-only"
+    assert result["feasibility"]["worker_profile"]["bound"] is False
+    assert result["feasibility"]["floor_reachable"] is False
+    assert STRUCTURAL_UNREACHABLE_BLOCKER in result["blockers"]
+    assert "worker-capability-profile-unbound" in result["blockers"]
     assert registry_snapshot(root) == before
 
 
@@ -909,10 +1165,9 @@ def test_registry_preview_rejects_stale_frontier_bindings(tmp_path: Path) -> Non
         acceptance_contracts=TYPED_ACCEPTANCE,
     )
     assert result["status"] == "blocked"
-    assert result["blockers"] == [
-        "frontier-queue-sha256-mismatch",
-        "frontier-registry-head-mismatch",
-    ]
+    assert "frontier-queue-sha256-mismatch" in result["blockers"]
+    assert "frontier-registry-head-mismatch" in result["blockers"]
+    assert result["feasibility"]["required"] is True
 
 
 def test_agent_frontier_rejects_tampered_supply_report(tmp_path: Path) -> None:

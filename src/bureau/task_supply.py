@@ -9,9 +9,11 @@ import tempfile
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
+from . import legacy
 from .acceptance import AcceptanceContractError
 from .schema_validation import DocumentSchemaError, default_schema_set
 from .task_specs import task_spec_digest
@@ -22,6 +24,8 @@ SUPPLY_KIND = "bureau_task_supply_report"
 FALLBACK_METADATA_KEY = "supply_fallback"
 TERMINAL_TASK_STATES = frozenset({"verified", "cancelled", "superseded"})
 REVIEW_REASON = "execution is interactive-agent/review-before-effect"
+MISSING_CAPABILITIES_PREFIX = "missing capabilities: "
+STRUCTURAL_UNREACHABLE_BLOCKER = "claimable-supply-floor-structurally-unreachable"
 
 
 class SupplyError(RuntimeError):
@@ -254,6 +258,191 @@ def _effective_reasons(
     return sorted(set(reasons))
 
 
+def _missing_capabilities_from_reasons(reasons: Sequence[str]) -> set[str]:
+    result: set[str] = set()
+    for reason in reasons:
+        if not reason.startswith(MISSING_CAPABILITIES_PREFIX):
+            continue
+        result.update(
+            item.strip()
+            for item in reason[len(MISSING_CAPABILITIES_PREFIX) :].split(",")
+            if item.strip()
+        )
+    return result
+
+
+def derive_worker_capability_profile(
+    frontier: Sequence[Mapping[str, Any]],
+    task_documents: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    present: set[str] = set()
+    missing: set[str] = set()
+    evidence_task_ids: list[str] = []
+    for item in frontier:
+        task_id = str(item.get("task_id") or "")
+        task = task_documents.get(task_id)
+        if not isinstance(task, Mapping):
+            continue
+        raw_required = task.get("required_capabilities")
+        if not isinstance(raw_required, list):
+            continue
+        required = {
+            capability
+            for capability in raw_required
+            if isinstance(capability, str) and capability
+        }
+        observed_missing = _missing_capabilities_from_reasons(_item_reasons(item))
+        missing.update(observed_missing)
+        present.update(required - observed_missing)
+        if required or observed_missing:
+            evidence_task_ids.append(task_id)
+    conflicts = present & missing
+    capabilities = present - conflicts
+    return {
+        "schema_version": SUPPLY_SCHEMA_VERSION,
+        "bound": bool(present or missing) and not conflicts,
+        "source": "authoritative-frontier-task-capability-reasons",
+        "capabilities": sorted(capabilities),
+        "missing_capabilities": sorted(missing - conflicts),
+        "conflicting_capabilities": sorted(conflicts),
+        "evidence_task_ids": sorted(set(evidence_task_ids)),
+    }
+
+
+def _task_claims(task: Mapping[str, Any] | None) -> tuple[legacy.Claim, ...] | None:
+    if not isinstance(task, Mapping):
+        return None
+    raw_claims = task.get("claims")
+    if not isinstance(raw_claims, list):
+        return None
+    try:
+        return tuple(
+            legacy.Claim.from_raw(dict(claim))
+            for claim in raw_claims
+            if isinstance(claim, Mapping)
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _claims_conflict(
+    left: Sequence[legacy.Claim],
+    right: Sequence[legacy.Claim],
+    resources: Mapping[str, legacy.Resource],
+) -> tuple[str, str] | None:
+    resource_map = dict(resources)
+    for left_claim in left:
+        for right_claim in right:
+            if legacy.overlaps(left_claim.resource, right_claim.resource, resource_map) and (
+                legacy.modes_conflict(left_claim.mode, right_claim.mode)
+            ):
+                return left_claim.resource, right_claim.resource
+    return None
+
+
+def _jointly_packable_claimable(
+    classification: Mapping[str, Any],
+    task_documents: Mapping[str, Mapping[str, Any]],
+    resources: Mapping[str, legacy.Resource],
+) -> tuple[list[str], list[tuple[legacy.Claim, ...]], dict[str, str]]:
+    selected_ids: list[str] = []
+    selected_claims: list[tuple[legacy.Claim, ...]] = []
+    excluded: dict[str, str] = {}
+    for item in classification["items"]:
+        if item.get("claimable") is not True:
+            continue
+        task_id = str(item.get("task_id") or "")
+        claims = _task_claims(task_documents.get(task_id))
+        if claims is None:
+            excluded[task_id] = "task-spec-claims-unavailable"
+            continue
+        conflict = next(
+            (
+                pair
+                for held in selected_claims
+                if (pair := _claims_conflict(claims, held, resources)) is not None
+            ),
+            None,
+        )
+        if conflict is not None:
+            excluded[task_id] = f"pairwise-resource-conflict:{conflict[0]}:{conflict[1]}"
+            continue
+        selected_ids.append(task_id)
+        selected_claims.append(claims)
+    return selected_ids, selected_claims, excluded
+
+
+def _catalog_capability_blockers(
+    spec: FallbackSpec,
+    worker_profile: Mapping[str, Any] | None,
+    *,
+    feasibility_required: bool,
+) -> list[str]:
+    if not feasibility_required:
+        return []
+    if not isinstance(worker_profile, Mapping) or worker_profile.get("bound") is not True:
+        return ["worker-capability-profile-unbound"]
+    present = {
+        item
+        for item in worker_profile.get("capabilities", [])
+        if isinstance(item, str) and item
+    }
+    observed_missing = {
+        item
+        for item in worker_profile.get("missing_capabilities", [])
+        if isinstance(item, str) and item
+    }
+    required = set(spec.capabilities)
+    missing = sorted(required & observed_missing)
+    unknown = sorted(required - present - observed_missing)
+    blockers: list[str] = []
+    if missing:
+        blockers.append("missing-worker-capabilities:" + ",".join(missing))
+    if unknown:
+        blockers.append("worker-capability-evidence-missing:" + ",".join(unknown))
+    return blockers
+
+
+def _structural_capability_possible(
+    spec: FallbackSpec, worker_profile: Mapping[str, Any] | None
+) -> bool:
+    """Return whether capability evidence does not prove this fallback impossible.
+
+    Structural reachability is an optimistic upper bound. Unknown or unbound
+    capabilities therefore remain possible; only explicitly observed missing
+    capabilities may reduce the upper bound. Actual publication stays fail-closed
+    through ``_catalog_capability_blockers``.
+    """
+    if not isinstance(worker_profile, Mapping):
+        return True
+    observed_missing = {
+        item
+        for item in worker_profile.get("missing_capabilities", [])
+        if isinstance(item, str) and item
+    }
+    return not bool(set(spec.capabilities) & observed_missing)
+
+
+def _max_packable_catalog_count(
+    specs: Sequence[FallbackSpec],
+    resources: Mapping[str, legacy.Resource],
+) -> int:
+    best = 0
+    for size in range(1, len(specs) + 1):
+        for subset in combinations(specs, size):
+            claims = [
+                (legacy.Claim(spec.claim_resource, spec.claim_mode),)
+                for spec in subset
+            ]
+            if all(
+                _claims_conflict(claims[left], claims[right], resources) is None
+                for left in range(len(claims))
+                for right in range(left + 1, len(claims))
+            ):
+                best = max(best, size)
+    return best
+
+
 def classify_frontier(
     frontier: Sequence[Mapping[str, Any]],
     *,
@@ -477,6 +666,9 @@ def build_supply_report(
     catalog_blockers: Mapping[str, Sequence[str]] | None = None,
     frontier_snapshot_sha256: str | None = None,
     acceptance_contracts: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
+    worker_profile: Mapping[str, Any] | None = None,
+    feasibility_required: bool = False,
+    resource_definitions: Mapping[str, legacy.Resource] | None = None,
 ) -> dict[str, Any]:
     policy = policy or DEFAULT_SUPPLY_POLICY
     now = generated_at or utc_now()
@@ -501,8 +693,32 @@ def build_supply_report(
     normal_count = len(classification["normal_claimable"])
     fallback_count = len(classification["fallback_claimable"])
     total_claimable = normal_count + fallback_count
-    refill_triggered = total_claimable < policy.floor
-    shortage = max(0, policy.refill_target - total_claimable) if refill_triggered else 0
+    resources = dict(resource_definitions or {})
+    if feasibility_required and resources:
+        joint_task_ids, joint_claim_sets, joint_excluded = _jointly_packable_claimable(
+            classification, documents, resources
+        )
+    elif feasibility_required:
+        joint_task_ids, joint_claim_sets, joint_excluded = [], [], {
+            str(item.get("task_id") or ""): "resource-conflict-model-unbound"
+            for item in classification["items"]
+            if item.get("claimable") is True
+        }
+    else:
+        joint_task_ids = [
+            str(item["task_id"])
+            for item in classification["items"]
+            if item.get("claimable") is True
+        ]
+        joint_claim_sets = []
+        joint_excluded = {}
+    joint_claimable_count = (
+        len(joint_task_ids) if feasibility_required else total_claimable
+    )
+    refill_triggered = joint_claimable_count < policy.floor
+    shortage = (
+        max(0, policy.refill_target - joint_claimable_count) if refill_triggered else 0
+    )
     proposal_limit = min(shortage, policy.max_new_per_cycle, len(FALLBACK_CATALOG))
     bucket = time_bucket(now, policy.bucket_hours)
     global_blockers = sorted(
@@ -514,7 +730,18 @@ def build_supply_report(
     )
     if not runtime_healthy:
         global_blockers.append("required-runtime-unhealthy")
+    if feasibility_required:
+        if not isinstance(worker_profile, Mapping) or worker_profile.get("bound") is not True:
+            global_blockers.append("worker-capability-profile-unbound")
+        if not resources:
+            global_blockers.append("resource-conflict-model-unbound")
     category_blocks = catalog_blockers or {}
+    category_feasibility = {
+        spec.category: _catalog_capability_blockers(
+            spec, worker_profile, feasibility_required=feasibility_required
+        )
+        for spec in FALLBACK_CATALOG
+    }
     explicit_acceptance = (
         default_fallback_acceptance_contracts()
         if acceptance_contracts is None
@@ -536,18 +763,56 @@ def build_supply_report(
             if item.get("effective_state") in TERMINAL_TASK_STATES
         ),
     )
+    structural_catalog: list[FallbackSpec] = []
+    if feasibility_required and resources:
+        for spec in FALLBACK_CATALOG:
+            open_key = _catalog_open_key(spec, str(repository_path), initiative_id)
+            explicit_category_blockers = [
+                blocker
+                for blocker in category_blocks.get(spec.category, ())
+                if isinstance(blocker, str) and blocker
+            ]
+            if (
+                open_key not in existing
+                and _structural_capability_possible(spec, worker_profile)
+                and not explicit_category_blockers
+            ):
+                structural_catalog.append(spec)
+    structural_additional_capacity = (
+        _max_packable_catalog_count(structural_catalog, resources)
+        if feasibility_required and resources
+        else len(FALLBACK_CATALOG)
+    )
+    structural_capacity_upper_bound = (
+        total_claimable + structural_additional_capacity
+        if feasibility_required
+        else total_claimable + len(FALLBACK_CATALOG)
+    )
+    floor_reachable = (
+        structural_capacity_upper_bound >= policy.floor
+        if feasibility_required
+        else True
+    )
+    if feasibility_required and not floor_reachable:
+        global_blockers.append(STRUCTURAL_UNREACHABLE_BLOCKER)
+    global_blockers = sorted(set(global_blockers))
     proposals: list[dict[str, Any]] = []
     created_count = 0
+    planned_claim_sets: list[tuple[legacy.Claim, ...]] = []
     for index, spec in enumerate(FALLBACK_CATALOG):
         if created_count >= proposal_limit:
             break
         open_key = _catalog_open_key(spec, str(repository_path), initiative_id)
         fingerprint = _catalog_fingerprint(open_key, bucket)
-        blockers = set(global_blockers) | {
-            str(blocker)
-            for blocker in category_blocks.get(spec.category, ())
-            if isinstance(blocker, str) and blocker
-        }
+        blockers = (
+            set(global_blockers)
+            | set(category_feasibility[spec.category])
+            | {
+                str(blocker)
+                for blocker in category_blocks.get(spec.category, ())
+                if isinstance(blocker, str) and blocker
+            }
+        )
         existing_match = existing.get(open_key)
         if existing_match is not None:
             existing_id, existing_marker = existing_match
@@ -609,6 +874,21 @@ def build_supply_report(
             except (DocumentSchemaError, AcceptanceContractError):
                 blockers.add("acceptance-contract-invalid")
                 task = None
+        candidate_claims = (legacy.Claim(spec.claim_resource, spec.claim_mode),)
+        if feasibility_required and not blockers and task is not None:
+            conflict = next(
+                (
+                    pair
+                    for held in (*joint_claim_sets, *planned_claim_sets)
+                    if (pair := _claims_conflict(candidate_claims, held, resources))
+                    is not None
+                ),
+                None,
+            )
+            if conflict is not None:
+                blockers.add(
+                    f"pairwise-resource-conflict:{conflict[0]}:{conflict[1]}"
+                )
         proposal = {
             "category": spec.category,
             "action": "create",
@@ -627,15 +907,21 @@ def build_supply_report(
         proposals.append(proposal)
         if not blockers:
             created_count += 1
+            if feasibility_required:
+                planned_claim_sets.append(candidate_claims)
     publishable_proposals = [
         proposal
         for proposal in proposals
         if proposal["action"] == "create" and not proposal["blockers"]
     ]
     report_blockers = list(global_blockers)
-    if total_claimable < policy.floor and not mutation_authority:
+    if joint_claimable_count < policy.floor and not mutation_authority:
         report_blockers.append("registry-mutation-authority-unavailable")
-    if total_claimable < policy.floor and mutation_authority and not publishable_proposals:
+    if (
+        joint_claimable_count < policy.floor
+        and mutation_authority
+        and not publishable_proposals
+    ):
         proposal_blockers = {
             str(blocker)
             for proposal in proposals
@@ -647,7 +933,7 @@ def build_supply_report(
         else:
             report_blockers.append("fallback-catalog-exhausted-without-publishable-candidate")
     report_blockers = sorted(set(report_blockers))
-    if total_claimable >= policy.floor:
+    if joint_claimable_count >= policy.floor:
         status = "satisfied"
     elif report_blockers:
         status = "blocked"
@@ -668,6 +954,9 @@ def build_supply_report(
         for proposal in proposals
         if not proposal["blockers"]
     ]
+    projected_joint_claimable_count = joint_claimable_count + len(
+        publishable_proposals
+    )
     plan = {
         "schema_version": SUPPLY_SCHEMA_VERSION,
         "kind": "bureau_task_supply_publication_plan",
@@ -713,6 +1002,11 @@ def build_supply_report(
             "normal_claimable_count": normal_count,
             "fallback_claimable_count": fallback_count,
             "total_claimable_count": total_claimable,
+            "joint_claimable_count": joint_claimable_count,
+            "projected_joint_claimable_count": projected_joint_claimable_count,
+            "structural_capacity_upper_bound": (
+                structural_capacity_upper_bound if feasibility_required else None
+            ),
             "blocked_ready_count": len(classification["blocked_ready"]),
             "floor": policy.floor,
             "refill_target": policy.refill_target,
@@ -728,6 +1022,33 @@ def build_supply_report(
             "reused_proposal_count": sum(
                 proposal["action"] == "reuse" for proposal in proposals
             ),
+        },
+        "feasibility": {
+            "schema_version": SUPPLY_SCHEMA_VERSION,
+            "required": feasibility_required,
+            "worker_profile": (
+                dict(worker_profile) if isinstance(worker_profile, Mapping) else None
+            ),
+            "joint_claimable_task_ids": joint_task_ids,
+            "pairwise_excluded": joint_excluded,
+            "structural_additional_capacity": (
+                structural_additional_capacity if feasibility_required else None
+            ),
+            "structural_capacity_upper_bound": (
+                structural_capacity_upper_bound if feasibility_required else None
+            ),
+            "projected_joint_claimable_count": projected_joint_claimable_count,
+            "floor_reachable": floor_reachable,
+            "catalog_capability_blockers": {
+                category: blockers
+                for category, blockers in sorted(category_feasibility.items())
+                if blockers
+            },
+            "does_not_establish": [
+                "permission to bypass capability gates",
+                "permission to bypass leases or open-PR guards",
+                "maximum future supply beyond the current evidence-bound profile",
+            ],
         },
         "normal_claimable": classification["normal_claimable"],
         "fallback_claimable": classification["fallback_claimable"],
@@ -991,9 +1312,11 @@ def build_registry_supply_report(
         if repository is not None and repository.path
         else registry_root
     )
+    documents = _frontier_documents(registry)
+    worker_profile = derive_worker_capability_profile(frontier, documents)
     return build_supply_report(
         frontier,
-        task_documents=_frontier_documents(registry),
+        task_documents=documents,
         policy=policy,
         repository=repository_path,
         registry_root=registry_root,
@@ -1005,6 +1328,9 @@ def build_registry_supply_report(
         environment_blockers=blockers,
         frontier_snapshot_sha256=frontier_snapshot_sha256,
         acceptance_contracts=acceptance_contracts,
+        worker_profile=worker_profile,
+        feasibility_required=True,
+        resource_definitions=registry.resources,
     )
 
 

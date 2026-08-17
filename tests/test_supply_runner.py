@@ -160,6 +160,47 @@ def claimable_task(task_id: str) -> dict:
     }
 
 
+PROFILE_EVIDENCE_TASK_ID = "WELTGEWEBE-OS-V1-T052"
+PACKABLE_BASE_TASK_IDS = (
+    "AUDIO-CONTROL-PLANE-V1-T011",
+    "AUDIO-CONTROL-PLANE-V1-T040",
+    "CCM-V1-T006",
+    "CCM-V1-T007",
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T002",
+)
+SATISFIED_PACKABLE_TASK_IDS = (
+    "AUDIO-CONTROL-PLANE-V1-T011",
+    "AUDIO-CONTROL-PLANE-V1-T040",
+    "BUR-2026-003-T005",
+    "BUR-2026-005-T007",
+    "BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AFTER-CLOSEOUT-FIX-20260810",
+    "CCM-V1-T006",
+    "CCM-V1-T007",
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T002",
+)
+
+
+def profile_evidence_task() -> dict:
+    """Canonical nonclaimable task proving the worker's fallback capability profile."""
+    reason = "fixture capability-profile evidence only"
+    return {
+        "task_id": PROFILE_EVIDENCE_TASK_ID,
+        "title": PROFILE_EVIDENCE_TASK_ID,
+        "effective_state": "planned",
+        "queue_lane": "later",
+        "eligible": False,
+        "claim_reasons": [reason],
+        "reasons": [reason],
+    }
+
+
+def packable_base_frontier() -> list[dict]:
+    return [
+        *(claimable_task(task_id) for task_id in PACKABLE_BASE_TASK_IDS),
+        profile_evidence_task(),
+    ]
+
+
 def published_fallback_items(root: Path) -> list[dict]:
     """Published fallbacks as the dispatcher sees them: ready, but review-gated."""
     registry = Registry.load(root)
@@ -226,36 +267,29 @@ def fallback_task_ids(root: Path) -> set[str]:
     return {path.stem for path in (root / "registry/tasks").glob("*-FB-*.json")}
 
 
-def test_selected_but_unbound_candidates_refill_toward_target(tmp_path: Path) -> None:
+def test_selected_but_unbound_candidates_fail_closed_without_worker_profile(
+    tmp_path: Path,
+) -> None:
     root = registry_copy(tmp_path)
     before = fallback_task_ids(root)
+    queue_before = (root / "registry/queue.json").read_bytes()
     frontier = [unbound_candidate(index) for index in range(8)]
 
     summary = cycle(tmp_path, root, frontier)
 
     assert summary["metrics"]["normal_claimable_count"] == 0
     assert summary["metrics"]["total_claimable_count"] == 0
+    assert summary["metrics"]["joint_claimable_count"] == 0
     assert summary["metrics"]["shortage_to_target"] == 12
-    assert summary["status"] == "refill-proposed"
-    assert summary["publication"]["status"] == "published"
-
-    created = summary["publication"]["created_task_ids"]
-    assert len(created) == SupplyPolicy().max_new_per_cycle
-    assert len(set(created)) == len(created)
-    assert set(created) & before == set()
-
-    registry = Registry.load(root)
-    for task_id in created:
-        assert task_id in registry.tasks
-        assert task_id in registry.queue["later"]
-
-    # The published work is canonical, not yet claimable: normal gates still decide.
-    readback = {
-        item["task_id"]: item
-        for item in summary["publication"]["post_publication_readback"]
-    }
-    assert set(readback) == set(created)
-    assert all(item["claimable"] is False for item in readback.values())
+    assert summary["status"] == "blocked"
+    assert "worker-capability-profile-unbound" in summary["blockers"]
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    assert persisted["feasibility"]["worker_profile"]["bound"] is False
+    assert summary["publication"]["attempted"] is False
+    assert summary["publication"]["status"] == "preview-only"
+    assert summary["publication"]["created_task_ids"] == []
+    assert fallback_task_ids(root) == before
+    assert (root / "registry/queue.json").read_bytes() == queue_before
 
 
 def test_written_report_is_consumable_by_the_agent_frontier(tmp_path: Path) -> None:
@@ -309,13 +343,13 @@ def test_runner_uses_catalog_typed_acceptance_without_injected_mapping(
         head_reader=head_reader,
     )
 
-    assert summary["status"] == "refill-proposed"
+    assert summary["status"] == "blocked"
+    assert "worker-capability-profile-unbound" in summary["blockers"]
     assert summary["publication"]["attempted"] is False
     persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
-    assert persisted["publication_plan"]["status"] == "authorized"
-    assert persisted["publication_plan"]["actions"]
+    assert persisted["publication_plan"]["status"] == "preview-only"
+    assert persisted["proposals"]
     for proposal in persisted["proposals"]:
-        assert proposal["blockers"] == []
         criteria = proposal["task"]["acceptance"]
         assert all(criterion["evidence_type"] == "object" for criterion in criteria)
         assert all(criterion["verifier"] == "manual_observation" for criterion in criteria)
@@ -393,53 +427,72 @@ def test_missing_mutation_authority_is_an_explicit_blocked_status(tmp_path: Path
     assert (root / "registry/queue.json").read_bytes() == queue_before
 
 
-def test_repeated_cycles_reuse_instead_of_duplicating_canonical_fallbacks(
+def test_repeated_feasible_cycles_reuse_instead_of_duplicating_canonical_fallbacks(
     tmp_path: Path,
 ) -> None:
     root = registry_copy(tmp_path)
     before = fallback_task_ids(root)
-    starved = [unbound_candidate(index) for index in range(8)]
+    baseline = packable_base_frontier()
 
-    first = cycle(tmp_path, root, starved)
+    first = cycle(tmp_path, root, baseline)
     after_first = fallback_task_ids(root)
 
-    second = cycle(tmp_path, root, starved + published_fallback_items(root))
+    second = cycle(tmp_path, root, baseline + published_fallback_items(root))
     after_second = fallback_task_ids(root)
 
-    third = cycle(tmp_path, root, starved + published_fallback_items(root))
+    third = cycle(tmp_path, root, baseline + published_fallback_items(root))
     after_third = fallback_task_ids(root)
 
     assert first["publication"]["status"] == "published"
     assert second["publication"]["status"] == "published"
-    # The bounded catalog is exhausted: repetition proposes reuse, never a duplicate.
     assert third["publication"]["status"] == "preview-only"
     assert third["status"] == "blocked"
-    assert third["metrics"]["new_proposal_count"] == 0
-    assert third["metrics"]["reused_proposal_count"] == len(after_third - before)
-
-    assert len(after_first - before) == 4
-    assert len(after_second - before) == 7
+    assert "claimable-supply-floor-structurally-unreachable" in third["blockers"]
+    assert len(after_first - before) == 3
+    assert len(after_second - before) == 6
     assert after_third == after_second
     assert set(first["publication"]["created_task_ids"]).isdisjoint(
         second["publication"]["created_task_ids"]
     )
+    assert third["publication"]["created_task_ids"] == []
     registry = Registry.load(root)
     assert sorted(registry.queue["later"]) == sorted(set(registry.queue["later"]))
+
+
+def test_repeated_unbound_cycles_never_publish_or_duplicate_fallbacks(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    before = fallback_task_ids(root)
+    queue_before = (root / "registry/queue.json").read_bytes()
+    starved = [unbound_candidate(index) for index in range(8)]
+
+    first = cycle(tmp_path, root, starved)
+    second = cycle(tmp_path, root, starved)
+    third = cycle(tmp_path, root, starved)
+
+    for summary in (first, second, third):
+        assert summary["status"] == "blocked"
+        assert "worker-capability-profile-unbound" in summary["blockers"]
+        assert summary["publication"]["status"] == "preview-only"
+        assert summary["publication"]["created_task_ids"] == []
+    assert fallback_task_ids(root) == before
+    assert (root / "registry/queue.json").read_bytes() == queue_before
 
 
 def test_terminal_fallback_blocks_only_its_own_category_in_the_same_bucket(
     tmp_path: Path,
 ) -> None:
     root = registry_copy(tmp_path)
-    starved = [unbound_candidate(index) for index in range(8)]
-    first = cycle(tmp_path, root, starved)
+    baseline = packable_base_frontier()
+    first = cycle(tmp_path, root, baseline)
     terminal_id = first["publication"]["created_task_ids"][0]
     terminal_path = mark_terminal(root, terminal_id)
 
     second = cycle(
         tmp_path,
         root,
-        starved + published_fallback_items(root),
+        baseline + published_fallback_items(root),
         generated_at=LATER_SAME_BUCKET,
     )
 
@@ -450,7 +503,91 @@ def test_terminal_fallback_blocks_only_its_own_category_in_the_same_bucket(
     assert json.loads(terminal_path.read_text(encoding="utf-8"))["state"] == "cancelled"
 
 
-def test_normal_claimable_work_is_not_displaced_by_fallbacks(tmp_path: Path) -> None:
+def test_unbound_profile_remains_fail_closed_across_same_bucket_cycles(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    before = fallback_task_ids(root)
+    starved = [unbound_candidate(index) for index in range(8)]
+
+    first = cycle(tmp_path, root, starved)
+    second = cycle(tmp_path, root, starved, generated_at=LATER_SAME_BUCKET)
+
+    assert first["status"] == "blocked"
+    assert second["status"] == "blocked"
+    assert first["publication"]["created_task_ids"] == []
+    assert second["publication"]["created_task_ids"] == []
+    assert "worker-capability-profile-unbound" in first["blockers"]
+    assert "worker-capability-profile-unbound" in second["blockers"]
+    assert fallback_task_ids(root) == before
+
+
+def test_bound_jointly_feasible_frontier_publishes_only_compatible_refill(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    task_ids = [
+        "AUDIO-CONTROL-PLANE-V1-T029",
+        "AUDIO-CONTROL-PLANE-V1-T040",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-FU-PICKUP-EXPIRED-SAME-OWNER-LEASE-RECOVERY-20260812",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+        "OPERATOR-INTEGRATION-LOOP-V1-T033",
+        "WELTGEWEBE-OS-V1-T041",
+        "BUREAU-CONTROL-PLANE-V3-T005",
+    ]
+
+    summary = cycle(
+        tmp_path,
+        root,
+        [claimable_task(task_id) for task_id in task_ids],
+    )
+
+    assert summary["metrics"]["total_claimable_count"] == 7
+    assert summary["metrics"]["joint_claimable_count"] == 7
+    assert summary["status"] == "refill-proposed"
+    assert summary["publication"]["status"] == "published"
+    assert len(summary["publication"]["created_task_ids"]) == 1
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    assert persisted["feasibility"]["worker_profile"]["bound"] is True
+    assert persisted["metrics"]["joint_claimable_count"] == 7
+    assert persisted["metrics"]["projected_joint_claimable_count"] == 8
+    assert persisted["feasibility"]["floor_reachable"] is True
+    created = [
+        proposal
+        for proposal in persisted["proposals"]
+        if proposal["action"] == "create" and not proposal["blockers"]
+    ]
+    assert [proposal["category"] for proposal in created] == ["maintenance"]
+
+
+def test_normal_jointly_claimable_work_is_not_displaced_by_fallbacks(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    before = fallback_task_ids(root)
+    queue_before = (root / "registry/queue.json").read_bytes()
+
+    summary = cycle(
+        tmp_path,
+        root,
+        [claimable_task(task_id) for task_id in SATISFIED_PACKABLE_TASK_IDS],
+    )
+
+    assert summary["status"] == "satisfied"
+    assert summary["metrics"]["normal_claimable_count"] == 8
+    assert summary["metrics"]["total_claimable_count"] == 8
+    assert summary["metrics"]["joint_claimable_count"] == 8
+    assert summary["metrics"]["proposal_count"] == 0
+    assert summary["metrics"]["shortage_to_target"] == 0
+    assert summary["publication"]["attempted"] is False
+    assert summary["publication"]["created_task_ids"] == []
+    assert fallback_task_ids(root) == before
+    assert (root / "registry/queue.json").read_bytes() == queue_before
+
+
+def test_claimable_items_without_task_specs_fail_closed_for_joint_packability(
+    tmp_path: Path,
+) -> None:
     root = registry_copy(tmp_path)
     before = fallback_task_ids(root)
     queue_before = (root / "registry/queue.json").read_bytes()
@@ -461,10 +598,16 @@ def test_normal_claimable_work_is_not_displaced_by_fallbacks(tmp_path: Path) -> 
         [claimable_task(f"REAL-T{index:03d}") for index in range(8)],
     )
 
-    assert summary["status"] == "satisfied"
     assert summary["metrics"]["normal_claimable_count"] == 8
-    assert summary["metrics"]["proposal_count"] == 0
-    assert summary["metrics"]["shortage_to_target"] == 0
+    assert summary["metrics"]["total_claimable_count"] == 8
+    assert summary["metrics"]["joint_claimable_count"] == 0
+    assert summary["status"] == "blocked"
+    assert "worker-capability-profile-unbound" in summary["blockers"]
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    assert len(persisted["feasibility"]["pairwise_excluded"]) == 8
+    assert set(persisted["feasibility"]["pairwise_excluded"].values()) == {
+        "task-spec-claims-unavailable"
+    }
     assert summary["publication"]["attempted"] is False
     assert summary["publication"]["created_task_ids"] == []
     assert fallback_task_ids(root) == before

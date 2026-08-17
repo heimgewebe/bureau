@@ -110,6 +110,39 @@ def _github_repository_slug(remote: str) -> str:
     return "/".join(parts)
 
 
+def _canonical_runtime_repository(root: Path) -> str | None:
+    try:
+        identity = bureau_runtime_identity(root)
+        compatibility = identity.get("compatibility", {})
+        manifest = identity.get("manifest", {})
+        canonical = manifest.get("canonical_registry", {})
+        registry = identity.get("registry", {})
+        external = identity.get("external_remote", {})
+        canonical_root = Path(str(canonical.get("root", ""))).expanduser().resolve()
+        registry_root = Path(str(registry.get("root", ""))).expanduser().resolve()
+        resolved_root = root.expanduser().resolve()
+    except (OSError, TypeError, ValueError):
+        return None
+    expected_repository = external.get("expected_repository")
+    if (
+        compatibility.get("status") != "canonical-read-only"
+        or manifest.get("valid") is not True
+        or canonical.get("valid") is not True
+        or registry.get("role") != "canonical-runtime-snapshot"
+        or registry.get("bureau_project") is not True
+        or canonical_root != resolved_root
+        or registry_root != resolved_root
+        or canonical.get("source_commit") != registry.get("head")
+        or not isinstance(expected_repository, str)
+        or not expected_repository
+    ):
+        return None
+    try:
+        return _github_repository_slug(f"https://github.com/{expected_repository}")
+    except OperatorIntakeError:
+        return None
+
+
 def _github_repository_for_preview(root: Path) -> str | None:
     try:
         process = subprocess.run(
@@ -120,13 +153,13 @@ def _github_repository_for_preview(root: Path) -> str | None:
             timeout=15,
         )
     except (OSError, subprocess.TimeoutExpired):
-        return None
-    if process.returncode != 0:
-        return None
-    try:
-        return _github_repository_slug(process.stdout)
-    except OperatorIntakeError:
-        return None
+        process = None
+    if process is not None and process.returncode == 0:
+        try:
+            return _github_repository_slug(process.stdout)
+        except OperatorIntakeError:
+            return None
+    return _canonical_runtime_repository(root)
 
 
 def _fsync_directory(path: Path) -> None:

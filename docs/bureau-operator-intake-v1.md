@@ -190,6 +190,8 @@ Der Vertrag ist eng und fail-closed. Er verlangt:
 - einen standalone Task ohne `depends_on`, Parent oder Children;
 - im StateStore exakt die im Receipt gebundene Revision, denselben Spec-Digest, dieselbe Spec und `state=planned`.
 
+Die Repository-Identität stammt primär aus dem GitHub-`origin` des Registry-Checkouts. Ein immutable canonical Runtime-Snapshot besitzt absichtlich kein Git-Remote; ausschließlich wenn `bureau runtime-identity` genau diesen Snapshot als manifestgebunden, integer und `canonical-read-only` bestätigt, darf dessen gebundene `expected_repository`-Identität verwendet werden. Beliebige Nicht-Git-Verzeichnisse bleiben fail-closed.
+
 Vor jeder Wirkung kann der vollständige Vertrag read-only geprüft werden:
 
 ```bash

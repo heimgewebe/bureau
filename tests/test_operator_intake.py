@@ -4527,6 +4527,43 @@ def test_t026_publication_preview_blocks_foreign_pr_before_lease_acquisition(
     assert all(command[:3] != ["gh", "pr", "create"] for command in calls)
 
 
+def test_github_repository_for_preview_prefers_git_origin(
+    registry_factory, monkeypatch
+):
+    root, _ = _committed_registry(registry_factory)
+    _git(root, "remote", "add", "origin", "git@github.com:example/bureau.git")
+
+    def unexpected_runtime_identity(_root):
+        raise AssertionError("runtime snapshot fallback must not run when origin is valid")
+
+    monkeypatch.setattr(
+        operator_intake_module,
+        "bureau_runtime_identity",
+        unexpected_runtime_identity,
+    )
+
+    assert operator_intake_module._github_repository_for_preview(root) == "example/bureau"
+
+
+def test_github_repository_for_preview_accepts_manifest_bound_runtime_snapshot(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, _ = _committed_registry(registry_factory)
+    _, snapshot = _runtime_snapshot_registry(root, tmp_path, monkeypatch)
+
+    assert (
+        operator_intake_module._github_repository_for_preview(snapshot)
+        == "heimgewebe/bureau"
+    )
+
+
+def test_github_repository_for_preview_rejects_arbitrary_non_git_root(tmp_path):
+    root = tmp_path / "plain-registry"
+    root.mkdir()
+
+    assert operator_intake_module._github_repository_for_preview(root) is None
+
+
 def _merged_task_promotion_fixture(registry_factory, tmp_path, monkeypatch):
     root, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

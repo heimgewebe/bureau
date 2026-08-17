@@ -8,8 +8,11 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
+from bureau import supply_runner as supply_runner_module
 from bureau.agent_frontier import build_frontier_report
 from bureau.core import Dispatcher, StateStore
+from bureau.cycle_contract import CONTRACT_VERSION, SCHEMA_VERSION
+from bureau.supply_runner import FrontierObservation, reconcile_merged_supply_publication
 from bureau.task_supply import (
     FALLBACK_METADATA_KEY,
     REVIEW_REASON,
@@ -1051,3 +1054,408 @@ def test_canonical_publication_feeds_normal_pickup_and_preserves_gates(
     )
     assert approved_intent["intent"]["task_id"] == task_id
     assert dispatcher.store.list_runs() == []
+
+
+POST_MERGE_PR = 77
+POST_MERGE_HEAD = "d" * 40
+POST_MERGE_COMMIT = "e" * 40
+POST_MERGE_CURRENT_HEAD = "f" * 40
+POST_MERGE_CAPABILITIES = ["repository", "python", "testing", "bureau", "grabowski"]
+
+
+def post_merge_case(tmp_path: Path) -> dict:
+    project_root = Path(__file__).parents[1]
+    root = copy_registry(project_root, tmp_path / "post-merge-registry")
+    queue_path = root / "registry/queue.json"
+    supply = report(
+        tmp_path,
+        [],
+        task_documents=task_documents(root),
+        registry_root=root,
+        repository=root,
+        registry_head=HEAD,
+        queue_sha256=file_sha256(queue_path),
+    )
+    publication = publish_supply_plan(
+        supply["publication_plan"],
+        mutation_authorized=True,
+        expected_plan_sha256=supply["publication_plan"]["plan_sha256"],
+        head_reader=lambda _root: HEAD,
+    )
+    assert len(publication["created_tasks"]) == 4
+    receipt_path = tmp_path / "task-supply-run.json"
+    receipt = {
+        "schema_version": SCHEMA_VERSION,
+        "contract_version": CONTRACT_VERSION,
+        "cycle_id": "2026-08-02T12",
+        "stage": "watchdog",
+        "run_id": "task-supply-test-run",
+        "trigger": "local-task-supply",
+        "started_at": "2026-08-02T10:00:00Z",
+        "finished_at": "2026-08-02T10:01:00Z",
+        "lifecycle_state": "terminal",
+        "result": "completed",
+        "degraded": False,
+        "evidence": [
+            {
+                "kind": "task_supply_publication",
+                "publication_result_sha256": publication["result_sha256"],
+                "publication_result": publication,
+            }
+        ],
+        "next_action": "wait for the exact Supply publication merge",
+        "receipt_path": str(receipt_path),
+    }
+    receipt_path.write_text(
+        json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    files = {
+        binding["task_path"]: {
+            "status": "added",
+            "file_sha256": binding["file_sha256"],
+            "spec_sha256": binding["spec_sha256"],
+        }
+        for binding in publication["created_tasks"]
+    }
+    files["registry/queue.json"] = {
+        "status": "modified",
+        "file_sha256": publication["queue_sha256_after"],
+    }
+    pull_request = {
+        "number": POST_MERGE_PR,
+        "state": "MERGED",
+        "merged_at": "2026-08-02T10:03:00Z",
+        "merge_commit": POST_MERGE_COMMIT,
+        "head": POST_MERGE_HEAD,
+        "branch": "automation/task-supply-test",
+        "base": "main",
+        "base_sha": publication["registry_head_before"],
+        "files": files,
+    }
+    state_db = tmp_path / "post-merge-state.sqlite3"
+    StateStore(state_db)
+    return {
+        "root": root,
+        "publication": publication,
+        "run_receipt": receipt_path,
+        "run_receipt_sha256": file_sha256(receipt_path),
+        "pull_request": pull_request,
+        "state_db": state_db,
+        "reconciliation_receipt": tmp_path / "post-merge-reconciliation.json",
+    }
+
+
+def post_merge_observer(publication: dict) -> FrontierObservation:
+    projected = []
+    for binding in publication["created_tasks"]:
+        projected.append(
+            {
+                "task_id": binding["task_id"],
+                "effective_state": "ready",
+                "queue_lane": "later",
+                "eligible": False,
+                "resource_eligible": False,
+                "claim_reasons": [REVIEW_REASON],
+                "reasons": [REVIEW_REASON],
+            }
+        )
+    return FrontierObservation(
+        frontier=tuple(projected),
+        runtime_healthy=True,
+        runtime_blocker_codes=(),
+        capabilities=tuple(POST_MERGE_CAPABILITIES),
+    )
+
+
+def reconcile_case(
+    case: dict,
+    *,
+    mode: str,
+    pull_request: dict | None = None,
+    expected_run_receipt_sha256: str | None = None,
+    reconciliation_receipt: Path | None = None,
+    observer=None,
+) -> dict:
+    selected_pr = pull_request or case["pull_request"]
+    return reconcile_merged_supply_publication(
+        registry_root=case["root"],
+        run_receipt_path=case["run_receipt"],
+        expected_run_receipt_sha256=(
+            expected_run_receipt_sha256 or case["run_receipt_sha256"]
+        ),
+        repository="heimgewebe/bureau",
+        pull_request_number=POST_MERGE_PR,
+        capabilities=POST_MERGE_CAPABILITIES,
+        state_db=case["state_db"],
+        mode=mode,
+        reconciliation_receipt_path=(
+            reconciliation_receipt
+            if reconciliation_receipt is not None
+            else case["reconciliation_receipt"]
+        ),
+        pull_request_reader=lambda _repository, _number, _bindings: selected_pr,
+        head_reader=lambda _root: POST_MERGE_CURRENT_HEAD,
+        merge_ancestor_checker=lambda _root, _ancestor, _descendant: True,
+        observer=(
+            observer
+            if observer is not None
+            else lambda **_kwargs: post_merge_observer(case["publication"])
+        ),
+    )
+
+
+@pytest.mark.parametrize("drift", ["unmerged", "task", "queue", "base", "receipt"])
+def test_post_merge_reconciliation_fails_closed_before_state_effect(
+    tmp_path: Path,
+    drift: str,
+) -> None:
+    case = post_merge_case(tmp_path)
+    pull_request = json.loads(json.dumps(case["pull_request"]))
+    expected_receipt = case["run_receipt_sha256"]
+    if drift == "unmerged":
+        pull_request["state"] = "OPEN"
+        pull_request["merged_at"] = None
+    elif drift == "task":
+        task_path = case["publication"]["created_tasks"][0]["task_path"]
+        pull_request["files"][task_path]["spec_sha256"] = "0" * 64
+    elif drift == "queue":
+        pull_request["files"]["registry/queue.json"]["file_sha256"] = "0" * 64
+    elif drift == "base":
+        pull_request["base_sha"] = "0" * 40
+    else:
+        expected_receipt = "0" * 64
+    with pytest.raises(SupplyError):
+        reconcile_case(
+            case,
+            mode="apply",
+            pull_request=pull_request,
+            expected_run_receipt_sha256=expected_receipt,
+        )
+    store = StateStore(case["state_db"])
+    assert all(
+        store.task_spec(binding["task_id"]) is None
+        for binding in case["publication"]["created_tasks"]
+    )
+    assert not case["reconciliation_receipt"].exists()
+
+
+def test_post_merge_reconciliation_imports_missing_specs_and_replays_receipt(
+    tmp_path: Path,
+) -> None:
+    case = post_merge_case(tmp_path)
+    queue_before = (case["root"] / "registry/queue.json").read_bytes()
+    preview = reconcile_case(case, mode="preview")
+    assert preview["status"] == "ready"
+    assert preview["effect_started"] is False
+    assert {item["status"] for item in preview["state_preimage"]} == {"missing"}
+    assert not case["reconciliation_receipt"].exists()
+
+    applied = reconcile_case(case, mode="apply")
+    assert applied["status"] == "completed"
+    assert applied["effect_started"] is True
+    assert {item["status"] for item in applied["state_results"]} == {"imported"}
+    assert case["reconciliation_receipt"].is_file()
+    store = StateStore(case["state_db"])
+    for binding in case["publication"]["created_tasks"]:
+        current = store.task_spec(binding["task_id"])
+        assert current is not None
+        assert current["revision"] == 1
+        assert current["spec_sha256"] == binding["spec_sha256"]
+    assert (case["root"] / "registry/queue.json").read_bytes() == queue_before
+
+    replay = reconcile_case(case, mode="readback")
+    assert replay["idempotent_replay"] is True
+    assert replay["effect_started"] is False
+    assert replay["receipt_sha256"] == applied["receipt_sha256"]
+
+
+def test_post_merge_reconciliation_preserves_existing_divergence(
+    tmp_path: Path,
+) -> None:
+    case = post_merge_case(tmp_path)
+    first = case["publication"]["created_tasks"][0]
+    registry = Registry.load(case["root"])
+    divergent = json.loads(json.dumps(registry.tasks[first["task_id"]].raw))
+    divergent["title"] = divergent["title"] + " divergent-test"
+    store = StateStore(case["state_db"])
+    stored = store.put_task_spec(
+        divergent,
+        idempotency_key="post-merge-divergence-test",
+        expected_revision=None,
+        source="test-divergence",
+    )
+    before = store.task_spec(first["task_id"])
+    assert before is not None
+    assert before["spec_sha256"] != first["spec_sha256"]
+
+    applied = reconcile_case(case, mode="apply")
+    assert applied["status"] == "completed-with-divergence"
+    rows = {item["task_id"]: item for item in applied["state_results"]}
+    assert rows[first["task_id"]]["status"] == "divergent-preserved"
+    assert rows[first["task_id"]]["after"] == {
+        "revision": stored["revision"],
+        "spec_sha256": before["spec_sha256"],
+    }
+    assert sum(item["status"] == "imported" for item in applied["state_results"]) == 3
+    after = store.task_spec(first["task_id"])
+    assert after is not None
+    assert after["revision"] == before["revision"]
+    assert after["spec_sha256"] == before["spec_sha256"]
+
+
+def test_post_merge_readback_without_receipt_is_read_only(tmp_path: Path) -> None:
+    case = post_merge_case(tmp_path)
+    readback = reconcile_case(case, mode="readback")
+    assert readback["status"] == "receipt-missing"
+    assert readback["effect_started"] is False
+    assert {item["status"] for item in readback["state_readback"]} == {"missing"}
+    store = StateStore(case["state_db"])
+    assert all(
+        store.task_spec(binding["task_id"]) is None
+        for binding in case["publication"]["created_tasks"]
+    )
+
+
+def test_post_merge_dispatcher_failure_requires_readback_before_retry(tmp_path: Path) -> None:
+    case = post_merge_case(tmp_path)
+
+    def fail_dispatcher(**_kwargs):
+        raise RuntimeError("dispatcher-readback-failed")
+
+    with pytest.raises(
+        SupplyError,
+        match=r"StateStore effect may already be complete.*run exact readback",
+    ):
+        reconcile_case(case, mode="apply", observer=fail_dispatcher)
+
+    assert not case["reconciliation_receipt"].exists()
+    store = StateStore(case["state_db"])
+    assert all(
+        store.task_spec(binding["task_id"])["spec_sha256"] == binding["spec_sha256"]
+        for binding in case["publication"]["created_tasks"]
+    )
+    readback = reconcile_case(case, mode="readback")
+    assert readback["status"] == "receipt-missing"
+    assert {item["status"] for item in readback["state_readback"]} == {
+        "expected-present"
+    }
+    assert readback["effect_started"] is False
+
+
+
+def test_post_merge_cli_routes_explicit_preview(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_reconcile(**kwargs):
+        captured.update(kwargs)
+        return {"status": "ready", "effect_started": False}
+
+    monkeypatch.setattr(
+        supply_runner_module,
+        "reconcile_merged_supply_publication",
+        fake_reconcile,
+    )
+    run_receipt = tmp_path / "run.json"
+    state_db = tmp_path / "state.sqlite3"
+    result = supply_runner_module.main(
+        [
+            "--registry-root",
+            str(tmp_path),
+            "--capability",
+            "bureau",
+            "--reconcile-merged-run",
+            str(run_receipt),
+            "--expected-run-receipt-sha256",
+            "a" * 64,
+            "--publication-repository",
+            "heimgewebe/bureau",
+            "--publication-pr",
+            "77",
+            "--bureau-state-db",
+            str(state_db),
+            "--reconcile-preview",
+        ]
+    )
+    assert result == 0
+    assert captured["mode"] == "preview"
+    assert captured["registry_root"] == tmp_path
+    assert captured["run_receipt_path"] == run_receipt
+    assert captured["expected_run_receipt_sha256"] == "a" * 64
+    assert captured["repository"] == "heimgewebe/bureau"
+    assert captured["pull_request_number"] == 77
+    assert captured["state_db"] == state_db
+    assert captured["reconciliation_receipt_path"] is None
+    assert json.loads(capsys.readouterr().out)["status"] == "ready"
+
+
+def test_supply_runner_receipt_persists_publication_binding(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    publication_result = {
+        "kind": "bureau_task_supply_publication_result",
+        "status": "published",
+        "created_task_ids": ["DEMO-FB-ONE"],
+        "created_tasks": [
+            {
+                "task_id": "DEMO-FB-ONE",
+                "task_path": "registry/tasks/DEMO-FB-ONE.json",
+                "queue_lane": "later",
+                "file_sha256": "b" * 64,
+                "spec_sha256": "c" * 64,
+            }
+        ],
+        "result_sha256": "d" * 64,
+    }
+    summary = {
+        "status": "refill-proposed",
+        "report_path": str(tmp_path / "report.json"),
+        "report_sha256": "e" * 64,
+        "metrics": {"floor": 8},
+        "blockers": [],
+        "publication": {
+            "status": "published",
+            "created_task_ids": ["DEMO-FB-ONE"],
+            "result": publication_result,
+        },
+    }
+    monkeypatch.setattr(
+        supply_runner_module,
+        "run_supply_cycle",
+        lambda **_kwargs: summary,
+    )
+    monkeypatch.setattr(
+        supply_runner_module,
+        "cycle_id",
+        lambda: "2026-08-17T12",
+    )
+    state_root = tmp_path / "supply-state"
+    result = supply_runner_module.main(
+        [
+            "--registry-root",
+            str(tmp_path),
+            "--capability",
+            "bureau",
+            "--state-root",
+            str(state_root),
+        ]
+    )
+    assert result == 0
+    receipts = list((state_root / "runs").glob("*-task-supply.json"))
+    assert len(receipts) == 1
+    receipt = json.loads(receipts[0].read_text(encoding="utf-8"))
+    evidence = [
+        item for item in receipt["evidence"] if item.get("kind") == "task_supply_publication"
+    ]
+    assert evidence == [
+        {
+            "kind": "task_supply_publication",
+            "publication_result_sha256": "d" * 64,
+            "publication_result": publication_result,
+        }
+    ]

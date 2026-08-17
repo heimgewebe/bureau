@@ -14,6 +14,7 @@ from typing import Any
 
 from .acceptance import AcceptanceContractError
 from .schema_validation import DocumentSchemaError, default_schema_set
+from .task_specs import task_spec_digest
 from .v2 import Registry
 
 SUPPLY_SCHEMA_VERSION = 1
@@ -834,6 +835,7 @@ def publish_supply_plan(
         raise SupplyError("publication action retains safety blockers")
     queue_before = queue_path.read_bytes()
     created_paths: list[Path] = []
+    created_tasks: list[dict[str, Any]] = []
     try:
         queue = json.loads(queue_before.decode("utf-8"))
         lanes = queue.get("lanes")
@@ -868,6 +870,15 @@ def publish_supply_plan(
                 raise SupplyError(f"publication task contract is invalid: {exc}") from exc
             created_paths.append(target)
             _atomic_write_json(target, task)
+            created_tasks.append(
+                {
+                    "task_id": task_id,
+                    "task_path": str(relative_path),
+                    "queue_lane": "later",
+                    "file_sha256": file_sha256(target),
+                    "spec_sha256": task_spec_digest(task),
+                }
+            )
             if task_id not in lanes["later"]:
                 lanes["later"].append(task_id)
         _atomic_write_json(queue_path, queue)
@@ -891,6 +902,7 @@ def publish_supply_plan(
         "queue_sha256_before": expected_queue_sha256,
         "queue_sha256_after": file_sha256(queue_path),
         "created_task_ids": [str(action["task_id"]) for action in create_actions],
+        "created_tasks": created_tasks,
         "reused_task_ids": [
             str(action["task_id"]) for action in actions if action.get("action") == "reuse"
         ],

@@ -30,6 +30,29 @@ from queue, later-lane tasks whose advisory priority says now/next, terminal tas
 and now-lane tasks that are not ready. The default command is read-only: it does not promote
 lanes, claim work, write tasks or close anything.
 
+### Runtime identity during the legacy queue transition
+
+The immutable-runtime compatibility gate treats one case specially during the T012/T013 migration:
+a clean canonical `heimgewebe/bureau` checkout may be ahead of the deployed source commit when the
+deployed commit is an ancestor of `HEAD`, `HEAD == origin/main`, and the complete Git path delta is
+exactly the regular file `registry/queue.json`. That bounded forward drift remains runtime-compatible
+because the file is only the transitional dispatcher-order projection. The local claim-root preflight
+may therefore stay clear, but it still reports that fresh GitHub main and claim authority have not
+been established; atomic claimability remains the responsibility of the normal claim path.
+
+This exception is deliberately fail-closed. A dirty checkout, missing or symlinked queue file,
+non-canonical origin, `origin/main` mismatch, divergent history, unreadable Git evidence, or any
+additional changed path blocks compatibility. In particular, TaskSpec, schema, package, source,
+authority, or mixed queue-plus-authoritative drift still requires exact runtime convergence and
+continues to report `release-registry-identity-mismatch`. The exception never makes
+`registry/queue.json` task, admission, claim, dispatch, lifecycle, acceptance, or closeout truth.
+
+Historically, verified task `BUR-2026-005-T013` made `registry/queue.json` the dispatch-order canon
+for the earlier control model. Control Plane V3 subsequently moved operational task revision,
+lifecycle, run, reservation, acceptance, closeout, and frontier authority into StateStore. The
+legacy queue surface remains readable during migration, and compatibility with a queue-only commit
+reflects that migration boundary rather than restoring the older authority model.
+
 A queue mutation must go through a reviewed plan artifact. First write a plan:
 
 ```bash

@@ -38,6 +38,7 @@ SCHEDULER_NAMES = (
 
 
 CANONICAL_GITHUB_REPOSITORY = "heimgewebe/bureau"
+LEGACY_QUEUE_PROJECTION_PATH = "registry/queue.json"
 
 
 def github_repository_from_remote(value: str | None) -> str | None:
@@ -172,6 +173,47 @@ def _git_identity(root: Path) -> dict[str, Any]:
         "dirty": bool(status),
         "dirty_paths": dirty_paths,
     }
+
+
+def _release_registry_drift_classification(
+    registry_root: Path, deployed_commit: Any, registry: dict[str, Any]
+) -> str:
+    """Classify only the one legacy queue drift that may preserve compatibility."""
+    head = registry.get("head")
+    if not isinstance(deployed_commit, str) or not deployed_commit:
+        return "blocked"
+    if not isinstance(head, str) or not head:
+        return "blocked"
+    if deployed_commit == head:
+        return "exact"
+    if (
+        registry.get("available") is not True
+        or registry.get("dirty") is not False
+        or registry.get("origin_main") != head
+        or str(registry.get("origin_repository") or "").casefold()
+        != CANONICAL_GITHUB_REPOSITORY
+    ):
+        return "blocked"
+    queue_path = registry_root / LEGACY_QUEUE_PROJECTION_PATH
+    if queue_path.is_symlink() or not queue_path.is_file():
+        return "blocked"
+    if _git(registry_root, "merge-base", deployed_commit, head) != deployed_commit:
+        return "blocked"
+    changed = _git(
+        registry_root,
+        "diff",
+        "--name-only",
+        "--no-renames",
+        deployed_commit,
+        head,
+        "--",
+    )
+    if changed is None:
+        return "blocked"
+    changed_paths = sorted({line for line in changed.splitlines() if line})
+    if changed_paths == [LEGACY_QUEUE_PROJECTION_PATH]:
+        return "legacy-queue-only"
+    return "blocked"
 
 
 def _is_bureau_project(root: Path) -> bool:
@@ -346,6 +388,10 @@ def bureau_runtime_identity(
             }
         )
 
+    release_registry_drift = _release_registry_drift_classification(
+        resolved_registry_root, manifest.get("source_commit"), registry
+    )
+
     if canonical_selected:
         status = "canonical-read-only"
         mutation_allowed = False
@@ -373,7 +419,7 @@ def bureau_runtime_identity(
     elif manifest.get("valid") is True:
         source_kind = "immutable-release"
         if (
-            manifest.get("source_commit") == registry.get("head")
+            release_registry_drift in {"exact", "legacy-queue-only"}
             and registry.get("dirty") is False
         ):
             status = "compatible"
@@ -401,7 +447,10 @@ def bureau_runtime_identity(
             claim_root_reasons.append("registry-checkout-unavailable")
         if registry.get("dirty") is not False:
             claim_root_reasons.append("registry-checkout-dirty")
-        if registry.get("head") != manifest.get("source_commit"):
+        if (
+            registry.get("head") != manifest.get("source_commit")
+            and release_registry_drift != "legacy-queue-only"
+        ):
             claim_root_reasons.append("registry-head-differs-deployed-source")
         if registry.get("origin_main") != registry.get("head"):
             claim_root_reasons.append("registry-origin-main-mismatch")

@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T024",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Verbleibende Pythonista-Prescan-C901-Schuld in begrenzten Slices abbauen",
+  "state": "planned",
+  "goal": "Die nach PR #1256 verbleibenden Komplexitätsblöcke in merger_ui_prescan.py charakterisierungsbasiert und verhaltenserhaltend in kleine Slices zerlegen, ohne Prescan-, Selection-Pool- oder Merge-Semantik zu verändern.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 75
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "continuous-integration",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "5cf68a7230a5b720172483cb6242aa1b5c9e6b94",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur begrenzte, charakterisierungsbasierte Extraktionen in der Pythonista-Prescan-Fläche. Keine Baseline-Anhebung, kein UI-Redesign und keine implizite Merge-Ausführung."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/repoground/merger/repoground/frontends/pythonista/merger_ui_prescan.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_pythonista_prescan_sheet.py"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rglr-v1-t024-characterization-first",
+      "assertion": "Vor jeder Produktions-Extraktion belegen fokussierte Tests die jeweils betroffenen bestehenden Auswahl-, Pool-, UI- und Fehlerpfade; neue Implementierung wird gegen diese Charakterisierung geprüft.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:pythonista-prescan-c901:rglr-v1-t024-characterization-first"
+      }
+    },
+    {
+      "id": "rglr-v1-t024-bounded-slices",
+      "assertion": "Die drei aktuellen Altlasten `_present_prescan_ui` (C901 86), `_pool_update` (C901 44) und `show_pool_viewer` (C901 24) werden als getrennte, revisionsgebundene Slices bearbeitet; kein Slice mischt ein UI-Redesign oder fremde Bereinigung ein.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:pythonista-prescan-c901:rglr-v1-t024-bounded-slices"
+      }
+    },
+    {
+      "id": "rglr-v1-t024-semantics",
+      "assertion": "Prescan bleibt Selection-Pool-only und löst keinen Merge aus; ALL/PARTIAL/NONE-, Replace/Append/Remove-, Guard-, Thread-/UI-delay- und Persistenzsemantik bleiben erhalten.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:pythonista-prescan-c901:rglr-v1-t024-semantics"
+      }
+    },
+    {
+      "id": "rglr-v1-t024-contracts",
+      "assertion": "Pythonista-Mixin-Globalvertrag, Importvertrag und Frontend-Parity bleiben grün; die C901-Baseline wird nicht angehoben und die Maintainability-Budgetdimensionen verschlechtern sich nicht.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:pythonista-prescan-c901:rglr-v1-t024-contracts"
+      }
+    },
+    {
+      "id": "rglr-v1-t024-delivery",
+      "assertion": "Jeder Slice besitzt exakten Head, Self-Review, fokussierte Tests, Ruff, py_compile, git diff --check, Parity-Guard, grüne Pflicht-CI, Merge und Remote-main-Readback.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:pythonista-prescan-c901:rglr-v1-t024-delivery"
+      }
+    }
+  ],
+  "metadata": {
+    "source": "post-merge readback of heimgewebe/repoground#1256",
+    "observed_at": "2026-08-18T17:09:35+02:00",
+    "source_candidate": "candidate-220d6678122f2058a45235ea",
+    "source_event_id": 8505,
+    "source_ref": "github-pr:heimgewebe/repoground#1256@2dbea614ce70e86bf884bffa8c5db4e03c95c6e1:5cf68a7230a5b720172483cb6242aa1b5c9e6b94",
+    "baseline_measurement": {
+      "current_c901_count": 160,
+      "current_max": 138,
+      "excess_total": 2172,
+      "remaining_prescan_findings": {
+        "MergerUIPrescanMixin._present_prescan_ui": 86,
+        "MergerUIPrescanMixin._present_prescan_ui._pool_update": 44,
+        "MergerUIPrescanMixin.show_pool_viewer": 24
+      }
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die typed Task-Publikation ist vor Registry-Wirkung wegen release-registry-identity-mismatch fail-closed blockiert. Der auf main dokumentierte Bootstrap-Präzedenzfall erlaubt in genau dieser Lage eine eng gebundene normale geschützte PR mit exakt einer Taskdatei, Validierung und revisionsgebundenem Review.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation authority"
+      ]
+    },
+    "scope_note": "T024 registriert bewusste Restarbeit aus RepoGround Slice #16; es autorisiert keinen großen Prescan-UI-Umbau."
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2087-FOTOLABOR-20260818",
+  "title": "Single-Use-Runtime-Refresh nach PR #2087 für Fotolabor-Fortsetzung",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand fe41fe6e12569eb433542c47b8f2bdd84902789a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf cc9432032f4546fed8ed97455099ed9854995ed2 und enthält PR #2087. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und darf legitime zwischenzeitliche Main-Merges enthalten. Zweck ist ausschließlich, die durch Release-/Registry-Drift blockierte normale operator-native Proposal-, Review- und Publikationskette wieder freizuschalten. Diese Authority publiziert oder implementiert keine Fotolabor-Tasks, verändert weder Fotolabor noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use bootstrap authority only. Vor dem einzigen Runtime-Effekt sind frischer GitHub-main, required validate (3.10)/(3.12), target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Keine Queue-, Claim-, Dispatch-, Fotolabor-Publikations-, PC-Mutations- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-main-present",
+      "assertion": "Vor dem einzigen Refresh wird der aktuelle GitHub-main frisch beobachtet; er enthält diese gemergte Authority-TaskSpec, PR #2087 und jeden zwischenzeitlich regulär integrierten Main-Fortschritt. Kein älterer Zwischenstand wird deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:fresh-main-present"
+      }
+    },
+    {
+      "id": "bootstrap-publication-and-adoption",
+      "assertion": "Diese Authority wird als exakt eine neue Task-Datei über einen geschützten Pull Request mit exaktem Head und grünen Required-Checks publiziert. Erst nach dem Merge darf adopt-authority sie missing-only und an Publication-PR, Merge-Commit, Main-Commit und Task-Dateihash gebunden in den StateStore übernehmen; gewöhnliche Tasks erhalten daraus keinerlei Bootstrap- oder Bypass-Autorität.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:bootstrap-adoption"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehörige Required-Checks und target_sha256 frisch beobachtet. Jede Drift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; ohne beide Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation/break_glass, single-use und unverbraucht sein. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:authoritative-task-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:live-lease-binding"
+      }
+    },
+    {
+      "id": "immutable-readback-and-closeout",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; StateStore-Integrität und Runtime-Identity bleiben gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben und die Authority wird anschließend mit genau diesem Ergebnis terminalisiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:immutable-readback-closeout"
+      }
+    },
+    {
+      "id": "single-use-normal-intake-unblock-only",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Runtime-Refresh und dient ausschließlich dazu, den normalen operator-native Proposal-, Review- und Publikationspfad wieder freizuschalten, insbesondere für die reservierten OPERATOR-PC-HYGIENE-V1-T022 bis T025 und den bereits erfassten G:-Postflight-Kandidaten Event 8361. Sie publiziert oder implementiert diese Arbeit nicht, verändert den Fotolabor-PC nicht und wird nach resultgebundenem Closeout niemals für ein späteres Target wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2087-fotolabor:single-use-unblock-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden. Bereits konsumierte oder zweckfremde Authorities bleiben unverändert."
+  },
+  "metadata": {
+    "source": "Fotolabor-Fortsetzung nach terminalem Closeout der verbrauchten Vorgänger-Authority; PR #2087 hat Bureau main nach dem letzten erfolgreichen Runtime-Refresh erneut weitergeführt und stale-runtime-blocked aktiviert.",
+    "main_at_registration": "cc9432032f4546fed8ed97455099ed9854995ed2",
+    "deployed_source_at_registration": "fe41fe6e12569eb433542c47b8f2bdd84902789a",
+    "successor_of": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-FOTOLABOR-T021-20260818",
+    "predecessor_closeout": {
+      "state_store_revision": 4,
+      "source_commit": "fe41fe6e12569eb433542c47b8f2bdd84902789a",
+      "result_sha256": "da4d0ee45c38f5f7676a453ca9d33334fb0eda529402ddf7795414931d016262",
+      "closed_at": "2026-08-18T11:20:57.320220Z"
+    },
+    "trigger_merges": [
+      {
+        "pull_request": 2087,
+        "merge_commit": "cc9432032f4546fed8ed97455099ed9854995ed2"
+      }
+    ],
+    "unblock_task_ids": [
+      "OPERATOR-PC-HYGIENE-V1-T022",
+      "OPERATOR-PC-HYGIENE-V1-T023",
+      "OPERATOR-PC-HYGIENE-V1-T024",
+      "OPERATOR-PC-HYGIENE-V1-T025"
+    ],
+    "unblock_candidate_event_ids": [
+      8361
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "adopt-authority-missing-only-after-protected-merge",
+      "reason": "Installed immutable Bureau runtime lags Registry/main; protected runtime-drift bootstrap permits only this new single-use Authority TaskSpec before conservative publication-bound StateStore adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before task merge and adoption",
+        "Fotolabor task publication, implementation or completion"
+      ]
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal, consumed or purpose-mismatched runtime authorities",
+      "publication, implementation or completion authority for OPERATOR-PC-HYGIENE-V1-T022 through T025 or candidate Event 8361",
+      "permission to mutate Fotolabor during this runtime refresh",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    }
+  }
+}

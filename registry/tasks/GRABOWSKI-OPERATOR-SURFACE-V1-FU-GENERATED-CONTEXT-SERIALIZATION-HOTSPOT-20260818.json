@@ -1,0 +1,147 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Operator-Context-Regeneration hängt nur von Inputs ab, die den publizierten Operator-/Tool-Vertrag semantisch verändern; fachlich disjunkte Source-Änderungen ohne Vertragswirkung erzwingen keine Mutation der gemeinsamen Generated-Context-Artefakte.",
+      "evidence_type": "object",
+      "id": "semantic-generation-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:generated-context-hotspot:semantic-generation-boundary"
+      }
+    },
+    {
+      "assertion": "Echte Änderungen an den gebundenen Contract-Inputs erzeugen weiterhin deterministische, reproduzierbare Digests und werden durch context-check fail-closed als stale erkannt, bis die kanonische Regeneration erfolgt.",
+      "evidence_type": "object",
+      "id": "deterministic-integrity",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:generated-context-hotspot:deterministic-integrity"
+      }
+    },
+    {
+      "assertion": "Ein Test oder reproduzierbarer Fixture-Beleg zeigt, dass zwei disjunkte Änderungen außerhalb der semantischen Contract-Inputs nicht mehr über dieselbe Generated-Datei serialisiert werden, während eine echte Contract-Änderung weiterhin den Check auslöst.",
+      "evidence_type": "object",
+      "id": "parallel-disjoint-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:generated-context-hotspot:parallel-disjoint-proof"
+      }
+    },
+    {
+      "assertion": "Die Lösung deaktiviert weder context-check noch Generated-Context-Validierung, ignoriert keine Drift pauschal und führt keine zweite konkurrierende Vertragswahrheit ein.",
+      "evidence_type": "object",
+      "id": "no-integrity-bypass",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:generated-context-hotspot:no-integrity-bypass"
+      }
+    },
+    {
+      "assertion": "Fokussierte Generator-/Context-Tests, vollständige relevante Validation und ein revisionsgebundener Self-Review belegen die Entkopplung ohne Regression der publizierten Runtime-/Tool-Verträge.",
+      "evidence_type": "object",
+      "id": "verification",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:generated-context-hotspot:verification"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 18.08.2026 die Umsetzung des aus #823 belegten Generated-Context-Serialisierungshotspots ausdrücklich mit @grabowski angeordnet. Die laufende Umsetzung ist als Draft PR #826 revisionsgebunden; fremde PR-#810-Leases bleiben geschützt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/tools/build_operator_context.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_context.py",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den deterministischen Operator-Context-Vertrag so entkoppeln, dass fachlich disjunkte Grabowski-Änderungen nicht allein wegen breit eingebetteter Source-Provenienz dieselbe generierte Datei mutieren müssen. Echte Änderungen am publizierten Operator-/Tool-Vertrag müssen weiterhin deterministisch erkannt werden; Integrität, Reproduzierbarkeit und Fail-Closed-Context-Checks dürfen nicht geschwächt werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-GENERATED-CONTEXT-SERIALIZATION-HOTSPOT-20260818",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission_to_disable_context_check",
+      "permission_to_modify_foreign_work",
+      "merge_authority",
+      "deployment_authority"
+    ],
+    "implementation_head": "14c40abfaac8c8c72aa54f62a342398f6b82de9d",
+    "implementation_pr": "heimgewebe/grabowski#826",
+    "observed_followup": "PR #823 war trotz fachlich disjunktem Patch bis zur Freigabe von docs/generated/operator-context.v1.json blockiert; PR #826 reproduziert und behebt die Whole-File-Hash-Ursache, bleibt aber für die einmalige Migration hinter der aktiven PR-#810-Lease geschützt.",
+    "related_candidate_event": 8309,
+    "related_candidate_id": "candidate-bd20f1fe187146447388f719",
+    "source_candidate_event": 8343,
+    "source_issue": "heimgewebe/grabowski#821",
+    "source_pr": "heimgewebe/grabowski#823",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7101e3f1b6667904d69c4486",
+      "event_id": 8343,
+      "event_created_at": "2026-08-18T10:51:19.879843Z",
+      "request_sha256": "735c7a1781b7c0829d36e5d6a53a640fbe432d9d2a2d6fa32374ba2ded1e6713",
+      "candidate_event_id": "candidate-event-26888850ea67ba7cc462184b",
+      "source_fingerprint": "361882c9f8d29dab9c162219d5bf00ffe836e31667b053067698b2077f7acc17",
+      "content_fingerprint": "7101e3f1b6667904d69c4486f12ab9311356679c0f3e2f9b862190b9405c4c51",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "361882c9f8d29dab9c162219d5bf00ffe836e31667b053067698b2077f7acc17",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "chat:pr823-followup:generated-context-hotspot:20260818",
+        "observed_at": "2026-08-18T10:51:19.749974Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "361882c9f8d29dab9c162219d5bf00ffe836e31667b053067698b2077f7acc17",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "chat:pr823-followup:generated-context-hotspot:20260818",
+          "observed_at": "2026-08-18T10:51:19.749974Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "ci"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Generated Operator Context als Cross-PR-Serialisierungshotspot entkoppeln"
+}

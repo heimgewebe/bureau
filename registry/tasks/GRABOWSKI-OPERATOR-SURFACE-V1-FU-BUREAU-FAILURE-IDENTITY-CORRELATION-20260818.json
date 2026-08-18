@@ -1,0 +1,149 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Bureau-Fehler tragen eine versionierte, bounded Identitätsbindung, die Caller-/Adapteroberfläche, tatsächlich beobachtete Bureau-Runtime und Request-/Result-Schemaidentität voneinander trennt; keine Rohpfade, Secrets oder ungebundenen Freitexte werden als Identität exponiert.",
+      "evidence_type": "object",
+      "id": "identity-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-failure-identity:identity-contract"
+      }
+    },
+    {
+      "assertion": "Die read-only Auditprojektion kann wiederholte Bureau-Fehler nach exakter Identitätsbindung gruppieren und weist Identitätsabdeckung sowie unbekannte Alt-/Teilrecords aus; inkompatible Runtime-/Schemaidentitäten werden nicht zu einem homogenen Cluster geglättet.",
+      "evidence_type": "object",
+      "id": "exact-correlation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-failure-identity:exact-correlation"
+      }
+    },
+    {
+      "assertion": "Historische Auditrecords ohne neue Identitätsfelder bleiben lesbar und werden konservativ als identity-unknown behandelt; bestehende Failure-Code-, Retryability- und Fail-Closed-Semantik bleibt mindestens so streng wie zuvor.",
+      "evidence_type": "object",
+      "id": "backward-compatible",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-failure-identity:backward-compatible"
+      }
+    },
+    {
+      "assertion": "Die Änderung bleibt additiv und bounded: keine neue Control Plane, kein zweiter Auditstore, keine Lease-/Retry-Policyänderung und keine automatische Kausalitäts- oder Root-Cause-Aussage.",
+      "evidence_type": "object",
+      "id": "bounded-surface",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-failure-identity:bounded-surface"
+      }
+    },
+    {
+      "assertion": "Fokussierte Adapter-/Audit-/Operator-Tests, vollständige relevante Validation und eine frische Live-Auditprojektion belegen die neue Identitätsabdeckung revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "verification",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-failure-identity:verification"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 18.08.2026 die Umsetzung der aus #821 abgeleiteten Folgepunkte ausdrücklich mit @grabowski angeordnet. Scope bleibt auf additive, bounded Identitäts-/Auditsemantik und Regressionstests begrenzt; fremde Leases/Dirty-States, Merge und Deployment bleiben eigene Gates.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_intake.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_read_surface.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_operator_optimization.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_intake_adapter.py",
+      "path:/home/alex/repos/grabowski/tests/test_read_surface.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_optimization.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowskis Bureau-Adapter und read-only Auditprojektion so härten, dass wiederholte Bureau-Vertragsfehler nur innerhalb explizit gebundener Caller-, Bureau-Runtime- und Schemaidentitäten korreliert werden. Historische oder unvollständig identifizierte Datensätze bleiben als unbekannt klassifiziert; aus heterogenen Fehlercodes darf weder eine gemeinsame Ursache noch Retryability abgeleitet werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BUREAU-FAILURE-IDENTITY-CORRELATION-20260818",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "shared_root_cause",
+      "automatic_retry_authority",
+      "permission_to_modify_foreign_work",
+      "merge_authority",
+      "deployment_authority"
+    ],
+    "observed_followup": "#823 kann Retryability und Reclaim-Provenienz unterscheiden, aber wiederholte Bureau-Fehler noch nicht belastbar nach Caller-/Runtime-/Schemaidentität korrelieren.",
+    "operator_intake_refinement_event": 8398,
+    "source_issue": "heimgewebe/grabowski#821",
+    "source_merge_commit": "3d64307e9b227e280c8be28d58deb224fe63cb6e",
+    "source_pr": "heimgewebe/grabowski#823",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c1fa24abcc1279a16196cac6",
+      "event_id": 8398,
+      "event_created_at": "2026-08-18T12:05:26.350187Z",
+      "request_sha256": "b5dc44ba488cf0d24ea1a97df4bb60139439bf4736d0adc35420bc36deb55149",
+      "candidate_event_id": "candidate-event-b5ba8f4090dd85ae27fb6baf",
+      "source_fingerprint": "f06d801bc6e5fb49818928db25aee16eda30a7bfc30b89fe03e35d516909ea12",
+      "content_fingerprint": "c1fa24abcc1279a16196cac617c7c623c51033453c5b3de3366a9a3827104d5c",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "f06d801bc6e5fb49818928db25aee16eda30a7bfc30b89fe03e35d516909ea12",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "chat:followup-821:typed-acceptance-contract-refinement:20260818",
+        "observed_at": "2026-08-18T12:05:26.240356Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "f06d801bc6e5fb49818928db25aee16eda30a7bfc30b89fe03e35d516909ea12",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "chat:followup-821:typed-acceptance-contract-refinement:20260818",
+          "observed_at": "2026-08-18T12:05:26.240356Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Fehler nach Caller-, Runtime- und Schemaidentität korrelationssicher binden"
+}

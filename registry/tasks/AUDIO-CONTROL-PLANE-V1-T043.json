@@ -1,0 +1,150 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das strukturierte und das strukturabgetragene Stimuluspaar bindet dasselbe konkrete Unit-Inventar; Unterschiede in Stimme, Renderengine und Ausgangsparametern sind ausgeschlossen oder als verbleibender Konfundierer explizit ausgewiesen. Wenn die Hierarchiefrage ohne Änderung der Unit-Reihenfolge testbar ist, bleibt auch die Reihenfolge identisch.",
+      "evidence_type": "object",
+      "id": "causal-stimulus-control",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-blind-t043:causal-stimulus-control"
+      }
+    },
+    {
+      "assertion": "Die Bedingungen verwenden eine vorab deklarierte gemeinsame Ausschnitts- und Pegelregel. Pegelangleichung erzeugt kein Clipping und verstärkt kein Stimulusmaterial über den sicher gerenderten Ausgangspegel; Restdifferenzen werden im Manifest messbar berichtet.",
+      "evidence_type": "object",
+      "id": "level-and-duration-control",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-blind-t043:level-and-duration-control"
+      }
+    },
+    {
+      "assertion": "A/B- beziehungsweise ABX-Zuordnung, Dateinamen und Antwortschlüssel sind so getrennt, dass der Hörer die Bedingung nicht aus Metadaten ableiten kann; Reihenfolge beziehungsweise Bedingungszuordnung ist deterministisch reproduzierbar und über mehrere Trials gegen einfache Order-Effekte ausbalancierbar.",
+      "evidence_type": "object",
+      "id": "anonymous-counterbalanced-protocol",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-blind-t043:anonymous-counterbalanced-protocol"
+      }
+    },
+    {
+      "assertion": "Automatisierte Tests belegen ausschließlich Stimulus- und Protokollkorrektheit. Eine Aussage über hörbare Präferenz, Walähnlichkeit oder Hierarchieerkennung entsteht nur aus separat erfassten menschlichen Antworten mit dokumentierter Auswertungsregel; fehlen Antworten, bleibt das perceptuelle Ergebnis unbestimmt.",
+      "evidence_type": "object",
+      "id": "human-response-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-blind-t043:human-response-boundary"
+      }
+    },
+    {
+      "assertion": "Stimuli werden ausschließlich offline erzeugt. T043 startet keinen Wal-Dienst, verändert keine PipeWire-, MIDI-, Geräte- oder Profilzustände und ändert weder Live-Modi noch Defaultparameter.",
+      "evidence_type": "object",
+      "id": "offline-no-live-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-blind-t043:offline-no-live-effect"
+      }
+    },
+    {
+      "assertion": "Fokussierte Blindtest-, Grammar- und Korpustests sowie relevante Repository-Validatoren und geschützte GitHub-Pflichtchecks sind auf dem exakten finalen Head grün; gleiche Inputs erzeugen reproduzierbare Testmanifeste und Stimuluspläne.",
+      "evidence_type": "object",
+      "id": "regression-and-ci",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-blind-t043:regression-and-ci"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Offline-Stimulusgenerator, Blindtestvertrag, Auswertung, Tests und Dokumentation im Audio-Repository. Keine automatische physische Wiedergabe, kein Live-Audioeffekt und kein Defaultwechsel.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Einen offline ausführbaren perceptuellen A/B- beziehungsweise ABX-Test für die gemergte Buckelwal-Songhierarchie bauen, bei dem strukturierte und strukturabgetragene Bedingungen dasselbe konkrete Unit-Inventar und, soweit die Fragestellung dies zulässt, dieselbe Unit-Reihenfolge verwenden. Damit wird der hörbare Beitrag der Makrohierarchie von Timbre, Pegel und zufälliger Unit-Auswahl getrennt. Automatisierte Tests dürfen ausschließlich Stimulus- und Protokollkorrektheit belegen; eine Aussage über Präferenz, Walähnlichkeit oder Erkennbarkeit entsteht nur aus separat erfassten menschlichen Antworten.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T043",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "menschliche Präferenz ohne reale Antworten",
+      "population-wide Walähnlichkeit",
+      "kausalen Hierarchieeffekt bei ungleichem Unit-Inhalt",
+      "Berechtigung zu einem Live- oder Defaultwechsel"
+    ],
+    "source": "Post-Merge-Folgetask aus Audio PR #106 / Merge 009e62c6703313168b27ed99577845466b9c7528.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c099396c2811ffd03913d96a",
+      "event_id": 8448,
+      "event_created_at": "2026-08-18T12:22:49.269305Z",
+      "request_sha256": "748940f36d662124dc0fdf7b3e01012901c35202dbf56ca288000df73f39bfcc",
+      "candidate_event_id": "candidate-event-53ef2739165c138fcd4033a0",
+      "source_fingerprint": "873a9b5686619a2c81db670fa0b6d67a37531b3f490686fdefaac60a99193b1d",
+      "content_fingerprint": "c099396c2811ffd03913d96ac05a909473a1231a2eb19de491a70540b1730a3e",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "873a9b5686619a2c81db670fa0b6d67a37531b3f490686fdefaac60a99193b1d",
+        "freshness": "fingerprint-bound",
+        "kind": "operator_observation",
+        "locator": "state-store:AUDIO-CONTROL-PLANE-V1-T043@revision-1",
+        "observed_at": "2026-08-18T12:22:49.150149Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "873a9b5686619a2c81db670fa0b6d67a37531b3f490686fdefaac60a99193b1d",
+          "freshness": "fingerprint-bound",
+          "kind": "operator_observation",
+          "locator": "state-store:AUDIO-CONTROL-PLANE-V1-T043@revision-1",
+          "observed_at": "2026-08-18T12:22:49.150149Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 43
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Der neue Blindtest bleibt additiv. Bei nicht kontrollierbarem Stimulusinhalt, Pegel- oder Metadatendrift oder nicht reproduzierbarer Zuordnung wird keine perceptuelle Schlussfolgerung akzeptiert und der bestehende explorative Test bleibt ausdrücklich nicht-kausal; Live- und Defaultverträge werden nicht verändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kontrollierten Blindtest für Buckelwal-Songhierarchie bauen"
+}

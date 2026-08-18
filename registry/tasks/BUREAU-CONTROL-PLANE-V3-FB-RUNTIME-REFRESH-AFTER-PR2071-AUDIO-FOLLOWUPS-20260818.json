@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2071-AUDIO-FOLLOWUPS-20260818",
+  "title": "Single-Use-Runtime-Refresh nach PR #2071 für Audio T043/T044",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 72b9e08f0b3a68557d316dca9e7985dfee4f777d auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf c5a34ad0ecba5460ff84e3997a5715330d54c403 und enthält seit der installierten Runtime die PRs #2068, #2069, #2070 und #2071. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und darf legitime zwischenzeitliche Main-Merges enthalten. Zweck ist ausschließlich, den normalen operator-native Proposal-, Review- und Registry-Publikationspfad für AUDIO-CONTROL-PLANE-V1-T043 und AUDIO-CONTROL-PLANE-V1-T044 wieder freizuschalten. Diese Authority publiziert oder implementiert die Audio-Tasks nicht, verändert weder Audio-Runtime noch Defaults, Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use bootstrap authority only. Vor dem einzigen Runtime-Effekt sind frischer GitHub-main, required validate (3.10)/(3.12), target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Keine Queue-, Claim-, Dispatch-, Audio-T043/T044-Publikations-, Audio-Implementierungs-, Default- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-main-present",
+      "assertion": "Vor dem einzigen Refresh wird der aktuelle GitHub-main frisch beobachtet; er enthält diese gemergte Authority-TaskSpec, PR #2068, PR #2069, PR #2070, PR #2071 und jeden zwischenzeitlich regulär integrierten Main-Fortschritt. Kein älterer Zwischenstand wird deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2071-audio-followups:fresh-main-present"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehörige Required-Checks und target_sha256 frisch beobachtet. Jede Drift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2071-audio-followups:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; ohne beide Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2071-audio-followups:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation/break_glass, single-use und unverbraucht sein. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2071-audio-followups:authoritative-task-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2071-audio-followups:live-lease-binding"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; StateStore-Integrität und Runtime-Identity bleiben gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2071-audio-followups:immutable-readback"
+      }
+    },
+    {
+      "id": "single-use-audio-publication-unblock-only",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Runtime-Refresh und dient ausschließlich dazu, den normalen operator-native Proposal-, Review- und Publikationspfad für AUDIO-CONTROL-PLANE-V1-T043 und AUDIO-CONTROL-PLANE-V1-T044 wieder freizuschalten. Sie publiziert oder implementiert diese Tasks nicht, verändert keine Audio-Runtime oder Defaults und wird nach resultgebundenem Closeout niemals für ein späteres Target wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2071-audio-followups:single-use-audio-publication-unblock-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden. Bereits konsumierte oder zweckfremde Authorities bleiben unverändert."
+  },
+  "metadata": {
+    "source": "operator-intake successor candidate for Audio T043/T044 publication after PR #2071",
+    "source_candidate_id": "candidate-f3f27038cbd894536d3570ea",
+    "source_candidate_event_id": "candidate-event-e83febadc3acd38667484eca",
+    "source_event_id": 8231,
+    "main_at_registration": "c5a34ad0ecba5460ff84e3997a5715330d54c403",
+    "deployed_source_at_registration": "72b9e08f0b3a68557d316dca9e7985dfee4f777d",
+    "trigger_merges": [
+      {
+        "pull_request": 2068,
+        "merge_commit": "0d95fc4654f726f59b2139df822a739634d4fb47"
+      },
+      {
+        "pull_request": 2069,
+        "merge_commit": "bbcdddbe31a6cd0d18c04a04ac246f09e5482eaf"
+      },
+      {
+        "pull_request": 2070,
+        "merge_commit": "5be6baa5517c786078f134b08dc9ab13c24c6721"
+      },
+      {
+        "pull_request": 2071,
+        "merge_commit": "c5a34ad0ecba5460ff84e3997a5715330d54c403"
+      }
+    ],
+    "unblock_task_ids": [
+      "AUDIO-CONTROL-PLANE-V1-T043",
+      "AUDIO-CONTROL-PLANE-V1-T044"
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Installed immutable Bureau runtime lags Registry/main; protected runtime-drift bootstrap permits only this new Authority TaskSpec before conservative missing-only StateStore adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before task merge",
+        "T043/T044 publication, implementation or completion"
+      ]
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal, consumed or purpose-mismatched runtime authorities",
+      "publication, implementation or completion authority for AUDIO-CONTROL-PLANE-V1-T043 or AUDIO-CONTROL-PLANE-V1-T044",
+      "permission to change Audio live modes or defaults",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    }
+  }
+}

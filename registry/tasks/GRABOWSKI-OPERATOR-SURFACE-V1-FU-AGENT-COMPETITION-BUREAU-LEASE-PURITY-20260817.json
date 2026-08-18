@@ -1,0 +1,147 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest reproduziert den am 2026-08-17 beobachteten Fall: grabowski_agent_competition_start auf einem Bureau-Checkout scheitert vor dem Fix mit 'Bureau and non-Bureau resources must be acquired separately'; nach dem Fix erreicht derselbe revisionsgebundene read-only Reviewer-Pfad die Provider-Ausführung oder einen echten providerspezifischen Quota-/Transportblocker, ohne einen /tmp-Schattencheckout zu benötigen.",
+      "evidence_type": "object",
+      "id": "direct-bureau-review",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-competition:bureau-lease-purity:direct-review"
+      }
+    },
+    {
+      "assertion": "Competition-Evidence-Ressourcen und Bureau-Ressourcen werden unter derselben task-eigenen Lease-Owner-Identität ausschließlich in lease-vertragskonformen getrennten Gruppen vor Prozessstart erworben; scheitert eine spätere Gruppe, werden bereits erworbene Gruppen deterministisch zurückgerollt und es bleibt keine verwaiste Competition-Lease zurück.",
+      "evidence_type": "object",
+      "id": "resource-purity",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-competition:bureau-lease-purity:resource-purity"
+      }
+    },
+    {
+      "assertion": "Der zentrale Grabowski-Ressourcenvertrag lehnt direkte gemischte Bureau-/Nicht-Bureau-Acquires weiterhin mit 'Bureau and non-Bureau resources must be acquired separately' ab; der Fix erweitert weder grabowski_resource_acquire noch das öffentliche grabowski_task_start-Schema um eine globale Bypass- oder Broad-Repo-Autorität.",
+      "evidence_type": "object",
+      "id": "central-guard-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-competition:bureau-lease-purity:guard"
+      }
+    },
+    {
+      "assertion": "Regressionstests und ein echter revisionsgebundener Bureau-Checkout-Review belegen: erwarteter Head bleibt unverändert, Provider-Workspace ist read-only, Candidate/Receipt bleibt advisory-only, keine automatische Patch-Anwendung findet statt und terminale Competition-Leases werden korrekt freigegeben.",
+      "evidence_type": "object",
+      "id": "review-invariants",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:agent-competition:bureau-lease-purity:review-invariants"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_agent_competition.py",
+      "component:src/grabowski_tasks.py",
+      "component:src/grabowski_resources.py",
+      "component:tests/test_agent_competition.py",
+      "component:tests/test_tasks.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "grabowski_agent_competition_start so härten, dass read-only Competitor-/Reviewer-Läufe direkt auf einem Bureau-Checkout starten können, ohne den privaten Competition-Evidence-Pfad und einen Bureau-Repo-Operationskey in einem vom zentralen Lease-Vertrag verbotenen gemeinsamen Acquire zu mischen. Bureau- und Nicht-Bureau-Ressourcen müssen unter demselben task-eigenen Lease-Owner getrennt, vor Prozessstart vollständig erworben, bei Teilfehler atomar rückrollbar und weiterhin fail-closed sequenziert werden; der zentrale Mixed-Acquire-Schutz bleibt unverändert und das öffentliche grabowski_task_start-Schema darf nicht erweitert werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-AGENT-COMPETITION-BUREAU-LEASE-PURITY-20260817",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "affected_components": [
+      "src/grabowski_agent_competition.py",
+      "src/grabowski_tasks.py",
+      "src/grabowski_resources.py",
+      "tests/test_agent_competition.py",
+      "tests/test_tasks.py"
+    ],
+    "does_not_establish": [
+      "permission to weaken the central mixed-resource rejection",
+      "permission to give reviewer agents write authority",
+      "permission to bypass Bureau lease contracts",
+      "permission to change the public grabowski_task_start tool schema",
+      "that provider quota failures are caused by the lease bug"
+    ],
+    "observed_direct_repository": "/home/alex/repos/.bureau-worktrees/BUR-RUN-20260817T155404Z-1adbdacd35",
+    "observed_error": "Bureau and non-Bureau resources must be acquired separately",
+    "observed_head": "212868808305410ac37a6a4802cb9d950444d202",
+    "observed_surface": "grabowski_agent_competition_start",
+    "related_tasks": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T053",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T088"
+    ],
+    "root_cause_update": "Current source readback on 2026-08-18 shows grabowski_agent_competition_start passes the mixed resource list into synchronous grabowski_task_start, which creates the task_id/lease owner internally and performs the pre-process resource acquire. A race-free repair therefore requires an internal grouped task-resource acquisition seam while keeping the public MCP wrapper schema unchanged.",
+    "scope_note": "T053 covers Bureau worktree creation and T088 covers checkout cleanup. T088 intentionally preserves the central mixed-acquire rejection; neither changes agent competition task-owned resource sequencing.",
+    "source": "Live closeout of OPERATOR-INTEGRATION-LOOP-V1-FB-CARE-BAC5FA82B6 on 2026-08-17 plus read-only root-cause analysis on 2026-08-18",
+    "successful_workaround": "Detached /tmp review checkout avoided Bureau classification; OpenCode/DeepSeek reviewer then completed read-only with receipt a83658e88c34132d0d882b2e532c1d07e8cfc817a6c59613bb4220b12588adaa.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5b7b3866064b269cf29f2279",
+      "event_id": 8198,
+      "event_created_at": "2026-08-18T05:55:08.386506Z",
+      "request_sha256": "b3f00bfe5f9874423f45f0563342617f32d9661ca7036874189a3dfc89f26050",
+      "candidate_event_id": "candidate-event-b9995ab1deb2977027987656",
+      "source_fingerprint": "b940747cd6db0dbb3c6400679e465fe2f8e833ed536094a729b510c72d6f9414",
+      "content_fingerprint": "5b7b3866064b269cf29f22790931dcbd07ab763bc16c01c63662131de0755626",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "b940747cd6db0dbb3c6400679e465fe2f8e833ed536094a729b510c72d6f9414",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-observation",
+        "locator": "grabowski:source-readback:agent-competition-task-start-mixed-resource-owner:2026-08-18",
+        "observed_at": "2026-08-18T05:52:00Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "b940747cd6db0dbb3c6400679e465fe2f8e833ed536094a729b510c72d6f9414",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-observation",
+          "locator": "grabowski:source-readback:agent-competition-task-start-mixed-resource-owner:2026-08-18",
+          "observed_at": "2026-08-18T05:52:00Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 522
+  },
+  "required_capabilities": [
+    "python",
+    "grabowski",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Agent-Competition auf Bureau-Checkouts ressourcenrein leasen"
+}

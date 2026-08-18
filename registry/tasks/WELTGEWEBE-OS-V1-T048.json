@@ -73,31 +73,35 @@
     "event_id": 1201,
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-bfc546d2b54ec75688c577ba",
-      "event_id": 7821,
-      "event_created_at": "2026-08-16T18:49:09.883339Z",
-      "request_sha256": "6d17c3a097bfb804eab295959181b980926649b1e90532c87eb65789f24a7a0c",
-      "candidate_event_id": "candidate-event-5bec725ff20f2ab2c07fc2bc",
-      "source_fingerprint": "2f4033b58038850c6fdd2a05f8c9a71db3ce21c88f6123f669e334f6a58e114b",
-      "content_fingerprint": "98807d3869a2fcaa1725ac72be05076e6311d8b2546682db733fba1ef3b5433a",
+      "candidate_id": "candidate-cb2eaa98b6dfbe49269998ea",
+      "event_id": 8564,
+      "event_created_at": "2026-08-18T16:07:41.758104Z",
+      "request_sha256": "81447288908cce31fca17f77b46e67af0bebb6692c2f4e488582488e780538f5",
+      "candidate_event_id": "candidate-event-b2dde098b444c68c6c074564",
+      "source_fingerprint": "5ab121d712e0d7310b899a7ae668b96db6505be0fa9836aec108353d88272c1a",
+      "content_fingerprint": "cb2eaa98b6dfbe49269998ea83de64a701c028a04e718a751f82d7fc49e1d7fb",
       "source": {
-        "does_not_establish": [],
-        "fingerprint": "2f4033b58038850c6fdd2a05f8c9a71db3ce21c88f6123f669e334f6a58e114b",
-        "freshness": "digest-bound",
-        "kind": "bureau_task_spec_audit",
-        "locator": "bureau:registry/tasks/WELTGEWEBE-OS-V1-T048.json@ae275fc895e6ab460172f479fa7ba30c62dfff91",
-        "observed_at": "2026-08-16T18:49:09.776009Z",
-        "sha256": "499739b59fbd40b549df9427b934874f81c5e6a026338ac12b26cb4869e820b5"
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "5ab121d712e0d7310b899a7ae668b96db6505be0fa9836aec108353d88272c1a",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "conversation:weltgewebe-kubernetes-plan-t048-readiness-20260818",
+        "observed_at": "2026-08-18T16:08:00Z",
+        "sha256": null
       },
       "source_observations": [
         {
-          "does_not_establish": [],
-          "fingerprint": "2f4033b58038850c6fdd2a05f8c9a71db3ce21c88f6123f669e334f6a58e114b",
-          "freshness": "digest-bound",
-          "kind": "bureau_task_spec_audit",
-          "locator": "bureau:registry/tasks/WELTGEWEBE-OS-V1-T048.json@ae275fc895e6ab460172f479fa7ba30c62dfff91",
-          "observed_at": "2026-08-16T18:49:09.776009Z",
-          "sha256": "499739b59fbd40b549df9427b934874f81c5e6a026338ac12b26cb4869e820b5"
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "5ab121d712e0d7310b899a7ae668b96db6505be0fa9836aec108353d88272c1a",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "conversation:weltgewebe-kubernetes-plan-t048-readiness-20260818",
+          "observed_at": "2026-08-18T16:08:00Z",
+          "sha256": null
         }
       ],
       "does_not_establish": [
@@ -132,6 +136,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Kanonische Performancewahrheit und reale Messgates einführen"
 }

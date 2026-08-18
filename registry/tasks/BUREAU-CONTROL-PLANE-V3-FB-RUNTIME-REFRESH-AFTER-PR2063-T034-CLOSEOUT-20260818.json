@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-T034-CLOSEOUT-20260818",
+  "title": "Single-Use-Runtime-Refresh nach PR #2063 für T034-Closeout",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 3ea976fbb6af242fda42ba726e24e37cf6cec7e8 liegt hinter dem nach T034-Merge PR #2063 beobachteten main 4be7f02924ff16d8002e869b3806f71142f7395a. Zweck ist ausschließlich, den Runtime-/Registry-Drift zu beseitigen, damit der bereits gemergte T034-Run revisionsgebunden reconciliert, abgenommen und geschlossen werden kann. Das tatsächliche Target wird erst unmittelbar vor prepare-intent frisch aus GitHub-main abgeleitet und darf auch legitime zwischenzeitliche Main-Merges enthalten. Diese Authority verändert weder T034-Code noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use bootstrap authority only. Vor dem einzigen Runtime-Effekt sind frischer GitHub-main, required validate (3.10)/(3.12), target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und die exakten Live-Leases des Runtime-Refresh-Intents Pflicht. Keine Queue-, Claim-, Dispatch-, T034-Code- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-main-present",
+      "assertion": "Vor dem einzigen Refresh wird der aktuelle GitHub-main frisch beobachtet; er enthält diese gemergte Authority-TaskSpec und PR #2063 mit dem integrierten T034-Fix. Legitime zwischenzeitliche Main-Merges werden im frischen Target mitgeführt; kein älterer Zwischenstand wird deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2063-t034-closeout:fresh-main-present"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehörige Required-Checks und target_sha256 frisch beobachtet. Jede Drift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2063-t034-closeout:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; ohne beide Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2063-t034-closeout:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation/break_glass, single-use und unverbraucht sein. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2063-t034-closeout:authoritative-task-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2063-t034-closeout:live-lease-binding"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; StateStore-Integrität und Runtime-Identity bleiben gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2063-t034-closeout:immutable-readback"
+      }
+    },
+    {
+      "id": "single-use-t034-closeout-only",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Runtime-Refresh und dient ausschließlich dazu, den bereits gemergten BUREAU-CONTROL-PLANE-V3-T034-Run gegen aktuellen main revisionsgebunden zu reconciliieren und zu schließen. Nach resultgebundenem Closeout wird sie terminal und niemals für ein späteres Target wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2063-t034-closeout:single-use-t034-closeout-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden."
+  },
+  "metadata": {
+    "source": "post-merge closeout prerequisite for BUREAU-CONTROL-PLANE-V3-T034 after PR #2063",
+    "main_at_registration": "4be7f02924ff16d8002e869b3806f71142f7395a",
+    "deployed_source_at_registration": "3ea976fbb6af242fda42ba726e24e37cf6cec7e8",
+    "trigger_merges": [
+      {
+        "pull_request": 2063,
+        "merge_commit": "4be7f02924ff16d8002e869b3806f71142f7395a"
+      }
+    ],
+    "unblock_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-T034"
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before task merge",
+        "T034 completion"
+      ]
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal or purpose-mismatched runtime authorities",
+      "implementation authority for T034",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    }
+  }
+}

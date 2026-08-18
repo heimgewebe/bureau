@@ -624,39 +624,55 @@ def test_runner_uses_dispatcher_task_specs_for_worker_profile_when_registry_drif
     tmp_path: Path,
 ) -> None:
     root = registry_copy(tmp_path)
-    present_id = "OPERATOR-INTEGRATION-LOOP-V1-T033"
+    drift_id = (
+        "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809"
+    )
+    control_id = "OPERATOR-INTEGRATION-LOOP-V1-T033"
     missing_id = "OPERATOR-INTEGRATION-LOOP-V1-T034"
-
-    for task_id in (present_id, missing_id):
-        path = root / f"registry/tasks/{task_id}.json"
-        document = json.loads(path.read_text(encoding="utf-8"))
-        document["required_capabilities"] = [*CAPABILITIES, "github"]
-        path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
     registry = Registry.load(root)
     authoritative_documents = {
         task_id: dict(task.raw) for task_id, task in registry.tasks.items()
     }
-    authoritative_documents[present_id] = {
-        **authoritative_documents[present_id],
-        "required_capabilities": list(CAPABILITIES),
+    authoritative_documents[drift_id] = {
+        **authoritative_documents[drift_id],
+        "required_capabilities": [
+            "repository",
+            "python",
+            "testing",
+            "grabowski",
+            "runtime-deployment",
+        ],
     }
     authoritative_documents[missing_id] = {
         **authoritative_documents[missing_id],
-        "required_capabilities": ["github"],
+        "required_capabilities": ["github", "review-evidence"],
     }
-    missing_github = {
+    drift_item = {
+        "task_id": drift_id,
+        "title": drift_id,
+        "effective_state": "ready",
+        "queue_lane": "later",
+        "eligible": False,
+        "claim_reasons": ["missing capabilities: runtime-deployment"],
+        "reasons": ["missing capabilities: runtime-deployment"],
+    }
+    missing_legacy_capabilities = {
         "task_id": missing_id,
         "title": missing_id,
         "effective_state": "ready",
         "queue_lane": "later",
         "eligible": False,
-        "claim_reasons": ["missing capabilities: github"],
-        "reasons": ["missing capabilities: github"],
+        "claim_reasons": ["missing capabilities: github, review-evidence"],
+        "reasons": ["missing capabilities: github, review-evidence"],
     }
 
     def observe(**_kwargs: object) -> FrontierObservation:
         return FrontierObservation(
-            frontier=(claimable_task(present_id), missing_github),
+            frontier=(
+                drift_item,
+                claimable_task(control_id),
+                missing_legacy_capabilities,
+            ),
             runtime_healthy=True,
             runtime_blocker_codes=(),
             capabilities=CAPABILITIES,
@@ -677,16 +693,65 @@ def test_runner_uses_dispatcher_task_specs_for_worker_profile_when_registry_drif
     persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
     profile = persisted["feasibility"]["worker_profile"]
     assert profile["bound"] is True
+    assert profile["capabilities"] == sorted(CAPABILITIES)
     assert profile["conflicting_capabilities"] == []
-    assert "github" in profile["missing_capabilities"]
+    assert {"github", "review-evidence", "runtime-deployment"} <= set(
+        profile["missing_capabilities"]
+    )
+    assert drift_id in profile["evidence_task_ids"]
     assert profile["task_document_source"] == "authoritative-dispatcher-task-specs"
     assert profile["task_spec_root_sha256"] == "a" * 64
     assert profile["task_documents_sha256"] == sha256_json(authoritative_documents)
+    assert profile["registry_fallback_task_ids"] == []
+    assert persisted["feasibility"]["joint_claimable_task_ids"] == [control_id]
     snapshot = json.loads(snapshot_path(tmp_path / "supply-state").read_text(encoding="utf-8"))
     assert snapshot["registry"]["task_spec_root_sha256"] == "a" * 64
     assert snapshot["registry"]["task_documents_sha256"] == sha256_json(
         authoritative_documents
     )
+
+
+def test_runner_registry_fallback_is_bounded_to_missing_frontier_task_document(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    fallback_id = "OPERATOR-INTEGRATION-LOOP-V1-T033"
+    registry = Registry.load(root)
+    authoritative_documents = {
+        task_id: dict(task.raw) for task_id, task in registry.tasks.items()
+    }
+    authoritative_documents.pop(fallback_id)
+
+    def observe(**_kwargs: object) -> FrontierObservation:
+        return FrontierObservation(
+            frontier=(claimable_task(fallback_id),),
+            runtime_healthy=True,
+            runtime_blocker_codes=(),
+            capabilities=CAPABILITIES,
+            task_documents=authoritative_documents,
+            task_spec_root_sha256="b" * 64,
+            task_documents_sha256=sha256_json(authoritative_documents),
+        )
+
+    summary = cycle(
+        tmp_path,
+        root,
+        [],
+        observer=observe,
+        mutation_authority=False,
+        publish=False,
+    )
+
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    profile = persisted["feasibility"]["worker_profile"]
+    assert profile["bound"] is True
+    assert profile["task_document_source"] == (
+        "authoritative-dispatcher-task-specs-with-bounded-registry-fallback"
+    )
+    assert profile["registry_fallback_task_ids"] == [fallback_id]
+    assert profile["task_documents_sha256"] == sha256_json(authoritative_documents)
+    assert persisted["feasibility"]["joint_claimable_task_ids"] == [fallback_id]
+    assert fallback_id not in persisted["feasibility"]["pairwise_excluded"]
 
 
 def test_unhealthy_runtime_keeps_every_candidate_blocked(tmp_path: Path) -> None:

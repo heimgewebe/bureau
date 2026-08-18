@@ -1340,22 +1340,50 @@ def build_registry_supply_report(
         if repository is not None and repository.path
         else registry_root
     )
-    documents = (
+    registry_documents = _frontier_documents(registry)
+    authoritative_documents = (
         {str(task_id): dict(document) for task_id, document in task_documents.items()}
         if task_documents is not None
-        else _frontier_documents(registry)
+        else None
     )
     if (
-        task_documents is not None
+        authoritative_documents is not None
         and frontier_task_documents_sha256 is not None
-        and sha256_json(documents) != frontier_task_documents_sha256
+        and sha256_json(authoritative_documents) != frontier_task_documents_sha256
     ):
         blockers.append("frontier-task-documents-sha256-mismatch")
+
+    registry_fallback_task_ids: list[str] = []
+    if authoritative_documents is None:
+        documents = registry_documents
+    else:
+        documents = dict(authoritative_documents)
+        frontier_task_ids = sorted(
+            {
+                str(item.get("task_id") or "")
+                for item in frontier
+                if str(item.get("task_id") or "")
+            }
+        )
+        for task_id in frontier_task_ids:
+            if task_id in documents:
+                continue
+            registry_document = registry_documents.get(task_id)
+            if registry_document is None:
+                continue
+            documents[task_id] = dict(registry_document)
+            registry_fallback_task_ids.append(task_id)
+
     worker_profile = derive_worker_capability_profile(frontier, documents)
-    if task_documents is not None:
-        worker_profile["task_document_source"] = "authoritative-dispatcher-task-specs"
+    if authoritative_documents is not None:
+        worker_profile["task_document_source"] = (
+            "authoritative-dispatcher-task-specs-with-bounded-registry-fallback"
+            if registry_fallback_task_ids
+            else "authoritative-dispatcher-task-specs"
+        )
         worker_profile["task_spec_root_sha256"] = frontier_task_spec_root_sha256
         worker_profile["task_documents_sha256"] = frontier_task_documents_sha256
+        worker_profile["registry_fallback_task_ids"] = registry_fallback_task_ids
     return build_supply_report(
         frontier,
         task_documents=documents,

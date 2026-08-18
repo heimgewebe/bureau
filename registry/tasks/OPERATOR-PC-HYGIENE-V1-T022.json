@@ -1,0 +1,139 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Record Acer EC CPU, GPU and system temperatures plus CPU/GPU fan RPM at a reproducible light-load baseline and show a material reduction from the 2026-08-18 observed CPU 70-77 C at 2-17% CPU load and GPU 65 C before sustained stress testing.",
+      "evidence_type": "object",
+      "id": "thermal-baseline",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:thermal-baseline"
+      }
+    },
+    {
+      "assertion": "Inspect and, where needed, service air inlets, fans, heatsink fins, heatpipe/contact condition and thermal interface material; record what was actually found rather than assuming the historical overheat damaged silicon.",
+      "evidence_type": "object",
+      "id": "physical-cooling",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:physical-cooling"
+      }
+    },
+    {
+      "assertion": "Resolve the current BIOS V1.00 and Acer video-firmware state against the exact AN517-52 support package; perform BIOS/VBIOS changes only with AC power, exact model/package binding, rollback/recovery considerations and post-flash version readback.",
+      "evidence_type": "object",
+      "id": "firmware-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:firmware-postflight"
+      }
+    },
+    {
+      "assertion": "Review Acer/OEM-relevant Intel Dynamic Tuning, Management Engine, Intel graphics and NVIDIA graphics drivers; update only justified model-compatible components and record before/after versions.",
+      "evidence_type": "object",
+      "id": "platform-drivers",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:platform-drivers"
+      }
+    },
+    {
+      "assertion": "Only after the thermal baseline is safe, run a bounded sustained CPU/GPU workload and record temperatures, clocks/performance counters and any throttling evidence; distinguish thermal, power and firmware limits.",
+      "evidence_type": "object",
+      "id": "performance-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:bounded-performance-proof"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.infra"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "host:joerg-laptop",
+      "repo:/home/alex/repos/infra",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-PC-HYGIENE-V1-T022.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra"
+  },
+  "goal": "Restore safe thermal headroom on Joerg's Acer Nitro AN517-52 before any sustained performance benchmark, then bring Acer-supported BIOS/video-firmware and platform-driver state to a justified baseline and measure whether sustained CPU/GPU performance has recovered.",
+  "id": "OPERATOR-PC-HYGIENE-V1-T022",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permanent CPU damage",
+      "sustained-load throttling",
+      "failed heatpipe",
+      "degraded thermal paste without physical inspection",
+      "safe unattended firmware flashing"
+    ],
+    "live_finding": "Acer EC telemetry showed CPU 70-77 C at only 2-17% CPU load, GPU 65 C, system 56-57 C, CPU fan about 2800 RPM and GPU fan about 3700 RPM. CPU PercentProcessorPerformance remained about 168-170%, so Turbo is currently available and permanent low-clock lock was not established. BIOS is V1.00 from 2020; Acer publishes an AN517-52 video-firmware performance update. Windows is High Performance with AC minimum CPU state 100% while Acer platform profile reads Balanced.",
+    "next_action": "Service and remeasure cooling first; only then consider exact-model BIOS/VBIOS and platform-driver updates followed by a bounded sustained performance test.",
+    "registered_at": "2026-08-18T18:58:00+02:00",
+    "source": "Live investigation of joerg-laptop after reported overheating/slowness",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-fdca4aaf172a02c2d65c1dc6",
+      "event_id": 8609,
+      "event_created_at": "2026-08-18T16:56:59.879655Z",
+      "request_sha256": "8668addd51a4d95e0ab9b41465910e07b4992756d8662e19617735eedff83272",
+      "candidate_event_id": "candidate-event-441655133123c738a1ef4036",
+      "source_fingerprint": "032764af70a58113053b2de31b99fb84f07cf5a3cab7b66a7bab3ff73d852096",
+      "content_fingerprint": "fdca4aaf172a02c2d65c1dc681b9cde4825a030a1fe408aadc3db4d12cb4fb86",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "032764af70a58113053b2de31b99fb84f07cf5a3cab7b66a7bab3ff73d852096",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "chat:joerg-laptop-performance-2026-08-18",
+        "observed_at": "2026-08-18T16:56:59.774312Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "032764af70a58113053b2de31b99fb84f07cf5a3cab7b66a7bab3ff73d852096",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "chat:joerg-laptop-performance-2026-08-18",
+          "observed_at": "2026-08-18T16:56:59.774312Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 220
+  },
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Do not start sustained load or firmware mutation until the preconditions are proven. For reversible software/driver changes record the pre-state and vendor rollback path; if firmware identity or power stability is ambiguous, stop without flashing."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Restore AN517-52 thermal headroom and firmware baseline"
+}

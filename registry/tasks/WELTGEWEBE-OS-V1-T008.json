@@ -1,30 +1,132 @@
 {
-  "schema_version": 1,
-  "id": "WELTGEWEBE-OS-V1-T008",
-  "initiative": "WELTGEWEBE-OS-V1",
-  "title": "Leitstand auf SLO-, Zell- und Föderationsbetrieb ausrichten",
-  "state": "blocked",
-  "goal": "Leitstand als operative Projektion für Cluster, Zellen, SLOs, Fehlerbudgets, Deployments, Föderationszustellung und offene Verpflichtungen ausrichten.",
+  "acceptance": [
+    {
+      "assertion": "Leitstand konsumiert autoritative Quellen und erzeugt kein konkurrierendes Statusmodell.",
+      "evidence_type": "object",
+      "id": "operational-projection",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t008:operational-projection"
+      }
+    },
+    {
+      "assertion": "Verfügbarkeit, Latenz, Fehlerbudget, RTO/RPO und Restore-Alter sind sichtbar.",
+      "evidence_type": "object",
+      "id": "slo-visibility",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t008:slo-visibility"
+      }
+    },
+    {
+      "assertion": "Zell-, Nachbarschafts- und Föderationszustand sind mit Herkunft und Frische dargestellt.",
+      "evidence_type": "object",
+      "id": "cell-state",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t008:cell-state"
+      }
+    },
+    {
+      "assertion": "Handlungsflächen verweisen auf Grabowski-Aufträge und Receipts statt unkontrollierte Direktmutation.",
+      "evidence_type": "object",
+      "id": "operator-actions",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t008:operator-actions"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
   "depends_on": [
     "WELTGEWEBE-OS-V1-T003",
     "WELTGEWEBE-OS-V1-T004",
     "WELTGEWEBE-OS-V1-T007"
   ],
-  "priority": {
-    "lane": "later",
-    "rank": 6
-  },
-  "claims": [
-    {
-      "resource": "repo.leitstand",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Leitstand als operative Projektion für Cluster, Zellen, SLOs, Fehlerbudgets, Deployments, Föderationszustellung und offene Verpflichtungen ausrichten.",
+  "id": "WELTGEWEBE-OS-V1-T008",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "dependency_reconciliation": {
+      "dependency_evidence": {
+        "WELTGEWEBE-OS-V1-T007": {
+          "receipt_sha256": "fae19948b66ee1db4056de0afbb14c76343bbec65d441f9535cc42f553c35b98",
+          "run_id": "BUR-RUN-20260818T102826Z-be6c18451a"
+        }
+      },
+      "dependency_states": {
+        "WELTGEWEBE-OS-V1-T003": "verified",
+        "WELTGEWEBE-OS-V1-T004": "verified",
+        "WELTGEWEBE-OS-V1-T007": "succeeded"
+      },
+      "does_not_establish": [
+        "queue placement",
+        "claim success",
+        "capability availability",
+        "resource availability",
+        "implementation completion"
+      ],
+      "from_state": "blocked",
+      "reason": "T003 and T004 are authoritative StateStore verified; T007 terminalized successfully as run BUR-RUN-20260818T102826Z-be6c18451a with receipt fae19948b66ee1db4056de0afbb14c76343bbec65d441f9535cc42f553c35b98. No independent current blocker remains.",
+      "reconciled_at": "2026-08-18T12:04:00Z",
+      "source_registry_commit": "50914f30ed3b95f4f9d0fb6cc80c695c06dd6ef3",
+      "to_state": "ready"
+    },
+    "ecosystem_role": "operational-view",
+    "registered_at": "2026-07-15T20:50:00Z",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bb9e7802055eeb12747c0c25",
+      "event_id": 8374,
+      "event_created_at": "2026-08-18T11:11:49.843347Z",
+      "request_sha256": "04574911f0cf300d2b416e493a7db8863a4f1ce8d9834f7b2ec1f9e63daef62c",
+      "candidate_event_id": "candidate-event-9dd01305244ba3f1820bb1f7",
+      "source_fingerprint": "715189daf1ba0587eff17fddeb68d453359eb00e2e8f782ecc04dce6c75a8256",
+      "content_fingerprint": "bb9e7802055eeb12747c0c2509eeb4c8ea4715c5a62fbb6b272b36c23dba4136",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "715189daf1ba0587eff17fddeb68d453359eb00e2e8f782ecc04dce6c75a8256",
+        "freshness": "digest-bound",
+        "kind": "direct_user_request",
+        "locator": "chat:wlt-kubernetes-plan-2026-08-18;chronik#281",
+        "observed_at": "2026-08-18T11:11:49.702459Z",
+        "sha256": "fdb446b831a8f070cc93f3d4df43f75b361d70c3fc38c983c607097cbdff93ed"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "715189daf1ba0587eff17fddeb68d453359eb00e2e8f782ecc04dce6c75a8256",
+          "freshness": "digest-bound",
+          "kind": "direct_user_request",
+          "locator": "chat:wlt-kubernetes-plan-2026-08-18;chronik#281",
+          "observed_at": "2026-08-18T11:11:49.702459Z",
+          "sha256": "fdb446b831a8f070cc93f3d4df43f75b361d70c3fc38c983c607097cbdff93ed"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 6
   },
   "required_capabilities": [
     "typescript",
@@ -33,34 +135,7 @@
     "chronik",
     "kubernetes"
   ],
-  "acceptance": [
-    {
-      "id": "operational-projection",
-      "assertion": "Leitstand konsumiert autoritative Quellen und erzeugt kein konkurrierendes Statusmodell.",
-      "evidence_type": "object",
-      "verifier": "source map and tests"
-    },
-    {
-      "id": "slo-visibility",
-      "assertion": "Verfügbarkeit, Latenz, Fehlerbudget, RTO/RPO und Restore-Alter sind sichtbar.",
-      "evidence_type": "object",
-      "verifier": "dashboard fixture and runtime proof"
-    },
-    {
-      "id": "cell-state",
-      "assertion": "Zell-, Nachbarschafts- und Föderationszustand sind mit Herkunft und Frische dargestellt.",
-      "evidence_type": "object",
-      "verifier": "projection tests"
-    },
-    {
-      "id": "operator-actions",
-      "assertion": "Handlungsflächen verweisen auf Grabowski-Aufträge und Receipts statt unkontrollierte Direktmutation.",
-      "evidence_type": "object",
-      "verifier": "UI and authorization tests"
-    }
-  ],
-  "metadata": {
-    "registered_at": "2026-07-15T20:50:00Z",
-    "ecosystem_role": "operational-view"
-  }
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Leitstand auf SLO-, Zell- und Föderationsbetrieb ausrichten"
 }

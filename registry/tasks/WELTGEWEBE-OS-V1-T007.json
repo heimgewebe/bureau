@@ -36,25 +36,37 @@
       "id": "typed-events",
       "assertion": "Chronik unterscheidet Domain-Ereignis, Deployment, Föderationszustellung und Operator-Receipt typisiert.",
       "evidence_type": "object",
-      "verifier": "schema and ingestion tests"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:typed-events"
+      }
     },
     {
       "id": "provenance",
       "assertion": "Jeder Eintrag bindet Ursprung, Version, Korrelations-ID und Quellbeleg.",
       "evidence_type": "object",
-      "verifier": "contract validation"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:provenance"
+      }
     },
     {
       "id": "replay-boundary",
       "assertion": "Chronik kann Diagnose und Historie liefern, begründet aber keine stille Rückschreibung in Weltgewebe.",
       "evidence_type": "object",
-      "verifier": "read-only boundary tests"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:replay-boundary"
+      }
     },
     {
       "id": "retention",
       "assertion": "Aufbewahrung, Datenschutz und Lösch-/Widerrufsprojektionen sind explizit.",
       "evidence_type": "object",
-      "verifier": "policy tests"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:retention"
+      }
     }
   ],
   "metadata": {

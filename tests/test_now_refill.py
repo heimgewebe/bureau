@@ -37,33 +37,30 @@ def _move_all_to_next(root: Path, *, review_before_effect: bool = False) -> list
     return ids
 
 
-def test_empty_now_refills_from_structurally_runnable_next(registry_factory, tmp_path):
+def test_empty_now_refill_apply_is_retired_and_byte_stable(registry_factory, tmp_path):
     root = registry_factory(task_count=3)
     ids = _move_all_to_next(root, review_before_effect=True)
     store = StateStore(tmp_path / "state" / "state.sqlite3", tmp_path / "state")
     registry = Registry.load(root)
-
     preview = build_now_refill_report(
         registry,
         store,
         policy=NowRefillPolicy(floor=2, target=3, max_promotions=3),
     )
-    assert preview["status"] == "refill-planned"
     assert [item["task_id"] for item in preview["promotions"]] == ids
-    assert all(item["structural_reasons"] == [] for item in preview["promotions"])
-    assert all(item["actor_dependent_reasons"] for item in preview["promotions"])
-
+    before = (root / "registry/queue.json").read_bytes()
     result = apply_now_refill(
         registry,
         store,
         authority="test-operator",
         policy=NowRefillPolicy(floor=2, target=3, max_promotions=3),
     )
-    assert result["applied"] is True
-    queue = json.loads((root / "registry/queue.json").read_text())
-    assert queue["lanes"]["now"] == ids
-    assert queue["lanes"]["next"] == []
-    assert result["post_readback"]["status"] == "satisfied"
+    assert result["applied"] is False
+    assert result["retired"] is True
+    assert result["queue_authoritative"] is False
+    assert result["compatibility_queue_mutated"] is False
+    assert (root / "registry/queue.json").read_bytes() == before
+
 
 
 def test_structural_blocker_excludes_candidate(registry_factory, tmp_path):
@@ -231,15 +228,13 @@ def test_registry_terminal_state_supersedes_historical_verified_receipt(
     )
 
 
-def test_runtime_drift_between_preview_and_apply_refuses_write(
+def test_runtime_drift_cannot_create_queue_write_after_retirement(
     registry_factory, tmp_path, monkeypatch
 ):
     root = registry_factory(task_count=3)
     _move_all_to_next(root, review_before_effect=True)
     store = StateStore(tmp_path / "state" / "state.sqlite3", tmp_path / "state")
     registry = Registry.load(root)
-    policy = NowRefillPolicy(floor=2, target=3, max_promotions=3)
-
     calls = {"count": 0}
 
     def flaky_runtime_truth(self) -> dict:
@@ -252,8 +247,13 @@ def test_runtime_drift_between_preview_and_apply_refuses_write(
         }
 
     monkeypatch.setattr(Dispatcher, "_runtime_execution_truth", flaky_runtime_truth)
-
-    before_text = (root / "registry/queue.json").read_text()
-    with pytest.raises(legacy.StateError, match="runtime"):
-        apply_now_refill(registry, store, authority="test-operator", policy=policy)
-    assert (root / "registry/queue.json").read_text() == before_text
+    before = (root / "registry/queue.json").read_bytes()
+    result = apply_now_refill(
+        registry,
+        store,
+        authority="test-operator",
+        policy=NowRefillPolicy(floor=2, target=3, max_promotions=3),
+    )
+    assert result["retired"] is True
+    assert result["changed"] is False
+    assert (root / "registry/queue.json").read_bytes() == before

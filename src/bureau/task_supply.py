@@ -13,11 +13,11 @@ from itertools import combinations
 from pathlib import Path
 from typing import Any
 
-from . import legacy
+from . import legacy, task_specs
 from .acceptance import AcceptanceContractError
 from .schema_validation import DocumentSchemaError, default_schema_set
 from .task_specs import task_spec_digest
-from .v2 import Registry
+from .v2 import Registry, StateStore
 
 SUPPLY_SCHEMA_VERSION = 1
 SUPPLY_KIND = "bureau_task_supply_report"
@@ -1114,11 +1114,17 @@ def publish_supply_plan(
     *,
     mutation_authorized: bool,
     expected_plan_sha256: str,
+    state_db: Path | None = None,
+    state_store_root: Path | None = None,
     head_reader: Callable[[Path], str] = _git_head,
     registry_loader: Callable[[str | Path], Registry] = Registry.load,
 ) -> dict[str, Any]:
+    """Publish one bounded refill atomically to the authoritative StateStore."""
+    del head_reader, registry_loader
     if not mutation_authorized:
-        raise SupplyError("registry mutation authority is required")
+        raise SupplyError("StateStore mutation authority is required")
+    if state_db is None and state_store_root is None:
+        raise SupplyError("StateStore publication requires an explicit Bureau StateStore path")
     claimed_plan_sha256 = plan.get("plan_sha256")
     observed_plan_sha256 = sha256_json(
         {key: value for key, value in plan.items() if key != "plan_sha256"}
@@ -1132,15 +1138,9 @@ def publish_supply_plan(
         raise SupplyError("publication plan is not authorized and blocker-free")
     registry_info = plan.get("registry")
     if not isinstance(registry_info, Mapping):
-        raise SupplyError("publication plan has no Registry binding")
-    registry_root = Path(str(registry_info.get("root"))).resolve()
-    queue_path = registry_root / "registry/queue.json"
+        raise SupplyError("publication plan has no Registry trace binding")
     expected_head = str(registry_info.get("head") or "")
     expected_queue_sha256 = str(registry_info.get("queue_sha256") or "")
-    if head_reader(registry_root) != expected_head:
-        raise SupplyError("Registry head changed after plan review")
-    if not queue_path.is_file() or file_sha256(queue_path) != expected_queue_sha256:
-        raise SupplyError("Registry queue changed after plan review")
     actions = plan.get("actions")
     if not isinstance(actions, list):
         raise SupplyError("publication plan actions must be a list")
@@ -1154,81 +1154,90 @@ def publish_supply_plan(
         raise SupplyError("publication plan contains no create actions")
     if any(action.get("blockers") for action in actions):
         raise SupplyError("publication action retains safety blockers")
-    queue_before = queue_path.read_bytes()
-    created_paths: list[Path] = []
-    created_tasks: list[dict[str, Any]] = []
-    try:
-        queue = json.loads(queue_before.decode("utf-8"))
-        lanes = queue.get("lanes")
-        if not isinstance(lanes, dict) or not isinstance(lanes.get("later"), list):
-            raise SupplyError("Registry queue has no later lane")
-        tasks_root = (registry_root / "registry/tasks").resolve()
-        for action in create_actions:
-            task = action.get("task")
-            task_id = action.get("task_id")
-            relative_path = action.get("task_path")
-            if (
-                not isinstance(task, dict)
-                or not isinstance(task_id, str)
-                or not task_id
-                or "/" in task_id
-                or "\\" in task_id
-                or task.get("id") != task_id
-                or relative_path != f"registry/tasks/{task_id}.json"
-                or action.get("queue_lane") != "later"
-            ):
-                raise SupplyError("publication action task binding is invalid")
-            target = (registry_root / str(relative_path)).resolve()
-            if target.parent != tasks_root:
-                raise SupplyError("publication target escapes the Registry task directory")
-            if target.exists():
-                raise SupplyError(f"publication target already exists: {relative_path}")
-            try:
-                default_schema_set().validate_task_write(
-                    task, f"task-supply-publication:{task_id}"
-                )
-            except (DocumentSchemaError, AcceptanceContractError) as exc:
-                raise SupplyError(f"publication task contract is invalid: {exc}") from exc
-            created_paths.append(target)
-            _atomic_write_json(target, task)
-            created_tasks.append(
-                {
-                    "task_id": task_id,
-                    "task_path": str(relative_path),
-                    "queue_lane": "later",
-                    "file_sha256": file_sha256(target),
-                    "spec_sha256": task_spec_digest(task),
-                }
+
+    prepared: list[tuple[str, dict[str, Any], str]] = []
+    for action in create_actions:
+        task = action.get("task")
+        task_id = action.get("task_id")
+        relative_path = action.get("task_path")
+        if (
+            not isinstance(task, dict)
+            or not isinstance(task_id, str)
+            or not task_id
+            or "/" in task_id
+            or "\\" in task_id
+            or task.get("id") != task_id
+            or relative_path != f"registry/tasks/{task_id}.json"
+            or action.get("queue_lane") != "later"
+        ):
+            raise SupplyError("publication action task binding is invalid")
+        try:
+            default_schema_set().validate_task_write(
+                task, f"task-supply-publication:{task_id}"
             )
-            if task_id not in lanes["later"]:
-                lanes["later"].append(task_id)
-        _atomic_write_json(queue_path, queue)
-        registry_loader(registry_root)
-    except Exception:
-        with queue_path.open("wb") as handle:
-            handle.write(queue_before)
-            handle.flush()
-            os.fsync(handle.fileno())
-        _fsync_directory(queue_path.parent)
-        for path in reversed(created_paths):
-            path.unlink(missing_ok=True)
-            _fsync_directory(path.parent)
-        raise
+        except (DocumentSchemaError, AcceptanceContractError) as exc:
+            raise SupplyError(f"publication task contract is invalid: {exc}") from exc
+        prepared.append((task_id, task, task_spec_digest(task)))
+
+    store = StateStore(state_db, state_store_root)
+    revisions: list[dict[str, Any]] = []
+    try:
+        with store.immediate() as connection:
+            for task_id, task, expected_digest in prepared:
+                written = task_specs.put(
+                    connection,
+                    task,
+                    idempotency_key=f"task-supply:{expected_plan_sha256}:{task_id}",
+                    expected_revision=None,
+                    source="task-supply-reviewed-plan",
+                )
+                if written.get("spec_sha256") != expected_digest:
+                    raise SupplyError(
+                        f"StateStore TaskSpec digest diverged during Supply publication: {task_id}"
+                    )
+                revisions.append(written)
+            projection = task_specs.current_projection(connection)
+            task_spec_root_sha256 = task_specs.projection_root(projection)
+    except task_specs.TaskSpecError as exc:
+        raise SupplyError(f"StateStore Supply publication rejected: {exc}") from exc
+
+    current = {task_id: store.task_spec(task_id) for task_id, _, _ in prepared}
+    for task_id, _task, expected_digest in prepared:
+        observed = current[task_id]
+        if observed is None or observed.get("spec_sha256") != expected_digest:
+            raise SupplyError(f"StateStore Supply readback drifted: {task_id}")
+    replay = store.replay_projection()
     result = {
         "schema_version": SUPPLY_SCHEMA_VERSION,
         "kind": "bureau_task_supply_publication_result",
         "status": "published",
+        "publication_mode": "state_store",
         "plan_sha256": expected_plan_sha256,
-        "registry_head_before": expected_head,
-        "queue_sha256_before": expected_queue_sha256,
-        "queue_sha256_after": file_sha256(queue_path),
-        "created_task_ids": [str(action["task_id"]) for action in create_actions],
-        "created_tasks": created_tasks,
+        "coordination_state_root": str(store.state_root.expanduser().resolve()),
+        "registry_head_at_plan": expected_head,
+        "compatibility_queue_sha256_at_plan": expected_queue_sha256,
+        "queue_mutated": False,
+        "created_task_ids": [task_id for task_id, _, _ in prepared],
+        "created_tasks": [
+            {
+                "task_id": task_id,
+                "task_path": f"registry/tasks/{task_id}.json",
+                "queue_lane": "later",
+                "spec_sha256": expected_digest,
+                "state_store_revision": current[task_id]["revision"],
+            }
+            for task_id, _task, expected_digest in prepared
+        ],
+        "task_spec_revisions": revisions,
+        "task_spec_root_sha256": task_spec_root_sha256,
+        "authoritative_root_sha256": replay["authoritative_root_sha256"],
         "reused_task_ids": [
             str(action["task_id"]) for action in actions if action.get("action") == "reuse"
         ],
-        "post_publication_registry_valid": True,
+        "post_publication_state_store_valid": True,
         "does_not_establish": [
+            "Git task projection",
+            "compatibility queue mutation",
             "current claimability after publication",
             "merge authority",
             "runtime deployment",
@@ -1238,7 +1247,6 @@ def publish_supply_plan(
         {key: value for key, value in result.items() if key != "result_sha256"}
     )
     return result
-
 
 def _frontier_documents(registry: Registry) -> dict[str, dict[str, Any]]:
     return {task_id: task.raw for task_id, task in registry.tasks.items()}

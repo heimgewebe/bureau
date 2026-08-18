@@ -7,14 +7,13 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import sqlite3
 import stat
 import subprocess
 import tempfile
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
 from . import legacy, task_specs
 from .acceptance import AcceptanceContractError
@@ -25,10 +24,6 @@ from .approval import (
     task_approval_contract,
 )
 from .core import Registry, StateError, StateStore
-from .lease_contract import (
-    BUREAU_REGISTRY_PUBLICATION_GATE_KEY,
-    BUREAU_REPOSITORY_ROOT,
-)
 from .live_register import (
     ACTIVE_LIVE_STATUSES,
     CANDIDATE_EVENT_SCHEMA_VERSION,
@@ -42,10 +37,6 @@ from .live_register import (
     current_candidate_records,
     live_register_record,
 )
-from .registry_registration_preflight import (
-    exact_open_pr_identity_collisions,
-    github_open_pr_identity_observation,
-)
 from .runtime_identity import bureau_runtime_identity
 from .runtime_refresh import (
     DEFAULT_GRABOWSKI_RESOURCE_DB,
@@ -53,7 +44,6 @@ from .runtime_refresh import (
     validate_live_lease_binding,
 )
 from .schema_validation import DocumentSchemaError
-from .worktree_hygiene import _process_references
 
 OPERATOR_INTAKE_SCHEMA_VERSION = 1
 MAX_SIMILARITY_RESULTS = 5
@@ -539,18 +529,6 @@ def read_json_object_file(
             details={"path": str(target)},
         )
     return value
-
-
-class TaskPublisher(Protocol):
-    def publish(
-        self,
-        *,
-        registry: Registry,
-        plan: dict[str, Any],
-        workspace_root: Path,
-        assert_plan_unchanged: Callable[[], None],
-        phase_changed: Callable[[str], None],
-    ) -> dict[str, Any]: ...
 
 
 def _checked_text(
@@ -1419,6 +1397,7 @@ def _write_create_only(path: Path, content: bytes) -> None:
 
 def _validate_task_semantics(
     registry: Registry,
+    store: StateStore,
     task_json: dict[str, Any],
     *,
     allow_existing_task_id: bool = False,
@@ -1460,12 +1439,13 @@ def _validate_task_semantics(
         )
     task_id = str(task_json.get("id", ""))
     initiative = str(task_json.get("initiative", ""))
-    if task_id in registry.tasks and not allow_existing_task_id:
+    current_task_spec = store.task_spec(task_id)
+    if current_task_spec is not None and not allow_existing_task_id:
         raise OperatorIntakeError("task-exists", f"task {task_id} already exists")
     if initiative not in registry.initiatives:
         raise OperatorIntakeError("initiative-unknown", f"unknown initiative {initiative}")
     for dependency in task_json.get("depends_on", []):
-        if dependency not in registry.tasks:
+        if store.task_spec(str(dependency)) is None:
             raise OperatorIntakeError(
                 "dependency-unknown", f"task dependency {dependency} is unknown"
             )
@@ -1505,20 +1485,13 @@ def _task_spec_proposal_binding(
     task_id = str(task_json.get("id", ""))
     proposed_sha256 = legacy.sha256_json(task_json)
     current = store.task_spec(task_id)
-    projected = registry.tasks.get(task_id)
     projected_file_sha256 = _task_projection_file_sha256(registry, task_id)
     if current is None:
-        if projected is not None:
-            raise OperatorIntakeError(
-                "task-spec-baseline-missing",
-                "existing Git task has no authoritative StateStore TaskSpec baseline",
-                details={"task_id": task_id},
-            )
         return {
             "operation": "register",
             "expected_revision": None,
             "expected_spec_sha256": None,
-            "expected_task_file_sha256": None,
+            "expected_task_file_sha256": projected_file_sha256,
             "proposed_spec_sha256": proposed_sha256,
         }
     explicit_task_id = event["record"].get("task_id")
@@ -1570,17 +1543,19 @@ def _validate_task_spec_proposal_binding(
     expected_revision = binding.get("expected_revision")
     expected_spec_sha256 = binding.get("expected_spec_sha256")
     expected_file_sha256 = binding.get("expected_task_file_sha256")
-    observed_file_sha256 = _task_projection_file_sha256(registry, task_id)
-    projected = registry.tasks.get(task_id)
     if operation == "register":
-        if (
-            expected_revision is not None
-            or expected_spec_sha256 is not None
-            or expected_file_sha256 is not None
+        if expected_revision is not None or expected_spec_sha256 is not None:
+            raise OperatorIntakeError(
+                "task-spec-binding-invalid",
+                "new TaskSpec registration must bind a null StateStore preimage",
+            )
+        if expected_file_sha256 is not None and (
+            not isinstance(expected_file_sha256, str)
+            or _SOURCE_SHA_RE.fullmatch(expected_file_sha256) is None
         ):
             raise OperatorIntakeError(
                 "task-spec-binding-invalid",
-                "new TaskSpec registration must bind a null preimage",
+                "compatibility task-file trace digest is malformed",
             )
         replay_state = (
             current is not None
@@ -1593,11 +1568,6 @@ def _validate_task_spec_proposal_binding(
                 "TaskSpec appeared after proposal review",
                 retryable=True,
                 details={"task_id": task_id, "current_revision": current["revision"]},
-            )
-        if projected is not None or observed_file_sha256 is not None:
-            raise OperatorIntakeError(
-                "target-exists",
-                f"target task file already exists: registry/tasks/{task_id}.json",
             )
     elif operation == "revise":
         if (
@@ -1643,13 +1613,6 @@ def _validate_task_spec_proposal_binding(
             raise OperatorIntakeError(
                 "candidate-task-identity-mismatch",
                 "reviewed TaskSpec revision candidate no longer binds the exact task_id",
-            )
-        if observed_file_sha256 != expected_file_sha256:
-            raise OperatorIntakeError(
-                "task-file-baseline-drift",
-                "Git task file bytes changed from the reviewed proposal baseline",
-                retryable=True,
-                details={"expected": expected_file_sha256, "observed": observed_file_sha256},
             )
     else:
         raise OperatorIntakeError(
@@ -1706,10 +1669,11 @@ def task_propose(
         raise OperatorIntakeError(
             "candidate-not-open", "only a current open candidate can be proposed"
         )
-    if publishing_task_id not in registry.tasks:
+    publishing_task = store.task_spec(publishing_task_id)
+    if publishing_task is None:
         raise OperatorIntakeError(
             "publishing-task-unknown",
-            f"publishing task {publishing_task_id} is not in the Registry",
+            f"publishing task {publishing_task_id} is not in the authoritative StateStore",
         )
     bound_task = _inject_candidate_binding(task_json, event)
     task_spec_binding = _task_spec_proposal_binding(
@@ -1733,6 +1697,7 @@ def task_propose(
         )
     _validate_task_semantics(
         registry,
+        store,
         bound_task,
         allow_existing_task_id=task_spec_binding["operation"] == "revise",
     )
@@ -1774,7 +1739,7 @@ def task_propose(
         },
         "registry": identity,
         "publishing_task_id": publishing_task_id,
-        "publishing_task_sha256": registry.tasks[publishing_task_id].sha256,
+        "publishing_task_sha256": publishing_task["spec_sha256"],
         "task_id": task_id,
         "target_path": target_path,
         "task_json": bound_task,
@@ -1791,6 +1756,7 @@ def task_propose(
         "placeholder_justification": placeholder_justification,
         "publication": {
             "action_class": "registry_mutation",
+            "publication_mode": "state_store",
             "required_level": "reviewed_plan",
             "queue_mutated": False,
         },
@@ -1804,7 +1770,7 @@ def task_propose(
             ],
         },
         "does_not_establish": [
-            "registry_mutation",
+            "git_registry_mutation",
             "queue_mutation",
             "task_readiness",
             "claim_or_dispatch_authority",
@@ -2221,25 +2187,23 @@ def _validated_proposal(
         expected_reference=expected_proposal_sha,
         task_id=str(plan.get("task_id")),
     )
-    registry, identity = _canonical_registry_snapshot(registry)
+    registry, _identity = _canonical_registry_snapshot(registry)
     publishing_task_id = str(plan.get("publishing_task_id", ""))
-    publishing_task = registry.tasks.get(publishing_task_id)
+    publishing_task = store.task_spec(publishing_task_id)
     if publishing_task is None:
         raise OperatorIntakeError(
             "publishing-task-unknown",
-            f"publishing task {publishing_task_id} is not in the Registry",
+            f"publishing task {publishing_task_id} is not in the authoritative StateStore",
         )
-    if plan.get("publishing_task_sha256") != publishing_task.sha256:
+    planned_publishing_sha = plan.get("publishing_task_sha256")
+    legacy_projection = registry.tasks.get(publishing_task_id)
+    accepted_publishing_digests = {str(publishing_task["spec_sha256"])}
+    if legacy_projection is not None:
+        accepted_publishing_digests.add(legacy_projection.sha256)
+    if planned_publishing_sha not in accepted_publishing_digests:
         raise OperatorIntakeError(
             "publishing-task-drift",
-            "publishing task revision does not match the reviewed proposal",
-        )
-    if plan.get("registry") != identity:
-        raise OperatorIntakeError(
-            "registry-drift",
-            "Registry commit or tree changed after proposal creation",
-            retryable=True,
-            details={"planned": plan.get("registry"), "current": identity},
+            "publishing task binding does not match the authoritative StateStore revision",
         )
     candidate = plan.get("candidate")
     if not isinstance(candidate, dict):
@@ -2259,6 +2223,7 @@ def _validated_proposal(
     )
     _validate_task_semantics(
         registry,
+        store,
         task_json,
         allow_existing_task_id=task_spec_binding["operation"] == "revise",
     )
@@ -2267,18 +2232,6 @@ def _validated_proposal(
     expected_path = f"registry/tasks/{task_json.get('id')}.json"
     if target_path != expected_path:
         raise OperatorIntakeError("target-path-invalid", f"target path must be {expected_path}")
-    expected_target_file_sha256 = task_spec_binding["expected_task_file_sha256"]
-    observed_target_file_sha256 = _task_projection_file_sha256(registry, str(task_json.get("id")))
-    if observed_target_file_sha256 != expected_target_file_sha256:
-        raise OperatorIntakeError(
-            "task-file-baseline-drift",
-            "target task file bytes differ from the reviewed proposal baseline",
-            retryable=True,
-            details={
-                "expected": expected_target_file_sha256,
-                "observed": observed_target_file_sha256,
-            },
-        )
     if plan.get("task_json_sha256") != legacy.sha256_json(task_json):
         raise OperatorIntakeError("task-json-drift", "task_json_sha256 does not match task_json")
     if plan.get("task_file_sha256") != hashlib.sha256(content).hexdigest():
@@ -2303,59 +2256,6 @@ def _validated_proposal(
     return plan, plan_bytes, approval_result
 
 
-def _require_no_registry_pr_collision_observation(
-    observe: Callable[[], dict[str, Any]],
-    *,
-    plan: dict[str, Any],
-    branch: str,
-    phase: str,
-    observation_phase: str,
-    repository: str,
-) -> dict[str, Any]:
-    try:
-        observation = observe()
-        collisions = exact_open_pr_identity_collisions(
-            observation,
-            task_id=str(plan["task_id"]),
-            target_path=str(plan["target_path"]),
-            excluded_head_ref=branch,
-            excluded_head_repository_id=observation.get("repository_id"),
-        )
-    except Exception as exc:
-        raise OperatorIntakeError(
-            "pre_effect_unknown",
-            "fresh GitHub open-PR identity could not be proven before publication effect",
-            retryable=True,
-            effect_started=False,
-            ambiguity=False,
-            publication_phase=phase,
-            details={
-                "observation_phase": observation_phase,
-                "repository": repository,
-                "task_id": plan["task_id"],
-                "target_path": plan["target_path"],
-                "cause_code": getattr(exc, "code", None),
-                "cause_type": type(exc).__name__,
-                "cause": str(exc)[:2000],
-            },
-        ) from exc
-    if collisions:
-        raise OperatorIntakeError(
-            "registry_pr_collision",
-            "an open GitHub pull request already claims the exact Registry task id or target path",
-            retryable=True,
-            effect_started=False,
-            ambiguity=False,
-            publication_phase=phase,
-            details={
-                "observation_phase": observation_phase,
-                "collision_axis": "exact_task_id_or_target_path",
-                "semantic_similarity_consulted": False,
-                "collisions": collisions,
-                "open_pr_observation": observation,
-            },
-        )
-    return observation
 
 
 def publication_preview(
@@ -2366,45 +2266,12 @@ def publication_preview(
     github_repository: str | None = None,
     open_pr_runner: Callable[[list[str]], str] | None = None,
 ) -> dict[str, Any]:
+    """Preview the StateStore-only reviewed TaskSpec publication contract."""
+    del github_repository, open_pr_runner
     path = Path(plan_path).expanduser().absolute()
     plan, plan_bytes, approval_result = _validated_proposal(registry, store, plan_path=path)
+    state_root = store.state_root.expanduser().resolve()
     task_id = str(plan["task_id"])
-    branch = _publication_branch(task_id, str(plan["proposal_sha256"]))
-    repository = github_repository or _github_repository_for_preview(registry.root)
-    if repository is None:
-        open_pr_identity_revalidation: dict[str, Any] = {
-            "status": "not_observed",
-            "observation_phase": "pre_lease",
-            "reason": "origin_not_github",
-            "semantic_similarity_consulted": False,
-            "does_not_establish": ["github_open_pr_absence", "lease_authority"],
-        }
-    else:
-        observation = _require_no_registry_pr_collision_observation(
-            lambda: github_open_pr_identity_observation(
-                repository,
-                checked_base_sha=str(plan["registry"]["commit"]),
-                runner=open_pr_runner,
-            ),
-            plan=plan,
-            branch=branch,
-            phase="before_workspace",
-            observation_phase="pre_lease",
-            repository=repository,
-        )
-        open_pr_identity_revalidation = {
-            "status": "clear",
-            "observation_phase": "pre_lease",
-            "collision_axis": "exact_task_id_or_target_path",
-            "semantic_similarity_consulted": False,
-            "observation": observation,
-        }
-    required_keys = sorted(
-        [
-            f"path:{BUREAU_REPOSITORY_ROOT / plan['target_path']}",
-            BUREAU_REGISTRY_PUBLICATION_GATE_KEY,
-        ]
-    )
     return {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "kind": "bureau_task_publication_preview",
@@ -2413,33 +2280,35 @@ def publication_preview(
         "retryable": False,
         "ambiguity": False,
         "required_readback": [],
+        "publication_mode": "state_store",
+        "coordination_state_root": str(state_root),
         "plan_path": str(path),
         "plan_file_sha256": hashlib.sha256(plan_bytes).hexdigest(),
         "proposal_sha256": plan["proposal_sha256"],
         "publishing_task_sha256": plan["publishing_task_sha256"],
         "task_id": task_id,
         "target_path": plan["target_path"],
-        "branch": branch,
-        "required_resource_keys": required_keys,
-        "open_pr_identity_revalidation": open_pr_identity_revalidation,
+        "branch": None,
+        "required_resource_keys": [f"path:{state_root}"],
+        "open_pr_identity_revalidation": {
+            "status": "not_required",
+            "reason": "state_store_is_operational_task_authority",
+            "semantic_similarity_consulted": False,
+            "does_not_establish": ["github_open_pr_absence", "git_publication_authority"],
+        },
         "approval": approval_result,
         "does_not_establish": [
             "lease_ownership",
+            "git_task_projection",
             "branch_creation",
             "pull_request_creation",
             "queue_mutation",
+            "task_readiness",
             "merge_readiness",
             *candidate_authority_nonclaims(),
         ],
     }
 
-
-def _publication_branch(task_id: str, proposal_sha256: str) -> str:
-    slug = re.sub(r"[^a-z0-9]+", "-", task_id.casefold()).strip("-")
-    branch = f"operator/register-{slug}-{proposal_sha256[:10]}"
-    if not _BRANCH_RE.fullmatch(branch):
-        raise OperatorIntakeError("branch-invalid", "derived publication branch is invalid")
-    return branch
 
 
 def _release_unchanged_publication_leases(binding: dict[str, Any]) -> dict[str, Any]:
@@ -2521,32 +2390,8 @@ def _release_unchanged_publication_leases(binding: dict[str, Any]) -> dict[str, 
     }
 
 
-def _attach_publication_phase(error: OperatorIntakeError, phase: str) -> OperatorIntakeError:
-    """Keep the original typed failure while adding the last proven phase."""
-    if error.publication_phase not in PUBLICATION_PHASES or PUBLICATION_PHASES.index(
-        error.publication_phase
-    ) < PUBLICATION_PHASES.index(phase):
-        error.publication_phase = phase
-    return error
 
 
-def _release_leases_after_safe_failure(
-    error: OperatorIntakeError,
-    *,
-    phase: str,
-    binding: dict[str, Any],
-) -> None:
-    """Release exact leases only for an independently proven pre-remote failure."""
-    recorded_phase = error.publication_phase or phase
-    if recorded_phase in _REMOTE_EFFECT_PHASES or error.effect_started or error.ambiguity:
-        return
-    try:
-        error.details["lease_release"] = _release_unchanged_publication_leases(binding)
-    except Exception as release_exc:
-        error.details["lease_release"] = {
-            "released": False,
-            "error": str(release_exc)[:2000],
-        }
 
 
 def publish_task_proposal(
@@ -2558,23 +2403,25 @@ def publish_task_proposal(
     workspace_root: str | Path,
     receipt_path: str | Path,
     resource_db: str | Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
-    publisher: TaskPublisher | None = None,
 ) -> dict[str, Any]:
-    """Publish one reviewed task proposal without queue, merge or deployment effects."""
+    """Publish one reviewed TaskSpec to the authoritative StateStore only."""
+    del workspace_root
     path = Path(plan_path).expanduser().absolute()
     receipt = Path(receipt_path).expanduser().absolute()
     plan_bytes, _ = _read_bounded_regular_file(path, field="proposal")
     plan_file_sha = hashlib.sha256(plan_bytes).hexdigest()
     try:
-        plan_for_replay = json.loads(plan_bytes)
+        plan = json.loads(plan_bytes)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise OperatorIntakeError(
             "proposal-json-invalid", f"cannot parse task proposal: {exc}"
         ) from exc
-    if not isinstance(plan_for_replay, dict):
+    if not isinstance(plan, dict):
         raise OperatorIntakeError(
             "proposal-object-required", "task proposal JSON must be an object"
         )
+
+    state_root = store.state_root.expanduser().resolve()
     if os.path.lexists(receipt):
         receipt_bytes, _ = _read_bounded_regular_file(receipt, field="receipt")
         try:
@@ -2590,27 +2437,32 @@ def publish_task_proposal(
         unsigned_receipt = {
             key: value for key, value in existing.items() if key != "receipt_sha256"
         }
+        publication = existing.get("publication")
         receipt_valid = (
             existing.get("kind") == "bureau_task_publication_receipt"
             and existing.get("status") == "published"
+            and existing.get("publication_mode") == "state_store"
+            and existing.get("coordination_state_root") == str(state_root)
             and existing.get("receipt_sha256") == legacy.sha256_json(unsigned_receipt)
-            and existing.get("publication", {}).get("readback_complete") is True
+            and isinstance(publication, dict)
+            and publication.get("mode") == "state_store"
+            and publication.get("readback_complete") is True
         )
         if not receipt_valid:
             raise OperatorIntakeError(
                 "receipt-integrity-invalid",
-                "existing publication receipt is not a valid completed receipt",
+                "existing publication receipt is not a valid completed StateStore receipt",
             )
         if (
-            existing.get("proposal_sha256") == plan_for_replay.get("proposal_sha256")
+            existing.get("proposal_sha256") == plan.get("proposal_sha256")
             and existing.get("plan_file_sha256") == plan_file_sha
         ):
             return {**existing, "idempotent_replay": True, "receipt_path": str(receipt)}
         raise OperatorIntakeError(
             "receipt-conflict", "existing publication receipt belongs to a different plan"
         )
+
     preview = publication_preview(registry, store, plan_path=path)
-    plan = plan_for_replay
     if lease_binding.get("task_id") != plan["publishing_task_id"]:
         raise OperatorIntakeError(
             "lease-task-mismatch",
@@ -2628,7 +2480,7 @@ def publish_task_proposal(
             min_remaining_seconds=60,
             required_metadata={
                 "task_id": plan["publishing_task_id"],
-                "operation": "registry-publication",
+                "operation": "state-task-publication",
                 "proposal_sha256": plan["proposal_sha256"],
             },
         )
@@ -2644,57 +2496,24 @@ def publish_task_proposal(
             },
             details=exc.details,
         ) from exc
-    gate_snapshot = next(
-        item
-        for item in normalized_leases["lease_snapshots"]
-        if item["resource_key"] == BUREAU_REGISTRY_PUBLICATION_GATE_KEY
-    )
-    if gate_snapshot["expires_at_unix"] - gate_snapshot["acquired_at_unix"] > 300:
-        error = OperatorIntakeError(
-            "publication-gate-ttl-invalid",
-            "registry publication gate lease must be bounded to at most 300 seconds",
-            publication_phase="before_workspace",
-        )
-        _release_leases_after_safe_failure(
-            error, phase="before_workspace", binding=normalized_leases
-        )
-        raise error
 
-    # T003: after local authority and lease validation, but before remote GitHub
-    # effects, commit the reviewed TaskSpec to the existing StateStore journal.
-    try:
-        task_spec_binding = plan["task_spec"]
-        expected_revision = task_spec_binding["expected_revision"]
-        current_task_spec = store.task_spec(plan["task_id"])
-        replay_after_revision = (
-            task_spec_binding["operation"] == "revise"
-            and current_task_spec is not None
-            and int(current_task_spec["revision"]) == int(expected_revision) + 1
-            and current_task_spec["spec_sha256"] == plan["task_json_sha256"]
+    current_plan_bytes, _ = _read_bounded_regular_file(path, field="plan")
+    if hashlib.sha256(current_plan_bytes).hexdigest() != plan_file_sha:
+        raise OperatorIntakeError(
+            "plan-file-drift",
+            "reviewed plan bytes changed before StateStore publication effect",
+            retryable=True,
         )
-        if replay_after_revision:
-            task_spec_revision = store.put_task_spec(
-                plan["task_json"],
-                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
-                expected_revision=expected_revision,
-                source="operator-intake-reviewed-proposal",
-            )
-            legacy_import = {
-                "replayed_after_revision": True,
-                "imported": 0,
-                "unchanged": len(registry.tasks),
-                "total": len(registry.tasks),
-            }
-        else:
-            registration = store.register_task_spec_with_legacy_import(
-                registry,
-                plan["task_json"],
-                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
-                expected_revision=expected_revision,
-                source="operator-intake-reviewed-proposal",
-            )
-            legacy_import = registration["legacy_task_spec_import"]
-            task_spec_revision = registration["task_spec_revision"]
+
+    task_spec_binding = plan["task_spec"]
+    expected_revision = task_spec_binding["expected_revision"]
+    try:
+        task_spec_revision = store.put_task_spec(
+            plan["task_json"],
+            idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+            expected_revision=expected_revision,
+            source="operator-intake-reviewed-proposal",
+        )
     except StateError as exc:
         raise OperatorIntakeError(
             "task-spec-state-mutation-failed",
@@ -2715,132 +2534,76 @@ def publish_task_proposal(
                 "proposal_sha256": plan["task_json_sha256"],
             },
         )
-
-    def assert_plan_unchanged() -> None:
-        current_bytes, _ = _read_bounded_regular_file(path, field="plan")
-        observed = hashlib.sha256(current_bytes).hexdigest()
-        if observed != plan_file_sha:
-            raise OperatorIntakeError(
-                "plan-file-drift",
-                "reviewed plan bytes changed before publication effect",
-                retryable=True,
-            )
-
-    phase = "before_workspace"
-
-    def phase_changed(value: str) -> None:
-        nonlocal phase
-        if value not in PUBLICATION_PHASES:
-            raise OperatorIntakeError(
-                "publication-phase-invalid",
-                f"publisher reported unsupported publication phase {value!r}",
-                publication_phase=phase,
-            )
-        if PUBLICATION_PHASES.index(value) < PUBLICATION_PHASES.index(phase):
-            raise OperatorIntakeError(
-                "publication-phase-regression",
-                "publisher publication phase regressed",
-                publication_phase=phase,
-                details={"reported": value},
-            )
-        phase = value
-
-    selected_publisher = publisher or SubprocessTaskPublisher()
-    try:
-        assert_plan_unchanged()
-        published = selected_publisher.publish(
-            registry=registry,
-            plan=plan,
-            workspace_root=Path(workspace_root).expanduser().absolute(),
-            assert_plan_unchanged=assert_plan_unchanged,
-            phase_changed=phase_changed,
-        )
-        assert_plan_unchanged()
-        if phase != "pr_confirmed":
-            raise OperatorIntakeError(
-                "publication-readback-incomplete",
-                "publisher returned success without a confirmed pull-request phase",
-                effect_started=phase in _REMOTE_EFFECT_PHASES,
-                ambiguity=phase in {"push_attempted", "pr_attempted"},
-                required_readback=["remote branch head", "open pull request for exact branch"],
-                publication_phase=phase,
-            )
-    except OperatorIntakeError as exc:
-        error = _attach_publication_phase(exc, phase)
-        recorded_phase = error.publication_phase or phase
-        if recorded_phase in _REMOTE_EFFECT_PHASES:
-            error.effect_started = True
-            if recorded_phase in {"push_attempted", "pr_attempted"}:
-                error.ambiguity = True
-                if not error.required_readback:
-                    error.required_readback = (
-                        "remote branch head",
-                        "open pull request for exact branch",
-                        "target task file at remote head",
-                    )
-        _release_leases_after_safe_failure(error, phase=recorded_phase, binding=normalized_leases)
-        raise
-    except Exception as exc:
-        remote_effect_possible = phase in _REMOTE_EFFECT_PHASES
-        error = OperatorIntakeError(
-            "publication-unclear" if remote_effect_possible else "local-publication-failed",
-            (
-                f"publisher failed with unclear remote outcome: {exc}"
-                if remote_effect_possible
-                else f"publisher failed before any remote effect: {exc}"
-            ),
+    current = store.task_spec(plan["task_id"])
+    if (
+        current is None
+        or current.get("revision") != task_spec_revision.get("revision")
+        or current.get("spec_sha256") != task_spec_revision.get("spec_sha256")
+        or current.get("spec") != plan["task_json"]
+    ):
+        raise OperatorIntakeError(
+            "task-spec-state-readback-ambiguous",
+            "StateStore post-publication readback differs from the reviewed TaskSpec revision",
+            effect_started=True,
+            ambiguity=True,
             retryable=False,
-            effect_started=remote_effect_possible,
-            ambiguity=remote_effect_possible,
-            required_readback=(
-                [
-                    "remote branch head",
-                    "open pull request for exact branch",
-                    "target task file at remote head",
-                ]
-                if remote_effect_possible
-                else []
-            ),
-            publication_phase=phase,
+            required_readback=[f"StateStore TaskSpec {plan['task_id']}"],
         )
-        _release_leases_after_safe_failure(error, phase=phase, binding=normalized_leases)
-        raise error from exc
+    projection = store.replay_projection()
     try:
         lease_release = _release_unchanged_publication_leases(normalized_leases)
     except OperatorIntakeError as exc:
         raise OperatorIntakeError(
             "lease-release-failed",
-            f"publication succeeded but exact lease release failed: {exc}",
+            f"StateStore publication succeeded but exact lease release failed: {exc}",
             effect_started=True,
             required_readback=["publication lease rows"],
-            details={"publication": published, "cause_code": exc.code},
-            publication_phase=phase,
+            details={"task_spec_revision": task_spec_revision, "cause_code": exc.code},
+            publication_phase="committed_locally",
         ) from exc
+
+    publication = {
+        "mode": "state_store",
+        "readback_complete": True,
+        "coordination_state_root": str(state_root),
+        "task_id": plan["task_id"],
+        "revision": task_spec_revision["revision"],
+        "spec_sha256": task_spec_revision["spec_sha256"],
+        "task_spec_root_sha256": projection["task_specs"]["root_sha256"],
+        "authoritative_root_sha256": projection["authoritative_root_sha256"],
+    }
     value: dict[str, Any] = {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "kind": "bureau_task_publication_receipt",
         "status": "published",
-        "effect_started": True,
+        "effect_started": bool(task_spec_revision.get("changed", True)),
         "retryable": False,
         "ambiguity": False,
         "required_readback": [],
-        "publication_phase": phase,
+        "publication_phase": "committed_locally",
+        "publication_mode": "state_store",
+        "coordination_state_root": str(state_root),
         "proposal_sha256": preview["proposal_sha256"],
         "plan_file_sha256": plan_file_sha,
         "task_id": preview["task_id"],
         "target_path": preview["target_path"],
-        "branch": preview["branch"],
+        "branch": None,
         "registry": plan["registry"],
         "publishing_task_id": plan["publishing_task_id"],
         "publishing_task_sha256": plan["publishing_task_sha256"],
         "lease_binding": normalized_leases,
         "lease_release": lease_release,
         "task_spec_revision": task_spec_revision,
-        "legacy_task_spec_import": legacy_import,
-        "publication": published,
+        "legacy_task_spec_import": {
+            "status": "retired",
+            "imported": 0,
+            "reason": "StateStore is the sole operational TaskSpec authority",
+        },
+        "publication": publication,
         "created_at": legacy.utc_now(),
         "queue_mutated": False,
         "does_not_establish": [
+            "git_task_projection",
             "task_readiness",
             "claim_or_dispatch_authority",
             "merge_or_deployment_authority",
@@ -2855,23 +2618,22 @@ def publish_task_proposal(
     except (OSError, OperatorIntakeError) as exc:
         raise OperatorIntakeError(
             "receipt-write-unclear",
-            f"publication succeeded but receipt write failed: {exc}",
+            f"StateStore publication succeeded but receipt write failed: {exc}",
             retryable=False,
             effect_started=True,
             ambiguity=True,
-            required_readback=[f"publication receipt at {receipt}"],
+            required_readback=[
+                f"StateStore TaskSpec {plan['task_id']}",
+                f"publication receipt at {receipt}",
+            ],
             details={
                 "proposal_sha256": preview["proposal_sha256"],
-                "branch": preview["branch"],
-                "publication": published,
-                "publication_confirmed": True,
+                "publication": publication,
                 "ambiguity_scope": "receipt",
             },
-            publication_phase=phase,
+            publication_phase="committed_locally",
         ) from exc
     return {**value, "idempotent_replay": False, "receipt_path": str(receipt)}
-
-
 
 def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]:
     receipt_path = Path(path).expanduser().absolute()
@@ -2903,7 +2665,6 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
         )
     publication = value.get("publication")
     revision = value.get("task_spec_revision")
-    pull_request = publication.get("pull_request") if isinstance(publication, dict) else None
     task_id = value.get("task_id")
     proposal_sha256 = value.get("proposal_sha256")
     target_path = value.get("target_path")
@@ -2915,13 +2676,6 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
         or target_path != f"registry/tasks/{task_id}.json"
         or not isinstance(publication, dict)
         or publication.get("readback_complete") is not True
-        or not isinstance(publication.get("repository"), str)
-        or not isinstance(publication.get("branch"), str)
-        or not isinstance(publication.get("head"), str)
-        or not isinstance(publication.get("target_file_sha256"), str)
-        or not isinstance(pull_request, dict)
-        or not isinstance(pull_request.get("number"), int)
-        or pull_request["number"] < 1
         or not isinstance(revision, dict)
         or revision.get("task_id") != task_id
         or not isinstance(revision.get("revision"), int)
@@ -2931,7 +2685,44 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
     ):
         raise OperatorIntakeError(
             "promotion-publication-receipt-shape-invalid",
-            "publication receipt is missing exact task, publication or revision bindings",
+            "publication receipt is missing exact task or revision bindings",
+        )
+    mode = value.get("publication_mode", "git_pr")
+    if mode == "state_store":
+        state_root = value.get("coordination_state_root")
+        if (
+            not isinstance(state_root, str)
+            or not state_root
+            or not Path(state_root).is_absolute()
+            or publication.get("mode") != "state_store"
+            or publication.get("coordination_state_root") != state_root
+            or publication.get("task_id") != task_id
+            or publication.get("revision") != revision["revision"]
+            or publication.get("spec_sha256") != revision["spec_sha256"]
+        ):
+            raise OperatorIntakeError(
+                "promotion-publication-receipt-shape-invalid",
+                "StateStore publication receipt lacks exact authority bindings",
+            )
+    elif mode == "git_pr":
+        pull_request = publication.get("pull_request")
+        if (
+            not isinstance(publication.get("repository"), str)
+            or not isinstance(publication.get("branch"), str)
+            or not isinstance(publication.get("head"), str)
+            or not isinstance(publication.get("target_file_sha256"), str)
+            or not isinstance(pull_request, dict)
+            or not isinstance(pull_request.get("number"), int)
+            or pull_request["number"] < 1
+        ):
+            raise OperatorIntakeError(
+                "promotion-publication-receipt-shape-invalid",
+                "legacy Git publication receipt lacks exact PR bindings",
+            )
+    else:
+        raise OperatorIntakeError(
+            "promotion-publication-mode-invalid",
+            f"unsupported publication mode: {mode}",
         )
     if revision["spec"].get("id") != task_id or revision["spec"].get("state") != "planned":
         raise OperatorIntakeError(
@@ -2951,7 +2742,6 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
             "publication receipt TaskSpec bytes do not match its bound digest",
         )
     return value
-
 
 def _promotion_pull_request_readback(repository: str, number: int) -> dict[str, Any]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
@@ -3058,47 +2848,11 @@ def _task_promotion_binding(
     publication_receipt: dict[str, Any],
 ) -> dict[str, Any]:
     task_id = publication_receipt["task_id"]
-    publication = publication_receipt["publication"]
     revision = publication_receipt["task_spec_revision"]
-    repository = _github_repository_for_preview(registry.root)
-    if repository is None or repository != publication["repository"]:
-        raise OperatorIntakeError(
-            "promotion-repository-identity-mismatch",
-            "current Registry origin does not match the publication receipt repository",
-            details={"expected": publication["repository"], "observed": repository},
-        )
-    task = registry.tasks.get(task_id)
-    if task is None:
-        raise OperatorIntakeError(
-            "promotion-task-missing-in-registry",
-            f"task {task_id} is missing from the current Registry",
-        )
+    mode = publication_receipt.get("publication_mode", "git_pr")
     target_path = publication_receipt["target_path"]
-    target_file = registry.root / target_path
-    target_bytes, _ = _read_bounded_regular_file(target_file, field="promotion_task_file")
-    target_sha256 = hashlib.sha256(target_bytes).hexdigest()
-    if target_sha256 != publication["target_file_sha256"]:
-        raise OperatorIntakeError(
-            "promotion-task-file-drift",
-            "current Registry task-file bytes differ from the publication receipt",
-            details={
-                "expected": publication["target_file_sha256"],
-                "observed": target_sha256,
-            },
-        )
-    try:
-        registry_spec_sha256 = task_specs.task_spec_digest(task.raw)
-    except task_specs.TaskSpecError as exc:
-        raise OperatorIntakeError(
-            "promotion-registry-task-invalid",
-            f"current Registry TaskSpec is invalid: {exc}",
-        ) from exc
-    if registry_spec_sha256 != revision["spec_sha256"] or task.raw != revision["spec"]:
-        raise OperatorIntakeError(
-            "promotion-registry-spec-drift",
-            "current Registry TaskSpec differs from the exact published planned spec",
-        )
-    family = registry.parent_child_projection(task_id)
+    target_sha256: str | None = None
+
     try:
         with store.connect() as connection:
             state_projection = task_specs.current_projection(connection)
@@ -3116,35 +2870,97 @@ def _task_promotion_binding(
         if isinstance(state_target_metadata, dict)
         else None
     )
-    state_child_task_ids = []
-    for candidate_id, candidate in state_tasks.items():
-        if candidate_id == task_id:
-            continue
-        candidate_spec = candidate.get("spec", {})
-        candidate_metadata = candidate_spec.get("metadata")
-        if (
-            isinstance(candidate_metadata, dict)
-            and candidate_metadata.get("parent_task") == task_id
-        ):
-            state_child_task_ids.append(candidate_id)
-    parent_task_id = family.parent_task_id or state_parent_task_id
-    child_task_ids = sorted(set(family.child_task_ids) | set(state_child_task_ids))
+    state_child_task_ids = sorted(
+        candidate_id
+        for candidate_id, candidate in state_tasks.items()
+        if candidate_id != task_id
+        and isinstance(candidate.get("spec", {}).get("metadata"), dict)
+        and candidate["spec"]["metadata"].get("parent_task") == task_id
+    )
+
+    if mode == "state_store":
+        expected_root = str(store.state_root.expanduser().resolve())
+        if publication_receipt.get("coordination_state_root") != expected_root:
+            raise OperatorIntakeError(
+                "promotion-state-root-identity-mismatch",
+                "current StateStore root does not match the publication receipt",
+                details={
+                    "expected": publication_receipt.get("coordination_state_root"),
+                    "observed": expected_root,
+                },
+            )
+        parent_task_id = state_parent_task_id
+        child_task_ids = state_child_task_ids
+        publication_identity = {
+            "mode": "state_store",
+            "coordination_state_root": expected_root,
+            "task_id": task_id,
+            "revision": revision["revision"],
+            "spec_sha256": revision["spec_sha256"],
+        }
+    else:
+        publication = publication_receipt["publication"]
+        repository = _github_repository_for_preview(registry.root)
+        if repository is None or repository != publication["repository"]:
+            raise OperatorIntakeError(
+                "promotion-repository-identity-mismatch",
+                "current Registry origin does not match the publication receipt repository",
+                details={"expected": publication["repository"], "observed": repository},
+            )
+        task = registry.tasks.get(task_id)
+        if task is None:
+            raise OperatorIntakeError(
+                "promotion-task-missing-in-registry",
+                f"task {task_id} is missing from the current Registry",
+            )
+        target_file = registry.root / target_path
+        target_bytes, _ = _read_bounded_regular_file(
+            target_file, field="promotion_task_file"
+        )
+        target_sha256 = hashlib.sha256(target_bytes).hexdigest()
+        if target_sha256 != publication["target_file_sha256"]:
+            raise OperatorIntakeError(
+                "promotion-task-file-drift",
+                "current Registry task-file bytes differ from the publication receipt",
+                details={
+                    "expected": publication["target_file_sha256"],
+                    "observed": target_sha256,
+                },
+            )
+        try:
+            registry_spec_sha256 = task_specs.task_spec_digest(task.raw)
+        except task_specs.TaskSpecError as exc:
+            raise OperatorIntakeError(
+                "promotion-registry-task-invalid",
+                f"current Registry TaskSpec is invalid: {exc}",
+            ) from exc
+        if registry_spec_sha256 != revision["spec_sha256"] or task.raw != revision["spec"]:
+            raise OperatorIntakeError(
+                "promotion-registry-spec-drift",
+                "current Registry TaskSpec differs from the exact published planned spec",
+            )
+        family = registry.parent_child_projection(task_id)
+        parent_task_id = family.parent_task_id or state_parent_task_id
+        child_task_ids = sorted(set(family.child_task_ids) | set(state_child_task_ids))
+        merge = _promotion_merge_identity(publication_receipt)
+        publication_identity = {
+            **merge,
+            "target_path": target_path,
+            "target_file_sha256": target_sha256,
+        }
+
     if revision["spec"].get("depends_on") or parent_task_id or child_task_ids:
         raise OperatorIntakeError(
             "promotion-standalone-task-required",
-            "post-merge direct readiness is allowed only for tasks without "
-            "dependencies, parent or children",
+            "direct readiness is allowed only for tasks without dependencies, parent or children",
             details={
                 "depends_on": list(revision["spec"].get("depends_on") or []),
                 "parent_task_id": parent_task_id,
                 "child_task_ids": child_task_ids,
-                "registry_parent_task_id": family.parent_task_id,
-                "registry_child_task_ids": list(family.child_task_ids),
                 "state_store_parent_task_id": state_parent_task_id,
                 "state_store_child_task_ids": state_child_task_ids,
             },
         )
-    merge = _promotion_merge_identity(publication_receipt)
     ready_spec = json.loads(json.dumps(revision["spec"]))
     ready_spec["state"] = "ready"
     try:
@@ -3158,9 +2974,9 @@ def _task_promotion_binding(
         "task_id": task_id,
         "proposal_sha256": publication_receipt["proposal_sha256"],
         "publication_receipt_sha256": publication_receipt["receipt_sha256"],
+        "publication": publication_identity,
         "target_path": target_path,
         "target_file_sha256": target_sha256,
-        "merge": merge,
         "before": {
             "revision": revision["revision"],
             "spec_sha256": revision["spec_sha256"],
@@ -3174,7 +2990,6 @@ def _task_promotion_binding(
         "planned_spec": revision["spec"],
         "ready_spec": ready_spec,
     }
-
 
 def _task_promotion_preflight(
     registry: Registry,
@@ -3240,11 +3055,7 @@ def _task_promotion_replay(
 ) -> dict[str, Any]:
     binding = _task_promotion_binding(registry, store, publication_receipt)
     receipt = _read_task_promotion_receipt(promotion_receipt_path)
-    expected_publication = {
-        **binding["merge"],
-        "target_path": binding["target_path"],
-        "target_file_sha256": binding["target_file_sha256"],
-    }
+    expected_publication = binding["publication"]
     if (
         receipt.get("task_id") != binding["task_id"]
         or receipt.get("proposal_sha256") != binding["proposal_sha256"]
@@ -3318,11 +3129,7 @@ def promote_task_ready(
             "task_id": binding["task_id"],
             "proposal_sha256": binding["proposal_sha256"],
             "publication_receipt_sha256": binding["publication_receipt_sha256"],
-            "publication": {
-                **binding["merge"],
-                "target_path": binding["target_path"],
-                "target_file_sha256": binding["target_file_sha256"],
-            },
+            "publication": binding["publication"],
             "before": binding["before"],
             "after": binding["after"],
             "read_only": True,
@@ -3390,11 +3197,7 @@ def promote_task_ready(
             retryable=False,
             required_readback=[f"StateStore TaskSpec {binding['task_id']}"],
         )
-    publication_binding = {
-        **binding["merge"],
-        "target_path": binding["target_path"],
-        "target_file_sha256": binding["target_file_sha256"],
-    }
+    publication_binding = binding["publication"]
     value = {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "kind": "bureau_task_readiness_promotion_receipt",
@@ -3435,1856 +3238,3 @@ def promote_task_ready(
         "readback_verified": True,
         "receipt_path": str(receipt_path),
     }
-
-
-class SubprocessTaskPublisher:
-    """Narrow Git/GitHub transport for one already reviewed task-file publication."""
-
-    _MARKER_NAME = "bureau-operator-publication.json"
-    _MARKER_TEMP_SUFFIX = ".tmp"
-    _STAGING_SUFFIX = ".bureau-staging"
-    _RESERVATION_SUFFIX = ".bureau-reservation.json"
-    _TARGET_TEMP_SUFFIX = ".bureau-publication-tmp"
-
-    @staticmethod
-    def _command_environment() -> dict[str, str]:
-        return {
-            **os.environ,
-            "GIT_CONFIG_NOSYSTEM": "1",
-            "GIT_CONFIG_GLOBAL": os.devnull,
-            "GIT_CONFIG_SYSTEM": os.devnull,
-            "GIT_TERMINAL_PROMPT": "0",
-        }
-
-    def _run(
-        self,
-        arguments: Sequence[str],
-        *,
-        cwd: Path | None = None,
-        timeout: int = 60,
-    ) -> str:
-        env = self._command_environment()
-        phase = getattr(self, "_publication_phase", "before_workspace")
-        effect_command = list(arguments[:2]) == ["git", "push"] or list(arguments[:3]) == [
-            "gh",
-            "pr",
-            "create",
-        ]
-        try:
-            process = subprocess.run(
-                list(arguments),
-                cwd=cwd,
-                text=True,
-                capture_output=True,
-                check=False,
-                timeout=timeout,
-                env=env,
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            remote_possible = effect_command or phase in _REMOTE_EFFECT_PHASES
-            raise OperatorIntakeError(
-                "publication-unclear" if remote_possible else "publication-command-failed",
-                f"{' '.join(arguments)} could not complete: {exc}",
-                effect_started=remote_possible,
-                ambiguity=effect_command or phase in {"push_attempted", "pr_attempted"},
-                required_readback=(
-                    ["remote branch head", "open pull request"] if remote_possible else []
-                ),
-                publication_phase=phase,
-            ) from exc
-        if process.returncode != 0:
-            detail = "\n".join(
-                part for part in (process.stdout.strip(), process.stderr.strip()) if part
-            )[:4000]
-            remote_possible = effect_command or phase in _REMOTE_EFFECT_PHASES
-            raise OperatorIntakeError(
-                "publication-unclear" if effect_command else "publication-command-failed",
-                f"{' '.join(arguments)} failed: {detail}",
-                effect_started=remote_possible,
-                ambiguity=effect_command or phase in {"push_attempted", "pr_attempted"},
-                required_readback=(
-                    ["remote branch head", "open pull request"] if remote_possible else []
-                ),
-                publication_phase=phase,
-            )
-        return process.stdout.strip()
-
-    def _observe_registry_open_pr_identities(
-        self,
-        *,
-        repository: str,
-        registry: Registry,
-        plan: dict[str, Any],
-    ) -> dict[str, Any]:
-        return github_open_pr_identity_observation(
-            repository,
-            checked_base_sha=str(plan["registry"]["commit"]),
-            runner=lambda arguments: self._run(arguments, cwd=registry.root),
-        )
-
-    def _require_no_registry_pr_collision(
-        self,
-        *,
-        repository: str,
-        registry: Registry,
-        plan: dict[str, Any],
-        branch: str,
-        phase: str,
-        observation_phase: str,
-    ) -> dict[str, Any]:
-        return _require_no_registry_pr_collision_observation(
-            lambda: self._observe_registry_open_pr_identities(
-                repository=repository,
-                registry=registry,
-                plan=plan,
-            ),
-            plan=plan,
-            branch=branch,
-            phase=phase,
-            observation_phase=observation_phase,
-            repository=repository,
-        )
-
-    def _git_blob_sha256(self, workspace: Path, object_name: str) -> str:
-        """Hash exact Git object bytes without consulting the worktree."""
-        phase = getattr(self, "_publication_phase", "before_workspace")
-        try:
-            process = subprocess.run(
-                ["git", "cat-file", "blob", object_name],
-                cwd=workspace,
-                capture_output=True,
-                check=False,
-                timeout=60,
-                env=self._command_environment(),
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise OperatorIntakeError(
-                "publication-git-object-read-failed",
-                f"cannot read exact Git blob {object_name!r}: {exc}",
-                publication_phase=phase,
-            ) from exc
-        if process.returncode != 0:
-            detail = process.stderr.decode("utf-8", errors="replace").strip()[:4000]
-            raise OperatorIntakeError(
-                "publication-git-object-read-failed",
-                f"cannot read exact Git blob {object_name!r}: {detail}",
-                publication_phase=phase,
-            )
-        return hashlib.sha256(process.stdout).hexdigest()
-
-    def _set_phase(
-        self,
-        phase: str,
-        phase_changed: Callable[[str], None],
-        *,
-        workspace: Path | None = None,
-        marker: dict[str, Any] | None = None,
-    ) -> None:
-        self._publication_phase = phase
-        if workspace is not None and marker is not None:
-            marker["phase"] = phase
-            self._write_workspace_marker(workspace, marker)
-        phase_changed(phase)
-
-    @staticmethod
-    def _json_bytes(value: dict[str, Any]) -> bytes:
-        return (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
-
-    def _write_workspace_marker(self, workspace: Path, marker: dict[str, Any]) -> None:
-        marker_path = workspace / ".git" / self._MARKER_NAME
-        temporary = marker_path.with_name(marker_path.name + self._MARKER_TEMP_SUFFIX)
-        marker_bytes = self._json_bytes(marker)
-        try:
-            descriptor = os.open(
-                temporary,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
-                0o600,
-            )
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-marker-write-failed",
-                f"cannot create publication workspace marker temporary: {exc}",
-                publication_phase=getattr(self, "_publication_phase", None),
-            ) from exc
-        try:
-            self._after_marker_temp_created(temporary)
-            offset = 0
-            while offset < len(marker_bytes):
-                written = os.write(descriptor, marker_bytes[offset:])
-                if written <= 0:
-                    raise OSError(errno.EIO, "publication marker temporary write stalled")
-                offset += written
-            self._after_marker_temp_written(temporary)
-            os.fsync(descriptor)
-            self._after_marker_temp_fsync(temporary)
-        finally:
-            os.close(descriptor)
-        self._before_marker_replace(temporary, marker_path)
-        try:
-            os.replace(temporary, marker_path)
-            _fsync_directory(marker_path.parent)
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-marker-write-failed",
-                f"cannot atomically publish workspace marker: {exc}",
-                publication_phase=getattr(self, "_publication_phase", None),
-            ) from exc
-
-    def _before_clone(self, staging: Path) -> None:
-        """Fault-injection seam after reservation and before staging creation."""
-
-    def _after_clone_destination_created(self, staging: Path) -> None:
-        """Fault-injection seam after durable staging creation and before clone."""
-
-    def _after_workspace_rename_fsync(self, workspace: Path) -> None:
-        """Fault-injection seam after durable final rename and before reservation removal."""
-
-    def _after_marker_temp_created(self, temporary: Path) -> None:
-        """Fault-injection seam after exclusive marker temporary creation."""
-
-    def _after_marker_temp_written(self, temporary: Path) -> None:
-        """Fault-injection seam after complete marker write and before fsync."""
-
-    def _after_marker_temp_fsync(self, temporary: Path) -> None:
-        """Fault-injection seam after marker fsync and before replace."""
-
-    def _before_marker_replace(self, temporary: Path, marker: Path) -> None:
-        """Fault-injection seam immediately before atomic marker replacement."""
-
-    def _before_git_add(self, target: Path) -> None:
-        """Fault-injection seam after materialization and before index staging."""
-
-    def _after_git_add(self, target: Path) -> None:
-        """Fault-injection seam after index staging and before byte verification."""
-
-    def _before_git_commit(self, target: Path) -> None:
-        """Fault-injection seam after index verification and before tree capture."""
-
-    def _before_publication_ref_update(self, workspace: Path, target: Path, commit: str) -> None:
-        """Fault-injection seam after immutable commit verification."""
-
-    def _before_markerless_staging_remove(self, staging: Path) -> None:
-        """Fault-injection seam after inode observation and before removal."""
-
-    def _before_workspace_rename(self, staging: Path, workspace: Path) -> None:
-        """Fault-injection seam after durable validation and before publication."""
-
-    def _after_target_temp_created(self, temporary: Path) -> None:
-        """Fault-injection seam after exclusive creation and before the first write."""
-
-    def _after_target_temp_fsync(self, temporary: Path) -> None:
-        """Fault-injection seam after durable reviewed bytes and before rename."""
-
-    def _after_target_rename(self, target: Path) -> None:
-        """Fault-injection seam after rename and before the parent fsync."""
-
-    @staticmethod
-    def _validate_local_tree(registry: Registry, plan: dict[str, Any]) -> None:
-        """Validate the exact post-publication Registry before creating its workspace."""
-        try:
-            with tempfile.TemporaryDirectory(prefix="bureau-publication-validate-") as raw:
-                sandbox = Path(raw)
-                shutil.copytree(registry.root / "registry", sandbox / "registry")
-                shutil.copytree(registry.root / "schemas", sandbox / "schemas")
-                target = sandbox / str(plan["target_path"])
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(_render_task(plan["task_json"]))
-                Registry.load(sandbox)
-        except OperatorIntakeError:
-            raise
-        except Exception as exc:
-            raise OperatorIntakeError(
-                "local-registry-validation-failed",
-                f"proposed Registry tree is invalid before workspace creation: {exc}",
-                publication_phase="before_workspace",
-            ) from exc
-
-    @classmethod
-    def _marker_identity(cls, plan: dict[str, Any], branch: str) -> dict[str, Any]:
-        target = Path(str(plan["target_path"]))
-        target_temporary = target.parent / (f".{plan['proposal_sha256']}{cls._TARGET_TEMP_SUFFIX}")
-        return {
-            "schema_version": 1,
-            "kind": "bureau_operator_publication_workspace",
-            "proposal_sha256": plan["proposal_sha256"],
-            "base_commit": plan["registry"]["commit"],
-            "branch": branch,
-            "target_path": plan["target_path"],
-            "target_file_sha256": plan["task_file_sha256"],
-            "target_temporary": target_temporary.as_posix(),
-            "publishing_task_id": plan["publishing_task_id"],
-            "publishing_task_sha256": plan["publishing_task_sha256"],
-        }
-
-    @classmethod
-    def _reservation_path(cls, workspace: Path) -> Path:
-        return workspace.with_name(f".{workspace.name}{cls._RESERVATION_SUFFIX}")
-
-    @classmethod
-    def _reservation_identity(
-        cls,
-        plan: dict[str, Any],
-        branch: str,
-        remote: str,
-        staging: Path,
-        workspace: Path,
-    ) -> dict[str, Any]:
-        identity = {
-            "schema_version": 1,
-            "kind": "bureau_operator_publication_staging_reservation",
-            "proposal_sha256": plan["proposal_sha256"],
-            "base_commit": plan["registry"]["commit"],
-            "branch": branch,
-            "remote": remote,
-            "staging_path": str(staging),
-            "final_path": str(workspace),
-        }
-        return {**identity, "reservation_sha256": legacy.sha256_json(identity)}
-
-    @staticmethod
-    def _read_regular_file_no_follow(
-        path: Path,
-        *,
-        code: str,
-        phase: str,
-        missing_ok: bool = False,
-    ) -> bytes | None:
-        try:
-            path_stat = path.lstat()
-        except FileNotFoundError:
-            if missing_ok:
-                return None
-            raise OperatorIntakeError(
-                code,
-                f"required publication artifact is missing: {path}",
-                publication_phase=phase,
-            ) from None
-        except OSError as exc:
-            raise OperatorIntakeError(
-                code,
-                f"cannot inspect publication artifact {path}: {exc}",
-                publication_phase=phase,
-            ) from exc
-        if not stat.S_ISREG(path_stat.st_mode):
-            raise OperatorIntakeError(
-                code,
-                f"publication artifact is not a no-follow regular file: {path}",
-                details={"mode": stat.filemode(path_stat.st_mode)},
-                publication_phase=phase,
-            )
-        try:
-            descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-        except OSError as exc:
-            raise OperatorIntakeError(
-                code,
-                f"cannot safely open publication artifact {path}: {exc}",
-                publication_phase=phase,
-            ) from exc
-        try:
-            opened_stat = os.fstat(descriptor)
-            if (
-                not stat.S_ISREG(opened_stat.st_mode)
-                or opened_stat.st_dev != path_stat.st_dev
-                or opened_stat.st_ino != path_stat.st_ino
-            ):
-                raise OperatorIntakeError(
-                    code,
-                    f"publication artifact changed during inspection: {path}",
-                    publication_phase=phase,
-                )
-            with os.fdopen(descriptor, "rb") as handle:
-                descriptor = -1
-                return handle.read()
-        finally:
-            if descriptor >= 0:
-                os.close(descriptor)
-
-    def _load_exact_reservation(
-        self, reservation: Path, *, expected: dict[str, Any]
-    ) -> dict[str, Any]:
-        raw = self._read_regular_file_no_follow(
-            reservation,
-            code="workspace-reservation-invalid",
-            phase="before_workspace",
-        )
-        assert raw is not None
-        try:
-            observed = json.loads(raw.decode("utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise OperatorIntakeError(
-                "workspace-reservation-invalid",
-                "publication staging reservation is not valid JSON",
-                details={"reservation": str(reservation)},
-                publication_phase="before_workspace",
-            ) from exc
-        unsigned = (
-            {key: value for key, value in observed.items() if key != "reservation_sha256"}
-            if isinstance(observed, dict)
-            else {}
-        )
-        if (
-            observed != expected
-            or raw != self._json_bytes(expected)
-            or observed.get("reservation_sha256") != legacy.sha256_json(unsigned)
-        ):
-            raise OperatorIntakeError(
-                "workspace-reservation-mismatch",
-                "publication staging reservation is foreign, malformed or identity-invalid",
-                details={"reservation": str(reservation)},
-                publication_phase="before_workspace",
-            )
-        return observed
-
-    def _create_or_load_reservation(
-        self, reservation: Path, *, expected: dict[str, Any]
-    ) -> tuple[dict[str, Any], bool]:
-        if os.path.lexists(reservation):
-            return self._load_exact_reservation(reservation, expected=expected), True
-        parent = reservation.parent
-        try:
-            parent_descriptor = os.open(
-                parent,
-                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
-            )
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-reservation-write-failed",
-                f"cannot open reservation parent without following links: {exc}",
-                publication_phase="before_workspace",
-            ) from exc
-        temporary_path: Path | None = None
-        descriptor = -1
-        try:
-            descriptor, raw_temporary = tempfile.mkstemp(
-                prefix=reservation.name + ".tmp-", dir=parent
-            )
-            temporary_path = Path(raw_temporary)
-            os.fchmod(descriptor, 0o600)
-            payload = self._json_bytes(expected)
-            offset = 0
-            while offset < len(payload):
-                written = os.write(descriptor, payload[offset:])
-                if written <= 0:
-                    raise OSError(errno.EIO, "publication reservation write stalled")
-                offset += written
-            os.fsync(descriptor)
-            os.close(descriptor)
-            descriptor = -1
-            try:
-                _rename_noreplace(
-                    temporary_path.name,
-                    reservation.name,
-                    source_dir_fd=parent_descriptor,
-                    target_dir_fd=parent_descriptor,
-                )
-            except FileExistsError:
-                return self._load_exact_reservation(reservation, expected=expected), True
-            os.fsync(parent_descriptor)
-            temporary_path = None
-            return expected, False
-        except OperatorIntakeError:
-            raise
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-reservation-write-failed",
-                f"cannot atomically persist publication staging reservation: {exc}",
-                publication_phase="before_workspace",
-            ) from exc
-        finally:
-            if descriptor >= 0:
-                os.close(descriptor)
-            if temporary_path is not None:
-                with contextlib.suppress(OSError):
-                    temporary_path.unlink()
-            os.close(parent_descriptor)
-
-    def _remove_exact_reservation(self, reservation: Path, *, expected: dict[str, Any]) -> None:
-        self._load_exact_reservation(reservation, expected=expected)
-        try:
-            parent_descriptor = os.open(
-                reservation.parent,
-                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
-            )
-            try:
-                os.unlink(reservation.name, dir_fd=parent_descriptor)
-                os.fsync(parent_descriptor)
-            finally:
-                os.close(parent_descriptor)
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-reservation-remove-failed",
-                f"cannot durably remove exact publication reservation: {exc}",
-                publication_phase="local_workspace",
-            ) from exc
-
-    @classmethod
-    def _valid_marker_temporary(
-        cls,
-        raw: bytes,
-        *,
-        identity: dict[str, Any],
-        phases: Sequence[str],
-    ) -> bool:
-        return any(
-            raw == candidate[: len(raw)]
-            for candidate in (cls._json_bytes({**identity, "phase": phase}) for phase in phases)
-        )
-
-    def _remove_marker_temporary(self, temporary: Path, *, git_directory: Path) -> None:
-        try:
-            descriptor = os.open(
-                git_directory,
-                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
-            )
-            try:
-                os.unlink(temporary.name, dir_fd=descriptor)
-                os.fsync(descriptor)
-            finally:
-                os.close(descriptor)
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-marker-temp-reconcile-failed",
-                f"cannot reconcile exact publication marker temporary: {exc}",
-                publication_phase=getattr(self, "_publication_phase", "before_workspace"),
-            ) from exc
-
-    def _load_exact_workspace_marker(
-        self,
-        workspace: Path,
-        *,
-        plan: dict[str, Any],
-        branch: str,
-        phase_changed: Callable[[str], None],
-        initial_reservation: bool = False,
-        missing_ok: bool = False,
-    ) -> dict[str, Any] | None:
-        """Restore persisted phase evidence before any transport-dependent check."""
-        git_directory = workspace / ".git"
-        marker_path = git_directory / self._MARKER_NAME
-        temporary = marker_path.with_name(marker_path.name + self._MARKER_TEMP_SUFFIX)
-        try:
-            if not stat.S_ISDIR(git_directory.lstat().st_mode):
-                raise OSError(errno.EINVAL, "workspace Git metadata is not a real directory")
-        except FileNotFoundError:
-            if missing_ok and not os.path.lexists(temporary):
-                return None
-            raise OperatorIntakeError(
-                "workspace-identity-ambiguous",
-                "existing publication workspace has no real Git metadata directory",
-                details={"workspace": str(workspace)},
-                publication_phase="before_workspace",
-            ) from None
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-identity-ambiguous",
-                "existing publication workspace has no readable exact identity marker",
-                details={"workspace": str(workspace)},
-                publication_phase="before_workspace",
-            ) from exc
-        marker_raw = self._read_regular_file_no_follow(
-            marker_path,
-            code="workspace-identity-ambiguous",
-            phase="before_workspace",
-            missing_ok=True,
-        )
-        temporary_raw = self._read_regular_file_no_follow(
-            temporary,
-            code="workspace-marker-temp-invalid",
-            phase="before_workspace",
-            missing_ok=True,
-        )
-        expected = self._marker_identity(plan, branch)
-        if marker_raw is None:
-            if temporary_raw is None:
-                if missing_ok:
-                    return None
-                raise OperatorIntakeError(
-                    "workspace-identity-ambiguous",
-                    "existing publication workspace has no exact identity marker",
-                    details={"workspace": str(workspace)},
-                    publication_phase="before_workspace",
-                )
-            if not initial_reservation or not self._valid_marker_temporary(
-                temporary_raw, identity=expected, phases=("local_workspace",)
-            ):
-                raise OperatorIntakeError(
-                    "workspace-marker-temp-mismatch",
-                    "markerless workspace has a foreign or unauthorized marker temporary",
-                    details={"temporary": str(temporary)},
-                    publication_phase="before_workspace",
-                )
-            self._remove_marker_temporary(temporary, git_directory=git_directory)
-            marker = {**expected, "phase": "local_workspace"}
-            self._publication_phase = "local_workspace"
-            self._write_workspace_marker(workspace, marker)
-            phase_changed("local_workspace")
-            return marker
-        try:
-            marker = json.loads(marker_raw.decode("utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise OperatorIntakeError(
-                "workspace-identity-ambiguous",
-                "existing publication workspace marker is not valid JSON",
-                details={"workspace": str(workspace)},
-                publication_phase="before_workspace",
-            ) from exc
-        if not isinstance(marker, dict):
-            raise OperatorIntakeError(
-                "workspace-identity-ambiguous",
-                "existing publication workspace identity marker is not an object",
-                details={"workspace": str(workspace)},
-                publication_phase="before_workspace",
-            )
-        mismatched = {
-            key: {"expected": value, "observed": marker.get(key)}
-            for key, value in expected.items()
-            if marker.get(key) != value
-        }
-        marker_phase = marker.get("phase")
-        if marker_phase not in PUBLICATION_PHASES or marker_phase == "before_workspace":
-            mismatched["phase"] = {
-                "expected": list(PUBLICATION_PHASES[1:]),
-                "observed": marker_phase,
-            }
-        if mismatched:
-            raise OperatorIntakeError(
-                "workspace-identity-mismatch",
-                "existing publication workspace belongs to different or ambiguous work",
-                details={"workspace": str(workspace), "mismatched": mismatched},
-                publication_phase="before_workspace",
-            )
-        exact_marker = {**expected, "phase": marker_phase}
-        if marker_raw != self._json_bytes(exact_marker):
-            raise OperatorIntakeError(
-                "workspace-identity-mismatch",
-                "existing publication workspace marker bytes are not canonical and exact",
-                details={"workspace": str(workspace)},
-                publication_phase="before_workspace",
-            )
-        if temporary_raw is not None:
-            phase_index = PUBLICATION_PHASES.index(str(marker_phase))
-            if not self._valid_marker_temporary(
-                temporary_raw,
-                identity=expected,
-                phases=PUBLICATION_PHASES[phase_index:],
-            ):
-                raise OperatorIntakeError(
-                    "workspace-marker-temp-mismatch",
-                    "publication workspace marker temporary contains foreign state",
-                    details={"temporary": str(temporary)},
-                    publication_phase=str(marker_phase),
-                )
-            self._remove_marker_temporary(temporary, git_directory=git_directory)
-        self._set_phase(str(marker_phase), phase_changed)
-        return marker
-
-    def _reconcile_staged_workspace(
-        self,
-        staging: Path,
-        *,
-        marker: dict[str, Any],
-        plan: dict[str, Any],
-        branch: str,
-        remote: str,
-    ) -> None:
-        """Accept only an exact, clean, fully initialized pre-publication staging tree."""
-        if marker.get("phase") != "local_workspace":
-            raise OperatorIntakeError(
-                "workspace-staging-phase-invalid",
-                "staged publication workspace is not in the exact local workspace phase",
-                details={"staging": str(staging), "phase": marker.get("phase")},
-                publication_phase=str(marker.get("phase", "before_workspace")),
-            )
-        try:
-            references = _process_references(staging)
-        except StateError as exc:
-            raise OperatorIntakeError(
-                "workspace-process-check-failed",
-                str(exc),
-                publication_phase="local_workspace",
-            ) from exc
-        if references:
-            raise OperatorIntakeError(
-                "workspace-active",
-                "staged publication workspace is referenced by active processes",
-                details={"staging": str(staging), "processes": references},
-                publication_phase="local_workspace",
-            )
-        observed_origin = self._run(["git", "remote", "get-url", "origin"], cwd=staging)
-        observed_branch = self._run(["git", "branch", "--show-current"], cwd=staging)
-        head = self._run(["git", "rev-parse", "HEAD"], cwd=staging)
-        status = self._run(
-            ["git", "status", "--porcelain", "--untracked-files=all"], cwd=staging
-        ).splitlines()
-        if (
-            observed_origin != remote
-            or observed_branch != branch
-            or head != str(plan["registry"]["commit"])
-            or status
-        ):
-            raise OperatorIntakeError(
-                "workspace-staging-state-mismatch",
-                "staged publication workspace is dirty, foreign or incomplete",
-                details={
-                    "expected_origin": remote,
-                    "observed_origin": observed_origin,
-                    "expected_branch": branch,
-                    "observed_branch": observed_branch,
-                    "expected_head": plan["registry"]["commit"],
-                    "observed_head": head,
-                    "status": status,
-                },
-                publication_phase="local_workspace",
-            )
-        try:
-            Registry.load(staging)
-        except Exception as exc:
-            raise OperatorIntakeError(
-                "workspace-staging-validation-failed",
-                f"staged publication workspace Registry is invalid: {exc}",
-                publication_phase="local_workspace",
-            ) from exc
-
-    def _remove_reserved_markerless_staging(
-        self,
-        staging: Path,
-        *,
-        reservation: Path,
-        expected_reservation: dict[str, Any],
-    ) -> None:
-        """Remove only an inactive markerless clone path with an exact reservation."""
-        self._load_exact_reservation(reservation, expected=expected_reservation)
-        if not self._checked_workspace_directory(staging, code="workspace-staging-path-invalid"):
-            return
-        if not self._checked_workspace_directory(staging.parent, code="workspace-root-invalid"):
-            raise OperatorIntakeError(
-                "workspace-root-invalid",
-                "publication staging parent is missing",
-                publication_phase="before_workspace",
-            )
-        try:
-            references = _process_references(staging)
-        except StateError as exc:
-            raise OperatorIntakeError(
-                "workspace-process-check-failed",
-                str(exc),
-                publication_phase="before_workspace",
-            ) from exc
-        if references:
-            raise OperatorIntakeError(
-                "workspace-active",
-                "markerless reserved staging path is referenced by active processes",
-                details={"staging": str(staging), "processes": references},
-                publication_phase="before_workspace",
-            )
-        try:
-            expected = staging.lstat()
-            if not stat.S_ISDIR(expected.st_mode):
-                raise OSError(
-                    errno.ENOTDIR,
-                    "reserved staging path is not a real directory",
-                    str(staging),
-                )
-            self._before_markerless_staging_remove(staging)
-            parent_descriptor = os.open(
-                staging.parent,
-                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
-            )
-            try:
-                _remove_directory_tree_at(parent_descriptor, staging.name, expected=expected)
-            finally:
-                os.close(parent_descriptor)
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-staging-identity-changed"
-                if exc.errno == errno.ESTALE
-                else "workspace-staging-recreate-failed",
-                f"cannot remove exact inactive markerless staging path: {exc}",
-                details={"staging": str(staging)},
-                publication_phase="before_workspace",
-            ) from exc
-
-    @staticmethod
-    def _checked_workspace_directory(path: Path, *, code: str) -> bool:
-        if not os.path.lexists(path):
-            return False
-        try:
-            path_stat = path.lstat()
-        except OSError as exc:
-            raise OperatorIntakeError(
-                code, f"cannot inspect publication path {path}: {exc}"
-            ) from exc
-        if not stat.S_ISDIR(path_stat.st_mode):
-            raise OperatorIntakeError(
-                code,
-                f"publication path is not a real directory: {path}",
-                publication_phase="before_workspace",
-            )
-        return True
-
-    def _target_temporary_path(
-        self,
-        target: Path,
-        *,
-        proposal_sha256: str,
-    ) -> Path:
-        return target.parent / f".{proposal_sha256}{self._TARGET_TEMP_SUFFIX}"
-
-    def _materialize_target_file(
-        self,
-        workspace: Path,
-        target: Path,
-        *,
-        reviewed_bytes: bytes,
-        expected_sha256: str,
-        expected_preimage_sha256: str | None,
-        proposal_sha256: str,
-    ) -> None:
-        """Create or CAS-replace one reviewed target through a durable temporary."""
-        try:
-            relative_target = target.relative_to(workspace)
-            parent_descriptor = _open_directory_beneath(workspace, relative_target.parent)
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-target-parent-invalid",
-                f"cannot open publication target parent without symlinks: {exc}",
-                publication_phase="local_workspace",
-            ) from exc
-        except ValueError as exc:
-            raise OperatorIntakeError(
-                "workspace-target-parent-invalid",
-                "publication target must remain beneath its exact workspace",
-                details={"target": str(target), "workspace": str(workspace)},
-                publication_phase="local_workspace",
-            ) from exc
-        temporary = self._target_temporary_path(
-            target,
-            proposal_sha256=proposal_sha256,
-        )
-        try:
-            target_hash = self._workspace_file_sha256(
-                workspace, relative_target, phase="local_workspace"
-            )
-            replace_existing = False
-            if target_hash is not None:
-                if target_hash == expected_sha256:
-                    return
-                if expected_preimage_sha256 is None or target_hash != expected_preimage_sha256:
-                    raise OperatorIntakeError(
-                        "workspace-target-hash-mismatch",
-                        "existing publication target does not match the reviewed preimage",
-                        details={
-                            "expected_preimage": expected_preimage_sha256,
-                            "observed": target_hash,
-                        },
-                        publication_phase="local_workspace",
-                    )
-                replace_existing = True
-            elif expected_preimage_sha256 is not None:
-                raise OperatorIntakeError(
-                    "workspace-target-missing",
-                    "reviewed TaskSpec revision target disappeared from the publication workspace",
-                    publication_phase="local_workspace",
-                )
-            try:
-                temporary_stat = os.stat(
-                    temporary.name,
-                    dir_fd=parent_descriptor,
-                    follow_symlinks=False,
-                )
-            except FileNotFoundError:
-                temporary_stat = None
-            if temporary_stat is not None:
-                if not stat.S_ISREG(temporary_stat.st_mode):
-                    raise OperatorIntakeError(
-                        "workspace-target-temp-type-invalid",
-                        "publication target temporary is not an exact owned regular file",
-                        details={"temporary": str(temporary)},
-                        publication_phase="local_workspace",
-                    )
-                try:
-                    os.unlink(temporary.name, dir_fd=parent_descriptor)
-                    os.fsync(parent_descriptor)
-                except OSError as exc:
-                    raise OperatorIntakeError(
-                        "workspace-target-temp-reconcile-failed",
-                        f"cannot reconcile exact owned publication temporary: {exc}",
-                        publication_phase="local_workspace",
-                    ) from exc
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-            try:
-                descriptor = os.open(temporary.name, flags, 0o600, dir_fd=parent_descriptor)
-            except OSError as exc:
-                raise OperatorIntakeError(
-                    "workspace-target-temp-create-failed",
-                    f"cannot exclusively create publication target temporary: {exc}",
-                    publication_phase="local_workspace",
-                ) from exc
-            try:
-                self._after_target_temp_created(temporary)
-                offset = 0
-                while offset < len(reviewed_bytes):
-                    written = os.write(descriptor, reviewed_bytes[offset:])
-                    if written <= 0:
-                        raise OSError(errno.EIO, "publication target temporary write stalled")
-                    offset += written
-                os.fsync(descriptor)
-                self._after_target_temp_fsync(temporary)
-            finally:
-                os.close(descriptor)
-            observed_temporary_hash = self._workspace_file_sha256(
-                workspace,
-                temporary.relative_to(workspace),
-                phase="local_workspace",
-            )
-            if observed_temporary_hash != expected_sha256:
-                raise OperatorIntakeError(
-                    "workspace-target-temp-hash-mismatch",
-                    "publication target temporary does not contain the exact reviewed bytes",
-                    details={
-                        "expected": expected_sha256,
-                        "observed": observed_temporary_hash,
-                    },
-                    publication_phase="local_workspace",
-                )
-            try:
-                if replace_existing:
-                    observed_preimage = self._workspace_file_sha256(
-                        workspace, relative_target, phase="local_workspace"
-                    )
-                    if observed_preimage != expected_preimage_sha256:
-                        raise OperatorIntakeError(
-                            "workspace-target-preimage-drift",
-                            "publication target changed immediately before reviewed replacement",
-                            details={
-                                "expected": expected_preimage_sha256,
-                                "observed": observed_preimage,
-                            },
-                            publication_phase="local_workspace",
-                        )
-                    os.replace(
-                        temporary.name,
-                        target.name,
-                        src_dir_fd=parent_descriptor,
-                        dst_dir_fd=parent_descriptor,
-                    )
-                else:
-                    _rename_noreplace(
-                        temporary.name,
-                        target.name,
-                        source_dir_fd=parent_descriptor,
-                        target_dir_fd=parent_descriptor,
-                    )
-                self._after_target_rename(target)
-                os.fsync(parent_descriptor)
-            except OSError as exc:
-                raise OperatorIntakeError(
-                    "workspace-target-rename-failed",
-                    f"cannot atomically publish the reviewed target file: {exc}",
-                    publication_phase="local_workspace",
-                ) from exc
-        finally:
-            os.close(parent_descriptor)
-
-    @staticmethod
-    def _workspace_file_sha256(workspace: Path, relative: Path, *, phase: str) -> str | None:
-        """Hash a workspace file without following any symbolic-link component."""
-        if relative.is_absolute() or relative.name in {"", ".", ".."}:
-            raise OperatorIntakeError(
-                "workspace-target-path-invalid",
-                "publication workspace file path is not a safe relative path",
-                details={"path": str(relative)},
-                publication_phase=phase,
-            )
-        try:
-            parent_descriptor = _open_directory_beneath(workspace, relative.parent)
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "workspace-target-parent-invalid",
-                f"cannot open publication workspace parent without symlinks: {exc}",
-                details={"path": str(relative.parent)},
-                publication_phase=phase,
-            ) from exc
-        try:
-            target_stat = os.stat(relative.name, dir_fd=parent_descriptor, follow_symlinks=False)
-        except FileNotFoundError:
-            os.close(parent_descriptor)
-            return None
-        except OSError as exc:
-            os.close(parent_descriptor)
-            raise OperatorIntakeError(
-                "workspace-target-inspection-failed",
-                f"cannot inspect publication workspace target {relative}: {exc}",
-                publication_phase=phase,
-            ) from exc
-        if not stat.S_ISREG(target_stat.st_mode):
-            os.close(parent_descriptor)
-            raise OperatorIntakeError(
-                "workspace-target-type-invalid",
-                "publication workspace target must be a regular file and never a symlink",
-                details={"target": str(relative), "mode": stat.filemode(target_stat.st_mode)},
-                publication_phase=phase,
-            )
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-        try:
-            descriptor = os.open(relative.name, flags, dir_fd=parent_descriptor)
-        except OSError as exc:
-            os.close(parent_descriptor)
-            raise OperatorIntakeError(
-                "workspace-target-inspection-failed",
-                f"cannot safely open publication workspace target {relative}: {exc}",
-                publication_phase=phase,
-            ) from exc
-        try:
-            opened_stat = os.fstat(descriptor)
-            if (
-                not stat.S_ISREG(opened_stat.st_mode)
-                or opened_stat.st_dev != target_stat.st_dev
-                or opened_stat.st_ino != target_stat.st_ino
-            ):
-                raise OperatorIntakeError(
-                    "workspace-target-type-invalid",
-                    "publication workspace target changed during no-follow inspection",
-                    details={"target": str(relative)},
-                    publication_phase=phase,
-                )
-            with os.fdopen(descriptor, "rb") as handle:
-                descriptor = -1
-                return hashlib.sha256(handle.read()).hexdigest()
-        finally:
-            if descriptor >= 0:
-                os.close(descriptor)
-            os.close(parent_descriptor)
-
-    def _reconcile_exact_workspace(
-        self,
-        workspace: Path,
-        *,
-        marker: dict[str, Any],
-        plan: dict[str, Any],
-        branch: str,
-        remote: str,
-        phase_changed: Callable[[str], None],
-    ) -> tuple[dict[str, Any], str | None, str]:
-        marker_phase = str(marker["phase"])
-        try:
-            references = _process_references(workspace)
-        except StateError as exc:
-            raise OperatorIntakeError(
-                "workspace-process-check-failed",
-                str(exc),
-                publication_phase=str(marker_phase),
-            ) from exc
-        if references:
-            raise OperatorIntakeError(
-                "workspace-active",
-                "existing publication workspace is referenced by active processes",
-                details={"workspace": str(workspace), "processes": references},
-                publication_phase=str(marker_phase),
-            )
-        observed_origin = self._run(["git", "remote", "get-url", "origin"], cwd=workspace)
-        observed_branch = self._run(["git", "branch", "--show-current"], cwd=workspace)
-        head = self._run(["git", "rev-parse", "HEAD"], cwd=workspace)
-        status = self._run(
-            ["git", "status", "--porcelain", "--untracked-files=all"], cwd=workspace
-        ).splitlines()
-        if observed_origin != remote or observed_branch != branch:
-            raise OperatorIntakeError(
-                "workspace-git-binding-mismatch",
-                "existing publication workspace has a foreign origin or branch",
-                details={
-                    "expected_origin": remote,
-                    "observed_origin": observed_origin,
-                    "expected_branch": branch,
-                    "observed_branch": observed_branch,
-                },
-                publication_phase=str(marker_phase),
-            )
-        target_path = str(plan["target_path"])
-        target = workspace / target_path
-        target_hash = self._workspace_file_sha256(workspace, Path(target_path), phase=marker_phase)
-        expected_hash = str(plan["task_file_sha256"])
-        expected_preimage = plan["task_spec"]["expected_task_file_sha256"]
-        temporary = self._target_temporary_path(
-            target,
-            proposal_sha256=str(plan["proposal_sha256"]),
-        )
-        temporary_hash = self._workspace_file_sha256(
-            workspace, temporary.relative_to(workspace), phase=marker_phase
-        )
-        temporary_path = temporary.relative_to(workspace).as_posix()
-        base_commit = str(plan["registry"]["commit"])
-        if head == base_commit:
-            if expected_preimage is None:
-                allowed = [
-                    [],
-                    [f"?? {target_path}"],
-                    [f"A  {target_path}"],
-                    [f"?? {temporary_path}"],
-                ]
-                allowed_target_hashes = {None, expected_hash}
-                invalid_temporary_state = temporary_hash is not None and target_hash is not None
-            else:
-                allowed = [
-                    [],
-                    [f" M {target_path}"],
-                    [f"M {target_path}"],
-                    [f"M  {target_path}"],
-                    [f"?? {temporary_path}"],
-                ]
-                allowed_target_hashes = {expected_preimage, expected_hash}
-                invalid_temporary_state = False
-            if (
-                status not in allowed
-                or target_hash not in allowed_target_hashes
-                or invalid_temporary_state
-            ):
-                raise OperatorIntakeError(
-                    "workspace-local-state-mismatch",
-                    "existing pre-commit workspace is dirty, foreign or ambiguous",
-                    details={
-                        "status": status,
-                        "target_file_sha256": target_hash,
-                        "target_temporary_sha256": temporary_hash,
-                    },
-                    publication_phase=str(marker_phase),
-                )
-            if PUBLICATION_PHASES.index(str(marker_phase)) >= PUBLICATION_PHASES.index(
-                "committed_locally"
-            ):
-                raise OperatorIntakeError(
-                    "workspace-phase-mismatch",
-                    "workspace marker claims a commit or remote effect that Git does not contain",
-                    publication_phase=str(marker_phase),
-                )
-            return marker, None, ""
-        count = self._run(["git", "rev-list", "--count", f"{base_commit}..HEAD"], cwd=workspace)
-        parent = self._run(["git", "rev-parse", "HEAD^"], cwd=workspace)
-        changed = self._run(
-            ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"],
-            cwd=workspace,
-        ).splitlines()
-        if count != "1" or parent != base_commit or status or changed != [target_path]:
-            raise OperatorIntakeError(
-                "workspace-commit-mismatch",
-                "existing workspace commit is not the exact single target-file commit",
-                details={
-                    "commit_count": count,
-                    "parent": parent,
-                    "status": status,
-                    "changed": changed,
-                },
-                publication_phase=str(marker_phase),
-            )
-        if target_hash != expected_hash:
-            raise OperatorIntakeError(
-                "workspace-target-hash-mismatch",
-                "existing workspace target file does not match the reviewed proposal",
-                details={"expected": expected_hash, "observed": target_hash},
-                publication_phase=str(marker_phase),
-            )
-        committed_target_hash = self._git_blob_sha256(workspace, f"HEAD:{target_path}")
-        if committed_target_hash != expected_hash:
-            raise OperatorIntakeError(
-                "workspace-commit-target-hash-mismatch",
-                "existing workspace commit does not contain the exact reviewed target bytes",
-                details={
-                    "expected": expected_hash,
-                    "observed": committed_target_hash,
-                    "head": head,
-                },
-                publication_phase=str(marker_phase),
-            )
-        diff = self._run(["git", "show", "--format=", "--binary", "HEAD"], cwd=workspace)
-        if PUBLICATION_PHASES.index(str(marker_phase)) < PUBLICATION_PHASES.index(
-            "committed_locally"
-        ):
-            self._set_phase("committed_locally", phase_changed, workspace=workspace, marker=marker)
-        return marker, head, diff
-
-    def _pull_request_readback(
-        self,
-        *,
-        repository: str,
-        branch: str,
-        head: str,
-        cwd: Path,
-    ) -> dict[str, Any] | None:
-        raw = self._run(
-            [
-                "gh",
-                "pr",
-                "list",
-                "--repo",
-                repository,
-                "--head",
-                branch,
-                "--state",
-                "all",
-                "--json",
-                "number,url,state,headRefOid,headRefName,baseRefName",
-            ],
-            cwd=cwd,
-        )
-        try:
-            values = json.loads(raw)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise OperatorIntakeError(
-                "publication-readback-invalid",
-                "GitHub pull-request readback was not valid JSON",
-                effect_started=True,
-                ambiguity=True,
-                required_readback=["pull request metadata", "remote branch head"],
-                publication_phase=getattr(self, "_publication_phase", None),
-            ) from exc
-        if not isinstance(values, list) or len(values) > 1:
-            raise OperatorIntakeError(
-                "publication-readback-mismatch",
-                "GitHub pull-request readback is ambiguous for the exact branch",
-                effect_started=True,
-                ambiguity=True,
-                required_readback=["pull request metadata", "remote branch head"],
-                details={"readback": values},
-                publication_phase=getattr(self, "_publication_phase", None),
-            )
-        if not values:
-            return None
-        readback = values[0]
-        if (
-            not isinstance(readback, dict)
-            or readback.get("headRefOid") != head
-            or readback.get("headRefName") != branch
-            or readback.get("baseRefName") != "main"
-            or readback.get("state") != "OPEN"
-        ):
-            raise OperatorIntakeError(
-                "publication-readback-mismatch",
-                "GitHub pull-request readback does not match the exact publication",
-                effect_started=True,
-                ambiguity=True,
-                required_readback=["pull request metadata", "remote branch head"],
-                details={"readback": readback, "expected_head": head},
-                publication_phase=getattr(self, "_publication_phase", None),
-            )
-        return readback
-
-    @staticmethod
-    def _github_slug(remote: str) -> str:
-        return _github_repository_slug(remote)
-
-    def publish(
-        self,
-        *,
-        registry: Registry,
-        plan: dict[str, Any],
-        workspace_root: Path,
-        assert_plan_unchanged: Callable[[], None],
-        phase_changed: Callable[[str], None],
-    ) -> dict[str, Any]:
-        self._publication_phase = "before_workspace"
-        base_commit = str(plan["registry"]["commit"])
-        task_id = str(plan["task_id"])
-        target_path = str(plan["target_path"])
-        branch = _publication_branch(task_id, str(plan["proposal_sha256"]))
-        workspace = workspace_root / str(plan["proposal_sha256"])[:20]
-        staging = workspace.with_name(f".{workspace.name}{self._STAGING_SUFFIX}")
-        reservation = self._reservation_path(workspace)
-        root_exists = self._checked_workspace_directory(
-            workspace_root, code="workspace-root-invalid"
-        )
-        if not root_exists and not self._checked_workspace_directory(
-            workspace_root.parent, code="workspace-root-parent-invalid"
-        ):
-            raise OperatorIntakeError(
-                "workspace-root-parent-invalid",
-                f"publication workspace parent does not exist: {workspace_root.parent}",
-                publication_phase="before_workspace",
-            )
-        final_exists = self._checked_workspace_directory(workspace, code="workspace-path-invalid")
-        staging_exists = self._checked_workspace_directory(
-            staging, code="workspace-staging-path-invalid"
-        )
-        if final_exists and staging_exists:
-            raise OperatorIntakeError(
-                "workspace-publication-ambiguous",
-                "both final and staged publication workspaces exist; neither was changed",
-                details={"workspace": str(workspace), "staging": str(staging)},
-                publication_phase="before_workspace",
-            )
-        reservation_exists = os.path.lexists(reservation)
-        workspace_reconciled = final_exists or staging_exists or reservation_exists
-        marker: dict[str, Any] | None = None
-        head: str | None = None
-        diff = ""
-        if final_exists:
-            marker = self._load_exact_workspace_marker(
-                workspace,
-                plan=plan,
-                branch=branch,
-                phase_changed=phase_changed,
-            )
-        self._validate_local_tree(registry, plan)
-        assert_plan_unchanged()
-        remote = self._run(["git", "-C", str(registry.root), "remote", "get-url", "origin"])
-        repository = self._github_slug(remote)
-        pre_workspace_open_pr_observation = self._require_no_registry_pr_collision(
-            repository=repository,
-            registry=registry,
-            plan=plan,
-            branch=branch,
-            phase="before_workspace",
-            observation_phase="pre_workspace",
-        )
-        expected_reservation = self._reservation_identity(plan, branch, remote, staging, workspace)
-        if final_exists:
-            assert marker is not None
-            if reservation_exists:
-                self._load_exact_reservation(reservation, expected=expected_reservation)
-            marker, head, diff = self._reconcile_exact_workspace(
-                workspace,
-                marker=marker,
-                plan=plan,
-                branch=branch,
-                remote=remote,
-                phase_changed=phase_changed,
-            )
-            if reservation_exists:
-                self._remove_exact_reservation(reservation, expected=expected_reservation)
-                reservation_exists = False
-        elif staging_exists:
-            self._load_exact_reservation(reservation, expected=expected_reservation)
-            marker = self._load_exact_workspace_marker(
-                staging,
-                plan=plan,
-                branch=branch,
-                phase_changed=phase_changed,
-                initial_reservation=True,
-                missing_ok=True,
-            )
-            if marker is None:
-                self._remove_reserved_markerless_staging(
-                    staging,
-                    reservation=reservation,
-                    expected_reservation=expected_reservation,
-                )
-                staging_exists = False
-            else:
-                self._reconcile_staged_workspace(
-                    staging,
-                    marker=marker,
-                    plan=plan,
-                    branch=branch,
-                    remote=remote,
-                )
-        remote_main_output = self._run(["git", "ls-remote", remote, "refs/heads/main"]).split()
-        if not remote_main_output:
-            raise OperatorIntakeError(
-                "remote-main-missing", "remote main ref is missing", retryable=True
-            )
-        remote_main = remote_main_output[0]
-        if remote_main != base_commit:
-            raise OperatorIntakeError(
-                "remote-main-drift",
-                "remote main changed after proposal creation",
-                retryable=True,
-                details={"planned": base_commit, "observed": remote_main},
-            )
-        if not final_exists and not staging_exists:
-            if not root_exists:
-                try:
-                    workspace_root.mkdir(mode=0o700)
-                    _fsync_directory(workspace_root.parent)
-                except OSError as exc:
-                    raise OperatorIntakeError(
-                        "workspace-root-create-failed",
-                        f"cannot create no-follow publication workspace root: {exc}",
-                        publication_phase="before_workspace",
-                    ) from exc
-                root_exists = True
-            if not self._checked_workspace_directory(workspace_root, code="workspace-root-invalid"):
-                raise OperatorIntakeError(
-                    "workspace-root-invalid",
-                    f"publication workspace root could not be created: {workspace_root}",
-                    publication_phase="before_workspace",
-                )
-            _fsync_directory(workspace_root)
-            _, reservation_reused = self._create_or_load_reservation(
-                reservation, expected=expected_reservation
-            )
-            workspace_reconciled = workspace_reconciled or reservation_reused
-            self._before_clone(staging)
-            try:
-                root_descriptor = os.open(
-                    workspace_root,
-                    os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
-                )
-                try:
-                    os.mkdir(staging.name, mode=0o700, dir_fd=root_descriptor)
-                    os.fsync(root_descriptor)
-                finally:
-                    os.close(root_descriptor)
-            except OSError as exc:
-                raise OperatorIntakeError(
-                    "workspace-staging-create-failed",
-                    f"cannot exclusively create reserved staging destination: {exc}",
-                    publication_phase="before_workspace",
-                ) from exc
-            self._after_clone_destination_created(staging)
-            self._run(
-                [
-                    "git",
-                    "clone",
-                    "--no-hardlinks",
-                    "--no-local",
-                    "--no-checkout",
-                    str(registry.root),
-                    str(staging),
-                ]
-            )
-            self._run(["git", "remote", "set-url", "origin", remote], cwd=staging)
-            self._run(["git", "checkout", "--detach", base_commit], cwd=staging)
-            self._run(["git", "checkout", "-b", branch], cwd=staging)
-            marker = self._marker_identity(plan, branch)
-            self._set_phase("local_workspace", phase_changed, workspace=staging, marker=marker)
-            self._reconcile_staged_workspace(
-                staging,
-                marker=marker,
-                plan=plan,
-                branch=branch,
-                remote=remote,
-            )
-        if not final_exists:
-            assert marker is not None
-            try:
-                _fsync_tree(staging)
-                _fsync_directory(workspace_root)
-                self._before_workspace_rename(staging, workspace)
-                _rename_noreplace(staging, workspace)
-                _fsync_directory(workspace_root)
-                self._after_workspace_rename_fsync(workspace)
-            except OSError as exc:
-                raise OperatorIntakeError(
-                    "workspace-atomic-publication-failed",
-                    f"cannot atomically publish staged workspace: {exc}",
-                    details={"workspace": str(workspace), "staging": str(staging)},
-                    publication_phase="local_workspace",
-                ) from exc
-            self._remove_exact_reservation(reservation, expected=expected_reservation)
-            reservation_exists = False
-            head = None
-            diff = ""
-        task_file = workspace / target_path
-        if head is None:
-            reviewed_bytes = _render_task(plan["task_json"])
-            self._materialize_target_file(
-                workspace,
-                task_file,
-                reviewed_bytes=reviewed_bytes,
-                expected_sha256=str(plan["task_file_sha256"]),
-                expected_preimage_sha256=plan["task_spec"]["expected_task_file_sha256"],
-                proposal_sha256=str(plan["proposal_sha256"]),
-            )
-            try:
-                Registry.load(workspace)
-            except Exception as exc:
-                raise OperatorIntakeError(
-                    "local-registry-validation-failed",
-                    f"publication workspace Registry validation failed: {exc}",
-                    publication_phase="local_workspace",
-                ) from exc
-            changed = self._run(
-                ["git", "status", "--porcelain", "--untracked-files=all"], cwd=workspace
-            ).splitlines()
-            allowed_changes = (
-                ([f"?? {target_path}"], [f"A  {target_path}"])
-                if plan["task_spec"]["expected_task_file_sha256"] is None
-                else (
-                    [f" M {target_path}"],
-                    [f"M {target_path}"],
-                    [f"M  {target_path}"],
-                )
-            )
-            if changed not in allowed_changes:
-                raise OperatorIntakeError(
-                    "publication-scope-drift",
-                    "publication workspace changed outside the target task file",
-                    details={"status": changed},
-                    publication_phase="local_workspace",
-                )
-            self._before_git_add(task_file)
-            self._run(["git", "add", "--", target_path], cwd=workspace)
-            self._after_git_add(task_file)
-            staged = self._run(
-                ["git", "diff", "--cached", "--name-only"], cwd=workspace
-            ).splitlines()
-            if staged != [target_path]:
-                raise OperatorIntakeError(
-                    "publication-scope-drift",
-                    "staged publication diff is not exactly the target task file",
-                    details={"paths": staged},
-                    publication_phase="local_workspace",
-                )
-            expected_target_hash = str(plan["task_file_sha256"])
-            staged_target_hash = self._git_blob_sha256(workspace, f":{target_path}")
-            if staged_target_hash != expected_target_hash:
-                raise OperatorIntakeError(
-                    "publication-index-target-hash-mismatch",
-                    "staged publication target bytes do not match the reviewed proposal",
-                    details={
-                        "expected": expected_target_hash,
-                        "observed": staged_target_hash,
-                    },
-                    publication_phase="local_workspace",
-                )
-            diff = self._run(["git", "diff", "--cached", "--binary"], cwd=workspace)
-            assert_plan_unchanged()
-            self._before_git_commit(task_file)
-            final_worktree_hash = self._workspace_file_sha256(
-                workspace, Path(target_path), phase="local_workspace"
-            )
-            final_index_hash = self._git_blob_sha256(workspace, f":{target_path}")
-            if (
-                final_worktree_hash != expected_target_hash
-                or final_index_hash != expected_target_hash
-            ):
-                raise OperatorIntakeError(
-                    "publication-precommit-target-hash-mismatch",
-                    "publication target changed after staging; commit was not attempted",
-                    details={
-                        "expected": expected_target_hash,
-                        "worktree": final_worktree_hash,
-                        "index": final_index_hash,
-                    },
-                    publication_phase="local_workspace",
-                )
-            tree = self._run(["git", "write-tree"], cwd=workspace)
-            tree_paths = self._run(
-                [
-                    "git",
-                    "diff-tree",
-                    "--no-commit-id",
-                    "--name-only",
-                    "-r",
-                    base_commit,
-                    tree,
-                ],
-                cwd=workspace,
-            ).splitlines()
-            tree_target_hash = self._git_blob_sha256(workspace, f"{tree}:{target_path}")
-            if tree_paths != [target_path] or tree_target_hash != expected_target_hash:
-                raise OperatorIntakeError(
-                    "publication-tree-mismatch",
-                    "immutable publication tree is outside scope or has unreviewed bytes",
-                    details={
-                        "paths": tree_paths,
-                        "expected": expected_target_hash,
-                        "observed": tree_target_hash,
-                    },
-                    publication_phase="local_workspace",
-                )
-            base_date = self._run(["git", "show", "-s", "--format=%aI", base_commit], cwd=workspace)
-            candidate_head = self._run(
-                [
-                    "/usr/bin/env",
-                    f"GIT_AUTHOR_DATE={base_date}",
-                    f"GIT_COMMITTER_DATE={base_date}",
-                    "git",
-                    "-c",
-                    "user.name=Bureau Operator",
-                    "-c",
-                    "user.email=bureau-operator@localhost",
-                    "commit-tree",
-                    tree,
-                    "-p",
-                    base_commit,
-                    "-m",
-                    (
-                        f"Register Bureau task {task_id}"
-                        if plan["task_spec"]["operation"] == "register"
-                        else f"Revise Bureau task {task_id}"
-                    ),
-                ],
-                cwd=workspace,
-            )
-            candidate_tree = self._run(
-                ["git", "rev-parse", f"{candidate_head}^{{tree}}"], cwd=workspace
-            )
-            candidate_parent = self._run(["git", "rev-parse", f"{candidate_head}^"], cwd=workspace)
-            committed_target_hash = self._git_blob_sha256(
-                workspace, f"{candidate_head}:{target_path}"
-            )
-            if (
-                candidate_tree != tree
-                or candidate_parent != base_commit
-                or committed_target_hash != expected_target_hash
-            ):
-                raise OperatorIntakeError(
-                    "publication-commit-target-hash-mismatch",
-                    "local publication commit object is not the exact reviewed tree",
-                    details={
-                        "expected_tree": tree,
-                        "observed_tree": candidate_tree,
-                        "expected_parent": base_commit,
-                        "observed_parent": candidate_parent,
-                        "expected": expected_target_hash,
-                        "observed": committed_target_hash,
-                        "head": candidate_head,
-                    },
-                    publication_phase="local_workspace",
-                )
-            self._before_publication_ref_update(workspace, task_file, candidate_head)
-            self._run(
-                ["git", "update-ref", f"refs/heads/{branch}", candidate_head, base_commit],
-                cwd=workspace,
-            )
-            head = self._run(["git", "rev-parse", "HEAD"], cwd=workspace)
-            if head != candidate_head:
-                raise OperatorIntakeError(
-                    "publication-ref-update-mismatch",
-                    "publication branch did not advance to the verified commit object",
-                    details={"expected": candidate_head, "observed": head},
-                    publication_phase="local_workspace",
-                )
-            post_commit_status = self._run(
-                ["git", "status", "--porcelain", "--untracked-files=all"], cwd=workspace
-            ).splitlines()
-            if post_commit_status:
-                raise OperatorIntakeError(
-                    "publication-postcommit-workspace-drift",
-                    "workspace or index changed after immutable tree capture; push was blocked",
-                    details={"status": post_commit_status, "head": head},
-                    publication_phase="local_workspace",
-                )
-            self._set_phase("committed_locally", phase_changed, workspace=workspace, marker=marker)
-        remote_main_output = self._run(["git", "ls-remote", remote, "refs/heads/main"]).split()
-        if not remote_main_output:
-            raise OperatorIntakeError(
-                "remote-main-missing", "remote main ref is missing", retryable=True
-            )
-        remote_main = remote_main_output[0]
-        if remote_main != base_commit:
-            raise OperatorIntakeError(
-                "remote-main-drift",
-                "remote main changed immediately before publication push",
-                retryable=True,
-                publication_phase=getattr(self, "_publication_phase", None),
-            )
-        assert_plan_unchanged()
-        pre_remote_open_pr_observation = self._require_no_registry_pr_collision(
-            repository=repository,
-            registry=registry,
-            plan=plan,
-            branch=branch,
-            phase=getattr(self, "_publication_phase", "committed_locally"),
-            observation_phase="pre_remote_effect",
-        )
-        remote_branch_output = self._run(
-            ["git", "ls-remote", remote, f"refs/heads/{branch}"]
-        ).split()
-        if remote_branch_output:
-            if remote_branch_output[0] != head:
-                raise OperatorIntakeError(
-                    "remote-branch-mismatch",
-                    "remote publication branch does not match the exact local commit",
-                    effect_started=True,
-                    required_readback=["remote branch head", "target task file at remote head"],
-                    details={"expected": head, "observed": remote_branch_output[0]},
-                    publication_phase=getattr(self, "_publication_phase", None),
-                )
-            remote_target_hash = self._git_blob_sha256(
-                workspace, f"{remote_branch_output[0]}:{target_path}"
-            )
-            if remote_target_hash != str(plan["task_file_sha256"]):
-                raise OperatorIntakeError(
-                    "remote-target-hash-mismatch",
-                    "remote publication head does not contain the exact reviewed target bytes",
-                    effect_started=True,
-                    required_readback=["target task file at remote head"],
-                    details={
-                        "expected": plan["task_file_sha256"],
-                        "observed": remote_target_hash,
-                        "head": remote_branch_output[0],
-                    },
-                    publication_phase=getattr(self, "_publication_phase", None),
-                )
-            if PUBLICATION_PHASES.index(str(marker["phase"])) < PUBLICATION_PHASES.index(
-                "push_confirmed"
-            ):
-                self._set_phase("push_confirmed", phase_changed, workspace=workspace, marker=marker)
-        else:
-            if PUBLICATION_PHASES.index(str(marker["phase"])) >= PUBLICATION_PHASES.index(
-                "push_confirmed"
-            ):
-                raise OperatorIntakeError(
-                    "remote-branch-missing-after-confirmation",
-                    "workspace records a confirmed push but the exact remote branch is absent",
-                    effect_started=True,
-                    required_readback=["remote branch head"],
-                    publication_phase=str(marker["phase"]),
-                )
-            self._set_phase("push_attempted", phase_changed, workspace=workspace, marker=marker)
-            self._run(["git", "push", "origin", f"HEAD:refs/heads/{branch}"], cwd=workspace)
-            confirmed = self._run(["git", "ls-remote", remote, f"refs/heads/{branch}"]).split()
-            if not confirmed or confirmed[0] != head:
-                raise OperatorIntakeError(
-                    "publication-readback-mismatch",
-                    "remote branch readback does not match the pushed commit",
-                    effect_started=True,
-                    ambiguity=True,
-                    required_readback=["remote branch head", "target task file at remote head"],
-                    publication_phase="push_attempted",
-                )
-            remote_target_hash = self._git_blob_sha256(workspace, f"{confirmed[0]}:{target_path}")
-            if remote_target_hash != str(plan["task_file_sha256"]):
-                raise OperatorIntakeError(
-                    "remote-target-hash-mismatch",
-                    "pushed remote head does not contain the exact reviewed target bytes",
-                    effect_started=True,
-                    ambiguity=True,
-                    required_readback=["target task file at remote head"],
-                    details={
-                        "expected": plan["task_file_sha256"],
-                        "observed": remote_target_hash,
-                        "head": confirmed[0],
-                    },
-                    publication_phase="push_attempted",
-                )
-            self._set_phase("push_confirmed", phase_changed, workspace=workspace, marker=marker)
-        operation = str(plan["task_spec"]["operation"])
-        git_target_absent = plan["task_spec"]["expected_task_file_sha256"] is None
-        binding_exception = (
-            "Bureau-Task-Binding-Exception: task-registration PR; "
-            f"{task_id} is introduced by this PR and is absent from the base registry\n\n"
-            if git_target_absent
-            else ""
-        )
-        action = "Register" if operation == "register" else "Revise"
-        body = (
-            f"Bureau-Task: {task_id}\n"
-            f"{binding_exception}"
-            f"{action} reviewed candidate task `{task_id}`.\n\n"
-            f"- proposal: `{plan['proposal_sha256']}`\n"
-            f"- candidate: `{plan['candidate']['candidate_id']}`\n"
-            f"- source event: `{plan['candidate']['event_id']}`\n"
-            f"- target: `{target_path}`\n"
-            f"- expected TaskSpec revision: `{plan['task_spec']['expected_revision']}`\n\n"
-            "This PR does not queue, claim, dispatch, merge, deploy or verify the task.\n"
-        )
-        readback = self._pull_request_readback(
-            repository=repository, branch=branch, head=head, cwd=workspace
-        )
-        if readback is None:
-            if marker["phase"] == "pr_confirmed":
-                raise OperatorIntakeError(
-                    "publication-readback-mismatch",
-                    "workspace records a confirmed pull request but none exists",
-                    effect_started=True,
-                    ambiguity=True,
-                    required_readback=["pull request metadata", "remote branch head"],
-                    publication_phase="pr_confirmed",
-                )
-            self._set_phase("pr_attempted", phase_changed, workspace=workspace, marker=marker)
-            url = self._run(
-                [
-                    "gh",
-                    "pr",
-                    "create",
-                    "--repo",
-                    repository,
-                    "--base",
-                    "main",
-                    "--head",
-                    branch,
-                    "--title",
-                    (
-                        f"Register Bureau task {task_id}"
-                        if operation == "register"
-                        else f"Revise Bureau task {task_id}"
-                    ),
-                    "--body",
-                    body,
-                ],
-                cwd=workspace,
-            )
-            readback_raw = self._run(
-                [
-                    "gh",
-                    "pr",
-                    "view",
-                    url,
-                    "--repo",
-                    repository,
-                    "--json",
-                    "number,url,state,headRefOid,headRefName,baseRefName",
-                ],
-                cwd=workspace,
-            )
-            try:
-                readback = json.loads(readback_raw)
-            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-                raise OperatorIntakeError(
-                    "publication-readback-invalid",
-                    "created pull-request readback was not valid JSON",
-                    effect_started=True,
-                    ambiguity=True,
-                    required_readback=["pull request metadata", "remote branch head"],
-                    publication_phase="pr_attempted",
-                ) from exc
-            if (
-                not isinstance(readback, dict)
-                or readback.get("headRefOid") != head
-                or readback.get("headRefName") != branch
-                or readback.get("baseRefName") != "main"
-                or readback.get("state") != "OPEN"
-            ):
-                raise OperatorIntakeError(
-                    "publication-readback-mismatch",
-                    "GitHub pull-request readback does not match the published branch",
-                    effect_started=True,
-                    ambiguity=True,
-                    required_readback=["pull request metadata", "remote branch head"],
-                    details={"readback": readback, "expected_head": head},
-                    publication_phase="pr_attempted",
-                )
-        self._set_phase("pr_confirmed", phase_changed, workspace=workspace, marker=marker)
-        target_file_sha256 = self._workspace_file_sha256(
-            workspace, Path(target_path), phase="pr_confirmed"
-        )
-        if target_file_sha256 != str(plan["task_file_sha256"]):
-            raise OperatorIntakeError(
-                "workspace-target-hash-mismatch",
-                "confirmed publication workspace target does not match reviewed bytes",
-                effect_started=True,
-                required_readback=["target task file at remote head"],
-                details={
-                    "expected": plan["task_file_sha256"],
-                    "observed": target_file_sha256,
-                },
-                publication_phase="pr_confirmed",
-            )
-        return {
-            "repository": repository,
-            "workspace": str(workspace),
-            "branch": branch,
-            "head": head,
-            "pull_request": readback,
-            "url": readback.get("url"),
-            "git_diff_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest(),
-            "target_file_sha256": target_file_sha256,
-            "readback_complete": True,
-            "publication_phase": "pr_confirmed",
-            "workspace_reconciled": workspace_reconciled,
-            "open_pr_identity_revalidation": {
-                "collision_axis": "exact_task_id_or_target_path",
-                "semantic_similarity_consulted": False,
-                "pre_workspace": pre_workspace_open_pr_observation,
-                "pre_remote_effect": pre_remote_open_pr_observation,
-            },
-            "does_not_establish": [
-                "queue_truth",
-                "task_readiness",
-                "claim_or_dispatch_authority",
-                "merge_or_deployment_authority",
-                "task_verification",
-            ],
-        }

@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from bureau import legacy
 from bureau.authority_inventory import (
     _installed_systemd_consumers,
+    _operational_registry_writer_projection,
     _systemd_probe,
     authority_inventory,
     main,
@@ -392,3 +393,45 @@ def test_systemd_list_unit_files_treats_empty_exit_one_as_no_matches(
 
     assert units == []
     assert error is None
+
+
+def test_t013_operational_writer_projection_reports_cutover_on_repository_source() -> None:
+    root = Path(__file__).resolve().parents[1]
+    projection = _operational_registry_writer_projection(root)
+    assert projection["complete"] is True
+    assert projection["status"] == "cutover"
+    assert projection["active_count"] == 0
+    assert projection["unknown_count"] == 0
+    assert projection["active_surfaces"] == []
+    statuses = {item["name"]: item["status"] for item in projection["surfaces"]}
+    assert statuses == {
+        "operator-task-publication": "state_store",
+        "task-supply-publication": "state_store",
+        "now-refill-apply": "retired",
+        "queue-reconcile-apply": "retired",
+        "source-bridge-now-refill-publish": "retired",
+        "live-register-task-promotion-apply": "retired",
+        "systemd-now-refill-publish": "retired",
+    }
+    assert projection["compatibility_contract"]["operational_task_authority"] == (
+        "bureau-state-store-task-specs"
+    )
+    assert projection["compatibility_contract"]["registry_queue_json"] == (
+        "read-only-compatibility-history"
+    )
+
+
+def test_authority_inventory_exposes_path_sensitive_operational_writer_count(
+    tmp_path: Path,
+) -> None:
+    root = Path(__file__).resolve().parents[1]
+    state = tmp_path / "state.sqlite3"
+    connection = sqlite3.connect(state)
+    connection.execute("PRAGMA user_version=5")
+    for table in ("task_status", "runs", "events", "task_claims", "receipt_records"):
+        connection.execute(f'CREATE TABLE "{table}" (id TEXT)')
+    connection.commit()
+    connection.close()
+    inventory = authority_inventory(root, state_path=state, probe_systemd=False)
+    assert inventory["operational_registry_writers"]["status"] == "cutover"
+    assert inventory["summary"]["operational_registry_writer_count"] == 0

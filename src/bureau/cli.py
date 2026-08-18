@@ -50,7 +50,6 @@ from .effect_scope import (
 )
 from .lease_contract import bureau_lease_contract, diagnose_bureau_resource_keys
 from .live_register import (
-    apply_live_promote_plan,
     live_register_export,
     live_register_list,
     live_register_record,
@@ -1487,7 +1486,11 @@ def main(argv: list[str] | None = None) -> int:
                     path=args.write_plan,
                 )
             elif args.apply_plan:
-                value = apply_live_promote_plan(registry, path=args.apply_plan)
+                raise StateError(
+                    "live-promote-plan --apply-plan is retired after the StateStore "
+                    "TaskSpec cutover; use reviewed operator-task-propose / "
+                    "operator-task-publish instead"
+                )
             else:
                 raise StateError("live-promote-plan requires --write-plan or --apply-plan")
         elif args.command == "operator-candidate-assess":

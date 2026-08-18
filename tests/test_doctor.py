@@ -7,7 +7,7 @@ from pathlib import Path
 from bureau import legacy
 from bureau.doctor import doctor_projection
 from bureau.state_backup import create_backup
-from bureau.v2 import StateStore
+from bureau.v2 import Registry, StateStore
 
 NOW = "2026-07-07T12:00:00Z"
 TASK_1 = "BUR-TEST-001-T001"
@@ -148,6 +148,41 @@ def test_doctor_projects_flow_backup_restore_and_authority(
     assert control["authority"]["operational"] == "Bureau StateStore"
     for organ in control["organs"].values():
         assert {"source", "freshness", "bounds", "authority", "status"} <= set(organ)
+
+
+
+def test_doctor_counts_state_store_only_tasks_as_operational_truth(
+    registry_factory, tmp_path: Path
+) -> None:
+    root = registry_factory()
+    state_root = make_state(root)
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    store.import_registry_task_specs(registry)
+    current = store.task_spec(TASK_1)
+    assert current is not None
+    new_task = json.loads(json.dumps(current["spec"]))
+    new_task["id"] = "BUR-TEST-001-T999"
+    new_task["title"] = "Doctor StateStore-only task"
+    new_task["priority"] = {"lane": "next", "rank": 999}
+    store.put_task_spec(
+        new_task,
+        idempotency_key="doctor-state-store-only-task",
+        expected_revision=None,
+        source="test-doctor",
+    )
+
+    result = doctor_projection(
+        root,
+        state_root=state_root,
+        backup_root=tmp_path / "no-backups",
+        restore_receipt_root=tmp_path / "no-restores",
+        now=NOW,
+    )
+
+    assert result["control_plane"]["bounds"]["task_count"] == 4
+    assert result["control_plane"]["metrics"]["ready"]["value"] == 4
+    assert result["control_plane"]["authority"]["operational"] == "Bureau StateStore"
 
 
 def test_dashboard_is_bounded_doctor_consumer(registry_factory, tmp_path: Path) -> None:

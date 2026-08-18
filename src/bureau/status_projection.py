@@ -314,7 +314,7 @@ def _next_actions(
                 "action": "claim-task",
                 "task_id": task["task_id"],
                 "queue_lane": task.get("queue_lane"),
-                "source": "registry-queue",
+                "source": "task-priority-projection",
             }
         )
     return actions
@@ -682,9 +682,22 @@ def status_projection(
     generated_at = now or _utc_now()
     if registry is None:
         registry = Registry.load(root)
+    source_registry = registry
     state_path = _runtime_state_db_path(state_db, state_root)
-    state = _read_only_state_rows(state_path)
+    state = _read_only_state_rows(state_path, registry=source_registry)
     state_available = bool(state.get("available"))
+    task_authority_value = state.get("task_authority")
+    task_authority = (
+        task_authority_value if isinstance(task_authority_value, dict) else {}
+    )
+    operational_registry = state.get("operational_registry")
+    state_store_task_authority = (
+        state_available
+        and isinstance(operational_registry, Registry)
+        and task_authority.get("kind") == "bureau-state-store-task-specs"
+    )
+    if state_store_task_authority:
+        registry = operational_registry
     rows = state.get("rows", {}) if state_available else {}
     workspaces = _read_workspaces(state_path) if state_available else {}
     overlays = (
@@ -733,6 +746,16 @@ def status_projection(
                 observations_by_task.setdefault(task_id, []).append(observation)
 
     projection_findings: list[dict[str, Any]] = []
+    task_authority_error = state.get("task_authority_error")
+    if state_available and isinstance(task_authority_error, str):
+        projection_findings.append(
+            {
+                "severity": "blocker",
+                "code": "state-store-task-authority-invalid",
+                "message": "StateStore TaskSpec authority could not be projected safely.",
+                "detail": task_authority_error,
+            }
+        )
     if github_observed and github_healthy and github_binding_healthy is False:
         projection_findings.append(
             {
@@ -759,19 +782,24 @@ def status_projection(
         if not state_available:
             unknowns.append("runtime-state-unavailable")
 
-        queue_lane = _queue_lane(registry, task.id)
-        if queue_lane is None and task.state in {"inbox", "planned", "ready", "blocked"}:
+        queue_lane = task.lane if task.lane in {"now", "next", "later"} else None
+        compatibility_queue_lane = _queue_lane(source_registry, task.id)
+        if (
+            compatibility_queue_lane != queue_lane
+            and task.state in {"inbox", "planned", "ready", "blocked"}
+        ):
             findings.append(
                 {
                     "severity": "warning",
-                    "code": "task-priority-not-queued",
+                    "code": "compatibility-queue-projection-lag",
                     "message": (
-                        f"task declares advisory priority lane '{task.lane}' "
-                        "but is not dispatchable because registry/queue.json "
-                        "is the queue canon"
+                        "registry/queue.json differs from the authoritative task priority "
+                        "view; the Git queue is compatibility output only and never gates "
+                        "claimability"
                     ),
-                    "declared_lane": task.lane,
-                    "queue_canonical": True,
+                    "projected_lane": queue_lane,
+                    "compatibility_queue_lane": compatibility_queue_lane,
+                    "queue_authoritative": False,
                 }
             )
 
@@ -858,7 +886,18 @@ def status_projection(
                 "title": task.title,
                 "initiative": task.initiative,
                 "queue_lane": queue_lane,
-                "registry_state": task.state,
+                "queue_lane_authority": (
+                    "state-store-task-priority"
+                    if state_store_task_authority
+                    else "git-task-priority-bootstrap"
+                ),
+                "compatibility_queue_lane": compatibility_queue_lane,
+                "registry_state": (
+                    source_registry.tasks[task.id].state
+                    if task.id in source_registry.tasks
+                    else None
+                ),
+                "task_spec_state": task.state,
                 "effective_state": effective_state,
                 "active_run": active_run,
                 "workspace": workspace,
@@ -890,6 +929,30 @@ def status_projection(
             "available": state_available,
             "path": str(state_path),
             "error": None if state_available else state.get("error"),
+        },
+        "task_authority": {
+            "status": (
+                "state-store"
+                if state_store_task_authority
+                else "legacy-git-bootstrap"
+                if state_available and task_authority.get("kind") == "legacy-git-bootstrap"
+                else "unavailable"
+            ),
+            "kind": task_authority.get("kind"),
+            "task_count": task_authority.get("task_count"),
+            "task_spec_root_sha256": task_authority.get("task_spec_root_sha256"),
+            "git_projection_only_task_ids": task_authority.get(
+                "git_projection_only_task_ids", []
+            ),
+            "error": state.get("task_authority_error"),
+            "operational_registry_source": (
+                "bureau-state-store" if state_store_task_authority else "git-bootstrap"
+            ),
+        },
+        "compatibility_queue": {
+            "source": "registry/queue.json",
+            "authoritative": False,
+            "role": "compatibility_projection_only",
         },
         "github_observation": {
             "observed": github_observed,

@@ -1,0 +1,138 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Confirm whether Transcend Elite/OTBservice is needed; if not needed, disable or remove it reversibly and prove the previously observed handle growth of roughly 168 handles in 9 seconds no longer exists after reboot or service restart.",
+      "evidence_type": "object",
+      "id": "otb-leak",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:otbservice-postflight"
+      }
+    },
+    {
+      "assertion": "Classify current autostarts by required workflow and disable only unnecessary always-on helpers; preserve explicitly needed photo, scanner, backup, Tailscale, SSH and RustDesk functionality.",
+      "evidence_type": "object",
+      "id": "startup-rationalization",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:startup-postflight"
+      }
+    },
+    {
+      "assertion": "Verify the actual realtime-antivirus ownership and Avira background footprint; avoid running redundant realtime scanners and record any security-product change with postflight protection status.",
+      "evidence_type": "object",
+      "id": "security-overhead",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:security-postflight"
+      }
+    },
+    {
+      "assertion": "Identify processes that keep the RTX 2060 awake during ordinary desktop use, prefer integrated graphics for non-GPU-intensive applications where safe, and prove the discrete GPU can return to a lower-power idle state when no GPU workload is intended.",
+      "evidence_type": "object",
+      "id": "gpu-idle",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:gpu-idle-postflight"
+      }
+    },
+    {
+      "assertion": "After changes and a clean reboot, record CPU/RAM/disk/background-process state and Acer EC temperatures under comparable light load; show improvement without attributing unresolved physical cooling limits to software alone.",
+      "evidence_type": "object",
+      "id": "responsiveness-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "joerg-laptop:software-hygiene-performance-proof"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.infra"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "host:joerg-laptop",
+      "repo:/home/alex/repos/infra",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-PC-HYGIENE-V1-T023.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra"
+  },
+  "goal": "Eliminate confirmed software-side resource leakage and unnecessary persistent background load on Joerg's laptop while preserving required photo, backup and security workflows, then prove that idle responsiveness and thermal load improve.",
+  "id": "OPERATOR-PC-HYGIENE-V1-T023",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Transcend Elite is unused by Joerg",
+      "Avira realtime redundancy with Defender without explicit provider-state verification",
+      "Firefox is permanently forced to the RTX by a user GPU preference",
+      "software cleanup alone will fix the high CPU temperature"
+    ],
+    "live_finding": "Transcend OTBservice version 1.0.0.0 was auto-running with more than 47,000 handles and grew from 47,367 to 47,535 handles in 9 seconds while no USB/removable disk was attached. Avira Endpoint Protection used about 513 MB RAM in the sampled process set; numerous vendor/media/update helpers auto-start. RTX 2060 was in P0 at about 22 W and 59-65 C while Firefox was the visible active 3D-GPU process.",
+    "next_action": "Handle OTBservice first because the resource leak is directly proven, then reduce only workflow-unnecessary startup/GPU/background load and compare a clean-reboot baseline.",
+    "registered_at": "2026-08-18T18:58:00+02:00",
+    "source": "Live investigation of joerg-laptop after reported overheating/slowness",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-fe5f2292fa7cbeb081d243ed",
+      "event_id": 8610,
+      "event_created_at": "2026-08-18T16:57:14.839588Z",
+      "request_sha256": "680c95a3132902eebec8da8120d9067ac6221aead5f412021f467d44726a1765",
+      "candidate_event_id": "candidate-event-e8d1307d242eceb1982989f7",
+      "source_fingerprint": "032764af70a58113053b2de31b99fb84f07cf5a3cab7b66a7bab3ff73d852096",
+      "content_fingerprint": "fe5f2292fa7cbeb081d243edb74652be1b6a21d700ec476d8ec599d397de6a00",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "032764af70a58113053b2de31b99fb84f07cf5a3cab7b66a7bab3ff73d852096",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "chat:joerg-laptop-performance-2026-08-18",
+        "observed_at": "2026-08-18T16:57:14.729519Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "032764af70a58113053b2de31b99fb84f07cf5a3cab7b66a7bab3ff73d852096",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "chat:joerg-laptop-performance-2026-08-18",
+          "observed_at": "2026-08-18T16:57:14.729519Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 22
+  },
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Before disabling or removing each startup/service component record the exact service/startup entry and restoration path. Re-enable any component whose required photo, backup, scanner, security or remote-access function regresses."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Remove Jörg laptop software performance leaks"
+}

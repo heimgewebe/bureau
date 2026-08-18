@@ -1,17 +1,171 @@
 {
-  "schema_version": 1,
+  "acceptance": [
+    {
+      "assertion": "Kein produktiver Pfad schreibt operative Task-, Status-, Queue-, Initiativen- oder Closeoutwahrheit in Git-Dateien; verbleibende Git-Ausgaben sind ausdrücklich Code, CI/Release, redigierter Snapshot oder read-only Kompatibilitätsprojektion.",
+      "evidence_type": "object",
+      "id": "legacy-writers-removed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t013:legacy-operational-writers-removed"
+      }
+    },
+    {
+      "assertion": "Code-, Schema-, Migrations- und Snapshotprüfung auf dem öffentlichen Repository bleibt vollständig grün; die weiterhin durch Branch Protection verlangte Registry-Preflight-Prüfung bleibt wirksam oder explizit als sichere Code-PR-Prüfung erhalten.",
+      "evidence_type": "object",
+      "id": "ci-remains-strong",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t013:ci-remains-strong"
+      }
+    },
+    {
+      "assertion": "Historische Registry-Task- und Queue-Dateien bleiben nachvollziehbar als Bootstrap-/Archiv-/Kompatibilitätsprojektion lesbar, besitzen aber keinen produktiven Writer und können keine neue Laufzeitwirkung erzeugen.",
+      "evidence_type": "object",
+      "id": "compatibility-archive",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t013:compatibility-archive-read-only"
+      }
+    },
+    {
+      "assertion": "Nach dem Cutover zeigen wiederholte Livezyklen null operative Queue-/Status-/Taskregistrierungs-/Closeout-PRs sowie keine unerklärten terminalen oder ready/unqueued Driftfälle; StateStore bleibt alleinige operative TaskSpec-/Lifecycle-Autorität.",
+      "evidence_type": "object",
+      "id": "measured-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t013:measured-zero-operational-prs-and-drift"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T012"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-T013-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/src/bureau/effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_effect_scope.py",
+      "path:/home/alex/repos/bureau/tests/test_coordination_state_effect_scope.py",
+      "path:/home/alex/repos/bureau/src/bureau/task_supply.py",
+      "path:/home/alex/repos/bureau/src/bureau/supply_runner.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py",
+      "path:/home/alex/repos/bureau/tests/test_supply_runner.py",
+      "path:/home/alex/repos/bureau/src/bureau/source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/tests/test_source_pr_bridge.py",
+      "path:/home/alex/repos/bureau/tests/test_source_pr_bridge_cli.py",
+      "path:/home/alex/repos/bureau/tests/test_source_pr_bridge_systemd.py",
+      "path:/home/alex/repos/bureau/src/bureau/now_refill.py",
+      "path:/home/alex/repos/bureau/tests/test_now_refill.py",
+      "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
+      "path:/home/alex/repos/bureau/tests/test_queue_reconcile.py",
+      "path:/home/alex/repos/bureau/src/bureau/authority_inventory.py",
+      "path:/home/alex/repos/bureau/tests/test_authority_inventory.py",
+      "path:/home/alex/repos/bureau/ops/systemd/bureau-source-pr-bridge.service",
+      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-merge-group.yml",
+      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+      "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight_workflow_failclosed.py",
+      "path:/home/alex/repos/bureau/tests/test_github_workflows.py",
+      "path:/home/alex/repos/bureau/docs/operations.md",
+      "path:/home/alex/repos/bureau/registry/queue.json",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T013.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Nach erfolgreichem Cutover alle Queue-, Status-, Lifecycle-, Closeout- und Taskregistrierungs-PR-Pfade entfernen oder in reine Snapshot-/Codepublikation überführen. GitHub-Code-PRs, unabhängige CI, Releases und redigierte Snapshots bleiben erhalten.",
   "id": "BUREAU-CONTROL-PLANE-V3-T013",
   "initiative": "BUREAU-CONTROL-PLANE-V3",
-  "title": "Legacy-Git-Schreibpfade nach Cutover entfernen",
-  "goal": "Nach erfolgreichem Cutover alle Queue-, Status-, Lifecycle-, Closeout- und Taskregistrierungs-PR-Pfade entfernen oder in reine Snapshot-/Codepublikation überführen. GitHub-Code-PRs, unabhängige CI, Releases und redigierte Snapshots bleiben erhalten.",
-  "state": "planned",
+  "metadata": {
+    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
+    "does_not_establish": [
+      "Merge- oder Deploymentabschluss",
+      "Freigabe fremder Ressourcen",
+      "direkte main-Mutation",
+      "Merge oder Deployment des Grabowski-Adapters PR #825"
+    ],
+    "execution_prerequisite": {
+      "kind": "grabowski_pull_request_and_runtime",
+      "pull_request": 825,
+      "repository": "heimgewebe/grabowski",
+      "required": "merged_and_deployed_before_t013_claim"
+    },
+    "registered_at": "2026-08-06T11:11:00Z",
+    "revision_base_main": "fe41fe6e12569eb433542c47b8f2bdd84902789a",
+    "revision_reason": "2026-08-18: T012 ist verifiziert; T013 erhält typed Acceptance und den vollständigen exakten Scope für Operator-Intake, Supply, Queue-/Now-Refill-Writer, Source-Bridge, Effect-Scope, Authority-Inventar, systemd und erforderliche CI-Kompatibilität. Der eigentliche Claim bleibt bis zum gemergten und live deployten Grabowski-StateStore-Publication-Adapter gesperrt.",
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-492fdcf1d63d54b9423b30ba",
+      "event_id": 8348,
+      "event_created_at": "2026-08-18T11:04:52.656284Z",
+      "request_sha256": "5e40a26a593930f6c1d0574070f611a9826408d84effb856a0a56a75a37c3a9b",
+      "candidate_event_id": "candidate-event-f59ae00a0885bdf689bc3a9f",
+      "source_fingerprint": "fa149f0a7f04e5b930f1a0eefa873e27c8503282d0543504db7714cefe84cac9",
+      "content_fingerprint": "492fdcf1d63d54b9423b30ba17bbb93d10ba382cf4f9b349721b7276a90ce60e",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "fa149f0a7f04e5b930f1a0eefa873e27c8503282d0543504db7714cefe84cac9",
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:t013-hard-cutover-readiness:2026-08-18",
+        "observed_at": "2026-08-18T11:04:52.514197Z",
+        "sha256": "6f46cd4e01d92e37dbfb9c44ac9554b93fbc04e0365f839af6adf123aee44167"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "fa149f0a7f04e5b930f1a0eefa873e27c8503282d0543504db7714cefe84cac9",
+          "freshness": "digest-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau:t013-hard-cutover-readiness:2026-08-18",
+          "observed_at": "2026-08-18T11:04:52.514197Z",
+          "sha256": "6f46cd4e01d92e37dbfb9c44ac9554b93fbc04e0365f839af6adf123aee44167"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
   "priority": {
     "lane": "later",
     "rank": 50
   },
-  "depends_on": [
-    "BUREAU-CONTROL-PLANE-V3-T012"
-  ],
   "required_capabilities": [
     "repository",
     "python",
@@ -19,74 +173,7 @@
     "bureau",
     "grabowski"
   ],
-  "claims": [
-    {
-      "resource": "component.bureau.core",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "component.bureau.docs",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "component.bureau.registry",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "state.bureau",
-      "mode": "read"
-    }
-  ],
-  "execution": {
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
-    },
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/bureau",
-    "grabowski_resources": [
-      "path:/home/alex/repos/bureau/src/bureau/source_pr_bridge.py",
-      "path:/home/alex/repos/bureau/src/bureau/now_refill.py",
-      "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
-      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-merge-group.yml",
-      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
-      "path:/home/alex/repos/bureau/docs/operations.md",
-      "path:/home/alex/repos/bureau/registry/queue.json",
-      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T013.json"
-    ]
-  },
-  "acceptance": [
-    {
-      "id": "legacy-writers-removed",
-      "assertion": "Kein produktiver Pfad schreibt operative Task-, Status-, Queue-, Initiativen- oder Closeoutwahrheit in Git-Dateien."
-    },
-    {
-      "id": "ci-remains-strong",
-      "assertion": "Code-, Schema-, Migrations- und Snapshotprüfung auf dem öffentlichen Repository bleibt vollständig grün."
-    },
-    {
-      "id": "compatibility-archive",
-      "assertion": "Historische Registry-Dateien bleiben nachvollziehbar archiviert und können keine neue Laufzeitwirkung erzeugen."
-    },
-    {
-      "id": "measured-effect",
-      "assertion": "Nach dem Cutover entstehen null Queue-/Status-/Closeout-PRs und keine terminalen oder ready/unqueued Driftfälle."
-    }
-  ],
-  "metadata": {
-    "registered_at": "2026-08-06T11:11:00Z",
-    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
-    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
-    "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
-    "does_not_establish": [
-      "Merge- oder Deploymentabschluss",
-      "Freigabe fremder Ressourcen",
-      "direkte main-Mutation"
-    ]
-  }
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Legacy-Git-Schreibpfade nach Cutover entfernen"
 }

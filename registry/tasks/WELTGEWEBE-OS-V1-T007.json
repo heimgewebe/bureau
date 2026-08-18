@@ -1,28 +1,122 @@
 {
-  "schema_version": 1,
-  "id": "WELTGEWEBE-OS-V1-T007",
-  "initiative": "WELTGEWEBE-OS-V1",
-  "title": "Chronik als Ereignis- und Wirkungsverlauf anbinden",
-  "state": "ready",
-  "goal": "Chronik als append-only Projektion für versionierte Domain-, Deployment-, Föderations- und Grabowski-Receipts anbinden, ohne die jeweilige Primärwahrheit zu ersetzen.",
-  "depends_on": [
-    "WELTGEWEBE-OS-V1-T002"
+  "acceptance": [
+    {
+      "assertion": "Chronik unterscheidet Domain-Ereignis, Deployment, Föderationszustellung und Operator-Receipt typisiert.",
+      "evidence_type": "object",
+      "id": "typed-events",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:typed-events"
+      }
+    },
+    {
+      "assertion": "Jeder Eintrag bindet Ursprung, Version, Korrelations-ID und Quellbeleg.",
+      "evidence_type": "object",
+      "id": "provenance",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:provenance"
+      }
+    },
+    {
+      "assertion": "Chronik kann Diagnose und Historie liefern, begründet aber keine stille Rückschreibung in Weltgewebe.",
+      "evidence_type": "object",
+      "id": "replay-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:replay-boundary"
+      }
+    },
+    {
+      "assertion": "Aufbewahrung, Datenschutz und Lösch-/Widerrufsprojektionen sind explizit.",
+      "evidence_type": "object",
+      "id": "retention",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t007:retention"
+      }
+    }
   ],
-  "priority": {
-    "lane": "later",
-    "rank": 5
-  },
   "claims": [
     {
-      "resource": "repo.chronik",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "repo.chronik"
     }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T002"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/chronik"
+  },
+  "goal": "Chronik als append-only Projektion für versionierte Domain-, Deployment-, Föderations- und Grabowski-Receipts anbinden, ohne die jeweilige Primärwahrheit zu ersetzen.",
+  "id": "WELTGEWEBE-OS-V1-T007",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "dependency_reconciliation": {
+      "dependency_states": {
+        "WELTGEWEBE-OS-V1-T002": "verified"
+      },
+      "does_not_establish": [
+        "queue placement",
+        "claim success",
+        "capability availability",
+        "resource availability",
+        "implementation completion"
+      ],
+      "from_state": "blocked",
+      "reason": "Every declared dependency is terminal and the task defines no independent current blocker.",
+      "reconciled_at": "2026-08-04T22:34:00Z",
+      "source_registry_commit": "4a1b9b573f29ed2097650c59f68e8cc6d776ba35",
+      "to_state": "ready"
+    },
+    "ecosystem_role": "history-projection",
+    "registered_at": "2026-07-15T20:50:00Z",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-93eb2b9d2f085c5ef1339a32",
+      "event_id": 8301,
+      "event_created_at": "2026-08-18T10:21:06.378054Z",
+      "request_sha256": "7eeff60d540b30e40b748b2d27b52cd5c5174596b921f8747477a2a1148cc702",
+      "candidate_event_id": "candidate-event-2bf67e14c6395dd37fd470f6",
+      "source_fingerprint": "cdb85265216fb764e4465b74fa9792537bc1bd3669de3c6af3270563e240bc51",
+      "content_fingerprint": "93eb2b9d2f085c5ef1339a321d51ea606513bb12c536dce27e49aefde359d301",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "cdb85265216fb764e4465b74fa9792537bc1bd3669de3c6af3270563e240bc51",
+        "freshness": "digest-bound",
+        "kind": "direct_user_request",
+        "locator": "https://github.com/heimgewebe/bureau/pull/2074",
+        "observed_at": "2026-08-18T10:21:06.229671Z",
+        "sha256": "4ba61c815bd29123da3136ca4282fd8d5b31770a76b2227c683f97e4bb1fd21f"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "cdb85265216fb764e4465b74fa9792537bc1bd3669de3c6af3270563e240bc51",
+          "freshness": "digest-bound",
+          "kind": "direct_user_request",
+          "locator": "https://github.com/heimgewebe/bureau/pull/2074",
+          "observed_at": "2026-08-18T10:21:06.229671Z",
+          "sha256": "4ba61c815bd29123da3136ca4282fd8d5b31770a76b2227c683f97e4bb1fd21f"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 5
   },
   "required_capabilities": [
     "python",
@@ -31,63 +125,7 @@
     "postgresql",
     "nats"
   ],
-  "acceptance": [
-    {
-      "id": "typed-events",
-      "assertion": "Chronik unterscheidet Domain-Ereignis, Deployment, Föderationszustellung und Operator-Receipt typisiert.",
-      "evidence_type": "object",
-      "verifier": "manual_observation",
-      "verifier_config": {
-        "observation_scope": "weltgewebe:t007:typed-events"
-      }
-    },
-    {
-      "id": "provenance",
-      "assertion": "Jeder Eintrag bindet Ursprung, Version, Korrelations-ID und Quellbeleg.",
-      "evidence_type": "object",
-      "verifier": "manual_observation",
-      "verifier_config": {
-        "observation_scope": "weltgewebe:t007:provenance"
-      }
-    },
-    {
-      "id": "replay-boundary",
-      "assertion": "Chronik kann Diagnose und Historie liefern, begründet aber keine stille Rückschreibung in Weltgewebe.",
-      "evidence_type": "object",
-      "verifier": "manual_observation",
-      "verifier_config": {
-        "observation_scope": "weltgewebe:t007:replay-boundary"
-      }
-    },
-    {
-      "id": "retention",
-      "assertion": "Aufbewahrung, Datenschutz und Lösch-/Widerrufsprojektionen sind explizit.",
-      "evidence_type": "object",
-      "verifier": "manual_observation",
-      "verifier_config": {
-        "observation_scope": "weltgewebe:t007:retention"
-      }
-    }
-  ],
-  "metadata": {
-    "registered_at": "2026-07-15T20:50:00Z",
-    "ecosystem_role": "history-projection",
-    "dependency_reconciliation": {
-      "reconciled_at": "2026-08-04T22:34:00Z",
-      "source_registry_commit": "4a1b9b573f29ed2097650c59f68e8cc6d776ba35",
-      "from_state": "blocked",
-      "to_state": "ready",
-      "dependency_states": {
-        "WELTGEWEBE-OS-V1-T002": "verified"
-      },
-      "reason": "Every declared dependency is terminal and the task defines no independent current blocker.",
-      "does_not_establish": [
-        "queue placement",
-        "claim success",
-        "capability availability",
-        "resource availability",
-        "implementation completion"
-      ]
-    }
-  }
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Chronik als Ereignis- und Wirkungsverlauf anbinden"
 }

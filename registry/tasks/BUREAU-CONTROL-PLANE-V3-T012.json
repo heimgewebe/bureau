@@ -1,53 +1,71 @@
 {
-  "schema_version": 1,
-  "id": "BUREAU-CONTROL-PLANE-V3-T012",
-  "initiative": "BUREAU-CONTROL-PLANE-V3",
-  "title": "Schattenbetrieb, Consumer-Migration und Cutover durchführen",
-  "goal": "Git-Registry und StateStore zunächst dual lesen, aber immer nur einen Writer zulassen. Null-Divergenz, Multi-Agent-Claim, automatischer Closeout, Offline-Betrieb, Restore und Rückrollpfad müssen über mehrere kontrollierte Zyklen belegt sein, bevor StateStore alleinige operative Autorität wird.",
-  "state": "planned",
-  "priority": {
-    "lane": "later",
-    "rank": 50
-  },
-  "depends_on": [
-    "BUREAU-CONTROL-PLANE-V3-T011"
-  ],
-  "required_capabilities": [
-    "repository",
-    "python",
-    "testing",
-    "bureau",
-    "grabowski"
+  "acceptance": [
+    {
+      "assertion": "Während des Schattenbetriebs existiert genau ein autoritativer Writer; die andere Seite ist nur Projektion.",
+      "evidence_type": "object",
+      "id": "single-writer-shadow-mode",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t012:single-writer-shadow-mode"
+      }
+    },
+    {
+      "assertion": "Wiederholte Kontrollzyklen zeigen null unerklärte Divergenz zwischen StateStore und Git-Kompatibilitätsprojektion.",
+      "evidence_type": "object",
+      "id": "zero-divergence-window",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t012:zero-divergence-window"
+      }
+    },
+    {
+      "assertion": "Multi-Agent-Claim, Acceptance-Closeout, GitHub-Ausfall, Backup-Restore und Runtime-Readback sind erfolgreich belegt.",
+      "evidence_type": "object",
+      "id": "end-to-end-cutover-gates",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t012:end-to-end-cutover-gates"
+      }
+    },
+    {
+      "assertion": "Cutover und Rückrollpfad sind an exakte Release-, Schema-, Checkpoint- und State-Wurzeln gebunden.",
+      "evidence_type": "object",
+      "id": "reversible-cutover",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t012:reversible-cutover"
+      }
+    }
   ],
   "claims": [
     {
-      "resource": "component.bureau.core",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "component.bureau.core"
     },
     {
-      "resource": "component.bureau.docs",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "component.bureau.docs"
     },
     {
-      "resource": "component.bureau.registry",
-      "mode": "read"
+      "mode": "read",
+      "resource": "component.bureau.registry"
     },
     {
-      "resource": "state.bureau",
-      "mode": "read"
+      "mode": "read",
+      "resource": "state.bureau"
     }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T011"
   ],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen."
+      "note": "Die Umsetzung verändert ausschließlich den revisionsgebundenen Bureau-Scope. Merge, Runtime-Refresh und Cutover bleiben separate, exakt belegte Wirkungen.",
+      "required_level": "operator"
     },
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
       "path:/home/alex/repos/bureau/src/bureau/runtime_identity.py",
       "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
@@ -55,36 +73,81 @@
       "path:/home/alex/repos/bureau/tests/test_runtime_identity.py",
       "path:/home/alex/repos/bureau/tests/test_registry_snapshot.py",
       "path:/home/alex/repos/bureau/docs/operations.md",
-      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T012.json"
-    ]
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-T012.json",
+      "path:/home/alex/repos/bureau/src/bureau/status_projection.py",
+      "path:/home/alex/repos/bureau/tests/test_status_projection.py",
+      "path:/home/alex/repos/bureau/tests/test_doctor.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
   },
-  "acceptance": [
-    {
-      "id": "single-writer-shadow-mode",
-      "assertion": "Während des Schattenbetriebs existiert genau ein autoritativer Writer; die andere Seite ist nur Projektion."
-    },
-    {
-      "id": "zero-divergence-window",
-      "assertion": "Wiederholte Kontrollzyklen zeigen null unerklärte Divergenz zwischen StateStore und Git-Kompatibilitätsprojektion."
-    },
-    {
-      "id": "end-to-end-cutover-gates",
-      "assertion": "Multi-Agent-Claim, Acceptance-Closeout, GitHub-Ausfall, Backup-Restore und Runtime-Readback sind erfolgreich belegt."
-    },
-    {
-      "id": "reversible-cutover",
-      "assertion": "Cutover und Rückrollpfad sind an exakte Release-, Schema-, Checkpoint- und State-Wurzeln gebunden."
-    }
-  ],
+  "goal": "Git-Registry und StateStore zunächst dual lesen, aber immer nur einen Writer zulassen. Null-Divergenz, Multi-Agent-Claim, automatischer Closeout, Offline-Betrieb, Restore und Rückrollpfad müssen über mehrere kontrollierte Zyklen belegt sein, bevor StateStore alleinige operative Autorität wird.",
+  "id": "BUREAU-CONTROL-PLANE-V3-T012",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
-    "registered_at": "2026-08-06T11:11:00Z",
-    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
-    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
     "architecture_constraint": "Vorhandene StateStore-, Event-, CAS-, Receipt-, Live-Register- und Runtime-Organe erweitern; keine zweite Wahrheitsschicht schaffen.",
     "does_not_establish": [
       "Merge- oder Deploymentabschluss",
       "Freigabe fremder Ressourcen",
       "direkte main-Mutation"
-    ]
-  }
+    ],
+    "registered_at": "2026-08-06T11:11:00Z",
+    "revision_base_main": "72b9e08f0b3a68557d316dca9e7985dfee4f777d",
+    "revision_reason": "2026-08-18: typed Acceptance nachziehen und status_projection/Doctor auf die bereits autoritative StateStore-TaskSpec-Sicht migrieren; Live-Diagnose zeigte 186 Git/StateStore-Stateabweichungen und falsche stale-Receipt-Signale bei Git-basierter Digestprüfung.",
+    "source": "Direkter Nutzerauftrag und frischer Live-Abgleich von GitHub main, Registry, Queue, bestehendem StateStore und historischen Implementierungs-PRs.",
+    "user_authority": "2026-08-06: vollständigen Bureau-Control-Plane-v3-Plan autonom und ohne Zusatzkosten umsetzen.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c701b55e34cc9a6a9a6d6752",
+      "event_id": 8166,
+      "event_created_at": "2026-08-18T05:33:32.623001Z",
+      "request_sha256": "ed93763b6c276b188c62dca6ab5562e6c088920309b02e7276aaf0dda6506e02",
+      "candidate_event_id": "candidate-event-9b0d1b07af329f842de0f479",
+      "source_fingerprint": "f0937e5409a45d1c7f07054cc0d9d3edd647fcb683b78878112eec443c302148",
+      "content_fingerprint": "c701b55e34cc9a6a9a6d675237c1f046a1075739dfe1bd502bba4d53297136f6",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "f0937e5409a45d1c7f07054cc0d9d3edd647fcb683b78878112eec443c302148",
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:t012-cutover-readiness:2026-08-18",
+        "observed_at": "2026-08-18T05:31:00Z",
+        "sha256": "ad6d6a55ec73817380b29c4f765c7457d749f9564dee39b570f5f89085dcf79b"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "f0937e5409a45d1c7f07054cc0d9d3edd647fcb683b78878112eec443c302148",
+          "freshness": "digest-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau:t012-cutover-readiness:2026-08-18",
+          "observed_at": "2026-08-18T05:31:00Z",
+          "sha256": "ad6d6a55ec73817380b29c4f765c7457d749f9564dee39b570f5f89085dcf79b"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Schattenbetrieb, Consumer-Migration und Cutover durchführen"
 }

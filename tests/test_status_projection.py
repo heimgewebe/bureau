@@ -11,7 +11,7 @@ from bureau.status_projection import (
     STATUS_PROJECTION_SCHEMA_VERSION,
     status_projection,
 )
-from bureau.v2 import Registry, StateStore, plan_sha256
+from bureau.v2 import Registry, StateStore, authoritative_task_registry, plan_sha256
 
 NOW = "2026-07-07T12:00:00Z"
 
@@ -73,13 +73,18 @@ def add_run(
 
 
 def add_task_status(
-    state_root: Path, task_id: str, state: str, task_sha256: str = "wrong"
+    state_root: Path,
+    task_id: str,
+    state: str,
+    task_sha256: str = "wrong",
+    *,
+    plan_sha: str = "",
 ) -> None:
     with connect(state_root) as connection:
         connection.execute(
             "INSERT INTO task_status(task_id, task_sha256, plan_sha256, state, updated_at)"
             " VALUES(?,?,?,?,?)",
-            (task_id, task_sha256, "", state, NOW),
+            (task_id, task_sha256, plan_sha, state, NOW),
         )
 
 
@@ -350,7 +355,9 @@ def test_unbound_unhealthy_github_binding_is_top_level_blocker(registry_factory)
     assert entry["github"] is None
 
 
-def test_task_priority_without_queue_entry_is_reported_as_advisory(registry_factory) -> None:
+def test_task_priority_without_queue_entry_is_reported_as_compatibility_lag(
+    registry_factory,
+) -> None:
     root = registry_factory()
     queue_path = root / "registry/queue.json"
     queue = json.loads(queue_path.read_text(encoding="utf-8"))
@@ -358,13 +365,124 @@ def test_task_priority_without_queue_entry_is_reported_as_advisory(registry_fact
     queue_path.write_text(json.dumps(queue), encoding="utf-8")
     projection = project(root)
     entry = task_entry(projection, TASK_1)
-    assert entry["queue_lane"] is None
+    assert entry["queue_lane"] == "now"
+    assert entry["queue_lane_authority"] == "git-task-priority-bootstrap"
+    assert entry["compatibility_queue_lane"] is None
     finding = next(
-        item for item in entry["findings"] if item["code"] == "task-priority-not-queued"
+        item
+        for item in entry["findings"]
+        if item["code"] == "compatibility-queue-projection-lag"
     )
     assert finding["severity"] == "warning"
-    assert finding["declared_lane"] == "now"
-    assert finding["queue_canonical"] is True
+    assert finding["projected_lane"] == "now"
+    assert finding["compatibility_queue_lane"] is None
+    assert finding["queue_authoritative"] is False
+    assert projection["compatibility_queue"] == {
+        "source": "registry/queue.json",
+        "authoritative": False,
+        "role": "compatibility_projection_only",
+    }
+    assert projection["healthy"] is True
+
+
+def test_state_store_taskspec_revision_is_operational_authority(registry_factory) -> None:
+    root = registry_factory()
+    state_root = make_state(root)
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    store.import_registry_task_specs(registry)
+    current = store.task_spec(TASK_1)
+    assert current is not None
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["state"] = "planned"
+    revised["title"] = "StateStore authoritative title"
+    stored = store.put_task_spec(
+        revised,
+        idempotency_key="status-projection-authoritative-revision",
+        expected_revision=current["revision"],
+        source="test-status-projection",
+    )
+
+    projection = project(root)
+    entry = task_entry(projection, TASK_1)
+
+    assert projection["task_authority"]["status"] == "state-store"
+    assert projection["task_authority"]["kind"] == "bureau-state-store-task-specs"
+    assert entry["registry_state"] == "ready"
+    assert entry["task_spec_state"] == "planned"
+    assert entry["effective_state"] == "planned"
+    assert entry["queue_lane_authority"] == "state-store-task-priority"
+    assert entry["title"] == "StateStore authoritative title"
+    assert projection["task_authority"]["task_spec_root_sha256"]
+    assert stored["spec_sha256"] != registry.tasks[TASK_1].sha256
+
+
+def test_state_store_only_task_is_visible_in_status_projection(registry_factory) -> None:
+    root = registry_factory()
+    state_root = make_state(root)
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    store.import_registry_task_specs(registry)
+    current = store.task_spec(TASK_1)
+    assert current is not None
+    new_task = json.loads(json.dumps(current["spec"]))
+    new_task["id"] = "BUR-TEST-001-T999"
+    new_task["title"] = "StateStore-only task"
+    new_task["priority"] = {"lane": "next", "rank": 999}
+    store.put_task_spec(
+        new_task,
+        idempotency_key="status-projection-state-only-task",
+        expected_revision=None,
+        source="test-status-projection",
+    )
+
+    projection = project(root)
+    entry = task_entry(projection, "BUR-TEST-001-T999")
+
+    assert projection["task_authority"]["task_count"] == 4
+    assert entry["registry_state"] is None
+    assert entry["task_spec_state"] == "ready"
+    assert entry["effective_state"] == "ready"
+    assert entry["queue_lane"] == "next"
+    assert entry["compatibility_queue_lane"] is None
+
+
+def test_verified_receipt_binds_current_state_store_revision_not_git_projection(
+    registry_factory,
+) -> None:
+    root = registry_factory()
+    state_root = make_state(root)
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    store.import_registry_task_specs(registry)
+    current = store.task_spec(TASK_1)
+    assert current is not None
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["title"] = "Revised only in StateStore"
+    stored = store.put_task_spec(
+        revised,
+        idempotency_key="status-projection-receipt-current-state-revision",
+        expected_revision=current["revision"],
+        source="test-status-projection",
+    )
+    authoritative, _authority, _revisions = authoritative_task_registry(registry, store)
+    authoritative_task_sha = authoritative.tasks[TASK_1].sha256
+    current_plan = plan_sha256(authoritative, revised["initiative"])
+    add_task_status(
+        state_root,
+        TASK_1,
+        "verified",
+        task_sha256=authoritative_task_sha,
+        plan_sha=current_plan,
+    )
+
+    projection = project(root)
+    entry = task_entry(projection, TASK_1)
+
+    assert stored["spec_sha256"] != registry.tasks[TASK_1].sha256
+    assert authoritative_task_sha != registry.tasks[TASK_1].sha256
+    assert entry["effective_state"] == "verified"
+    assert entry["stale_reasons"] == []
     assert projection["healthy"] is True
 
 

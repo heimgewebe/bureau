@@ -507,7 +507,16 @@ bureau --root . --json status-projection
 ```
 
 Both commands observe and project only. They never verify tasks, mutate the
-queue, merge, delete branches or clean up worktrees.
+queue, merge, delete branches or clean up worktrees. When the StateStore contains
+TaskSpec revisions, `status-projection` uses that TaskSpec projection as its operational
+task catalog. Git task files remain the compatibility/source projection: `registry_state`
+shows their declared state when one exists, while `task_spec_state` and
+`effective_state` come from StateStore authority. StateStore-only tasks therefore remain
+visible to Doctor and dashboard consumers. Likewise, `queue_lane` follows the
+authoritative task priority view; the legacy `registry/queue.json` lane is exposed
+separately as `compatibility_queue_lane` and can never gate claimability. A malformed
+StateStore TaskSpec projection is a blocker rather than a reason to silently treat Git
+as equivalent current truth.
 
 ### Bounded Control Plane Doctor (T011)
 

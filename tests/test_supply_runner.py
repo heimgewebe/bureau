@@ -17,7 +17,13 @@ from bureau.supply_runner import (
     run_supply_cycle,
     snapshot_path,
 )
-from bureau.task_supply import REVIEW_REASON, SupplyError, SupplyPolicy, _load_frontier_snapshot
+from bureau.task_supply import (
+    REVIEW_REASON,
+    SupplyError,
+    SupplyPolicy,
+    _load_frontier_snapshot,
+    sha256_json,
+)
 from bureau.v2 import Registry
 
 HEAD = "d" * 40
@@ -614,6 +620,140 @@ def test_claimable_items_without_task_specs_fail_closed_for_joint_packability(
     assert (root / "registry/queue.json").read_bytes() == queue_before
 
 
+def test_runner_uses_dispatcher_task_specs_for_worker_profile_when_registry_drifted(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    drift_id = (
+        "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809"
+    )
+    control_id = "OPERATOR-INTEGRATION-LOOP-V1-T033"
+    missing_id = "OPERATOR-INTEGRATION-LOOP-V1-T034"
+    registry = Registry.load(root)
+    authoritative_documents = {
+        task_id: dict(task.raw) for task_id, task in registry.tasks.items()
+    }
+    authoritative_documents[drift_id] = {
+        **authoritative_documents[drift_id],
+        "required_capabilities": [
+            "repository",
+            "python",
+            "testing",
+            "grabowski",
+            "runtime-deployment",
+        ],
+    }
+    authoritative_documents[missing_id] = {
+        **authoritative_documents[missing_id],
+        "required_capabilities": ["github", "review-evidence"],
+    }
+    drift_item = {
+        "task_id": drift_id,
+        "title": drift_id,
+        "effective_state": "ready",
+        "queue_lane": "later",
+        "eligible": False,
+        "claim_reasons": ["missing capabilities: runtime-deployment"],
+        "reasons": ["missing capabilities: runtime-deployment"],
+    }
+    missing_legacy_capabilities = {
+        "task_id": missing_id,
+        "title": missing_id,
+        "effective_state": "ready",
+        "queue_lane": "later",
+        "eligible": False,
+        "claim_reasons": ["missing capabilities: github, review-evidence"],
+        "reasons": ["missing capabilities: github, review-evidence"],
+    }
+
+    def observe(**_kwargs: object) -> FrontierObservation:
+        return FrontierObservation(
+            frontier=(
+                drift_item,
+                claimable_task(control_id),
+                missing_legacy_capabilities,
+            ),
+            runtime_healthy=True,
+            runtime_blocker_codes=(),
+            capabilities=CAPABILITIES,
+            task_documents=authoritative_documents,
+            task_spec_root_sha256="a" * 64,
+            task_documents_sha256=sha256_json(authoritative_documents),
+        )
+
+    summary = cycle(
+        tmp_path,
+        root,
+        [],
+        observer=observe,
+        mutation_authority=False,
+        publish=False,
+    )
+
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    profile = persisted["feasibility"]["worker_profile"]
+    assert profile["bound"] is True
+    assert profile["capabilities"] == sorted(CAPABILITIES)
+    assert profile["conflicting_capabilities"] == []
+    assert {"github", "review-evidence", "runtime-deployment"} <= set(
+        profile["missing_capabilities"]
+    )
+    assert drift_id in profile["evidence_task_ids"]
+    assert profile["task_document_source"] == "authoritative-dispatcher-task-specs"
+    assert profile["task_spec_root_sha256"] == "a" * 64
+    assert profile["task_documents_sha256"] == sha256_json(authoritative_documents)
+    assert profile["registry_fallback_task_ids"] == []
+    assert persisted["feasibility"]["joint_claimable_task_ids"] == [control_id]
+    snapshot = json.loads(snapshot_path(tmp_path / "supply-state").read_text(encoding="utf-8"))
+    assert snapshot["registry"]["task_spec_root_sha256"] == "a" * 64
+    assert snapshot["registry"]["task_documents_sha256"] == sha256_json(
+        authoritative_documents
+    )
+
+
+def test_runner_registry_fallback_is_bounded_to_missing_frontier_task_document(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    fallback_id = "OPERATOR-INTEGRATION-LOOP-V1-T033"
+    registry = Registry.load(root)
+    authoritative_documents = {
+        task_id: dict(task.raw) for task_id, task in registry.tasks.items()
+    }
+    authoritative_documents.pop(fallback_id)
+
+    def observe(**_kwargs: object) -> FrontierObservation:
+        return FrontierObservation(
+            frontier=(claimable_task(fallback_id),),
+            runtime_healthy=True,
+            runtime_blocker_codes=(),
+            capabilities=CAPABILITIES,
+            task_documents=authoritative_documents,
+            task_spec_root_sha256="b" * 64,
+            task_documents_sha256=sha256_json(authoritative_documents),
+        )
+
+    summary = cycle(
+        tmp_path,
+        root,
+        [],
+        observer=observe,
+        mutation_authority=False,
+        publish=False,
+    )
+
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    profile = persisted["feasibility"]["worker_profile"]
+    assert profile["bound"] is True
+    assert profile["task_document_source"] == (
+        "authoritative-dispatcher-task-specs-with-bounded-registry-fallback"
+    )
+    assert profile["registry_fallback_task_ids"] == [fallback_id]
+    assert profile["task_documents_sha256"] == sha256_json(authoritative_documents)
+    assert persisted["feasibility"]["joint_claimable_task_ids"] == [fallback_id]
+    assert fallback_id not in persisted["feasibility"]["pairwise_excluded"]
+
+
 def test_unhealthy_runtime_keeps_every_candidate_blocked(tmp_path: Path) -> None:
     root = registry_copy(tmp_path)
     before = fallback_task_ids(root)
@@ -657,6 +797,17 @@ def test_observation_uses_the_canonical_dispatcher_gates(
     assert result.runtime_healthy is True
     assert result.capabilities == tuple(sorted(CAPABILITIES))
     assert result.frontier
+    assert result.task_documents is not None
+    assert result.task_spec_root_sha256 is not None
+    assert len(result.task_spec_root_sha256) == 64
+    assert result.task_documents_sha256 is not None
+    assert result.task_documents is not None
+    assert result.task_documents_sha256 == sha256_json(result.task_documents)
+    assert all(
+        item["task_id"] in result.task_documents
+        for item in result.frontier
+        if item.get("task_id")
+    )
     assert all("claim_reasons" in item and "effective_state" in item for item in result.frontier)
     # The snapshot stays a bounded projection of the authoritative claim contract.
     assert set(result.frontier[0]) <= {

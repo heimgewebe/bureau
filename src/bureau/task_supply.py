@@ -1288,6 +1288,9 @@ def build_registry_supply_report(
     frontier_registry_head: str | None = None,
     frontier_queue_sha256: str | None = None,
     frontier_snapshot_sha256: str | None = None,
+    frontier_task_spec_root_sha256: str | None = None,
+    frontier_task_documents_sha256: str | None = None,
+    task_documents: Mapping[str, Mapping[str, Any]] | None = None,
     acceptance_contracts: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
     head_reader: Callable[[Path], str] = _git_head,
 ) -> dict[str, Any]:
@@ -1306,14 +1309,81 @@ def build_registry_supply_report(
         blockers.append("frontier-queue-sha256-mismatch")
     if frontier_snapshot_sha256 is None:
         blockers.append("frontier-snapshot-sha256-unbound")
+    if task_documents is not None:
+        if frontier_task_spec_root_sha256 is None:
+            blockers.append("frontier-task-spec-root-sha256-unbound")
+        elif (
+            len(frontier_task_spec_root_sha256) != 64
+            or any(
+                char not in "0123456789abcdef"
+                for char in frontier_task_spec_root_sha256
+            )
+        ):
+            raise SupplyError(
+                "frontier_task_spec_root_sha256 must be a lowercase SHA-256 digest"
+            )
+        if frontier_task_documents_sha256 is None:
+            blockers.append("frontier-task-documents-sha256-unbound")
+        elif (
+            len(frontier_task_documents_sha256) != 64
+            or any(
+                char not in "0123456789abcdef"
+                for char in frontier_task_documents_sha256
+            )
+        ):
+            raise SupplyError(
+                "frontier_task_documents_sha256 must be a lowercase SHA-256 digest"
+            )
     repository = registry.resources.get("repo.bureau")
     repository_path = (
         Path(repository.path)
         if repository is not None and repository.path
         else registry_root
     )
-    documents = _frontier_documents(registry)
+    registry_documents = _frontier_documents(registry)
+    authoritative_documents = (
+        {str(task_id): dict(document) for task_id, document in task_documents.items()}
+        if task_documents is not None
+        else None
+    )
+    if (
+        authoritative_documents is not None
+        and frontier_task_documents_sha256 is not None
+        and sha256_json(authoritative_documents) != frontier_task_documents_sha256
+    ):
+        blockers.append("frontier-task-documents-sha256-mismatch")
+
+    registry_fallback_task_ids: list[str] = []
+    if authoritative_documents is None:
+        documents = registry_documents
+    else:
+        documents = dict(authoritative_documents)
+        frontier_task_ids = sorted(
+            {
+                str(item.get("task_id") or "")
+                for item in frontier
+                if str(item.get("task_id") or "")
+            }
+        )
+        for task_id in frontier_task_ids:
+            if task_id in documents:
+                continue
+            registry_document = registry_documents.get(task_id)
+            if registry_document is None:
+                continue
+            documents[task_id] = dict(registry_document)
+            registry_fallback_task_ids.append(task_id)
+
     worker_profile = derive_worker_capability_profile(frontier, documents)
+    if authoritative_documents is not None:
+        worker_profile["task_document_source"] = (
+            "authoritative-dispatcher-task-specs-with-bounded-registry-fallback"
+            if registry_fallback_task_ids
+            else "authoritative-dispatcher-task-specs"
+        )
+        worker_profile["task_spec_root_sha256"] = frontier_task_spec_root_sha256
+        worker_profile["task_documents_sha256"] = frontier_task_documents_sha256
+        worker_profile["registry_fallback_task_ids"] = registry_fallback_task_ids
     return build_supply_report(
         frontier,
         task_documents=documents,

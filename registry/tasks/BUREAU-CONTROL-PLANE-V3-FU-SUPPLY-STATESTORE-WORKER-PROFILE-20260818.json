@@ -1,0 +1,183 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Wenn die aktuelle StateStore-TaskSpec-Revision von der Registry-Projektion abweicht, verwendet die Supply-Feasibility für Worker-Profil und Claims dieselbe autoritative StateStore-Revision wie der Dispatcher.",
+      "evidence_type": "object",
+      "id": "state-store-revision-authoritative",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:supply:state-store-revision-authoritative"
+      }
+    },
+    {
+      "assertion": "Der reale Driftfall GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809 (StateStore Rev 2 ohne github/review-evidence, Registry mit diesen Alt-Capabilities) erzeugt für repository/python/testing/bureau/grabowski keine falschen Konflikte github oder review-evidence.",
+      "evidence_type": "object",
+      "id": "real-drift-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:supply:real-drift-regression"
+      }
+    },
+    {
+      "assertion": "Die für pairwise/joint packability rekonstruierten Claims stammen aus derselben autoritativen TaskSpec-Projektion wie die Capability-Ableitung; Registry-Altstände dürfen keine Phantomkonflikte erzeugen.",
+      "evidence_type": "object",
+      "id": "joint-packability-same-authority",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:supply:joint-packability-same-authority"
+      }
+    },
+    {
+      "assertion": "Fehlt für einen Frontier-Task eine autoritative StateStore-TaskSpec, bleibt ein explizit begrenzter Registry-Fallback möglich; Capability-, Lease-, PR- und Runtime-Gates werden nicht gelockert.",
+      "evidence_type": "object",
+      "id": "bounded-fallback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:supply:bounded-registry-fallback"
+      }
+    },
+    {
+      "assertion": "Fokussierte Supply-/Runner-Regressionen sowie Ruff sind grün; die historische T034-Unreachable-Regressionssemantik bleibt erhalten.",
+      "evidence_type": "object",
+      "id": "regression-suite",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:supply:state-store-profile-regressions"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-CONTROL-PLANE-V3-T034"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/task_supply.py",
+      "path:/home/alex/repos/bureau/src/bureau/supply_runner.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py",
+      "path:/home/alex/repos/bureau/tests/test_supply_runner.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-CONTROL-PLANE-V3-FU-SUPPLY-STATESTORE-WORKER-PROFILE-20260818.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Die T034-Feasibility muss Worker-Capabilities und Task-Claims aus denselben autoritativen TaskSpec-Revisionen ableiten, die der Dispatcher für die beobachtete Frontier verwendet. StateStore/Registry-Drift darf keine falschen Capability-Konflikte und keinen künstlichen joint_claimable_count=0 erzeugen.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FU-SUPPLY-STATESTORE-WORKER-PROFILE-20260818",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "candidate_id": "candidate-54c45e8c2750e379a6cfea8e",
+    "counterexample": {
+      "registry_required_capabilities": [
+        "repository",
+        "python",
+        "testing",
+        "grabowski",
+        "github",
+        "review-evidence"
+      ],
+      "state_store_required_capabilities": [
+        "repository",
+        "python",
+        "testing",
+        "grabowski",
+        "runtime-deployment"
+      ],
+      "state_store_revision": 2,
+      "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-RUNTIME-REFRESH-LEASE-CONTRACT-20260809"
+    },
+    "derived_from": "BUREAU-CONTROL-PLANE-V3-T034 post-merge live acceptance",
+    "observed_main_commit": "72b9e08f0b3a68557d316dca9e7985dfee4f777d",
+    "observed_runtime_commit": "b5d87191ca309f954f1ce1253560b49cc7e3c2d6",
+    "observed_supply": {
+      "conflicting_capabilities": [
+        "github",
+        "review-evidence"
+      ],
+      "joint_claimable_count": 0,
+      "raw_ready_count": 148,
+      "structural_capacity_upper_bound": 0,
+      "total_claimable_count": 0,
+      "worker_profile_bound": false
+    },
+    "scope_boundary": [
+      "no generic state setter",
+      "no capability gate weakening",
+      "no lease or open-PR bypass",
+      "no T034 reimplementation",
+      "no foreign checkout or lease mutation"
+    ],
+    "source_event_id": 8202,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-54c45e8c2750e379a6cfea8e",
+      "event_id": 8202,
+      "event_created_at": "2026-08-18T05:58:27.380276Z",
+      "request_sha256": "61c91d0b7d213c261de96e2ec2f45291137ea2bc787b8fabcb8b659866d5f113",
+      "candidate_event_id": "candidate-event-9588c255b6757df54ae9a80c",
+      "source_fingerprint": "f2616f6ccdc240d9a725bd767da818ebb07f889a4e0b6a96c0824be8bf3cdfe1",
+      "content_fingerprint": "54c45e8c2750e379a6cfea8e1123d2e0eee11170ae5044c5c0d77505a6d7bb79",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "f2616f6ccdc240d9a725bd767da818ebb07f889a4e0b6a96c0824be8bf3cdfe1",
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "runtime:bureau-task-supply:post-t034-live-state-store-registry-drift-20260818",
+        "observed_at": "2026-08-18T05:58:27.214564Z",
+        "sha256": "75ae87fbd0352384cd024c7ba13a4c7849411ca573985211598b79fcc9a9a391"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "f2616f6ccdc240d9a725bd767da818ebb07f889a4e0b6a96c0824be8bf3cdfe1",
+          "freshness": "digest-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "runtime:bureau-task-supply:post-t034-live-state-store-registry-drift-20260818",
+          "observed_at": "2026-08-18T05:58:27.214564Z",
+          "sha256": "75ae87fbd0352384cd024c7ba13a4c7849411ca573985211598b79fcc9a9a391"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Die zusätzliche autoritative TaskSpec-Projektion zurücknehmen und die bisherige fail-closed Registry-Ableitung wiederherstellen; keine StateStore-, Queue-, Lease-, PR- oder Capability-Gates verändern."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Supply-Profil an autoritative StateStore-TaskSpecs binden"
+}

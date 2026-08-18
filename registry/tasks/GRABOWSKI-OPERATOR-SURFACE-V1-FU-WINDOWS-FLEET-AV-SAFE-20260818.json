@@ -1,0 +1,156 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine repräsentative read-only Windows-Fleet-Diagnose erzeugt keine ausführbare DLL/EXE über Add-Type, csc.exe oder äquivalente dynamische C#-Kompilierung in %TEMP%/%LOCALAPPDATA%\\Temp, sofern dieselbe Beobachtung mit nativen PowerShell-, CIM- oder Windows-Werkzeugen möglich ist.",
+      "evidence_type": "object",
+      "id": "no-temp-compiled-helper",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:windows-fleet:av-safe-no-temp-compile"
+      }
+    },
+    {
+      "assertion": "Falls dynamische native Interop-Kompilierung für einen eng begrenzten Fall unvermeidbar bleibt, ist sie explizit als erhöhte Diagnosewirkung klassifiziert, nicht Teil des normalen read-only-Pfads, nutzt einen kontrollierten Artefakt-/Cleanup-Vertrag und ist durch einen zielgenauen Regressionstest abgesichert.",
+      "evidence_type": "object",
+      "id": "explicit-exception-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:windows-fleet:interop-exception-contract"
+      }
+    },
+    {
+      "assertion": "Remote-Fleet-Ausführungen behalten eine revisionsfeste, geheimnisfreie Provenienz, die Host, Task/Request-Identität, semantische Operation und ausgeführten argv-/Payload-Digest so bindet, dass ein später beobachteter Sicherheitsfund dem verursachenden Aufruf eindeutig zugeordnet oder ausdrücklich als ungebunden klassifiziert werden kann.",
+      "evidence_type": "object",
+      "id": "remote-command-provenance",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:windows-fleet:remote-command-provenance"
+      }
+    },
+    {
+      "assertion": "Ein Regressionstest bildet den FOTOLABOR-Fall vom 18.08.2026 ab: SSH -> PowerShell -> dynamischer C#-Compiler -> Temp-DLL darf im normalen read-only-Diagnosepfad nicht wieder auftreten; die getestete Alternative liefert dieselbe benötigte Diagnoseinformation ohne temporäre native Helper-DLL.",
+      "evidence_type": "object",
+      "id": "fotolabor-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:windows-fleet:fotolabor-av-regression"
+      }
+    },
+    {
+      "assertion": "Fleet-Allowlist, SSH-Transport, Replay-/Outcome-Unknown-Gates, Secret-Redaction und AV-Schutz werden nicht abgeschwächt; keine AV-Ausnahme und keine globale Scanner-Ausnahme wird als Fix eingeführt.",
+      "evidence_type": "object",
+      "id": "security-boundaries-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:windows-fleet:security-boundaries"
+      }
+    },
+    {
+      "assertion": "Fokussierte Tests, vollständige relevante Grabowski-Validation und ein frischer Windows-Fleet-Live-Readback belegen die Änderung revisionsgebunden; der Live-Readback erzeugt keinen neuen Avira-Fund.",
+      "evidence_type": "object",
+      "id": "verification",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:windows-fleet:verification"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 18.08.2026 im laufenden Fotolabor-Sicherheitsfall ausdrücklich angeordnet, alles Sinnvolle umzusetzen. Der Task begrenzt die Wirkung auf Grabowski-Repository-Härtung und Tests; keine Änderung am quarantänisierten Fund und keine Abschwächung von AV-Schutz oder Fleet-Sicherheitsgates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowskis Windows-Fleet-Diagnostik so härten, dass read-only Operationen keine dynamisch kompilierten C#-/PInvoke-Hilfs-DLLs in benutzerschreibbaren Temp-Verzeichnissen erzeugen, wenn native PowerShell-, CIM- oder Windows-Werkzeuge ausreichen. Zusätzlich muss die tatsächlich ausgeführte Remote-Operation revisionsfest an Task/Request, Host und Ausführungsprovenienz gebunden bleiben, damit ein späterer AV-Fund ohne Rekonstruktion aus Fremdlogs eindeutig zugeordnet werden kann.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-WINDOWS-FLEET-AV-SAFE-20260818",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current_malware_absence",
+      "avira_false_positive",
+      "automatic_merge_authority",
+      "deployment_authority"
+    ],
+    "live_evidence": {
+      "avira_detection": "TR/W32.MalwareX",
+      "friction_event_id": "7420993d21394f3a873825264b8d2413",
+      "host": "fotolabor",
+      "observed_at": "2026-08-18",
+      "observed_chain": "OpenSSH -> cmd.exe -> PowerShell -> PowerShell(dynamic C# Runtime.InteropServices) -> csc.exe -> %LOCALAPPDATA%\\Temp\\xmnwraor\\xmnwraor.dll",
+      "original_sha256": "edd7eee3dc833df4fd1ad358584ec72fba73e74f41a93b43307810d7debe3870",
+      "remediation": "quarantined-and-remediated"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9301b5a4d3acb50a17213e5a",
+      "event_id": 8487,
+      "event_created_at": "2026-08-18T13:46:14.179427Z",
+      "request_sha256": "1a71ea53295680c010d05a00d14e3d9ed659d955b914a0b86c29e2cbb495aa1e",
+      "candidate_event_id": "candidate-event-8a6c67d02adc8defd42b8643",
+      "source_fingerprint": "3cf46625a99372c6802e64e487dd0e64073d116bf242ad75e9db6ac2a1146b2b",
+      "content_fingerprint": "9301b5a4d3acb50a17213e5a8beefa39ef7e076986c95f601b284900d87673bb",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "3cf46625a99372c6802e64e487dd0e64073d116bf242ad75e9db6ac2a1146b2b",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "fotolabor:avira:TR-W32-MalwareX:2026-08-18T13:45:21+02:00",
+        "observed_at": "2026-08-18T13:46:14.049395Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "3cf46625a99372c6802e64e487dd0e64073d116bf242ad75e9db6ac2a1146b2b",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "fotolabor:avira:TR-W32-MalwareX:2026-08-18T13:45:21+02:00",
+          "observed_at": "2026-08-18T13:46:14.049395Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Windows-Fleet-Diagnosen AV-sicher und revisionsfest machen"
+}

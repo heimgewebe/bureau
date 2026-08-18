@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T016",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Fotolabor G: nach Backup-Nachweis offline reparieren",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 16
+  },
+  "goal": "Die von Windows als Full Repair Needed markierte NTFS-Struktur von G: ohne Datenverlust bereinigen: zuerst eine belastbare zweite Kopie der relevanten Daten nachweisen, erst danach eine geeignete Offline-Reparatur ausführen und Dateisystemzustand sowie NTFS-Ereignisse postflight verifizieren.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Der Nutzer hat am 18. August 2026 die autonome Optimierung des Fotolabor-PCs über den eingerichteten SSH-/Grabowski-Pfad beauftragt. Eine schreibende Dateisystemreparatur bleibt zusätzlich an nachgewiesene Datensicherung, frischen Readback und die break-glass-Wirkungsfreigabe im Ausführungszeitpunkt gebunden."
+    },
+    "grabowski_resources": [
+      "host:fotolabor",
+      "repo:/home/alex/repos/heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "fotolabor-g-backup-proof",
+      "assertion": "Vor jeder schreibenden NTFS-Reparatur ist für die relevanten Daten auf G: eine belastbare zweite Kopie oder ein gleichwertiger Wiederherstellungsnachweis dokumentiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "fotolabor:g:backup-proof"
+      }
+    },
+    {
+      "id": "fotolabor-g-repair",
+      "assertion": "G: meldet nach einer kontrollierten Offline-Reparatur keinen Full-Repair-Needed-/Dirty-Zustand mehr; die Reparaturwirkung ist durch frischen Readback belegt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "fotolabor:g:filesystem-postflight"
+      }
+    },
+    {
+      "id": "fotolabor-g-postflight",
+      "assertion": "Neue NTFS-98-Ereignisse und der physische Datenträgerzustand werden nach der Reparatur erneut geprüft; verbleibende Hardware- oder I/O-Risiken werden separat registriert statt geglättet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "fotolabor:g:ntfs-disk-postflight"
+      }
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-08-18T12:20:00+02:00",
+    "source": "Fotolabor-Liveaudit und Recovery des fehlgeschlagenen Operator-Intake-Registrierungs-PR #2077",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d3c1844bde9968abd5a07ca8",
+      "event_id": 8292,
+      "candidate_event_id": "candidate-event-93f8540737beffe669e38547",
+      "request_sha256": "722359b5d3934f2f8e56fea2de941b6c31aa9191b6aaabc94310d9388a7d2cbb",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "recovery": {
+      "closed_pull_request": 2077,
+      "failed_head": "9ecc85176df9f2bd3b23ebd7ca08ae756a93160a",
+      "failure": "registry-registration-preflight rejected runtime_mutation with required_level=operator; runtime_mutation requires break_glass",
+      "state_store_orphan_observed": true,
+      "system_followup_candidate_id": "candidate-dc8e634b4a1e14a0d081f1f3",
+      "system_followup_event_id": 8299
+    },
+    "does_not_establish": [
+      "backup_exists",
+      "filesystem_repaired",
+      "physical_disk_failure",
+      "queue_truth",
+      "task_readiness"
+    ]
+  },
+  "rollback": {
+    "strategy": "Vor Reparatur nur lesen. Falls eine Reparatur unerwartete Folgen zeigt, keine weiteren Schreiboperationen ausführen; aus der zuvor nachgewiesenen zweiten Kopie wiederherstellen und den Datenträger separat diagnostizieren."
+  },
+  "depends_on": []
+}

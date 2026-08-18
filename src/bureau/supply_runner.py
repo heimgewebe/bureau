@@ -88,6 +88,9 @@ class FrontierObservation:
     runtime_healthy: bool
     runtime_blocker_codes: tuple[str, ...]
     capabilities: tuple[str, ...]
+    task_documents: Mapping[str, Mapping[str, Any]] | None = None
+    task_spec_root_sha256: str | None = None
+    task_documents_sha256: str | None = None
 
 
 def _projected_item(item: dict[str, Any]) -> dict[str, Any]:
@@ -111,6 +114,13 @@ def observe_authoritative_frontier(
     # Same truth the claim path gates on, so supply health cannot diverge from dispatch.
     runtime_truth = dispatcher._runtime_execution_truth()
     frontier = dispatcher.frontier(set(selected))
+    task_documents = {
+        task_id: dict(task.raw) for task_id, task in dispatcher.registry.tasks.items()
+    }
+    task_spec_root_sha256 = dispatcher.task_authority.get("task_spec_root_sha256")
+    if not isinstance(task_spec_root_sha256, str) or not task_spec_root_sha256:
+        task_spec_root_sha256 = None
+    task_documents_sha256 = sha256_json(task_documents)
     return FrontierObservation(
         frontier=tuple(_projected_item(item) for item in frontier),
         runtime_healthy=runtime_truth.get("execution_blocked") is not True,
@@ -118,6 +128,9 @@ def observe_authoritative_frontier(
             str(code) for code in runtime_truth.get("blocker_codes", []) if code
         ),
         capabilities=selected,
+        task_documents=task_documents,
+        task_spec_root_sha256=task_spec_root_sha256,
+        task_documents_sha256=task_documents_sha256,
     )
 
 
@@ -140,6 +153,8 @@ def _write_snapshot(
                 "root": str(registry_root),
                 "head": registry_head,
                 "queue_sha256": queue_sha256,
+                "task_spec_root_sha256": observation.task_spec_root_sha256,
+                "task_documents_sha256": observation.task_documents_sha256,
             },
             "capabilities": list(observation.capabilities),
             "runtime_healthy": observation.runtime_healthy,
@@ -869,6 +884,9 @@ def run_supply_cycle(
         frontier_registry_head=head,
         frontier_queue_sha256=queue_digest,
         frontier_snapshot_sha256=snapshot_digest,
+        frontier_task_spec_root_sha256=observation.task_spec_root_sha256,
+        frontier_task_documents_sha256=observation.task_documents_sha256,
+        task_documents=observation.task_documents,
         acceptance_contracts=acceptance_contracts,
         head_reader=selected_head_reader,
     )

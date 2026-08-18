@@ -1113,6 +1113,58 @@ def test_registry_preview_requires_explicit_runtime_and_authority_for_plan(
     assert registry_snapshot(root) == before
 
 
+def test_registry_preview_requires_task_spec_root_for_authoritative_documents(
+    tmp_path: Path,
+) -> None:
+    project_root = Path(__file__).parents[1]
+    root = copy_registry(project_root, tmp_path / "registry-copy")
+    queue_digest = file_sha256(root / "registry/queue.json")
+    result = build_registry_supply_report(
+        registry_root=root,
+        frontier=[],
+        runtime_healthy=True,
+        mutation_authority=False,
+        frontier_registry_head=HEAD,
+        frontier_queue_sha256=queue_digest,
+        frontier_snapshot_sha256=SNAPSHOT_SHA,
+        task_documents=task_documents(root),
+        head_reader=lambda _root: HEAD,
+        acceptance_contracts=TYPED_ACCEPTANCE,
+    )
+
+    assert result["status"] == "blocked"
+    assert "frontier-task-spec-root-sha256-unbound" in result["blockers"]
+    assert result["feasibility"]["worker_profile"]["task_document_source"] == (
+        "authoritative-dispatcher-task-specs"
+    )
+    assert result["feasibility"]["worker_profile"]["task_spec_root_sha256"] is None
+
+
+def test_registry_preview_rejects_mismatched_authoritative_task_documents_digest(
+    tmp_path: Path,
+) -> None:
+    project_root = Path(__file__).parents[1]
+    root = copy_registry(project_root, tmp_path / "registry-copy")
+    queue_digest = file_sha256(root / "registry/queue.json")
+    result = build_registry_supply_report(
+        registry_root=root,
+        frontier=[],
+        runtime_healthy=True,
+        mutation_authority=False,
+        frontier_registry_head=HEAD,
+        frontier_queue_sha256=queue_digest,
+        frontier_snapshot_sha256=SNAPSHOT_SHA,
+        frontier_task_spec_root_sha256="a" * 64,
+        frontier_task_documents_sha256="b" * 64,
+        task_documents=task_documents(root),
+        head_reader=lambda _root: HEAD,
+        acceptance_contracts=TYPED_ACCEPTANCE,
+    )
+
+    assert result["status"] == "blocked"
+    assert "frontier-task-documents-sha256-mismatch" in result["blockers"]
+
+
 def test_frontier_ineligible_marker_and_duplicate_ids_fail_closed() -> None:
     first = frontier_item("REAL-T001")
     second = frontier_item("REAL-T001")

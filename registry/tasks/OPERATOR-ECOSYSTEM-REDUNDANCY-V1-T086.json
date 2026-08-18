@@ -1,0 +1,169 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Effectiveness-Projektion erhält reale Reposkop-relevante Policy-v3-Evaluationen, Decisions, Outcomes, semantische Reviews und duration_ms über beliebig viele spätere irrelevante Auditrecords und über Segmentrotation hinweg. Der persistente Zustand bleibt ausschließlich ein aus verifizierter Grabowski-Auditwahrheit ableitbares Derivat; exakte Auditreferenzen, Checkpoint-Ordinal und Provenienz sind sichtbar.",
+      "evidence_type": "object",
+      "id": "durable-audit-derived-cohort",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-durable-audit-cohort"
+      }
+    },
+    {
+      "assertion": "Ein einzelner öffentlicher Effectiveness-Aufruf führt keinen unbeschränkten Catch-up über den gesamten seit dem Checkpoint angewachsenen Audit-Tail aus. Physische Catch-up-Arbeit ist deterministisch begrenzt; solange der Index den verifizierten Tail noch nicht erreicht, wird Unvollständigkeit explizit und fail-closed als nicht vollständig ausgewertet gemeldet. `limit` beziehungsweise ein dokumentierter serverseitiger Bound darf nicht nur dekorative Provenienz sein.",
+      "evidence_type": "object",
+      "id": "bounded-incremental-catchup",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-bounded-catchup"
+      }
+    },
+    {
+      "assertion": "Manipulierte Cachebytes werden nicht als Auditwahrheit akzeptiert. Tests decken mindestens Payload-Tamper, fehlende Zeile, Checkpoint-Drift und kohärente Manipulation von `record_json` plus lokalem Payload-Hash ab. Für moderne Auditrecords wird die kanonische Grabowski-Record-Hash-Bindung oder eine gleich starke Auditbindung geprüft; bei nicht sicher prüfbarem Zustand wird aus verifizierter Audit-Evidenz rebuilt oder fail-closed abgebrochen.",
+      "evidence_type": "object",
+      "id": "cache-audit-integrity",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-cache-audit-integrity"
+      }
+    },
+    {
+      "assertion": "`since_unix` filtert auch im dauerhaften Indexpfad korrekt. Wenn die begrenzte Retention den angefragten Zeitraum möglicherweise abgeschnitten hat, wird dies mit eindeutigen Trunkierungs-/Coverage-Feldern gemeldet und nicht als vollständige Historie ausgegeben.",
+      "evidence_type": "object",
+      "id": "since-unix-durable-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-since-unix"
+      }
+    },
+    {
+      "assertion": "Regressionstests verwenden nur Reviewzustände, die die produktive Review-Schreiboberfläche zulässt. Insbesondere zählt `confirmed_prevention` nur zu einer blockierten Evaluation; Tests dürfen keine semantisch unmögliche `allow`+`confirmed_prevention`-Kombination durch direkte Rohrecord-Injektion als gültige Evidenz etablieren.",
+      "evidence_type": "object",
+      "id": "semantic-review-validity",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-review-semantics"
+      }
+    },
+    {
+      "assertion": "Historische reale Reposkop-Laufzeiten überleben das Rohscanfenster, sodass der bestehende p95-Regressionsvertrag seine Mindestmenge von 60 realen Samples tatsächlich erreichen kann; unterhalb der Mindestmenge bleibt die Aussage ausdrücklich `insufficient`.",
+      "evidence_type": "object",
+      "id": "duration-threshold-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-duration-threshold"
+      }
+    },
+    {
+      "assertion": "Die Änderung führt weder einen neuen MCP-Schreibpfad noch Task-, Lease-, PR-, Deployment-, Writer- oder Policy-Autorität ein und synthetisiert keine Sample-/Control-Evidenz. Repository-write bleibt fail-closed Reposkop-required; workspace-write-Sample/Control bleibt natürliche prospektive Nutzung.",
+      "evidence_type": "object",
+      "id": "authority-boundary-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-authority-boundary"
+      }
+    },
+    {
+      "assertion": "Fokussierte Tests, relevante Integrations-/Repositorytests und Ruff/Format-Gates sind auf exakt dem PR-Head grün. Nach Merge und Runtime-Konvergenz zeigt ein frischer Produktionsreadback, dass echte historische Reposkop-Kohorten mit `limit=10000` nicht mehr wegen hoher irrelevanter Auditlast verschwinden; ein unmittelbar folgender Readback belegt den begrenzten inkrementellen Steady-State statt eines erneuten Vollscans.",
+      "evidence_type": "object",
+      "id": "regression-and-live-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski-reposkop-effectiveness-regression-live-proof"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 18. August 2026 die Umsetzung dieses Reposkop-Folgebedarfs ausdrücklich mit @grabowski beauftragt. Fremde Dirty-States, Leases und Writer bleiben geschützt; Übernahme nur nach revisionsgebundener Freigabe/Reconciliation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die Grabowski-Reposkop-Effectiveness-Projektion so härten, dass reale Policy-v3-Sample-, Control-, Review- und Laufzeitevidenz auch bei hoher fremder Auditlast und Segmentrotation erhalten und gegen die verifizierte Auditkette prüfbar bleibt, ohne unbeschränkte Vollscans, synthetische Evidenz oder eine zweite Autorität einzuführen. Der bestehende p95-Vertrag bleibt bis mindestens 60 realen Reposkop-Laufzeitmessungen insuffizient; die historische Kohorte darf vorher nicht durch das Rohscanfenster herausaltern.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current_patch_correctness",
+      "current_controller_lease_obsolete",
+      "merge_readiness",
+      "runtime_convergence",
+      "causal_reposkop_value"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-992ff47ce0c661c179615e3e",
+      "event_id": 8252,
+      "event_created_at": "2026-08-18T07:29:39.979734Z",
+      "request_sha256": "0b400866b9cdb573a01f121fd82fb44e6c692717f767eac94795936129015661",
+      "candidate_event_id": "candidate-event-c2cc2ae2b4a2fc2adb5cf727",
+      "source_fingerprint": "5b88678a8c4fa39411823fa7da95bd709bc8274866342b6c2a5e737de0253f39",
+      "content_fingerprint": "82c7e72f63fb26e7a83aec2aadc5c52093c3f3dfb6a8e91b10e85ba596dda5cd",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "5b88678a8c4fa39411823fa7da95bd709bc8274866342b6c2a5e737de0253f39",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "chat:2026-08-18:reposkop-effectiveness-live-review",
+        "observed_at": "2026-08-18T07:29:39.863839Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "5b88678a8c4fa39411823fa7da95bd709bc8274866342b6c2a5e737de0253f39",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "chat:2026-08-18:reposkop-effectiveness-live-review",
+          "observed_at": "2026-08-18T07:29:39.863839Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "reason": "Die Live-Projektion lieferte mit dem normalen 10k-Fenster null historische Evaluationen, obwohl jüngere Review-Evidenzreferenzen derselben Policy-v3-Arbeit noch vorhanden waren. Ein erster Recovery-Patch existiert, ist aber wegen aktiver fremder Custody und offener Reviewpunkte noch nicht integrationsreif.",
+    "source": "operator-intake-candidate-8252-reposkop-durable-effectiveness-20260818"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 86
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Reposkop-Effectiveness-Kohorten auditgebunden dauerhaft messbar machen"
+}

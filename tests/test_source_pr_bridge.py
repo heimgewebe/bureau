@@ -6,7 +6,6 @@ import subprocess
 from pathlib import Path
 
 from bureau import source_pr_bridge
-from bureau.now_refill import NowRefillPolicy
 
 
 class FakeRunner:
@@ -176,117 +175,11 @@ def _bootstrap_origin_and_checkout(
     return origin, checkout, ids
 
 
-def test_publish_now_refill_pushes_new_branch(tmp_path, registry_factory, monkeypatch):
-    origin, checkout, ids = _bootstrap_origin_and_checkout(
-        tmp_path, registry_factory, trigger_refill=True
-    )
-
-    def fake_json(arguments, *, allow_not_found=False):
-        assert arguments == [
-            "api",
-            f"repos/{source_pr_bridge.DEFAULT_REPOSITORY}"
-            f"/git/ref/heads/{source_pr_bridge.NOW_REFILL_BRANCH}",
-        ]
-        assert allow_not_found is True
-        return None
-
-    monkeypatch.setattr(source_pr_bridge, "_json", fake_json)
-
-    result = source_pr_bridge.publish_now_refill(
-        checkout,
-        state_db=tmp_path / "state" / "state.sqlite3",
-        state_root=tmp_path / "state",
-        policy=NowRefillPolicy(floor=2, target=3, max_promotions=3),
-        authority="test-operator",
-    )
-
-    assert result["status"] == "published"
-    assert result["branch"] == source_pr_bridge.NOW_REFILL_BRANCH
-    assert [item["task_id"] for item in result["promotions"]] == ids
-
-    branch_ref = _run_git(origin, "rev-parse", f"refs/heads/{source_pr_bridge.NOW_REFILL_BRANCH}")
-    assert branch_ref == result["head_sha"]
-    main_ref = _run_git(origin, "rev-parse", "refs/heads/main")
-    assert main_ref == result["base_sha"]
-
-    queue_on_branch = _run_git(origin, "show", f"{branch_ref}:registry/queue.json")
-    assert json.loads(queue_on_branch)["lanes"]["now"] == ids
-
-    # The operator's own checkout is untouched: still on main, still clean.
-    assert _run_git(checkout, "rev-parse", "--abbrev-ref", "HEAD") == "main"
-    assert _run_git(checkout, "rev-parse", "HEAD") == result["base_sha"]
-    assert _run_git(checkout, "status", "--porcelain") == ""
-    worktrees = _run_git(checkout, "worktree", "list", "--porcelain")
-    assert "bureau-now-refill" not in worktrees
-
-
-def test_publish_now_refill_ignores_checked_out_stale_local_proposal_branch(
-    tmp_path, registry_factory, monkeypatch
-):
-    origin, checkout, _ids = _bootstrap_origin_and_checkout(
-        tmp_path, registry_factory, trigger_refill=True
-    )
-    stale_worktree = tmp_path / "stale-proposal"
-    _run_git(checkout, "branch", source_pr_bridge.NOW_REFILL_BRANCH, "main")
-    _run_git(
-        checkout,
-        "worktree",
-        "add",
-        str(stale_worktree),
-        source_pr_bridge.NOW_REFILL_BRANCH,
-    )
-
-    def fake_json(arguments, *, allow_not_found=False):
-        assert allow_not_found is True
-        return None
-
-    monkeypatch.setattr(source_pr_bridge, "_json", fake_json)
-
-    result = source_pr_bridge.publish_now_refill(
-        checkout,
-        state_db=tmp_path / "state" / "state.sqlite3",
-        state_root=tmp_path / "state",
-        policy=NowRefillPolicy(floor=2, target=3, max_promotions=3),
-        authority="test-operator",
-    )
-
-    assert result["status"] == "published"
-    assert _run_git(stale_worktree, "rev-parse", "--abbrev-ref", "HEAD") == (
-        source_pr_bridge.NOW_REFILL_BRANCH
-    )
-    assert _run_git(stale_worktree, "rev-parse", "HEAD") == result["base_sha"]
-    assert _run_git(origin, "rev-parse", f"refs/heads/{source_pr_bridge.NOW_REFILL_BRANCH}") == (
-        result["head_sha"]
-    )
 
 
 
-def test_publish_now_refill_is_a_noop_when_not_triggered(tmp_path, registry_factory, monkeypatch):
-    # registry_factory's default queue already satisfies the floor: nothing to refill.
-    origin, checkout, _ids = _bootstrap_origin_and_checkout(
-        tmp_path, registry_factory, trigger_refill=False
-    )
 
-    def fail_json(arguments, *, allow_not_found=False):
-        raise AssertionError("gh should not be consulted when no refill is applied")
 
-    monkeypatch.setattr(source_pr_bridge, "_json", fail_json)
-
-    result = source_pr_bridge.publish_now_refill(
-        checkout,
-        state_db=tmp_path / "state" / "state.sqlite3",
-        state_root=tmp_path / "state",
-        policy=NowRefillPolicy(floor=2, target=3, max_promotions=3),
-        authority="test-operator",
-    )
-
-    assert result["status"] == "not-applied"
-    assert result["refill_status"] == "satisfied"
-
-    branches = _run_git(origin, "branch", "--list")
-    assert source_pr_bridge.NOW_REFILL_BRANCH not in branches
-    worktrees = _run_git(checkout, "worktree", "list", "--porcelain")
-    assert "bureau-now-refill" not in worktrees
 
 
 def test_withdraw_open_proposal_closes_stale_pr(monkeypatch):
@@ -350,3 +243,14 @@ def test_main_withdraws_instead_of_reconciling_not_applied_publish(
     result = json.loads(capsys.readouterr().out)
     assert result["status"] == "withdrawn"
     assert result["publish"]["status"] == "not-applied"
+
+
+def test_publish_now_refill_is_retired_without_git_or_queue_effect(registry_factory, tmp_path):
+    root = registry_factory(2)
+    queue_path = root / "registry/queue.json"
+    before = queue_path.read_bytes()
+    result = source_pr_bridge.publish_now_refill(root, authority="test-operator")
+    assert result["status"] == "not-applied"
+    assert result["retired"] is True
+    assert result["compatibility_queue_mutated"] is False
+    assert queue_path.read_bytes() == before

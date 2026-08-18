@@ -10,10 +10,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from . import now_refill, state_snapshot
-from .core import StateStore
+from . import state_snapshot
 from .now_refill import NowRefillPolicy
-from .v2 import Registry
 
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
 DEFAULT_BASE = "main"
@@ -85,80 +83,26 @@ def publish_now_refill(
     base: str = DEFAULT_BASE,
     branch: str = NOW_REFILL_BRANCH,
 ) -> dict[str, Any]:
-    """Compute and publish one bounded Now-refill proposal from real local truth.
-
-    The decision runs against a throwaway worktree pinned to the canonical
-    ``origin/<base>`` tip, so the operator's own checkout at ``root`` is never
-    switched, staged or committed to. The refill decision itself is computed with
-    the real local Bureau StateStore, active runs, open-PR observation and runtime
-    gate bound into ``bureau.now_refill`` -- the same live truth the claim path
-    uses. A GitHub-hosted runner never sees this state and therefore never decides
-    or invents a promotion; it may at most transport the exact, unmodified,
-    revision-bound branch this function publishes.
-
-    Returns a ``not-applied`` result without any Git side effect when the refill
-    decision does not require or cannot authorise a promotion (already satisfied,
-    no structurally runnable candidate, or a blocked runtime/registry gate).
-    """
-    _git(root, "fetch", "origin", base)
-    remote_head = _git(root, "rev-parse", f"origin/{base}")
-    with tempfile.TemporaryDirectory(prefix="bureau-now-refill-") as raw_tmp:
-        worktree = Path(raw_tmp) / "checkout"
-        _git(root, "worktree", "add", "--detach", str(worktree), remote_head)
-        try:
-            registry = Registry.load(worktree)
-            store = StateStore(state_db, state_root)
-            result = now_refill.apply_now_refill(
-                registry, store, authority=authority, policy=policy
-            )
-            if not result["applied"]:
-                return {
-                    "status": "not-applied",
-                    "refill_status": result["status"],
-                    "blockers": result["blockers"],
-                    "report_sha256": result["report_sha256"],
-                }
-            _git(worktree, "add", "registry/queue.json")
-            _git(
-                worktree,
-                "-c",
-                f"user.name={NOW_REFILL_GIT_AUTHOR_NAME}",
-                "-c",
-                f"user.email={NOW_REFILL_GIT_AUTHOR_EMAIL}",
-                "commit",
-                "-m",
-                NOW_REFILL_COMMIT_MESSAGE,
-            )
-            head_sha = _git(worktree, "rev-parse", "HEAD")
-            existing_ref = _json(
-                ["api", f"repos/{repository}/git/ref/heads/{branch}"],
-                allow_not_found=True,
-            )
-            if existing_ref is None:
-                _git(worktree, "push", "origin", f"HEAD:refs/heads/{branch}")
-            else:
-                expected_remote = str(existing_ref["object"]["sha"])
-                _git(
-                    worktree,
-                    "push",
-                    f"--force-with-lease=refs/heads/{branch}:{expected_remote}",
-                    "origin",
-                    f"HEAD:refs/heads/{branch}",
-                )
-            return {
-                "status": "published",
-                "branch": branch,
-                "base": base,
-                "base_sha": remote_head,
-                "head_sha": head_sha,
-                "queue_sha256_before": result["registry"]["queue_sha256_before"],
-                "queue_sha256_after": result["queue_sha256_after"],
-                "report_sha256": result["report_sha256"],
-                "promotions": result["promotions"],
-            }
-        finally:
-            _git(root, "worktree", "remove", "--force", str(worktree))
-
+    """Retired compatibility entrypoint; never creates queue branches or PRs."""
+    del root, state_db, state_root, policy, repository, base, branch
+    if not authority.strip():
+        raise ValueError("explicit queue-refill authority is required")
+    return {
+        "status": "not-applied",
+        "retired": True,
+        "queue_authoritative": False,
+        "compatibility_queue_mutated": False,
+        "reason": (
+            "Now-refill Git publication is retired; StateStore frontier/priority "
+            "is the operational authority"
+        ),
+        "does_not_establish": [
+            "Git branch creation",
+            "pull request creation",
+            "queue mutation authority",
+            "claim or dispatch authority",
+        ],
+    }
 
 def publish_state_snapshot(
     root: Path,
@@ -608,7 +552,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     base=arguments.base,
                     branch=branch,
                 )
-        if publish_result is not None and publish_result["status"] != "published":
+        if publish_result is not None and publish_result.get("retired") is True:
+            result = {
+                "status": "retired",
+                "kind": arguments.kind,
+                "branch": branch,
+                "mutation_performed": False,
+            }
+        elif publish_result is not None and publish_result["status"] != "published":
             result = withdraw_open_proposal(arguments.repo, arguments.base, branch)
         else:
             result = reconcile(

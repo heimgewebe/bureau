@@ -14,10 +14,10 @@ bureau --root . explain-next --capability repository --capability shell --json
 
 ## Queue freshness reconcile
 
-`registry/queue.json` is still the legacy dispatcher-order surface during the T012/T013
-transition; it is not the long-term V3 operational state authority. Current TaskSpec revisions,
-lifecycle state, runs, reservations, acceptance and closeout remain StateStore truth.
-`task.priority` is advisory metadata. Use
+`registry/queue.json` is read-only compatibility history after the T013 cutover. It is not an
+operational dispatcher-order or lifecycle authority. Current TaskSpec revisions, task priority,
+dynamic frontier, lifecycle state, runs, reservations, acceptance and closeout are StateStore truth.
+Use
 `queue-reconcile` to compare the two without mutating queue state:
 
 ```bash
@@ -53,27 +53,18 @@ lifecycle, run, reservation, acceptance, closeout, and frontier authority into S
 legacy queue surface remains readable during migration, and compatibility with a queue-only commit
 reflects that migration boundary rather than restoring the older authority model.
 
-A queue mutation must go through a reviewed plan artifact. First write a plan:
+`queue-reconcile --write-plan` remains available for audit and review evidence, but
+`queue-reconcile --apply-plan` is deliberately retired as a materialisation effect. A reviewed plan
+is still validated (including its review, action filter and resource binding), then returns an
+explicit `retired`/`no_op` result. It never rewrites `registry/queue.json`. Likewise,
+`bureau.now_refill --apply` reports the bounded projection and an explicit retired result without
+moving lanes. The dynamic StateStore frontier and TaskSpec priority are the operational scheduling
+surfaces; a compatibility-queue discrepancy is diagnostic evidence only.
 
-```bash
-bureau --root . --json queue-reconcile --write-plan /tmp/bureau-queue-plan.json
-```
-
-Review the plan's `actions` and `expected_queue_after`. To apply, edit `review.status` to
-`reviewed` and add `reviewer` plus `reviewed_at`, then run:
-
-```bash
-bureau --root . --json queue-reconcile --apply-plan /tmp/bureau-queue-plan.json
-```
-
-Apply is deliberately narrow. It only applies deterministic add-to-`now`/add-to-`next` actions
-that exactly match the current dry-run recommendations. The reviewed artifact is bound to the same
-registry root, Git head and pre-apply queue hash. Apply checks the head before validation, directly
-before the write, directly after the write and after post-apply gates. A head change, queue change,
-dry-run change, action change or failed registry/doctor/registry-truth gate refuses or rolls back the
-queue mutation. A reviewed plan with no current actions returns an explicit byte-stable no-op and
-does not rewrite `registry/queue.json`. Real queue updates retain the repository's readable JSON
-format. The path never claims, dispatches, completes or merges work.
+Do not repair operational readiness by editing `registry/queue.json`, creating a queue PR or running
+a historical queue writer. Repair the authoritative TaskSpec/lifecycle state through the typed
+StateStore APIs, then re-read Doctor/Frontier. The compatibility file may remain stale until an
+explicit archive/projection policy changes it; that does not create a second authority.
 
 ## Worktree hygiene and reviewed cleanup
 
@@ -154,8 +145,8 @@ bureau --root . --json live-list
 ```
 
 Live-register records are operational evidence only. They do not establish queue truth, task truth,
-claim authority, dispatch authority or merge readiness. Durable work still requires a reviewed
-Registry PR.
+claim authority, dispatch authority or merge readiness. Durable work still requires a reviewed,
+CAS-bound TaskSpec publication into the authoritative StateStore.
 
 Operational views can consume the same state-store evidence without changing dispatch authority:
 
@@ -177,7 +168,10 @@ bureau --root . --json live-promote-plan \
   --write-plan /tmp/live-promote.json
 ```
 
-Apply requires `review.status=reviewed` and does not mutate the queue.
+The Live Register plan remains review evidence only. `live-promote-plan --apply-plan` is retired
+after the T013 cutover and fails closed before any Registry effect; materialise the reviewed
+candidate through `operator-task-propose` / `operator-task-publish`, which writes the authoritative
+StateStore TaskSpec directly.
 
 ## Operator-native candidate intake and task publication
 
@@ -195,7 +189,15 @@ bureau --root /clean/bureau --json operator-task-publish \
   --plan proposal.json --preview
 ```
 
-Apply additionally requires a reviewed proposal, a live owner/task lease binding, the exact task-file lease, the short Registry-publication gate, an isolated workspace root and a create-only receipt path. Bureau reads Grabowski's private resource database directly; supplied JSON is not treated as lease authority. Publication creates a branch and pull request only. It never queues, claims, dispatches, merges, deploys or verifies the proposed task.
+Apply additionally requires a reviewed proposal, a live owner/task lease binding for the exact
+StateRoot and a create-only receipt path. Bureau reads Grabowski's private resource database
+directly; supplied JSON is not treated as lease authority. `operator-task-publish` advertises
+`publication_mode: state_store`, binds the absolute coordination StateRoot, performs one TaskSpec
+CAS mutation there and reads the exact revision back before releasing the lease. It does not create
+a branch, task-file commit or pull request and never mutates `registry/queue.json`. `operator-task-ready`
+promotes the same StateStore revision; historical Git publication receipts remain readable only for
+compatibility closeout. Neither command claims, dispatches, merges, deploys or verifies the proposed
+task.
 
 See `docs/bureau-operator-intake-v1.md` for schemas, failure semantics, idempotency and non-claims.
 
@@ -216,10 +218,10 @@ bureau --root . --json claim-next --worker worker-repo-bureau \
   --resource repo.bureau --capability repository --capability shell
 ```
 
-A resource-scoped ball does not create a second queue authority. During the T012/T013 transition,
-`registry/queue.json` remains only the legacy dispatcher-order surface. It does not override
-StateStore lifecycle truth. The resource filter limits observation, explanation and selection to
-tasks whose claims overlap the requested resource.
+A resource-scoped ball does not create a second queue authority. `registry/queue.json` is
+read-only compatibility history and does not override StateStore TaskSpec, priority or lifecycle
+truth. The resource filter limits observation, explanation and selection to tasks whose claims
+overlap the requested resource.
 
 Worker ownership is still one active assignment per worker ID. Use stable resource-scoped worker
 IDs, such as `worker-repo-bureau` or `worker-repo-lenskit`, when operating multiple repository
@@ -335,90 +337,29 @@ journalctl --user -u bureau-source-pr-bridge.service -n 50 --no-pager
 Neither half of the pipeline establishes readiness, dependency completeness, safe parallel scope or
 autonomous execution permission.
 
-## Now-lane refill: local authoritative decision
+## Now-lane refill: read-only compatibility projection
 
-`bureau.now_refill` keeps the canonical Now lane at or above a configured floor by promoting
-existing, structurally runnable tasks from Next. The decision is a revision-bound snapshot of the
-same live truth the claim path checks: canonical Registry head, `registry/queue.json` digest, the
-live Bureau StateStore (active runs, reservations), open GitHub pull-request bindings observed
-through `gh`, and the runtime-execution gate (Bureau checkout dirty, `HEAD` diverged from
-`origin/main`, or registry/receipt drift). Missing or contradictory evidence in any of these blocks
-the decision with no Registry effect; it never produces a partial or best-guess promotion.
+`bureau.now_refill` remains useful as a bounded diagnostic of the former Now/Next queue model. The
+preview can explain which structurally runnable tasks would have been promoted under the legacy
+policy, but it no longer grants or performs an operational queue effect. `--apply` requires the
+explicit authority string for compatibility with reviewed historical procedures, then returns
+`retired: true`, `compatibility_queue_mutated: false` and leaves `registry/queue.json` byte-stable.
 
-```bash
-python -m bureau.now_refill --root . --floor 2 --target 4 --max-promotions 4
-python -m bureau.now_refill --root . --apply --authority <explicit-operator-authority>
-```
+The old `source-pr-bridge --kind now-refill --publish` path is retired in the same way: it creates no
+worktree, branch, commit or pull request. The installed `bureau-source-pr-bridge.service` therefore
+contains no Now-refill publish `ExecStart`. No hosted workflow or local timer may materialise a queue
+refill. Operational scheduling comes from StateStore TaskSpec priority plus the dynamic Frontier.
 
-The default command is read-only preview. `--apply` requires an explicit, non-empty `--authority`
-string, re-validates the queue digest, Git head and runtime gate immediately before writing, and
-rolls the queue file back to its exact prior bytes if any post-write consistency check fails.
+The source bridge itself is **not** retired. Its bounded source-observation path and the separate
+redacted StateStore snapshot transport remain allowed Git outputs because they carry observation or
+transparency evidence, not task/queue/lifecycle truth. Code, schema and runtime-release changes also
+continue through normal protected GitHub PR/CI/merge. Exceptional reviewed one-file runtime-bootstrap
+TaskSpecs remain the fail-closed recovery seam for immutable-runtime convergence; they are not the
+ordinary task-registration path.
 
-**A GitHub-hosted runner cannot see any of this local truth** — it starts from an empty StateStore,
-has no visibility into locally running Bureau agents, Grabowski leases or the operator's checkout
-drift, and would either invent a promotion from stale or absent evidence or silently promote nothing
-while claiming success. Bureau therefore removed the hosted `refill-bureau-now-lane` GitHub Actions
-workflow entirely. No workflow in this repository computes or applies a Now-refill decision. The
-decision, branch and commit are produced only by the local, already-authenticated, manifest-bound
-`~/.local/bin/bureau source-pr-bridge --kind now-refill --publish` path below. A hosted runner may
-at most observe and merge the exact, unmodified, revision-bound branch this path pushes.
-
-`~/.local/bin/bureau source-pr-bridge --publish` computes and publishes the proposal without
-touching the operator's own working tree or branch. The stable `bureau` launcher verifies the
-immutable release and canonical Registry snapshot before dispatching the bridge:
-
-```bash
-~/.local/bin/bureau source-pr-bridge --kind now-refill --publish --auto-merge \
-  --root ~/repos/bureau --state-root ~/.local/state/bureau \
-  --authority bureau-source-pr-bridge-local
-```
-
-It fetches `origin/main`, adds a detached throwaway `git worktree` pinned to that exact commit,
-computes and applies the refill decision inside that worktree only, commits `registry/queue.json`
-there when (and only when) a promotion is authorised, force-with-lease pushes the commit to
-`automation/now-lane-refill`, and removes the worktree again. `~/repos/bureau` itself is never
-checked out to a different branch, staged or committed to. The subsequent pull-request reconcile
-step (already covered above) then creates or refreshes the task-bound PR and enables auto-merge
-using the operator's own authorised `gh` session; `main` is never written to directly.
-
-The proposal commit is created while the throwaway worktree remains detached; no local
-`automation/now-lane-refill` branch is checked out. Therefore a surviving historical branch ref
-cannot block a later cycle. If a cycle is killed before its own cleanup runs (out-of-band `SIGKILL`,
-host reboot), the orphaned worktree is still diagnosed and removed through
-`bureau --root ~/repos/bureau --json worktree-hygiene` and its reviewed cleanup plan (`## Worktree
-hygiene and reviewed cleanup` above), not by hand-editing `~/repos/bureau/.git`.
-
-The installed user timer invokes the same manifest-bound `~/.local/bin/bureau source-pr-bridge`
-entrypoint and passes `--publish --root %h/repos/bureau --state-root %h/.local/state/bureau` on its
-`--kind now-refill` invocation. Enabling `bureau-source-pr-bridge.timer` through the installation
-steps above is sufficient; no separate refill timer exists. The timer's five-minute cadence is the only cadence at which the Now lane is observed and,
-if below floor, refilled; there is no faster or hosted path.
-
-Repeated cycles are bounded and idempotent. If the lane is already at or above the floor, no
-structurally runnable Next task exists, or the runtime gate is blocked, the cycle publishes nothing.
-It also closes any still-open proposal from an earlier decision, because an old auto-merge request
-must not outlive the local truth that authorised it. A later authorised cycle may publish the same
-branch again and open a fresh revision-bound PR. If a proposal remains authorised, a repeat cycle
-recomputes the same deterministic promotion from `origin/main`, force-with-lease-updates the same
-branch and refreshes the existing PR body — it never opens a second parallel PR. Once a promotion
-merges, the next cycle observes a satisfied Now lane and publishes nothing, so no double-promotion
-occurs.
-
-Blocking cases surface as `status: "blocked"` with a specific entry in `blockers`:
-
-- `no-structurally-runnable-next-task` — the lane is below floor but no Next task clears every
-  structural claim gate (dependencies, child gates, active runs, initiative limits, resource
-  conflicts, open-PR overlap, queue absence, non-ready state).
-- `runtime-execution-blocked` — the checkout is dirty, `HEAD` differs from `origin/main`, or the
-  registry/receipt state failed the drift check; no promotion is proposed or applied until the
-  runtime gate clears.
-
-**Rollback without direct `main` mutation.** An incorrect promotion is reverted the same way any
-other canonical change is reverted: open a normal pull request. Either `git revert` the merge commit
-on a fresh branch, or move the affected task(s) back from `now` to `next` through the reviewed
-`queue-reconcile` plan path (`## Queue freshness reconcile` above) and open a PR for the reviewed
-plan. Both paths go through the standard PR, CI and merge gate; neither pushes to `main` directly or
-edits `registry/queue.json` in place on the canonical branch.
+Rollback of an incorrect operational task change uses StateStore revision/CAS plus the normal
+acceptance/reconciliation contracts and verified StateStore backup/restore evidence. It does not
+reactivate queue writers or hand-edit `registry/queue.json`.
 
 ## Source promotion preview
 
@@ -625,10 +566,11 @@ baseline is not the intended revision, stop and repair the task or claim path; d
 adopt a foreign checkout. The coordinator-created worktree remains bound to the run and does not by
 itself establish test sufficiency, merge readiness or deployment authority.
 
-`registry/tasks/*.json` remains the Git publication/input surface, while the current StateStore
-TaskSpec revision and lifecycle state are operational authority. `registry/queue.json` remains a
-transitional legacy dispatcher-order surface until T012/T013 remove the old writers; it must not
-be treated as a second V3 state authority. The run envelope binds the exact task and plan revisions.
+`registry/tasks/*.json` is now a read-only bootstrap/archive compatibility surface for ordinary
+tasks; the current StateStore TaskSpec revision is the publication, revision and lifecycle
+authority. New reviewed Operator-Intake tasks and Supply fallbacks are written directly to
+StateStore and need no task-file/queue PR. `registry/queue.json` is read-only compatibility history.
+The run envelope binds the exact authoritative task and plan revisions.
 Diagnose intended resources without acquiring them:
 
 ```bash
@@ -646,6 +588,16 @@ bureau --json lease-contract \
 Doctor reports nonterminal legacy tasks that still request the broad repository key. Planned tasks
 produce a migration warning; a ready task or a task in `now` produces a blocker until its scope is
 narrowed. Historical terminal evidence is not rewritten.
+
+
+### GitHub protection after the T013 cutover
+
+The protected `main` branch still requires the normal validation matrix and the
+`registry-registration-preflight/freshness` context. T013 does **not** remove that required check:
+it remains useful for code PR freshness and for the exceptional reviewed runtime-bootstrap TaskSpec
+seam. Ordinary task registration, queue movement, Supply publication and closeout no longer create
+PRs. Removing or renaming the required check would require a separate ruleset migration; do not use
+T013 as an implicit branch-protection bypass.
 
 
 ## Redacted public StateStore snapshot

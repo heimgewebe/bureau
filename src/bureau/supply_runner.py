@@ -606,6 +606,11 @@ def reconcile_merged_supply_publication(
 ) -> dict[str, Any]:
     if mode not in {"preview", "apply", "readback"}:
         raise SupplyError("unsupported post-merge reconciliation mode")
+    if mode == "apply":
+        raise SupplyError(
+            "post-merge Git-to-StateStore reconciliation is retired; "
+            "Supply publication now writes the authoritative StateStore directly"
+        )
     if state_db is None and state_store_root is None:
         raise SupplyError("post-merge reconciliation requires an explicit Bureau StateStore path")
     selected_root = registry_root.expanduser().resolve()
@@ -844,11 +849,6 @@ def run_supply_cycle(
     if registry_head is not None:
         if not isinstance(registry_head, str) or GIT_HEAD_RE.fullmatch(registry_head) is None:
             raise SupplyError("registry_head must be an exact lowercase 40-character Git commit")
-        if publish:
-            raise SupplyError(
-                "manifest-bound registry_head is read-only; publication requires "
-                "a Git-bound Registry"
-            )
         head = registry_head
 
         def selected_head_reader(_root: Path) -> str:
@@ -902,7 +902,7 @@ def run_supply_cycle(
     if not publish:
         publication["reason"] = "publication was not requested"
     elif not mutation_authority:
-        publication["reason"] = "registry mutation authority is not granted"
+        publication["reason"] = "StateStore mutation authority is not granted"
     elif plan.get("status") != "authorized":
         publication["reason"] = "publication plan is not authorized and blocker-free"
     else:
@@ -912,6 +912,8 @@ def run_supply_cycle(
                 plan,
                 mutation_authorized=True,
                 expected_plan_sha256=str(plan["plan_sha256"]),
+                state_db=state_db,
+                state_store_root=state_store_root,
                 head_reader=selected_head_reader,
             )
         except SupplyError as exc:
@@ -919,7 +921,9 @@ def run_supply_cycle(
             publication["reason"] = str(exc)
         else:
             publication["status"] = "published"
-            publication["reason"] = "bounded canonical refill published under explicit authority"
+            publication["reason"] = (
+                "bounded refill published atomically to authoritative StateStore"
+            )
             publication["result"] = result
             publication["created_task_ids"] = list(result["created_task_ids"])
             publication["post_publication_readback"] = _publication_readback(

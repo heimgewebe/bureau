@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator
 
 from bureau import supply_runner as supply_runner_module
 from bureau.agent_frontier import build_frontier_report
-from bureau.core import Dispatcher, StateStore
+from bureau.core import StateStore
 from bureau.cycle_contract import CONTRACT_VERSION, SCHEMA_VERSION
 from bureau.supply_runner import FrontierObservation, reconcile_merged_supply_publication
 from bureau.task_supply import (
@@ -649,44 +649,13 @@ def test_publish_requires_explicit_authority(tmp_path: Path) -> None:
         )
 
 
-def test_publish_fails_closed_on_head_or_queue_drift(tmp_path: Path) -> None:
+
+
+def test_authorized_publish_creates_state_store_tasks_without_git_mutation(tmp_path: Path) -> None:
     project_root = Path(__file__).parents[1]
     root = copy_registry(project_root, tmp_path / "registry-copy")
     queue_path = root / "registry/queue.json"
-    result = report(
-        tmp_path,
-        [],
-        registry_root=root,
-        repository=root,
-        registry_head=HEAD,
-        queue_sha256=file_sha256(queue_path),
-    )
-    plan = result["publication_plan"]
-    queue_before = queue_path.read_bytes()
-    with pytest.raises(SupplyError, match="head changed"):
-        publish_supply_plan(
-            plan,
-            mutation_authorized=True,
-            expected_plan_sha256=plan["plan_sha256"],
-            head_reader=lambda _root: "c" * 40,
-        )
-    assert queue_path.read_bytes() == queue_before
-    queue_path.write_text(queue_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
-    changed = queue_path.read_bytes()
-    with pytest.raises(SupplyError, match="queue changed"):
-        publish_supply_plan(
-            plan,
-            mutation_authorized=True,
-            expected_plan_sha256=plan["plan_sha256"],
-            head_reader=lambda _root: HEAD,
-        )
-    assert queue_path.read_bytes() == changed
-
-
-def test_authorized_publish_creates_canonical_tasks_and_valid_registry(tmp_path: Path) -> None:
-    project_root = Path(__file__).parents[1]
-    root = copy_registry(project_root, tmp_path / "registry-copy")
-    queue_path = root / "registry/queue.json"
+    git_before = registry_snapshot(root)
     result = report(
         tmp_path,
         [],
@@ -697,54 +666,30 @@ def test_authorized_publish_creates_canonical_tasks_and_valid_registry(tmp_path:
         queue_sha256=file_sha256(queue_path),
     )
     plan = result["publication_plan"]
+    state_root = tmp_path / "bureau-state"
     publication = publish_supply_plan(
         plan,
         mutation_authorized=True,
         expected_plan_sha256=plan["plan_sha256"],
-        head_reader=lambda _root: HEAD,
+        state_store_root=state_root,
     )
     assert publication["status"] == "published"
-    assert publication["post_publication_registry_valid"] is True
+    assert publication["publication_mode"] == "state_store"
+    assert publication["queue_mutated"] is False
     assert len(publication["created_task_ids"]) == 4
-    registry = Registry.load(root)
+    store = StateStore(state_root=state_root)
     for task_id in publication["created_task_ids"]:
-        assert task_id in registry.tasks
-        assert task_id in registry.queue["later"]
-        assert registry.tasks[task_id].raw["metadata"][FALLBACK_METADATA_KEY][
-            "generated_by_task"
-        ] == "OPERATOR-INTEGRATION-LOOP-V1-T014"
-
-
-def test_publish_rolls_back_all_files_when_post_validation_fails(tmp_path: Path) -> None:
-    project_root = Path(__file__).parents[1]
-    root = copy_registry(project_root, tmp_path / "registry-copy")
-    queue_path = root / "registry/queue.json"
-    queue_before = queue_path.read_bytes()
-    result = report(
-        tmp_path,
-        [],
-        registry_root=root,
-        repository=root,
-        registry_head=HEAD,
-        queue_sha256=file_sha256(queue_path),
-    )
-    plan = result["publication_plan"]
-
-    def reject_registry(_root: str | Path) -> Registry:
-        raise RuntimeError("synthetic post-publication validation failure")
-
-    with pytest.raises(RuntimeError, match="synthetic"):
-        publish_supply_plan(
-            plan,
-            mutation_authorized=True,
-            expected_plan_sha256=plan["plan_sha256"],
-            head_reader=lambda _root: HEAD,
-            registry_loader=reject_registry,
+        current = store.task_spec(task_id)
+        assert current is not None
+        assert (
+            current["spec"]["metadata"][FALLBACK_METADATA_KEY]["generated_by_task"]
+            == "OPERATOR-INTEGRATION-LOOP-V1-T014"
         )
-    assert queue_path.read_bytes() == queue_before
-    for action in plan["actions"]:
-        if action["action"] == "create":
-            assert not (root / action["task_path"]).exists()
+        assert not (root / f"registry/tasks/{task_id}.json").exists()
+    assert registry_snapshot(root) == git_before
+
+
+
 
 
 def empty_source_state() -> dict:
@@ -995,6 +940,7 @@ def test_publish_rejects_unknown_action_before_mutation(tmp_path: Path) -> None:
             plan,
             mutation_authorized=True,
             expected_plan_sha256=plan["plan_sha256"],
+            state_store_root=tmp_path / "bureau-state",
             head_reader=lambda _root: HEAD,
         )
     assert registry_snapshot(root) == before
@@ -1026,6 +972,7 @@ def test_publish_revalidates_typed_acceptance_before_any_mutation(tmp_path: Path
             plan,
             mutation_authorized=True,
             expected_plan_sha256=plan["plan_sha256"],
+            state_store_root=tmp_path / "bureau-state",
             head_reader=lambda _root: HEAD,
         )
 
@@ -1268,99 +1215,12 @@ def test_publish_rejects_path_traversal_task_binding(tmp_path: Path) -> None:
             plan,
             mutation_authorized=True,
             expected_plan_sha256=plan["plan_sha256"],
+            state_store_root=tmp_path / "bureau-state",
             head_reader=lambda _root: HEAD,
         )
     assert registry_snapshot(root) == before
 
 
-def test_canonical_publication_feeds_normal_pickup_and_preserves_gates(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    project_root = Path(__file__).parents[1]
-    root = copy_registry(project_root, tmp_path / "registry-copy")
-    queue_path = root / "registry/queue.json"
-    result = report(
-        tmp_path,
-        [],
-        task_documents=task_documents(root),
-        registry_root=root,
-        repository=root,
-        registry_head=HEAD,
-        queue_sha256=file_sha256(queue_path),
-    )
-    plan = result["publication_plan"]
-    task_id = next(
-        action["task_id"] for action in plan["actions"] if action["action"] == "create"
-    )
-    assert task_id not in Registry.load(root).tasks
-
-    publish_supply_plan(
-        plan,
-        mutation_authorized=True,
-        expected_plan_sha256=plan["plan_sha256"],
-        head_reader=lambda _root: HEAD,
-    )
-    subprocess.run(["git", "init", str(root)], check=True, capture_output=True, text=True)
-    subprocess.run(
-        ["git", "-C", str(root), "config", "user.name", "Bureau Test"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(root), "config", "user.email", "bureau-test@example.invalid"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(root), "add", "registry", "schemas"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(root), "commit", "-m", "test registry snapshot"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    registry = Registry.load(root)
-    dispatcher = Dispatcher(registry, StateStore(tmp_path / "state.sqlite3"))
-    monkeypatch.setattr(
-        dispatcher,
-        "_runtime_execution_truth",
-        lambda: {
-            "schema_version": 1,
-            "status": "clear",
-            "execution_blocked": False,
-        },
-    )
-    without_capabilities = {
-        item["task_id"]: item for item in dispatcher.frontier(set())
-    }[task_id]
-    assert without_capabilities["eligible"] is False
-    assert any(
-        reason.startswith("missing capabilities:")
-        for reason in without_capabilities["claim_reasons"]
-    )
-
-    task = registry.tasks[task_id]
-    with_capabilities = {
-        item["task_id"]: item
-        for item in dispatcher.frontier(set(task.capabilities))
-    }[task_id]
-    assert with_capabilities["eligible"] is False
-    assert with_capabilities["claim_reasons"] == [REVIEW_REASON]
-
-    approved_intent = dispatcher.claim_intent(
-        "fallback-pickup-test",
-        task.capabilities,
-        task_id=task_id,
-        approved=True,
-    )
-    assert approved_intent["intent"]["task_id"] == task_id
-    assert dispatcher.store.list_runs() == []
 
 
 POST_MERGE_PR = 77
@@ -1518,218 +1378,19 @@ def reconcile_case(
     )
 
 
-@pytest.mark.parametrize("drift", ["unmerged", "task", "queue", "base", "receipt"])
-def test_post_merge_reconciliation_fails_closed_before_state_effect(
-    tmp_path: Path,
-    drift: str,
-) -> None:
-    case = post_merge_case(tmp_path)
-    pull_request = json.loads(json.dumps(case["pull_request"]))
-    expected_receipt = case["run_receipt_sha256"]
-    if drift == "unmerged":
-        pull_request["state"] = "OPEN"
-        pull_request["merged_at"] = None
-    elif drift == "task":
-        task_path = case["publication"]["created_tasks"][0]["task_path"]
-        pull_request["files"][task_path]["spec_sha256"] = "0" * 64
-    elif drift == "queue":
-        pull_request["files"]["registry/queue.json"]["file_sha256"] = "0" * 64
-    elif drift == "base":
-        pull_request["base_sha"] = "0" * 40
-    else:
-        expected_receipt = "0" * 64
-    with pytest.raises(SupplyError):
-        reconcile_case(
-            case,
-            mode="apply",
-            pull_request=pull_request,
-            expected_run_receipt_sha256=expected_receipt,
-        )
-    store = StateStore(case["state_db"])
-    assert all(
-        store.task_spec(binding["task_id"]) is None
-        for binding in case["publication"]["created_tasks"]
-    )
-    assert not case["reconciliation_receipt"].exists()
-
-
-def test_post_merge_reconciliation_revalidates_pr_before_state_effect(
-    tmp_path: Path,
-) -> None:
-    case = post_merge_case(tmp_path)
-    drifted_pr = json.loads(json.dumps(case["pull_request"]))
-    task_path = case["publication"]["created_tasks"][0]["task_path"]
-    drifted_pr["files"][task_path]["spec_sha256"] = "0" * 64
-    calls = 0
-
-    def moving_pr(_repository, _number, _bindings):
-        nonlocal calls
-        calls += 1
-        return case["pull_request"] if calls == 1 else drifted_pr
-
-    with pytest.raises(SupplyError, match="merged Supply TaskSpec binding drifted"):
-        reconcile_case(case, mode="apply", pull_request_reader=moving_pr)
-
-    assert calls == 2
-    store = StateStore(case["state_db"])
-    assert all(
-        store.task_spec(binding["task_id"]) is None
-        for binding in case["publication"]["created_tasks"]
-    )
-    assert not case["reconciliation_receipt"].exists()
-
-
-def test_post_merge_reconciliation_imports_missing_specs_and_replays_receipt(
-    tmp_path: Path,
-) -> None:
-    case = post_merge_case(tmp_path)
-    queue_before = (case["root"] / "registry/queue.json").read_bytes()
-    preview = reconcile_case(case, mode="preview")
-    assert preview["status"] == "ready"
-    assert preview["effect_started"] is False
-    assert {item["status"] for item in preview["state_preimage"]} == {"missing"}
-    assert not case["reconciliation_receipt"].exists()
-
-    applied = reconcile_case(case, mode="apply")
-    assert applied["status"] == "completed"
-    assert applied["effect_started"] is True
-    assert {item["status"] for item in applied["state_results"]} == {"imported"}
-    assert case["reconciliation_receipt"].is_file()
-    store = StateStore(case["state_db"])
-    for binding in case["publication"]["created_tasks"]:
-        current = store.task_spec(binding["task_id"])
-        assert current is not None
-        assert current["revision"] == 1
-        assert current["spec_sha256"] == binding["spec_sha256"]
-    assert (case["root"] / "registry/queue.json").read_bytes() == queue_before
-
-    replay = reconcile_case(case, mode="readback")
-    assert replay["idempotent_replay"] is True
-    assert replay["effect_started"] is False
-    assert replay["receipt_sha256"] == applied["receipt_sha256"]
-
-
-def test_post_merge_reconciliation_preserves_existing_divergence(
-    tmp_path: Path,
-) -> None:
-    case = post_merge_case(tmp_path)
-    first = case["publication"]["created_tasks"][0]
-    registry = Registry.load(case["root"])
-    divergent = json.loads(json.dumps(registry.tasks[first["task_id"]].raw))
-    divergent["title"] = divergent["title"] + " divergent-test"
-    store = StateStore(case["state_db"])
-    stored = store.put_task_spec(
-        divergent,
-        idempotency_key="post-merge-divergence-test",
-        expected_revision=None,
-        source="test-divergence",
-    )
-    before = store.task_spec(first["task_id"])
-    assert before is not None
-    assert before["spec_sha256"] != first["spec_sha256"]
-
-    applied = reconcile_case(case, mode="apply")
-    assert applied["status"] == "completed-with-divergence"
-    rows = {item["task_id"]: item for item in applied["state_results"]}
-    assert rows[first["task_id"]]["status"] == "divergent-preserved"
-    assert rows[first["task_id"]]["after"] == {
-        "revision": stored["revision"],
-        "spec_sha256": before["spec_sha256"],
-    }
-    assert sum(item["status"] == "imported" for item in applied["state_results"]) == 3
-    after = store.task_spec(first["task_id"])
-    assert after is not None
-    assert after["revision"] == before["revision"]
-    assert after["spec_sha256"] == before["spec_sha256"]
-
-
-def test_post_merge_readback_without_receipt_is_read_only(tmp_path: Path) -> None:
-    case = post_merge_case(tmp_path)
-    readback = reconcile_case(case, mode="readback")
-    assert readback["status"] == "receipt-missing"
-    assert readback["effect_started"] is False
-    assert {item["status"] for item in readback["state_readback"]} == {"missing"}
-    store = StateStore(case["state_db"])
-    assert all(
-        store.task_spec(binding["task_id"]) is None
-        for binding in case["publication"]["created_tasks"]
-    )
-
-
-def test_post_merge_dispatcher_failure_requires_readback_before_retry(tmp_path: Path) -> None:
-    case = post_merge_case(tmp_path)
-
-    def fail_dispatcher(**_kwargs):
-        raise RuntimeError("dispatcher-readback-failed")
-
-    with pytest.raises(
-        SupplyError,
-        match=r"StateStore effect may already be complete.*run exact readback",
-    ):
-        reconcile_case(case, mode="apply", observer=fail_dispatcher)
-
-    assert not case["reconciliation_receipt"].exists()
-    store = StateStore(case["state_db"])
-    assert all(
-        store.task_spec(binding["task_id"])["spec_sha256"] == binding["spec_sha256"]
-        for binding in case["publication"]["created_tasks"]
-    )
-    readback = reconcile_case(case, mode="readback")
-    assert readback["status"] == "receipt-missing"
-    assert {item["status"] for item in readback["state_readback"]} == {
-        "expected-present"
-    }
-    assert readback["effect_started"] is False
 
 
 
-def test_post_merge_cli_routes_explicit_preview(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    captured: dict[str, object] = {}
 
-    def fake_reconcile(**kwargs):
-        captured.update(kwargs)
-        return {"status": "ready", "effect_started": False}
 
-    monkeypatch.setattr(
-        supply_runner_module,
-        "reconcile_merged_supply_publication",
-        fake_reconcile,
-    )
-    run_receipt = tmp_path / "run.json"
-    state_db = tmp_path / "state.sqlite3"
-    result = supply_runner_module.main(
-        [
-            "--registry-root",
-            str(tmp_path),
-            "--capability",
-            "bureau",
-            "--reconcile-merged-run",
-            str(run_receipt),
-            "--expected-run-receipt-sha256",
-            "a" * 64,
-            "--publication-repository",
-            "heimgewebe/bureau",
-            "--publication-pr",
-            "77",
-            "--bureau-state-db",
-            str(state_db),
-            "--reconcile-preview",
-        ]
-    )
-    assert result == 0
-    assert captured["mode"] == "preview"
-    assert captured["registry_root"] == tmp_path
-    assert captured["run_receipt_path"] == run_receipt
-    assert captured["expected_run_receipt_sha256"] == "a" * 64
-    assert captured["repository"] == "heimgewebe/bureau"
-    assert captured["pull_request_number"] == 77
-    assert captured["state_db"] == state_db
-    assert captured["reconciliation_receipt_path"] is None
-    assert json.loads(capsys.readouterr().out)["status"] == "ready"
+
+
+
+
+
+
+
+
 
 
 def test_supply_runner_receipt_persists_publication_binding(
@@ -1798,3 +1459,44 @@ def test_supply_runner_receipt_persists_publication_binding(
             "publication_result": publication_result,
         }
     ]
+
+
+def test_state_store_publish_treats_git_head_and_queue_as_trace_only(tmp_path: Path) -> None:
+    project_root = Path(__file__).parents[1]
+    root = copy_registry(project_root, tmp_path / "registry-copy")
+    queue_path = root / "registry/queue.json"
+    result = report(
+        tmp_path,
+        [],
+        registry_root=root,
+        repository=root,
+        registry_head=HEAD,
+        queue_sha256=file_sha256(queue_path),
+    )
+    plan = result["publication_plan"]
+    before = registry_snapshot(root)
+    publication = publish_supply_plan(
+        plan,
+        mutation_authorized=True,
+        expected_plan_sha256=plan["plan_sha256"],
+        state_store_root=tmp_path / "bureau-state",
+        head_reader=lambda _root: "c" * 40,
+    )
+    assert publication["status"] == "published"
+    assert publication["registry_head_at_plan"] == HEAD
+    assert publication["compatibility_queue_sha256_at_plan"] == file_sha256(queue_path)
+    assert registry_snapshot(root) == before
+
+
+def test_post_merge_git_to_state_store_apply_is_retired(tmp_path: Path) -> None:
+    with pytest.raises(SupplyError, match="retired"):
+        reconcile_merged_supply_publication(
+            registry_root=tmp_path,
+            run_receipt_path=tmp_path / "unused-receipt.json",
+            expected_run_receipt_sha256="0" * 64,
+            repository="heimgewebe/bureau",
+            pull_request_number=1,
+            capabilities=(),
+            state_store_root=tmp_path / "bureau-state",
+            mode="apply",
+        )

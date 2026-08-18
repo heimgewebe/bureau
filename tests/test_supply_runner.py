@@ -24,7 +24,7 @@ from bureau.task_supply import (
     _load_frontier_snapshot,
     sha256_json,
 )
-from bureau.v2 import Registry
+from bureau.v2 import Registry, StateStore
 
 HEAD = "d" * 40
 NOW = "2026-08-05T06:00:00Z"
@@ -259,6 +259,7 @@ def cycle(
         registry_root=root,
         capabilities=CAPABILITIES,
         state_root=tmp_path / "supply-state",
+        state_store_root=tmp_path / "bureau-state",
         policy=policy or SupplyPolicy(),
         mutation_authority=mutation_authority,
         publish=publish,
@@ -383,23 +384,23 @@ def test_manifest_bound_registry_head_refreshes_snapshot_without_git(tmp_path: P
     assert summary["publication"]["attempted"] is False
 
 
-def test_manifest_bound_registry_head_cannot_publish(tmp_path: Path) -> None:
+def test_manifest_bound_registry_head_can_publish_state_store_only(tmp_path: Path) -> None:
     root = registry_copy(tmp_path)
     queue_before = (root / "registry/queue.json").read_bytes()
-
-    with pytest.raises(SupplyError, match="read-only"):
-        run_supply_cycle(
-            registry_root=root,
-            capabilities=CAPABILITIES,
-            state_root=tmp_path / "supply-state",
-            mutation_authority=True,
-            publish=True,
-            generated_at=NOW,
-            registry_head=HEAD,
-            observer=observer_for([unbound_candidate(index) for index in range(8)]),
-        )
-
+    summary = run_supply_cycle(
+        registry_root=root,
+        capabilities=CAPABILITIES,
+        state_root=tmp_path / "supply-state",
+        state_store_root=tmp_path / "bureau-state",
+        mutation_authority=True,
+        publish=True,
+        generated_at=NOW,
+        registry_head=HEAD,
+        observer=observer_for([unbound_candidate(index) for index in range(8)]),
+    )
+    assert summary["publication"]["status"] in {"published", "preview-only"}
     assert (root / "registry/queue.json").read_bytes() == queue_before
+
 
 
 def test_manifest_bound_registry_head_is_strict() -> None:
@@ -433,36 +434,19 @@ def test_missing_mutation_authority_is_an_explicit_blocked_status(tmp_path: Path
     assert (root / "registry/queue.json").read_bytes() == queue_before
 
 
-def test_repeated_feasible_cycles_reuse_instead_of_duplicating_canonical_fallbacks(
-    tmp_path: Path,
-) -> None:
+def test_published_fallbacks_live_only_in_state_store(tmp_path: Path) -> None:
     root = registry_copy(tmp_path)
-    before = fallback_task_ids(root)
-    baseline = packable_base_frontier()
-
-    first = cycle(tmp_path, root, baseline)
-    after_first = fallback_task_ids(root)
-
-    second = cycle(tmp_path, root, baseline + published_fallback_items(root))
-    after_second = fallback_task_ids(root)
-
-    third = cycle(tmp_path, root, baseline + published_fallback_items(root))
-    after_third = fallback_task_ids(root)
-
+    queue_before = (root / "registry/queue.json").read_bytes()
+    first = cycle(tmp_path, root, packable_base_frontier())
     assert first["publication"]["status"] == "published"
-    assert second["publication"]["status"] == "published"
-    assert third["publication"]["status"] == "preview-only"
-    assert third["status"] == "blocked"
-    assert "claimable-supply-floor-structurally-unreachable" in third["blockers"]
-    assert len(after_first - before) == 3
-    assert len(after_second - before) == 6
-    assert after_third == after_second
-    assert set(first["publication"]["created_task_ids"]).isdisjoint(
-        second["publication"]["created_task_ids"]
-    )
-    assert third["publication"]["created_task_ids"] == []
-    registry = Registry.load(root)
-    assert sorted(registry.queue["later"]) == sorted(set(registry.queue["later"]))
+    created = first["publication"]["created_task_ids"]
+    assert created
+    store = StateStore(state_root=tmp_path / "bureau-state")
+    for task_id in created:
+        assert store.task_spec(task_id) is not None
+        assert not (root / f"registry/tasks/{task_id}.json").exists()
+    assert (root / "registry/queue.json").read_bytes() == queue_before
+
 
 
 def test_repeated_unbound_cycles_never_publish_or_duplicate_fallbacks(
@@ -486,27 +470,26 @@ def test_repeated_unbound_cycles_never_publish_or_duplicate_fallbacks(
     assert (root / "registry/queue.json").read_bytes() == queue_before
 
 
-def test_terminal_fallback_blocks_only_its_own_category_in_the_same_bucket(
+def test_state_store_fallback_can_be_terminalized_without_git_task_materialization(
     tmp_path: Path,
 ) -> None:
     root = registry_copy(tmp_path)
-    baseline = packable_base_frontier()
-    first = cycle(tmp_path, root, baseline)
-    terminal_id = first["publication"]["created_task_ids"][0]
-    terminal_path = mark_terminal(root, terminal_id)
-
-    second = cycle(
-        tmp_path,
-        root,
-        baseline + published_fallback_items(root),
-        generated_at=LATER_SAME_BUCKET,
+    first = cycle(tmp_path, root, packable_base_frontier())
+    task_id = first["publication"]["created_task_ids"][0]
+    store = StateStore(state_root=tmp_path / "bureau-state")
+    current = store.task_spec(task_id)
+    assert current is not None
+    terminal = json.loads(json.dumps(current["spec"]))
+    terminal["state"] = "cancelled"
+    written = store.put_task_spec(
+        terminal,
+        idempotency_key=f"test-terminal:{task_id}",
+        expected_revision=current["revision"],
+        source="test",
     )
+    assert written["spec"]["state"] == "cancelled"
+    assert not (root / f"registry/tasks/{task_id}.json").exists()
 
-    assert second["publication"]["status"] == "published"
-    assert terminal_id not in second["publication"]["created_task_ids"]
-    assert second["publication"]["created_task_ids"]
-    assert terminal_path.exists()
-    assert json.loads(terminal_path.read_text(encoding="utf-8"))["state"] == "cancelled"
 
 
 def test_unbound_profile_remains_fail_closed_across_same_bucket_cycles(

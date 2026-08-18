@@ -653,6 +653,196 @@ def _external_consumers() -> list[dict[str, Any]]:
     return records
 
 
+
+def _function_source(root: Path, relative_path: str, function_name: str) -> str | None:
+    """Return one top-level function body as source for narrow cutover diagnostics."""
+    path = root / relative_path
+    if not path.is_file():
+        return None
+    try:
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=str(path))
+    except (OSError, UnicodeError, SyntaxError):
+        return None
+    node = next(
+        (
+            item
+            for item in tree.body
+            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and item.name == function_name
+        ),
+        None,
+    )
+    if node is None:
+        return None
+    lines = source.splitlines(keepends=True)
+    return "".join(lines[node.lineno - 1 : node.end_lineno])
+
+
+def _operational_registry_writer_projection(root: Path) -> dict[str, Any]:
+    """Classify only known operational task/queue Git writer entrypoints.
+
+    The generic authority scanner intentionally remains broad.  This projection is
+    path-sensitive and answers the narrower T013 question: can an ordinary
+    TaskSpec/Queue/Supply effect still materialize operational Registry truth in Git?
+    """
+    specifications = (
+        (
+            "operator-task-publication",
+            "src/bureau/operator_intake.py",
+            "publish_task_proposal",
+            "state_store",
+            ("store.put_task_spec(", '"publication_mode": "state_store"'),
+            ("SubprocessTaskPublisher", "gh pr create", "git push"),
+        ),
+        (
+            "task-supply-publication",
+            "src/bureau/task_supply.py",
+            "publish_supply_plan",
+            "state_store",
+            ("task_specs.put(", '"publication_mode": "state_store"'),
+            ("legacy.atomic_write", "queue_path.write", "task_path.write"),
+        ),
+        (
+            "now-refill-apply",
+            "src/bureau/now_refill.py",
+            "apply_now_refill",
+            "retired",
+            ('"retired": True', '"compatibility_queue_mutated": False'),
+            ("legacy.atomic_write",),
+        ),
+        (
+            "queue-reconcile-apply",
+            "src/bureau/queue_reconcile.py",
+            "apply_queue_reconcile_plan",
+            "retired",
+            ('"retired": True', '"compatibility_queue_mutated": False'),
+            ("legacy.atomic_write",),
+        ),
+        (
+            "source-bridge-now-refill-publish",
+            "src/bureau/source_pr_bridge.py",
+            "publish_now_refill",
+            "retired",
+            ('"retired": True', '"compatibility_queue_mutated": False'),
+            ("_git(", "_gh(", "git push", "pr create"),
+        ),
+    )
+    surfaces: list[dict[str, Any]] = []
+    for name, relative, function_name, expected_status, required, forbidden in specifications:
+        source = _function_source(root, relative, function_name)
+        if source is None:
+            status = "unknown"
+            evidence = {"function_observed": False}
+        else:
+            missing_required = [marker for marker in required if marker not in source]
+            present_forbidden = [marker for marker in forbidden if marker in source]
+            status = expected_status if not missing_required and not present_forbidden else "active"
+            evidence = {
+                "function_observed": True,
+                "missing_required_markers": missing_required,
+                "present_forbidden_markers": present_forbidden,
+            }
+        surfaces.append(
+            {
+                "name": name,
+                "path": relative,
+                "entrypoint": function_name,
+                "status": status,
+                "expected_status": expected_status,
+                "evidence": evidence,
+            }
+        )
+
+    live_cli_path = root / "src/bureau/cli.py"
+    try:
+        live_cli_text = live_cli_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        live_cli_status = "unknown"
+        live_cli_evidence = {"cli_observed": False}
+    else:
+        retired_marker = (
+            "live-promote-plan --apply-plan is retired after the StateStore "
+            in live_cli_text
+        )
+        active_call = "apply_live_promote_plan(" in live_cli_text
+        live_cli_status = "retired" if retired_marker and not active_call else "active"
+        live_cli_evidence = {
+            "cli_observed": True,
+            "retired_marker": retired_marker,
+            "legacy_apply_call_present": active_call,
+        }
+    surfaces.append(
+        {
+            "name": "live-register-task-promotion-apply",
+            "path": "src/bureau/cli.py",
+            "entrypoint": "live-promote-plan --apply-plan",
+            "status": live_cli_status,
+            "expected_status": "retired",
+            "evidence": live_cli_evidence,
+        }
+    )
+
+    service_path = root / "ops/systemd/bureau-source-pr-bridge.service"
+    try:
+        service_text = service_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        service_status = "unknown"
+        service_evidence = {"unit_observed": False}
+    else:
+        active_publish = any(
+            "now-refill" in line and "--publish" in line
+            for line in service_text.splitlines()
+            if line.startswith("ExecStart=")
+        )
+        service_status = "active" if active_publish else "retired"
+        service_evidence = {
+            "unit_observed": True,
+            "now_refill_publish_execstart": active_publish,
+        }
+    surfaces.append(
+        {
+            "name": "systemd-now-refill-publish",
+            "path": "ops/systemd/bureau-source-pr-bridge.service",
+            "entrypoint": "ExecStart",
+            "status": service_status,
+            "expected_status": "retired",
+            "evidence": service_evidence,
+        }
+    )
+    active = [item for item in surfaces if item["status"] == "active"]
+    unknown = [item for item in surfaces if item["status"] == "unknown"]
+    complete = not unknown
+    return {
+        "schema_version": 1,
+        "kind": "bureau_operational_registry_writer_projection",
+        "status": "cutover" if complete and not active else "incomplete",
+        "complete": complete,
+        "active_count": len(active),
+        "unknown_count": len(unknown),
+        "active_surfaces": [item["name"] for item in active],
+        "surfaces": surfaces,
+        "allowed_git_outputs": [
+            "code-ci-release",
+            "source-observation",
+            "redacted-state-snapshot",
+            "compatibility-read",
+            "exceptional-reviewed-runtime-bootstrap-task-spec",
+        ],
+        "compatibility_contract": {
+            "registry_task_files": "read-only-bootstrap-and-archive",
+            "registry_queue_json": "read-only-compatibility-history",
+            "operational_task_authority": "bureau-state-store-task-specs",
+            "operational_queue_authority": "state-store-dynamic-frontier",
+        },
+        "does_not_establish": [
+            "absence of arbitrary unscanned Git writes outside known operational entrypoints",
+            "runtime deployment of this source revision",
+            "future GitHub availability",
+        ],
+    }
+
+
 def authority_inventory(
     root: Path,
     *,
@@ -794,6 +984,7 @@ def authority_inventory(
             }
         )
 
+    operational_writers = _operational_registry_writer_projection(root)
     error_count = sum(1 for item in findings if item["severity"] == "error")
     payload: dict[str, Any] = {
         "schema_version": _SCHEMA_VERSION,
@@ -812,8 +1003,12 @@ def authority_inventory(
                 "target": "github-main",
             },
             {
-                "subject": "task-status-frontier-claims-runs-acceptance-closeout",
-                "current": "split-git-registry-and-state-store",
+                "subject": "task-specs-status-frontier-claims-runs-acceptance-closeout",
+                "current": (
+                    "bureau-state-store"
+                    if operational_writers["status"] == "cutover"
+                    else "split-git-registry-and-state-store"
+                ),
                 "target": "bureau-state-store",
             },
             {
@@ -827,6 +1022,7 @@ def authority_inventory(
                 "target": "redacted-hash-bound-snapshot",
             },
         ],
+        "operational_registry_writers": operational_writers,
         "consumers": consumers,
         "state_store": state,
         "systemd": systemd,
@@ -841,6 +1037,8 @@ def authority_inventory(
             "git_registry_writer_count": sum(
                 "git_registry" in item["writes"] for item in consumers
             ),
+            "operational_registry_writer_count": operational_writers["active_count"],
+            "operational_registry_writer_unknown_count": operational_writers["unknown_count"],
             "github_transport_count": sum(
                 "github_transport" in item["writes"] for item in consumers
             ),

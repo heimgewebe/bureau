@@ -263,65 +263,32 @@ def apply_now_refill(
     authority: str,
     policy: NowRefillPolicy | None = None,
 ) -> dict[str, Any]:
-    """Materialize one bounded compatibility refill with rollback."""
-
+    """Return the compatibility refill projection without materializing queue state."""
     if not authority.strip():
         raise legacy.StateError("explicit queue-refill authority is required")
     selected_policy = policy or NowRefillPolicy()
     report = build_now_refill_report(registry, store, policy=selected_policy)
-    if report["status"] != "refill-planned":
-        return {
-            **report,
-            "applied": False,
-            "changed": False,
-            "authority_evidence": authority,
-        }
-
-    # Re-observe runtime/frontier immediately before the first file effect.
-    guard = build_now_refill_report(registry, store, policy=selected_policy)
-    if guard["runtime"].get("execution_blocked") is True:
-        raise legacy.StateError("runtime changed to blocked before Now-refill effect")
-    if (
-        guard["frontier_projection_sha256"] != report["frontier_projection_sha256"]
-        or guard["promotions"] != report["promotions"]
-    ):
-        raise legacy.StateError("dynamic frontier changed before Now-refill effect")
-
-    queue_path = _queue_path(registry)
-    before_text = queue_path.read_text(encoding="utf-8")
-    queue_before = legacy.read_json(queue_path)
-    if _queue_sha256(queue_before) != report["registry"]["queue_sha256_before"]:
-        raise legacy.StateError("queue changed after Now-refill report generation")
-    if _git_head(registry.root) != report["registry"]["git_head"]:
-        raise legacy.StateError("registry Git head changed after Now-refill report generation")
-    expected = _apply_promotions(queue_before, report["promotions"])
-    legacy.atomic_write(
-        queue_path, json.dumps(expected, ensure_ascii=False, indent=2) + "\n"
-    )
-    try:
-        if _git_head(registry.root) != report["registry"]["git_head"]:
-            raise legacy.StateError("registry Git head changed during Now refill")
-        registry_after = Registry.load(registry.root)
-        post = build_now_refill_report(
-            registry_after,
-            store,
-            policy=selected_policy,
-            _check_runtime=False,
-        )
-        if post["status"] != "satisfied":
-            raise legacy.StateError("Now-refill compatibility post-readback is not satisfied")
-    except Exception:
-        legacy.atomic_write(queue_path, before_text)
-        raise
     return {
         **report,
-        "applied": True,
-        "changed": True,
+        "applied": False,
+        "changed": False,
+        "retired": True,
+        "queue_authoritative": False,
+        "compatibility_queue_mutated": False,
         "authority_evidence": authority,
-        "queue_sha256_after": _queue_sha256(expected),
-        "post_readback": post,
+        "reason": (
+            "registry/queue.json is read-only compatibility history after the "
+            "StateStore authority cutover"
+        ),
+        "does_not_establish": sorted(
+            set(report.get("boundaries", []))
+            | {
+                "compatibility queue mutation authority",
+                "task admission authority",
+                "claim or dispatch authority",
+            }
+        ),
     }
-
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="bureau-now-refill")

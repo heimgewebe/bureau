@@ -24,7 +24,7 @@ def test_user_service_uses_manifest_bound_bureau_launcher():
     text = SERVICE.read_text(encoding="utf-8")
     exec_starts = [line for line in text.splitlines() if line.startswith("ExecStart=")]
 
-    assert len(exec_starts) == 2
+    assert len(exec_starts) == 1
     assert all(
         line.startswith("ExecStart=%h/.local/bin/bureau source-pr-bridge")
         for line in exec_starts

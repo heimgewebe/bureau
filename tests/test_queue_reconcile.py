@@ -9,7 +9,6 @@ import pytest
 from bureau import cli as bureau_cli
 from bureau import legacy
 from bureau import queue_reconcile as queue_reconcile_module
-from bureau import registry_truth as registry_truth_module
 from bureau.core import Dispatcher, Registry, StateStore
 from bureau.queue_reconcile import (
     apply_queue_reconcile_plan,
@@ -285,25 +284,6 @@ def test_write_plan_requires_review_before_apply(registry_factory, tmp_path):
         apply_queue_reconcile_plan(registry, store, plan_path)
 
 
-def test_reviewed_plan_materializes_full_compatibility_projection(
-    registry_factory, tmp_path
-):
-    root = registry_factory(2)
-    task_id = "BUR-TEST-001-T002"
-    _remove_from_queue(root, task_id)
-    _git_init(root)
-    registry = Registry.load(root)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    plan = write_queue_reconcile_plan(registry, store, plan_path)
-    _review_plan(plan_path)
-
-    result = apply_queue_reconcile_plan(registry, store, plan_path)
-
-    assert result["applied"] is True
-    assert result["queue_authoritative"] is False
-    assert _read_queue(root) == plan["expected_queue_after"]
-    assert result["post_gates"]["compatibility_queue_converged"] is True
 
 
 def test_reviewed_noop_plan_is_byte_stable(registry_factory, tmp_path):
@@ -323,94 +303,12 @@ def test_reviewed_noop_plan_is_byte_stable(registry_factory, tmp_path):
     assert _queue_path(root).read_bytes() == before
 
 
-def test_stale_queue_preimage_refuses_without_mutation(registry_factory, tmp_path):
-    root = registry_factory(1)
-    task_id = "BUR-TEST-001-T001"
-    _remove_from_queue(root, task_id)
-    _git_init(root)
-    registry = Registry.load(root)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    write_queue_reconcile_plan(registry, store, plan_path)
-    _review_plan(plan_path)
-    queue = _read_queue(root)
-    queue["lanes"]["later"].append(task_id)
-    _queue_path(root).write_text(json.dumps(queue))
-    changed = _queue_path(root).read_bytes()
-
-    with pytest.raises(legacy.StateError, match="queue changed"):
-        apply_queue_reconcile_plan(registry, store, plan_path)
-    assert _queue_path(root).read_bytes() == changed
 
 
-def test_registry_head_drift_refuses_without_mutation(registry_factory, tmp_path):
-    root = registry_factory(1)
-    task_id = "BUR-TEST-001-T001"
-    _remove_from_queue(root, task_id)
-    _git_init(root)
-    registry = Registry.load(root)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    write_queue_reconcile_plan(registry, store, plan_path)
-    _review_plan(plan_path)
-    before = _queue_path(root).read_bytes()
-    (root / "unrelated.txt").write_text("new head\n")
-    _git(root, "add", "unrelated.txt")
-    _git(root, "commit", "-m", "advance fixture")
-
-    with pytest.raises(legacy.StateError, match="git head changed"):
-        apply_queue_reconcile_plan(registry, store, plan_path)
-    assert _queue_path(root).read_bytes() == before
 
 
-def test_state_store_frontier_drift_refuses_without_mutation(registry_factory, tmp_path):
-    root = registry_factory(1)
-    task_id = "BUR-TEST-001-T001"
-    _remove_from_queue(root, task_id)
-    _git_init(root)
-    registry = Registry.load(root)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    store.import_registry_task_specs(registry)
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    write_queue_reconcile_plan(registry, store, plan_path)
-    _review_plan(plan_path)
-    before = _queue_path(root).read_bytes()
-    current = store.task_spec(task_id)
-    assert current is not None
-    spec = dict(current["spec"])
-    spec["state"] = "blocked"
-    store.put_task_spec(
-        spec,
-        idempotency_key="queue-reconcile-frontier-drift",
-        expected_revision=1,
-        source="test",
-    )
-
-    with pytest.raises(legacy.StateError, match="frontier changed"):
-        apply_queue_reconcile_plan(registry, store, plan_path)
-    assert _queue_path(root).read_bytes() == before
 
 
-def test_failed_post_gate_rolls_back_queue_bytes(registry_factory, tmp_path, monkeypatch):
-    root = registry_factory(1)
-    task_id = "BUR-TEST-001-T001"
-    _remove_from_queue(root, task_id)
-    _git_init(root)
-    registry = Registry.load(root)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    write_queue_reconcile_plan(registry, store, plan_path)
-    _review_plan(plan_path)
-    before = _queue_path(root).read_bytes()
-    monkeypatch.setattr(
-        registry_truth_module,
-        "registry_truth_diagnostics",
-        lambda root: {"healthy": False},
-    )
-
-    with pytest.raises(legacy.StateError, match="post-apply gates failed"):
-        apply_queue_reconcile_plan(registry, store, plan_path)
-    assert _queue_path(root).read_bytes() == before
 
 
 def test_cli_report_emits_compatibility_contract(registry_factory, tmp_path, capsys):
@@ -454,58 +352,6 @@ def test_plan_actions_are_bound_to_current_projection(registry_factory, tmp_path
     assert all(action.get("task_id") != "" for action in plan["actions"])
 
 
-def test_removal_only_action_class_filter_excludes_add_actions_and_effects(
-    registry_factory, tmp_path
-):
-    root = registry_factory(2)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    remove_task_id, add_task_id = _make_mixed_add_remove_drift(root, store)
-    _git_init(root)
-    registry = Registry.load(root)
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    action_filter = _action_filter(action_classes=["remove_from_queue"])
-
-    plan = write_queue_reconcile_plan(
-        registry,
-        store,
-        plan_path,
-        action_filter=action_filter,
-    )
-
-    assert plan["action_filter"] == action_filter
-    assert plan["action_filter_sha256"] == legacy.sha256_json(action_filter)
-    assert plan["actions_sha256"] == legacy.sha256_json(plan["actions"])
-    filtered_report = queue_reconcile_report(
-        registry,
-        store,
-        action_filter=action_filter,
-    )
-    assert plan["dry_run_report_sha256"] == legacy.sha256_json(filtered_report)
-    assert {action["operation"] for action in plan["actions"]} == {
-        "remove_from_queue"
-    }
-    assert remove_task_id not in {
-        task_id
-        for lane in plan["expected_queue_after"]["lanes"].values()
-        for task_id in lane
-    }
-    assert add_task_id not in {
-        task_id
-        for lane in plan["expected_queue_after"]["lanes"].values()
-        for task_id in lane
-    }
-    _review_plan(plan_path)
-
-    result = apply_queue_reconcile_plan(registry, store, plan_path)
-
-    queued = {
-        task_id for lane in _read_queue(root)["lanes"].values() for task_id in lane
-    }
-    assert result["applied"] is True
-    assert result["action_filter"] == action_filter
-    assert result["post_gates"]["compatibility_queue_converged"] is True
-    assert remove_task_id not in queued
-    assert add_task_id not in queued
 
 
 def test_finding_code_filter_can_select_only_terminal_removals(
@@ -533,32 +379,6 @@ def test_finding_code_filter_can_select_only_terminal_removals(
     ]
 
 
-def test_add_only_action_filter_does_not_apply_detected_removal(
-    registry_factory, tmp_path
-):
-    root = registry_factory(2)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    remove_task_id, add_task_id = _make_mixed_add_remove_drift(root, store)
-    _git_init(root)
-    registry = Registry.load(root)
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    action_filter = _action_filter(action_classes=["add_to_queue"])
-    write_queue_reconcile_plan(
-        registry,
-        store,
-        plan_path,
-        action_filter=action_filter,
-    )
-    _review_plan(plan_path)
-
-    result = apply_queue_reconcile_plan(registry, store, plan_path)
-
-    queued = {
-        task_id for lane in _read_queue(root)["lanes"].values() for task_id in lane
-    }
-    assert result["post_gates"]["compatibility_queue_converged"] is True
-    assert remove_task_id in queued
-    assert add_task_id in queued
 
 
 def test_default_plan_keeps_full_action_derivation(registry_factory, tmp_path):
@@ -652,64 +472,8 @@ def test_plan_rejects_missing_or_unknown_filter_values_before_writing(
     assert not plan_path.exists()
 
 
-@pytest.mark.parametrize("tamper", ["missing", "unknown", "changed"])
-def test_apply_rejects_filter_tampering_without_queue_effect(
-    registry_factory, tmp_path, tamper
-):
-    root = registry_factory(2)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    _make_mixed_add_remove_drift(root, store)
-    _git_init(root)
-    registry = Registry.load(root)
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    write_queue_reconcile_plan(
-        registry,
-        store,
-        plan_path,
-        action_filter=_action_filter(action_classes=["remove_from_queue"]),
-    )
-    plan = _review_plan(plan_path)
-    if tamper == "missing":
-        del plan["action_filter"]
-    elif tamper == "unknown":
-        plan["action_filter"]["allowed_action_classes"] = ["unknown_queue_effect"]
-    else:
-        plan["action_filter"] = _action_filter(action_classes=["add_to_queue"])
-        plan["action_filter_sha256"] = legacy.sha256_json(plan["action_filter"])
-    plan_path.write_text(json.dumps(plan))
-    before = _queue_path(root).read_bytes()
-
-    with pytest.raises(legacy.StateError, match="action filter"):
-        apply_queue_reconcile_plan(registry, store, plan_path)
-
-    assert _queue_path(root).read_bytes() == before
 
 
-def test_apply_rejects_action_set_tampering_without_queue_effect(
-    registry_factory, tmp_path
-):
-    root = registry_factory(2)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    _make_mixed_add_remove_drift(root, store)
-    _git_init(root)
-    registry = Registry.load(root)
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    write_queue_reconcile_plan(
-        registry,
-        store,
-        plan_path,
-        action_filter=_action_filter(action_classes=["remove_from_queue"]),
-    )
-    plan = _review_plan(plan_path)
-    plan["actions"] = []
-    plan["actions_sha256"] = legacy.sha256_json(plan["actions"])
-    plan_path.write_text(json.dumps(plan))
-    before = _queue_path(root).read_bytes()
-
-    with pytest.raises(legacy.StateError, match="actions changed"):
-        apply_queue_reconcile_plan(registry, store, plan_path)
-
-    assert _queue_path(root).read_bytes() == before
 
 
 def test_filtered_noop_plan_is_byte_stable(registry_factory, tmp_path):
@@ -737,33 +501,6 @@ def test_filtered_noop_plan_is_byte_stable(registry_factory, tmp_path):
     assert _queue_path(root).read_bytes() == before
 
 
-def test_filtered_plan_post_gate_failure_rolls_back_queue_bytes(
-    registry_factory, tmp_path, monkeypatch
-):
-    root = registry_factory(2)
-    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
-    _make_mixed_add_remove_drift(root, store)
-    _git_init(root)
-    registry = Registry.load(root)
-    plan_path = tmp_path / "plans" / "queue-plan.json"
-    write_queue_reconcile_plan(
-        registry,
-        store,
-        plan_path,
-        action_filter=_action_filter(action_classes=["remove_from_queue"]),
-    )
-    _review_plan(plan_path)
-    before = _queue_path(root).read_bytes()
-    monkeypatch.setattr(
-        registry_truth_module,
-        "registry_truth_diagnostics",
-        lambda root: {"healthy": False},
-    )
-
-    with pytest.raises(legacy.StateError, match="post-apply gates failed"):
-        apply_queue_reconcile_plan(registry, store, plan_path)
-
-    assert _queue_path(root).read_bytes() == before
 
 
 def test_cli_writes_removal_only_filter_into_plan(registry_factory, tmp_path, capsys):
@@ -798,3 +535,40 @@ def test_cli_writes_removal_only_filter_into_plan(registry_factory, tmp_path, ca
     assert {action["operation"] for action in output["actions"]} == {
         "remove_from_queue"
     }
+
+
+def test_reviewed_queue_reconcile_apply_is_retired_and_byte_stable(registry_factory, tmp_path):
+    root = registry_factory(2)
+    task_id = "BUR-TEST-001-T002"
+    _remove_from_queue(root, task_id)
+    _git_init(root)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    before = _queue_path(root).read_bytes()
+    result = apply_queue_reconcile_plan(registry, store, plan_path)
+    assert result["applied"] is False
+    assert result["no_op"] is True
+    assert result["retired"] is True
+    assert result["queue_authoritative"] is False
+    assert result["compatibility_queue_mutated"] is False
+    assert _queue_path(root).read_bytes() == before
+
+
+def test_retired_queue_reconcile_still_rejects_filter_hash_tampering(registry_factory, tmp_path):
+    root = registry_factory(1)
+    _git_init(root)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    plan = json.loads(plan_path.read_text())
+    plan["action_filter_sha256"] = "0" * 64
+    plan_path.write_text(json.dumps(plan))
+    before = _queue_path(root).read_bytes()
+    with pytest.raises(legacy.StateError, match="filter hash"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+    assert _queue_path(root).read_bytes() == before

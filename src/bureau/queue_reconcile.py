@@ -8,7 +8,7 @@ from typing import Any
 
 from . import legacy
 from .approval import require_approval, reviewed_plan_approval
-from .core import Dispatcher, Registry, StateStore
+from .core import Registry, StateStore
 from .frontier import EXECUTABLE_LANES, build_frontier_projection
 
 TERMINAL_STATES = {"verified", "cancelled", "superseded"}
@@ -635,8 +635,7 @@ def apply_queue_reconcile_plan(
     *,
     resource: str | None = None,
 ) -> dict[str, Any]:
-    """Materialize the reviewed compatibility queue with rollback on drift."""
-
+    """Validate one reviewed plan but never materialize the compatibility queue."""
     plan = _load_reviewed_plan(path)
     if "action_filter" not in plan:
         raise legacy.StateError("queue reconcile plan lacks an action filter")
@@ -645,141 +644,38 @@ def apply_queue_reconcile_plan(
         raise legacy.StateError("queue reconcile plan action filter is not normalized")
     if legacy.sha256_json(planned_action_filter) != plan.get("action_filter_sha256"):
         raise legacy.StateError("queue reconcile plan action filter hash mismatch")
-    planned_actions = plan.get("actions")
-    if not isinstance(planned_actions, list):
-        raise legacy.StateError("queue reconcile plan actions are not a list")
-    if legacy.sha256_json(planned_actions) != plan.get("actions_sha256"):
-        raise legacy.StateError("queue reconcile plan actions hash mismatch")
     if plan.get("resource") != resource:
         raise legacy.StateError("queue reconcile plan resource does not match apply resource")
-    plan_registry = plan.get("registry")
-    if not isinstance(plan_registry, dict):
-        raise legacy.StateError("queue reconcile plan lacks a registry binding")
-    _require_bound_registry_root(registry.root, plan_registry.get("root"))
-    planned_git_head = plan_registry.get("git_head")
-    current_git_head = _require_bound_git_head(registry.root, planned_git_head)
-    current_queue = _read_queue(registry)
-    current_queue_sha = _queue_sha256(current_queue)
-    if current_queue_sha != plan_registry.get("queue_sha256_before"):
-        raise legacy.StateError("queue changed since queue reconcile plan was generated")
     current_report = queue_reconcile_report(
         registry,
         store,
         resource=resource,
         action_filter=planned_action_filter,
     )
-    if legacy.sha256_json(current_report) != plan.get("dry_run_report_sha256"):
-        raise legacy.StateError(
-            "dynamic frontier changed, or findings/action filter drifted since queue plan review"
-        )
-    if current_report["frontier_projection_sha256"] != plan.get("frontier_projection_sha256"):
-        raise legacy.StateError("frontier projection changed since queue plan review")
-    if (
-        _plan_actions(current_report, action_filter=planned_action_filter)
-        != planned_actions
-    ):
-        raise legacy.StateError("queue reconcile actions changed since plan review")
-    expected = plan.get("expected_queue_after")
-    if not isinstance(expected, dict):
-        raise legacy.StateError("queue reconcile plan lacks expected_queue_after")
-    expected_sha = _queue_sha256(expected)
-    if expected_sha != plan.get("expected_queue_after_sha256"):
-        raise legacy.StateError("queue reconcile plan expected queue hash mismatch")
-    if expected != current_report["compatibility_queue"]:
-        raise legacy.StateError("reviewed queue differs from current dynamic projection")
-    _require_bound_git_head(registry.root, planned_git_head)
-    if expected_sha == current_queue_sha:
-        return {
-            "schema_version": QUEUE_RECONCILE_PLAN_SCHEMA_VERSION,
-            "command": "queue-reconcile-apply",
-            "applied": False,
-            "no_op": True,
-            "queue_authoritative": False,
-            "resource": resource,
-            "path": str(Path(path).expanduser()),
-            "registry_git_head": current_git_head,
-            "queue_sha256_before": current_queue_sha,
-            "queue_sha256_after": expected_sha,
-            "action_filter": planned_action_filter,
-            "actions": [],
-            "approval": plan.get("approval"),
-            "post_gates": None,
-        }
-
-    queue_path = _queue_path(registry)
-    before_text = queue_path.read_text(encoding="utf-8")
-    legacy.atomic_write(queue_path, _queue_text(expected))
-    try:
-        _require_bound_git_head(registry.root, planned_git_head)
-        registry_after = Registry.load(registry.root)
-        from .registry_truth import registry_truth_diagnostics
-
-        state_integrity = store.integrity()
-        doctor = Dispatcher(registry_after, store).doctor(False)
-        registry_truth = registry_truth_diagnostics(registry.root)
-        post_report = queue_reconcile_report(
-            registry_after,
-            store,
-            resource=resource,
-            action_filter=planned_action_filter,
-            _check_runtime=False,
-        )
-        gates = {
-            "bureau_check": (
-                state_integrity["integrity"] == "ok"
-                and not state_integrity["foreign_key_errors"]
-            ),
-            "doctor_healthy": doctor["healthy"],
-            "registry_truth_healthy": registry_truth["healthy"],
-            "compatibility_queue_converged": post_report["summary"][
-                "compatibility_converged"
-            ],
-        }
-        required = {
-            key: gates[key]
-            for key in (
-                "bureau_check",
-                "registry_truth_healthy",
-                "compatibility_queue_converged",
-            )
-        }
-        if not all(required.values()):
-            raise legacy.StateError(
-                "post-apply gates failed: "
-                + legacy.canonical_json({"required": required, "observed": gates})
-            )
-        _require_bound_git_head(registry.root, planned_git_head)
-    except Exception:
-        legacy.atomic_write(queue_path, before_text)
-        raise
     return {
         "schema_version": QUEUE_RECONCILE_PLAN_SCHEMA_VERSION,
         "command": "queue-reconcile-apply",
-        "applied": True,
-        "no_op": False,
+        "applied": False,
+        "no_op": True,
+        "retired": True,
         "queue_authoritative": False,
+        "compatibility_queue_mutated": False,
         "resource": resource,
         "path": str(Path(path).expanduser()),
-        "registry_git_head": current_git_head,
-        "queue_sha256_before": current_queue_sha,
-        "queue_sha256_after": expected_sha,
         "action_filter": planned_action_filter,
         "actions": plan.get("actions", []),
         "approval": plan.get("approval"),
-        "post_gates": gates,
-        "post_gate_policy": {
-            "required": [
-                "bureau_check",
-                "registry_truth_healthy",
-                "compatibility_queue_converged",
-            ],
-            "observed_only": ["doctor_healthy"],
-        },
+        "frontier_projection_sha256": current_report["frontier_projection_sha256"],
+        "reason": (
+            "queue reconciliation materialization is retired; registry/queue.json "
+            "is read-only compatibility history"
+        ),
         "does_not_establish": [
-            "queue_admission_authority",
-            "dispatch_authority",
-            "task_claim",
-            "task_completion",
-            "merge_readiness",
+            "compatibility queue mutation authority",
+            "queue admission authority",
+            "dispatch authority",
+            "task claim",
+            "task completion",
+            "merge readiness",
         ],
     }

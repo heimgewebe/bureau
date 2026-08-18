@@ -1,0 +1,163 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die verwendete Interphrase-Gap-Definition ist revisionsgebunden aus dem Garland-2013-Legacy-Korpus abgeleitet und unterscheidet Interphrase-Pausen ausdrücklich von Unit-, Intra-Phrase-, Theme- und Session-Grenzen. Ableitungsregel, Korpusrevision und resultierende Referenzstatistik werden reproduzierbar im Evidenzmanifest gebunden.",
+      "evidence_type": "object",
+      "id": "gap-definition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-pause-t044:gap-definition"
+      }
+    },
+    {
+      "assertion": "Parameterwahl, Tuning und Modellauswahl verwenden ausschließlich vorab deklarierte Entwicklungsdaten. Der 2017–2019-Holdout wird während der Kalibrierung nicht gelesen oder für Entscheidungen verwendet; entsprechende Split- und Zugriffskontrakte sind automatisiert geprüft.",
+      "evidence_type": "object",
+      "id": "development-only-calibration",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-pause-t044:development-only-calibration"
+      }
+    },
+    {
+      "assertion": "Nach Abschluss der Entwicklungsphase wird genau ein finaler Kandidat mit vollständiger Parameter- und Codebindung eingefroren und genau einmal auf dem unveränderten 2017–2019-Holdout bewertet. Eine nachträgliche Anpassung anhand dieses Holdout-Ergebnisses gehört nicht zu demselben Experiment.",
+      "evidence_type": "object",
+      "id": "frozen-holdout-single-eval",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-pause-t044:frozen-holdout-single-eval"
+      }
+    },
+    {
+      "assertion": "Der finale Vergleich verwendet denselben revisionsgebundenen Oracle-/Evaluatorvertrag wie der relevante Baseline-Vergleich und berichtet alle sechs Strukturmetriken einschließlich Interphrase-Gap-RAE. Die historischen Werte 0.22786836858667633 und 0.08101189807106207 werden als Ausgangsevidenz gebunden, aber nicht nachträglich als willkürliche Acceptance-Schwelle umgedeutet; keine Metrik darf selektiv verschwiegen werden.",
+      "evidence_type": "object",
+      "id": "baseline-and-six-metrics",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-pause-t044:baseline-and-six-metrics"
+      }
+    },
+    {
+      "assertion": "Die Pausenkalibrierung verändert weder Unit-Synthese noch Timbre-/Voice-Parameter. Bestehende Roughness-, Harmonik- und relevante Voice-Regression-Gates bleiben auf dem exakten finalen Head grün; beobachtete Änderungen sind auf zeitliche Phrase-Grenzen begrenzt oder explizit als Konfundierer ausgewiesen.",
+      "evidence_type": "object",
+      "id": "no-timbre-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-pause-t044:no-timbre-regression"
+      }
+    },
+    {
+      "assertion": "T044 selbst verändert weder Wal-Live-Modi noch Defaultparameter. Ein späterer Defaultwechsel erfordert einen separaten revisionsgebundenen Entscheid mit nachgewiesener Holdout-Verbesserung und ohne relevante Regressionen. Fehlt diese Evidenz, bleibt der bestehende Default unverändert und die Einordnung walartig, etwas stilisiert bestehen.",
+      "evidence_type": "object",
+      "id": "no-default-without-evidence",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-pause-t044:no-default-without-evidence"
+      }
+    },
+    {
+      "assertion": "Fokussierte Grammar-, Korpus-, Split-, Pause- und Evaluatortests sowie relevante Repository-Validatoren und geschützte GitHub-Pflichtchecks sind auf dem exakten finalen Head grün. Gleiche Inputs erzeugen reproduzierbare Split-, Kalibrierungs- und Evaluationsmanifeste.",
+      "evidence_type": "object",
+      "id": "regression-and-ci",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "audio-whale-pause-t044:regression-and-ci"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Offline-Korpusanalyse, Pausenkalibrierung, Evaluator/Manifeste, Tests und Dokumentation im Audio-Repository. Keine physische Wiedergabe, kein Live-Audioeffekt und kein Defaultwechsel.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Die Interphrase-Pausen der gemergten Buckelwal-Songhierarchie empirisch gegen den Garland-2013-Legacy-Korpus kalibrieren, nachdem der pausierte Kandidat zwar fünf von sechs Strukturmetriken verbesserte, den relativen Interphrase-Gap-Fehler aber auf 0.22786836858667633 gegenüber 0.08101189807106207 beim unpausierten Baseline-Kandidaten verschlechterte. Tuning und Modellauswahl erfolgen ausschließlich auf Entwicklungsdaten; der 2017–2019-Holdout bleibt bis zur einmaligen Bewertung des final eingefrorenen Kandidaten unangetastet. T044 selbst ändert weder Live-Modi noch Defaults. Nur bei belastbarer Holdout-Verbesserung darf daraus ein separater Default-Entscheid entstehen; andernfalls bleibt die Einordnung walartig, etwas stilisiert.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T044",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "einen Defaultwechsel",
+      "eine Holdout-Verbesserung vor realer Einmalbewertung",
+      "kausale biologische Wahrheit außerhalb des gebundenen Korpus",
+      "Berechtigung zu Live-Audio-, PipeWire-, MIDI- oder Geräteänderungen"
+    ],
+    "historical_counterevidence": {
+      "paused_gap_relative_error": 0.22786836858667633,
+      "unpaused_baseline_gap_relative_error": 0.08101189807106207
+    },
+    "source": "Post-Merge-Audit zu Audio PR #106 / Merge 009e62c6703313168b27ed99577845466b9c7528; pausierter Kandidat verbesserte 5/6 Strukturmetriken, verschlechterte aber den Interphrase-Gap-RAE.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-887f5338e2ff437ac2e9e976",
+      "event_id": 8434,
+      "event_created_at": "2026-08-18T12:18:02.128577Z",
+      "request_sha256": "40392df3291dd4851aa9e5914d758d285f16e4fe2270bb785f1ca4f0ddc50f90",
+      "candidate_event_id": "candidate-event-164697fc36ed7eba8fcfe1b1",
+      "source_fingerprint": "87eb6f3a2b5b5ee0a174a56b4b702d439ce017070500fd8f66dd7e040ec6d4a6",
+      "content_fingerprint": "22618c670f39baf3bf865cf5a5aae4bb2722d68f5f88a879b1cb6fc26d4bb987",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "87eb6f3a2b5b5ee0a174a56b4b702d439ce017070500fd8f66dd7e040ec6d4a6",
+        "freshness": "fingerprint-bound",
+        "kind": "post_merge_followup",
+        "locator": "https://github.com/heimgewebe/audio/pull/106",
+        "observed_at": "2026-08-18T12:18:02.015081Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "87eb6f3a2b5b5ee0a174a56b4b702d439ce017070500fd8f66dd7e040ec6d4a6",
+          "freshness": "fingerprint-bound",
+          "kind": "post_merge_followup",
+          "locator": "https://github.com/heimgewebe/audio/pull/106",
+          "observed_at": "2026-08-18T12:18:02.015081Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 44
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Die Kalibrierung bleibt additiv und offline. Wenn der eingefrorene Kandidat auf dem Holdout keine belastbare Verbesserung zeigt oder andere relevante Metriken regressieren, bleibt der bisherige Live-/Defaultvertrag unverändert; das Ergebnis wird als Counterevidence dokumentiert. Der Holdout wird nicht für eine zweite Tuningrunde innerhalb desselben Experiments verwendet."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Buckelwal-Interphrase-Pausen empirisch kalibrieren"
+}

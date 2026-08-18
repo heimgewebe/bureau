@@ -1,0 +1,178 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein revisionsgebundenes Vibe-Lab-Artefakt definiert die Sampling-Unit vollständig als candidate_identity_birth und benennt explizit Unit-ID, kanonischen Birth-Event-Anker, Inklusionsregel, Exklusionsregel und Ordnungsregel.",
+      "evidence_type": "object",
+      "id": "sampling-unit-definition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:definition"
+      }
+    },
+    {
+      "assertion": "Die Regel sagt explizit: Ein Event, das eine Candidate-ID supersediert oder aktualisiert, deren erster kanonischer Event vor der künftigen Aktivierungsgrenze liegt, verbraucht keinen Sample-Slot und darf nicht als neue Ankunft rekonstruiert werden.",
+      "evidence_type": "object",
+      "id": "supersession-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:supersession-boundary"
+      }
+    },
+    {
+      "assertion": "Für jede potenzielle Sample-Unit muss aus der kanonischen Bureau-Eventhistorie deterministisch beweisbar sein, dass der betrachtete Event der erste Event dieser Candidate-ID ist. Wenn dieser Beweis nicht eindeutig möglich ist, stoppt der künftige Pilot fail-closed statt eine Semantik nach Beobachtung auszuwählen.",
+      "evidence_type": "object",
+      "id": "birth-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:birth-proof"
+      }
+    },
+    {
+      "assertion": "Mindestens fünf adversariale Paper-Fälle decken ab: vor Aktivierung geborene ID mit späteren Supersessions; nach Aktivierung neu geborene ID mit späteren Supersessions; mehrere neue IDs in enger Folge; inhaltlich ähnliche/äquivalente Intake-Ereignisse; unvollständig beweisbare Historie. Erwartete Klassifikation und Slot-Verbrauch werden vor Gegenreview eingefroren.",
+      "evidence_type": "object",
+      "id": "adversarial-paper-cases",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:adversarial-cases"
+      }
+    },
+    {
+      "assertion": "Die Regel schließt Kandidaten aus, die für den Versuch selbst erzeugt, verzögert, priorisiert oder semantisch umgeformt wurden; der Sampling-Mechanismus darf keine Bureau-Kandidaten erzeugen und keine produktive Arbeit verzögern.",
+      "evidence_type": "object",
+      "id": "self-interference-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:self-interference"
+      }
+    },
+    {
+      "assertion": "Ein revisionsgebundener unabhängiger semantischer Gegencheck bestätigt ohne materielle Mehrdeutigkeit, dass Event-Arrival, Candidate-Identity-Birth und Supersession nicht mehr gegeneinander austauschbar sind. Bei materiellem Dissens endet dieser Task als REJECT und autorisiert keinen Pilot.",
+      "evidence_type": "object",
+      "id": "independent-review",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:review"
+      }
+    },
+    {
+      "assertion": "Das Ergebnis aktiviert keinen Natural-Pilot, nimmt keine Natural Cases auf, eröffnet P1 nicht wieder und autorisiert weder P2/P3, Minimal-vs-Full, Validator, Bureau-/Grabowski-Runtime, Routing, Queue, Policy, Deployment, Merge-Policy, Chronik, Leitstand noch Produktintegration. Ein späterer Pilot erfordert einen separaten Entscheid.",
+      "evidence_type": "object",
+      "id": "nonclaims",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:nonclaims"
+      }
+    },
+    {
+      "assertion": "Alle Vibe-Lab-Artefakte sind auf exaktem Head repository-validiert; generierte Projektionen werden nur über bestehende Repo-Werkzeuge aktualisiert; Review und CI sind vor Merge revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "validation",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "vibe-lab:outcome-bound:sampling-unit:validation"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.vibe-lab"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung am 2026-08-18 mit '@grabowski umsetzen' ausdrücklich autorisiert. Scope: ausschließlich Vibe-Lab Paper-/Adversarial-Semantik für eine künftige Sampling-Unit; keine Natural-Case-Aufnahme und keine produktive Control-Plane-Wirkung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab"
+  },
+  "goal": "Definiere und prüfe vor jeder neuen Outcome-Bound-Natural-Pilot-Aktivierung eine einzige kanonische Sampling-Unit. Zielregel ist candidate_identity_birth: Ein Sample-Element entsteht nur am ersten kanonischen Bureau-Operator-Intake-Event einer bislang nie beobachteten stabilen Candidate-ID. Supersessions oder andere spätere Events einer bereits vorher existierenden Candidate-ID sind keine neuen Ankünfte. Prüfe diese Regel ausschließlich paper-/adversarial gegen die in S1 sichtbar gewordenen Mehrdeutigkeiten und friere Definition, Inklusions-/Exklusionsregel, Ordnung und Stop-Regel revisionsgebunden ein. Es werden in diesem Task keine natürlichen Fälle aufgenommen und keine Aktivierungsgrenze für einen neuen Pilot gesetzt.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T035",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Outcome Case efficacy or inefficacy",
+      "Natural-pilot activation",
+      "P1 reopening",
+      "P2 or P3 authorization",
+      "Minimal-vs-Full authorization",
+      "validator justification",
+      "Bureau or Grabowski runtime integration",
+      "routing, queue, claim, merge or deployment authority",
+      "Chronik or Leitstand integration"
+    ],
+    "hard_bounds": {
+      "natural_cases": 0,
+      "new_pilot_activation": false,
+      "productive_authority": false
+    },
+    "sampling_unit_candidate": "candidate_identity_birth",
+    "source_merge": "5da2773bd3398aea66d7fe1175a67d9b9e174178",
+    "source_pr": "heimgewebe/vibe-lab#347",
+    "source_result": "REJECT_THIS_REVISION",
+    "source_task": "OPERATOR-INTEGRATION-LOOP-V1-T033",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c7915712beae1b05cc227138",
+      "event_id": 8286,
+      "event_created_at": "2026-08-18T09:10:37.148106Z",
+      "request_sha256": "4418a258016877e9de4ae03606a3825e6fa8ece8c4aa2936fc4bb142fdffdbea",
+      "candidate_event_id": "candidate-event-84c7baaa03a32679851c70b4",
+      "source_fingerprint": "305eafce63d1ad7ee81edc6d9d96ec61e49bffd127098ae72f5fd86d57a4fb33",
+      "content_fingerprint": "b31c3218a56de76ccf38392b98dc25316ee1c2fea75fb800cab75b3f2aef9dba",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "305eafce63d1ad7ee81edc6d9d96ec61e49bffd127098ae72f5fd86d57a4fb33",
+        "freshness": "digest-bound",
+        "kind": "github_pr",
+        "locator": "heimgewebe/vibe-lab#347",
+        "observed_at": "2026-08-18T09:08:17Z",
+        "sha256": "dcae2d813d8919a4835b658f8f8004fb6da71c92e371ba5613a4a29e30510aab"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "305eafce63d1ad7ee81edc6d9d96ec61e49bffd127098ae72f5fd86d57a4fb33",
+          "freshness": "digest-bound",
+          "kind": "github_pr",
+          "locator": "heimgewebe/vibe-lab#347",
+          "observed_at": "2026-08-18T09:08:17Z",
+          "sha256": "dcae2d813d8919a4835b658f8f8004fb6da71c92e371ba5613a4a29e30510aab"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Paper-/Adversarial-only. Bei Mehrdeutigkeit oder Falsifikation wird das Ergebnis als REJECT dokumentiert; es existiert keine Natural-Case-, Runtime-, Queue-, Routing-, Claim-, Registry-, Merge- oder Deployment-Wirkung zurückzurollen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Outcome-Bound Natural-Pilot: Sampling-Unit vor Aktivierung einfrieren"
+}

@@ -1,77 +1,99 @@
 {
-  "schema_version": 1,
-  "id": "OPERATOR-PC-HYGIENE-V1-T016",
-  "initiative": "OPERATOR-PC-HYGIENE-V1",
-  "title": "Fotolabor G: nach Backup-Nachweis offline reparieren",
-  "state": "planned",
-  "priority": {
-    "lane": "now",
-    "rank": 16
-  },
-  "goal": "Die von Windows als Full Repair Needed markierte NTFS-Struktur von G: ohne Datenverlust bereinigen: zuerst eine belastbare zweite Kopie der relevanten Daten nachweisen, erst danach eine geeignete Offline-Reparatur ausführen und Dateisystemzustand sowie NTFS-Ereignisse postflight verifizieren.",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/heim-pc",
-    "approval": {
-      "action_class": "runtime_mutation",
-      "required_level": "break_glass",
-      "note": "Der Nutzer hat am 18. August 2026 die autonome Optimierung des Fotolabor-PCs über den eingerichteten SSH-/Grabowski-Pfad beauftragt. Eine schreibende Dateisystemreparatur bleibt zusätzlich an nachgewiesene Datensicherung, frischen Readback und die break-glass-Wirkungsfreigabe im Ausführungszeitpunkt gebunden."
-    },
-    "grabowski_resources": [
-      "host:fotolabor",
-      "repo:/home/alex/repos/heim-pc"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.heim-pc",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
-  "required_capabilities": [
-    "shell",
-    "grabowski"
-  ],
   "acceptance": [
     {
-      "id": "fotolabor-g-backup-proof",
       "assertion": "Vor jeder schreibenden NTFS-Reparatur ist für die relevanten Daten auf G: eine belastbare zweite Kopie oder ein gleichwertiger Wiederherstellungsnachweis dokumentiert.",
       "evidence_type": "object",
+      "id": "fotolabor-g-backup-proof",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "fotolabor:g:backup-proof"
       }
     },
     {
-      "id": "fotolabor-g-repair",
       "assertion": "G: meldet nach einer kontrollierten Offline-Reparatur keinen Full-Repair-Needed-/Dirty-Zustand mehr; die Reparaturwirkung ist durch frischen Readback belegt.",
       "evidence_type": "object",
+      "id": "fotolabor-g-repair",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "fotolabor:g:filesystem-postflight"
       }
     },
     {
-      "id": "fotolabor-g-postflight",
       "assertion": "Neue NTFS-98-Ereignisse und der physische Datenträgerzustand werden nach der Reparatur erneut geprüft; verbleibende Hardware- oder I/O-Risiken werden separat registriert statt geglättet.",
       "evidence_type": "object",
+      "id": "fotolabor-g-postflight",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "fotolabor:g:ntfs-disk-postflight"
       }
     }
   ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Der Nutzer hat am 18. August 2026 die autonome Optimierung des Fotolabor-PCs über den eingerichteten SSH-/Grabowski-Pfad beauftragt. Eine schreibende Dateisystemreparatur bleibt zusätzlich an nachgewiesene Datensicherung, frischen Readback und die break-glass-Wirkungsfreigabe im Ausführungszeitpunkt gebunden.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "host:fotolabor",
+      "repo:/home/alex/repos/heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc"
+  },
+  "goal": "Die von Windows als Full Repair Needed markierte NTFS-Struktur von G: ohne Datenverlust bereinigen: zuerst eine belastbare zweite Kopie der relevanten Daten nachweisen, erst danach eine geeignete Offline-Reparatur ausführen und Dateisystemzustand sowie NTFS-Ereignisse postflight verifizieren.",
+  "id": "OPERATOR-PC-HYGIENE-V1-T016",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
   "metadata": {
-    "registered_at": "2026-08-18T12:20:00+02:00",
-    "source": "Fotolabor-Liveaudit und Recovery des fehlgeschlagenen Operator-Intake-Registrierungs-PR #2077",
+    "does_not_establish": [
+      "backup_exists",
+      "filesystem_repaired",
+      "physical_disk_failure",
+      "queue_truth",
+      "task_readiness"
+    ],
     "operator_intake": {
       "schema_version": 1,
-      "candidate_id": "candidate-d3c1844bde9968abd5a07ca8",
-      "event_id": 8292,
-      "candidate_event_id": "candidate-event-93f8540737beffe669e38547",
-      "request_sha256": "722359b5d3934f2f8e56fea2de941b6c31aa9191b6aaabc94310d9388a7d2cbb",
+      "candidate_id": "candidate-8a2276393812090a29a3e853",
+      "event_id": 8334,
+      "event_created_at": "2026-08-18T10:47:30.555558Z",
+      "request_sha256": "068a17a57b9601c9144ec8ffea71db9b2814abd06f13de164a343946dcac391d",
+      "candidate_event_id": "candidate-event-d793d21587bb72bfd810991d",
+      "source_fingerprint": "5bbad77f47e34c356aa889d658cde7eb92df1d8eefece1738f2e6c95755d947a",
+      "content_fingerprint": "8a2276393812090a29a3e853bd6eb11d641aee84d288443b6c0f08e8e65a139d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "5bbad77f47e34c356aa889d658cde7eb92df1d8eefece1738f2e6c95755d947a",
+        "freshness": "fingerprint-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:duplicate:OPERATOR-PC-HYGIENE-V1-T016:T021:post-runtime-refresh",
+        "observed_at": "2026-08-18T10:47:30.397088Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "5bbad77f47e34c356aa889d658cde7eb92df1d8eefece1738f2e6c95755d947a",
+          "freshness": "fingerprint-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau:duplicate:OPERATOR-PC-HYGIENE-V1-T016:T021:post-runtime-refresh",
+          "observed_at": "2026-08-18T10:47:30.397088Z",
+          "sha256": null
+        }
+      ],
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
@@ -89,16 +111,36 @@
       "system_followup_candidate_id": "candidate-dc8e634b4a1e14a0d081f1f3",
       "system_followup_event_id": 8299
     },
-    "does_not_establish": [
-      "backup_exists",
-      "filesystem_repaired",
-      "physical_disk_failure",
-      "queue_truth",
-      "task_readiness"
-    ]
+    "registered_at": "2026-08-18T12:20:00+02:00",
+    "source": "Fotolabor-Liveaudit und Recovery des fehlgeschlagenen Operator-Intake-Registrierungs-PR #2077",
+    "superseded_by": "OPERATOR-PC-HYGIENE-V1-T021",
+    "supersession": {
+      "decided_at": "2026-08-18T10:47:30Z",
+      "does_not_establish": [
+        "T021 execution completion",
+        "backup existence",
+        "filesystem repair"
+      ],
+      "evidence": [
+        "PR #2083 merged T016 after T021 already existed on main",
+        "T021 Registry digest equals StateStore revision 1",
+        "T016 Registry and StateStore diverged after failed PR #2077 recovery"
+      ],
+      "reason": "T021 already represents the same Fotolabor G: repair outcome and is Registry/StateStore-consistent with break_glass; keeping T016 executable would create duplicate authority."
+    }
   },
+  "priority": {
+    "lane": "now",
+    "rank": 16
+  },
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
   "rollback": {
     "strategy": "Vor Reparatur nur lesen. Falls eine Reparatur unerwartete Folgen zeigt, keine weiteren Schreiboperationen ausführen; aus der zuvor nachgewiesenen zweiten Kopie wiederherstellen und den Datenträger separat diagnostizieren."
   },
-  "depends_on": []
+  "schema_version": 1,
+  "state": "superseded",
+  "title": "Fotolabor G: nach Backup-Nachweis offline reparieren"
 }

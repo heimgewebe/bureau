@@ -1,0 +1,178 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine scoped-Writer-Delegation ist nur zulässig, wenn ein serverseitiger Receipt den exakten Bureau-Run, Claim-Intent-Digest, Parent-Owner, vollständige Parent-Lease-Snapshots, Workspace/Branch/Head, Child-Lane beziehungsweise Writer-Task und die identische erlaubte Pfadmenge bindet. Eine Owner-Zeichenfolge oder ein aufrufergelieferter Digest allein genügt nicht.",
+      "evidence_type": "object",
+      "id": "parent-owned-delegation-receipt",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-scoped-writer-lease-handoff:receipt"
+      }
+    },
+    {
+      "assertion": "Der Vertrag erzeugt zu keinem Zeitpunkt zwei unabhängige Schreibautoritäten für denselben Pfad. Entweder bleiben die Bureau-Leases autoritativ und der Child-Writer erhält ausschließlich daraus abgeleitete, widerrufbare Ausführungsautorität, oder ein expliziter atomarer Owner-Handoff ersetzt die Parent-Autorität. Doppelakquisition und stilles Lease-Stehlen bleiben ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "single-writer-no-double-lease",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-scoped-writer-lease-handoff:single-writer"
+      }
+    },
+    {
+      "assertion": "Fremde Owner, fehlende oder abgelaufene Parent-Leases, Lease-Metadaten-Drift, geänderter Claim-Intent, Workspace-/Head-/Branch-Drift, nicht identischer Pfadscope oder ein bereits aktiver anderer Writer brechen vor Writer-Start und vor Dateimutation fail-closed ab; nur eigene kurzlebige Child-Artefakte werden kompensiert.",
+      "evidence_type": "object",
+      "id": "foreign-or-drifted-parent-fails-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-scoped-writer-lease-handoff:negative-controls"
+      }
+    },
+    {
+      "assertion": "Ein read-only Reviewer kann den exakt eingefrorenen Bureau-/Writer-Workspace und Diff prüfen, ohne selbst dieselben Schreib-Leases erwerben zu müssen; Review-Evidenz bleibt Head-/Diff-/Run-gebunden und verleiht keine Schreib-, Merge- oder Lease-Autorität.",
+      "evidence_type": "object",
+      "id": "readonly-review-does-not-need-write-lease",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-scoped-writer-lease-handoff:review"
+      }
+    },
+    {
+      "assertion": "Ein Regressionstest reproduziert BUR-RUN-20260817T204720Z-8972ca454d: Bureau besitzt die vier exakten Dateileases, der autorisierte scoped-Writer-Versuch wird heute vor Wirkung als fremde Lease-Kollision abgewiesen und kompensiert. Nach dem Fix kann genau ein gebundener Child-Writer denselben Scope bearbeiten, während ein nicht gebundener oder fremder Writer weiterhin vor Effekt blockiert.",
+      "evidence_type": "object",
+      "id": "current-run-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-scoped-writer-lease-handoff:run-8972ca454d-regression"
+      }
+    },
+    {
+      "assertion": "Fokussierte Tests und vollständige Grabowski-Validierung sind grün; ein frischer isolierter Livebeweis führt Bureau-Pickup → scoped Writer → read-only Review/Collection → Controller-Integration/Closeout ohne Controller-Direktpatch und ohne fremde Lease-/Dirty-State-Mutation durch.",
+      "evidence_type": "object",
+      "id": "end-to-end-bureau-writer-proof",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:bureau-scoped-writer-lease-handoff:e2e"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur den owner- und rungebundenen Delegationsvertrag zwischen bereits koordiniertem Bureau-Pickup und scoped Writer implementieren. Keine generische Lease-Übernahme, kein Force-Release, keine Fremdlease-Mutation, kein Bypass von Workspace-, Writer-, Review-, Merge- oder Closeout-Gates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_work_acquire.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_work_acquire.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den koordinierten Bureau-Pickup mit Grabowskis scoped-Writer-Lane so verbinden, dass ein bereits vom Bureau-Run ownergebunden geleaster exakter Dateiscope an genau einen autorisierten Child-Writer delegiert werden kann, ohne dieselben Pfade als fremde Leases erneut akquirieren zu müssen. Die Delegation muss Bureau-Run, Claim-Intent, Lease-Snapshots, Workspace, Child-Lane, Writer-Task und erlaubte Pfade revisions- und digestgebunden koppeln; fremde Owner, Scope-Drift, abgelaufene Parent-Leases und konkurrierende Writer bleiben fail-closed. Es entsteht keine zweite Lease- oder Taskwahrheit.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BUREAU-SCOPED-WRITER-LEASE-HANDOFF-20260818",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "task readiness",
+      "queue admission",
+      "generic subleasing",
+      "permission to steal or release foreign leases",
+      "permission for two writers on overlapping paths",
+      "merge or deployment authority"
+    ],
+    "observed_effect": "none-before-writer-start",
+    "observed_failure": "Bureau-run already owned the exact four path leases; scoped work_acquire attempted independent acquisition, rejected the parent-owned paths as foreign and compensated before writer mutation.",
+    "related_existing_tasks": [
+      {
+        "relationship": "complements; existing task governs direct-controller lease liveness and terminal owner handoff, not Bureau-parent to scoped-writer delegation",
+        "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T030"
+      },
+      {
+        "relationship": "complements; existing task defines scoped-writer authority for direct lanes, not reuse/delegation of an already Bureau-owned exact path lease set",
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T161"
+      },
+      {
+        "relationship": "complements; existing task handles retained checkout identity supersession in Bureau-free work_acquire",
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DIRECT-LANE-SUPERSESSION-20260812"
+      }
+    ],
+    "source_run_id": "BUR-RUN-20260817T204720Z-8972ca454d",
+    "source_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-STRUCTURED-TOOL-SECOND-REAL-READ-PROVIDER-20260817",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-33d1365df9602947ca38ee77",
+      "event_id": 8185,
+      "event_created_at": "2026-08-18T05:44:56.241009Z",
+      "request_sha256": "79c08a8acd58780fb7e7b0bb33124f2eb1c4b08feb40f004cbbe7b35a0ca3238",
+      "candidate_event_id": "candidate-event-b61bd98afed867b3a6e52871",
+      "source_fingerprint": "2a534fe7677a06896966b1a71f994b5cfa195ebe5bcd279ed72c355e2948f574",
+      "content_fingerprint": "33d1365df9602947ca38ee776c521a6331b2dabb45cbc259300f38273de8326b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "2a534fe7677a06896966b1a71f994b5cfa195ebe5bcd279ed72c355e2948f574",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-runtime-evidence",
+        "locator": "bureau-run:BUR-RUN-20260817T204720Z-8972ca454d",
+        "observed_at": "2026-08-18T05:44:56.101185Z",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "2a534fe7677a06896966b1a71f994b5cfa195ebe5bcd279ed72c355e2948f574",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-runtime-evidence",
+          "locator": "bureau-run:BUR-RUN-20260817T204720Z-8972ca454d",
+          "observed_at": "2026-08-18T05:44:56.101185Z",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau",
+    "resource-leases"
+  ],
+  "rollback": {
+    "strategy": "Den Delegations-/Handoff-Pfad per normalem Revert entfernen; bestehende Bureau-Run-, Lease-, Workspace- und Task-Historie nicht umschreiben. Bei unklarem Writerstart nur Readback/Reconciliation, kein Blind-Retry und keine Fremdlease-Freigabe."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Dateileases sicher an scoped Writer delegieren"
+}

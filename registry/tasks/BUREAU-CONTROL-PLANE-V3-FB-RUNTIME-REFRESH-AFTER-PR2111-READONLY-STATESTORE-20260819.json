@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2111-READONLY-STATESTORE-20260819",
+  "title": "Single-Use-Runtime-Refresh nach PR #2111 für read-only StateStore",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand dd19f01663a648512394d550730c9662af98c02a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Das tatsächliche Target wird erst nach geschütztem Merge von PR #2111 sowie nach Merge dieser Authority-TaskSpec bestimmt und muss beide enthalten. Zweck ist ausschließlich, die in PR #2111 reparierte ReadOnlyStateStore-Auswahl für read_only CLI-Befehle auch bei explizitem, revisionsgebundenem Registry-Root in die immutable Bureau-Runtime zu bringen, damit Grabowskis claim-coordination-status- und Pickup-Readbacks den kanonischen StateRoot ohne chmod- oder sonstige Initialisierungswirkung lesen können und der orphaned Run BUR-RUN-20260818T214207Z-fcbf9c8ffb anschließend über den normalen revisionsgebundenen Reconcile-/Closeout-Pfad fortgeführt werden kann. Diese Authority verändert keine Queue, Claims, Dispatch-Zustände oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use post-PR2111 runtime authority only. Vor dem einzigen Runtime-Effekt sind geschützter Merge von PR #2111, Merge dieser Authority-TaskSpec, frischer GitHub-main, required validate (3.10)/(3.12), target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Keine Implementierungs-, Queue-, Claim-, Dispatch- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-main-present",
+      "assertion": "Vor dem einzigen Refresh wird der aktuelle GitHub-main frisch beobachtet; er enthält den geschützten Merge von PR #2111, diese gemergte Authority-TaskSpec sowie jeden zwischenzeitlich regulär integrierten Main-Fortschritt. Kein älterer Zwischenstand wird deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2111-readonly-statestore:fresh-main-present"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehörige Required-Checks und target_sha256 frisch beobachtet. Jede Drift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2111-readonly-statestore:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; ohne beide Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2111-readonly-statestore:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation/break_glass, single-use und unverbraucht sein. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2111-readonly-statestore:authoritative-task-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2111-readonly-statestore:live-lease-binding"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; StateStore-Integrität und Runtime-Identity bleiben gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2111-readonly-statestore:immutable-readback"
+      }
+    },
+    {
+      "id": "single-use-pr2111-readonly-statestore-unblock-only",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Runtime-Refresh und dient ausschließlich dazu, den PR-#2111-Fix für nebenwirkungsfreie read_only StateStore-Zugriffe in die immutable Bureau-Runtime zu übernehmen und danach den normalen revisionsgebundenen Grabowski-Pickup-/Orphan-Reconcile-Pfad für BUR-RUN-20260818T214207Z-fcbf9c8ffb wieder zu öffnen. Sie implementiert oder schließt weder den alten Runtime-Refresh-Task noch den orphaned Run selbst und wird nach resultgebundenem Closeout niemals für ein späteres Target wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2111-readonly-statestore:single-use-unblock-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden. Bereits konsumierte oder zweckfremde Authorities bleiben unverändert."
+  },
+  "metadata": {
+    "source": "Direct continuation after the operator reproduced the deployed Bureau read-only failure: claim-coordination-status through the explicit canonical Registry snapshot selected mutable StateStore and failed on chmod of /home/alex/.local/state/bureau. PR #2111 fixes the CLI store-selection boundary; source validation on combined main+PR2110 passed 52/52 relevant tests and a real read-only StateRoot claim-coordination-status read. PR #2111 then merged through the protected merge queue at exact commit 21f41f41d9ccaccf0c3d55f566b6e341ea6a8f5e after merge-group validate (3.10)/(3.12) succeeded.",
+    "deployed_source_at_draft": "dd19f01663a648512394d550730c9662af98c02a",
+    "main_at_registration": "21f41f41d9ccaccf0c3d55f566b6e341ea6a8f5e",
+    "trigger_pull_requests": [
+      2111
+    ],
+    "trigger_heads": [
+      {
+        "pull_request": 2111,
+        "head_commit": "7dc211eaeac57dfaea3bb705cd1515e50f7c1adf"
+      }
+    ],
+    "trigger_merges": [
+      {
+        "pull_request": 2111,
+        "merge_commit": "21f41f41d9ccaccf0c3d55f566b6e341ea6a8f5e"
+      }
+    ],
+    "unblock_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-AGENT-COMPETITION-PUBLISH-20260818"
+    ],
+    "unblock_run_ids": [
+      "BUR-RUN-20260818T214207Z-fcbf9c8ffb"
+    ],
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect before protected merge of PR #2111 and this Authority-TaskSpec",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal, consumed or purpose-mismatched runtime authorities",
+      "implementation or completion authority for the old Runtime-Refresh task or orphaned run",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Installed immutable Bureau runtime cannot safely serve Grabowski read-only pickup status for an explicit canonical Registry snapshot until PR #2111 is deployed; the reviewed runtime-bootstrap seam permits only this new Authority TaskSpec before conservative missing-only StateStore adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before PR #2111 and this task are both merged",
+        "old Runtime-Refresh task or orphaned-run completion"
+      ]
+    }
+  }
+}

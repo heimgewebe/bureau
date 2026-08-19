@@ -5511,6 +5511,74 @@ def test_runtime_closeout_uses_typed_closure_and_releases_own_leases(
     assert not preexisting_closeout_root.exists()
 
 
+def test_runtime_closeout_prefers_state_store_task_over_older_runtime_registry(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    case["store"].import_registry_task_specs(Registry.load(case["root"]))
+    current = case["store"].task_spec(case["task_id"])
+    assert current is not None
+    assert (
+        task_revision_sha256(current["spec"])
+        == case["claimed"]["run"]["task_sha256"]
+    )
+
+    snapshot_task_path = (
+        case["snapshot_root"] / "registry" / "tasks" / f"{case['task_id']}.json"
+    )
+    stale_snapshot_task = json.loads(snapshot_task_path.read_text())
+    stale_snapshot_task["title"] = "older immutable runtime Registry projection"
+    snapshot_task_path.write_text(json.dumps(stale_snapshot_task), encoding="utf-8")
+    assert (
+        task_revision_sha256(stale_snapshot_task)
+        != case["claimed"]["run"]["task_sha256"]
+    )
+
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+
+    assert result["status"] == "succeeded"
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
+def test_runtime_closeout_rejects_true_state_store_task_drift_after_claim(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory, tmp_path, monkeypatch
+    )
+    case["store"].import_registry_task_specs(Registry.load(case["root"]))
+    current = case["store"].task_spec(case["task_id"])
+    assert current is not None
+    changed = json.loads(json.dumps(current["spec"]))
+    changed["title"] = "concurrent authoritative StateStore revision"
+    case["store"].put_task_spec(
+        changed,
+        idempotency_key=f"test-runtime-closeout-drift:{case['task_id']}",
+        expected_revision=current["revision"],
+        source="test concurrent StateStore mutation",
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert exc.value.details["task_authority"] == "bureau-state-store-task-specs"
+    assert exc.value.details["task_spec_revision"] == current["revision"] + 1
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
 def test_runtime_closeout_cli_routes_through_canonical_runtime_snapshot(
     registry_factory, tmp_path, monkeypatch, capsys
 ):

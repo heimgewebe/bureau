@@ -139,20 +139,21 @@ def test_explicit_registry_read_only_cli_preserves_state_permissions(tmp_path: P
     state_root.chmod(0o750)
     state.chmod(0o640)
 
-    result = bureau_cli.main(
-        [
-            "--root",
-            str(project_root),
-            "--state-root",
-            str(state_root),
-            "--json",
-            "status",
-        ]
-    )
+    for command in ("status", "live-list"):
+        result = bureau_cli.main(
+            [
+                "--root",
+                str(project_root),
+                "--state-root",
+                str(state_root),
+                "--json",
+                command,
+            ]
+        )
 
-    assert result == 0
-    assert stat.S_IMODE(state_root.stat().st_mode) == 0o750
-    assert stat.S_IMODE(state.stat().st_mode) == 0o640
+        assert result == 0
+        assert stat.S_IMODE(state_root.stat().st_mode) == 0o750
+        assert stat.S_IMODE(state.stat().st_mode) == 0o640
 
 
 def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) -> None:

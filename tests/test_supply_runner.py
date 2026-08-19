@@ -18,6 +18,7 @@ from bureau.supply_runner import (
     snapshot_path,
 )
 from bureau.task_supply import (
+    FALLBACK_CATALOG,
     REVIEW_REASON,
     SupplyError,
     SupplyPolicy,
@@ -37,19 +38,11 @@ TYPED_ACCEPTANCE = {
             "assertion": f"The reviewed {category} artifact matches the expected digest.",
             "evidence_type": "object",
             "verifier": "artifact_hash_matches",
-            "verifier_config": {"artifact_sha256": f"{index:x}" * 64},
+            "verifier_config": {"artifact_sha256": f"{index % 16:x}" * 64},
         }
     ]
     for index, category in enumerate(
-        (
-            "maintenance",
-            "care",
-            "audit",
-            "diagnosis",
-            "registry-reconciliation",
-            "queue-reconciliation",
-            "error-investigation",
-        ),
+        (spec.category for spec in FALLBACK_CATALOG),
         start=1,
     )
 }
@@ -535,18 +528,25 @@ def test_bound_jointly_feasible_frontier_publishes_only_compatible_refill(
     assert summary["metrics"]["joint_claimable_count"] == 7
     assert summary["status"] == "refill-proposed"
     assert summary["publication"]["status"] == "published"
-    assert len(summary["publication"]["created_task_ids"]) == 1
+    assert len(summary["publication"]["created_task_ids"]) == 4
     persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
     assert persisted["feasibility"]["worker_profile"]["bound"] is True
     assert persisted["metrics"]["joint_claimable_count"] == 7
-    assert persisted["metrics"]["projected_joint_claimable_count"] == 8
+    assert persisted["metrics"]["projected_joint_claimable_count"] == 11
     assert persisted["feasibility"]["floor_reachable"] is True
     created = [
         proposal
         for proposal in persisted["proposals"]
         if proposal["action"] == "create" and not proposal["blockers"]
     ]
-    assert [proposal["category"] for proposal in created] == ["maintenance"]
+    assert [proposal["category"] for proposal in created] == [
+        "scout-commonworld",
+        "scout-schauwerk",
+        "scout-chronik",
+        "scout-lenskit",
+    ]
+    assert all(proposal["task"]["claims"][0]["mode"] == "read" for proposal in created)
+    assert all("approval" not in proposal["task"]["execution"] for proposal in created)
 
 
 def test_normal_jointly_claimable_work_is_not_displaced_by_fallbacks(

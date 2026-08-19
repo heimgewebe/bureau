@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "component.grabowski.reposkop-effectiveness",
+  "type": "component",
+  "parent": "repo.grabowski",
+  "metadata": {
+    "purpose": "Logical Bureau coordination scope for the durable Reposkop effectiveness cohort and its three canonical implementation paths. Physical Grabowski write authority remains exclusively path-scoped through task execution.grabowski_resources.",
+    "canonical_paths": [
+      "src/grabowski_reposkop_effectiveness.py",
+      "tests/test_reposkop_effectiveness.py",
+      "docs/reposkop-effectiveness-policy-v3.md"
+    ],
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086",
+    "does_not_establish": [
+      "repository-wide mutation authority",
+      "ownership of foreign Grabowski worktrees",
+      "scope outside the listed paths",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

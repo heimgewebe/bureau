@@ -131,6 +131,31 @@ def test_read_only_state_store_has_no_initialization_side_effect(tmp_path: Path)
             read.execute("INSERT INTO marker VALUES ('forbidden')")
 
 
+def test_explicit_registry_read_only_cli_preserves_state_permissions(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    state_root = tmp_path / "state"
+    state = state_root / "bureau.sqlite3"
+    StateStore(state, state_root)
+    state_root.chmod(0o750)
+    state.chmod(0o640)
+
+    for command in ("status", "live-list"):
+        result = bureau_cli.main(
+            [
+                "--root",
+                str(project_root),
+                "--state-root",
+                str(state_root),
+                "--json",
+                command,
+            ]
+        )
+
+        assert result == 0
+        assert stat.S_IMODE(state_root.stat().st_mode) == 0o750
+        assert stat.S_IMODE(state.stat().st_mode) == 0o640
+
+
 def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) -> None:
     source = make_installable_source(tmp_path)
     launcher, prefix, receipt = install_runtime(tmp_path, source)

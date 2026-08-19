@@ -1074,12 +1074,7 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0
         if args.command in {"live-list", "live-export", "live-retention"}:
-            store_class = (
-                ReadOnlyStateStore
-                if registry_selection == "canonical-runtime-default"
-                else StateStore
-            )
-            store = store_class(state_path, state_root)
+            store = ReadOnlyStateStore(state_path, state_root)
             if args.command == "live-list":
                 value = live_register_list(
                     store,
@@ -1371,7 +1366,6 @@ def main(argv: list[str] | None = None) -> int:
         store = (
             ReadOnlyStateStore(state_path, state_root)
             if effect_scope == _COMMAND_EFFECT_READ_ONLY
-            and registry_selection == "canonical-runtime-default"
             else StateStore(state_path, state_root)
         )
         adapter_registry = adapters(args)

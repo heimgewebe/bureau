@@ -5278,11 +5278,65 @@ def _prepare_runtime_closeout_case(
     *,
     with_closeout_lease: bool = True,
     authenticate_evidence: bool = True,
+    with_runtime_refresh_authority: bool = False,
 ):
     from bureau import runtime_identity as runtime_identity_module
 
     root = registry_factory(1, mode="write")
     task_id = prepare_coordinated_registry(root)
+    if with_runtime_refresh_authority:
+        (root / "registry/resources/runtime.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "id": "component.bureau.runtime",
+                    "type": "component",
+                    "parent": "root",
+                }
+            ),
+            encoding="utf-8",
+        )
+        task_path = root / "registry" / "tasks" / f"{task_id}.json"
+        task_raw = json.loads(task_path.read_text(encoding="utf-8"))
+        task_raw.setdefault("metadata", {})["runtime_refresh_authority"] = {
+            "schema_version": 1,
+            "mode": "single-use-target-bound",
+            "single_use": True,
+            "required_action_class": "runtime_mutation",
+            "required_approval_level": "break_glass",
+            "required_claim_resource": "component.bureau.runtime",
+            "required_task_state": ["ready", "active"],
+            "target_binding": "candidate.target_sha256",
+            "forbid_foreign_task_substitution": True,
+            "forbid_historical_target_reuse": True,
+            "successor_task_required_after_terminal": True,
+        }
+        task_raw["execution"]["approval"] = {
+            "action_class": "runtime_mutation",
+            "required_level": "break_glass",
+            "note": "test-only runtime refresh authority",
+        }
+        task_raw["claims"] = [
+            {
+                "resource": "component.bureau.runtime",
+                "mode": "write",
+                "isolation": "worktree",
+            }
+        ]
+        task_path.write_text(json.dumps(task_raw), encoding="utf-8")
+        git_output(
+            root,
+            "add",
+            str(task_path.relative_to(root)),
+            "registry/resources/runtime.json",
+        )
+        git_output(root, "commit", "-m", "add runtime refresh authority")
+        git_output(
+            root,
+            "update-ref",
+            "refs/remotes/origin/main",
+            git_output(root, "rev-parse", "HEAD"),
+        )
     deployed_commit = git_output(root, "rev-parse", "HEAD")
     _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
     intent = dispatcher.claim_intent(
@@ -5290,7 +5344,8 @@ def _prepare_runtime_closeout_case(
         ("repository",),
         task_id=task_id,
         base_dir=tmp_path / "worktrees",
-        approved=True,
+        approved=not with_runtime_refresh_authority,
+        break_glass=with_runtime_refresh_authority,
     )["intent"]
     binding, database = coordinated_lease_database(
         tmp_path / "leases", intent
@@ -5425,6 +5480,66 @@ def _prepare_runtime_closeout_case(
     }
 
 
+def _apply_runtime_refresh_authority_lifecycle(
+    case, *, consume_source: str = "runtime-refresh-authority-consumption"
+):
+    case["store"].import_registry_task_specs(Registry.load(case["root"]))
+    baseline = case["store"].task_spec(case["task_id"])
+    assert baseline is not None
+    baseline_spec = json.loads(json.dumps(baseline["spec"]))
+    baseline_sha256 = baseline["spec_sha256"]
+    baseline_revision = baseline["revision"]
+    intent_sha256 = "1" * 64
+    target_sha256 = "2" * 64
+    result_sha256 = "3" * 64
+    binding = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_authority_target_binding",
+        "task_id": case["task_id"],
+        "authority_revision": baseline_revision,
+        "authority_spec_sha256": baseline_sha256,
+        "intent_sha256": intent_sha256,
+        "target_sha256": target_sha256,
+        "bound_at": "2026-08-19T14:57:00Z",
+    }
+    bound_spec = json.loads(json.dumps(baseline_spec))
+    bound_spec["metadata"]["runtime_refresh_authority"]["target_binding_receipt"] = binding
+    bound = case["store"].put_task_spec(
+        bound_spec,
+        idempotency_key=f"runtime-refresh-bind:{case['task_id']}:{intent_sha256}",
+        expected_revision=baseline_revision,
+        source="runtime-refresh-authority-target-binding",
+    )
+    consumption = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_authority_consumption",
+        "task_id": case["task_id"],
+        "authority_revision": baseline_revision,
+        "authority_spec_sha256": baseline_sha256,
+        "intent_sha256": intent_sha256,
+        "target_sha256": target_sha256,
+        "result_sha256": result_sha256,
+        "status": "consumed",
+        "consumed_at": "2026-08-19T14:57:06Z",
+    }
+    consumed_spec = json.loads(json.dumps(bound["spec"]))
+    consumed_spec["metadata"]["runtime_refresh_authority"]["consumption"] = consumption
+    consumed = case["store"].put_task_spec(
+        consumed_spec,
+        idempotency_key=f"runtime-refresh-consume:{case['task_id']}:{result_sha256}",
+        expected_revision=bound["revision"],
+        source=consume_source,
+    )
+    return {
+        "baseline": baseline,
+        "bound": bound,
+        "consumed": consumed,
+        "intent_sha256": intent_sha256,
+        "target_sha256": target_sha256,
+        "result_sha256": result_sha256,
+    }
+
+
 def test_normal_complete_stays_fail_closed_during_deploy_lag(
     registry_factory, tmp_path, monkeypatch, capsys
 ):
@@ -5545,6 +5660,89 @@ def test_runtime_closeout_prefers_state_store_task_over_older_runtime_registry(
 
     assert result["status"] == "succeeded"
     assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
+def test_runtime_closeout_accepts_canonical_runtime_refresh_authority_receipts(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory,
+        tmp_path,
+        monkeypatch,
+        with_runtime_refresh_authority=True,
+    )
+    lifecycle = _apply_runtime_refresh_authority_lifecycle(case)
+    assert lifecycle["consumed"]["revision"] == lifecycle["baseline"]["revision"] + 2
+    assert (
+        task_revision_sha256(lifecycle["consumed"]["spec"])
+        != case["claimed"]["run"]["task_sha256"]
+    )
+
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+
+    assert result["status"] == "succeeded"
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
+def test_runtime_closeout_rejects_semantic_drift_after_runtime_refresh_receipts(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory,
+        tmp_path,
+        monkeypatch,
+        with_runtime_refresh_authority=True,
+    )
+    lifecycle = _apply_runtime_refresh_authority_lifecycle(case)
+    changed = json.loads(json.dumps(lifecycle["consumed"]["spec"]))
+    changed["title"] = "concurrent semantic drift after runtime refresh"
+    case["store"].put_task_spec(
+        changed,
+        idempotency_key=f"test-runtime-closeout-post-refresh-drift:{case['task_id']}",
+        expected_revision=lifecycle["consumed"]["revision"],
+        source="test semantic mutation after runtime refresh",
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_forged_runtime_refresh_mutation_source(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(
+        registry_factory,
+        tmp_path,
+        monkeypatch,
+        with_runtime_refresh_authority=True,
+    )
+    _apply_runtime_refresh_authority_lifecycle(
+        case, consume_source="test-forged-runtime-refresh-consumption"
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
 
 
 def test_runtime_closeout_rejects_true_state_store_task_drift_after_claim(

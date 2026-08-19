@@ -73,6 +73,24 @@ _AT_FDCWD = -100
 _RENAME_NOREPLACE = 1
 _RENAME_EXCHANGE = 2
 MAX_PROPOSAL_BYTES = 4 * 1024 * 1024
+_CANDIDATE_RECORD_REQUEST_FIELDS = frozenset(
+    {
+        "schema_version",
+        "idempotency_key",
+        "title",
+        "source_kind",
+        "desired_outcome",
+        "repo",
+        "source_locator",
+        "source_sha256",
+        "observed_at",
+        "task_id",
+        "candidate_id",
+        "supersedes_event_id",
+        "note",
+        "catalog_validation",
+    }
+)
 
 
 def _github_repository_slug(remote: str) -> str:
@@ -665,33 +683,25 @@ def candidate_record_request(
     request: dict[str, Any],
 ) -> dict[str, Any]:
     """Validate the versioned JSON transport request before domain dispatch."""
-    allowed = {
-        "schema_version",
-        "idempotency_key",
-        "title",
-        "source_kind",
-        "desired_outcome",
-        "repo",
-        "source_locator",
-        "source_sha256",
-        "observed_at",
-        "task_id",
-        "candidate_id",
-        "supersedes_event_id",
-        "note",
-        "catalog_validation",
-    }
-    if request.get("schema_version") != OPERATOR_INTAKE_SCHEMA_VERSION:
+    received_schema_version = request.get("schema_version")
+    if received_schema_version != OPERATOR_INTAKE_SCHEMA_VERSION:
         raise OperatorIntakeError(
             "request-schema-unsupported",
             f"candidate request schema_version must be {OPERATOR_INTAKE_SCHEMA_VERSION}",
+            details={
+                "expected_schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+                "received_schema_version": received_schema_version,
+            },
         )
-    unknown = sorted(set(request) - allowed)
+    unknown = sorted(set(request) - _CANDIDATE_RECORD_REQUEST_FIELDS)
     if unknown:
         raise OperatorIntakeError(
             "request-fields-unknown",
             "candidate request contains unknown fields",
-            details={"unknown_fields": unknown},
+            details={
+                "unknown_fields": unknown,
+                "allowed_fields": sorted(_CANDIDATE_RECORD_REQUEST_FIELDS),
+            },
         )
     payload = {key: value for key, value in request.items() if key != "schema_version"}
     return candidate_record(registry, store, **payload)

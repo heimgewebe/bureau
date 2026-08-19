@@ -7435,27 +7435,38 @@ def runtime_closeout(
                 details={"runtime_identity": identity},
             )
         exact_registry = Registry.load(canonical_registry_root)
-        revision = _authoritative_close_revision(
-            exact_registry, str(run["task_id"]), run_id=run_id
-        )
+        with store.connect() as connection:
+            revision = _close_revision(
+                exact_registry,
+                connection,
+                str(run["task_id"]),
+                run_id=run_id,
+            )
+        revision_details = {
+            "task_authority": revision.task_authority,
+            "task_spec_revision": revision.task_spec_revision,
+            "task_spec_sha256": revision.task_spec_sha256,
+        }
         if revision.task_sha256 != run.get("task_sha256"):
             raise RunStateConflict(
                 "task-revision-changed",
-                "deployed Registry task revision differs from the run baseline",
+                "authoritative task revision differs from the run baseline",
                 run_id=run_id,
                 details={
                     "expected_task_sha256": run.get("task_sha256"),
                     "observed_task_sha256": revision.task_sha256,
+                    **revision_details,
                 },
             )
         if revision.plan_sha256 != run.get("plan_sha256"):
             raise RunStateConflict(
                 "plan-revision-changed",
-                "deployed Registry plan revision differs from the run baseline",
+                "authoritative plan revision differs from the run baseline",
                 run_id=run_id,
                 details={
                     "expected_plan_sha256": run.get("plan_sha256"),
                     "observed_plan_sha256": revision.plan_sha256,
+                    **revision_details,
                 },
             )
         return identity, exact_registry

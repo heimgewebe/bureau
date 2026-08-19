@@ -6664,6 +6664,219 @@ def _close_revision(
     return _authoritative_close_revision(registry, task_id, run_id=run_id)
 
 
+def _runtime_refresh_closeout_evolution_matches(
+    connection: sqlite3.Connection,
+    task_id: str,
+    claimed_task: dict[str, Any],
+    *,
+    observed_revision: int,
+    observed_spec_sha256: str,
+) -> bool:
+    """Accept only the two canonical TaskSpec receipts written by runtime refresh.
+
+    Runtime refresh binds and consumes its own single-use authority after the
+    Bureau run has already frozen the TaskSpec baseline.  Those two mutations
+    are operational receipts, not a change to the requested work.  Closeout may
+    therefore accept them only when the complete StateStore lineage proves that
+    the current TaskSpec is the claimed TaskSpec plus exactly those two receipts.
+    Any other revision, field drift, source, idempotency key, or receipt binding
+    remains stale baseline.
+    """
+    if not isinstance(claimed_task, dict) or claimed_task.get("id") != task_id:
+        return False
+    try:
+        _claimed_metadata, claimed_authority, _claimed_state = (
+            runtime_refresh._validate_runtime_refresh_authority_contract(
+                spec=claimed_task,
+                approval_task_id=task_id,
+                allow_planned=False,
+            )
+        )
+    except runtime_refresh.RuntimeRefreshError:
+        return False
+    if (
+        claimed_authority.get("target_binding_receipt") is not None
+        or claimed_authority.get("consumption") is not None
+    ):
+        return False
+
+    try:
+        current = task_specs.get_current(connection, task_id)
+    except task_specs.TaskSpecError:
+        return False
+    if (
+        current is None
+        or int(current["revision"]) != observed_revision
+        or str(current["spec_sha256"]) != observed_spec_sha256
+    ):
+        return False
+    current_spec = current.get("spec")
+    if not isinstance(current_spec, dict):
+        return False
+    current_metadata = current_spec.get("metadata")
+    if not isinstance(current_metadata, dict):
+        return False
+    current_authority = current_metadata.get("runtime_refresh_authority")
+    if not isinstance(current_authority, dict):
+        return False
+    binding = current_authority.get("target_binding_receipt")
+    consumption = current_authority.get("consumption")
+    if not isinstance(binding, dict) or not isinstance(consumption, dict):
+        return False
+
+    normalized_current = copy.deepcopy(current_spec)
+    normalized_authority = normalized_current.get("metadata", {}).get(
+        "runtime_refresh_authority"
+    )
+    if not isinstance(normalized_authority, dict):
+        return False
+    normalized_authority.pop("target_binding_receipt", None)
+    normalized_authority.pop("consumption", None)
+    if normalized_current != claimed_task:
+        return False
+
+    try:
+        binding = runtime_refresh._validated_authority_target_binding(binding)
+        consumption = runtime_refresh._validated_authority_consumption(consumption)
+    except runtime_refresh.RuntimeRefreshError:
+        return False
+    baseline_spec_sha256 = task_specs.task_spec_digest(claimed_task)
+    authority_revision = binding["authority_revision"]
+    if (
+        consumption["authority_revision"] != authority_revision
+        or observed_revision != authority_revision + 2
+        or binding["task_id"] != task_id
+        or consumption["task_id"] != task_id
+        or binding["authority_spec_sha256"] != baseline_spec_sha256
+        or consumption["authority_spec_sha256"] != baseline_spec_sha256
+        or consumption["intent_sha256"] != binding["intent_sha256"]
+        or consumption["target_sha256"] != binding["target_sha256"]
+    ):
+        return False
+    intent_sha256 = binding["intent_sha256"]
+    result_sha256 = consumption["result_sha256"]
+
+    rows = connection.execute(
+        "SELECT revision,parent_revision,spec_sha256,spec_json,source "
+        "FROM task_spec_revisions WHERE task_id=? AND revision BETWEEN ? AND ? "
+        "ORDER BY revision",
+        (task_id, authority_revision, observed_revision),
+    ).fetchall()
+    if len(rows) != 3:
+        return False
+    baseline_row, binding_row, consumption_row = rows
+    if (
+        int(baseline_row["revision"]) != authority_revision
+        or baseline_row["parent_revision"]
+        != (None if authority_revision == 1 else authority_revision - 1)
+        or str(baseline_row["spec_sha256"]) != baseline_spec_sha256
+        or int(binding_row["revision"]) != authority_revision + 1
+        or int(binding_row["parent_revision"]) != authority_revision
+        or str(binding_row["source"])
+        != "runtime-refresh-authority-target-binding"
+        or int(consumption_row["revision"]) != observed_revision
+        or int(consumption_row["parent_revision"]) != authority_revision + 1
+        or str(consumption_row["source"])
+        != "runtime-refresh-authority-consumption"
+        or str(consumption_row["spec_sha256"]) != observed_spec_sha256
+    ):
+        return False
+    try:
+        binding_spec = json.loads(str(binding_row["spec_json"]))
+        consumption_spec = json.loads(str(consumption_row["spec_json"]))
+    except json.JSONDecodeError:
+        return False
+    if (
+        not isinstance(binding_spec, dict)
+        or not isinstance(consumption_spec, dict)
+        or task_specs.task_spec_digest(binding_spec) != str(binding_row["spec_sha256"])
+        or task_specs.task_spec_digest(consumption_spec)
+        != str(consumption_row["spec_sha256"])
+        or consumption_spec != current_spec
+    ):
+        return False
+    binding_spec_authority = binding_spec.get("metadata", {}).get(
+        "runtime_refresh_authority"
+    )
+    if not isinstance(binding_spec_authority, dict):
+        return False
+    intermediate_binding = binding_spec_authority.get("target_binding_receipt")
+    if intermediate_binding != binding or "consumption" in binding_spec_authority:
+        return False
+    binding_spec_authority = copy.deepcopy(binding_spec_authority)
+    binding_spec_authority.pop("target_binding_receipt", None)
+    normalized_binding_spec = copy.deepcopy(binding_spec)
+    normalized_binding_spec["metadata"]["runtime_refresh_authority"] = binding_spec_authority
+    if normalized_binding_spec != claimed_task:
+        return False
+
+    expected_mutations = [
+        (
+            f"runtime-refresh-bind:{task_id}:{intent_sha256}",
+            authority_revision,
+            str(binding_row["spec_sha256"]),
+            authority_revision + 1,
+        ),
+        (
+            f"runtime-refresh-consume:{task_id}:{result_sha256}",
+            authority_revision + 1,
+            str(consumption_row["spec_sha256"]),
+            observed_revision,
+        ),
+    ]
+    mutation_rows = connection.execute(
+        "SELECT idempotency_key,expected_revision,requested_sha256,resulting_revision "
+        "FROM task_spec_mutations WHERE task_id=? AND resulting_revision>? "
+        "AND resulting_revision<=? ORDER BY resulting_revision",
+        (task_id, authority_revision, observed_revision),
+    ).fetchall()
+    if len(mutation_rows) != len(expected_mutations):
+        return False
+    observed_mutations = [
+        (
+            str(row["idempotency_key"]),
+            None if row["expected_revision"] is None else int(row["expected_revision"]),
+            str(row["requested_sha256"]),
+            int(row["resulting_revision"]),
+        )
+        for row in mutation_rows
+    ]
+    return observed_mutations == expected_mutations
+
+
+def _close_revision_task_matches_claim_baseline(
+    connection: sqlite3.Connection,
+    revision: _CloseRevision,
+    claimed_task: dict[str, Any] | None,
+    *,
+    expected_task_sha256: str,
+) -> bool:
+    """Match the frozen run task, permitting only authenticated refresh receipts."""
+    if getattr(revision, "task_authority", "git") != "bureau-state-store-task-specs":
+        return revision.task_sha256 == expected_task_sha256
+    if not isinstance(claimed_task, dict):
+        return False
+    claimed_spec_sha256 = task_specs.task_spec_digest(claimed_task)
+    if (
+        revision.task_sha256 == expected_task_sha256
+        and revision.task_spec_sha256 == claimed_spec_sha256
+    ):
+        return True
+    task_spec_revision = revision.task_spec_revision
+    task_spec_sha256 = revision.task_spec_sha256
+    if not isinstance(task_spec_revision, int) or not isinstance(task_spec_sha256, str):
+        return False
+    if not _runtime_refresh_closeout_evolution_matches(
+        connection,
+        revision.task_id,
+        claimed_task,
+        observed_revision=task_spec_revision,
+        observed_spec_sha256=task_spec_sha256,
+    ):
+        return False
+    return task_revision_sha256(claimed_task) == expected_task_sha256
+
+
 def _receipt_binds_current_revision(registry: Registry, receipt: dict[str, Any]) -> bool:
     """Report whether a stored receipt still describes the authoritative revision.
 
@@ -6783,14 +6996,13 @@ def _complete_run_after_typed_evaluation(
                 if observed_task_spec_sha256 is not None and isinstance(claimed_task, dict)
                 else None
             )
-            task_spec_drift = (
-                observed_task_spec_sha256 is not None
-                and observed_task_spec_sha256 != claimed_task_spec_sha256
+            task_revision_matches = _close_revision_task_matches_claim_baseline(
+                connection,
+                revision,
+                claimed_task if isinstance(claimed_task, dict) else None,
+                expected_task_sha256=run["task_sha256"],
             )
-            if task_spec_drift or revision.digests != (
-                run["task_sha256"],
-                run["plan_sha256"],
-            ):
+            if not task_revision_matches or revision.plan_sha256 != run["plan_sha256"]:
                 raise RunStateConflict(
                     "stale-baseline",
                     "run baseline is stale; task or plan changed after claim",
@@ -7442,12 +7654,19 @@ def runtime_closeout(
                 str(run["task_id"]),
                 run_id=run_id,
             )
+            claimed_task = envelope.get("task")
+            task_revision_matches = _close_revision_task_matches_claim_baseline(
+                connection,
+                revision,
+                claimed_task if isinstance(claimed_task, dict) else None,
+                expected_task_sha256=str(run.get("task_sha256") or ""),
+            )
         revision_details = {
             "task_authority": revision.task_authority,
             "task_spec_revision": revision.task_spec_revision,
             "task_spec_sha256": revision.task_spec_sha256,
         }
-        if revision.task_sha256 != run.get("task_sha256"):
+        if not task_revision_matches:
             raise RunStateConflict(
                 "task-revision-changed",
                 "authoritative task revision differs from the run baseline",

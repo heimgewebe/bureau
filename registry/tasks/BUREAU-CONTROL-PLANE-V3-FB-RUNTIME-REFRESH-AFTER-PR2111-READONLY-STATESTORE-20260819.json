@@ -108,9 +108,9 @@
     "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden. Bereits konsumierte oder zweckfremde Authorities bleiben unverändert."
   },
   "metadata": {
-    "source": "Direct continuation after the operator reproduced the deployed Bureau read-only failure: claim-coordination-status through the explicit canonical Registry snapshot selected mutable StateStore and failed on chmod of /home/alex/.local/state/bureau. PR #2111 fixes the CLI store-selection boundary; source validation on combined main+PR2110 passed 52/52 relevant tests and a real read-only StateRoot claim-coordination-status read.",
+    "source": "Direct continuation after the operator reproduced the deployed Bureau read-only failure: claim-coordination-status through the explicit canonical Registry snapshot selected mutable StateStore and failed on chmod of /home/alex/.local/state/bureau. PR #2111 fixes the CLI store-selection boundary; source validation on combined main+PR2110 passed 52/52 relevant tests and a real read-only StateRoot claim-coordination-status read. PR #2111 then merged through the protected merge queue at exact commit 21f41f41d9ccaccf0c3d55f566b6e341ea6a8f5e after merge-group validate (3.10)/(3.12) succeeded.",
     "deployed_source_at_draft": "dd19f01663a648512394d550730c9662af98c02a",
-    "main_at_registration": "6d4a855a0d57560ff1bd3496c0490d27b00149d7",
+    "main_at_registration": "21f41f41d9ccaccf0c3d55f566b6e341ea6a8f5e",
     "trigger_pull_requests": [
       2111
     ],
@@ -120,7 +120,12 @@
         "head_commit": "7dc211eaeac57dfaea3bb705cd1515e50f7c1adf"
       }
     ],
-    "trigger_merges": [],
+    "trigger_merges": [
+      {
+        "pull_request": 2111,
+        "merge_commit": "21f41f41d9ccaccf0c3d55f566b6e341ea6a8f5e"
+      }
+    ],
     "unblock_task_ids": [
       "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-AGENT-COMPETITION-PUBLISH-20260818"
     ],

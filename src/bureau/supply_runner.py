@@ -983,7 +983,7 @@ def _next_action(summary: dict[str, Any]) -> str:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="bureau-task-supply-runner")
-    parser.add_argument("--registry-root", default=".")
+    parser.add_argument("--registry-root", default=os.environ.get("BUREAU_REGISTRY_ROOT", "."))
     parser.add_argument("--capability", action="append", default=[], required=True)
     parser.add_argument("--state-root", help="task-supply artifact root")
     parser.add_argument("--bureau-state-db")

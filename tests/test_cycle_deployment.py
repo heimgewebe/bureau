@@ -14,7 +14,7 @@ from bureau.cycle_deployment import (
     CycleDeploymentError,
     audit_cycle_deployment,
 )
-from bureau.runtime_identity import _package_tree_sha256
+from bureau.runtime_identity import SCHEDULER_NAMES, _package_tree_sha256
 
 REPO_ROOT = Path(__file__).parents[1]
 
@@ -53,6 +53,16 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
         canonical_shim = REPO_ROOT / "ops" / "systemd" / "libexec" / name
         _copy(canonical_shim, release_build / "ops" / "systemd" / "libexec" / name)
         _copy(canonical_shim, shims / name)
+
+    cycle_scheduler_names = {name for _stage, name, _module in STAGES}
+    for name in SCHEDULER_NAMES:
+        if name in cycle_scheduler_names:
+            continue
+        for suffix in (".service", ".timer"):
+            canonical = REPO_ROOT / "ops" / "systemd" / f"{name}{suffix}"
+            _copy(canonical, release_build / "ops" / "systemd" / f"{name}{suffix}")
+        canonical_shim = REPO_ROOT / "ops" / "systemd" / "libexec" / name
+        _copy(canonical_shim, release_build / "ops" / "systemd" / "libexec" / name)
 
     package_tree_sha256 = _package_tree_sha256(release_build)
     assert package_tree_sha256 is not None

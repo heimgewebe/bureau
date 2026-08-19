@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+exec "$HOME/.local/bin/bureau-task-supply-runner" \
+  --capability bureau \
+  --capability grabowski \
+  --capability python \
+  --capability repository \
+  --capability testing \
+  --mutation-authority \
+  --publish \
+  "$@"

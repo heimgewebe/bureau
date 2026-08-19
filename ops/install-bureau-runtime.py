@@ -329,15 +329,12 @@ def _backup_existing(
     launcher: Path,
     runtime_refresh_launcher: Path | None = None,
     status_capsule_launcher: Path | None = None,
-    task_supply_launcher: Path | None = None,
 ) -> dict[str, Any]:
     launchers = [launcher]
     if runtime_refresh_launcher is not None:
         launchers.append(runtime_refresh_launcher)
     if status_capsule_launcher is not None:
         launchers.append(status_capsule_launcher)
-    if task_supply_launcher is not None:
-        launchers.append(task_supply_launcher)
     if not manifest_path.exists() and not any(os.path.lexists(item) for item in launchers):
         return {
             "directory": None,
@@ -354,10 +351,6 @@ def _backup_existing(
             "status_capsule_launcher_kind": None,
             "status_capsule_launcher_symlink_target": None,
             "status_capsule_launcher_metadata": None,
-            "task_supply_launcher": None,
-            "task_supply_launcher_kind": None,
-            "task_supply_launcher_symlink_target": None,
-            "task_supply_launcher_metadata": None,
         }
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     directory = prefix / "backups" / stamp
@@ -377,11 +370,6 @@ def _backup_existing(
         if status_capsule_launcher is not None
         else {"path": None, "kind": None, "symlink_target": None, "metadata": None}
     )
-    task_supply = (
-        _backup_launcher(directory, task_supply_launcher, "bureau-task-supply-runner")
-        if task_supply_launcher is not None
-        else {"path": None, "kind": None, "symlink_target": None, "metadata": None}
-    )
     return {
         "directory": str(directory),
         "manifest": str(manifest_backup) if manifest_backup else None,
@@ -397,10 +385,6 @@ def _backup_existing(
         "status_capsule_launcher_kind": status_capsule["kind"],
         "status_capsule_launcher_symlink_target": status_capsule["symlink_target"],
         "status_capsule_launcher_metadata": status_capsule["metadata"],
-        "task_supply_launcher": task_supply["path"],
-        "task_supply_launcher_kind": task_supply["kind"],
-        "task_supply_launcher_symlink_target": task_supply["symlink_target"],
-        "task_supply_launcher_metadata": task_supply["metadata"],
     }
 
 
@@ -495,7 +479,6 @@ def main(argv: list[str] | None = None) -> int:
     launcher = bin_dir / "bureau"
     runtime_refresh_launcher = bin_dir / "bureau-runtime-refresh"
     status_capsule_launcher = bin_dir / "bureau-status-capsule"
-    task_supply_launcher = bin_dir / "bureau-task-supply-runner"
     expected_launchers = {
         launcher: stable_launcher_bytes(manifest_path),
         runtime_refresh_launcher: stable_launcher_bytes(
@@ -503,9 +486,6 @@ def main(argv: list[str] | None = None) -> int:
         ),
         status_capsule_launcher: stable_launcher_bytes(
             manifest_path, "bureau.status_capsule"
-        ),
-        task_supply_launcher: stable_launcher_bytes(
-            manifest_path, "bureau.supply_runner"
         ),
     }
     # Normalize lexically, not with Path.resolve(): a launcher may itself
@@ -570,18 +550,12 @@ def main(argv: list[str] | None = None) -> int:
         label="bureau-status-capsule",
         replace_existing=args.replace_existing,
     )
-    _validate_existing_launcher(
-        task_supply_launcher,
-        label="bureau-task-supply-runner",
-        replace_existing=args.replace_existing,
-    )
     backup = _backup_existing(
         prefix,
         manifest_path,
         launcher,
         runtime_refresh_launcher,
         status_capsule_launcher,
-        task_supply_launcher,
     )
     previous_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
     installed_at = datetime.now(timezone.utc).isoformat()
@@ -602,7 +576,6 @@ def main(argv: list[str] | None = None) -> int:
         "launcher_path": str(launcher),
         "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
         "status_capsule_launcher_path": str(status_capsule_launcher),
-        "task_supply_launcher_path": str(task_supply_launcher),
         "installed_at": installed_at,
         "runtime_approval": runtime_approval,
         "previous_manifest_sha256": (
@@ -618,7 +591,6 @@ def main(argv: list[str] | None = None) -> int:
     launcher_bytes = expected_launchers[launcher]
     runtime_refresh_launcher_bytes = expected_launchers[runtime_refresh_launcher]
     status_capsule_launcher_bytes = expected_launchers[status_capsule_launcher]
-    task_supply_launcher_bytes = expected_launchers[task_supply_launcher]
 
     final_launcher_mutations = {
         path
@@ -653,12 +625,6 @@ def main(argv: list[str] | None = None) -> int:
         enforce_allowlist=args.enforce_launcher_allowlist,
         allowed_paths=allowed_launcher_paths,
     )
-    task_supply_launcher_written = _write_launcher_if_needed(
-        task_supply_launcher,
-        task_supply_launcher_bytes,
-        enforce_allowlist=args.enforce_launcher_allowlist,
-        allowed_paths=allowed_launcher_paths,
-    )
     receipt = {
         "schema_version": 1,
         "kind": "bureau_runtime_install_receipt",
@@ -674,9 +640,6 @@ def main(argv: list[str] | None = None) -> int:
         "status_capsule_launcher_path": str(status_capsule_launcher),
         "status_capsule_launcher_sha256": sha256(status_capsule_launcher),
         "status_capsule_launcher_written": status_capsule_launcher_written,
-        "task_supply_launcher_path": str(task_supply_launcher),
-        "task_supply_launcher_sha256": sha256(task_supply_launcher),
-        "task_supply_launcher_written": task_supply_launcher_written,
         "package_tree_sha256": source_digest,
         "canonical_registry_root": registry_snapshot["root"],
         "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],

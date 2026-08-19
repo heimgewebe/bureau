@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2116-TASK-SUPPLY-20260819",
+  "title": "Single-Use-Runtime-Refresh nach PR #2116 für task-supply",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 0eb32d6c9f7f26f5cc2967040871cbbc93e4afc4 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Das tatsächliche Target wird erst nach geschütztem Merge von PR #2116 sowie nach Merge dieser Authority-TaskSpec bestimmt und muss beide enthalten. Zweck ist ausschließlich, die in PR #2115 eingeführte bounded approval-freie read-only Task-Supply-Funktion und die in PR #2116 beseitigte vierte-Launcher-Bootstrap-Seam revisionsgenau in die immutable Bureau-Runtime zu bringen, damit bureau-task-supply.service/timer danach über den bestehenden stabilen bureau-Launcher live validiert werden können. Diese Authority verändert keine Queue, Claims, Dispatch-Zustände, Supply-TaskSpecs oder fremde Arbeit und darf nach erfolgreichem Refresh niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use post-PR2116 task-supply runtime authority only. Vor dem einzigen Runtime-Effekt sind geschützter Merge von PR #2116, Merge dieser Authority-TaskSpec, frischer GitHub-main, required validate (3.10)/(3.12), target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Keine Implementierungs-, Queue-, Claim-, Dispatch-, Supply-Publikations- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-main-present",
+      "assertion": "Vor dem einzigen Refresh wird der aktuelle GitHub-main frisch beobachtet; er enthält den geschützten Merge von PR #2116, diese gemergte Authority-TaskSpec sowie jeden zwischenzeitlich regulär integrierten Main-Fortschritt. Kein älterer Zwischenstand wird deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2116-task-supply:fresh-main-present"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehörige Required-Checks und target_sha256 frisch beobachtet. Jede Drift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2116-task-supply:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; die stehende Nutzerautorisierung darf als authorized_by/authorization dienen, ohne einen neuen Nutzerdialog. Ohne Task- und Target-Bindung beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2116-task-supply:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation/break_glass, single-use und unverbraucht sein. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2116-task-supply:authoritative-task-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2116-task-supply:live-lease-binding"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; StateStore-Integrität und Runtime-Identity bleiben gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2116-task-supply:immutable-readback"
+      }
+    },
+    {
+      "id": "single-use-pr2116-task-supply-only",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Runtime-Refresh und dient ausschließlich dazu, die gemergte PR-#2115/#2116-Task-Supply-Kette inklusive Launcher-Konsolidierung in die immutable Bureau-Runtime zu übernehmen und danach den normalen systemd-/Supply-/Frontier-Validierungspfad zu öffnen. Sie publiziert selbst keine Supply-Tasks und wird nach resultgebundenem Closeout niemals für ein späteres Target wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2116-task-supply:single-use-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden. Bereits konsumierte oder zweckfremde Authorities bleiben unverändert."
+  },
+  "metadata": {
+    "source": "Direct continuation after PR #2115 merged task-supply autopublishing and live analysis proved that its fourth stable launcher could not be safely deployed by the older three-launcher Runtime-Refresh. PR #2116 structurally removed that forward-bootstrap seam by routing task supply through the existing immutable bureau launcher; exact-head CI and merge-group validate (3.10)/(3.12) passed and PR #2116 merged at 2b5d0fb07fdeaac82ede328764679862f2455765.",
+    "deployed_source_at_draft": "0eb32d6c9f7f26f5cc2967040871cbbc93e4afc4",
+    "main_at_registration": "2b5d0fb07fdeaac82ede328764679862f2455765",
+    "initial_observation_sha256": "99413f8f1a45f1d9ded2b0c0e4edccf1e070adccb018c3919c8c8f6fddc91ea8",
+    "trigger_pull_requests": [
+      2115,
+      2116
+    ],
+    "trigger_heads": [
+      {
+        "pull_request": 2115,
+        "head_commit": "ff35bdc23275e763a027e57bea14a054d9d888c8"
+      },
+      {
+        "pull_request": 2116,
+        "head_commit": "151b63508c1efe0f0321c1742de7ccba94fab764"
+      }
+    ],
+    "trigger_merges": [
+      {
+        "pull_request": 2115,
+        "merge_commit": "bf883b1e30323598dd2df24eaac784842b5d4017"
+      },
+      {
+        "pull_request": 2116,
+        "merge_commit": "2b5d0fb07fdeaac82ede328764679862f2455765"
+      }
+    ],
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect before protected merge of PR #2116 and this Authority-TaskSpec",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal, consumed or purpose-mismatched runtime authorities",
+      "queue, claim, dispatch or supply-task publication authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed immutable Bureau runtime still predates PR #2115/#2116; conservative missing-only StateStore adoption of this single-purpose authority is required before any target-bound runtime refresh.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "supply-task publication authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before PR #2116 and this task are both merged"
+      ]
+    }
+  }
+}

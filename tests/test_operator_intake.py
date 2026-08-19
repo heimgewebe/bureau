@@ -633,6 +633,38 @@ def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
     ]
 
 
+def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
+    store = StateStore(tmp_path / "state.sqlite3")
+
+    with pytest.raises(OperatorIntakeError) as schema_error:
+        candidate_record_request(None, store, {"schema_version": 2})
+
+    assert schema_error.value.code == "request-schema-unsupported"
+    assert schema_error.value.retryable is False
+    assert schema_error.value.details == {
+        "expected_schema_version": 1,
+        "received_schema_version": 2,
+    }
+
+    with pytest.raises(OperatorIntakeError) as fields_error:
+        candidate_record_request(
+            None,
+            store,
+            {
+                "schema_version": 1,
+                "unexpected_z": "z",
+                "unexpected_a": "a",
+            },
+        )
+
+    assert fields_error.value.code == "request-fields-unknown"
+    assert fields_error.value.retryable is False
+    assert fields_error.value.details == {
+        "unknown_fields": ["unexpected_a", "unexpected_z"],
+        "allowed_fields": sorted(operator_intake_module._CANDIDATE_RECORD_REQUEST_FIELDS),
+    }
+
+
 def test_candidate_record_preserves_v1_request_hash_without_refinement(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -1061,7 +1093,10 @@ def test_candidate_request_rejects_unknown_fields(registry_factory, tmp_path):
             },
         )
     assert caught.value.code == "request-fields-unknown"
-    assert caught.value.details == {"unknown_fields": ["invented_authority"]}
+    assert caught.value.details == {
+        "unknown_fields": ["invented_authority"],
+        "allowed_fields": sorted(operator_intake_module._CANDIDATE_RECORD_REQUEST_FIELDS),
+    }
 
 
 def test_candidate_record_rejects_idempotency_conflict(registry_factory, tmp_path):

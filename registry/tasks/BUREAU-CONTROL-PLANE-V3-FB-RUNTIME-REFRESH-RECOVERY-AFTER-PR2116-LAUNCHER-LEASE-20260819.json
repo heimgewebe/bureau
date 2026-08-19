@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-RECOVERY-AFTER-PR2116-LAUNCHER-LEASE-20260819",
+  "title": "Single-Use-Recovery-Runtime-Refresh mit zielabgeleiteten Launcher-Leases",
+  "state": "ready",
+  "goal": "Genau einen neuen, revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Vorgänger-Intent 37421b80711762454927f7b210e37f6fdeedf2d8787a58de22d382a464bc2076 wird niemals wiederholt: sein Installer brach vor jeder Runtime-/Launcher-/Manifest-Mutation fail-closed ab, weil der deployte alte Controller die durch die Zielrevision veränderten drei stabilen Launcher nicht in required_resource_keys aufgenommen hatte. Diese Successor-Authority darf nur mit einem Controller aus dem exakten frisch beobachteten Ziel-main ausgeführt werden, damit die Zielrevision selbst ihre Launcher-Mutationsmenge bestimmt und exakt daran die Grabowski-Leases und Installer-Allowlist bindet.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use Recovery nach target-aware Launcher-Lease-Seam. Die stehende Nutzerautorisierung darf als authorized_by/authorization dienen. Vor Wirkung: Successor geschuetzt gemergt und missing-only adoptiert; frischer current main mit required CI; Controller-Code exakt aus diesem current main und sauber/origin-main-identisch; neuer target_sha256; neuer Intent; alle vom Ziel-Controller berechneten Runtime- und Launcher-Resource-Keys exakt live geleast. Der gebundene Vorgaenger-Intent/Target/Result darf nie wiederverwendet oder replayed werden."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "predecessor-classified-no-runtime-mutation",
+      "assertion": "Der Vorgänger-Result ef0582f768f37ea9546a2924e49436fd4c5e5e2a1067bf7af35f15a6b230ede9 bleibt unverändert als unclear-Evidenz erhalten. Recovery-Readback belegt: Installer-Abbruch an der initialen Launcher-Allowlist vor Registry-Snapshot, Release, Backup, Manifest- oder Launcher-Schreibpfad; deployed source bleibt 0eb32d6c9f7f26f5cc2967040871cbbc93e4afc4; alle drei Launcher-Digests und das Deployment-Manifest blieben unverändert; die drei alten Runtime-Leases wurden ausschließlich snapshot-gebunden freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:predecessor-no-runtime-mutation"
+      }
+    },
+    {
+      "id": "fresh-successor-main",
+      "assertion": "Unmittelbar vor dem neuen Intent wird GitHub-main frisch beobachtet. Er enthält den geschützten Merge dieser Successor-Authority und alle zwischenzeitlichen legitimen Main-Merges; Required-Checks validate (3.10)/(3.12) sind für diesen exakten Main grün. Ein älteres Target wird nicht verwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:fresh-successor-main"
+      }
+    },
+    {
+      "id": "target-controller-binding",
+      "assertion": "prepare-intent und apply werden durch bureau.runtime_refresh aus einem sauberen kanonischen Checkout ausgeführt, dessen HEAD exakt dem frisch beobachteten GitHub-main entspricht und dessen origin/main identisch ist. Der deployte alte Runtime-Refresh-Launcher wird für diesen Recovery-Intent nicht als Controller verwendet, weil er die Ziel-Launcher-Mutationen nachweislich nicht vorhersagen kann.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:target-controller-binding"
+      }
+    },
+    {
+      "id": "target-derived-launcher-leases",
+      "assertion": "Der neue Intent enthält alle vom exakt zielgebundenen Controller als mutierend erkannten stabilen Launcher-Pfade plus die normalen Prefix-/State-/Workspace-Ressourcen. Diese Resource-Keys werden exakt unter identischem Task-/Target-/Intent-Binding live geleast; der Installer erhält seine --allowed-launcher-path-Werte ausschließlich aus dieser Intent-Menge. Fehlende, fremde, abgelaufene oder nach Intent driftende Launcher-Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:target-derived-launcher-leases"
+      }
+    },
+    {
+      "id": "predecessor-never-replayed",
+      "assertion": "Die gebundene Vorgänger-Authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2116-TASK-SUPPLY-20260819, Target 1f5b3d43bdbf97e8cf79f895969e952613c920f6f24dbd18dbbec5621b698649 und Intent 37421b80711762454927f7b210e37f6fdeedf2d8787a58de22d382a464bc2076 werden weder erneut angewendet noch als Authority substituiert. Der neue Main muss einen anderen target_sha256 und einen neuen Attempt-Ledger-Pfad erzeugen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:no-predecessor-replay"
+      }
+    },
+    {
+      "id": "single-new-runtime-effect",
+      "assertion": "Diese Successor-Authority autorisiert höchstens einen neuen Runtime-Effekt. Bei failed/unclear/timeout/transport ambiguity erfolgt kein Blind-Retry; zuerst Result-/Started-/Workspace-/Manifest-/Launcher-/Runtime-Readback und Recovery-Klassifikation.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:single-new-effect"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach erfolgreichem apply binden Deployment-Manifest, immutable Release, Paketbaum, kanonischer Registry-Snapshot und alle stabilen Launcher den exakt gleichen source commit; bureau runtime-identity ist integrity-valid, bureau check sowie StateStore-Integrität/Replay sind grün. Erst dann werden Successor-Authority und Runtime-Leases resultgebunden geschlossen bzw. freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:immutable-readback"
+      }
+    },
+    {
+      "id": "scope-is-runtime-recovery-only",
+      "assertion": "Diese TaskSpec erteilt keine Queue-, Claim-, Dispatch-, Supply-Task-Publikations-, PC-, Deployment-fremde oder Fremdarbeitsautorität. Nach erfolgreichem Runtime-Readback wird sie konsumiert/terminal und nie wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-recovery-pr2116:scope-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Der letzte integrity-valid Runtime-Stand 0eb32d6c9f7f26f5cc2967040871cbbc93e4afc4 bleibt bis zum eindeutigen neuen Install-/Readback-Receipt die einzige Deployment-Wahrheit. Bei neuem unklarem Ergebnis keine Wiederholung; vorhandene Backup-/Readback-/Lease-/Attempt-Evidenz verwenden und keine alte oder gebundene Authority reaktivieren."
+  },
+  "metadata": {
+    "source": "Recovery successor after the first post-PR2116 runtime-refresh attempt proved a target-sensitive launcher-content forward-compatibility seam. The deployed 0eb32d6c controller considered its three launchers valid against its own embedded scheduler inventory and omitted their path leases. The 1e7c744 target embeds bureau-task-supply in RUNTIME_SCHEDULER_NAMES, making all three target launcher bytes differ; its installer correctly rejected those unleased mutations before changing runtime state.",
+    "main_at_registration": "1e7c74440fb934201129747105d0a5d1bcbff095",
+    "deployed_source_at_registration": "0eb32d6c9f7f26f5cc2967040871cbbc93e4afc4",
+    "predecessor": {
+      "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2116-TASK-SUPPLY-20260819",
+      "authority_revision": 2,
+      "authority_spec_sha256": "f5166d5470cdb4d83b012bc23ae18d1ca4adc4189c736f4fbf2021cdc8177bf5",
+      "target_sha256": "1f5b3d43bdbf97e8cf79f895969e952613c920f6f24dbd18dbbec5621b698649",
+      "intent_sha256": "37421b80711762454927f7b210e37f6fdeedf2d8787a58de22d382a464bc2076",
+      "result_sha256": "ef0582f768f37ea9546a2924e49436fd4c5e5e2a1067bf7af35f15a6b230ede9",
+      "result_status": "unclear",
+      "error_code": "installer-returned-nonzero",
+      "recovery_classification": "pre-runtime-mutation-failure",
+      "must_not_reuse": true
+    },
+    "target_launcher_evidence": {
+      "deployed_controller_required_resource_keys_omitted_launchers": true,
+      "target_controller_detected_launcher_resource_keys": [
+        "path:/home/alex/.local/bin/bureau",
+        "path:/home/alex/.local/bin/bureau-runtime-refresh",
+        "path:/home/alex/.local/bin/bureau-status-capsule"
+      ],
+      "deployed_launcher_sha256": {
+        "bureau": "82618008e2c00032b2f9f011248b8ef881be7b9e3194b1acc722c211de21612c",
+        "bureau-runtime-refresh": "a2257272a235312c2271b2929e293c232ca525006ebfd532c163c5a89248be17",
+        "bureau-status-capsule": "10a7d95b8fd6c6432078110ff4b9a8950495091f26200d64115d7dfdd0eb7b40"
+      },
+      "target_expected_launcher_sha256_at_1e7c744": {
+        "bureau": "1f5daa90cea05ef4af8f5f8028015c45268c178917197f9c3dd780b9b5ff758e",
+        "bureau-runtime-refresh": "8c772b4bb1b56e389d0b2604167045bf0844ebe3165a04af5d31da77dff228f6",
+        "bureau-status-capsule": "fdbcef7943e2e05beea78848196a3dd4b58866bd9c71ff10b6a556021a870ea7"
+      }
+    },
+    "does_not_establish": [
+      "safe retry of predecessor intent",
+      "permission to edit predecessor receipts or StateStore history",
+      "runtime target before fresh post-merge observation",
+      "permission to execute from mutable or stale controller source",
+      "generic arbitrary launcher-path authority",
+      "queue, claim, dispatch or supply-task publication authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one successor authority TaskSpec",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The predecessor authority is already target-bound to an immutable failed/unclear attempt and cannot be reused. A new protected TaskSpec and a fresh post-merge target are required for safe recovery.",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "supply-task publication authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ]
+    }
+  }
+}

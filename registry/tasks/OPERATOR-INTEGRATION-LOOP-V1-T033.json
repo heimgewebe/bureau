@@ -149,6 +149,20 @@
         "merge_authority",
         "deployment_authority"
       ]
+    },
+    "superseded_by": "OPERATOR-INTEGRATION-LOOP-V1-T035",
+    "superseded_at": "2026-08-19T20:30:34.903347Z",
+    "supersession_reason": "T033 wurde auf seiner eingefrorenen Revision terminal als nicht ehrlich akzeptierbar verworfen. Spaetere S1-/S1-R1-/S1-R2-Evidenz bestaetigt, dass der alte Natural-Shadow nicht reaktiviert oder retrospektiv repariert werden darf; T035 besitzt den korrigierten pre-activation Sampling-Unit-Pfad.",
+    "supersession_evidence": {
+      "terminal_run_ids": [
+        "BUR-RUN-20260819T172039Z-05d57dee33",
+        "BUR-RUN-20260819T193810Z-cb2253af0e"
+      ],
+      "terminal_result": "REJECT_THIS_REVISION",
+      "successor_task": "OPERATOR-INTEGRATION-LOOP-V1-T035",
+      "successor_source_pr": "heimgewebe/vibe-lab#347",
+      "successor_source_merge": "5da2773bd3398aea66d7fe1175a67d9b9e174178",
+      "later_paper_merge": "21399adf7bf213df0e996a33fd05c63508031078"
     }
   },
   "priority": {
@@ -166,6 +180,6 @@
     "strategy": "Der Shadow ist Evidenz-only. Bei Falsifikation oder unverhältnismäßigem Aufwand endet er durch Ergebnisdokumentation; keine produktive Runtime-, Queue-, Routing- oder Registry-Wirkung muss zurückgerollt werden."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "S0-R3 externe Validität in einem sequenziellen Natural-Shadow prüfen"
 }

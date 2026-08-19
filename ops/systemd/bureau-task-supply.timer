@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep Bureau claimable task supply above its configured floor
+
+[Timer]
+OnCalendar=*-*-* *:00/5:30
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=false
+Unit=bureau-task-supply.service
+
+[Install]
+WantedBy=timers.target

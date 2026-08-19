@@ -1,0 +1,24 @@
+[Unit]
+Description=Bureau bounded StateStore task-supply refill
+Documentation=https://github.com/heimgewebe/bureau
+ConditionPathExists=%h/.local/share/bureau/deployment-manifest.json
+After=bureau-closure-planner.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bureau-task-supply-runner --capability bureau --capability grabowski --capability python --capability repository --capability testing --mutation-authority --publish
+TimeoutStartSec=3min
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+StateDirectory=bureau-task-supply
+StateDirectoryMode=0700
+ReadWritePaths=%h/.local/state/bureau-task-supply %h/.local/state/bureau
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+SystemCallArchitectures=native

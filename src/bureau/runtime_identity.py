@@ -34,6 +34,7 @@ SCHEDULER_NAMES = (
     "bureau-operator-control",
     "bureau-verifier-control",
     "bureau-closure-planner",
+    "bureau-task-supply",
 )
 
 

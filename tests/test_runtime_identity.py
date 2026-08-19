@@ -532,12 +532,19 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     assert first_receipt["status_capsule_launcher_sha256"] == hashlib.sha256(
         status_capsule_launcher.read_bytes()
     ).hexdigest()
+    task_supply_launcher = Path(first_receipt["task_supply_launcher_path"])
+    assert task_supply_launcher == bin_dir / "bureau-task-supply-runner"
+    assert task_supply_launcher.is_file()
+    assert first_receipt["task_supply_launcher_sha256"] == hashlib.sha256(
+        task_supply_launcher.read_bytes()
+    ).hexdigest()
     deployment_manifest = json.loads(
         (prefix / "deployment-manifest.json").read_text(encoding="utf-8")
     )
     assert deployment_manifest["status_capsule_launcher_path"] == str(
         status_capsule_launcher
     )
+    assert deployment_manifest["task_supply_launcher_path"] == str(task_supply_launcher)
     release_root = Path(deployment_manifest["immutable_release_path"])
     release_schemas = release_root / "schemas"
     expected_schema_names = {path.name for path in (project_root / "schemas").glob("*.json")}
@@ -588,6 +595,7 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     assert Path(rollback["manifest"]).is_file()
     assert Path(rollback["launcher"]).is_file()
     assert Path(rollback["status_capsule_launcher"]).is_file()
+    assert Path(rollback["task_supply_launcher"]).is_file()
 
     launcher = bin_dir / "bureau"
     launched = subprocess.run(

@@ -62,6 +62,7 @@ RUNTIME_LAUNCHER_ENTRYPOINTS = (
     ("bureau", "bureau.cli"),
     ("bureau-runtime-refresh", "bureau.runtime_refresh"),
     ("bureau-status-capsule", "bureau.status_capsule"),
+    ("bureau-task-supply-runner", "bureau.supply_runner"),
 )
 RUNTIME_SCHEDULER_NAMES = (
     "bureau-halfhour-operator",
@@ -69,6 +70,7 @@ RUNTIME_SCHEDULER_NAMES = (
     "bureau-operator-control",
     "bureau-verifier-control",
     "bureau-closure-planner",
+    "bureau-task-supply",
 )
 RUNTIME_AUTHORITY_SCHEMA_VERSION = 1
 RUNTIME_AUTHORITY_MODE = "single-use-target-bound"
@@ -2910,12 +2912,21 @@ def _validate_historical_install_receipt(
 
 def _historical_runtime_snapshot(
     *, prefix: Path, bin_dir: Path, install_receipt: dict[str, Any]
-) -> tuple[Path, tuple[Path, Path, Path]]:
+) -> tuple[Path, tuple[Path, ...]]:
     expected_manifest_sha256 = install_receipt.get("manifest_sha256")
+    task_supply_bound = (
+        install_receipt.get("task_supply_launcher_path") is not None
+        or install_receipt.get("task_supply_launcher_sha256") is not None
+    )
     launcher_contract = (
         ("bureau", "launcher_sha256"),
         ("bureau-runtime-refresh", "runtime_refresh_launcher_sha256"),
         ("bureau-status-capsule", "status_capsule_launcher_sha256"),
+        *(
+            (("bureau-task-supply-runner", "task_supply_launcher_sha256"),)
+            if task_supply_bound
+            else ()
+        ),
     )
     if not isinstance(expected_manifest_sha256, str) or not _is_sha256(expected_manifest_sha256):
         raise RuntimeRefreshError(
@@ -2933,7 +2944,7 @@ def _historical_runtime_snapshot(
     manifest_matches = 0
 
     def matches(
-        manifest_path: Path, launcher_paths: tuple[Path, Path, Path]
+        manifest_path: Path, launcher_paths: tuple[Path, ...]
     ) -> bool:
         nonlocal manifest_matches
         if (
@@ -3025,6 +3036,14 @@ def readback_historical_install(
             label="status capsule launcher pointer",
         ),
     }
+    if (
+        persisted_receipt.get("task_supply_launcher_path") is not None
+        or persisted_receipt.get("task_supply_launcher_sha256") is not None
+    ):
+        expected_launcher_paths["task_supply_launcher_path"] = _historical_nonsymlink_path(
+            resolved_bin_dir / "bureau-task-supply-runner",
+            label="task supply launcher pointer",
+        )
     persisted_manifest_path = _historical_nonsymlink_path(
         Path(str(persisted_receipt.get("manifest_path", ""))),
         label="receipt manifest pointer",
@@ -3060,7 +3079,7 @@ def readback_historical_install(
             "historical-runtime-source-mismatch",
             "historical deployment manifest source differs from the authority intent",
         )
-    receipt_manifest_bindings = (
+    receipt_manifest_bindings = [
         ("release_id", "release_id"),
         ("package_tree_sha256", "package_tree_sha256"),
         ("canonical_registry_root", "canonical_registry_root"),
@@ -3071,7 +3090,11 @@ def readback_historical_install(
         ("installed_at", "installed_at"),
         ("runtime_approval", "runtime_approval"),
         ("rollback", "rollback"),
-    )
+    ]
+    if persisted_receipt.get("task_supply_launcher_path") is not None:
+        receipt_manifest_bindings.append(
+            ("task_supply_launcher_path", "task_supply_launcher_path")
+        )
     for manifest_field, receipt_field in receipt_manifest_bindings:
         if manifest.get(manifest_field) != persisted_receipt.get(receipt_field):
             raise RuntimeRefreshError(
@@ -3149,6 +3172,11 @@ def readback_historical_install(
         "launcher_sha256",
         "runtime_refresh_launcher_sha256",
         "status_capsule_launcher_sha256",
+        *(
+            ("task_supply_launcher_sha256",)
+            if install_receipt.get("task_supply_launcher_sha256") is not None
+            else ()
+        ),
     )
     launcher_sha256s = tuple(
         _historical_artifact_sha256(path, label=field)
@@ -3169,6 +3197,11 @@ def readback_historical_install(
         "bureau_launcher_sha256": launcher_sha256s[0],
         "runtime_refresh_launcher_sha256": launcher_sha256s[1],
         "status_capsule_launcher_sha256": launcher_sha256s[2],
+        **(
+            {"task_supply_launcher_sha256": launcher_sha256s[3]}
+            if len(launcher_sha256s) > 3
+            else {}
+        ),
         "check_valid": True,
         "runtime_identity_valid": True,
         "rollback": install_receipt.get("rollback"),

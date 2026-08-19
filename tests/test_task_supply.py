@@ -45,19 +45,11 @@ TYPED_ACCEPTANCE = {
             "assertion": f"The reviewed {category} validation artifact has the expected digest.",
             "evidence_type": "object",
             "verifier": "artifact_hash_matches",
-            "verifier_config": {"artifact_sha256": f"{index:x}" * 64},
+            "verifier_config": {"artifact_sha256": f"{index % 16:x}" * 64},
         }
     ]
     for index, category in enumerate(
-        (
-            "maintenance",
-            "care",
-            "audit",
-            "diagnosis",
-            "registry-reconciliation",
-            "queue-reconciliation",
-            "error-investigation",
-        ),
+        (spec.category for spec in FALLBACK_CATALOG),
         start=1,
     )
 }
@@ -295,88 +287,78 @@ def test_feasible_fallback_selection_is_bounded_and_pairwise_compatible(
     assert result["status"] == "refill-proposed"
     assert result["feasibility"]["floor_reachable"] is True
     assert result["metrics"]["joint_claimable_count"] == 7
-    assert result["metrics"]["projected_joint_claimable_count"] == 10
+    assert result["metrics"]["projected_joint_claimable_count"] == 11
     actions = result["publication_plan"]["actions"]
     assert [item["category"] for item in actions] == [
-        "maintenance",
-        "care",
-        "registry-reconciliation",
+        "scout-commonworld",
+        "scout-schauwerk",
+        "scout-chronik",
+        "scout-lenskit",
     ]
     assert len(actions) <= result["policy"]["max_new_per_cycle"]
-    assert any(
-        "pairwise-resource-conflict" in blocker
-        for proposal in result["proposals"]
-        for blocker in proposal["blockers"]
-    )
+    assert len({action["task"]["claims"][0]["resource"] for action in actions}) == len(actions)
+    assert all(action["task"]["claims"][0]["mode"] == "read" for action in actions)
 
 
-def test_historical_base_worker_profile_reports_floor_structurally_unreachable(
+def test_base_worker_profile_reaches_floor_through_bounded_read_only_scout_reserve(
     tmp_path: Path,
 ) -> None:
     registry = Registry.load(Path(__file__).parents[1])
-    repository = tmp_path.resolve()
     normal_ids = [f"REAL-T{index:03d}" for index in range(1, 5)]
     documents = {task_id: normal_document(task_id) for task_id in normal_ids}
     frontier = [frontier_item(task_id) for task_id in normal_ids]
-    existing = {
-        "care": ("FB-CARE", ["missing capabilities: documentation"]),
-        "audit": ("FB-AUDIT", ["missing capabilities: audit"]),
-        "registry-reconciliation": (
-            "FB-REGISTRY",
-            ["repo write blocked by open PR: open-pr:heimgewebe/bureau#2010"],
-        ),
-        "queue-reconciliation": ("FB-QUEUE", []),
-    }
-    for category, (task_id, reasons) in existing.items():
-        documents[task_id] = fallback_document(
-            category=category, repository=repository, task_id=task_id
-        )
-        frontier.append(frontier_item(task_id, reasons=reasons))
+
     result = report(
         tmp_path,
         frontier,
         task_documents=documents,
-        repository=repository,
         mutation_authority=True,
-        worker_profile=capability_profile(
-            missing=("audit", "documentation")
-        ),
+        approval_available=False,
+        worker_profile=capability_profile(missing=("audit", "documentation")),
         feasibility_required=True,
         resource_definitions=registry.resources,
     )
-    assert result["metrics"]["total_claimable_count"] == 5
-    assert result["metrics"]["joint_claimable_count"] == 5
-    assert result["metrics"]["structural_capacity_upper_bound"] == 6
-    assert result["feasibility"]["structural_additional_capacity"] == 1
-    assert result["feasibility"]["floor_reachable"] is False
-    assert STRUCTURAL_UNREACHABLE_BLOCKER in result["blockers"]
-    assert result["status"] == "blocked"
-    assert result["publication_plan"]["actions"] == []
-    assert result["feasibility"]["catalog_capability_blockers"] == {
-        "audit": ["missing-worker-capabilities:audit"],
-        "care": ["missing-worker-capabilities:documentation"],
-    }
-    registry_proposal = next(
-        proposal
-        for proposal in result["proposals"]
-        if proposal["category"] == "registry-reconciliation"
-    )
-    assert any("#2010" in blocker for blocker in registry_proposal["blockers"])
 
-    supply_path = tmp_path / "historical-supply.json"
-    supply_path.write_text(json.dumps(result), encoding="utf-8")
-    frontier_report = build_frontier_report(
-        empty_source_state(),
-        task_supply_report_path=supply_path,
-        generated_at=NOW,
-    )
-    assert any(
-        item["kind"] == "claimable_task_supply_unreachable"
-        for item in frontier_report["bottlenecks"]
-    )
-    assert frontier_report["next_action"].startswith(
-        "treat the supply floor as currently unreachable"
-    )
+    assert result["metrics"]["joint_claimable_count"] == 4
+    assert result["feasibility"]["structural_additional_capacity"] >= 4
+    assert result["feasibility"]["structural_capacity_upper_bound"] >= 8
+    assert result["feasibility"]["floor_reachable"] is True
+    assert STRUCTURAL_UNREACHABLE_BLOCKER not in result["blockers"]
+    assert result["status"] == "refill-proposed"
+
+    actions = result["publication_plan"]["actions"]
+    assert [action["category"] for action in actions] == [
+        "scout-commonworld",
+        "scout-schauwerk",
+        "scout-chronik",
+        "scout-lenskit",
+    ]
+    assert len(actions) == result["policy"]["max_new_per_cycle"]
+    repositories = set()
+    for action in actions:
+        task = action["task"]
+        assert task["execution"]["policy"] == "autonomous"
+        assert "approval" not in task["execution"]
+        assert task["claims"] == [
+            {
+                "resource": next(
+                    spec.claim_resource
+                    for spec in FALLBACK_CATALOG
+                    if spec.category == action["category"]
+                ),
+                "mode": "read",
+                "isolation": "none",
+            }
+        ]
+        repositories.add(task["execution"]["working_repository"])
+    assert len(repositories) == len(actions)
+
+    blocked_writes = {
+        proposal["category"]: proposal["blockers"]
+        for proposal in result["proposals"]
+        if proposal["category"] in {"maintenance", "registry-reconciliation"}
+    }
+    assert all("operator-approval-unavailable" in blockers for blockers in blocked_writes.values())
 
 
 def test_policy_requires_real_floor_and_hysteresis() -> None:
@@ -484,11 +466,7 @@ def test_default_fallback_acceptance_is_typed_and_publishable(tmp_path: Path) ->
     assert result["publication_plan"]["status"] == "authorized"
     assert result["publication_plan"]["actions"]
     contracts = default_fallback_acceptance_contracts()
-    assert set(contracts) == {spec["category"] for spec in result["proposals"]} | {
-        "registry-reconciliation",
-        "queue-reconciliation",
-        "error-investigation",
-    }
+    assert set(contracts) == {spec.category for spec in FALLBACK_CATALOG}
     for proposal in result["proposals"]:
         assert proposal["blockers"] == []
         criteria = proposal["task"]["acceptance"]
@@ -888,7 +866,6 @@ def test_all_catalog_candidates_blocked_makes_report_blocked(tmp_path: Path) -> 
             "audit",
             "diagnosis",
             "registry-reconciliation",
-            "queue-reconciliation",
             "error-investigation",
         )
     }
@@ -1021,7 +998,6 @@ def test_registry_preview_defaults_runtime_unhealthy_and_is_read_only(
     assert result["status"] == "blocked"
     assert result["runtime_healthy"] is False
     assert result["blockers"] == [
-        STRUCTURAL_UNREACHABLE_BLOCKER,
         "frontier-queue-sha256-unbound",
         "frontier-registry-head-unbound",
         "frontier-snapshot-sha256-unbound",
@@ -1029,7 +1005,8 @@ def test_registry_preview_defaults_runtime_unhealthy_and_is_read_only(
         "required-runtime-unhealthy",
         "worker-capability-profile-unbound",
     ]
-    assert result["feasibility"]["floor_reachable"] is False
+    assert result["feasibility"]["floor_reachable"] is True
+    assert result["feasibility"]["structural_capacity_upper_bound"] >= 8
     assert registry_snapshot(root) == before
 
 
@@ -1054,8 +1031,8 @@ def test_registry_preview_requires_explicit_runtime_and_authority_for_plan(
     assert result["status"] == "blocked"
     assert result["publication_plan"]["status"] == "preview-only"
     assert result["feasibility"]["worker_profile"]["bound"] is False
-    assert result["feasibility"]["floor_reachable"] is False
-    assert STRUCTURAL_UNREACHABLE_BLOCKER in result["blockers"]
+    assert result["feasibility"]["floor_reachable"] is True
+    assert STRUCTURAL_UNREACHABLE_BLOCKER not in result["blockers"]
     assert "worker-capability-profile-unbound" in result["blockers"]
     assert registry_snapshot(root) == before
 

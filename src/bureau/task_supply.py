@@ -9,7 +9,6 @@ import tempfile
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -66,9 +65,11 @@ class FallbackSpec:
     claim_mode: str
     scope_path: str
     acceptance: tuple[str, ...]
+    repository_resource: str | None = None
+    execution_policy: str = "review-before-effect"
 
 
-FALLBACK_CATALOG: tuple[FallbackSpec, ...] = (
+_BASE_FALLBACK_CATALOG: tuple[FallbackSpec, ...] = (
     FallbackSpec(
         category="maintenance",
         title="Perform one bounded Bureau maintenance repair",
@@ -155,23 +156,6 @@ FALLBACK_CATALOG: tuple[FallbackSpec, ...] = (
         ),
     ),
     FallbackSpec(
-        category="queue-reconciliation",
-        title="Reconcile one Bureau queue drift",
-        goal=(
-            "Remove or add exactly one queue entry whose current task truth proves the "
-            "existing queue projection stale."
-        ),
-        capabilities=("repository", "python", "bureau", "grabowski"),
-        claim_resource="component.bureau.registry",
-        claim_mode="write",
-        scope_path="registry/queue.json",
-        acceptance=(
-            "Task state, implementation status, and queue position are freshly read back.",
-            "The patch changes only the proven stale queue projection.",
-            "Queue and Registry validation pass without broad automatic admission.",
-        ),
-    ),
-    FallbackSpec(
         category="error-investigation",
         title="Investigate one reproducible Bureau error",
         goal=(
@@ -188,6 +172,57 @@ FALLBACK_CATALOG: tuple[FallbackSpec, ...] = (
             "A regression test fails before the repair and passes afterwards when applicable.",
         ),
     ),
+)
+
+
+_SCOUT_REPOSITORIES: tuple[tuple[str, str], ...] = (
+    ("commonworld", "repo.commonworld"),
+    ("schauwerk", "repo.schauwerk"),
+    ("chronik", "repo.chronik"),
+    ("lenskit", "repo.lenskit"),
+    ("systemkatalog", "repo.systemkatalog"),
+    ("heimlern", "repo.heimlern"),
+    ("semantah", "repo.semantah"),
+    ("wgx", "repo.wgx"),
+    ("aussensensor", "repo.aussensensor"),
+    ("steuerboard", "repo.steuerboard"),
+    ("plexer", "repo.plexer"),
+    ("mitschreiber", "repo.mitschreiber"),
+)
+
+
+def _read_only_scout_spec(name: str, resource: str) -> FallbackSpec:
+    return FallbackSpec(
+        category=f"scout-{name}",
+        title=f"Scout one bounded {name} maintenance opportunity",
+        goal=(
+            f"Read the current {name} repository at an exact revision and return one "
+            "evidence-bound actionable maintenance finding or a no-change proof. Do not "
+            "mutate the repository from this task."
+        ),
+        capabilities=("repository", "bureau", "grabowski"),
+        claim_resource=resource,
+        claim_mode="read",
+        scope_path=".",
+        acceptance=(
+            "The inspected repository and exact revision are recorded before analysis.",
+            "The scout performs no repository, runtime, queue, or StateStore mutation.",
+            (
+                "The outcome is one bounded actionable finding with evidence or a "
+                "reproducible no-change proof."
+            ),
+        ),
+        repository_resource=resource,
+        execution_policy="autonomous",
+    )
+
+
+READ_ONLY_SCOUT_CATALOG: tuple[FallbackSpec, ...] = tuple(
+    _read_only_scout_spec(name, resource) for name, resource in _SCOUT_REPOSITORIES
+)
+FALLBACK_CATALOG: tuple[FallbackSpec, ...] = (
+    *_BASE_FALLBACK_CATALOG,
+    *READ_ONLY_SCOUT_CATALOG,
 )
 
 
@@ -403,6 +438,21 @@ def _catalog_capability_blockers(
     return blockers
 
 
+def _catalog_approval_blockers(
+    spec: FallbackSpec,
+    *,
+    approval_available: bool,
+    feasibility_required: bool,
+) -> list[str]:
+    if (
+        feasibility_required
+        and spec.execution_policy == "review-before-effect"
+        and not approval_available
+    ):
+        return ["operator-approval-unavailable"]
+    return []
+
+
 def _structural_capability_possible(
     spec: FallbackSpec, worker_profile: Mapping[str, Any] | None
 ) -> bool:
@@ -426,20 +476,42 @@ def _structural_capability_possible(
 def _max_packable_catalog_count(
     specs: Sequence[FallbackSpec],
     resources: Mapping[str, legacy.Resource],
+    *,
+    held_claim_sets: Sequence[Sequence[legacy.Claim]] = (),
 ) -> int:
+    """Return the exact maximum additional pairwise-compatible catalog capacity.
+
+    Branch-and-bound keeps the calculation exact without the combinatorial full
+    powerset walk that becomes expensive once the bounded ecosystem scout reserve
+    is present. Existing jointly claimable work is treated as already held.
+    """
+    candidates: list[tuple[legacy.Claim, ...]] = []
+    for spec in specs:
+        claims = (legacy.Claim(spec.claim_resource, spec.claim_mode),)
+        if any(
+            _claims_conflict(claims, held, resources) is not None
+            for held in held_claim_sets
+        ):
+            continue
+        candidates.append(claims)
+
     best = 0
-    for size in range(1, len(specs) + 1):
-        for subset in combinations(specs, size):
-            claims = [
-                (legacy.Claim(spec.claim_resource, spec.claim_mode),)
-                for spec in subset
-            ]
-            if all(
-                _claims_conflict(claims[left], claims[right], resources) is None
-                for left in range(len(claims))
-                for right in range(left + 1, len(claims))
-            ):
-                best = max(best, size)
+
+    def visit(index: int, selected: list[tuple[legacy.Claim, ...]]) -> None:
+        nonlocal best
+        if len(selected) + len(candidates) - index <= best:
+            return
+        if index >= len(candidates):
+            best = max(best, len(selected))
+            return
+        claims = candidates[index]
+        if all(_claims_conflict(claims, held, resources) is None for held in selected):
+            selected.append(claims)
+            visit(index + 1, selected)
+            selected.pop()
+        visit(index + 1, selected)
+
+    visit(0, [])
     return best
 
 
@@ -526,6 +598,34 @@ def _existing_fallbacks(
     return result
 
 
+def _fallback_repository(
+    spec: FallbackSpec,
+    default_repository: Path,
+    resources: Mapping[str, legacy.Resource],
+) -> Path | None:
+    if spec.repository_resource is None:
+        return default_repository
+    resource = resources.get(spec.repository_resource)
+    path = resource.path if resource is not None else None
+    if not isinstance(path, str) or not path:
+        return None
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute():
+        return None
+    return candidate.resolve(strict=False)
+
+
+def _fallback_repository_blockers(
+    spec: FallbackSpec,
+    default_repository: Path,
+    resources: Mapping[str, legacy.Resource],
+) -> list[str]:
+    if _fallback_repository(spec, default_repository, resources) is not None:
+        return []
+    resource = spec.repository_resource or "default"
+    return [f"fallback-repository-resource-unavailable:{resource}"]
+
+
 def _catalog_open_key(spec: FallbackSpec, repository: str, initiative_id: str) -> str:
     return sha256_json(
         {
@@ -567,7 +667,22 @@ def _fallback_task(
     rank: int,
     acceptance: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    exact_scope = repository / spec.scope_path
+    exact_scope = (repository / spec.scope_path).resolve(strict=False)
+    execution: dict[str, Any] = {
+        "mode": "interactive-agent",
+        "policy": spec.execution_policy,
+        "working_repository": str(repository),
+        "grabowski_resources": [f"path:{exact_scope}"],
+    }
+    if spec.claim_mode in {"write", "exclusive"}:
+        execution["approval"] = {
+            "action_class": "repository_mutation",
+            "required_level": "operator",
+            "note": (
+                "Bounded supply fallback. Re-read live state, preserve foreign work, and "
+                "stop when the stated scope or evidence no longer matches."
+            ),
+        }
     return {
         "schema_version": 1,
         "id": task_id,
@@ -578,20 +693,7 @@ def _fallback_task(
         "depends_on": [],
         "required_capabilities": list(spec.capabilities),
         "priority": {"lane": "later", "rank": rank},
-        "execution": {
-            "mode": "interactive-agent",
-            "policy": "review-before-effect",
-            "working_repository": str(repository),
-            "approval": {
-                "action_class": "repository_mutation",
-                "required_level": "operator",
-                "note": (
-                    "Bounded supply fallback. Re-read live state, preserve foreign work, and "
-                    "stop when the stated scope or evidence no longer matches."
-                ),
-            },
-            "grabowski_resources": [f"path:{exact_scope}"],
-        },
+        "execution": execution,
         "claims": [
             {
                 "resource": spec.claim_resource,
@@ -608,9 +710,10 @@ def _fallback_task(
                 "open_key": open_key,
                 "time_bucket": bucket,
                 "scope_path": spec.scope_path,
+                "repository_resource": spec.repository_resource,
                 "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
                 "does_not_establish": [
-                    "claimability before canonical Registry publication",
+                    "claimability before canonical StateStore publication",
                     "permission to bypass current leases or open-PR guards",
                     "merge or deployment authority",
                 ],
@@ -694,6 +797,7 @@ def build_supply_report(
     fallback_count = len(classification["fallback_claimable"])
     total_claimable = normal_count + fallback_count
     resources = dict(resource_definitions or {})
+    catalog = FALLBACK_CATALOG if feasibility_required else _BASE_FALLBACK_CATALOG
     if feasibility_required and resources:
         joint_task_ids, joint_claim_sets, joint_excluded = _jointly_packable_claimable(
             classification, documents, resources
@@ -719,7 +823,7 @@ def build_supply_report(
     shortage = (
         max(0, policy.refill_target - joint_claimable_count) if refill_triggered else 0
     )
-    proposal_limit = min(shortage, policy.max_new_per_cycle, len(FALLBACK_CATALOG))
+    proposal_limit = min(shortage, policy.max_new_per_cycle, len(catalog))
     bucket = time_bucket(now, policy.bucket_hours)
     global_blockers = sorted(
         {
@@ -736,11 +840,23 @@ def build_supply_report(
         if not resources:
             global_blockers.append("resource-conflict-model-unbound")
     category_blocks = catalog_blockers or {}
+    fallback_repositories = {
+        spec.category: _fallback_repository(spec, repository_path, resources)
+        for spec in catalog
+    }
     category_feasibility = {
-        spec.category: _catalog_capability_blockers(
-            spec, worker_profile, feasibility_required=feasibility_required
-        )
-        for spec in FALLBACK_CATALOG
+        spec.category: [
+            *_catalog_capability_blockers(
+                spec, worker_profile, feasibility_required=feasibility_required
+            ),
+            *_fallback_repository_blockers(spec, repository_path, resources),
+            *_catalog_approval_blockers(
+                spec,
+                approval_available=approval_available,
+                feasibility_required=feasibility_required,
+            ),
+        ]
+        for spec in catalog
     }
     explicit_acceptance = (
         default_fallback_acceptance_contracts()
@@ -765,28 +881,40 @@ def build_supply_report(
     )
     structural_catalog: list[FallbackSpec] = []
     if feasibility_required and resources:
-        for spec in FALLBACK_CATALOG:
-            open_key = _catalog_open_key(spec, str(repository_path), initiative_id)
+        for spec in catalog:
+            target_repository = fallback_repositories[spec.category]
+            open_key = _catalog_open_key(
+                spec, str(target_repository or repository_path), initiative_id
+            )
             explicit_category_blockers = [
                 blocker
                 for blocker in category_blocks.get(spec.category, ())
                 if isinstance(blocker, str) and blocker
             ]
             if (
-                open_key not in existing
+                target_repository is not None
+                and open_key not in existing
                 and _structural_capability_possible(spec, worker_profile)
+                and not _fallback_repository_blockers(spec, repository_path, resources)
+                and not _catalog_approval_blockers(
+                    spec,
+                    approval_available=approval_available,
+                    feasibility_required=feasibility_required,
+                )
                 and not explicit_category_blockers
             ):
                 structural_catalog.append(spec)
     structural_additional_capacity = (
-        _max_packable_catalog_count(structural_catalog, resources)
+        _max_packable_catalog_count(
+            structural_catalog, resources, held_claim_sets=joint_claim_sets
+        )
         if feasibility_required and resources
-        else len(FALLBACK_CATALOG)
+        else len(catalog)
     )
     structural_capacity_upper_bound = (
-        total_claimable + structural_additional_capacity
+        joint_claimable_count + structural_additional_capacity
         if feasibility_required
-        else total_claimable + len(FALLBACK_CATALOG)
+        else total_claimable + len(catalog)
     )
     floor_reachable = (
         structural_capacity_upper_bound >= policy.floor
@@ -799,10 +927,13 @@ def build_supply_report(
     proposals: list[dict[str, Any]] = []
     created_count = 0
     planned_claim_sets: list[tuple[legacy.Claim, ...]] = []
-    for index, spec in enumerate(FALLBACK_CATALOG):
+    for index, spec in enumerate(catalog):
         if created_count >= proposal_limit:
             break
-        open_key = _catalog_open_key(spec, str(repository_path), initiative_id)
+        target_repository = fallback_repositories[spec.category]
+        open_key = _catalog_open_key(
+            spec, str(target_repository or repository_path), initiative_id
+        )
         fingerprint = _catalog_fingerprint(open_key, bucket)
         blockers = (
             set(global_blockers)
@@ -855,12 +986,14 @@ def build_supply_report(
             typed_criteria, (str, bytes)
         ) or not typed_criteria:
             blockers.add("acceptance-contract-unresolved")
+        elif target_repository is None:
+            blockers.update(category_feasibility[spec.category])
         else:
             task = _fallback_task(
                 task_id=task_id,
                 initiative_id=initiative_id,
                 spec=spec,
-                repository=repository_path,
+                repository=target_repository,
                 fingerprint=fingerprint,
                 open_key=open_key,
                 bucket=bucket,

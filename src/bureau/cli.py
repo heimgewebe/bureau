@@ -186,6 +186,8 @@ def parser() -> argparse.ArgumentParser:
     state_restore_test.add_argument("--receipt", type=Path)
     source_pr_bridge = sub.add_parser("source-pr-bridge")
     source_pr_bridge.add_argument("bridge_args", nargs=argparse.REMAINDER)
+    task_supply_run = sub.add_parser("task-supply-run")
+    task_supply_run.add_argument("task_supply_args", nargs=argparse.REMAINDER)
     sub.add_parser("status")
     doctor = sub.add_parser("doctor")
     doctor_mode = doctor.add_mutually_exclusive_group()
@@ -706,9 +708,17 @@ def _parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
             command_index += 1
             continue
         break
-    if command_index < len(raw) and raw[command_index] == "source-pr-bridge":
+    if command_index < len(raw) and raw[command_index] in {
+        "source-pr-bridge",
+        "task-supply-run",
+    }:
+        command = raw[command_index]
         args = parser().parse_args(raw[: command_index + 1])
-        args.bridge_args = raw[command_index + 1 :]
+        forwarded = raw[command_index + 1 :]
+        if command == "source-pr-bridge":
+            args.bridge_args = forwarded
+        else:
+            args.task_supply_args = forwarded
         return args
     if (
         command_index < len(raw)
@@ -862,6 +872,39 @@ def main(argv: list[str] | None = None) -> int:
             from .source_pr_bridge import main as run_source_pr_bridge
 
             return run_source_pr_bridge(args.bridge_args)
+        if args.command == "task-supply-run":
+            module_value = _CLI_RUNTIME_IDENTITY.get("module")
+            manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")
+            registry_value = _CLI_RUNTIME_IDENTITY.get("registry")
+            module_identity = module_value if isinstance(module_value, dict) else {}
+            manifest_identity = manifest_value if isinstance(manifest_value, dict) else {}
+            registry_identity = registry_value if isinstance(registry_value, dict) else {}
+            canonical_value = manifest_identity.get("canonical_registry")
+            canonical_registry = canonical_value if isinstance(canonical_value, dict) else {}
+            if (
+                module_identity.get("source_kind") != "immutable-release"
+                or manifest_identity.get("valid") is not True
+                or canonical_registry.get("valid") is not True
+                or _CLI_RUNTIME_IDENTITY.get("registry_selection")
+                != "canonical-runtime-default"
+                or registry_identity.get("root") != canonical_registry.get("root")
+                or str(root) != canonical_registry.get("root")
+            ):
+                emit(
+                    {
+                        "schema_version": 1,
+                        "status": "immutable-runtime-required",
+                        "reason_codes": ["task-supply-outside-manifest-release"],
+                        "does_not_establish": ["task_supply_execution", "safe_retry"],
+                    },
+                    args.json,
+                )
+                return 2
+            from .supply_runner import main as run_supply_runner
+
+            return run_supply_runner(
+                [*args.task_supply_args, "--registry-root", str(root)]
+            )
         if args.command == "cycle-run":
             module_value = _CLI_RUNTIME_IDENTITY.get("module")
             manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")

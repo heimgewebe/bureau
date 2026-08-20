@@ -101,6 +101,10 @@ def test_command_effect_scope_is_explicit_and_fails_closed() -> None:
         == "coordination_state_mutation"
     )
     assert (
+        effect_scope.classify_command_effect_scope("orphan-resume", mutates=True)
+        == "coordination_state_mutation"
+    )
+    assert (
         effect_scope.classify_command_effect_scope("future-command", mutates=True)
         == "registry_mutation"
     )
@@ -110,6 +114,25 @@ def test_command_effect_scope_is_explicit_and_fails_closed() -> None:
     assert bureau_cli._command_effect_scope(assess) == "read_only"
     assert bureau_cli._command_mutates(apply) is True
     assert bureau_cli._command_effect_scope(apply) == "coordination_state_mutation"
+    digest = "a" * 64
+    orphan_resume = bureau_cli.parser().parse_args(
+        [
+            "orphan-resume",
+            "BUR-RUN-test",
+            "--worker",
+            "worker",
+            "--expected-updated-at",
+            "2026-08-20T00:00:00Z",
+            "--expected-task-sha256",
+            digest,
+            "--expected-plan-sha256",
+            digest,
+            "--expected-envelope-sha256",
+            digest,
+        ]
+    )
+    assert bureau_cli._command_mutates(orphan_resume) is True
+    assert bureau_cli._command_effect_scope(orphan_resume) == "coordination_state_mutation"
     unknown = SimpleNamespace(command="future-command")
     assert bureau_cli._command_mutates(unknown) is True
     assert bureau_cli._command_effect_scope(unknown) == "registry_mutation"

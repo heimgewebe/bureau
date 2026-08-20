@@ -55,6 +55,16 @@ The historical v1 contract already forbids implicit merge, cleanup, task verific
 
 Any exception requires a separate initiative or task with explicit acceptance criteria, source ownership and revalidation rules.
 
+## Narrow orphan recovery
+
+`orphaned` remains terminal by default. `orphan-resume` is an explicit recovery operation only for a coordinated interactive run that Bureau's own reconciliation marked `orphaned` with `stale worker without external executor` while no external executor was bound. It does not make generic failed, cancelled or orphaned runs resumable.
+
+The operation is compare-and-swap bound to the exact current run snapshot: worker, `updated_at`, task digest, plan digest and envelope digest must still match. The original coordinated claim envelope must be intact, the current TaskSpec and initiative plan must be unchanged, no run reservation may remain, the worker may own no other active run, and an already-created workspace must still have the recorded path and branch. Normal current eligibility, dependency, open-PR conflict and resource-scope checks run again before any state write.
+
+A resource-owning run must never become active before its external exclusive protection exists. The original owner-bound Grabowski lease therefore has to be live first and must validate against the original task, run and claim-intent metadata. Only after that validation may Bureau restore the same run from `orphaned` to `assigned`, recreate its declared reservations and append `run-orphan-resumed`.
+
+The recovery preserves run ID, worker, attempt, envelope and workspace identity. It grants no task completion, merge, deployment, foreign-lease or generic terminal-state recovery authority.
+
 ## Plan freshness rule
 
 A run freezes both `task_sha256` and `plan_sha256`. Changing task or plan material after verification can stale existing receipts and block dependants. Plan pinning is therefore not harmless metadata; it is a freshness event and must be handled under the strategy task `BUR-2026-005-T008` before any pinning mutation is introduced.

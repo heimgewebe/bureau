@@ -423,6 +423,13 @@ def parser() -> argparse.ArgumentParser:
     heartbeat = sub.add_parser("heartbeat")
     heartbeat.add_argument("run_id")
     heartbeat.add_argument("--worker")
+    orphan_resume = sub.add_parser("orphan-resume")
+    orphan_resume.add_argument("run_id")
+    orphan_resume.add_argument("--worker", required=True)
+    orphan_resume.add_argument("--expected-updated-at", required=True)
+    orphan_resume.add_argument("--expected-task-sha256", required=True)
+    orphan_resume.add_argument("--expected-plan-sha256", required=True)
+    orphan_resume.add_argument("--expected-envelope-sha256", required=True)
     expand = sub.add_parser("claim-expand")
     expand.add_argument("run_id")
     expand.add_argument("--resource", required=True)
@@ -1693,6 +1700,16 @@ def main(argv: list[str] | None = None) -> int:
             value = store.bind(args.run_id, args.system, args.external_id)
         elif args.command == "heartbeat":
             value = store.heartbeat(args.run_id, args.worker)
+        elif args.command == "orphan-resume":
+            value = dispatcher.resume_orphaned_run(
+                args.run_id,
+                worker_id=args.worker,
+                expected_updated_at=args.expected_updated_at,
+                expected_task_sha256=args.expected_task_sha256,
+                expected_plan_sha256=args.expected_plan_sha256,
+                expected_envelope_sha256=args.expected_envelope_sha256,
+                resource_db=DEFAULT_GRABOWSKI_RESOURCE_DB,
+            )
         elif args.command == "claim-expand":
             value = dispatcher.expand_claim(
                 args.run_id,

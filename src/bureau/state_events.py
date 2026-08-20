@@ -39,6 +39,7 @@ OPERATIONAL_EVENT_TYPES = frozenset(
         "run-failed",
         "run-heartbeat",
         "run-orphaned",
+        "run-orphan-resumed",
         "workspace-created",
         "workspace-preserved",
         "workspace-removed",

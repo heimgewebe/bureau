@@ -150,3 +150,37 @@ def test_task_supply_state_binding_maps_global_state_db(tmp_path: Path) -> None:
         "--bureau-state-db",
         str(state_db.resolve()),
     ]
+
+
+def test_task_supply_state_binding_maps_both_global_state_paths(tmp_path: Path) -> None:
+    state_root = tmp_path / "custom-state"
+    state_db = state_root / "bureau.sqlite3"
+    args = argparse.Namespace(
+        task_supply_args=["--publish"],
+        state_db=str(state_db),
+        state_root=str(state_root),
+    )
+
+    assert cli._task_supply_args_with_state_binding(args) == [
+        "--publish",
+        "--bureau-state-db",
+        str(state_db.resolve()),
+        "--bureau-state-root",
+        str(state_root.resolve()),
+    ]
+
+
+def test_task_supply_state_binding_preserves_abbreviated_runner_override(
+    tmp_path: Path,
+) -> None:
+    explicit_root = tmp_path / "explicit"
+    args = argparse.Namespace(
+        task_supply_args=[f"--bureau-state-r={explicit_root}", "--publish"],
+        state_db=None,
+        state_root=str(tmp_path / "global-state"),
+    )
+
+    assert cli._task_supply_args_with_state_binding(args) == [
+        f"--bureau-state-r={explicit_root}",
+        "--publish",
+    ]

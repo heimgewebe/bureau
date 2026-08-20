@@ -696,21 +696,19 @@ def _canonical_coordination_state_binding(
 
 def _task_supply_args_with_state_binding(args: argparse.Namespace) -> list[str]:
     forwarded = list(args.task_supply_args)
-    state_options = ("--bureau-state-db", "--bureau-state-root")
-    if any(
-        value == option or value.startswith(f"{option}=")
-        for value in forwarded
-        for option in state_options
-    ):
+    if any(value.startswith("--bureau-state") for value in forwarded):
         return forwarded
+    bound = list(forwarded)
     if args.state_db:
         state_db = Path(args.state_db).expanduser().resolve()
-        return [*forwarded, "--bureau-state-db", str(state_db)]
+        bound.extend(("--bureau-state-db", str(state_db)))
     if args.state_root:
         state_root = Path(args.state_root).expanduser().resolve()
-    else:
-        state_root = _state_path(args).expanduser().resolve().parent
-    return [*forwarded, "--bureau-state-root", str(state_root)]
+        bound.extend(("--bureau-state-root", str(state_root)))
+    if args.state_db or args.state_root:
+        return bound
+    state_root = _state_path(args).expanduser().resolve().parent
+    return [*bound, "--bureau-state-root", str(state_root)]
 
 
 def _parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:

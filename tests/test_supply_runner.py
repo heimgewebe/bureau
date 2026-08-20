@@ -13,6 +13,7 @@ from bureau.supply_runner import (
     FrontierObservation,
     _canonical_runtime_registry_head,
     _runtime_bound_registry_head,
+    _runtime_bound_state_store_paths,
     default_state_root,
     observe_authoritative_frontier,
     report_path,
@@ -366,6 +367,41 @@ def test_runtime_bound_registry_head_preserves_git_checkout_path(
     )
 
     assert _runtime_bound_registry_head(root) is None
+
+def test_runtime_bound_state_store_uses_configured_default_for_canonical_snapshot(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    state_root = tmp_path / "bureau-state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
+
+    state_db, bound_root = _runtime_bound_state_store_paths(
+        registry_head=HEAD,
+        state_db=None,
+        state_store_root=None,
+    )
+
+    assert state_db is None
+    assert bound_root == state_root.resolve()
+
+
+def test_runtime_bound_state_store_preserves_explicit_paths(tmp_path: Path) -> None:
+    state_root = tmp_path / "explicit-state"
+    state_db = state_root / "custom.sqlite3"
+
+    assert _runtime_bound_state_store_paths(
+        registry_head=HEAD,
+        state_db=state_db,
+        state_store_root=state_root,
+    ) == (state_db, state_root)
+
+
+def test_runtime_bound_state_store_keeps_source_checkout_fail_closed() -> None:
+    assert _runtime_bound_state_store_paths(
+        registry_head=None,
+        state_db=None,
+        state_store_root=None,
+    ) == (None, None)
+
 
 def test_runner_report_path_matches_the_agent_frontier_default(
     monkeypatch: pytest.MonkeyPatch,

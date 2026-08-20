@@ -1,4 +1,3 @@
-import argparse
 from pathlib import Path
 
 from bureau import cli, runtime_identity, runtime_refresh, supply_runner
@@ -90,8 +89,6 @@ def test_task_supply_cli_delegates_to_runner_with_canonical_registry(
         return 0
 
     monkeypatch.setattr(supply_runner, "main", fake_supply_main)
-    state_root = tmp_path / "bureau-state"
-    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
 
     result = cli.main(
         [
@@ -106,81 +103,12 @@ def test_task_supply_cli_delegates_to_runner_with_canonical_registry(
     )
 
     assert result == 0
-    assert observed["argv"][-4:] == [
-        "--bureau-state-root",
-        str(state_root.resolve()),
-        "--registry-root",
-        str(canonical_root),
-    ]
-    assert observed["argv"][:-4] == [
+    assert observed["argv"][-2:] == ["--registry-root", str(canonical_root)]
+    assert observed["argv"][:-2] == [
         "--capability",
         "bureau",
         "--mutation-authority",
         "--publish",
         "--registry-root",
         "/tmp/caller-must-not-win",
-    ]
-
-
-def test_task_supply_state_binding_preserves_runner_override(tmp_path: Path) -> None:
-    explicit_db = tmp_path / "explicit" / "bureau.sqlite3"
-    args = argparse.Namespace(
-        task_supply_args=["--bureau-state-db", str(explicit_db), "--publish"],
-        state_db=None,
-        state_root=str(tmp_path / "global-state"),
-    )
-
-    assert cli._task_supply_args_with_state_binding(args) == [
-        "--bureau-state-db",
-        str(explicit_db),
-        "--publish",
-    ]
-
-
-def test_task_supply_state_binding_maps_global_state_db(tmp_path: Path) -> None:
-    state_db = tmp_path / "custom-state" / "bureau.sqlite3"
-    args = argparse.Namespace(
-        task_supply_args=["--publish"],
-        state_db=str(state_db),
-        state_root=None,
-    )
-
-    assert cli._task_supply_args_with_state_binding(args) == [
-        "--publish",
-        "--bureau-state-db",
-        str(state_db.resolve()),
-    ]
-
-
-def test_task_supply_state_binding_maps_both_global_state_paths(tmp_path: Path) -> None:
-    state_root = tmp_path / "custom-state"
-    state_db = state_root / "bureau.sqlite3"
-    args = argparse.Namespace(
-        task_supply_args=["--publish"],
-        state_db=str(state_db),
-        state_root=str(state_root),
-    )
-
-    assert cli._task_supply_args_with_state_binding(args) == [
-        "--publish",
-        "--bureau-state-db",
-        str(state_db.resolve()),
-        "--bureau-state-root",
-        str(state_root.resolve()),
-    ]
-
-
-def test_task_supply_state_binding_preserves_abbreviated_runner_override(
-    tmp_path: Path,
-) -> None:
-    explicit_root = tmp_path / "explicit"
-    args = argparse.Namespace(
-        task_supply_args=[f"--bureau-state-r={explicit_root}", "--publish"],
-        state_db=None,
-        state_root=str(tmp_path / "global-state"),
-    )
-
-    assert cli._task_supply_args_with_state_binding(args) == [
-        f"--bureau-state-r={explicit_root}",
-        "--publish",
     ]

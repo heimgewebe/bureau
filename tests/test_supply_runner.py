@@ -11,6 +11,8 @@ from bureau.agent_frontier import default_task_supply_report, load_task_supply_s
 from bureau.core import Dispatcher
 from bureau.supply_runner import (
     FrontierObservation,
+    _canonical_runtime_registry_head,
+    _runtime_bound_registry_head,
     default_state_root,
     observe_authoritative_frontier,
     report_path,
@@ -304,6 +306,66 @@ def test_written_report_is_consumable_by_the_agent_frontier(tmp_path: Path) -> N
     assert consumed["metrics"]["total_claimable_count"] == 0
     assert consumed["metrics"]["floor"] == 8
 
+
+def canonical_runtime_identity(root: Path, *, head: str = HEAD) -> dict[str, object]:
+    resolved = str(root.resolve())
+    return {
+        "compatibility": {"status": "canonical-read-only"},
+        "manifest": {
+            "valid": True,
+            "source_commit": head,
+            "canonical_registry": {
+                "valid": True,
+                "root": resolved,
+                "source_commit": head,
+            },
+        },
+        "registry": {
+            "root": resolved,
+            "head": head,
+            "role": "canonical-runtime-snapshot",
+        },
+    }
+
+
+def test_runtime_bound_registry_head_uses_verified_canonical_snapshot(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "canonical-snapshot"
+    root.mkdir()
+    monkeypatch.setattr(
+        "bureau.supply_runner.bureau_runtime_identity",
+        lambda observed: canonical_runtime_identity(observed),
+    )
+
+    assert _runtime_bound_registry_head(root) == HEAD
+
+
+def test_canonical_runtime_registry_head_rejects_identity_mismatch(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "canonical-snapshot"
+    root.mkdir()
+    identity = canonical_runtime_identity(root)
+    identity["registry"]["head"] = "e" * 40  # type: ignore[index]
+    monkeypatch.setattr("bureau.supply_runner.bureau_runtime_identity", lambda _root: identity)
+
+    with pytest.raises(SupplyError, match="cannot bind task-supply revision"):
+        _canonical_runtime_registry_head(root)
+
+
+def test_runtime_bound_registry_head_preserves_git_checkout_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "checkout"
+    root.mkdir()
+    (root / ".git").write_text("gitdir: elsewhere\n", encoding="utf-8")
+    monkeypatch.setattr(
+        "bureau.supply_runner.bureau_runtime_identity",
+        lambda _root: pytest.fail("Git checkouts must not require runtime identity"),
+    )
+
+    assert _runtime_bound_registry_head(root) is None
 
 def test_runner_report_path_matches_the_agent_frontier_default(
     monkeypatch: pytest.MonkeyPatch,

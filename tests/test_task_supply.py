@@ -1411,6 +1411,11 @@ def test_supply_runner_receipt_persists_publication_binding(
         "cycle_id",
         lambda: "2026-08-17T12",
     )
+    monkeypatch.setattr(
+        supply_runner_module,
+        "_runtime_bound_registry_head",
+        lambda _root: HEAD,
+    )
     state_root = tmp_path / "supply-state"
     result = supply_runner_module.main(
         [

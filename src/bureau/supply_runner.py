@@ -173,6 +173,26 @@ def _runtime_bound_registry_head(registry_root: Path) -> str | None:
     return _canonical_runtime_registry_head(resolved_root)
 
 
+def _runtime_bound_state_store_paths(
+    *,
+    registry_head: str | None,
+    state_db: Path | None,
+    state_store_root: Path | None,
+) -> tuple[Path | None, Path | None]:
+    """Materialize the canonical StateStore only for a verified runtime snapshot."""
+    if state_db is not None or state_store_root is not None:
+        return state_db, state_store_root
+    if registry_head is None:
+        return None, None
+    configured = os.environ.get("BUREAU_STATE_DIR")
+    root = (
+        Path(configured).expanduser().resolve()
+        if configured
+        else (Path.home() / ".local/state/bureau").resolve()
+    )
+    return None, root
+
+
 def _write_snapshot(
     path: Path,
     observation: FrontierObservation,
@@ -1111,14 +1131,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     summary: dict[str, Any] | None = None
     try:
         registry_root = Path(args.registry_root).expanduser()
+        registry_head = _runtime_bound_registry_head(registry_root)
+        state_db = Path(args.bureau_state_db).expanduser() if args.bureau_state_db else None
+        state_store_root = (
+            Path(args.bureau_state_root).expanduser() if args.bureau_state_root else None
+        )
+        state_db, state_store_root = _runtime_bound_state_store_paths(
+            registry_head=registry_head,
+            state_db=state_db,
+            state_store_root=state_store_root,
+        )
         summary = run_supply_cycle(
             registry_root=registry_root,
             capabilities=args.capability,
             state_root=selected_root,
-            state_db=Path(args.bureau_state_db).expanduser() if args.bureau_state_db else None,
-            state_store_root=(
-                Path(args.bureau_state_root).expanduser() if args.bureau_state_root else None
-            ),
+            state_db=state_db,
+            state_store_root=state_store_root,
             policy=SupplyPolicy(
                 floor=args.floor,
                 refill_target=args.refill_target,
@@ -1129,7 +1157,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             mutation_authority=args.mutation_authority,
             publish=args.publish,
             environment_blockers=tuple(args.environment_blocker),
-            registry_head=_runtime_bound_registry_head(registry_root),
+            registry_head=registry_head,
         )
         result = _cycle_result(summary)
         degraded = result in {"blocked", "failed"}

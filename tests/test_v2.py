@@ -4255,6 +4255,69 @@ def test_orphan_resume_rejects_stale_run_snapshot_before_effect(
     assert unchanged["reservations"] == []
 
 
+def test_orphan_resume_reloads_authoritative_task_spec_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, _intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    store.import_registry_task_specs(dispatcher.source_registry)
+    current = store.task_spec(orphaned["task_id"])
+    assert current is not None
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["priority"]["rank"] += 1
+    store.put_task_spec(
+        revised,
+        idempotency_key="test-orphan-resume-task-revision",
+        expected_revision=current["revision"],
+        source="test orphan resume task revision",
+    )
+
+    with pytest.raises(StateError, match="orphan resume current TaskSpec differs from run"):
+        dispatcher.resume_orphaned_run(
+            orphaned["run_id"],
+            worker_id=orphaned["worker_id"],
+            expected_updated_at=orphaned["updated_at"],
+            expected_task_sha256=orphaned["task_sha256"],
+            expected_plan_sha256=orphaned["plan_sha256"],
+            expected_envelope_sha256=orphaned["envelope_sha256"],
+            resource_db=database,
+        )
+    unchanged = store.run(orphaned["run_id"])
+    assert unchanged["state"] == "orphaned"
+    assert unchanged["reservations"] == []
+
+
+def test_orphan_resume_honors_runtime_drift_gate_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, _intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    dispatcher.enforce_runtime_gate = True
+    monkeypatch.setattr(
+        dispatcher,
+        "_runtime_execution_truth",
+        lambda: {"execution_blocked": True, "status": "blocked-for-test"},
+    )
+
+    result = dispatcher.resume_orphaned_run(
+        orphaned["run_id"],
+        worker_id=orphaned["worker_id"],
+        expected_updated_at=orphaned["updated_at"],
+        expected_task_sha256=orphaned["task_sha256"],
+        expected_plan_sha256=orphaned["plan_sha256"],
+        expected_envelope_sha256=orphaned["envelope_sha256"],
+        resource_db=database,
+    )
+
+    assert result["status"] == "runtime-drift-blocked"
+    assert result["command"] == "orphan-resume"
+    unchanged = store.run(orphaned["run_id"])
+    assert unchanged["state"] == "orphaned"
+    assert unchanged["reservations"] == []
+
+
 def test_coordinated_claim_intent_records_issuance_and_requires_approval(
     registry_factory, tmp_path, monkeypatch
 ):

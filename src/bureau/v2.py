@@ -5624,6 +5624,13 @@ class Dispatcher(legacy.Dispatcher):
         if not expected_updated_at:
             raise legacy.StateError("orphan resume expected_updated_at is required")
 
+        runtime_truth = self._runtime_execution_truth()
+        runtime_stop = self._runtime_execution_stop(
+            command="orphan-resume", runtime_truth=runtime_truth
+        )
+        if runtime_stop is not None:
+            return runtime_stop
+
         fresh_open_pr_reservations = self._open_pr_reservations(strict=True)
         normalized_lease: dict[str, Any] | None = None
         with self.store.immediate() as connection:
@@ -5695,13 +5702,14 @@ class Dispatcher(legacy.Dispatcher):
             ):
                 raise legacy.StateError("orphan resume claim intent identity mismatch")
 
-            task = self.registry.tasks.get(row["task_id"])
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_registry, _, _ = _authoritative_task_registry_from_connection(
+                fresh_source_registry, connection
+            )
+            task = fresh_registry.tasks.get(row["task_id"])
             if task is None or task.sha256 != row["task_sha256"]:
                 raise legacy.StateError("orphan resume current TaskSpec differs from run")
-            fresh_source_registry = Registry.load(self.source_registry.root)
-            fresh_initiative_registry, _ = _state_store_initiative_registry(
-                fresh_source_registry, self.store, connection=connection
-            )
+            fresh_initiative_registry = fresh_registry
             current_plan_sha = plan_sha256(fresh_initiative_registry, task.initiative)
             if current_plan_sha != row["plan_sha256"]:
                 raise legacy.StateError("orphan resume current plan differs from run")

@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T086-REPOSKOP-CLOSEOUT-20260820",
+  "title": "Single-Use Bureau-Runtime-Refresh für T086 Reposkop-Closeout",
+  "state": "ready",
+  "goal": "Genau einen neuen, revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, damit die installierte Bureau-Runtime die bereits kanonische Resource component.grabowski.reposkop-effectiveness und alle legitimen nachfolgenden Main-Merges kennt, bevor OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086 revisionsgebunden verengt und abgeschlossen wird. Diese Authority erteilt ausschließlich den Runtime-Effekt und keine T086-Implementierungs-, Queue-, Claim-, Dispatch- oder Fremdarbeitsautorität.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound Runtime-Konvergenz ausschließlich für den T086 Governance-Closeout. Die aktuelle explizite Nutzeranweisung autorisiert die vorgesehene Ausführung; vor Wirkung bleiben alle Bootstrap-, Main-, CI-, Intent-, Lease- und Readback-Gates bindend."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-current-main",
+      "assertion": "Unmittelbar vor dem neuen Intent wird GitHub-main frisch beobachtet. Das Refresh-Ziel enthält den geschützten Merge dieser Authority, PR #2113 mit component.grabowski.reposkop-effectiveness sowie alle bis dahin legitimen Main-Merges; Required Checks für den exakten Zielstand sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t086-reposkop-runtime-refresh:fresh-main"
+      }
+    },
+    {
+      "id": "single-runtime-effect",
+      "assertion": "Diese Authority autorisiert höchstens einen neuen Runtime-Effekt. Bei failed, unclear, timeout oder Transport-Ambiguität erfolgt kein Blind-Retry; zuerst werden Result, Attempt, Manifest, Registry-Snapshot, Launcher und Runtime readback-klassifiziert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t086-reposkop-runtime-refresh:single-effect"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach erfolgreichem Refresh binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; bureau runtime-identity ist integrity-valid und der Registry-Snapshot enthält component.grabowski.reposkop-effectiveness.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t086-reposkop-runtime-refresh:immutable-readback"
+      }
+    },
+    {
+      "id": "runtime-only-scope",
+      "assertion": "Die Authority erteilt keine T086-Implementierungswirkung, keine Queue-, Claim-, Dispatch-, Supply-, Fremdarbeits- oder allgemeine Repository-Autorität. Nach eindeutig erfolgreichem Runtime-Readback wird sie konsumiert und terminal geschlossen und nie wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t086-reposkop-runtime-refresh:scope-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Der letzte integrity-valid installierte Bureau-Runtime-Stand fd84456de8965130e60f78735b14f5dabd03774a bleibt bis zu einem eindeutigen neuen Install- und Readback-Receipt die Deployment-Wahrheit. Bei unklarem Ergebnis wird nicht blind wiederholt; vorhandene Attempt-, Backup-, Manifest-, Registry- und Lease-Evidenz wird zuerst klassifiziert."
+  },
+  "metadata": {
+    "source": "Candidate 8792 / candidate-8cb1a80ac2b5118531b8be4c: single-use Bureau runtime convergence required before OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086 revision-2 scope closeout. The originally motivating resource landed via Bureau PR #2113; later legitimate main changes do not widen this authority beyond one target-bound runtime effect.",
+    "candidate_event_id": 8792,
+    "candidate_id": "candidate-8cb1a80ac2b5118531b8be4c",
+    "t086_task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086",
+    "main_at_registration": "8bc481f2cd50ba0c8415f712b1da9b9c63dfb25e",
+    "deployed_source_at_registration": "fd84456de8965130e60f78735b14f5dabd03774a",
+    "does_not_establish": [
+      "runtime target before fresh post-merge observation",
+      "permission to reuse any consumed runtime authority",
+      "permission to bypass stale-runtime or bootstrap gates",
+      "queue, claim, dispatch or supply-task publication authority",
+      "T086 implementation authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one runtime-refresh Authority TaskSpec",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed Bureau runtime is intentionally stale relative to current main and cannot normally publish a newer registry-root authority. The authority must therefore enter through one protected TaskSpec file and be adopted missing-only after merge.",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ]
+    }
+  }
+}

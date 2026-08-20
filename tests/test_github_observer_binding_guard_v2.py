@@ -8,6 +8,8 @@ from bureau.github_observer import (
     BINDING_UNMATCHED,
     observe_pull_requests,
 )
+from bureau.legacy import Registry
+from bureau.v2 import StateStore
 
 
 def pull_request(
@@ -179,3 +181,35 @@ def test_schema_visible_exception_suppresses_multi_task_binding_blocker(
     assert observation["binding_exception"]["reason"] == "explicit cross-task closeout"
     assert result["binding_healthy"] is True
     assert result["hard_findings"] == []
+
+
+def test_state_store_only_task_binding_is_valid(
+    tmp_path: Path, registry_factory
+) -> None:
+    root = registry_factory(task_count=1)
+    registry_value = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    base = dict(registry_value.tasks["BUR-TEST-001-T001"].raw)
+    base["id"] = "BUR-TEST-001-T999"
+    base["title"] = "StateStore-only observer binding"
+    base["state"] = "ready"
+    store.put_task_spec(
+        base,
+        idempotency_key="state-only-observer-binding",
+        expected_revision=None,
+        source="test",
+    )
+
+    result = observe_pull_requests(
+        root,
+        repository="heimgewebe/bureau",
+        pull_requests=[pull_request(body="Bureau-Task: BUR-TEST-001-T999")],
+        state_db=store.path,
+        registry=registry_value,
+    )
+
+    assert result["healthy"] is True
+    assert result["binding_healthy"] is True
+    assert result["hard_findings"] == []
+    assert result["pull_requests"][0]["task_id"] == "BUR-TEST-001-T999"
+    assert "task-authority:bureau-state-store-task-specs" in result["notes"]

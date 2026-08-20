@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2124-TASK-SUPPLY-SNAPSHOT-IDENTITY-20260820",
+  "title": "Single-Use Bureau-Runtime-Refresh nach PR #2124",
+  "state": "ready",
+  "goal": "Genau einen neuen, revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, damit die installierte immutable Bureau-Runtime den in PR #2124 gemergten Task-Supply-Fix für canonical Registry-Snapshots enthält. Die Authority erteilt ausschließlich diesen einen target-bound Runtime-Effekt und keine Queue-, Claim-, Dispatch-, Supply-Publikations- oder Fremdarbeitsautorität.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound Runtime-Konvergenz ausschließlich nach dem geschützten Merge von PR #2124. Die aktuelle explizite Nutzeranweisung '@grabowski umsetzen' autorisiert die vorgesehene Ausführung; vor Wirkung bleiben frischer Main, exact-target Controller, CI, Intent, zielabgeleitete Ressourcen/Leases und immutable Readback bindend."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-current-main",
+      "assertion": "Unmittelbar vor dem neuen Intent wird GitHub-main frisch beobachtet. Das Refresh-Ziel enthält den geschützten Merge von PR #2124 und den geschützten Merge dieser Authority sowie alle bis dahin legitimen Main-Merges; Required Checks für den exakten Zielstand sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2124-task-supply-runtime-refresh:fresh-main"
+      }
+    },
+    {
+      "id": "target-controller-binding",
+      "assertion": "prepare-intent und apply werden mit Controller-Code aus dem exakten frisch beobachteten Ziel-main ausgeführt. Die vom Ziel-Controller berechnete Runtime- und Launcher-Mutationsmenge wird vollständig an den Intent und an exakt passende Live-Leases gebunden; fehlende, fremde, abgelaufene oder driftende Ressourcen brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2124-task-supply-runtime-refresh:target-controller"
+      }
+    },
+    {
+      "id": "single-runtime-effect",
+      "assertion": "Diese Authority autorisiert höchstens einen neuen Runtime-Effekt. Keine historische oder konsumierte Runtime-Authority und kein historischer Target-/Intent-/Result-Digest wird wiederverwendet. Bei failed, unclear, timeout oder Transport-Ambiguität erfolgt kein Blind-Retry; zuerst werden Attempt, Result, Manifest, Registry-Snapshot, Launcher und Runtime readback-klassifiziert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2124-task-supply-runtime-refresh:single-effect"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach erfolgreichem Refresh binden Deployment-Manifest, immutable Release, Paketbaum, kanonischer Registry-Snapshot und stabile Launcher denselben source commit; bureau runtime-identity und bureau check sind integrity-valid, StateStore-Integrität ist ok, und der installierte Supply-Runner enthält den PR-#2124-Fix.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2124-task-supply-runtime-refresh:immutable-readback"
+      }
+    },
+    {
+      "id": "runtime-only-scope",
+      "assertion": "Die Authority erteilt keine Queue-, Claim-, Dispatch-, Task-Supply-Publikations-, allgemeine Repository-, PC- oder Fremdarbeitsautorität. Nach eindeutig erfolgreichem Runtime-Readback wird sie konsumiert und terminal geschlossen und nie wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2124-task-supply-runtime-refresh:scope-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Der letzte integrity-valid installierte Bureau-Runtime-Stand 9b86f508afff79a9d97456d7220a4339ae936a02 bleibt bis zu einem eindeutigen neuen Install- und Readback-Receipt die Deployment-Wahrheit. Bei unklarem Ergebnis wird nicht blind wiederholt; vorhandene Attempt-, Backup-, Manifest-, Registry-, Launcher- und Lease-Evidenz wird zuerst klassifiziert."
+  },
+  "metadata": {
+    "source": "Post-merge runtime convergence for Bureau PR #2124, which fixes task-supply revision identity under the canonical immutable Registry snapshot.",
+    "candidate_event_id": "candidate-event-473d90695712a12f1a0e9675",
+    "candidate_event_numeric_id": 9059,
+    "candidate_id": "candidate-82c8c4376dd91fbbd369ee66",
+    "source_pull_request": 2124,
+    "source_pull_request_head": "516eceba1a0978e85d219cc5c201d24a05954d49",
+    "source_merge_commit": "119be1c7ec621a5312bc2449de646b07f80c1691",
+    "source_merged_at": "2026-08-20T08:21:38Z",
+    "main_at_registration": "119be1c7ec621a5312bc2449de646b07f80c1691",
+    "deployed_source_at_registration": "9b86f508afff79a9d97456d7220a4339ae936a02",
+    "does_not_establish": [
+      "runtime target before fresh post-authority-merge observation",
+      "permission to reuse any consumed runtime authority",
+      "permission to bypass stale-runtime or bootstrap gates",
+      "queue, claim, dispatch or supply-task publication authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one runtime-refresh Authority TaskSpec",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed immutable Bureau runtime is intentionally behind the merged task-supply fix. A fresh single-use authority must enter through one protected TaskSpec and be adopted missing-only after merge.",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ]
+    }
+  }
+}

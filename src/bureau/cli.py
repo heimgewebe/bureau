@@ -694,6 +694,25 @@ def _canonical_coordination_state_binding(
 
 
 
+def _task_supply_args_with_state_binding(args: argparse.Namespace) -> list[str]:
+    forwarded = list(args.task_supply_args)
+    state_options = ("--bureau-state-db", "--bureau-state-root")
+    if any(
+        value == option or value.startswith(f"{option}=")
+        for value in forwarded
+        for option in state_options
+    ):
+        return forwarded
+    if args.state_db:
+        state_db = Path(args.state_db).expanduser().resolve()
+        return [*forwarded, "--bureau-state-db", str(state_db)]
+    if args.state_root:
+        state_root = Path(args.state_root).expanduser().resolve()
+    else:
+        state_root = _state_path(args).expanduser().resolve().parent
+    return [*forwarded, "--bureau-state-root", str(state_root)]
+
+
 def _parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     raw = list(sys.argv[1:] if argv is None else argv)
     value_options = {"--root", "--state-db", "--state-root", "--grabowski-source"}
@@ -905,8 +924,9 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             from .supply_runner import main as run_supply_runner
 
+            task_supply_args = _task_supply_args_with_state_binding(args)
             return run_supply_runner(
-                [*args.task_supply_args, "--registry-root", str(root)]
+                [*task_supply_args, "--registry-root", str(root)]
             )
         if args.command == "cycle-run":
             module_value = _CLI_RUNTIME_IDENTITY.get("module")

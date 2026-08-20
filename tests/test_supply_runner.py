@@ -310,7 +310,6 @@ def test_written_report_is_consumable_by_the_agent_frontier(tmp_path: Path) -> N
 def canonical_runtime_identity(root: Path, *, head: str = HEAD) -> dict[str, object]:
     resolved = str(root.resolve())
     return {
-        "registry_selection": "canonical-runtime-default",
         "compatibility": {"status": "canonical-read-only"},
         "manifest": {
             "valid": True,

@@ -150,8 +150,7 @@ def _canonical_runtime_registry_head(registry_root: Path) -> str:
     except (OSError, TypeError, ValueError) as exc:
         raise SupplyError("canonical runtime Registry identity is invalid") from exc
     if (
-        identity.get("registry_selection") != "canonical-runtime-default"
-        or compatibility.get("status") != "canonical-read-only"
+        compatibility.get("status") != "canonical-read-only"
         or manifest.get("valid") is not True
         or canonical.get("valid") is not True
         or registry.get("role") != "canonical-runtime-snapshot"

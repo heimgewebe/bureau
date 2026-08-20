@@ -34,6 +34,7 @@ from .cycle_contract import (
     validate_receipt,
 )
 from .read_only_state import ReadOnlyStateStore
+from .runtime_identity import bureau_runtime_identity
 from .task_specs import task_spec_digest
 from .task_supply import (
     SupplyError,
@@ -132,6 +133,45 @@ def observe_authoritative_frontier(
         task_spec_root_sha256=task_spec_root_sha256,
         task_documents_sha256=task_documents_sha256,
     )
+
+
+def _canonical_runtime_registry_head(registry_root: Path) -> str:
+    """Bind a non-Git canonical Registry snapshot to its verified runtime commit."""
+    resolved_root = registry_root.expanduser().resolve()
+    identity = bureau_runtime_identity(resolved_root)
+    manifest = identity.get("manifest", {})
+    canonical = manifest.get("canonical_registry", {})
+    registry = identity.get("registry", {})
+    compatibility = identity.get("compatibility", {})
+    source_commit = canonical.get("source_commit")
+    try:
+        canonical_root = Path(str(canonical.get("root", ""))).expanduser().resolve()
+        registry_root_identity = Path(str(registry.get("root", ""))).expanduser().resolve()
+    except (OSError, TypeError, ValueError) as exc:
+        raise SupplyError("canonical runtime Registry identity is invalid") from exc
+    if (
+        identity.get("registry_selection") != "canonical-runtime-default"
+        or compatibility.get("status") != "canonical-read-only"
+        or manifest.get("valid") is not True
+        or canonical.get("valid") is not True
+        or registry.get("role") != "canonical-runtime-snapshot"
+        or canonical_root != resolved_root
+        or registry_root_identity != resolved_root
+        or not isinstance(source_commit, str)
+        or GIT_HEAD_RE.fullmatch(source_commit) is None
+        or manifest.get("source_commit") != source_commit
+        or registry.get("head") != source_commit
+    ):
+        raise SupplyError("canonical runtime Registry identity cannot bind task-supply revision")
+    return source_commit
+
+
+def _runtime_bound_registry_head(registry_root: Path) -> str | None:
+    """Use Git for source checkouts and runtime identity for immutable snapshots."""
+    resolved_root = registry_root.expanduser().resolve()
+    if (resolved_root / ".git").exists():
+        return None
+    return _canonical_runtime_registry_head(resolved_root)
 
 
 def _write_snapshot(
@@ -1071,8 +1111,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     evidence: list[dict[str, Any]] = []
     summary: dict[str, Any] | None = None
     try:
+        registry_root = Path(args.registry_root).expanduser()
         summary = run_supply_cycle(
-            registry_root=Path(args.registry_root).expanduser(),
+            registry_root=registry_root,
             capabilities=args.capability,
             state_root=selected_root,
             state_db=Path(args.bureau_state_db).expanduser() if args.bureau_state_db else None,
@@ -1089,6 +1130,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             mutation_authority=args.mutation_authority,
             publish=args.publish,
             environment_blockers=tuple(args.environment_blocker),
+            registry_head=_runtime_bound_registry_head(registry_root),
         )
         result = _cycle_result(summary)
         degraded = result in {"blocked", "failed"}

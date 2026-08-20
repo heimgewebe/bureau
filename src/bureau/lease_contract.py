@@ -203,6 +203,14 @@ _READ_COMMANDS: dict[str, dict[str, Any]] = {
             "nonclaims": ["repo_exists", "task_exists", "registry_binding_valid"],
         },
     },
+    "operator-candidate-contract": {
+        "availability_class": "checkout_independent_read",
+        "git_repository_lease_required": False,
+        "registry_catalog_required": False,
+        "state_store_required": False,
+        "effect": "none",
+        "conflict_scope": "none",
+    },
     "operator-candidate-record": {
         "availability_class": "always_on_operational_append",
         "git_repository_lease_required": False,

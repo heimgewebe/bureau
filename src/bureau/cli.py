@@ -61,6 +61,7 @@ from .operator_intake import (
     OperatorIntakeError,
     candidate_assess,
     candidate_record_request,
+    candidate_record_request_contract,
     promote_task_ready,
     publication_preview,
     publish_task_proposal,
@@ -338,6 +339,7 @@ def parser() -> argparse.ArgumentParser:
     live_export.add_argument("--limit", type=int, default=100)
     live_retention = sub.add_parser("live-retention")
     live_retention.add_argument("--limit", type=int, default=500)
+    sub.add_parser("operator-candidate-contract")
     candidate_record_parser = sub.add_parser("operator-candidate-record")
     candidate_record_parser.add_argument("--request", required=True)
     candidate_assess_parser = sub.add_parser("operator-candidate-assess")
@@ -612,6 +614,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "live-list",
         "live-retention",
         "operator-candidate-assess",
+        "operator-candidate-contract",
         "repo-balls",
         "repo-scan",
         "resource-lifecycle-contract",
@@ -1093,6 +1096,9 @@ def main(argv: list[str] | None = None) -> int:
             except ValueError as exc:
                 raise StateError(str(exc)) from exc
             emit(value, args.json)
+            return 0
+        if args.command == "operator-candidate-contract":
+            emit(candidate_record_request_contract(), args.json)
             return 0
         if args.command == "lease-contract":
             try:

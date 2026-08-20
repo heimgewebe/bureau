@@ -91,6 +91,40 @@ _CANDIDATE_RECORD_REQUEST_FIELDS = frozenset(
         "catalog_validation",
     }
 )
+_CANDIDATE_RECORD_REQUEST_REQUIRED_FIELDS = frozenset(
+    {
+        "schema_version",
+        "idempotency_key",
+        "title",
+        "source_kind",
+        "desired_outcome",
+    }
+)
+
+
+def candidate_record_request_contract() -> dict[str, Any]:
+    """Return the canonical read-only transport contract for candidate recording."""
+    allowed_fields = sorted(_CANDIDATE_RECORD_REQUEST_FIELDS)
+    required_fields = sorted(_CANDIDATE_RECORD_REQUEST_REQUIRED_FIELDS)
+    optional_fields = sorted(
+        _CANDIDATE_RECORD_REQUEST_FIELDS - _CANDIDATE_RECORD_REQUEST_REQUIRED_FIELDS
+    )
+    return {
+        "schema_version": 1,
+        "kind": "bureau_candidate_record_request_contract",
+        "request_schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+        "allowed_fields": allowed_fields,
+        "required_fields": required_fields,
+        "optional_fields": optional_fields,
+        "defaults": {"catalog_validation": "strict"},
+        "does_not_establish": [
+            "candidate_validity",
+            "catalog_binding_validity",
+            "candidate_recording",
+            "claim_authority",
+            "dispatch_authority",
+        ],
+    }
 
 
 def _github_repository_slug(remote: str) -> str:
@@ -683,24 +717,26 @@ def candidate_record_request(
     request: dict[str, Any],
 ) -> dict[str, Any]:
     """Validate the versioned JSON transport request before domain dispatch."""
+    contract = candidate_record_request_contract()
+    expected_schema_version = contract["request_schema_version"]
     received_schema_version = request.get("schema_version")
-    if received_schema_version != OPERATOR_INTAKE_SCHEMA_VERSION:
+    if received_schema_version != expected_schema_version:
         raise OperatorIntakeError(
             "request-schema-unsupported",
-            f"candidate request schema_version must be {OPERATOR_INTAKE_SCHEMA_VERSION}",
+            f"candidate request schema_version must be {expected_schema_version}",
             details={
-                "expected_schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+                "expected_schema_version": expected_schema_version,
                 "received_schema_version": received_schema_version,
             },
         )
-    unknown = sorted(set(request) - _CANDIDATE_RECORD_REQUEST_FIELDS)
+    unknown = sorted(set(request) - set(contract["allowed_fields"]))
     if unknown:
         raise OperatorIntakeError(
             "request-fields-unknown",
             "candidate request contains unknown fields",
             details={
                 "unknown_fields": unknown,
-                "allowed_fields": sorted(_CANDIDATE_RECORD_REQUEST_FIELDS),
+                "allowed_fields": contract["allowed_fields"],
             },
         )
     payload = {key: value for key, value in request.items() if key != "schema_version"}

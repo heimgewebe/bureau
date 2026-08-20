@@ -39,6 +39,14 @@ def fsync_directory(path: Path) -> None:
         os.close(descriptor)
 
 
+def _path_lexists(path: Path) -> bool:
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return False
+    return True
+
+
 def atomic_write(path: Path, data: bytes, mode: int = 0o644) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
@@ -468,6 +476,7 @@ def _restore_install_preimage(
     manifest_path: Path,
     launchers: dict[str, Path],
     receipt_path: Path | None,
+    parent_preimage: dict[str, tuple[Path, bool]],
 ) -> list[dict[str, Any]]:
     failures: list[dict[str, Any]] = []
 
@@ -513,6 +522,31 @@ def _restore_install_preimage(
     if receipt_path is not None:
         attempt("receipt", lambda: restore_file(receipt_path, None))
 
+    def remove_created_parent(label: str, path: Path) -> None:
+        try:
+            try:
+                observed = path.lstat()
+            except FileNotFoundError:
+                return
+            if stat.S_ISLNK(observed.st_mode):
+                raise OSError(f"transaction-created parent became a symlink: {path}")
+            if not stat.S_ISDIR(observed.st_mode):
+                raise OSError(f"transaction-created parent has the wrong type: {path}")
+            if any(path.iterdir()):
+                raise OSError(f"transaction-created parent became non-empty: {path}")
+            path.rmdir()
+            fsync_directory(path.parent)
+            if _path_lexists(path):
+                raise OSError(f"transaction-created parent still exists after removal: {path}")
+        except Exception as exc:
+            failures.append(
+                {"operation": ["remove-created-parent", label], "error": repr(exc)}
+            )
+
+    for label, (path, existed) in parent_preimage.items():
+        if not existed:
+            remove_created_parent(label, path)
+
     expected: list[tuple[str, Path, str | None, str | None]] = [
         (
             "manifest",
@@ -550,6 +584,15 @@ def _restore_install_preimage(
             )
     if receipt_path is not None and os.path.lexists(receipt_path):
         failures.append({"operation": ["verify-preimage", "receipt"]})
+    for label, (path, existed) in parent_preimage.items():
+        if not existed:
+            try:
+                if _path_lexists(path):
+                    failures.append({"operation": ["verify-preimage", label]})
+            except Exception as exc:
+                failures.append(
+                    {"operation": ["verify-preimage", label], "error": repr(exc)}
+                )
     return failures
 
 
@@ -703,6 +746,11 @@ def main(argv: list[str] | None = None) -> int:
         label="bureau-status-capsule",
         replace_existing=args.replace_existing,
     )
+    receipts_dir = prefix / "receipts"
+    transaction_parent_preimage = {
+        "bin-dir": (bin_dir, _path_lexists(bin_dir)),
+        "receipts-dir": (receipts_dir, _path_lexists(receipts_dir)),
+    }
     backup = _backup_existing(
         prefix,
         manifest_path,
@@ -877,6 +925,7 @@ def main(argv: list[str] | None = None) -> int:
                 "status-capsule": status_capsule_launcher,
             },
             receipt_path=transaction["receipt_path"],
+            parent_preimage=transaction_parent_preimage,
         )
 
     if args.converge_user_systemd:

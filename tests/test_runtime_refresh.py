@@ -3540,10 +3540,12 @@ def scheduler_installer_approval(
     return path
 
 
+@pytest.mark.parametrize("preexisting_launchers", [False, True])
 def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    preexisting_launchers: bool,
 ) -> None:
     installer = load_installer_module()
     source = clean_installer_source(tmp_path)
@@ -3553,19 +3555,23 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
     manifest_path.parent.mkdir(parents=True)
     manifest_path.write_bytes(b"exact old manifest\n")
     manifest_path.chmod(0o640)
-    bin_dir.mkdir()
     launcher_paths = [
         bin_dir / "bureau",
         bin_dir / "bureau-runtime-refresh",
         bin_dir / "bureau-status-capsule",
     ]
-    for path in launcher_paths:
-        path.write_bytes(f"exact old {path.name}\n".encode())
-        path.chmod(0o700)
+    if preexisting_launchers:
+        bin_dir.mkdir()
+        for path in launcher_paths:
+            path.write_bytes(f"exact old {path.name}\n".encode())
+            path.chmod(0o700)
     install_preimage = {
         path: (path.read_bytes(), path.stat().st_mode & 0o777)
         for path in (manifest_path, *launcher_paths)
+        if path.is_file()
     }
+    assert bin_dir.exists() is preexisting_launchers
+    assert not (prefix / "receipts").exists()
     unit_root = (tmp_path / "transaction-systemd/user").resolve()
     libexec_root = (tmp_path / "transaction-libexec").resolve()
     unit_root.mkdir(parents=True)
@@ -3593,6 +3599,9 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
 
     def fail_receipt_write(path: Path, data: bytes, mode: int = 0o644) -> None:
         if path.parent == prefix / "receipts":
+            real_atomic_write(path, data, mode)
+            assert path.parent.is_dir()
+            assert path.is_file()
             raise OSError("injected durable receipt write failure")
         real_atomic_write(path, data, mode)
 
@@ -3627,12 +3636,55 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
     for path, (content, mode) in install_preimage.items():
         assert path.read_bytes() == content
         assert path.stat().st_mode & 0o777 == mode
+    assert bin_dir.exists() is preexisting_launchers
     assert not (prefix / "receipts").exists()
     assert systemd.states == state_before
     for name in refresh.RUNTIME_SCHEDULER_NAMES:
         assert not (unit_root / f"{name}.service").exists()
         assert not (unit_root / f"{name}.timer").exists()
         assert not (libexec_root / name).exists()
+
+
+@pytest.mark.parametrize(
+    ("parent_state", "expected_error"),
+    [
+        ("non-empty", "became non-empty"),
+        ("symlink", "became a symlink"),
+        ("wrong-type", "has the wrong type"),
+    ],
+)
+def test_installer_rollback_reports_created_parent_drift(
+    tmp_path: Path,
+    parent_state: str,
+    expected_error: str,
+) -> None:
+    installer = load_installer_module()
+    parent = tmp_path / "transaction-created-parent"
+    if parent_state == "non-empty":
+        parent.mkdir()
+        (parent / "foreign").write_text("preserve me\n", encoding="utf-8")
+    elif parent_state == "symlink":
+        target = tmp_path / "foreign-target"
+        target.mkdir()
+        parent.symlink_to(target, target_is_directory=True)
+    else:
+        parent.write_text("foreign type\n", encoding="utf-8")
+
+    failures = installer._restore_install_preimage(
+        backup={"manifest": None},
+        manifest_path=tmp_path / "absent-manifest.json",
+        launchers={},
+        receipt_path=None,
+        parent_preimage={"created-parent": (parent, False)},
+    )
+
+    assert failures[0]["operation"] == ["remove-created-parent", "created-parent"]
+    assert expected_error in failures[0]["error"]
+    assert {tuple(failure["operation"]) for failure in failures} == {
+        ("remove-created-parent", "created-parent"),
+        ("verify-preimage", "created-parent"),
+    }
+    assert installer._path_lexists(parent)
 
 
 def test_installer_wrapper_selects_refresh_entrypoint_and_backs_up_both(

@@ -22,6 +22,7 @@ _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
         "heartbeat",
         "projection-repair",
         "lifecycle-reconcile-apply",
+        "orphan-resume",
         "operator-task-publish",
         "operator-task-ready",
         "receipt-normalize",

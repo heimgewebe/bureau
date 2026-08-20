@@ -75,6 +75,7 @@ COORDINATED_CLAIM_ISSUED_EVENT = "coordinated-claim-intent-issued"
 COORDINATED_CLAIM_ISSUANCE_SCHEMA_VERSION = 2
 COORDINATED_CLAIM_MUTATION_SCHEMA_VERSION = 1
 COORDINATED_CLAIM_IDEMPOTENCY_MAX_LENGTH = 512
+ORPHANED_STALE_WORKER_ERROR = "stale worker without external executor"
 
 
 def _task_from_authoritative_spec(spec: dict[str, Any], digest: str) -> legacy.Task:
@@ -5598,6 +5599,269 @@ class Dispatcher(legacy.Dispatcher):
                     }
         return result
 
+    def resume_orphaned_run(
+        self,
+        run_id: str,
+        *,
+        worker_id: str,
+        expected_updated_at: str,
+        expected_task_sha256: str,
+        expected_plan_sha256: str,
+        expected_envelope_sha256: str,
+        resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
+    ) -> dict[str, Any]:
+        """Resume one automatically orphaned coordinated run without changing identity."""
+        if not run_id or not worker_id:
+            raise legacy.StateError("orphan resume requires run and worker identity")
+        expected_digests = {
+            "task_sha256": expected_task_sha256,
+            "plan_sha256": expected_plan_sha256,
+            "envelope_sha256": expected_envelope_sha256,
+        }
+        for label, digest in expected_digests.items():
+            if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+                raise legacy.StateError(f"orphan resume {label} is invalid")
+        if not expected_updated_at:
+            raise legacy.StateError("orphan resume expected_updated_at is required")
+
+        runtime_truth = self._runtime_execution_truth()
+        runtime_stop = self._runtime_execution_stop(
+            command="orphan-resume", runtime_truth=runtime_truth
+        )
+        if runtime_stop is not None:
+            return runtime_stop
+
+        fresh_open_pr_reservations = self._open_pr_reservations(strict=True)
+        normalized_lease: dict[str, Any] | None = None
+        with self.store.immediate() as connection:
+            row = connection.execute(
+                "SELECT * FROM runs WHERE run_id=?", (run_id,)
+            ).fetchone()
+            if row is None:
+                raise legacy.StateError(f"unknown run {run_id}")
+            exact_fields = {
+                "worker_id": worker_id,
+                "updated_at": expected_updated_at,
+                **expected_digests,
+            }
+            drift = {
+                field: {"expected": expected, "observed": row[field]}
+                for field, expected in exact_fields.items()
+                if row[field] != expected
+            }
+            if drift:
+                raise legacy.StateError(
+                    "orphan resume run snapshot drift: " + legacy.canonical_json(drift)
+                )
+            if row["state"] != "orphaned" or row["error"] != ORPHANED_STALE_WORKER_ERROR:
+                raise legacy.StateError(
+                    "orphan resume is limited to automatically orphaned stale workers"
+                )
+            if any(
+                row[field] is not None
+                for field in (
+                    "external_system",
+                    "external_id",
+                    "external_state",
+                    "external_observed_at",
+                )
+            ):
+                raise legacy.StateError("orphan resume rejects externally bound runs")
+            if connection.execute(
+                "SELECT 1 FROM reservations WHERE run_id=? LIMIT 1", (run_id,)
+            ).fetchone() is not None:
+                raise legacy.StateError("orphan resume requires released run reservations")
+            if connection.execute(
+                "SELECT 1 FROM runs WHERE worker_id=? "
+                "AND state IN ('assigned','running','verifying') LIMIT 1",
+                (worker_id,),
+            ).fetchone() is not None:
+                raise legacy.StateError("orphan resume worker already owns an active run")
+
+            try:
+                envelope = json.loads(row["envelope_json"])
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise legacy.StateError("orphan resume envelope is invalid") from exc
+            if not isinstance(envelope, dict):
+                raise legacy.StateError("orphan resume envelope must be an object")
+            if legacy.sha256_json(envelope) != row["envelope_sha256"]:
+                raise legacy.StateError("orphan resume envelope digest mismatch")
+            self.registry.schemas.validate("execution-envelope", envelope, f"run:{run_id}:resume")
+            for field in ("run_id", "task_id", "worker_id", "task_sha256", "plan_sha256"):
+                if envelope.get(field) != row[field]:
+                    raise legacy.StateError(f"orphan resume envelope {field} mismatch")
+            intent = envelope.get("claim_intent")
+            if not isinstance(intent, dict):
+                raise legacy.StateError("orphan resume requires a coordinated claim intent")
+            if (
+                intent.get("run_id") != run_id
+                or intent.get("worker_id") != worker_id
+                or intent.get("task_id") != row["task_id"]
+                or intent.get("task_sha256") != row["task_sha256"]
+                or intent.get("plan_sha256") != row["plan_sha256"]
+            ):
+                raise legacy.StateError("orphan resume claim intent identity mismatch")
+
+            fresh_source_registry = Registry.load(self.source_registry.root)
+            fresh_registry, _, _ = _authoritative_task_registry_from_connection(
+                fresh_source_registry, connection
+            )
+            task = fresh_registry.tasks.get(row["task_id"])
+            if task is None or task.sha256 != row["task_sha256"]:
+                raise legacy.StateError("orphan resume current TaskSpec differs from run")
+            fresh_initiative_registry = fresh_registry
+            current_plan_sha = plan_sha256(fresh_initiative_registry, task.initiative)
+            if current_plan_sha != row["plan_sha256"]:
+                raise legacy.StateError("orphan resume current plan differs from run")
+
+            workspace = intent.get("workspace")
+            workspace_row = connection.execute(
+                "SELECT * FROM workspaces WHERE run_id=?", (run_id,)
+            ).fetchone()
+            if isinstance(workspace, dict):
+                if row["workspace_path"] is not None or row["workspace_branch"] is not None:
+                    if workspace_row is None:
+                        raise legacy.StateError("orphan resume workspace record is missing")
+                    expected_workspace_record = {
+                        "repository_path": workspace.get("repository"),
+                        "workspace_path": workspace.get("workspace_path"),
+                        "branch": workspace.get("workspace_branch"),
+                        "baseline_commit": workspace.get("baseline_commit"),
+                    }
+                    workspace_drift = {
+                        field: {"expected": expected, "observed": workspace_row[field]}
+                        for field, expected in expected_workspace_record.items()
+                        if workspace_row[field] != expected
+                    }
+                    if workspace_drift:
+                        raise legacy.StateError(
+                            "orphan resume workspace record drift: "
+                            + legacy.canonical_json(workspace_drift)
+                        )
+                    if workspace_row["state"] != "active":
+                        raise legacy.StateError(
+                            "orphan resume requires an active workspace record"
+                        )
+                    if (
+                        row["workspace_path"] != workspace.get("workspace_path")
+                        or row["workspace_branch"] != workspace.get("workspace_branch")
+                    ):
+                        raise legacy.StateError("orphan resume workspace binding drift")
+                    workspace_path = Path(str(workspace["workspace_path"]))
+                    if not workspace_path.is_dir():
+                        raise legacy.StateError("orphan resume workspace is missing")
+                    observed_root = Path(
+                        _git(workspace_path, "rev-parse", "--show-toplevel").stdout.strip()
+                    ).resolve()
+                    if observed_root != workspace_path.resolve():
+                        raise legacy.StateError("orphan resume workspace root changed")
+                    observed_branch = _git(
+                        workspace_path, "branch", "--show-current"
+                    ).stdout.strip()
+                    if observed_branch != workspace.get("workspace_branch"):
+                        raise legacy.StateError("orphan resume workspace branch changed")
+                elif workspace_row is not None:
+                    raise legacy.StateError("orphan resume has unexpected workspace record")
+            elif row["workspace_path"] is not None or row["workspace_branch"] is not None:
+                raise legacy.StateError("orphan resume has unexpected workspace state")
+            elif workspace_row is not None:
+                raise legacy.StateError("orphan resume has unexpected workspace record")
+
+            runs = self.store.active_runs(connection)
+            reservations = self.store.reservations(connection) + fresh_open_pr_reservations
+            overlays = self.store.overlays(connection, self.registry)
+            capabilities = intent.get("capabilities")
+            if not isinstance(capabilities, list) or not all(
+                isinstance(item, str) and item for item in capabilities
+            ):
+                raise legacy.StateError("orphan resume claim capabilities are invalid")
+            reasons = self.reasons(
+                task,
+                set(capabilities),
+                runs,
+                reservations,
+                overlays,
+                initiative_registry=fresh_initiative_registry,
+            )
+            review_reason = f"execution is {task.mode}/{task.policy}"
+            reasons = [reason for reason in reasons if reason != review_reason]
+            if reasons:
+                raise legacy.StateError(
+                    "orphan resume eligibility changed: "
+                    + legacy.canonical_json({"reasons": reasons})
+                )
+
+            open_pr_scope = _task_open_pr_scope_assessment(
+                task, fresh_open_pr_reservations, self.registry, overlays
+            )
+            required_keys = sorted(
+                _coordinated_grabowski_resource_keys(
+                    self.registry.resources, task, open_pr_scope
+                )
+            )
+            if required_keys != intent.get("required_resource_keys"):
+                raise legacy.StateError("orphan resume resource scope changed")
+            if required_keys:
+                try:
+                    normalized_lease = runtime_refresh.validate_live_lease_binding(
+                        intent,
+                        {"owner_id": intent.get("lease_owner_id"), "task_id": task.id},
+                        resource_db=resource_db,
+                        min_remaining_seconds=COORDINATED_CLAIM_MIN_LEASE_SECONDS,
+                        required_metadata={
+                            "task_id": task.id,
+                            "run_id": run_id,
+                            "claim_intent_sha256": intent.get("intent_sha256"),
+                        },
+                    )
+                except runtime_refresh.RuntimeRefreshError as exc:
+                    raise legacy.StateError(
+                        f"orphan resume lease validation failed: {exc.code}"
+                    ) from exc
+
+            now = legacy.utc_now()
+            updated = connection.execute(
+                "UPDATE runs SET state='assigned',error=NULL,heartbeat_at=?,updated_at=? "
+                "WHERE run_id=? AND state='orphaned' AND updated_at=?",
+                (now, now, run_id, expected_updated_at),
+            )
+            if updated.rowcount != 1:
+                raise legacy.StateError("orphan resume CAS failed")
+            for claim in task.claims:
+                connection.execute(
+                    "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+                    "VALUES(?,?,?,?,?)",
+                    (run_id, claim.resource, claim.mode, claim.amount, now),
+                )
+            connection.execute(
+                "UPDATE workers SET heartbeat_at=? WHERE worker_id=?", (now, worker_id)
+            )
+            self.store.event(
+                connection,
+                "run-orphan-resumed",
+                {
+                    "worker_id": worker_id,
+                    "task_sha256": row["task_sha256"],
+                    "plan_sha256": row["plan_sha256"],
+                    "envelope_sha256": row["envelope_sha256"],
+                    "lease_binding_sha256": (
+                        normalized_lease.get("lease_binding_sha256")
+                        if isinstance(normalized_lease, dict)
+                        else None
+                    ),
+                },
+                run_id,
+            )
+
+        resumed = self.store.run(run_id)
+        return {
+            "status": "resumed",
+            "run": resumed,
+            "lease_binding": normalized_lease,
+            "preserved": ["run_id", "worker_id", "attempt", "envelope", "workspace"],
+            "does_not_establish": ["task completion", "merge readiness", "deployment authority"],
+        }
+
     def reconcile(self, stale_after: int = 900) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
         orphaned: list[str] = []
@@ -5623,7 +5887,7 @@ class Dispatcher(legacy.Dispatcher):
                         continue
                     connection.execute(
                         "UPDATE runs SET state='orphaned',error=?,updated_at=? WHERE run_id=?",
-                        ("stale worker without external executor", legacy.utc_now(), row["run_id"]),
+                        (ORPHANED_STALE_WORKER_ERROR, legacy.utc_now(), row["run_id"]),
                     )
                     connection.execute("DELETE FROM reservations WHERE run_id=?", (row["run_id"],))
                     self.store.event(connection, "run-orphaned", {}, row["run_id"])

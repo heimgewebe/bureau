@@ -4119,6 +4119,205 @@ def coordinated_lease_database(
     }, database
 
 
+def orphaned_coordinated_run(
+    registry_factory, tmp_path, monkeypatch, *, materialize_workspace: bool = False
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="test orphan resume",
+    )["intent"]
+    binding, database = coordinated_lease_database(tmp_path / "lease-db", intent)
+    claimed = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    run_id = claimed["run"]["run_id"]
+    if materialize_workspace:
+        bureau_v2.create_workspace(
+            registry,
+            store,
+            run_id,
+            Path(intent["workspace"]["workspace_path"]).parent,
+        )
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET heartbeat_at='2000-01-01T00:00:00Z' WHERE run_id=?",
+            (run_id,),
+        )
+    reconciled = dispatcher.reconcile(stale_after=1)
+    assert reconciled["orphaned"] == [run_id]
+    orphaned = store.run(run_id)
+    assert orphaned["state"] == "orphaned"
+    assert orphaned["error"] == bureau_v2.ORPHANED_STALE_WORKER_ERROR
+    assert orphaned["reservations"] == []
+    return store, dispatcher, intent, database, orphaned
+
+
+def test_orphan_resume_preserves_run_identity_and_requires_live_original_lease(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch, materialize_workspace=True
+    )
+
+    result = dispatcher.resume_orphaned_run(
+        orphaned["run_id"],
+        worker_id=orphaned["worker_id"],
+        expected_updated_at=orphaned["updated_at"],
+        expected_task_sha256=orphaned["task_sha256"],
+        expected_plan_sha256=orphaned["plan_sha256"],
+        expected_envelope_sha256=orphaned["envelope_sha256"],
+        resource_db=database,
+    )
+
+    resumed = result["run"]
+    assert result["status"] == "resumed"
+    assert resumed["state"] == "assigned"
+    assert resumed["error"] is None
+    assert resumed["run_id"] == orphaned["run_id"]
+    assert resumed["worker_id"] == orphaned["worker_id"]
+    assert resumed["attempt"] == orphaned["attempt"]
+    assert resumed["envelope_sha256"] == orphaned["envelope_sha256"]
+    assert resumed["task_sha256"] == orphaned["task_sha256"]
+    assert resumed["plan_sha256"] == orphaned["plan_sha256"]
+    assert sorted(item["resource_id"] for item in resumed["reservations"]) == sorted(
+        claim["resource"] for claim in json.loads(
+            Path(store.envelope_path(resumed["run_id"])).read_text()
+        )["claims"]
+    )
+    status = coordinated_claim_status(store, resumed["run_id"], resource_db=database)
+    assert status["status"] == "coordinated"
+    assert status["blocking"] is False
+    assert status["lease"]["status"] == "active-bound"
+    workspace = bureau_v2.workspace_status(store, resumed["run_id"])
+    assert workspace["state"] == "active"
+    assert workspace["workspace_path"] == resumed["workspace_path"]
+    assert workspace["branch"] == resumed["workspace_branch"]
+    with store.connect() as connection:
+        event_types = [
+            row["event_type"]
+            for row in connection.execute(
+                "SELECT event_type FROM events WHERE run_id=? ORDER BY event_id",
+                (resumed["run_id"],),
+            )
+        ]
+    assert "run-orphan-resumed" in event_types
+    assert intent["run_id"] == resumed["run_id"]
+
+
+def test_orphan_resume_fails_closed_without_live_original_lease(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, _intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    connection = sqlite3.connect(database)
+    connection.execute("DELETE FROM leases")
+    connection.commit()
+    connection.close()
+
+    with pytest.raises(StateError, match="orphan resume lease validation failed"):
+        dispatcher.resume_orphaned_run(
+            orphaned["run_id"],
+            worker_id=orphaned["worker_id"],
+            expected_updated_at=orphaned["updated_at"],
+            expected_task_sha256=orphaned["task_sha256"],
+            expected_plan_sha256=orphaned["plan_sha256"],
+            expected_envelope_sha256=orphaned["envelope_sha256"],
+            resource_db=database,
+        )
+    unchanged = store.run(orphaned["run_id"])
+    assert unchanged["state"] == "orphaned"
+    assert unchanged["reservations"] == []
+
+
+def test_orphan_resume_rejects_stale_run_snapshot_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, _intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    with pytest.raises(StateError, match="orphan resume run snapshot drift"):
+        dispatcher.resume_orphaned_run(
+            orphaned["run_id"],
+            worker_id=orphaned["worker_id"],
+            expected_updated_at="1999-01-01T00:00:00Z",
+            expected_task_sha256=orphaned["task_sha256"],
+            expected_plan_sha256=orphaned["plan_sha256"],
+            expected_envelope_sha256=orphaned["envelope_sha256"],
+            resource_db=database,
+        )
+    unchanged = store.run(orphaned["run_id"])
+    assert unchanged["state"] == "orphaned"
+    assert unchanged["reservations"] == []
+
+
+def test_orphan_resume_reloads_authoritative_task_spec_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, _intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    store.import_registry_task_specs(dispatcher.source_registry)
+    current = store.task_spec(orphaned["task_id"])
+    assert current is not None
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["priority"]["rank"] += 1
+    store.put_task_spec(
+        revised,
+        idempotency_key="test-orphan-resume-task-revision",
+        expected_revision=current["revision"],
+        source="test orphan resume task revision",
+    )
+
+    with pytest.raises(StateError, match="orphan resume current TaskSpec differs from run"):
+        dispatcher.resume_orphaned_run(
+            orphaned["run_id"],
+            worker_id=orphaned["worker_id"],
+            expected_updated_at=orphaned["updated_at"],
+            expected_task_sha256=orphaned["task_sha256"],
+            expected_plan_sha256=orphaned["plan_sha256"],
+            expected_envelope_sha256=orphaned["envelope_sha256"],
+            resource_db=database,
+        )
+    unchanged = store.run(orphaned["run_id"])
+    assert unchanged["state"] == "orphaned"
+    assert unchanged["reservations"] == []
+
+
+def test_orphan_resume_honors_runtime_drift_gate_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, _intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    dispatcher.enforce_runtime_gate = True
+    monkeypatch.setattr(
+        dispatcher,
+        "_runtime_execution_truth",
+        lambda: {"execution_blocked": True, "status": "blocked-for-test"},
+    )
+
+    result = dispatcher.resume_orphaned_run(
+        orphaned["run_id"],
+        worker_id=orphaned["worker_id"],
+        expected_updated_at=orphaned["updated_at"],
+        expected_task_sha256=orphaned["task_sha256"],
+        expected_plan_sha256=orphaned["plan_sha256"],
+        expected_envelope_sha256=orphaned["envelope_sha256"],
+        resource_db=database,
+    )
+
+    assert result["status"] == "runtime-drift-blocked"
+    assert result["command"] == "orphan-resume"
+    unchanged = store.run(orphaned["run_id"])
+    assert unchanged["state"] == "orphaned"
+    assert unchanged["reservations"] == []
+
+
 def test_coordinated_claim_intent_records_issuance_and_requires_approval(
     registry_factory, tmp_path, monkeypatch
 ):

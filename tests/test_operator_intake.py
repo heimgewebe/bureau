@@ -22,6 +22,7 @@ from bureau.operator_intake import (
     candidate_assess,
     candidate_record,
     candidate_record_request,
+    candidate_record_request_contract,
     publication_preview,
     publish_task_proposal,
     review_task_proposal,
@@ -633,6 +634,34 @@ def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
     ]
 
 
+def test_candidate_record_request_contract_is_machine_readable() -> None:
+    contract = candidate_record_request_contract()
+
+    assert contract["schema_version"] == 1
+    assert contract["kind"] == "bureau_candidate_record_request_contract"
+    assert (
+        contract["request_schema_version"]
+        == operator_intake_module.OPERATOR_INTAKE_SCHEMA_VERSION
+    )
+    assert contract["required_fields"] == sorted(
+        {
+            "schema_version",
+            "idempotency_key",
+            "title",
+            "source_kind",
+            "desired_outcome",
+        }
+    )
+    assert set(contract["required_fields"]).isdisjoint(contract["optional_fields"])
+    assert sorted(contract["required_fields"] + contract["optional_fields"]) == contract[
+        "allowed_fields"
+    ]
+    assert contract["allowed_fields"] == sorted(
+        operator_intake_module._CANDIDATE_RECORD_REQUEST_FIELDS
+    )
+    assert contract["defaults"] == {"catalog_validation": "strict"}
+
+
 def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
     store = StateStore(tmp_path / "state.sqlite3")
 
@@ -661,8 +690,32 @@ def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
     assert fields_error.value.retryable is False
     assert fields_error.value.details == {
         "unknown_fields": ["unexpected_a", "unexpected_z"],
-        "allowed_fields": sorted(operator_intake_module._CANDIDATE_RECORD_REQUEST_FIELDS),
+        "allowed_fields": candidate_record_request_contract()["allowed_fields"],
     }
+
+
+def test_candidate_record_request_contract_cli_does_not_load_registry(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    def fail_registry_load(_root):
+        raise AssertionError("operator-candidate-contract must not load the Git registry")
+
+    monkeypatch.setattr(bureau_cli.Registry, "load", fail_registry_load)
+
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(tmp_path / "missing-checkout"),
+            "--json",
+            "operator-candidate-contract",
+        ]
+    )
+
+    assert rc == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["kind"] == "bureau_candidate_record_request_contract"
+    assert result["request_schema_version"] == 1
+    assert "runtime_identity" in result
 
 
 def test_candidate_record_preserves_v1_request_hash_without_refinement(registry_factory, tmp_path):

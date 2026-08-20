@@ -207,6 +207,11 @@ def test_emergency_repo_lease_rejects_missing_expected_boundary() -> None:
 
 def test_operator_intake_read_and_plan_contracts_are_explicit() -> None:
     expected = {
+        "operator-candidate-contract": {
+            "availability_class": "checkout_independent_read",
+            "effect": "none",
+            "state_store_required": False,
+        },
         "operator-candidate-record": {
             "availability_class": "always_on_operational_append",
             "effect": "append_only_state_store_candidate_event",

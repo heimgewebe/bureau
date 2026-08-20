@@ -31,6 +31,14 @@ def canonical(value: Any) -> bytes:
     return f"{rendered}\n".encode()
 
 
+def fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def atomic_write(path: Path, data: bytes, mode: int = 0o644) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
@@ -41,6 +49,7 @@ def atomic_write(path: Path, data: bytes, mode: int = 0o644) -> None:
             os.fsync(handle.fileno())
         os.chmod(temporary, mode)
         os.replace(temporary, path)
+        fsync_directory(path.parent)
     finally:
         with contextlib.suppress(FileNotFoundError):
             os.unlink(temporary)
@@ -270,6 +279,9 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--source", default=".")
     value.add_argument("--prefix", default="~/.local/share/bureau")
     value.add_argument("--bin-dir", default="~/.local/bin")
+    value.add_argument("--user-unit-dir", default="~/.config/systemd/user")
+    value.add_argument("--libexec-dir", default="~/.local/libexec")
+    value.add_argument("--converge-user-systemd", action="store_true")
     value.add_argument("--approval-intent")
     value.add_argument(
         "--runtime-refresh-state-root",
@@ -329,13 +341,18 @@ def _backup_existing(
     launcher: Path,
     runtime_refresh_launcher: Path | None = None,
     status_capsule_launcher: Path | None = None,
+    force_generation: bool = False,
 ) -> dict[str, Any]:
     launchers = [launcher]
     if runtime_refresh_launcher is not None:
         launchers.append(runtime_refresh_launcher)
     if status_capsule_launcher is not None:
         launchers.append(status_capsule_launcher)
-    if not manifest_path.exists() and not any(os.path.lexists(item) for item in launchers):
+    if (
+        not force_generation
+        and not manifest_path.exists()
+        and not any(os.path.lexists(item) for item in launchers)
+    ):
         return {
             "directory": None,
             "manifest": None,
@@ -426,9 +443,114 @@ def _write_launcher_if_needed(
     if not _launcher_needs_write(path, expected):
         return False
     if enforce_allowlist and path not in allowed_paths:
-        raise SystemExit(f"launcher mutation is not covered by runtime-refresh lease: {path}")
+        raise RuntimeError(f"launcher mutation is not covered by runtime-refresh lease: {path}")
     atomic_write(path, expected, 0o755)
     return True
+
+
+def _restore_symlink(path: Path, target: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.parent / f".{path.name}.restore-{os.getpid()}"
+    with contextlib.suppress(FileNotFoundError):
+        temporary.unlink()
+    try:
+        temporary.symlink_to(target)
+        os.replace(temporary, path)
+        fsync_directory(path.parent)
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            temporary.unlink()
+
+
+def _restore_install_preimage(
+    *,
+    backup: dict[str, Any],
+    manifest_path: Path,
+    launchers: dict[str, Path],
+    receipt_path: Path | None,
+) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
+
+    def attempt(label: str, operation: Any) -> None:
+        try:
+            operation()
+        except Exception as exc:
+            failures.append({"operation": ["restore", label], "error": repr(exc)})
+
+    def restore_file(target: Path, backup_path: str | None) -> None:
+        if backup_path is None:
+            if target.is_dir() and not target.is_symlink():
+                raise OSError(f"rollback target became a directory: {target}")
+            if os.path.lexists(target):
+                target.unlink()
+                fsync_directory(target.parent)
+            return
+        source = Path(backup_path)
+        if source.is_symlink() or not source.is_file():
+            raise OSError(f"rollback backup is unavailable: {source}")
+        atomic_write(target, source.read_bytes(), stat.S_IMODE(source.stat().st_mode))
+
+    attempt("manifest", lambda: restore_file(manifest_path, backup.get("manifest")))
+    for label, target in launchers.items():
+        key = "launcher" if label == "bureau" else f"{label.replace('-', '_')}_launcher"
+        kind = backup.get(f"{key}_kind")
+        if kind == "symlink":
+            attempt(
+                label,
+                lambda target=target, key=key: _restore_symlink(
+                    target, str(backup[f"{key}_symlink_target"])
+                ),
+            )
+        elif kind in {"file", None}:
+            attempt(
+                label,
+                lambda target=target, key=key: restore_file(target, backup.get(key)),
+            )
+        else:
+            failures.append(
+                {"operation": ["restore", label], "error": f"invalid backup kind: {kind}"}
+            )
+    if receipt_path is not None:
+        attempt("receipt", lambda: restore_file(receipt_path, None))
+
+    expected: list[tuple[str, Path, str | None, str | None]] = [
+        (
+            "manifest",
+            manifest_path,
+            "file" if backup.get("manifest") else None,
+            backup.get("manifest"),
+        )
+    ]
+    for label, target in launchers.items():
+        key = "launcher" if label == "bureau" else f"{label.replace('-', '_')}_launcher"
+        expected.append((label, target, backup.get(f"{key}_kind"), backup.get(key)))
+    for label, target, kind, backup_path in expected:
+        try:
+            if kind is None:
+                matches = not os.path.lexists(target)
+            elif kind == "symlink":
+                key = "launcher" if label == "bureau" else f"{label.replace('-', '_')}_launcher"
+                matches = target.is_symlink() and os.readlink(target) == backup.get(
+                    f"{key}_symlink_target"
+                )
+            else:
+                source = Path(str(backup_path))
+                matches = (
+                    not target.is_symlink()
+                    and target.is_file()
+                    and target.read_bytes() == source.read_bytes()
+                    and stat.S_IMODE(target.stat().st_mode)
+                    == stat.S_IMODE(source.stat().st_mode)
+                )
+            if not matches:
+                failures.append({"operation": ["verify-preimage", label]})
+        except Exception as exc:
+            failures.append(
+                {"operation": ["verify-preimage", label], "error": repr(exc)}
+            )
+    if receipt_path is not None and os.path.lexists(receipt_path):
+        failures.append({"operation": ["verify-preimage", "receipt"]})
+    return failures
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -436,6 +558,8 @@ def main(argv: list[str] | None = None) -> int:
     source = Path(args.source).expanduser().resolve()
     prefix = Path(args.prefix).expanduser().resolve()
     bin_dir = Path(args.bin_dir).expanduser().resolve()
+    user_unit_dir = Path(args.user_unit_dir).expanduser().resolve()
+    libexec_dir = Path(args.libexec_dir).expanduser().resolve()
     top = Path(git(source, "rev-parse", "--show-toplevel")).resolve()
     if top != source:
         raise SystemExit(f"source must be repository root: {top}")
@@ -452,6 +576,9 @@ def main(argv: list[str] | None = None) -> int:
     from bureau.runtime_refresh import (
         RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD,
         RuntimeRefreshError,
+        converge_user_scheduler,
+        read_json,
+        scheduler_resource_keys,
         stable_launcher_bytes,
         validate_legacy_runtime_refresh_bootstrap,
         validate_runtime_approval_intent,
@@ -475,6 +602,32 @@ def main(argv: list[str] | None = None) -> int:
             )
     except RuntimeRefreshError as exc:
         raise SystemExit(f"runtime approval denied: {exc.code}: {exc.message}") from exc
+    if args.converge_user_systemd:
+        if not args.approval_intent:
+            raise SystemExit("scheduler convergence requires a typed runtime-refresh intent")
+        approval_intent = read_json(Path(args.approval_intent).expanduser().resolve())
+        expected_scheduler_keys = set(
+            scheduler_resource_keys(
+                user_unit_dir=user_unit_dir,
+                libexec_dir=libexec_dir,
+            )
+        )
+        intent_resource_keys = approval_intent.get("required_resource_keys")
+        forbidden_scheduler_keys = {
+            f"path:{user_unit_dir}",
+            f"path:{libexec_dir}",
+        }
+        if (
+            approval_intent.get("user_unit_dir") != str(user_unit_dir)
+            or approval_intent.get("libexec_dir") != str(libexec_dir)
+            or not isinstance(intent_resource_keys, list)
+            or not all(isinstance(item, str) for item in intent_resource_keys)
+            or not expected_scheduler_keys.issubset(set(intent_resource_keys))
+            or not forbidden_scheduler_keys.isdisjoint(intent_resource_keys)
+        ):
+            raise SystemExit(
+                "scheduler convergence paths are not covered by the runtime-refresh intent"
+            )
 
     launcher = bin_dir / "bureau"
     runtime_refresh_launcher = bin_dir / "bureau-runtime-refresh"
@@ -556,100 +709,247 @@ def main(argv: list[str] | None = None) -> int:
         launcher,
         runtime_refresh_launcher,
         status_capsule_launcher,
+        force_generation=args.converge_user_systemd,
     )
     previous_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
     installed_at = datetime.now(timezone.utc).isoformat()
-    manifest = {
-        "schema_version": 1,
-        "kind": "bureau_runtime_deployment",
-        "release_id": release_id,
-        "source_repository": str(source),
-        "source_commit": head,
-        "package_tree_sha256": source_digest,
-        "immutable_release_path": str(release),
-        "module_path": str(module),
-        "module_sha256": sha256(module),
-        "canonical_registry_root": registry_snapshot["root"],
-        "canonical_registry_inventory_path": registry_snapshot["inventory_path"],
-        "canonical_registry_inventory_sha256": registry_snapshot["inventory_sha256"],
-        "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
-        "launcher_path": str(launcher),
-        "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
-        "status_capsule_launcher_path": str(status_capsule_launcher),
-        "installed_at": installed_at,
-        "runtime_approval": runtime_approval,
-        "previous_manifest_sha256": (
-            hashlib.sha256(previous_manifest).hexdigest() if previous_manifest else None
-        ),
-        "rollback": backup,
-    }
-    manifest[RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD] = hashlib.sha256(
-        canonical(manifest)
-    ).hexdigest()
-    manifest_bytes = canonical(manifest)
-    manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
     launcher_bytes = expected_launchers[launcher]
     runtime_refresh_launcher_bytes = expected_launchers[runtime_refresh_launcher]
     status_capsule_launcher_bytes = expected_launchers[status_capsule_launcher]
 
-    final_launcher_mutations = {
-        path
-        for path, expected in expected_launchers.items()
-        if _launcher_needs_write(path, expected)
-    }
-    if args.enforce_launcher_allowlist:
-        unleased = sorted(
-            str(path) for path in final_launcher_mutations if path not in allowed_launcher_paths
-        )
-        if unleased:
-            raise SystemExit(
-                "launcher drift detected before effect without runtime-refresh lease: "
-                + ", ".join(unleased)
+    def build_manifest(scheduler: dict[str, Any] | None = None) -> tuple[dict[str, Any], bytes]:
+        value = {
+            "schema_version": 1,
+            "kind": "bureau_runtime_deployment",
+            "release_id": release_id,
+            "source_repository": str(source),
+            "source_commit": head,
+            "package_tree_sha256": source_digest,
+            "immutable_release_path": str(release),
+            "module_path": str(module),
+            "module_sha256": sha256(module),
+            "canonical_registry_root": registry_snapshot["root"],
+            "canonical_registry_inventory_path": registry_snapshot["inventory_path"],
+            "canonical_registry_inventory_sha256": registry_snapshot["inventory_sha256"],
+            "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
+            "launcher_path": str(launcher),
+            "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
+            "status_capsule_launcher_path": str(status_capsule_launcher),
+            "installed_at": installed_at,
+            "runtime_approval": runtime_approval,
+            "previous_manifest_sha256": (
+                hashlib.sha256(previous_manifest).hexdigest() if previous_manifest else None
+            ),
+            "rollback": backup,
+        }
+        if scheduler is not None:
+            value["scheduler"] = scheduler
+        value[RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD] = hashlib.sha256(
+            canonical(value)
+        ).hexdigest()
+        return value, canonical(value)
+
+    def validate_launcher_effect() -> None:
+        final_launcher_mutations = {
+            path
+            for path, expected in expected_launchers.items()
+            if _launcher_needs_write(path, expected)
+        }
+        if args.enforce_launcher_allowlist:
+            unleased = sorted(
+                str(path)
+                for path in final_launcher_mutations
+                if path not in allowed_launcher_paths
             )
-    atomic_write(manifest_path, manifest_bytes)
-    launcher_written = _write_launcher_if_needed(
-        launcher,
-        launcher_bytes,
-        enforce_allowlist=args.enforce_launcher_allowlist,
-        allowed_paths=allowed_launcher_paths,
-    )
-    runtime_refresh_launcher_written = _write_launcher_if_needed(
-        runtime_refresh_launcher,
-        runtime_refresh_launcher_bytes,
-        enforce_allowlist=args.enforce_launcher_allowlist,
-        allowed_paths=allowed_launcher_paths,
-    )
-    status_capsule_launcher_written = _write_launcher_if_needed(
-        status_capsule_launcher,
-        status_capsule_launcher_bytes,
-        enforce_allowlist=args.enforce_launcher_allowlist,
-        allowed_paths=allowed_launcher_paths,
-    )
-    receipt = {
-        "schema_version": 1,
-        "kind": "bureau_runtime_install_receipt",
-        "release_id": release_id,
-        "manifest_path": str(manifest_path),
-        "manifest_sha256": sha256(manifest_path),
-        "launcher_path": str(launcher),
-        "launcher_sha256": sha256(launcher),
-        "launcher_written": launcher_written,
-        "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
-        "runtime_refresh_launcher_sha256": sha256(runtime_refresh_launcher),
-        "runtime_refresh_launcher_written": runtime_refresh_launcher_written,
-        "status_capsule_launcher_path": str(status_capsule_launcher),
-        "status_capsule_launcher_sha256": sha256(status_capsule_launcher),
-        "status_capsule_launcher_written": status_capsule_launcher_written,
-        "package_tree_sha256": source_digest,
-        "canonical_registry_root": registry_snapshot["root"],
-        "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
-        "rollback": backup,
-        "runtime_approval": runtime_approval,
-        "installed_at": installed_at,
+            if unleased:
+                raise RuntimeRefreshError(
+                    "launcher-drift-before-effect",
+                    "launcher drift detected before effect without runtime-refresh lease",
+                    details={"paths": unleased},
+                )
+
+    transaction: dict[str, Any] = {
+        "receipt": None,
+        "receipt_path": None,
+        "reported": False,
+        "launcher_written": False,
+        "runtime_refresh_launcher_written": False,
+        "status_capsule_launcher_written": False,
     }
-    receipt_path = prefix / "receipts" / f"{release_id}-{manifest_digest[:12]}.json"
-    atomic_write(receipt_path, canonical(receipt))
-    print(json.dumps({**receipt, "receipt_path": str(receipt_path)}, sort_keys=True))
+
+    def write_candidate_install() -> None:
+        validate_launcher_effect()
+        _candidate_manifest, candidate_bytes = build_manifest()
+        atomic_write(manifest_path, candidate_bytes)
+        transaction["launcher_written"] = _write_launcher_if_needed(
+            launcher,
+            launcher_bytes,
+            enforce_allowlist=args.enforce_launcher_allowlist,
+            allowed_paths=allowed_launcher_paths,
+        )
+        transaction["runtime_refresh_launcher_written"] = _write_launcher_if_needed(
+            runtime_refresh_launcher,
+            runtime_refresh_launcher_bytes,
+            enforce_allowlist=args.enforce_launcher_allowlist,
+            allowed_paths=allowed_launcher_paths,
+        )
+        transaction["status_capsule_launcher_written"] = _write_launcher_if_needed(
+            status_capsule_launcher,
+            status_capsule_launcher_bytes,
+            enforce_allowlist=args.enforce_launcher_allowlist,
+            allowed_paths=allowed_launcher_paths,
+        )
+
+    def write_final_install(scheduler: dict[str, Any]) -> None:
+        _manifest, final_manifest_bytes = build_manifest(scheduler)
+        manifest_digest = hashlib.sha256(final_manifest_bytes).hexdigest()
+        receipt_path = prefix / "receipts" / f"{release_id}-{manifest_digest[:12]}.json"
+        if os.path.lexists(receipt_path):
+            raise RuntimeRefreshError(
+                "install-receipt-preexists",
+                "durable install receipt target already exists",
+                details={"path": str(receipt_path)},
+            )
+        receipt = {
+            "schema_version": 1,
+            "kind": "bureau_runtime_install_receipt",
+            "release_id": release_id,
+            "manifest_path": str(manifest_path),
+            "manifest_sha256": manifest_digest,
+            "launcher_path": str(launcher),
+            "launcher_sha256": hashlib.sha256(launcher_bytes).hexdigest(),
+            "launcher_written": transaction["launcher_written"],
+            "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
+            "runtime_refresh_launcher_sha256": hashlib.sha256(
+                runtime_refresh_launcher_bytes
+            ).hexdigest(),
+            "runtime_refresh_launcher_written": transaction[
+                "runtime_refresh_launcher_written"
+            ],
+            "status_capsule_launcher_path": str(status_capsule_launcher),
+            "status_capsule_launcher_sha256": hashlib.sha256(
+                status_capsule_launcher_bytes
+            ).hexdigest(),
+            "status_capsule_launcher_written": transaction[
+                "status_capsule_launcher_written"
+            ],
+            "package_tree_sha256": source_digest,
+            "canonical_registry_root": registry_snapshot["root"],
+            "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
+            "rollback": backup,
+            "runtime_approval": runtime_approval,
+            "installed_at": installed_at,
+            "scheduler": scheduler,
+        }
+        transaction["receipt_path"] = receipt_path
+        atomic_write(manifest_path, final_manifest_bytes)
+        atomic_write(receipt_path, canonical(receipt))
+        for path, expected in expected_launchers.items():
+            if (
+                path.is_symlink()
+                or not path.is_file()
+                or path.read_bytes() != expected
+                or not path.stat().st_mode & 0o111
+            ):
+                raise RuntimeRefreshError(
+                    "install-launcher-readback-failed",
+                    "stable launcher changed before durable install completion",
+                    details={"path": str(path)},
+                )
+        if sha256(manifest_path) != manifest_digest or receipt_path.read_bytes() != canonical(
+            receipt
+        ):
+            raise RuntimeRefreshError(
+                "install-durable-readback-failed",
+                "manifest or durable receipt readback differs from the committed install",
+            )
+        transaction["receipt"] = receipt
+        print(json.dumps({**receipt, "receipt_path": str(receipt_path)}, sort_keys=True))
+        transaction["reported"] = True
+
+    def rollback_install() -> list[dict[str, Any]]:
+        return _restore_install_preimage(
+            backup=backup,
+            manifest_path=manifest_path,
+            launchers={
+                "bureau": launcher,
+                "runtime-refresh": runtime_refresh_launcher,
+                "status-capsule": status_capsule_launcher,
+            },
+            receipt_path=transaction["receipt_path"],
+        )
+
+    if args.converge_user_systemd:
+        rollback_directory = backup.get("directory")
+        if not isinstance(rollback_directory, str):
+            raise SystemExit("scheduler convergence requires a rollback generation")
+        try:
+            converge_user_scheduler(
+                source_commit=head,
+                release_id=release_id,
+                release=release,
+                user_unit_dir=user_unit_dir,
+                libexec_dir=libexec_dir,
+                rollback_directory=Path(rollback_directory),
+                manifest_path=manifest_path,
+                before_validation=write_candidate_install,
+                after_activation=write_final_install,
+                rollback_effect=rollback_install,
+            )
+        except RuntimeRefreshError as exc:
+            print(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "bureau_runtime_install_error",
+                        "error": exc.as_dict(),
+                    },
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+            )
+            return 2
+    else:
+        write_candidate_install()
+        _manifest, manifest_bytes = build_manifest()
+        manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
+        atomic_write(manifest_path, manifest_bytes)
+        receipt = {
+            "schema_version": 1,
+            "kind": "bureau_runtime_install_receipt",
+            "release_id": release_id,
+            "manifest_path": str(manifest_path),
+            "manifest_sha256": manifest_digest,
+            "launcher_path": str(launcher),
+            "launcher_sha256": sha256(launcher),
+            "launcher_written": transaction["launcher_written"],
+            "runtime_refresh_launcher_path": str(runtime_refresh_launcher),
+            "runtime_refresh_launcher_sha256": sha256(runtime_refresh_launcher),
+            "runtime_refresh_launcher_written": transaction[
+                "runtime_refresh_launcher_written"
+            ],
+            "status_capsule_launcher_path": str(status_capsule_launcher),
+            "status_capsule_launcher_sha256": sha256(status_capsule_launcher),
+            "status_capsule_launcher_written": transaction[
+                "status_capsule_launcher_written"
+            ],
+            "package_tree_sha256": source_digest,
+            "canonical_registry_root": registry_snapshot["root"],
+            "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
+            "rollback": backup,
+            "runtime_approval": runtime_approval,
+            "installed_at": installed_at,
+        }
+        receipt_path = prefix / "receipts" / f"{release_id}-{manifest_digest[:12]}.json"
+        atomic_write(receipt_path, canonical(receipt))
+        transaction.update({"receipt": receipt, "receipt_path": receipt_path})
+
+    receipt = transaction["receipt"]
+    receipt_path = transaction["receipt_path"]
+    if not isinstance(receipt, dict) or not isinstance(receipt_path, Path):
+        raise SystemExit("installer transaction completed without a durable receipt")
+    if not transaction["reported"]:
+        print(json.dumps({**receipt, "receipt_path": str(receipt_path)}, sort_keys=True))
     return 0
 
 

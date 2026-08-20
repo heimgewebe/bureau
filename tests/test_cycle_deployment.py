@@ -8,6 +8,7 @@ import pytest
 
 import bureau.cycle_deployment as deployment
 from bureau.cycle_deployment import (
+    OUTSIDE_CYCLE_SCHEDULERS,
     SOURCES,
     STAGES,
     STATE_DIRECTORIES,
@@ -127,6 +128,16 @@ def test_five_stages_and_source_ownership_are_in_canonical_release(tmp_path: Pat
         "verifier",
         "closure",
     ]
+    assert result["outside_cycle_schedulers"] == list(OUTSIDE_CYCLE_SCHEDULERS)
+    assert result["outside_cycle_schedulers"] == [
+        {
+            "name": "task-supply",
+            "scheduler_name": "bureau-task-supply",
+            "part_of_five_stage_cycle": False,
+            "deployment_authority": "runtime-refresh",
+        }
+    ]
+    assert "bureau-task-supply" not in {name for _stage, name, _module in STAGES}
     assert len(result["canonical_sources"]) == len(SOURCES)
     assert all(stage["service"]["matches"] for stage in result["stages"])
     assert all(stage["timer"]["matches"] for stage in result["stages"])

@@ -52,6 +52,19 @@ def test_task_supply_libexec_is_only_a_stable_launcher_bridge() -> None:
 def test_task_supply_is_part_of_runtime_identity_and_refresh_contract() -> None:
     assert "bureau-task-supply" in runtime_identity.SCHEDULER_NAMES
     assert "bureau-task-supply" in runtime_refresh.RUNTIME_SCHEDULER_NAMES
+    assert runtime_refresh.REQUIRED_RUNTIME_TIMER == "bureau-task-supply"
+    scheduler_keys = runtime_refresh.scheduler_resource_keys(
+        user_unit_dir=Path("/test/systemd/user"),
+        libexec_dir=Path("/test/libexec"),
+    )
+    assert "path:/test/systemd/user" not in scheduler_keys
+    assert "path:/test/libexec" not in scheduler_keys
+    assert "path:/test/systemd/user/bureau-task-supply.service" in scheduler_keys
+    assert "path:/test/systemd/user/bureau-task-supply.timer" in scheduler_keys
+    assert "path:/test/libexec/bureau-task-supply" in scheduler_keys
+    assert "service:bureau-task-supply.service" in scheduler_keys
+    assert "service:bureau-task-supply.timer" in scheduler_keys
+    assert len([key for key in scheduler_keys if key.startswith("path:")]) == 18
     assert runtime_refresh.RUNTIME_LAUNCHER_ENTRYPOINTS == (
         ("bureau", "bureau.cli"),
         ("bureau-runtime-refresh", "bureau.runtime_refresh"),

@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 import sqlite3
+import stat
 import subprocess
 import sys
 import time
@@ -70,6 +71,24 @@ RUNTIME_SCHEDULER_NAMES = (
     "bureau-verifier-control",
     "bureau-closure-planner",
     "bureau-task-supply",
+)
+REQUIRED_RUNTIME_TIMER = "bureau-task-supply"
+DEFAULT_USER_SYSTEMD_UNIT_ROOT = Path("~/.config/systemd/user").expanduser()
+DEFAULT_RUNTIME_LIBEXEC_ROOT = Path("~/.local/libexec").expanduser()
+SYSTEMD_TIMER_PROPERTIES = (
+    "LoadState",
+    "UnitFileState",
+    "ActiveState",
+    "SubState",
+    "FragmentPath",
+)
+SYSTEMD_SERVICE_PROPERTIES = (
+    "LoadState",
+    "UnitFileState",
+    "ActiveState",
+    "SubState",
+    "FragmentPath",
+    "Result",
 )
 RUNTIME_AUTHORITY_SCHEMA_VERSION = 1
 RUNTIME_AUTHORITY_MODE = "single-use-target-bound"
@@ -780,16 +799,810 @@ def launcher_mutation_resource_keys(*, prefix: Path, bin_dir: Path) -> list[str]
     return sorted(keys)
 
 
+def scheduler_resource_keys(*, user_unit_dir: Path, libexec_dir: Path) -> list[str]:
+    """Return the exact filesystem and systemd-user authority needed by convergence."""
+    return sorted(
+        {
+            *(
+                f"path:{user_unit_dir / f'{name}.{kind}'}"
+                for name in RUNTIME_SCHEDULER_NAMES
+                for kind in ("service", "timer")
+            ),
+            *(f"path:{libexec_dir / name}" for name in RUNTIME_SCHEDULER_NAMES),
+            *(f"service:{name}.service" for name in RUNTIME_SCHEDULER_NAMES),
+            *(f"service:{name}.timer" for name in RUNTIME_SCHEDULER_NAMES),
+        }
+    )
+
+
 def required_resource_keys(
-    *, state_root: Path, prefix: Path, bin_dir: Path, workspace: Path
+    *,
+    state_root: Path,
+    prefix: Path,
+    bin_dir: Path,
+    workspace: Path,
+    user_unit_dir: Path = DEFAULT_USER_SYSTEMD_UNIT_ROOT,
+    libexec_dir: Path = DEFAULT_RUNTIME_LIBEXEC_ROOT,
 ) -> list[str]:
     return sorted(
         {
             *launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir),
+            *scheduler_resource_keys(
+                user_unit_dir=user_unit_dir,
+                libexec_dir=libexec_dir,
+            ),
             f"path:{prefix}",
             f"path:{state_root}",
             f"path:{workspace}",
         }
+    )
+
+
+def _scheduler_artifacts(
+    *, release: Path, user_unit_dir: Path, libexec_dir: Path
+) -> list[dict[str, Any]]:
+    release_root = release.expanduser().resolve()
+    systemd_root = release_root / "ops/systemd"
+    artifacts: list[dict[str, Any]] = []
+    for name in RUNTIME_SCHEDULER_NAMES:
+        for kind, source, live, mode in (
+            (
+                "service",
+                systemd_root / f"{name}.service",
+                user_unit_dir / f"{name}.service",
+                0o644,
+            ),
+            (
+                "timer",
+                systemd_root / f"{name}.timer",
+                user_unit_dir / f"{name}.timer",
+                0o644,
+            ),
+            (
+                "libexec",
+                systemd_root / "libexec" / name,
+                libexec_dir / name,
+                0o755,
+            ),
+        ):
+            if source.is_symlink() or not source.is_file():
+                raise RuntimeRefreshError(
+                    "scheduler-release-artifact-invalid",
+                    "immutable scheduler artifact is not a regular file",
+                    details={"path": str(source), "name": name, "kind": kind},
+                )
+            try:
+                source.resolve(strict=True).relative_to(release_root)
+            except (OSError, ValueError) as exc:
+                raise RuntimeRefreshError(
+                    "scheduler-release-artifact-invalid",
+                    "immutable scheduler artifact escaped its release",
+                    details={"path": str(source), "release": str(release_root)},
+                ) from exc
+            artifacts.append(
+                {
+                    "name": name,
+                    "kind": kind,
+                    "source_path": str(source),
+                    "source_sha256": sha256_bytes(source.read_bytes()),
+                    "live_path": str(live),
+                    "mode": f"{mode:04o}",
+                }
+            )
+    return artifacts
+
+
+def _validate_scheduler_parent(path: Path, *, label: str) -> None:
+    if not path.is_absolute() or path.is_symlink() or not path.is_dir():
+        raise RuntimeRefreshError(
+            "scheduler-parent-invalid",
+            "scheduler parent must already be an absolute, non-symlink directory",
+            details={"label": label, "path": str(path)},
+        )
+    try:
+        resolved = path.resolve(strict=True)
+    except OSError as exc:
+        raise RuntimeRefreshError(
+            "scheduler-parent-invalid",
+            "scheduler parent is unavailable",
+            details={"label": label, "path": str(path)},
+        ) from exc
+    if resolved != path:
+        raise RuntimeRefreshError(
+            "scheduler-parent-invalid",
+            "scheduler parent contains a symlink or non-canonical component",
+            details={"label": label, "path": str(path), "resolved": str(resolved)},
+        )
+
+
+def _live_artifact_matches(item: dict[str, Any]) -> bool:
+    path = Path(item["live_path"])
+    try:
+        return (
+            not path.is_symlink()
+            and path.is_file()
+            and sha256_bytes(path.read_bytes()) == item["source_sha256"]
+            and stat.S_IMODE(path.stat().st_mode) == int(item["mode"], 8)
+        )
+    except OSError:
+        return False
+
+
+def _parse_systemctl_show(
+    output: str, *, unit: str, properties: tuple[str, ...]
+) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for line in output.splitlines():
+        key, separator, value = line.partition("=")
+        if not separator or key not in properties or key in values:
+            raise RuntimeRefreshError(
+                "scheduler-systemd-readback-invalid",
+                "systemctl show returned ambiguous properties",
+                details={"unit": unit, "line": line},
+            )
+        values[key] = value
+    missing = sorted(set(properties) - values.keys())
+    if missing:
+        raise RuntimeRefreshError(
+            "scheduler-systemd-readback-invalid",
+            "systemctl show omitted required properties",
+            details={"unit": unit, "missing": missing},
+        )
+    return values
+
+
+def _scheduler_systemctl(
+    arguments: list[str],
+    *,
+    command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
+) -> str:
+    argv = ["systemctl", "--user", *arguments]
+    result = command_runner(argv)
+    if result.returncode:
+        raise RuntimeRefreshError(
+            "scheduler-systemctl-failed",
+            "user systemd mutation or readback failed",
+            details={
+                "argv": argv,
+                "returncode": result.returncode,
+                "stdout": result.stdout[-4000:],
+                "stderr": result.stderr[-4000:],
+            },
+        )
+    return result.stdout.strip()
+
+
+def _scheduler_unit_state(
+    unit: str,
+    *,
+    kind: str,
+    command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
+) -> dict[str, str]:
+    properties = (
+        SYSTEMD_TIMER_PROPERTIES if kind == "timer" else SYSTEMD_SERVICE_PROPERTIES
+    )
+    output = _scheduler_systemctl(
+        [
+            "show",
+            unit,
+            "--no-pager",
+            "--property=" + ",".join(properties),
+        ],
+        command_runner=command_runner,
+    )
+    return _parse_systemctl_show(output, unit=unit, properties=properties)
+
+
+def _timer_intent(state: dict[str, str], *, unit: str) -> str:
+    unit_file_state = state["UnitFileState"]
+    if state["LoadState"] == "not-found" and unit_file_state in {"", "disabled"}:
+        return "absent"
+    if unit_file_state in {"enabled", "enabled-runtime"}:
+        return unit_file_state
+    if unit_file_state == "disabled":
+        return "disabled"
+    raise RuntimeRefreshError(
+        "scheduler-timer-intent-ambiguous",
+        "managed timer has no unambiguous enabled or disabled intent",
+        details={"unit": unit, "state": state},
+    )
+
+
+def _snapshot_live_artifact(item: dict[str, Any], backup_files: Path) -> dict[str, Any]:
+    path = Path(item["live_path"])
+    record: dict[str, Any] = {
+        "name": item["name"],
+        "kind": item["kind"],
+        "path": str(path),
+    }
+    if path.is_symlink():
+        record.update({"preimage_kind": "symlink", "target": os.readlink(path)})
+        return record
+    if not os.path.lexists(path):
+        record["preimage_kind"] = "absent"
+        return record
+    if not path.is_file():
+        raise RuntimeRefreshError(
+            "scheduler-live-artifact-invalid",
+            "live scheduler target is neither a regular file, symlink nor absent",
+            details={"path": str(path)},
+        )
+    content = path.read_bytes()
+    relative = f"{item['name']}.{item['kind']}"
+    backup_path = backup_files / relative
+    mode = stat.S_IMODE(path.stat().st_mode)
+    atomic_write(backup_path, content, mode)
+    record.update(
+        {
+            "preimage_kind": "file",
+            "mode": f"{mode:04o}",
+            "sha256": sha256_bytes(content),
+            "backup_path": str(backup_path),
+        }
+    )
+    return record
+
+
+def _replace_with_symlink(path: Path, target: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    temporary = path.parent / f".{path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}"
+    try:
+        temporary.symlink_to(target)
+        os.replace(temporary, path)
+        _fsync_directory(path.parent)
+    finally:
+        if os.path.lexists(temporary):
+            temporary.unlink()
+
+
+def _restore_artifact(record: dict[str, Any]) -> None:
+    path = Path(record["path"])
+    kind = record["preimage_kind"]
+    if kind == "absent":
+        if path.is_dir() and not path.is_symlink():
+            raise RuntimeRefreshError(
+                "scheduler-rollback-target-invalid",
+                "scheduler rollback target became a directory",
+                details={"path": str(path)},
+            )
+        if os.path.lexists(path):
+            path.unlink()
+            _fsync_directory(path.parent)
+        return
+    if kind == "symlink":
+        _replace_with_symlink(path, record["target"])
+        return
+    if kind != "file":
+        raise RuntimeRefreshError(
+            "scheduler-rollback-preimage-invalid",
+            "scheduler rollback preimage kind is invalid",
+            details={"record": record},
+        )
+    backup_path = Path(record["backup_path"])
+    if backup_path.is_symlink() or not backup_path.is_file():
+        raise RuntimeRefreshError(
+            "scheduler-rollback-backup-invalid",
+            "scheduler rollback backup is unavailable",
+            details={"path": str(backup_path)},
+        )
+    content = backup_path.read_bytes()
+    if sha256_bytes(content) != record["sha256"]:
+        raise RuntimeRefreshError(
+            "scheduler-rollback-backup-invalid",
+            "scheduler rollback backup digest differs",
+            details={"path": str(backup_path)},
+        )
+    atomic_write(path, content, int(record["mode"], 8))
+
+
+def _run_scheduler_command(
+    arguments: list[str],
+    *,
+    command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
+) -> None:
+    _scheduler_systemctl(arguments, command_runner=command_runner)
+
+
+def _timer_states(
+    *, command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]]
+) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]]]:
+    timers = {
+        name: _scheduler_unit_state(
+            f"{name}.timer", kind="timer", command_runner=command_runner
+        )
+        for name in RUNTIME_SCHEDULER_NAMES
+    }
+    services = {
+        name: _scheduler_unit_state(
+            f"{name}.service", kind="service", command_runner=command_runner
+        )
+        for name in RUNTIME_SCHEDULER_NAMES
+    }
+    return timers, services
+
+
+def _restore_scheduler_files(preimage: dict[str, Any]) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
+    for record in preimage["artifacts"]:
+        try:
+            _restore_artifact(record)
+        except Exception as exc:
+            failures.append(
+                {"operation": ["restore", record["path"]], "error": repr(exc)}
+            )
+    for record in preimage["artifacts"]:
+        path = Path(record["path"])
+        try:
+            kind = record["preimage_kind"]
+            if kind == "absent":
+                matches = not os.path.lexists(path)
+            elif kind == "symlink":
+                matches = path.is_symlink() and os.readlink(path) == record["target"]
+            else:
+                matches = not path.is_symlink() and path.is_file()
+                if matches:
+                    content = path.read_bytes()
+                    matches = (
+                        sha256_bytes(content) == record["sha256"]
+                        and stat.S_IMODE(path.stat().st_mode) == int(record["mode"], 8)
+                    )
+            if not matches:
+                failures.append(
+                    {"operation": ["verify-preimage", record["path"]]}
+                )
+        except Exception as exc:
+            failures.append(
+                {
+                    "operation": ["verify-preimage", record["path"]],
+                    "error": repr(exc),
+                }
+            )
+    return failures
+
+
+def _validate_scheduler_candidate(
+    *,
+    manifest_path: Path,
+    release: Path,
+    user_unit_dir: Path,
+    libexec_dir: Path,
+    validation_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
+    cycle_validator: Callable[..., dict[str, Any]] | None,
+) -> dict[str, Any]:
+    unit_paths = [
+        str(user_unit_dir / f"{name}.{kind}")
+        for name in RUNTIME_SCHEDULER_NAMES
+        for kind in ("service", "timer")
+    ]
+    argv = ["systemd-analyze", "--user", "verify", *unit_paths]
+    verified = validation_runner(argv)
+    if verified.returncode:
+        raise RuntimeRefreshError(
+            "scheduler-candidate-systemd-verify-failed",
+            "candidate scheduler units failed systemd-analyze --user verify",
+            details={
+                "argv": argv,
+                "returncode": verified.returncode,
+                "stdout": verified.stdout[-4000:],
+                "stderr": verified.stderr[-4000:],
+            },
+        )
+
+    mismatched_artifacts = [
+        item["live_path"]
+        for item in _scheduler_artifacts(
+            release=release,
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
+        )
+        if not _live_artifact_matches(item)
+    ]
+    if mismatched_artifacts:
+        raise RuntimeRefreshError(
+            "scheduler-candidate-artifact-drift",
+            "candidate scheduler artifacts changed before activation",
+            details={"paths": mismatched_artifacts},
+        )
+
+    if cycle_validator is None:
+        from .cycle_deployment import audit_cycle_deployment
+
+        cycle_validator = audit_cycle_deployment
+    module_paths = {
+        "bureau.cycle_deployment": release / "src/bureau/cycle_deployment.py",
+        "bureau_cycle": release / "src/bureau_cycle/__init__.py",
+        "bureau.closure_runner": release / "src/bureau/closure_runner.py",
+    }
+    try:
+        cycle = cycle_validator(
+            manifest_path=manifest_path,
+            canonical_root=release,
+            unit_root=user_unit_dir,
+            shim_root=libexec_dir,
+            module_paths=module_paths,
+        )
+    except Exception as exc:
+        raise RuntimeRefreshError(
+            "scheduler-candidate-cycle-deployment-invalid",
+            "candidate-bound read-only cycle-deployment validation failed",
+            details={"error": repr(exc)},
+        ) from exc
+    if (
+        not isinstance(cycle, dict)
+        or cycle.get("status") != "ok"
+        or cycle.get("activatable") is not False
+        or cycle.get("read_only") is not True
+        or cycle.get("self_heal") is not False
+    ):
+        raise RuntimeRefreshError(
+            "scheduler-candidate-cycle-deployment-drift",
+            "candidate-bound read-only cycle-deployment validation found drift",
+            details={"audit": cycle},
+        )
+    return {
+        "systemd_analyze": {
+            "argv": argv,
+            "returncode": verified.returncode,
+        },
+        "cycle_deployment": cycle,
+        "contract_equivalent": "bureau --json cycle-deployment",
+        "candidate_bound": True,
+        "read_only": True,
+    }
+
+
+def _restore_scheduler_preimage(
+    preimage: dict[str, Any],
+    *,
+    command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
+) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
+
+    def attempt(arguments: list[str]) -> None:
+        try:
+            _run_scheduler_command(arguments, command_runner=command_runner)
+        except Exception as exc:  # every recovery failure must remain explicit
+            failures.append({"operation": arguments, "error": repr(exc)})
+
+    timer_units = [f"{name}.timer" for name in RUNTIME_SCHEDULER_NAMES]
+    attempt(["disable", "--now", *timer_units])
+    failures.extend(_restore_scheduler_files(preimage))
+    attempt(["daemon-reload"])
+    for name in RUNTIME_SCHEDULER_NAMES:
+        state = preimage["timers"][name]
+        intent = preimage["timer_intent"][name]
+        unit = f"{name}.timer"
+        if intent == "enabled":
+            attempt(["enable", unit])
+        elif intent == "enabled-runtime":
+            attempt(["enable", "--runtime", unit])
+        elif intent == "disabled":
+            attempt(["disable", unit])
+        if state["ActiveState"] == "active":
+            attempt(["start", unit])
+        elif state["ActiveState"] == "inactive" and intent != "absent":
+            attempt(["stop", unit])
+    for name in RUNTIME_SCHEDULER_NAMES:
+        state = preimage["services"][name]
+        unit = f"{name}.service"
+        if state["LoadState"] == "loaded" and state["ActiveState"] == "inactive":
+            attempt(["stop", unit])
+        if state["LoadState"] == "loaded" and state["Result"] == "success":
+            attempt(["reset-failed", unit])
+
+    try:
+        timers, services = _timer_states(command_runner=command_runner)
+        for kind, expected_group, observed_group in (
+            ("timer", preimage["timers"], timers),
+            ("service", preimage["services"], services),
+        ):
+            for name in RUNTIME_SCHEDULER_NAMES:
+                expected = expected_group[name]
+                observed = observed_group[name]
+                if observed != expected:
+                    failures.append(
+                        {
+                            "operation": ["verify-preimage", f"{name}.{kind}"],
+                            "expected": expected,
+                            "observed": observed,
+                        }
+                    )
+    except Exception as exc:
+        failures.append({"operation": ["verify-preimage"], "error": repr(exc)})
+    return failures
+
+
+def _scheduler_readback(
+    *,
+    source_commit: str,
+    release_id: str,
+    release: Path,
+    user_unit_dir: Path,
+    libexec_dir: Path,
+    prior_timers: dict[str, dict[str, str]],
+    timer_intent: dict[str, str],
+    command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
+) -> dict[str, Any]:
+    artifacts = _scheduler_artifacts(
+        release=release,
+        user_unit_dir=user_unit_dir,
+        libexec_dir=libexec_dir,
+    )
+    artifact_evidence: list[dict[str, Any]] = []
+    for item in artifacts:
+        path = Path(item["live_path"])
+        if path.is_symlink() or not path.is_file():
+            raise RuntimeRefreshError(
+                "scheduler-readback-fragment-invalid",
+                "live scheduler artifact is not a regular file",
+                details={"path": str(path)},
+            )
+        observed_sha256 = sha256_bytes(path.read_bytes())
+        expected_mode = int(item["mode"], 8)
+        observed_mode = stat.S_IMODE(path.stat().st_mode)
+        if observed_sha256 != item["source_sha256"] or observed_mode != expected_mode:
+            raise RuntimeRefreshError(
+                "scheduler-readback-fragment-mismatch",
+                "live scheduler artifact differs from the immutable release",
+                details={
+                    "path": str(path),
+                    "source_path": item["source_path"],
+                    "expected_sha256": item["source_sha256"],
+                    "observed_sha256": observed_sha256,
+                    "expected_mode": item["mode"],
+                    "observed_mode": f"{observed_mode:04o}",
+                },
+            )
+        artifact_evidence.append(
+            {**item, "live_sha256": observed_sha256, "matches_release": True}
+        )
+
+    timers, services = _timer_states(command_runner=command_runner)
+    for name in RUNTIME_SCHEDULER_NAMES:
+        timer = timers[name]
+        service = services[name]
+        expected_timer_path = str(user_unit_dir / f"{name}.timer")
+        expected_service_path = str(user_unit_dir / f"{name}.service")
+        if (
+            timer["LoadState"] != "loaded"
+            or timer["FragmentPath"] != expected_timer_path
+            or service["LoadState"] != "loaded"
+            or service["FragmentPath"] != expected_service_path
+        ):
+            raise RuntimeRefreshError(
+                "scheduler-readback-load-state-invalid",
+                "managed scheduler unit is not loaded from its converged fragment",
+                details={"name": name, "timer": timer, "service": service},
+            )
+        if name == REQUIRED_RUNTIME_TIMER:
+            if (
+                timer["UnitFileState"] != "enabled"
+                or timer["ActiveState"] != "active"
+                or timer["SubState"] != "waiting"
+                or service["ActiveState"] == "failed"
+                or service["Result"] != "success"
+            ):
+                raise RuntimeRefreshError(
+                    "scheduler-required-timer-invalid",
+                    "required task-supply scheduler is not enabled, waiting and healthy",
+                    details={"timer": timer, "service": service},
+                )
+            continue
+        prior = prior_timers[name]
+        intent = timer_intent[name]
+        expected_unit_file_state = "disabled" if intent == "absent" else intent
+        if (
+            timer["UnitFileState"] != expected_unit_file_state
+            or timer["ActiveState"] != prior["ActiveState"]
+            or timer["SubState"] != prior["SubState"]
+        ):
+            raise RuntimeRefreshError(
+                "scheduler-timer-intent-drift",
+                "managed timer intent or active state changed during convergence",
+                details={
+                    "name": name,
+                    "expected_unit_file_state": expected_unit_file_state,
+                    "prior": prior,
+                    "observed": timer,
+                },
+            )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": source_commit,
+        "release_id": release_id,
+        "immutable_release_path": str(release),
+        "user_unit_dir": str(user_unit_dir),
+        "libexec_dir": str(libexec_dir),
+        "required_timer": f"{REQUIRED_RUNTIME_TIMER}.timer",
+        "artifacts": artifact_evidence,
+        "prior_timer_intent": timer_intent,
+        "pre_convergence_timers": prior_timers,
+        "timers": timers,
+        "services": services,
+        "authoritative": True,
+    }
+
+
+def converge_user_scheduler(
+    *,
+    source_commit: str,
+    release_id: str,
+    release: Path,
+    user_unit_dir: Path,
+    libexec_dir: Path,
+    rollback_directory: Path,
+    manifest_path: Path,
+    command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]] | None = None,
+    validation_runner: Callable[[list[str]], subprocess.CompletedProcess[str]] | None = None,
+    cycle_validator: Callable[..., dict[str, Any]] | None = None,
+    before_validation: Callable[[], None] | None = None,
+    after_activation: Callable[[dict[str, Any]], None] | None = None,
+    rollback_effect: Callable[[], list[dict[str, Any]]] | None = None,
+) -> dict[str, Any]:
+    """Converge immutable scheduler bytes and systemd state as one recoverable effect."""
+    runner = command_runner or (lambda argv: _run(argv, timeout=60))
+    verifier = validation_runner or (lambda argv: _run(argv, timeout=60))
+    _validate_scheduler_parent(user_unit_dir, label="user unit directory")
+    _validate_scheduler_parent(libexec_dir, label="libexec directory")
+    artifacts = _scheduler_artifacts(
+        release=release,
+        user_unit_dir=user_unit_dir,
+        libexec_dir=libexec_dir,
+    )
+    changed = [item for item in artifacts if not _live_artifact_matches(item)]
+    timers, services = _timer_states(command_runner=runner)
+    intents = {
+        name: _timer_intent(timers[name], unit=f"{name}.timer")
+        for name in RUNTIME_SCHEDULER_NAMES
+    }
+    rollback_root = rollback_directory / "scheduler"
+    if rollback_root.exists():
+        raise RuntimeRefreshError(
+            "scheduler-rollback-generation-exists",
+            "scheduler rollback generation already exists",
+            details={"path": str(rollback_root)},
+        )
+    rollback_root.mkdir(parents=True, exist_ok=False, mode=0o700)
+    backup_files = rollback_root / "files"
+    backup_files.mkdir(mode=0o700)
+    preimage = {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_preimage",
+        "source_commit": source_commit,
+        "release_id": release_id,
+        "artifacts": [_snapshot_live_artifact(item, backup_files) for item in artifacts],
+        "timers": timers,
+        "services": services,
+        "timer_intent": intents,
+    }
+    preimage_path = rollback_root / "preimage.json"
+    atomic_write(preimage_path, canonical_bytes(preimage))
+
+    systemd_mutated = False
+    try:
+        if before_validation is not None:
+            before_validation()
+        for item in changed:
+            source = Path(item["source_path"])
+            atomic_write(
+                Path(item["live_path"]),
+                source.read_bytes(),
+                int(item["mode"], 8),
+            )
+        validation = _validate_scheduler_candidate(
+            manifest_path=manifest_path,
+            release=release,
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
+            validation_runner=verifier,
+            cycle_validator=cycle_validator,
+        )
+        systemd_mutated = True
+        _run_scheduler_command(["daemon-reload"], command_runner=runner)
+        for name in RUNTIME_SCHEDULER_NAMES:
+            if name == REQUIRED_RUNTIME_TIMER:
+                continue
+            intent = intents[name]
+            unit = f"{name}.timer"
+            if intent == "enabled":
+                _run_scheduler_command(["enable", unit], command_runner=runner)
+            elif intent == "enabled-runtime":
+                _run_scheduler_command(["enable", "--runtime", unit], command_runner=runner)
+            else:
+                _run_scheduler_command(["disable", unit], command_runner=runner)
+        _run_scheduler_command(
+            ["enable", "--now", f"{REQUIRED_RUNTIME_TIMER}.timer"],
+            command_runner=runner,
+        )
+        readback = _scheduler_readback(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
+            prior_timers=timers,
+            timer_intent=intents,
+            command_runner=runner,
+        )
+        readback["candidate_validation"] = validation
+        readback["changed_artifacts"] = [item["live_path"] for item in changed]
+        readback["rollback_preimage_path"] = str(preimage_path)
+        if after_activation is not None:
+            after_activation(readback)
+    except Exception as exc:
+        rollback_failures = (
+            _restore_scheduler_preimage(preimage, command_runner=runner)
+            if systemd_mutated
+            else _restore_scheduler_files(preimage)
+        )
+        if rollback_effect is not None:
+            try:
+                rollback_failures.extend(rollback_effect())
+            except Exception as rollback_exc:
+                rollback_failures.append(
+                    {"operation": ["restore-install"], "error": repr(rollback_exc)}
+                )
+        error = exc.as_dict() if isinstance(exc, RuntimeRefreshError) else {
+            "code": "scheduler-convergence-unexpected",
+            "message": repr(exc),
+            "details": {},
+        }
+        if rollback_failures:
+            raise RuntimeRefreshError(
+                "scheduler-convergence-recovery-required",
+                "scheduler convergence failed and exact preimage recovery is incomplete",
+                details={
+                    "cause": error,
+                    "rollback_failures": rollback_failures,
+                    "preimage_path": str(preimage_path),
+                    "safe_to_retry": False,
+                },
+            ) from exc
+        raise RuntimeRefreshError(
+            "scheduler-convergence-rolled-back",
+            "scheduler convergence failed; exact preimage was restored",
+            details={
+                "cause": error,
+                "preimage_path": str(preimage_path),
+                "safe_to_retry": False,
+            },
+        ) from exc
+    return readback
+
+
+def readback_user_scheduler(
+    scheduler_receipt: dict[str, Any],
+    *,
+    expected_commit: str,
+    command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]] | None = None,
+) -> dict[str, Any]:
+    """Re-read one result-bound scheduler deployment from live user systemd."""
+    if (
+        scheduler_receipt.get("kind") != "bureau_runtime_scheduler_readback"
+        or scheduler_receipt.get("source_commit") != expected_commit
+        or scheduler_receipt.get("authoritative") is not True
+    ):
+        raise RuntimeRefreshError(
+            "scheduler-receipt-invalid",
+            "installer scheduler receipt is not bound to the deployed source",
+        )
+    runner = command_runner or (lambda argv: _run(argv, timeout=60))
+    prior_timers = scheduler_receipt.get("pre_convergence_timers")
+    timer_intent = scheduler_receipt.get("prior_timer_intent")
+    if not isinstance(prior_timers, dict) or not isinstance(timer_intent, dict):
+        raise RuntimeRefreshError(
+            "scheduler-receipt-invalid", "installer scheduler receipt lacks timer preimage"
+        )
+    return _scheduler_readback(
+        source_commit=expected_commit,
+        release_id=str(scheduler_receipt.get("release_id", "")),
+        release=Path(str(scheduler_receipt.get("immutable_release_path", ""))),
+        user_unit_dir=Path(str(scheduler_receipt.get("user_unit_dir", ""))),
+        libexec_dir=Path(str(scheduler_receipt.get("libexec_dir", ""))),
+        prior_timers=prior_timers,
+        timer_intent=timer_intent,
+        command_runner=runner,
     )
 
 
@@ -1843,6 +2656,8 @@ def prepare_intent(
     state_root: Path,
     prefix: Path,
     bin_dir: Path,
+    user_unit_dir: Path = DEFAULT_USER_SYSTEMD_UNIT_ROOT,
+    libexec_dir: Path = DEFAULT_RUNTIME_LIBEXEC_ROOT,
     remote_url: str,
     authorized_by: str,
     authorization: str,
@@ -1891,6 +2706,8 @@ def prepare_intent(
             "intent-ttl-invalid", "intent TTL must be between 1 and 3600 seconds"
         )
     current = now or utc_now()
+    resolved_user_unit_dir = user_unit_dir.expanduser().resolve()
+    resolved_libexec_dir = libexec_dir.expanduser().resolve()
     store = authority_store or _default_read_only_authority_store()
     authority_task_spec = validate_authoritative_runtime_refresh_task(
         store=store,
@@ -1915,9 +2732,16 @@ def prepare_intent(
         "state_root": str(state_root),
         "prefix": str(prefix),
         "bin_dir": str(bin_dir),
+        "user_unit_dir": str(resolved_user_unit_dir),
+        "libexec_dir": str(resolved_libexec_dir),
         "workspace": str(workspace),
         "required_resource_keys": required_resource_keys(
-            state_root=state_root, prefix=prefix, bin_dir=bin_dir, workspace=workspace
+            state_root=state_root,
+            prefix=prefix,
+            bin_dir=bin_dir,
+            workspace=workspace,
+            user_unit_dir=resolved_user_unit_dir,
+            libexec_dir=resolved_libexec_dir,
         ),
         "authorized_by": authorized_by.strip(),
         "authorization": authorization.strip(),
@@ -2669,6 +3493,8 @@ def run_installer(
     source: Path,
     prefix: Path,
     bin_dir: Path,
+    user_unit_dir: Path,
+    libexec_dir: Path,
     approval_intent: Path,
     allowed_launcher_paths: Iterable[Path] = (),
     timeout: float = 300,
@@ -2682,15 +3508,38 @@ def run_installer(
         str(prefix),
         "--bin-dir",
         str(bin_dir),
+        "--user-unit-dir",
+        str(user_unit_dir),
+        "--libexec-dir",
+        str(libexec_dir),
         "--approval-intent",
         str(approval_intent),
         "--replace-existing",
         "--enforce-launcher-allowlist",
+        "--converge-user-systemd",
     ]
     for path in sorted({str(item) for item in allowed_launcher_paths}):
         argv.extend(["--allowed-launcher-path", path])
     result = _run(argv, cwd=source, timeout=timeout)
     if result.returncode:
+        try:
+            structured_error = json.loads(result.stderr.strip().splitlines()[-1])
+        except (IndexError, json.JSONDecodeError):
+            structured_error = None
+        if (
+            isinstance(structured_error, dict)
+            and structured_error.get("kind") == "bureau_runtime_install_error"
+            and isinstance(structured_error.get("error"), dict)
+        ):
+            error = structured_error["error"]
+            if isinstance(error.get("code"), str) and isinstance(error.get("message"), str):
+                raise RuntimeRefreshError(
+                    error["code"],
+                    error["message"],
+                    details=error.get("details")
+                    if isinstance(error.get("details"), dict)
+                    else {},
+                )
         raise RuntimeRefreshError(
             "installer-returned-nonzero",
             "Bureau installer returned non-zero after effect start",
@@ -2797,6 +3646,21 @@ def readback_install(
         raise RuntimeRefreshError(
             "readback-snapshot-mismatch", "Registry snapshot readback mismatch"
         )
+    scheduler_receipt = install_receipt.get("scheduler")
+    scheduler_readback = None
+    if scheduler_receipt is not None:
+        if (
+            not isinstance(scheduler_receipt, dict)
+            or manifest.get("scheduler") != scheduler_receipt
+        ):
+            raise RuntimeRefreshError(
+                "scheduler-manifest-receipt-mismatch",
+                "scheduler deployment differs between manifest and installer receipt",
+            )
+        scheduler_readback = readback_user_scheduler(
+            scheduler_receipt,
+            expected_commit=expected_commit,
+        )
     return {
         "manifest_path": str(manifest_path),
         "manifest_sha256": manifest_sha,
@@ -2809,6 +3673,7 @@ def readback_install(
         "status_capsule_launcher_sha256": sha256_bytes(status_capsule_launcher.read_bytes()),
         "check_valid": True,
         "runtime_identity_valid": True,
+        "scheduler": scheduler_readback,
         "rollback": install_receipt.get("rollback"),
     }
 
@@ -4028,6 +4893,8 @@ def apply_runtime_refresh(
     )
     prefix = Path(intent["prefix"]).expanduser().resolve()
     bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
+    user_unit_dir = Path(intent["user_unit_dir"]).expanduser().resolve()
+    libexec_dir = Path(intent["libexec_dir"]).expanduser().resolve()
     intent_resource_keys = set(intent.get("required_resource_keys", []))
     live_launcher_keys = set(launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir))
     unleased_launcher_drift = sorted(live_launcher_keys - intent_resource_keys)
@@ -4036,6 +4903,21 @@ def apply_runtime_refresh(
             "launcher-drift-after-intent",
             "a launcher now requires mutation but is absent from the intent leases",
             details={"resource_keys": unleased_launcher_drift},
+        )
+    missing_scheduler_resources = sorted(
+        set(
+            scheduler_resource_keys(
+                user_unit_dir=user_unit_dir,
+                libexec_dir=libexec_dir,
+            )
+        )
+        - intent_resource_keys
+    )
+    if missing_scheduler_resources:
+        raise RuntimeRefreshError(
+            "scheduler-resources-unleased",
+            "scheduler convergence is absent from the exact runtime-refresh leases",
+            details={"resource_keys": missing_scheduler_resources},
         )
     binding = validate_live_lease_binding(
         intent, lease_binding, resource_db=resource_db, now=current
@@ -4145,6 +5027,8 @@ def apply_runtime_refresh(
             source=workspace,
             prefix=prefix,
             bin_dir=bin_dir,
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
             approval_intent=intent_path,
             allowed_launcher_paths=allowed_launcher_paths,
         )

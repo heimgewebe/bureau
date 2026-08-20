@@ -3494,6 +3494,7 @@ def clean_installer_source(tmp_path: Path) -> Path:
         staged,
         ignore=shutil.ignore_patterns(
             ".git",
+            ".review-audits",
             ".pytest_cache",
             ".ruff_cache",
             "__pycache__",
@@ -3540,6 +3541,132 @@ def scheduler_installer_approval(
     return path
 
 
+@pytest.mark.parametrize("noncanonical", ["prefix", "bin_dir"])
+def test_run_installer_rejects_noncanonical_scheduler_runtime_layout_before_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    noncanonical: str,
+) -> None:
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = (home / ".local/share/bureau").resolve()
+    bin_dir = (home / ".local/bin").resolve()
+    if noncanonical == "prefix":
+        prefix = (tmp_path / "custom-prefix").resolve()
+    else:
+        bin_dir = (tmp_path / "custom-bin").resolve()
+
+    monkeypatch.setattr(
+        refresh,
+        "_run",
+        lambda *_args, **_kwargs: pytest.fail("installer process must not be invoked"),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.run_installer(
+            source=tmp_path / "source",
+            prefix=prefix,
+            bin_dir=bin_dir,
+            user_unit_dir=tmp_path / "systemd/user",
+            libexec_dir=tmp_path / "libexec",
+            approval_intent=tmp_path / "approval.json",
+        )
+
+    assert caught.value.code == "scheduler-runtime-layout-noncanonical"
+    assert caught.value.details["mismatches"] == [noncanonical]
+
+
+@pytest.mark.parametrize("noncanonical", ["prefix", "bin_dir"])
+def test_real_installer_rejects_noncanonical_scheduler_layout_before_effects(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    noncanonical: str,
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = (home / ".local/share/bureau").resolve()
+    bin_dir = (home / ".local/bin").resolve()
+    if noncanonical == "prefix":
+        prefix = (tmp_path / "custom-prefix").resolve()
+    else:
+        bin_dir = (tmp_path / "custom-bin").resolve()
+    unit_root = (tmp_path / "custom-systemd/user").resolve()
+    libexec_root = (tmp_path / "custom-libexec").resolve()
+    sentinel_paths = [
+        prefix / "deployment-manifest.json",
+        prefix / "receipts/existing.json",
+        *(bin_dir / name for name, _ in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS),
+        unit_root / "bureau-task-supply.service",
+        unit_root / "bureau-task-supply.timer",
+        libexec_root / "bureau-task-supply",
+    ]
+    for path in sentinel_paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(f"sentinel {path.name}\n".encode())
+    preimage = {path: path.read_bytes() for path in sentinel_paths}
+
+    monkeypatch.setattr(
+        installer,
+        "atomic_write",
+        lambda *_args, **_kwargs: pytest.fail("installer artifacts must not be written"),
+    )
+    monkeypatch.setattr(
+        refresh,
+        "atomic_write",
+        lambda *_args, **_kwargs: pytest.fail("scheduler artifacts must not be written"),
+    )
+    real_subprocess_run = subprocess.run
+    runtime_commands: list[list[str]] = []
+
+    def reject_runtime_commands(
+        argv: list[str], *args: Any, **kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] in {"systemctl", "systemd-analyze"}:
+            runtime_commands.append(argv)
+            pytest.fail("systemctl and systemd-analyze must not be invoked")
+        return real_subprocess_run(argv, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", reject_runtime_commands)
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(prefix),
+            "--bin-dir",
+            str(bin_dir),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip())["error"]
+    assert error["code"] == "scheduler-runtime-layout-noncanonical"
+    assert error["details"]["mismatches"] == [noncanonical]
+    assert runtime_commands == []
+    assert {path: path.read_bytes() for path in sentinel_paths} == preimage
+    assert sorted(path for path in prefix.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(prefix)
+    )
+    assert sorted(path for path in bin_dir.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(bin_dir)
+    )
+    assert sorted(path for path in unit_root.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(unit_root)
+    )
+    assert sorted(path for path in libexec_root.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(libexec_root)
+    )
+
+
 @pytest.mark.parametrize("preexisting_launchers", [False, True])
 def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
     tmp_path: Path,
@@ -3549,8 +3676,10 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
 ) -> None:
     installer = load_installer_module()
     source = clean_installer_source(tmp_path)
-    prefix = tmp_path / "transaction-prefix"
-    bin_dir = tmp_path / "transaction-bin"
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = home / ".local/share/bureau"
+    bin_dir = home / ".local/bin"
     manifest_path = prefix / "deployment-manifest.json"
     manifest_path.parent.mkdir(parents=True)
     manifest_path.write_bytes(b"exact old manifest\n")
@@ -3744,7 +3873,7 @@ def test_status_reports_terminal_and_unresolved_attempts(tmp_path: Path) -> None
     }
 
 
-def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> None:
+def test_real_non_systemd_installer_supports_custom_layout(tmp_path: Path) -> None:
     repository = Path(__file__).parents[1]
     staged = tmp_path / "staged"
     shutil.copytree(
@@ -3752,6 +3881,7 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         staged,
         ignore=shutil.ignore_patterns(
             ".git",
+            ".review-audits",
             ".pytest_cache",
             ".ruff_cache",
             "__pycache__",

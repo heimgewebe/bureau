@@ -625,7 +625,25 @@ def main(argv: list[str] | None = None) -> int:
         stable_launcher_bytes,
         validate_legacy_runtime_refresh_bootstrap,
         validate_runtime_approval_intent,
+        validate_scheduler_runtime_layout,
     )
+
+    if args.converge_user_systemd:
+        try:
+            validate_scheduler_runtime_layout(prefix=prefix, bin_dir=bin_dir)
+        except RuntimeRefreshError as exc:
+            print(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "bureau_runtime_install_error",
+                        "error": exc.as_dict(),
+                    },
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+            )
+            return 2
 
     manifest_path = prefix / "deployment-manifest.json"
     try:

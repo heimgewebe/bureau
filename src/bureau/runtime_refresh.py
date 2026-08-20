@@ -815,6 +815,34 @@ def scheduler_resource_keys(*, user_unit_dir: Path, libexec_dir: Path) -> list[s
     )
 
 
+def validate_scheduler_runtime_layout(*, prefix: Path, bin_dir: Path) -> None:
+    """Require the canonical runtime paths referenced by shipped scheduler artifacts."""
+    expected_prefix = Path("~/.local/share/bureau").expanduser().resolve()
+    expected_bin_dir = Path("~/.local/bin").expanduser().resolve()
+    observed_prefix = prefix.expanduser().resolve()
+    observed_bin_dir = bin_dir.expanduser().resolve()
+    mismatches = [
+        label
+        for label, observed, expected in (
+            ("prefix", observed_prefix, expected_prefix),
+            ("bin_dir", observed_bin_dir, expected_bin_dir),
+        )
+        if observed != expected
+    ]
+    if mismatches:
+        raise RuntimeRefreshError(
+            "scheduler-runtime-layout-noncanonical",
+            "scheduler convergence requires the current user's canonical runtime layout",
+            details={
+                "mismatches": mismatches,
+                "prefix": str(observed_prefix),
+                "expected_prefix": str(expected_prefix),
+                "bin_dir": str(observed_bin_dir),
+                "expected_bin_dir": str(expected_bin_dir),
+            },
+        )
+
+
 def required_resource_keys(
     *,
     state_root: Path,
@@ -3499,6 +3527,7 @@ def run_installer(
     allowed_launcher_paths: Iterable[Path] = (),
     timeout: float = 300,
 ) -> dict[str, Any]:
+    validate_scheduler_runtime_layout(prefix=prefix, bin_dir=bin_dir)
     argv = [
         sys.executable,
         str(source / "ops/install-bureau-runtime.py"),

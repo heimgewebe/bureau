@@ -800,20 +800,72 @@ def launcher_mutation_resource_keys(*, prefix: Path, bin_dir: Path) -> list[str]
     return sorted(keys)
 
 
-def scheduler_resource_keys(*, user_unit_dir: Path, libexec_dir: Path) -> list[str]:
+def default_runtime_user_unit_dir() -> Path:
+    """Return the user manager's environment-selected runtime unit directory."""
+    runtime_root = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime_root is None:
+        base = Path("/run/user") / str(os.getuid())
+    else:
+        base = Path(runtime_root)
+        if not runtime_root or not base.is_absolute():
+            raise RuntimeRefreshError(
+                "runtime-dir-invalid",
+                "XDG_RUNTIME_DIR must be a non-empty absolute path",
+                details={"xdg_runtime_dir": runtime_root},
+            )
+    return (base / "systemd/user").resolve()
+
+
+def validate_runtime_user_unit_dir(expected: Path) -> Path:
+    """Fail closed when systemctl would use a runtime unit tree other than the intent."""
+    expected_path = expected.expanduser().resolve()
+    observed_path = default_runtime_user_unit_dir()
+    if observed_path != expected_path:
+        raise RuntimeRefreshError(
+            "runtime-user-unit-dir-drift",
+            "current user runtime systemd path differs from the runtime-refresh intent",
+            details={"expected": str(expected_path), "observed": str(observed_path)},
+        )
+    return observed_path
+
+
+def scheduler_resource_keys(
+    *,
+    user_unit_dir: Path,
+    libexec_dir: Path,
+    runtime_user_unit_dir: Path | None = None,
+) -> list[str]:
     """Return the exact filesystem and systemd-user authority needed by convergence."""
-    return sorted(
-        {
-            *(
-                f"path:{user_unit_dir / f'{name}.{kind}'}"
-                for name in RUNTIME_SCHEDULER_NAMES
-                for kind in ("service", "timer")
-            ),
-            *(f"path:{libexec_dir / name}" for name in RUNTIME_SCHEDULER_NAMES),
-            *(f"service:{name}.service" for name in RUNTIME_SCHEDULER_NAMES),
-            *(f"service:{name}.timer" for name in RUNTIME_SCHEDULER_NAMES),
-        }
-    )
+    keys = {
+        *(
+            f"path:{user_unit_dir / f'{name}.{kind}'}"
+            for name in RUNTIME_SCHEDULER_NAMES
+            for kind in ("service", "timer")
+        ),
+        *(f"path:{libexec_dir / name}" for name in RUNTIME_SCHEDULER_NAMES),
+        *(f"service:{name}.service" for name in RUNTIME_SCHEDULER_NAMES),
+        *(f"service:{name}.timer" for name in RUNTIME_SCHEDULER_NAMES),
+    }
+    if runtime_user_unit_dir is not None:
+        keys.update(
+            f"path:{unit_root / 'timers.target.wants' / f'{name}.timer'}"
+            for unit_root in (user_unit_dir, runtime_user_unit_dir)
+            for name in RUNTIME_SCHEDULER_NAMES
+        )
+    return sorted(keys)
+
+
+def forbidden_scheduler_parent_resource_keys(
+    *, user_unit_dir: Path, libexec_dir: Path, runtime_user_unit_dir: Path
+) -> set[str]:
+    """Return broad scheduler paths that must never substitute for exact leases."""
+    return {
+        f"path:{user_unit_dir}",
+        f"path:{libexec_dir}",
+        f"path:{runtime_user_unit_dir}",
+        f"path:{user_unit_dir / 'timers.target.wants'}",
+        f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
+    }
 
 
 def validate_scheduler_runtime_layout(*, prefix: Path, bin_dir: Path) -> None:
@@ -852,13 +904,20 @@ def required_resource_keys(
     workspace: Path,
     user_unit_dir: Path = DEFAULT_USER_SYSTEMD_UNIT_ROOT,
     libexec_dir: Path = DEFAULT_RUNTIME_LIBEXEC_ROOT,
+    runtime_user_unit_dir: Path | None = None,
 ) -> list[str]:
+    resolved_runtime_user_unit_dir = (
+        default_runtime_user_unit_dir()
+        if runtime_user_unit_dir is None
+        else runtime_user_unit_dir.expanduser().resolve()
+    )
     return sorted(
         {
             *launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir),
             *scheduler_resource_keys(
                 user_unit_dir=user_unit_dir,
                 libexec_dir=libexec_dir,
+                runtime_user_unit_dir=resolved_runtime_user_unit_dir,
             ),
             f"path:{prefix}",
             f"path:{state_root}",
@@ -2687,6 +2746,7 @@ def prepare_intent(
     bin_dir: Path,
     user_unit_dir: Path = DEFAULT_USER_SYSTEMD_UNIT_ROOT,
     libexec_dir: Path = DEFAULT_RUNTIME_LIBEXEC_ROOT,
+    runtime_user_unit_dir: Path | None = None,
     remote_url: str,
     authorized_by: str,
     authorization: str,
@@ -2737,6 +2797,11 @@ def prepare_intent(
     current = now or utc_now()
     resolved_user_unit_dir = user_unit_dir.expanduser().resolve()
     resolved_libexec_dir = libexec_dir.expanduser().resolve()
+    resolved_runtime_user_unit_dir = (
+        default_runtime_user_unit_dir()
+        if runtime_user_unit_dir is None
+        else runtime_user_unit_dir.expanduser().resolve()
+    )
     store = authority_store or _default_read_only_authority_store()
     authority_task_spec = validate_authoritative_runtime_refresh_task(
         store=store,
@@ -2763,6 +2828,7 @@ def prepare_intent(
         "bin_dir": str(bin_dir),
         "user_unit_dir": str(resolved_user_unit_dir),
         "libexec_dir": str(resolved_libexec_dir),
+        "runtime_user_unit_dir": str(resolved_runtime_user_unit_dir),
         "workspace": str(workspace),
         "required_resource_keys": required_resource_keys(
             state_root=state_root,
@@ -2771,6 +2837,7 @@ def prepare_intent(
             workspace=workspace,
             user_unit_dir=resolved_user_unit_dir,
             libexec_dir=resolved_libexec_dir,
+            runtime_user_unit_dir=resolved_runtime_user_unit_dir,
         ),
         "authorized_by": authorized_by.strip(),
         "authorization": authorization.strip(),
@@ -3524,11 +3591,13 @@ def run_installer(
     bin_dir: Path,
     user_unit_dir: Path,
     libexec_dir: Path,
+    runtime_user_unit_dir: Path,
     approval_intent: Path,
     allowed_launcher_paths: Iterable[Path] = (),
     timeout: float = 300,
 ) -> dict[str, Any]:
     validate_scheduler_runtime_layout(prefix=prefix, bin_dir=bin_dir)
+    validate_runtime_user_unit_dir(runtime_user_unit_dir)
     argv = [
         sys.executable,
         str(source / "ops/install-bureau-runtime.py"),
@@ -3542,6 +3611,8 @@ def run_installer(
         str(user_unit_dir),
         "--libexec-dir",
         str(libexec_dir),
+        "--runtime-user-unit-dir",
+        str(runtime_user_unit_dir),
         "--approval-intent",
         str(approval_intent),
         "--replace-existing",
@@ -4924,6 +4995,8 @@ def apply_runtime_refresh(
     bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
     user_unit_dir = Path(intent["user_unit_dir"]).expanduser().resolve()
     libexec_dir = Path(intent["libexec_dir"]).expanduser().resolve()
+    runtime_user_unit_dir = Path(intent["runtime_user_unit_dir"]).expanduser().resolve()
+    validate_runtime_user_unit_dir(runtime_user_unit_dir)
     intent_resource_keys = set(intent.get("required_resource_keys", []))
     live_launcher_keys = set(launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir))
     unleased_launcher_drift = sorted(live_launcher_keys - intent_resource_keys)
@@ -4938,6 +5011,7 @@ def apply_runtime_refresh(
             scheduler_resource_keys(
                 user_unit_dir=user_unit_dir,
                 libexec_dir=libexec_dir,
+                runtime_user_unit_dir=runtime_user_unit_dir,
             )
         )
         - intent_resource_keys
@@ -4947,6 +5021,20 @@ def apply_runtime_refresh(
             "scheduler-resources-unleased",
             "scheduler convergence is absent from the exact runtime-refresh leases",
             details={"resource_keys": missing_scheduler_resources},
+        )
+    forbidden_scheduler_resources = sorted(
+        forbidden_scheduler_parent_resource_keys(
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
+            runtime_user_unit_dir=runtime_user_unit_dir,
+        )
+        & intent_resource_keys
+    )
+    if forbidden_scheduler_resources:
+        raise RuntimeRefreshError(
+            "scheduler-resources-overbroad",
+            "scheduler convergence intent contains broad directory leases",
+            details={"resource_keys": forbidden_scheduler_resources},
         )
     binding = validate_live_lease_binding(
         intent, lease_binding, resource_db=resource_db, now=current
@@ -5058,6 +5146,7 @@ def apply_runtime_refresh(
             bin_dir=bin_dir,
             user_unit_dir=user_unit_dir,
             libexec_dir=libexec_dir,
+            runtime_user_unit_dir=runtime_user_unit_dir,
             approval_intent=intent_path,
             allowed_launcher_paths=allowed_launcher_paths,
         )
@@ -5198,6 +5287,9 @@ def parser() -> argparse.ArgumentParser:
     intent.add_argument("--candidate", required=True, type=Path)
     intent.add_argument("--prefix", default="~/.local/share/bureau", type=Path)
     intent.add_argument("--bin-dir", default="~/.local/bin", type=Path)
+    intent.add_argument("--user-unit-dir", default=DEFAULT_USER_SYSTEMD_UNIT_ROOT, type=Path)
+    intent.add_argument("--libexec-dir", default=DEFAULT_RUNTIME_LIBEXEC_ROOT, type=Path)
+    intent.add_argument("--runtime-user-unit-dir", type=Path)
     intent.add_argument("--remote-url", default=DEFAULT_REMOTE_URL)
     intent.add_argument("--authorized-by", required=True)
     intent.add_argument("--authorization", required=True)
@@ -5266,6 +5358,13 @@ def main(argv: list[str] | None = None) -> int:
                 state_root=state_root,
                 prefix=_resolved(args.prefix),
                 bin_dir=_resolved(args.bin_dir),
+                user_unit_dir=_resolved(args.user_unit_dir),
+                libexec_dir=_resolved(args.libexec_dir),
+                runtime_user_unit_dir=(
+                    _resolved(args.runtime_user_unit_dir)
+                    if args.runtime_user_unit_dir is not None
+                    else default_runtime_user_unit_dir()
+                ),
                 remote_url=args.remote_url,
                 authorized_by=args.authorized_by,
                 authorization=args.authorization,

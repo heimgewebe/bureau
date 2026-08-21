@@ -289,6 +289,7 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--bin-dir", default="~/.local/bin")
     value.add_argument("--user-unit-dir", default="~/.config/systemd/user")
     value.add_argument("--libexec-dir", default="~/.local/libexec")
+    value.add_argument("--runtime-user-unit-dir")
     value.add_argument("--converge-user-systemd", action="store_true")
     value.add_argument("--approval-intent")
     value.add_argument(
@@ -608,6 +609,11 @@ def main(argv: list[str] | None = None) -> int:
     bin_dir = Path(args.bin_dir).expanduser().resolve()
     user_unit_dir = Path(args.user_unit_dir).expanduser().resolve()
     libexec_dir = Path(args.libexec_dir).expanduser().resolve()
+    configured_runtime_user_unit_dir = (
+        Path(args.runtime_user_unit_dir).expanduser().resolve()
+        if args.runtime_user_unit_dir
+        else None
+    )
     top = Path(git(source, "rev-parse", "--show-toplevel")).resolve()
     if top != source:
         raise SystemExit(f"source must be repository root: {top}")
@@ -625,17 +631,24 @@ def main(argv: list[str] | None = None) -> int:
         RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD,
         RuntimeRefreshError,
         converge_user_scheduler,
+        default_runtime_user_unit_dir,
+        forbidden_scheduler_parent_resource_keys,
         read_json,
         scheduler_resource_keys,
         stable_launcher_bytes,
         validate_legacy_runtime_refresh_bootstrap,
         validate_runtime_approval_intent,
+        validate_runtime_user_unit_dir,
         validate_scheduler_runtime_layout,
     )
 
+    runtime_user_unit_dir = configured_runtime_user_unit_dir
+
     if args.converge_user_systemd:
         try:
+            runtime_user_unit_dir = runtime_user_unit_dir or default_runtime_user_unit_dir()
             validate_scheduler_runtime_layout(prefix=prefix, bin_dir=bin_dir)
+            validate_runtime_user_unit_dir(runtime_user_unit_dir)
         except RuntimeRefreshError as exc:
             print(
                 json.dumps(
@@ -676,16 +689,19 @@ def main(argv: list[str] | None = None) -> int:
             scheduler_resource_keys(
                 user_unit_dir=user_unit_dir,
                 libexec_dir=libexec_dir,
+                runtime_user_unit_dir=runtime_user_unit_dir,
             )
         )
         intent_resource_keys = approval_intent.get("required_resource_keys")
-        forbidden_scheduler_keys = {
-            f"path:{user_unit_dir}",
-            f"path:{libexec_dir}",
-        }
+        forbidden_scheduler_keys = forbidden_scheduler_parent_resource_keys(
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
+            runtime_user_unit_dir=runtime_user_unit_dir,
+        )
         if (
             approval_intent.get("user_unit_dir") != str(user_unit_dir)
             or approval_intent.get("libexec_dir") != str(libexec_dir)
+            or approval_intent.get("runtime_user_unit_dir") != str(runtime_user_unit_dir)
             or not isinstance(intent_resource_keys, list)
             or not all(isinstance(item, str) for item in intent_resource_keys)
             or not expected_scheduler_keys.issubset(set(intent_resource_keys))

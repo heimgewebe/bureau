@@ -1491,11 +1491,13 @@ def test_observe_blocks_ambiguous_pr_and_main_drift(tmp_path: Path) -> None:
 
 def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path) -> None:
     observed, _, intent, intent_path = prepare_candidate_intent(tmp_path)
+    runtime_user_unit_dir = refresh.default_runtime_user_unit_dir()
 
     assert intent_path.is_file()
     assert intent["target_sha256"] == observed["target_sha256"]
     assert intent["expected_deployed_source_commit"] == DEPLOYED
     assert intent["required_resource_keys"] == sorted(intent["required_resource_keys"])
+    assert intent["runtime_user_unit_dir"] == str(runtime_user_unit_dir)
     assert f"path:{tmp_path.resolve() / 'bin/bureau'}" in intent["required_resource_keys"]
     assert (
         f"path:{tmp_path.resolve() / 'bin/bureau-status-capsule'}"
@@ -1514,8 +1516,22 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
             f"path:{tmp_path.resolve() / f'libexec/{name}'}"
             in intent["required_resource_keys"]
         )
+        assert (
+            f"path:{tmp_path.resolve() / f'systemd/user/timers.target.wants/{name}.timer'}"
+            in intent["required_resource_keys"]
+        )
+        assert (
+            f"path:{runtime_user_unit_dir / f'timers.target.wants/{name}.timer'}"
+            in intent["required_resource_keys"]
+        )
         assert f"service:{name}.service" in intent["required_resource_keys"]
         assert f"service:{name}.timer" in intent["required_resource_keys"]
+    assert {
+        f"path:{tmp_path.resolve() / 'systemd/user'}",
+        f"path:{tmp_path.resolve() / 'systemd/user/timers.target.wants'}",
+        f"path:{runtime_user_unit_dir}",
+        f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
+    }.isdisjoint(intent["required_resource_keys"])
     assert intent["runtime_approval"]["allowed"] is True
     assert intent["runtime_approval"]["required_level"] == "break_glass"
     assert intent["runtime_approval"]["expected_reference"] == observed["target_sha256"]
@@ -1548,6 +1564,79 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
             authorization="",
             now=NOW,
         )
+
+
+def test_scheduler_resource_keys_lease_exact_persistent_and_runtime_wants_links() -> None:
+    user_unit_dir = Path("/test/home/.config/systemd/user")
+    runtime_user_unit_dir = Path("/run/user/1234/systemd/user")
+    libexec_dir = Path("/test/home/.local/libexec")
+
+    keys = refresh.scheduler_resource_keys(
+        user_unit_dir=user_unit_dir,
+        libexec_dir=libexec_dir,
+        runtime_user_unit_dir=runtime_user_unit_dir,
+    )
+
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        assert f"path:{user_unit_dir / f'{name}.service'}" in keys
+        assert f"path:{user_unit_dir / f'{name}.timer'}" in keys
+        assert f"path:{libexec_dir / name}" in keys
+        assert f"path:{user_unit_dir / f'timers.target.wants/{name}.timer'}" in keys
+        assert f"path:{runtime_user_unit_dir / f'timers.target.wants/{name}.timer'}" in keys
+    assert {
+        f"path:{user_unit_dir}",
+        f"path:{libexec_dir}",
+        f"path:{runtime_user_unit_dir}",
+        f"path:{user_unit_dir / 'timers.target.wants'}",
+        f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
+    }.isdisjoint(keys)
+    assert len([key for key in keys if key.startswith("path:")]) == 30
+
+
+def test_runtime_user_unit_dir_default_is_xdg_bound_and_home_independent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path / "unrelated-home"))
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
+    assert refresh.default_runtime_user_unit_dir() == (
+        Path("/run/user") / str(os.getuid()) / "systemd/user"
+    )
+
+    runtime_root = (tmp_path / "xdg-runtime").resolve()
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
+    assert refresh.default_runtime_user_unit_dir() == runtime_root / "systemd/user"
+
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "relative-runtime")
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.default_runtime_user_unit_dir()
+    assert caught.value.code == "runtime-dir-invalid"
+
+
+def test_apply_rejects_runtime_user_unit_dir_drift_before_effects(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "runtime-at-intent"))
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    binding, resource_db = lease_for(tmp_path / "runtime-path-leases", intent)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "runtime-at-apply"))
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("observer must not run after runtime path drift"),
+            source_preparer=lambda **_: pytest.fail("source effect must not run"),
+            installer=lambda **_: pytest.fail("installer effect must not run"),
+        )
+
+    assert caught.value.code == "runtime-user-unit-dir-drift"
+    assert not (Path(intent["state_root"]) / "attempts").exists()
 
 
 def test_prepare_uses_authoritative_state_store_over_stale_registry_snapshot(
@@ -3598,7 +3687,11 @@ def scheduler_installer_approval(
     *,
     user_unit_dir: Path,
     libexec_dir: Path,
+    runtime_user_unit_dir: Path | None = None,
 ) -> Path:
+    bound_runtime_user_unit_dir = (
+        runtime_user_unit_dir or refresh.default_runtime_user_unit_dir()
+    )
     path = write_runtime_approval_intent(
         source,
         tmp_path,
@@ -3608,9 +3701,11 @@ def scheduler_installer_approval(
     intent.pop("intent_sha256")
     intent["user_unit_dir"] = str(user_unit_dir)
     intent["libexec_dir"] = str(libexec_dir)
+    intent["runtime_user_unit_dir"] = str(bound_runtime_user_unit_dir)
     intent["required_resource_keys"] = refresh.scheduler_resource_keys(
         user_unit_dir=user_unit_dir,
         libexec_dir=libexec_dir,
+        runtime_user_unit_dir=bound_runtime_user_unit_dir,
     )
     path.write_bytes(
         refresh.canonical_bytes(refresh.bind_digest(intent, "intent_sha256"))
@@ -3646,11 +3741,105 @@ def test_run_installer_rejects_noncanonical_scheduler_runtime_layout_before_run(
             bin_dir=bin_dir,
             user_unit_dir=tmp_path / "systemd/user",
             libexec_dir=tmp_path / "libexec",
+            runtime_user_unit_dir=refresh.default_runtime_user_unit_dir(),
             approval_intent=tmp_path / "approval.json",
         )
 
     assert caught.value.code == "scheduler-runtime-layout-noncanonical"
     assert caught.value.details["mismatches"] == [noncanonical]
+
+
+def test_run_installer_rejects_runtime_user_unit_dir_drift_before_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "current-runtime"))
+    monkeypatch.setattr(
+        refresh,
+        "_run",
+        lambda *_args, **_kwargs: pytest.fail("installer process must not be invoked"),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.run_installer(
+            source=tmp_path / "source",
+            prefix=(home / ".local/share/bureau").resolve(),
+            bin_dir=(home / ".local/bin").resolve(),
+            user_unit_dir=tmp_path / "systemd/user",
+            libexec_dir=tmp_path / "libexec",
+            runtime_user_unit_dir=(tmp_path / "intent-runtime/systemd/user").resolve(),
+            approval_intent=tmp_path / "approval.json",
+        )
+
+    assert caught.value.code == "runtime-user-unit-dir-drift"
+
+
+def test_real_installer_rejects_runtime_user_unit_dir_drift_before_effects(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    intent_runtime_root = (tmp_path / "intent-runtime").resolve()
+    runtime_user_unit_dir = intent_runtime_root / "systemd/user"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(intent_runtime_root))
+    unit_root = (tmp_path / "custom-systemd/user").resolve()
+    libexec_root = (tmp_path / "custom-libexec").resolve()
+    approval_path = scheduler_installer_approval(
+        source,
+        tmp_path,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=runtime_user_unit_dir,
+    )
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "drifted-runtime"))
+    monkeypatch.setattr(
+        installer,
+        "atomic_write",
+        lambda *_args, **_kwargs: pytest.fail("installer artifacts must not be written"),
+    )
+    real_subprocess_run = subprocess.run
+
+    def reject_runtime_commands(
+        argv: list[str], *args: Any, **kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] in {"systemctl", "systemd-analyze"}:
+            pytest.fail("systemctl and systemd-analyze must not be invoked")
+        return real_subprocess_run(argv, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", reject_runtime_commands)
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(home / ".local/share/bureau"),
+            "--bin-dir",
+            str(home / ".local/bin"),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--runtime-user-unit-dir",
+            str(runtime_user_unit_dir),
+            "--approval-intent",
+            str(approval_path),
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip())["error"]
+    assert error["code"] == "runtime-user-unit-dir-drift"
+    assert not (home / ".local").exists()
+    assert not unit_root.exists()
+    assert not libexec_root.exists()
 
 
 @pytest.mark.parametrize("noncanonical", ["prefix", "bin_dir"])
@@ -4144,6 +4333,7 @@ def test_real_non_systemd_installer_supports_custom_layout(tmp_path: Path) -> No
         check=False,
         text=True,
         capture_output=True,
+        env={**os.environ, "XDG_RUNTIME_DIR": "relative-runtime"},
     )
     assert install.returncode == 0, install.stderr
     receipt = json.loads(install.stdout.strip().splitlines()[-1])

@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2132-T120-REPOSKOP-20260821",
+  "title": "Single-Use Bureau-Runtime-Refresh nach PR #2132 für T120 und Reposkop #107",
+  "state": "ready",
+  "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst geschützt gemergt wurde. Zweck ist ausschließlich, die in PR #2132 gemergte Typed-Acceptance-Reparatur von GRABOWSKI-OPERATOR-SURFACE-V1-T120 in die immutable Bureau-Runtime zu übernehmen, damit T120 anschließend über den normalen Claim-Pfad ausgeführt werden kann und der bereits grüne Reposkop-PR #107 seinen strikten Base-Update-Guard erhalten kann. Diese Authority erteilt genau einen Runtime-Effekt und keine T120-Implementierungs-, GitHub-Ruleset-, Queue-, Claim-, Dispatch-, Supply-, Reposkop-Code- oder Fremdarbeitsautorität.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound Runtime-Konvergenz ausschließlich nach dem geschützten T120-TaskSpec-Repair in PR #2132. Die aktuelle explizite Nutzeranweisung @grabowski umsetzen autorisiert die vorgesehene Ausführung; vor Wirkung bleiben Fresh-Main-, CI-, Target-, Intent-, Lease-, Single-Use- und Readback-Gates bindend."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-current-main",
+      "assertion": "Unmittelbar vor dem neuen Intent wird GitHub-main frisch beobachtet. Das Refresh-Ziel enthält den geschützten Merge dieser Authority, den Merge von PR #2132 mit der Typed-Acceptance-Reparatur für GRABOWSKI-OPERATOR-SURFACE-V1-T120 sowie alle bis dahin legitimen Main-Merges; die für den exakten Zielstand erforderlichen Checks sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t120-reposkop-runtime-refresh:fresh-main"
+      }
+    },
+    {
+      "id": "single-runtime-effect",
+      "assertion": "Diese Authority autorisiert höchstens einen neuen Runtime-Effekt. Bei failed, unclear, timeout oder Transport-Ambiguität erfolgt kein Blind-Retry; zuerst werden Result, Attempt, Manifest, Registry-Snapshot, Launcher, Authority-Consumption und Runtime readback-klassifiziert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t120-reposkop-runtime-refresh:single-effect"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach erfolgreichem Refresh binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; bureau runtime-identity ist integrity-valid und die Runtime-TaskSpec GRABOWSKI-OPERATOR-SURFACE-V1-T120 enthält für alle acht Acceptance-Kriterien den aktuellen typisierten Evidence-Vertrag.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t120-reposkop-runtime-refresh:immutable-readback"
+      }
+    },
+    {
+      "id": "runtime-only-scope",
+      "assertion": "Die Authority erteilt keine T120-Implementierungswirkung, keine GitHub-Ruleset-, Reposkop-Code-, Queue-, Claim-, Dispatch-, Supply-, Fremdarbeits- oder allgemeine Repository-Autorität. Nach eindeutig erfolgreichem Runtime-Readback wird sie konsumiert und terminal geschlossen und nie wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:t120-reposkop-runtime-refresh:scope-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Der aktuell integrity-valid installierte Bureau-Runtime-Stand 92feef913b2c354cfd9da06bae8e3ef6cdaa2394 bleibt bis zu einem eindeutigen neuen Install- und Readback-Receipt Deployment-Wahrheit. Bei unklarem Ergebnis wird nicht blind wiederholt; vorhandene Attempt-, Backup-, Manifest-, Registry-, Intent-, Authority- und Lease-Evidenz wird zuerst klassifiziert."
+  },
+  "metadata": {
+    "source": "Candidate 9357 / candidate-168db9b444c1e6270d261c59: fresh single-use Bureau runtime convergence required after merged PR #2132 so T120 can be claimed before the Reposkop #107 base-update-guard rollout.",
+    "candidate_event_id": 9357,
+    "candidate_id": "candidate-168db9b444c1e6270d261c59",
+    "t120_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T120",
+    "reposkop_pull_request": 107,
+    "main_at_registration": "fbe3c1cf71cacf810d131ed26f8d29ccba63282c",
+    "deployed_source_at_registration": "92feef913b2c354cfd9da06bae8e3ef6cdaa2394",
+    "source_observation_sha256": "2be58bf382f113ce36fdb020f3e681c6b10062429a66a846d53f38b4ffa486d7",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse any consumed runtime authority",
+      "permission to bypass stale-runtime or bootstrap gates",
+      "T120 implementation or GitHub ruleset mutation authority",
+      "queue, claim, dispatch or supply-task publication authority",
+      "Reposkop code or merge authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one runtime-refresh Authority TaskSpec",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed Bureau runtime is intentionally stale relative to current main and cannot normally publish a newer registry-root authority. The authority must therefore enter through one protected TaskSpec file and be adopted missing-only after merge.",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ]
+    }
+  }
+}

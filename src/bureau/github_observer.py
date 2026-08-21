@@ -13,6 +13,7 @@ import json
 import os
 import re
 import subprocess
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ from . import legacy
 from .v2 import (
     OpenPullRequestObservationError,
     _github_repository_for_path,
+    _read_only_overlays,
     _read_only_state_rows,
     _runtime_state_db_path,
 )
@@ -438,6 +440,59 @@ def _has_follow_up_semantics(task: Any) -> bool:
     return any(value not in (None, "", [], {}, False) for value in candidates)
 
 
+def _authoritative_binding_registry(
+    registry: legacy.Registry | None,
+    state_path: Path,
+) -> tuple[legacy.Registry | None, list[str]]:
+    """Overlay legacy Git contracts with validated StateStore task authority."""
+    if registry is None or not state_path.exists():
+        return registry, []
+    state = _read_only_state_rows(state_path, registry=registry)
+    if not state.get("available"):
+        raise OpenPullRequestObservationError(
+            "authoritative StateStore task projection unavailable: "
+            + str(state.get("error") or "state-store-unavailable")
+        )
+    integrity = state.get("integrity")
+    if integrity != "ok":
+        raise OpenPullRequestObservationError(
+            "authoritative StateStore task projection unavailable: "
+            f"integrity check failed: {integrity!r}"
+        )
+    foreign_key_errors = state.get("foreign_key_errors")
+    if not isinstance(foreign_key_errors, list) or foreign_key_errors:
+        raise OpenPullRequestObservationError(
+            "authoritative StateStore task projection unavailable: "
+            "foreign key check failed"
+        )
+    authority_error = state.get("task_authority_error")
+    if isinstance(authority_error, str) and authority_error:
+        raise OpenPullRequestObservationError(
+            f"authoritative StateStore task projection unavailable: {authority_error}"
+        )
+    projected = state.get("operational_registry")
+    authority = state.get("task_authority")
+    if projected is None or not isinstance(authority, dict):
+        raise OpenPullRequestObservationError(
+            "authoritative StateStore task projection unavailable: projection missing"
+        )
+    overlays = _read_only_overlays(
+        projected,
+        state.get("rows", {}).get("task_status", []),
+    )
+    projected.tasks = {
+        task_id: replace(task, state=overlays.get(task_id, task.state))
+        for task_id, task in projected.tasks.items()
+    }
+    kind = authority.get("kind")
+    note = (
+        f"task-authority:{kind}"
+        if isinstance(kind, str) and kind
+        else "task-authority:state-store"
+    )
+    return projected, [note]
+
+
 def observe_pull_requests(
     root: Path,
     *,
@@ -469,9 +524,16 @@ def observe_pull_requests(
         if not fetched["available"]:
             return _blocked_observation(repository, fetched["error"], observed_at)
         pull_requests = fetched["pull_requests"]
-    known_task_ids = set(registry.tasks) if registry is not None else set()
     state_path = _runtime_state_db_path(state_db, state_root)
     runs_by_id, runs_by_branch, state_notes = _run_index(state_path)
+    try:
+        binding_registry, authority_notes = _authoritative_binding_registry(
+            registry, state_path
+        )
+    except OpenPullRequestObservationError as exc:
+        return _blocked_observation(repository, str(exc), observed_at)
+    state_notes.extend(authority_notes)
+    known_task_ids = set(binding_registry.tasks) if binding_registry is not None else set()
     observations: list[dict[str, Any]] = []
     for pull_request in pull_requests:
         number = pull_request.get("number")
@@ -513,7 +575,9 @@ def observe_pull_requests(
             }
         )
     _mark_shared_task_ambiguity(observations)
-    hard_findings = _binding_hard_findings(observations, registry=registry, repository=repository)
+    hard_findings = _binding_hard_findings(
+        observations, registry=binding_registry, repository=repository
+    )
     return {
         "schema_version": GITHUB_OBSERVATION_SCHEMA_VERSION,
         "source": "github",

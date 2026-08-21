@@ -90,6 +90,15 @@ SYSTEMD_SERVICE_PROPERTIES = (
     "FragmentPath",
     "Result",
 )
+SCHEDULER_RECONVERGEABLE_READBACK_CODES = frozenset(
+    {
+        "scheduler-readback-fragment-invalid",
+        "scheduler-readback-fragment-mismatch",
+        "scheduler-readback-load-state-invalid",
+        "scheduler-required-timer-invalid",
+        "scheduler-timer-intent-drift",
+    }
+)
 RUNTIME_AUTHORITY_SCHEMA_VERSION = 1
 RUNTIME_AUTHORITY_MODE = "single-use-target-bound"
 RUNTIME_AUTHORITY_TARGET_BINDING = "candidate.target_sha256"
@@ -618,6 +627,7 @@ def observe_runtime_refresh(
     slo_seconds: int = DEFAULT_SLO_SECONDS,
     now: datetime | None = None,
     github: Callable[[list[str]], Any] = gh_preflight_json,
+    scheduler_reader: Callable[..., dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     observed_at = now or utc_now()
     reasons: list[str] = []
@@ -724,8 +734,35 @@ def observe_runtime_refresh(
     if merged_at:
         age_seconds = max(0, int((observed_at - parse_time(merged_at)).total_seconds()))
 
+    scheduler_actionable = False
+    scheduler_blocked = False
     if deployed == main_commit:
-        status = "already_current"
+        if "scheduler" not in manifest:
+            reasons.append("scheduler-receipt-missing")
+            scheduler_actionable = True
+        else:
+            scheduler_receipt = manifest.get("scheduler")
+            if not isinstance(scheduler_receipt, dict):
+                reasons.append("scheduler-receipt-invalid")
+                scheduler_blocked = True
+            else:
+                reader = scheduler_reader or readback_user_scheduler
+                try:
+                    reader(scheduler_receipt, expected_commit=main_commit)
+                except RuntimeRefreshError as exc:
+                    reasons.append(exc.code)
+                    if exc.code in SCHEDULER_RECONVERGEABLE_READBACK_CODES:
+                        scheduler_actionable = True
+                    else:
+                        scheduler_blocked = True
+
+    if deployed == main_commit:
+        if scheduler_blocked:
+            status = "blocked"
+        elif scheduler_actionable:
+            status = "alert"
+        else:
+            status = "already_current"
     elif reasons:
         status = "blocked"
     elif age_seconds is not None and age_seconds > slo_seconds:
@@ -2925,7 +2962,7 @@ def prepare_intent(
     authority_store: Any | None = None,
 ) -> tuple[dict[str, Any], Path]:
     verify_digest(candidate, "observation_sha256")
-    if candidate.get("status") not in {"candidate", "alert", "already_current"}:
+    if candidate.get("status") not in {"candidate", "alert"}:
         raise RuntimeRefreshError(
             "candidate-not-deployable", f"candidate status is {candidate.get('status')!r}"
         )
@@ -5217,146 +5254,78 @@ def apply_runtime_refresh(
     verify_digest(live, "observation_sha256")
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")
-    source_current = live.get("status") == "already_current"
-    same_source_reconvergence: dict[str, Any] | None = None
-    # Source equality does not prove that the release-bound scheduler effects
-    # exist. Only the manifest receipt plus a fresh live readback can do that.
-    if source_current:
-        current_manifest, current_manifest_sha = load_manifest(manifest_path)
-        if (
-            current_manifest.get("source_commit") != intent["main_commit"]
-            or current_manifest_sha != live.get("deployed_manifest_sha256")
-        ):
-            raise RuntimeRefreshError(
-                "deployed-boundary-drift",
-                "deployed runtime changed after the source-current observation",
-            )
-        scheduler_receipt = current_manifest.get("scheduler")
-        if isinstance(scheduler_receipt, dict):
-            scheduler_binding = {
-                "release_id": current_manifest.get("release_id"),
-                "immutable_release_path": current_manifest.get(
-                    "immutable_release_path"
-                ),
-                "user_unit_dir": str(user_unit_dir),
-                "libexec_dir": str(libexec_dir),
-            }
-            binding_mismatches = sorted(
-                field
-                for field, expected in scheduler_binding.items()
-                if not isinstance(expected, str)
-                or not expected
-                or scheduler_receipt.get(field) != expected
-            )
-            if binding_mismatches:
-                raise RuntimeRefreshError(
-                    "scheduler-receipt-binding-mismatch",
-                    "deployed scheduler receipt is not bound to the immutable "
-                    "release and intent paths",
-                    details={"fields": binding_mismatches},
-                )
-            else:
-                try:
-                    scheduler_readback = readback_user_scheduler(
-                        scheduler_receipt,
-                        expected_commit=intent["main_commit"],
-                    )
-                except RuntimeRefreshError as exc:
-                    reconvergeable_codes = {
-                        "scheduler-readback-fragment-invalid",
-                        "scheduler-readback-fragment-mismatch",
-                        "scheduler-readback-load-state-invalid",
-                        "scheduler-required-timer-invalid",
-                        "scheduler-timer-intent-drift",
-                    }
-                    if exc.code not in reconvergeable_codes:
-                        raise
-                    same_source_reconvergence = exc.as_dict()
-                else:
-                    bound_authority = bind_runtime_refresh_authority(
-                        store=store, intent=intent, now=current
-                    )
-                    started = bind_digest(
-                        {
-                            "schema_version": SCHEMA_VERSION,
-                            "kind": "bureau_runtime_refresh_attempt_start",
-                            "intent_sha256": intent["intent_sha256"],
-                            "target_sha256": intent["target_sha256"],
-                            "main_commit": intent["main_commit"],
-                            "authority_task_spec": bound_authority,
-                            "lease_binding": binding,
-                            "started_at": isoformat(current),
-                            "effect_started": False,
-                        },
-                        "start_sha256",
-                    )
-                    create_only(started_path, canonical_bytes(started))
-                    result = _write_attempt_result(
-                        result_path,
-                        {
-                            "schema_version": SCHEMA_VERSION,
-                            "kind": "bureau_runtime_refresh_result",
-                            "status": "already_current",
-                            "intent_sha256": intent["intent_sha256"],
-                            "target_sha256": intent["target_sha256"],
-                            "main_commit": intent["main_commit"],
-                            "authority_task_spec": bound_authority,
-                            "scheduler": scheduler_readback,
-                            "finished_at": isoformat(current),
-                            "effect_started": False,
-                            "lease_binding": binding,
-                        },
-                    )
-                    consume_runtime_refresh_authority(
-                        store=store, intent=intent, result=result, now=current
-                    )
-                    return result
-        else:
-            same_source_reconvergence = {
-                "code": "scheduler-receipt-missing",
-                "message": "deployed manifest has no scheduler convergence receipt",
-                "details": {},
-            }
-    if not source_current and live.get("status") not in {"candidate", "alert"}:
+    if live.get("status") == "already_current":
+        bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
+        started = bind_digest(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "kind": "bureau_runtime_refresh_attempt_start",
+                "intent_sha256": intent["intent_sha256"],
+                "target_sha256": intent["target_sha256"],
+                "main_commit": intent["main_commit"],
+                "authority_task_spec": bound_authority,
+                "lease_binding": binding,
+                "started_at": isoformat(current),
+                "effect_started": False,
+            },
+            "start_sha256",
+        )
+        create_only(started_path, canonical_bytes(started))
+        result = _write_attempt_result(
+            result_path,
+            {
+                "schema_version": SCHEMA_VERSION,
+                "kind": "bureau_runtime_refresh_result",
+                "status": "already_current",
+                "intent_sha256": intent["intent_sha256"],
+                "target_sha256": intent["target_sha256"],
+                "main_commit": intent["main_commit"],
+                "authority_task_spec": bound_authority,
+                "finished_at": isoformat(current),
+                "effect_started": False,
+                "lease_binding": binding,
+            },
+        )
+        consume_runtime_refresh_authority(store=store, intent=intent, result=result, now=current)
+        return result
+    if live.get("status") not in {"candidate", "alert"}:
         raise RuntimeRefreshError(
             "live-candidate-blocked",
             "live observation is not deployable",
             details={"status": live.get("status"), "reason_codes": live.get("reason_codes")},
         )
-    if not source_current and live.get("target_sha256") != intent.get("target_sha256"):
+    if live.get("target_sha256") != intent.get("target_sha256"):
         raise RuntimeRefreshError(
             "target-drift",
             "live deployment target differs from explicit intent",
             details={"intent": intent.get("target_sha256"), "live": live.get("target_sha256")},
         )
-    if not source_current:
-        current_manifest, current_manifest_sha = load_manifest(manifest_path)
-        if (
-            current_manifest.get("source_commit")
-            != intent["expected_deployed_source_commit"]
-            or current_manifest_sha != intent["expected_manifest_sha256"]
-        ):
-            raise RuntimeRefreshError(
-                "deployed-boundary-drift", "deployed runtime changed after intent"
-            )
+    current_manifest, current_manifest_sha = load_manifest(manifest_path)
+    if (
+        current_manifest.get("source_commit") != intent["expected_deployed_source_commit"]
+        or current_manifest_sha != intent["expected_manifest_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "deployed-boundary-drift", "deployed runtime changed after intent"
+        )
 
     # This CAS is the last authority operation before the attempt ledger and
     # runtime effects. It prevents two targets from racing on one TaskSpec.
     bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
-    started_value: dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
-        "kind": "bureau_runtime_refresh_attempt_start",
-        "intent_sha256": intent["intent_sha256"],
-        "target_sha256": intent["target_sha256"],
-        "main_commit": intent["main_commit"],
-        "authority_task_spec": bound_authority,
-        "lease_binding": binding,
-        "started_at": isoformat(current),
-        "effect_started": False,
-    }
-    if same_source_reconvergence is not None:
-        started_value["same_source_reconvergence"] = same_source_reconvergence
-    started = bind_digest(started_value, "start_sha256")
+    started = bind_digest(
+        {
+            "schema_version": SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound_authority,
+            "lease_binding": binding,
+            "started_at": isoformat(current),
+            "effect_started": False,
+        },
+        "start_sha256",
+    )
     create_only(started_path, canonical_bytes(started))
     effect_started = False
     workspace = Path(intent["workspace"])
@@ -5391,25 +5360,25 @@ def apply_runtime_refresh(
             bin_dir=bin_dir,
             install_receipt=install_receipt,
         )
-        result_value = {
-            "schema_version": SCHEMA_VERSION,
-            "kind": "bureau_runtime_refresh_result",
-            "status": "deployed",
-            "intent_sha256": intent["intent_sha256"],
-            "target_sha256": intent["target_sha256"],
-            "main_commit": intent["main_commit"],
-            "authority_task_spec": bound_authority,
-            "source_identity": source_identity,
-            "install_receipt": install_receipt,
-            "readback": evidence,
-            "lease_binding": binding,
-            "finished_at": isoformat(utc_now()),
-            "effect_started": True,
-            "does_not_establish": ["future_runtime_health", "future_main_stability"],
-        }
-        if same_source_reconvergence is not None:
-            result_value["same_source_reconvergence"] = same_source_reconvergence
-        result = _write_attempt_result(result_path, result_value)
+        result = _write_attempt_result(
+            result_path,
+            {
+                "schema_version": SCHEMA_VERSION,
+                "kind": "bureau_runtime_refresh_result",
+                "status": "deployed",
+                "intent_sha256": intent["intent_sha256"],
+                "target_sha256": intent["target_sha256"],
+                "main_commit": intent["main_commit"],
+                "authority_task_spec": bound_authority,
+                "source_identity": source_identity,
+                "install_receipt": install_receipt,
+                "readback": evidence,
+                "lease_binding": binding,
+                "finished_at": isoformat(utc_now()),
+                "effect_started": True,
+                "does_not_establish": ["future_runtime_health", "future_main_stability"],
+            },
+        )
     except subprocess.TimeoutExpired as exc:
         error = {
             "code": "effect-timeout",
@@ -5427,26 +5396,26 @@ def apply_runtime_refresh(
         consume_runtime_refresh_authority(store=store, intent=intent, result=result, now=current)
         shutil.rmtree(workspace)
         return result
-    result_value = {
-        "schema_version": SCHEMA_VERSION,
-        "kind": "bureau_runtime_refresh_result",
-        "status": status,
-        "intent_sha256": intent["intent_sha256"],
-        "target_sha256": intent["target_sha256"],
-        "main_commit": intent["main_commit"],
-        "authority_task_spec": bound_authority,
-        "error": error,
-        "lease_binding": binding,
-        "finished_at": isoformat(utc_now()),
-        "effect_started": effect_started,
-        "workspace_preserved": os.path.lexists(workspace),
-        "does_not_establish": ["safe_retry", "deployment_outcome"]
-        if status == "unclear"
-        else ["future_success"],
-    }
-    if same_source_reconvergence is not None:
-        result_value["same_source_reconvergence"] = same_source_reconvergence
-    return _write_attempt_result(result_path, result_value)
+    return _write_attempt_result(
+        result_path,
+        {
+            "schema_version": SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": status,
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound_authority,
+            "error": error,
+            "lease_binding": binding,
+            "finished_at": isoformat(utc_now()),
+            "effect_started": effect_started,
+            "workspace_preserved": os.path.lexists(workspace),
+            "does_not_establish": ["safe_retry", "deployment_outcome"]
+            if status == "unclear"
+            else ["future_success"],
+        },
+    )
 
 
 def status_report(state_root: Path, manifest_path: Path) -> dict[str, Any]:

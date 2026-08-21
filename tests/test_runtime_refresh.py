@@ -606,26 +606,6 @@ def write_manifest(path: Path, source_commit: str = DEPLOYED, **extra: Any) -> d
     return value
 
 
-def source_current_observation(
-    observed: dict[str, Any], manifest_path: Path
-) -> dict[str, Any]:
-    live = dict(observed)
-    live.update(
-        {
-            "status": "already_current",
-            "deployed_source_commit": MAIN,
-            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
-            "main_commit": MAIN,
-            "lag_commits": 0,
-            "reason_codes": [],
-        }
-    )
-    live["target_sha256"] = refresh.sha256_bytes(
-        refresh.canonical_bytes(refresh._target_payload(live))
-    )
-    return refresh.bind_digest(live, "observation_sha256")
-
-
 def green_pr_detail(main_commit: str = MAIN) -> dict[str, Any]:
     return {
         "number": 42,
@@ -1442,23 +1422,35 @@ def add_authority_run_receipt(
     return run_id, receipt
 
 
-def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> None:
+def test_observe_reports_already_current_only_when_scheduler_converged(
+    tmp_path: Path,
+) -> None:
     manifest = tmp_path / "deployment-manifest.json"
-    write_manifest(manifest, MAIN)
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
     calls: list[list[str]] = []
+    scheduler_calls: list[tuple[dict[str, Any], str]] = []
 
     def github(arguments: list[str]) -> Any:
         calls.append(arguments)
         return {"sha": MAIN}
+
+    def scheduler_reader(
+        receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        scheduler_calls.append((receipt, expected_commit))
+        return {"authoritative": True}
 
     result = refresh.observe_runtime_refresh(
         repository="heimgewebe/bureau",
         manifest_path=manifest,
         now=NOW,
         github=github,
+        scheduler_reader=scheduler_reader,
     )
 
     assert result["status"] == "already_current"
+    assert result["reason_codes"] == []
     assert result["lag_commits"] == 0
     assert result["recovery_action"] == {
         "action": "none",
@@ -1466,7 +1458,94 @@ def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> No
         "requires_authorization": False,
     }
     assert calls == [["api", "repos/heimgewebe/bureau/commits/main"]]
+    assert scheduler_calls == [(scheduler_receipt, MAIN)]
     refresh.verify_digest(result, "observation_sha256")
+
+
+def test_observe_source_current_missing_scheduler_requires_prepare_intent(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    write_manifest(manifest, MAIN)
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+    )
+
+    assert result["status"] == "alert"
+    assert result["reason_codes"] == ["scheduler-receipt-missing"]
+    assert result["recovery_action"] == {
+        "action": "prepare-intent",
+        "eligible": True,
+        "requires_authorization": True,
+    }
+
+
+def test_observe_source_current_live_scheduler_drift_requires_prepare_intent(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-readback-load-state-invalid",
+            "task-supply timer is not loaded",
+        )
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=scheduler_reader,
+    )
+
+    assert result["status"] == "alert"
+    assert result["reason_codes"] == ["scheduler-readback-load-state-invalid"]
+    assert result["recovery_action"]["action"] == "prepare-intent"
+    assert result["recovery_action"]["eligible"] is True
+
+
+def test_observe_source_current_invalid_scheduler_evidence_blocks(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-receipt-invalid",
+            "scheduler receipt is malformed",
+        )
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=scheduler_reader,
+    )
+
+    assert result["status"] == "blocked"
+    assert result["reason_codes"] == ["scheduler-receipt-invalid"]
+    assert result["recovery_action"] == {
+        "action": "resolve-reason-codes",
+        "eligible": False,
+        "reason_codes": ["scheduler-receipt-invalid"],
+        "requires_authorization": False,
+    }
 
 
 def test_observe_binds_exact_merged_main_and_green_ci(tmp_path: Path) -> None:
@@ -2636,38 +2715,6 @@ def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) ->
     assert not (Path(intent["state_root"]) / "attempts" / intent["target_sha256"]).exists()
 
 
-def test_prepare_intent_accepts_source_current_for_effect_reconvergence(
-    tmp_path: Path,
-) -> None:
-    observed, manifest_path = candidate(tmp_path)
-    write_manifest(manifest_path, MAIN)
-    source_current = source_current_observation(observed, manifest_path)
-    authority_store = seed_authority_store(
-        tmp_path / "source-current-bureau-state", "BUR-2026-003-T009"
-    )
-
-    intent, intent_path = refresh.prepare_intent(
-        candidate=source_current,
-        state_root=(tmp_path / "source-current-state").resolve(),
-        prefix=(tmp_path / "source-current-prefix").resolve(),
-        bin_dir=(tmp_path / "source-current-bin").resolve(),
-        remote_url="file:///tmp/bureau.git",
-        authorized_by="chatgpt",
-        authorization="Explicit same-source scheduler reconvergence approval.",
-        break_glass=True,
-        approval_reference=source_current["target_sha256"],
-        approval_task_id="BUR-2026-003-T009",
-        now=NOW,
-        authority_store=authority_store,
-    )
-
-    assert intent["main_commit"] == MAIN
-    assert intent["expected_deployed_source_commit"] == MAIN
-    assert intent["target_sha256"] == source_current["target_sha256"]
-    assert intent["observation_sha256"] == source_current["observation_sha256"]
-    assert intent_path.is_file()
-
-
 def test_prepare_intent_rejects_tampered_or_blocked_candidate(tmp_path: Path) -> None:
     observed, _ = candidate(tmp_path)
     observed["main_commit"] = "9" * 40
@@ -3447,279 +3494,20 @@ def test_apply_existing_start_without_result_is_unclear_without_execution(
     assert executed is False
 
 
-def test_apply_source_current_missing_scheduler_receipt_runs_installer(
-    tmp_path: Path,
-) -> None:
+def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "main_commit": MAIN,
+            "reason_codes": [],
+        }
+    )
+    live = refresh.bind_digest(live, "observation_sha256")
     write_manifest(manifest_path, MAIN)
-    live = source_current_observation(observed, manifest_path)
-    calls = {"source": 0, "install": 0, "readback": 0}
 
-    def source_preparer(**kwargs: Any) -> dict[str, Any]:
-        calls["source"] += 1
-        kwargs["workspace"].mkdir(parents=True)
-        return {"head": MAIN, "root": str(kwargs["workspace"])}
-
-    def installer(**kwargs: Any) -> dict[str, Any]:
-        calls["install"] += 1
-        assert kwargs["source"] == Path(intent["workspace"])
-        assert kwargs["approval_intent"] == intent_path
-        return {"manifest_sha256": "a" * 64, "scheduler": {"authoritative": True}}
-
-    def readback(**kwargs: Any) -> dict[str, Any]:
-        calls["readback"] += 1
-        assert kwargs["expected_commit"] == MAIN
-        return {
-            "source_commit": MAIN,
-            "check_valid": True,
-            "runtime_identity_valid": True,
-            "scheduler": {"authoritative": True},
-        }
-
-    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
-    result = refresh.apply_runtime_refresh(
-        intent_path=intent_path,
-        lease_binding=lease_binding,
-        manifest_path=manifest_path,
-        state_root=Path(intent["state_root"]),
-        resource_db=resource_db,
-        now=NOW,
-        observer=lambda **_: live,
-        source_preparer=source_preparer,
-        installer=installer,
-        readback=readback,
-    )
-
-    assert result["status"] == "deployed"
-    assert result["effect_started"] is True
-    assert calls == {"source": 1, "install": 1, "readback": 1}
-    assert result["same_source_reconvergence"]["code"] == "scheduler-receipt-missing"
-
-
-def test_apply_source_current_invalid_scheduler_receipt_fails_closed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
-    release_id = "immutable-release"
-    release_path = tmp_path / "prefix/releases" / release_id
-    scheduler_receipt = {
-        "kind": "bureau_runtime_scheduler_readback",
-        "source_commit": MAIN,
-        "release_id": release_id,
-        "immutable_release_path": str(release_path),
-        "user_unit_dir": intent["user_unit_dir"],
-        "libexec_dir": intent["libexec_dir"],
-        "authoritative": True,
-    }
-    write_manifest(
-        manifest_path,
-        MAIN,
-        release_id=release_id,
-        immutable_release_path=str(release_path),
-        scheduler=scheduler_receipt,
-    )
-    live = source_current_observation(observed, manifest_path)
-
-    def invalid_receipt(
-        _receipt: dict[str, Any], *, expected_commit: str
-    ) -> dict[str, Any]:
-        assert expected_commit == MAIN
-        raise refresh.RuntimeRefreshError(
-            "scheduler-receipt-invalid",
-            "installer scheduler receipt lacks timer preimage",
-        )
-
-    monkeypatch.setattr(refresh, "readback_user_scheduler", invalid_receipt)
-    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
-    with pytest.raises(refresh.RuntimeRefreshError) as caught:
-        refresh.apply_runtime_refresh(
-            intent_path=intent_path,
-            lease_binding=lease_binding,
-            manifest_path=manifest_path,
-            state_root=Path(intent["state_root"]),
-            resource_db=resource_db,
-            now=NOW,
-            observer=lambda **_: live,
-            source_preparer=lambda **_: pytest.fail("invalid receipt must not prepare source"),
-            installer=lambda **_: pytest.fail("invalid receipt must not install"),
-        )
-
-    assert caught.value.code == "scheduler-receipt-invalid"
-    attempt_dir = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
-    assert not (attempt_dir / "started.json").exists()
-    assert not (attempt_dir / "result.json").exists()
-
-
-def test_apply_source_current_scheduler_binding_mismatch_fails_closed(
-    tmp_path: Path,
-) -> None:
-    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
-    release_id = "immutable-release"
-    release_path = tmp_path / "prefix/releases" / release_id
-    scheduler_receipt = {
-        "kind": "bureau_runtime_scheduler_readback",
-        "source_commit": MAIN,
-        "release_id": "wrong-release",
-        "immutable_release_path": str(release_path),
-        "user_unit_dir": intent["user_unit_dir"],
-        "libexec_dir": intent["libexec_dir"],
-        "authoritative": True,
-    }
-    write_manifest(
-        manifest_path,
-        MAIN,
-        release_id=release_id,
-        immutable_release_path=str(release_path),
-        scheduler=scheduler_receipt,
-    )
-    live = source_current_observation(observed, manifest_path)
-    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
-
-    with pytest.raises(refresh.RuntimeRefreshError) as caught:
-        refresh.apply_runtime_refresh(
-            intent_path=intent_path,
-            lease_binding=lease_binding,
-            manifest_path=manifest_path,
-            state_root=Path(intent["state_root"]),
-            resource_db=resource_db,
-            now=NOW,
-            observer=lambda **_: live,
-            source_preparer=lambda **_: pytest.fail("binding mismatch must not prepare source"),
-            installer=lambda **_: pytest.fail("binding mismatch must not install"),
-        )
-
-    assert caught.value.code == "scheduler-receipt-binding-mismatch"
-
-
-def test_apply_source_current_missing_systemd_runs_installer(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
-    release_id = "immutable-release"
-    release_path = tmp_path / "prefix/releases" / release_id
-    scheduler_receipt = {
-        "kind": "bureau_runtime_scheduler_readback",
-        "source_commit": MAIN,
-        "release_id": release_id,
-        "immutable_release_path": str(release_path),
-        "user_unit_dir": intent["user_unit_dir"],
-        "libexec_dir": intent["libexec_dir"],
-        "authoritative": True,
-    }
-    write_manifest(
-        manifest_path,
-        MAIN,
-        release_id=release_id,
-        immutable_release_path=str(release_path),
-        scheduler=scheduler_receipt,
-    )
-    live = source_current_observation(observed, manifest_path)
-    calls = {"source": 0, "install": 0, "readback": 0}
-
-    def missing_systemd(
-        receipt: dict[str, Any], *, expected_commit: str
-    ) -> dict[str, Any]:
-        assert receipt == scheduler_receipt
-        assert expected_commit == MAIN
-        raise refresh.RuntimeRefreshError(
-            "scheduler-readback-load-state-invalid",
-            "managed scheduler unit is not loaded from its converged fragment",
-            details={
-                "name": "bureau-task-supply",
-                "timer": {"LoadState": "not-found"},
-                "service": {"LoadState": "not-found"},
-            },
-        )
-
-    def source_preparer(**kwargs: Any) -> dict[str, Any]:
-        calls["source"] += 1
-        kwargs["workspace"].mkdir(parents=True)
-        return {"head": MAIN, "root": str(kwargs["workspace"])}
-
-    def installer(**kwargs: Any) -> dict[str, Any]:
-        calls["install"] += 1
-        assert kwargs["source"] == Path(intent["workspace"])
-        assert kwargs["approval_intent"] == intent_path
-        return {"manifest_sha256": "a" * 64, "scheduler": {"authoritative": True}}
-
-    def readback(**kwargs: Any) -> dict[str, Any]:
-        calls["readback"] += 1
-        assert kwargs["expected_commit"] == MAIN
-        return {
-            "source_commit": MAIN,
-            "check_valid": True,
-            "runtime_identity_valid": True,
-            "scheduler": {"authoritative": True},
-        }
-
-    monkeypatch.setattr(refresh, "readback_user_scheduler", missing_systemd)
-    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
-    result = refresh.apply_runtime_refresh(
-        intent_path=intent_path,
-        lease_binding=lease_binding,
-        manifest_path=manifest_path,
-        state_root=Path(intent["state_root"]),
-        resource_db=resource_db,
-        now=NOW,
-        observer=lambda **_: live,
-        source_preparer=source_preparer,
-        installer=installer,
-        readback=readback,
-    )
-
-    assert result["status"] == "deployed"
-    assert result["effect_started"] is True
-    assert result["readback"]["scheduler"]["authoritative"] is True
-    assert calls == {"source": 1, "install": 1, "readback": 1}
-    started = refresh.read_json(
-        Path(intent["state_root"])
-        / "attempts"
-        / intent["target_sha256"]
-        / "started.json"
-    )
-    assert (
-        started["same_source_reconvergence"]["code"]
-        == "scheduler-readback-load-state-invalid"
-    )
-    assert result["same_source_reconvergence"] == started["same_source_reconvergence"]
-
-
-def test_apply_source_current_converged_scheduler_has_no_effect(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
-    release_id = "immutable-release"
-    release_path = tmp_path / "prefix/releases" / release_id
-    scheduler_receipt = {
-        "kind": "bureau_runtime_scheduler_readback",
-        "source_commit": MAIN,
-        "release_id": release_id,
-        "immutable_release_path": str(release_path),
-        "user_unit_dir": intent["user_unit_dir"],
-        "libexec_dir": intent["libexec_dir"],
-        "authoritative": True,
-    }
-    write_manifest(
-        manifest_path,
-        MAIN,
-        release_id=release_id,
-        immutable_release_path=str(release_path),
-        scheduler=scheduler_receipt,
-    )
-    live = source_current_observation(observed, manifest_path)
-    scheduler_readback = {
-        **scheduler_receipt,
-        "artifacts": [{"matches_release": True}],
-    }
-    calls: list[tuple[dict[str, Any], str]] = []
-
-    def readback_scheduler(
-        receipt: dict[str, Any], *, expected_commit: str
-    ) -> dict[str, Any]:
-        calls.append((receipt, expected_commit))
-        return scheduler_readback
-
-    monkeypatch.setattr(refresh, "readback_user_scheduler", readback_scheduler)
     lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
     result = refresh.apply_runtime_refresh(
         intent_path=intent_path,
@@ -3731,103 +3519,10 @@ def test_apply_source_current_converged_scheduler_has_no_effect(
         observer=lambda **_: live,
         source_preparer=lambda **_: pytest.fail("source preparation must not run"),
         installer=lambda **_: pytest.fail("installer must not run"),
-        readback=lambda **_: pytest.fail("install readback must not run"),
     )
 
     assert result["status"] == "already_current"
     assert result["effect_started"] is False
-    assert result["scheduler"] == scheduler_readback
-    assert calls == [(scheduler_receipt, MAIN)]
-
-
-def test_apply_source_current_reconvergence_failure_is_rollback_safe(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    runtime_root = tmp_path / "run/user"
-    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
-    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
-    write_manifest(manifest_path, MAIN)
-    live = source_current_observation(observed, manifest_path)
-    release, release_id, _source_commit = scheduler_release(tmp_path)
-    unit_root = Path(intent["user_unit_dir"])
-    libexec_root = Path(intent["libexec_dir"])
-    unit_root.mkdir(parents=True)
-    libexec_root.mkdir(parents=True)
-    systemd = FakeUserSystemd(
-        unit_root,
-        runtime_unit_root=Path(intent["runtime_user_unit_dir"]),
-    )
-    rollback = tmp_path / "rollback"
-    rollback.mkdir()
-    calls = 0
-
-    def source_preparer(**kwargs: Any) -> dict[str, Any]:
-        kwargs["workspace"].mkdir(parents=True)
-        (kwargs["workspace"] / "preserved").write_text("unclear\n", encoding="utf-8")
-        return {"head": MAIN, "root": str(kwargs["workspace"])}
-
-    def installer(**kwargs: Any) -> dict[str, Any]:
-        nonlocal calls
-        calls += 1
-        return refresh.converge_user_scheduler(
-            source_commit=MAIN,
-            release_id=release_id,
-            release=release,
-            user_unit_dir=kwargs["user_unit_dir"],
-            libexec_dir=kwargs["libexec_dir"],
-            runtime_user_unit_dir=kwargs["runtime_user_unit_dir"],
-            rollback_directory=rollback,
-            manifest_path=manifest_path,
-            command_runner=systemd,
-            validation_runner=successful_systemd_analyze,
-            cycle_validator=successful_cycle_validation,
-            after_activation=lambda _scheduler: (_ for _ in ()).throw(
-                OSError("injected same-source convergence failure")
-            ),
-        )
-
-    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
-    first = refresh.apply_runtime_refresh(
-        intent_path=intent_path,
-        lease_binding=lease_binding,
-        manifest_path=manifest_path,
-        state_root=Path(intent["state_root"]),
-        resource_db=resource_db,
-        now=NOW,
-        observer=lambda **_: live,
-        source_preparer=source_preparer,
-        installer=installer,
-    )
-    second = refresh.apply_runtime_refresh(
-        intent_path=intent_path,
-        lease_binding=lease_binding,
-        manifest_path=manifest_path,
-        state_root=Path(intent["state_root"]),
-        resource_db=resource_db,
-        now=NOW + timedelta(seconds=1),
-        observer=lambda **_: pytest.fail("durable failure must not re-observe"),
-        source_preparer=lambda **_: pytest.fail("durable failure must not re-prepare"),
-        installer=lambda **_: pytest.fail("durable failure must not retry"),
-    )
-
-    assert first["status"] == "unclear"
-    assert first["effect_started"] is True
-    assert first["error"]["code"] == "scheduler-convergence-rolled-back"
-    assert first["error"]["details"]["safe_to_retry"] is False
-    assert first["workspace_preserved"] is True
-    assert second["result_sha256"] == first["result_sha256"]
-    assert second["reused"] is True
-    assert calls == 1
-    for name in refresh.RUNTIME_SCHEDULER_NAMES:
-        for path in (
-            unit_root / f"{name}.service",
-            unit_root / f"{name}.timer",
-            libexec_root / name,
-        ):
-            assert not os.path.lexists(path)
-    assert not os.path.lexists(
-        unit_root / "timers.target.wants/bureau-task-supply.timer"
-    )
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2136-STATESTORE-INTAKE-20260821",
+  "title": "Single-Use Bureau-Runtime-Refresh nach PR #2136 für StateStore-only Intake",
+  "state": "ready",
+  "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst geschützt gemergt und missing-only in den StateStore adoptiert wurde. Zweck ist ausschließlich, den in PR #2136 gemergten Fix für StateStore-only bestehende TaskSpecs und Refinement-Supersessions in die immutable Bureau-Runtime zu übernehmen, damit anschließend der Live-Operator-Intake-Readback und der revisionsgebundene Retirement des obsoleten T035-Closeout-Wrappers erfolgen können. Diese Authority erteilt genau einen Runtime-Effekt und keine T036-, Queue-, Claim-, Dispatch-, Supply-, Codeimplementierungs-, Fremdarbeits- oder allgemeine Repository-Autorität.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound Runtime-Konvergenz ausschließlich nach dem geschützten Merge von PR #2136 und dieser Authority. Die aktuelle explizite Nutzeranweisung 'weiter @grabowski' autorisiert die vorgesehene Ausführung; vor Wirkung bleiben Fresh-Main-, CI-, Target-, Intent-, Lease-, Single-Use- und Readback-Gates bindend."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-current-main",
+      "assertion": "Unmittelbar vor dem neuen Intent wird GitHub-main frisch beobachtet. Das Refresh-Ziel enthält den geschützten Merge dieser Authority, den Merge von PR #2136 mit dem StateStore-only Operator-Intake-Fix sowie alle bis dahin legitimen Main-Merges; die für den exakten Zielstand erforderlichen Checks sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2136-statestore-intake-runtime-refresh:fresh-main"
+      }
+    },
+    {
+      "id": "single-runtime-effect",
+      "assertion": "Diese Authority autorisiert höchstens einen neuen Runtime-Effekt. Bei failed, unclear, timeout oder Transport-Ambiguität erfolgt kein Blind-Retry; zuerst werden Result, Attempt, Manifest, Registry-Snapshot, Launcher, Authority-Consumption und Runtime readback-klassifiziert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2136-statestore-intake-runtime-refresh:single-effect"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach erfolgreichem Refresh binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; bureau runtime-identity ist integrity-valid und enthält den gemergten PR-#2136-Operator-Intake-Stand.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2136-statestore-intake-runtime-refresh:immutable-readback"
+      }
+    },
+    {
+      "id": "runtime-only-scope",
+      "assertion": "Die Authority erteilt keine T036-, Queue-, Claim-, Dispatch-, Supply-, Codeimplementierungs-, Fremdarbeits- oder allgemeine Repository-Autorität. Nach eindeutig erfolgreichem Runtime-Readback wird sie konsumiert und terminal geschlossen und nie wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:pr2136-statestore-intake-runtime-refresh:scope-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Der aktuell integrity-valid installierte Bureau-Runtime-Stand 879e8ffbf25ee3c01520f9b79245bf38ab5e6c41 bleibt bis zu einem eindeutigen neuen Install- und Readback-Receipt Deployment-Wahrheit. Bei unklarem Ergebnis wird nicht blind wiederholt; vorhandene Attempt-, Backup-, Manifest-, Registry-, Intent-, Authority- und Lease-Evidenz wird zuerst klassifiziert."
+  },
+  "metadata": {
+    "source": "Candidate 9393 / candidate-c50a8a50c3f320b3d998a848: fresh single-use Bureau runtime convergence required after merged PR #2136 for StateStore-only Operator-Intake live verification.",
+    "candidate_event_id": 9393,
+    "candidate_id": "candidate-c50a8a50c3f320b3d998a848",
+    "source_pull_request": 2136,
+    "source_pull_request_head": "a7effdcad7f853bc5c0a66517df1eb3ec0ca3615",
+    "source_pull_request_merge_commit": "2b861761cd1cd1b0ce0c338eb4a5ded7e3c6992e",
+    "main_at_registration": "2b861761cd1cd1b0ce0c338eb4a5ded7e3c6992e",
+    "deployed_source_at_registration": "879e8ffbf25ee3c01520f9b79245bf38ab5e6c41",
+    "source_observation_sha256": "d42b3fac94397eb428e03e5d17520e5198ac5254e98e45c0b2a915208469a375",
+    "post_refresh_live_target": "OPERATOR-INTEGRATION-LOOP-V1-FU-T035-ORPHANED-CLOSEOUT-20260820",
+    "t036_must_remain_untouched": "OPERATOR-INTEGRATION-LOOP-V1-T036",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse any consumed runtime authority",
+      "permission to bypass stale-runtime or bootstrap gates",
+      "permission to mutate OPERATOR-INTEGRATION-LOOP-V1-T036",
+      "queue, claim, dispatch or supply-task publication authority",
+      "general repository or foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one runtime-refresh Authority TaskSpec",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed Bureau runtime is intentionally behind the just-merged PR #2136 and cannot safely bootstrap this new runtime authority through a StateStore-first publication. The authority must enter through one protected TaskSpec file and be adopted missing-only after merge.",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ]
+    }
+  }
+}

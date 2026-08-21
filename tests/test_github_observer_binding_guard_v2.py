@@ -9,7 +9,7 @@ from bureau.github_observer import (
     observe_pull_requests,
 )
 from bureau.legacy import Registry
-from bureau.v2 import StateStore
+from bureau.v2 import StateStore, authoritative_task_registry, plan_sha256
 
 
 def pull_request(
@@ -239,3 +239,54 @@ def test_newer_state_store_schema_blocks_task_projection(
     assert result["binding_healthy"] is False
     assert finding_codes(result) == {"github-observation-blocked"}
     assert "unsupported schema version: 999" in result["blocked_reason"]
+
+
+def test_state_store_terminal_overlay_blocks_open_pr_binding(
+    tmp_path: Path, registry_factory
+) -> None:
+    root = registry_factory(task_count=1)
+    registry_value = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    spec = dict(registry_value.tasks["BUR-TEST-001-T001"].raw)
+    spec["id"] = "BUR-TEST-001-T999"
+    spec["title"] = "StateStore-only observer binding"
+    spec["state"] = "ready"
+    store.put_task_spec(
+        spec,
+        idempotency_key="state-only-terminal-overlay",
+        expected_revision=None,
+        source="test",
+    )
+    projected, _, _ = authoritative_task_registry(registry_value, store)
+    task_value = projected.tasks["BUR-TEST-001-T999"]
+    connection = store.connect()
+    try:
+        connection.execute(
+            """
+            INSERT INTO task_status(
+                task_id,task_sha256,plan_sha256,state,receipt_sha256,updated_at
+            ) VALUES(?,?,?,?,?,?)
+            """,
+            (
+                task_value.id,
+                task_value.sha256,
+                plan_sha256(projected, task_value.initiative),
+                "verified",
+                "f" * 64,
+                "2026-08-21T04:30:00Z",
+            ),
+        )
+    finally:
+        connection.close()
+
+    result = observe_pull_requests(
+        root,
+        repository="heimgewebe/bureau",
+        pull_requests=[pull_request(body="Bureau-Task: BUR-TEST-001-T999")],
+        state_db=store.path,
+        registry=registry_value,
+    )
+
+    assert result["healthy"] is True
+    assert result["binding_healthy"] is False
+    assert finding_codes(result) == {"terminal-github-task-binding"}

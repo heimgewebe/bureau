@@ -13,6 +13,7 @@ import json
 import os
 import re
 import subprocess
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ from . import legacy
 from .v2 import (
     OpenPullRequestObservationError,
     _github_repository_for_path,
+    _read_only_overlays,
     _read_only_state_rows,
     _runtime_state_db_path,
 )
@@ -462,6 +464,14 @@ def _authoritative_binding_registry(
         raise OpenPullRequestObservationError(
             "authoritative StateStore task projection unavailable: projection missing"
         )
+    overlays = _read_only_overlays(
+        projected,
+        state.get("rows", {}).get("task_status", []),
+    )
+    projected.tasks = {
+        task_id: replace(task, state=overlays.get(task_id, task.state))
+        for task_id, task in projected.tasks.items()
+    }
     kind = authority.get("kind")
     note = (
         f"task-authority:{kind}"

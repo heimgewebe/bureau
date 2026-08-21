@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import ctypes
 import errno
 import hashlib
@@ -743,6 +744,26 @@ def candidate_record_request(
     return candidate_record(registry, store, **payload)
 
 
+def _authoritative_candidate_catalog(
+    registry: Registry,
+    store: StateStore,
+    task_id: Any,
+) -> Registry:
+    """Expose one authoritative StateStore-only task to strict Live Register validation."""
+    if not isinstance(task_id, str):
+        return registry
+    normalized_task_id = task_id.strip()
+    if not normalized_task_id or normalized_task_id in registry.tasks:
+        return registry
+    authoritative = store.task_spec(normalized_task_id)
+    if authoritative is None:
+        return registry
+    catalog = copy.copy(registry)
+    catalog.tasks = dict(registry.tasks)
+    catalog.tasks[normalized_task_id] = authoritative["spec"]
+    return catalog
+
+
 def candidate_record(
     registry: Registry | None,
     store: StateStore,
@@ -804,6 +825,7 @@ def candidate_record(
     bound_registry = registry
     if catalog_validation == "strict" and registry is not None:
         bound_registry, _ = _canonical_read_registry_snapshot(registry)
+        bound_registry = _authoritative_candidate_catalog(bound_registry, store, task_id)
     elif catalog_validation == "deferred":
         bound_registry = None
 

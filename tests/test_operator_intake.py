@@ -252,6 +252,49 @@ def _revision_proposal(
     return plan_path, recorded, revised
 
 
+def _state_store_only_revision_proposal(
+    registry: Registry,
+    store: StateStore,
+    tmp_path: Path,
+    *,
+    task_id: str = "BUR-TEST-001-T099",
+) -> tuple[Path, dict, dict, dict]:
+    store.import_registry_task_specs(registry)
+    seeded = store.put_task_spec(
+        _task(registry.root, task_id),
+        idempotency_key=f"seed:{task_id}",
+        expected_revision=None,
+        source="test-state-store-only-task",
+    )
+    assert task_id not in registry.tasks
+    baseline = store.task_spec(task_id)
+    assert baseline is not None
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:state-store-only-revision",
+        title=f"Revise StateStore-only {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:state-store-only:{task_id}",
+        source_sha256="3" * 64,
+        desired_outcome=f"Revise the exact authoritative TaskSpec {task_id}",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(baseline["spec"]))
+    revised["title"] = f"{revised['title']} revised from StateStore authority"
+    plan_path = tmp_path / f"{task_id}.state-store-only.proposal.json"
+    task_propose(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        task_json=revised,
+        publishing_task_id="BUR-TEST-001-T001",
+        path=plan_path,
+    )
+    return plan_path, recorded, seeded, revised
+
+
 def _lease_binding(*, owner: str = "operator-test", task_id: str = "BUR-TEST-001-T001") -> dict:
     return {"owner_id": owner, "task_id": task_id}
 
@@ -1466,6 +1509,7 @@ def test_task_revision_proposal_binds_authoritative_baseline(registry_factory, t
     plan = json.loads(plan_path.read_text())
     baseline = store.task_spec(plan["task_id"])
     assert baseline is not None
+    assert plan["task_id"] in registry.tasks
     assert plan["candidate"]["candidate_id"] == recorded["candidate_id"]
     assert plan["task_spec"]["operation"] == "revise"
     assert plan["task_spec"]["expected_revision"] == 1
@@ -1478,6 +1522,93 @@ def test_task_revision_proposal_binds_authoritative_baseline(registry_factory, t
     )
     _review(plan_path)
     assert publication_preview(registry, store, plan_path=plan_path)["status"] == "ready"
+
+
+def test_task_revision_resolves_state_store_only_authoritative_task(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+
+    plan_path, recorded, seeded, _ = _state_store_only_revision_proposal(registry, store, tmp_path)
+
+    plan = json.loads(plan_path.read_text())
+    assert recorded["record"]["task_id"] == plan["task_id"]
+    assert recorded["record"]["catalog_validation"]["status"] == "validated"
+    assert plan["task_spec"]["operation"] == "revise"
+    assert plan["task_spec"]["expected_revision"] == seeded["revision"]
+    assert plan["task_spec"]["expected_spec_sha256"] == seeded["spec_sha256"]
+    assert plan["task_spec"]["proposed_spec_sha256"] == plan["task_json_sha256"]
+    assert plan["task_spec"]["expected_task_file_sha256"] is None
+
+
+def test_candidate_record_rejects_task_unknown_to_registry_and_state_store(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+
+    with pytest.raises(OperatorIntakeError, match="unknown live register task") as caught:
+        candidate_record(
+            registry,
+            store,
+            idempotency_key="source:truly-unknown-task",
+            title="Reject a truly unknown task binding",
+            source_kind="runtime-diagnostic",
+            source_locator="bureau:unknown-task",
+            source_sha256="4" * 64,
+            desired_outcome="Keep strict candidate task binding fail-closed",
+            repo="repo.alpha",
+            task_id="BUR-TEST-001-T777",
+        )
+
+    assert caught.value.code == "candidate-record-invalid"
+    assert caught.value.effect_started is False
+    assert operator_intake_module.candidate_records(store) == []
+
+
+def test_state_store_only_revision_rejects_candidate_bound_to_another_task(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T099"
+    store.put_task_spec(
+        _task(registry.root, task_id),
+        idempotency_key=f"seed:{task_id}",
+        expected_revision=None,
+        source="test-state-store-only-task",
+    )
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:state-store-only-wrong-target",
+        title="Reject a mismatched StateStore-only revision candidate",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:state-store-only-wrong-target",
+        source_sha256="5" * 64,
+        desired_outcome="Keep the candidate bound to its exact existing task",
+        repo="repo.alpha",
+        task_id="BUR-TEST-001-T001",
+    )
+    baseline = store.task_spec(task_id)
+    assert baseline is not None
+    revised = json.loads(json.dumps(baseline["spec"]))
+    revised["title"] = "Must not revise a differently bound StateStore-only task"
+    plan_path = tmp_path / "state-store-only-mismatch.json"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=plan_path,
+        )
+
+    assert caught.value.code == "candidate-task-identity-mismatch"
+    assert not plan_path.exists()
 
 
 def test_task_revision_allows_git_projection_to_lag_authoritative_baseline(
@@ -1738,6 +1869,49 @@ def test_task_revision_publication_advances_and_replays_without_receipt(registry
     )
 
 
+def test_state_store_only_revision_publication_advances_and_replays_idempotently(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, seeded, _ = _state_store_only_revision_proposal(registry, store, tmp_path)
+    pending = json.loads(plan_path.read_text())
+    review_task_proposal(
+        plan_path=plan_path,
+        reviewer="operator-state-store-only-review",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+    preview = publication_preview(registry, store, plan_path=plan_path)
+
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "unused-first",
+        receipt_path=tmp_path / "state-store-only-first-receipt.json",
+    )
+    second = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "unused-replay",
+        receipt_path=tmp_path / "state-store-only-replay-receipt.json",
+    )
+
+    assert first["publication_mode"] == "state_store"
+    assert first["queue_mutated"] is False
+    assert first["task_spec_revision"]["revision"] == seeded["revision"] + 1
+    assert first["task_spec_revision"]["parent_revision"] == seeded["revision"]
+    assert first["task_spec_revision"]["idempotent_replay"] is False
+    assert second["task_spec_revision"]["revision"] == first["task_spec_revision"]["revision"]
+    assert second["task_spec_revision"]["spec_sha256"] == first["task_spec_revision"]["spec_sha256"]
+    assert second["task_spec_revision"]["idempotent_replay"] is True
+
+
 def test_task_revision_stale_expected_revision_fails_before_publication_effect(
     registry_factory, tmp_path
 ):
@@ -1771,6 +1945,49 @@ def test_task_revision_stale_expected_revision_fails_before_publication_effect(
     assert store.task_spec(plan["task_id"])["spec"]["title"] == (
         "Foreign revision wins the CAS race"
     )
+
+
+def test_state_store_only_revision_stale_expected_revision_fails_closed(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _, _ = _state_store_only_revision_proposal(registry, store, tmp_path)
+    pending = json.loads(plan_path.read_text())
+    review_task_proposal(
+        plan_path=plan_path,
+        reviewer="operator-state-store-only-review",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    current = store.task_spec(pending["task_id"])
+    assert current is not None
+    foreign = json.loads(json.dumps(current["spec"]))
+    foreign["title"] = "Foreign StateStore-only revision wins the CAS race"
+    advanced = store.put_task_spec(
+        foreign,
+        idempotency_key="foreign-state-store-only-revision",
+        expected_revision=current["revision"],
+        source="test-foreign-state-store-only-revision",
+    )
+    receipt_path = tmp_path / "state-store-only-stale-receipt.json"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "unused-stale",
+            receipt_path=receipt_path,
+        )
+
+    assert caught.value.code == "task-spec-baseline-drift"
+    assert caught.value.effect_started is False
+    assert not receipt_path.exists()
+    authoritative = store.task_spec(pending["task_id"])
+    assert authoritative is not None
+    assert authoritative["revision"] == advanced["revision"]
+    assert authoritative["spec_sha256"] == advanced["spec_sha256"]
 
 
 def test_task_review_binds_exact_pending_proposal_and_enables_preview(registry_factory, tmp_path):

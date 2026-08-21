@@ -8,6 +8,8 @@ from bureau.github_observer import (
     BINDING_UNMATCHED,
     observe_pull_requests,
 )
+from bureau.legacy import Registry
+from bureau.v2 import StateStore, authoritative_task_registry, plan_sha256
 
 
 def pull_request(
@@ -179,3 +181,148 @@ def test_schema_visible_exception_suppresses_multi_task_binding_blocker(
     assert observation["binding_exception"]["reason"] == "explicit cross-task closeout"
     assert result["binding_healthy"] is True
     assert result["hard_findings"] == []
+
+
+def test_state_store_only_task_binding_is_valid(
+    tmp_path: Path, registry_factory
+) -> None:
+    root = registry_factory(task_count=1)
+    registry_value = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    base = dict(registry_value.tasks["BUR-TEST-001-T001"].raw)
+    base["id"] = "BUR-TEST-001-T999"
+    base["title"] = "StateStore-only observer binding"
+    base["state"] = "ready"
+    store.put_task_spec(
+        base,
+        idempotency_key="state-only-observer-binding",
+        expected_revision=None,
+        source="test",
+    )
+
+    result = observe_pull_requests(
+        root,
+        repository="heimgewebe/bureau",
+        pull_requests=[pull_request(body="Bureau-Task: BUR-TEST-001-T999")],
+        state_db=store.path,
+        registry=registry_value,
+    )
+
+    assert result["healthy"] is True
+    assert result["binding_healthy"] is True
+    assert result["hard_findings"] == []
+    assert result["pull_requests"][0]["task_id"] == "BUR-TEST-001-T999"
+    assert "task-authority:bureau-state-store-task-specs" in result["notes"]
+
+
+def test_newer_state_store_schema_blocks_task_projection(
+    tmp_path: Path, registry_factory
+) -> None:
+    root = registry_factory(task_count=1)
+    registry_value = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    connection = store.connect()
+    try:
+        connection.execute("PRAGMA user_version=999")
+    finally:
+        connection.close()
+
+    result = observe_pull_requests(
+        root,
+        repository="heimgewebe/bureau",
+        pull_requests=[pull_request(body="Bureau-Task: BUR-TEST-001-T001")],
+        state_db=store.path,
+        registry=registry_value,
+    )
+
+    assert result["healthy"] is False
+    assert result["binding_healthy"] is False
+    assert finding_codes(result) == {"github-observation-blocked"}
+    assert "unsupported schema version: 999" in result["blocked_reason"]
+
+
+def test_state_store_terminal_overlay_blocks_open_pr_binding(
+    tmp_path: Path, registry_factory
+) -> None:
+    root = registry_factory(task_count=1)
+    registry_value = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    spec = dict(registry_value.tasks["BUR-TEST-001-T001"].raw)
+    spec["id"] = "BUR-TEST-001-T999"
+    spec["title"] = "StateStore-only observer binding"
+    spec["state"] = "ready"
+    store.put_task_spec(
+        spec,
+        idempotency_key="state-only-terminal-overlay",
+        expected_revision=None,
+        source="test",
+    )
+    projected, _, _ = authoritative_task_registry(registry_value, store)
+    task_value = projected.tasks["BUR-TEST-001-T999"]
+    connection = store.connect()
+    try:
+        connection.execute(
+            """
+            INSERT INTO task_status(
+                task_id,task_sha256,plan_sha256,state,receipt_sha256,updated_at
+            ) VALUES(?,?,?,?,?,?)
+            """,
+            (
+                task_value.id,
+                task_value.sha256,
+                plan_sha256(projected, task_value.initiative),
+                "verified",
+                "f" * 64,
+                "2026-08-21T04:30:00Z",
+            ),
+        )
+    finally:
+        connection.close()
+
+    result = observe_pull_requests(
+        root,
+        repository="heimgewebe/bureau",
+        pull_requests=[pull_request(body="Bureau-Task: BUR-TEST-001-T999")],
+        state_db=store.path,
+        registry=registry_value,
+    )
+
+    assert result["healthy"] is True
+    assert result["binding_healthy"] is False
+    assert finding_codes(result) == {"terminal-github-task-binding"}
+
+
+def test_state_store_integrity_or_foreign_key_failure_blocks_projection(
+    tmp_path: Path, monkeypatch
+) -> None:
+    state_path = tmp_path / "state.sqlite3"
+    state_path.write_bytes(b"state-present")
+    registry_value = registry(task("BUR-X-T001"))
+    base_state = {
+        "available": True,
+        "integrity": "ok",
+        "foreign_key_errors": [],
+        "rows": {"task_status": []},
+        "operational_registry": registry_value,
+        "task_authority": {"kind": "bureau-state-store-task-specs"},
+    }
+    for override, expected in (
+        ({"integrity": "corrupt"}, "integrity check failed"),
+        ({"foreign_key_errors": [{"table": "task_status"}]}, "foreign key check failed"),
+    ):
+        state = {**base_state, **override}
+        monkeypatch.setattr(
+            "bureau.github_observer._read_only_state_rows",
+            lambda _path, *, registry=None, value=state: value,
+        )
+        result = observe_pull_requests(
+            tmp_path,
+            repository="heimgewebe/bureau",
+            pull_requests=[pull_request(body="Bureau-Task: BUR-X-T001")],
+            state_db=state_path,
+            registry=registry_value,
+        )
+        assert result["healthy"] is False
+        assert result["binding_healthy"] is False
+        assert finding_codes(result) == {"github-observation-blocked"}
+        assert expected in result["blocked_reason"]

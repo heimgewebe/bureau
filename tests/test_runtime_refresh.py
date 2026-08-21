@@ -26,6 +26,172 @@ MAIN = "2" * 40
 HEAD = "3" * 40
 
 
+class FakeUserSystemd:
+    def __init__(
+        self,
+        unit_root: Path,
+        *,
+        runtime_unit_root: Path | None = None,
+        timer_states: dict[str, tuple[str, str]] | None = None,
+        fail_once: tuple[str, ...] | None = None,
+    ) -> None:
+        self.unit_root = unit_root
+        (self.unit_root / "timers.target.wants").mkdir(parents=True, exist_ok=True)
+        self.runtime_unit_root = runtime_unit_root or unit_root.parent / "runtime-user"
+        self.runtime_unit_root.mkdir(parents=True, exist_ok=True)
+        self.commands: list[tuple[str, ...]] = []
+        self.fail_once = fail_once
+        self.failed = False
+        self.states: dict[str, dict[str, str]] = {}
+        configured = timer_states or {}
+        for name in refresh.RUNTIME_SCHEDULER_NAMES:
+            for kind in ("timer", "service"):
+                unit = f"{name}.{kind}"
+                fragment = unit_root / unit
+                loaded = fragment.is_file() and not fragment.is_symlink()
+                if kind == "timer":
+                    unit_file, active = configured.get(name, ("disabled", "inactive"))
+                    sub = "waiting" if active == "active" else "dead"
+                    if not loaded:
+                        unit_file = ""
+                else:
+                    unit_file, active, sub = "static", "inactive", "dead"
+                self.states[unit] = {
+                    "LoadState": "loaded" if loaded else "not-found",
+                    "UnitFileState": unit_file if loaded else "",
+                    "ActiveState": active,
+                    "SubState": sub,
+                    "FragmentPath": str(fragment) if loaded else "",
+                    "Result": "success",
+                }
+                if kind == "timer" and loaded:
+                    if unit_file == "enabled":
+                        self._enablement_link(unit, runtime=False).parent.mkdir(
+                            parents=True, exist_ok=True
+                        )
+                        self._enablement_link(unit, runtime=False).symlink_to(
+                            f"../{unit}"
+                        )
+                    elif unit_file == "enabled-runtime":
+                        self._enablement_link(unit, runtime=True).parent.mkdir(
+                            parents=True, exist_ok=True
+                        )
+                        self._enablement_link(unit, runtime=True).symlink_to(
+                            str(fragment)
+                        )
+
+    def _enablement_link(self, unit: str, *, runtime: bool) -> Path:
+        root = self.runtime_unit_root if runtime else self.unit_root
+        return root / "timers.target.wants" / unit
+
+    def _refresh_unit_file_state(self, unit: str) -> None:
+        state = self.states[unit]
+        if state["LoadState"] != "loaded":
+            state["UnitFileState"] = ""
+        elif os.path.lexists(self._enablement_link(unit, runtime=False)):
+            state["UnitFileState"] = "enabled"
+        elif os.path.lexists(self._enablement_link(unit, runtime=True)):
+            state["UnitFileState"] = "enabled-runtime"
+        else:
+            state["UnitFileState"] = "disabled"
+
+    def _reload(self) -> None:
+        for unit, state in self.states.items():
+            fragment = self.unit_root / unit
+            loaded = fragment.is_file() and not fragment.is_symlink()
+            state["LoadState"] = "loaded" if loaded else "not-found"
+            state["FragmentPath"] = str(fragment) if loaded else ""
+            if unit.endswith(".timer"):
+                self._refresh_unit_file_state(unit)
+            elif loaded:
+                state["UnitFileState"] = "static"
+            else:
+                state["UnitFileState"] = ""
+            if not loaded:
+                state["ActiveState"] = "inactive"
+                state["SubState"] = "dead"
+
+    def __call__(self, argv: list[str]) -> subprocess.CompletedProcess[str]:
+        arguments = tuple(argv[2:])
+        self.commands.append(arguments)
+        if self.fail_once == arguments and not self.failed:
+            self.failed = True
+            return subprocess.CompletedProcess(argv, 1, stdout="", stderr="injected failure")
+        command = arguments[0]
+        if command == "show":
+            unit = arguments[1]
+            properties = arguments[-1].removeprefix("--property=").split(",")
+            output = "\n".join(
+                f"{key}={self.states[unit][key]}" for key in properties
+            )
+            return subprocess.CompletedProcess(argv, 0, stdout=output + "\n", stderr="")
+        if command == "daemon-reload":
+            self._reload()
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        runtime = "--runtime" in arguments
+        now = "--now" in arguments
+        units = [item for item in arguments[1:] if not item.startswith("--")]
+        if command in {"enable", "disable"}:
+            for unit in units:
+                state = self.states[unit]
+                if command == "enable":
+                    link = self._enablement_link(unit, runtime=runtime)
+                    link.parent.mkdir(parents=True, exist_ok=True)
+                    if os.path.lexists(link):
+                        link.unlink()
+                    link.symlink_to(str(self.unit_root / unit))
+                else:
+                    for root in (self.unit_root, self.runtime_unit_root):
+                        for link in root.glob(f"*.target.wants/{unit}"):
+                            if link.is_symlink():
+                                link.unlink()
+                self._refresh_unit_file_state(unit)
+                if now:
+                    state["ActiveState"] = "active" if command == "enable" else "inactive"
+                    state["SubState"] = "waiting" if command == "enable" else "dead"
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        if command in {"start", "stop"}:
+            for unit in units:
+                state = self.states[unit]
+                state["ActiveState"] = "active" if command == "start" else "inactive"
+                state["SubState"] = (
+                    "waiting" if command == "start" and unit.endswith(".timer") else "dead"
+                )
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        if command == "reset-failed":
+            for unit in units:
+                self.states[unit]["Result"] = "success"
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        raise AssertionError(f"unexpected systemctl command: {arguments}")
+
+
+def successful_systemd_analyze(argv: list[str]) -> subprocess.CompletedProcess[str]:
+    assert argv[:3] == ["systemd-analyze", "--user", "verify"]
+    assert len(argv[3:]) == len(refresh.RUNTIME_SCHEDULER_NAMES) * 2
+    return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+
+def successful_cycle_validation(**kwargs: Any) -> dict[str, Any]:
+    release = kwargs["canonical_root"]
+    assert all(
+        path.is_relative_to(release) for path in kwargs["module_paths"].values()
+    )
+    return {
+        "status": "ok",
+        "activatable": False,
+        "read_only": True,
+        "self_heal": False,
+    }
+
+
+def scheduler_release(tmp_path: Path) -> tuple[Path, str, str]:
+    source_commit = "9" * 40
+    release_id = f"{source_commit[:12]}-srcscheduler"
+    release = tmp_path / "runtime/releases" / release_id
+    shutil.copytree(Path(__file__).parents[1] / "ops/systemd", release / "ops/systemd")
+    return release, release_id, source_commit
+
+
 def _github_result(
     *, returncode: int, stdout: str = "", stderr: str = ""
 ) -> subprocess.CompletedProcess[str]:
@@ -681,6 +847,8 @@ def prepare_candidate_intent(
         state_root=state_root,
         prefix=(tmp_path / "prefix").resolve(),
         bin_dir=(tmp_path / "bin").resolve(),
+        user_unit_dir=(tmp_path / "systemd/user").resolve(),
+        libexec_dir=(tmp_path / "libexec").resolve(),
         remote_url="file:///tmp/bureau.git",
         authorized_by="chatgpt",
         authorization="User explicitly authorized T016 implementation.",
@@ -1366,16 +1534,47 @@ def test_observe_blocks_ambiguous_pr_and_main_drift(tmp_path: Path) -> None:
 
 def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path) -> None:
     observed, _, intent, intent_path = prepare_candidate_intent(tmp_path)
+    runtime_user_unit_dir = refresh.default_runtime_user_unit_dir()
 
     assert intent_path.is_file()
     assert intent["target_sha256"] == observed["target_sha256"]
     assert intent["expected_deployed_source_commit"] == DEPLOYED
     assert intent["required_resource_keys"] == sorted(intent["required_resource_keys"])
+    assert intent["runtime_user_unit_dir"] == str(runtime_user_unit_dir)
     assert f"path:{tmp_path.resolve() / 'bin/bureau'}" in intent["required_resource_keys"]
     assert (
         f"path:{tmp_path.resolve() / 'bin/bureau-status-capsule'}"
         in intent["required_resource_keys"]
     )
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        assert (
+            f"path:{tmp_path.resolve() / f'systemd/user/{name}.service'}"
+            in intent["required_resource_keys"]
+        )
+        assert (
+            f"path:{tmp_path.resolve() / f'systemd/user/{name}.timer'}"
+            in intent["required_resource_keys"]
+        )
+        assert (
+            f"path:{tmp_path.resolve() / f'libexec/{name}'}"
+            in intent["required_resource_keys"]
+        )
+        assert (
+            f"path:{tmp_path.resolve() / f'systemd/user/timers.target.wants/{name}.timer'}"
+            in intent["required_resource_keys"]
+        )
+        assert (
+            f"path:{runtime_user_unit_dir / f'timers.target.wants/{name}.timer'}"
+            in intent["required_resource_keys"]
+        )
+        assert f"service:{name}.service" in intent["required_resource_keys"]
+        assert f"service:{name}.timer" in intent["required_resource_keys"]
+    assert {
+        f"path:{tmp_path.resolve() / 'systemd/user'}",
+        f"path:{tmp_path.resolve() / 'systemd/user/timers.target.wants'}",
+        f"path:{runtime_user_unit_dir}",
+        f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
+    }.isdisjoint(intent["required_resource_keys"])
     assert intent["runtime_approval"]["allowed"] is True
     assert intent["runtime_approval"]["required_level"] == "break_glass"
     assert intent["runtime_approval"]["expected_reference"] == observed["target_sha256"]
@@ -1408,6 +1607,122 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
             authorization="",
             now=NOW,
         )
+
+
+def test_scheduler_resource_keys_lease_exact_persistent_and_runtime_wants_links() -> None:
+    user_unit_dir = Path("/test/home/.config/systemd/user")
+    runtime_user_unit_dir = Path("/run/user/1234/systemd/user")
+    libexec_dir = Path("/test/home/.local/libexec")
+
+    keys = refresh.scheduler_resource_keys(
+        user_unit_dir=user_unit_dir,
+        libexec_dir=libexec_dir,
+        runtime_user_unit_dir=runtime_user_unit_dir,
+    )
+
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        artifact_paths = (
+            user_unit_dir / f"{name}.service",
+            user_unit_dir / f"{name}.timer",
+            libexec_dir / name,
+        )
+        for artifact_path in artifact_paths:
+            assert f"path:{artifact_path}" in keys
+            assert f"path:{refresh._scheduler_staging_path(artifact_path)}" in keys
+        persistent_wants = user_unit_dir / f"timers.target.wants/{name}.timer"
+        runtime_wants = runtime_user_unit_dir / f"timers.target.wants/{name}.timer"
+        for wants_path in (persistent_wants, runtime_wants):
+            assert f"path:{wants_path}" in keys
+            staging_key = f"path:{refresh._scheduler_staging_path(wants_path)}"
+            if name == refresh.REQUIRED_RUNTIME_TIMER and wants_path == persistent_wants:
+                assert staging_key in keys
+            else:
+                assert staging_key not in keys
+    assert {
+        f"path:{user_unit_dir}",
+        f"path:{libexec_dir}",
+        f"path:{runtime_user_unit_dir}",
+        f"path:{user_unit_dir / 'timers.target.wants'}",
+        f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
+    }.isdisjoint(keys)
+    assert len([key for key in keys if key.startswith("path:")]) == 49
+
+
+def test_scheduler_staging_paths_fail_closed_without_deleting_foreign_entries(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "systemd/user/demo.service"
+    target.parent.mkdir(parents=True)
+    staging = refresh._scheduler_staging_path(target)
+    staging.write_text("foreign staging entry\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        refresh.atomic_write(
+            target,
+            b"candidate\n",
+            0o644,
+            staging_path=staging,
+        )
+
+    assert staging.read_text(encoding="utf-8") == "foreign staging entry\n"
+    assert not os.path.lexists(target)
+
+    wants = tmp_path / "systemd/user/timers.target.wants/demo.timer"
+    wants.parent.mkdir()
+    wants_staging = refresh._scheduler_staging_path(wants)
+    wants_staging.write_text("foreign link staging entry\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        refresh._replace_with_symlink(wants, "../demo.timer")
+
+    assert wants_staging.read_text(encoding="utf-8") == "foreign link staging entry\n"
+    assert not os.path.lexists(wants)
+
+
+def test_runtime_user_unit_dir_default_is_xdg_bound_and_home_independent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path / "unrelated-home"))
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
+    assert refresh.default_runtime_user_unit_dir() == (
+        Path("/run/user") / str(os.getuid()) / "systemd/user"
+    )
+
+    runtime_root = (tmp_path / "xdg-runtime").resolve()
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
+    assert refresh.default_runtime_user_unit_dir() == runtime_root / "systemd/user"
+
+    monkeypatch.setenv("XDG_RUNTIME_DIR", "relative-runtime")
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.default_runtime_user_unit_dir()
+    assert caught.value.code == "runtime-dir-invalid"
+
+
+def test_apply_rejects_runtime_user_unit_dir_drift_before_effects(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "runtime-at-intent"))
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    binding, resource_db = lease_for(tmp_path / "runtime-path-leases", intent)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "runtime-at-apply"))
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("observer must not run after runtime path drift"),
+            source_preparer=lambda **_: pytest.fail("source effect must not run"),
+            installer=lambda **_: pytest.fail("installer effect must not run"),
+        )
+
+    assert caught.value.code == "runtime-user-unit-dir-drift"
+    assert not (Path(intent["state_root"]) / "attempts").exists()
 
 
 def test_prepare_uses_authoritative_state_store_over_stale_registry_snapshot(
@@ -1636,6 +1951,635 @@ def test_apply_blocks_launcher_drift_absent_from_intent_before_observer(tmp_path
         )
     assert error.value.code == "launcher-drift-after-intent"
     assert error.value.details["resource_keys"] == [f"path:{status_capsule}"]
+
+
+def test_scheduler_resources_are_required_by_live_lease_validation(tmp_path: Path) -> None:
+    _, _, intent, _ = prepare_candidate_intent(tmp_path)
+    missing_key = (
+        f"path:{refresh._scheduler_staging_path(tmp_path.resolve() / 'libexec/bureau-task-supply')}"
+    )
+    assert f"path:{tmp_path.resolve() / 'systemd/user'}" not in intent[
+        "required_resource_keys"
+    ]
+    assert f"path:{tmp_path.resolve() / 'libexec'}" not in intent[
+        "required_resource_keys"
+    ]
+    binding, resource_db = lease_for(
+        tmp_path / "scheduler-lease-gap", intent, omit={missing_key}
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.validate_live_lease_binding(
+            intent,
+            binding,
+            resource_db=resource_db,
+            now=NOW,
+        )
+
+    assert caught.value.code == "lease-resources-missing"
+    assert caught.value.details["missing"] == [missing_key]
+
+
+@pytest.mark.parametrize("mode", [0o644, 0o755])
+def test_atomic_write_applies_exact_mode_under_restrictive_umask(
+    tmp_path: Path, mode: int
+) -> None:
+    path = tmp_path / f"artifact-{mode:o}"
+    previous_umask = os.umask(0o077)
+    try:
+        refresh.atomic_write(path, b"exact mode\n", mode)
+    finally:
+        os.umask(previous_umask)
+
+    assert path.read_bytes() == b"exact mode\n"
+    assert path.stat().st_mode & 0o777 == mode
+
+
+def test_release_task_supply_absent_live_is_converged_enabled_and_waiting(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    systemd = FakeUserSystemd(unit_root)
+    shutil.rmtree(systemd.runtime_unit_root)
+    assert not systemd.runtime_unit_root.exists()
+
+    result = refresh.converge_user_scheduler(
+        source_commit=source_commit,
+        release_id=release_id,
+        release=release,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=systemd.runtime_unit_root,
+        rollback_directory=rollback,
+        manifest_path=tmp_path / "candidate-manifest.json",
+        command_runner=systemd,
+        validation_runner=successful_systemd_analyze,
+        cycle_validator=successful_cycle_validation,
+    )
+
+    assert ("daemon-reload",) in systemd.commands
+    assert (
+        "start",
+        "bureau-task-supply.timer",
+    ) in systemd.commands
+    task_timer = result["timers"]["bureau-task-supply"]
+    assert task_timer == {
+        "LoadState": "loaded",
+        "UnitFileState": "enabled",
+        "ActiveState": "active",
+        "SubState": "waiting",
+        "FragmentPath": str(unit_root / "bureau-task-supply.timer"),
+    }
+    assert result["services"]["bureau-task-supply"]["Result"] == "success"
+    assert result["authoritative"] is True
+    assert result["source_commit"] == source_commit
+    assert result["release_id"] == release_id
+    assert len(result["changed_artifacts"]) == len(refresh.RUNTIME_SCHEDULER_NAMES) * 3
+    for artifact in result["artifacts"]:
+        assert artifact["matches_release"] is True
+        assert Path(artifact["live_path"]).read_bytes() == Path(
+            artifact["source_path"]
+        ).read_bytes()
+    preimage = json.loads(
+        Path(result["rollback_preimage_path"]).read_text(encoding="utf-8")
+    )
+    assert {item["preimage_kind"] for item in preimage["artifacts"]} == {"absent"}
+    repeated_readback = refresh.readback_user_scheduler(
+        result,
+        expected_commit=source_commit,
+        command_runner=systemd,
+    )
+    assert repeated_readback["timers"]["bureau-task-supply"] == task_timer
+
+    live_service = unit_root / "bureau-task-supply.service"
+    live_service.write_bytes(live_service.read_bytes() + b"# drift\n")
+    with pytest.raises(refresh.RuntimeRefreshError) as drift:
+        refresh.readback_user_scheduler(
+            result,
+            expected_commit=source_commit,
+            command_runner=systemd,
+        )
+    assert drift.value.code == "scheduler-readback-fragment-mismatch"
+
+
+def test_scheduler_convergence_preserves_existing_timer_intent(tmp_path: Path) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        for suffix in ("service", "timer"):
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"old {name}.{suffix}\n", encoding="utf-8"
+            )
+        executable = libexec_root / name
+        executable.write_text(f"old {name}\n", encoding="utf-8")
+        executable.chmod(0o755)
+    systemd = FakeUserSystemd(
+        unit_root,
+        timer_states={
+            "bureau-curator": ("enabled", "active"),
+            "bureau-verifier-control": ("enabled-runtime", "inactive"),
+            "bureau-operator-control": ("disabled", "inactive"),
+        },
+    )
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+
+    result = refresh.converge_user_scheduler(
+        source_commit=source_commit,
+        release_id=release_id,
+        release=release,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=systemd.runtime_unit_root,
+        rollback_directory=rollback,
+        manifest_path=tmp_path / "candidate-manifest.json",
+        command_runner=systemd,
+        validation_runner=successful_systemd_analyze,
+        cycle_validator=successful_cycle_validation,
+    )
+
+    assert result["timers"]["bureau-curator"]["UnitFileState"] == "enabled"
+    assert result["timers"]["bureau-curator"]["SubState"] == "waiting"
+    assert result["timers"]["bureau-verifier-control"]["UnitFileState"] == "enabled-runtime"
+    assert result["timers"]["bureau-verifier-control"]["ActiveState"] == "inactive"
+    assert result["timers"]["bureau-operator-control"]["UnitFileState"] == "disabled"
+    assert result["prior_timer_intent"]["bureau-curator"] == "enabled"
+    assert result["prior_timer_intent"]["bureau-verifier-control"] == "enabled-runtime"
+    assert result["timers"]["bureau-task-supply"]["UnitFileState"] == "enabled"
+    assert not any(command[0] in {"enable", "disable"} for command in systemd.commands)
+
+
+def test_scheduler_convergence_rejects_missing_persistent_wants_parent_before_effects(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    systemd = FakeUserSystemd(unit_root)
+    shutil.rmtree(unit_root / "timers.target.wants")
+    commands_before = list(systemd.commands)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.converge_user_scheduler(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=unit_root,
+            libexec_dir=libexec_root,
+            runtime_user_unit_dir=systemd.runtime_unit_root,
+            rollback_directory=tmp_path / "rollback",
+            manifest_path=tmp_path / "candidate-manifest.json",
+            command_runner=systemd,
+            validation_runner=successful_systemd_analyze,
+            cycle_validator=successful_cycle_validation,
+        )
+
+    assert caught.value.code == "scheduler-parent-invalid"
+    assert caught.value.details["label"] == "persistent timer enablement directory"
+    assert systemd.commands == commands_before
+    assert not (tmp_path / "rollback").exists()
+
+
+def test_foreign_timer_enablement_link_survives_convergence_and_later_rollback(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        for suffix in ("service", "timer"):
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"old {name}.{suffix}\n", encoding="utf-8"
+            )
+        executable = libexec_root / name
+        executable.write_text(f"old {name}\n", encoding="utf-8")
+        executable.chmod(0o755)
+    systemd = FakeUserSystemd(unit_root)
+    foreign_link = (
+        unit_root / "custom-maintenance.target.wants/bureau-operator-control.timer"
+    )
+    foreign_link.parent.mkdir()
+    foreign_link.symlink_to("../bureau-operator-control.timer")
+
+    first_rollback = tmp_path / "first-rollback"
+    first_rollback.mkdir()
+    refresh.converge_user_scheduler(
+        source_commit=source_commit,
+        release_id=release_id,
+        release=release,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=systemd.runtime_unit_root,
+        rollback_directory=first_rollback,
+        manifest_path=tmp_path / "candidate-manifest.json",
+        command_runner=systemd,
+        validation_runner=successful_systemd_analyze,
+        cycle_validator=successful_cycle_validation,
+    )
+
+    assert foreign_link.is_symlink()
+    assert os.readlink(foreign_link) == "../bureau-operator-control.timer"
+    assert systemd.states["bureau-operator-control.timer"]["UnitFileState"] == (
+        "disabled"
+    )
+
+    later_rollback = tmp_path / "later-rollback"
+    later_rollback.mkdir()
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.converge_user_scheduler(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=unit_root,
+            libexec_dir=libexec_root,
+            runtime_user_unit_dir=systemd.runtime_unit_root,
+            rollback_directory=later_rollback,
+            manifest_path=tmp_path / "candidate-manifest.json",
+            command_runner=systemd,
+            validation_runner=successful_systemd_analyze,
+            cycle_validator=successful_cycle_validation,
+            after_activation=lambda _scheduler: (_ for _ in ()).throw(
+                OSError("injected later transaction failure")
+            ),
+        )
+
+    assert caught.value.code == "scheduler-convergence-rolled-back"
+    assert foreign_link.is_symlink()
+    assert os.readlink(foreign_link) == "../bureau-operator-control.timer"
+    assert not any(command[0] in {"enable", "disable"} for command in systemd.commands)
+
+
+@pytest.mark.parametrize(
+    ("task_supply_intent", "task_supply_active"),
+    [
+        ("absent", "inactive"),
+        ("disabled", "active"),
+        ("enabled", "inactive"),
+        ("enabled-runtime", "active"),
+    ],
+)
+def test_required_timer_rollback_restores_exact_link_intent_and_active_state(
+    tmp_path: Path,
+    task_supply_intent: str,
+    task_supply_active: str,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        if name == refresh.REQUIRED_RUNTIME_TIMER and task_supply_intent == "absent":
+            continue
+        for suffix in ("service", "timer"):
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"preimage {name}.{suffix}\n", encoding="utf-8"
+            )
+        executable = libexec_root / name
+        executable.write_text(f"preimage {name}\n", encoding="utf-8")
+        executable.chmod(0o755)
+    configured = (
+        {}
+        if task_supply_intent == "absent"
+        else {
+            refresh.REQUIRED_RUNTIME_TIMER: (
+                task_supply_intent,
+                task_supply_active,
+            )
+        }
+    )
+    systemd = FakeUserSystemd(unit_root, timer_states=configured)
+    state_before = json.loads(json.dumps(systemd.states))
+    persistent_link = systemd._enablement_link(
+        "bureau-task-supply.timer", runtime=False
+    )
+    runtime_link = systemd._enablement_link("bureau-task-supply.timer", runtime=True)
+
+    def link_preimage(path: Path) -> tuple[str, str | None]:
+        return (
+            ("symlink", os.readlink(path))
+            if path.is_symlink()
+            else ("absent", None)
+        )
+
+    links_before = {
+        persistent_link: link_preimage(persistent_link),
+        runtime_link: link_preimage(runtime_link),
+    }
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.converge_user_scheduler(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=unit_root,
+            libexec_dir=libexec_root,
+            runtime_user_unit_dir=systemd.runtime_unit_root,
+            rollback_directory=rollback,
+            manifest_path=tmp_path / "candidate-manifest.json",
+            command_runner=systemd,
+            validation_runner=successful_systemd_analyze,
+            cycle_validator=successful_cycle_validation,
+            after_activation=lambda _scheduler: (_ for _ in ()).throw(
+                OSError("injected post-convergence failure")
+            ),
+        )
+
+    assert caught.value.code == "scheduler-convergence-rolled-back"
+    assert systemd.states == state_before
+    assert {path: link_preimage(path) for path in links_before} == links_before
+    assert not any(command[0] in {"enable", "disable"} for command in systemd.commands)
+    preimage = json.loads(
+        Path(caught.value.details["preimage_path"]).read_text(encoding="utf-8")
+    )
+    assert {
+        record["path"]: record["preimage_kind"]
+        for record in preimage["enablement_links"]
+    } == {
+        str(persistent_link): links_before[persistent_link][0],
+        str(runtime_link): links_before[runtime_link][0],
+    }
+
+
+def test_partial_systemd_failure_restores_exact_fragment_and_state_preimage(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    original: dict[Path, tuple[bytes, int]] = {}
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        for suffix in ("service", "timer"):
+            path = unit_root / f"{name}.{suffix}"
+            path.write_bytes(f"preimage {name}.{suffix}\n".encode())
+            path.chmod(0o644)
+            original[path] = (path.read_bytes(), 0o644)
+        path = libexec_root / name
+        path.write_bytes(f"preimage {name}\n".encode())
+        path.chmod(0o755)
+        original[path] = (path.read_bytes(), 0o755)
+    configured = {
+        "bureau-curator": ("enabled", "active"),
+        "bureau-operator-control": ("disabled", "inactive"),
+    }
+    systemd = FakeUserSystemd(
+        unit_root,
+        timer_states=configured,
+        fail_once=("start", "bureau-task-supply.timer"),
+    )
+    state_before = json.loads(json.dumps(systemd.states))
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+
+    previous_umask = os.umask(0o077)
+    try:
+        with pytest.raises(refresh.RuntimeRefreshError) as caught:
+            refresh.converge_user_scheduler(
+                source_commit=source_commit,
+                release_id=release_id,
+                release=release,
+                user_unit_dir=unit_root,
+                libexec_dir=libexec_root,
+                runtime_user_unit_dir=systemd.runtime_unit_root,
+                rollback_directory=rollback,
+                manifest_path=tmp_path / "candidate-manifest.json",
+                command_runner=systemd,
+                validation_runner=successful_systemd_analyze,
+                cycle_validator=successful_cycle_validation,
+            )
+    finally:
+        os.umask(previous_umask)
+
+    assert caught.value.code == "scheduler-convergence-rolled-back"
+    assert caught.value.details["safe_to_retry"] is False
+    assert Path(caught.value.details["preimage_path"]).is_file()
+    assert systemd.states == state_before
+    for path, (content, mode) in original.items():
+        assert path.read_bytes() == content
+        assert path.stat().st_mode & 0o777 == mode
+    assert systemd.commands.count(("daemon-reload",)) == 2
+
+
+def test_failed_required_service_readback_is_rolled_back_without_blind_retry(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        for suffix in ("service", "timer"):
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"previous {name}.{suffix}\n", encoding="utf-8"
+            )
+        executable = libexec_root / name
+        executable.write_text(f"previous {name}\n", encoding="utf-8")
+        executable.chmod(0o755)
+    systemd = FakeUserSystemd(unit_root)
+    state_before = json.loads(json.dumps(systemd.states))
+    injected = False
+
+    def runner(argv: list[str]) -> subprocess.CompletedProcess[str]:
+        nonlocal injected
+        result = systemd(argv)
+        if tuple(argv[2:]) == ("start", "bureau-task-supply.timer"):
+            systemd.states["bureau-task-supply.service"]["ActiveState"] = "failed"
+            systemd.states["bureau-task-supply.service"]["SubState"] = "failed"
+            systemd.states["bureau-task-supply.service"]["Result"] = "exit-code"
+            injected = True
+        return result
+
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.converge_user_scheduler(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=unit_root,
+            libexec_dir=libexec_root,
+            runtime_user_unit_dir=systemd.runtime_unit_root,
+            rollback_directory=rollback,
+            manifest_path=tmp_path / "candidate-manifest.json",
+            command_runner=runner,
+            validation_runner=successful_systemd_analyze,
+            cycle_validator=successful_cycle_validation,
+        )
+
+    assert injected is True
+    assert caught.value.code == "scheduler-convergence-rolled-back"
+    assert caught.value.details["cause"]["code"] == "scheduler-required-timer-invalid"
+    assert caught.value.details["safe_to_retry"] is False
+    assert systemd.states == state_before
+
+
+def test_systemd_analyze_failure_restores_files_without_activation(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    original: dict[Path, tuple[bytes, int]] = {}
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        for suffix in ("service", "timer"):
+            path = unit_root / f"{name}.{suffix}"
+            path.write_bytes(f"preimage {name}.{suffix}\n".encode())
+            path.chmod(0o640)
+            original[path] = (path.read_bytes(), 0o640)
+        path = libexec_root / name
+        path.write_bytes(f"preimage {name}\n".encode())
+        path.chmod(0o700)
+        original[path] = (path.read_bytes(), 0o700)
+    systemd = FakeUserSystemd(unit_root)
+    state_before = json.loads(json.dumps(systemd.states))
+    validation_commands: list[list[str]] = []
+
+    def reject_candidate(argv: list[str]) -> subprocess.CompletedProcess[str]:
+        validation_commands.append(argv)
+        return subprocess.CompletedProcess(
+            argv, 1, stdout="", stderr="injected unit verification failure"
+        )
+
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.converge_user_scheduler(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=unit_root,
+            libexec_dir=libexec_root,
+            runtime_user_unit_dir=systemd.runtime_unit_root,
+            rollback_directory=rollback,
+            manifest_path=tmp_path / "candidate-manifest.json",
+            command_runner=systemd,
+            validation_runner=reject_candidate,
+            cycle_validator=lambda **_: pytest.fail(
+                "cycle validation must not follow failed systemd verification"
+            ),
+        )
+
+    assert caught.value.code == "scheduler-convergence-rolled-back"
+    assert caught.value.details["cause"]["code"] == (
+        "scheduler-candidate-systemd-verify-failed"
+    )
+    assert validation_commands[0][:3] == ["systemd-analyze", "--user", "verify"]
+    assert not any(
+        command[0] in {"daemon-reload", "enable", "start"}
+        for command in systemd.commands
+    )
+    assert systemd.states == state_before
+    for path, (content, mode) in original.items():
+        assert path.read_bytes() == content
+        assert path.stat().st_mode & 0o777 == mode
+
+
+def test_candidate_cycle_deployment_drift_prevents_activation(tmp_path: Path) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    systemd = FakeUserSystemd(unit_root)
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.converge_user_scheduler(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=unit_root,
+            libexec_dir=libexec_root,
+            runtime_user_unit_dir=systemd.runtime_unit_root,
+            rollback_directory=rollback,
+            manifest_path=tmp_path / "candidate-manifest.json",
+            command_runner=systemd,
+            validation_runner=successful_systemd_analyze,
+            cycle_validator=lambda **_: {
+                "status": "drift",
+                "activatable": False,
+                "read_only": True,
+                "self_heal": False,
+                "findings": [{"code": "injected-drift"}],
+            },
+        )
+
+    assert caught.value.details["cause"]["code"] == (
+        "scheduler-candidate-cycle-deployment-drift"
+    )
+    assert not any(
+        command[0] in {"daemon-reload", "enable", "start"}
+        for command in systemd.commands
+    )
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        assert not (unit_root / f"{name}.service").exists()
+        assert not (unit_root / f"{name}.timer").exists()
+        assert not (libexec_root / name).exists()
+
+
+def test_incomplete_post_effect_recovery_is_explicit(tmp_path: Path) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    rollback = tmp_path / "rollback"
+    rollback.mkdir()
+    systemd = FakeUserSystemd(unit_root)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.converge_user_scheduler(
+            source_commit=source_commit,
+            release_id=release_id,
+            release=release,
+            user_unit_dir=unit_root,
+            libexec_dir=libexec_root,
+            runtime_user_unit_dir=systemd.runtime_unit_root,
+            rollback_directory=rollback,
+            manifest_path=tmp_path / "candidate-manifest.json",
+            command_runner=systemd,
+            validation_runner=successful_systemd_analyze,
+            cycle_validator=successful_cycle_validation,
+            after_activation=lambda _scheduler: (_ for _ in ()).throw(
+                OSError("injected post-effect failure")
+            ),
+            rollback_effect=lambda: [
+                {
+                    "operation": ["verify-preimage", "manifest"],
+                    "error": "injected incomplete restoration",
+                }
+            ],
+        )
+
+    assert caught.value.code == "scheduler-convergence-recovery-required"
+    assert caught.value.details["safe_to_retry"] is False
+    assert caught.value.details["rollback_failures"] == [
+        {
+            "operation": ["verify-preimage", "manifest"],
+            "error": "injected incomplete restoration",
+        }
+    ]
 
 
 def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
@@ -2840,17 +3784,60 @@ def test_no_run_closeout_rejects_conflicting_authoritative_terminal_state(
     assert "runtime_closeout" not in before["spec"]["metadata"]
 
 
-def test_readback_validates_all_launchers_and_runtime_identity(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("manifest_extra", "receipt_extra"),
+    [
+        ({}, {}),
+        ({"scheduler": []}, {"scheduler": []}),
+        (
+            {"scheduler": {"kind": "manifest-scheduler"}},
+            {"scheduler": {"kind": "receipt-scheduler"}},
+        ),
+    ],
+)
+def test_readback_rejects_missing_malformed_or_mismatched_scheduler_evidence(
+    tmp_path: Path,
+    manifest_extra: dict[str, Any],
+    receipt_extra: dict[str, Any],
+) -> None:
+    prefix = tmp_path / "prefix"
+    manifest_path = prefix / "deployment-manifest.json"
+    write_manifest(manifest_path, MAIN, **manifest_extra)
+    receipt = {
+        "manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+        **receipt_extra,
+    }
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.readback_install(
+            expected_commit=MAIN,
+            prefix=prefix,
+            bin_dir=tmp_path / "absent-bin",
+            install_receipt=receipt,
+        )
+
+    assert caught.value.code == "scheduler-manifest-receipt-mismatch"
+
+
+def test_readback_validates_all_launchers_and_runtime_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     prefix = tmp_path / "prefix"
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     manifest_path = prefix / "deployment-manifest.json"
+    scheduler_receipt = {
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
     write_manifest(
         manifest_path,
         MAIN,
         release_id="release",
         package_tree_sha256="a" * 64,
         canonical_registry_tree_sha256="b" * 64,
+        scheduler=scheduler_receipt,
     )
     bureau = bin_dir / "bureau"
     bureau.write_text(
@@ -2887,7 +3874,17 @@ else:
         "runtime_refresh_launcher_sha256": refresh.sha256_bytes(runner.read_bytes()),
         "status_capsule_launcher_sha256": refresh.sha256_bytes(status_capsule.read_bytes()),
         "rollback": {"directory": "/rollback"},
+        "scheduler": scheduler_receipt,
     }
+    scheduler_calls: list[tuple[dict[str, Any], str]] = []
+
+    def scheduler_readback(
+        evidence: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        scheduler_calls.append((evidence, expected_commit))
+        return {"kind": "live-scheduler-readback", "authoritative": True}
+
+    monkeypatch.setattr(refresh, "readback_user_scheduler", scheduler_readback)
 
     result = refresh.readback_install(
         expected_commit=MAIN,
@@ -2901,6 +3898,11 @@ else:
     assert result["source_commit"] == MAIN
     assert result["status_capsule_launcher_sha256"] == receipt["status_capsule_launcher_sha256"]
     assert result["rollback"] == {"directory": "/rollback"}
+    assert result["scheduler"] == {
+        "kind": "live-scheduler-readback",
+        "authoritative": True,
+    }
+    assert scheduler_calls == [(scheduler_receipt, MAIN)]
 
     status_capsule.unlink()
     with pytest.raises(refresh.RuntimeRefreshError) as missing:
@@ -2943,6 +3945,685 @@ def load_installer_module() -> Any:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def clean_installer_source(tmp_path: Path) -> Path:
+    repository = Path(__file__).parents[1]
+    staged = tmp_path / "installer-staged"
+    shutil.copytree(
+        repository,
+        staged,
+        ignore=shutil.ignore_patterns(
+            ".git",
+            ".review-audits",
+            ".pytest_cache",
+            ".ruff_cache",
+            "__pycache__",
+            "*.pyc",
+        ),
+    )
+    git(staged, "init", "-b", "main")
+    git(staged, "config", "user.name", "Test")
+    git(staged, "config", "user.email", "test@example.invalid")
+    git(staged, "add", ".")
+    git(staged, "commit", "-m", "synthetic scheduler transaction source")
+    bare = tmp_path / "installer-bureau.git"
+    git(tmp_path, "clone", "--bare", str(staged), str(bare))
+    clean = tmp_path / "installer-clean"
+    git(tmp_path, "clone", str(bare), str(clean))
+    git(clean, "remote", "set-url", "origin", str(bare))
+    git(clean, "fetch", "origin", "main")
+    return clean
+
+
+def scheduler_installer_approval(
+    source: Path,
+    tmp_path: Path,
+    *,
+    user_unit_dir: Path,
+    libexec_dir: Path,
+    runtime_user_unit_dir: Path | None = None,
+) -> Path:
+    bound_runtime_user_unit_dir = (
+        runtime_user_unit_dir or refresh.default_runtime_user_unit_dir()
+    )
+    path = write_runtime_approval_intent(
+        source,
+        tmp_path,
+        label="scheduler-installer-transaction",
+    )
+    intent = json.loads(path.read_text(encoding="utf-8"))
+    intent.pop("intent_sha256")
+    intent["user_unit_dir"] = str(user_unit_dir)
+    intent["libexec_dir"] = str(libexec_dir)
+    intent["runtime_user_unit_dir"] = str(bound_runtime_user_unit_dir)
+    intent["required_resource_keys"] = refresh.scheduler_resource_keys(
+        user_unit_dir=user_unit_dir,
+        libexec_dir=libexec_dir,
+        runtime_user_unit_dir=bound_runtime_user_unit_dir,
+    )
+    path.write_bytes(
+        refresh.canonical_bytes(refresh.bind_digest(intent, "intent_sha256"))
+    )
+    return path
+
+
+@pytest.mark.parametrize("noncanonical", ["prefix", "bin_dir"])
+def test_run_installer_rejects_noncanonical_scheduler_runtime_layout_before_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    noncanonical: str,
+) -> None:
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = (home / ".local/share/bureau").resolve()
+    bin_dir = (home / ".local/bin").resolve()
+    if noncanonical == "prefix":
+        prefix = (tmp_path / "custom-prefix").resolve()
+    else:
+        bin_dir = (tmp_path / "custom-bin").resolve()
+
+    monkeypatch.setattr(
+        refresh,
+        "_run",
+        lambda *_args, **_kwargs: pytest.fail("installer process must not be invoked"),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.run_installer(
+            source=tmp_path / "source",
+            prefix=prefix,
+            bin_dir=bin_dir,
+            user_unit_dir=tmp_path / "systemd/user",
+            libexec_dir=tmp_path / "libexec",
+            runtime_user_unit_dir=refresh.default_runtime_user_unit_dir(),
+            approval_intent=tmp_path / "approval.json",
+        )
+
+    assert caught.value.code == "scheduler-runtime-layout-noncanonical"
+    assert caught.value.details["mismatches"] == [noncanonical]
+
+
+def test_run_installer_rejects_runtime_user_unit_dir_drift_before_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "current-runtime"))
+    monkeypatch.setattr(
+        refresh,
+        "_run",
+        lambda *_args, **_kwargs: pytest.fail("installer process must not be invoked"),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.run_installer(
+            source=tmp_path / "source",
+            prefix=(home / ".local/share/bureau").resolve(),
+            bin_dir=(home / ".local/bin").resolve(),
+            user_unit_dir=tmp_path / "systemd/user",
+            libexec_dir=tmp_path / "libexec",
+            runtime_user_unit_dir=(tmp_path / "intent-runtime/systemd/user").resolve(),
+            approval_intent=tmp_path / "approval.json",
+        )
+
+    assert caught.value.code == "runtime-user-unit-dir-drift"
+
+
+def test_real_installer_rejects_runtime_user_unit_dir_drift_before_effects(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    intent_runtime_root = (tmp_path / "intent-runtime").resolve()
+    runtime_user_unit_dir = intent_runtime_root / "systemd/user"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(intent_runtime_root))
+    unit_root = (tmp_path / "custom-systemd/user").resolve()
+    libexec_root = (tmp_path / "custom-libexec").resolve()
+    approval_path = scheduler_installer_approval(
+        source,
+        tmp_path,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=runtime_user_unit_dir,
+    )
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path / "drifted-runtime"))
+    monkeypatch.setattr(
+        installer,
+        "atomic_write",
+        lambda *_args, **_kwargs: pytest.fail("installer artifacts must not be written"),
+    )
+    real_subprocess_run = subprocess.run
+
+    def reject_runtime_commands(
+        argv: list[str], *args: Any, **kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] in {"systemctl", "systemd-analyze"}:
+            pytest.fail("systemctl and systemd-analyze must not be invoked")
+        return real_subprocess_run(argv, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", reject_runtime_commands)
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(home / ".local/share/bureau"),
+            "--bin-dir",
+            str(home / ".local/bin"),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--runtime-user-unit-dir",
+            str(runtime_user_unit_dir),
+            "--approval-intent",
+            str(approval_path),
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip())["error"]
+    assert error["code"] == "runtime-user-unit-dir-drift"
+    assert not (home / ".local").exists()
+    assert not unit_root.exists()
+    assert not libexec_root.exists()
+
+
+@pytest.mark.parametrize("noncanonical", ["prefix", "bin_dir"])
+def test_real_installer_rejects_noncanonical_scheduler_layout_before_effects(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    noncanonical: str,
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = (home / ".local/share/bureau").resolve()
+    bin_dir = (home / ".local/bin").resolve()
+    if noncanonical == "prefix":
+        prefix = (tmp_path / "custom-prefix").resolve()
+    else:
+        bin_dir = (tmp_path / "custom-bin").resolve()
+    unit_root = (tmp_path / "custom-systemd/user").resolve()
+    libexec_root = (tmp_path / "custom-libexec").resolve()
+    sentinel_paths = [
+        prefix / "deployment-manifest.json",
+        prefix / "receipts/existing.json",
+        *(bin_dir / name for name, _ in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS),
+        unit_root / "bureau-task-supply.service",
+        unit_root / "bureau-task-supply.timer",
+        libexec_root / "bureau-task-supply",
+    ]
+    for path in sentinel_paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(f"sentinel {path.name}\n".encode())
+    preimage = {path: path.read_bytes() for path in sentinel_paths}
+
+    monkeypatch.setattr(
+        installer,
+        "atomic_write",
+        lambda *_args, **_kwargs: pytest.fail("installer artifacts must not be written"),
+    )
+    monkeypatch.setattr(
+        refresh,
+        "atomic_write",
+        lambda *_args, **_kwargs: pytest.fail("scheduler artifacts must not be written"),
+    )
+    real_subprocess_run = subprocess.run
+    runtime_commands: list[list[str]] = []
+
+    def reject_runtime_commands(
+        argv: list[str], *args: Any, **kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] in {"systemctl", "systemd-analyze"}:
+            runtime_commands.append(argv)
+            pytest.fail("systemctl and systemd-analyze must not be invoked")
+        return real_subprocess_run(argv, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", reject_runtime_commands)
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(prefix),
+            "--bin-dir",
+            str(bin_dir),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip())["error"]
+    assert error["code"] == "scheduler-runtime-layout-noncanonical"
+    assert error["details"]["mismatches"] == [noncanonical]
+    assert runtime_commands == []
+    assert {path: path.read_bytes() for path in sentinel_paths} == preimage
+    assert sorted(path for path in prefix.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(prefix)
+    )
+    assert sorted(path for path in bin_dir.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(bin_dir)
+    )
+    assert sorted(path for path in unit_root.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(unit_root)
+    )
+    assert sorted(path for path in libexec_root.rglob("*") if path.is_file()) == sorted(
+        path for path in sentinel_paths if path.is_relative_to(libexec_root)
+    )
+
+
+@pytest.mark.parametrize("preexisting_launchers", [False, True])
+def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    preexisting_launchers: bool,
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = home / ".local/share/bureau"
+    bin_dir = home / ".local/bin"
+    manifest_path = prefix / "deployment-manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_bytes(b"exact old manifest\n")
+    manifest_path.chmod(0o640)
+    launcher_paths = [
+        bin_dir / "bureau",
+        bin_dir / "bureau-runtime-refresh",
+        bin_dir / "bureau-status-capsule",
+    ]
+    if preexisting_launchers:
+        bin_dir.mkdir()
+        for path in launcher_paths:
+            path.write_bytes(f"exact old {path.name}\n".encode())
+            path.chmod(0o700)
+    install_preimage = {
+        path: (path.read_bytes(), path.stat().st_mode & 0o777)
+        for path in (manifest_path, *launcher_paths)
+        if path.is_file()
+    }
+    assert bin_dir.exists() is preexisting_launchers
+    assert not (prefix / "receipts").exists()
+    unit_root = (tmp_path / "transaction-systemd/user").resolve()
+    libexec_root = (tmp_path / "transaction-libexec").resolve()
+    runtime_root = (tmp_path / "transaction-runtime").resolve()
+    runtime_unit_root = runtime_root / "systemd/user"
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    runtime_unit_root.mkdir(parents=True)
+    approval_path = scheduler_installer_approval(
+        source,
+        tmp_path,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=runtime_unit_root,
+    )
+    systemd = FakeUserSystemd(unit_root, runtime_unit_root=runtime_unit_root)
+    state_before = json.loads(json.dumps(systemd.states))
+
+    def fake_run(
+        argv: list[str],
+        **_kwargs: Any,
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] == "systemctl":
+            return systemd(argv)
+        if argv[:3] == ["systemd-analyze", "--user", "verify"]:
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        raise AssertionError(f"unexpected runtime command: {argv}")
+
+    real_atomic_write = installer.atomic_write
+
+    def fail_receipt_write(path: Path, data: bytes, mode: int = 0o644) -> None:
+        if path.parent == prefix / "receipts":
+            real_atomic_write(path, data, mode)
+            assert path.parent.is_dir()
+            assert path.is_file()
+            raise OSError("injected durable receipt write failure")
+        real_atomic_write(path, data, mode)
+
+    monkeypatch.setattr(refresh, "_run", fake_run)
+    monkeypatch.setattr(installer, "atomic_write", fail_receipt_write)
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(prefix),
+            "--bin-dir",
+            str(bin_dir),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--runtime-user-unit-dir",
+            str(runtime_unit_root),
+            "--approval-intent",
+            str(approval_path),
+            "--replace-existing",
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip().splitlines()[-1])["error"]
+    assert error["code"] == "scheduler-convergence-rolled-back"
+    assert "injected durable receipt write failure" in error["details"]["cause"][
+        "message"
+    ]
+    for path, (content, mode) in install_preimage.items():
+        assert path.read_bytes() == content
+        assert path.stat().st_mode & 0o777 == mode
+    assert bin_dir.exists() is preexisting_launchers
+    assert not (prefix / "receipts").exists()
+    assert systemd.states == state_before
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        assert not (unit_root / f"{name}.service").exists()
+        assert not (unit_root / f"{name}.timer").exists()
+        assert not (libexec_root / name).exists()
+
+
+def test_launcher_directory_fsync_failure_after_replace_restores_exact_preimage(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = home / ".local/share/bureau"
+    bin_dir = home / ".local/bin"
+    manifest_path = prefix / "deployment-manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_bytes(b"exact old manifest\n")
+    manifest_path.chmod(0o640)
+    bin_dir.mkdir()
+    launcher = bin_dir / "bureau"
+    launcher.write_bytes(b"#!/bin/sh\necho exact-old-launcher\n")
+    launcher.chmod(0o710)
+    launcher_preimage = (launcher.read_bytes(), launcher.stat().st_mode & 0o777)
+    for name, entrypoint in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS:
+        path = bin_dir / name
+        if path == launcher:
+            continue
+        path.write_bytes(refresh.stable_launcher_bytes(manifest_path, entrypoint))
+        path.chmod(0o755)
+
+    unit_root = (tmp_path / "transaction-systemd/user").resolve()
+    libexec_root = (tmp_path / "transaction-libexec").resolve()
+    runtime_root = (tmp_path / "transaction-runtime").resolve()
+    runtime_unit_root = runtime_root / "systemd/user"
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    runtime_unit_root.mkdir(parents=True)
+    systemd = FakeUserSystemd(unit_root, runtime_unit_root=runtime_unit_root)
+    approval_path = scheduler_installer_approval(
+        source,
+        tmp_path,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=runtime_unit_root,
+    )
+    approval = json.loads(approval_path.read_text(encoding="utf-8"))
+    approval.pop("intent_sha256")
+    approval["required_resource_keys"].append(f"path:{launcher}")
+    approval["required_resource_keys"].sort()
+    approval_path.write_bytes(
+        refresh.canonical_bytes(refresh.bind_digest(approval, "intent_sha256"))
+    )
+
+    replaced_launcher = False
+    fsync_failure_injected = False
+    fsync_armed = False
+    real_replace = installer.os.replace
+    real_fsync_directory = installer.fsync_directory
+
+    def fake_run(
+        argv: list[str], **_kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] == "systemctl":
+            return systemd(argv)
+        if argv[:3] == ["systemd-analyze", "--user", "verify"]:
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        raise AssertionError(f"unexpected runtime command: {argv}")
+
+    def observe_launcher_replace(source_path: str, target_path: str) -> None:
+        nonlocal replaced_launcher, fsync_armed
+        real_replace(source_path, target_path)
+        if Path(target_path) == launcher and not fsync_failure_injected:
+            replaced_launcher = True
+            fsync_armed = True
+
+    def fail_first_launcher_directory_fsync(path: Path) -> None:
+        nonlocal fsync_armed, fsync_failure_injected
+        if path == bin_dir and fsync_armed and not fsync_failure_injected:
+            fsync_armed = False
+            fsync_failure_injected = True
+            assert launcher.read_bytes() != launcher_preimage[0]
+            raise OSError("injected launcher directory fsync failure after replace")
+        real_fsync_directory(path)
+
+    monkeypatch.setattr(installer.os, "replace", observe_launcher_replace)
+    monkeypatch.setattr(installer, "fsync_directory", fail_first_launcher_directory_fsync)
+    monkeypatch.setattr(refresh, "_run", fake_run)
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(prefix),
+            "--bin-dir",
+            str(bin_dir),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--runtime-user-unit-dir",
+            str(runtime_unit_root),
+            "--approval-intent",
+            str(approval_path),
+            "--replace-existing",
+            "--enforce-launcher-allowlist",
+            "--allowed-launcher-path",
+            str(launcher),
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip().splitlines()[-1])["error"]
+    assert error["code"] == "scheduler-convergence-rolled-back"
+    assert "fsync failure after replace" in error["details"]["cause"]["message"]
+    assert replaced_launcher is True
+    assert fsync_failure_injected is True
+    assert launcher.read_bytes() == launcher_preimage[0]
+    assert launcher.stat().st_mode & 0o777 == launcher_preimage[1]
+    assert manifest_path.read_bytes() == b"exact old manifest\n"
+    assert manifest_path.stat().st_mode & 0o777 == 0o640
+
+
+def test_scheduler_rollback_does_not_restore_unmutated_unleased_launchers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = home / ".local/share/bureau"
+    bin_dir = home / ".local/bin"
+    manifest_path = prefix / "deployment-manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_bytes(b"exact old manifest\n")
+    manifest_path.chmod(0o640)
+    bin_dir.mkdir()
+    launcher_paths: dict[str, Path] = {}
+    launcher_preimage: dict[Path, bytes] = {}
+    for name, entrypoint in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS:
+        path = bin_dir / name
+        content = refresh.stable_launcher_bytes(manifest_path, entrypoint)
+        path.write_bytes(content)
+        path.chmod(0o755)
+        launcher_paths[name] = path
+        launcher_preimage[path] = content
+
+    unit_root = (tmp_path / "transaction-systemd/user").resolve()
+    libexec_root = (tmp_path / "transaction-libexec").resolve()
+    runtime_root = (tmp_path / "transaction-runtime").resolve()
+    runtime_unit_root = runtime_root / "systemd/user"
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    runtime_unit_root.mkdir(parents=True)
+    approval_path = scheduler_installer_approval(
+        source,
+        tmp_path,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=runtime_unit_root,
+    )
+    approval = json.loads(approval_path.read_text(encoding="utf-8"))
+    assert {
+        f"path:{path}" for path in launcher_paths.values()
+    }.isdisjoint(approval["required_resource_keys"])
+    systemd = FakeUserSystemd(unit_root, runtime_unit_root=runtime_unit_root)
+    state_before = json.loads(json.dumps(systemd.states))
+
+    def fake_run(
+        argv: list[str], **_kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] == "systemctl":
+            return systemd(argv)
+        if argv[:3] == ["systemd-analyze", "--user", "verify"]:
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        raise AssertionError(f"unexpected runtime command: {argv}")
+
+    concurrent_launcher = launcher_paths["bureau"]
+    concurrent_content = b"concurrent launcher change\n"
+    launcher_atomic_writes: list[Path] = []
+    real_atomic_write = installer.atomic_write
+
+    def fail_receipt_after_concurrent_launcher_change(
+        path: Path, data: bytes, mode: int = 0o644
+    ) -> None:
+        if path in launcher_preimage:
+            launcher_atomic_writes.append(path)
+        if path.parent == prefix / "receipts":
+            concurrent_launcher.write_bytes(concurrent_content)
+            concurrent_launcher.chmod(0o711)
+            real_atomic_write(path, data, mode)
+            raise OSError("injected durable receipt write failure")
+        real_atomic_write(path, data, mode)
+
+    monkeypatch.setattr(refresh, "_run", fake_run)
+    monkeypatch.setattr(
+        installer,
+        "atomic_write",
+        fail_receipt_after_concurrent_launcher_change,
+    )
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(prefix),
+            "--bin-dir",
+            str(bin_dir),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--runtime-user-unit-dir",
+            str(runtime_unit_root),
+            "--approval-intent",
+            str(approval_path),
+            "--replace-existing",
+            "--enforce-launcher-allowlist",
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip().splitlines()[-1])["error"]
+    assert error["code"] == "scheduler-convergence-rolled-back"
+    assert launcher_atomic_writes == []
+    assert concurrent_launcher.read_bytes() == concurrent_content
+    assert concurrent_launcher.stat().st_mode & 0o777 == 0o711
+    for path, content in launcher_preimage.items():
+        if path != concurrent_launcher:
+            assert path.read_bytes() == content
+            assert path.stat().st_mode & 0o777 == 0o755
+    assert manifest_path.read_bytes() == b"exact old manifest\n"
+    assert manifest_path.stat().st_mode & 0o777 == 0o640
+    assert not (prefix / "receipts").exists()
+    assert systemd.states == state_before
+
+
+@pytest.mark.parametrize(
+    ("parent_state", "expected_error"),
+    [
+        ("non-empty", "became non-empty"),
+        ("symlink", "became a symlink"),
+        ("wrong-type", "has the wrong type"),
+    ],
+)
+def test_installer_rollback_reports_created_parent_drift(
+    tmp_path: Path,
+    parent_state: str,
+    expected_error: str,
+) -> None:
+    installer = load_installer_module()
+    parent = tmp_path / "transaction-created-parent"
+    if parent_state == "non-empty":
+        parent.mkdir()
+        (parent / "foreign").write_text("preserve me\n", encoding="utf-8")
+    elif parent_state == "symlink":
+        target = tmp_path / "foreign-target"
+        target.mkdir()
+        parent.symlink_to(target, target_is_directory=True)
+    else:
+        parent.write_text("foreign type\n", encoding="utf-8")
+
+    failures = installer._restore_install_preimage(
+        backup={"manifest": None},
+        manifest_path=tmp_path / "absent-manifest.json",
+        launchers={},
+        mutated_launchers=set(),
+        receipt_path=None,
+        parent_preimage={"created-parent": (parent, False)},
+    )
+
+    assert failures[0]["operation"] == ["remove-created-parent", "created-parent"]
+    assert expected_error in failures[0]["error"]
+    assert {tuple(failure["operation"]) for failure in failures} == {
+        ("remove-created-parent", "created-parent"),
+        ("verify-preimage", "created-parent"),
+    }
+    assert installer._path_lexists(parent)
 
 
 def test_installer_wrapper_selects_refresh_entrypoint_and_backs_up_both(
@@ -3002,7 +4683,7 @@ def test_status_reports_terminal_and_unresolved_attempts(tmp_path: Path) -> None
     }
 
 
-def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> None:
+def test_real_non_systemd_installer_supports_custom_layout(tmp_path: Path) -> None:
     repository = Path(__file__).parents[1]
     staged = tmp_path / "staged"
     shutil.copytree(
@@ -3010,6 +4691,7 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         staged,
         ignore=shutil.ignore_patterns(
             ".git",
+            ".review-audits",
             ".pytest_cache",
             ".ruff_cache",
             "__pycache__",
@@ -3082,6 +4764,7 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         check=False,
         text=True,
         capture_output=True,
+        env={**os.environ, "XDG_RUNTIME_DIR": "relative-runtime"},
     )
     assert install.returncode == 0, install.stderr
     receipt = json.loads(install.stdout.strip().splitlines()[-1])

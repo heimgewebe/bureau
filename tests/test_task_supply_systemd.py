@@ -1,4 +1,7 @@
+import os
 from pathlib import Path
+
+import pytest
 
 from bureau import cli, runtime_identity, runtime_refresh, supply_runner
 
@@ -52,11 +55,154 @@ def test_task_supply_libexec_is_only_a_stable_launcher_bridge() -> None:
 def test_task_supply_is_part_of_runtime_identity_and_refresh_contract() -> None:
     assert "bureau-task-supply" in runtime_identity.SCHEDULER_NAMES
     assert "bureau-task-supply" in runtime_refresh.RUNTIME_SCHEDULER_NAMES
+    assert runtime_refresh.REQUIRED_RUNTIME_TIMER == "bureau-task-supply"
+    scheduler_keys = runtime_refresh.scheduler_resource_keys(
+        user_unit_dir=Path("/test/systemd/user"),
+        libexec_dir=Path("/test/libexec"),
+    )
+    assert "path:/test/systemd/user" not in scheduler_keys
+    assert "path:/test/libexec" not in scheduler_keys
+    task_supply_paths = (
+        Path("/test/systemd/user/bureau-task-supply.service"),
+        Path("/test/systemd/user/bureau-task-supply.timer"),
+        Path("/test/libexec/bureau-task-supply"),
+    )
+    for target in task_supply_paths:
+        assert f"path:{target}" in scheduler_keys
+        assert f"path:{runtime_refresh._scheduler_staging_path(target)}" in scheduler_keys
+    assert "service:bureau-task-supply.service" in scheduler_keys
+    assert "service:bureau-task-supply.timer" in scheduler_keys
+    assert len([key for key in scheduler_keys if key.startswith("path:")]) == 36
     assert runtime_refresh.RUNTIME_LAUNCHER_ENTRYPOINTS == (
         ("bureau", "bureau.cli"),
         ("bureau-runtime-refresh", "bureau.runtime_refresh"),
         ("bureau-status-capsule", "bureau.status_capsule"),
     )
+
+
+def test_scheduler_mutations_use_only_exact_reserved_staging_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    user_unit_dir = tmp_path / "systemd/user"
+    libexec_dir = tmp_path / "libexec"
+    runtime_user_unit_dir = tmp_path / "runtime-systemd/user"
+    (user_unit_dir / "timers.target.wants").mkdir(parents=True)
+    libexec_dir.mkdir()
+    runtime_user_unit_dir.mkdir(parents=True)
+    keys = set(
+        runtime_refresh.scheduler_resource_keys(
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
+            runtime_user_unit_dir=runtime_user_unit_dir,
+        )
+    )
+    service = user_unit_dir / "bureau-task-supply.service"
+    timer = user_unit_dir / "bureau-task-supply.timer"
+    libexec = libexec_dir / "bureau-task-supply"
+    wants = user_unit_dir / "timers.target.wants/bureau-task-supply.timer"
+    replace_calls: list[tuple[Path, Path]] = []
+    real_replace = runtime_refresh.os.replace
+
+    def observed_replace(source: os.PathLike[str] | str, target: os.PathLike[str] | str) -> None:
+        replace_calls.append((Path(source), Path(target)))
+        real_replace(source, target)
+
+    monkeypatch.setattr(runtime_refresh.os, "replace", observed_replace)
+    for target, mode in ((service, 0o644), (timer, 0o644), (libexec, 0o755)):
+        runtime_refresh.atomic_write(
+            target,
+            b"candidate\n",
+            mode,
+            staging_path=runtime_refresh._scheduler_staging_path(target),
+        )
+    runtime_refresh._replace_with_symlink(wants, "../bureau-task-supply.timer")
+
+    backup = tmp_path / "service.preimage"
+    backup.write_bytes(b"preimage\n")
+    runtime_refresh._restore_artifact(
+        {
+            "path": str(service),
+            "preimage_kind": "file",
+            "mode": "0644",
+            "sha256": runtime_refresh.sha256_bytes(b"preimage\n"),
+            "backup_path": str(backup),
+        }
+    )
+    runtime_refresh._restore_artifact(
+        {
+            "path": str(wants),
+            "preimage_kind": "symlink",
+            "target": "../preimage.timer",
+        }
+    )
+
+    scheduler_targets = {service, timer, libexec, wants}
+    scheduler_replaces = [call for call in replace_calls if call[1] in scheduler_targets]
+    assert scheduler_replaces
+    mutated_paths = {path for call in scheduler_replaces for path in call}
+    assert {f"path:{path}" for path in mutated_paths}.issubset(keys)
+    assert all(
+        source == runtime_refresh._scheduler_staging_path(target)
+        for source, target in scheduler_replaces
+    )
+    assert all(".tmp-" not in path.name for path in mutated_paths)
+    assert {
+        f"path:{user_unit_dir}",
+        f"path:{libexec_dir}",
+        f"path:{runtime_user_unit_dir}",
+        f"path:{user_unit_dir / 'timers.target.wants'}",
+        f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
+    }.isdisjoint(keys)
+
+
+def test_scheduler_symlink_fsync_failure_restores_with_same_reserved_stage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    user_unit_dir = tmp_path / "systemd/user"
+    wants_parent = user_unit_dir / "timers.target.wants"
+    wants_parent.mkdir(parents=True)
+    libexec_dir = tmp_path / "libexec"
+    libexec_dir.mkdir()
+    runtime_user_unit_dir = tmp_path / "runtime-systemd/user"
+    runtime_user_unit_dir.mkdir(parents=True)
+    wants = wants_parent / "bureau-task-supply.timer"
+    wants.symlink_to("../preimage.timer")
+    stage = runtime_refresh._scheduler_staging_path(wants)
+    keys = set(
+        runtime_refresh.scheduler_resource_keys(
+            user_unit_dir=user_unit_dir,
+            libexec_dir=libexec_dir,
+            runtime_user_unit_dir=runtime_user_unit_dir,
+        )
+    )
+    assert {f"path:{wants}", f"path:{stage}"}.issubset(keys)
+
+    real_fsync = runtime_refresh._fsync_directory
+    fail_once = True
+
+    def fail_after_replace(path: Path) -> None:
+        nonlocal fail_once
+        if path == wants_parent and fail_once:
+            fail_once = False
+            raise OSError("injected scheduler directory fsync failure after replace")
+        real_fsync(path)
+
+    monkeypatch.setattr(runtime_refresh, "_fsync_directory", fail_after_replace)
+    with pytest.raises(OSError, match="fsync failure after replace"):
+        runtime_refresh._replace_with_symlink(wants, "../candidate.timer")
+
+    assert wants.is_symlink()
+    assert os.readlink(wants) == "../candidate.timer"
+    assert not os.path.lexists(stage)
+    runtime_refresh._restore_artifact(
+        {
+            "path": str(wants),
+            "preimage_kind": "symlink",
+            "target": "../preimage.timer",
+        }
+    )
+    assert os.readlink(wants) == "../preimage.timer"
+    assert not os.path.lexists(stage)
 
 
 def test_task_supply_cli_delegates_to_runner_with_canonical_registry(

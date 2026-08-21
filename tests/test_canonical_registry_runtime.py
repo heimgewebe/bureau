@@ -452,6 +452,23 @@ def test_runtime_release_contains_cycle_scheduler_package(tmp_path: Path) -> Non
     assert (package / "verifier_runner.py").is_file()
 
 
+def test_runtime_release_contains_task_supply_scheduler_artifacts(tmp_path: Path) -> None:
+    source = make_installable_source(tmp_path)
+    _launcher, prefix, _receipt = install_runtime(tmp_path, source)
+    manifest = json.loads((prefix / "deployment-manifest.json").read_text(encoding="utf-8"))
+    release = Path(manifest["immutable_release_path"])
+
+    for relative in (
+        "ops/systemd/bureau-task-supply.service",
+        "ops/systemd/bureau-task-supply.timer",
+        "ops/systemd/libexec/bureau-task-supply",
+    ):
+        source_path = source / relative
+        release_path = release / relative
+        assert release_path.read_bytes() == source_path.read_bytes()
+    assert (release / "ops/systemd/libexec/bureau-task-supply").stat().st_mode & 0o111
+
+
 def test_deployed_launcher_runs_cycle_deployment_audit_from_immutable_release(
     tmp_path: Path,
 ) -> None:

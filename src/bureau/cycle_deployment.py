@@ -24,6 +24,14 @@ STAGES = (
     ("verifier", "bureau-verifier-control", "bureau_cycle.verifier_runner"),
     ("closure", "bureau-closure-planner", "bureau.closure_runner"),
 )
+OUTSIDE_CYCLE_SCHEDULERS = (
+    {
+        "name": "task-supply",
+        "scheduler_name": "bureau-task-supply",
+        "part_of_five_stage_cycle": False,
+        "deployment_authority": "runtime-refresh",
+    },
+)
 STATE_DIRECTORIES = {
     "discovery": ("bureau-halfhour-operator",),
     "curator": ("bureau-curator",),
@@ -472,6 +480,7 @@ def audit_cycle_deployment(
         "canonical_sources": sources,
         "runtime_modules": modules,
         "stages": stages,
+        "outside_cycle_schedulers": [dict(item) for item in OUTSIDE_CYCLE_SCHEDULERS],
         "findings": findings,
     }
 

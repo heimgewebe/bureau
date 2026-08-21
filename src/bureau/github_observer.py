@@ -453,6 +453,18 @@ def _authoritative_binding_registry(
             "authoritative StateStore task projection unavailable: "
             + str(state.get("error") or "state-store-unavailable")
         )
+    integrity = state.get("integrity")
+    if integrity != "ok":
+        raise OpenPullRequestObservationError(
+            "authoritative StateStore task projection unavailable: "
+            f"integrity check failed: {integrity!r}"
+        )
+    foreign_key_errors = state.get("foreign_key_errors")
+    if not isinstance(foreign_key_errors, list) or foreign_key_errors:
+        raise OpenPullRequestObservationError(
+            "authoritative StateStore task projection unavailable: "
+            "foreign key check failed"
+        )
     authority_error = state.get("task_authority_error")
     if isinstance(authority_error, str) and authority_error:
         raise OpenPullRequestObservationError(

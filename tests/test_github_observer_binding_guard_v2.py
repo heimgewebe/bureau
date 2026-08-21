@@ -290,3 +290,39 @@ def test_state_store_terminal_overlay_blocks_open_pr_binding(
     assert result["healthy"] is True
     assert result["binding_healthy"] is False
     assert finding_codes(result) == {"terminal-github-task-binding"}
+
+
+def test_state_store_integrity_or_foreign_key_failure_blocks_projection(
+    tmp_path: Path, monkeypatch
+) -> None:
+    state_path = tmp_path / "state.sqlite3"
+    state_path.write_bytes(b"state-present")
+    registry_value = registry(task("BUR-X-T001"))
+    base_state = {
+        "available": True,
+        "integrity": "ok",
+        "foreign_key_errors": [],
+        "rows": {"task_status": []},
+        "operational_registry": registry_value,
+        "task_authority": {"kind": "bureau-state-store-task-specs"},
+    }
+    for override, expected in (
+        ({"integrity": "corrupt"}, "integrity check failed"),
+        ({"foreign_key_errors": [{"table": "task_status"}]}, "foreign key check failed"),
+    ):
+        state = {**base_state, **override}
+        monkeypatch.setattr(
+            "bureau.github_observer._read_only_state_rows",
+            lambda _path, *, registry=None, value=state: value,
+        )
+        result = observe_pull_requests(
+            tmp_path,
+            repository="heimgewebe/bureau",
+            pull_requests=[pull_request(body="Bureau-Task: BUR-X-T001")],
+            state_db=state_path,
+            registry=registry_value,
+        )
+        assert result["healthy"] is False
+        assert result["binding_healthy"] is False
+        assert finding_codes(result) == {"github-observation-blocked"}
+        assert expected in result["blocked_reason"]

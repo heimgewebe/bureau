@@ -822,10 +822,26 @@ def candidate_record(
     if replayed is not None:
         return replayed
 
+    predecessor = None
+    if checked_supersedes_event_id is not None:
+        predecessor = next(
+            (
+                item
+                for item in reversed(candidate_records(store))
+                if int(item["event_id"]) == checked_supersedes_event_id
+            ),
+            None,
+        )
+
     bound_registry = registry
     if catalog_validation == "strict" and registry is not None:
         bound_registry, _ = _canonical_read_registry_snapshot(registry)
-        bound_registry = _authoritative_candidate_catalog(bound_registry, store, task_id)
+        validation_task_id = task_id
+        if validation_task_id is None and predecessor is not None:
+            validation_task_id = predecessor["record"].get("task_id")
+        bound_registry = _authoritative_candidate_catalog(
+            bound_registry, store, validation_task_id
+        )
     elif catalog_validation == "deferred":
         bound_registry = None
 
@@ -861,14 +877,6 @@ def candidate_record(
                 equivalent_candidate_id = _candidate_identity(existing)
                 break
     if checked_supersedes_event_id is not None:
-        predecessor = next(
-            (
-                item
-                for item in reversed(candidate_records(store))
-                if int(item["event_id"]) == checked_supersedes_event_id
-            ),
-            None,
-        )
         selected_candidate_id = (
             candidate_id
             or (_candidate_identity(predecessor) if predecessor is not None else None)

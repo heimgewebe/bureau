@@ -1540,6 +1540,54 @@ def test_task_revision_resolves_state_store_only_authoritative_task(registry_fac
     assert plan["task_spec"]["expected_task_file_sha256"] is None
 
 
+def test_candidate_refinement_inherits_state_store_only_task_for_strict_validation(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    task_id = "BUR-TEST-001-T099"
+    store.put_task_spec(
+        _task(registry.root, task_id),
+        idempotency_key=f"seed:{task_id}",
+        expected_revision=None,
+        source="test-state-store-only-task",
+    )
+    assert task_id not in registry.tasks
+    first = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:state-store-only-candidate",
+        title=f"Observe StateStore-only {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:state-store-only:{task_id}",
+        source_sha256="5" * 64,
+        desired_outcome=f"Refine the authoritative TaskSpec {task_id}",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+
+    refined = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:state-store-only-candidate-refinement",
+        title=f"Refine StateStore-only {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:state-store-only:{task_id}:refinement",
+        source_sha256="6" * 64,
+        desired_outcome=f"Refine the authoritative TaskSpec {task_id}",
+        supersedes_event_id=first["event_id"],
+    )
+
+    assert refined["candidate_id"] == first["candidate_id"]
+    assert refined["record"]["task_id"] == task_id
+    assert refined["record"]["supersedes_event_id"] == first["event_id"]
+    assert refined["record"]["catalog_validation"] == {
+        "mode": "strict",
+        "status": "validated",
+        "does_not_establish": [],
+    }
+
+
 def test_candidate_record_rejects_task_unknown_to_registry_and_state_store(
     registry_factory, tmp_path
 ):

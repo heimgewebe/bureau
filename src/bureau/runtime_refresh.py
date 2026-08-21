@@ -305,9 +305,24 @@ def _fsync_directory(path: Path) -> None:
         os.close(descriptor)
 
 
-def atomic_write(path: Path, data: bytes, mode: int = 0o600) -> None:
+def atomic_write(
+    path: Path,
+    data: bytes,
+    mode: int = 0o600,
+    *,
+    staging_path: Path | None = None,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    temporary = path.parent / f".{path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}"
+    if staging_path is None:
+        temporary = path.parent / f".{path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}"
+    else:
+        temporary = staging_path
+        if temporary == path or temporary.parent != path.parent:
+            raise RuntimeRefreshError(
+                "atomic-staging-path-invalid",
+                "atomic staging path must be a distinct sibling of the target",
+                details={"path": str(path), "staging_path": str(temporary)},
+            )
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
     try:
         with os.fdopen(descriptor, "wb", closefd=True) as stream:
@@ -829,6 +844,11 @@ def validate_runtime_user_unit_dir(expected: Path) -> Path:
     return observed_path
 
 
+def _scheduler_staging_path(path: Path) -> Path:
+    """Return the deterministic sibling staging path covered by scheduler leases."""
+    return path.parent / f".{path.name}.bureau-runtime-refresh-stage"
+
+
 def scheduler_resource_keys(
     *,
     user_unit_dir: Path,
@@ -836,22 +856,32 @@ def scheduler_resource_keys(
     runtime_user_unit_dir: Path | None = None,
 ) -> list[str]:
     """Return the exact filesystem and systemd-user authority needed by convergence."""
-    keys = {
+    staged_paths = {
         *(
-            f"path:{user_unit_dir / f'{name}.{kind}'}"
+            user_unit_dir / f"{name}.{kind}"
             for name in RUNTIME_SCHEDULER_NAMES
             for kind in ("service", "timer")
         ),
-        *(f"path:{libexec_dir / name}" for name in RUNTIME_SCHEDULER_NAMES),
-        *(f"service:{name}.service" for name in RUNTIME_SCHEDULER_NAMES),
-        *(f"service:{name}.timer" for name in RUNTIME_SCHEDULER_NAMES),
+        *(libexec_dir / name for name in RUNTIME_SCHEDULER_NAMES),
     }
+    leased_paths = set(staged_paths)
     if runtime_user_unit_dir is not None:
-        keys.update(
-            f"path:{unit_root / 'timers.target.wants' / f'{name}.timer'}"
+        leased_paths.update(
+            unit_root / "timers.target.wants" / f"{name}.timer"
             for unit_root in (user_unit_dir, runtime_user_unit_dir)
             for name in RUNTIME_SCHEDULER_NAMES
         )
+        staged_paths.add(
+            user_unit_dir
+            / "timers.target.wants"
+            / f"{REQUIRED_RUNTIME_TIMER}.timer"
+        )
+    keys = {
+        *(f"path:{path}" for path in leased_paths),
+        *(f"path:{_scheduler_staging_path(path)}" for path in staged_paths),
+        *(f"service:{name}.service" for name in RUNTIME_SCHEDULER_NAMES),
+        *(f"service:{name}.timer" for name in RUNTIME_SCHEDULER_NAMES),
+    }
     return sorted(keys)
 
 
@@ -1165,13 +1195,15 @@ def _snapshot_live_artifact(item: dict[str, Any], backup_files: Path) -> dict[st
 
 def _replace_with_symlink(path: Path, target: str) -> None:
     _validate_scheduler_parent(path.parent, label="scheduler symlink parent")
-    temporary = path.parent / f".{path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}"
+    temporary = _scheduler_staging_path(path)
+    temporary_created = False
     try:
         temporary.symlink_to(target)
+        temporary_created = True
         os.replace(temporary, path)
         _fsync_directory(path.parent)
     finally:
-        if os.path.lexists(temporary):
+        if temporary_created and os.path.lexists(temporary):
             temporary.unlink()
 
 
@@ -1212,7 +1244,12 @@ def _restore_artifact(record: dict[str, Any]) -> None:
             "scheduler rollback backup digest differs",
             details={"path": str(backup_path)},
         )
-    atomic_write(path, content, int(record["mode"], 8))
+    atomic_write(
+        path,
+        content,
+        int(record["mode"], 8),
+        staging_path=_scheduler_staging_path(path),
+    )
 
 
 def _run_scheduler_command(
@@ -1686,10 +1723,12 @@ def converge_user_scheduler(
             before_validation()
         for item in changed:
             source = Path(item["source_path"])
+            live_path = Path(item["live_path"])
             atomic_write(
-                Path(item["live_path"]),
+                live_path,
                 source.read_bytes(),
                 int(item["mode"], 8),
+                staging_path=_scheduler_staging_path(live_path),
             )
         validation = _validate_scheduler_candidate(
             manifest_path=manifest_path,

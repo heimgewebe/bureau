@@ -1621,11 +1621,23 @@ def test_scheduler_resource_keys_lease_exact_persistent_and_runtime_wants_links(
     )
 
     for name in refresh.RUNTIME_SCHEDULER_NAMES:
-        assert f"path:{user_unit_dir / f'{name}.service'}" in keys
-        assert f"path:{user_unit_dir / f'{name}.timer'}" in keys
-        assert f"path:{libexec_dir / name}" in keys
-        assert f"path:{user_unit_dir / f'timers.target.wants/{name}.timer'}" in keys
-        assert f"path:{runtime_user_unit_dir / f'timers.target.wants/{name}.timer'}" in keys
+        artifact_paths = (
+            user_unit_dir / f"{name}.service",
+            user_unit_dir / f"{name}.timer",
+            libexec_dir / name,
+        )
+        for artifact_path in artifact_paths:
+            assert f"path:{artifact_path}" in keys
+            assert f"path:{refresh._scheduler_staging_path(artifact_path)}" in keys
+        persistent_wants = user_unit_dir / f"timers.target.wants/{name}.timer"
+        runtime_wants = runtime_user_unit_dir / f"timers.target.wants/{name}.timer"
+        for wants_path in (persistent_wants, runtime_wants):
+            assert f"path:{wants_path}" in keys
+            staging_key = f"path:{refresh._scheduler_staging_path(wants_path)}"
+            if name == refresh.REQUIRED_RUNTIME_TIMER and wants_path == persistent_wants:
+                assert staging_key in keys
+            else:
+                assert staging_key not in keys
     assert {
         f"path:{user_unit_dir}",
         f"path:{libexec_dir}",
@@ -1633,7 +1645,38 @@ def test_scheduler_resource_keys_lease_exact_persistent_and_runtime_wants_links(
         f"path:{user_unit_dir / 'timers.target.wants'}",
         f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
     }.isdisjoint(keys)
-    assert len([key for key in keys if key.startswith("path:")]) == 30
+    assert len([key for key in keys if key.startswith("path:")]) == 49
+
+
+def test_scheduler_staging_paths_fail_closed_without_deleting_foreign_entries(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "systemd/user/demo.service"
+    target.parent.mkdir(parents=True)
+    staging = refresh._scheduler_staging_path(target)
+    staging.write_text("foreign staging entry\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        refresh.atomic_write(
+            target,
+            b"candidate\n",
+            0o644,
+            staging_path=staging,
+        )
+
+    assert staging.read_text(encoding="utf-8") == "foreign staging entry\n"
+    assert not os.path.lexists(target)
+
+    wants = tmp_path / "systemd/user/timers.target.wants/demo.timer"
+    wants.parent.mkdir()
+    wants_staging = refresh._scheduler_staging_path(wants)
+    wants_staging.write_text("foreign link staging entry\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        refresh._replace_with_symlink(wants, "../demo.timer")
+
+    assert wants_staging.read_text(encoding="utf-8") == "foreign link staging entry\n"
+    assert not os.path.lexists(wants)
 
 
 def test_runtime_user_unit_dir_default_is_xdg_bound_and_home_independent(
@@ -1912,7 +1955,9 @@ def test_apply_blocks_launcher_drift_absent_from_intent_before_observer(tmp_path
 
 def test_scheduler_resources_are_required_by_live_lease_validation(tmp_path: Path) -> None:
     _, _, intent, _ = prepare_candidate_intent(tmp_path)
-    missing_key = f"path:{tmp_path.resolve() / 'libexec/bureau-task-supply'}"
+    missing_key = (
+        f"path:{refresh._scheduler_staging_path(tmp_path.resolve() / 'libexec/bureau-task-supply')}"
+    )
     assert f"path:{tmp_path.resolve() / 'systemd/user'}" not in intent[
         "required_resource_keys"
     ]

@@ -3496,17 +3496,25 @@ def test_apply_existing_start_without_result_is_unclear_without_execution(
 
 def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
     live = dict(observed)
     live.update(
         {
             "status": "already_current",
             "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
             "main_commit": MAIN,
             "reason_codes": [],
+            "scheduler": scheduler,
         }
     )
     live = refresh.bind_digest(live, "observation_sha256")
-    write_manifest(manifest_path, MAIN)
 
     lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
     result = refresh.apply_runtime_refresh(
@@ -3523,6 +3531,67 @@ def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) ->
 
     assert result["status"] == "already_current"
     assert result["effect_started"] is False
+    assert result["scheduler"] == scheduler
+    assert result["manifest_sha256"] == live["deployed_manifest_sha256"]
+
+
+def test_already_current_no_effect_authority_can_closeout(tmp_path: Path) -> None:
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+            "main_commit": MAIN,
+            "reason_codes": [],
+            "scheduler": scheduler,
+        }
+    )
+    live = refresh.bind_digest(live, "observation_sha256")
+    lease_binding, resource_db = lease_for(tmp_path / "no-effect-leases", intent)
+    store = authority_store_for_intent(intent)
+
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=lease_binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: live,
+        source_preparer=lambda **_: pytest.fail("source preparation must not run"),
+        installer=lambda **_: pytest.fail("installer must not run"),
+        authority_store=store,
+    )
+    assert result["status"] == "already_current"
+    assert result["effect_started"] is False
+    release_test_leases(resource_db)
+
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=intent["approval_task_id"],
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        scheduler_readback=lambda receipt, **_: receipt,
+    )
+
+    assert closeout["closeout"]["status"] == "verified"
+    assert closeout["closeout"]["runtime_result_sha256"] == result["result_sha256"]
+    current = store.task_spec(intent["approval_task_id"])
+    assert current is not None
+    assert current["spec"]["state"] == "verified"
 
 
 @pytest.mark.parametrize(

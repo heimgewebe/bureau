@@ -736,6 +736,7 @@ def observe_runtime_refresh(
 
     scheduler_actionable = False
     scheduler_blocked = False
+    scheduler_readback_evidence: dict[str, Any] | None = None
     if deployed == main_commit:
         if "scheduler" not in manifest:
             reasons.append("scheduler-receipt-missing")
@@ -748,7 +749,9 @@ def observe_runtime_refresh(
             else:
                 reader = scheduler_reader or readback_user_scheduler
                 try:
-                    reader(scheduler_receipt, expected_commit=main_commit)
+                    scheduler_readback_evidence = reader(
+                        scheduler_receipt, expected_commit=main_commit
+                    )
                 except RuntimeRefreshError as exc:
                     reasons.append(exc.code)
                     if exc.code in SCHEDULER_RECONVERGEABLE_READBACK_CODES:
@@ -815,6 +818,8 @@ def observe_runtime_refresh(
             "runtime_semantic_correctness",
         ],
     }
+    if scheduler_readback_evidence is not None:
+        observation["scheduler"] = scheduler_readback_evidence
     observation["target_sha256"] = sha256_bytes(canonical_bytes(_target_payload(observation)))
     return bind_digest(observation, "observation_sha256")
 
@@ -4808,6 +4813,7 @@ def closeout_runtime_refresh_authority(
     now: datetime | None = None,
     authority_store: Any | None = None,
     readback: Callable[..., dict[str, Any]] = readback_historical_install,
+    scheduler_readback: Callable[..., dict[str, Any]] = readback_user_scheduler,
 ) -> dict[str, Any]:
     """CAS-close a successful single-use authority that intentionally has no run."""
     current_time = now or utc_now()
@@ -4848,11 +4854,21 @@ def closeout_runtime_refresh_authority(
             "authority-closeout-result-mismatch",
             "persisted result digest differs from the requested closeout",
         )
-    if result.get("status") != "deployed" or result.get("effect_started") is not True:
+    deployed_success = (
+        result.get("status") == "deployed" and result.get("effect_started") is True
+    )
+    no_effect_success = (
+        result.get("status") == "already_current"
+        and result.get("effect_started") is False
+    )
+    if not (deployed_success or no_effect_success):
         raise RuntimeRefreshError(
-            "authority-closeout-result-not-deployed",
-            "no-run closeout requires a terminal deployed result",
-            details={"status": result.get("status")},
+            "authority-closeout-result-not-successful",
+            "no-run closeout requires deployed/effect-started or already-current/no-effect success",
+            details={
+                "status": result.get("status"),
+                "effect_started": result.get("effect_started"),
+            },
         )
     effect_history = _runtime_authority_effect_history(resolved_state_root, approval_task_id)
     requested_effect = {
@@ -4870,20 +4886,27 @@ def closeout_runtime_refresh_authority(
         for item in effect_history
         if not all(item.get(key) == value for key, value in requested_effect.items())
     ]
-    if len(matching_effects) != 1:
+    if deployed_success:
+        if len(matching_effects) != 1:
+            raise RuntimeRefreshError(
+                "authority-closeout-history-mismatch",
+                "requested deployed result is not uniquely represented in authority history",
+                details={"requested": requested_effect, "effects": effect_history},
+            )
+        if conflicting_effects:
+            raise RuntimeRefreshError(
+                "authority-closeout-historical-multi-use",
+                (
+                    "single-use runtime authority has other effect-started attempts and "
+                    "cannot be verified by one no-run closeout"
+                ),
+                details={"requested": requested_effect, "conflicts": conflicting_effects},
+            )
+    elif effect_history:
         raise RuntimeRefreshError(
-            "authority-closeout-history-mismatch",
-            "requested deployed result is not uniquely represented in authority history",
-            details={"requested": requested_effect, "effects": effect_history},
-        )
-    if conflicting_effects:
-        raise RuntimeRefreshError(
-            "authority-closeout-historical-multi-use",
-            (
-                "single-use runtime authority has other effect-started attempts and "
-                "cannot be verified by one no-run closeout"
-            ),
-            details={"requested": requested_effect, "conflicts": conflicting_effects},
+            "authority-closeout-no-effect-history-conflict",
+            "already-current no-effect closeout cannot coexist with effect-started history",
+            details={"effects": effect_history},
         )
     if (
         started.get("schema_version") != SCHEMA_VERSION
@@ -4897,23 +4920,39 @@ def closeout_runtime_refresh_authority(
             "authority-closeout-start-mismatch",
             "attempt start receipt does not match the deployed result",
         )
-    install_receipt = result.get("install_receipt")
-    persisted_readback = result.get("readback")
-    if not isinstance(install_receipt, dict) or not isinstance(persisted_readback, dict):
-        raise RuntimeRefreshError(
-            "authority-closeout-result-invalid",
-            "deployed result lacks installer or immutable readback evidence",
+    if deployed_success:
+        install_receipt = result.get("install_receipt")
+        persisted_readback = result.get("readback")
+        if not isinstance(install_receipt, dict) or not isinstance(persisted_readback, dict):
+            raise RuntimeRefreshError(
+                "authority-closeout-result-invalid",
+                "deployed result lacks installer or immutable readback evidence",
+            )
+        current_readback = readback(
+            expected_commit=intent["main_commit"],
+            prefix=Path(intent["prefix"]).expanduser().resolve(),
+            bin_dir=Path(intent["bin_dir"]).expanduser().resolve(),
+            install_receipt=install_receipt,
         )
-    current_readback = readback(
-        expected_commit=intent["main_commit"],
-        prefix=Path(intent["prefix"]).expanduser().resolve(),
-        bin_dir=Path(intent["bin_dir"]).expanduser().resolve(),
-        install_receipt=install_receipt,
-    )
+        closeout_manifest_sha256 = persisted_readback.get("manifest_sha256")
+    else:
+        persisted_readback = result.get("scheduler")
+        closeout_manifest_sha256 = result.get("manifest_sha256")
+        if (
+            not isinstance(persisted_readback, dict)
+            or not _is_sha256(closeout_manifest_sha256)
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-result-invalid",
+                "already-current result lacks scheduler or manifest evidence",
+            )
+        current_readback = scheduler_readback(
+            persisted_readback, expected_commit=intent["main_commit"]
+        )
     if current_readback != persisted_readback:
         raise RuntimeRefreshError(
             "authority-closeout-readback-drift",
-            "current immutable runtime/Registry readback differs from the deployed result",
+            "current runtime readback differs from the successful result",
         )
     store = _closeout_authority_store(intent, authority_store)
     try:
@@ -5047,7 +5086,7 @@ def closeout_runtime_refresh_authority(
         "intent_sha256": intent_sha256,
         "runtime_result_sha256": result_sha256,
         "source_commit": intent["main_commit"],
-        "manifest_sha256": persisted_readback["manifest_sha256"],
+        "manifest_sha256": closeout_manifest_sha256,
         "readback_sha256": sha256_bytes(canonical_bytes(current_readback)),
         "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
         "lease_release_sha256": release["lease_release_sha256"],
@@ -5255,6 +5294,19 @@ def apply_runtime_refresh(
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")
     if live.get("status") == "already_current":
+        scheduler_evidence = live.get("scheduler")
+        manifest_sha256 = live.get("deployed_manifest_sha256")
+        if (
+            not isinstance(scheduler_evidence, dict)
+            or scheduler_evidence.get("kind") != "bureau_runtime_scheduler_readback"
+            or scheduler_evidence.get("source_commit") != intent["main_commit"]
+            or scheduler_evidence.get("authoritative") is not True
+            or not _is_sha256(manifest_sha256)
+        ):
+            raise RuntimeRefreshError(
+                "already-current-evidence-invalid",
+                "already-current result lacks authoritative scheduler or manifest evidence",
+            )
         bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
         started = bind_digest(
             {
@@ -5281,6 +5333,8 @@ def apply_runtime_refresh(
                 "target_sha256": intent["target_sha256"],
                 "main_commit": intent["main_commit"],
                 "authority_task_spec": bound_authority,
+                "scheduler": scheduler_evidence,
+                "manifest_sha256": manifest_sha256,
                 "finished_at": isoformat(current),
                 "effect_started": False,
                 "lease_binding": binding,

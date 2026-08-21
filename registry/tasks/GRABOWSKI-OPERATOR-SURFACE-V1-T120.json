@@ -37,35 +37,75 @@
   "acceptance": [
     {
       "id": "complete-inventory",
-      "assertion": "A bounded inventory identifies every repository and exact default or merge-target branch that may be dispatched through Captain, plus its active rules, required checks, enforcement state, current-user bypass state and bypass actors; omissions and inaccessible repositories are explicit."
+      "assertion": "A bounded inventory identifies every repository and exact default or merge-target branch that may be dispatched through Captain, plus its active rules, required checks, enforcement state, current-user bypass state and bypass actors; omissions and inaccessible repositories are explicit.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:complete-inventory"
+      }
     },
     {
       "id": "repository-reservations",
-      "assertion": "Organization-level repository discovery is the only operation allowed under the service claim alone. Before reading branch-protection or ruleset state for a concrete repository, and before every mutation, the run atomically expands its claim to that exact repo.* resource in write mode, proves the lease is live and retains it through repository readback; missing resource mappings or conflicting claims fail closed without settings effects."
+      "assertion": "Organization-level repository discovery is the only operation allowed under the service claim alone. Before reading branch-protection or ruleset state for a concrete repository, and before every mutation, the run atomically expands its claim to the exact repo.* resource in write mode, proves the lease is live and retains it through repository readback; missing resource mappings or conflicting claims fail closed without settings effects.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:repository-reservations"
+      }
     },
     {
       "id": "strict-policy",
-      "assertion": "Each enabled direct-Captain target has at least one active applying ruleset with a nonempty required-status-check rule and strict_required_status_checks_policy=true."
+      "assertion": "Each enabled direct-Captain target has at least one active applying ruleset with a nonempty required-status-check rule and strict_required_status_checks_policy=true.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:strict-policy"
+      }
     },
     {
       "id": "non-bypassable",
-      "assertion": "For the current Captain GitHub actor, current_user_can_bypass is never and no bypass actor can authorize the direct merge path; stronger existing review, signed-commit, deployment or branch restrictions remain intact."
+      "assertion": "For the current Captain GitHub actor, current_user_can_bypass is never and no bypass actor can authorize the direct merge path; stronger existing review, signed-commit, deployment or branch restrictions remain intact.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:non-bypassable"
+      }
     },
     {
       "id": "safe-settings-effects",
-      "assertion": "Every ruleset mutation is repository-, branch-, old-state- and new-state-bound with preflight and readback; no repository visibility, code, branch, workflow or unrelated setting changes."
+      "assertion": "Every ruleset mutation is repository-, branch-, old-state- and new-state-bound with preflight and readback; no repository visibility, code, branch, workflow or unrelated setting changes.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:safe-settings-effects"
+      }
     },
     {
       "id": "alternative-path",
-      "assertion": "Repositories that cannot or should not satisfy the strict ruleset contract remain fail-closed for direct Captain dispatch and receive a reviewed alternative merge procedure instead of a bypass or weakened check."
+      "assertion": "Repositories that cannot or should not satisfy the strict ruleset contract remain fail-closed for direct Captain dispatch and receive a reviewed alternative merge procedure instead of a bypass or weakened check.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:alternative-path"
+      }
     },
     {
       "id": "live-guard-proof",
-      "assertion": "The deployed T057 guard accepts each protected target from fresh paginated rules and detail reads and rejects intentionally unprotected or bypassable fixtures; policy drift between reads fails closed."
+      "assertion": "The deployed T057 guard accepts each protected target from fresh paginated rules and detail reads and rejects intentionally unprotected or bypassable fixtures; policy drift between reads fails closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:live-guard-proof"
+      }
     },
     {
       "id": "reconciliation",
-      "assertion": "The final receipt records changed, already-compliant, blocked and excluded repositories separately and does not reinterpret historical merges as compliant."
+      "assertion": "The final receipt records changed, already-compliant, blocked and excluded repositories separately and does not reinterpret historical merges as compliant.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t120:reconciliation"
+      }
     }
   ],
   "metadata": {

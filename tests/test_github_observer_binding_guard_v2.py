@@ -213,3 +213,29 @@ def test_state_store_only_task_binding_is_valid(
     assert result["hard_findings"] == []
     assert result["pull_requests"][0]["task_id"] == "BUR-TEST-001-T999"
     assert "task-authority:bureau-state-store-task-specs" in result["notes"]
+
+
+def test_newer_state_store_schema_blocks_task_projection(
+    tmp_path: Path, registry_factory
+) -> None:
+    root = registry_factory(task_count=1)
+    registry_value = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    connection = store.connect()
+    try:
+        connection.execute("PRAGMA user_version=999")
+    finally:
+        connection.close()
+
+    result = observe_pull_requests(
+        root,
+        repository="heimgewebe/bureau",
+        pull_requests=[pull_request(body="Bureau-Task: BUR-TEST-001-T001")],
+        state_db=store.path,
+        registry=registry_value,
+    )
+
+    assert result["healthy"] is False
+    assert result["binding_healthy"] is False
+    assert finding_codes(result) == {"github-observation-blocked"}
+    assert "unsupported schema version: 999" in result["blocked_reason"]

@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import sqlite3
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -443,23 +442,32 @@ def _authoritative_binding_registry(
     registry: legacy.Registry | None,
     state_path: Path,
 ) -> tuple[legacy.Registry | None, list[str]]:
-    """Overlay legacy Git contracts with StateStore TaskSpec authority read-only."""
+    """Overlay legacy Git contracts with validated StateStore task authority."""
     if registry is None or not state_path.exists():
         return registry, []
-    from .read_only_state import ReadOnlyStateStore
-    from .v2 import authoritative_task_registry
-
-    try:
-        projected, authority, _ = authoritative_task_registry(
-            registry,
-            ReadOnlyStateStore(path=state_path),
-        )
-    except (OSError, sqlite3.Error, legacy.StateError) as exc:
+    state = _read_only_state_rows(state_path, registry=registry)
+    if not state.get("available"):
         raise OpenPullRequestObservationError(
-            f"authoritative StateStore task projection unavailable: {type(exc).__name__}: {exc}"
-        ) from exc
-    kind = authority.get("kind") if isinstance(authority, dict) else None
-    note = f"task-authority:{kind}" if isinstance(kind, str) and kind else "task-authority:state-store"
+            "authoritative StateStore task projection unavailable: "
+            + str(state.get("error") or "state-store-unavailable")
+        )
+    authority_error = state.get("task_authority_error")
+    if isinstance(authority_error, str) and authority_error:
+        raise OpenPullRequestObservationError(
+            f"authoritative StateStore task projection unavailable: {authority_error}"
+        )
+    projected = state.get("operational_registry")
+    authority = state.get("task_authority")
+    if projected is None or not isinstance(authority, dict):
+        raise OpenPullRequestObservationError(
+            "authoritative StateStore task projection unavailable: projection missing"
+        )
+    kind = authority.get("kind")
+    note = (
+        f"task-authority:{kind}"
+        if isinstance(kind, str) and kind
+        else "task-authority:state-store"
+    )
     return projected, [note]
 
 

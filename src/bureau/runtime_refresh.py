@@ -980,11 +980,43 @@ def _scheduler_artifacts(
     return artifacts
 
 
-def _validate_scheduler_parent(path: Path, *, label: str) -> None:
-    if not path.is_absolute() or path.is_symlink() or not path.is_dir():
+def _validate_scheduler_parent(
+    path: Path, *, label: str, allow_absent: bool = False
+) -> None:
+    if not path.is_absolute():
         raise RuntimeRefreshError(
             "scheduler-parent-invalid",
-            "scheduler parent must already be an absolute, non-symlink directory",
+            "scheduler parent must be absolute",
+            details={"label": label, "path": str(path)},
+        )
+    try:
+        observed = path.lstat()
+    except FileNotFoundError:
+        try:
+            resolved = path.resolve(strict=False)
+        except OSError as exc:
+            raise RuntimeRefreshError(
+                "scheduler-parent-invalid",
+                "scheduler parent is unavailable",
+                details={"label": label, "path": str(path)},
+            ) from exc
+        if resolved != path:
+            raise RuntimeRefreshError(
+                "scheduler-parent-invalid",
+                "scheduler parent contains a symlink or non-canonical component",
+                details={"label": label, "path": str(path), "resolved": str(resolved)},
+            ) from None
+        if allow_absent:
+            return
+        raise RuntimeRefreshError(
+            "scheduler-parent-invalid",
+            "scheduler parent must already exist",
+            details={"label": label, "path": str(path)},
+        ) from None
+    if stat.S_ISLNK(observed.st_mode) or not stat.S_ISDIR(observed.st_mode):
+        raise RuntimeRefreshError(
+            "scheduler-parent-invalid",
+            "scheduler parent must be a non-symlink directory",
             details={"label": label, "path": str(path)},
         )
     try:
@@ -1132,7 +1164,7 @@ def _snapshot_live_artifact(item: dict[str, Any], backup_files: Path) -> dict[st
 
 
 def _replace_with_symlink(path: Path, target: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    _validate_scheduler_parent(path.parent, label="scheduler symlink parent")
     temporary = path.parent / f".{path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}"
     try:
         temporary.symlink_to(target)
@@ -1219,6 +1251,51 @@ def _restore_scheduler_files(preimage: dict[str, Any]) -> list[dict[str, Any]]:
                 {"operation": ["restore", record["path"]], "error": repr(exc)}
             )
     for record in preimage["artifacts"]:
+        path = Path(record["path"])
+        try:
+            kind = record["preimage_kind"]
+            if kind == "absent":
+                matches = not os.path.lexists(path)
+            elif kind == "symlink":
+                matches = path.is_symlink() and os.readlink(path) == record["target"]
+            else:
+                matches = not path.is_symlink() and path.is_file()
+                if matches:
+                    content = path.read_bytes()
+                    matches = (
+                        sha256_bytes(content) == record["sha256"]
+                        and stat.S_IMODE(path.stat().st_mode) == int(record["mode"], 8)
+                    )
+            if not matches:
+                failures.append(
+                    {"operation": ["verify-preimage", record["path"]]}
+                )
+        except Exception as exc:
+            failures.append(
+                {
+                    "operation": ["verify-preimage", record["path"]],
+                    "error": repr(exc),
+                }
+            )
+    return failures
+
+
+def _restore_scheduler_enablement_links(
+    preimage: dict[str, Any], *, mutated_paths: set[str]
+) -> list[dict[str, Any]]:
+    """Restore only leased enablement links this transaction attempted to mutate."""
+    failures: list[dict[str, Any]] = []
+    records = preimage["enablement_links"]
+    for record in records:
+        if record["path"] not in mutated_paths:
+            continue
+        try:
+            _restore_artifact(record)
+        except Exception as exc:
+            failures.append(
+                {"operation": ["restore", record["path"]], "error": repr(exc)}
+            )
+    for record in records:
         path = Path(record["path"])
         try:
             kind = record["preimage_kind"]
@@ -1342,6 +1419,7 @@ def _validate_scheduler_candidate(
 def _restore_scheduler_preimage(
     preimage: dict[str, Any],
     *,
+    mutated_enablement_paths: set[str],
     command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
 ) -> list[dict[str, Any]]:
     failures: list[dict[str, Any]] = []
@@ -1353,19 +1431,18 @@ def _restore_scheduler_preimage(
             failures.append({"operation": arguments, "error": repr(exc)})
 
     timer_units = [f"{name}.timer" for name in RUNTIME_SCHEDULER_NAMES]
-    attempt(["disable", "--now", *timer_units])
+    attempt(["stop", *timer_units])
     failures.extend(_restore_scheduler_files(preimage))
+    failures.extend(
+        _restore_scheduler_enablement_links(
+            preimage, mutated_paths=mutated_enablement_paths
+        )
+    )
     attempt(["daemon-reload"])
     for name in RUNTIME_SCHEDULER_NAMES:
         state = preimage["timers"][name]
         intent = preimage["timer_intent"][name]
         unit = f"{name}.timer"
-        if intent == "enabled":
-            attempt(["enable", unit])
-        elif intent == "enabled-runtime":
-            attempt(["enable", "--runtime", unit])
-        elif intent == "disabled":
-            attempt(["disable", unit])
         if state["ActiveState"] == "active":
             attempt(["start", unit])
         elif state["ActiveState"] == "inactive" and intent != "absent":
@@ -1519,6 +1596,7 @@ def converge_user_scheduler(
     release: Path,
     user_unit_dir: Path,
     libexec_dir: Path,
+    runtime_user_unit_dir: Path,
     rollback_directory: Path,
     manifest_path: Path,
     command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]] | None = None,
@@ -1533,6 +1611,15 @@ def converge_user_scheduler(
     verifier = validation_runner or (lambda argv: _run(argv, timeout=60))
     _validate_scheduler_parent(user_unit_dir, label="user unit directory")
     _validate_scheduler_parent(libexec_dir, label="libexec directory")
+    _validate_scheduler_parent(
+        user_unit_dir / "timers.target.wants",
+        label="persistent timer enablement directory",
+    )
+    _validate_scheduler_parent(
+        runtime_user_unit_dir,
+        label="runtime user unit directory",
+        allow_absent=True,
+    )
     artifacts = _scheduler_artifacts(
         release=release,
         user_unit_dir=user_unit_dir,
@@ -1554,6 +1641,27 @@ def converge_user_scheduler(
     rollback_root.mkdir(parents=True, exist_ok=False, mode=0o700)
     backup_files = rollback_root / "files"
     backup_files.mkdir(mode=0o700)
+    required_timer_unit = user_unit_dir / f"{REQUIRED_RUNTIME_TIMER}.timer"
+    required_enablement_links = [
+        {
+            "name": REQUIRED_RUNTIME_TIMER,
+            "kind": "persistent-wants-link",
+            "live_path": str(
+                user_unit_dir
+                / "timers.target.wants"
+                / f"{REQUIRED_RUNTIME_TIMER}.timer"
+            ),
+        },
+        {
+            "name": REQUIRED_RUNTIME_TIMER,
+            "kind": "runtime-wants-link",
+            "live_path": str(
+                runtime_user_unit_dir
+                / "timers.target.wants"
+                / f"{REQUIRED_RUNTIME_TIMER}.timer"
+            ),
+        },
+    ]
     preimage = {
         "schema_version": SCHEMA_VERSION,
         "kind": "bureau_runtime_scheduler_preimage",
@@ -1563,11 +1671,16 @@ def converge_user_scheduler(
         "timers": timers,
         "services": services,
         "timer_intent": intents,
+        "enablement_links": [
+            _snapshot_live_artifact(item, backup_files)
+            for item in required_enablement_links
+        ],
     }
     preimage_path = rollback_root / "preimage.json"
     atomic_write(preimage_path, canonical_bytes(preimage))
 
     systemd_mutated = False
+    mutated_enablement_paths: set[str] = set()
     try:
         if before_validation is not None:
             before_validation()
@@ -1586,21 +1699,27 @@ def converge_user_scheduler(
             validation_runner=verifier,
             cycle_validator=cycle_validator,
         )
+        persistent_link = Path(required_enablement_links[0]["live_path"])
+        link_matches = False
+        try:
+            link_matches = (
+                persistent_link.is_symlink()
+                and persistent_link.resolve(strict=False)
+                == required_timer_unit.resolve(strict=False)
+            )
+        except (OSError, RuntimeError):
+            link_matches = False
+        if not link_matches:
+            # Mark the leased exact path before replace/fsync so rollback also
+            # covers an ambiguous failure after the namespace mutation.
+            mutated_enablement_paths.add(str(persistent_link))
+            _replace_with_symlink(
+                persistent_link, f"../{REQUIRED_RUNTIME_TIMER}.timer"
+            )
         systemd_mutated = True
         _run_scheduler_command(["daemon-reload"], command_runner=runner)
-        for name in RUNTIME_SCHEDULER_NAMES:
-            if name == REQUIRED_RUNTIME_TIMER:
-                continue
-            intent = intents[name]
-            unit = f"{name}.timer"
-            if intent == "enabled":
-                _run_scheduler_command(["enable", unit], command_runner=runner)
-            elif intent == "enabled-runtime":
-                _run_scheduler_command(["enable", "--runtime", unit], command_runner=runner)
-            else:
-                _run_scheduler_command(["disable", unit], command_runner=runner)
         _run_scheduler_command(
-            ["enable", "--now", f"{REQUIRED_RUNTIME_TIMER}.timer"],
+            ["start", f"{REQUIRED_RUNTIME_TIMER}.timer"],
             command_runner=runner,
         )
         readback = _scheduler_readback(
@@ -1620,9 +1739,18 @@ def converge_user_scheduler(
             after_activation(readback)
     except Exception as exc:
         rollback_failures = (
-            _restore_scheduler_preimage(preimage, command_runner=runner)
+            _restore_scheduler_preimage(
+                preimage,
+                mutated_enablement_paths=mutated_enablement_paths,
+                command_runner=runner,
+            )
             if systemd_mutated
-            else _restore_scheduler_files(preimage)
+            else [
+                *_restore_scheduler_files(preimage),
+                *_restore_scheduler_enablement_links(
+                    preimage, mutated_paths=mutated_enablement_paths
+                ),
+            ]
         )
         if rollback_effect is not None:
             try:

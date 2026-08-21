@@ -836,7 +836,7 @@ def main(argv: list[str] | None = None) -> int:
         ).hexdigest()
         return value, canonical(value)
 
-    def validate_launcher_effect() -> None:
+    def validate_launcher_effect() -> set[Path]:
         final_launcher_mutations = {
             path
             for path, expected in expected_launchers.items()
@@ -854,6 +854,7 @@ def main(argv: list[str] | None = None) -> int:
                     "launcher drift detected before effect without runtime-refresh lease",
                     details={"paths": unleased},
                 )
+        return final_launcher_mutations
 
     transaction: dict[str, Any] = {
         "receipt": None,
@@ -865,27 +866,33 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     def write_candidate_install() -> None:
-        validate_launcher_effect()
+        final_launcher_mutations = validate_launcher_effect()
         _candidate_manifest, candidate_bytes = build_manifest()
         atomic_write(manifest_path, candidate_bytes)
-        transaction["launcher_written"] = _write_launcher_if_needed(
-            launcher,
-            launcher_bytes,
-            enforce_allowlist=args.enforce_launcher_allowlist,
-            allowed_paths=allowed_launcher_paths,
-        )
-        transaction["runtime_refresh_launcher_written"] = _write_launcher_if_needed(
-            runtime_refresh_launcher,
-            runtime_refresh_launcher_bytes,
-            enforce_allowlist=args.enforce_launcher_allowlist,
-            allowed_paths=allowed_launcher_paths,
-        )
-        transaction["status_capsule_launcher_written"] = _write_launcher_if_needed(
-            status_capsule_launcher,
-            status_capsule_launcher_bytes,
-            enforce_allowlist=args.enforce_launcher_allowlist,
-            allowed_paths=allowed_launcher_paths,
-        )
+        for field, path, expected in (
+            ("launcher_written", launcher, launcher_bytes),
+            (
+                "runtime_refresh_launcher_written",
+                runtime_refresh_launcher,
+                runtime_refresh_launcher_bytes,
+            ),
+            (
+                "status_capsule_launcher_written",
+                status_capsule_launcher,
+                status_capsule_launcher_bytes,
+            ),
+        ):
+            if path not in final_launcher_mutations:
+                continue
+            # This is an attempted-mutation flag: atomic_write may replace the
+            # path and then fail while syncing its directory.
+            transaction[field] = True
+            _write_launcher_if_needed(
+                path,
+                expected,
+                enforce_allowlist=args.enforce_launcher_allowlist,
+                allowed_paths=allowed_launcher_paths,
+            )
 
     def write_final_install(scheduler: dict[str, Any]) -> None:
         _manifest, final_manifest_bytes = build_manifest(scheduler)
@@ -987,6 +994,7 @@ def main(argv: list[str] | None = None) -> int:
                 release=release,
                 user_unit_dir=user_unit_dir,
                 libexec_dir=libexec_dir,
+                runtime_user_unit_dir=runtime_user_unit_dir,
                 rollback_directory=Path(rollback_directory),
                 manifest_path=manifest_path,
                 before_validation=write_candidate_install,

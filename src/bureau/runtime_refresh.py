@@ -313,6 +313,7 @@ def atomic_write(path: Path, data: bytes, mode: int = 0o600) -> None:
         with os.fdopen(descriptor, "wb", closefd=True) as stream:
             stream.write(data)
             stream.flush()
+            os.fchmod(stream.fileno(), mode)
             os.fsync(stream.fileno())
         os.replace(temporary, path)
         _fsync_directory(path.parent)
@@ -3626,6 +3627,16 @@ def readback_install(
         raise RuntimeRefreshError(
             "readback-manifest-mismatch", "installer receipt manifest hash mismatch"
         )
+    scheduler_receipt = install_receipt.get("scheduler")
+    if (
+        not isinstance(scheduler_receipt, dict)
+        or manifest.get("scheduler") != scheduler_receipt
+    ):
+        raise RuntimeRefreshError(
+            "scheduler-manifest-receipt-mismatch",
+            "scheduler deployment is missing, malformed, or differs between manifest "
+            "and installer receipt",
+        )
     bureau_launcher = bin_dir / "bureau"
     refresh_launcher = bin_dir / "bureau-runtime-refresh"
     status_capsule_launcher = bin_dir / "bureau-status-capsule"
@@ -3675,21 +3686,10 @@ def readback_install(
         raise RuntimeRefreshError(
             "readback-snapshot-mismatch", "Registry snapshot readback mismatch"
         )
-    scheduler_receipt = install_receipt.get("scheduler")
-    scheduler_readback = None
-    if scheduler_receipt is not None:
-        if (
-            not isinstance(scheduler_receipt, dict)
-            or manifest.get("scheduler") != scheduler_receipt
-        ):
-            raise RuntimeRefreshError(
-                "scheduler-manifest-receipt-mismatch",
-                "scheduler deployment differs between manifest and installer receipt",
-            )
-        scheduler_readback = readback_user_scheduler(
-            scheduler_receipt,
-            expected_commit=expected_commit,
-        )
+    scheduler_readback = readback_user_scheduler(
+        scheduler_receipt,
+        expected_commit=expected_commit,
+    )
     return {
         "manifest_path": str(manifest_path),
         "manifest_sha256": manifest_sha,

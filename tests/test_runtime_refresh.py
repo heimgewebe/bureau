@@ -1803,6 +1803,21 @@ def test_scheduler_resources_are_required_by_live_lease_validation(tmp_path: Pat
     assert caught.value.details["missing"] == [missing_key]
 
 
+@pytest.mark.parametrize("mode", [0o644, 0o755])
+def test_atomic_write_applies_exact_mode_under_restrictive_umask(
+    tmp_path: Path, mode: int
+) -> None:
+    path = tmp_path / f"artifact-{mode:o}"
+    previous_umask = os.umask(0o077)
+    try:
+        refresh.atomic_write(path, b"exact mode\n", mode)
+    finally:
+        os.umask(previous_umask)
+
+    assert path.read_bytes() == b"exact mode\n"
+    assert path.stat().st_mode & 0o777 == mode
+
+
 def test_release_task_supply_absent_live_is_converged_enabled_and_waiting(
     tmp_path: Path,
 ) -> None:
@@ -1935,12 +1950,12 @@ def test_partial_systemd_failure_restores_exact_fragment_and_state_preimage(
         for suffix in ("service", "timer"):
             path = unit_root / f"{name}.{suffix}"
             path.write_bytes(f"preimage {name}.{suffix}\n".encode())
-            path.chmod(0o640)
-            original[path] = (path.read_bytes(), 0o640)
+            path.chmod(0o644)
+            original[path] = (path.read_bytes(), 0o644)
         path = libexec_root / name
         path.write_bytes(f"preimage {name}\n".encode())
-        path.chmod(0o700)
-        original[path] = (path.read_bytes(), 0o700)
+        path.chmod(0o755)
+        original[path] = (path.read_bytes(), 0o755)
     configured = {
         "bureau-curator": ("enabled", "active"),
         "bureau-operator-control": ("disabled", "inactive"),
@@ -1954,19 +1969,23 @@ def test_partial_systemd_failure_restores_exact_fragment_and_state_preimage(
     rollback = tmp_path / "rollback"
     rollback.mkdir()
 
-    with pytest.raises(refresh.RuntimeRefreshError) as caught:
-        refresh.converge_user_scheduler(
-            source_commit=source_commit,
-            release_id=release_id,
-            release=release,
-            user_unit_dir=unit_root,
-            libexec_dir=libexec_root,
-            rollback_directory=rollback,
-            manifest_path=tmp_path / "candidate-manifest.json",
-            command_runner=systemd,
-            validation_runner=successful_systemd_analyze,
-            cycle_validator=successful_cycle_validation,
-        )
+    previous_umask = os.umask(0o077)
+    try:
+        with pytest.raises(refresh.RuntimeRefreshError) as caught:
+            refresh.converge_user_scheduler(
+                source_commit=source_commit,
+                release_id=release_id,
+                release=release,
+                user_unit_dir=unit_root,
+                libexec_dir=libexec_root,
+                rollback_directory=rollback,
+                manifest_path=tmp_path / "candidate-manifest.json",
+                command_runner=systemd,
+                validation_runner=successful_systemd_analyze,
+                cycle_validator=successful_cycle_validation,
+            )
+    finally:
+        os.umask(previous_umask)
 
     assert caught.value.code == "scheduler-convergence-rolled-back"
     assert caught.value.details["safe_to_retry"] is False
@@ -3381,17 +3400,60 @@ def test_no_run_closeout_rejects_conflicting_authoritative_terminal_state(
     assert "runtime_closeout" not in before["spec"]["metadata"]
 
 
-def test_readback_validates_all_launchers_and_runtime_identity(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("manifest_extra", "receipt_extra"),
+    [
+        ({}, {}),
+        ({"scheduler": []}, {"scheduler": []}),
+        (
+            {"scheduler": {"kind": "manifest-scheduler"}},
+            {"scheduler": {"kind": "receipt-scheduler"}},
+        ),
+    ],
+)
+def test_readback_rejects_missing_malformed_or_mismatched_scheduler_evidence(
+    tmp_path: Path,
+    manifest_extra: dict[str, Any],
+    receipt_extra: dict[str, Any],
+) -> None:
+    prefix = tmp_path / "prefix"
+    manifest_path = prefix / "deployment-manifest.json"
+    write_manifest(manifest_path, MAIN, **manifest_extra)
+    receipt = {
+        "manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+        **receipt_extra,
+    }
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.readback_install(
+            expected_commit=MAIN,
+            prefix=prefix,
+            bin_dir=tmp_path / "absent-bin",
+            install_receipt=receipt,
+        )
+
+    assert caught.value.code == "scheduler-manifest-receipt-mismatch"
+
+
+def test_readback_validates_all_launchers_and_runtime_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     prefix = tmp_path / "prefix"
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     manifest_path = prefix / "deployment-manifest.json"
+    scheduler_receipt = {
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
     write_manifest(
         manifest_path,
         MAIN,
         release_id="release",
         package_tree_sha256="a" * 64,
         canonical_registry_tree_sha256="b" * 64,
+        scheduler=scheduler_receipt,
     )
     bureau = bin_dir / "bureau"
     bureau.write_text(
@@ -3428,7 +3490,17 @@ else:
         "runtime_refresh_launcher_sha256": refresh.sha256_bytes(runner.read_bytes()),
         "status_capsule_launcher_sha256": refresh.sha256_bytes(status_capsule.read_bytes()),
         "rollback": {"directory": "/rollback"},
+        "scheduler": scheduler_receipt,
     }
+    scheduler_calls: list[tuple[dict[str, Any], str]] = []
+
+    def scheduler_readback(
+        evidence: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        scheduler_calls.append((evidence, expected_commit))
+        return {"kind": "live-scheduler-readback", "authoritative": True}
+
+    monkeypatch.setattr(refresh, "readback_user_scheduler", scheduler_readback)
 
     result = refresh.readback_install(
         expected_commit=MAIN,
@@ -3442,6 +3514,11 @@ else:
     assert result["source_commit"] == MAIN
     assert result["status_capsule_launcher_sha256"] == receipt["status_capsule_launcher_sha256"]
     assert result["rollback"] == {"directory": "/rollback"}
+    assert result["scheduler"] == {
+        "kind": "live-scheduler-readback",
+        "authoritative": True,
+    }
+    assert scheduler_calls == [(scheduler_receipt, MAIN)]
 
     status_capsule.unlink()
     with pytest.raises(refresh.RuntimeRefreshError) as missing:
@@ -3774,6 +3851,118 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
         assert not (libexec_root / name).exists()
 
 
+def test_scheduler_rollback_does_not_restore_unmutated_unleased_launchers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    installer = load_installer_module()
+    source = clean_installer_source(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    prefix = home / ".local/share/bureau"
+    bin_dir = home / ".local/bin"
+    manifest_path = prefix / "deployment-manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_bytes(b"exact old manifest\n")
+    manifest_path.chmod(0o640)
+    bin_dir.mkdir()
+    launcher_paths: dict[str, Path] = {}
+    launcher_preimage: dict[Path, bytes] = {}
+    for name, entrypoint in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS:
+        path = bin_dir / name
+        content = refresh.stable_launcher_bytes(manifest_path, entrypoint)
+        path.write_bytes(content)
+        path.chmod(0o755)
+        launcher_paths[name] = path
+        launcher_preimage[path] = content
+
+    unit_root = (tmp_path / "transaction-systemd/user").resolve()
+    libexec_root = (tmp_path / "transaction-libexec").resolve()
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    approval_path = scheduler_installer_approval(
+        source,
+        tmp_path,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+    )
+    approval = json.loads(approval_path.read_text(encoding="utf-8"))
+    assert {
+        f"path:{path}" for path in launcher_paths.values()
+    }.isdisjoint(approval["required_resource_keys"])
+    systemd = FakeUserSystemd(unit_root)
+    state_before = json.loads(json.dumps(systemd.states))
+
+    def fake_run(
+        argv: list[str], **_kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if argv[0] == "systemctl":
+            return systemd(argv)
+        if argv[:3] == ["systemd-analyze", "--user", "verify"]:
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        raise AssertionError(f"unexpected runtime command: {argv}")
+
+    concurrent_launcher = launcher_paths["bureau"]
+    concurrent_content = b"concurrent launcher change\n"
+    launcher_atomic_writes: list[Path] = []
+    real_atomic_write = installer.atomic_write
+
+    def fail_receipt_after_concurrent_launcher_change(
+        path: Path, data: bytes, mode: int = 0o644
+    ) -> None:
+        if path in launcher_preimage:
+            launcher_atomic_writes.append(path)
+        if path.parent == prefix / "receipts":
+            concurrent_launcher.write_bytes(concurrent_content)
+            concurrent_launcher.chmod(0o711)
+            real_atomic_write(path, data, mode)
+            raise OSError("injected durable receipt write failure")
+        real_atomic_write(path, data, mode)
+
+    monkeypatch.setattr(refresh, "_run", fake_run)
+    monkeypatch.setattr(
+        installer,
+        "atomic_write",
+        fail_receipt_after_concurrent_launcher_change,
+    )
+
+    result = installer.main(
+        [
+            "--source",
+            str(source),
+            "--prefix",
+            str(prefix),
+            "--bin-dir",
+            str(bin_dir),
+            "--user-unit-dir",
+            str(unit_root),
+            "--libexec-dir",
+            str(libexec_root),
+            "--approval-intent",
+            str(approval_path),
+            "--replace-existing",
+            "--enforce-launcher-allowlist",
+            "--converge-user-systemd",
+        ]
+    )
+
+    assert result == 2
+    error = json.loads(capsys.readouterr().err.strip().splitlines()[-1])["error"]
+    assert error["code"] == "scheduler-convergence-rolled-back"
+    assert launcher_atomic_writes == []
+    assert concurrent_launcher.read_bytes() == concurrent_content
+    assert concurrent_launcher.stat().st_mode & 0o777 == 0o711
+    for path, content in launcher_preimage.items():
+        if path != concurrent_launcher:
+            assert path.read_bytes() == content
+            assert path.stat().st_mode & 0o777 == 0o755
+    assert manifest_path.read_bytes() == b"exact old manifest\n"
+    assert manifest_path.stat().st_mode & 0o777 == 0o640
+    assert not (prefix / "receipts").exists()
+    assert systemd.states == state_before
+
+
 @pytest.mark.parametrize(
     ("parent_state", "expected_error"),
     [
@@ -3803,6 +3992,7 @@ def test_installer_rollback_reports_created_parent_drift(
         backup={"manifest": None},
         manifest_path=tmp_path / "absent-manifest.json",
         launchers={},
+        mutated_launchers=set(),
         receipt_path=None,
         parent_preimage={"created-parent": (parent, False)},
     )

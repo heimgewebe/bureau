@@ -475,6 +475,7 @@ def _restore_install_preimage(
     backup: dict[str, Any],
     manifest_path: Path,
     launchers: dict[str, Path],
+    mutated_launchers: set[str],
     receipt_path: Path | None,
     parent_preimage: dict[str, tuple[Path, bool]],
 ) -> list[dict[str, Any]]:
@@ -501,6 +502,8 @@ def _restore_install_preimage(
 
     attempt("manifest", lambda: restore_file(manifest_path, backup.get("manifest")))
     for label, target in launchers.items():
+        if label not in mutated_launchers:
+            continue
         key = "launcher" if label == "bureau" else f"{label.replace('-', '_')}_launcher"
         kind = backup.get(f"{key}_kind")
         if kind == "symlink":
@@ -556,6 +559,8 @@ def _restore_install_preimage(
         )
     ]
     for label, target in launchers.items():
+        if label not in mutated_launchers:
+            continue
         key = "launcher" if label == "bureau" else f"{label.replace('-', '_')}_launcher"
         expected.append((label, target, backup.get(f"{key}_kind"), backup.get(key)))
     for label, target, kind, backup_path in expected:
@@ -941,6 +946,15 @@ def main(argv: list[str] | None = None) -> int:
                 "bureau": launcher,
                 "runtime-refresh": runtime_refresh_launcher,
                 "status-capsule": status_capsule_launcher,
+            },
+            mutated_launchers={
+                label
+                for label, field in (
+                    ("bureau", "launcher_written"),
+                    ("runtime-refresh", "runtime_refresh_launcher_written"),
+                    ("status-capsule", "status_capsule_launcher_written"),
+                )
+                if transaction[field]
             },
             receipt_path=transaction["receipt_path"],
             parent_preimage=transaction_parent_preimage,

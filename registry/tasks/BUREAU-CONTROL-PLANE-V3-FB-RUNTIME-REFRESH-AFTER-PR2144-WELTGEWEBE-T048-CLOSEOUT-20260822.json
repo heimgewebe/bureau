@@ -36,13 +36,13 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Single-use bootstrap authority only. Vor dem einzigen Runtime-Effekt sind ein frisch beobachteter current main, der PR #2127 und diese Authority enthält, grüne Required-Checks, target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Keine Queue-, Claim-, Dispatch-, T048-Implementierungs-, Weltgewebe-, Fremdlease- oder Fremdarbeitsautorität."
+      "note": "Single-use bootstrap authority only. Vor dem einzigen Runtime-Effekt sind ein frisch beobachteter current main, der PR #2144, den seit PR #2127 vorhandenen Orphan-Resume-Vertrag und diese Authority enthält, grüne Required-Checks, target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Keine Queue-, Claim-, Dispatch-, T048-Implementierungs-, Weltgewebe-, Fremdlease- oder Fremdarbeitsautorität."
     }
   },
   "acceptance": [
     {
       "id": "fresh-main-contains-pr2144-and-authority",
-      "assertion": "Vor dem einzigen Refresh wird GitHub main frisch gelesen. Der Ziel-main enthält PR #2144 mit dem orphan-resume-Vertrag und diese gemergte Authority-TaskSpec. Kein älterer Zwischenstand wird deployt.",
+      "assertion": "Vor dem einzigen Refresh wird GitHub main frisch gelesen. Der Ziel-main enthält PR #2144, den seit PR #2127 vorhandenen orphan-resume-Vertrag und diese gemergte Authority-TaskSpec. Kein älterer Zwischenstand wird deployt.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -127,7 +127,7 @@
         "queue mutation",
         "claim or dispatch authority",
         "merge readiness before exact-head CI",
-        "runtime mutation before this task and PR #2127 are both merged",
+        "runtime mutation before this task, PR #2144 and the PR #2127 orphan-resume contract are all present on current main",
         "T048 implementation or completion",
         "same-run recovery execution"
       ]

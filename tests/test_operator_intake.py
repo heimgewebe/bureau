@@ -1524,6 +1524,93 @@ def test_task_revision_proposal_binds_authoritative_baseline(registry_factory, t
     assert publication_preview(registry, store, plan_path=plan_path)["status"] == "ready"
 
 
+def test_authoritative_candidate_catalog_overlays_one_typed_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    task_id = "BUR-TEST-001-T099"
+    store.put_task_spec(
+        _task(registry.root, task_id),
+        idempotency_key=f"seed:{task_id}",
+        expected_revision=None,
+        source="test-state-store-only-task",
+    )
+    authoritative = store.task_spec(task_id)
+    assert authoritative is not None
+    lookups = []
+
+    def exact_task_spec(requested_task_id):
+        lookups.append(requested_task_id)
+        return authoritative
+
+    monkeypatch.setattr(store, "task_spec", exact_task_spec)
+
+    catalog = operator_intake_module._authoritative_candidate_catalog(registry, store, task_id)
+
+    assert lookups == [task_id]
+    assert catalog is not registry
+    assert catalog.tasks is not registry.tasks
+    assert task_id not in registry.tasks
+    assert isinstance(catalog.tasks[task_id], operator_intake_module.legacy.Task)
+    assert catalog.tasks[task_id].id == task_id
+    assert catalog.tasks[task_id].raw == authoritative["spec"]
+
+
+def test_authoritative_candidate_catalog_preserves_existing_git_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    task_id = sorted(registry.tasks)[0]
+
+    def unexpected_task_spec(_task_id):
+        pytest.fail("existing Git task must not query the StateStore overlay")
+
+    monkeypatch.setattr(store, "task_spec", unexpected_task_spec)
+
+    catalog = operator_intake_module._authoritative_candidate_catalog(registry, store, task_id)
+
+    assert catalog is registry
+    assert isinstance(catalog.tasks[task_id], operator_intake_module.legacy.Task)
+
+
+@pytest.mark.parametrize(
+    ("drift", "message"),
+    [
+        ("digest", "authoritative TaskSpec digest drift"),
+        ("id", "authoritative TaskSpec id drift"),
+    ],
+)
+def test_authoritative_candidate_catalog_rejects_digest_or_id_drift(
+    registry_factory, tmp_path, monkeypatch, drift, message
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    task_id = "BUR-TEST-001-T099"
+    spec = _task(registry.root, task_id)
+    if drift == "id":
+        spec["id"] = "BUR-TEST-001-T098"
+    digest = operator_intake_module.task_specs.task_spec_digest(spec)
+    if drift == "digest":
+        digest = "0" * 64
+    monkeypatch.setattr(
+        store,
+        "task_spec",
+        lambda requested_task_id: {
+            "spec": spec,
+            "spec_sha256": digest,
+        }
+        if requested_task_id == task_id
+        else None,
+    )
+
+    with pytest.raises(operator_intake_module.StateError, match=message):
+        operator_intake_module._authoritative_candidate_catalog(registry, store, task_id)
+
+    assert task_id not in registry.tasks
+
+
 def test_task_revision_resolves_state_store_only_authoritative_task(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

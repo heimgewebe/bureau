@@ -1984,7 +1984,9 @@ def _scheduler_closeout_readbacks_match(
 
 
 def _install_closeout_readbacks_match(
-    persisted: dict[str, Any], current: dict[str, Any]
+    persisted: dict[str, Any],
+    current: dict[str, Any],
+    install_receipt: dict[str, Any],
 ) -> bool:
     """Authenticate immutable install evidence when historical readback omits scheduler state."""
     persisted_base = dict(persisted)
@@ -1996,6 +1998,11 @@ def _install_closeout_readbacks_match(
     if persisted_scheduler is None:
         return current_scheduler is None
     if not isinstance(persisted_scheduler, dict):
+        return False
+    installed_scheduler = install_receipt.get("scheduler")
+    if not isinstance(installed_scheduler, dict) or not _scheduler_closeout_readbacks_match(
+        persisted_scheduler, installed_scheduler
+    ):
         return False
     # Historical install authentication intentionally cannot reproduce live systemd
     # state. The persisted scheduler evidence is already bound by the immutable
@@ -5068,7 +5075,9 @@ def closeout_runtime_refresh_authority(
             persisted_readback, expected_commit=intent["main_commit"]
         )
     readback_matches = (
-        _install_closeout_readbacks_match(persisted_readback, current_readback)
+        _install_closeout_readbacks_match(
+            persisted_readback, current_readback, install_receipt
+        )
         if deployed_success
         else _scheduler_closeout_readbacks_match(persisted_readback, current_readback)
     )

@@ -3977,6 +3977,47 @@ def test_no_run_closeout_accepts_result_bound_scheduler_missing_from_historical_
     assert current["spec"]["state"] == "verified"
 
 
+def test_no_run_closeout_rejects_scheduler_not_bound_to_install_receipt(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": intent["main_commit"],
+        "authoritative": True,
+    }
+    install_receipt, historical_readback, _ = historical_runtime_artifacts(
+        tmp_path, intent, scheduler=scheduler
+    )
+    tampered_scheduler = {**scheduler, "source_commit": "9" * 40}
+    result = replace_historical_result(
+        intent,
+        result,
+        install_receipt=install_receipt,
+        readback={**historical_readback, "scheduler": tampered_scheduler},
+    )
+    release_test_leases(resource_db)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as exc_info:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=20),
+            authority_store=store,
+        )
+
+    assert exc_info.value.code == "authority-closeout-readback-drift"
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "ready"
+
+
 @pytest.mark.parametrize(
     ("damage", "expected_code"),
     [

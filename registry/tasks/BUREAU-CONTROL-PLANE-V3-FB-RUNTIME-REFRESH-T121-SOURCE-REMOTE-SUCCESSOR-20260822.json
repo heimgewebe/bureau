@@ -1,0 +1,156 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Unmittelbar vor prepare-intent wird GitHub main frisch beobachtet; Required-Checks des exakten Zielstands sind grün und target_sha256 ist frisch gebunden.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-source-remote-successor:fresh-main"
+      }
+    },
+    {
+      "assertion": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T121-UNBLOCK-20260822, Intent a3a8edcde440058758a3cb4e6ec8d84d70b5b265208e581a8f34fd216507745e und Result 1cd43e6304e8fdd1005ed0bcea5d2fac5cc9daf7818f1597aa897a7a54034c2b werden nicht erneut angewendet oder umgeschrieben; der Successor erhält neue Task-ID und neuen Intent.",
+      "evidence_type": "object",
+      "id": "failed-predecessor-not-retried",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-source-remote-successor:no-predecessor-retry"
+      }
+    },
+    {
+      "assertion": "Der neue prepare-intent bindet remote_url exakt an git@github.com:heimgewebe/bureau.git; apply verifiziert denselben Remote im isolierten Source-Workspace, bevor ein Runtime-Effekt beginnt.",
+      "evidence_type": "object",
+      "id": "source-remote-bound",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-source-remote-successor:ssh-remote"
+      }
+    },
+    {
+      "assertion": "Diese Authority autorisiert höchstens einen neuen Runtime-Effekt. Bei failed, unclear, timeout oder Transport-Ambiguität erfolgt kein Blind-Retry; zuerst werden Result, Attempt, Manifest, Registry-Snapshot, Authority-Consumption und Runtime klassifiziert.",
+      "evidence_type": "object",
+      "id": "single-runtime-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-source-remote-successor:single-effect"
+      }
+    },
+    {
+      "assertion": "Nach erfolgreichem Refresh binden Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben source commit; Bureau runtime-identity ist integrity-valid und entspricht dem frisch beobachteten Main-Ziel.",
+      "evidence_type": "object",
+      "id": "immutable-runtime-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-source-remote-successor:immutable-readback"
+      }
+    },
+    {
+      "assertion": "Nach erfolgreichem Runtime-Refresh zeigt bureau-task-supply.service den gemergten --controller-capability operator-approval Parameter; ein frischer Supply-Report wird anschließend neu gelesen.",
+      "evidence_type": "object",
+      "id": "supply-controller-capability-live",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-source-remote-successor:supply-readback"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-use Successor nach failed-before-effect source-remote-mismatch. Die explizite Nutzeranweisung @grabowski umsetzen autorisiert genau einen neuen target-bound, reversiblen Bureau-Runtime-Refresh. Frische Observation, CI, target_sha256, neuer Intent, expliziter SSH remote_url, exakte Runtime-Leases und Result-Readback bleiben bindend. Kein Retry oder Rewrite von a3a8edc…/1cd43e…, keine T121-Completion-, Grabowski-Code-, Queue-, Claim-, Dispatch- oder Fremdarbeitsautorität.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Dieser Successor ersetzt ausschließlich den vor Effekt fehlgeschlagenen T121-Unblock-Intent a3a8edcde440058758a3cb4e6ec8d84d70b5b265208e581a8f34fd216507745e, dessen isolierter Source-Workspace wegen eines expliziten HTTPS-vs-SSH-Remote-Mismatch abgewiesen wurde. Der neue Intent muss den tatsächlich verwendeten SSH-Remote git@github.com:heimgewebe/bureau.git explizit binden. Die Authority implementiert, verifiziert oder schließt T121 nicht selbst, verändert keine Grabowski-Dateien, keine Queue, Claims, Dispatch-Entscheidungen oder fremde Arbeit und darf nach terminalem Result niemals wiederverwendet werden.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T121-SOURCE-REMOTE-SUCCESSOR-20260822",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_t121_run_id": "BUR-RUN-20260822T103619Z-0dfb2ebfe3",
+    "deployed_source_at_registration": "047181c585779d82ee3b33e6086696060db9116a",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse the predecessor authority or target",
+      "T121 implementation or completion authority",
+      "Grabowski repository mutation authority",
+      "foreign-work mutation authority"
+    ],
+    "failed_predecessor": {
+      "effect_started": false,
+      "expected_remote": "https://github.com/heimgewebe/bureau.git",
+      "failure": "source-remote-mismatch",
+      "intent_sha256": "a3a8edcde440058758a3cb4e6ec8d84d70b5b265208e581a8f34fd216507745e",
+      "observed_remote": "git@github.com:heimgewebe/bureau.git",
+      "result_sha256": "1cd43e6304e8fdd1005ed0bcea5d2fac5cc9daf7818f1597aa897a7a54034c2b",
+      "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T121-UNBLOCK-20260822"
+    },
+    "main_at_registration": "222eb5db6933be8bc112c0defd27bb8a7fbe669e",
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "Bureau immutable runtime is stale, so ordinary StateStore mutation and stale-run reconcile are blocked. A new create-only authority must first be merged through the protected repository and then adopted missing-only.",
+      "scope": "exactly this one new TaskSpec file",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "required_remote_url": "git@github.com:heimgewebe/bureau.git",
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "source": "Live continuation on 2026-08-22 after the T121-Unblock successor intent failed before effect because expected HTTPS remote did not match the isolated source workspace SSH remote; Bureau runtime remained on 047181c585779d82ee3b33e6086696060db9116a while current main including PR #2146 was 222eb5db6933be8bc112c0defd27bb8a7fbe669e.",
+    "successor_of": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T121-UNBLOCK-20260822",
+    "successor_reason": "The predecessor intent a3a8edcde440058758a3cb4e6ec8d84d70b5b265208e581a8f34fd216507745e ended failed-before-effect with source-remote-mismatch; the task identity is permanently bound to that intent and cannot be safely reused.",
+    "unblock_task_ids": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T121"
+    ]
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Der aktuell integrity-valid installierte Bureau-Release bleibt bis zu einem eindeutigen neuen Install- und Readback-Receipt Deployment-Wahrheit. Bei unklarem Ergebnis wird nicht blind wiederholt; vorhandene Attempt-, Backup-, Manifest-, Registry-, Intent-, Authority- und Lease-Evidenz wird zuerst klassifiziert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-Use Bureau-Runtime-Refresh nach T121 Source-Remote-Mismatch"
+}

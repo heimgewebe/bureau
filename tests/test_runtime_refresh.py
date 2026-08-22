@@ -1100,7 +1100,10 @@ def historical_no_run_success(
 
 
 def historical_runtime_artifacts(
-    tmp_path: Path, intent: dict[str, Any]
+    tmp_path: Path,
+    intent: dict[str, Any],
+    *,
+    scheduler: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Path]]:
     prefix = Path(intent["prefix"])
     bin_dir = Path(intent["bin_dir"])
@@ -1192,6 +1195,8 @@ def historical_runtime_artifacts(
         "previous_manifest_sha256": None,
         "rollback": rollback,
     }
+    if scheduler is not None:
+        manifest["scheduler"] = scheduler
     manifest[refresh.RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD] = refresh.payload_digest(
         manifest, refresh.RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD
     )
@@ -1224,6 +1229,8 @@ def historical_runtime_artifacts(
         "runtime_approval": runtime_approval,
         "installed_at": refresh.isoformat(NOW),
     }
+    if scheduler is not None:
+        receipt["scheduler"] = scheduler
     receipt_path = prefix / "receipts" / f"{release_id}-{manifest_sha256[:12]}.json"
     receipt_path.parent.mkdir(parents=True)
     receipt_path.write_bytes(refresh.canonical_bytes(receipt))
@@ -1422,23 +1429,36 @@ def add_authority_run_receipt(
     return run_id, receipt
 
 
-def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> None:
+def test_observe_reports_already_current_only_when_scheduler_converged(
+    tmp_path: Path,
+) -> None:
     manifest = tmp_path / "deployment-manifest.json"
-    write_manifest(manifest, MAIN)
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
     calls: list[list[str]] = []
+    scheduler_calls: list[tuple[dict[str, Any], str]] = []
 
     def github(arguments: list[str]) -> Any:
         calls.append(arguments)
         return {"sha": MAIN}
+
+    def scheduler_reader(
+        receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        scheduler_calls.append((receipt, expected_commit))
+        return {"authoritative": True}
 
     result = refresh.observe_runtime_refresh(
         repository="heimgewebe/bureau",
         manifest_path=manifest,
         now=NOW,
         github=github,
+        scheduler_reader=scheduler_reader,
     )
 
     assert result["status"] == "already_current"
+    assert result["scheduler_target_state"] == "converged"
+    assert result["reason_codes"] == []
     assert result["lag_commits"] == 0
     assert result["recovery_action"] == {
         "action": "none",
@@ -1446,7 +1466,212 @@ def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> No
         "requires_authorization": False,
     }
     assert calls == [["api", "repos/heimgewebe/bureau/commits/main"]]
+    assert scheduler_calls == [(scheduler_receipt, MAIN)]
     refresh.verify_digest(result, "observation_sha256")
+
+
+def test_observe_source_current_missing_scheduler_requires_prepare_intent(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    write_manifest(manifest, MAIN)
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+    )
+
+    assert result["status"] == "alert"
+    assert result["scheduler_target_state"] == "missing-receipt"
+    assert result["reason_codes"] == ["scheduler-receipt-missing"]
+    assert result["recovery_action"] == {
+        "action": "prepare-intent",
+        "eligible": True,
+        "requires_authorization": True,
+    }
+
+
+def test_observe_source_current_live_scheduler_drift_requires_prepare_intent(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-readback-load-state-invalid",
+            "task-supply timer is not loaded",
+        )
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=scheduler_reader,
+    )
+
+    assert result["status"] == "alert"
+    assert (
+        result["scheduler_target_state"]
+        == "drift:scheduler-readback-load-state-invalid"
+    )
+    assert result["reason_codes"] == ["scheduler-readback-load-state-invalid"]
+    assert result["recovery_action"]["action"] == "prepare-intent"
+    assert result["recovery_action"]["eligible"] is True
+
+    converged = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=lambda _receipt, **_: {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_scheduler_readback",
+            "source_commit": MAIN,
+            "authoritative": True,
+        },
+    )
+    assert converged["status"] == "already_current"
+    assert converged["scheduler_target_state"] == "converged"
+    assert converged["target_sha256"] != result["target_sha256"]
+
+
+def test_observe_source_current_failed_service_is_not_auto_reconvergeable(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-required-service-invalid",
+            "task-supply service is failed",
+        )
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=scheduler_reader,
+    )
+
+    assert result["status"] == "blocked"
+    assert (
+        result["scheduler_target_state"]
+        == "blocked:scheduler-required-service-invalid"
+    )
+    assert result["reason_codes"] == ["scheduler-required-service-invalid"]
+    assert result["recovery_action"]["action"] == "resolve-reason-codes"
+    assert result["recovery_action"]["eligible"] is False
+
+
+
+def test_observe_source_current_scheduler_timeout_blocks(tmp_path: Path) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise subprocess.TimeoutExpired(cmd=["systemctl", "--user"], timeout=60)
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau", manifest_path=manifest, now=NOW,
+        github=lambda _arguments: {"sha": MAIN}, scheduler_reader=scheduler_reader,
+    )
+    assert result["status"] == "blocked"
+    assert result["reason_codes"] == ["scheduler-readback-timeout"]
+    assert result["scheduler_target_state"] == "blocked:scheduler-readback-timeout"
+    assert result["recovery_action"]["action"] == "resolve-reason-codes"
+
+
+def test_observe_source_current_scheduler_io_failure_blocks(tmp_path: Path) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise FileNotFoundError("scheduler artifact disappeared during readback")
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=scheduler_reader,
+    )
+
+    assert result["status"] == "blocked"
+    assert result["reason_codes"] == ["scheduler-readback-io-failed"]
+    assert result["scheduler_target_state"] == "blocked:scheduler-readback-io-failed"
+    assert result["recovery_action"]["action"] == "resolve-reason-codes"
+    assert result["recovery_action"]["eligible"] is False
+
+
+def test_observe_source_current_unsafe_fragment_blocks(tmp_path: Path) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-readback-fragment-unsafe", "scheduler path is a directory"
+        )
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau", manifest_path=manifest, now=NOW,
+        github=lambda _arguments: {"sha": MAIN}, scheduler_reader=scheduler_reader,
+    )
+    assert result["status"] == "blocked"
+    assert result["reason_codes"] == ["scheduler-readback-fragment-unsafe"]
+    assert result["scheduler_target_state"] == "blocked:scheduler-readback-fragment-unsafe"
+
+
+def test_observe_source_current_invalid_scheduler_evidence_blocks(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-receipt-invalid",
+            "scheduler receipt is malformed",
+        )
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=scheduler_reader,
+    )
+
+    assert result["status"] == "blocked"
+    assert result["scheduler_target_state"] == "blocked:scheduler-receipt-invalid"
+    assert result["reason_codes"] == ["scheduler-receipt-invalid"]
+    assert result["recovery_action"] == {
+        "action": "resolve-reason-codes",
+        "eligible": False,
+        "reason_codes": ["scheduler-receipt-invalid"],
+        "requires_authorization": False,
+    }
 
 
 def test_observe_binds_exact_merged_main_and_green_ci(tmp_path: Path) -> None:
@@ -1995,6 +2220,49 @@ def test_atomic_write_applies_exact_mode_under_restrictive_umask(
     assert path.stat().st_mode & 0o777 == mode
 
 
+def test_scheduler_readback_distinguishes_replaceable_and_unsafe_fragments(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    user_unit_dir = tmp_path / "live-systemd"
+    libexec_dir = tmp_path / "live-libexec"
+    user_unit_dir.mkdir()
+    libexec_dir.mkdir()
+    artifacts = refresh._scheduler_artifacts(
+        release=release, user_unit_dir=user_unit_dir, libexec_dir=libexec_dir
+    )
+    prior_timers = {
+        name: {
+            "LoadState": "not-found",
+            "UnitFileState": "disabled",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "FragmentPath": "",
+        }
+        for name in refresh.RUNTIME_SCHEDULER_NAMES
+    }
+    timer_intent = {name: "absent" for name in refresh.RUNTIME_SCHEDULER_NAMES}
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
+        refresh._scheduler_readback(
+            source_commit=source_commit, release_id=release_id, release=release,
+            user_unit_dir=user_unit_dir, libexec_dir=libexec_dir,
+            prior_timers=prior_timers, timer_intent=timer_intent,
+            command_runner=lambda _argv: pytest.fail("systemd read must not run"),
+        )
+    assert missing.value.code == "scheduler-readback-fragment-replaceable"
+    assert missing.value.details["kind"] == "absent"
+    first_path = Path(artifacts[0]["live_path"])
+    first_path.mkdir(parents=True)
+    with pytest.raises(refresh.RuntimeRefreshError) as unsafe:
+        refresh._scheduler_readback(
+            source_commit=source_commit, release_id=release_id, release=release,
+            user_unit_dir=user_unit_dir, libexec_dir=libexec_dir,
+            prior_timers=prior_timers, timer_intent=timer_intent,
+            command_runner=lambda _argv: pytest.fail("systemd read must not run"),
+        )
+    assert unsafe.value.code == "scheduler-readback-fragment-unsafe"
+
+
 def test_release_task_supply_absent_live_is_converged_enabled_and_waiting(
     tmp_path: Path,
 ) -> None:
@@ -2426,7 +2694,7 @@ def test_failed_required_service_readback_is_rolled_back_without_blind_retry(
 
     assert injected is True
     assert caught.value.code == "scheduler-convergence-rolled-back"
-    assert caught.value.details["cause"]["code"] == "scheduler-required-timer-invalid"
+    assert caught.value.details["cause"]["code"] == "scheduler-required-service-invalid"
     assert caught.value.details["safe_to_retry"] is False
     assert systemd.states == state_before
 
@@ -3395,19 +3663,78 @@ def test_apply_existing_start_without_result_is_unclear_without_execution(
     assert executed is False
 
 
-def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) -> None:
+def test_apply_already_current_target_drift_closes_without_effect_ledger(
+    tmp_path: Path,
+) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
     live = dict(observed)
     live.update(
         {
             "status": "already_current",
             "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+            "main_commit": MAIN,
+            "lag_commits": 0,
+            "scheduler_target_state": "converged",
+            "reason_codes": [],
+            "scheduler": scheduler,
+        }
+    )
+    live["target_sha256"] = refresh.sha256_bytes(
+        refresh.canonical_bytes(refresh._target_payload(live))
+    )
+    live = refresh.bind_digest(live, "observation_sha256")
+    assert live["target_sha256"] != intent["target_sha256"]
+    lease_binding, resource_db = lease_for(tmp_path / "target-drift-leases", intent)
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=lease_binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: live,
+        source_preparer=lambda **_: pytest.fail("no-effect must not prepare source"),
+        installer=lambda **_: pytest.fail("no-effect must not install"),
+    )
+    assert result["status"] == "already_current"
+    assert result["effect_started"] is False
+    assert result["observed_target_sha256"] == live["target_sha256"]
+    attempt_dir = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not (attempt_dir / "started.json").exists()
+    assert not (attempt_dir / "result.json").exists()
+    no_effect = Path(intent["state_root"]) / "no-effect-results" / f"{intent['intent_sha256']}.json"
+    assert no_effect.is_file()
+    assert refresh.read_json(no_effect)["result_sha256"] == result["result_sha256"]
+
+def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) -> None:
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
             "main_commit": MAIN,
             "reason_codes": [],
+            "scheduler": scheduler,
         }
     )
     live = refresh.bind_digest(live, "observation_sha256")
-    write_manifest(manifest_path, MAIN)
 
     lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
     result = refresh.apply_runtime_refresh(
@@ -3424,6 +3751,99 @@ def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) ->
 
     assert result["status"] == "already_current"
     assert result["effect_started"] is False
+    assert result["scheduler"] == scheduler
+    assert result["manifest_sha256"] == live["deployed_manifest_sha256"]
+
+
+def test_already_current_no_effect_authority_can_closeout(tmp_path: Path) -> None:
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+        "services": {
+            name: {
+                "LoadState": "loaded",
+                "FragmentPath": f"/units/{name}.service",
+                "ActiveState": "inactive",
+                "SubState": "dead",
+                "Result": "success",
+            }
+            for name in refresh.RUNTIME_SCHEDULER_NAMES
+        },
+    }
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+            "main_commit": MAIN,
+            "reason_codes": [],
+            "scheduler": scheduler,
+        }
+    )
+    live = refresh.bind_digest(live, "observation_sha256")
+    lease_binding, resource_db = lease_for(tmp_path / "no-effect-leases", intent)
+    store = authority_store_for_intent(intent)
+
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=lease_binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: live,
+        source_preparer=lambda **_: pytest.fail("source preparation must not run"),
+        installer=lambda **_: pytest.fail("installer must not run"),
+        authority_store=store,
+    )
+    assert result["status"] == "already_current"
+    assert result["effect_started"] is False
+    effect_attempt = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not (effect_attempt / "started.json").exists()
+    assert not (effect_attempt / "result.json").exists()
+    assert (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    ).is_file()
+    release_test_leases(resource_db)
+
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=intent["approval_task_id"],
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        scheduler_readback=lambda receipt, **_: {
+            **receipt,
+            "services": {
+                name: (
+                    {
+                        **state,
+                        "ActiveState": "activating",
+                        "SubState": "start",
+                    }
+                    if name == refresh.REQUIRED_RUNTIME_TIMER
+                    else dict(state)
+                )
+                for name, state in receipt["services"].items()
+            },
+        },
+    )
+
+    assert closeout["closeout"]["status"] == "verified"
+    assert closeout["closeout"]["runtime_result_sha256"] == result["result_sha256"]
+    current = store.task_spec(intent["approval_task_id"])
+    assert current is not None
+    assert current["spec"]["state"] == "verified"
 
 
 @pytest.mark.parametrize(
@@ -3515,6 +3935,87 @@ def test_no_run_closeout_authenticates_historical_runtime_after_successor_deploy
     assert artifacts["manifest"].read_bytes() == successor_manifest
     assert json.loads(successor_manifest)["source_commit"] == "9" * 40
     assert historical_readback["source_commit"] == intent["main_commit"]
+
+
+def test_no_run_closeout_accepts_result_bound_scheduler_missing_from_historical_readback(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": intent["main_commit"],
+        "authoritative": True,
+    }
+    install_receipt, historical_readback, _ = historical_runtime_artifacts(
+        tmp_path, intent, scheduler=scheduler
+    )
+    assert "scheduler" not in historical_readback
+    result = replace_historical_result(
+        intent,
+        result,
+        install_receipt=install_receipt,
+        readback={**historical_readback, "scheduler": scheduler},
+    )
+    release_test_leases(resource_db)
+
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+    )
+
+    assert closeout["closeout"]["status"] == "verified"
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "verified"
+
+
+def test_no_run_closeout_rejects_scheduler_not_bound_to_install_receipt(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": intent["main_commit"],
+        "authoritative": True,
+    }
+    install_receipt, historical_readback, _ = historical_runtime_artifacts(
+        tmp_path, intent, scheduler=scheduler
+    )
+    tampered_scheduler = {**scheduler, "source_commit": "9" * 40}
+    result = replace_historical_result(
+        intent,
+        result,
+        install_receipt=install_receipt,
+        readback={**historical_readback, "scheduler": tampered_scheduler},
+    )
+    release_test_leases(resource_db)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as exc_info:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=20),
+            authority_store=store,
+        )
+
+    assert exc_info.value.code == "authority-closeout-readback-drift"
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "ready"
 
 
 @pytest.mark.parametrize(

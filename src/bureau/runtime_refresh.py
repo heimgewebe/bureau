@@ -762,6 +762,11 @@ def observe_runtime_refresh(
                     reasons.append(reason)
                     scheduler_target_state = f"blocked:{reason}"
                     scheduler_blocked = True
+                except OSError:
+                    reason = "scheduler-readback-io-failed"
+                    reasons.append(reason)
+                    scheduler_target_state = f"blocked:{reason}"
+                    scheduler_blocked = True
                 except RuntimeRefreshError as exc:
                     reasons.append(exc.code)
                     if exc.code in SCHEDULER_RECONVERGEABLE_READBACK_CODES:
@@ -1930,6 +1935,77 @@ def readback_user_scheduler(
         timer_intent=timer_intent,
         command_runner=runner,
     )
+
+
+def _scheduler_closeout_readbacks_match(
+    persisted: dict[str, Any], current: dict[str, Any]
+) -> bool:
+    """Compare result-bound scheduler invariants while ignoring transient service state."""
+    if current == persisted:
+        return True
+    stable_fields = (
+        "schema_version",
+        "kind",
+        "source_commit",
+        "release_id",
+        "immutable_release_path",
+        "user_unit_dir",
+        "libexec_dir",
+        "required_timer",
+        "artifacts",
+        "prior_timer_intent",
+        "pre_convergence_timers",
+        "timers",
+        "authoritative",
+    )
+    if any(current.get(field) != persisted.get(field) for field in stable_fields):
+        return False
+    persisted_services = persisted.get("services")
+    current_services = current.get("services")
+    expected_names = set(RUNTIME_SCHEDULER_NAMES)
+    if (
+        not isinstance(persisted_services, dict)
+        or not isinstance(current_services, dict)
+        or set(persisted_services) != expected_names
+        or set(current_services) != expected_names
+    ):
+        return False
+    for name in RUNTIME_SCHEDULER_NAMES:
+        persisted_state = persisted_services.get(name)
+        current_state = current_services.get(name)
+        if not isinstance(persisted_state, dict) or not isinstance(current_state, dict):
+            return False
+        fields = ("LoadState", "FragmentPath")
+        if name == REQUIRED_RUNTIME_TIMER:
+            fields += ("Result",)
+        if any(current_state.get(field) != persisted_state.get(field) for field in fields):
+            return False
+    return True
+
+
+def _install_closeout_readbacks_match(
+    persisted: dict[str, Any], current: dict[str, Any]
+) -> bool:
+    """Authenticate immutable install evidence when historical readback omits scheduler state."""
+    persisted_base = dict(persisted)
+    current_base = dict(current)
+    persisted_scheduler = persisted_base.pop("scheduler", None)
+    current_scheduler = current_base.pop("scheduler", None)
+    if current_base != persisted_base:
+        return False
+    if persisted_scheduler is None:
+        return current_scheduler is None
+    if not isinstance(persisted_scheduler, dict):
+        return False
+    # Historical install authentication intentionally cannot reproduce live systemd
+    # state. The persisted scheduler evidence is already bound by the immutable
+    # result and installer receipt. If a reader does provide scheduler state, compare
+    # only the invariants that readback_user_scheduler itself validates as stable.
+    if current_scheduler is None:
+        return True
+    if not isinstance(current_scheduler, dict):
+        return False
+    return _scheduler_closeout_readbacks_match(persisted_scheduler, current_scheduler)
 
 
 def _is_sha256(value: Any) -> bool:
@@ -4275,6 +4351,7 @@ def readback_historical_install(
         ("installed_at", "installed_at"),
         ("runtime_approval", "runtime_approval"),
         ("rollback", "rollback"),
+        ("scheduler", "scheduler"),
     )
     for manifest_field, receipt_field in receipt_manifest_bindings:
         if manifest.get(manifest_field) != persisted_receipt.get(receipt_field):
@@ -4990,7 +5067,12 @@ def closeout_runtime_refresh_authority(
         current_readback = scheduler_readback(
             persisted_readback, expected_commit=intent["main_commit"]
         )
-    if current_readback != persisted_readback:
+    readback_matches = (
+        _install_closeout_readbacks_match(persisted_readback, current_readback)
+        if deployed_success
+        else _scheduler_closeout_readbacks_match(persisted_readback, current_readback)
+    )
+    if not readback_matches:
         raise RuntimeRefreshError(
             "authority-closeout-readback-drift",
             "current runtime readback differs from the successful result",

@@ -10,6 +10,7 @@ start record already exists.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -25,7 +26,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from . import approval, legacy, registry_snapshot, runtime_identity
+from . import approval, legacy, registry_snapshot
 
 SCHEMA_VERSION = 1
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
@@ -4287,6 +4288,118 @@ def _historical_runtime_snapshot(
     )
 
 
+def _historical_package_tree_constants(
+    release: Path,
+) -> tuple[tuple[str, ...], tuple[str, ...]] | None:
+    """Parse package-tree constants from an immutable release without executing it."""
+    module = release / "src/bureau/runtime_identity.py"
+    try:
+        if module.is_symlink() or not module.is_file():
+            return None
+        if module.stat().st_size > MAX_HISTORICAL_RUNTIME_ARTIFACT_BYTES:
+            return None
+        source = module.read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=str(module))
+    except (OSError, UnicodeDecodeError, SyntaxError):
+        return None
+
+    values: dict[str, tuple[str, ...]] = {}
+    required = {"MANAGED_PACKAGES", "SCHEDULER_NAMES"}
+    for statement in tree.body:
+        target: ast.expr | None = None
+        value_node: ast.expr | None = None
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1:
+            target = statement.targets[0]
+            value_node = statement.value
+        elif isinstance(statement, ast.AnnAssign):
+            target = statement.target
+            value_node = statement.value
+        if not isinstance(target, ast.Name) or target.id not in required or value_node is None:
+            continue
+        if target.id in values:
+            return None
+        if not isinstance(value_node, ast.Tuple):
+            return None
+        value_items: list[str] = []
+        for item in value_node.elts:
+            if (
+                not isinstance(item, ast.Constant)
+                or not isinstance(item.value, str)
+                or not item.value
+            ):
+                return None
+            value_items.append(item.value)
+        value = tuple(value_items)
+        if not value or len(set(value)) != len(value):
+            return None
+        values[target.id] = value
+
+    if set(values) != required:
+        return None
+    packages = values["MANAGED_PACKAGES"]
+    scheduler_names = values["SCHEDULER_NAMES"]
+    if "bureau" not in packages or not all(name.isidentifier() for name in packages):
+        return None
+    if not all(
+        name not in {".", ".."}
+        and len(name) <= 128
+        and all(
+            character.isascii() and (character.isalnum() or character in "-_.@")
+            for character in name
+        )
+        for name in scheduler_names
+    ):
+        return None
+    return packages, scheduler_names
+
+
+def _historical_package_tree_sha256(release: Path) -> str | None:
+    """Rebuild the legacy package-tree digest from release-bound data only."""
+    constants = _historical_package_tree_constants(release)
+    if constants is None:
+        return None
+    managed_packages, scheduler_names = constants
+    pyproject = release / "pyproject.toml"
+    packages = [release / "src" / name for name in managed_packages]
+    schemas = release / "schemas"
+    systemd = release / "ops/systemd"
+    schema_paths = sorted(schemas.glob("*.json")) if schemas.is_dir() else []
+    if (
+        pyproject.is_symlink()
+        or not pyproject.is_file()
+        or schemas.is_symlink()
+        or not schemas.is_dir()
+        or not schema_paths
+        or systemd.is_symlink()
+        or not systemd.is_dir()
+        or any(package.is_symlink() or not package.is_dir() for package in packages)
+    ):
+        return None
+    paths = [
+        pyproject,
+        *schema_paths,
+        *(path for package in packages for path in sorted(package.rglob("*.py"))),
+        *(systemd / f"{name}.service" for name in scheduler_names),
+        *(systemd / f"{name}.timer" for name in scheduler_names),
+        *(systemd / "libexec" / name for name in scheduler_names),
+    ]
+    digest = hashlib.sha256()
+    try:
+        for path in paths:
+            if path.is_symlink() or not path.is_file():
+                return None
+            relative = path.relative_to(release).as_posix().encode()
+            content = path.read_bytes()
+            digest.update(len(relative).to_bytes(4, "big"))
+            digest.update(relative)
+            digest.update(b"x" if path.stat().st_mode & 0o111 else b"-")
+            digest.update(len(content).to_bytes(8, "big"))
+            digest.update(content)
+    except (OSError, ValueError):
+        return None
+    return digest.hexdigest()
+
+
 def readback_historical_install(
     *, expected_commit: str, prefix: Path, bin_dir: Path, install_receipt: dict[str, Any]
 ) -> dict[str, Any]:
@@ -4386,7 +4499,7 @@ def readback_historical_install(
             "historical immutable release path is invalid",
             details={"expected": str(expected_release), "observed": str(release)},
         )
-    observed_package_sha256 = runtime_identity._package_tree_sha256(release)
+    observed_package_sha256 = _historical_package_tree_sha256(release)
     if observed_package_sha256 != manifest.get("package_tree_sha256"):
         raise RuntimeRefreshError(
             "historical-runtime-package-mismatch",

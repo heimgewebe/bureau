@@ -891,6 +891,7 @@ def run_supply_cycle(
     state_store_root: Path | None = None,
     policy: SupplyPolicy | None = None,
     approval_available: bool = False,
+    controller_capabilities: Sequence[str] = (),
     mutation_authority: bool = False,
     publish: bool = False,
     environment_blockers: Sequence[str] = (),
@@ -937,6 +938,7 @@ def run_supply_cycle(
         frontier=list(observation.frontier),
         policy=policy,
         approval_available=approval_available,
+        controller_capabilities=controller_capabilities,
         runtime_healthy=observation.runtime_healthy,
         mutation_authority=mutation_authority,
         environment_blockers=tuple(blockers),
@@ -1001,6 +1003,9 @@ def run_supply_cycle(
         "status": report["status"],
         "registry": report["registry"],
         "capabilities": list(observation.capabilities),
+        "controller_capabilities": list(
+            report["feasibility"]["controller_profile"]["capabilities"]
+        ),
         "runtime_healthy": observation.runtime_healthy,
         "mutation_authority_observed": mutation_authority,
         "metrics": report["metrics"],
@@ -1052,6 +1057,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--max-new-per-cycle", type=int, default=4)
     parser.add_argument("--bucket-hours", type=int, default=24)
     parser.add_argument("--approval-available", action="store_true")
+    parser.add_argument("--controller-capability", action="append", default=[])
     parser.add_argument("--mutation-authority", action="store_true")
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--environment-blocker", action="append", default=[])
@@ -1154,6 +1160,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 bucket_hours=args.bucket_hours,
             ),
             approval_available=args.approval_available,
+            controller_capabilities=args.controller_capability,
             mutation_authority=args.mutation_authority,
             publish=args.publish,
             environment_blockers=tuple(args.environment_blocker),

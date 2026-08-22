@@ -14,6 +14,7 @@ from bureau.core import StateStore
 from bureau.cycle_contract import CONTRACT_VERSION, SCHEMA_VERSION
 from bureau.supply_runner import FrontierObservation, reconcile_merged_supply_publication
 from bureau.task_supply import (
+    CONTROLLER_APPROVAL_CAPABILITY,
     FALLBACK_CATALOG,
     FALLBACK_METADATA_KEY,
     REVIEW_REASON,
@@ -81,6 +82,7 @@ def report(
     policy: SupplyPolicy | None = None,
     generated_at: str = NOW,
     approval_available: bool = False,
+    controller_capabilities: tuple[str, ...] = (),
     runtime_healthy: bool = True,
     mutation_authority: bool = True,
     environment_blockers: tuple[str, ...] = (),
@@ -107,6 +109,7 @@ def report(
         registry_head=registry_head,
         queue_sha256=queue_sha256,
         approval_available=approval_available,
+        controller_capabilities=controller_capabilities,
         runtime_healthy=runtime_healthy,
         mutation_authority=mutation_authority,
         environment_blockers=environment_blockers,
@@ -387,6 +390,49 @@ def test_review_only_task_needs_explicit_approval(tmp_path: Path) -> None:
     with_approval = report(tmp_path, [item], approval_available=True)
     assert without_approval["metrics"]["normal_claimable_count"] == 0
     assert with_approval["metrics"]["normal_claimable_count"] == 1
+
+
+def test_controller_approval_capability_reaches_floor_without_widening_worker_profile(
+    tmp_path: Path,
+) -> None:
+    registry = Registry.load(Path(__file__).parents[1])
+    task_ids = [f"REVIEW-T{index:03d}" for index in range(8)]
+    documents = {task_id: normal_document(task_id) for task_id in task_ids}
+    frontier = [frontier_item(task_id, reasons=[REVIEW_REASON]) for task_id in task_ids]
+    worker_profile = capability_profile(missing=("audit", "documentation"))
+
+    without_controller = report(
+        tmp_path,
+        frontier,
+        task_documents=documents,
+        worker_profile=worker_profile,
+        feasibility_required=True,
+        resource_definitions=registry.resources,
+    )
+    with_controller = report(
+        tmp_path,
+        frontier,
+        task_documents=documents,
+        controller_capabilities=(CONTROLLER_APPROVAL_CAPABILITY,),
+        worker_profile=worker_profile,
+        feasibility_required=True,
+        resource_definitions=registry.resources,
+    )
+
+    assert without_controller["metrics"]["joint_claimable_count"] == 0
+    assert with_controller["metrics"]["joint_claimable_count"] == 8
+    assert with_controller["status"] == "satisfied"
+    assert with_controller["feasibility"]["controller_profile"]["capabilities"] == [
+        CONTROLLER_APPROVAL_CAPABILITY
+    ]
+    assert (
+        with_controller["feasibility"]["controller_profile"]["operator_approval_capable"]
+        is True
+    )
+    assert with_controller["feasibility"]["worker_profile"] == worker_profile
+    assert with_controller["approval_available"] is False
+    assert "audit" not in with_controller["feasibility"]["worker_profile"]["capabilities"]
+    assert "documentation" not in with_controller["feasibility"]["worker_profile"]["capabilities"]
 
 
 def test_approval_does_not_erase_other_blockers() -> None:

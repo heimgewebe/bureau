@@ -10,6 +10,7 @@ from . import legacy
 from .approval import require_approval, reviewed_plan_approval
 from .core import Registry, StateStore
 from .frontier import EXECUTABLE_LANES, build_frontier_projection
+from .v2 import authoritative_task_registry
 
 TERMINAL_STATES = {"verified", "cancelled", "superseded"}
 QUEUE_RECONCILE_PLAN_SCHEMA_VERSION = 3
@@ -216,6 +217,7 @@ def _finding(
     current_lane: str | None,
     desired_lane: str | None,
     card: dict[str, Any] | None,
+    effective_state: str | None,
     proposed_action: dict[str, Any],
 ) -> dict[str, Any]:
     return {
@@ -223,7 +225,7 @@ def _finding(
         "severity": severity,
         "task_id": task_id,
         "title": None if card is None else card.get("title"),
-        "effective_state": None if card is None else card.get("effective_state"),
+        "effective_state": effective_state,
         "queue_lane": current_lane,
         "projected_lane": desired_lane,
         "priority_lane": (
@@ -311,6 +313,21 @@ def queue_reconcile_report(
     current_positions = _lane_positions(current)
     desired_positions = _lane_positions(unfiltered_desired)
     cards = _card_index(projection)
+    authoritative_registry, _authority, _revisions = authoritative_task_registry(
+        registry, store
+    )
+    with store.connect() as connection:
+        authoritative_overlays = store.overlays(connection, authoritative_registry)
+        source_overlays = store.overlays(connection, registry)
+    source_effective_states: dict[str, str] = {}
+    for task in registry.tasks.values():
+        authoritative_task = authoritative_registry.tasks.get(task.id)
+        if authoritative_task is not None:
+            source_effective_states[task.id] = authoritative_overlays.get(
+                task.id, authoritative_task.state
+            )
+        else:
+            source_effective_states[task.id] = source_overlays.get(task.id, task.state)
     findings: list[dict[str, Any]] = []
 
     for task_id in sorted(set(current_positions) | set(desired_positions)):
@@ -319,10 +336,15 @@ def queue_reconcile_report(
         if current_lane == desired_lane:
             continue
         card = cards.get(task_id)
+        effective_state = (
+            card.get("effective_state")
+            if card is not None
+            else source_effective_states.get(task_id)
+        )
         if desired_lane is None:
             code = (
                 "terminal-task-in-queue"
-                if card is None or card.get("terminal") is True
+                if effective_state in TERMINAL_STATES
                 else "compatibility-task-not-in-frontier"
             )
             action = {"operation": "remove_from_queue", "target_lane": None}
@@ -346,6 +368,7 @@ def queue_reconcile_report(
                 current_lane=current_lane,
                 desired_lane=desired_lane,
                 card=card,
+                effective_state=effective_state,
                 proposed_action=action,
             )
         )

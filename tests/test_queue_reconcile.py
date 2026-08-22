@@ -267,6 +267,29 @@ def test_state_store_terminal_task_is_removed_from_compatibility_projection(
     assert finding["proposed_action"]["operation"] == "remove_from_queue"
 
 
+def test_git_only_ready_task_is_not_mislabeled_terminal_when_projection_is_partial(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2)
+    task_id = "BUR-TEST-001-T001"
+    authoritative_task_id = "BUR-TEST-001-T002"
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3", tmp_path / "state")
+    store.put_task_spec(
+        registry.tasks[authoritative_task_id].raw,
+        idempotency_key="queue-reconcile-partial-projection",
+        expected_revision=None,
+        source="test",
+    )
+
+    report = _report(root, store)
+
+    finding = next(item for item in report["findings"] if item.get("task_id") == task_id)
+    assert finding["code"] == "compatibility-task-not-in-frontier"
+    assert finding["effective_state"] == "ready"
+    assert finding["proposed_action"]["operation"] == "remove_from_queue"
+
+
 def test_write_plan_requires_review_before_apply(registry_factory, tmp_path):
     root = registry_factory(1)
     task_id = "BUR-TEST-001-T001"

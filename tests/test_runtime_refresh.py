@@ -1450,6 +1450,7 @@ def test_observe_reports_already_current_only_when_scheduler_converged(
     )
 
     assert result["status"] == "already_current"
+    assert result["scheduler_target_state"] == "converged"
     assert result["reason_codes"] == []
     assert result["lag_commits"] == 0
     assert result["recovery_action"] == {
@@ -1476,6 +1477,7 @@ def test_observe_source_current_missing_scheduler_requires_prepare_intent(
     )
 
     assert result["status"] == "alert"
+    assert result["scheduler_target_state"] == "missing-receipt"
     assert result["reason_codes"] == ["scheduler-receipt-missing"]
     assert result["recovery_action"] == {
         "action": "prepare-intent",
@@ -1509,9 +1511,64 @@ def test_observe_source_current_live_scheduler_drift_requires_prepare_intent(
     )
 
     assert result["status"] == "alert"
+    assert (
+        result["scheduler_target_state"]
+        == "drift:scheduler-readback-load-state-invalid"
+    )
     assert result["reason_codes"] == ["scheduler-readback-load-state-invalid"]
     assert result["recovery_action"]["action"] == "prepare-intent"
     assert result["recovery_action"]["eligible"] is True
+
+    converged = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=lambda _receipt, **_: {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_scheduler_readback",
+            "source_commit": MAIN,
+            "authoritative": True,
+        },
+    )
+    assert converged["status"] == "already_current"
+    assert converged["scheduler_target_state"] == "converged"
+    assert converged["target_sha256"] != result["target_sha256"]
+
+
+def test_observe_source_current_failed_service_is_not_auto_reconvergeable(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-required-service-invalid",
+            "task-supply service is failed",
+        )
+
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest,
+        now=NOW,
+        github=lambda _arguments: {"sha": MAIN},
+        scheduler_reader=scheduler_reader,
+    )
+
+    assert result["status"] == "blocked"
+    assert (
+        result["scheduler_target_state"]
+        == "blocked:scheduler-required-service-invalid"
+    )
+    assert result["reason_codes"] == ["scheduler-required-service-invalid"]
+    assert result["recovery_action"]["action"] == "resolve-reason-codes"
+    assert result["recovery_action"]["eligible"] is False
+
 
 
 def test_observe_source_current_invalid_scheduler_evidence_blocks(
@@ -1539,6 +1596,7 @@ def test_observe_source_current_invalid_scheduler_evidence_blocks(
     )
 
     assert result["status"] == "blocked"
+    assert result["scheduler_target_state"] == "blocked:scheduler-receipt-invalid"
     assert result["reason_codes"] == ["scheduler-receipt-invalid"]
     assert result["recovery_action"] == {
         "action": "resolve-reason-codes",
@@ -2525,7 +2583,7 @@ def test_failed_required_service_readback_is_rolled_back_without_blind_retry(
 
     assert injected is True
     assert caught.value.code == "scheduler-convergence-rolled-back"
-    assert caught.value.details["cause"]["code"] == "scheduler-required-timer-invalid"
+    assert caught.value.details["cause"]["code"] == "scheduler-required-service-invalid"
     assert caught.value.details["safe_to_retry"] is False
     assert systemd.states == state_before
 
@@ -3492,6 +3550,57 @@ def test_apply_existing_start_without_result_is_unclear_without_execution(
     assert result["status"] == "unclear_existing_attempt"
     assert result["reused"] is True
     assert executed is False
+
+
+def test_apply_checks_scheduler_target_before_already_current_noop(
+    tmp_path: Path,
+) -> None:
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+            "main_commit": MAIN,
+            "lag_commits": 0,
+            "scheduler_target_state": "converged",
+            "reason_codes": [],
+            "scheduler": scheduler,
+        }
+    )
+    live["target_sha256"] = refresh.sha256_bytes(
+        refresh.canonical_bytes(refresh._target_payload(live))
+    )
+    live = refresh.bind_digest(live, "observation_sha256")
+    assert live["target_sha256"] != intent["target_sha256"]
+
+    lease_binding, resource_db = lease_for(tmp_path / "target-drift-leases", intent)
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: live,
+            source_preparer=lambda **_: pytest.fail("target drift must not prepare source"),
+            installer=lambda **_: pytest.fail("target drift must not install"),
+        )
+
+    assert caught.value.code == "target-drift"
+    attempt_dir = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not (attempt_dir / "started.json").exists()
+    assert not (attempt_dir / "result.json").exists()
+
 
 
 def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) -> None:

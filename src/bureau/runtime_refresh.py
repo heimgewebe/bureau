@@ -616,6 +616,7 @@ def _target_payload(observation: dict[str, Any]) -> dict[str, Any]:
         "deployed_source_commit": observation.get("deployed_source_commit"),
         "deployed_manifest_sha256": observation.get("deployed_manifest_sha256"),
         "lag_commits": observation.get("lag_commits"),
+        "scheduler_target_state": observation.get("scheduler_target_state"),
     }
 
 
@@ -737,14 +738,18 @@ def observe_runtime_refresh(
     scheduler_actionable = False
     scheduler_blocked = False
     scheduler_readback_evidence: dict[str, Any] | None = None
+    scheduler_target_state = "source-not-current"
     if deployed == main_commit:
+        scheduler_target_state = "converged"
         if "scheduler" not in manifest:
             reasons.append("scheduler-receipt-missing")
+            scheduler_target_state = "missing-receipt"
             scheduler_actionable = True
         else:
             scheduler_receipt = manifest.get("scheduler")
             if not isinstance(scheduler_receipt, dict):
                 reasons.append("scheduler-receipt-invalid")
+                scheduler_target_state = "blocked:scheduler-receipt-invalid"
                 scheduler_blocked = True
             else:
                 reader = scheduler_reader or readback_user_scheduler
@@ -755,8 +760,10 @@ def observe_runtime_refresh(
                 except RuntimeRefreshError as exc:
                     reasons.append(exc.code)
                     if exc.code in SCHEDULER_RECONVERGEABLE_READBACK_CODES:
+                        scheduler_target_state = f"drift:{exc.code}"
                         scheduler_actionable = True
                     else:
+                        scheduler_target_state = f"blocked:{exc.code}"
                         scheduler_blocked = True
 
     if deployed == main_commit:
@@ -805,6 +812,7 @@ def observe_runtime_refresh(
         "deployed_source_commit": deployed,
         "deployed_manifest_sha256": manifest_sha,
         "lag_commits": lag_commits,
+        "scheduler_target_state": scheduler_target_state,
         "age_seconds": age_seconds,
         "slo_seconds": slo_seconds,
         "status": status,
@@ -1623,12 +1631,16 @@ def _scheduler_readback(
                 timer["UnitFileState"] != "enabled"
                 or timer["ActiveState"] != "active"
                 or timer["SubState"] != "waiting"
-                or service["ActiveState"] == "failed"
-                or service["Result"] != "success"
             ):
                 raise RuntimeRefreshError(
                     "scheduler-required-timer-invalid",
-                    "required task-supply scheduler is not enabled, waiting and healthy",
+                    "required task-supply timer is not enabled and waiting",
+                    details={"timer": timer, "service": service},
+                )
+            if service["ActiveState"] == "failed" or service["Result"] != "success":
+                raise RuntimeRefreshError(
+                    "scheduler-required-service-invalid",
+                    "required task-supply service is failed or has a non-success result",
                     details={"timer": timer, "service": service},
                 )
             continue
@@ -5293,6 +5305,12 @@ def apply_runtime_refresh(
     verify_digest(live, "observation_sha256")
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")
+    if live.get("target_sha256") != intent.get("target_sha256"):
+        raise RuntimeRefreshError(
+            "target-drift",
+            "live deployment target differs from explicit intent",
+            details={"intent": intent.get("target_sha256"), "live": live.get("target_sha256")},
+        )
     if live.get("status") == "already_current":
         scheduler_evidence = live.get("scheduler")
         manifest_sha256 = live.get("deployed_manifest_sha256")
@@ -5347,12 +5365,6 @@ def apply_runtime_refresh(
             "live-candidate-blocked",
             "live observation is not deployable",
             details={"status": live.get("status"), "reason_codes": live.get("reason_codes")},
-        )
-    if live.get("target_sha256") != intent.get("target_sha256"):
-        raise RuntimeRefreshError(
-            "target-drift",
-            "live deployment target differs from explicit intent",
-            details={"intent": intent.get("target_sha256"), "live": live.get("target_sha256")},
         )
     current_manifest, current_manifest_sha = load_manifest(manifest_path)
     if (

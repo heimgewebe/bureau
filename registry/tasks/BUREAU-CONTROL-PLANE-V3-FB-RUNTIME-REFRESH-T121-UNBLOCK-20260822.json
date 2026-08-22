@@ -1,0 +1,164 @@
+{
+  "acceptance": [
+    {
+      "id": "fresh-current-main",
+      "assertion": "Unmittelbar vor prepare-intent wird GitHub main frisch beobachtet; das Ziel enthält diese gemergte Authority, PR #2138 mit dem Scheduler-Konvergenzfix und alle legitimen Zwischenmerges. Die Required-Checks des exakten Zielstands sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-unblock:fresh-main"
+      }
+    },
+    {
+      "id": "failed-predecessor-not-retried",
+      "assertion": "Die verbrauchte Authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2138-SCHEDULER-CONVERGENCE-20260822 und ihr target e211a0504bac4368ebee02162d0238d848d168ae834a306398d4fb8faa8453f5 werden nicht erneut angewendet. Der neue Effekt erhält eine neue Task-ID, frische Observation und neuen target_sha256.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-unblock:no-predecessor-retry"
+      }
+    },
+    {
+      "id": "single-runtime-effect",
+      "assertion": "Diese Authority autorisiert höchstens einen neuen Runtime-Effekt. Bei failed, unclear, timeout oder Transport-Ambiguität erfolgt kein Blind-Retry; zuerst werden Result, Attempt, Manifest, Registry-Snapshot, Authority-Consumption und Runtime klassifiziert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-unblock:single-effect"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach erfolgreichem Refresh binden Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben source commit; Bureau runtime-identity ist integrity-valid und entspricht dem frisch beobachteten Main-Ziel.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-unblock:immutable-readback"
+      }
+    },
+    {
+      "id": "t121-reconcile-only-boundary",
+      "assertion": "Nach erfolgreichem Refresh darf diese Authority ausschließlich dazu dienen, den alten stale T121-Run über den normalen revisionsgebundenen Bureau-Reconcile zu terminalisieren und danach den regulären T121-Pickup wieder zu ermöglichen. Sie autorisiert weder T121-Completion noch Grabowski-Mutationen, Lease-Force-Releases, fremde Run-Mutationen oder einen zweiten Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t121-unblock:scope-only"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-use T121-Unblocker. Die aktuelle explizite Nutzeranweisung '@grabowski umsetzen' setzt die bestehende T121-Arbeit autonom fort und autorisiert den dafür zwingend notwendigen, zweckgebundenen Runtime-Unblock. Vor dem einzigen Effekt bleiben Fresh-Main-, CI-, Target-, Intent-, Lease-, Single-Use- und Readback-Gates bindend. Keine T121-Completion-, Grabowski-Code-, Queue-, Claim-, Dispatch- oder Fremdarbeitsautorität.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh vom aktuell installierten integrity-valid Stand auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Zweck ist ausschließlich, den release-registry-identity-mismatch zu beseitigen, damit der stale T121-Lauf BUR-RUN-20260822T103619Z-0dfb2ebfe3 über den kanonischen Reconcile-Pfad terminalisiert und GRABOWSKI-OPERATOR-SURFACE-V1-T121 danach regulär frisch geclaimt und fortgesetzt werden kann. Diese Authority implementiert, verifiziert oder schließt T121 nicht selbst, verändert keine Grabowski-Dateien, keine Queue, Claims, Dispatch-Entscheidungen oder fremde Arbeit und darf nach erfolgreichem resultgebundenem Closeout niemals wiederverwendet werden.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T121-UNBLOCK-20260822",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_t121_run_id": "BUR-RUN-20260822T103619Z-0dfb2ebfe3",
+    "deployed_source_at_registration": "047181c585779d82ee3b33e6086696060db9116a",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse the predecessor authority or target",
+      "T121 implementation or completion authority",
+      "Grabowski repository mutation authority",
+      "foreign-work mutation authority"
+    ],
+    "main_at_registration": "38177a4dfab51d73104acb1ff0c0354e8540bc31",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-df3bef5a79030a523ddd6a6f",
+      "candidate_event_id": "candidate-event-39f081c294d97e3a5417e262",
+      "candidate_sha256": "2826ba15322c558538314465630c9ac3bf0c2e08b5002328d98cad527f401319",
+      "event_id": 10110,
+      "request_sha256": "33d6017f5dc5c8afc0a125212afb62365652e62cbf70d011186dccdcc7655379",
+      "assessment_decision": "promote",
+      "source": {
+        "kind": "operator_observation",
+        "locator": "grabowski:t121-live-resume:2026-08-22:failed-runtime-refresh-successor",
+        "repo": "/home/alex/repos/.bureau-worktrees/control-main",
+        "observed_at": "2026-08-22T12:08:36Z",
+        "sha256": null,
+        "freshness": "fresh",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "task_readiness",
+        "registry_mutation",
+        "claim_or_dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "Bureau immutable runtime is stale, so ordinary StateStore mutation and stale-run reconcile are blocked. A new create-only authority must first be merged through the protected repository and then adopted missing-only.",
+      "scope": "exactly this one new TaskSpec file",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "source": "Live T121 continuation on 2026-08-22 after the prior PR2138 runtime-refresh authority started an effect, rolled scheduler state back, ended status=unclear with safe_to_retry=false, while Bureau runtime remained on 047181c585779d82ee3b33e6086696060db9116a and protected main advanced beyond it.",
+    "successor_of": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2138-SCHEDULER-CONVERGENCE-20260822",
+    "successor_reason": "The predecessor effect started and was rolled back with status unclear and safe_to_retry=false; historical target or authority reuse is forbidden.",
+    "unblock_task_ids": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T121"
+    ]
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Der aktuell integrity-valid installierte Bureau-Release bleibt bis zu einem eindeutigen neuen Install- und Readback-Receipt Deployment-Wahrheit. Bei unklarem Ergebnis wird nicht blind wiederholt; vorhandene Attempt-, Backup-, Manifest-, Registry-, Intent-, Authority- und Lease-Evidenz wird zuerst klassifiziert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-Use Bureau-Runtime-Refresh zum T121-Unblock"
+}

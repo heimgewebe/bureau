@@ -40,6 +40,15 @@
   },
   "acceptance": [
     {
+      "id": "typed-predecessor-reconciliation-bound",
+      "assertion": "Vor jedem prepare-intent oder apply muss der separate operatorautorisierte Bureau-Reconciliation-Receipt /home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-20260822T160233Z.json mit Dateihash c89484ce7e70dcce4d131bc17f535a55c16d9f4e2a3d5a7d0c2a5d7517c1956b unverändert lesbar sein. Sein kind ist bureau-reconciliation-receipt; er bindet den PR2145-Vorgänger an status=unclear/effect_started=true/safe_to_retry=false und beweist per digestgebundenem Live-Readback, dass Manifest, beide Launcher, Paketbaum und Registry-Snapshot konsistent auf dem letzten integritätsgültigen source commit 047181c585779d82ee3b33e6086696060db9116a stehen. Fehlt der Receipt, driftet sein Digest oder widerspricht irgendein Realzustand, bleibt diese Successor-Authority wirkungslos.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-t048-closeout:typed-predecessor-reconciliation"
+      }
+    },
+    {
       "id": "fresh-main-contains-pr2146-and-authority",
       "assertion": "Vor dem einzigen Refresh wird GitHub main frisch gelesen. Der Ziel-main enthält PR #2138, PR #2146, den seit PR #2127 vorhandenen Same-Run-Orphan-Resume-Vertrag und diese gemergte Authority-TaskSpec. Kein älterer Zwischenstand wird deployt.",
       "evidence_type": "object",
@@ -135,7 +144,17 @@
       "result_status": "unclear",
       "error_code": "scheduler-convergence-rolled-back",
       "safe_to_retry": false,
-      "deployment_rollback_observed": true
+      "deployment_rollback_observed": true,
+      "reconciliation_receipt": {
+        "schema_version": 1,
+        "kind": "bureau-reconciliation-receipt",
+        "path": "/home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-20260822T160233Z.json",
+        "sha256": "c89484ce7e70dcce4d131bc17f535a55c16d9f4e2a3d5a7d0c2a5d7517c1956b",
+        "observed_at": "2026-08-22T16:02:33Z",
+        "conclusion": "reconciled-to-last-known-good",
+        "predecessor_target_is_not_current_runtime": true,
+        "prior_unclear_attempt_may_not_be_retried": true
+      }
     },
     "publication_path": {
       "kind": "normal-protected-pull-request",
@@ -175,7 +194,9 @@
       ],
       "forbid_historical_target_reuse": true,
       "forbid_foreign_task_substitution": true,
-      "successor_task_required_after_terminal": true
+      "successor_task_required_after_terminal": true,
+      "required_predecessor_reconciliation_receipt_sha256": "c89484ce7e70dcce4d131bc17f535a55c16d9f4e2a3d5a7d0c2a5d7517c1956b",
+      "required_predecessor_reconciliation_receipt_path": "/home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-20260822T160233Z.json"
     },
     "successor_of": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2144-WELTGEWEBE-T048-CLOSEOUT-20260822",
     "successor_reason": "The predecessor began a runtime effect, rolled scheduler state back, ended status=unclear with safe_to_retry=false and remains target-bound. Current protected main 222eb5db6933be8bc112c0defd27bb8a7fbe669e additionally contains PR #2146, so a fresh exact single-use authority is required for any later effect."

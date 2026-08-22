@@ -33,6 +33,14 @@ def test_task_supply_service_uses_revision_bound_launcher_and_state_store_only()
     assert "RestrictAddressFamilies=AF_UNIX" in text
 
 
+def test_task_supply_service_treats_blocked_as_successful_oneshot_only() -> None:
+    text = SERVICE.read_text(encoding="utf-8")
+    success_exit_status = [
+        line for line in text.splitlines() if line.startswith("SuccessExitStatus=")
+    ]
+    assert success_exit_status == ["SuccessExitStatus=2"]
+
+
 def test_task_supply_timer_runs_on_bounded_five_minute_cadence() -> None:
     text = TIMER.read_text(encoding="utf-8")
     assert "OnCalendar=*-*-* *:00/5:30" in text

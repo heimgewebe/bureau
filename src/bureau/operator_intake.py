@@ -45,6 +45,7 @@ from .runtime_refresh import (
     validate_live_lease_binding,
 )
 from .schema_validation import DocumentSchemaError
+from .v2 import _task_from_authoritative_spec
 
 OPERATOR_INTAKE_SCHEMA_VERSION = 1
 MAX_SIMILARITY_RESULTS = 5
@@ -758,9 +759,16 @@ def _authoritative_candidate_catalog(
     authoritative = store.task_spec(normalized_task_id)
     if authoritative is None:
         return registry
+    spec = authoritative["spec"]
+    digest = str(authoritative["spec_sha256"])
+    if task_specs.task_spec_digest(spec) != digest:
+        raise StateError(f"authoritative TaskSpec digest drift for {normalized_task_id}")
+    task = _task_from_authoritative_spec(spec, digest)
+    if task.id != normalized_task_id:
+        raise StateError(f"authoritative TaskSpec id drift for {normalized_task_id}")
     catalog = copy.copy(registry)
     catalog.tasks = dict(registry.tasks)
-    catalog.tasks[normalized_task_id] = authoritative["spec"]
+    catalog.tasks[normalized_task_id] = task
     return catalog
 
 

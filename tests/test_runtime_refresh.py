@@ -3924,9 +3924,15 @@ def test_historical_readback_uses_release_bound_scheduler_semantics(
         "AGENT-COMPETITION-PUBLISH-20260818"
     )
     intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
-    historical_scheduler_names = runtime_identity.SCHEDULER_NAMES[:-1]
-    assert len(historical_scheduler_names) == 5
-    assert runtime_identity.SCHEDULER_NAMES[-1] == "bureau-task-supply"
+    historical_scheduler_names = (
+        "bureau-halfhour-operator",
+        "bureau-curator",
+        "bureau-operator-control",
+        "bureau-verifier-control",
+        "bureau-closure-planner",
+    )
+    assert historical_scheduler_names != runtime_identity.SCHEDULER_NAMES
+    assert "bureau-task-supply" in runtime_identity.SCHEDULER_NAMES
     install_receipt, historical_readback, artifacts = historical_runtime_artifacts(
         tmp_path,
         intent,

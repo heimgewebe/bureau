@@ -41,6 +41,7 @@ from .task_supply import (
     SupplyPolicy,
     _fsync_directory,
     _git_head,
+    build_controller_capability_profile,
     build_registry_supply_report,
     file_sha256,
     publish_supply_plan,
@@ -201,6 +202,7 @@ def _write_snapshot(
     registry_head: str,
     queue_sha256: str,
     generated_at: str,
+    controller_capabilities: Sequence[str],
 ) -> str:
     atomic_json(
         path,
@@ -216,6 +218,7 @@ def _write_snapshot(
                 "task_documents_sha256": observation.task_documents_sha256,
             },
             "capabilities": list(observation.capabilities),
+            "controller_capabilities": list(controller_capabilities),
             "runtime_healthy": observation.runtime_healthy,
             "frontier": [dict(item) for item in observation.frontier],
         },
@@ -916,6 +919,11 @@ def run_supply_cycle(
     else:
         head = head_reader(resolved_registry_root)
     queue_digest = file_sha256(resolved_registry_root / "registry/queue.json")
+    controller_profile = build_controller_capability_profile(
+        controller_capabilities,
+        approval_available=approval_available,
+    )
+    effective_controller_capabilities = tuple(controller_profile["capabilities"])
     observation = observer(
         registry_root=resolved_registry_root,
         capabilities=capabilities,
@@ -930,6 +938,7 @@ def run_supply_cycle(
         registry_head=head,
         queue_sha256=queue_digest,
         generated_at=now,
+        controller_capabilities=effective_controller_capabilities,
     )
     blockers = list(environment_blockers)
     blockers.extend(f"runtime-blocker:{code}" for code in observation.runtime_blocker_codes)

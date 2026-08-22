@@ -509,10 +509,15 @@ def _supply_regeneration_policy(report_path: Path) -> SupplyPolicy:
     return SupplyPolicy(**fields)
 
 
-def _supply_regeneration_capabilities(report_path: Path) -> tuple[str, ...]:
+def _supply_regeneration_capabilities(
+    report_path: Path,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
     snapshot = report_path.parent / "frontier-snapshot.json"
     value = load_json(snapshot, None)
     capabilities = value.get("capabilities") if isinstance(value, dict) else None
+    controller_capabilities = (
+        value.get("controller_capabilities", []) if isinstance(value, dict) else None
+    )
     if (
         isinstance(value, dict)
         and value.get("schema_version") == 1
@@ -520,8 +525,13 @@ def _supply_regeneration_capabilities(report_path: Path) -> tuple[str, ...]:
         and isinstance(capabilities, list)
         and capabilities
         and all(isinstance(item, str) and item for item in capabilities)
+        and isinstance(controller_capabilities, list)
+        and all(isinstance(item, str) and item for item in controller_capabilities)
     ):
-        return tuple(sorted(set(capabilities)))
+        return (
+            tuple(sorted(set(capabilities))),
+            tuple(sorted(set(controller_capabilities))),
+        )
     raise SupplyError("task-supply regeneration capabilities are unavailable")
 
 
@@ -537,7 +547,7 @@ def refresh_stale_task_supply_summary(
 
         current_head, current_queue_sha256 = current_registry_binding(registry_root)
         policy = _supply_regeneration_policy(report_path)
-        capabilities = _supply_regeneration_capabilities(report_path)
+        capabilities, controller_capabilities = _supply_regeneration_capabilities(report_path)
         regeneration_root.mkdir(parents=True, exist_ok=True, mode=0o700)
         result = supply_runner.run_supply_cycle(
             registry_root=registry_root,
@@ -545,6 +555,7 @@ def refresh_stale_task_supply_summary(
             state_root=regeneration_root,
             policy=policy,
             approval_available=False,
+            controller_capabilities=controller_capabilities,
             mutation_authority=False,
             publish=False,
             registry_head=current_head,

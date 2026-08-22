@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2146-INFRA-FOLLOWUPS-20260822",
+  "title": "Single-Use-Runtime-Refresh nach PR #2146 für Infra-Folgetasks",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 222eb5db6933be8bc112c0defd27bb8a7fbe669e und enthält PR #2146. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und darf legitime zwischenzeitliche Main-Merges enthalten. Zweck ist ausschließlich, release-registry-identity-mismatch zu beseitigen und damit den normalen operator-native Proposal-, Review- und Registry-Publikationspfad für die bereits erfassten Infra-Folgekandidaten 10125 und 10132 wieder freizuschalten. Diese Authority publiziert oder implementiert OPERATOR-PC-HYGIENE-V1-T024 oder OPERATOR-MACHINE-READABILITY-V1-T032 nicht, verändert weder Infra-Runtime noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use bootstrap authority only. Vor dem einzigen Runtime-Effekt sind frischer GitHub-main, required validate (3.10)/(3.12), target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Keine Queue-, Claim-, Dispatch-, T024/T032-Publikations-, T024/T032-Implementierungs- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-main-present",
+      "assertion": "Vor dem einzigen Refresh wird der aktuelle GitHub-main frisch beobachtet; er enthält diese gemergte Authority-TaskSpec, PR #2146 und jeden zwischenzeitlich regulär integrierten Main-Fortschritt. Kein älterer Zwischenstand wird deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-infra-followups:fresh-main-present"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehörige Required-Checks und target_sha256 frisch beobachtet. Jede Drift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-infra-followups:fresh-target-per-execution"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; ohne beide Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-infra-followups:break-glass-target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen; sie muss nichtterminal, runtime_mutation/break_glass, single-use und unverbraucht sein. Historische, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-infra-followups:authoritative-task-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-infra-followups:live-lease-binding"
+      }
+    },
+    {
+      "id": "immutable-readback",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum und kanonischer Registry-Snapshot denselben source commit; StateStore-Integrität und Runtime-Identity bleiben gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-infra-followups:immutable-readback"
+      }
+    },
+    {
+      "id": "single-use-infra-publication-unblock-only",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Runtime-Refresh und dient ausschließlich dazu, den normalen operator-native Proposal-, Review- und Publikationspfad für die Kandidaten 10125 und 10132 wieder freizuschalten. Sie publiziert oder implementiert T024/T032 nicht und wird nach resultgebundenem Closeout niemals für ein späteres Target wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2146-infra-followups:single-use-infra-publication-unblock-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten und keinen Blind-Retry ausführen. Den letzten integrity-valid immutable Release erhalten und ausschließlich den bestehenden result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden. Bereits konsumierte oder zweckfremde Authorities bleiben unverändert."
+  },
+  "metadata": {
+    "source": "direct_user_request_and_live_operator_blocker",
+    "operator_request": "@grabowski umsetzen",
+    "main_at_registration": "222eb5db6933be8bc112c0defd27bb8a7fbe669e",
+    "deployed_source_at_registration": "047181c585779d82ee3b33e6086696060db9116a",
+    "trigger_merge": {
+      "pull_request": 2146,
+      "head_commit": "744bfc0996f1038e3d01a250a76bf4d896caf929",
+      "merge_commit": "222eb5db6933be8bc112c0defd27bb8a7fbe669e"
+    },
+    "unblock_candidate_events": [
+      10125,
+      10132
+    ],
+    "unblock_task_ids": [
+      "OPERATOR-PC-HYGIENE-V1-T024",
+      "OPERATOR-MACHINE-READABILITY-V1-T032"
+    ],
+    "observed_blocker": {
+      "code": "release-registry-identity-mismatch",
+      "consumer": "grabowski_bureau_task_propose",
+      "installed_source": "047181c585779d82ee3b33e6086696060db9116a",
+      "observed_main": "222eb5db6933be8bc112c0defd27bb8a7fbe669e"
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Installed immutable Bureau runtime lags Registry/main; protected runtime-drift bootstrap permits only this new Authority TaskSpec before conservative missing-only StateStore adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before task merge",
+        "T024/T032 publication, implementation or completion"
+      ]
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse terminal, consumed or purpose-mismatched runtime authorities",
+      "publication, implementation or completion authority for OPERATOR-PC-HYGIENE-V1-T024 or OPERATOR-MACHINE-READABILITY-V1-T032",
+      "queue truth",
+      "claim or dispatch authority",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true
+    }
+  }
+}

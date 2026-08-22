@@ -21,6 +21,7 @@ from bureau.supply_runner import (
     snapshot_path,
 )
 from bureau.task_supply import (
+    CONTROLLER_APPROVAL_CAPABILITY,
     FALLBACK_CATALOG,
     REVIEW_REASON,
     SupplyError,
@@ -248,6 +249,8 @@ def cycle(
     observer=None,
     mutation_authority: bool = True,
     publish: bool = True,
+    approval_available: bool = False,
+    controller_capabilities: tuple[str, ...] = (),
     generated_at: str = NOW,
     policy: SupplyPolicy | None = None,
 ) -> dict:
@@ -257,8 +260,10 @@ def cycle(
         state_root=tmp_path / "supply-state",
         state_store_root=tmp_path / "bureau-state",
         policy=policy or SupplyPolicy(),
+        approval_available=approval_available,
         mutation_authority=mutation_authority,
         publish=publish,
+        controller_capabilities=controller_capabilities,
         generated_at=generated_at,
         acceptance_contracts=TYPED_ACCEPTANCE,
         observer=observer or observer_for(frontier),
@@ -293,6 +298,52 @@ def test_selected_but_unbound_candidates_fail_closed_without_worker_profile(
     assert summary["publication"]["created_task_ids"] == []
     assert fallback_task_ids(root) == before
     assert (root / "registry/queue.json").read_bytes() == queue_before
+
+
+def test_runner_persists_controller_capabilities_separately_from_worker_profile(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    summary = cycle(
+        tmp_path,
+        root,
+        [unbound_candidate(index) for index in range(8)],
+        mutation_authority=False,
+        publish=False,
+        controller_capabilities=(CONTROLLER_APPROVAL_CAPABILITY,),
+    )
+
+    assert summary["controller_capabilities"] == [CONTROLLER_APPROVAL_CAPABILITY]
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    assert persisted["feasibility"]["controller_profile"]["capabilities"] == [
+        CONTROLLER_APPROVAL_CAPABILITY
+    ]
+    assert persisted["feasibility"]["worker_profile"]["bound"] is False
+    assert persisted["approval_available"] is False
+    snapshot = json.loads(snapshot_path(tmp_path / "supply-state").read_text(encoding="utf-8"))
+    assert snapshot["controller_capabilities"] == [CONTROLLER_APPROVAL_CAPABILITY]
+
+
+def test_runner_snapshot_preserves_legacy_approval_as_effective_controller_capability(
+    tmp_path: Path,
+) -> None:
+    root = registry_copy(tmp_path)
+    summary = cycle(
+        tmp_path,
+        root,
+        [unbound_candidate(index) for index in range(8)],
+        mutation_authority=False,
+        publish=False,
+        approval_available=True,
+    )
+
+    persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
+    assert persisted["approval_available"] is True
+    assert persisted["feasibility"]["controller_profile"]["sources"] == [
+        "legacy-approval-available"
+    ]
+    snapshot = json.loads(snapshot_path(tmp_path / "supply-state").read_text(encoding="utf-8"))
+    assert snapshot["controller_capabilities"] == [CONTROLLER_APPROVAL_CAPABILITY]
 
 
 def test_written_report_is_consumable_by_the_agent_frontier(tmp_path: Path) -> None:

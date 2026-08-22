@@ -303,6 +303,7 @@ def _write_stale_supply_fixture(tmp_path: Path) -> tuple[Path, Path, bytes]:
                 "schema_version": 1,
                 "kind": "bureau_authoritative_frontier_snapshot",
                 "capabilities": ["repository", "python", "testing", "bureau", "grabowski"],
+                "controller_capabilities": ["operator-approval"],
                 "frontier": [],
             }
         ),
@@ -378,6 +379,8 @@ def test_stale_supply_is_regenerated_read_only_before_frontier_consumption(
     assert len(calls) == 2
     assert calls[0]["mutation_authority"] is False
     assert calls[0]["publish"] is False
+    assert calls[0]["approval_available"] is False
+    assert calls[0]["controller_capabilities"] == ("operator-approval",)
     assert calls[0]["registry_head"] == "b" * 40
     assert calls[0]["capabilities"] == (
         "bureau",

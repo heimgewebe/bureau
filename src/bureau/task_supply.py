@@ -24,6 +24,7 @@ FALLBACK_METADATA_KEY = "supply_fallback"
 TERMINAL_TASK_STATES = frozenset({"verified", "cancelled", "superseded"})
 REVIEW_REASON = "execution is interactive-agent/review-before-effect"
 MISSING_CAPABILITIES_PREFIX = "missing capabilities: "
+CONTROLLER_APPROVAL_CAPABILITY = "operator-approval"
 STRUCTURAL_UNREACHABLE_BLOCKER = "claimable-supply-floor-structurally-unreachable"
 
 
@@ -344,6 +345,44 @@ def derive_worker_capability_profile(
     }
 
 
+def build_controller_capability_profile(
+    controller_capabilities: Sequence[str] = (),
+    *,
+    approval_available: bool = False,
+) -> dict[str, Any]:
+    """Project controller-side structural capabilities separately from worker skills.
+
+    ``operator-approval`` means the controller role can satisfy a review-before-effect
+    boundary when a concrete execution is admitted. It is feasibility evidence only:
+    it never approves a particular task, claim, repository effect, merge or deployment.
+    ``approval_available`` remains a compatibility input for older callers.
+    """
+    if isinstance(controller_capabilities, (str, bytes)):
+        raise ValueError("controller_capabilities must be a sequence of capability names")
+    normalized: set[str] = set()
+    for index, item in enumerate(controller_capabilities):
+        if not isinstance(item, str) or not item.strip() or item != item.strip():
+            raise ValueError(f"controller_capabilities[{index}] must be trimmed non-empty text")
+        normalized.add(item)
+    sources: list[str] = []
+    if normalized:
+        sources.append("explicit-controller-capabilities")
+    if approval_available:
+        normalized.add(CONTROLLER_APPROVAL_CAPABILITY)
+        sources.append("legacy-approval-available")
+    return {
+        "schema_version": SUPPLY_SCHEMA_VERSION,
+        "capabilities": sorted(normalized),
+        "operator_approval_capable": CONTROLLER_APPROVAL_CAPABILITY in normalized,
+        "sources": sources,
+        "does_not_establish": [
+            "approval for any concrete effect",
+            "claim authority",
+            "permission to bypass leases, runtime health, acceptance or open-PR guards",
+        ],
+    }
+
+
 def _task_claims(task: Mapping[str, Any] | None) -> tuple[legacy.Claim, ...] | None:
     if not isinstance(task, Mapping):
         return None
@@ -520,9 +559,14 @@ def classify_frontier(
     *,
     task_documents: Mapping[str, Mapping[str, Any]] | None = None,
     approval_available: bool = False,
+    controller_capabilities: Sequence[str] = (),
     runtime_healthy: bool = True,
 ) -> dict[str, Any]:
     documents = task_documents or {}
+    controller_profile = build_controller_capability_profile(
+        controller_capabilities, approval_available=approval_available
+    )
+    effective_approval = bool(controller_profile["operator_approval_capable"])
     items: list[dict[str, Any]] = []
     seen_task_ids: set[str] = set()
     for position, item in enumerate(frontier):
@@ -532,7 +576,7 @@ def classify_frontier(
         raw_reasons = _item_reasons(item)
         reasons = _effective_reasons(
             item,
-            approval_available=approval_available,
+            approval_available=effective_approval,
             runtime_healthy=runtime_healthy,
         )
         if not task_id:
@@ -541,7 +585,7 @@ def classify_frontier(
             reasons.append("authoritative-frontier-duplicate-task-id")
         else:
             seen_task_ids.add(task_id)
-        approval_override = approval_available and set(raw_reasons) == {REVIEW_REASON}
+        approval_override = effective_approval and set(raw_reasons) == {REVIEW_REASON}
         frontier_eligible = (
             item.get("eligible") is True
             or item.get("claimable") is True
@@ -763,6 +807,7 @@ def build_supply_report(
     queue_sha256: str,
     initiative_id: str = "OPERATOR-INTEGRATION-LOOP-V1",
     approval_available: bool = False,
+    controller_capabilities: Sequence[str] = (),
     runtime_healthy: bool = True,
     mutation_authority: bool = False,
     environment_blockers: Iterable[str] = (),
@@ -787,10 +832,14 @@ def build_supply_report(
     ):
         raise ValueError("frontier_snapshot_sha256 must be a lowercase SHA-256 digest")
     documents = dict(task_documents or {})
+    controller_profile = build_controller_capability_profile(
+        controller_capabilities, approval_available=approval_available
+    )
+    effective_approval = bool(controller_profile["operator_approval_capable"])
     classification = classify_frontier(
         frontier,
         task_documents=documents,
-        approval_available=approval_available,
+        controller_capabilities=controller_profile["capabilities"],
         runtime_healthy=runtime_healthy,
     )
     normal_count = len(classification["normal_claimable"])
@@ -852,7 +901,7 @@ def build_supply_report(
             *_fallback_repository_blockers(spec, repository_path, resources),
             *_catalog_approval_blockers(
                 spec,
-                approval_available=approval_available,
+                approval_available=effective_approval,
                 feasibility_required=feasibility_required,
             ),
         ]
@@ -898,7 +947,7 @@ def build_supply_report(
                 and not _fallback_repository_blockers(spec, repository_path, resources)
                 and not _catalog_approval_blockers(
                     spec,
-                    approval_available=approval_available,
+                    approval_available=effective_approval,
                     feasibility_required=feasibility_required,
                 )
                 and not explicit_category_blockers
@@ -1159,6 +1208,7 @@ def build_supply_report(
         "feasibility": {
             "schema_version": SUPPLY_SCHEMA_VERSION,
             "required": feasibility_required,
+            "controller_profile": controller_profile,
             "worker_profile": (
                 dict(worker_profile) if isinstance(worker_profile, Mapping) else None
             ),
@@ -1423,6 +1473,7 @@ def build_registry_supply_report(
     frontier: Sequence[Mapping[str, Any]],
     policy: SupplyPolicy | None = None,
     approval_available: bool = False,
+    controller_capabilities: Sequence[str] = (),
     runtime_healthy: bool = False,
     mutation_authority: bool = False,
     environment_blockers: Sequence[str] = (),
@@ -1534,6 +1585,7 @@ def build_registry_supply_report(
         registry_head=head,
         queue_sha256=queue_digest,
         approval_available=approval_available,
+        controller_capabilities=controller_capabilities,
         runtime_healthy=runtime_healthy,
         mutation_authority=mutation_authority,
         environment_blockers=blockers,
@@ -1556,6 +1608,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--max-new-per-cycle", type=int, default=4)
     result.add_argument("--bucket-hours", type=int, default=24)
     result.add_argument("--approval-available", action="store_true")
+    result.add_argument("--controller-capability", action="append", default=[])
     result.add_argument("--runtime-healthy", action="store_true")
     result.add_argument("--mutation-authority", action="store_true")
     result.add_argument("--environment-blocker", action="append", default=[])
@@ -1577,6 +1630,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         frontier=_load_frontier_snapshot(frontier_path),
         policy=policy,
         approval_available=args.approval_available,
+        controller_capabilities=args.controller_capability,
         runtime_healthy=args.runtime_healthy,
         mutation_authority=args.mutation_authority,
         environment_blockers=tuple(args.environment_blocker),

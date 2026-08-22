@@ -19,6 +19,7 @@ def test_task_supply_service_uses_revision_bound_launcher_and_state_store_only()
     assert command.startswith("ExecStart=%h/.local/bin/bureau task-supply-run ")
     for capability in ("bureau", "grabowski", "python", "repository", "testing"):
         assert f"--capability {capability}" in command
+    assert "--controller-capability operator-approval" in command
     assert "--mutation-authority" in command
     assert "--publish" in command
     assert "--approval-available" not in command

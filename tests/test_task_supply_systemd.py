@@ -38,7 +38,8 @@ def test_task_supply_service_treats_blocked_as_successful_oneshot_only() -> None
     success_exit_status = [
         line for line in text.splitlines() if line.startswith("SuccessExitStatus=")
     ]
-    assert success_exit_status == ["SuccessExitStatus=2"]
+    assert supply_runner.BLOCKED_EXIT_STATUS != 2
+    assert success_exit_status == [f"SuccessExitStatus={supply_runner.BLOCKED_EXIT_STATUS}"]
 
 
 def test_task_supply_timer_runs_on_bounded_five_minute_cadence() -> None:

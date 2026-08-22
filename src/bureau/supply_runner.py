@@ -52,6 +52,7 @@ from .v2 import Registry, StateStore
 CYCLE_SCHEMA_VERSION = 1
 CYCLE_KIND = "bureau_task_supply_cycle_result"
 SNAPSHOT_KIND = "bureau_authoritative_frontier_snapshot"
+BLOCKED_EXIT_STATUS = 3
 GIT_HEAD_RE = re.compile(r"^[0-9a-f]{40}$")
 SNAPSHOT_FIELDS = (
     "task_id",
@@ -1240,7 +1241,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     if result == "failed":
         return 1
-    return 2 if result == "blocked" else 0
+    return BLOCKED_EXIT_STATUS if result == "blocked" else 0
 
 
 if __name__ == "__main__":

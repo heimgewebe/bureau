@@ -6,7 +6,7 @@ After=bureau-closure-planner.service
 
 [Service]
 Type=oneshot
-SuccessExitStatus=2
+SuccessExitStatus=3
 ExecStart=%h/.local/bin/bureau task-supply-run --capability bureau --capability grabowski --capability python --capability repository --capability testing --controller-capability operator-approval --mutation-authority --publish
 TimeoutStartSec=3min
 UMask=0077

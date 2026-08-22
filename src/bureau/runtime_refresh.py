@@ -92,7 +92,7 @@ SYSTEMD_SERVICE_PROPERTIES = (
 )
 SCHEDULER_RECONVERGEABLE_READBACK_CODES = frozenset(
     {
-        "scheduler-readback-fragment-invalid",
+        "scheduler-readback-fragment-replaceable",
         "scheduler-readback-fragment-mismatch",
         "scheduler-readback-load-state-invalid",
         "scheduler-required-timer-invalid",
@@ -757,6 +757,11 @@ def observe_runtime_refresh(
                     scheduler_readback_evidence = reader(
                         scheduler_receipt, expected_commit=main_commit
                     )
+                except subprocess.TimeoutExpired:
+                    reason = "scheduler-readback-timeout"
+                    reasons.append(reason)
+                    scheduler_target_state = f"blocked:{reason}"
+                    scheduler_blocked = True
                 except RuntimeRefreshError as exc:
                     reasons.append(exc.code)
                     if exc.code in SCHEDULER_RECONVERGEABLE_READBACK_CODES:
@@ -1583,10 +1588,22 @@ def _scheduler_readback(
     artifact_evidence: list[dict[str, Any]] = []
     for item in artifacts:
         path = Path(item["live_path"])
-        if path.is_symlink() or not path.is_file():
+        if path.is_symlink():
             raise RuntimeRefreshError(
-                "scheduler-readback-fragment-invalid",
-                "live scheduler artifact is not a regular file",
+                "scheduler-readback-fragment-replaceable",
+                "live scheduler artifact is a replaceable symlink",
+                details={"path": str(path), "kind": "symlink"},
+            )
+        if not os.path.lexists(path):
+            raise RuntimeRefreshError(
+                "scheduler-readback-fragment-replaceable",
+                "live scheduler artifact is absent",
+                details={"path": str(path), "kind": "absent"},
+            )
+        if not path.is_file():
+            raise RuntimeRefreshError(
+                "scheduler-readback-fragment-unsafe",
+                "live scheduler artifact has an unsafe non-file type",
                 details={"path": str(path)},
             )
         observed_sha256 = sha256_bytes(path.read_bytes())
@@ -4837,7 +4854,13 @@ def closeout_runtime_refresh_authority(
     resolved_state_root = state_root.expanduser().resolve()
     intent_path = resolved_state_root / "intents" / f"{intent_sha256}.json"
     started_path = resolved_state_root / "attempts" / target_sha256 / "started.json"
-    result_path = resolved_state_root / "attempts" / target_sha256 / "result.json"
+    effect_result_path = resolved_state_root / "attempts" / target_sha256 / "result.json"
+    no_effect_result_path = (
+        resolved_state_root / "no-effect-results" / f"{intent_sha256}.json"
+    )
+    result_path = (
+        effect_result_path if effect_result_path.exists() else no_effect_result_path
+    )
     intent = read_json(intent_path)
     verify_digest(intent, "intent_sha256")
     if (
@@ -4858,8 +4881,6 @@ def closeout_runtime_refresh_authority(
     # Re-evaluate the typed evidence at the time it was issued. Closeout may
     # legitimately happen after the short deployment intent has expired.
     validate_runtime_approval_intent(intent_path, now=parse_time(created_at))
-    started = read_json(started_path)
-    verify_digest(started, "start_sha256")
     result = _validate_result_for_intent(read_json(result_path), intent)
     if result.get("result_sha256") != result_sha256:
         raise RuntimeRefreshError(
@@ -4920,17 +4941,25 @@ def closeout_runtime_refresh_authority(
             "already-current no-effect closeout cannot coexist with effect-started history",
             details={"effects": effect_history},
         )
-    if (
-        started.get("schema_version") != SCHEMA_VERSION
-        or started.get("kind") != "bureau_runtime_refresh_attempt_start"
-        or started.get("intent_sha256") != intent_sha256
-        or started.get("target_sha256") != target_sha256
-        or started.get("main_commit") != intent.get("main_commit")
-        or started.get("lease_binding") != result.get("lease_binding")
-    ):
+    if deployed_success:
+        started = read_json(started_path)
+        verify_digest(started, "start_sha256")
+        if (
+            started.get("schema_version") != SCHEMA_VERSION
+            or started.get("kind") != "bureau_runtime_refresh_attempt_start"
+            or started.get("intent_sha256") != intent_sha256
+            or started.get("target_sha256") != target_sha256
+            or started.get("main_commit") != intent.get("main_commit")
+            or started.get("lease_binding") != result.get("lease_binding")
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-start-mismatch",
+                "attempt start receipt does not match the deployed result",
+            )
+    elif started_path.exists():
         raise RuntimeRefreshError(
-            "authority-closeout-start-mismatch",
-            "attempt start receipt does not match the deployed result",
+            "authority-closeout-no-effect-start-conflict",
+            "already-current no-effect result must not occupy the effect-attempt ledger",
         )
     if deployed_success:
         install_receipt = result.get("install_receipt")
@@ -5180,6 +5209,25 @@ def apply_runtime_refresh(
     attempt_dir = resolved_state_root / "attempts" / intent["target_sha256"]
     started_path = attempt_dir / "started.json"
     result_path = attempt_dir / "result.json"
+    no_effect_result_path = (
+        resolved_state_root
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    if no_effect_result_path.exists():
+        existing = _validate_result_for_intent(read_json(no_effect_result_path), intent)
+        if (
+            existing.get("status") != "already_current"
+            or existing.get("effect_started") is not False
+        ):
+            raise RuntimeRefreshError(
+                "no-effect-result-invalid",
+                "intent-bound no-effect result is not an already-current success",
+            )
+        consume_runtime_refresh_authority(
+            store=store, intent=intent, result=existing, now=current
+        )
+        return {**existing, "reused": True}
     if result_path.exists():
         existing = read_json(result_path)
         verify_digest(existing, "result_sha256")
@@ -5305,12 +5353,6 @@ def apply_runtime_refresh(
     verify_digest(live, "observation_sha256")
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")
-    if live.get("target_sha256") != intent.get("target_sha256"):
-        raise RuntimeRefreshError(
-            "target-drift",
-            "live deployment target differs from explicit intent",
-            details={"intent": intent.get("target_sha256"), "live": live.get("target_sha256")},
-        )
     if live.get("status") == "already_current":
         scheduler_evidence = live.get("scheduler")
         manifest_sha256 = live.get("deployed_manifest_sha256")
@@ -5326,29 +5368,15 @@ def apply_runtime_refresh(
                 "already-current result lacks authoritative scheduler or manifest evidence",
             )
         bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
-        started = bind_digest(
-            {
-                "schema_version": SCHEMA_VERSION,
-                "kind": "bureau_runtime_refresh_attempt_start",
-                "intent_sha256": intent["intent_sha256"],
-                "target_sha256": intent["target_sha256"],
-                "main_commit": intent["main_commit"],
-                "authority_task_spec": bound_authority,
-                "lease_binding": binding,
-                "started_at": isoformat(current),
-                "effect_started": False,
-            },
-            "start_sha256",
-        )
-        create_only(started_path, canonical_bytes(started))
         result = _write_attempt_result(
-            result_path,
+            no_effect_result_path,
             {
                 "schema_version": SCHEMA_VERSION,
                 "kind": "bureau_runtime_refresh_result",
                 "status": "already_current",
                 "intent_sha256": intent["intent_sha256"],
                 "target_sha256": intent["target_sha256"],
+                "observed_target_sha256": live.get("target_sha256"),
                 "main_commit": intent["main_commit"],
                 "authority_task_spec": bound_authority,
                 "scheduler": scheduler_evidence,
@@ -5360,6 +5388,12 @@ def apply_runtime_refresh(
         )
         consume_runtime_refresh_authority(store=store, intent=intent, result=result, now=current)
         return result
+    if live.get("target_sha256") != intent.get("target_sha256"):
+        raise RuntimeRefreshError(
+            "target-drift",
+            "live deployment target differs from explicit intent",
+            details={"intent": intent.get("target_sha256"), "live": live.get("target_sha256")},
+        )
     if live.get("status") not in {"candidate", "alert"}:
         raise RuntimeRefreshError(
             "live-candidate-blocked",

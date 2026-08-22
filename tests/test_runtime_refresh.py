@@ -1571,6 +1571,41 @@ def test_observe_source_current_failed_service_is_not_auto_reconvergeable(
 
 
 
+def test_observe_source_current_scheduler_timeout_blocks(tmp_path: Path) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise subprocess.TimeoutExpired(cmd=["systemctl", "--user"], timeout=60)
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau", manifest_path=manifest, now=NOW,
+        github=lambda _arguments: {"sha": MAIN}, scheduler_reader=scheduler_reader,
+    )
+    assert result["status"] == "blocked"
+    assert result["reason_codes"] == ["scheduler-readback-timeout"]
+    assert result["scheduler_target_state"] == "blocked:scheduler-readback-timeout"
+    assert result["recovery_action"]["action"] == "resolve-reason-codes"
+
+
+def test_observe_source_current_unsafe_fragment_blocks(tmp_path: Path) -> None:
+    manifest = tmp_path / "deployment-manifest.json"
+    scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
+    write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
+    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+        assert expected_commit == MAIN
+        raise refresh.RuntimeRefreshError(
+            "scheduler-readback-fragment-unsafe", "scheduler path is a directory"
+        )
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau", manifest_path=manifest, now=NOW,
+        github=lambda _arguments: {"sha": MAIN}, scheduler_reader=scheduler_reader,
+    )
+    assert result["status"] == "blocked"
+    assert result["reason_codes"] == ["scheduler-readback-fragment-unsafe"]
+    assert result["scheduler_target_state"] == "blocked:scheduler-readback-fragment-unsafe"
+
+
 def test_observe_source_current_invalid_scheduler_evidence_blocks(
     tmp_path: Path,
 ) -> None:
@@ -2150,6 +2185,49 @@ def test_atomic_write_applies_exact_mode_under_restrictive_umask(
 
     assert path.read_bytes() == b"exact mode\n"
     assert path.stat().st_mode & 0o777 == mode
+
+
+def test_scheduler_readback_distinguishes_replaceable_and_unsafe_fragments(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    user_unit_dir = tmp_path / "live-systemd"
+    libexec_dir = tmp_path / "live-libexec"
+    user_unit_dir.mkdir()
+    libexec_dir.mkdir()
+    artifacts = refresh._scheduler_artifacts(
+        release=release, user_unit_dir=user_unit_dir, libexec_dir=libexec_dir
+    )
+    prior_timers = {
+        name: {
+            "LoadState": "not-found",
+            "UnitFileState": "disabled",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "FragmentPath": "",
+        }
+        for name in refresh.RUNTIME_SCHEDULER_NAMES
+    }
+    timer_intent = {name: "absent" for name in refresh.RUNTIME_SCHEDULER_NAMES}
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
+        refresh._scheduler_readback(
+            source_commit=source_commit, release_id=release_id, release=release,
+            user_unit_dir=user_unit_dir, libexec_dir=libexec_dir,
+            prior_timers=prior_timers, timer_intent=timer_intent,
+            command_runner=lambda _argv: pytest.fail("systemd read must not run"),
+        )
+    assert missing.value.code == "scheduler-readback-fragment-replaceable"
+    assert missing.value.details["kind"] == "absent"
+    first_path = Path(artifacts[0]["live_path"])
+    first_path.mkdir(parents=True)
+    with pytest.raises(refresh.RuntimeRefreshError) as unsafe:
+        refresh._scheduler_readback(
+            source_commit=source_commit, release_id=release_id, release=release,
+            user_unit_dir=user_unit_dir, libexec_dir=libexec_dir,
+            prior_timers=prior_timers, timer_intent=timer_intent,
+            command_runner=lambda _argv: pytest.fail("systemd read must not run"),
+        )
+    assert unsafe.value.code == "scheduler-readback-fragment-unsafe"
 
 
 def test_release_task_supply_absent_live_is_converged_enabled_and_waiting(
@@ -3552,7 +3630,7 @@ def test_apply_existing_start_without_result_is_unclear_without_execution(
     assert executed is False
 
 
-def test_apply_checks_scheduler_target_before_already_current_noop(
+def test_apply_already_current_target_drift_closes_without_effect_ledger(
     tmp_path: Path,
 ) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
@@ -3581,27 +3659,27 @@ def test_apply_checks_scheduler_target_before_already_current_noop(
     )
     live = refresh.bind_digest(live, "observation_sha256")
     assert live["target_sha256"] != intent["target_sha256"]
-
     lease_binding, resource_db = lease_for(tmp_path / "target-drift-leases", intent)
-    with pytest.raises(refresh.RuntimeRefreshError) as caught:
-        refresh.apply_runtime_refresh(
-            intent_path=intent_path,
-            lease_binding=lease_binding,
-            manifest_path=manifest_path,
-            state_root=Path(intent["state_root"]),
-            resource_db=resource_db,
-            now=NOW,
-            observer=lambda **_: live,
-            source_preparer=lambda **_: pytest.fail("target drift must not prepare source"),
-            installer=lambda **_: pytest.fail("target drift must not install"),
-        )
-
-    assert caught.value.code == "target-drift"
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=lease_binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: live,
+        source_preparer=lambda **_: pytest.fail("no-effect must not prepare source"),
+        installer=lambda **_: pytest.fail("no-effect must not install"),
+    )
+    assert result["status"] == "already_current"
+    assert result["effect_started"] is False
+    assert result["observed_target_sha256"] == live["target_sha256"]
     attempt_dir = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
     assert not (attempt_dir / "started.json").exists()
     assert not (attempt_dir / "result.json").exists()
-
-
+    no_effect = Path(intent["state_root"]) / "no-effect-results" / f"{intent['intent_sha256']}.json"
+    assert no_effect.is_file()
+    assert refresh.read_json(no_effect)["result_sha256"] == result["result_sha256"]
 
 def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
@@ -3682,6 +3760,14 @@ def test_already_current_no_effect_authority_can_closeout(tmp_path: Path) -> Non
     )
     assert result["status"] == "already_current"
     assert result["effect_started"] is False
+    effect_attempt = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not (effect_attempt / "started.json").exists()
+    assert not (effect_attempt / "result.json").exists()
+    assert (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    ).is_file()
     release_test_leases(resource_db)
 
     closeout = refresh.closeout_runtime_refresh_authority(

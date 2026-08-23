@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-F84C-WELTGEWEBE-T048-CLOSEOUT-20260823",
+  "title": "Single-Use-Bureau-Runtime-Refresh nach f84c-Reconciliation für Weltgewebe T048 Closeout",
+  "state": "ready",
+  "goal": "Genau einen neuen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten integrity-valid Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Ziel-main muss mindestens PR #2153 mit der korrekten systemd-Semantik für einen fachlich blocked task-supply-Lauf, PR #2154 mit release-gebundenem historischem Package-Readback, den vorhandenen Same-Run-Orphan-Resume-Vertrag, diese neue Authority-TaskSpec und alle legitimen Zwischenmerges enthalten. Zweck ist ausschließlich, den erhaltenen Run BUR-RUN-20260819T091805Z-f3350c4ca3 wieder über den kanonischen Same-Run-Recovery- und typed-Acceptance-Closeout-Pfad für WELTGEWEBE-OS-V1-T048 arbeitsfähig zu machen. Der vorherige Refresh unter BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2146-WELTGEWEBE-T048-CLOSEOUT-20260822 auf target f84c247549dc80437d274945dbe2de7446bbaf20f172286373e2d06e24c868f4 begann einen Effekt, scheiterte mit scheduler-convergence-rolled-back, wurde digestgebunden auf den letzten guten Runtimezustand reconciled und endete status=unclear mit safe_to_retry=false; weder seine Authority noch sein Target oder Intent dürfen wiederverwendet werden. Diese Authority implementiert oder verifiziert T048 nicht selbst, erzeugt keinen neuen T048-Lauf, verändert Weltgewebe nicht, verändert keine Queue, Claims, Dispatch-Entscheidungen oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use T048 closeout bootstrap authority after formal reconciliation of f84c. Vor dem einzigen Runtime-Effekt sind der unveränderte reconciliation receipt 4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1, ein frisch beobachteter current main mit PR #2153, PR #2154 und dieser Authority, grüne Required-Checks, target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Der fehlgeschlagene f84c-Vorgänger wird nicht wiederverwendet. Keine Queue-, Claim-, Dispatch-, T048-Implementierungs-, Weltgewebe-, Fremdlease- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "typed-predecessor-reconciliation-bound",
+      "assertion": "Vor jedem prepare-intent oder apply muss der separate operatorautorisierte Bureau-Reconciliation-Receipt /home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-f84c-20260823T0509Z.json mit Dateihash 4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1 unverändert lesbar sein. Sein kind ist bureau-reconciliation-receipt; er bindet den f84c-Vorgänger an status=unclear/effect_started=true/safe_to_retry=false und beweist per digestgebundenem Live-Readback, dass alle 18 Scheduler-Artefakte und beide Enablement-Link-Zustände dem exakten Rollback-Preimage entsprechen und Manifest, Launcher, Paketbaum, Registry-Snapshot sowie StateStore-Integrität konsistent auf dem letzten integritätsgültigen source commit 047181c585779d82ee3b33e6086696060db9116a stehen. Fehlt der Receipt, driftet sein Digest oder widerspricht irgendein Realzustand, bleibt diese Successor-Authority wirkungslos.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:typed-predecessor-reconciliation"
+      }
+    },
+    {
+      "id": "fresh-main-contains-causal-fixes-and-authority",
+      "assertion": "Vor dem einzigen Refresh wird GitHub main frisch gelesen. Der Ziel-main enthält PR #2153 mit der task-supply/systemd-Korrektur, PR #2154 mit release-gebundenem historischem Package-Readback, den kanonischen Same-Run-Orphan-Resume-Vertrag und diese gemergte Authority-TaskSpec. Alle legitimen Zwischenmerges sind zulässig, aber kein älterer Zwischenstand wird deployt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:fresh-main"
+      }
+    },
+    {
+      "id": "failed-predecessor-not-retried",
+      "assertion": "Die Vorgänger-Authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2146-WELTGEWEBE-T048-CLOSEOUT-20260822, ihr target f84c247549dc80437d274945dbe2de7446bbaf20f172286373e2d06e24c868f4, ihr intent 1d726cbe21b5c2187c0a912255a9aefeaf402440bf3154de2ef7c6211ddfe564 und ihr unclear Result c72593c4ba620f7da5753f54422b0bbf51784a2b952236d4f8ff03a6b4ec1c6a werden nicht erneut angewendet. Der neue Effekt erhält diese neue Task-ID, eine frische Observation, einen neuen intent_sha256 und einen neuen target_sha256.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:no-predecessor-retry"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent werden aktueller GitHub-main, zugehörige Required-Checks, Deployment-Manifest und target_sha256 frisch beobachtet. Jede Main-, Check-, Registry-, Reconciliation-Receipt- oder Manifestdrift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:fresh-target"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; ohne beide Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen. Sie muss nichtterminal, runtime_mutation/break_glass, single-use, unverbraucht und exakt auf diese Task-ID gebunden sein. Historische, targetgebundene, verbrauchte oder zweckfremde Authorities werden nicht substituiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:authoritative-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab. Insbesondere werden keine Leases eines anderen aktiven Bureau-Runs übernommen oder freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:live-leases"
+      }
+    },
+    {
+      "id": "immutable-readback-includes-causal-fixes",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben source commit. StateStore-Integrität und Runtime-Identity sind gültig, der installierte Bureau-CLI-Readback enthält den Same-Run-Orphan-Resume-Vertrag, der installierte task-supply-Pfad enthält die in PR #2153 gemergte Semantik, nach der ein fachlich blocked Supply-Ergebnis kein systemd-Fehler ist, und der installierte Runtime-Refresh-Pfad enthält den in PR #2154 gemergten release-gebundenen historischen Package-Readback. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:immutable-readback"
+      }
+    },
+    {
+      "id": "single-use-same-run-recovery-only",
+      "assertion": "Diese TaskSpec autorisiert höchstens einen erfolgreichen Bureau-Runtime-Refresh. Ihr einziger Zweck ist, den kanonischen Same-Run-Recovery- und typed-Acceptance-Closeout-Pfad für BUR-RUN-20260819T091805Z-f3350c4ca3 wieder bereitzustellen. Sie autorisiert weder die Wiederaufnahme selbst noch Lease-Rebinding, Grabowski-Codeänderungen, T048-Implementierung, T048-Completion ohne authentifizierte Akzeptanzevidenz, Weltgewebe-Mutationen oder einen neuen T048-Lauf und wird nach resultgebundenem Closeout niemals für ein späteres Target wiederverwendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-f84c-t048-closeout:single-use-boundary"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Wahrheit behaupten und keinen Apply blind wiederholen. Den letzten integrity-valid immutable Bureau-Release erhalten und ausschließlich den kanonischen result-, readback-, lease-release- und verify-then-retry-Vertrag zur Reconciliation verwenden. Bereits targetgebundene, konsumierte oder zweckfremde Authorities bleiben unverändert."
+  },
+  "metadata": {
+    "source": "direct user continuation on 2026-08-23 after the f84c T048 runtime-refresh attempt was formally reconciled and Bureau PR #2153 plus PR #2154 merged the two causal scheduler/package-readback fixes",
+    "main_at_registration": "e77716ed493f1017b662c04c22c8545422cc93b5",
+    "deployed_source_at_registration": "047181c585779d82ee3b33e6086696060db9116a",
+    "required_fixes": [
+      {
+        "pull_request": 2153,
+        "merge_commit": "865f3289c6f5261ec303d4d838436d1c38c8774a",
+        "purpose": "task-supply blocked outcome is a successful controller evaluation rather than a failed systemd service"
+      },
+      {
+        "pull_request": 2154,
+        "head_commit": "61c30356583e581485757f3bee9a7ac5e8d5785b",
+        "merge_commit": "e77716ed493f1017b662c04c22c8545422cc93b5",
+        "purpose": "historical runtime package readback is bound to the immutable release tree"
+      }
+    ],
+    "preserved_run_id": "BUR-RUN-20260819T091805Z-f3350c4ca3",
+    "unblock_task_ids": [
+      "WELTGEWEBE-OS-V1-T048"
+    ],
+    "failed_predecessor": {
+      "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2146-WELTGEWEBE-T048-CLOSEOUT-20260822",
+      "authority_revision": 1,
+      "target_sha256": "f84c247549dc80437d274945dbe2de7446bbaf20f172286373e2d06e24c868f4",
+      "intent_sha256": "1d726cbe21b5c2187c0a912255a9aefeaf402440bf3154de2ef7c6211ddfe564",
+      "result_sha256": "c72593c4ba620f7da5753f54422b0bbf51784a2b952236d4f8ff03a6b4ec1c6a",
+      "result_file_sha256": "465e6ac540d12e80b04eb9c265f0809ec63efdd287db77bc052f958f94aa651f",
+      "result_status": "unclear",
+      "error_code": "scheduler-convergence-rolled-back",
+      "safe_to_retry": false,
+      "deployment_rollback_observed": true,
+      "reconciliation_receipt": {
+        "schema_version": 1,
+        "kind": "bureau-reconciliation-receipt",
+        "path": "/home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-f84c-20260823T0509Z.json",
+        "sha256": "4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1",
+        "conclusion": "reconciled-to-last-known-good",
+        "predecessor_target_is_not_current_runtime": true,
+        "prior_unclear_attempt_may_not_be_retried": true
+      }
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "Publish exactly one new single-use authority because the prior T048 runtime-refresh authority is irreversibly target-bound to an unclear rolled-back attempt that is now independently reconciled; ordinary task publication and historical authority reuse remain forbidden.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before this task, PR #2153, PR #2154 and the Same-Run-Orphan-Resume contract are all present on current main",
+        "T048 implementation or completion",
+        "same-run recovery execution"
+      ]
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse the failed predecessor authority, target or intent",
+      "implementation or completion authority for WELTGEWEBE-OS-V1-T048",
+      "permission to mutate Weltgewebe",
+      "permission to recreate a T048 run",
+      "foreign-work mutation authority"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "target_binding": "candidate.target_sha256",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "forbid_historical_target_reuse": true,
+      "forbid_foreign_task_substitution": true,
+      "successor_task_required_after_terminal": true,
+      "required_predecessor_reconciliation_receipt_sha256": "4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1",
+      "required_predecessor_reconciliation_receipt_path": "/home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-f84c-20260823T0509Z.json"
+    },
+    "successor_of": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2146-WELTGEWEBE-T048-CLOSEOUT-20260822",
+    "successor_reason": "The predecessor began a runtime effect, scheduler convergence rolled back, ended status=unclear with safe_to_retry=false, remains irreversibly target-bound, and is now independently reconciled by receipt 4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1. Current protected main at registration e77716ed493f1017b662c04c22c8545422cc93b5 additionally contains PR #2153 and PR #2154, so a fresh exact single-use authority is required for any later effect."
+  }
+}

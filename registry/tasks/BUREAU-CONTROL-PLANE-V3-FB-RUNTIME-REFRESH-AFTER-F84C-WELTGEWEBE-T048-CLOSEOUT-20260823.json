@@ -35,13 +35,13 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Single-use T048 closeout bootstrap authority after formal reconciliation of f84c. Vor dem einzigen Runtime-Effekt sind der unveränderte reconciliation receipt 4625835a2e3ee742a231eabc61e2fc5ff8f5d81588193980e9b2ccf8281966a1, ein frisch beobachteter current main mit PR #2153, PR #2154 und dieser Authority, grüne Required-Checks, target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Der fehlgeschlagene f84c-Vorgänger wird nicht wiederverwendet. Keine Queue-, Claim-, Dispatch-, T048-Implementierungs-, Weltgewebe-, Fremdlease- oder Fremdarbeitsautorität."
+      "note": "Single-use T048 closeout bootstrap authority after formal reconciliation of f84c. Vor dem einzigen Runtime-Effekt sind der unveränderte reconciliation receipt 4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1, ein frisch beobachteter current main mit PR #2153, PR #2154 und dieser Authority, grüne Required-Checks, target_sha256-Bindung exakt an diese Task-ID, autoritativer StateStore-Preflight und exakte Live-Leases Pflicht. Der fehlgeschlagene f84c-Vorgänger wird nicht wiederverwendet. Keine Queue-, Claim-, Dispatch-, T048-Implementierungs-, Weltgewebe-, Fremdlease- oder Fremdarbeitsautorität."
     }
   },
   "acceptance": [
     {
       "id": "typed-predecessor-reconciliation-bound",
-      "assertion": "Vor jedem prepare-intent oder apply muss der separate operatorautorisierte Bureau-Reconciliation-Receipt /home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-f84c-20260823T0509Z.json mit Dateihash 4625835a2e3ee742a231eabc61e2fc5ff8f5d81588193980e9b2ccf8281966a1 unverändert lesbar sein. Sein kind ist bureau-reconciliation-receipt; er bindet den f84c-Vorgänger an status=unclear/effect_started=true/safe_to_retry=false und beweist per digestgebundenem Live-Readback, dass alle 18 Scheduler-Artefakte und beide Enablement-Link-Zustände dem exakten Rollback-Preimage entsprechen und Manifest, Launcher, Paketbaum, Registry-Snapshot sowie StateStore-Integrität konsistent auf dem letzten integritätsgültigen source commit 047181c585779d82ee3b33e6086696060db9116a stehen. Fehlt der Receipt, driftet sein Digest oder widerspricht irgendein Realzustand, bleibt diese Successor-Authority wirkungslos.",
+      "assertion": "Vor jedem prepare-intent oder apply muss der separate operatorautorisierte Bureau-Reconciliation-Receipt /home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-f84c-20260823T0509Z.json mit Dateihash 4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1 unverändert lesbar sein. Sein kind ist bureau-reconciliation-receipt; er bindet den f84c-Vorgänger an status=unclear/effect_started=true/safe_to_retry=false und beweist per digestgebundenem Live-Readback, dass alle 18 Scheduler-Artefakte und beide Enablement-Link-Zustände dem exakten Rollback-Preimage entsprechen und Manifest, Launcher, Paketbaum, Registry-Snapshot sowie StateStore-Integrität konsistent auf dem letzten integritätsgültigen source commit 047181c585779d82ee3b33e6086696060db9116a stehen. Fehlt der Receipt, driftet sein Digest oder widerspricht irgendein Realzustand, bleibt diese Successor-Authority wirkungslos.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -160,7 +160,7 @@
         "schema_version": 1,
         "kind": "bureau-reconciliation-receipt",
         "path": "/home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-f84c-20260823T0509Z.json",
-        "sha256": "4625835a2e3ee742a231eabc61e2fc5ff8f5d81588193980e9b2ccf8281966a1",
+        "sha256": "4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1",
         "conclusion": "reconciled-to-last-known-good",
         "predecessor_target_is_not_current_runtime": true,
         "prior_unclear_attempt_may_not_be_retried": true
@@ -205,10 +205,10 @@
       "forbid_historical_target_reuse": true,
       "forbid_foreign_task_substitution": true,
       "successor_task_required_after_terminal": true,
-      "required_predecessor_reconciliation_receipt_sha256": "4625835a2e3ee742a231eabc61e2fc5ff8f5d81588193980e9b2ccf8281966a1",
+      "required_predecessor_reconciliation_receipt_sha256": "4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1",
       "required_predecessor_reconciliation_receipt_path": "/home/alex/.local/state/bureau/receipts/WELTGEWEBE-T048-runtime-refresh-reconciliation-f84c-20260823T0509Z.json"
     },
     "successor_of": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2146-WELTGEWEBE-T048-CLOSEOUT-20260822",
-    "successor_reason": "The predecessor began a runtime effect, scheduler convergence rolled back, ended status=unclear with safe_to_retry=false, remains irreversibly target-bound, and is now independently reconciled by receipt 4625835a2e3ee742a231eabc61e2fc5ff8f5d81588193980e9b2ccf8281966a1. Current protected main at registration e77716ed493f1017b662c04c22c8545422cc93b5 additionally contains PR #2153 and PR #2154, so a fresh exact single-use authority is required for any later effect."
+    "successor_reason": "The predecessor began a runtime effect, scheduler convergence rolled back, ended status=unclear with safe_to_retry=false, remains irreversibly target-bound, and is now independently reconciled by receipt 4625835a805f77e986d26cefe17a32d85e3294228306ac7c0761f0661a1966a1. Current protected main at registration e77716ed493f1017b662c04c22c8545422cc93b5 additionally contains PR #2153 and PR #2154, so a fresh exact single-use authority is required for any later effect."
   }
 }

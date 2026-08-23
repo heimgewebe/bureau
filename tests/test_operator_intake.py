@@ -703,6 +703,17 @@ def test_candidate_record_request_contract_is_machine_readable() -> None:
         operator_intake_module._CANDIDATE_RECORD_REQUEST_FIELDS
     )
     assert contract["defaults"] == {"catalog_validation": "strict"}
+    close = contract["operations"]["close"]
+    assert close["operation"] == "close"
+    assert close["outcome"] == "completed"
+    assert close["max_evidence"] == operator_intake_module.MAX_CANDIDATE_CLOSE_EVIDENCE
+    assert set(close["required_fields"]) == (
+        operator_intake_module._CANDIDATE_CLOSE_REQUEST_REQUIRED_FIELDS
+    )
+    assert set(close["allowed_fields"]) == operator_intake_module._CANDIDATE_CLOSE_REQUEST_FIELDS
+    assert set(close["evidence_sources"]) == (
+        operator_intake_module._CANDIDATE_CLOSE_EVIDENCE_SOURCES
+    )
 
 
 def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
@@ -735,6 +746,32 @@ def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
         "unknown_fields": ["unexpected_a", "unexpected_z"],
         "allowed_fields": candidate_record_request_contract()["allowed_fields"],
     }
+
+    with pytest.raises(OperatorIntakeError) as operation_error:
+        candidate_record_request(
+            None,
+            store,
+            {"schema_version": 1, "operation": ["close"]},
+        )
+    assert operation_error.value.code == "request-operation-invalid"
+
+    with pytest.raises(OperatorIntakeError) as missing_error:
+        candidate_record_request(
+            None,
+            store,
+            {
+                "schema_version": 1,
+                "operation": "close",
+                "candidate_id": "candidate-example",
+            },
+        )
+    assert missing_error.value.code == "request-fields-missing"
+    assert missing_error.value.details["missing_fields"] == [
+        "evidence",
+        "expected_event_id",
+        "idempotency_key",
+        "outcome",
+    ]
 
 
 def test_candidate_record_request_contract_cli_does_not_load_registry(
@@ -979,6 +1016,158 @@ def test_candidate_request_refines_current_event_and_inherits_identity(registry_
     assert refined["record"]["operator_intake"]["desired_outcome"] == request["desired_outcome"]
     assert refined["record"]["operator_intake"]["source"]["sha256"] == "b" * 64
     assert refined["record"]["operator_intake"] != first["record"]["operator_intake"]
+
+
+def _candidate_close_request(recorded: dict, *, key: str = "close:alpha") -> dict:
+    return {
+        "schema_version": 1,
+        "operation": "close",
+        "idempotency_key": key,
+        "candidate_id": recorded["candidate_id"],
+        "expected_event_id": recorded["event_id"],
+        "outcome": "completed",
+        "evidence": [
+            {
+                "source": "github",
+                "reference": "heimgewebe/example#42@merge",
+                "sha256": "c" * 64,
+            },
+            {
+                "source": "test",
+                "reference": "pytest:test_candidate_close",
+                "sha256": "d" * 64,
+            },
+        ],
+        "note": "Implementation merged and verified.",
+    }
+
+
+def test_candidate_request_closes_exact_current_candidate_with_bound_evidence(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    request = _candidate_close_request(first)
+
+    closed = candidate_record_request(registry, store, request)
+    assessed = candidate_assess(registry, store, candidate_id=first["candidate_id"])
+
+    assert closed["kind"] == "bureau_candidate_close_result"
+    assert closed["status"] == "closed"
+    assert closed["effect_started"] is True
+    assert closed["idempotent_replay"] is False
+    assert closed["candidate_id"] == first["candidate_id"]
+    assert closed["event_id"] > first["event_id"]
+    assert closed["record"]["status"] == "closed"
+    assert closed["record"]["promotion_required"] is False
+    assert closed["record"]["supersedes_event_id"] == first["event_id"]
+    closeout = closed["record"]["operator_intake"]["candidate_closeout"]
+    assert closeout["kind"] == "bureau_candidate_closeout"
+    assert closeout["candidate_id"] == first["candidate_id"]
+    assert closeout["predecessor_event_id"] == first["event_id"]
+    assert closeout["outcome"] == "completed"
+    assert closeout["request_sha256"] == closed["request_sha256"]
+    assert closeout["closeout_sha256"] == closed["closeout_sha256"]
+    assert closeout["evidence"] == sorted(
+        request["evidence"], key=operator_intake_module.legacy.canonical_json
+    )
+    assert closeout["evidence_sha256"] == operator_intake_module.legacy.sha256_json(
+        closeout["evidence"]
+    )
+    assert assessed["candidate_status"] == "closed"
+    assert assessed["decision"] == "drop"
+
+
+def test_candidate_close_request_is_idempotent(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    request = _candidate_close_request(first)
+
+    closed = candidate_record_request(registry, store, request)
+    replayed = candidate_record_request(registry, store, request)
+
+    assert replayed["status"] == "closed"
+    assert replayed["effect_started"] is False
+    assert replayed["idempotent_replay"] is True
+    assert replayed["event_id"] == closed["event_id"]
+    assert replayed["request_sha256"] == closed["request_sha256"]
+    assert replayed["closeout_sha256"] == closed["closeout_sha256"]
+    assert replayed["does_not_establish"] == closed["does_not_establish"]
+
+
+def test_candidate_close_rejects_stale_event_without_effect(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    refined = candidate_record_request(
+        registry,
+        store,
+        {
+            "schema_version": 1,
+            "idempotency_key": "source:alpha-before-close",
+            "title": "Refined candidate before close",
+            "source_kind": "conversation",
+            "source_locator": "chat:alpha-refined",
+            "source_sha256": "e" * 64,
+            "desired_outcome": "Refine before close",
+            "candidate_id": first["candidate_id"],
+            "supersedes_event_id": first["event_id"],
+        },
+    )
+    request = _candidate_close_request(first)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_record_request(registry, store, request)
+
+    assert caught.value.code == "candidate-close-stale"
+    assert caught.value.effect_started is False
+    assert caught.value.required_readback == ("candidate_by_candidate_id",)
+    assessed = candidate_assess(registry, store, candidate_id=first["candidate_id"])
+    assert assessed["event_id"] == refined["event_id"]
+    assert assessed["candidate_status"] == "observed"
+
+
+def test_candidate_close_rejects_different_reclose(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    closed = candidate_record_request(registry, store, _candidate_close_request(first))
+    different = _candidate_close_request(first, key="close:alpha:different")
+    different["evidence"][0]["sha256"] = "f" * 64
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_record_request(registry, store, different)
+
+    assert caught.value.code == "candidate-close-not-active"
+    assert caught.value.details["candidate_status"] == "closed"
+    assessed = candidate_assess(registry, store, candidate_id=first["candidate_id"])
+    assert assessed["event_id"] == closed["event_id"]
+
+
+def test_candidate_close_requires_sha_bound_supported_evidence(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+
+    missing = _candidate_close_request(first)
+    missing["evidence"] = []
+    with pytest.raises(OperatorIntakeError) as missing_error:
+        candidate_record_request(registry, store, missing)
+    assert missing_error.value.code == "candidate-close-evidence-invalid"
+
+    unsupported = _candidate_close_request(first)
+    unsupported["evidence"][0]["source"] = "web"
+    with pytest.raises(OperatorIntakeError) as source_error:
+        candidate_record_request(registry, store, unsupported)
+    assert source_error.value.code == "candidate-close-evidence-source-unsupported"
+
+    invalid_digest = _candidate_close_request(first)
+    invalid_digest["evidence"][0]["sha256"] = "ABC"
+    with pytest.raises(OperatorIntakeError) as digest_error:
+        candidate_record_request(registry, store, invalid_digest)
+    assert digest_error.value.code == "candidate-close-evidence-digest-invalid"
 
 
 def test_candidate_request_can_add_assessment_missing_repo_once(registry_factory, tmp_path):

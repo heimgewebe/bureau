@@ -102,6 +102,33 @@ _CANDIDATE_RECORD_REQUEST_REQUIRED_FIELDS = frozenset(
         "desired_outcome",
     }
 )
+_CANDIDATE_CLOSE_REQUEST_FIELDS = frozenset(
+    {
+        "schema_version",
+        "operation",
+        "idempotency_key",
+        "candidate_id",
+        "expected_event_id",
+        "outcome",
+        "evidence",
+        "note",
+    }
+)
+_CANDIDATE_CLOSE_REQUEST_REQUIRED_FIELDS = frozenset(
+    {
+        "schema_version",
+        "operation",
+        "idempotency_key",
+        "candidate_id",
+        "expected_event_id",
+        "outcome",
+        "evidence",
+    }
+)
+_CANDIDATE_CLOSE_EVIDENCE_SOURCES = frozenset(
+    {"receipt", "test", "git", "github", "runtime", "bureau", "workspace", "job", "user"}
+)
+MAX_CANDIDATE_CLOSE_EVIDENCE = 16
 
 
 def candidate_record_request_contract() -> dict[str, Any]:
@@ -119,6 +146,21 @@ def candidate_record_request_contract() -> dict[str, Any]:
         "required_fields": required_fields,
         "optional_fields": optional_fields,
         "defaults": {"catalog_validation": "strict"},
+        "operations": {
+            "record": {
+                "operation": "omitted-or-record",
+                "allowed_fields": allowed_fields,
+                "required_fields": required_fields,
+            },
+            "close": {
+                "operation": "close",
+                "allowed_fields": sorted(_CANDIDATE_CLOSE_REQUEST_FIELDS),
+                "required_fields": sorted(_CANDIDATE_CLOSE_REQUEST_REQUIRED_FIELDS),
+                "outcome": "completed",
+                "evidence_sources": sorted(_CANDIDATE_CLOSE_EVIDENCE_SOURCES),
+                "max_evidence": MAX_CANDIDATE_CLOSE_EVIDENCE,
+            },
+        },
         "does_not_establish": [
             "candidate_validity",
             "catalog_binding_validity",
@@ -731,7 +773,45 @@ def candidate_record_request(
                 "received_schema_version": received_schema_version,
             },
         )
-    unknown = sorted(set(request) - set(contract["allowed_fields"]))
+    operation = request.get("operation")
+    if operation is not None and not isinstance(operation, str):
+        raise OperatorIntakeError(
+            "request-operation-invalid",
+            "candidate request operation must be text",
+        )
+    if operation == "close":
+        close_contract = contract["operations"]["close"]
+        unknown = sorted(set(request) - set(close_contract["allowed_fields"]))
+        if unknown:
+            raise OperatorIntakeError(
+                "request-fields-unknown",
+                "candidate close request contains unknown fields",
+                details={
+                    "unknown_fields": unknown,
+                    "allowed_fields": close_contract["allowed_fields"],
+                },
+            )
+        missing = sorted(set(close_contract["required_fields"]) - set(request))
+        if missing:
+            raise OperatorIntakeError(
+                "request-fields-missing",
+                "candidate close request is missing required fields",
+                details={"missing_fields": missing},
+            )
+        payload = {
+            key: value
+            for key, value in request.items()
+            if key not in {"schema_version", "operation"}
+        }
+        return candidate_close(registry, store, **payload)
+    if operation not in {None, "record"}:
+        raise OperatorIntakeError(
+            "request-operation-unsupported",
+            "candidate request operation must be record or close",
+            details={"received_operation": operation},
+        )
+    legacy_request = {key: value for key, value in request.items() if key != "operation"}
+    unknown = sorted(set(legacy_request) - set(contract["allowed_fields"]))
     if unknown:
         raise OperatorIntakeError(
             "request-fields-unknown",
@@ -741,8 +821,274 @@ def candidate_record_request(
                 "allowed_fields": contract["allowed_fields"],
             },
         )
-    payload = {key: value for key, value in request.items() if key != "schema_version"}
+    payload = {key: value for key, value in legacy_request.items() if key != "schema_version"}
     return candidate_record(registry, store, **payload)
+
+
+def _normalize_candidate_close_evidence(value: Any) -> list[dict[str, str]]:
+    if (
+        not isinstance(value, list)
+        or not value
+        or len(value) > MAX_CANDIDATE_CLOSE_EVIDENCE
+    ):
+        raise OperatorIntakeError(
+            "candidate-close-evidence-invalid",
+            f"evidence must contain 1..{MAX_CANDIDATE_CLOSE_EVIDENCE} entries",
+        )
+    normalized: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for index, item in enumerate(value):
+        if not isinstance(item, dict) or set(item) != {"source", "reference", "sha256"}:
+            raise OperatorIntakeError(
+                "candidate-close-evidence-invalid",
+                f"evidence[{index}] must contain exactly source, reference and sha256",
+            )
+        source = _checked_text(
+            item.get("source"),
+            field=f"evidence[{index}].source",
+            maximum=32,
+        )
+        assert source is not None
+        if source not in _CANDIDATE_CLOSE_EVIDENCE_SOURCES:
+            raise OperatorIntakeError(
+                "candidate-close-evidence-source-unsupported",
+                f"evidence[{index}].source is unsupported",
+                details={"allowed_sources": sorted(_CANDIDATE_CLOSE_EVIDENCE_SOURCES)},
+            )
+        reference = _checked_text(
+            item.get("reference"),
+            field=f"evidence[{index}].reference",
+            maximum=2048,
+        )
+        assert reference is not None
+        digest = _checked_text(
+            item.get("sha256"),
+            field=f"evidence[{index}].sha256",
+            maximum=64,
+        )
+        assert digest is not None
+        if _SOURCE_SHA_RE.fullmatch(digest) is None:
+            raise OperatorIntakeError(
+                "candidate-close-evidence-digest-invalid",
+                f"evidence[{index}].sha256 must be a lowercase SHA-256 digest",
+            )
+        entry = {"source": source, "reference": reference, "sha256": digest}
+        fingerprint = legacy.canonical_json(entry)
+        if fingerprint in seen:
+            raise OperatorIntakeError(
+                "candidate-close-evidence-duplicate",
+                f"evidence[{index}] duplicates an earlier entry",
+            )
+        seen.add(fingerprint)
+        normalized.append(entry)
+    return sorted(normalized, key=legacy.canonical_json)
+
+
+def _candidate_close_replay(
+    event: dict[str, Any],
+    *,
+    candidate_id: str,
+    idempotency_key: str,
+    request_sha256: str,
+) -> dict[str, Any] | None:
+    context = _operator_context(event["record"])
+    closeout = context.get("candidate_closeout")
+    if not isinstance(closeout, dict):
+        return None
+    if (
+        closeout.get("idempotency_key") != idempotency_key
+        or closeout.get("request_sha256") != request_sha256
+        or event["record"].get("status") != "closed"
+    ):
+        return None
+    return {
+        "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+        "kind": "bureau_candidate_close_result",
+        "status": "closed",
+        "effect_started": False,
+        "retryable": False,
+        "ambiguity": False,
+        "required_readback": [],
+        "idempotent_replay": True,
+        "candidate_id": candidate_id,
+        "event_id": event["event_id"],
+        "request_sha256": request_sha256,
+        "closeout_sha256": closeout.get("closeout_sha256"),
+        "record": event["record"],
+        "does_not_establish": list(closeout.get("does_not_establish", [])),
+    }
+
+
+def candidate_close(
+    registry: Registry | None,
+    store: StateStore,
+    *,
+    idempotency_key: str,
+    candidate_id: str,
+    expected_event_id: int,
+    outcome: str,
+    evidence: Any,
+    note: str | None = None,
+) -> dict[str, Any]:
+    """Terminally close exactly one current candidate with SHA-bound evidence."""
+    key = _checked_text(idempotency_key, field="idempotency_key", maximum=200)
+    assert key is not None
+    if not _IDEMPOTENCY_RE.fullmatch(key):
+        raise OperatorIntakeError(
+            "idempotency-key-invalid",
+            "idempotency_key contains unsupported characters",
+        )
+    identity = _checked_text(candidate_id, field="candidate_id", maximum=120)
+    assert identity is not None
+    checked_event_id = _checked_supersedes_event_id(expected_event_id)
+    assert checked_event_id is not None
+    if outcome != "completed":
+        raise OperatorIntakeError(
+            "candidate-close-outcome-invalid",
+            "candidate close outcome must be completed",
+        )
+    normalized_evidence = _normalize_candidate_close_evidence(evidence)
+    checked_note = _checked_text(note, field="note", maximum=2000, required=False)
+    normalized_request = {
+        "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+        "operation": "close",
+        "idempotency_key": key,
+        "candidate_id": identity,
+        "expected_event_id": checked_event_id,
+        "outcome": "completed",
+        "evidence": normalized_evidence,
+        "note": checked_note,
+    }
+    request_sha = _request_sha256(normalized_request)
+    try:
+        current = current_candidate_record(store, candidate_id=identity)
+    except StateError as exc:
+        raise OperatorIntakeError(
+            "candidate-close-target-invalid",
+            str(exc),
+        ) from exc
+    replay = _candidate_close_replay(
+        current,
+        candidate_id=identity,
+        idempotency_key=key,
+        request_sha256=request_sha,
+    )
+    if replay is not None:
+        return replay
+    current_status = current["record"].get("status")
+    if current_status not in ACTIVE_LIVE_STATUSES:
+        raise OperatorIntakeError(
+            "candidate-close-not-active",
+            "only a current active or observed candidate can be closed",
+            details={"candidate_status": current_status, "event_id": current["event_id"]},
+        )
+    if int(current["event_id"]) != checked_event_id:
+        raise OperatorIntakeError(
+            "candidate-close-stale",
+            "expected_event_id does not match the current candidate event",
+            details={
+                "expected_event_id": checked_event_id,
+                "current_event_id": current["event_id"],
+            },
+            required_readback=("candidate_by_candidate_id",),
+        )
+
+    record = current["record"]
+    catalog = record.get("catalog_validation")
+    catalog_mode = (
+        str(catalog.get("mode"))
+        if isinstance(catalog, dict) and catalog.get("mode") in {"strict", "deferred"}
+        else "strict"
+    )
+    bound_registry = registry
+    if catalog_mode == "strict":
+        if registry is None:
+            raise OperatorIntakeError(
+                "candidate-close-registry-required",
+                "strict candidate close requires a Registry snapshot",
+            )
+        bound_registry, _ = _canonical_read_registry_snapshot(registry)
+        bound_registry = _authoritative_candidate_catalog(
+            bound_registry, store, record.get("task_id")
+        )
+    else:
+        bound_registry = None
+
+    evidence_sha = legacy.sha256_json(normalized_evidence)
+    closeout_material = {
+        "schema_version": 1,
+        "kind": "bureau_candidate_closeout",
+        "candidate_id": identity,
+        "predecessor_event_id": checked_event_id,
+        "idempotency_key": key,
+        "request_sha256": request_sha,
+        "outcome": "completed",
+        "evidence": normalized_evidence,
+        "evidence_sha256": evidence_sha,
+        "closed_at": legacy.utc_now(),
+        "does_not_establish": [
+            "registry_task_truth",
+            "queue_truth",
+            *candidate_authority_nonclaims(),
+            "system_convergence",
+        ],
+    }
+    closeout_sha = legacy.sha256_json(closeout_material)
+    closeout = {**closeout_material, "closeout_sha256": closeout_sha}
+    context = dict(_operator_context(record))
+    context["candidate_closeout"] = closeout
+    try:
+        closed = live_register_record(
+            bound_registry,
+            store,
+            kind="candidate_task",
+            title=str(record.get("title") or identity),
+            source=str(record.get("source") or "operator-intake"),
+            repo=record.get("repo"),
+            task_id=record.get("task_id"),
+            candidate_id=identity,
+            supersedes_event_id=checked_event_id,
+            status="closed",
+            promotion_required=False,
+            note=checked_note or "Completed with evidence-bound candidate closeout.",
+            catalog_validation=catalog_mode,
+            operator_context=context,
+        )
+    except StateError as exc:
+        try:
+            latest = current_candidate_record(store, candidate_id=identity)
+        except StateError:
+            latest = None
+        if latest is not None:
+            replay = _candidate_close_replay(
+                latest,
+                candidate_id=identity,
+                idempotency_key=key,
+                request_sha256=request_sha,
+            )
+            if replay is not None:
+                return replay
+        raise OperatorIntakeError(
+            "candidate-close-conflict",
+            str(exc),
+            required_readback=("candidate_by_candidate_id",),
+        ) from exc
+    return {
+        "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+        "kind": "bureau_candidate_close_result",
+        "status": "closed",
+        "effect_started": True,
+        "retryable": False,
+        "ambiguity": False,
+        "required_readback": [],
+        "idempotent_replay": False,
+        "candidate_id": identity,
+        "event_id": closed["event_id"],
+        "request_sha256": request_sha,
+        "closeout_sha256": closeout_sha,
+        "record": closed["record"],
+        "does_not_establish": closeout["does_not_establish"],
+    }
 
 
 def _authoritative_candidate_catalog(

@@ -1,6 +1,6 @@
 # Bureau operator-native intake v1
 
-Stand: 2026-07-26
+Stand: 2026-08-23
 
 ## Rolle und Zweck
 
@@ -8,7 +8,7 @@ ChatGPT über Grabowski ist der ausführende Operator. Der Nutzer bleibt Beobach
 
 Der Domänenkern liegt ausschließlich in `bureau.operator_intake`. CLI und künftige typisierte Grabowski-Werkzeuge sind dünne Adapter. Es entsteht keine zweite Task-, Queue-, Claim-, PR- oder Approval-Wahrheit.
 
-## Fünf Operationen
+## Fünf Transportoperationen
 
 ### 1. `operator-candidate-record`
 
@@ -27,6 +27,14 @@ Optionale Bindungen sind Repository, Task, Kandidaten-ID, `supersedes_event_id`,
 Eine append-only Korrektur oder Zustandsfortschreibung verwendet einen neuen Idempotenzschlüssel und bindet `supersedes_event_id` an das aktuelle Event des bestehenden Kandidaten. Das Feld ist Bestandteil des Request-Hashs. Kandidaten-ID, Repository, Task, Status und `promotion_required` werden vom Vorgänger geerbt, sofern die optionale Kandidaten-ID nicht ausdrücklich mit derselben Identität angegeben wird. Ein zuvor fehlendes Repository darf durch eine Refinement-Fortschreibung ergänzt werden; ein bereits gebundenes Repository darf nicht auf eine andere Ressource umgebunden werden. Task-Bindungen dürfen weiterhin weder neu gebunden noch geändert werden. Bei strikter Katalogvalidierung werden die effektiv geerbten Bindungen vor dem Append gegen den aktuellen Registry-Snapshot geprüft. Typfalsche, boolesche oder nichtpositive Event-IDs scheitern vor jeder Mutation; bereits supersedierte oder fremde Events werden durch den Live-Register-Vertrag abgelehnt.
 
 Die Aufnahme begründet keine Registry-, Queue-, Readiness-, Claim- oder Dispatch-Wahrheit. Sie ist wie `live-register` ein Always-on-State-Store-Append und darf den kanonischen read-only Registry-Snapshot zur strikten Katalogvalidierung lesen.
+
+#### Evidenzgebundener Kandidatenabschluss
+
+Derselbe Transport akzeptiert zusätzlich `operation: "close"`. Dieser Modus ist kein Registry-Task-Closeout und keine Promotion: Er terminalisiert ausschließlich den bestehenden Live-Register-Kandidaten append-only. Pflicht sind `candidate_id`, die **aktuelle** `expected_event_id`, ein eigener `idempotency_key`, `outcome: "completed"` und mindestens ein Beleg. Jeder Beleg enthält exakt `source`, `reference` und einen lowercase SHA-256-Digest. Zugelassene Quellen sind `receipt`, `test`, `git`, `github`, `runtime`, `bureau`, `workspace`, `job` und `user`; höchstens 16 Belege sind erlaubt.
+
+Vor dem Append liest Bureau die aktuelle Kandidatenidentität. Nur `active` oder `observed` darf zu `closed` wechseln. Eine veraltete `expected_event_id` scheitert ohne Effekt und verlangt einen Kandidaten-Readback. Der Abschluss setzt `promotion_required=false`, übernimmt Titel, Repository, Task-Bindung und die bisherige Operator-Provenienz und ergänzt darin ein strukturiertes `candidate_closeout` mit Request-Hash, Evidence-Hash, Einzelbelegen, Vorgänger-Event und eigenem `closeout_sha256`. Dadurch bleibt der Abschluss Teil derselben append-only Bureau-Historie statt eine zweite Closeout-Wahrheit zu erzeugen.
+
+Ein identischer Close-Request gegen den bereits geschlossenen Kandidaten ist ein wirkungsfreier idempotenter Replay. Ein anderer Request darf einen terminalen Kandidaten nicht nachträglich umdeuten. `closed` bedeutet nur: Die **im Request gebundene Kandidatenarbeit** ist durch die angegebenen Belege als abgeschlossen klassifiziert. Daraus folgen weder Registry-Task-, Queue-, Deployment- noch weitergehende Systemkonvergenz-Wahrheit.
 
 ### 2. `operator-candidate-assess`
 

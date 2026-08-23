@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2154-SUPPLY-SCHEDULER-20260823",
+  "title": "Single-Use Bureau-Runtime-Refresh nach PR #2154 für Supply-Konvergenz",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten und frisch integrity-valid beobachteten Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Ziel-main muss mindestens den bei Registrierung autoritativen Stand e77716ed493f1017b662c04c22c8545422cc93b5, diese neue Authority-TaskSpec und alle legitimen Zwischenmerges enthalten. Zweck ist ausschließlich, die in PR #2153 korrigierte Task-Supply/Systemd-Semantik (blocked = Exit 3, SuccessExitStatus=3), die bereits in PR #2146 eingeführte Controller-Capability operator-approval sowie die in PR #2154 stabilisierte historische Runtime-/Scheduler-Readback-Kompatibilität revisionsgenau in die aktive Bureau-Runtime zu bringen und anschließend Supply live neu zu messen. Diese Authority verändert weder Queue, Claims noch Dispatch oder fremde Arbeit und wiederholt keinen früheren target_sha256 oder Intent.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use Supply/Scheduler runtime authority. Vor dem einzigen Runtime-Effekt sind frischer current-main-Readback mit dieser Authority, grüne Required-Checks, approval_task_id exakt diese Task-ID, approval_reference exakt der frische target_sha256, autoritativer StateStore-Preflight, expliziter SSH-Remote und exakte intentgebundene Live-Leases Pflicht. Keine Queue-, Claim-, Dispatch-, Task-Supply-Publikations- oder Fremdarbeitsautorität."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "last-known-good-runtime-bound",
+      "assertion": "Vor prepare-intent und erneut vor apply ist die aktive Bureau-Runtime frisch integrity-valid gelesen und weiterhin konsistent auf dem last-known-good source commit 047181c585779d82ee3b33e6086696060db9116a gebunden, sofern noch kein neuer erfolgreicher Refresh stattgefunden hat. Frühere unklare Runtime-Refresh-Targets oder Intents werden nicht erneut angewendet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:last-known-good"
+      }
+    },
+    {
+      "id": "fresh-main-contains-authority-and-fixes",
+      "assertion": "Vor dem einzigen Refresh wird GitHub main frisch gelesen. Der Ziel-main ist ein Nachfolger von e77716ed493f1017b662c04c22c8545422cc93b5, enthält diese gemergte Authority-TaskSpec, PR #2153, PR #2154 und alle legitimen Zwischenmerges; die für den exakten Zielstand erforderlichen Checks sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:fresh-main"
+      }
+    },
+    {
+      "id": "historical-refresh-not-reused",
+      "assertion": "Keine historische Runtime-Refresh-Authority, kein früheres target_sha256 und kein früherer Intent werden substituiert oder wiederholt. Der neue Effekt ist exakt an diese neue Task-ID, eine frische Observation, einen neuen target_sha256 und einen neuen Intent gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:no-historical-reuse"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent und erneut vor apply werden aktueller GitHub-main, Required-Checks, Deployment-Manifest, Registry-Identität und target_sha256 frisch beobachtet. Jede Main-, Check-, Registry-, Manifest- oder Targetdrift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:fresh-target"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; der Source-Remote ist explizit git@github.com:heimgewebe/bureau.git. Ohne diese Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen. Sie ist nichtterminal, runtime_mutation/break_glass, single-use, unverbraucht und exakt auf diese Task-ID gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:authoritative-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:live-leases"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach apply binden Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben neuen source commit; StateStore-Integrität und Runtime-Identity sind gültig. bureau-task-supply.service enthält live SuccessExitStatus=3 und ExecStart enthält --controller-capability operator-approval. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:immutable-readback"
+      }
+    },
+    {
+      "id": "fresh-supply-readback",
+      "assertion": "Nach erfolgreichem Runtime-Refresh wird genau ein frischer Task-Supply-Lauf über den kanonischen Mechanismus beobachtet. feasibility.controller_profile enthält operator-approval, der Worker-Profile-Satz bleibt unverändert, und joint_claimable_count wird frisch gemessen. Liegt er unter floor=8, werden ausschließlich die neuen konkreten Blocker analysiert; fehlende audit/documentation-Capabilities werden nicht künstlich dem Writer zugeschlagen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2154:supply-readback"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Wahrheit behaupten und keinen Apply blind wiederholen. Den letzten integrity-valid immutable Bureau-Release erhalten und ausschließlich resultgebundenen Readback, Lease-Release und verify-then-retry beziehungsweise eine neue explizite Successor-Authority verwenden. Bereits targetgebundene, konsumierte oder zweckfremde Authorities bleiben unverändert."
+  },
+  "metadata": {
+    "source": "Direct user continuation on 2026-08-23 after fresh readback proved PR #2153 and PR #2154 are merged on main while the active immutable Bureau runtime remains on 047181c585779d82ee3b33e6086696060db9116a.",
+    "main_at_registration": "e77716ed493f1017b662c04c22c8545422cc93b5",
+    "deployed_source_at_registration": "047181c585779d82ee3b33e6086696060db9116a",
+    "trigger_merges": [
+      {
+        "pull_request": 2153,
+        "merge_commit": "865f3289c6f5261ec303d4d838436d1c38c8774a"
+      },
+      {
+        "pull_request": 2154,
+        "merge_commit": "e77716ed493f1017b662c04c22c8545422cc93b5"
+      }
+    ],
+    "unblock_task_ids": [
+      "BUREAU-CONTROL-PLANE-V3-FU-SUPPLY-STATESTORE-WORKER-PROFILE-20260818"
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "A fresh exact single-use Authority must be merged into protected current Bureau main and then adopted missing-only into the authoritative StateStore before runtime mutation. Historical or already target-bound authorities are forbidden.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI"
+      ]
+    },
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "target_binding": "candidate.target_sha256",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "forbid_historical_target_reuse": true,
+      "forbid_foreign_task_substitution": true,
+      "successor_task_required_after_terminal": true
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse historical refresh authority, target or intent",
+      "queue, claim or dispatch authority",
+      "foreign-work mutation authority"
+    ]
+  }
+}

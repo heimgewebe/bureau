@@ -1104,6 +1104,7 @@ def historical_runtime_artifacts(
     intent: dict[str, Any],
     *,
     scheduler: dict[str, Any] | None = None,
+    runtime_scheduler_names: tuple[str, ...] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Path]]:
     prefix = Path(intent["prefix"])
     bin_dir = Path(intent["bin_dir"])
@@ -1112,7 +1113,13 @@ def historical_runtime_artifacts(
     release = prefix / "releases" / release_id
     module = release / "src/bureau/runtime_identity.py"
     module.parent.mkdir(parents=True)
-    module.write_text("RUNTIME_FIXTURE = True\n", encoding="utf-8")
+    release_scheduler_names = runtime_scheduler_names or runtime_identity.SCHEDULER_NAMES
+    module.write_text(
+        f"MANAGED_PACKAGES = {runtime_identity.MANAGED_PACKAGES!r}\n"
+        f"SCHEDULER_NAMES = {release_scheduler_names!r}\n"
+        "RUNTIME_FIXTURE = True\n",
+        encoding="utf-8",
+    )
     cycle = release / "src/bureau_cycle"
     cycle.mkdir(parents=True)
     (cycle / "__init__.py").write_text("CYCLE_FIXTURE = True\n", encoding="utf-8")
@@ -1123,14 +1130,18 @@ def historical_runtime_artifacts(
     systemd = release / "ops/systemd"
     libexec = systemd / "libexec"
     libexec.mkdir(parents=True)
-    for name in runtime_identity.SCHEDULER_NAMES:
+    for name in release_scheduler_names:
         (systemd / f"{name}.service").write_text("[Service]\n", encoding="utf-8")
         (systemd / f"{name}.timer").write_text("[Timer]\n", encoding="utf-8")
         executable = libexec / name
         executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
         executable.chmod(0o755)
-    package_tree_sha256 = runtime_identity._package_tree_sha256(release)
+    package_tree_sha256 = refresh._historical_package_tree_sha256(release)
     assert package_tree_sha256 is not None
+    if release_scheduler_names == runtime_identity.SCHEDULER_NAMES:
+        assert runtime_identity._package_tree_sha256(release) == package_tree_sha256
+    else:
+        assert runtime_identity._package_tree_sha256(release) is None
 
     registry_root = prefix / "registry-snapshots" / f"{intent['main_commit'][:12]}-fixture"
     registry_task = registry_root / "registry/tasks/FIXTURE.json"
@@ -1276,7 +1287,10 @@ def historical_runtime_artifacts(
     )
     manifest_path.write_bytes(refresh.canonical_bytes(successor_manifest))
     successor_bytes = manifest_path.read_bytes()
-    assert runtime_identity._package_tree_sha256(successor_release) == package_tree_sha256
+    if release_scheduler_names == runtime_identity.SCHEDULER_NAMES:
+        assert runtime_identity._package_tree_sha256(successor_release) == package_tree_sha256
+    else:
+        assert runtime_identity._package_tree_sha256(successor_release) is None
     assert registry_snapshot.canonical_registry_identity(successor_manifest)["valid"] is True
     for name in launcher_contents:
         path = bin_dir / name
@@ -3900,6 +3914,59 @@ def test_no_run_closeout_is_receipt_bound_and_idempotent(tmp_path: Path, task_id
     assert replay["idempotent_replay"] is True
     assert store.task_spec(task_id)["revision"] == terminal_revision
     assert store.list_runs() == []
+
+
+def test_historical_readback_uses_release_bound_scheduler_semantics(
+    tmp_path: Path,
+) -> None:
+    task_id = (
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-"
+        "AGENT-COMPETITION-PUBLISH-20260818"
+    )
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    historical_scheduler_names = (
+        "bureau-halfhour-operator",
+        "bureau-curator",
+        "bureau-operator-control",
+        "bureau-verifier-control",
+        "bureau-closure-planner",
+    )
+    assert historical_scheduler_names != runtime_identity.SCHEDULER_NAMES
+    assert "bureau-task-supply" in runtime_identity.SCHEDULER_NAMES
+    install_receipt, historical_readback, artifacts = historical_runtime_artifacts(
+        tmp_path,
+        intent,
+        runtime_scheduler_names=historical_scheduler_names,
+    )
+    assert runtime_identity._package_tree_sha256(artifacts["release"]) is None
+    assert (
+        refresh._historical_package_tree_sha256(artifacts["release"])
+        == install_receipt["package_tree_sha256"]
+        == historical_readback["package_tree_sha256"]
+    )
+    result = replace_historical_result(
+        intent,
+        result,
+        install_receipt=install_receipt,
+        readback=historical_readback,
+    )
+    release_test_leases(resource_db)
+
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+    )
+
+    assert closeout["closeout"]["status"] == "verified"
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "verified"
 
 
 def test_no_run_closeout_authenticates_historical_runtime_after_successor_deploy(

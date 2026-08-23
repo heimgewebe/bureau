@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T168-20260823",
+  "title": "Single-Use Bureau-Runtime-Refresh für Grabowski T168",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom frisch integrity-valid beobachteten last-known-good Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst über einen geschützten Ein-Datei-PR gemergt und missing-only in den autoritativen StateStore adoptiert wurde. Zweck ist ausschließlich, den release-registry-identity-mismatch zu schließen, der den normalen typisierten Proposal-/Review-/Publish-Pfad für den bereits promovierten Kandidaten candidate-c7cb64aeaae945b041ed5b27 / GRABOWSKI-OPERATOR-SURFACE-V1-T168 blockiert. Diese Authority publiziert, claimt oder implementiert T168 nicht selbst, verändert weder Queue noch Dispatch noch fremde Arbeit und darf keinen bereits anderweitig erfolgreich konvergierten Runtime-Stand redundant deployen.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use T168 runtime authority. Vor einem Runtime-Effekt sind frischer current-main-Readback mit dieser gemergten Authority, grüne Required-Checks, approval_task_id exakt diese Task-ID, approval_reference exakt der frische target_sha256, autoritativer StateStore-Preflight, expliziter SSH-Remote und exakte intentgebundene Live-Leases Pflicht. Ist die Runtime durch einen anderen legitimen Refresh bereits auf einen aktuellen kompatiblen Stand konvergiert, ist kein redundanter Runtime-Effekt erlaubt."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "last-known-good-or-preconverged-runtime-bound",
+      "assertion": "Vor prepare-intent und erneut vor apply ist die aktive Bureau-Runtime frisch integrity-valid gelesen. Steht sie noch auf 047181c585779d82ee3b33e6086696060db9116a, darf der neue Refreshpfad fortgesetzt werden; ist sie durch einen anderen legitimen Refresh bereits auf einen aktuellen kompatiblen main-Stand konvergiert, beginnt kein redundanter Runtime-Effekt und die Authority wird nur über frischen Readback als nicht mehr benötigt behandelt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:runtime-precondition"
+      }
+    },
+    {
+      "id": "fresh-main-contains-authority",
+      "assertion": "Unmittelbar vor dem einzigen möglichen Refresh wird GitHub main frisch gelesen. Der Ziel-main ist ein Nachfolger des bei Registrierung beobachteten e77716ed493f1017b662c04c22c8545422cc93b5, enthält diese gemergte Authority-TaskSpec und alle legitimen Zwischenmerges; die für den exakten Zielstand erforderlichen Checks sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:fresh-main"
+      }
+    },
+    {
+      "id": "historical-refresh-not-reused",
+      "assertion": "Keine historische oder zweckfremde Runtime-Refresh-Authority, kein früheres target_sha256 und kein früherer Intent werden substituiert oder wiederholt. Der mögliche Effekt ist exakt an diese neue Task-ID, eine frische Observation, einen neuen target_sha256 und einen neuen Intent gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:no-historical-reuse"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent und erneut vor apply werden aktueller GitHub-main, Required-Checks, Deployment-Manifest, Registry-Identität und target_sha256 frisch beobachtet. Jede Main-, Check-, Registry-, Manifest- oder Targetdrift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:fresh-target"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; der Source-Remote ist explizit git@github.com:heimgewebe/bureau.git. Ohne diese Bindungen beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen. Sie ist nichtterminal, runtime_mutation/break_glass, single-use, unverbraucht und exakt auf diese Task-ID gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:authoritative-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:live-leases"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach einem apply binden Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben neuen source commit; StateStore-Integrität und Runtime-Identity sind gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:immutable-readback"
+      }
+    },
+    {
+      "id": "t168-typed-intake-unblocked",
+      "assertion": "Nach erfolgreicher Konvergenz wird candidate-c7cb64aeaae945b041ed5b27 / Event 10264 frisch gegen aktuelle Registry-Wahrheit bewertet. Der normale operator-task-propose -> review -> preview -> publish-Vertrag kann GRABOWSKI-OPERATOR-SURFACE-V1-T168 ohne release-registry-identity-mismatch weiterführen. Diese Authority selbst veröffentlicht oder implementiert T168 nicht.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t168:typed-intake-restored"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keinen Apply blind wiederholen und keine neue Deployment-Wahrheit behaupten. Den letzten integrity-valid immutable Bureau-Release erhalten, nur resultgebunden reconciliieren und für einen späteren neuen Zielstand eine neue explizite Successor-Authority verwenden. Wird die Runtime vor dem Effekt bereits durch einen anderen legitimen Refresh konvergiert, keinen redundanten Deploy ausführen."
+  },
+  "metadata": {
+    "source": "Direct continuation on 2026-08-23 after fresh readback proved the promoted Grabowski verification-environment candidate is blocked only by Bureau release-registry-identity mismatch, while the prior generic current-main authority is already consumed.",
+    "main_at_registration": "e77716ed493f1017b662c04c22c8545422cc93b5",
+    "deployed_source_at_registration": "047181c585779d82ee3b33e6086696060db9116a",
+    "unblock_candidate_id": "candidate-c7cb64aeaae945b041ed5b27",
+    "unblock_candidate_event_id": 10264,
+    "unblock_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T168",
+    "parallel_authority_observation": {
+      "branch": "ops/runtime-refresh-after-pr2154-supply-scheduler-20260823",
+      "scope": "Supply/Scheduler convergence only",
+      "handling": "foreign live coordination remains untouched; if its separately authorized runtime refresh converges first, this T168 authority must not duplicate the runtime effect"
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The normal typed task publisher is intentionally blocked by release-registry-identity mismatch. The documented runtime-drift bootstrap permits only a new exact single-use Authority as a protected one-file PR followed by missing-only StateStore adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI"
+      ]
+    },
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "target_binding": "candidate.target_sha256",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "forbid_historical_target_reuse": true,
+      "forbid_foreign_task_substitution": true,
+      "successor_task_required_after_terminal": true
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse historical or purpose-foreign refresh authority, target or intent",
+      "permission to publish or implement T168 through this bootstrap task",
+      "queue, claim or dispatch authority",
+      "foreign-work mutation authority"
+    ]
+  }
+}

@@ -958,3 +958,51 @@ def test_cli_exit_codes_and_independent_read(
     assert main(["read", "--path", str(tmp_path / "none.json")]) == 2
     unavailable = json.loads(capsys.readouterr().out)
     assert unavailable["status"] == "unavailable"
+
+
+def test_compact_truth_reports_full_issue_counts_beyond_bounded_samples():
+    from bureau.status_capsule import _compact_truth
+
+    warnings = [
+        {"issue": "verified_task_without_machine_closeout_evidence", "task_id": f"T{i:03d}"}
+        for i in range(25)
+    ]
+    warnings.extend(
+        [
+            {"issue": "other_warning"},
+            {"issue": ""},
+            {},
+            "malformed-warning",
+        ]
+    )
+    errors = [
+        {"issue": "z_error"},
+        {"issue": "a_error"},
+        {"issue": "z_error"},
+        None,
+    ]
+
+    compact = _compact_truth(
+        {"healthy": False, "warnings": warnings, "errors": errors}
+    )
+
+    assert compact["healthy"] is False
+    assert compact["warning_count"] == 29
+    assert compact["error_count"] == 4
+    assert compact["warning_issue_counts"] == {
+        "<missing-issue>": 3,
+        "other_warning": 1,
+        "verified_task_without_machine_closeout_evidence": 25,
+    }
+    assert list(compact["warning_issue_counts"]) == sorted(
+        compact["warning_issue_counts"]
+    )
+    assert compact["error_issue_counts"] == {
+        "<missing-issue>": 1,
+        "a_error": 1,
+        "z_error": 2,
+    }
+    assert len(compact["warnings"]) == 20
+    assert compact["warnings"] == warnings[:20]
+    assert compact["errors"] == errors
+    assert compact["truncated"] is True

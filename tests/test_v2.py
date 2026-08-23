@@ -4747,6 +4747,37 @@ def test_coordinated_runtime_claim_rejects_operator_approval(
     assert store.list_runs() == []
 
 
+def test_claim_intent_hard_blocker_precedes_break_glass_approval(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    task_path = root / "registry" / "tasks" / f"{task_id}.json"
+    preliminary = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+        }
+    }
+    task_path.write_text(json.dumps(task))
+    remove_from_queue(root, task_id)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    with pytest.raises(NoEligibleTask, match="state is verified"):
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            approved=True,
+            approval_source="test operator approval",
+        )
+
+    assert store.list_runs() == []
+
+
 def test_claim_intent_cli_json_envelopes_approval_rejection(
     registry_factory, tmp_path, capsys
 ):

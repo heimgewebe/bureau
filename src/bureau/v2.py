@@ -4813,16 +4813,20 @@ class Dispatcher(legacy.Dispatcher):
                     and task.policy == "review-before-effect"
                     and (approved or break_glass)
                 ):
-                    approval, _approval_decision = _coordinated_claim_approval(
-                        task,
-                        worker_id=worker_id,
-                        run_id=run_id,
-                        approved=approved,
-                        break_glass=break_glass,
-                        source=approval_source,
-                    )
-                    reasons = [reason for reason in reasons if reason != review_reason]
-                    candidate_approval_evidence = approval.as_dict()
+                    remaining_reasons = [
+                        reason for reason in reasons if reason != review_reason
+                    ]
+                    if not remaining_reasons:
+                        approval, _approval_decision = _coordinated_claim_approval(
+                            task,
+                            worker_id=worker_id,
+                            run_id=run_id,
+                            approved=approved,
+                            break_glass=break_glass,
+                            source=approval_source,
+                        )
+                        candidate_approval_evidence = approval.as_dict()
+                    reasons = remaining_reasons
                 if not reasons:
                     selected = task
                     approval_evidence = candidate_approval_evidence

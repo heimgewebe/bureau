@@ -4,7 +4,7 @@
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T168-20260823",
   "title": "Single-Use Bureau-Runtime-Refresh für Grabowski T168",
   "state": "ready",
-  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom frisch integrity-valid beobachteten last-known-good Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst über einen geschützten Ein-Datei-PR gemergt und missing-only in den autoritativen StateStore adoptiert wurde. Zweck ist ausschließlich, den release-registry-identity-mismatch zu schließen, der den normalen typisierten Proposal-/Review-/Publish-Pfad für den bereits promovierten Kandidaten candidate-c7cb64aeaae945b041ed5b27 / GRABOWSKI-OPERATOR-SURFACE-V1-T168 blockiert. Diese Authority publiziert, claimt oder implementiert T168 nicht selbst, verändert weder Queue noch Dispatch noch fremde Arbeit und darf keinen bereits anderweitig erfolgreich konvergierten Runtime-Stand redundant deployen.",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh von der unmittelbar vor Ausführung frisch integrity-valid beobachteten aktiven Bureau-Runtime auf den dann frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst über einen geschützten Ein-Datei-PR gemergt und missing-only in den autoritativen StateStore adoptiert wurde. Der bei Registrierung beobachtete Stand 047181c585779d82ee3b33e6086696060db9116a bleibt nur Last-known-good-Anker: auch ein zwischenzeitlich durch eine andere legitime Authority deployter, frisch als Vorfahr des neuen Ziel-main verifizierter Runtime-Stand ist als Ausgangspunkt zulässig. Übersprungen werden darf der Effekt ausschließlich, wenn aktive Runtime-Source und kanonischer Registry-Snapshot bereits exakt den frisch beobachteten Zielstand mit dieser Authority binden. Zweck ist ausschließlich, den release-registry-identity-mismatch zu schließen, der den normalen typisierten Proposal-/Review-/Publish-Pfad für candidate-c7cb64aeaae945b041ed5b27 / GRABOWSKI-OPERATOR-SURFACE-V1-T168 blockiert. Diese Authority publiziert, claimt oder implementiert T168 nicht selbst und verändert weder Queue noch Dispatch noch fremde Arbeit.",
   "priority": {
     "lane": "now",
     "rank": 0
@@ -35,13 +35,13 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Single-use T168 runtime authority. Vor einem Runtime-Effekt sind frischer current-main-Readback mit dieser gemergten Authority, grüne Required-Checks, approval_task_id exakt diese Task-ID, approval_reference exakt der frische target_sha256, autoritativer StateStore-Preflight, expliziter SSH-Remote und exakte intentgebundene Live-Leases Pflicht. Ist die Runtime durch einen anderen legitimen Refresh bereits auf einen aktuellen kompatiblen Stand konvergiert, ist kein redundanter Runtime-Effekt erlaubt."
+      "note": "Single-use T168 runtime authority. Vor einem Runtime-Effekt sind frischer current-main-Readback mit dieser gemergten Authority, grüne Required-Checks, approval_task_id exakt diese Task-ID, approval_reference exakt der frische target_sha256, autoritativer StateStore-Preflight, expliziter SSH-Remote und exakte intentgebundene Live-Leases Pflicht. Die aktive Runtime muss integrity-valid und entweder der registrierte Last-known-good-Stand oder ein frisch verifizierter Vorfahr des exakten Ziel-main sein. Kein redundanter Effekt ist nur zulässig, wenn Runtime-Source und kanonischer Registry-Snapshot bereits exakt den frisch beobachteten Zielstand mit dieser Authority binden."
     }
   },
   "acceptance": [
     {
-      "id": "last-known-good-or-preconverged-runtime-bound",
-      "assertion": "Vor prepare-intent und erneut vor apply ist die aktive Bureau-Runtime frisch integrity-valid gelesen. Steht sie noch auf 047181c585779d82ee3b33e6086696060db9116a, darf der neue Refreshpfad fortgesetzt werden; ist sie durch einen anderen legitimen Refresh bereits auf einen aktuellen kompatiblen main-Stand konvergiert, beginnt kein redundanter Runtime-Effekt und die Authority wird nur über frischen Readback als nicht mehr benötigt behandelt.",
+      "id": "verified-ancestor-or-exact-target-runtime-bound",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply werden aktive Runtime-Source, ihr kanonischer Registry-Snapshot und der frische GitHub-main-Zielstand gemeinsam gelesen. Der aktive Runtime-Source-Commit darf 047181c585779d82ee3b33e6086696060db9116a oder ein durch einen anderen legitimen Refresh entstandener Zwischenstand sein, sofern er frisch als Vorfahr des exakten Ziel-main mit dieser Authority verifiziert ist. Der Refresh wird fortgesetzt, sobald entweder Runtime-Source oder kanonischer Registry-Snapshot nicht exakt den Ziel-main beziehungsweise dessen kanonische Registry-Identität binden. Nur wenn Runtime-Source und kanonischer Registry-Snapshot bereits exakt auf dem frisch beobachteten Zielstand mit dieser Authority liegen, darf ohne Runtime-Effekt abgeschlossen werden. Eine nicht integrity-valide Runtime, ein nicht als Zielvorfahr belegbarer Source-Commit oder eine unklare Registry-Identität blockieren fail-closed.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -122,7 +122,7 @@
     }
   ],
   "rollback": {
-    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keinen Apply blind wiederholen und keine neue Deployment-Wahrheit behaupten. Den letzten integrity-valid immutable Bureau-Release erhalten, nur resultgebunden reconciliieren und für einen späteren neuen Zielstand eine neue explizite Successor-Authority verwenden. Wird die Runtime vor dem Effekt bereits durch einen anderen legitimen Refresh konvergiert, keinen redundanten Deploy ausführen."
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keinen Apply blind wiederholen und keine neue Deployment-Wahrheit behaupten. Den letzten integrity-valid immutable Bureau-Release erhalten, nur resultgebunden reconciliieren und für einen späteren neuen Zielstand eine neue explizite Successor-Authority verwenden. Hat ein anderer legitimer Refresh vor dem Effekt einen Zwischenstand deployt, diesen nur nach frischem Ancestor- und Registry-Readback als Ausgangspunkt akzeptieren; ein redundanter Deploy entfällt ausschließlich bei exakter Runtime-Source- und Registry-Snapshot-Gleichheit mit dem aktuellen Zielstand."
   },
   "metadata": {
     "source": "Direct continuation on 2026-08-23 after fresh readback proved the promoted Grabowski verification-environment candidate is blocked only by Bureau release-registry-identity mismatch, while the prior generic current-main authority is already consumed.",
@@ -134,7 +134,7 @@
     "parallel_authority_observation": {
       "branch": "ops/runtime-refresh-after-pr2154-supply-scheduler-20260823",
       "scope": "Supply/Scheduler convergence only",
-      "handling": "foreign live coordination remains untouched; if its separately authorized runtime refresh converges first, this T168 authority must not duplicate the runtime effect"
+      "handling": "foreign live coordination remains untouched; if its separately authorized runtime refresh converges first, its runtime may be used only after fresh verification as an ancestor of the new target. This T168 authority skips its own runtime effect only when active runtime source and canonical Registry snapshot exactly match the fresh target containing this authority."
     },
     "publication_path": {
       "kind": "normal-protected-pull-request",

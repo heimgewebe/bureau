@@ -188,6 +188,33 @@ def test_legacy_untyped_task_is_visible_but_not_claimable(
         dispatcher.claim_next("worker", ("repository",))
 
 
+def test_coordinated_claim_intent_rejects_legacy_untyped_task_before_issuance(
+    registry_factory, tmp_path, monkeypatch
+) -> None:
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [{"id": "legacy", "assertion": "legacy prose"}]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    registry, store, _dispatcher = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    dispatcher = Dispatcher(registry, store)
+    idempotency_key = "legacy-untyped-preselection"
+
+    with pytest.raises(NoEligibleTask, match="invalid acceptance contract"):
+        dispatcher.claim_intent(
+            "intent-worker",
+            ("repository",),
+            task_id=task["id"],
+            approved=True,
+            approval_source="test",
+            idempotency_key=idempotency_key,
+        )
+
+    assert store.list_runs() == []
+    assert store.claim_intent_issuance_by_idempotency_key(idempotency_key) is None
+
+
 def test_terminal_legacy_untyped_task_remains_readable_without_claim_reason(
     registry_factory, tmp_path, monkeypatch
 ) -> None:

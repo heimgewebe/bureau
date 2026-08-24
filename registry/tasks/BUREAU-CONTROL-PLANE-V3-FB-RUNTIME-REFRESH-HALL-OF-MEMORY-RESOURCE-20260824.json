@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824",
+  "title": "Single-Use Bureau-Runtime-Refresh für Hall-of-Memory-Resource-Onboarding",
+  "state": "ready",
+  "goal": "Execute exactly one target-bound Bureau runtime refresh to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The sole purpose is to converge the immutable Bureau runtime from source 4b0606f38f7d92441973625cd7846b1021478cdc with current canonical main so the merged repo.hall-of-memory resource is present in the canonical runtime Registry snapshot and the existing Hall of Memory Visual-CI candidate can continue through typed operator intake. This authority grants no queue, claim, dispatch, product-code, foreign-work, Hall-of-Memory repository mutation or general repository authority.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound bootstrap only. The current direct Hall of Memory task explicitly requires end-to-end Bureau onboarding, main/runtime readback and lifecycle closeout. No effect may start until fresh GitHub main/CI observation, exact target binding, authoritative TaskSpec preflight, typed source-ancestry precondition, live intent-bound leases and immutable runtime readback all pass. No blind retry after any effect-started ambiguity."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-current-main",
+      "assertion": "Immediately before prepare-intent and again before apply, GitHub main is freshly observed; the exact target contains this protected authority merge plus the Hall of Memory resource onboarding merge PR #2166 and all then-current legitimate main merges, and required validate (3.10) and validate (3.12) checks for that exact main revision are successful.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-hall-of-memory-resource-20260824:fresh-main"
+      }
+    },
+    {
+      "id": "source-ancestry-precondition",
+      "assertion": "Immediately before prepare-intent and again before apply, typed readback proves that deployment-manifest source_commit and canonical Registry source identity are equal and that active source 4b0606f38f7d92441973625cd7846b1021478cdc is the registered source or a verified Git ancestor of the freshly selected target main commit. Any identity mismatch, diverged history, unavailable ancestry proof or target drift blocks fail-closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-hall-of-memory-resource-20260824:source-ancestry"
+      }
+    },
+    {
+      "id": "single-runtime-effect",
+      "assertion": "This authority starts at most one runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are read back from attempt/result, manifest, launcher, package, snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-hall-of-memory-resource-20260824:single-effect"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "After a successful refresh, deployment manifest, immutable release, package tree, launcher pair and canonical Registry snapshot bind the same freshly observed source commit, and bureau runtime-identity is integrity-valid at that exact target.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-hall-of-memory-resource-20260824:immutable-readback"
+      }
+    },
+    {
+      "id": "hall-of-memory-resource-visible",
+      "assertion": "The canonical immutable Registry snapshot installed by the refresh contains exactly one git-repository resource repo.hall-of-memory bound to local path /home/alex/repos/hall-of-memory, GitHub slug Hall-of-Memory/Hall-of-Memory and Grabowski key repo:/home/alex/repos/hall-of-memory; typed candidate intake no longer reports that repository resource as absent.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-hall-of-memory-resource-20260824:resource-visible"
+      }
+    },
+    {
+      "id": "runtime-only-scope",
+      "assertion": "The authority is consumed exactly once after successful immutable readback and grants no queue, claim, dispatch, task-supply, Hall-of-Memory product-code, foreign-work or general repository mutation authority.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-hall-of-memory-resource-20260824:scope-only"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "The currently integrity-valid deployed Bureau runtime at source 4b0606f38f7d92441973625cd7846b1021478cdc remains authoritative until a new immutable result is fully read back. If source ancestry fails or the new effect becomes unclear, preserve all intent, attempt, workspace, backup, manifest, Registry, authority and lease evidence and do not retry. Reconciliation requires a separately authorized successor path."
+  },
+  "metadata": {
+    "source": "Current Hall of Memory end-to-end Bureau onboarding task after protected merge of repo.hall-of-memory in Bureau PR #2166; typed operator intake remains blocked because the active immutable Bureau Registry snapshot still points to source 4b0606f38f7d92441973625cd7846b1021478cdc.",
+    "main_at_registration": "2152621503c5cb712a28e9ae38d20476f68c7080",
+    "deployed_source_at_registration": "4b0606f38f7d92441973625cd7846b1021478cdc",
+    "deployed_manifest_sha256_at_registration": "7d8fe266b269156ae5f9b356aa8952610608ad99315953519b7e402a1edba5a1",
+    "post_refresh_live_target": "refine and promote candidate-5d65409c452e2148623cf9ed for Hall of Memory Visual-CI Chrome startup hardening",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse any consumed or terminal runtime authority",
+      "permission to bypass stale-runtime, bootstrap, review, source-ancestry or CI gates",
+      "queue, claim, dispatch or task-supply publication authority",
+      "Hall-of-Memory repository mutation authority",
+      "general repository or foreign-work mutation authority"
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824.json",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed immutable Bureau runtime predates the merged repo.hall-of-memory resource and both otherwise generic current-main runtime authorities are already consumed or terminal. A fresh single-use runtime authority therefore must enter through one protected create-only TaskSpec and be adopted missing-only before any runtime effect.",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ]
+    },
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true,
+      "source_precondition": {
+        "schema_version": 1,
+        "policy": "registered-source-or-verified-target-ancestor",
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "require_deployment_registry_identity_match": true,
+        "registered_deployed_source_commit": "4b0606f38f7d92441973625cd7846b1021478cdc",
+        "registered_manifest_sha256": "7d8fe266b269156ae5f9b356aa8952610608ad99315953519b7e402a1edba5a1",
+        "registered_registry_source_commit": "4b0606f38f7d92441973625cd7846b1021478cdc",
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "fail_closed": true,
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ]
+      }
+    }
+  }
+}

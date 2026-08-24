@@ -1,0 +1,211 @@
+{
+  "acceptance": [
+    {
+      "assertion": "WELTGEWEBE-OS-V1-T021 ist im autoritativen StateStore weiterhin Revision 1 / planned ohne Bureau-Run; der aktuelle Weltgewebe-main e34a27a160a37b86e06ba906e320ff24e871db0d wurde vollständig auf direkte GitHub-Actions-Runtimepfade geprüft und zeigt keine Node-20-Deklaration oder entsprechende Check-Run-Annotation. Der normale revisionsgebundene T021-TaskSpec-Proposal scheitert vor Registry-/StateStore-Wirkung ausschließlich am Bureau release-registry-identity-mismatch zwischen installierter Runtime 4b0606f38f7d92441973625cd7846b1021478cdc und current main, nicht an fehlender T021-Codeänderung.",
+      "evidence_type": "object",
+      "id": "t021-closeout-blocker-proven",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:t021-closeout-blocker-proven"
+      }
+    },
+    {
+      "assertion": "Unmittelbar vor prepare-intent und erneut vor apply wird GitHub main frisch beobachtet. Das exakte Ziel enthält den geschützten Merge dieser Authority-TaskSpec und alle bis dahin legitimen main-Merges; validate (3.10), validate (3.12) und registry-registration-preflight/freshness sind für den exakten Zielstand erfolgreich. Jede Main- oder Check-Drift verwirft ältere Zielbeobachtungen.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:fresh-current-main"
+      }
+    },
+    {
+      "assertion": "Unmittelbar vor prepare-intent und erneut vor apply belegt ein typisierter Readback, dass deployment-manifest source_commit und kanonische Registry-Source-Identität identisch sind und der aktive Source 4b0606f38f7d92441973625cd7846b1021478cdc entweder exakt der registrierte Ausgangsstand oder ein per Git merge-base nachgewiesener Vorfahr des frisch gewählten Target-main ist. Identity-Mismatch, divergierte Historie, fehlender Ancestry-Beleg oder Targetdrift blockieren fail-closed.",
+      "evidence_type": "object",
+      "id": "source-ancestry-precondition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:source-ancestry-precondition"
+      }
+    },
+    {
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply bestätigt der autoritative Bureau-StateStore diese exakte Task-ID mit positiver Revision und Spec-Digest, state ready oder active, action_class runtime_mutation, required_level break_glass, Claim component.bureau.runtime sowie ohne consumption, target_binding_receipt oder runtime_closeout. Fremde, historische, Hall-of-Memory-spezifische oder bereits konsumierte Authority-Tasks werden nicht substituiert.",
+      "evidence_type": "object",
+      "id": "authoritative-single-use-preflight",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:authoritative-single-use-preflight"
+      }
+    },
+    {
+      "assertion": "Die konkrete Break-Glass-Freigabe bindet diese exakte Task-ID und reference an den frisch berechneten target_sha256. Apply verwendet ausschließlich die aus demselben Intent abgeleiteten Grabowski-Live-Leases mit identischer Owner-/Task-/Target-Bindung; fehlende, fremde, abgelaufene oder driftende Leases brechen fail-closed vor Wirkung ab.",
+      "evidence_type": "object",
+      "id": "break-glass-target-and-lease-binding",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:break-glass-target-and-lease-binding"
+      }
+    },
+    {
+      "assertion": "Diese Authority startet höchstens einen Runtime-Effekt. Nach eindeutig erfolgreichem immutable Readback und Lease-Release wird sie mit exakter Task-ID, target_sha256, intent_sha256 und result_sha256 geschlossen; danach ist jede Wiederverwendung ausgeschlossen. Failed, unclear, timeout oder transport-ambiguous Ergebnisse werden zuerst über Attempt/Result, Manifest, Launcher, Paketbaum, Registry-Snapshot und Authority-Consumption readbackbar reconciliiert; kein Blind-Retry.",
+      "evidence_type": "object",
+      "id": "single-effect-and-authority-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:single-effect-and-authority-closeout"
+      }
+    },
+    {
+      "assertion": "Nach apply binden Bureau-Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben frisch gewählten source commit; StateStore-Integrität und Runtime-/Registry-Kompatibilität sind gültig. Ein erneuter revisionsgebundener T021-TaskSpec-Proposal wird nicht mehr durch release-registry-identity-mismatch blockiert. Dies beweist noch nicht die spätere T021-Acceptance.",
+      "evidence_type": "object",
+      "id": "immutable-readback-restores-t021-intake",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:immutable-readback-restores-t021-intake"
+      }
+    },
+    {
+      "assertion": "Diese Task autorisiert ausschließlich den einen Bureau-Runtime-Refresh und dessen receiptgebundenen Authority-Closeout. Sie begründet keine T021-Implementierungs- oder Verifikationsautorität, keine Weltgewebe-Code-, Grabowski-Runtime-, Queue-, Claim-, Dispatch- oder Fremdarbeitswirkung. Nach Konvergenz muss T021 weiterhin seinen eigenen Proposal/Review/Publish/Readiness/No-Run-Closeout-Vertrag erfüllen.",
+      "evidence_type": "object",
+      "id": "authority-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-weltgewebe-t021-closeout:authority-boundary"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-Use-Autorität ausschließlich als notwendige Voraussetzung des vom Nutzer fortgesetzten WELTGEWEBE-OS-V1-T021-Closeouts. Vor prepare-intent und erneut vor apply sind frischer GitHub-main, alle Required Checks, exakte Targetbindung, Deployment-/Registry-Identität samt Git-Ancestry, autoritativer StateStore-Preflight dieser exakten TaskSpec und alle intentgebundenen Live-Leases Pflicht. Keine Weltgewebe-Code-, Queue-, Claim-, Dispatch-, Grabowski-Runtime- oder Fremdarbeitswirkung; kein Blind-Retry nach Effect-Start.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom frisch belegten installierten source-/Registry-Stand 4b0606f38f7d92441973625cd7846b1021478cdc auf den unmittelbar vor Ausführung frisch beobachteten, geschützten und Required-Check-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ist ausschließlich, den normalen revisionsgebundenen Proposal/Review/Publish/Readiness/No-Run-Closeout für WELTGEWEBE-OS-V1-T021 wieder freizuschalten. Die Autorität ist single-use, targetgebunden und begründet selbst keine T021-Verifikation, keine Weltgewebe-Code-, Queue-, Claim-, Dispatch-, Grabowski-Runtime- oder Fremdarbeitswirkung.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-WELTGEWEBE-T021-CLOSEOUT-20260824",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "blocked_followup_task_id": "WELTGEWEBE-OS-V1-T021",
+    "blocked_proposal_id": "5c359045f1cca4437de0b24afc321b3315111e5203b1935ac92c25966b6fd7d9",
+    "blocked_reason": "release-registry-identity-mismatch",
+    "bootstrap_boundary": {
+      "foreign_purpose_authority_reuse_forbidden": true,
+      "historical_authority_reuse_forbidden": true,
+      "installed_runtime_is_stale": true,
+      "manual_authoritative_state_store_seed_required_before_effect": true,
+      "post_deploy_closeout_authority_required": true,
+      "schema_version": 1,
+      "target_must_contain_this_task_spec": true
+    },
+    "bureau_main_at_registration": "deeaf24cc4178f088cc19d211a93a69fb7b09d13",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse any consumed or purpose-mismatched runtime authority",
+      "permission to bypass stale-runtime, bootstrap, review, source-ancestry or CI gates",
+      "queue, claim, dispatch or task-supply publication authority",
+      "WELTGEWEBE-OS-V1-T021 acceptance or completion",
+      "Weltgewebe repository mutation authority",
+      "general repository or foreign-work mutation authority"
+    ],
+    "foreign_unconsumed_authority_substitution_forbidden": true,
+    "foreign_unconsumed_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824",
+    "installed_manifest_sha256_at_registration": "7d8fe266b269156ae5f9b356aa8952610608ad99315953519b7e402a1edba5a1",
+    "installed_runtime_before_authority": "4b0606f38f7d92441973625cd7846b1021478cdc",
+    "previous_generic_authority_state": "verified-consumed",
+    "previous_generic_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-CURRENT-MAIN-SUCCESSOR-20260824",
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "typed publication bypass authority for ordinary TaskSpecs",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI",
+        "runtime mutation before protected merge and missing-only StateStore adoption",
+        "direct SQLite mutation authority"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "Die installierte immutable Bureau-Runtime ist intern gültig, liegt aber hinter der geschützten Registry/main-Identität und blockiert deshalb normalen StateStore-first Task-Publish mit release-registry-identity-mismatch. Der generische aktuelle Refresh ist verbraucht; die einzige unverbrauchte Hall-of-Memory-Authority ist fremdzweckgebunden. Daher wird ausschließlich diese eine neue TaskSpec über einen geschützten GitHub-PR registriert und nach Merge missing-only in den StateStore übernommen.",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-WELTGEWEBE-T021-CLOSEOUT-20260824.json",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "source_precondition": {
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ],
+        "fail_closed": true,
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "4b0606f38f7d92441973625cd7846b1021478cdc",
+        "registered_manifest_sha256": "7d8fe266b269156ae5f9b356aa8952610608ad99315953519b7e402a1edba5a1",
+        "registered_registry_source_commit": "4b0606f38f7d92441973625cd7846b1021478cdc",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "schema_version": 1
+      },
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "source_candidate_content_fingerprint": "04a48ed16ca9e435ad213dc6ed0d598a8bc909219dff46f746d4d42c170aba82",
+    "source_candidate_event_contract_id": "candidate-event-0af4a2804132d463ac48fc02",
+    "source_candidate_event_id": 11124,
+    "source_candidate_id": "candidate-04a48ed16ca9e435ad213dc6",
+    "t021_state_store_revision": 1,
+    "t021_state_store_spec_sha256": "c21a6bdfacb9f9e63cd7f711fd0cbe7397a85c959c0c8a3297a9e616ce2c5a11",
+    "weltgewebe_main_at_blocker": "e34a27a160a37b86e06ba906e320ff24e871db0d"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Wahrheit behaupten und Apply nicht blind wiederholen. Den letzten integritätsgültigen immutable Bureau-Release als Rückfallkante beibehalten und ausschließlich den kanonischen receipt-/target-/StateStore-gebundenen Reconciliation- beziehungsweise Rollbackpfad verwenden; keine Registry-, StateStore-, Consumption- oder Single-Use-Historie zurückschreiben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-Use Bureau-Runtime-Refresh für WELTGEWEBE T021 Closeout"
+}

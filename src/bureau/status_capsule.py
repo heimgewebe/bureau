@@ -718,6 +718,15 @@ def _mirror_doctor_markers(
                 marker.touch(mode=0o600)
 
 
+def _truth_issue_counts(findings: list[Any]) -> dict[str, int]:
+    counts: Counter[str] = Counter()
+    for finding in findings:
+        issue = finding.get("issue") if isinstance(finding, dict) else None
+        key = issue if isinstance(issue, str) and issue else "<missing-issue>"
+        counts[key] += 1
+    return dict(sorted(counts.items()))
+
+
 def _compact_truth(value: dict[str, Any]) -> dict[str, Any]:
     errors = value.get("errors") if isinstance(value.get("errors"), list) else []
     warnings = value.get("warnings") if isinstance(value.get("warnings"), list) else []
@@ -725,6 +734,8 @@ def _compact_truth(value: dict[str, Any]) -> dict[str, Any]:
         "healthy": value.get("healthy") is True,
         "error_count": len(errors),
         "warning_count": len(warnings),
+        "error_issue_counts": _truth_issue_counts(errors),
+        "warning_issue_counts": _truth_issue_counts(warnings),
         "errors": [_bounded_json(item) for item in errors[:20]],
         "warnings": [_bounded_json(item) for item in warnings[:20]],
         "truncated": len(errors) > 20 or len(warnings) > 20,

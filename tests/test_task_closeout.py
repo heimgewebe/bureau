@@ -183,7 +183,9 @@ def test_apply_blocks_claim_from_dispatcher_instantiated_before_closeout(
         expected_preview_sha256=preview["preview_sha256"], now=NOW,
     )
     with pytest.raises(NoEligibleTask, match="state is verified"):
-        stale_dispatcher.claim_next("worker", ("repository",))
+        stale_dispatcher.claim_next(
+            "worker", ("repository",), reconcile_first=False
+        )
     with store.connect() as connection:
         assert connection.execute(
             "SELECT COUNT(*) FROM runs WHERE task_id=?", (task_id,)

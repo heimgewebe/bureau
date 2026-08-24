@@ -718,8 +718,9 @@ bureau --json task-no-run-closeout INITIATIVE-T001 \
   --expected-preview-sha256 <preview_sha256>
 ```
 
-Apply stores a revision-bound `metadata.verification` receipt in the
-authoritative TaskSpec and verifies that normal `verification-stamp` consumers
-see the same receipt. It establishes neither run identity nor retroactive claim
-authority. Tasks with GitHub/runtime/other non-manual verifiers remain on the
-normal run + closure-observer path.
+Apply stores a revision-bound `metadata.verification` receipt plus a matching
+`verified` `task_status` projection. That projection lets already-instantiated
+dispatchers observe the closeout without creating a run, and normal
+`verification-stamp` consumers must see the same receipt. It establishes neither
+run identity nor retroactive claim authority. Tasks with GitHub/runtime/other
+non-manual verifiers remain on the normal run + closure-observer path.

@@ -649,3 +649,77 @@ Manual revision-bound checks after the immutable Bureau release containing this 
 ```
 
 Both service commands deliberately enter through the stable manifest-validating `~/.local/bin/bureau` launcher; they never import from a mutable checkout or historical virtualenv. A green restore receipt proves local recovery consistency plus a fresh, fail-closed reconciliation simulation in the empty restored root. Runtime activation of the supplied units and an actual Restic snapshot remain separate effects with their own readback.
+
+## Direct work without a Bureau run
+
+`task-no-run-closeout` is the narrow closeout path for work that was completed
+outside Bureau dispatch but already has an authoritative StateStore TaskSpec. It
+does **not** create a historical or synthetic run.
+
+The path is intentionally fail-closed:
+
+- the current TaskSpec must be `ready` and StateStore-backed;
+- no Bureau run may exist for the task;
+- no `task_status` completion projection may already exist;
+- every acceptance criterion must be typed `manual_observation`;
+- the evidence bundle must bind the exact current `task_sha256` and
+  `plan_sha256`;
+- the reviewer must differ from every evidence producer;
+- apply requires the exact SHA-256 returned by a fresh preview.
+
+Evidence bundle shape:
+
+```json
+{
+  "schema_version": 1,
+  "kind": "bureau.task_no_run_acceptance_evidence_bundle",
+  "task_id": "INITIATIVE-T001",
+  "task_sha256": "<64-hex>",
+  "plan_sha256": "<64-hex>",
+  "evidence": {
+    "criterion-id": {
+      "schema_version": 1,
+      "kind": "bureau.acceptance_evidence",
+      "criterion_id": "criterion-id",
+      "evidence_type": "manual_observation",
+      "source": {"authority": "manual", "reference": "operator-observation:..."},
+      "observed_at": "2026-08-24T04:00:00Z",
+      "revision": {
+        "task_sha256": "<64-hex>",
+        "plan_sha256": "<64-hex>",
+        "observation_scope": "..."
+      },
+      "facts": {
+        "accepted": true,
+        "observer": "operator-observer",
+        "observation": "independently reviewable result",
+        "observation_scope": "..."
+      }
+    }
+  }
+}
+```
+
+Preview first:
+
+```bash
+bureau --json task-no-run-closeout INITIATIVE-T001 \
+  --evidence /absolute/path/evidence.json \
+  --reviewer controller-review
+```
+
+Then apply the exact returned preview digest:
+
+```bash
+bureau --json task-no-run-closeout INITIATIVE-T001 \
+  --evidence /absolute/path/evidence.json \
+  --reviewer controller-review \
+  --apply \
+  --expected-preview-sha256 <preview_sha256>
+```
+
+Apply stores a revision-bound `metadata.verification` receipt in the
+authoritative TaskSpec and verifies that normal `verification-stamp` consumers
+see the same receipt. It establishes neither run identity nor retroactive claim
+authority. Tasks with GitHub/runtime/other non-manual verifiers remain on the
+normal run + closure-observer path.

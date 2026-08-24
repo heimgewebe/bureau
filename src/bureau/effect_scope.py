@@ -26,6 +26,7 @@ _COORDINATION_STATE_MUTATION_COMMANDS = frozenset(
         "operator-task-publish",
         "operator-task-ready",
         "receipt-normalize",
+        "task-no-run-closeout",
         "workspace-cleanup",
     }
 )

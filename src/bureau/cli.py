@@ -73,6 +73,10 @@ from .read_only_state import ReadOnlyStateStore
 from .resource_lifecycle import resource_lifecycle_contract
 from .rlens_policy import evaluate_registry_rlens_policy
 from .runtime_identity import bureau_runtime_identity, require_mutation_compatible
+from .task_closeout import (
+    apply_task_no_run_closeout,
+    preview_task_no_run_closeout,
+)
 from .v2 import (
     coordinated_claim_intent_readback,
     coordinated_claim_status,
@@ -444,6 +448,12 @@ def parser() -> argparse.ArgumentParser:
     acceptance_authenticate.add_argument("criterion_id")
     acceptance_authenticate.add_argument("--expected-evidence-sha256", required=True)
     acceptance_authenticate.add_argument("--reviewer", required=True)
+    task_no_run_closeout = sub.add_parser("task-no-run-closeout")
+    task_no_run_closeout.add_argument("task_id")
+    task_no_run_closeout.add_argument("--evidence", required=True)
+    task_no_run_closeout.add_argument("--reviewer", required=True)
+    task_no_run_closeout.add_argument("--apply", action="store_true")
+    task_no_run_closeout.add_argument("--expected-preview-sha256")
     complete = sub.add_parser("complete")
     complete.add_argument("run_id")
     complete.add_argument("--evidence", required=True)
@@ -672,6 +682,8 @@ def _command_mutates(args: argparse.Namespace) -> bool:
     if command == "projection-repair":
         return bool(args.apply)
     if command == "receipt-normalize":
+        return bool(args.apply)
+    if command == "task-no-run-closeout":
         return bool(args.apply)
     # Fail closed for every command not explicitly proven read-only. This also
     # makes newly added commands mutation-gated until they are classified.
@@ -1452,6 +1464,29 @@ def main(argv: list[str] | None = None) -> int:
             value = reconcile_initiative_lifecycle(
                 registry, store, apply=apply_lifecycle, task_id=args.task_id
             )
+        elif args.command == "task-no-run-closeout":
+            evidence_path = Path(args.evidence).expanduser()
+            if args.apply:
+                if not args.expected_preview_sha256:
+                    raise StateError(
+                        "task-no-run-closeout --apply requires --expected-preview-sha256"
+                    )
+                value = apply_task_no_run_closeout(
+                    registry,
+                    store,
+                    args.task_id,
+                    evidence_path,
+                    reviewer=args.reviewer,
+                    expected_preview_sha256=args.expected_preview_sha256,
+                )
+            else:
+                value = preview_task_no_run_closeout(
+                    registry,
+                    store,
+                    args.task_id,
+                    evidence_path,
+                    reviewer=args.reviewer,
+                )
         elif args.command == "close-ready":
             value = close_ready_initiatives(registry, store)
         elif args.command == "frontier":

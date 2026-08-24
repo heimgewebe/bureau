@@ -177,6 +177,57 @@ def test_lifecycle_reconcile_apply_uses_canonical_coordination_store(
     assert initiative_path.read_bytes() == initiative_before
 
 
+def test_canonical_reconcile_uses_writable_coordination_store(
+    registry_factory, tmp_path: Path, monkeypatch, capsys
+) -> None:
+    registry_root = registry_factory(1)
+    state_root = tmp_path / "coordination-state"
+    identity = canonical_runtime_identity(registry_root)
+    registry_before = registry_file_evidence(registry_root)
+    calls: list[tuple[str, str]] = []
+
+    class FakeDispatcher:
+        def __init__(
+            self,
+            registry,
+            store,
+            adapter_registry,
+            enforce_runtime_gate=True,
+            runtime_identity=None,
+        ):
+            self.store = store
+
+        def reconcile(self, stale_after=900):
+            calls.append((type(self.store).__name__, str(self.store.path)))
+            return {"orphaned": [], "terminal": []}
+
+    def fake_acceptance_reconcile(registry, store):
+        calls.append((type(store).__name__, str(store.path)))
+        return {"terminalized_count": 0, "open_count": 0}
+
+    monkeypatch.setattr(bureau_cli, "bureau_runtime_identity", lambda *a, **k: identity)
+    monkeypatch.setattr(bureau_cli, "Dispatcher", FakeDispatcher)
+    monkeypatch.setattr(bureau_cli, "adapters", lambda args: object())
+    monkeypatch.setattr(bureau_cli, "reconcile_state_evidence", fake_acceptance_reconcile)
+
+    result = bureau_cli.main(
+        [
+            "--root", str(registry_root),
+            "--state-root", str(state_root),
+            "--json", "reconcile",
+        ]
+    )
+
+    assert result == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["runtime_identity"]["command_effect_scope"] == (
+        "coordination_state_mutation"
+    )
+    expected_db = str(state_root / "bureau.sqlite3")
+    assert calls == [("StateStore", expected_db), ("StateStore", expected_db)]
+    assert registry_file_evidence(registry_root) == registry_before
+
+
 def test_claim_intent_is_coordination_state_mutation() -> None:
     assert bureau_cli._command_mutates(
         bureau_cli.parser().parse_args(["claim-intent", "--worker", "test-worker"])

@@ -8,6 +8,7 @@ import pytest
 from bureau import cli as bureau_cli
 from bureau import task_specs
 from bureau.core import Dispatcher, Registry, StateError, StateStore, verification_stamp
+from bureau.legacy import NoEligibleTask
 from bureau.task_closeout import (
     BUNDLE_KIND,
     VERIFICATION_KIND,
@@ -118,7 +119,7 @@ def test_preview_is_read_only_and_acceptance_bound(registry_factory, tmp_path: P
     assert before == after
 
 
-def test_apply_verifies_without_creating_run_or_task_status(
+def test_apply_verifies_without_creating_run(
     registry_factory, tmp_path: Path
 ) -> None:
     _, registry, store, task_id = _setup(registry_factory, tmp_path)
@@ -152,17 +153,41 @@ def test_apply_verifies_without_creating_run_or_task_status(
             ]
             == 0
         )
-        assert (
-            connection.execute(
-                "SELECT COUNT(*) FROM task_status WHERE task_id=?", (task_id,)
-            ).fetchone()[0]
-            == 0
-        )
+        status = connection.execute(
+            "SELECT task_sha256,plan_sha256,state,receipt_sha256 FROM task_status WHERE task_id=?",
+            (task_id,),
+        ).fetchone()
+        assert status is not None
+        assert status["task_sha256"] == receipt["task_sha256"]
+        assert status["plan_sha256"] == receipt["plan_sha256"]
+        assert status["state"] == "verified"
+        assert status["receipt_sha256"] == receipt["receipt_sha256"]
     effective, _, _ = authoritative_task_registry(registry, store)
     stamp = verification_stamp(effective, store, task_id)
     assert stamp["receipt_sha256"] == receipt["receipt_sha256"]
     assert stamp["task_sha256"] == receipt["task_sha256"]
     assert stamp["plan_sha256"] == receipt["plan_sha256"]
+
+
+def test_apply_blocks_claim_from_dispatcher_instantiated_before_closeout(
+    registry_factory, tmp_path: Path
+) -> None:
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    stale_dispatcher = Dispatcher(registry, store)
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    preview = preview_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+    )
+    apply_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"], now=NOW,
+    )
+    with pytest.raises(NoEligibleTask, match="state is verified"):
+        stale_dispatcher.claim_next("worker", ("repository",))
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM runs WHERE task_id=?", (task_id,)
+        ).fetchone()[0] == 0
 
 
 def test_apply_is_idempotent_for_same_verified_receipt(registry_factory, tmp_path: Path) -> None:
@@ -224,6 +249,19 @@ def test_preview_rejects_reviewer_equal_to_evidence_producer(
 
     with pytest.raises(StateError, match="reviewer must differ"):
         preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW)
+
+
+def test_preview_rejects_whitespace_padded_reviewer_identity(
+    registry_factory, tmp_path: Path
+) -> None:
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    evidence = _evidence_path(
+        tmp_path, registry, store, task_id, observer=f"  {REVIEWER}  "
+    )
+    with pytest.raises(StateError, match="reviewer must differ"):
+        preview_task_no_run_closeout(
+            registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+        )
 
 
 def test_preview_rejects_non_manual_acceptance(registry_factory, tmp_path: Path) -> None:

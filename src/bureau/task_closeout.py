@@ -221,6 +221,7 @@ def _manual_authentications(
             raise legacy.StateError(
                 f"task no-run closeout evidence producer for {criterion_id!r} is missing"
             )
+        observer = observer.strip()
         if observer == reviewer:
             raise legacy.StateError(
                 "task no-run closeout reviewer must differ from every evidence producer"
@@ -279,9 +280,10 @@ def _preview_from_connection(
             f"task no-run closeout refuses task {task_id} because {len(runs)} Bureau run(s) exist"
         )
     status_row = connection.execute(
-        "SELECT state,receipt_sha256 FROM task_status WHERE task_id=?", (task_id,)
+        "SELECT task_sha256,plan_sha256,state,receipt_sha256 FROM task_status WHERE task_id=?",
+        (task_id,),
     ).fetchone()
-    if status_row is not None:
+    if status_row is not None and not replaying:
         raise legacy.StateError(
             "task no-run closeout refuses an existing task_status completion projection"
         )
@@ -349,6 +351,16 @@ def _preview_from_connection(
         if not isinstance(basis_revision, int) or not isinstance(basis_spec_sha256, str):
             raise legacy.StateError(
                 "task no-run closeout existing verification preimage binding is invalid"
+            )
+        if (
+            status_row is None
+            or status_row["task_sha256"] != stable_task_sha256
+            or status_row["plan_sha256"] != current_plan_sha256
+            or status_row["state"] != "verified"
+            or status_row["receipt_sha256"] != stored_receipt_sha256
+        ):
+            raise legacy.StateError(
+                "task no-run closeout existing task_status projection binding mismatch"
             )
     preview_basis = {
         "schema_version": SCHEMA_VERSION,
@@ -539,6 +551,32 @@ def apply_task_no_run_closeout(
             raise legacy.StateError("task no-run closeout TaskSpec readback is not verified")
         if readback["spec"].get("metadata", {}).get("verification") != verification:
             raise legacy.StateError("task no-run closeout verification readback mismatch")
+        connection.execute(
+            """
+            INSERT INTO task_status(
+                task_id,task_sha256,plan_sha256,state,receipt_sha256,updated_at
+            ) VALUES(?,?,?,'verified',?,?)
+            """,
+            (
+                task_id,
+                preview["task_sha256"],
+                preview["plan_sha256"],
+                verification["receipt_sha256"],
+                closed_at,
+            ),
+        )
+        status_readback = connection.execute(
+            "SELECT task_sha256,plan_sha256,state,receipt_sha256 FROM task_status WHERE task_id=?",
+            (task_id,),
+        ).fetchone()
+        if (
+            status_readback is None
+            or status_readback["task_sha256"] != preview["task_sha256"]
+            or status_readback["plan_sha256"] != preview["plan_sha256"]
+            or status_readback["state"] != "verified"
+            or status_readback["receipt_sha256"] != verification["receipt_sha256"]
+        ):
+            raise legacy.StateError("task no-run closeout task_status readback mismatch")
     effective, _, _ = authoritative_task_registry(registry, store)
     stamp = verification_stamp(effective, store, task_id)
     if (

@@ -344,10 +344,36 @@ def runtime_authority_spec(task_id: str, *, state: str = "ready") -> dict[str, A
     }
 
 
-def seed_authority_store(root: Path, task_id: str, *, state: str = "ready") -> StateStore:
+def source_precondition_contract() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "policy": "registered-source-or-verified-target-ancestor",
+        "identity_sources": [
+            "deployment-manifest.source_commit",
+            "canonical-registry.source_commit",
+        ],
+        "require_deployment_registry_identity_match": True,
+        "registered_deployed_source_commit": DEPLOYED,
+        "registered_manifest_sha256": "a" * 64,
+        "registered_registry_source_commit": DEPLOYED,
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "require_target_freshness": True,
+        "required_before": ["prepare-intent", "apply"],
+        "fail_closed": True,
+        "does_not_establish": ["ancestry without fresh proof"],
+    }
+
+
+def seed_authority_store(
+    root: Path, task_id: str, *, state: str = "ready", source_precondition: bool = False
+) -> StateStore:
     state_root = root.resolve()
     store = StateStore(state_root / "bureau.sqlite3", state_root)
     spec = runtime_authority_spec(task_id, state=state)
+    if source_precondition:
+        spec["metadata"]["runtime_refresh_authority"]["source_precondition"] = (
+            source_precondition_contract()
+        )
     store.put_task_spec(
         spec,
         idempotency_key=f"seed:{task_id}:{state}",
@@ -606,6 +632,41 @@ def write_manifest(path: Path, source_commit: str = DEPLOYED, **extra: Any) -> d
     return value
 
 
+def write_registry_bound_manifest(
+    path: Path,
+    *,
+    source_commit: str = DEPLOYED,
+    registry_source_commit: str | None = None,
+) -> dict[str, Any]:
+    registry_root = path.parent / "registry-snapshot"
+    registry_file = registry_root / "registry/tasks/FIXTURE.json"
+    registry_file.parent.mkdir(parents=True, exist_ok=True)
+    registry_file.write_text('{"id":"FIXTURE"}\n', encoding="utf-8")
+    paths = [Path("registry/tasks/FIXTURE.json")]
+    tree_sha256 = registry_snapshot.snapshot_tree_sha256(registry_root, paths)
+    assert tree_sha256 is not None
+    inventory = registry_root / ".bureau-runtime-snapshot.json"
+    inventory.write_bytes(
+        refresh.canonical_bytes(
+            {
+                "schema_version": 1,
+                "kind": "bureau_registry_snapshot",
+                "source_commit": registry_source_commit or source_commit,
+                "tree_sha256": tree_sha256,
+                "paths": [item.as_posix() for item in paths],
+            }
+        )
+    )
+    return write_manifest(
+        path,
+        source_commit=source_commit,
+        canonical_registry_root=str(registry_root),
+        canonical_registry_inventory_path=str(inventory),
+        canonical_registry_inventory_sha256=refresh.sha256_bytes(inventory.read_bytes()),
+        canonical_registry_tree_sha256=tree_sha256,
+    )
+
+
 def green_pr_detail(main_commit: str = MAIN) -> dict[str, Any]:
     return {
         "number": 42,
@@ -630,6 +691,9 @@ def github_fixture(
     detail: dict[str, Any] | None = None,
     associated: list[dict[str, Any]] | None = None,
     ahead_by: int = 1,
+    compare_status: str = "ahead",
+    behind_by: int = 0,
+    merge_base_commit: str = DEPLOYED,
 ):
     calls: list[list[str]] = []
     main_reads = 0
@@ -657,7 +721,12 @@ def github_fixture(
         if arguments[:3] == ["pr", "view", "42"]:
             return detail if detail is not None else green_pr_detail(main_commit)
         if joined == f"api repos/heimgewebe/bureau/compare/{DEPLOYED}...{main_commit}":
-            return {"ahead_by": ahead_by}
+            return {
+                "status": compare_status,
+                "ahead_by": ahead_by,
+                "behind_by": behind_by,
+                "merge_base_commit": {"sha": merge_base_commit},
+            }
         raise AssertionError(arguments)
 
     return github, calls
@@ -812,6 +881,104 @@ def test_observe_compare_404_fallback_fails_closed_on_unusable_parent(
     assert "commit-lag-unavailable" in result["reason_codes"]
 
 
+@pytest.mark.parametrize(
+    ("compare_status", "ahead_by", "behind_by", "merge_base_commit"),
+    [
+        ("diverged", 2, 1, "c" * 40),
+        ("behind", 0, 2, "c" * 40),
+        ("ahead", 2, 0, "c" * 40),
+    ],
+)
+def test_observe_blocks_when_deployed_source_is_not_proven_main_ancestor(
+    tmp_path: Path,
+    compare_status: str,
+    ahead_by: int,
+    behind_by: int,
+    merge_base_commit: str,
+) -> None:
+    value, _manifest = candidate(
+        tmp_path,
+        compare_status=compare_status,
+        ahead_by=ahead_by,
+        behind_by=behind_by,
+        merge_base_commit=merge_base_commit,
+    )
+
+    assert value["status"] == "blocked"
+    assert value["lag_commits"] is None
+    assert "deployed-source-not-main-ancestor" in value["reason_codes"]
+    assert value["source_ancestry"]["status"] == "rejected"
+
+
+def test_observe_binds_manifest_to_canonical_registry_source(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    github, _calls = github_fixture()
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+
+    assert value["status"] == "candidate"
+    assert value["source_ancestry"]["status"] == "proven"
+    assert value["runtime_source_identity"] == {
+        "schema_version": 1,
+        "status": "proven",
+        "deployed_source_commit": DEPLOYED,
+        "registry_source_commit": DEPLOYED,
+        "registry_reasons": [],
+    }
+
+
+def test_source_precondition_evidence_does_not_change_target_identity() -> None:
+    base = {
+        "repository": "heimgewebe/bureau",
+        "main_commit": MAIN,
+        "pull_request": {"number": 42},
+        "merged_at": "2026-07-14T07:30:00Z",
+        "required_checks": list(refresh.DEFAULT_REQUIRED_CHECKS),
+        "check_summary": {},
+        "deployed_source_commit": DEPLOYED,
+        "deployed_manifest_sha256": "a" * 64,
+        "lag_commits": 1,
+        "scheduler_target_state": "source-not-current",
+        "source_ancestry": {"status": "proven", "merge_base_commit": DEPLOYED},
+        "runtime_source_identity": {"status": "proven", "registry_source_commit": DEPLOYED},
+    }
+    changed_evidence = json.loads(json.dumps(base))
+    changed_evidence["source_ancestry"] = {"status": "rejected", "merge_base_commit": "c" * 40}
+    changed_evidence["runtime_source_identity"] = {
+        "status": "invalid",
+        "registry_source_commit": "d" * 40,
+    }
+
+    assert refresh._target_payload(base) == refresh._target_payload(changed_evidence)
+    assert "source_ancestry" not in refresh._target_payload(base)
+    assert "runtime_source_identity" not in refresh._target_payload(base)
+
+
+def test_observe_marks_registry_source_mismatch_invalid_without_affecting_legacy_authority(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path, registry_source_commit="c" * 40)
+    github, _calls = github_fixture()
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+
+    assert value["status"] == "candidate"
+    assert value["runtime_source_identity"]["status"] == "invalid"
+    assert "source-commit-mismatch" in value["runtime_source_identity"]["registry_reasons"]
+
+
 def test_observe_does_not_fallback_for_non_404_compare_failure(tmp_path: Path) -> None:
     manifest_path = tmp_path / "prefix/deployment-manifest.json"
     write_manifest(manifest_path)
@@ -859,6 +1026,206 @@ def prepare_candidate_intent(
         authority_store=authority_store,
     )
     return observed, manifest_path, intent, intent_path
+
+
+def prepare_source_precondition_intent(
+    tmp_path: Path,
+    *,
+    task_id: str = "BUREAU-SOURCE-PRECONDITION-TEST",
+) -> tuple[dict[str, Any], Path, dict[str, Any], Path]:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    github, _calls = github_fixture()
+    observed = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+    state_root = (tmp_path / "state").resolve()
+    authority_store = seed_authority_store(
+        tmp_path / "bureau-state", task_id, source_precondition=True
+    )
+    intent, intent_path = refresh.prepare_intent(
+        candidate=observed,
+        state_root=state_root,
+        prefix=(tmp_path / "prefix").resolve(),
+        bin_dir=(tmp_path / "bin").resolve(),
+        user_unit_dir=(tmp_path / "systemd/user").resolve(),
+        libexec_dir=(tmp_path / "libexec").resolve(),
+        remote_url="file:///tmp/bureau.git",
+        authorized_by="chatgpt",
+        authorization="User explicitly authorized source-precondition test.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id=task_id,
+        now=NOW,
+        authority_store=authority_store,
+        observer=lambda **_: observed,
+    )
+    return observed, manifest_path, intent, intent_path
+
+
+def test_prepare_intent_rejects_declared_source_precondition_without_registry_identity(
+    tmp_path: Path,
+) -> None:
+    observed, _manifest_path = candidate(tmp_path)
+    task_id = "BUREAU-SOURCE-PRECONDITION-MISSING-IDENTITY"
+    store = seed_authority_store(tmp_path / "bureau-state", task_id, source_precondition=True)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.prepare_intent(
+            candidate=observed,
+            state_root=(tmp_path / "state").resolve(),
+            prefix=(tmp_path / "prefix").resolve(),
+            bin_dir=(tmp_path / "bin").resolve(),
+            user_unit_dir=(tmp_path / "systemd/user").resolve(),
+            libexec_dir=(tmp_path / "libexec").resolve(),
+            remote_url="file:///tmp/bureau.git",
+            authorized_by="chatgpt",
+            authorization="User explicitly authorized source-precondition test.",
+            break_glass=True,
+            approval_reference=observed["target_sha256"],
+            approval_task_id=task_id,
+            now=NOW,
+            authority_store=store,
+            observer=lambda **_: observed,
+        )
+
+    assert caught.value.code == "runtime-source-identity-unproven"
+
+
+def test_prepare_intent_binds_enforced_source_precondition(tmp_path: Path) -> None:
+    observed, _manifest_path, intent, _intent_path = prepare_source_precondition_intent(tmp_path)
+
+    assert observed["source_ancestry"]["status"] == "proven"
+    assert observed["runtime_source_identity"]["status"] == "proven"
+    assert intent["source_precondition"] == source_precondition_contract()
+
+
+def test_prepare_intent_rebinds_fresh_source_precondition_observation(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    github, _calls = github_fixture()
+    observed = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+    fresh = json.loads(json.dumps(observed))
+    fresh["observed_at"] = refresh.isoformat(NOW + timedelta(seconds=5))
+    fresh.pop("observation_sha256", None)
+    fresh = refresh.bind_digest(fresh, "observation_sha256")
+    assert fresh["target_sha256"] == observed["target_sha256"]
+    assert fresh["observation_sha256"] != observed["observation_sha256"]
+    task_id = "BUREAU-SOURCE-PRECONDITION-FRESH-OBSERVATION"
+    store = seed_authority_store(tmp_path / "bureau-state", task_id, source_precondition=True)
+
+    intent, _intent_path = refresh.prepare_intent(
+        candidate=observed,
+        state_root=(tmp_path / "state").resolve(),
+        prefix=(tmp_path / "prefix").resolve(),
+        bin_dir=(tmp_path / "bin").resolve(),
+        user_unit_dir=(tmp_path / "systemd/user").resolve(),
+        libexec_dir=(tmp_path / "libexec").resolve(),
+        remote_url="file:///tmp/bureau.git",
+        authorized_by="chatgpt",
+        authorization="User explicitly authorized source-precondition test.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id=task_id,
+        now=NOW,
+        authority_store=store,
+        observer=lambda **_: fresh,
+    )
+
+    assert intent["observation_sha256"] == fresh["observation_sha256"]
+    assert intent["expected_manifest_sha256"] == fresh["deployed_manifest_sha256"]
+
+
+def test_prepare_intent_rejects_fresh_target_drift(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    github, _calls = github_fixture()
+    observed = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+    fresh = json.loads(json.dumps(observed))
+    fresh["main_commit"] = "9" * 40
+    fresh["source_ancestry"] = {
+        **fresh["source_ancestry"],
+        "main_commit": "9" * 40,
+    }
+    fresh["target_sha256"] = refresh.sha256_bytes(
+        refresh.canonical_bytes(refresh._target_payload(fresh))
+    )
+    fresh.pop("observation_sha256", None)
+    fresh = refresh.bind_digest(fresh, "observation_sha256")
+    task_id = "BUREAU-SOURCE-PRECONDITION-FRESH-TARGET-DRIFT"
+    store = seed_authority_store(tmp_path / "bureau-state", task_id, source_precondition=True)
+    state_root = (tmp_path / "state").resolve()
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.prepare_intent(
+            candidate=observed,
+            state_root=state_root,
+            prefix=(tmp_path / "prefix").resolve(),
+            bin_dir=(tmp_path / "bin").resolve(),
+            user_unit_dir=(tmp_path / "systemd/user").resolve(),
+            libexec_dir=(tmp_path / "libexec").resolve(),
+            remote_url="file:///tmp/bureau.git",
+            authorized_by="chatgpt",
+            authorization="User explicitly authorized source-precondition test.",
+            break_glass=True,
+            approval_reference=observed["target_sha256"],
+            approval_task_id=task_id,
+            now=NOW,
+            authority_store=store,
+            observer=lambda **_: fresh,
+        )
+
+    assert caught.value.code == "source-precondition-target-drift"
+    assert not (state_root / "intents").exists()
+
+
+def test_apply_rejects_fresh_diverged_source_before_effect(tmp_path: Path) -> None:
+    observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(tmp_path)
+    binding, resource_db = lease_for(tmp_path / "leases", intent)
+    live = json.loads(json.dumps(observed))
+    live["source_ancestry"] = {
+        **live["source_ancestry"],
+        "status": "rejected",
+        "method": "github-compare",
+        "compare_status": "diverged",
+        "ahead_by": 2,
+        "behind_by": 1,
+        "merge_base_commit": "c" * 40,
+    }
+    live["target_sha256"] = refresh.sha256_bytes(
+        refresh.canonical_bytes(refresh._target_payload(live))
+    )
+    live.pop("observation_sha256", None)
+    live = refresh.bind_digest(live, "observation_sha256")
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: live,
+            source_preparer=lambda **_: pytest.fail("source preparation must not start"),
+            installer=lambda **_: pytest.fail("installer must not start"),
+            readback=lambda **_: pytest.fail("readback must not start"),
+        )
+
+    assert caught.value.code == "source-ancestry-unproven"
 
 
 def lease_for(

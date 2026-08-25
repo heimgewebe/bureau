@@ -35,9 +35,9 @@ class SupplyError(RuntimeError):
 @dataclass(frozen=True)
 class SupplyPolicy:
     schema_version: int = SUPPLY_SCHEMA_VERSION
-    floor: int = 8
-    refill_target: int = 12
-    max_new_per_cycle: int = 4
+    floor: int = 12
+    refill_target: int = 20
+    max_new_per_cycle: int = 8
     bucket_hours: int = 24
 
     def __post_init__(self) -> None:
@@ -1603,10 +1603,16 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--frontier-report", required=True)
     result.add_argument("--frontier-head", required=True)
     result.add_argument("--frontier-queue-sha256", required=True)
-    result.add_argument("--floor", type=int, default=8)
-    result.add_argument("--refill-target", type=int, default=12)
-    result.add_argument("--max-new-per-cycle", type=int, default=4)
-    result.add_argument("--bucket-hours", type=int, default=24)
+    result.add_argument("--floor", type=int, default=DEFAULT_SUPPLY_POLICY.floor)
+    result.add_argument(
+        "--refill-target", type=int, default=DEFAULT_SUPPLY_POLICY.refill_target
+    )
+    result.add_argument(
+        "--max-new-per-cycle",
+        type=int,
+        default=DEFAULT_SUPPLY_POLICY.max_new_per_cycle,
+    )
+    result.add_argument("--bucket-hours", type=int, default=DEFAULT_SUPPLY_POLICY.bucket_hours)
     result.add_argument("--approval-available", action="store_true")
     result.add_argument("--controller-capability", action="append", default=[])
     result.add_argument("--runtime-healthy", action="store_true")

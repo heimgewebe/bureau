@@ -15,6 +15,7 @@ from bureau.cycle_contract import CONTRACT_VERSION, SCHEMA_VERSION
 from bureau.supply_runner import FrontierObservation, reconcile_merged_supply_publication
 from bureau.task_supply import (
     CONTROLLER_APPROVAL_CAPABILITY,
+    DEFAULT_SUPPLY_POLICY,
     FALLBACK_CATALOG,
     FALLBACK_METADATA_KEY,
     REVIEW_REASON,
@@ -31,6 +32,9 @@ from bureau.task_supply import (
     file_sha256,
     publish_supply_plan,
     sha256_json,
+)
+from bureau.task_supply import (
+    parser as task_supply_parser,
 )
 from bureau.v2 import Registry
 
@@ -262,8 +266,8 @@ def test_unbound_worker_profile_does_not_prove_floor_unreachable(
     )
     assert result["metrics"]["total_claimable_count"] == 7
     assert result["metrics"]["joint_claimable_count"] == 7
-    assert result["feasibility"]["structural_additional_capacity"] >= 1
-    assert result["feasibility"]["structural_capacity_upper_bound"] >= 8
+    assert result["feasibility"]["structural_additional_capacity"] >= 5
+    assert result["feasibility"]["structural_capacity_upper_bound"] >= 12
     assert result["feasibility"]["floor_reachable"] is True
     assert "worker-capability-profile-unbound" in result["blockers"]
     assert STRUCTURAL_UNREACHABLE_BLOCKER not in result["blockers"]
@@ -290,13 +294,17 @@ def test_feasible_fallback_selection_is_bounded_and_pairwise_compatible(
     assert result["status"] == "refill-proposed"
     assert result["feasibility"]["floor_reachable"] is True
     assert result["metrics"]["joint_claimable_count"] == 7
-    assert result["metrics"]["projected_joint_claimable_count"] == 11
+    assert result["metrics"]["projected_joint_claimable_count"] == 15
     actions = result["publication_plan"]["actions"]
     assert [item["category"] for item in actions] == [
         "scout-commonworld",
         "scout-schauwerk",
         "scout-chronik",
         "scout-lenskit",
+        "scout-systemkatalog",
+        "scout-heimlern",
+        "scout-semantah",
+        "scout-wgx",
     ]
     assert len(actions) <= result["policy"]["max_new_per_cycle"]
     assert len({action["task"]["claims"][0]["resource"] for action in actions}) == len(actions)
@@ -323,8 +331,8 @@ def test_base_worker_profile_reaches_floor_through_bounded_read_only_scout_reser
     )
 
     assert result["metrics"]["joint_claimable_count"] == 4
-    assert result["feasibility"]["structural_additional_capacity"] >= 4
-    assert result["feasibility"]["structural_capacity_upper_bound"] >= 8
+    assert result["feasibility"]["structural_additional_capacity"] >= 8
+    assert result["feasibility"]["structural_capacity_upper_bound"] >= 12
     assert result["feasibility"]["floor_reachable"] is True
     assert STRUCTURAL_UNREACHABLE_BLOCKER not in result["blockers"]
     assert result["status"] == "refill-proposed"
@@ -335,6 +343,10 @@ def test_base_worker_profile_reaches_floor_through_bounded_read_only_scout_reser
         "scout-schauwerk",
         "scout-chronik",
         "scout-lenskit",
+        "scout-systemkatalog",
+        "scout-heimlern",
+        "scout-semantah",
+        "scout-wgx",
     ]
     assert len(actions) == result["policy"]["max_new_per_cycle"]
     repositories = set()
@@ -364,13 +376,40 @@ def test_base_worker_profile_reaches_floor_through_bounded_read_only_scout_reser
     assert all("operator-approval-unavailable" in blockers for blockers in blocked_writes.values())
 
 
+def test_task_supply_cli_defaults_follow_default_policy() -> None:
+    args = task_supply_parser().parse_args(
+        [
+            "--frontier-report",
+            "frontier.json",
+            "--frontier-head",
+            HEAD,
+            "--frontier-queue-sha256",
+            QUEUE_SHA,
+        ]
+    )
+    assert (
+        args.floor,
+        args.refill_target,
+        args.max_new_per_cycle,
+        args.bucket_hours,
+    ) == (
+        DEFAULT_SUPPLY_POLICY.floor,
+        DEFAULT_SUPPLY_POLICY.refill_target,
+        DEFAULT_SUPPLY_POLICY.max_new_per_cycle,
+        DEFAULT_SUPPLY_POLICY.bucket_hours,
+    )
+
+
 def test_policy_requires_real_floor_and_hysteresis() -> None:
     with pytest.raises(ValueError, match="at least 8"):
         SupplyPolicy(floor=7)
     with pytest.raises(ValueError, match="greater than the floor"):
         SupplyPolicy(floor=8, refill_target=8)
-    assert SupplyPolicy().floor == 8
-    assert SupplyPolicy().refill_target > SupplyPolicy().floor
+    policy = SupplyPolicy()
+    assert policy.floor == 12
+    assert policy.refill_target == 20
+    assert policy.max_new_per_cycle == 8
+    assert policy.refill_target > policy.floor
 
 
 def test_raw_ready_is_not_claimability(tmp_path: Path) -> None:
@@ -396,7 +435,7 @@ def test_controller_approval_capability_reaches_floor_without_widening_worker_pr
     tmp_path: Path,
 ) -> None:
     registry = Registry.load(Path(__file__).parents[1])
-    task_ids = [f"REVIEW-T{index:03d}" for index in range(8)]
+    task_ids = [f"REVIEW-T{index:03d}" for index in range(12)]
     documents = {task_id: normal_document(task_id) for task_id in task_ids}
     frontier = [frontier_item(task_id, reasons=[REVIEW_REASON]) for task_id in task_ids]
     worker_profile = capability_profile(missing=("audit", "documentation"))
@@ -420,7 +459,7 @@ def test_controller_approval_capability_reaches_floor_without_widening_worker_pr
     )
 
     assert without_controller["metrics"]["joint_claimable_count"] == 0
-    assert with_controller["metrics"]["joint_claimable_count"] == 8
+    assert with_controller["metrics"]["joint_claimable_count"] == 12
     assert with_controller["status"] == "satisfied"
     assert with_controller["feasibility"]["controller_profile"]["capabilities"] == [
         CONTROLLER_APPROVAL_CAPABILITY
@@ -474,10 +513,10 @@ def test_normal_and_fallback_claimability_are_separate(tmp_path: Path) -> None:
 
 
 def test_floor_hysteresis_does_not_refill_at_floor(tmp_path: Path) -> None:
-    frontier = [frontier_item(f"REAL-T{index:03d}") for index in range(8)]
+    frontier = [frontier_item(f"REAL-T{index:03d}") for index in range(12)]
     result = report(tmp_path, frontier)
     assert result["status"] == "satisfied"
-    assert result["metrics"]["total_claimable_count"] == 8
+    assert result["metrics"]["total_claimable_count"] == 12
     assert result["metrics"]["shortage_to_target"] == 0
     assert result["proposals"] == []
 
@@ -485,20 +524,24 @@ def test_floor_hysteresis_does_not_refill_at_floor(tmp_path: Path) -> None:
 def test_empty_frontier_refills_toward_target_but_is_bounded(tmp_path: Path) -> None:
     result = report(tmp_path, [])
     assert result["status"] == "refill-proposed"
-    assert result["metrics"]["shortage_to_target"] == 12
-    assert result["metrics"]["new_proposal_count"] == 4
-    assert [item["category"] for item in result["proposals"]] == [
+    assert result["metrics"]["shortage_to_target"] == 20
+    assert 0 < result["metrics"]["new_proposal_count"] <= result["policy"]["max_new_per_cycle"]
+    assert [item["category"] for item in result["proposals"][:6]] == [
         "maintenance",
         "care",
         "audit",
         "diagnosis",
+        "registry-reconciliation",
+        "error-investigation",
     ]
     assert [
-        item["task"]["claims"][0]["resource"] for item in result["proposals"]
+        item["task"]["claims"][0]["resource"] for item in result["proposals"][:6]
     ] == [
         "component.bureau.core",
         "component.bureau.docs",
         "component.bureau.docs",
+        "component.bureau.core",
+        "component.bureau.registry",
         "component.bureau.core",
     ]
     assert all(item["claimable"] is False for item in result["proposals"])
@@ -595,8 +638,8 @@ def test_existing_nonterminal_fallback_is_reused(tmp_path: Path) -> None:
     assert second["proposals"][0]["action"] == "reuse"
     assert second["proposals"][0]["task_id"] == existing["id"]
     assert "task" not in second["proposals"][0]
-    assert second["metrics"]["new_proposal_count"] == 4
-    assert second["metrics"]["proposal_count"] == 5
+    assert second["metrics"]["new_proposal_count"] == first["metrics"]["new_proposal_count"] - 1
+    assert second["metrics"]["proposal_count"] == first["metrics"]["proposal_count"]
     assert second["proposals"][0]["blockers"] == [
         "existing-fallback-not-present-in-authoritative-frontier"
     ]
@@ -641,7 +684,7 @@ def test_terminal_fallback_id_blocks_only_its_category_in_the_same_bucket(
     actions = second["publication_plan"]["actions"]
     assert terminal["id"] not in [action["task_id"] for action in actions]
     assert second["publication_plan"]["status"] == "authorized"
-    assert second["metrics"]["new_proposal_count"] == 4
+    assert second["metrics"]["new_proposal_count"] == first["metrics"]["new_proposal_count"] - 1
 
     later = report(
         tmp_path,
@@ -700,7 +743,8 @@ def test_authorized_publish_creates_state_store_tasks_without_git_mutation(tmp_p
     assert publication["status"] == "published"
     assert publication["publication_mode"] == "state_store"
     assert publication["queue_mutated"] is False
-    assert len(publication["created_task_ids"]) == 4
+    assert len(publication["created_task_ids"]) == len(plan["actions"])
+    assert len(publication["created_task_ids"]) <= result["policy"]["max_new_per_cycle"]
     store = StateStore(state_root=state_root)
     for task_id in publication["created_task_ids"]:
         current = store.task_spec(task_id)
@@ -1052,7 +1096,7 @@ def test_registry_preview_defaults_runtime_unhealthy_and_is_read_only(
         "worker-capability-profile-unbound",
     ]
     assert result["feasibility"]["floor_reachable"] is True
-    assert result["feasibility"]["structural_capacity_upper_bound"] >= 8
+    assert result["feasibility"]["structural_capacity_upper_bound"] >= 12
     assert registry_snapshot(root) == before
 
 
@@ -1447,10 +1491,16 @@ def test_supply_runner_receipt_persists_publication_binding(
             "result": publication_result,
         },
     }
+    captured_cycle: dict[str, object] = {}
+
+    def fake_run_supply_cycle(**kwargs: object) -> dict:
+        captured_cycle.update(kwargs)
+        return summary
+
     monkeypatch.setattr(
         supply_runner_module,
         "run_supply_cycle",
-        lambda **_kwargs: summary,
+        fake_run_supply_cycle,
     )
     monkeypatch.setattr(
         supply_runner_module,
@@ -1474,6 +1524,7 @@ def test_supply_runner_receipt_persists_publication_binding(
         ]
     )
     assert result == 0
+    assert captured_cycle["policy"] == DEFAULT_SUPPLY_POLICY
     receipts = list((state_root / "runs").glob("*-task-supply.json"))
     assert len(receipts) == 1
     receipt = json.loads(receipts[0].read_text(encoding="utf-8"))

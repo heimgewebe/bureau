@@ -635,6 +635,32 @@ def observe_runtime_refresh(
     reasons: list[str] = []
     manifest, manifest_sha = load_manifest(manifest_path)
     deployed = manifest["source_commit"]
+    registry_identity = registry_snapshot.canonical_registry_identity(manifest)
+    if registry_identity.get("available") is True:
+        registry_reasons = [
+            str(item)
+            for item in registry_identity.get("reasons", [])
+            if isinstance(item, str) and item
+        ]
+        registry_source_commit = registry_identity.get("source_commit")
+        identity_proven = (
+            registry_identity.get("valid") is True and registry_source_commit == deployed
+        )
+        runtime_source_identity = {
+            "schema_version": 1,
+            "status": "proven" if identity_proven else "invalid",
+            "deployed_source_commit": deployed,
+            "registry_source_commit": registry_source_commit,
+            "registry_reasons": registry_reasons,
+        }
+    else:
+        runtime_source_identity = {
+            "schema_version": 1,
+            "status": "unavailable",
+            "deployed_source_commit": deployed,
+            "registry_source_commit": None,
+            "registry_reasons": ["canonical-registry-not-configured"],
+        }
 
     first_main = github(["api", f"repos/{repository}/commits/main"])
     if not isinstance(first_main, dict) or not isinstance(first_main.get("sha"), str):
@@ -644,6 +670,17 @@ def observe_runtime_refresh(
     merged_at: str | None = None
     check_summary: dict[str, dict[str, Any]] = {}
     lag_commits: int | None = 0 if deployed == main_commit else None
+    source_ancestry: dict[str, Any] = {
+        "schema_version": 1,
+        "status": "proven" if deployed == main_commit else "unproven",
+        "method": "same-commit" if deployed == main_commit else "pending",
+        "deployed_source_commit": deployed,
+        "main_commit": main_commit,
+        "compare_status": "identical" if deployed == main_commit else None,
+        "ahead_by": 0 if deployed == main_commit else None,
+        "behind_by": 0 if deployed == main_commit else None,
+        "merge_base_commit": deployed if deployed == main_commit else None,
+    }
 
     if deployed != main_commit:
         associated = github(
@@ -722,11 +759,75 @@ def observe_runtime_refresh(
             )
             if lag_commits is None:
                 reasons.append("commit-lag-unavailable")
-        else:
-            if isinstance(compare, dict) and isinstance(compare.get("ahead_by"), int):
-                lag_commits = compare["ahead_by"]
+                source_ancestry = {
+                    **source_ancestry,
+                    "status": "unproven",
+                    "method": "first-parent-walk",
+                }
             else:
+                source_ancestry = {
+                    **source_ancestry,
+                    "status": "proven",
+                    "method": "first-parent-walk",
+                    "ahead_by": lag_commits,
+                    "behind_by": 0,
+                    "merge_base_commit": deployed,
+                }
+        else:
+            compare_status = compare.get("status") if isinstance(compare, dict) else None
+            ahead_by = compare.get("ahead_by") if isinstance(compare, dict) else None
+            behind_by = compare.get("behind_by") if isinstance(compare, dict) else None
+            merge_base = compare.get("merge_base_commit") if isinstance(compare, dict) else None
+            merge_base_commit = merge_base.get("sha") if isinstance(merge_base, dict) else None
+            compare_shape_valid = (
+                isinstance(ahead_by, int)
+                and not isinstance(ahead_by, bool)
+                and isinstance(behind_by, int)
+                and not isinstance(behind_by, bool)
+                and isinstance(compare_status, str)
+                and isinstance(merge_base_commit, str)
+            )
+            if (
+                compare_shape_valid
+                and compare_status == "ahead"
+                and ahead_by > 0
+                and behind_by == 0
+                and merge_base_commit == deployed
+            ):
+                lag_commits = ahead_by
+                source_ancestry = {
+                    **source_ancestry,
+                    "status": "proven",
+                    "method": "github-compare",
+                    "compare_status": compare_status,
+                    "ahead_by": ahead_by,
+                    "behind_by": behind_by,
+                    "merge_base_commit": merge_base_commit,
+                }
+            elif compare_shape_valid:
+                lag_commits = None
+                reasons.append("deployed-source-not-main-ancestor")
+                source_ancestry = {
+                    **source_ancestry,
+                    "status": "rejected",
+                    "method": "github-compare",
+                    "compare_status": compare_status,
+                    "ahead_by": ahead_by,
+                    "behind_by": behind_by,
+                    "merge_base_commit": merge_base_commit,
+                }
+            else:
+                lag_commits = None
                 reasons.append("commit-lag-unavailable")
+                source_ancestry = {
+                    **source_ancestry,
+                    "status": "unproven",
+                    "method": "github-compare",
+                    "compare_status": compare_status,
+                    "ahead_by": ahead_by,
+                    "behind_by": behind_by,
+                    "merge_base_commit": merge_base_commit,
+                }
 
         second_main = github(["api", f"repos/{repository}/commits/main"])
         if not isinstance(second_main, dict) or second_main.get("sha") != main_commit:
@@ -822,6 +923,8 @@ def observe_runtime_refresh(
         "check_summary": check_summary,
         "deployed_source_commit": deployed,
         "deployed_manifest_sha256": manifest_sha,
+        "source_ancestry": source_ancestry,
+        "runtime_source_identity": runtime_source_identity,
         "lag_commits": lag_commits,
         "scheduler_target_state": scheduler_target_state,
         "age_seconds": age_seconds,
@@ -853,6 +956,34 @@ def persist_observation(state_root: Path, observation: dict[str, Any]) -> Path:
     )
     create_only(path, canonical_bytes(observation))
     atomic_write(state_root / "latest-observation.json", canonical_bytes(observation))
+    return path
+
+
+def persist_source_precondition_observation(
+    state_root: Path, *, intent_sha256: str, observation: dict[str, Any]
+) -> Path:
+    if not _is_sha256(intent_sha256):
+        raise RuntimeRefreshError(
+            "source-precondition-intent-digest-invalid",
+            "runtime-refresh intent digest is invalid for source-precondition evidence",
+        )
+    verify_digest(observation, "observation_sha256")
+    observation_sha256 = observation["observation_sha256"]
+    path = (
+        state_root
+        / "source-precondition-observations"
+        / f"{intent_sha256}-{observation_sha256}.json"
+    )
+    try:
+        create_only(path, canonical_bytes(observation))
+    except FileExistsError as exc:
+        existing = read_json(path)
+        verify_digest(existing, "observation_sha256")
+        if existing != observation:
+            raise RuntimeRefreshError(
+                "source-precondition-observation-collision",
+                "persisted source-precondition observation differs from current evidence",
+            ) from exc
     return path
 
 
@@ -2231,6 +2362,121 @@ def _runtime_authority_metadata(spec: dict[str, Any]) -> tuple[dict[str, Any], d
     return metadata, authority
 
 
+def _validated_runtime_source_precondition(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    fields = {
+        "schema_version",
+        "policy",
+        "identity_sources",
+        "require_deployment_registry_identity_match",
+        "registered_deployed_source_commit",
+        "registered_manifest_sha256",
+        "registered_registry_source_commit",
+        "ancestry_verification",
+        "require_target_freshness",
+        "required_before",
+        "fail_closed",
+        "does_not_establish",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise RuntimeRefreshError(
+            "authority-source-precondition-contract-invalid",
+            "runtime authority source_precondition contract is malformed",
+        )
+    commit_fields = (
+        value.get("registered_deployed_source_commit"),
+        value.get("registered_registry_source_commit"),
+    )
+    if (
+        value.get("schema_version") != 1
+        or value.get("policy") != "registered-source-or-verified-target-ancestor"
+        or value.get("identity_sources")
+        != ["deployment-manifest.source_commit", "canonical-registry.source_commit"]
+        or value.get("require_deployment_registry_identity_match") is not True
+        or value.get("ancestry_verification") != "git-merge-base-is-ancestor"
+        or value.get("require_target_freshness") is not True
+        or value.get("required_before") != ["prepare-intent", "apply"]
+        or value.get("fail_closed") is not True
+        or not all(
+            isinstance(item, str)
+            and len(item) == 40
+            and all(character in "0123456789abcdef" for character in item)
+            for item in commit_fields
+        )
+        or commit_fields[0] != commit_fields[1]
+        or not _is_sha256(value.get("registered_manifest_sha256"))
+        or not isinstance(value.get("does_not_establish"), list)
+        or not all(isinstance(item, str) and item for item in value["does_not_establish"])
+    ):
+        raise RuntimeRefreshError(
+            "authority-source-precondition-contract-invalid",
+            "runtime authority source_precondition values are invalid",
+        )
+    return dict(value)
+
+
+def _validate_candidate_source_precondition(
+    candidate: dict[str, Any], source_precondition: dict[str, Any] | None
+) -> None:
+    if source_precondition is None:
+        return
+    ancestry = candidate.get("source_ancestry")
+    identity = candidate.get("runtime_source_identity")
+    deployed = candidate.get("deployed_source_commit")
+    main_commit = candidate.get("main_commit")
+    if (
+        not isinstance(ancestry, dict)
+        or ancestry.get("schema_version") != 1
+        or ancestry.get("status") != "proven"
+        or ancestry.get("deployed_source_commit") != deployed
+        or ancestry.get("main_commit") != main_commit
+    ):
+        raise RuntimeRefreshError(
+            "source-ancestry-unproven",
+            "runtime refresh source ancestry is not proven for the exact target",
+        )
+    method = ancestry.get("method")
+    if method == "same-commit":
+        ancestry_valid = deployed == main_commit
+    elif method == "github-compare":
+        ancestry_valid = (
+            ancestry.get("compare_status") == "ahead"
+            and isinstance(ancestry.get("ahead_by"), int)
+            and not isinstance(ancestry.get("ahead_by"), bool)
+            and ancestry["ahead_by"] > 0
+            and ancestry.get("behind_by") == 0
+            and ancestry.get("merge_base_commit") == deployed
+        )
+    elif method == "first-parent-walk":
+        ancestry_valid = (
+            isinstance(ancestry.get("ahead_by"), int)
+            and not isinstance(ancestry.get("ahead_by"), bool)
+            and ancestry["ahead_by"] > 0
+            and ancestry.get("behind_by") == 0
+            and ancestry.get("merge_base_commit") == deployed
+        )
+    else:
+        ancestry_valid = False
+    if not ancestry_valid:
+        raise RuntimeRefreshError(
+            "source-ancestry-unproven",
+            "runtime refresh source ancestry evidence is malformed or divergent",
+        )
+    if (
+        not isinstance(identity, dict)
+        or identity.get("schema_version") != 1
+        or identity.get("status") != "proven"
+        or identity.get("deployed_source_commit") != deployed
+        or identity.get("registry_source_commit") != deployed
+        or identity.get("registry_reasons") != []
+    ):
+        raise RuntimeRefreshError(
+            "runtime-source-identity-unproven",
+            "deployment manifest and canonical Registry source identity do not match",
+        )
+
+
 def _validate_runtime_refresh_authority_contract(
     *,
     spec: dict[str, Any],
@@ -2274,6 +2520,7 @@ def _validate_runtime_refresh_authority_contract(
             "TaskSpec runtime_refresh_authority contract is not single-use and target-bound",
             details={"mismatched": mismatched},
         )
+    _validated_runtime_source_precondition(authority.get("source_precondition"))
     required_states = authority.get("required_task_state")
     if required_states != list(RUNTIME_AUTHORITY_ALLOWED_STATES):
         raise RuntimeRefreshError(
@@ -2905,6 +3152,88 @@ def bind_runtime_refresh_authority(
     }
 
 
+def _validate_source_precondition_result_evidence(
+    result: dict[str, Any], intent: dict[str, Any]
+) -> None:
+    source_precondition = _validated_runtime_source_precondition(
+        intent.get("source_precondition")
+    )
+    if source_precondition is None:
+        return
+    evidence = result.get("source_precondition_evidence")
+    expected_fields = {
+        "observation_sha256",
+        "observation_path",
+        "source_ancestry",
+        "runtime_source_identity",
+    }
+    observation_sha256 = (
+        evidence.get("observation_sha256") if isinstance(evidence, dict) else None
+    )
+    state_root_value = intent.get("state_root")
+    if (
+        not isinstance(evidence, dict)
+        or set(evidence) != expected_fields
+        or not _is_sha256(observation_sha256)
+        or not isinstance(evidence.get("observation_path"), str)
+        or not isinstance(state_root_value, str)
+        or not state_root_value
+    ):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result has malformed source-precondition evidence",
+        )
+    state_root = Path(state_root_value).expanduser().resolve()
+    expected_path = (
+        state_root
+        / "source-precondition-observations"
+        / f"{intent['intent_sha256']}-{observation_sha256}.json"
+    )
+    if evidence["observation_path"] != str(expected_path):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result source-precondition observation path is not intent-bound",
+        )
+    try:
+        observation = read_json(expected_path)
+        verify_digest(observation, "observation_sha256")
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result source-precondition observation is unavailable or invalid",
+            details={"cause": exc.code},
+        ) from exc
+    if (
+        observation.get("schema_version") != SCHEMA_VERSION
+        or observation.get("kind") != "bureau_runtime_refresh_observation"
+        or observation.get("repository") != intent.get("repository")
+        or observation.get("main_commit") != intent.get("main_commit")
+        or observation.get("observation_sha256") != observation_sha256
+        or observation.get("source_ancestry") != evidence.get("source_ancestry")
+        or observation.get("runtime_source_identity")
+        != evidence.get("runtime_source_identity")
+    ):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "persisted source-precondition observation does not match the result and intent",
+        )
+    _validate_candidate_source_precondition(observation, source_precondition)
+    if result.get("status") == "already_current":
+        if (
+            observation.get("status") != "already_current"
+            or result.get("observed_target_sha256") != observation.get("target_sha256")
+        ):
+            raise RuntimeRefreshError(
+                "source-precondition-result-evidence-invalid",
+                "already-current result is not bound to its persisted live observation",
+            )
+    elif observation.get("target_sha256") != intent.get("target_sha256"):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result source proof targets a different deployment",
+        )
+
+
 def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) -> dict[str, Any]:
     verify_digest(result, "result_sha256")
     if (
@@ -2918,6 +3247,7 @@ def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) 
             "result-intent-binding-invalid",
             "runtime-refresh result does not match the exact persisted intent",
         )
+    _validate_source_precondition_result_evidence(result, intent)
     return result
 
 
@@ -3078,6 +3408,8 @@ def prepare_intent(
     ttl_seconds: int = DEFAULT_INTENT_TTL_SECONDS,
     now: datetime | None = None,
     authority_store: Any | None = None,
+    manifest_path: Path | None = None,
+    observer: Callable[..., dict[str, Any]] = observe_runtime_refresh,
 ) -> tuple[dict[str, Any], Path]:
     verify_digest(candidate, "observation_sha256")
     if candidate.get("status") not in {"candidate", "alert"}:
@@ -3130,6 +3462,48 @@ def prepare_intent(
         approval_task_id=approval_task_id.strip(),
         target_sha256=candidate["target_sha256"],
     )
+    current_authority = _read_authority_task(store, approval_task_id.strip())
+    _metadata, authority_contract = _runtime_authority_metadata(current_authority["spec"])
+    source_precondition = _validated_runtime_source_precondition(
+        authority_contract.get("source_precondition")
+    )
+    if source_precondition is not None:
+        fresh_candidate = observer(
+            repository=candidate["repository"],
+            manifest_path=(
+                manifest_path.expanduser().resolve()
+                if manifest_path is not None
+                else prefix.expanduser().resolve() / "deployment-manifest.json"
+            ),
+            required_checks=tuple(candidate["required_checks"]),
+            now=current,
+        )
+        verify_digest(fresh_candidate, "observation_sha256")
+        if fresh_candidate.get("status") not in {"candidate", "alert"}:
+            raise RuntimeRefreshError(
+                "source-precondition-fresh-candidate-blocked",
+                "fresh runtime-refresh observation is not deployable before intent creation",
+                details={
+                    "status": fresh_candidate.get("status"),
+                    "reason_codes": fresh_candidate.get("reason_codes"),
+                },
+            )
+        _validate_candidate_source_precondition(fresh_candidate, source_precondition)
+        if (
+            fresh_candidate.get("main_commit") != candidate.get("main_commit")
+            or fresh_candidate.get("target_sha256") != candidate.get("target_sha256")
+        ):
+            raise RuntimeRefreshError(
+                "source-precondition-target-drift",
+                "fresh source-precondition observation differs from the reviewed deployment target",
+                details={
+                    "candidate_main_commit": candidate.get("main_commit"),
+                    "fresh_main_commit": fresh_candidate.get("main_commit"),
+                    "candidate_target_sha256": candidate.get("target_sha256"),
+                    "fresh_target_sha256": fresh_candidate.get("target_sha256"),
+                },
+            )
+        candidate = fresh_candidate
     authority_state_store = _authority_store_binding(store)
     workspace = state_root / "workspaces" / candidate["main_commit"]
     intent: dict[str, Any] = {
@@ -3176,6 +3550,8 @@ def prepare_intent(
             "automatic_retry_authority",
         ],
     }
+    if source_precondition is not None:
+        intent["source_precondition"] = source_precondition
     intent = bind_digest(intent, "intent_sha256")
     path = state_root / "intents" / f"{intent['intent_sha256']}.json"
     try:
@@ -5498,6 +5874,16 @@ def apply_runtime_refresh(
         expected_revision=expected_authority["revision"],
         expected_spec_sha256=expected_authority["spec_sha256"],
     )
+    current_authority = _read_authority_task(store, expected_authority["task_id"])
+    _metadata, authority_contract = _runtime_authority_metadata(current_authority["spec"])
+    source_precondition = _validated_runtime_source_precondition(
+        authority_contract.get("source_precondition")
+    )
+    if intent.get("source_precondition") != source_precondition:
+        raise RuntimeRefreshError(
+            "source-precondition-intent-drift",
+            "runtime-refresh intent source precondition differs from current authority",
+        )
     prefix = Path(intent["prefix"]).expanduser().resolve()
     bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
     user_unit_dir = Path(intent["user_unit_dir"]).expanduser().resolve()
@@ -5557,6 +5943,22 @@ def apply_runtime_refresh(
     verify_digest(live, "observation_sha256")
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")
+    _validate_candidate_source_precondition(live, source_precondition)
+    source_precondition_result_fields: dict[str, Any] = {}
+    if source_precondition is not None:
+        source_precondition_observation_path = persist_source_precondition_observation(
+            resolved_state_root,
+            intent_sha256=intent["intent_sha256"],
+            observation=live,
+        )
+        source_precondition_result_fields = {
+            "source_precondition_evidence": {
+                "observation_sha256": live["observation_sha256"],
+                "observation_path": str(source_precondition_observation_path),
+                "source_ancestry": live["source_ancestry"],
+                "runtime_source_identity": live["runtime_source_identity"],
+            }
+        }
     if live.get("status") == "already_current":
         scheduler_evidence = live.get("scheduler")
         manifest_sha256 = live.get("deployed_manifest_sha256")
@@ -5588,6 +5990,7 @@ def apply_runtime_refresh(
                 "finished_at": isoformat(current),
                 "effect_started": False,
                 "lease_binding": binding,
+                **source_precondition_result_fields,
             },
         )
         consume_runtime_refresh_authority(store=store, intent=intent, result=result, now=current)
@@ -5625,6 +6028,7 @@ def apply_runtime_refresh(
             "main_commit": intent["main_commit"],
             "authority_task_spec": bound_authority,
             "lease_binding": binding,
+            **source_precondition_result_fields,
             "started_at": isoformat(current),
             "effect_started": False,
         },
@@ -5678,6 +6082,7 @@ def apply_runtime_refresh(
                 "install_receipt": install_receipt,
                 "readback": evidence,
                 "lease_binding": binding,
+                **source_precondition_result_fields,
                 "finished_at": isoformat(utc_now()),
                 "effect_started": True,
                 "does_not_establish": ["future_runtime_health", "future_main_stability"],
@@ -5712,6 +6117,7 @@ def apply_runtime_refresh(
             "authority_task_spec": bound_authority,
             "error": error,
             "lease_binding": binding,
+            **source_precondition_result_fields,
             "finished_at": isoformat(utc_now()),
             "effect_started": effect_started,
             "workspace_preserved": os.path.lexists(workspace),
@@ -5880,6 +6286,7 @@ def main(argv: list[str] | None = None) -> int:
                 approval_reference=args.approval_reference,
                 approval_task_id=args.approval_task_id,
                 ttl_seconds=args.ttl_seconds,
+                manifest_path=manifest_path,
             )
             print(json.dumps({**intent, "intent_path": str(path)}, sort_keys=True))
             return 0

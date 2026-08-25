@@ -148,6 +148,21 @@ def get_current(connection: sqlite3.Connection, task_id: str) -> dict[str, Any] 
     return {**revision, "updated_at": str(pointer["updated_at"])}
 
 
+def get_by_digest(
+    connection: sqlite3.Connection, task_id: str, spec_sha256: str
+) -> dict[str, Any] | None:
+    validate_schema(connection)
+    row = connection.execute(
+        "SELECT task_id,revision,parent_revision,spec_sha256,spec_json,source,created_at "
+        "FROM task_spec_revisions WHERE task_id=? AND spec_sha256=? "
+        "ORDER BY revision DESC LIMIT 1",
+        (task_id, spec_sha256),
+    ).fetchone()
+    if row is None:
+        return None
+    return _validated_row(row)
+
+
 def current_projection(connection: sqlite3.Connection) -> dict[str, Any]:
     validate_schema(connection)
     tasks: dict[str, dict[str, Any]] = {}

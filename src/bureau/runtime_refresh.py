@@ -5360,6 +5360,104 @@ def _build_no_run_acceptance_evidence(
     return bind_digest(evidence, "evidence_sha256")
 
 
+def _validate_no_run_acceptance_replay_binding(
+    *,
+    store: Any,
+    current: dict[str, Any],
+    spec: dict[str, Any],
+    authority: dict[str, Any],
+    closeout: dict[str, Any],
+) -> None:
+    acceptance_evidence = closeout.get("acceptance_evidence")
+    if acceptance_evidence is None:
+        return
+    current_contract = _validated_no_run_acceptance_contract(
+        spec=spec, authority=authority
+    )
+    expected_current_bindings = {
+        "contract_sha256": sha256_bytes(canonical_bytes(current_contract)),
+        "criterion_ids": sorted(current_contract["criteria"]),
+    }
+    current_mismatched = {
+        key: {
+            "current": expected,
+            "acceptance_evidence": acceptance_evidence.get(key),
+        }
+        for key, expected in expected_current_bindings.items()
+        if acceptance_evidence.get(key) != expected
+    }
+    if current_mismatched:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-drift",
+            (
+                "stored no-run acceptance evidence no longer matches "
+                "the current frozen acceptance contract"
+            ),
+            details={
+                "current_revision": current["revision"],
+                "current_spec_sha256": current["spec_sha256"],
+                "evidence_task_spec_sha256": acceptance_evidence["task_spec_sha256"],
+                "mismatched": current_mismatched,
+            },
+        )
+    try:
+        historical_task_spec = store.task_spec_by_digest(
+            closeout["task_id"], acceptance_evidence["task_spec_sha256"]
+        )
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "cannot prove the no-run acceptance evidence against StateStore TaskSpec history",
+            details={"error": str(exc)},
+        ) from exc
+    if historical_task_spec is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "no-run acceptance evidence is not bound to a historical revision of this TaskSpec",
+            details={
+                "task_id": closeout["task_id"],
+                "task_spec_sha256": acceptance_evidence["task_spec_sha256"],
+            },
+        )
+    try:
+        historical_spec = historical_task_spec["spec"]
+        _, historical_authority = _runtime_authority_metadata(historical_spec)
+        historical_contract = _validated_no_run_acceptance_contract(
+            spec=historical_spec, authority=historical_authority
+        )
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "historical TaskSpec acceptance evidence binding is invalid",
+            details={
+                "revision": historical_task_spec["revision"],
+                "task_spec_sha256": acceptance_evidence["task_spec_sha256"],
+                "error": str(exc),
+            },
+        ) from exc
+    expected_historical_bindings = {
+        "contract_sha256": sha256_bytes(canonical_bytes(historical_contract)),
+        "criterion_ids": sorted(historical_contract["criteria"]),
+    }
+    historical_mismatched = {
+        key: {
+            "historical": expected,
+            "acceptance_evidence": acceptance_evidence.get(key),
+        }
+        for key, expected in expected_historical_bindings.items()
+        if acceptance_evidence.get(key) != expected
+    }
+    if historical_mismatched:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "no-run acceptance evidence does not match its bound historical TaskSpec contract",
+            details={
+                "revision": historical_task_spec["revision"],
+                "mismatched": historical_mismatched,
+            },
+        )
+
+
 def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
     fields = {
         "schema_version",
@@ -6057,6 +6155,13 @@ def _closeout_runtime_refresh_authority(
                 "verified authority cannot be reclassified as a multi-use incident",
             )
         existing_closeout = _validated_runtime_closeout(existing_closeout_value)
+        _validate_no_run_acceptance_replay_binding(
+            store=store,
+            current=current,
+            spec=spec,
+            authority=authority,
+            closeout=existing_closeout,
+        )
         expected_pairs = {
             "task_id": approval_task_id,
             "target_sha256": target_sha256,

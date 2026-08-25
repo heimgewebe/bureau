@@ -86,6 +86,31 @@ def test_revision_cas_and_idempotent_replay(tmp_path: Path) -> None:
         )
 
 
+def test_task_spec_by_digest_reads_historical_revision_without_mutation(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    original = _spec()
+    first = store.put_task_spec(
+        original, idempotency_key="digest-r1", expected_revision=None, source="test"
+    )
+    store.put_task_spec(
+        _spec(title="second", marker="b"),
+        idempotency_key="digest-r2",
+        expected_revision=1,
+        source="test",
+    )
+
+    historical = store.task_spec_by_digest("TEST-T001", first["spec_sha256"])
+
+    assert historical is not None
+    assert historical["revision"] == 1
+    assert historical["spec_sha256"] == first["spec_sha256"]
+    assert historical["spec"] == original
+    assert store.task_spec_by_digest("TEST-T001", "f" * 64) is None
+    assert store.task_spec("TEST-T001")["revision"] == 2
+
+
 def test_reverting_to_prior_content_creates_a_new_revision(tmp_path: Path) -> None:
     store = _store(tmp_path)
     original = _spec()

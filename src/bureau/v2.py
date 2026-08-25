@@ -3727,6 +3727,15 @@ class StateStore:
             except task_specs.TaskSpecError as exc:
                 raise legacy.StateError(str(exc)) from exc
 
+    def task_spec_by_digest(
+        self, task_id: str, spec_sha256: str
+    ) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            try:
+                return task_specs.get_by_digest(connection, task_id, spec_sha256)
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+
     def put_task_spec(
         self,
         spec: dict[str, Any],

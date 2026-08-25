@@ -297,6 +297,13 @@ Lease-, Effekt-Historien-, StateStore- und Run-/No-Run-Bindung. Beim Readback wi
 Kapsel nicht nur gegen ihren eigenen Digest geprüft, sondern auch gegen Task-ID,
 Runtime-Result, immutable Readback und Lease-Release des umschließenden Closeouts. Eine
 formal gültige, aber aus einem anderen Closeout transplantierte Kapsel ist damit ungültig.
+Bei einem idempotenten Replay wird zusätzlich der aktuelle normalisierte
+Acceptance-Vertrag erneut berechnet: `contract_sha256` und `criterion_ids` müssen weiter
+mit der gespeicherten Kapsel übereinstimmen. Deren `task_spec_sha256` muss außerdem über
+den typisierten StateStore-Lesepfad auf eine digestgültige historische Revision derselben
+Task auflösen, deren normalisierter Acceptance-Vertrag ebenfalls exakt zur Kapsel passt.
+Eine spätere TaskSpec-Revision kann daher weder neue Kriterien noch einen geänderten
+No-Run-Vertrag mit alter Acceptance-Evidenz weiterverwenden.
 Der anschließende TaskSpec-Readback und ein erneuter StateStore-Replay müssen passen. Ein
 identischer Replay ist wirkungsfrei; fremde, fehlende, nicht deployte, driftende oder
 manipulierte Evidenz blockiert. Terminalität wird nie aus

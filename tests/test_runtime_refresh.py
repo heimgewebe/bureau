@@ -4765,6 +4765,128 @@ def test_no_run_closeout_rejects_cross_bound_acceptance_evidence_on_replay(
     assert store.list_runs() == []
 
 
+def test_no_run_closeout_rejects_frozen_acceptance_contract_drift_on_replay(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-NO-RUN-FROZEN-ACCEPTANCE-CONTRACT-DRIFT"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    assert closeout["closeout"]["status"] == "verified"
+
+    def expand_frozen_acceptance(spec: dict[str, Any]) -> None:
+        spec["acceptance"].append(
+            {
+                "id": "post-closeout-proof",
+                "assertion": "A later frozen criterion must have its own typed evidence.",
+                "evidence_type": "object",
+                "verifier": "manual_observation",
+                "verifier_config": {
+                    "observation_scope": f"test:{task_id}:post-closeout-proof"
+                },
+            }
+        )
+        authority = spec["metadata"]["runtime_refresh_authority"]
+        authority["no_run_closeout_acceptance"]["criteria"]["post-closeout-proof"] = {
+            "verifier": refresh.RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER,
+            "required_evidence": ["state-store-integrity"],
+        }
+
+    revise_authority(
+        store,
+        task_id,
+        expand_frozen_acceptance,
+        key="revise:frozen-acceptance-contract-after-closeout",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-contract-drift"
+    assert set(caught.value.details["mismatched"]) == {
+        "contract_sha256",
+        "criterion_ids",
+    }
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
+def test_no_run_closeout_rejects_unbound_acceptance_task_spec_on_replay(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-NO-RUN-UNBOUND-ACCEPTANCE-TASK-SPEC"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    assert closeout["closeout"]["status"] == "verified"
+
+    def transplant_task_spec_binding(spec: dict[str, Any]) -> None:
+        runtime_closeout = spec["metadata"]["runtime_closeout"]
+        evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
+        evidence["task_spec_sha256"] = "f" * 64
+        evidence.pop("evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
+
+    revise_authority(
+        store,
+        task_id,
+        transplant_task_spec_binding,
+        key="tamper:unbound-acceptance-task-spec",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-task-spec-binding-invalid"
+    assert caught.value.details["task_spec_sha256"] == "f" * 64
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
 def test_no_run_closeout_rejects_missing_frozen_acceptance_mapping(tmp_path: Path) -> None:
     task_id = "BUREAU-NO-RUN-MISSING-ACCEPTANCE-MAPPING"
     intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)

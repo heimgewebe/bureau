@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2174-REPOGROUND-T020-20260825",
+  "title": "Single-Use Bureau-Runtime-Refresh nach PR #2174 für RepoGround T020",
+  "state": "ready",
+  "goal": "Execute exactly one new source- and target-bound Bureau runtime refresh to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The selected target must contain PR #2174 merge 5cb35b9ec825fba4793ebdb0ddc493a19365da84 and this authority's protected merge. The sole purpose is to restore exact immutable Bureau runtime and canonical Registry identity so the already-evidenced REPOGROUND-LEGACY-RECONCILIATION-V1-T020 formal no-run closeout and the broader T025 reconciliation can resume through their normal typed contracts. This authority grants no RepoGround code mutation, queue, claim, dispatch, task-supply, product-code, foreign-work or general repository authority.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound bootstrap only. The explicit 2026-08-25 operator continuation 'weiter @grabowski' authorizes autonomous completion of the current RepoGround/Bureau reconciliation, including the strictly necessary Bureau runtime convergence after protected PR #2174. No runtime effect may start until fresh protected-main/CI observation, exact target binding, authoritative TaskSpec preflight, typed deployment/Registry source identity and Git ancestry preconditions, live intent-bound leases and runtime-refresh readback gates all pass. Repeat the source precondition immediately before apply. No blind retry after any effect-started ambiguity."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "fresh-current-main-containing-pr2174",
+      "assertion": "Immediately before prepare-intent and again before apply, protected GitHub main is freshly observed; the exact selected target contains 5cb35b9ec825fba4793ebdb0ddc493a19365da84 as an ancestor and contains this authority's protected merge. Required checks for the exact target, including validate (3.10), validate (3.12) and the Registry registration freshness gate where applicable, are successful. Any target drift invalidates the candidate before effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-pr2174-repoground-t020-20260825:fresh-main"
+      }
+    },
+    {
+      "id": "source-precondition-before-prepare-and-apply",
+      "assertion": "Immediately before prepare-intent and again immediately before apply, the active deployment manifest and canonical Registry both report the same installed source identity. The manifest digest is the registered digest 5a972d2e1a85483b7eda1e1db7d93060e5f535dd484043efa0a7ca92b8378363 unless a fresh verified source-to-target ancestor transition permitted by the contract is proven. The installed source is exactly the registered source 791be3bd6eb680af33f579c44d54988fcade7f4b or is independently proven by Git ancestry to be an ancestor of the freshly selected target. Any identity mismatch, unrelated or diverged source history, unavailable ancestry proof, stale target or manifest drift blocks the effect fail-closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-pr2174-repoground-t020-20260825:source-precondition"
+      }
+    },
+    {
+      "id": "protected-publication-and-missing-only-adoption",
+      "assertion": "This exact create-only TaskSpec is published through a normal protected pull request. After merge, the exact main TaskSpec bytes, TaskSpec SHA256, publication PR and publication merge commit are independently read back. StateStore adoption uses only the typed bureau-runtime-refresh adopt-authority missing-only transition and must refuse any pre-existing foreign or conflicting StateStore revision.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-pr2174-repoground-t020-20260825:publication-adoption"
+      }
+    },
+    {
+      "id": "single-runtime-effect",
+      "assertion": "This authority starts at most one runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are read back from observation, intent, attempt, result, manifest, launcher, package, snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-pr2174-repoground-t020-20260825:single-effect"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "After a successful refresh, independently read deployment manifest, immutable release identity, installed package/launcher identity and canonical Registry snapshot bind the same source commit. That source contains 5cb35b9ec825fba4793ebdb0ddc493a19365da84 and this authority's protected merge, StateStore/Registry/runtime identity is consistent, required Bureau services and timers are healthy, and Bureau/Grabowski doctor surfaces report no refresh-created failure.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-pr2174-repoground-t020-20260825:immutable-readback"
+      }
+    },
+    {
+      "id": "single-use-consumption-and-runtime-only-scope",
+      "assertion": "The runtime-refresh result is bound to this exact authority revision/digest, observation, target, intent and attempt. The authority is consumed exactly once after successful immutable readback; no second refresh effect exists. Own refresh leases are released by the typed result-bound release path. This authority grants no RepoGround mutation, queue, dispatch, unrelated claim, task-supply, foreign-work, product-code or general repository mutation authority.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-pr2174-repoground-t020-20260825:consumption-scope"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "The currently integrity-valid deployed Bureau runtime remains authoritative until a new immutable result is fully read back. If publication/adoption, source identity, ancestry, target freshness, lease binding or apply outcome is unclear, preserve all precondition, observation, intent, attempt, result, workspace, backup, manifest, Registry, StateStore, authority and lease evidence and do not retry blindly. Reconciliation requires the typed existing recovery path or a separately authorized successor; never rewrite single-use history."
+  },
+  "metadata": {
+    "source": "Direct operator continuation on 2026-08-25 of the RepoGround T020/T025 reconciliation. Fresh runtime-refresh observation showed protected Bureau main 5cb35b9ec825fba4793ebdb0ddc493a19365da84 from PR #2174, successful validate (3.10)/(3.12), and installed Bureau source 791be3bd6eb680af33f579c44d54988fcade7f4b with matching deployment-manifest and canonical Registry source identities.",
+    "required_ancestor_merge": "5cb35b9ec825fba4793ebdb0ddc493a19365da84",
+    "required_ancestor_pr": 2174,
+    "main_at_registration": "5cb35b9ec825fba4793ebdb0ddc493a19365da84",
+    "deployed_source_at_registration": "791be3bd6eb680af33f579c44d54988fcade7f4b",
+    "canonical_registry_source_at_registration": "791be3bd6eb680af33f579c44d54988fcade7f4b",
+    "deployed_manifest_sha256_at_registration": "5a972d2e1a85483b7eda1e1db7d93060e5f535dd484043efa0a7ca92b8378363",
+    "runtime_refresh_observation_sha256_at_registration": "d338248462da4705b54fe772d34b49d2737626787ba64a71d59eea741734edb9",
+    "candidate_target_sha256_at_registration": "873fae91479e983c3e68e14afe62c9d881d48d937b2dea24fca35efe3ae5d1cf",
+    "unblock_task_ids": [
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T020",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T025"
+    ],
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse any consumed or previously target-bound runtime authority",
+      "permission to bypass protected PR, StateStore adoption, CI, source-precondition, lease or immutable readback gates",
+      "RepoGround code mutation",
+      "queue, claim, dispatch or task-supply publication authority",
+      "general repository or foreign-work mutation authority",
+      "T020 or T025 completion before their own typed closeout"
+    ],
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "target_binding": "candidate.target_sha256",
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "successor_task_required_after_terminal": true,
+      "source_precondition": {
+        "schema_version": 1,
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "791be3bd6eb680af33f579c44d54988fcade7f4b",
+        "registered_registry_source_commit": "791be3bd6eb680af33f579c44d54988fcade7f4b",
+        "registered_manifest_sha256": "5a972d2e1a85483b7eda1e1db7d93060e5f535dd484043efa0a7ca92b8378363",
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "fail_closed": true,
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ]
+      }
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2174-REPOGROUND-T020-20260825.json",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The installed immutable Bureau release predates protected main PR #2174, and the normal stale runtime cannot itself publish the T020 TaskSpec repair or a new exact source-preconditioned runtime authority. Therefore exactly one create-only TaskSpec is published through protected GitHub review and, after merge, adopted missing-only through the typed runtime-refresh adoption contract. No queue or live StateStore task truth is mutated by the Git publication itself.",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ]
+    }
+  }
+}

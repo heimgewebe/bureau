@@ -35,9 +35,9 @@ class SupplyError(RuntimeError):
 @dataclass(frozen=True)
 class SupplyPolicy:
     schema_version: int = SUPPLY_SCHEMA_VERSION
-    floor: int = 8
-    refill_target: int = 12
-    max_new_per_cycle: int = 4
+    floor: int = 12
+    refill_target: int = 20
+    max_new_per_cycle: int = 8
     bucket_hours: int = 24
 
     def __post_init__(self) -> None:

@@ -180,6 +180,10 @@ SATISFIED_PACKABLE_TASK_IDS = (
     "CCM-V1-T006",
     "CCM-V1-T007",
     "COMMONWORLD-PUBLIC-GLOBE-V1-T002",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+    "OPERATOR-INTEGRATION-LOOP-V1-T033",
+    "WELTGEWEBE-OS-V1-T041",
+    "OPERATOR-MACHINE-READABILITY-V1-T007",
 )
 
 
@@ -288,7 +292,7 @@ def test_selected_but_unbound_candidates_fail_closed_without_worker_profile(
     assert summary["metrics"]["normal_claimable_count"] == 0
     assert summary["metrics"]["total_claimable_count"] == 0
     assert summary["metrics"]["joint_claimable_count"] == 0
-    assert summary["metrics"]["shortage_to_target"] == 12
+    assert summary["metrics"]["shortage_to_target"] == SupplyPolicy().refill_target
     assert summary["status"] == "blocked"
     assert "worker-capability-profile-unbound" in summary["blockers"]
     persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
@@ -356,7 +360,7 @@ def test_written_report_is_consumable_by_the_agent_frontier(tmp_path: Path) -> N
     assert consumed.get("invalid") is not True
     assert consumed["report_sha256"] == summary["report_sha256"]
     assert consumed["metrics"]["total_claimable_count"] == 0
-    assert consumed["metrics"]["floor"] == 8
+    assert consumed["metrics"]["floor"] == SupplyPolicy().floor
 
 
 def canonical_runtime_identity(root: Path, *, head: str = HEAD) -> dict[str, object]:
@@ -677,11 +681,11 @@ def test_bound_jointly_feasible_frontier_publishes_only_compatible_refill(
     assert summary["metrics"]["joint_claimable_count"] == 7
     assert summary["status"] == "refill-proposed"
     assert summary["publication"]["status"] == "published"
-    assert len(summary["publication"]["created_task_ids"]) == 4
+    assert len(summary["publication"]["created_task_ids"]) == SupplyPolicy().max_new_per_cycle
     persisted = json.loads(Path(summary["report_path"]).read_text(encoding="utf-8"))
     assert persisted["feasibility"]["worker_profile"]["bound"] is True
     assert persisted["metrics"]["joint_claimable_count"] == 7
-    assert persisted["metrics"]["projected_joint_claimable_count"] == 11
+    assert persisted["metrics"]["projected_joint_claimable_count"] == 15
     assert persisted["feasibility"]["floor_reachable"] is True
     created = [
         proposal
@@ -693,6 +697,10 @@ def test_bound_jointly_feasible_frontier_publishes_only_compatible_refill(
         "scout-schauwerk",
         "scout-chronik",
         "scout-lenskit",
+        "scout-systemkatalog",
+        "scout-heimlern",
+        "scout-semantah",
+        "scout-wgx",
     ]
     assert all(proposal["task"]["claims"][0]["mode"] == "read" for proposal in created)
     assert all("approval" not in proposal["task"]["execution"] for proposal in created)
@@ -712,9 +720,9 @@ def test_normal_jointly_claimable_work_is_not_displaced_by_fallbacks(
     )
 
     assert summary["status"] == "satisfied"
-    assert summary["metrics"]["normal_claimable_count"] == 8
-    assert summary["metrics"]["total_claimable_count"] == 8
-    assert summary["metrics"]["joint_claimable_count"] == 8
+    assert summary["metrics"]["normal_claimable_count"] == SupplyPolicy().floor
+    assert summary["metrics"]["total_claimable_count"] == SupplyPolicy().floor
+    assert summary["metrics"]["joint_claimable_count"] == SupplyPolicy().floor
     assert summary["metrics"]["proposal_count"] == 0
     assert summary["metrics"]["shortage_to_target"] == 0
     assert summary["publication"]["attempted"] is False

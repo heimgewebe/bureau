@@ -1364,6 +1364,44 @@ def test_apply_deployed_result_binds_source_precondition_proof(tmp_path: Path) -
     )
     assert started["source_precondition_evidence"] == proof
 
+    proof_path = Path(proof["observation_path"])
+    proof_path.unlink()
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=state_root,
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("result replay must not re-observe"),
+            source_preparer=lambda **_: pytest.fail("result replay must not prepare source"),
+            installer=lambda **_: pytest.fail("result replay must not install"),
+            readback=lambda **_: pytest.fail("result replay must not read back effects"),
+        )
+    assert missing.value.code == "source-precondition-result-evidence-invalid"
+
+    tampered = json.loads(json.dumps(observed))
+    tampered["observed_at"] = refresh.isoformat(NOW + timedelta(seconds=1))
+    tampered.pop("observation_sha256", None)
+    tampered = refresh.bind_digest(tampered, "observation_sha256")
+    assert tampered["observation_sha256"] != observed["observation_sha256"]
+    refresh.create_only(proof_path, refresh.canonical_bytes(tampered))
+    with pytest.raises(refresh.RuntimeRefreshError) as replaced:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=state_root,
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("result replay must not re-observe"),
+            source_preparer=lambda **_: pytest.fail("result replay must not prepare source"),
+            installer=lambda **_: pytest.fail("result replay must not install"),
+            readback=lambda **_: pytest.fail("result replay must not read back effects"),
+        )
+    assert replaced.value.code == "source-precondition-result-evidence-invalid"
+
 
 def test_apply_already_current_result_binds_source_precondition_proof(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(tmp_path)
@@ -1429,7 +1467,24 @@ def test_apply_already_current_result_binds_source_precondition_proof(tmp_path: 
     assert result["status"] == "already_current"
     assert result["effect_started"] is False
     assert proof["observation_sha256"] == live["observation_sha256"]
-    assert refresh.read_json(Path(proof["observation_path"])) == live
+    proof_path = Path(proof["observation_path"])
+    assert refresh.read_json(proof_path) == live
+
+    proof_path.unlink()
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: pytest.fail("no-effect replay must not re-observe"),
+            source_preparer=lambda **_: pytest.fail("no-effect replay must not prepare source"),
+            installer=lambda **_: pytest.fail("no-effect replay must not install"),
+            readback=lambda **_: pytest.fail("no-effect replay must not read back effects"),
+        )
+    assert missing.value.code == "source-precondition-result-evidence-invalid"
 
 
 def test_apply_rejects_fresh_diverged_source_before_effect(tmp_path: Path) -> None:

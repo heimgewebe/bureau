@@ -3152,6 +3152,88 @@ def bind_runtime_refresh_authority(
     }
 
 
+def _validate_source_precondition_result_evidence(
+    result: dict[str, Any], intent: dict[str, Any]
+) -> None:
+    source_precondition = _validated_runtime_source_precondition(
+        intent.get("source_precondition")
+    )
+    if source_precondition is None:
+        return
+    evidence = result.get("source_precondition_evidence")
+    expected_fields = {
+        "observation_sha256",
+        "observation_path",
+        "source_ancestry",
+        "runtime_source_identity",
+    }
+    observation_sha256 = (
+        evidence.get("observation_sha256") if isinstance(evidence, dict) else None
+    )
+    state_root_value = intent.get("state_root")
+    if (
+        not isinstance(evidence, dict)
+        or set(evidence) != expected_fields
+        or not _is_sha256(observation_sha256)
+        or not isinstance(evidence.get("observation_path"), str)
+        or not isinstance(state_root_value, str)
+        or not state_root_value
+    ):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result has malformed source-precondition evidence",
+        )
+    state_root = Path(state_root_value).expanduser().resolve()
+    expected_path = (
+        state_root
+        / "source-precondition-observations"
+        / f"{intent['intent_sha256']}-{observation_sha256}.json"
+    )
+    if evidence["observation_path"] != str(expected_path):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result source-precondition observation path is not intent-bound",
+        )
+    try:
+        observation = read_json(expected_path)
+        verify_digest(observation, "observation_sha256")
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result source-precondition observation is unavailable or invalid",
+            details={"cause": exc.code},
+        ) from exc
+    if (
+        observation.get("schema_version") != SCHEMA_VERSION
+        or observation.get("kind") != "bureau_runtime_refresh_observation"
+        or observation.get("repository") != intent.get("repository")
+        or observation.get("main_commit") != intent.get("main_commit")
+        or observation.get("observation_sha256") != observation_sha256
+        or observation.get("source_ancestry") != evidence.get("source_ancestry")
+        or observation.get("runtime_source_identity")
+        != evidence.get("runtime_source_identity")
+    ):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "persisted source-precondition observation does not match the result and intent",
+        )
+    _validate_candidate_source_precondition(observation, source_precondition)
+    if result.get("status") == "already_current":
+        if (
+            observation.get("status") != "already_current"
+            or result.get("observed_target_sha256") != observation.get("target_sha256")
+        ):
+            raise RuntimeRefreshError(
+                "source-precondition-result-evidence-invalid",
+                "already-current result is not bound to its persisted live observation",
+            )
+    elif observation.get("target_sha256") != intent.get("target_sha256"):
+        raise RuntimeRefreshError(
+            "source-precondition-result-evidence-invalid",
+            "runtime-refresh result source proof targets a different deployment",
+        )
+
+
 def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) -> dict[str, Any]:
     verify_digest(result, "result_sha256")
     if (
@@ -3165,6 +3247,7 @@ def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) 
             "result-intent-binding-invalid",
             "runtime-refresh result does not match the exact persisted intent",
         )
+    _validate_source_precondition_result_evidence(result, intent)
     return result
 
 

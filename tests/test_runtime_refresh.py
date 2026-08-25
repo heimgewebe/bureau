@@ -1192,6 +1192,133 @@ def test_prepare_intent_rejects_fresh_target_drift(tmp_path: Path) -> None:
     assert not (state_root / "intents").exists()
 
 
+def test_prepare_intent_uses_explicit_manifest_for_fresh_source_precondition_observation(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "custom-runtime/active-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    github, _calls = github_fixture()
+    observed = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+    )
+    task_id = "BUREAU-SOURCE-PRECONDITION-CUSTOM-MANIFEST"
+    store = seed_authority_store(tmp_path / "bureau-state", task_id, source_precondition=True)
+    observed_paths: list[Path] = []
+
+    def observer(**kwargs: Any) -> dict[str, Any]:
+        observed_paths.append(kwargs["manifest_path"])
+        return observed
+
+    intent, _intent_path = refresh.prepare_intent(
+        candidate=observed,
+        state_root=(tmp_path / "state").resolve(),
+        prefix=(tmp_path / "different-prefix").resolve(),
+        bin_dir=(tmp_path / "bin").resolve(),
+        user_unit_dir=(tmp_path / "systemd/user").resolve(),
+        libexec_dir=(tmp_path / "libexec").resolve(),
+        remote_url="file:///tmp/bureau.git",
+        authorized_by="chatgpt",
+        authorization="User explicitly authorized source-precondition test.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id=task_id,
+        now=NOW,
+        authority_store=store,
+        manifest_path=manifest_path,
+        observer=observer,
+    )
+
+    assert observed_paths == [manifest_path.resolve()]
+    assert intent["observation_sha256"] == observed["observation_sha256"]
+
+
+def test_main_prepare_intent_forwards_global_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    candidate_path = tmp_path / "candidate.json"
+    candidate_path.write_text("{}\n", encoding="utf-8")
+    manifest_path = tmp_path / "custom-runtime/active-manifest.json"
+    captured: dict[str, Any] = {}
+
+    def fake_prepare_intent(**kwargs: Any) -> tuple[dict[str, Any], Path]:
+        captured.update(kwargs)
+        return {"kind": "stub-intent"}, tmp_path / "intent.json"
+
+    monkeypatch.setattr(refresh, "prepare_intent", fake_prepare_intent)
+
+    assert (
+        refresh.main(
+            [
+                "--state-root",
+                str(tmp_path / "state"),
+                "--manifest",
+                str(manifest_path),
+                "prepare-intent",
+                "--candidate",
+                str(candidate_path),
+                "--authorized-by",
+                "chatgpt",
+                "--authorization",
+                "Explicit custom manifest forwarding test.",
+                "--approval-reference",
+                "a" * 64,
+                "--approval-task-id",
+                "BUREAU-CUSTOM-MANIFEST-CLI",
+            ]
+        )
+        == 0
+    )
+    assert captured["manifest_path"] == manifest_path.resolve()
+
+
+def test_apply_persists_source_precondition_proof_before_source_preparation(
+    tmp_path: Path,
+) -> None:
+    observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(tmp_path)
+    binding, resource_db = lease_for(tmp_path / "leases", intent)
+    state_root = Path(intent["state_root"])
+    expected_path = (
+        state_root
+        / "source-precondition-observations"
+        / f"{intent['intent_sha256']}-{observed['observation_sha256']}.json"
+    )
+
+    def source_preparer(**_: Any) -> dict[str, Any]:
+        assert refresh.read_json(expected_path) == observed
+        raise refresh.RuntimeRefreshError(
+            "stop-after-source-precondition-proof",
+            "test stops after durable pre-effect source proof",
+        )
+
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=binding,
+        manifest_path=manifest_path,
+        state_root=state_root,
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: observed,
+        source_preparer=source_preparer,
+        installer=lambda **_: pytest.fail("installer must not start"),
+        readback=lambda **_: pytest.fail("readback must not start"),
+    )
+
+    proof = result["source_precondition_evidence"]
+    assert result["status"] == "failed"
+    assert result["effect_started"] is False
+    assert proof["observation_sha256"] == observed["observation_sha256"]
+    assert proof["observation_path"] == str(expected_path)
+    assert proof["source_ancestry"] == observed["source_ancestry"]
+    assert proof["runtime_source_identity"] == observed["runtime_source_identity"]
+    started = refresh.read_json(
+        state_root / "attempts" / intent["target_sha256"] / "started.json"
+    )
+    assert started["source_precondition_evidence"] == proof
+
+
 def test_apply_rejects_fresh_diverged_source_before_effect(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(tmp_path)
     binding, resource_db = lease_for(tmp_path / "leases", intent)

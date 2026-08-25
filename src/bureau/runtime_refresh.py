@@ -959,6 +959,34 @@ def persist_observation(state_root: Path, observation: dict[str, Any]) -> Path:
     return path
 
 
+def persist_source_precondition_observation(
+    state_root: Path, *, intent_sha256: str, observation: dict[str, Any]
+) -> Path:
+    if not _is_sha256(intent_sha256):
+        raise RuntimeRefreshError(
+            "source-precondition-intent-digest-invalid",
+            "runtime-refresh intent digest is invalid for source-precondition evidence",
+        )
+    verify_digest(observation, "observation_sha256")
+    observation_sha256 = observation["observation_sha256"]
+    path = (
+        state_root
+        / "source-precondition-observations"
+        / f"{intent_sha256}-{observation_sha256}.json"
+    )
+    try:
+        create_only(path, canonical_bytes(observation))
+    except FileExistsError as exc:
+        existing = read_json(path)
+        verify_digest(existing, "observation_sha256")
+        if existing != observation:
+            raise RuntimeRefreshError(
+                "source-precondition-observation-collision",
+                "persisted source-precondition observation differs from current evidence",
+            ) from exc
+    return path
+
+
 def launcher_mutation_resource_keys(*, prefix: Path, bin_dir: Path) -> list[str]:
     manifest_path = prefix / "deployment-manifest.json"
     keys: set[str] = set()
@@ -3297,6 +3325,7 @@ def prepare_intent(
     ttl_seconds: int = DEFAULT_INTENT_TTL_SECONDS,
     now: datetime | None = None,
     authority_store: Any | None = None,
+    manifest_path: Path | None = None,
     observer: Callable[..., dict[str, Any]] = observe_runtime_refresh,
 ) -> tuple[dict[str, Any], Path]:
     verify_digest(candidate, "observation_sha256")
@@ -3358,7 +3387,11 @@ def prepare_intent(
     if source_precondition is not None:
         fresh_candidate = observer(
             repository=candidate["repository"],
-            manifest_path=prefix.expanduser().resolve() / "deployment-manifest.json",
+            manifest_path=(
+                manifest_path.expanduser().resolve()
+                if manifest_path is not None
+                else prefix.expanduser().resolve() / "deployment-manifest.json"
+            ),
             required_checks=tuple(candidate["required_checks"]),
             now=current,
         )
@@ -5828,6 +5861,21 @@ def apply_runtime_refresh(
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")
     _validate_candidate_source_precondition(live, source_precondition)
+    source_precondition_result_fields: dict[str, Any] = {}
+    if source_precondition is not None:
+        source_precondition_observation_path = persist_source_precondition_observation(
+            resolved_state_root,
+            intent_sha256=intent["intent_sha256"],
+            observation=live,
+        )
+        source_precondition_result_fields = {
+            "source_precondition_evidence": {
+                "observation_sha256": live["observation_sha256"],
+                "observation_path": str(source_precondition_observation_path),
+                "source_ancestry": live["source_ancestry"],
+                "runtime_source_identity": live["runtime_source_identity"],
+            }
+        }
     if live.get("status") == "already_current":
         scheduler_evidence = live.get("scheduler")
         manifest_sha256 = live.get("deployed_manifest_sha256")
@@ -5859,6 +5907,7 @@ def apply_runtime_refresh(
                 "finished_at": isoformat(current),
                 "effect_started": False,
                 "lease_binding": binding,
+                **source_precondition_result_fields,
             },
         )
         consume_runtime_refresh_authority(store=store, intent=intent, result=result, now=current)
@@ -5896,6 +5945,7 @@ def apply_runtime_refresh(
             "main_commit": intent["main_commit"],
             "authority_task_spec": bound_authority,
             "lease_binding": binding,
+            **source_precondition_result_fields,
             "started_at": isoformat(current),
             "effect_started": False,
         },
@@ -5949,6 +5999,7 @@ def apply_runtime_refresh(
                 "install_receipt": install_receipt,
                 "readback": evidence,
                 "lease_binding": binding,
+                **source_precondition_result_fields,
                 "finished_at": isoformat(utc_now()),
                 "effect_started": True,
                 "does_not_establish": ["future_runtime_health", "future_main_stability"],
@@ -5983,6 +6034,7 @@ def apply_runtime_refresh(
             "authority_task_spec": bound_authority,
             "error": error,
             "lease_binding": binding,
+            **source_precondition_result_fields,
             "finished_at": isoformat(utc_now()),
             "effect_started": effect_started,
             "workspace_preserved": os.path.lexists(workspace),
@@ -6151,6 +6203,7 @@ def main(argv: list[str] | None = None) -> int:
                 approval_reference=args.approval_reference,
                 approval_task_id=args.approval_task_id,
                 ttl_seconds=args.ttl_seconds,
+                manifest_path=manifest_path,
             )
             print(json.dumps({**intent, "intent_path": str(path)}, sort_keys=True))
             return 0

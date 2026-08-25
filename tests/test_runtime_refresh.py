@@ -1319,6 +1319,119 @@ def test_apply_persists_source_precondition_proof_before_source_preparation(
     assert started["source_precondition_evidence"] == proof
 
 
+def test_apply_deployed_result_binds_source_precondition_proof(tmp_path: Path) -> None:
+    observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(tmp_path)
+    binding, resource_db = lease_for(tmp_path / "deployed-proof-leases", intent)
+    state_root = Path(intent["state_root"])
+
+    def source_preparer(**kwargs: Any) -> dict[str, Any]:
+        kwargs["workspace"].mkdir(parents=True)
+        return {
+            "head": MAIN,
+            "root": str(kwargs["workspace"]),
+            "dirty": False,
+            "detached": True,
+        }
+
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=binding,
+        manifest_path=manifest_path,
+        state_root=state_root,
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: observed,
+        source_preparer=source_preparer,
+        installer=lambda **_: {
+            "manifest_sha256": "a" * 64,
+            "rollback": {"directory": "/rollback"},
+        },
+        readback=lambda **_: {
+            "source_commit": MAIN,
+            "manifest_sha256": "a" * 64,
+            "check_valid": True,
+            "runtime_identity_valid": True,
+        },
+    )
+
+    proof = result["source_precondition_evidence"]
+    assert result["status"] == "deployed"
+    assert result["effect_started"] is True
+    assert proof["observation_sha256"] == observed["observation_sha256"]
+    assert refresh.read_json(Path(proof["observation_path"])) == observed
+    started = refresh.read_json(
+        state_root / "attempts" / intent["target_sha256"] / "started.json"
+    )
+    assert started["source_precondition_evidence"] == proof
+
+
+def test_apply_already_current_result_binds_source_precondition_proof(tmp_path: Path) -> None:
+    observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(tmp_path)
+    write_registry_bound_manifest(manifest_path, source_commit=MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+            "main_commit": MAIN,
+            "lag_commits": 0,
+            "scheduler_target_state": "converged",
+            "reason_codes": [],
+            "scheduler": scheduler,
+            "source_ancestry": {
+                "schema_version": 1,
+                "status": "proven",
+                "method": "same-commit",
+                "deployed_source_commit": MAIN,
+                "main_commit": MAIN,
+                "compare_status": "identical",
+                "ahead_by": 0,
+                "behind_by": 0,
+                "merge_base_commit": MAIN,
+            },
+            "runtime_source_identity": {
+                "schema_version": 1,
+                "status": "proven",
+                "deployed_source_commit": MAIN,
+                "registry_source_commit": MAIN,
+                "registry_reasons": [],
+            },
+        }
+    )
+    live["target_sha256"] = refresh.sha256_bytes(
+        refresh.canonical_bytes(refresh._target_payload(live))
+    )
+    live.pop("observation_sha256", None)
+    live = refresh.bind_digest(live, "observation_sha256")
+    binding, resource_db = lease_for(tmp_path / "already-current-proof-leases", intent)
+
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: live,
+        source_preparer=lambda **_: pytest.fail("already-current must not prepare source"),
+        installer=lambda **_: pytest.fail("already-current must not install"),
+        readback=lambda **_: pytest.fail("already-current must not read back installer effects"),
+    )
+
+    proof = result["source_precondition_evidence"]
+    assert result["status"] == "already_current"
+    assert result["effect_started"] is False
+    assert proof["observation_sha256"] == live["observation_sha256"]
+    assert refresh.read_json(Path(proof["observation_path"])) == live
+
+
 def test_apply_rejects_fresh_diverged_source_before_effect(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(tmp_path)
     binding, resource_db = lease_for(tmp_path / "leases", intent)

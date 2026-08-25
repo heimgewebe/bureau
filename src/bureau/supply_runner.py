@@ -37,6 +37,7 @@ from .read_only_state import ReadOnlyStateStore
 from .runtime_identity import bureau_runtime_identity
 from .task_specs import task_spec_digest
 from .task_supply import (
+    DEFAULT_SUPPLY_POLICY,
     SupplyError,
     SupplyPolicy,
     _fsync_directory,
@@ -1062,10 +1063,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--state-root", help="task-supply artifact root")
     parser.add_argument("--bureau-state-db")
     parser.add_argument("--bureau-state-root")
-    parser.add_argument("--floor", type=int, default=8)
-    parser.add_argument("--refill-target", type=int, default=12)
-    parser.add_argument("--max-new-per-cycle", type=int, default=4)
-    parser.add_argument("--bucket-hours", type=int, default=24)
+    parser.add_argument("--floor", type=int, default=DEFAULT_SUPPLY_POLICY.floor)
+    parser.add_argument(
+        "--refill-target", type=int, default=DEFAULT_SUPPLY_POLICY.refill_target
+    )
+    parser.add_argument(
+        "--max-new-per-cycle",
+        type=int,
+        default=DEFAULT_SUPPLY_POLICY.max_new_per_cycle,
+    )
+    parser.add_argument("--bucket-hours", type=int, default=DEFAULT_SUPPLY_POLICY.bucket_hours)
     parser.add_argument("--approval-available", action="store_true")
     parser.add_argument("--controller-capability", action="append", default=[])
     parser.add_argument("--mutation-authority", action="store_true")

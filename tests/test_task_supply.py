@@ -15,6 +15,7 @@ from bureau.cycle_contract import CONTRACT_VERSION, SCHEMA_VERSION
 from bureau.supply_runner import FrontierObservation, reconcile_merged_supply_publication
 from bureau.task_supply import (
     CONTROLLER_APPROVAL_CAPABILITY,
+    DEFAULT_SUPPLY_POLICY,
     FALLBACK_CATALOG,
     FALLBACK_METADATA_KEY,
     REVIEW_REASON,
@@ -31,6 +32,9 @@ from bureau.task_supply import (
     file_sha256,
     publish_supply_plan,
     sha256_json,
+)
+from bureau.task_supply import (
+    parser as task_supply_parser,
 )
 from bureau.v2 import Registry
 
@@ -370,6 +374,30 @@ def test_base_worker_profile_reaches_floor_through_bounded_read_only_scout_reser
         if proposal["category"] in {"maintenance", "registry-reconciliation"}
     }
     assert all("operator-approval-unavailable" in blockers for blockers in blocked_writes.values())
+
+
+def test_task_supply_cli_defaults_follow_default_policy() -> None:
+    args = task_supply_parser().parse_args(
+        [
+            "--frontier-report",
+            "frontier.json",
+            "--frontier-head",
+            HEAD,
+            "--frontier-queue-sha256",
+            QUEUE_SHA,
+        ]
+    )
+    assert (
+        args.floor,
+        args.refill_target,
+        args.max_new_per_cycle,
+        args.bucket_hours,
+    ) == (
+        DEFAULT_SUPPLY_POLICY.floor,
+        DEFAULT_SUPPLY_POLICY.refill_target,
+        DEFAULT_SUPPLY_POLICY.max_new_per_cycle,
+        DEFAULT_SUPPLY_POLICY.bucket_hours,
+    )
 
 
 def test_policy_requires_real_floor_and_hysteresis() -> None:
@@ -1463,10 +1491,16 @@ def test_supply_runner_receipt_persists_publication_binding(
             "result": publication_result,
         },
     }
+    captured_cycle: dict[str, object] = {}
+
+    def fake_run_supply_cycle(**kwargs: object) -> dict:
+        captured_cycle.update(kwargs)
+        return summary
+
     monkeypatch.setattr(
         supply_runner_module,
         "run_supply_cycle",
-        lambda **_kwargs: summary,
+        fake_run_supply_cycle,
     )
     monkeypatch.setattr(
         supply_runner_module,
@@ -1490,6 +1524,7 @@ def test_supply_runner_receipt_persists_publication_binding(
         ]
     )
     assert result == 0
+    assert captured_cycle["policy"] == DEFAULT_SUPPLY_POLICY
     receipts = list((state_root / "runs").glob("*-task-supply.json"))
     assert len(receipts) == 1
     receipt = json.loads(receipts[0].read_text(encoding="utf-8"))

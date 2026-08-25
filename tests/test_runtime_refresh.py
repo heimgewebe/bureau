@@ -4710,6 +4710,61 @@ def test_no_run_closeout_is_receipt_bound_and_idempotent(tmp_path: Path, task_id
     assert store.list_runs() == []
 
 
+def test_no_run_closeout_rejects_cross_bound_acceptance_evidence_on_replay(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-NO-RUN-CROSS-BOUND-ACCEPTANCE-EVIDENCE"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    assert closeout["closeout"]["status"] == "verified"
+
+    def transplant_acceptance_evidence(spec: dict[str, Any]) -> None:
+        runtime_closeout = spec["metadata"]["runtime_closeout"]
+        evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
+        evidence["runtime_result_sha256"] = "f" * 64
+        evidence.pop("evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
+
+    revise_authority(
+        store,
+        task_id,
+        transplant_acceptance_evidence,
+        key="tamper:cross-bound-acceptance-evidence",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-evidence-binding-invalid"
+    assert "runtime_result_sha256" in caught.value.details["mismatched"]
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
 def test_no_run_closeout_rejects_missing_frozen_acceptance_mapping(tmp_path: Path) -> None:
     task_id = "BUREAU-NO-RUN-MISSING-ACCEPTANCE-MAPPING"
     intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
@@ -5137,6 +5192,74 @@ def test_no_run_closeout_rejects_historical_multi_use_of_single_use_authority(
     )
     assert replay["idempotent_replay"] is True
     assert replay["closeout"] == incident["closeout"]
+
+    third_intent = json.loads(json.dumps(intent))
+    third_intent["target_sha256"] = "d" * 64
+    third_intent["main_commit"] = "5" * 40
+    third_intent["nonce"] = "historical-third-use-restored-after-closeout"
+    third_intent.pop("intent_sha256", None)
+    third_intent = refresh.bind_digest(third_intent, "intent_sha256")
+    refresh.create_only(
+        state_root / "intents" / f"{third_intent['intent_sha256']}.json",
+        refresh.canonical_bytes(third_intent),
+    )
+    third_attempt = state_root / "attempts" / third_intent["target_sha256"]
+    third_started = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "intent_sha256": third_intent["intent_sha256"],
+            "target_sha256": third_intent["target_sha256"],
+            "main_commit": third_intent["main_commit"],
+            "lease_binding": result["lease_binding"],
+            "started_at": refresh.isoformat(NOW + timedelta(minutes=2)),
+            "effect_started": False,
+        },
+        "start_sha256",
+    )
+    refresh.create_only(
+        third_attempt / "started.json", refresh.canonical_bytes(third_started)
+    )
+    refresh._write_attempt_result(
+        third_attempt / "result.json",
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "deployed",
+            "intent_sha256": third_intent["intent_sha256"],
+            "target_sha256": third_intent["target_sha256"],
+            "main_commit": third_intent["main_commit"],
+            "source_identity": {"head": third_intent["main_commit"]},
+            "install_receipt": result["install_receipt"],
+            "readback": {
+                **result["readback"],
+                "source_commit": third_intent["main_commit"],
+            },
+            "lease_binding": result["lease_binding"],
+            "finished_at": refresh.isoformat(NOW + timedelta(minutes=2)),
+            "effect_started": True,
+        },
+    )
+    before_drift_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as drift:
+        refresh.closeout_historical_multi_use_runtime_refresh_authority(
+            state_root=state_root,
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=22),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert drift.value.code == "authority-incident-closeout-history-drift"
+    assert drift.value.details["stored_effect_count"] == 2
+    assert drift.value.details["current_effect_count"] == 3
+    assert store.task_spec(task_id) == before_drift_replay
+    assert store.list_runs() == []
 
 
 def test_no_run_closeout_rejects_missing_release_and_wrong_or_tampered_evidence(

@@ -293,10 +293,13 @@ persistiert `metadata.runtime_closeout` mit Task-ID, ursprünglicher Autoritäts
 -digest, Target, Intent, Runtime-Result, Source-Commit, Manifest-/Readback- sowie
 Lease-Binding-/Release-Digests. Neue Closeouts enthalten zusätzlich eine digestgebundene
 `acceptance_evidence`-Kapsel mit TaskSpec-, Acceptance-Vertrags-, Result-, Readback-,
-Lease-, Effekt-Historien-, StateStore- und Run-/No-Run-Bindung. Der anschließende
-TaskSpec-Readback und ein erneuter
-StateStore-Replay müssen passen. Ein identischer Replay ist wirkungsfrei; fremde, fehlende,
-nicht deployte, driftende oder manipulierte Evidenz blockiert. Terminalität wird nie aus
+Lease-, Effekt-Historien-, StateStore- und Run-/No-Run-Bindung. Beim Readback wird die
+Kapsel nicht nur gegen ihren eigenen Digest geprüft, sondern auch gegen Task-ID,
+Runtime-Result, immutable Readback und Lease-Release des umschließenden Closeouts. Eine
+formal gültige, aber aus einem anderen Closeout transplantierte Kapsel ist damit ungültig.
+Der anschließende TaskSpec-Readback und ein erneuter StateStore-Replay müssen passen. Ein
+identischer Replay ist wirkungsfrei; fremde, fehlende, nicht deployte, driftende oder
+manipulierte Evidenz blockiert. Terminalität wird nie aus
 Notizen, Goal- oder Acceptance-Prosa abgeleitet, und es gibt weder Direct-SQL auf Bureau
 StateStore noch Queue-/Claim-/Dispatch-Wirkung.
 
@@ -312,9 +315,12 @@ Effekt und führt dieselben harten Intent-/Result-, immutable Readback-, StateSt
 und Lease-Release-Prüfungen wie der normale Closeout aus. Er startet keinen Runtime-Effekt
 und erzeugt keinen Claim oder Fake-Run. Sein einziger TaskSpec-CAS setzt den Lifecycle auf
 `superseded` und persistiert `metadata.runtime_incident_closeout` mit dem Digest der
-vollständigen Effekt-Historie sowie Effekt- und Konfliktanzahl. Die Receipt-Aussage ist
-explizit **nicht** `legitimate_single_use_verification` und legitimiert keinen historischen
-Effekt rückwirkend.
+vollständigen Effekt-Historie sowie Effekt- und Konfliktanzahl. Auch ein späterer
+idempotenter Replay liest die vollständige Historie erneut und vergleicht Digest und
+Zähler mit dem gespeicherten Incident-Closeout. Nachträglich wiederentdeckte oder
+wiederhergestellte Effekte führen deshalb zu `authority-incident-closeout-history-drift`
+statt zu einem veralteten Erfolgsreplay. Die Receipt-Aussage ist explizit **nicht**
+`legitimate_single_use_verification` und legitimiert keinen historischen Effekt rückwirkend.
 
 ```bash
 bureau-runtime-refresh --state-root ~/.local/state/bureau/runtime-refresh \

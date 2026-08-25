@@ -5419,7 +5419,29 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
         )
     parse_time(value["closed_at"])
     if "acceptance_evidence" in value:
-        _validated_no_run_acceptance_evidence(value["acceptance_evidence"])
+        acceptance_evidence = _validated_no_run_acceptance_evidence(
+            value["acceptance_evidence"]
+        )
+        expected_acceptance_bindings = {
+            "task_id": value["task_id"],
+            "runtime_result_sha256": value["runtime_result_sha256"],
+            "readback_sha256": value["readback_sha256"],
+            "lease_release_sha256": value["lease_release_sha256"],
+        }
+        mismatched_acceptance_bindings = {
+            key: {
+                "closeout": expected,
+                "acceptance_evidence": acceptance_evidence.get(key),
+            }
+            for key, expected in expected_acceptance_bindings.items()
+            if acceptance_evidence.get(key) != expected
+        }
+        if mismatched_acceptance_bindings:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-evidence-binding-invalid",
+                "no-run acceptance evidence does not match its enclosing runtime closeout",
+                details={"mismatched": mismatched_acceptance_bindings},
+            )
     return dict(value)
 
 
@@ -5987,6 +6009,28 @@ def _closeout_runtime_refresh_authority(
             raise RuntimeRefreshError(
                 "authority-incident-closeout-replay-mismatch",
                 "incident closeout is bound to other evidence",
+            )
+        current_effect_history_sha256 = sha256_bytes(canonical_bytes(effect_history))
+        if (
+            existing_incident["effect_history_sha256"] != current_effect_history_sha256
+            or existing_incident["effect_count"] != len(effect_history)
+            or existing_incident["conflicting_effect_count"] != len(conflicting_effects)
+        ):
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-history-drift",
+                "incident closeout no longer matches the complete historical effect ledger",
+                details={
+                    "stored_effect_history_sha256": existing_incident[
+                        "effect_history_sha256"
+                    ],
+                    "current_effect_history_sha256": current_effect_history_sha256,
+                    "stored_effect_count": existing_incident["effect_count"],
+                    "current_effect_count": len(effect_history),
+                    "stored_conflicting_effect_count": existing_incident[
+                        "conflicting_effect_count"
+                    ],
+                    "current_conflicting_effect_count": len(conflicting_effects),
+                },
             )
         if spec.get("state") != "superseded":
             raise RuntimeRefreshError(

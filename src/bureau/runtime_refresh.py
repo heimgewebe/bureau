@@ -102,11 +102,33 @@ SCHEDULER_RECONVERGEABLE_READBACK_CODES = frozenset(
 )
 RUNTIME_AUTHORITY_SCHEMA_VERSION = 1
 RUNTIME_AUTHORITY_MODE = "single-use-target-bound"
+RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION = "single-use-target-bound-source-precondition-v1"
+RUNTIME_AUTHORITY_SUPPORTED_MODES = frozenset(
+    {RUNTIME_AUTHORITY_MODE, RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION}
+)
 RUNTIME_AUTHORITY_TARGET_BINDING = "candidate.target_sha256"
 RUNTIME_AUTHORITY_ALLOWED_STATES = ("ready", "active")
 RUNTIME_AUTHORITY_BINDING_KIND = "bureau_runtime_refresh_authority_target_binding"
 RUNTIME_AUTHORITY_CONSUMPTION_KIND = "bureau_runtime_refresh_authority_consumption"
 RUNTIME_AUTHORITY_CLOSEOUT_KIND = "bureau_runtime_refresh_no_run_closeout"
+RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND = "bureau_runtime_refresh_multi_use_incident_closeout"
+RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND = "bureau_runtime_refresh_no_run_acceptance_contract"
+RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_EVIDENCE_KIND = (
+    "bureau_runtime_refresh_no_run_acceptance_evidence"
+)
+RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER = "runtime-refresh-no-run-evidence-v1"
+RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES = frozenset(
+    {
+        "approval-intent",
+        "runtime-result",
+        "single-use-history",
+        "immutable-readback",
+        "state-store-integrity",
+        "lease-release",
+        "run-lifecycle",
+        "source-precondition",
+    }
+)
 
 
 class RuntimeRefreshError(RuntimeError):
@@ -2499,7 +2521,6 @@ def _validate_runtime_refresh_authority_contract(
     metadata, authority = _runtime_authority_metadata(spec)
     required_values = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
-        "mode": RUNTIME_AUTHORITY_MODE,
         "single_use": True,
         "required_action_class": "runtime_mutation",
         "required_approval_level": "break_glass",
@@ -2517,10 +2538,37 @@ def _validate_runtime_refresh_authority_contract(
     if mismatched:
         raise RuntimeRefreshError(
             "authority-contract-invalid",
-            "TaskSpec runtime_refresh_authority contract is not single-use and target-bound",
+            "TaskSpec runtime_refresh_authority contract is not structurally valid",
             details={"mismatched": mismatched},
         )
-    _validated_runtime_source_precondition(authority.get("source_precondition"))
+    mode = authority.get("mode")
+    if mode not in RUNTIME_AUTHORITY_SUPPORTED_MODES:
+        raise RuntimeRefreshError(
+            "authority-contract-generation-unsupported",
+            "runtime authority contract generation is not supported by this runner",
+            details={
+                "observed_mode": mode,
+                "supported_modes": sorted(RUNTIME_AUTHORITY_SUPPORTED_MODES),
+            },
+        )
+    source_precondition = _validated_runtime_source_precondition(
+        authority.get("source_precondition")
+    )
+    if mode == RUNTIME_AUTHORITY_MODE and source_precondition is not None:
+        raise RuntimeRefreshError(
+            "authority-contract-generation-invalid",
+            "legacy runtime authority mode cannot carry source_precondition",
+            details={
+                "observed_mode": mode,
+                "required_mode": RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION,
+            },
+        )
+    if mode == RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION and source_precondition is None:
+        raise RuntimeRefreshError(
+            "authority-contract-generation-invalid",
+            "source-precondition authority mode requires source_precondition",
+            details={"observed_mode": mode},
+        )
     required_states = authority.get("required_task_state")
     if required_states != list(RUNTIME_AUTHORITY_ALLOWED_STATES):
         raise RuntimeRefreshError(
@@ -2674,6 +2722,7 @@ def validate_authoritative_runtime_refresh_task(
         "revision": revision,
         "spec_sha256": digest,
         "state": state,
+        "contract_mode": authority["mode"],
         "target_sha256": target_sha256,
         "target_binding_receipt": binding,
     }
@@ -3079,9 +3128,12 @@ def _intent_authority_record(intent: dict[str, Any]) -> dict[str, Any]:
         "target_sha256",
         "target_binding_receipt",
     }
+    optional = {"contract_mode"}
+    observed_fields = set(value) if isinstance(value, dict) else set()
     if (
         not isinstance(value, dict)
-        or set(value) != required
+        or not required <= observed_fields
+        or observed_fields - required - optional
         or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
         or value.get("task_id") != intent.get("approval_task_id")
         or not isinstance(value.get("revision"), int)
@@ -3090,12 +3142,41 @@ def _intent_authority_record(intent: dict[str, Any]) -> dict[str, Any]:
         or not _is_sha256(value.get("spec_sha256"))
         or value.get("target_sha256") != intent.get("target_sha256")
         or value.get("target_binding_receipt") is not None
+        or (
+            "contract_mode" in value
+            and value.get("contract_mode") not in RUNTIME_AUTHORITY_SUPPORTED_MODES
+        )
     ):
         raise RuntimeRefreshError(
             "authority-intent-binding-invalid",
             "runtime-refresh intent authoritative TaskSpec binding is invalid",
         )
     return dict(value)
+
+
+def _validate_intent_authority_contract_generation(
+    *, expected_authority: dict[str, Any], authority: dict[str, Any]
+) -> str:
+    current_contract_mode = authority.get("mode")
+    intent_contract_mode = expected_authority.get("contract_mode")
+    if intent_contract_mode is None:
+        if current_contract_mode != RUNTIME_AUTHORITY_MODE:
+            raise RuntimeRefreshError(
+                "authority-runner-contract-generation-missing",
+                "runtime-refresh intent predates the current authority contract generation",
+                details={"authority_mode": current_contract_mode},
+            )
+        return RUNTIME_AUTHORITY_MODE
+    if intent_contract_mode != current_contract_mode:
+        raise RuntimeRefreshError(
+            "authority-runner-contract-generation-drift",
+            "runtime-refresh intent contract generation differs from current authority",
+            details={
+                "intent_mode": intent_contract_mode,
+                "authority_mode": current_contract_mode,
+            },
+        )
+    return intent_contract_mode
 
 
 def bind_runtime_refresh_authority(
@@ -3112,6 +3193,9 @@ def bind_runtime_refresh_authority(
     current = _read_authority_task(store, expected["task_id"])
     spec = json.loads(json.dumps(current["spec"]))
     metadata, authority = _runtime_authority_metadata(spec)
+    _validate_intent_authority_contract_generation(
+        expected_authority=expected, authority=authority
+    )
     binding = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "kind": RUNTIME_AUTHORITY_BINDING_KIND,
@@ -3296,6 +3380,9 @@ def consume_runtime_refresh_authority(
             "consumption": existing,
             "idempotent_replay": True,
         }
+    _validate_intent_authority_contract_generation(
+        expected_authority=expected, authority=authority
+    )
     bound_authority = result.get("authority_task_spec")
     if not isinstance(bound_authority, dict):
         raise RuntimeRefreshError(
@@ -5072,6 +5159,207 @@ def validate_released_lease_binding(
     return evidence
 
 
+def _runtime_authority_acceptance_ids(spec: dict[str, Any]) -> list[str]:
+    acceptance = spec.get("acceptance")
+    if not isinstance(acceptance, list) or not acceptance:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-invalid",
+            "runtime authority has no frozen acceptance contract",
+        )
+    criterion_ids: list[str] = []
+    for criterion in acceptance:
+        criterion_id = criterion.get("id") if isinstance(criterion, dict) else None
+        if not isinstance(criterion_id, str) or not criterion_id or criterion_id in criterion_ids:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-contract-invalid",
+                "runtime authority acceptance criterion identities are invalid",
+            )
+        criterion_ids.append(criterion_id)
+    return criterion_ids
+
+
+def _validated_no_run_acceptance_contract(
+    *, spec: dict[str, Any], authority: dict[str, Any]
+) -> dict[str, Any]:
+    criterion_ids = _runtime_authority_acceptance_ids(spec)
+    value = authority.get("no_run_closeout_acceptance")
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"schema_version", "kind", "criteria"}
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND
+        or not isinstance(value.get("criteria"), dict)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-missing",
+            "no-run closeout requires an explicit criterion-specific acceptance contract",
+        )
+    criteria = value["criteria"]
+    if set(criteria) != set(criterion_ids):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-incomplete",
+            "no-run acceptance contract does not cover the frozen TaskSpec acceptance",
+            details={
+                "expected_criteria": sorted(criterion_ids),
+                "observed_criteria": sorted(str(item) for item in criteria),
+            },
+        )
+    normalized: dict[str, Any] = {}
+    for criterion_id in criterion_ids:
+        item = criteria[criterion_id]
+        if (
+            not isinstance(item, dict)
+            or set(item) != {"verifier", "required_evidence"}
+            or item.get("verifier") != RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER
+            or not isinstance(item.get("required_evidence"), list)
+            or not item["required_evidence"]
+            or any(not isinstance(entry, str) for entry in item["required_evidence"])
+            or len(set(item["required_evidence"])) != len(item["required_evidence"])
+            or set(item["required_evidence"]) - RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-contract-invalid",
+                "no-run acceptance criterion verifier contract is invalid",
+                details={"criterion_id": criterion_id},
+            )
+        normalized[criterion_id] = {
+            "verifier": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER,
+            "required_evidence": sorted(item["required_evidence"]),
+        }
+    source_precondition = _validated_runtime_source_precondition(
+        authority.get("source_precondition")
+    )
+    if source_precondition is not None and not any(
+        "source-precondition" in item["required_evidence"]
+        for item in normalized.values()
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-incomplete",
+            "source-precondition authority has no criterion bound to source-precondition evidence",
+        )
+    return {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND,
+        "criteria": normalized,
+    }
+
+
+def _validated_no_run_acceptance_evidence(value: Any) -> dict[str, Any]:
+    fields = {
+        "schema_version",
+        "kind",
+        "task_id",
+        "task_spec_sha256",
+        "contract_sha256",
+        "criterion_ids",
+        "available_evidence",
+        "runtime_result_sha256",
+        "readback_sha256",
+        "lease_release_sha256",
+        "effect_history_sha256",
+        "state_store_root_sha256",
+        "run_evidence_sha256",
+        "evidence_sha256",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "no-run acceptance evidence record is malformed",
+        )
+    digest_fields = {
+        "task_spec_sha256",
+        "contract_sha256",
+        "runtime_result_sha256",
+        "readback_sha256",
+        "lease_release_sha256",
+        "effect_history_sha256",
+        "state_store_root_sha256",
+        "run_evidence_sha256",
+        "evidence_sha256",
+    }
+    criterion_ids = value.get("criterion_ids")
+    available_evidence = value.get("available_evidence")
+    if (
+        value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_EVIDENCE_KIND
+        or not isinstance(value.get("task_id"), str)
+        or not value["task_id"]
+        or any(not _is_sha256(value.get(field)) for field in digest_fields)
+        or not isinstance(criterion_ids, list)
+        or not criterion_ids
+        or any(not isinstance(item, str) or not item for item in criterion_ids)
+        or len(set(criterion_ids)) != len(criterion_ids)
+        or criterion_ids != sorted(criterion_ids)
+        or not isinstance(available_evidence, list)
+        or any(not isinstance(item, str) for item in available_evidence)
+        or len(set(available_evidence)) != len(available_evidence)
+        or available_evidence != sorted(available_evidence)
+        or set(available_evidence) - RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "no-run acceptance evidence values are invalid",
+        )
+    unsigned = {key: item for key, item in value.items() if key != "evidence_sha256"}
+    if value["evidence_sha256"] != sha256_bytes(canonical_bytes(unsigned)):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "no-run acceptance evidence digest is invalid",
+        )
+    return dict(value)
+
+
+def _build_no_run_acceptance_evidence(
+    *,
+    spec: dict[str, Any],
+    authority: dict[str, Any],
+    task_id: str,
+    task_spec_sha256: str,
+    available_evidence: set[str],
+    runtime_result_sha256: str,
+    readback_sha256: str,
+    lease_release_sha256: str,
+    effect_history: list[dict[str, Any]],
+    state_store_health: dict[str, Any],
+    terminal_run: dict[str, Any] | None,
+) -> dict[str, Any]:
+    contract = _validated_no_run_acceptance_contract(spec=spec, authority=authority)
+    missing = {
+        criterion_id: sorted(set(item["required_evidence"]) - available_evidence)
+        for criterion_id, item in contract["criteria"].items()
+        if set(item["required_evidence"]) - available_evidence
+    }
+    if missing:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-incomplete",
+            "no-run closeout lacks evidence required by frozen acceptance criteria",
+            details={"missing": missing},
+        )
+    state_store_root_sha256 = state_store_health.get("authoritative_root_sha256")
+    if not _is_sha256(state_store_root_sha256):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "StateStore health evidence has no authoritative root digest",
+        )
+    run_evidence = terminal_run or {"status": "no-run"}
+    evidence = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_EVIDENCE_KIND,
+        "task_id": task_id,
+        "task_spec_sha256": task_spec_sha256,
+        "contract_sha256": sha256_bytes(canonical_bytes(contract)),
+        "criterion_ids": sorted(contract["criteria"]),
+        "available_evidence": sorted(available_evidence),
+        "runtime_result_sha256": runtime_result_sha256,
+        "readback_sha256": readback_sha256,
+        "lease_release_sha256": lease_release_sha256,
+        "effect_history_sha256": sha256_bytes(canonical_bytes(effect_history)),
+        "state_store_root_sha256": state_store_root_sha256,
+        "run_evidence_sha256": sha256_bytes(canonical_bytes(run_evidence)),
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
 def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
     fields = {
         "schema_version",
@@ -5091,7 +5379,11 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
         "closed_at",
         "does_not_establish",
     }
-    if not isinstance(value, dict) or set(value) != fields:
+    if (
+        not isinstance(value, dict)
+        or not fields <= set(value)
+        or set(value) - fields - {"acceptance_evidence"}
+    ):
         raise RuntimeRefreshError(
             "authority-closeout-record-invalid",
             "runtime authority closeout record is malformed",
@@ -5124,6 +5416,77 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
         raise RuntimeRefreshError(
             "authority-closeout-record-invalid",
             "runtime authority closeout record values are invalid",
+        )
+    parse_time(value["closed_at"])
+    if "acceptance_evidence" in value:
+        _validated_no_run_acceptance_evidence(value["acceptance_evidence"])
+    return dict(value)
+
+
+def _validated_runtime_incident_closeout(value: Any) -> dict[str, Any]:
+    fields = {
+        "schema_version",
+        "kind",
+        "status",
+        "task_id",
+        "authority_revision",
+        "authority_spec_sha256",
+        "target_sha256",
+        "intent_sha256",
+        "runtime_result_sha256",
+        "source_commit",
+        "manifest_sha256",
+        "readback_sha256",
+        "lease_binding_sha256",
+        "lease_release_sha256",
+        "effect_history_sha256",
+        "effect_count",
+        "conflicting_effect_count",
+        "closed_at",
+        "does_not_establish",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise RuntimeRefreshError(
+            "authority-incident-closeout-record-invalid",
+            "runtime authority incident closeout record is malformed",
+        )
+    digest_fields = {
+        "authority_spec_sha256",
+        "target_sha256",
+        "intent_sha256",
+        "runtime_result_sha256",
+        "manifest_sha256",
+        "readback_sha256",
+        "lease_binding_sha256",
+        "lease_release_sha256",
+        "effect_history_sha256",
+    }
+    if (
+        value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND
+        or value.get("status") != "superseded"
+        or not isinstance(value.get("task_id"), str)
+        or not value["task_id"]
+        or not isinstance(value.get("authority_revision"), int)
+        or isinstance(value.get("authority_revision"), bool)
+        or value["authority_revision"] < 1
+        or any(not _is_sha256(value.get(field)) for field in digest_fields)
+        or not isinstance(value.get("source_commit"), str)
+        or len(value["source_commit"]) != 40
+        or not isinstance(value.get("effect_count"), int)
+        or isinstance(value.get("effect_count"), bool)
+        or value["effect_count"] < 2
+        or not isinstance(value.get("conflicting_effect_count"), int)
+        or isinstance(value.get("conflicting_effect_count"), bool)
+        or value["conflicting_effect_count"] < 1
+        or value["conflicting_effect_count"] >= value["effect_count"]
+        or not isinstance(value.get("closed_at"), str)
+        or not isinstance(value.get("does_not_establish"), list)
+        or not all(isinstance(item, str) for item in value["does_not_establish"])
+    ):
+        raise RuntimeRefreshError(
+            "authority-incident-closeout-record-invalid",
+            "runtime authority incident closeout record values are invalid",
         )
     parse_time(value["closed_at"])
     return dict(value)
@@ -5404,8 +5767,9 @@ def _validated_terminal_authority_run(
     }
 
 
-def closeout_runtime_refresh_authority(
+def _closeout_runtime_refresh_authority(
     *,
+    historical_multi_use_incident: bool,
     state_root: Path,
     approval_task_id: str,
     target_sha256: str,
@@ -5499,7 +5863,7 @@ def closeout_runtime_refresh_authority(
                 "requested deployed result is not uniquely represented in authority history",
                 details={"requested": requested_effect, "effects": effect_history},
             )
-        if conflicting_effects:
+        if conflicting_effects and not historical_multi_use_incident:
             raise RuntimeRefreshError(
                 "authority-closeout-historical-multi-use",
                 (
@@ -5508,6 +5872,17 @@ def closeout_runtime_refresh_authority(
                 ),
                 details={"requested": requested_effect, "conflicts": conflicting_effects},
             )
+        if historical_multi_use_incident and not conflicting_effects:
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-multi-use-required",
+                "incident closeout requires at least two distinct effect-started attempts",
+                details={"requested": requested_effect, "effects": effect_history},
+            )
+    elif historical_multi_use_incident:
+        raise RuntimeRefreshError(
+            "authority-incident-closeout-effect-required",
+            "incident closeout requires a deployed effect-started result",
+        )
     elif effect_history:
         raise RuntimeRefreshError(
             "authority-closeout-no-effect-history-conflict",
@@ -5575,6 +5950,7 @@ def closeout_runtime_refresh_authority(
             "authority-closeout-readback-drift",
             "current runtime readback differs from the successful result",
         )
+    current_readback_sha256 = sha256_bytes(canonical_bytes(current_readback))
     store = _closeout_authority_store(intent, authority_store)
     try:
         task_runs = [run for run in store.list_runs() if run.get("task_id") == approval_task_id]
@@ -5584,10 +5960,10 @@ def closeout_runtime_refresh_authority(
             "Bureau run readback failed closed",
             details={"error": str(exc)},
         ) from exc
-    _validated_terminal_authority_run(
+    terminal_run = _validated_terminal_authority_run(
         store=store, approval_task_id=approval_task_id, task_runs=task_runs
     )
-    _validate_state_store_health(store)
+    state_store_health = _validate_state_store_health(store)
     release = validate_released_lease_binding(
         intent=intent,
         result=result,
@@ -5597,8 +5973,45 @@ def closeout_runtime_refresh_authority(
     current = _read_authority_task(store, approval_task_id)
     spec = current["spec"]
     metadata, authority = _runtime_authority_metadata(spec)
+    existing_incident_value = metadata.get("runtime_incident_closeout")
+    if existing_incident_value is not None:
+        existing_incident = _validated_runtime_incident_closeout(existing_incident_value)
+        expected_pairs = {
+            "task_id": approval_task_id,
+            "target_sha256": target_sha256,
+            "intent_sha256": intent_sha256,
+            "runtime_result_sha256": result_sha256,
+            "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
+        }
+        if any(existing_incident.get(key) != value for key, value in expected_pairs.items()):
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-replay-mismatch",
+                "incident closeout is bound to other evidence",
+            )
+        if spec.get("state") != "superseded":
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-state-conflict",
+                "incident closeout evidence exists on a non-superseded TaskSpec",
+            )
+        if not historical_multi_use_incident:
+            raise RuntimeRefreshError(
+                "authority-closeout-historical-multi-use-superseded",
+                "multi-use authority was terminalized as an incident, not verified",
+            )
+        return {
+            "task_id": approval_task_id,
+            "revision": current["revision"],
+            "spec_sha256": current["spec_sha256"],
+            "closeout": existing_incident,
+            "idempotent_replay": True,
+        }
     existing_closeout_value = metadata.get("runtime_closeout")
     if existing_closeout_value is not None:
+        if historical_multi_use_incident:
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-already-verified",
+                "verified authority cannot be reclassified as a multi-use incident",
+            )
         existing_closeout = _validated_runtime_closeout(existing_closeout_value)
         expected_pairs = {
             "task_id": approval_task_id,
@@ -5696,51 +6109,130 @@ def closeout_runtime_refresh_authority(
         allow_bound_intent=True,
         expected_consumption=expected_consumption,
     )
-    closeout = {
-        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
-        "kind": RUNTIME_AUTHORITY_CLOSEOUT_KIND,
-        "status": "verified",
-        "task_id": approval_task_id,
-        "authority_revision": baseline["revision"],
-        "authority_spec_sha256": baseline["spec_sha256"],
-        "target_sha256": target_sha256,
-        "intent_sha256": intent_sha256,
-        "runtime_result_sha256": result_sha256,
-        "source_commit": intent["main_commit"],
-        "manifest_sha256": closeout_manifest_sha256,
-        "readback_sha256": sha256_bytes(canonical_bytes(current_readback)),
-        "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
-        "lease_release_sha256": release["lease_release_sha256"],
-        "closed_at": isoformat(current_time),
-        "does_not_establish": [
-            "retroactive_claim_authority",
-            "synthetic_run_authority",
-            "runtime_authority_for_later_targets",
-            "future_runtime_health",
-        ],
-    }
+    if historical_multi_use_incident:
+        closeout = {
+            "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+            "kind": RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND,
+            "status": "superseded",
+            "task_id": approval_task_id,
+            "authority_revision": baseline["revision"],
+            "authority_spec_sha256": baseline["spec_sha256"],
+            "target_sha256": target_sha256,
+            "intent_sha256": intent_sha256,
+            "runtime_result_sha256": result_sha256,
+            "source_commit": intent["main_commit"],
+            "manifest_sha256": closeout_manifest_sha256,
+            "readback_sha256": current_readback_sha256,
+            "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
+            "lease_release_sha256": release["lease_release_sha256"],
+            "effect_history_sha256": sha256_bytes(canonical_bytes(effect_history)),
+            "effect_count": len(effect_history),
+            "conflicting_effect_count": len(conflicting_effects),
+            "closed_at": isoformat(current_time),
+            "does_not_establish": [
+                "legitimate_single_use_verification",
+                "retroactive_effect_legitimation",
+                "runtime_replay_authority",
+                "synthetic_run_authority",
+                "future_runtime_health",
+            ],
+        }
+    else:
+        available_acceptance_evidence = {
+            "approval-intent",
+            "runtime-result",
+            "single-use-history",
+            "immutable-readback",
+            "state-store-integrity",
+            "lease-release",
+            "run-lifecycle",
+        }
+        current_source_precondition = _validated_runtime_source_precondition(
+            authority.get("source_precondition")
+        )
+        if current_source_precondition is not None:
+            if intent.get("source_precondition") != current_source_precondition:
+                raise RuntimeRefreshError(
+                    "authority-closeout-source-precondition-unproven",
+                    "historical intent did not bind the current source-precondition contract",
+                )
+            _validate_source_precondition_result_evidence(result, intent)
+            available_acceptance_evidence.add("source-precondition")
+        acceptance_evidence = _build_no_run_acceptance_evidence(
+            spec=spec,
+            authority=authority,
+            task_id=approval_task_id,
+            task_spec_sha256=current["spec_sha256"],
+            available_evidence=available_acceptance_evidence,
+            runtime_result_sha256=result_sha256,
+            readback_sha256=current_readback_sha256,
+            lease_release_sha256=release["lease_release_sha256"],
+            effect_history=effect_history,
+            state_store_health=state_store_health,
+            terminal_run=terminal_run,
+        )
+        closeout = {
+            "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+            "kind": RUNTIME_AUTHORITY_CLOSEOUT_KIND,
+            "status": "verified",
+            "task_id": approval_task_id,
+            "authority_revision": baseline["revision"],
+            "authority_spec_sha256": baseline["spec_sha256"],
+            "target_sha256": target_sha256,
+            "intent_sha256": intent_sha256,
+            "runtime_result_sha256": result_sha256,
+            "source_commit": intent["main_commit"],
+            "manifest_sha256": closeout_manifest_sha256,
+            "readback_sha256": current_readback_sha256,
+            "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
+            "lease_release_sha256": release["lease_release_sha256"],
+            "acceptance_evidence": acceptance_evidence,
+            "closed_at": isoformat(current_time),
+            "does_not_establish": [
+                "retroactive_claim_authority",
+                "synthetic_run_authority",
+                "runtime_authority_for_later_targets",
+                "future_runtime_health",
+            ],
+        }
     mutated = json.loads(json.dumps(spec))
-    mutated["state"] = "verified"
     mutated_metadata = mutated["metadata"]
     mutated_authority = mutated_metadata["runtime_refresh_authority"]
     mutated_authority["target_binding_receipt"] = authority["target_binding_receipt"]
     mutated_authority["consumption"] = expected_consumption
-    mutated_metadata["runtime_closeout"] = closeout
+    if historical_multi_use_incident:
+        mutated["state"] = "superseded"
+        mutated_metadata["runtime_incident_closeout"] = closeout
+        idempotency_key = (
+            f"runtime-refresh-multi-use-incident-closeout:{approval_task_id}:{result_sha256}"
+        )
+        mutation_source = "runtime-refresh-multi-use-incident-closeout"
+        closeout_field = "runtime_incident_closeout"
+        expected_terminal_state = "superseded"
+        closeout_validator = _validated_runtime_incident_closeout
+    else:
+        mutated["state"] = "verified"
+        mutated_metadata["runtime_closeout"] = closeout
+        idempotency_key = f"runtime-refresh-no-run-closeout:{approval_task_id}:{result_sha256}"
+        mutation_source = "runtime-refresh-no-run-closeout"
+        closeout_field = "runtime_closeout"
+        expected_terminal_state = "verified"
+        closeout_validator = _validated_runtime_closeout
     changed = _put_authority_task(
         store,
         mutated,
-        idempotency_key=f"runtime-refresh-no-run-closeout:{approval_task_id}:{result_sha256}",
+        idempotency_key=idempotency_key,
         expected_revision=current["revision"],
-        source="runtime-refresh-no-run-closeout",
+        source=mutation_source,
     )
     readback_task = _read_authority_task(store, approval_task_id)
-    observed_closeout = _validated_runtime_closeout(
-        readback_task["spec"]["metadata"].get("runtime_closeout")
+    observed_closeout = closeout_validator(
+        readback_task["spec"]["metadata"].get(closeout_field)
     )
     if (
         readback_task.get("revision") != changed.get("revision")
         or readback_task.get("spec_sha256") != changed.get("spec_sha256")
-        or readback_task["spec"].get("state") != "verified"
+        or readback_task["spec"].get("state") != expected_terminal_state
         or observed_closeout != closeout
     ):
         raise RuntimeRefreshError(
@@ -5755,6 +6247,62 @@ def closeout_runtime_refresh_authority(
         "closeout": observed_closeout,
         "idempotent_replay": False,
     }
+
+
+def closeout_runtime_refresh_authority(
+    *,
+    state_root: Path,
+    approval_task_id: str,
+    target_sha256: str,
+    intent_sha256: str,
+    result_sha256: str,
+    resource_db: Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
+    now: datetime | None = None,
+    authority_store: Any | None = None,
+    readback: Callable[..., dict[str, Any]] = readback_historical_install,
+    scheduler_readback: Callable[..., dict[str, Any]] = readback_user_scheduler,
+) -> dict[str, Any]:
+    return _closeout_runtime_refresh_authority(
+        historical_multi_use_incident=False,
+        state_root=state_root,
+        approval_task_id=approval_task_id,
+        target_sha256=target_sha256,
+        intent_sha256=intent_sha256,
+        result_sha256=result_sha256,
+        resource_db=resource_db,
+        now=now,
+        authority_store=authority_store,
+        readback=readback,
+        scheduler_readback=scheduler_readback,
+    )
+
+
+def closeout_historical_multi_use_runtime_refresh_authority(
+    *,
+    state_root: Path,
+    approval_task_id: str,
+    target_sha256: str,
+    intent_sha256: str,
+    result_sha256: str,
+    resource_db: Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
+    now: datetime | None = None,
+    authority_store: Any | None = None,
+    readback: Callable[..., dict[str, Any]] = readback_historical_install,
+    scheduler_readback: Callable[..., dict[str, Any]] = readback_user_scheduler,
+) -> dict[str, Any]:
+    return _closeout_runtime_refresh_authority(
+        historical_multi_use_incident=True,
+        state_root=state_root,
+        approval_task_id=approval_task_id,
+        target_sha256=target_sha256,
+        intent_sha256=intent_sha256,
+        result_sha256=result_sha256,
+        resource_db=resource_db,
+        now=now,
+        authority_store=authority_store,
+        readback=readback,
+        scheduler_readback=scheduler_readback,
+    )
 
 
 def apply_runtime_refresh(
@@ -5876,6 +6424,9 @@ def apply_runtime_refresh(
     )
     current_authority = _read_authority_task(store, expected_authority["task_id"])
     _metadata, authority_contract = _runtime_authority_metadata(current_authority["spec"])
+    _validate_intent_authority_contract_generation(
+        expected_authority=expected_authority, authority=authority_contract
+    )
     source_precondition = _validated_runtime_source_precondition(
         authority_contract.get("source_precondition")
     )
@@ -6223,6 +6774,12 @@ def parser() -> argparse.ArgumentParser:
     closeout.add_argument("--intent-sha256", required=True)
     closeout.add_argument("--result-sha256", required=True)
 
+    incident_closeout = sub.add_parser("closeout-authority-incident")
+    incident_closeout.add_argument("--approval-task-id", required=True)
+    incident_closeout.add_argument("--target-sha256", required=True)
+    incident_closeout.add_argument("--intent-sha256", required=True)
+    incident_closeout.add_argument("--result-sha256", required=True)
+
     sub.add_parser("status")
     return value
 
@@ -6304,6 +6861,16 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if result.get("status") in {"deployed", "already_current"} else 2
         if args.command == "closeout-authority":
             result = closeout_runtime_refresh_authority(
+                state_root=state_root,
+                approval_task_id=args.approval_task_id,
+                target_sha256=args.target_sha256,
+                intent_sha256=args.intent_sha256,
+                result_sha256=args.result_sha256,
+            )
+            print(json.dumps(result, sort_keys=True))
+            return 0
+        if args.command == "closeout-authority-incident":
+            result = closeout_historical_multi_use_runtime_refresh_authority(
                 state_root=state_root,
                 approval_task_id=args.approval_task_id,
                 target_sha256=args.target_sha256,

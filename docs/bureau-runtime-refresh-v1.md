@@ -39,10 +39,18 @@ Nicht behauptet werden:
 - zukünftige Runtime-Gesundheit.
 
 Eine Autoritäts-TaskSpec ist nur zulässig, wenn ihr strukturierter
-`metadata.runtime_refresh_authority`-Vertrag exakt `single-use-target-bound` deklariert.
-Er muss `runtime_mutation`, `break_glass`, den Write-Claim
-`component.bureau.runtime`, die erlaubten Zustände `ready` und `active`, die Bindung
-`candidate.target_sha256` sowie das Verbot fremder Task- und historischer
+`metadata.runtime_refresh_authority`-Vertrag eine vom tatsächlich ausführenden Runner
+unterstützte Vertragsgeneration deklariert. Der Legacy-Modus `single-use-target-bound`
+bleibt nur für Authorities ohne `source_precondition` gültig. Sobald eine
+Source-Precondition verpflichtend ist, muss der Modus
+`single-use-target-bound-source-precondition-v1` lauten. Ein älterer Runner, der diese
+Generation nicht kennt, lehnt sie vor Intent- oder Runtime-Wirkung ab; ein neues
+sicherheitskritisches Feld kann damit nicht mehr still unter einer alten
+Vertragsgeneration ignoriert werden.
+
+Unabhängig von der Generation muss der Vertrag `runtime_mutation`, `break_glass`, den
+Write-Claim `component.bureau.runtime`, die erlaubten Zustände `ready` und `active`, die
+Bindung `candidate.target_sha256` sowie das Verbot fremder Task- und historischer
 Target-Substitution enthalten. Prosa, Acceptance-Text und ein alter Registry-Snapshot
 ersetzen keinen dieser maschinenlesbaren Werte.
 
@@ -118,8 +126,8 @@ Unmittelbar vor dem create-only Intent liest `prepare-intent` außerdem
 TaskSpec muss die exakte Task-ID, eine positive Revision samt Digest, einen erlaubten
 nichtterminalen Zustand und den oben beschriebenen Single-Use-Vertrag besitzen. Sie darf
 weder bereits an einen anderen Target/Intent gebunden noch verbraucht oder durch einen
-`runtime_closeout` geschlossen sein. Revision und TaskSpec-Digest sowie der exakte
-StateStore-Pfad werden in den Intent aufgenommen. Fehlt die autoritative TaskSpec, ist sie
+`runtime_closeout` geschlossen sein. Revision, TaskSpec-Digest und `contract_mode` sowie der exakte StateStore-Pfad werden
+in den Intent aufgenommen. Fehlt die autoritative TaskSpec, ist sie
 terminal/supersedet, semantisch falsch oder widerspricht sie dem Snapshot, endet der Aufruf
 vor einer Intent-Datei. Die Registry-Projektion kann eine Task auffindbar machen, begründet
 aber keine Runtime-Autorität.
@@ -170,7 +178,13 @@ Ergebnisreceipt aufgenommen.
 die aktuelle autoritative TaskSpec und verlangt exakt die im Intent gespeicherte Revision
 und denselben Digest. Bereits verbrauchte Autorität, terminaler/supersedeter Zustand,
 Target-Bindung eines anderen Intents oder jede TaskSpec-Revision dazwischen blockiert vor
-Observation, Attempt-Receipt und Runtime-Wirkung. Erst danach werden Ablaufzeit und
+Observation, Attempt-Receipt und Runtime-Wirkung. Zusätzlich muss der im Intent gebundene
+`contract_mode` der aktuellen Authority-Generation entsprechen. Dieser Generationstest gilt
+nicht nur im frischen `apply`, sondern bereits bei der Target-Bindung und vor der erstmaligen
+Consumption eines vorhandenen erfolgreichen Results. Ein historischer Intent ohne
+`contract_mode` darf ausschließlich den Legacy-Modus ausführen; eine neuere
+Source-Precondition-Generation blockiert damit auch Result-Reuse vor StateStore-Wirkung.
+Erst danach werden Ablaufzeit und
 Live-Leases geprüft. Anschließend wird GitHub erneut beobachtet. Zielhash, `main`,
 Pflicht-CI sowie installierter Ausgangscommit und Manifest-Hash müssen unverändert sein.
 
@@ -259,30 +273,65 @@ Vor der einzigen TaskSpec-Wirkung werden konsistent geprüft:
 - `StateStore.integrity()` und vollständiger Event-/TaskSpec-Replay gegen die aktuelle Projektion;
 - Abwesenheit jedes Bureau-Runs für diese Task;
 - Freigabe aller exakt im Resultreceipt gebundenen Grabowski-Leases aus demselben
-  Lease-Store und unverändertem Lease-Vertrag.
+  Lease-Store und unverändertem Lease-Vertrag;
+- vollständige Abdeckung der eingefrorenen TaskSpec-Acceptance durch den strukturierten
+  `metadata.runtime_refresh_authority.no_run_closeout_acceptance`-Vertrag. Dieser muss
+  exakt dieselben Criterion-IDs führen. Jedes Kriterium benennt unter dem spezialisierten
+  Verifier `runtime-refresh-no-run-evidence-v1` die dafür erforderlichen bereits geprüften
+  Evidenzklassen. Ein erfolgreicher Deploy ist daher kein Ersatz für ein zusätzliches
+  fachliches Sicherheitskriterium.
+
+Bei einer Authority mit `source_precondition` muss mindestens ein Acceptance-Kriterium
+explizit die Evidenzklasse `source-precondition` verlangen. Außerdem müssen historischer
+Intent und Result genau diese Source-Precondition samt Observation-/Ancestry-/Runtime-
+Identity-Evidenz tatsächlich gebunden haben. Fehlt das im historischen Runnervertrag,
+blockiert der Closeout als `authority-closeout-source-precondition-unproven`; die später
+beobachtete physische Runtime-Konvergenz wird nicht rückwirkend zur Gate-Evidenz erklärt.
 
 Nur dann setzt ein einziger `StateStore.put_task_spec()`-CAS den Zustand auf `verified` und
 persistiert `metadata.runtime_closeout` mit Task-ID, ursprünglicher Autoritätsrevision und
 -digest, Target, Intent, Runtime-Result, Source-Commit, Manifest-/Readback- sowie
-Lease-Binding-/Release-Digests. Der anschließende TaskSpec-Readback und ein erneuter
+Lease-Binding-/Release-Digests. Neue Closeouts enthalten zusätzlich eine digestgebundene
+`acceptance_evidence`-Kapsel mit TaskSpec-, Acceptance-Vertrags-, Result-, Readback-,
+Lease-, Effekt-Historien-, StateStore- und Run-/No-Run-Bindung. Der anschließende
+TaskSpec-Readback und ein erneuter
 StateStore-Replay müssen passen. Ein identischer Replay ist wirkungsfrei; fremde, fehlende,
 nicht deployte, driftende oder manipulierte Evidenz blockiert. Terminalität wird nie aus
 Notizen, Goal- oder Acceptance-Prosa abgeleitet, und es gibt weder Direct-SQL auf Bureau
 StateStore noch Queue-/Claim-/Dispatch-Wirkung.
 
-Der historische Browser-Control-Bootstrap ist dadurch bewusst **nicht** aus einem einzelnen
-Receipt terminalisierbar. Für
-`BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811`
-existieren mehrere unterschiedliche, bereits `effect_started=true` ausgeführte
-Runtime-Refresh-Targets; darunter der in der Follow-up-Evidenz gebundene Erfolg auf
-`5c5746a980fe035661074b4a9a85d3e52634d153` mit Result
-`9b6afa43ad97b0056e7ac011c5f334e479eff2a739325d70d6b15c25f3ef6459`.
-Ein Closeout nur dieses einen Effekts würde die deklarierte Single-Use-Semantik rückwirkend
-fälschen und wird daher fail-closed abgewiesen. Die Mehrfachnutzung benötigt eine eigene
-Provenienz-/Lifecycle-Reconciliation; sie autorisiert weder einen weiteren Refresh noch
-einen Fake-Run. `BUREAU-TRUTH-MODEL-V2-T029` ist bereits mit seinem älteren
-`runtime_closeout` terminal und dient ausschließlich als Präzedenz-/Negativfall, nicht als
-erneut zu schließende Autorität.
+Der normale `closeout-authority` bleibt bei historischer Mehrfachnutzung bewusst
+fail-closed. Ein einzelner erfolgreicher Effekt darf eine deklarierte Single-Use-Authority
+niemals als `verified` erscheinen lassen, wenn weitere `effect_started=true`-Effekte zur
+selben Task existieren.
+
+Für genau diese belegte Vertragsverletzung existiert getrennt
+`closeout-authority-incident`. Der Pfad akzeptiert nur einen bereits `deployed`en,
+effektgestarteten Result-Beleg, verlangt mindestens einen weiteren abweichenden historischen
+Effekt und führt dieselben harten Intent-/Result-, immutable Readback-, StateStore-, Run-
+und Lease-Release-Prüfungen wie der normale Closeout aus. Er startet keinen Runtime-Effekt
+und erzeugt keinen Claim oder Fake-Run. Sein einziger TaskSpec-CAS setzt den Lifecycle auf
+`superseded` und persistiert `metadata.runtime_incident_closeout` mit dem Digest der
+vollständigen Effekt-Historie sowie Effekt- und Konfliktanzahl. Die Receipt-Aussage ist
+explizit **nicht** `legitimate_single_use_verification` und legitimiert keinen historischen
+Effekt rückwirkend.
+
+```bash
+bureau-runtime-refresh --state-root ~/.local/state/bureau/runtime-refresh \
+  closeout-authority-incident \
+  --approval-task-id '<exact task id>' \
+  --target-sha256 '<authoritatively consumed target digest>' \
+  --intent-sha256 '<authoritatively consumed intent digest>' \
+  --result-sha256 '<authoritatively consumed deployed result digest>'
+```
+
+Der historische Browser-Control-Bootstrap
+`BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811` ist der
+Negativfall: Mehrere unterschiedliche Targets wurden bereits mit Wirkung ausgeführt. Ein
+normaler Closeout bleibt deshalb verboten; nur die Incident-/Supersession-Semantik darf den
+fehlerhaften Authority-Lifecycle terminalisieren. `BUREAU-TRUTH-MODEL-V2-T029` ist bereits
+mit seinem älteren `runtime_closeout` terminal und dient ausschließlich als Präzedenzfall,
+nicht als erneut zu schließende Autorität.
 
 ## Historische Provenienzgrenze `affe99f…`
 

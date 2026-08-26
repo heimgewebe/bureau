@@ -5901,9 +5901,14 @@ def test_incident_replay_rejects_removed_preexisting_provenance_receipt(
     assert incident["closeout"]["provenance_receipts_sha256"] == receipts_sha256
 
     def remove_binding(spec: dict[str, Any]) -> None:
-        spec["metadata"]["runtime_refresh_authority"].pop(
-            "target_binding_receipt", None
+        authority = spec["metadata"]["runtime_refresh_authority"]
+        authority.pop("target_binding_receipt", None)
+        _, rewritten_provenance_sha256 = refresh._runtime_incident_provenance_receipts(
+            authority
         )
+        spec["metadata"]["runtime_incident_closeout"][
+            "provenance_receipts_sha256"
+        ] = rewritten_provenance_sha256
 
     revise_authority(
         store,

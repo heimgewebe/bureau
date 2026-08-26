@@ -6224,6 +6224,42 @@ def _closeout_runtime_refresh_authority(
             _runtime_incident_provenance_receipts(authority)
         )
         incident_consumption = incident_provenance["consumption"]
+        incident_binding = incident_provenance["target_binding_receipt"]
+        result_authority = result.get("authority_task_spec")
+        if result_authority is not None:
+            if not isinstance(result_authority, dict):
+                raise RuntimeRefreshError(
+                    "authority-incident-closeout-provenance-drift",
+                    "modern incident result authority binding is malformed",
+                )
+            result_binding = _validated_authority_target_binding(
+                result_authority.get("target_binding_receipt")
+            )
+            expected_result_authority = {
+                "task_id": approval_task_id,
+                "authority_revision": existing_incident["authority_revision"],
+                "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+            }
+            mismatched_result_authority = {
+                key: {"expected": value, "result_authority": result_authority.get(key)}
+                for key, value in expected_result_authority.items()
+                if result_authority.get(key) != value
+            }
+            if mismatched_result_authority:
+                raise RuntimeRefreshError(
+                    "authority-incident-closeout-provenance-drift",
+                    "modern incident result authority differs from closeout authority",
+                    details={"mismatched": mismatched_result_authority},
+                )
+            if incident_binding != result_binding or incident_consumption is None:
+                raise RuntimeRefreshError(
+                    "authority-incident-closeout-provenance-drift",
+                    "modern incident replay lost its result-bound operational provenance",
+                    details={
+                        "target_binding_present": incident_binding is not None,
+                        "consumption_present": incident_consumption is not None,
+                    },
+                )
         if incident_consumption is not None:
             expected_incident_consumption = {
                 "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
@@ -6246,7 +6282,6 @@ def _closeout_runtime_refresh_authority(
                         "observed": incident_consumption,
                     },
                 )
-        incident_binding = incident_provenance["target_binding_receipt"]
         if incident_binding is not None:
             expected_incident_binding = {
                 "task_id": approval_task_id,

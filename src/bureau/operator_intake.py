@@ -2651,11 +2651,21 @@ def _validated_proposal(
     task_spec_binding = _validate_task_spec_proposal_binding(
         registry, store, plan=plan, task_json=task_json, event=current
     )
+    # The binding check above already proves that any existing TaskSpec is an
+    # exact register replay or a valid revision baseline/replay. Preserve that
+    # proof so a publication committed before its receipt can be retried without
+    # weakening the ordinary task-exists guard.
+    current_task_spec = store.task_spec(str(task_json.get("id", "")))
+    allow_existing_task_id = task_spec_binding["operation"] == "revise" or (
+        current_task_spec is not None
+        and int(current_task_spec["revision"]) == 1
+        and current_task_spec["spec_sha256"] == task_spec_binding["proposed_spec_sha256"]
+    )
     _validate_task_semantics(
         registry,
         store,
         task_json,
-        allow_existing_task_id=task_spec_binding["operation"] == "revise",
+        allow_existing_task_id=allow_existing_task_id,
     )
     content = _render_task(task_json)
     target_path = str(plan.get("target_path"))

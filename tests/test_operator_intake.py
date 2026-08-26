@@ -3162,6 +3162,63 @@ def test_publication_receipt_write_failure_reports_state_store_readback(
     stored = store.task_spec(json.loads(plan_path.read_text())["task_id"])
     assert stored is not None
 
+
+def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "receipt.json"
+    original_replay_projection = store.replay_projection
+    fail_once = True
+
+    def replay_projection_with_one_failure():
+        nonlocal fail_once
+        if fail_once:
+            fail_once = False
+            raise RuntimeError("injected projection failure before publication receipt")
+        return original_replay_projection()
+
+    monkeypatch.setattr(store, "replay_projection", replay_projection_with_one_failure)
+    with pytest.raises(RuntimeError, match="injected projection failure"):
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=receipt,
+        )
+
+    plan = json.loads(plan_path.read_text())
+    committed = store.task_spec(plan["task_id"])
+    assert committed is not None
+    assert committed["revision"] == 1
+    assert committed["spec_sha256"] == plan["task_json_sha256"]
+    assert not receipt.exists()
+
+    retry_preview = publication_preview(registry, store, plan_path=plan_path)
+    recovered = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(retry_preview, tmp_path),
+        workspace_root=tmp_path / "workspaces-retry",
+        receipt_path=receipt,
+    )
+
+    assert recovered["status"] == "published"
+    assert recovered["task_spec_revision"]["revision"] == 1
+    assert recovered["task_spec_revision"]["idempotent_replay"] is True
+    assert store.task_spec(plan["task_id"])["revision"] == 1
+    assert receipt.is_file()
+
+
 def _cli_result(capsys):
     payload = json.loads(capsys.readouterr().out)
     return payload.get("result", payload)

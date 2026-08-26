@@ -117,6 +117,7 @@ def _initial_lane(
     effective_state: str,
     structural_reasons: list[str],
     active_runs: list[dict[str, Any]],
+    reverification_candidate: bool = False,
 ) -> str | None:
     if active_runs:
         if any(item["state"] == "verifying" for item in active_runs):
@@ -124,6 +125,10 @@ def _initial_lane(
         return "in_flight"
     if effective_state in TERMINAL_TASK_STATES:
         return None
+    if effective_state == "stale" and reverification_candidate:
+        return "blocked" if structural_reasons else (
+            task.lane if task.lane in EXECUTABLE_LANES else "later"
+        )
     if effective_state in {"blocked", "stale"}:
         return "blocked"
     if effective_state == "ready":
@@ -280,15 +285,19 @@ def build_frontier_projection(
             structural.append(runtime_reason)
             structural.sort()
         effective_state = overlays.get(task.id, task.state)
+        reverification_candidate = dispatcher._task_reverification_candidate(
+            task, effective_state
+        )
         active_runs = _active_run_projection(runs_by_task.get(task.id, []))
         lane = _initial_lane(
             task=task,
             effective_state=effective_state,
             structural_reasons=structural,
             active_runs=active_runs,
+            reverification_candidate=reverification_candidate,
         )
         structurally_eligible = (
-            effective_state == "ready"
+            (effective_state == "ready" or reverification_candidate)
             and not structural
             and not active_runs
             and not compact_runtime["execution_blocked"]
@@ -301,6 +310,7 @@ def build_frontier_projection(
             "task_spec_sha256": revisions[task.id]["spec_sha256"],
             "declared_state": task.state,
             "effective_state": effective_state,
+            "reverification_candidate": reverification_candidate,
             "priority": {"lane": task.lane, "rank": task.rank},
             "projected_lane": lane,
             "projected_from_lane": None,

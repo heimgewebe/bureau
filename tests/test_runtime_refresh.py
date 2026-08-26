@@ -4832,6 +4832,59 @@ def test_no_run_closeout_rejects_frozen_acceptance_contract_drift_on_replay(
     assert store.list_runs() == []
 
 
+def test_no_run_closeout_rejects_frozen_acceptance_definition_drift_on_replay(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-NO-RUN-FROZEN-ACCEPTANCE-DEFINITION-DRIFT"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    assert closeout["closeout"]["status"] == "verified"
+
+    def revise_frozen_criterion(spec: dict[str, Any]) -> None:
+        criterion = spec["acceptance"][0]
+        criterion["assertion"] = "The revised frozen criterion requires new evidence."
+        criterion["verifier_config"] = {
+            "observation_scope": f"test:{task_id}:revised-runtime-authority"
+        }
+
+    revise_authority(
+        store,
+        task_id,
+        revise_frozen_criterion,
+        key="revise:frozen-acceptance-definition-after-closeout",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-contract-drift"
+    assert set(caught.value.details["mismatched"]) == {"contract_sha256"}
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
 def test_no_run_closeout_rejects_unbound_acceptance_task_spec_on_replay(
     tmp_path: Path,
 ) -> None:
@@ -5298,6 +5351,9 @@ def test_no_run_closeout_rejects_historical_multi_use_of_single_use_authority(
     assert after["spec"]["state"] == "superseded"
     assert "runtime_closeout" not in after["spec"]["metadata"]
     assert after["spec"]["metadata"]["runtime_incident_closeout"] == incident["closeout"]
+    incident_authority = after["spec"]["metadata"]["runtime_refresh_authority"]
+    assert "target_binding_receipt" not in incident_authority
+    assert "consumption" not in incident_authority
     assert refresh._runtime_authority_effect_history(state_root, task_id) == history_before
     assert store.list_runs() == []
 

@@ -5241,6 +5241,7 @@ def _validated_no_run_acceptance_contract(
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "kind": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND,
         "criteria": normalized,
+        "frozen_acceptance": json.loads(json.dumps(spec["acceptance"])),
     }
 
 
@@ -6225,6 +6226,8 @@ def _closeout_runtime_refresh_authority(
                 "TaskSpec consumption differs from no-run closeout evidence",
             )
         expected_consumption = existing_consumption
+    elif historical_multi_use_incident:
+        expected_consumption = None
     else:
         authority["consumption"] = expected_consumption
     binding_value = authority.get("target_binding_receipt")
@@ -6239,7 +6242,7 @@ def _closeout_runtime_refresh_authority(
                 "authority-target-binding-mismatch",
                 "TaskSpec target binding differs from no-run closeout evidence",
             )
-    else:
+    elif not historical_multi_use_incident:
         authority["target_binding_receipt"] = {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
             "kind": RUNTIME_AUTHORITY_BINDING_KIND,
@@ -6347,8 +6350,9 @@ def _closeout_runtime_refresh_authority(
     mutated = json.loads(json.dumps(spec))
     mutated_metadata = mutated["metadata"]
     mutated_authority = mutated_metadata["runtime_refresh_authority"]
-    mutated_authority["target_binding_receipt"] = authority["target_binding_receipt"]
-    mutated_authority["consumption"] = expected_consumption
+    if not historical_multi_use_incident:
+        mutated_authority["target_binding_receipt"] = authority["target_binding_receipt"]
+        mutated_authority["consumption"] = expected_consumption
     if historical_multi_use_incident:
         mutated["state"] = "superseded"
         mutated_metadata["runtime_incident_closeout"] = closeout

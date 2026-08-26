@@ -4765,6 +4765,110 @@ def test_no_run_closeout_rejects_cross_bound_acceptance_evidence_on_replay(
     assert store.list_runs() == []
 
 
+def test_no_run_closeout_rejects_removed_acceptance_evidence_on_replay(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-NO-RUN-REMOVED-ACCEPTANCE-EVIDENCE"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    assert closeout["closeout"]["acceptance_evidence"]
+
+    def remove_acceptance_capsule(spec: dict[str, Any]) -> None:
+        spec["metadata"]["runtime_closeout"].pop("acceptance_evidence")
+
+    revise_authority(
+        store,
+        task_id,
+        remove_acceptance_capsule,
+        key="tamper:remove-typed-acceptance-evidence",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-evidence-missing"
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
+def test_no_run_closeout_rejects_missing_required_evidence_class_on_replay(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-NO-RUN-MISSING-REQUIRED-EVIDENCE-CLASS"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    assert closeout["closeout"]["status"] == "verified"
+
+    def drop_required_evidence(spec: dict[str, Any]) -> None:
+        runtime_closeout = spec["metadata"]["runtime_closeout"]
+        evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
+        evidence["available_evidence"].remove("state-store-integrity")
+        evidence.pop("evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
+
+    revise_authority(
+        store,
+        task_id,
+        drop_required_evidence,
+        key="tamper:drop-required-acceptance-evidence-class",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-evidence-incomplete"
+    assert "runtime-authority-proof" in caught.value.details["missing"]
+    assert "state-store-integrity" in caught.value.details["missing"]["runtime-authority-proof"]
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
 def test_no_run_closeout_rejects_frozen_acceptance_contract_drift_on_replay(
     tmp_path: Path,
 ) -> None:
@@ -4936,6 +5040,91 @@ def test_no_run_closeout_rejects_unbound_acceptance_task_spec_on_replay(
 
     assert caught.value.code == "authority-closeout-acceptance-task-spec-binding-invalid"
     assert caught.value.details["task_spec_sha256"] == "f" * 64
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
+def test_no_run_closeout_rejects_source_precondition_contract_drift_on_replay(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-NO-RUN-SOURCE-PRECONDITION-CONTRACT-DRIFT"
+    observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(
+        tmp_path, task_id=task_id
+    )
+    store = authority_store_for_intent(intent)
+    binding, resource_db = lease_for(tmp_path / "source-precondition-replay-leases", intent)
+
+    def source_preparer(**kwargs: Any) -> dict[str, Any]:
+        kwargs["workspace"].mkdir(parents=True)
+        return {
+            "head": MAIN,
+            "root": str(kwargs["workspace"]),
+            "dirty": False,
+            "detached": True,
+        }
+
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: observed,
+        source_preparer=source_preparer,
+        installer=lambda **_: {
+            "manifest_sha256": "a" * 64,
+            "rollback": {"directory": "/rollback"},
+        },
+        readback=lambda **_: {
+            "source_commit": MAIN,
+            "manifest_sha256": "a" * 64,
+            "check_valid": True,
+            "runtime_identity_valid": True,
+        },
+    )
+    assert result["status"] == "deployed"
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    assert closeout["closeout"]["status"] == "verified"
+
+    def drift_source_precondition(spec: dict[str, Any]) -> None:
+        authority = spec["metadata"]["runtime_refresh_authority"]
+        authority["source_precondition"]["registered_manifest_sha256"] = "b" * 64
+
+    revise_authority(
+        store,
+        task_id,
+        drift_source_precondition,
+        key="revise:source-precondition-contract-after-closeout",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-contract-drift"
+    assert set(caught.value.details["mismatched"]) == {"contract_sha256"}
     assert store.task_spec(task_id) == before_replay
     assert store.list_runs() == []
 

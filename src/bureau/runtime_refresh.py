@@ -5242,6 +5242,7 @@ def _validated_no_run_acceptance_contract(
         "kind": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND,
         "criteria": normalized,
         "frozen_acceptance": json.loads(json.dumps(spec["acceptance"])),
+        "source_precondition": source_precondition,
     }
 
 
@@ -5371,6 +5372,35 @@ def _validate_no_run_acceptance_replay_binding(
 ) -> None:
     acceptance_evidence = closeout.get("acceptance_evidence")
     if acceptance_evidence is None:
+        try:
+            bound_task_spec = store.task_spec_by_digest(
+                closeout["task_id"], closeout["authority_spec_sha256"]
+            )
+        except (legacy.StateError, OSError, sqlite3.Error) as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-task-spec-binding-invalid",
+                "cannot classify an evidence-free closeout against its bound TaskSpec history",
+                details={"error": str(exc)},
+            ) from exc
+        if bound_task_spec is None:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-task-spec-binding-invalid",
+                "evidence-free closeout is not bound to a historical revision of this TaskSpec",
+                details={
+                    "task_id": closeout["task_id"],
+                    "task_spec_sha256": closeout["authority_spec_sha256"],
+                },
+            )
+        _, bound_authority = _runtime_authority_metadata(bound_task_spec["spec"])
+        if bound_authority.get("no_run_closeout_acceptance") is not None:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-evidence-missing",
+                "typed no-run closeout lost its criterion-specific acceptance evidence capsule",
+                details={
+                    "revision": bound_task_spec["revision"],
+                    "task_spec_sha256": closeout["authority_spec_sha256"],
+                },
+            )
         return
     current_contract = _validated_no_run_acceptance_contract(
         spec=spec, authority=authority
@@ -5400,6 +5430,20 @@ def _validate_no_run_acceptance_replay_binding(
                 "evidence_task_spec_sha256": acceptance_evidence["task_spec_sha256"],
                 "mismatched": current_mismatched,
             },
+        )
+    available_evidence = set(acceptance_evidence["available_evidence"])
+    missing_evidence = {
+        criterion_id: sorted(
+            set(item["required_evidence"]) - available_evidence
+        )
+        for criterion_id, item in current_contract["criteria"].items()
+        if set(item["required_evidence"]) - available_evidence
+    }
+    if missing_evidence:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-incomplete",
+            "stored no-run acceptance evidence no longer covers every frozen criterion",
+            details={"missing": missing_evidence},
         )
     try:
         historical_task_spec = store.task_spec_by_digest(

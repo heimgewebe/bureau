@@ -104,7 +104,7 @@
     ],
     "runtime_refresh_authority": {
       "schema_version": 1,
-      "mode": "single-use-target-bound",
+      "mode": "single-use-target-bound-source-precondition-v1",
       "single_use": true,
       "required_action_class": "runtime_mutation",
       "required_approval_level": "break_glass",

@@ -102,7 +102,7 @@
     "runtime_refresh_authority": {
       "forbid_foreign_task_substitution": true,
       "forbid_historical_target_reuse": true,
-      "mode": "single-use-target-bound",
+      "mode": "single-use-target-bound-source-precondition-v1",
       "required_action_class": "runtime_mutation",
       "required_approval_level": "break_glass",
       "required_claim_resource": "component.bureau.runtime",

@@ -5588,6 +5588,28 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
     return dict(value)
 
 
+def _runtime_incident_provenance_receipts(
+    authority: dict[str, Any],
+) -> tuple[dict[str, Any], str]:
+    consumption_value = authority.get("consumption")
+    consumption = (
+        _validated_authority_consumption(consumption_value)
+        if consumption_value is not None
+        else None
+    )
+    binding_value = authority.get("target_binding_receipt")
+    binding = (
+        _validated_authority_target_binding(binding_value)
+        if binding_value is not None
+        else None
+    )
+    receipts = {
+        "consumption": consumption,
+        "target_binding_receipt": binding,
+    }
+    return receipts, sha256_bytes(canonical_bytes(receipts))
+
+
 def _validated_runtime_incident_closeout(value: Any) -> dict[str, Any]:
     fields = {
         "schema_version",
@@ -5604,6 +5626,7 @@ def _validated_runtime_incident_closeout(value: Any) -> dict[str, Any]:
         "readback_sha256",
         "lease_binding_sha256",
         "lease_release_sha256",
+        "provenance_receipts_sha256",
         "effect_history_sha256",
         "effect_count",
         "conflicting_effect_count",
@@ -5624,6 +5647,7 @@ def _validated_runtime_incident_closeout(value: Any) -> dict[str, Any]:
         "readback_sha256",
         "lease_binding_sha256",
         "lease_release_sha256",
+        "provenance_receipts_sha256",
         "effect_history_sha256",
     }
     if (
@@ -6141,17 +6165,120 @@ def _closeout_runtime_refresh_authority(
     existing_incident_value = metadata.get("runtime_incident_closeout")
     if existing_incident_value is not None:
         existing_incident = _validated_runtime_incident_closeout(existing_incident_value)
+        try:
+            incident_authority_spec = store.task_spec_by_digest(
+                approval_task_id, existing_incident["authority_spec_sha256"]
+            )
+        except (legacy.StateError, OSError, sqlite3.Error) as exc:
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-authority-binding-invalid",
+                "cannot prove incident closeout against StateStore TaskSpec history",
+                details={"error": str(exc)},
+            ) from exc
+        if (
+            incident_authority_spec is None
+            or incident_authority_spec.get("revision")
+            != existing_incident["authority_revision"]
+        ):
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-authority-binding-invalid",
+                "incident closeout authority revision/digest is not historical TaskSpec truth",
+                details={
+                    "authority_revision": existing_incident["authority_revision"],
+                    "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+                    "historical_revision": (
+                        incident_authority_spec.get("revision")
+                        if isinstance(incident_authority_spec, dict)
+                        else None
+                    ),
+                },
+            )
+        historical_release = {
+            key: value for key, value in release.items() if key != "lease_release_sha256"
+        }
+        historical_release["observed_at"] = existing_incident["closed_at"]
+        historical_release_sha256 = sha256_bytes(canonical_bytes(historical_release))
         expected_pairs = {
             "task_id": approval_task_id,
             "target_sha256": target_sha256,
             "intent_sha256": intent_sha256,
             "runtime_result_sha256": result_sha256,
+            "source_commit": intent["main_commit"],
+            "manifest_sha256": closeout_manifest_sha256,
+            "readback_sha256": current_readback_sha256,
             "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
+            "lease_release_sha256": historical_release_sha256,
         }
-        if any(existing_incident.get(key) != value for key, value in expected_pairs.items()):
+        mismatched_incident_bindings = {
+            key: {"expected": value, "incident_closeout": existing_incident.get(key)}
+            for key, value in expected_pairs.items()
+            if existing_incident.get(key) != value
+        }
+        if mismatched_incident_bindings:
             raise RuntimeRefreshError(
                 "authority-incident-closeout-replay-mismatch",
                 "incident closeout is bound to other evidence",
+                details={"mismatched": mismatched_incident_bindings},
+            )
+        incident_provenance, incident_provenance_sha256 = (
+            _runtime_incident_provenance_receipts(authority)
+        )
+        incident_consumption = incident_provenance["consumption"]
+        if incident_consumption is not None:
+            expected_incident_consumption = {
+                "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+                "kind": RUNTIME_AUTHORITY_CONSUMPTION_KIND,
+                "status": "consumed",
+                "task_id": approval_task_id,
+                "authority_revision": existing_incident["authority_revision"],
+                "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+                "target_sha256": target_sha256,
+                "intent_sha256": intent_sha256,
+                "result_sha256": result_sha256,
+                "consumed_at": incident_consumption["consumed_at"],
+            }
+            if incident_consumption != expected_incident_consumption:
+                raise RuntimeRefreshError(
+                    "authority-consumption-mismatch",
+                    "retained incident consumption differs from canonical closeout evidence",
+                    details={
+                        "expected": expected_incident_consumption,
+                        "observed": incident_consumption,
+                    },
+                )
+        incident_binding = incident_provenance["target_binding_receipt"]
+        if incident_binding is not None:
+            expected_incident_binding = {
+                "task_id": approval_task_id,
+                "authority_revision": existing_incident["authority_revision"],
+                "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+                "target_sha256": target_sha256,
+                "intent_sha256": intent_sha256,
+            }
+            mismatched_incident_receipt = {
+                key: {"expected": value, "target_binding_receipt": incident_binding.get(key)}
+                for key, value in expected_incident_binding.items()
+                if incident_binding.get(key) != value
+            }
+            if mismatched_incident_receipt:
+                raise RuntimeRefreshError(
+                    "authority-target-binding-mismatch",
+                    "retained incident target binding differs from canonical closeout evidence",
+                    details={"mismatched": mismatched_incident_receipt},
+                )
+        if (
+            existing_incident["provenance_receipts_sha256"]
+            != incident_provenance_sha256
+        ):
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-provenance-drift",
+                "incident closeout provenance receipt presence or content changed",
+                details={
+                    "stored_provenance_receipts_sha256": existing_incident[
+                        "provenance_receipts_sha256"
+                    ],
+                    "current_provenance_receipts_sha256": incident_provenance_sha256,
+                },
             )
         current_effect_history_sha256 = sha256_bytes(canonical_bytes(effect_history))
         if (
@@ -6306,6 +6433,7 @@ def _closeout_runtime_refresh_authority(
         expected_consumption=expected_consumption,
     )
     if historical_multi_use_incident:
+        _, provenance_receipts_sha256 = _runtime_incident_provenance_receipts(authority)
         closeout = {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
             "kind": RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND,
@@ -6321,6 +6449,7 @@ def _closeout_runtime_refresh_authority(
             "readback_sha256": current_readback_sha256,
             "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
             "lease_release_sha256": release["lease_release_sha256"],
+            "provenance_receipts_sha256": provenance_receipts_sha256,
             "effect_history_sha256": sha256_bytes(canonical_bytes(effect_history)),
             "effect_count": len(effect_history),
             "conflicting_effect_count": len(conflicting_effects),

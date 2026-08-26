@@ -132,6 +132,49 @@ def test_ready_revision_after_verified_receipt_is_self_reverification_candidate(
     assert status_after == status_before
 
 
+def test_claim_rechecks_fresh_initiative_plan_before_reverification(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _init_clean_origin_main(root)
+    registry, store, task_id, _status_before = _complete_then_revise_verified_task(
+        root, tmp_path, monkeypatch
+    )
+    dispatcher = Dispatcher(registry, store)
+
+    with store.connect() as connection:
+        overlays = store.overlays(connection, dispatcher.registry)
+    assert overlays[task_id] == "stale"
+    assert dispatcher._task_reverification_candidate(
+        dispatcher.registry.tasks[task_id], "stale"
+    ) is True
+
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["current_plan"] = {
+        "repository": "test",
+        "path": "plan.md",
+        "commit": "3" * 40,
+        "document_sha256": "4" * 64,
+    }
+    initiative_path.write_text(json.dumps(initiative))
+    _git_output(root, "add", ".")
+    _git_output(root, "commit", "-m", "change plan after dispatcher construction")
+    _git_output(
+        root,
+        "update-ref",
+        "refs/remotes/origin/main",
+        _git_output(root, "rev-parse", "HEAD"),
+    )
+
+    with pytest.raises(NoEligibleTask, match="state is stale"):
+        dispatcher.claim_intent(
+            "fresh-plan-reverification-worker",
+            ("repository",),
+            task_id=task_id,
+        )
+
+
 def test_frontier_projects_ready_stale_task_as_reverification_candidate(
     registry_factory, tmp_path, monkeypatch
 ):

@@ -4300,7 +4300,11 @@ class Dispatcher(legacy.Dispatcher):
         return None
 
     def _task_reverification_candidate(
-        self, task: legacy.Task, effective_state: str
+        self,
+        task: legacy.Task,
+        effective_state: str,
+        *,
+        initiative_registry: Registry | None = None,
     ) -> bool:
         """Allow only a current ready TaskSpec to supersede its own stale verified overlay."""
         if (
@@ -4332,7 +4336,8 @@ class Dispatcher(legacy.Dispatcher):
             or not row["plan_sha256"]
         ):
             return False
-        current_plan = plan_sha256(self.registry, task.initiative)
+        plan_registry = initiative_registry or self.registry
+        current_plan = plan_sha256(plan_registry, task.initiative)
         return (
             row["task_sha256"] != task.sha256
             and row["plan_sha256"] == current_plan
@@ -4448,7 +4453,9 @@ class Dispatcher(legacy.Dispatcher):
         # registry/queue.json is a compatibility projection only. Claim
         # admission is derived from task state, priority and the live gates below.
         closure_bridge = self._closure_bridge_applies(task, state, initiative)
-        reverification_candidate = self._task_reverification_candidate(task, state)
+        reverification_candidate = self._task_reverification_candidate(
+            task, state, initiative_registry=initiative_source
+        )
         if state not in TERMINAL_TASK_STATES:
             try:
                 validate_acceptance_contract(task.raw)

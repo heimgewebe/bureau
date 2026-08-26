@@ -4299,6 +4299,45 @@ class Dispatcher(legacy.Dispatcher):
             }
         return None
 
+    def _task_reverification_candidate(
+        self, task: legacy.Task, effective_state: str
+    ) -> bool:
+        """Allow only a current ready TaskSpec to supersede its own stale verified overlay."""
+        if (
+            effective_state != "stale"
+            or task.state != "ready"
+            or self.task_authority.get("kind") != "bureau-state-store-task-specs"
+        ):
+            return False
+        revision = self.task_revisions.get(task.id)
+        if (
+            not isinstance(revision, dict)
+            or revision.get("spec_sha256") != task_specs.task_spec_digest(task.raw)
+        ):
+            return False
+        with self.store.connect() as connection:
+            row = connection.execute(
+                "SELECT state,receipt_sha256,task_sha256,plan_sha256 "
+                "FROM task_status WHERE task_id=?",
+                (task.id,),
+            ).fetchone()
+        if (
+            row is None
+            or row["state"] != "verified"
+            or not isinstance(row["receipt_sha256"], str)
+            or not row["receipt_sha256"]
+            or not isinstance(row["task_sha256"], str)
+            or not row["task_sha256"]
+            or not isinstance(row["plan_sha256"], str)
+            or not row["plan_sha256"]
+        ):
+            return False
+        current_plan = plan_sha256(self.registry, task.initiative)
+        return (
+            row["task_sha256"] != task.sha256
+            and row["plan_sha256"] == current_plan
+        )
+
     def _open_pr_reservations(self, *, strict: bool) -> list[legacy.Reservation]:
         # Retain strict for call-site compatibility. Observation failures are
         # represented as fail-closed reservations so frontier and claim_next
@@ -4409,6 +4448,7 @@ class Dispatcher(legacy.Dispatcher):
         # registry/queue.json is a compatibility projection only. Claim
         # admission is derived from task state, priority and the live gates below.
         closure_bridge = self._closure_bridge_applies(task, state, initiative)
+        reverification_candidate = self._task_reverification_candidate(task, state)
         if state not in TERMINAL_TASK_STATES:
             try:
                 validate_acceptance_contract(task.raw)
@@ -4418,7 +4458,7 @@ class Dispatcher(legacy.Dispatcher):
                     f"invalid acceptance contract: {first_diagnostic}; "
                     "repair the TaskSpec acceptance contract before claim"
                 )
-        if state != "ready" and not closure_bridge:
+        if state != "ready" and not closure_bridge and not reverification_candidate:
             result.append(f"state is {state}")
         parent_child = self.registry.parent_child_projection(task, overlays)
         if parent_child.blocker_reason is not None:
@@ -9357,6 +9397,40 @@ _RUNTIME_EXECUTION_BLOCK_CODES = {
     "checkout-status-unreadable",
     "head-differs-origin-main",
 }
+_RUNTIME_EXECUTION_NONBLOCKING_FINDING_CODES = {
+    "checkout-not-git",
+}
+
+
+def _receipt_drift_is_task_revision_only(report: dict[str, Any]) -> bool:
+    registry_report = report.get("registry") if isinstance(report, dict) else None
+    if (
+        not isinstance(registry_report, dict)
+        or registry_report.get("task_authority_kind")
+        != "bureau-state-store-task-specs"
+    ):
+        return False
+    receipts = report.get("receipts") if isinstance(report, dict) else None
+    if not isinstance(receipts, dict):
+        return False
+    stale_tasks = receipts.get("stale_tasks")
+    if not isinstance(stale_tasks, list) or not stale_tasks:
+        return False
+    for item in stale_tasks:
+        if not isinstance(item, dict):
+            return False
+        stored_task = item.get("stored_task_sha256")
+        current_task = item.get("current_task_sha256")
+        stored_plan = item.get("stored_plan_sha256")
+        current_plan = item.get("current_plan_sha256")
+        if not all(
+            isinstance(value, str) and value
+            for value in (stored_task, current_task, stored_plan, current_plan)
+        ):
+            return False
+        if stored_task == current_task or stored_plan != current_plan:
+            return False
+    return True
 
 
 def _runtime_execution_truth(report: dict[str, Any]) -> dict[str, Any]:
@@ -9366,6 +9440,7 @@ def _runtime_execution_truth(report: dict[str, Any]) -> dict[str, Any]:
     findings = report.get("findings") if isinstance(report, dict) else []
     if not isinstance(findings, list):
         findings = []
+    receipt_drift_nonblocking = _receipt_drift_is_task_revision_only(report)
     blocker_findings = [
         item
         for item in findings
@@ -9374,7 +9449,12 @@ def _runtime_execution_truth(report: dict[str, Any]) -> dict[str, Any]:
             item.get("code") in _RUNTIME_EXECUTION_BLOCK_CODES
             or (
                 item.get("severity") == "blocker"
-                and item.get("code") != "checkout-not-git"
+                and item.get("code")
+                not in _RUNTIME_EXECUTION_NONBLOCKING_FINDING_CODES
+                and not (
+                    item.get("code") == "receipt-drift"
+                    and receipt_drift_nonblocking
+                )
             )
         )
     ]
@@ -9481,6 +9561,9 @@ def runtime_drift_check(
             )
             overlays = _read_only_overlays(effective_registry, task_status_rows)
             registry_report = _registry_drift(effective_registry, overlays, findings)
+            registry_report["task_authority_kind"] = (
+                task_authority.get("kind") if isinstance(task_authority, dict) else None
+            )
             receipt_report = _receipt_drift(effective_registry, state, findings)
     runtime = {
         "root": str(resolved_root),

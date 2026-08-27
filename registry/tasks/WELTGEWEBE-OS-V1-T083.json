@@ -41,31 +41,46 @@
       "id": "orphan-classification",
       "assertion": "Ein Diagnosepfad bindet Repository, PR, exakten Head-SHA, Workflow-Run-ID und Eventtyp und klassifiziert einen Run erst dann als Orphan-Kandidaten, wenn er ueber einen expliziten Schwellenwert queued bleibt und weiterhin null Jobs besitzt. Ein Run mit erzeugten wartenden Jobs wird nicht als derselbe Fehler behandelt.",
       "evidence_type": "object",
-      "verifier": "GitHub Actions run and jobs authoritative readback"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t083:actions-orphan:classification"
+      }
     },
     {
       "id": "pr1796-regression-fixture",
       "assertion": "Ein reproduzierbarer Fixture- oder aufgezeichneter Contract-Test bildet den PR-#1796-Befund ab: der urspruengliche Required-CI-Run 32985724661 blieb queued mit null Jobs, waehrend ein manuell gestarteter CI-Lauf auf derselben fachlichen Revision ausfuehrbar war. Der Diagnosepfad erkennt diese Inkonsistenz ohne den manuellen Lauf als Required-PR-Evidenz auszugeben.",
       "evidence_type": "object",
-      "verifier": "recorded GitHub Actions contract fixture and exact event identity"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t083:actions-orphan:pr1796-regression-fixture"
+      }
     },
     {
       "id": "safe-recovery-order",
       "assertion": "Der Recovery-Vertrag liest vor jeder Mutation den aktuellen PR-Head, vorhandene Runs, Jobs und Required-Check-Zustand neu. Bevorzugt werden offizielle cancel/rerun- oder andere GitHub-API-Pfade, sofern sie fuer exakt den betroffenen PR-Run semantisch geeignet und verfuegbar sind; bei unklarem Ergebnis folgt zuerst Readback und hoechstens ein kontrollierter Retry.",
       "evidence_type": "object",
-      "verifier": "recovery state-machine tests and mutation/readback receipts"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t083:actions-orphan:safe-recovery-order"
+      }
     },
     {
       "id": "no-protection-bypass",
       "assertion": "Kein Recovery-Pfad setzt Required Checks auf Erfolg, deaktiviert Branch Protection, ersetzt einen pull_request-Required-Run durch einen workflow_dispatch-Lauf oder verwendet Force-Push. Falls GitHub keine sichere Wiederherstellungsschnittstelle bereitstellt, endet der Pfad fail-closed mit klarer Operator-Diagnose.",
       "evidence_type": "object",
-      "verifier": "branch protection, workflow event identity and negative recovery tests"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t083:actions-orphan:no-protection-bypass"
+      }
     },
     {
       "id": "doctor-observability",
       "assertion": "Doctor beziehungsweise die relevante Operator-Observability kann einen solchen Orphan-Zustand kompakt mit Alter, Run-ID, Head-SHA und naechster sicherer Aktion anzeigen, ohne Queue-Laenge oder Providerstatus als alleinigen Ursachenbeweis zu behaupten.",
       "evidence_type": "object",
-      "verifier": "doctor projection fixture and bounded live observation"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t083:actions-orphan:doctor-observability"
+      }
     }
   ],
   "metadata": {

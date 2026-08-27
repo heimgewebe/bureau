@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T081",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Federation-Delivery-Reconciliation gegen konkurrierende Deadlocks beweisen",
+  "state": "ready",
+  "goal": "Den nach PR #1796 verbleibenden Concurrency-Rest beweisen: Zwei reale PostgreSQL-Transaktionen muessen reconcile_delivery_endpoints mit ueberlappenden Peer-Mengen und umgekehrter Aufruferreihenfolge innerhalb eines begrenzten Zeitfensters ohne Deadlock abschliessen und den korrekten Delivery-Endpoint-Zustand hinterlassen. Der Beweis wird als Regressionstest in den normalen relevanten CI-Pfad aufgenommen, ohne Row-Locks, Transaktionsgrenzen oder Isolation zur Erzielung eines gruenen Tests abzuschwaechen.",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Vom Nutzer am 2026-08-27 mit der ausdruecklichen Anweisung '@grabowski umsetzen' fuer die bereits geprueften PR-#1796-Folgethemen autorisiert; Umsetzung bleibt revisions-, review- und CI-gebunden."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/api/src/federation.rs",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests",
+      "path:/home/alex/repos/weltgewebe/scripts/ci/run-postgres-integration-proofs.sh"
+    ]
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "rust",
+    "postgresql",
+    "sqlx",
+    "concurrency-testing",
+    "ci"
+  ],
+  "acceptance": [
+    {
+      "id": "real-postgres-overlap-reproduction",
+      "assertion": "Ein reproduzierbarer Test verwendet echtes PostgreSQL und startet zwei gleichzeitig laufende reconcile_delivery_endpoints-Transaktionen mit mindestens einer ueberlappenden Peer-Menge und gegensaetzlicher Eingabereihenfolge; ein Mock- oder rein sequentieller Test gilt nicht als Beweis.",
+      "evidence_type": "object",
+      "verifier": "exact-revision PostgreSQL integration test evidence"
+    },
+    {
+      "id": "bounded-no-deadlock-and-final-state",
+      "assertion": "Beide Transaktionen beenden innerhalb eines expliziten begrenzten Timeouts ohne Deadlock oder Lock-Timeout; danach werden die erwarteten Delivery-Endpoint-Zustaende fuer alle betroffenen Peers direkt aus PostgreSQL gelesen und exakt verglichen.",
+      "evidence_type": "object",
+      "verifier": "bounded concurrent transaction result and direct PostgreSQL readback"
+    },
+    {
+      "id": "locking-contract-preserved",
+      "assertion": "Der Test wird nicht durch Entfernen notwendiger FOR-UPDATE-Locks, Verkuerzen der fachlichen Transaktion, Abschwaechen der Isolation oder Serialisieren der beiden Testtransaktionen gruen gemacht; jede notwendige Produktionsaenderung bleibt minimal und begruendet.",
+      "evidence_type": "object",
+      "verifier": "exact diff review and transaction contract inspection"
+    },
+    {
+      "id": "normal-ci-regression-coverage",
+      "assertion": "Der Concurrency-Test laeuft im normalen fuer PostgreSQL-/Federation-Aenderungen relevanten CI-Pfad und wird auf dem exakten PR-Head sowie nach Merge revisionsgebunden gruen nachgewiesen.",
+      "evidence_type": "object",
+      "verifier": "GitHub Actions exact-head and post-merge CI evidence"
+    }
+  ],
+  "metadata": {
+    "candidate_id": "candidate-b8a8826e3e09aa50fdb12a47",
+    "candidate_idempotency_key": "weltgewebe-pr1796-federation-concurrency-regression-v1",
+    "candidate_assessment": "promote",
+    "candidate_exact_duplicates": [],
+    "registered_at": "2026-08-27T05:06:00Z",
+    "source_pr": "heimgewebe/weltgewebe#1796",
+    "source_pr_head": "e99106c2cef8af8014285db69c978474dae1f098",
+    "source_merge_commit": "4e1f339d601f064d1a0c9234910f305cb910f6aa",
+    "source_observation": "PR #1796 ordnet die gebatchten Peer-Row-Locks deterministisch, beweist aber nicht die Deadlock-Freiheit der gesamten Transaktion unter ueberlappenden konkurrierenden Reconciliation-Aufrufen.",
+    "does_not_establish": [
+      "dass PR #1796 aktuell einen bekannten Produktionsdeadlock verursacht",
+      "dass deterministische Row-Lock-Reihenfolge allein globale Deadlock-Freiheit garantiert",
+      "Berechtigung zum Abschwaechen von Transaktions- oder CI-Schutzregeln"
+    ]
+  }
+}

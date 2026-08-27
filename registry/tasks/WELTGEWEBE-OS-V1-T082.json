@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T082",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Automatisierte PR-Writer gegen veraltete Repository-Baeume absichern",
+  "state": "ready",
+  "goal": "Den in PR #1796 real beobachteten Stale-Tree-Fehler systemisch abfangen: Ein automatisierter Writer darf einen aktuellen PR-Branch nicht unbemerkt mit einem aelteren Repository-Baum ueberschreiben. Vor Push beziehungsweise spaetestens als blockierendes PR-Gate werden aktueller Remote-Base-Stand, erwarteter Schreibscope und resultierender Baum/Diff revisionsgebunden verglichen; unerwartete Ruecknahmen oder eine nicht erklaerte Diff-Explosion schlagen fail-closed fehl, ohne Force-Push oder Schutzregel-Bypass.",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Vom Nutzer am 2026-08-27 mit der ausdruecklichen Anweisung '@grabowski umsetzen' fuer die bereits geprueften PR-#1796-Folgethemen autorisiert; Schutzlogik darf bestehende Branch-Protection-, Review- oder CI-Gates nur ergaenzen, nicht umgehen."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/.github/workflows",
+      "path:/home/alex/repos/weltgewebe/scripts/ci"
+    ]
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "testing"
+  ],
+  "acceptance": [
+    {
+      "id": "stale-tree-fixture-fails-closed",
+      "assertion": "Ein reproduzierbarer Fixture-Fall modelliert den PR-#1796-Vorfall: Der neue Commit besitzt einen aktuellen Branch-Elterncommit, schreibt aber einen aelteren Repository-Baum zurueck und erzeugt dadurch zahlreiche fachfremde Aenderungen. Der Guard erkennt diesen Zustand deterministisch und blockiert ihn.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:fixture-fails-closed"
+      }
+    },
+    {
+      "id": "fresh-base-and-scope-binding",
+      "assertion": "Die Entscheidung ist an einen frisch gelesenen Remote-Base-/PR-Head und einen expliziten erwarteten Schreibscope gebunden. Ein alter lokaler Checkout, ein historischer Diff oder nur die Anzahl geaenderter Dateien reicht nicht als Autoritaet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:fresh-base-and-scope-binding"
+      }
+    },
+    {
+      "id": "normal-scoped-update-passes",
+      "assertion": "Ein normaler kleiner PR, der nur erwartete Pfade aendert und keine neueren Base-Aenderungen zuruecknimmt, passiert denselben Guard. Gross angelegte, aber explizit autorisierte Aenderungen koennen ueber einen revisionsgebundenen Scope-Vertrag legitimiert werden; reine Schwellenwerte duerfen nicht allein entscheiden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:normal-scoped-update-passes"
+      }
+    },
+    {
+      "id": "no-history-rewrite-bypass",
+      "assertion": "Recovery und Guard verwenden weder Force-Push noch eine Abschwaechung von Branch Protection, Review Evidence oder Required Checks. Ein erkannter Stale-Tree-Fall liefert eine maschinenlesbare Diagnose und einen vorwaertsgerichteten Reparaturpfad.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:no-history-rewrite-bypass"
+      }
+    },
+    {
+      "id": "ci-enforced-on-automated-prs",
+      "assertion": "Der Integritaetsguard wird auf den relevanten automatisierten PR-/Writer-Pfaden revisionsgebunden ausgefuehrt und ein absichtlich injizierter Stale-Tree-Fall kann nicht bis zum Required Merge Gate gruen werden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:ci-enforced-on-automated-prs"
+      }
+    }
+  ],
+  "metadata": {
+    "candidate_id": "candidate-10f24fdd774863a36bcb8ee5",
+    "candidate_event_id": 11740,
+    "candidate_idempotency_key": "weltgewebe-automated-pr-stale-tree-rewrite-guard-v1",
+    "candidate_assessment": "promote",
+    "candidate_exact_duplicates": [],
+    "registered_at": "2026-08-27",
+    "source_pr": "heimgewebe/weltgewebe#1796",
+    "source_pr_head": "e99106c2cef8af8014285db69c978474dae1f098",
+    "source_merge_commit": "4e1f339d601f064d1a0c9234910f305cb910f6aa",
+    "source_bad_commit": "049a0ef6b44e4be48a0cfe4a21994684704224b0",
+    "source_observation": "Waehrend PR #1796 schrieb ein Jules-Commit auf aktuelle Branch-Historie einen alten Repository-Baum zurueck; der Live-PR sprang von einer beabsichtigten Datei auf 76 Dateien (+818/-6783). Ein spaeterer Vorwaerts-Fix stellte den beabsichtigten Baum ohne Force-Push wieder her.",
+    "does_not_establish": [
+      "dass jeder grosse Diff ein Stale-Tree-Fehler ist",
+      "dass ein externer Writer selbst modifiziert werden kann",
+      "Berechtigung zum Umschreiben fremder Branch-Historie oder zum Umgehen geschuetzter Gates"
+    ]
+  }
+}

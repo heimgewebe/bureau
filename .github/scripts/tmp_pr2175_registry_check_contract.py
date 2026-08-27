@@ -50,6 +50,17 @@ if test_text.count(old_fixture) != 1:
     raise SystemExit("green PR fixture anchor drift")
 test_text = test_text.replace(old_fixture, new_fixture, 1)
 
+old_summary = '''    assert set(result["check_summary"]) == {
+        "validate (3.10)",
+        "validate (3.12)",
+    }
+'''
+new_summary = '''    assert set(result["check_summary"]) == set(refresh.DEFAULT_REQUIRED_CHECKS)
+'''
+if test_text.count(old_summary) != 1:
+    raise SystemExit("check-summary expectation anchor drift")
+test_text = test_text.replace(old_summary, new_summary, 1)
+
 candidate_anchor = '''def _compare_command_error(*, status: int) -> refresh.RuntimeRefreshError:
 '''
 regression = '''def test_observe_requires_registry_freshness_by_default(tmp_path: Path) -> None:

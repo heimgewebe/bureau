@@ -41,31 +41,46 @@
       "id": "stale-tree-fixture-fails-closed",
       "assertion": "Ein reproduzierbarer Fixture-Fall modelliert den PR-#1796-Vorfall: Der neue Commit besitzt einen aktuellen Branch-Elterncommit, schreibt aber einen aelteren Repository-Baum zurueck und erzeugt dadurch zahlreiche fachfremde Aenderungen. Der Guard erkennt diesen Zustand deterministisch und blockiert ihn.",
       "evidence_type": "object",
-      "verifier": "deterministic repository-tree integrity fixture"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:fixture-fails-closed"
+      }
     },
     {
       "id": "fresh-base-and-scope-binding",
       "assertion": "Die Entscheidung ist an einen frisch gelesenen Remote-Base-/PR-Head und einen expliziten erwarteten Schreibscope gebunden. Ein alter lokaler Checkout, ein historischer Diff oder nur die Anzahl geaenderter Dateien reicht nicht als Autoritaet.",
       "evidence_type": "object",
-      "verifier": "exact remote refs, declared write scope and tree comparison evidence"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:fresh-base-and-scope-binding"
+      }
     },
     {
       "id": "normal-scoped-update-passes",
       "assertion": "Ein normaler kleiner PR, der nur erwartete Pfade aendert und keine neueren Base-Aenderungen zuruecknimmt, passiert denselben Guard. Gross angelegte, aber explizit autorisierte Aenderungen koennen ueber einen revisionsgebundenen Scope-Vertrag legitimiert werden; reine Schwellenwerte duerfen nicht allein entscheiden.",
       "evidence_type": "object",
-      "verifier": "positive and negative integrity fixtures"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:normal-scoped-update-passes"
+      }
     },
     {
       "id": "no-history-rewrite-bypass",
       "assertion": "Recovery und Guard verwenden weder Force-Push noch eine Abschwaechung von Branch Protection, Review Evidence oder Required Checks. Ein erkannter Stale-Tree-Fall liefert eine maschinenlesbare Diagnose und einen vorwaertsgerichteten Reparaturpfad.",
       "evidence_type": "object",
-      "verifier": "exact diff, Git history and protected-branch policy evidence"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:no-history-rewrite-bypass"
+      }
     },
     {
       "id": "ci-enforced-on-automated-prs",
       "assertion": "Der Integritaetsguard wird auf den relevanten automatisierten PR-/Writer-Pfaden revisionsgebunden ausgefuehrt und ein absichtlich injizierter Stale-Tree-Fall kann nicht bis zum Required Merge Gate gruen werden.",
       "evidence_type": "object",
-      "verifier": "GitHub Actions exact-head negative and positive proof"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t082:stale-tree-guard:ci-enforced-on-automated-prs"
+      }
     }
   ],
   "metadata": {

@@ -5362,6 +5362,109 @@ def _build_no_run_acceptance_evidence(
     return bind_digest(evidence, "evidence_sha256")
 
 
+def _historical_no_run_closeout_acceptance_evidence(
+    *,
+    store: Any,
+    closeout: dict[str, Any],
+) -> dict[str, Any]:
+    stable_closeout = {
+        key: value
+        for key, value in closeout.items()
+        if key != "acceptance_evidence"
+    }
+    try:
+        with store.connect() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT revision,spec_sha256 FROM task_spec_revisions "
+                    "WHERE task_id=? AND source=? ORDER BY revision",
+                    (closeout["task_id"], "runtime-refresh-no-run-closeout"),
+                )
+            ]
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "cannot read the immutable no-run closeout TaskSpec history",
+            details={"error": str(exc)},
+        ) from exc
+
+    candidates: list[dict[str, Any]] = []
+    for row in rows:
+        try:
+            historical_task_spec = store.task_spec_by_digest(
+                closeout["task_id"], str(row["spec_sha256"])
+            )
+        except (legacy.StateError, OSError, sqlite3.Error) as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-history-invalid",
+                "cannot authenticate a historical no-run closeout TaskSpec revision",
+                details={"revision": row["revision"], "error": str(exc)},
+            ) from exc
+        if (
+            historical_task_spec is None
+            or historical_task_spec.get("revision") != int(row["revision"])
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-history-invalid",
+                "historical no-run closeout revision does not match its TaskSpec digest",
+                details={
+                    "revision": row["revision"],
+                    "task_spec_sha256": row["spec_sha256"],
+                },
+            )
+        historical_spec = historical_task_spec.get("spec")
+        historical_metadata = (
+            historical_spec.get("metadata") if isinstance(historical_spec, dict) else None
+        )
+        historical_closeout_value = (
+            historical_metadata.get("runtime_closeout")
+            if isinstance(historical_metadata, dict)
+            else None
+        )
+        if historical_closeout_value is None:
+            continue
+        try:
+            historical_closeout = _validated_runtime_closeout(historical_closeout_value)
+        except RuntimeRefreshError as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-history-invalid",
+                "historical no-run closeout revision contains invalid closeout evidence",
+                details={"revision": row["revision"], "error": str(exc)},
+            ) from exc
+        historical_stable = {
+            key: value
+            for key, value in historical_closeout.items()
+            if key != "acceptance_evidence"
+        }
+        if historical_stable == stable_closeout:
+            candidates.append(
+                {
+                    "revision": int(row["revision"]),
+                    "closeout": historical_closeout,
+                }
+            )
+
+    if len(candidates) != 1:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "no-run closeout has no unique immutable TaskSpec history anchor",
+            details={
+                "candidate_revisions": [item["revision"] for item in candidates],
+            },
+        )
+    historical_acceptance_evidence = candidates[0]["closeout"].get(
+        "acceptance_evidence"
+    )
+    if historical_acceptance_evidence is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "typed no-run acceptance evidence has no immutable historical origin",
+            details={"revision": candidates[0]["revision"]},
+        )
+    return historical_acceptance_evidence
+
+
 def _validate_no_run_acceptance_replay_binding(
     *,
     store: Any,
@@ -5500,6 +5603,30 @@ def _validate_no_run_acceptance_replay_binding(
                 "revision": historical_task_spec["revision"],
                 "mismatched": historical_mismatched,
             },
+        )
+
+    historical_acceptance_evidence = _historical_no_run_closeout_acceptance_evidence(
+        store=store,
+        closeout=closeout,
+    )
+    history_mismatched = {
+        key: {
+            "historical": historical_acceptance_evidence.get(key),
+            "acceptance_evidence": acceptance_evidence.get(key),
+        }
+        for key in sorted(
+            set(historical_acceptance_evidence) | set(acceptance_evidence)
+        )
+        if historical_acceptance_evidence.get(key) != acceptance_evidence.get(key)
+    }
+    if history_mismatched:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-history-drift",
+            (
+                "stored no-run acceptance evidence no longer matches its immutable "
+                "closeout revision"
+            ),
+            details={"mismatched": history_mismatched},
         )
 
 

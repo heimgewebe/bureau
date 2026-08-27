@@ -4782,6 +4782,70 @@ def test_no_run_closeout_rejects_cross_bound_acceptance_evidence_on_replay(
     assert store.list_runs() == []
 
 
+@pytest.mark.parametrize(
+    "field",
+    [
+        "run_evidence_sha256",
+        "state_store_root_sha256",
+        "effect_history_sha256",
+    ],
+)
+def test_no_run_closeout_rejects_rewritten_acceptance_evidence_hash_on_replay(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    task_id = f"BUREAU-NO-RUN-ACCEPTANCE-HISTORY-{field.replace('_', '-').upper()}"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    release_test_leases(resource_db)
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+    original = closeout["closeout"]["acceptance_evidence"][field]
+
+    def rewrite_acceptance_evidence(spec: dict[str, Any]) -> None:
+        runtime_closeout = spec["metadata"]["runtime_closeout"]
+        evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
+        evidence[field] = ("e" if original == "f" * 64 else "f") * 64
+        evidence.pop("evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
+
+    revise_authority(
+        store,
+        task_id,
+        rewrite_acceptance_evidence,
+        key=f"tamper:acceptance-history:{field}",
+    )
+    before_replay = store.task_spec(task_id)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            state_root=Path(intent["state_root"]),
+            approval_task_id=task_id,
+            target_sha256=intent["target_sha256"],
+            intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(minutes=21),
+            authority_store=store,
+            readback=lambda **_: result["readback"],
+        )
+
+    assert caught.value.code == "authority-closeout-acceptance-evidence-history-drift"
+    assert field in caught.value.details["mismatched"]
+    assert store.task_spec(task_id) == before_replay
+    assert store.list_runs() == []
+
+
 def test_no_run_closeout_rejects_removed_acceptance_evidence_on_replay(
     tmp_path: Path,
 ) -> None:

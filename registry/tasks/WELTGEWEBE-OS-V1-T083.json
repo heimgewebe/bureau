@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T083",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Verwaiste Required-GitHub-Actions-Laeufe sicher erkennen und wiederherstellen",
+  "state": "ready",
+  "goal": "Den in PR #1796 beobachteten GitHub-Actions-Orphan-Fall operational beherrschbar machen: Ein pull_request-Workflow, der ueber einen begrenzten Zeitraum auf queued steht und null Jobs erzeugt, wird von normaler Runner-Wartezeit unterschieden, revisionsgebunden diagnostiziert und ueber einen sicheren Recovery-Vertrag behandelt. Die Wiederherstellung darf Branch Protection, Required Checks oder Review Evidence nicht abschwaechen und soll nach Moeglichkeit offizielle GitHub-Run-Steuerung statt inhaltlich bedeutungsloser Repository-Aenderungen verwenden.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 1
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Vom Nutzer am 2026-08-27 mit der ausdruecklichen Anweisung '@grabowski umsetzen' fuer die bereits geprueften PR-#1796-Folgethemen autorisiert. Jeder Recovery-Effekt muss vor einem Retry autoritativ zurueckgelesen werden; Branch-Protection-Bypass ist nicht autorisiert."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/.github/workflows",
+      "path:/home/alex/repos/weltgewebe/scripts/ci"
+    ]
+  },
+  "required_capabilities": [
+    "github",
+    "github-actions",
+    "ci",
+    "observability",
+    "failure-recovery",
+    "branch-protection"
+  ],
+  "acceptance": [
+    {
+      "id": "orphan-classification",
+      "assertion": "Ein Diagnosepfad bindet Repository, PR, exakten Head-SHA, Workflow-Run-ID und Eventtyp und klassifiziert einen Run erst dann als Orphan-Kandidaten, wenn er ueber einen expliziten Schwellenwert queued bleibt und weiterhin null Jobs besitzt. Ein Run mit erzeugten wartenden Jobs wird nicht als derselbe Fehler behandelt.",
+      "evidence_type": "object",
+      "verifier": "GitHub Actions run and jobs authoritative readback"
+    },
+    {
+      "id": "pr1796-regression-fixture",
+      "assertion": "Ein reproduzierbarer Fixture- oder aufgezeichneter Contract-Test bildet den PR-#1796-Befund ab: der urspruengliche Required-CI-Run 32985724661 blieb queued mit null Jobs, waehrend ein manuell gestarteter CI-Lauf auf derselben fachlichen Revision ausfuehrbar war. Der Diagnosepfad erkennt diese Inkonsistenz ohne den manuellen Lauf als Required-PR-Evidenz auszugeben.",
+      "evidence_type": "object",
+      "verifier": "recorded GitHub Actions contract fixture and exact event identity"
+    },
+    {
+      "id": "safe-recovery-order",
+      "assertion": "Der Recovery-Vertrag liest vor jeder Mutation den aktuellen PR-Head, vorhandene Runs, Jobs und Required-Check-Zustand neu. Bevorzugt werden offizielle cancel/rerun- oder andere GitHub-API-Pfade, sofern sie fuer exakt den betroffenen PR-Run semantisch geeignet und verfuegbar sind; bei unklarem Ergebnis folgt zuerst Readback und hoechstens ein kontrollierter Retry.",
+      "evidence_type": "object",
+      "verifier": "recovery state-machine tests and mutation/readback receipts"
+    },
+    {
+      "id": "no-protection-bypass",
+      "assertion": "Kein Recovery-Pfad setzt Required Checks auf Erfolg, deaktiviert Branch Protection, ersetzt einen pull_request-Required-Run durch einen workflow_dispatch-Lauf oder verwendet Force-Push. Falls GitHub keine sichere Wiederherstellungsschnittstelle bereitstellt, endet der Pfad fail-closed mit klarer Operator-Diagnose.",
+      "evidence_type": "object",
+      "verifier": "branch protection, workflow event identity and negative recovery tests"
+    },
+    {
+      "id": "doctor-observability",
+      "assertion": "Doctor beziehungsweise die relevante Operator-Observability kann einen solchen Orphan-Zustand kompakt mit Alter, Run-ID, Head-SHA und naechster sicherer Aktion anzeigen, ohne Queue-Laenge oder Providerstatus als alleinigen Ursachenbeweis zu behaupten.",
+      "evidence_type": "object",
+      "verifier": "doctor projection fixture and bounded live observation"
+    }
+  ],
+  "metadata": {
+    "candidate_id": "candidate-2eff6c29ac054035a115c6e1",
+    "candidate_idempotency_key": "weltgewebe-github-actions-orphan-required-run-recovery-v1",
+    "candidate_assessment": "promote",
+    "candidate_exact_duplicates": [],
+    "registered_at": "2026-08-27T05:06:00Z",
+    "source_pr": "heimgewebe/weltgewebe#1796",
+    "source_pr_head": "e99106c2cef8af8014285db69c978474dae1f098",
+    "source_merge_commit": "4e1f339d601f064d1a0c9234910f305cb910f6aa",
+    "source_orphaned_run_id": 32985724661,
+    "source_observation": "Der urspruengliche pull_request-CI-Lauf blieb queued und erzeugte null Jobs. Ein workflow_dispatch-Lauf konnte erfolgreich arbeiten, erfuellte aber korrekterweise nicht die Required-PR-Check-Identitaet. Close/Reopen des PR erzeugte keinen neuen CI-Lauf; ein spaeterer Synchronize-Event erzeugte einen frischen echten PR-Lauf.",
+    "does_not_establish": [
+      "dass jeder lange queued Run ein GitHub-Orchestratorfehler ist",
+      "dass workflow_dispatch-Evidenz einen Required-pull_request-Check ersetzen darf",
+      "dass GitHub fuer jeden Orphan-Fall eine sichere programmgesteuerte Recovery-API anbietet"
+    ]
+  }
+}

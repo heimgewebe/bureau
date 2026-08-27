@@ -86,9 +86,7 @@ jobs:
             src/bureau/runtime_refresh.py \
             src/bureau/task_specs.py \
             tests/test_runtime_refresh.py \
-            tests/test_task_specs.py \
-            .github/workflows/pr2175-final-review-repair.yml \
-            .github/scripts/tmp_pr2175_final_review_repair.py
+            tests/test_task_specs.py
           git diff --cached --check
           expected=$(cat <<'EOF'
           .github/scripts/tmp_pr2175_final_review_repair.py

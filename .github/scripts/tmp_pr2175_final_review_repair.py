@@ -1,0 +1,918 @@
+from __future__ import annotations
+
+import json
+import textwrap
+from pathlib import Path
+
+
+def replace_once(path: str, old: str, new: str) -> None:
+    target = Path(path)
+    text = target.read_text(encoding="utf-8")
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{path}: expected one anchor, found {count}: {old[:100]!r}")
+    target.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+
+runtime = "src/bureau/runtime_refresh.py"
+replace_once(runtime, "import argparse\nimport ast\n", "import argparse\nimport ast\nimport base64\n")
+replace_once(
+    runtime,
+    '        "run-lifecycle",\n        "source-precondition",\n',
+    '        "run-lifecycle",\n        "source-precondition",\n'
+    '        "protected-publication-adoption",\n        "registry-resource-intake",\n',
+)
+
+helper_code = textwrap.dedent(
+    r'''
+    def _validated_protected_publication_adoption_contract(
+        spec: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        metadata = spec.get("metadata")
+        value = (
+            metadata.get("protected_publication_adoption")
+            if isinstance(metadata, dict)
+            else None
+        )
+        if value is None:
+            return None
+        fields = {
+            "schema_version",
+            "repository",
+            "publication_pr",
+            "publication_merge_commit",
+            "required_checks",
+        }
+        required_checks = value.get("required_checks") if isinstance(value, dict) else None
+        merge_commit = value.get("publication_merge_commit") if isinstance(value, dict) else None
+        if (
+            not isinstance(value, dict)
+            or set(value) != fields
+            or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+            or value.get("repository") != DEFAULT_REPOSITORY
+            or not isinstance(value.get("publication_pr"), int)
+            or isinstance(value.get("publication_pr"), bool)
+            or value["publication_pr"] < 1
+            or not isinstance(merge_commit, str)
+            or len(merge_commit) != 40
+            or any(character not in "0123456789abcdef" for character in merge_commit)
+            or required_checks != list(DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS)
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-publication-adoption-contract-invalid",
+                "protected publication/adoption evidence contract is invalid",
+            )
+        return json.loads(json.dumps(value))
+
+
+    def _validated_registry_resource_intake_contract(
+        spec: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        metadata = spec.get("metadata")
+        value = (
+            metadata.get("no_run_closeout_registry_resource_intake")
+            if isinstance(metadata, dict)
+            else None
+        )
+        if value is None:
+            return None
+        fields = {"schema_version", "candidate_id", "resource"}
+        resource_fields = {"id", "type", "path", "github_slug", "grabowski_key"}
+        resource = value.get("resource") if isinstance(value, dict) else None
+        if (
+            not isinstance(value, dict)
+            or set(value) != fields
+            or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+            or not isinstance(value.get("candidate_id"), str)
+            or not value["candidate_id"]
+            or not isinstance(resource, dict)
+            or set(resource) != resource_fields
+            or not all(
+                isinstance(resource.get(field), str) and resource[field]
+                for field in resource_fields
+            )
+            or resource.get("type") != "git-repository"
+            or not os.path.isabs(resource["path"])
+            or resource.get("grabowski_key")
+            != f"repo:{os.path.normpath(resource['path'])}"
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-registry-resource-intake-contract-invalid",
+                "Registry resource/intake evidence contract is invalid",
+            )
+        return json.loads(json.dumps(value))
+
+
+    def _prove_protected_publication_adoption(
+        *,
+        store: Any,
+        spec: dict[str, Any],
+        approval_task_id: str,
+        target_main_commit: str,
+        github: Callable[[list[str]], Any] = gh_preflight_json,
+    ) -> dict[str, Any]:
+        contract = _validated_protected_publication_adoption_contract(spec)
+        if contract is None:
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "protected publication/adoption contract is missing",
+            )
+        repository = contract["repository"]
+        publication_pr = contract["publication_pr"]
+        publication_merge_commit = contract["publication_merge_commit"]
+        required_checks = tuple(contract["required_checks"])
+        relative = _runtime_authority_task_path(approval_task_id).as_posix()
+
+        protection = github(["api", f"repos/{repository}/branches/main/protection"])
+        required_status = (
+            protection.get("required_status_checks") if isinstance(protection, dict) else None
+        )
+        contexts = required_status.get("contexts") if isinstance(required_status, dict) else None
+        force_pushes = protection.get("allow_force_pushes") if isinstance(protection, dict) else None
+        deletions = protection.get("allow_deletions") if isinstance(protection, dict) else None
+        if (
+            not isinstance(required_status, dict)
+            or required_status.get("strict") is not True
+            or not isinstance(contexts, list)
+            or not set(required_checks).issubset(set(contexts))
+            or not isinstance(force_pushes, dict)
+            or force_pushes.get("enabled") is not False
+            or not isinstance(deletions, dict)
+            or deletions.get("enabled") is not False
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "main protection no longer proves the protected publication contract",
+            )
+
+        detail = github(
+            [
+                "pr",
+                "view",
+                str(publication_pr),
+                "--repo",
+                repository,
+                "--json",
+                "number,state,isDraft,mergedAt,mergeCommit,baseRefName,statusCheckRollup,files",
+            ]
+        )
+        merge = detail.get("mergeCommit") if isinstance(detail, dict) else None
+        merge_oid = merge.get("oid") if isinstance(merge, dict) else None
+        files = detail.get("files") if isinstance(detail, dict) else None
+        file_paths = (
+            [item.get("path") for item in files if isinstance(item, dict)]
+            if isinstance(files, list)
+            else []
+        )
+        if (
+            not isinstance(detail, dict)
+            or detail.get("number") != publication_pr
+            or detail.get("state") != "MERGED"
+            or detail.get("isDraft") is True
+            or detail.get("baseRefName") != "main"
+            or not detail.get("mergedAt")
+            or merge_oid != publication_merge_commit
+            or file_paths != [relative]
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "historical publication PR is not the exact create-only protected authority merge",
+            )
+        check_summary = summarize_required_checks(detail.get("statusCheckRollup"), required_checks)
+        bad_checks = [name for name, item in check_summary.items() if item["state"] != "success"]
+        if bad_checks:
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "historical publication PR required checks are not green",
+                details={"checks": check_summary},
+            )
+
+        historical_file = github(
+            [
+                "api",
+                f"repos/{repository}/contents/{relative}?ref={publication_merge_commit}",
+            ]
+        )
+        encoded = historical_file.get("content") if isinstance(historical_file, dict) else None
+        if (
+            not isinstance(historical_file, dict)
+            or historical_file.get("type") != "file"
+            or historical_file.get("path") != relative
+            or historical_file.get("encoding") != "base64"
+            or not isinstance(encoded, str)
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "historical publication TaskSpec blob is unavailable",
+            )
+        try:
+            raw = base64.b64decode("".join(encoded.splitlines()), validate=True)
+            historical_spec = json.loads(raw.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "historical publication TaskSpec blob is invalid",
+            ) from exc
+        if not isinstance(historical_spec, dict) or historical_spec.get("id") != approval_task_id:
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "historical publication TaskSpec identity is invalid",
+            )
+        historical_metadata = historical_spec.get("metadata")
+        publication_path = (
+            historical_metadata.get("publication_path")
+            if isinstance(historical_metadata, dict)
+            else None
+        )
+        if (
+            not isinstance(publication_path, dict)
+            or publication_path.get("kind") != "normal-protected-pull-request"
+            or publication_path.get("state_store_transition")
+            != "seed-missing-preserve-state-store"
+            or publication_path.get("scope") != f"exactly {relative}"
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "historical TaskSpec did not declare protected missing-only adoption",
+            )
+
+        from . import task_specs
+
+        historical_spec_sha256 = task_specs.task_spec_digest(historical_spec)
+        idempotency_key = f"legacy-seed-exact:{approval_task_id}:{historical_spec_sha256}"
+        try:
+            receipt = store.task_spec_mutation_receipt(idempotency_key)
+        except (legacy.StateError, OSError, sqlite3.Error) as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "cannot read the missing-only adoption mutation receipt",
+                details={"error": str(exc)},
+            ) from exc
+        resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
+        if (
+            not isinstance(receipt, dict)
+            or receipt.get("task_id") != approval_task_id
+            or receipt.get("expected_revision") is not None
+            or receipt.get("requested_sha256") != historical_spec_sha256
+            or receipt.get("resulting_revision") != 1
+            or not isinstance(resulting, dict)
+            or resulting.get("revision") != 1
+            or resulting.get("spec_sha256") != historical_spec_sha256
+            or resulting.get("source") != "legacy-git-exact-seed"
+            or resulting.get("spec") != historical_spec
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "StateStore does not contain the exact missing-only adoption receipt",
+            )
+
+        if target_main_commit == publication_merge_commit:
+            ancestry_ok = True
+        else:
+            compare = github(
+                [
+                    "api",
+                    f"repos/{repository}/compare/{publication_merge_commit}...{target_main_commit}",
+                ]
+            )
+            merge_base = compare.get("merge_base_commit") if isinstance(compare, dict) else None
+            ancestry_ok = (
+                isinstance(compare, dict)
+                and compare.get("status") == "ahead"
+                and compare.get("behind_by") == 0
+                and isinstance(merge_base, dict)
+                and merge_base.get("sha") == publication_merge_commit
+            )
+        if not ancestry_ok:
+            raise RuntimeRefreshError(
+                "authority-closeout-protected-publication-adoption-unproven",
+                "publication merge is not an ancestor of the runtime target",
+            )
+        evidence = {
+            "schema_version": 1,
+            "kind": "bureau_runtime_refresh_protected_publication_adoption_evidence",
+            "task_id": approval_task_id,
+            "publication_pr": publication_pr,
+            "publication_merge_commit": publication_merge_commit,
+            "target_main_commit": target_main_commit,
+            "task_path": relative,
+            "task_file_sha256": sha256_bytes(raw),
+            "task_spec_sha256": historical_spec_sha256,
+            "adoption_idempotency_key": idempotency_key,
+            "adoption_revision": 1,
+        }
+        return bind_digest(evidence, "evidence_sha256")
+
+
+    def _prove_registry_resource_intake(
+        *,
+        store: Any,
+        spec: dict[str, Any],
+        registry_root: Path,
+    ) -> dict[str, Any]:
+        contract = _validated_registry_resource_intake_contract(spec)
+        if contract is None:
+            raise RuntimeRefreshError(
+                "authority-closeout-registry-resource-intake-unproven",
+                "Registry resource/intake contract is missing",
+            )
+        raw_root = registry_root.expanduser()
+        if raw_root.is_symlink() or not raw_root.is_dir():
+            raise RuntimeRefreshError(
+                "authority-closeout-registry-resource-intake-unproven",
+                "result-bound canonical Registry root is not an immutable directory",
+                details={"registry_root": str(raw_root)},
+            )
+        root = raw_root.resolve()
+        try:
+            registry = legacy.Registry.load(root)
+        except (legacy.ValidationError, OSError) as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-registry-resource-intake-unproven",
+                "result-bound canonical Registry cannot be loaded",
+                details={"error": str(exc)},
+            ) from exc
+        expected = contract["resource"]
+        resource = registry.resources.get(expected["id"])
+        observed = (
+            {
+                "id": resource.id,
+                "type": resource.type,
+                "path": resource.path,
+                "github_slug": resource.github_slug,
+                "grabowski_key": resource.grabowski_key,
+            }
+            if resource is not None
+            else None
+        )
+        if observed != expected:
+            raise RuntimeRefreshError(
+                "authority-closeout-registry-resource-intake-unproven",
+                "result-bound canonical Registry lacks the exact required repository resource",
+                details={"expected": expected, "observed": observed},
+            )
+        from . import operator_intake
+
+        try:
+            assessment = operator_intake._candidate_assess(
+                registry,
+                store,
+                candidate_id=contract["candidate_id"],
+            )
+        except (operator_intake.OperatorIntakeError, legacy.StateError, OSError) as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-registry-resource-intake-unproven",
+                "typed candidate-intake assessment failed against the result-bound Registry",
+                details={"error": str(exc)},
+            ) from exc
+        target = assessment.get("target") if isinstance(assessment, dict) else None
+        claims = target.get("claims") if isinstance(target, dict) else None
+        expected_claims = [
+            {"resource": expected["id"], "mode": "write", "isolation": "worktree"}
+        ]
+        if (
+            not isinstance(assessment, dict)
+            or assessment.get("kind") != "bureau_candidate_assessment"
+            or assessment.get("status") != "assessed"
+            or assessment.get("candidate_id") != contract["candidate_id"]
+            or claims != expected_claims
+            or "repo" in assessment.get("missing_fields", [])
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-registry-resource-intake-unproven",
+                "typed candidate intake does not bind the candidate to the installed repository resource",
+            )
+        evidence = {
+            "schema_version": 1,
+            "kind": "bureau_runtime_refresh_registry_resource_intake_evidence",
+            "candidate_id": contract["candidate_id"],
+            "resource": observed,
+            "registry_root": str(root),
+            "candidate_decision": assessment.get("decision"),
+            "candidate_event_id": assessment.get("event_id"),
+        }
+        return bind_digest(evidence, "evidence_sha256")
+
+
+    '''
+)
+replace_once(
+    runtime,
+    "def _validated_no_run_acceptance_contract(\n",
+    helper_code + "def _validated_no_run_acceptance_contract(\n",
+)
+
+old_contract_return = """    return {
+        \"schema_version\": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        \"kind\": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND,
+        \"criteria\": normalized,
+        \"frozen_acceptance\": json.loads(json.dumps(spec[\"acceptance\"])),
+        \"source_precondition\": source_precondition,
+    }
+"""
+new_contract_return = """    required_evidence_classes = {
+        evidence_class
+        for item in normalized.values()
+        for evidence_class in item[\"required_evidence\"]
+    }
+    publication_adoption = _validated_protected_publication_adoption_contract(spec)
+    registry_resource_intake = _validated_registry_resource_intake_contract(spec)
+    if (\"protected-publication-adoption\" in required_evidence_classes) != (
+        publication_adoption is not None
+    ):
+        raise RuntimeRefreshError(
+            \"authority-closeout-acceptance-contract-invalid\",
+            \"protected-publication-adoption evidence and its typed contract must be declared together\",
+        )
+    if (\"registry-resource-intake\" in required_evidence_classes) != (
+        registry_resource_intake is not None
+    ):
+        raise RuntimeRefreshError(
+            \"authority-closeout-acceptance-contract-invalid\",
+            \"registry-resource-intake evidence and its typed contract must be declared together\",
+        )
+    contract = {
+        \"schema_version\": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        \"kind\": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND,
+        \"criteria\": normalized,
+        \"frozen_acceptance\": json.loads(json.dumps(spec[\"acceptance\"])),
+        \"source_precondition\": source_precondition,
+    }
+    if publication_adoption is not None:
+        contract[\"protected_publication_adoption\"] = publication_adoption
+    if registry_resource_intake is not None:
+        contract[\"registry_resource_intake\"] = registry_resource_intake
+    return contract
+"""
+replace_once(runtime, old_contract_return, new_contract_return)
+
+old_closeout = """        if current_source_precondition is not None:
+            if intent.get(\"source_precondition\") != current_source_precondition:
+                raise RuntimeRefreshError(
+                    \"authority-closeout-source-precondition-unproven\",
+                    \"historical intent did not bind the current source-precondition contract\",
+                )
+            _validate_source_precondition_result_evidence(result, intent)
+            available_acceptance_evidence.add(\"source-precondition\")
+        acceptance_evidence = _build_no_run_acceptance_evidence(
+"""
+new_closeout = """        if current_source_precondition is not None:
+            if intent.get(\"source_precondition\") != current_source_precondition:
+                raise RuntimeRefreshError(
+                    \"authority-closeout-source-precondition-unproven\",
+                    \"historical intent did not bind the current source-precondition contract\",
+                )
+            _validate_source_precondition_result_evidence(result, intent)
+            available_acceptance_evidence.add(\"source-precondition\")
+        publication_adoption = _validated_protected_publication_adoption_contract(spec)
+        if publication_adoption is not None:
+            _prove_protected_publication_adoption(
+                store=store,
+                spec=spec,
+                approval_task_id=approval_task_id,
+                target_main_commit=intent[\"main_commit\"],
+            )
+            available_acceptance_evidence.add(\"protected-publication-adoption\")
+        registry_resource_intake = _validated_registry_resource_intake_contract(spec)
+        if registry_resource_intake is not None:
+            if deployed_success:
+                resource_install_receipt = result.get(\"install_receipt\")
+                if not isinstance(resource_install_receipt, dict):
+                    raise RuntimeRefreshError(
+                        \"authority-closeout-registry-resource-intake-unproven\",
+                        \"deployed result lacks the Registry root needed for typed intake evidence\",
+                    )
+                registry_root = Path(
+                    str(resource_install_receipt.get(\"canonical_registry_root\", \"\"))
+                )
+            else:
+                current_manifest, current_manifest_sha256 = load_manifest(
+                    Path(intent[\"prefix\"]).expanduser().resolve()
+                    / \"deployment-manifest.json\"
+                )
+                if (
+                    current_manifest_sha256 != closeout_manifest_sha256
+                    or current_manifest.get(\"source_commit\") != intent[\"main_commit\"]
+                ):
+                    raise RuntimeRefreshError(
+                        \"authority-closeout-registry-resource-intake-unproven\",
+                        \"already-current manifest does not bind the runtime target Registry\",
+                    )
+                registry_root = Path(
+                    str(current_manifest.get(\"canonical_registry_root\", \"\"))
+                )
+            _prove_registry_resource_intake(
+                store=store,
+                spec=spec,
+                registry_root=registry_root,
+            )
+            available_acceptance_evidence.add(\"registry-resource-intake\")
+        acceptance_evidence = _build_no_run_acceptance_evidence(
+"""
+replace_once(runtime, old_closeout, new_closeout)
+
+task_specs_path = "src/bureau/task_specs.py"
+old_specialized = """def put_runtime_refresh_no_run_closeout(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _validate_runtime_refresh_no_run_closeout_mutation(spec, idempotency_key)
+    try:
+        validate_task_write(canonical, f\"TaskSpec:{canonical['id']}\")
+    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        raise TaskSpecError(str(exc)) from exc
+    return _put_validated_material(
+        connection,
+        canonical,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source=\"runtime-refresh-no-run-closeout\",
+    )
+"""
+new_specialized = """def put_runtime_refresh_no_run_closeout(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _validate_runtime_refresh_no_run_closeout_mutation(spec, idempotency_key)
+    try:
+        validate_task_write(canonical, f\"TaskSpec:{canonical['id']}\")
+    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        raise TaskSpecError(str(exc)) from exc
+    validate_schema(connection)
+    reserved_receipt = connection.execute(
+        \"SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?\",
+        (idempotency_key,),
+    ).fetchone()
+    if reserved_receipt is None:
+        current = get_current(connection, canonical[\"id\"])
+        if current is not None and current[\"spec_sha256\"] == task_spec_digest(canonical):
+            raise TaskSpecError(
+                \"runtime-refresh no-run closeout must create its authenticated TaskSpec revision\"
+            )
+    return _put_validated_material(
+        connection,
+        canonical,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source=\"runtime-refresh-no-run-closeout\",
+    )
+"""
+replace_once(task_specs_path, old_specialized, new_specialized)
+
+p1 = {
+    "registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PR2172-SOURCE-CONVERGENCE-20260825.json": {
+        "publication_pr": 2173,
+        "publication_merge_commit": "791be3bd6eb680af33f579c44d54988fcade7f4b",
+    },
+    "registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2174-REPOGROUND-T020-20260825.json": {
+        "publication_pr": 2176,
+        "publication_merge_commit": "b70db7ccf1337802604b260651ea21456694d49c",
+    },
+}
+for path, binding in p1.items():
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    metadata = data["metadata"]
+    metadata["protected_publication_adoption"] = {
+        "schema_version": 1,
+        "repository": "heimgewebe/bureau",
+        "publication_pr": binding["publication_pr"],
+        "publication_merge_commit": binding["publication_merge_commit"],
+        "required_checks": [
+            "validate (3.10)",
+            "validate (3.12)",
+            "registry-registration-preflight/freshness",
+        ],
+    }
+    criterion = metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"]["criteria"][
+        "protected-publication-and-missing-only-adoption"
+    ]
+    criterion["required_evidence"] = ["protected-publication-adoption"]
+    Path(path).write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+hall_path = (
+    "registry/tasks/"
+    "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824.json"
+)
+hall = json.loads(Path(hall_path).read_text(encoding="utf-8"))
+hall_metadata = hall["metadata"]
+hall_metadata["no_run_closeout_registry_resource_intake"] = {
+    "schema_version": 1,
+    "candidate_id": "candidate-5d65409c452e2148623cf9ed",
+    "resource": {
+        "id": "repo.hall-of-memory",
+        "type": "git-repository",
+        "path": "/home/alex/repos/hall-of-memory",
+        "github_slug": "Hall-of-Memory/Hall-of-Memory",
+        "grabowski_key": "repo:/home/alex/repos/hall-of-memory",
+    },
+}
+hall_metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"]["criteria"][
+    "hall-of-memory-resource-visible"
+]["required_evidence"] = [
+    "immutable-readback",
+    "state-store-integrity",
+    "registry-resource-intake",
+]
+Path(hall_path).write_text(
+    json.dumps(hall, indent=2, ensure_ascii=False) + "\n",
+    encoding="utf-8",
+)
+
+replace_once(
+    "docs/bureau-runtime-refresh-v1.md",
+    "Nur dann setzt ein einziger `StateStore.put_task_spec()`-CAS den Zustand auf `verified` und\n",
+    "Die Acceptance-Klassen `protected-publication-adoption` und `registry-resource-intake` "
+    "werden nicht pauschal aus erfolgreichem Runtime-Readback abgeleitet. Erstere revalidiert "
+    "den exakten historischen Protected-PR-Merge und den unverwechselbaren `legacy-seed-exact`-"
+    "Receipt der Missing-only-Adoption. Letztere liest den resultgebundenen kanonischen Registry-"
+    "Snapshot, bindet die erwartete Repository-Resource feldgenau und fuehrt die typisierte "
+    "Candidate-Intake-Klassifikation gegen genau diesen Snapshot aus.\n\n"
+    "Nur dann setzt ein einziger `StateStore.put_task_spec()`-CAS den Zustand auf `verified` und\n",
+)
+
+test_task_specs = Path("tests/test_task_specs.py")
+if "def test_reserved_runtime_closeout_cannot_bless_preexisting_identical_revision" in test_task_specs.read_text(encoding="utf-8"):
+    raise SystemExit("task-spec regression already present")
+with test_task_specs.open("a", encoding="utf-8") as handle:
+    handle.write(
+        r'''
+
+
+def test_reserved_runtime_closeout_cannot_bless_preexisting_identical_revision(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    store.put_task_spec(
+        _spec(),
+        idempotency_key="seed-reserved-origin",
+        expected_revision=None,
+        source="test",
+    )
+    closeout_spec = _spec(title="verified")
+    closeout_spec["metadata"]["runtime_closeout"] = {
+        "kind": "bureau_runtime_refresh_no_run_closeout",
+        "status": "verified",
+        "task_id": "TEST-T001",
+        "runtime_result_sha256": "b" * 64,
+    }
+    ordinary = store.put_task_spec(
+        closeout_spec,
+        idempotency_key="ordinary-preexisting-closeout",
+        expected_revision=1,
+        source="ordinary-writer",
+    )
+    assert ordinary["changed"] is True
+    key = "runtime-refresh-no-run-closeout:TEST-T001:" + "b" * 64
+
+    with pytest.raises(StateError, match="must create its authenticated TaskSpec revision"):
+        store.put_runtime_refresh_no_run_closeout_task_spec(
+            closeout_spec,
+            idempotency_key=key,
+            expected_revision=ordinary["revision"],
+        )
+
+    assert store.task_spec_mutation_receipt(key) is None
+'''
+    )
+
+test_runtime = Path("tests/test_runtime_refresh.py")
+text = test_runtime.read_text(encoding="utf-8")
+if "import base64\n" not in text:
+    if text.count("import hashlib\n") != 1:
+        raise SystemExit("runtime test import anchor drift")
+    test_runtime.write_text(text.replace("import hashlib\n", "import base64\nimport hashlib\n", 1), encoding="utf-8")
+if "def test_protected_publication_adoption_proof_requires_exact_seed_receipt" in test_runtime.read_text(encoding="utf-8"):
+    raise SystemExit("runtime regressions already present")
+with test_runtime.open("a", encoding="utf-8") as handle:
+    handle.write(
+        r'''
+
+
+def test_protected_publication_adoption_proof_requires_exact_seed_receipt() -> None:
+    from bureau import task_specs as task_specs_module
+
+    task_id = "BUREAU-TEST-PROTECTED-PUBLICATION-ADOPTION"
+    merge_commit = "a" * 40
+    target_commit = "b" * 40
+    historical_spec = runtime_authority_spec(task_id)
+    historical_spec["metadata"]["publication_path"] = {
+        "kind": "normal-protected-pull-request",
+        "scope": f"exactly registry/tasks/{task_id}.json",
+        "state_store_transition": "seed-missing-preserve-state-store",
+    }
+    current_spec = json.loads(json.dumps(historical_spec))
+    current_spec["metadata"]["protected_publication_adoption"] = {
+        "schema_version": 1,
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "publication_pr": 2173,
+        "publication_merge_commit": merge_commit,
+        "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+    }
+    raw = (json.dumps(historical_spec, indent=2) + "\n").encode()
+    historical_digest = task_specs_module.task_spec_digest(historical_spec)
+    key = f"legacy-seed-exact:{task_id}:{historical_digest}"
+    receipt = {
+        "idempotency_key": key,
+        "task_id": task_id,
+        "expected_revision": None,
+        "requested_sha256": historical_digest,
+        "resulting_revision": 1,
+        "resulting_task_spec": {
+            "task_id": task_id,
+            "revision": 1,
+            "spec_sha256": historical_digest,
+            "spec": historical_spec,
+            "source": "legacy-git-exact-seed",
+        },
+    }
+
+    class ReceiptStore:
+        def __init__(self, value):
+            self.value = value
+            self.seen = None
+
+        def task_spec_mutation_receipt(self, idempotency_key: str):
+            self.seen = idempotency_key
+            return self.value
+
+    check_rollup = [
+        {"name": name, "status": "COMPLETED", "conclusion": "SUCCESS"}
+        for name in refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS
+    ]
+
+    def github(arguments: list[str]):
+        if arguments == ["api", f"repos/{refresh.DEFAULT_REPOSITORY}/branches/main/protection"]:
+            return {
+                "required_status_checks": {
+                    "strict": True,
+                    "contexts": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+                },
+                "allow_force_pushes": {"enabled": False},
+                "allow_deletions": {"enabled": False},
+            }
+        if arguments[:2] == ["pr", "view"]:
+            return {
+                "number": 2173,
+                "state": "MERGED",
+                "isDraft": False,
+                "mergedAt": "2026-08-25T00:00:00Z",
+                "mergeCommit": {"oid": merge_commit},
+                "baseRefName": "main",
+                "files": [{"path": f"registry/tasks/{task_id}.json"}],
+                "statusCheckRollup": check_rollup,
+            }
+        if arguments == [
+            "api",
+            f"repos/{refresh.DEFAULT_REPOSITORY}/contents/registry/tasks/{task_id}.json?ref={merge_commit}",
+        ]:
+            return {
+                "type": "file",
+                "path": f"registry/tasks/{task_id}.json",
+                "encoding": "base64",
+                "content": base64.b64encode(raw).decode(),
+            }
+        if arguments == [
+            "api",
+            f"repos/{refresh.DEFAULT_REPOSITORY}/compare/{merge_commit}...{target_commit}",
+        ]:
+            return {
+                "status": "ahead",
+                "behind_by": 0,
+                "merge_base_commit": {"sha": merge_commit},
+            }
+        raise AssertionError(arguments)
+
+    store = ReceiptStore(receipt)
+    evidence = refresh._prove_protected_publication_adoption(
+        store=store,
+        spec=current_spec,
+        approval_task_id=task_id,
+        target_main_commit=target_commit,
+        github=github,
+    )
+    assert store.seen == key
+    assert evidence["kind"] == "bureau_runtime_refresh_protected_publication_adoption_evidence"
+    assert evidence["adoption_revision"] == 1
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh._prove_protected_publication_adoption(
+            store=ReceiptStore(None),
+            spec=current_spec,
+            approval_task_id=task_id,
+            target_main_commit=target_commit,
+            github=github,
+        )
+    assert caught.value.code == "authority-closeout-protected-publication-adoption-unproven"
+
+
+def test_registry_resource_intake_proof_binds_resource_and_candidate(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from bureau import operator_intake
+
+    resources = tmp_path / "registry" / "resources"
+    resources.mkdir(parents=True)
+    (resources / "repo.json").write_text(
+        json.dumps({"schema_version": 1, "id": "repo", "type": "namespace", "parent": None})
+        + "\n",
+        encoding="utf-8",
+    )
+    expected = {
+        "id": "repo.hall-of-memory",
+        "type": "git-repository",
+        "path": "/home/alex/repos/hall-of-memory",
+        "github_slug": "Hall-of-Memory/Hall-of-Memory",
+        "grabowski_key": "repo:/home/alex/repos/hall-of-memory",
+    }
+    (resources / "hall-of-memory.json").write_text(
+        json.dumps({"schema_version": 1, "parent": "repo", **expected}) + "\n",
+        encoding="utf-8",
+    )
+    candidate_id = "candidate-5d65409c452e2148623cf9ed"
+    spec = runtime_authority_spec("BUREAU-TEST-REGISTRY-RESOURCE-INTAKE")
+    spec["metadata"]["no_run_closeout_registry_resource_intake"] = {
+        "schema_version": 1,
+        "candidate_id": candidate_id,
+        "resource": expected,
+    }
+    monkeypatch.setattr(
+        operator_intake,
+        "_candidate_assess",
+        lambda registry, store, **kwargs: {
+            "schema_version": 1,
+            "kind": "bureau_candidate_assessment",
+            "status": "assessed",
+            "candidate_id": candidate_id,
+            "event_id": 42,
+            "decision": "promote",
+            "target": {
+                "claims": [
+                    {"resource": expected["id"], "mode": "write", "isolation": "worktree"}
+                ]
+            },
+            "missing_fields": [],
+        },
+    )
+    evidence = refresh._prove_registry_resource_intake(
+        store=object(),
+        spec=spec,
+        registry_root=tmp_path,
+    )
+    assert evidence["resource"] == expected
+    assert evidence["candidate_id"] == candidate_id
+
+    bad = json.loads(json.dumps(spec))
+    bad_contract = bad["metadata"]["no_run_closeout_registry_resource_intake"]
+    bad_contract["resource"]["path"] = "/home/alex/repos/not-hall-of-memory"
+    bad_contract["resource"]["grabowski_key"] = "repo:/home/alex/repos/not-hall-of-memory"
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh._prove_registry_resource_intake(
+            store=object(),
+            spec=bad,
+            registry_root=tmp_path,
+        )
+    assert caught.value.code == "authority-closeout-registry-resource-intake-unproven"
+
+
+def test_registry_special_acceptance_criteria_require_dedicated_proof_classes() -> None:
+    root = Path(__file__).parents[1] / "registry" / "tasks"
+    publication_tasks = [
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PR2172-SOURCE-CONVERGENCE-20260825",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2174-REPOGROUND-T020-20260825",
+    ]
+    for task_id in publication_tasks:
+        spec = json.loads((root / f"{task_id}.json").read_text(encoding="utf-8"))
+        metadata = spec["metadata"]
+        assert metadata["protected_publication_adoption"]["repository"] == refresh.DEFAULT_REPOSITORY
+        mapping = metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"]["criteria"]
+        assert mapping["protected-publication-and-missing-only-adoption"]["required_evidence"] == [
+            "protected-publication-adoption"
+        ]
+
+    hall = json.loads(
+        (
+            root
+            / "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824.json"
+        ).read_text(encoding="utf-8")
+    )
+    hall_metadata = hall["metadata"]
+    assert hall_metadata["no_run_closeout_registry_resource_intake"]["candidate_id"] == (
+        "candidate-5d65409c452e2148623cf9ed"
+    )
+    hall_mapping = hall_metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"][
+        "criteria"
+    ]
+    assert "registry-resource-intake" in hall_mapping["hall-of-memory-resource-visible"][
+        "required_evidence"
+    ]
+'''
+    )

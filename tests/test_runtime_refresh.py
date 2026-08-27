@@ -7577,7 +7577,7 @@ def test_registry_source_precondition_authorities_have_complete_no_run_acceptanc
             "source-precondition" in item["required_evidence"]
             for item in contract["criteria"].values()
         )
-    assert len(paths) == 6
+    assert len(paths) == 7
 
 
 

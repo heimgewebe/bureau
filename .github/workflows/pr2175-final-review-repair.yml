@@ -24,6 +24,43 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Apply exact reviewed patch
         run: python .github/scripts/tmp_pr2175_final_review_repair.py
+      - name: Normalize repaired formatting
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              if text.count(old) != 1:
+                  raise SystemExit(f"format anchor drift: {path}: {old!r}")
+              target.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          replace_once(
+              "src/bureau/runtime_refresh.py",
+              '            "typed candidate intake does not bind the candidate to the installed repository resource",\n',
+              '            (\n'
+              '                "typed candidate intake does not bind the candidate to the installed "\n'
+              '                "repository resource"\n'
+              '            ),\n',
+          )
+          replace_once(
+              "src/bureau/runtime_refresh.py",
+              '            "protected-publication-adoption evidence and its typed contract must be declared together",\n',
+              '            (\n'
+              '                "protected-publication-adoption evidence and its typed contract must "\n'
+              '                "be declared together"\n'
+              '            ),\n',
+          )
+          replace_once(
+              "tests/test_runtime_refresh.py",
+              '        assert metadata["protected_publication_adoption"]["repository"] == refresh.DEFAULT_REPOSITORY\n',
+              '        assert (\n'
+              '            metadata["protected_publication_adoption"]["repository"]\n'
+              '            == refresh.DEFAULT_REPOSITORY\n'
+              '        )\n',
+          )
+          PY
       - name: Focused validation
         shell: bash
         run: |

@@ -1,0 +1,60 @@
+name: PR 2175 registry-check contract repair
+
+on:
+  push:
+    branches:
+      - pr2175-registry-check-contract-stage-20260827
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: "${{ github.event.head_commit.message == 'ci: launch PR 2175 registry-check contract repair' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install validation dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Apply exact contract repair
+        run: python .github/scripts/tmp_pr2175_registry_check_contract.py
+      - name: Validate runtime-refresh contract repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q tests/test_runtime_refresh.py
+          python -m ruff check src/bureau/runtime_refresh.py tests/test_runtime_refresh.py
+          PYTHONPATH=src python -m bureau.cli --root . --json check >/dev/null
+          git diff --check
+      - name: Commit self-clean validated output
+        shell: bash
+        env:
+          OUTPUT_BRANCH: pr2175-registry-check-contract-output-20260827
+        run: |
+          set -euo pipefail
+          remote=$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)
+          test "$remote" = "$GITHUB_SHA"
+          git rm \
+            .github/workflows/pr2175-registry-check-contract.yml \
+            .github/scripts/tmp_pr2175_registry_check_contract.py
+          git add -- src/bureau/runtime_refresh.py tests/test_runtime_refresh.py
+          git diff --cached --check
+          expected=$(cat <<'EOF'
+          .github/scripts/tmp_pr2175_registry_check_contract.py
+          .github/workflows/pr2175-registry-check-contract.yml
+          src/bureau/runtime_refresh.py
+          tests/test_runtime_refresh.py
+          EOF
+          )
+          observed=$(git diff --cached --name-only | sort)
+          test "$observed" = "$(printf '%s\n' "$expected" | sort)"
+          git config user.name 'grabowski-operator'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Require registry freshness for runtime refresh observations'
+          git push origin "HEAD:refs/heads/${OUTPUT_BRANCH}"

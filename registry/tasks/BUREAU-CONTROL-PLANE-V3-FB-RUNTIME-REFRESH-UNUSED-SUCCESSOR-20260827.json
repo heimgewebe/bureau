@@ -101,7 +101,7 @@
     "runtime_refresh_authority": {
       "forbid_foreign_task_substitution": true,
       "forbid_historical_target_reuse": true,
-      "mode": "single-use-target-bound",
+      "mode": "single-use-target-bound-source-precondition-v1",
       "required_action_class": "runtime_mutation",
       "required_approval_level": "break_glass",
       "required_claim_resource": "component.bureau.runtime",
@@ -136,7 +136,53 @@
         "schema_version": 1
       },
       "successor_task_required_after_terminal": true,
-      "target_binding": "candidate.target_sha256"
+      "target_binding": "candidate.target_sha256",
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "fresh-current-main": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "source-ancestry-precondition": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "single-runtime-effect": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "runtime-only-scope": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ]
+          }
+        }
+      }
     },
     "source": "The terminally consumed StateStore authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260826 requires successor_task_required_after_terminal=true. Fresh operator-intake candidate 11822 and observation 9f9551d8649640f7a8776611c90c0f4598a16ea9c84606318f0e611f23d3d310 prove that normal typed pickup is currently blocked by release-registry identity drift from deployed 28bac6af6d5485a4f725285f2cb2bf5e92c70155 to protected main 95f9c6d7959f8223626b91d39eed199a97377167."
   },

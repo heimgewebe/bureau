@@ -13,6 +13,7 @@ TASK_SPEC_SCHEMA_VERSION = 1
 TASK_SPEC_EVENT_TYPE = "task-spec-revision-set"
 TASK_SPEC_EVENT_SCHEMA_VERSION = state_events.EVENT_SCHEMA_VERSION
 TASK_SPEC_PROJECTION_SCHEMA_VERSION = 1
+RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX = "runtime-refresh-no-run-closeout:"
 
 
 class TaskSpecError(ValueError):
@@ -146,6 +147,135 @@ def get_current(connection: sqlite3.Connection, task_id: str) -> dict[str, Any] 
     if revision["spec_sha256"] != pointer["spec_sha256"]:
         raise TaskSpecError("TaskSpec current pointer digest mismatch")
     return {**revision, "updated_at": str(pointer["updated_at"])}
+
+
+def get_by_digest(
+    connection: sqlite3.Connection, task_id: str, spec_sha256: str
+) -> dict[str, Any] | None:
+    validate_schema(connection)
+    row = connection.execute(
+        "SELECT task_id,revision,parent_revision,spec_sha256,spec_json,source,created_at "
+        "FROM task_spec_revisions WHERE task_id=? AND spec_sha256=? "
+        "ORDER BY revision DESC LIMIT 1",
+        (task_id, spec_sha256),
+    ).fetchone()
+    if row is None:
+        return None
+    return _validated_row(row)
+
+
+
+def get_mutation_receipt(
+    connection: sqlite3.Connection, idempotency_key: str
+) -> dict[str, Any] | None:
+    validate_schema(connection)
+    if not isinstance(idempotency_key, str) or not idempotency_key:
+        raise TaskSpecError("TaskSpec idempotency key must be non-empty")
+    row = connection.execute(
+        "SELECT idempotency_key,task_id,expected_revision,requested_sha256,"
+        "resulting_revision,created_at FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if row is None:
+        return None
+    task_id = row["task_id"]
+    requested_sha256 = row["requested_sha256"]
+    resulting_revision = row["resulting_revision"]
+    expected_revision = row["expected_revision"]
+    created_at = row["created_at"]
+    if not isinstance(task_id, str) or not task_id:
+        raise TaskSpecError("TaskSpec mutation receipt task_id is invalid")
+    if (
+        expected_revision is not None
+        and (
+            not isinstance(expected_revision, int)
+            or isinstance(expected_revision, bool)
+            or expected_revision < 1
+        )
+    ):
+        raise TaskSpecError("TaskSpec mutation receipt expected revision is invalid")
+    if (
+        not isinstance(resulting_revision, int)
+        or isinstance(resulting_revision, bool)
+        or resulting_revision < 1
+    ):
+        raise TaskSpecError("TaskSpec mutation receipt resulting revision is invalid")
+    if not isinstance(requested_sha256, str) or not requested_sha256:
+        raise TaskSpecError("TaskSpec mutation receipt digest is invalid")
+    if not isinstance(created_at, str) or not created_at:
+        raise TaskSpecError("TaskSpec mutation receipt timestamp is invalid")
+    resulting_task_spec = _validated_row(
+        _revision_row(connection, task_id, resulting_revision)
+    )
+    if resulting_task_spec["spec_sha256"] != requested_sha256:
+        raise TaskSpecError("TaskSpec mutation receipt digest mismatch")
+    return {
+        "idempotency_key": idempotency_key,
+        "task_id": task_id,
+        "expected_revision": expected_revision,
+        "requested_sha256": requested_sha256,
+        "resulting_revision": resulting_revision,
+        "created_at": created_at,
+        "resulting_task_spec": resulting_task_spec,
+    }
+
+
+def _validate_runtime_refresh_no_run_closeout_mutation(
+    spec: Mapping[str, Any], idempotency_key: str
+) -> dict[str, Any]:
+    canonical = _canonical_spec(spec)
+    metadata = canonical.get("metadata")
+    closeout = metadata.get("runtime_closeout") if isinstance(metadata, Mapping) else None
+    result_sha256 = closeout.get("runtime_result_sha256") if isinstance(closeout, Mapping) else None
+    if (
+        not isinstance(closeout, Mapping)
+        or closeout.get("kind") != "bureau_runtime_refresh_no_run_closeout"
+        or closeout.get("status") != "verified"
+        or closeout.get("task_id") != canonical["id"]
+        or not isinstance(result_sha256, str)
+        or len(result_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in result_sha256)
+    ):
+        raise TaskSpecError("runtime-refresh no-run closeout mutation contract is invalid")
+    expected_key = (
+        f"{RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX}"
+        f"{canonical['id']}:{result_sha256}"
+    )
+    if idempotency_key != expected_key:
+        raise TaskSpecError("runtime-refresh no-run closeout idempotency binding is invalid")
+    return canonical
+
+
+def put_runtime_refresh_no_run_closeout(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _validate_runtime_refresh_no_run_closeout_mutation(spec, idempotency_key)
+    try:
+        validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
+    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        raise TaskSpecError(str(exc)) from exc
+    validate_schema(connection)
+    reserved_receipt = connection.execute(
+        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if reserved_receipt is None:
+        current = get_current(connection, canonical["id"])
+        if current is not None and current["spec_sha256"] == task_spec_digest(canonical):
+            raise TaskSpecError(
+                "runtime-refresh no-run closeout must create its authenticated TaskSpec revision"
+            )
+    return _put_validated_material(
+        connection,
+        canonical,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source="runtime-refresh-no-run-closeout",
+    )
 
 
 def current_projection(connection: sqlite3.Connection) -> dict[str, Any]:
@@ -377,6 +507,10 @@ def put(
     """
 
     canonical = _canonical_spec(spec)
+    if idempotency_key.startswith(RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX):
+        raise TaskSpecError(
+            "runtime-refresh no-run closeout idempotency namespace is reserved"
+        )
     try:
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
     except (DocumentSchemaError, AcceptanceContractError) as exc:

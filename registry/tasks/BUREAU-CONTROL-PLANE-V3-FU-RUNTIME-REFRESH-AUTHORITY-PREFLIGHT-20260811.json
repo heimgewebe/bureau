@@ -89,6 +89,33 @@
       "verifier_config": {
         "observation_scope": "bureau-runtime-refresh-authority-preflight:validation"
       }
+    },
+    {
+      "assertion": "Ein historisch mehrfach ausgeführter Single-Use-runtime_refresh_authority-Fall darf vom normalen Single-Use-No-Run-Closeout weiterhin nicht als verified terminalisiert werden. Ein eigener Incident-/Supersession-Closeout darf ausschließlich bei vollständiger historischer target-/intent-/result-Evidenz, aktuellem immutable Runtime-/Registry-Readback und StateStore-Integrität den fehlerhaften Authority-Lifecycle terminalisieren und muss die Mehrfachwirkung ausdrücklich als Vertragsverletzung bewahren; kein Runtime-Effekt wird wiederholt und kein historischer Effekt rückwirkend legitimiert.",
+      "evidence_type": "object",
+      "id": "historical-multi-use-incident-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:historical-multi-use-incident-closeout"
+      }
+    },
+    {
+      "assertion": "prepare-intent und apply binden die tatsächlich ausführende Runtime-Refresh-Runner-Identität an eine explizite kompatible Vertragsgeneration bzw. an alle verpflichtenden sicherheitskritischen Authority-Features. Ein älterer Runner, der ein verpflichtendes Feld wie source_precondition nicht implementiert, darf eine neuere Authority weder binden noch konsumieren; er muss vor Wirkung fail-closed abbrechen oder über einen revisionsgebundenen Bootstrap-Handoff exakt den kompatiblen geschützten Zielcode verwenden. Ein hermetischer Regressionstest reproduziert den PR-2173-Fall, in dem die Authority source_precondition enthielt, der tatsächlich verwendete ältere Intent/Result-Vertrag dieses Feature aber nicht führte.",
+      "evidence_type": "object",
+      "id": "runner-contract-generation-bound-before-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:runner-contract-generation-bound-before-effect"
+      }
+    },
+    {
+      "assertion": "Der spezialisierte Runtime-Refresh-No-Run-Closeout darf eine TaskSpec nur dann auf verified setzen, wenn jedes eingefrorene Acceptance-Kriterium durch typisierte Primärevidenz oder einen explizit dazu äquivalenten spezialisierten Verifier-Vertrag belegt ist. Erfolgreicher physischer Deploy, immutable Readback und Lease-Freigabe dürfen fehlende historische Durchsetzung eines zusätzlichen Sicherheitsgates nicht ersetzen. Ein Regressionstest reproduziert den PR-2173-Fall, in dem source-precondition-before-prepare-and-apply Teil der Acceptance war, aber der alte Apply-Intent/Result die neue Source-Precondition nicht belegte.",
+      "evidence_type": "object",
+      "id": "no-run-closeout-covers-frozen-acceptance",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau-runtime-refresh-authority-preflight:no-run-closeout-covers-frozen-acceptance"
+      }
     }
   ],
   "claims": [
@@ -115,7 +142,7 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Nur Runtime-Refresh-Autoritäts-Preflight, receiptgebundenen Single-Use-No-Run-Closeout, zugehörige Tests/Dokumentation und die eigene TaskSpec ändern. Kein Runtime-Refresh oder Deployment-Replay aus diesem Task, keine Queue-/Claim-/Dispatch-Mutation, kein Fake-Run, kein Direct-SQL und keine Mutation fremder Arbeit.",
+      "note": "Nur Runtime-Refresh-Autoritäts-Preflight, historischen Multi-Use-Incident-/Supersession-Closeout, Runner-/Contract-Generation-Handoff, receipt- und Acceptance-gebundenen Single-Use-No-Run-Closeout, zugehörige Tests/Dokumentation und die eigene TaskSpec ändern. Kein Runtime-Refresh oder Deployment-Replay aus diesem Task, keine Queue-/Claim-/Dispatch-Mutation, kein Fake-Run, kein Direct-SQL und keine Mutation fremder Arbeit.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -128,7 +155,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau"
   },
-  "goal": "Den am 2026-08-11 beobachteten Autoritätsbruch beim bereits physisch erfolgreichen Bureau-Runtime-Refresh auf affe99f27d482c75ca4ae61735e7d2d69f911c8d ohne Deployment-Replay revisionsgebunden nachbereiten und den Runtime-Refresh-Autoritätsvertrag dauerhaft schließen. approval_task_id muss vor prepare-intent und erneut vor apply aus der autoritativen StateStore-TaskSpec geprüft werden; supersedete, terminale, falsche oder bereits verbrauchte Autoritäten müssen vor jeder Wirkung fail-closed abgewiesen werden. Zusätzlich muss ein erfolgreich verbrauchter Single-Use-Runtime-Refresh, der wegen stale Runtime vor einem normalen Bureau-Claim stattfinden musste und deshalb keinen Bureau-Run besitzt, ausschließlich aus exakt task-, target-, intent- und receiptgebundener Primärevidenz kanonisch terminalisiert werden können. Dabei dürfen weder ein retroaktiver Claim oder Fake-Run noch Direct-SQL oder eine Statusableitung aus Prosa entstehen.",
+  "goal": "Den am 2026-08-11 beobachteten Autoritätsbruch beim bereits physisch erfolgreichen Bureau-Runtime-Refresh auf affe99f27d482c75ca4ae61735e7d2d69f911c8d ohne Deployment-Replay revisionsgebunden nachbereiten und den Runtime-Refresh-Autoritätsvertrag dauerhaft schließen. approval_task_id muss vor prepare-intent und erneut vor apply aus der autoritativen StateStore-TaskSpec geprüft werden; supersedete, terminale, falsche oder bereits verbrauchte Autoritäten müssen vor jeder Wirkung fail-closed abgewiesen werden. Zusätzlich muss ein erfolgreich verbrauchter Single-Use-Runtime-Refresh, der wegen stale Runtime vor einem normalen Bureau-Claim stattfinden musste und deshalb keinen Bureau-Run besitzt, ausschließlich aus exakt task-, target-, intent- und receiptgebundener Primärevidenz kanonisch terminalisiert werden können. Historische Mehrfachwirkung einer Single-Use-Authority muss als eigener Incident-/Supersession-Fall terminalisierbar sein, ohne sie rückwirkend als legitime Single-Use-Verifikation umzudeuten. Nach dem live reproduzierten PR-2173-Fall muss außerdem die tatsächlich ausführende Runtime-Refresh-Runner-Generation alle verpflichtenden sicherheitskritischen Authority-Features verstehen und nachweislich erzwingen; unbekannte Pflichtfeatures dürfen nicht still ignoriert werden. Der No-Run-Closeout darf physische Runtime-Konvergenz nicht als Ersatz für fehlende kriterienspezifische Acceptance-Evidenz behandeln. Dabei dürfen weder ein retroaktiver Claim oder Fake-Run noch Direct-SQL oder eine Statusableitung aus Prosa entstehen.",
   "id": "BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-AUTHORITY-PREFLIGHT-20260811",
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
@@ -139,8 +166,24 @@
       "rückwirkende Gültigkeit der stale approval_task_id",
       "Berechtigung zur Wiederverwendung einer verbrauchten Single-Use-Autorität",
       "Berechtigung zu Fake-Runs, Direct-SQL oder Statusableitung aus Prosa",
-      "Queue-, Claim-, Dispatch-, Merge- oder Fremdarbeitsautorität"
+      "Queue-, Claim-, Dispatch-, Merge- oder Fremdarbeitsautorität",
+      "rückwirkender Nachweis, dass der PR-2173-Effekt die neue source_precondition im tatsächlich ausführenden Runner erzwungen hat",
+      "Berechtigung, fehlende eingefrorene Acceptance-Evidenz aus physischem Deployment-Erfolg zu interpolieren",
+      "Berechtigung, historische Mehrfachwirkung als legitime Single-Use-Ausführung umzudeuten"
     ],
+    "historical_multi_use_followup": {
+      "candidate_id": "candidate-fd4847982cc8c50dbca04abf",
+      "consumption_result_sha256": "455a77dc38a4558aa21af5475c216b8453706d856132d267d1fa78f9777fccc8",
+      "does_not_establish": [
+        "legitimate single-use verification",
+        "permission to replay either runtime effect",
+        "retroactive claim or fake-run authority"
+      ],
+      "historical_result_sha256": "35a2195495c09c76485b511ecea911de227d8894684c5869ad8c65e111524e5d",
+      "schema_version": 1,
+      "source_event_id": 6553,
+      "source_sha256": "bdddaefc5e799dcf5f811f46cf1bd081dafe320fab5d7d88707daa1f43ee206e"
+    },
     "incident_refresh_result_sha256": "dea2fa1d51a865b1884ad652c43fd6aaf98f10c00c81df6c5ca2cc576088292b",
     "incident_refresh_source_commit": "affe99f27d482c75ca4ae61735e7d2d69f911c8d",
     "no_run_closeout_followup": {
@@ -161,6 +204,72 @@
       "source_candidate": "candidate-d33581388178daf1c31c02de",
       "source_event_id": 5996
     },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-17f39966d51c901a247328d1",
+      "event_id": 11277,
+      "event_created_at": "2026-08-25T12:54:23.269739Z",
+      "request_sha256": "1985fce172285e4200ecc988728a42bf394d1410041359e2d4f2cdf7c01b4c7b",
+      "candidate_event_id": "candidate-event-e60410cfe624167bacf13092",
+      "source_fingerprint": "a95f4cb50a489e6ea9e49f9d58c9147c9cd24036e880f75fe33e8b4e228d2488",
+      "content_fingerprint": "17f39966d51c901a247328d1219d9a4a6fae3a68beed279e71bf1c22e631db90",
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "a95f4cb50a489e6ea9e49f9d58c9147c9cd24036e880f75fe33e8b4e228d2488",
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau-runtime-refresh:pr2173:result=3a59ca75c713a9645d208ce14f0032cbc37570733194c81dd1fc15d2b4a001e5",
+        "observed_at": "2026-08-25T12:17:18.241650Z",
+        "sha256": "79c6af7fa37658188fff64dcb6468f8db2b1d6b8705df09bd98370fd4e8c894a"
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "a95f4cb50a489e6ea9e49f9d58c9147c9cd24036e880f75fe33e8b4e228d2488",
+          "freshness": "digest-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau-runtime-refresh:pr2173:result=3a59ca75c713a9645d208ce14f0032cbc37570733194c81dd1fc15d2b4a001e5",
+          "observed_at": "2026-08-25T12:17:18.241650Z",
+          "sha256": "79c6af7fa37658188fff64dcb6468f8db2b1d6b8705df09bd98370fd4e8c894a"
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "pr2173_followup": {
+      "acceptance_closeout_candidate_event_id": 11268,
+      "acceptance_closeout_candidate_id": "candidate-03e2533a49fd0b54d6e49842",
+      "authority_baseline_spec_sha256": "f268da41ca9119560da44560e5523acfbe71d1ad410e03d15e826fc4ed10f1c4",
+      "authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PR2172-SOURCE-CONVERGENCE-20260825",
+      "does_not_establish": [
+        "dass der historische PR-2173-Apply die neue source_precondition tatsächlich erzwang",
+        "Berechtigung zu Deployment-Replay oder zweitem Runtime-Effekt",
+        "Berechtigung zur rückwirkenden Umschreibung der Single-Use-Historie"
+      ],
+      "facts": [
+        "Die Authority enthielt source_precondition als verpflichtenden Sicherheitsvertrag.",
+        "Der tatsächlich verwendete ältere Intent/Result-Vertrag enthielt weder source_precondition noch source_ancestry/runtime_source_identity.",
+        "Die reale Source-Identität und Ancestry waren separat kurz vor dem Effekt durch den neueren Code belegt.",
+        "Der spätere runtime-refresh-no-run-closeout setzte die Authority auf verified, ohne kriterienspezifische Evidenz für die fehlende historische Gate-Durchsetzung zu speichern."
+      ],
+      "observed_main_commit": "791be3bd6eb680af33f579c44d54988fcade7f4b",
+      "revision3_candidate_event_id": 11277,
+      "revision3_candidate_id": "candidate-17f39966d51c901a247328d1",
+      "runner_generation_candidate_event_id": 11267,
+      "runner_generation_candidate_id": "candidate-e1094df3b74967186f1710b1",
+      "runtime_closeout_revision": 4,
+      "runtime_closeout_spec_sha256": "9d8e3a202355534dac8346beb8c4c8800c6b3408b21cd21e21d420bf83952b7a",
+      "runtime_intent_sha256": "06381bfcd57b94e6ad199d566ca7fbf17ce2457e6042b6fdf562754d2cde3228",
+      "runtime_result_sha256": "3a59ca75c713a9645d208ce14f0032cbc37570733194c81dd1fc15d2b4a001e5",
+      "runtime_target_sha256": "b7b58af23c61b3e66a729cf194fd68c8cb2f17e31a175cd31da07cd98e92af8d",
+      "schema_version": 1
+    },
     "publication_path": {
       "does_not_establish": [
         "queue mutation",
@@ -174,27 +283,7 @@
     "related_runtime_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUTHORITY-20260810",
     "source_candidate": "candidate-3fec3d18b348ddeef171c148",
     "source_event_id": 5953,
-    "stale_approval_task_id": "BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809",
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-01da133c000649b6a8f30c54",
-      "event_id": 6142,
-      "event_created_at": "2026-08-12T07:01:20.983202Z",
-      "request_sha256": "32b0cddb8720cd5e1fe01a03ebaa8985306508bf1bdaccc9e0e1c53486386d73",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "bureau-runtime-refresh-closeout-gap",
-        "locator": "bureau:candidate-d33581388178daf1c31c02de:event=5996;result=9b6afa43ad97b0056e7ac011c5f334e479eff2a739325d70d6b15c25f3ef6459",
-        "observed_at": "2026-08-12T06:54:00Z",
-        "sha256": "9b6afa43ad97b0056e7ac011c5f334e479eff2a739325d70d6b15c25f3ef6459"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+    "stale_approval_task_id": "BUREAU-TRUTH-MODEL-V2-FB-TASKSPEC-SEED-DRIFT-20260809"
   },
   "priority": {
     "lane": "now",
@@ -209,7 +298,7 @@
     "audit"
   ],
   "rollback": {
-    "strategy": "Revertiere nur die Preflight-/Provenienz-/No-Run-Closeout-Code-, Test- und Dokumentationsänderungen. Bereits erfolgte Runtime-Refreshes nicht erneut ausführen oder künstlich zurückschreiben; bei unklarer Runtime-Wirkung ausschließlich den bestehenden immutable Readback-/Rollback-/verify-then-retry-Vertrag verwenden. Keine historischen Runs oder Taskzustände erfinden."
+    "strategy": "Revertiere nur die Preflight-/Provenienz-/Multi-Use-Incident-/Runner-Generation-/Acceptance-/No-Run-Closeout-Code-, Test- und Dokumentationsänderungen. Bereits erfolgte Runtime-Refreshes nicht erneut ausführen oder künstlich zurückschreiben; bei unklarer Runtime-Wirkung ausschließlich den bestehenden immutable Readback-/Rollback-/verify-then-retry-Vertrag verwenden. Keine historischen Runs oder Taskzustände erfinden."
   },
   "schema_version": 1,
   "state": "ready",

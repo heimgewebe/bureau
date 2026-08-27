@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 import hashlib
 import json
 import os
@@ -102,11 +103,35 @@ SCHEDULER_RECONVERGEABLE_READBACK_CODES = frozenset(
 )
 RUNTIME_AUTHORITY_SCHEMA_VERSION = 1
 RUNTIME_AUTHORITY_MODE = "single-use-target-bound"
+RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION = "single-use-target-bound-source-precondition-v1"
+RUNTIME_AUTHORITY_SUPPORTED_MODES = frozenset(
+    {RUNTIME_AUTHORITY_MODE, RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION}
+)
 RUNTIME_AUTHORITY_TARGET_BINDING = "candidate.target_sha256"
 RUNTIME_AUTHORITY_ALLOWED_STATES = ("ready", "active")
 RUNTIME_AUTHORITY_BINDING_KIND = "bureau_runtime_refresh_authority_target_binding"
 RUNTIME_AUTHORITY_CONSUMPTION_KIND = "bureau_runtime_refresh_authority_consumption"
 RUNTIME_AUTHORITY_CLOSEOUT_KIND = "bureau_runtime_refresh_no_run_closeout"
+RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND = "bureau_runtime_refresh_multi_use_incident_closeout"
+RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND = "bureau_runtime_refresh_no_run_acceptance_contract"
+RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_EVIDENCE_KIND = (
+    "bureau_runtime_refresh_no_run_acceptance_evidence"
+)
+RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER = "runtime-refresh-no-run-evidence-v1"
+RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES = frozenset(
+    {
+        "approval-intent",
+        "runtime-result",
+        "single-use-history",
+        "immutable-readback",
+        "state-store-integrity",
+        "lease-release",
+        "run-lifecycle",
+        "source-precondition",
+        "protected-publication-adoption",
+        "registry-resource-intake",
+    }
+)
 
 
 class RuntimeRefreshError(RuntimeError):
@@ -2257,6 +2282,12 @@ def _put_authority_task(
     source: str,
 ) -> dict[str, Any]:
     try:
+        if source == "runtime-refresh-no-run-closeout":
+            return store.put_runtime_refresh_no_run_closeout_task_spec(
+                spec,
+                idempotency_key=idempotency_key,
+                expected_revision=expected_revision,
+            )
         return store.put_task_spec(
             spec,
             idempotency_key=idempotency_key,
@@ -2499,7 +2530,6 @@ def _validate_runtime_refresh_authority_contract(
     metadata, authority = _runtime_authority_metadata(spec)
     required_values = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
-        "mode": RUNTIME_AUTHORITY_MODE,
         "single_use": True,
         "required_action_class": "runtime_mutation",
         "required_approval_level": "break_glass",
@@ -2517,10 +2547,37 @@ def _validate_runtime_refresh_authority_contract(
     if mismatched:
         raise RuntimeRefreshError(
             "authority-contract-invalid",
-            "TaskSpec runtime_refresh_authority contract is not single-use and target-bound",
+            "TaskSpec runtime_refresh_authority contract is not structurally valid",
             details={"mismatched": mismatched},
         )
-    _validated_runtime_source_precondition(authority.get("source_precondition"))
+    mode = authority.get("mode")
+    if mode not in RUNTIME_AUTHORITY_SUPPORTED_MODES:
+        raise RuntimeRefreshError(
+            "authority-contract-generation-unsupported",
+            "runtime authority contract generation is not supported by this runner",
+            details={
+                "observed_mode": mode,
+                "supported_modes": sorted(RUNTIME_AUTHORITY_SUPPORTED_MODES),
+            },
+        )
+    source_precondition = _validated_runtime_source_precondition(
+        authority.get("source_precondition")
+    )
+    if mode == RUNTIME_AUTHORITY_MODE and source_precondition is not None:
+        raise RuntimeRefreshError(
+            "authority-contract-generation-invalid",
+            "legacy runtime authority mode cannot carry source_precondition",
+            details={
+                "observed_mode": mode,
+                "required_mode": RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION,
+            },
+        )
+    if mode == RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION and source_precondition is None:
+        raise RuntimeRefreshError(
+            "authority-contract-generation-invalid",
+            "source-precondition authority mode requires source_precondition",
+            details={"observed_mode": mode},
+        )
     required_states = authority.get("required_task_state")
     if required_states != list(RUNTIME_AUTHORITY_ALLOWED_STATES):
         raise RuntimeRefreshError(
@@ -2674,6 +2731,7 @@ def validate_authoritative_runtime_refresh_task(
         "revision": revision,
         "spec_sha256": digest,
         "state": state,
+        "contract_mode": authority["mode"],
         "target_sha256": target_sha256,
         "target_binding_receipt": binding,
     }
@@ -3079,9 +3137,12 @@ def _intent_authority_record(intent: dict[str, Any]) -> dict[str, Any]:
         "target_sha256",
         "target_binding_receipt",
     }
+    optional = {"contract_mode"}
+    observed_fields = set(value) if isinstance(value, dict) else set()
     if (
         not isinstance(value, dict)
-        or set(value) != required
+        or not required <= observed_fields
+        or observed_fields - required - optional
         or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
         or value.get("task_id") != intent.get("approval_task_id")
         or not isinstance(value.get("revision"), int)
@@ -3090,12 +3151,41 @@ def _intent_authority_record(intent: dict[str, Any]) -> dict[str, Any]:
         or not _is_sha256(value.get("spec_sha256"))
         or value.get("target_sha256") != intent.get("target_sha256")
         or value.get("target_binding_receipt") is not None
+        or (
+            "contract_mode" in value
+            and value.get("contract_mode") not in RUNTIME_AUTHORITY_SUPPORTED_MODES
+        )
     ):
         raise RuntimeRefreshError(
             "authority-intent-binding-invalid",
             "runtime-refresh intent authoritative TaskSpec binding is invalid",
         )
     return dict(value)
+
+
+def _validate_intent_authority_contract_generation(
+    *, expected_authority: dict[str, Any], authority: dict[str, Any]
+) -> str:
+    current_contract_mode = authority.get("mode")
+    intent_contract_mode = expected_authority.get("contract_mode")
+    if intent_contract_mode is None:
+        if current_contract_mode != RUNTIME_AUTHORITY_MODE:
+            raise RuntimeRefreshError(
+                "authority-runner-contract-generation-missing",
+                "runtime-refresh intent predates the current authority contract generation",
+                details={"authority_mode": current_contract_mode},
+            )
+        return RUNTIME_AUTHORITY_MODE
+    if intent_contract_mode != current_contract_mode:
+        raise RuntimeRefreshError(
+            "authority-runner-contract-generation-drift",
+            "runtime-refresh intent contract generation differs from current authority",
+            details={
+                "intent_mode": intent_contract_mode,
+                "authority_mode": current_contract_mode,
+            },
+        )
+    return intent_contract_mode
 
 
 def bind_runtime_refresh_authority(
@@ -3112,6 +3202,9 @@ def bind_runtime_refresh_authority(
     current = _read_authority_task(store, expected["task_id"])
     spec = json.loads(json.dumps(current["spec"]))
     metadata, authority = _runtime_authority_metadata(spec)
+    _validate_intent_authority_contract_generation(
+        expected_authority=expected, authority=authority
+    )
     binding = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "kind": RUNTIME_AUTHORITY_BINDING_KIND,
@@ -3296,6 +3389,9 @@ def consume_runtime_refresh_authority(
             "consumption": existing,
             "idempotent_replay": True,
         }
+    _validate_intent_authority_contract_generation(
+        expected_authority=expected, authority=authority
+    )
     bound_authority = result.get("authority_task_spec")
     if not isinstance(bound_authority, dict):
         raise RuntimeRefreshError(
@@ -5072,6 +5168,855 @@ def validate_released_lease_binding(
     return evidence
 
 
+def _runtime_authority_acceptance_ids(spec: dict[str, Any]) -> list[str]:
+    acceptance = spec.get("acceptance")
+    if not isinstance(acceptance, list) or not acceptance:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-invalid",
+            "runtime authority has no frozen acceptance contract",
+        )
+    criterion_ids: list[str] = []
+    for criterion in acceptance:
+        criterion_id = criterion.get("id") if isinstance(criterion, dict) else None
+        if not isinstance(criterion_id, str) or not criterion_id or criterion_id in criterion_ids:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-contract-invalid",
+                "runtime authority acceptance criterion identities are invalid",
+            )
+        criterion_ids.append(criterion_id)
+    return criterion_ids
+
+
+
+def _validated_protected_publication_adoption_contract(
+    spec: dict[str, Any],
+) -> dict[str, Any] | None:
+    metadata = spec.get("metadata")
+    value = (
+        metadata.get("protected_publication_adoption")
+        if isinstance(metadata, dict)
+        else None
+    )
+    if value is None:
+        return None
+    fields = {
+        "schema_version",
+        "repository",
+        "publication_pr",
+        "publication_merge_commit",
+        "required_checks",
+    }
+    required_checks = value.get("required_checks") if isinstance(value, dict) else None
+    merge_commit = value.get("publication_merge_commit") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or set(value) != fields
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("repository") != DEFAULT_REPOSITORY
+        or not isinstance(value.get("publication_pr"), int)
+        or isinstance(value.get("publication_pr"), bool)
+        or value["publication_pr"] < 1
+        or not isinstance(merge_commit, str)
+        or len(merge_commit) != 40
+        or any(character not in "0123456789abcdef" for character in merge_commit)
+        or required_checks != list(DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-publication-adoption-contract-invalid",
+            "protected publication/adoption evidence contract is invalid",
+        )
+    return json.loads(json.dumps(value))
+
+
+def _validated_registry_resource_intake_contract(
+    spec: dict[str, Any],
+) -> dict[str, Any] | None:
+    metadata = spec.get("metadata")
+    value = (
+        metadata.get("no_run_closeout_registry_resource_intake")
+        if isinstance(metadata, dict)
+        else None
+    )
+    if value is None:
+        return None
+    fields = {"schema_version", "candidate_id", "resource"}
+    resource_fields = {"id", "type", "path", "github_slug", "grabowski_key"}
+    resource = value.get("resource") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or set(value) != fields
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or not isinstance(value.get("candidate_id"), str)
+        or not value["candidate_id"]
+        or not isinstance(resource, dict)
+        or set(resource) != resource_fields
+        or not all(
+            isinstance(resource.get(field), str) and resource[field]
+            for field in resource_fields
+        )
+        or resource.get("type") != "git-repository"
+        or not os.path.isabs(resource["path"])
+        or resource.get("grabowski_key")
+        != f"repo:{os.path.normpath(resource['path'])}"
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-contract-invalid",
+            "Registry resource/intake evidence contract is invalid",
+        )
+    return json.loads(json.dumps(value))
+
+
+def _prove_protected_publication_adoption(
+    *,
+    store: Any,
+    spec: dict[str, Any],
+    approval_task_id: str,
+    target_main_commit: str,
+    github: Callable[[list[str]], Any] = gh_preflight_json,
+) -> dict[str, Any]:
+    contract = _validated_protected_publication_adoption_contract(spec)
+    if contract is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "protected publication/adoption contract is missing",
+        )
+    repository = contract["repository"]
+    publication_pr = contract["publication_pr"]
+    publication_merge_commit = contract["publication_merge_commit"]
+    required_checks = tuple(contract["required_checks"])
+    relative = _runtime_authority_task_path(approval_task_id).as_posix()
+
+    protection = github(["api", f"repos/{repository}/branches/main/protection"])
+    required_status = (
+        protection.get("required_status_checks") if isinstance(protection, dict) else None
+    )
+    contexts = required_status.get("contexts") if isinstance(required_status, dict) else None
+    force_pushes = protection.get("allow_force_pushes") if isinstance(protection, dict) else None
+    deletions = protection.get("allow_deletions") if isinstance(protection, dict) else None
+    if (
+        not isinstance(required_status, dict)
+        or required_status.get("strict") is not True
+        or not isinstance(contexts, list)
+        or not set(required_checks).issubset(set(contexts))
+        or not isinstance(force_pushes, dict)
+        or force_pushes.get("enabled") is not False
+        or not isinstance(deletions, dict)
+        or deletions.get("enabled") is not False
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "main protection no longer proves the protected publication contract",
+        )
+
+    detail = github(
+        [
+            "pr",
+            "view",
+            str(publication_pr),
+            "--repo",
+            repository,
+            "--json",
+            "number,state,isDraft,mergedAt,mergeCommit,baseRefName,statusCheckRollup,files",
+        ]
+    )
+    merge = detail.get("mergeCommit") if isinstance(detail, dict) else None
+    merge_oid = merge.get("oid") if isinstance(merge, dict) else None
+    files = detail.get("files") if isinstance(detail, dict) else None
+    file_paths = (
+        [item.get("path") for item in files if isinstance(item, dict)]
+        if isinstance(files, list)
+        else []
+    )
+    if (
+        not isinstance(detail, dict)
+        or detail.get("number") != publication_pr
+        or detail.get("state") != "MERGED"
+        or detail.get("isDraft") is True
+        or detail.get("baseRefName") != "main"
+        or not detail.get("mergedAt")
+        or merge_oid != publication_merge_commit
+        or file_paths != [relative]
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication PR is not the exact create-only protected authority merge",
+        )
+    check_summary = summarize_required_checks(detail.get("statusCheckRollup"), required_checks)
+    bad_checks = [name for name, item in check_summary.items() if item["state"] != "success"]
+    if bad_checks:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication PR required checks are not green",
+            details={"checks": check_summary},
+        )
+
+    historical_file = github(
+        [
+            "api",
+            f"repos/{repository}/contents/{relative}?ref={publication_merge_commit}",
+        ]
+    )
+    encoded = historical_file.get("content") if isinstance(historical_file, dict) else None
+    if (
+        not isinstance(historical_file, dict)
+        or historical_file.get("type") != "file"
+        or historical_file.get("path") != relative
+        or historical_file.get("encoding") != "base64"
+        or not isinstance(encoded, str)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication TaskSpec blob is unavailable",
+        )
+    try:
+        raw = base64.b64decode("".join(encoded.splitlines()), validate=True)
+        historical_spec = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication TaskSpec blob is invalid",
+        ) from exc
+    if not isinstance(historical_spec, dict) or historical_spec.get("id") != approval_task_id:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication TaskSpec identity is invalid",
+        )
+    historical_metadata = historical_spec.get("metadata")
+    publication_path = (
+        historical_metadata.get("publication_path")
+        if isinstance(historical_metadata, dict)
+        else None
+    )
+    if (
+        not isinstance(publication_path, dict)
+        or publication_path.get("kind") != "normal-protected-pull-request"
+        or publication_path.get("state_store_transition")
+        != "seed-missing-preserve-state-store"
+        or publication_path.get("scope") != f"exactly {relative}"
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical TaskSpec did not declare protected missing-only adoption",
+        )
+
+    from . import task_specs
+
+    historical_spec_sha256 = task_specs.task_spec_digest(historical_spec)
+    idempotency_key = f"legacy-seed-exact:{approval_task_id}:{historical_spec_sha256}"
+    try:
+        receipt = store.task_spec_mutation_receipt(idempotency_key)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "cannot read the missing-only adoption mutation receipt",
+            details={"error": str(exc)},
+        ) from exc
+    resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("task_id") != approval_task_id
+        or receipt.get("expected_revision") is not None
+        or receipt.get("requested_sha256") != historical_spec_sha256
+        or receipt.get("resulting_revision") != 1
+        or not isinstance(resulting, dict)
+        or resulting.get("revision") != 1
+        or resulting.get("spec_sha256") != historical_spec_sha256
+        or resulting.get("source") != "legacy-git-exact-seed"
+        or resulting.get("spec") != historical_spec
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "StateStore does not contain the exact missing-only adoption receipt",
+        )
+
+    if target_main_commit == publication_merge_commit:
+        ancestry_ok = True
+    else:
+        compare = github(
+            [
+                "api",
+                f"repos/{repository}/compare/{publication_merge_commit}...{target_main_commit}",
+            ]
+        )
+        merge_base = compare.get("merge_base_commit") if isinstance(compare, dict) else None
+        ancestry_ok = (
+            isinstance(compare, dict)
+            and compare.get("status") == "ahead"
+            and compare.get("behind_by") == 0
+            and isinstance(merge_base, dict)
+            and merge_base.get("sha") == publication_merge_commit
+        )
+    if not ancestry_ok:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "publication merge is not an ancestor of the runtime target",
+        )
+    evidence = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_protected_publication_adoption_evidence",
+        "task_id": approval_task_id,
+        "publication_pr": publication_pr,
+        "publication_merge_commit": publication_merge_commit,
+        "target_main_commit": target_main_commit,
+        "task_path": relative,
+        "task_file_sha256": sha256_bytes(raw),
+        "task_spec_sha256": historical_spec_sha256,
+        "adoption_idempotency_key": idempotency_key,
+        "adoption_revision": 1,
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
+def _prove_registry_resource_intake(
+    *,
+    store: Any,
+    spec: dict[str, Any],
+    registry_root: Path,
+) -> dict[str, Any]:
+    contract = _validated_registry_resource_intake_contract(spec)
+    if contract is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "Registry resource/intake contract is missing",
+        )
+    raw_root = registry_root.expanduser()
+    if raw_root.is_symlink() or not raw_root.is_dir():
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "result-bound canonical Registry root is not an immutable directory",
+            details={"registry_root": str(raw_root)},
+        )
+    root = raw_root.resolve()
+    try:
+        registry = legacy.Registry.load(root)
+    except (legacy.ValidationError, OSError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "result-bound canonical Registry cannot be loaded",
+            details={"error": str(exc)},
+        ) from exc
+    expected = contract["resource"]
+    resource = registry.resources.get(expected["id"])
+    observed = (
+        {
+            "id": resource.id,
+            "type": resource.type,
+            "path": resource.path,
+            "github_slug": resource.github_slug,
+            "grabowski_key": resource.grabowski_key,
+        }
+        if resource is not None
+        else None
+    )
+    if observed != expected:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "result-bound canonical Registry lacks the exact required repository resource",
+            details={"expected": expected, "observed": observed},
+        )
+    from . import operator_intake
+
+    try:
+        assessment = operator_intake._candidate_assess(
+            registry,
+            store,
+            candidate_id=contract["candidate_id"],
+        )
+    except (operator_intake.OperatorIntakeError, legacy.StateError, OSError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "typed candidate-intake assessment failed against the result-bound Registry",
+            details={"error": str(exc)},
+        ) from exc
+    target = assessment.get("target") if isinstance(assessment, dict) else None
+    claims = target.get("claims") if isinstance(target, dict) else None
+    expected_claims = [
+        {"resource": expected["id"], "mode": "write", "isolation": "worktree"}
+    ]
+    if (
+        not isinstance(assessment, dict)
+        or assessment.get("kind") != "bureau_candidate_assessment"
+        or assessment.get("status") != "assessed"
+        or assessment.get("candidate_id") != contract["candidate_id"]
+        or claims != expected_claims
+        or "repo" in assessment.get("missing_fields", [])
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            (
+                "typed candidate intake does not bind the candidate to the installed "
+                "repository resource"
+            ),
+        )
+    evidence = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_registry_resource_intake_evidence",
+        "candidate_id": contract["candidate_id"],
+        "resource": observed,
+        "registry_root": str(root),
+        "candidate_decision": assessment.get("decision"),
+        "candidate_event_id": assessment.get("event_id"),
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
+def _validated_no_run_acceptance_contract(
+    *, spec: dict[str, Any], authority: dict[str, Any]
+) -> dict[str, Any]:
+    criterion_ids = _runtime_authority_acceptance_ids(spec)
+    value = authority.get("no_run_closeout_acceptance")
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"schema_version", "kind", "criteria"}
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND
+        or not isinstance(value.get("criteria"), dict)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-missing",
+            "no-run closeout requires an explicit criterion-specific acceptance contract",
+        )
+    criteria = value["criteria"]
+    if set(criteria) != set(criterion_ids):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-incomplete",
+            "no-run acceptance contract does not cover the frozen TaskSpec acceptance",
+            details={
+                "expected_criteria": sorted(criterion_ids),
+                "observed_criteria": sorted(str(item) for item in criteria),
+            },
+        )
+    normalized: dict[str, Any] = {}
+    for criterion_id in criterion_ids:
+        item = criteria[criterion_id]
+        if (
+            not isinstance(item, dict)
+            or set(item) != {"verifier", "required_evidence"}
+            or item.get("verifier") != RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER
+            or not isinstance(item.get("required_evidence"), list)
+            or not item["required_evidence"]
+            or any(not isinstance(entry, str) for entry in item["required_evidence"])
+            or len(set(item["required_evidence"])) != len(item["required_evidence"])
+            or set(item["required_evidence"]) - RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES
+        ):
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-contract-invalid",
+                "no-run acceptance criterion verifier contract is invalid",
+                details={"criterion_id": criterion_id},
+            )
+        normalized[criterion_id] = {
+            "verifier": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER,
+            "required_evidence": sorted(item["required_evidence"]),
+        }
+    source_precondition = _validated_runtime_source_precondition(
+        authority.get("source_precondition")
+    )
+    if source_precondition is not None and not any(
+        "source-precondition" in item["required_evidence"]
+        for item in normalized.values()
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-incomplete",
+            "source-precondition authority has no criterion bound to source-precondition evidence",
+        )
+    required_evidence_classes = {
+        evidence_class
+        for item in normalized.values()
+        for evidence_class in item["required_evidence"]
+    }
+    publication_adoption = _validated_protected_publication_adoption_contract(spec)
+    registry_resource_intake = _validated_registry_resource_intake_contract(spec)
+    if ("protected-publication-adoption" in required_evidence_classes) != (
+        publication_adoption is not None
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-invalid",
+            (
+                "protected-publication-adoption evidence and its typed contract must "
+                "be declared together"
+            ),
+        )
+    if ("registry-resource-intake" in required_evidence_classes) != (
+        registry_resource_intake is not None
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-invalid",
+            "registry-resource-intake evidence and its typed contract must be declared together",
+        )
+    contract = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND,
+        "criteria": normalized,
+        "frozen_acceptance": json.loads(json.dumps(spec["acceptance"])),
+        "source_precondition": source_precondition,
+    }
+    if publication_adoption is not None:
+        contract["protected_publication_adoption"] = publication_adoption
+    if registry_resource_intake is not None:
+        contract["registry_resource_intake"] = registry_resource_intake
+    return contract
+
+
+def _validated_no_run_acceptance_evidence(value: Any) -> dict[str, Any]:
+    fields = {
+        "schema_version",
+        "kind",
+        "task_id",
+        "task_spec_sha256",
+        "contract_sha256",
+        "criterion_ids",
+        "available_evidence",
+        "runtime_result_sha256",
+        "readback_sha256",
+        "lease_release_sha256",
+        "effect_history_sha256",
+        "state_store_root_sha256",
+        "run_evidence_sha256",
+        "evidence_sha256",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "no-run acceptance evidence record is malformed",
+        )
+    digest_fields = {
+        "task_spec_sha256",
+        "contract_sha256",
+        "runtime_result_sha256",
+        "readback_sha256",
+        "lease_release_sha256",
+        "effect_history_sha256",
+        "state_store_root_sha256",
+        "run_evidence_sha256",
+        "evidence_sha256",
+    }
+    criterion_ids = value.get("criterion_ids")
+    available_evidence = value.get("available_evidence")
+    if (
+        value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_EVIDENCE_KIND
+        or not isinstance(value.get("task_id"), str)
+        or not value["task_id"]
+        or any(not _is_sha256(value.get(field)) for field in digest_fields)
+        or not isinstance(criterion_ids, list)
+        or not criterion_ids
+        or any(not isinstance(item, str) or not item for item in criterion_ids)
+        or len(set(criterion_ids)) != len(criterion_ids)
+        or criterion_ids != sorted(criterion_ids)
+        or not isinstance(available_evidence, list)
+        or any(not isinstance(item, str) for item in available_evidence)
+        or len(set(available_evidence)) != len(available_evidence)
+        or available_evidence != sorted(available_evidence)
+        or set(available_evidence) - RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "no-run acceptance evidence values are invalid",
+        )
+    unsigned = {key: item for key, item in value.items() if key != "evidence_sha256"}
+    if value["evidence_sha256"] != sha256_bytes(canonical_bytes(unsigned)):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "no-run acceptance evidence digest is invalid",
+        )
+    return dict(value)
+
+
+def _build_no_run_acceptance_evidence(
+    *,
+    spec: dict[str, Any],
+    authority: dict[str, Any],
+    task_id: str,
+    task_spec_sha256: str,
+    available_evidence: set[str],
+    runtime_result_sha256: str,
+    readback_sha256: str,
+    lease_release_sha256: str,
+    effect_history: list[dict[str, Any]],
+    state_store_health: dict[str, Any],
+    terminal_run: dict[str, Any] | None,
+) -> dict[str, Any]:
+    contract = _validated_no_run_acceptance_contract(spec=spec, authority=authority)
+    missing = {
+        criterion_id: sorted(set(item["required_evidence"]) - available_evidence)
+        for criterion_id, item in contract["criteria"].items()
+        if set(item["required_evidence"]) - available_evidence
+    }
+    if missing:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-incomplete",
+            "no-run closeout lacks evidence required by frozen acceptance criteria",
+            details={"missing": missing},
+        )
+    state_store_root_sha256 = state_store_health.get("authoritative_root_sha256")
+    if not _is_sha256(state_store_root_sha256):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-invalid",
+            "StateStore health evidence has no authoritative root digest",
+        )
+    run_evidence = terminal_run or {"status": "no-run"}
+    evidence = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_EVIDENCE_KIND,
+        "task_id": task_id,
+        "task_spec_sha256": task_spec_sha256,
+        "contract_sha256": sha256_bytes(canonical_bytes(contract)),
+        "criterion_ids": sorted(contract["criteria"]),
+        "available_evidence": sorted(available_evidence),
+        "runtime_result_sha256": runtime_result_sha256,
+        "readback_sha256": readback_sha256,
+        "lease_release_sha256": lease_release_sha256,
+        "effect_history_sha256": sha256_bytes(canonical_bytes(effect_history)),
+        "state_store_root_sha256": state_store_root_sha256,
+        "run_evidence_sha256": sha256_bytes(canonical_bytes(run_evidence)),
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
+def _historical_no_run_closeout_acceptance_evidence(
+    *,
+    store: Any,
+    closeout: dict[str, Any],
+) -> dict[str, Any]:
+    idempotency_key = (
+        f"runtime-refresh-no-run-closeout:{closeout['task_id']}:"
+        f"{closeout['runtime_result_sha256']}"
+    )
+    try:
+        receipt = store.task_spec_mutation_receipt(idempotency_key)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "cannot authenticate the immutable no-run closeout mutation receipt",
+            details={"error": str(exc)},
+        ) from exc
+    if receipt is None or receipt.get("task_id") != closeout["task_id"]:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "no-run closeout has no matching immutable mutation receipt",
+            details={"idempotency_key": idempotency_key},
+        )
+    historical_task_spec = receipt.get("resulting_task_spec")
+    if (
+        not isinstance(historical_task_spec, dict)
+        or historical_task_spec.get("revision") != receipt.get("resulting_revision")
+        or historical_task_spec.get("spec_sha256") != receipt.get("requested_sha256")
+        or historical_task_spec.get("source") != "runtime-refresh-no-run-closeout"
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "no-run closeout mutation receipt does not authenticate its TaskSpec revision",
+            details={"idempotency_key": idempotency_key},
+        )
+    historical_spec = historical_task_spec.get("spec")
+    historical_metadata = (
+        historical_spec.get("metadata") if isinstance(historical_spec, dict) else None
+    )
+    historical_closeout_value = (
+        historical_metadata.get("runtime_closeout")
+        if isinstance(historical_metadata, dict)
+        else None
+    )
+    try:
+        historical_closeout = _validated_runtime_closeout(historical_closeout_value)
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "receipt-bound no-run closeout revision contains invalid closeout evidence",
+            details={
+                "revision": historical_task_spec.get("revision"),
+                "error": str(exc),
+            },
+        ) from exc
+    stable_closeout = {
+        key: value for key, value in closeout.items() if key != "acceptance_evidence"
+    }
+    historical_stable = {
+        key: value
+        for key, value in historical_closeout.items()
+        if key != "acceptance_evidence"
+    }
+    if historical_stable != stable_closeout:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "no-run closeout no longer matches its receipt-bound immutable revision",
+            details={"revision": historical_task_spec["revision"]},
+        )
+    historical_acceptance_evidence = historical_closeout.get("acceptance_evidence")
+    if historical_acceptance_evidence is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-history-invalid",
+            "typed no-run acceptance evidence has no receipt-bound historical origin",
+            details={"revision": historical_task_spec["revision"]},
+        )
+    return historical_acceptance_evidence
+
+
+def _validate_no_run_acceptance_replay_binding(
+    *,
+    store: Any,
+    current: dict[str, Any],
+    spec: dict[str, Any],
+    authority: dict[str, Any],
+    closeout: dict[str, Any],
+) -> None:
+    acceptance_evidence = closeout.get("acceptance_evidence")
+    if acceptance_evidence is None:
+        try:
+            bound_task_spec = store.task_spec_by_digest(
+                closeout["task_id"], closeout["authority_spec_sha256"]
+            )
+        except (legacy.StateError, OSError, sqlite3.Error) as exc:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-task-spec-binding-invalid",
+                "cannot classify an evidence-free closeout against its bound TaskSpec history",
+                details={"error": str(exc)},
+            ) from exc
+        if bound_task_spec is None:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-task-spec-binding-invalid",
+                "evidence-free closeout is not bound to a historical revision of this TaskSpec",
+                details={
+                    "task_id": closeout["task_id"],
+                    "task_spec_sha256": closeout["authority_spec_sha256"],
+                },
+            )
+        _, bound_authority = _runtime_authority_metadata(bound_task_spec["spec"])
+        if bound_authority.get("no_run_closeout_acceptance") is not None:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-evidence-missing",
+                "typed no-run closeout lost its criterion-specific acceptance evidence capsule",
+                details={
+                    "revision": bound_task_spec["revision"],
+                    "task_spec_sha256": closeout["authority_spec_sha256"],
+                },
+            )
+        return
+    current_contract = _validated_no_run_acceptance_contract(
+        spec=spec, authority=authority
+    )
+    expected_current_bindings = {
+        "contract_sha256": sha256_bytes(canonical_bytes(current_contract)),
+        "criterion_ids": sorted(current_contract["criteria"]),
+    }
+    current_mismatched = {
+        key: {
+            "current": expected,
+            "acceptance_evidence": acceptance_evidence.get(key),
+        }
+        for key, expected in expected_current_bindings.items()
+        if acceptance_evidence.get(key) != expected
+    }
+    if current_mismatched:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-drift",
+            (
+                "stored no-run acceptance evidence no longer matches "
+                "the current frozen acceptance contract"
+            ),
+            details={
+                "current_revision": current["revision"],
+                "current_spec_sha256": current["spec_sha256"],
+                "evidence_task_spec_sha256": acceptance_evidence["task_spec_sha256"],
+                "mismatched": current_mismatched,
+            },
+        )
+    available_evidence = set(acceptance_evidence["available_evidence"])
+    missing_evidence = {
+        criterion_id: sorted(
+            set(item["required_evidence"]) - available_evidence
+        )
+        for criterion_id, item in current_contract["criteria"].items()
+        if set(item["required_evidence"]) - available_evidence
+    }
+    if missing_evidence:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-incomplete",
+            "stored no-run acceptance evidence no longer covers every frozen criterion",
+            details={"missing": missing_evidence},
+        )
+    try:
+        historical_task_spec = store.task_spec_by_digest(
+            closeout["task_id"], acceptance_evidence["task_spec_sha256"]
+        )
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "cannot prove the no-run acceptance evidence against StateStore TaskSpec history",
+            details={"error": str(exc)},
+        ) from exc
+    if historical_task_spec is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "no-run acceptance evidence is not bound to a historical revision of this TaskSpec",
+            details={
+                "task_id": closeout["task_id"],
+                "task_spec_sha256": acceptance_evidence["task_spec_sha256"],
+            },
+        )
+    try:
+        historical_spec = historical_task_spec["spec"]
+        _, historical_authority = _runtime_authority_metadata(historical_spec)
+        historical_contract = _validated_no_run_acceptance_contract(
+            spec=historical_spec, authority=historical_authority
+        )
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "historical TaskSpec acceptance evidence binding is invalid",
+            details={
+                "revision": historical_task_spec["revision"],
+                "task_spec_sha256": acceptance_evidence["task_spec_sha256"],
+                "error": str(exc),
+            },
+        ) from exc
+    expected_historical_bindings = {
+        "contract_sha256": sha256_bytes(canonical_bytes(historical_contract)),
+        "criterion_ids": sorted(historical_contract["criteria"]),
+    }
+    historical_mismatched = {
+        key: {
+            "historical": expected,
+            "acceptance_evidence": acceptance_evidence.get(key),
+        }
+        for key, expected in expected_historical_bindings.items()
+        if acceptance_evidence.get(key) != expected
+    }
+    if historical_mismatched:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-task-spec-binding-invalid",
+            "no-run acceptance evidence does not match its bound historical TaskSpec contract",
+            details={
+                "revision": historical_task_spec["revision"],
+                "mismatched": historical_mismatched,
+            },
+        )
+
+    historical_acceptance_evidence = _historical_no_run_closeout_acceptance_evidence(
+        store=store,
+        closeout=closeout,
+    )
+    history_mismatched = {
+        key: {
+            "historical": historical_acceptance_evidence.get(key),
+            "acceptance_evidence": acceptance_evidence.get(key),
+        }
+        for key in sorted(
+            set(historical_acceptance_evidence) | set(acceptance_evidence)
+        )
+        if historical_acceptance_evidence.get(key) != acceptance_evidence.get(key)
+    }
+    if history_mismatched:
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-evidence-history-drift",
+            (
+                "stored no-run acceptance evidence no longer matches its immutable "
+                "closeout revision"
+            ),
+            details={"mismatched": history_mismatched},
+        )
+
+
 def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
     fields = {
         "schema_version",
@@ -5091,7 +6036,11 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
         "closed_at",
         "does_not_establish",
     }
-    if not isinstance(value, dict) or set(value) != fields:
+    if (
+        not isinstance(value, dict)
+        or not fields <= set(value)
+        or set(value) - fields - {"acceptance_evidence"}
+    ):
         raise RuntimeRefreshError(
             "authority-closeout-record-invalid",
             "runtime authority closeout record is malformed",
@@ -5124,6 +6073,123 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
         raise RuntimeRefreshError(
             "authority-closeout-record-invalid",
             "runtime authority closeout record values are invalid",
+        )
+    parse_time(value["closed_at"])
+    if "acceptance_evidence" in value:
+        acceptance_evidence = _validated_no_run_acceptance_evidence(
+            value["acceptance_evidence"]
+        )
+        expected_acceptance_bindings = {
+            "task_id": value["task_id"],
+            "runtime_result_sha256": value["runtime_result_sha256"],
+            "readback_sha256": value["readback_sha256"],
+            "lease_release_sha256": value["lease_release_sha256"],
+        }
+        mismatched_acceptance_bindings = {
+            key: {
+                "closeout": expected,
+                "acceptance_evidence": acceptance_evidence.get(key),
+            }
+            for key, expected in expected_acceptance_bindings.items()
+            if acceptance_evidence.get(key) != expected
+        }
+        if mismatched_acceptance_bindings:
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-evidence-binding-invalid",
+                "no-run acceptance evidence does not match its enclosing runtime closeout",
+                details={"mismatched": mismatched_acceptance_bindings},
+            )
+    return dict(value)
+
+
+def _runtime_incident_provenance_receipts(
+    authority: dict[str, Any],
+) -> tuple[dict[str, Any], str]:
+    consumption_value = authority.get("consumption")
+    consumption = (
+        _validated_authority_consumption(consumption_value)
+        if consumption_value is not None
+        else None
+    )
+    binding_value = authority.get("target_binding_receipt")
+    binding = (
+        _validated_authority_target_binding(binding_value)
+        if binding_value is not None
+        else None
+    )
+    receipts = {
+        "consumption": consumption,
+        "target_binding_receipt": binding,
+    }
+    return receipts, sha256_bytes(canonical_bytes(receipts))
+
+
+def _validated_runtime_incident_closeout(value: Any) -> dict[str, Any]:
+    fields = {
+        "schema_version",
+        "kind",
+        "status",
+        "task_id",
+        "authority_revision",
+        "authority_spec_sha256",
+        "target_sha256",
+        "intent_sha256",
+        "runtime_result_sha256",
+        "source_commit",
+        "manifest_sha256",
+        "readback_sha256",
+        "lease_binding_sha256",
+        "lease_release_sha256",
+        "provenance_receipts_sha256",
+        "effect_history_sha256",
+        "effect_count",
+        "conflicting_effect_count",
+        "closed_at",
+        "does_not_establish",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise RuntimeRefreshError(
+            "authority-incident-closeout-record-invalid",
+            "runtime authority incident closeout record is malformed",
+        )
+    digest_fields = {
+        "authority_spec_sha256",
+        "target_sha256",
+        "intent_sha256",
+        "runtime_result_sha256",
+        "manifest_sha256",
+        "readback_sha256",
+        "lease_binding_sha256",
+        "lease_release_sha256",
+        "provenance_receipts_sha256",
+        "effect_history_sha256",
+    }
+    if (
+        value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND
+        or value.get("status") != "superseded"
+        or not isinstance(value.get("task_id"), str)
+        or not value["task_id"]
+        or not isinstance(value.get("authority_revision"), int)
+        or isinstance(value.get("authority_revision"), bool)
+        or value["authority_revision"] < 1
+        or any(not _is_sha256(value.get(field)) for field in digest_fields)
+        or not isinstance(value.get("source_commit"), str)
+        or len(value["source_commit"]) != 40
+        or not isinstance(value.get("effect_count"), int)
+        or isinstance(value.get("effect_count"), bool)
+        or value["effect_count"] < 2
+        or not isinstance(value.get("conflicting_effect_count"), int)
+        or isinstance(value.get("conflicting_effect_count"), bool)
+        or value["conflicting_effect_count"] < 1
+        or value["conflicting_effect_count"] >= value["effect_count"]
+        or not isinstance(value.get("closed_at"), str)
+        or not isinstance(value.get("does_not_establish"), list)
+        or not all(isinstance(item, str) for item in value["does_not_establish"])
+    ):
+        raise RuntimeRefreshError(
+            "authority-incident-closeout-record-invalid",
+            "runtime authority incident closeout record values are invalid",
         )
     parse_time(value["closed_at"])
     return dict(value)
@@ -5404,8 +6470,9 @@ def _validated_terminal_authority_run(
     }
 
 
-def closeout_runtime_refresh_authority(
+def _closeout_runtime_refresh_authority(
     *,
+    historical_multi_use_incident: bool,
     state_root: Path,
     approval_task_id: str,
     target_sha256: str,
@@ -5499,7 +6566,7 @@ def closeout_runtime_refresh_authority(
                 "requested deployed result is not uniquely represented in authority history",
                 details={"requested": requested_effect, "effects": effect_history},
             )
-        if conflicting_effects:
+        if conflicting_effects and not historical_multi_use_incident:
             raise RuntimeRefreshError(
                 "authority-closeout-historical-multi-use",
                 (
@@ -5508,6 +6575,17 @@ def closeout_runtime_refresh_authority(
                 ),
                 details={"requested": requested_effect, "conflicts": conflicting_effects},
             )
+        if historical_multi_use_incident and not conflicting_effects:
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-multi-use-required",
+                "incident closeout requires at least two distinct effect-started attempts",
+                details={"requested": requested_effect, "effects": effect_history},
+            )
+    elif historical_multi_use_incident:
+        raise RuntimeRefreshError(
+            "authority-incident-closeout-effect-required",
+            "incident closeout requires a deployed effect-started result",
+        )
     elif effect_history:
         raise RuntimeRefreshError(
             "authority-closeout-no-effect-history-conflict",
@@ -5575,6 +6653,7 @@ def closeout_runtime_refresh_authority(
             "authority-closeout-readback-drift",
             "current runtime readback differs from the successful result",
         )
+    current_readback_sha256 = sha256_bytes(canonical_bytes(current_readback))
     store = _closeout_authority_store(intent, authority_store)
     try:
         task_runs = [run for run in store.list_runs() if run.get("task_id") == approval_task_id]
@@ -5584,10 +6663,10 @@ def closeout_runtime_refresh_authority(
             "Bureau run readback failed closed",
             details={"error": str(exc)},
         ) from exc
-    _validated_terminal_authority_run(
+    terminal_run = _validated_terminal_authority_run(
         store=store, approval_task_id=approval_task_id, task_runs=task_runs
     )
-    _validate_state_store_health(store)
+    state_store_health = _validate_state_store_health(store)
     release = validate_released_lease_binding(
         intent=intent,
         result=result,
@@ -5597,9 +6676,213 @@ def closeout_runtime_refresh_authority(
     current = _read_authority_task(store, approval_task_id)
     spec = current["spec"]
     metadata, authority = _runtime_authority_metadata(spec)
+    existing_incident_value = metadata.get("runtime_incident_closeout")
+    if existing_incident_value is not None:
+        existing_incident = _validated_runtime_incident_closeout(existing_incident_value)
+        try:
+            incident_authority_spec = store.task_spec_by_digest(
+                approval_task_id, existing_incident["authority_spec_sha256"]
+            )
+        except (legacy.StateError, OSError, sqlite3.Error) as exc:
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-authority-binding-invalid",
+                "cannot prove incident closeout against StateStore TaskSpec history",
+                details={"error": str(exc)},
+            ) from exc
+        if (
+            incident_authority_spec is None
+            or incident_authority_spec.get("revision")
+            != existing_incident["authority_revision"]
+        ):
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-authority-binding-invalid",
+                "incident closeout authority revision/digest is not historical TaskSpec truth",
+                details={
+                    "authority_revision": existing_incident["authority_revision"],
+                    "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+                    "historical_revision": (
+                        incident_authority_spec.get("revision")
+                        if isinstance(incident_authority_spec, dict)
+                        else None
+                    ),
+                },
+            )
+        historical_release = {
+            key: value for key, value in release.items() if key != "lease_release_sha256"
+        }
+        historical_release["observed_at"] = existing_incident["closed_at"]
+        historical_release_sha256 = sha256_bytes(canonical_bytes(historical_release))
+        expected_pairs = {
+            "task_id": approval_task_id,
+            "target_sha256": target_sha256,
+            "intent_sha256": intent_sha256,
+            "runtime_result_sha256": result_sha256,
+            "source_commit": intent["main_commit"],
+            "manifest_sha256": closeout_manifest_sha256,
+            "readback_sha256": current_readback_sha256,
+            "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
+            "lease_release_sha256": historical_release_sha256,
+        }
+        mismatched_incident_bindings = {
+            key: {"expected": value, "incident_closeout": existing_incident.get(key)}
+            for key, value in expected_pairs.items()
+            if existing_incident.get(key) != value
+        }
+        if mismatched_incident_bindings:
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-replay-mismatch",
+                "incident closeout is bound to other evidence",
+                details={"mismatched": mismatched_incident_bindings},
+            )
+        incident_provenance, incident_provenance_sha256 = (
+            _runtime_incident_provenance_receipts(authority)
+        )
+        incident_consumption = incident_provenance["consumption"]
+        incident_binding = incident_provenance["target_binding_receipt"]
+        result_authority = result.get("authority_task_spec")
+        if result_authority is not None:
+            if not isinstance(result_authority, dict):
+                raise RuntimeRefreshError(
+                    "authority-incident-closeout-provenance-drift",
+                    "modern incident result authority binding is malformed",
+                )
+            result_binding = _validated_authority_target_binding(
+                result_authority.get("target_binding_receipt")
+            )
+            expected_result_authority = {
+                "task_id": approval_task_id,
+                "authority_revision": existing_incident["authority_revision"],
+                "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+            }
+            mismatched_result_authority = {
+                key: {"expected": value, "result_authority": result_authority.get(key)}
+                for key, value in expected_result_authority.items()
+                if result_authority.get(key) != value
+            }
+            if mismatched_result_authority:
+                raise RuntimeRefreshError(
+                    "authority-incident-closeout-provenance-drift",
+                    "modern incident result authority differs from closeout authority",
+                    details={"mismatched": mismatched_result_authority},
+                )
+            if incident_binding != result_binding or incident_consumption is None:
+                raise RuntimeRefreshError(
+                    "authority-incident-closeout-provenance-drift",
+                    "modern incident replay lost its result-bound operational provenance",
+                    details={
+                        "target_binding_present": incident_binding is not None,
+                        "consumption_present": incident_consumption is not None,
+                    },
+                )
+        if incident_consumption is not None:
+            expected_incident_consumption = {
+                "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+                "kind": RUNTIME_AUTHORITY_CONSUMPTION_KIND,
+                "status": "consumed",
+                "task_id": approval_task_id,
+                "authority_revision": existing_incident["authority_revision"],
+                "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+                "target_sha256": target_sha256,
+                "intent_sha256": intent_sha256,
+                "result_sha256": result_sha256,
+                "consumed_at": incident_consumption["consumed_at"],
+            }
+            if incident_consumption != expected_incident_consumption:
+                raise RuntimeRefreshError(
+                    "authority-consumption-mismatch",
+                    "retained incident consumption differs from canonical closeout evidence",
+                    details={
+                        "expected": expected_incident_consumption,
+                        "observed": incident_consumption,
+                    },
+                )
+        if incident_binding is not None:
+            expected_incident_binding = {
+                "task_id": approval_task_id,
+                "authority_revision": existing_incident["authority_revision"],
+                "authority_spec_sha256": existing_incident["authority_spec_sha256"],
+                "target_sha256": target_sha256,
+                "intent_sha256": intent_sha256,
+            }
+            mismatched_incident_receipt = {
+                key: {"expected": value, "target_binding_receipt": incident_binding.get(key)}
+                for key, value in expected_incident_binding.items()
+                if incident_binding.get(key) != value
+            }
+            if mismatched_incident_receipt:
+                raise RuntimeRefreshError(
+                    "authority-target-binding-mismatch",
+                    "retained incident target binding differs from canonical closeout evidence",
+                    details={"mismatched": mismatched_incident_receipt},
+                )
+        if (
+            existing_incident["provenance_receipts_sha256"]
+            != incident_provenance_sha256
+        ):
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-provenance-drift",
+                "incident closeout provenance receipt presence or content changed",
+                details={
+                    "stored_provenance_receipts_sha256": existing_incident[
+                        "provenance_receipts_sha256"
+                    ],
+                    "current_provenance_receipts_sha256": incident_provenance_sha256,
+                },
+            )
+        current_effect_history_sha256 = sha256_bytes(canonical_bytes(effect_history))
+        if (
+            existing_incident["effect_history_sha256"] != current_effect_history_sha256
+            or existing_incident["effect_count"] != len(effect_history)
+            or existing_incident["conflicting_effect_count"] != len(conflicting_effects)
+        ):
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-history-drift",
+                "incident closeout no longer matches the complete historical effect ledger",
+                details={
+                    "stored_effect_history_sha256": existing_incident[
+                        "effect_history_sha256"
+                    ],
+                    "current_effect_history_sha256": current_effect_history_sha256,
+                    "stored_effect_count": existing_incident["effect_count"],
+                    "current_effect_count": len(effect_history),
+                    "stored_conflicting_effect_count": existing_incident[
+                        "conflicting_effect_count"
+                    ],
+                    "current_conflicting_effect_count": len(conflicting_effects),
+                },
+            )
+        if spec.get("state") != "superseded":
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-state-conflict",
+                "incident closeout evidence exists on a non-superseded TaskSpec",
+            )
+        if not historical_multi_use_incident:
+            raise RuntimeRefreshError(
+                "authority-closeout-historical-multi-use-superseded",
+                "multi-use authority was terminalized as an incident, not verified",
+            )
+        return {
+            "task_id": approval_task_id,
+            "revision": current["revision"],
+            "spec_sha256": current["spec_sha256"],
+            "closeout": existing_incident,
+            "idempotent_replay": True,
+        }
     existing_closeout_value = metadata.get("runtime_closeout")
     if existing_closeout_value is not None:
+        if historical_multi_use_incident:
+            raise RuntimeRefreshError(
+                "authority-incident-closeout-already-verified",
+                "verified authority cannot be reclassified as a multi-use incident",
+            )
         existing_closeout = _validated_runtime_closeout(existing_closeout_value)
+        _validate_no_run_acceptance_replay_binding(
+            store=store,
+            current=current,
+            spec=spec,
+            authority=authority,
+            closeout=existing_closeout,
+        )
         expected_pairs = {
             "task_id": approval_task_id,
             "target_sha256": target_sha256,
@@ -5663,6 +6946,8 @@ def closeout_runtime_refresh_authority(
                 "TaskSpec consumption differs from no-run closeout evidence",
             )
         expected_consumption = existing_consumption
+    elif historical_multi_use_incident:
+        expected_consumption = None
     else:
         authority["consumption"] = expected_consumption
     binding_value = authority.get("target_binding_receipt")
@@ -5677,7 +6962,7 @@ def closeout_runtime_refresh_authority(
                 "authority-target-binding-mismatch",
                 "TaskSpec target binding differs from no-run closeout evidence",
             )
-    else:
+    elif not historical_multi_use_incident:
         authority["target_binding_receipt"] = {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
             "kind": RUNTIME_AUTHORITY_BINDING_KIND,
@@ -5696,51 +6981,176 @@ def closeout_runtime_refresh_authority(
         allow_bound_intent=True,
         expected_consumption=expected_consumption,
     )
-    closeout = {
-        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
-        "kind": RUNTIME_AUTHORITY_CLOSEOUT_KIND,
-        "status": "verified",
-        "task_id": approval_task_id,
-        "authority_revision": baseline["revision"],
-        "authority_spec_sha256": baseline["spec_sha256"],
-        "target_sha256": target_sha256,
-        "intent_sha256": intent_sha256,
-        "runtime_result_sha256": result_sha256,
-        "source_commit": intent["main_commit"],
-        "manifest_sha256": closeout_manifest_sha256,
-        "readback_sha256": sha256_bytes(canonical_bytes(current_readback)),
-        "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
-        "lease_release_sha256": release["lease_release_sha256"],
-        "closed_at": isoformat(current_time),
-        "does_not_establish": [
-            "retroactive_claim_authority",
-            "synthetic_run_authority",
-            "runtime_authority_for_later_targets",
-            "future_runtime_health",
-        ],
-    }
+    if historical_multi_use_incident:
+        _, provenance_receipts_sha256 = _runtime_incident_provenance_receipts(authority)
+        closeout = {
+            "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+            "kind": RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND,
+            "status": "superseded",
+            "task_id": approval_task_id,
+            "authority_revision": baseline["revision"],
+            "authority_spec_sha256": baseline["spec_sha256"],
+            "target_sha256": target_sha256,
+            "intent_sha256": intent_sha256,
+            "runtime_result_sha256": result_sha256,
+            "source_commit": intent["main_commit"],
+            "manifest_sha256": closeout_manifest_sha256,
+            "readback_sha256": current_readback_sha256,
+            "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
+            "lease_release_sha256": release["lease_release_sha256"],
+            "provenance_receipts_sha256": provenance_receipts_sha256,
+            "effect_history_sha256": sha256_bytes(canonical_bytes(effect_history)),
+            "effect_count": len(effect_history),
+            "conflicting_effect_count": len(conflicting_effects),
+            "closed_at": isoformat(current_time),
+            "does_not_establish": [
+                "legitimate_single_use_verification",
+                "retroactive_effect_legitimation",
+                "runtime_replay_authority",
+                "synthetic_run_authority",
+                "future_runtime_health",
+            ],
+        }
+    else:
+        available_acceptance_evidence = {
+            "approval-intent",
+            "runtime-result",
+            "single-use-history",
+            "immutable-readback",
+            "state-store-integrity",
+            "lease-release",
+            "run-lifecycle",
+        }
+        current_source_precondition = _validated_runtime_source_precondition(
+            authority.get("source_precondition")
+        )
+        if current_source_precondition is not None:
+            if intent.get("source_precondition") != current_source_precondition:
+                raise RuntimeRefreshError(
+                    "authority-closeout-source-precondition-unproven",
+                    "historical intent did not bind the current source-precondition contract",
+                )
+            _validate_source_precondition_result_evidence(result, intent)
+            available_acceptance_evidence.add("source-precondition")
+        publication_adoption = _validated_protected_publication_adoption_contract(spec)
+        if publication_adoption is not None:
+            _prove_protected_publication_adoption(
+                store=store,
+                spec=spec,
+                approval_task_id=approval_task_id,
+                target_main_commit=intent["main_commit"],
+            )
+            available_acceptance_evidence.add("protected-publication-adoption")
+        registry_resource_intake = _validated_registry_resource_intake_contract(spec)
+        if registry_resource_intake is not None:
+            if deployed_success:
+                resource_install_receipt = result.get("install_receipt")
+                if not isinstance(resource_install_receipt, dict):
+                    raise RuntimeRefreshError(
+                        "authority-closeout-registry-resource-intake-unproven",
+                        "deployed result lacks the Registry root needed for typed intake evidence",
+                    )
+                registry_root = Path(
+                    str(resource_install_receipt.get("canonical_registry_root", ""))
+                )
+            else:
+                current_manifest, current_manifest_sha256 = load_manifest(
+                    Path(intent["prefix"]).expanduser().resolve()
+                    / "deployment-manifest.json"
+                )
+                if (
+                    current_manifest_sha256 != closeout_manifest_sha256
+                    or current_manifest.get("source_commit") != intent["main_commit"]
+                ):
+                    raise RuntimeRefreshError(
+                        "authority-closeout-registry-resource-intake-unproven",
+                        "already-current manifest does not bind the runtime target Registry",
+                    )
+                registry_root = Path(
+                    str(current_manifest.get("canonical_registry_root", ""))
+                )
+            _prove_registry_resource_intake(
+                store=store,
+                spec=spec,
+                registry_root=registry_root,
+            )
+            available_acceptance_evidence.add("registry-resource-intake")
+        acceptance_evidence = _build_no_run_acceptance_evidence(
+            spec=spec,
+            authority=authority,
+            task_id=approval_task_id,
+            task_spec_sha256=current["spec_sha256"],
+            available_evidence=available_acceptance_evidence,
+            runtime_result_sha256=result_sha256,
+            readback_sha256=current_readback_sha256,
+            lease_release_sha256=release["lease_release_sha256"],
+            effect_history=effect_history,
+            state_store_health=state_store_health,
+            terminal_run=terminal_run,
+        )
+        closeout = {
+            "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+            "kind": RUNTIME_AUTHORITY_CLOSEOUT_KIND,
+            "status": "verified",
+            "task_id": approval_task_id,
+            "authority_revision": baseline["revision"],
+            "authority_spec_sha256": baseline["spec_sha256"],
+            "target_sha256": target_sha256,
+            "intent_sha256": intent_sha256,
+            "runtime_result_sha256": result_sha256,
+            "source_commit": intent["main_commit"],
+            "manifest_sha256": closeout_manifest_sha256,
+            "readback_sha256": current_readback_sha256,
+            "lease_binding_sha256": result["lease_binding"]["lease_binding_sha256"],
+            "lease_release_sha256": release["lease_release_sha256"],
+            "acceptance_evidence": acceptance_evidence,
+            "closed_at": isoformat(current_time),
+            "does_not_establish": [
+                "retroactive_claim_authority",
+                "synthetic_run_authority",
+                "runtime_authority_for_later_targets",
+                "future_runtime_health",
+            ],
+        }
     mutated = json.loads(json.dumps(spec))
-    mutated["state"] = "verified"
     mutated_metadata = mutated["metadata"]
     mutated_authority = mutated_metadata["runtime_refresh_authority"]
-    mutated_authority["target_binding_receipt"] = authority["target_binding_receipt"]
-    mutated_authority["consumption"] = expected_consumption
-    mutated_metadata["runtime_closeout"] = closeout
+    if not historical_multi_use_incident:
+        mutated_authority["target_binding_receipt"] = authority["target_binding_receipt"]
+        mutated_authority["consumption"] = expected_consumption
+    if historical_multi_use_incident:
+        mutated["state"] = "superseded"
+        mutated_metadata["runtime_incident_closeout"] = closeout
+        idempotency_key = (
+            f"runtime-refresh-multi-use-incident-closeout:{approval_task_id}:{result_sha256}"
+        )
+        mutation_source = "runtime-refresh-multi-use-incident-closeout"
+        closeout_field = "runtime_incident_closeout"
+        expected_terminal_state = "superseded"
+        closeout_validator = _validated_runtime_incident_closeout
+    else:
+        mutated["state"] = "verified"
+        mutated_metadata["runtime_closeout"] = closeout
+        idempotency_key = f"runtime-refresh-no-run-closeout:{approval_task_id}:{result_sha256}"
+        mutation_source = "runtime-refresh-no-run-closeout"
+        closeout_field = "runtime_closeout"
+        expected_terminal_state = "verified"
+        closeout_validator = _validated_runtime_closeout
     changed = _put_authority_task(
         store,
         mutated,
-        idempotency_key=f"runtime-refresh-no-run-closeout:{approval_task_id}:{result_sha256}",
+        idempotency_key=idempotency_key,
         expected_revision=current["revision"],
-        source="runtime-refresh-no-run-closeout",
+        source=mutation_source,
     )
     readback_task = _read_authority_task(store, approval_task_id)
-    observed_closeout = _validated_runtime_closeout(
-        readback_task["spec"]["metadata"].get("runtime_closeout")
+    observed_closeout = closeout_validator(
+        readback_task["spec"]["metadata"].get(closeout_field)
     )
     if (
         readback_task.get("revision") != changed.get("revision")
         or readback_task.get("spec_sha256") != changed.get("spec_sha256")
-        or readback_task["spec"].get("state") != "verified"
+        or readback_task["spec"].get("state") != expected_terminal_state
         or observed_closeout != closeout
     ):
         raise RuntimeRefreshError(
@@ -5755,6 +7165,62 @@ def closeout_runtime_refresh_authority(
         "closeout": observed_closeout,
         "idempotent_replay": False,
     }
+
+
+def closeout_runtime_refresh_authority(
+    *,
+    state_root: Path,
+    approval_task_id: str,
+    target_sha256: str,
+    intent_sha256: str,
+    result_sha256: str,
+    resource_db: Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
+    now: datetime | None = None,
+    authority_store: Any | None = None,
+    readback: Callable[..., dict[str, Any]] = readback_historical_install,
+    scheduler_readback: Callable[..., dict[str, Any]] = readback_user_scheduler,
+) -> dict[str, Any]:
+    return _closeout_runtime_refresh_authority(
+        historical_multi_use_incident=False,
+        state_root=state_root,
+        approval_task_id=approval_task_id,
+        target_sha256=target_sha256,
+        intent_sha256=intent_sha256,
+        result_sha256=result_sha256,
+        resource_db=resource_db,
+        now=now,
+        authority_store=authority_store,
+        readback=readback,
+        scheduler_readback=scheduler_readback,
+    )
+
+
+def closeout_historical_multi_use_runtime_refresh_authority(
+    *,
+    state_root: Path,
+    approval_task_id: str,
+    target_sha256: str,
+    intent_sha256: str,
+    result_sha256: str,
+    resource_db: Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
+    now: datetime | None = None,
+    authority_store: Any | None = None,
+    readback: Callable[..., dict[str, Any]] = readback_historical_install,
+    scheduler_readback: Callable[..., dict[str, Any]] = readback_user_scheduler,
+) -> dict[str, Any]:
+    return _closeout_runtime_refresh_authority(
+        historical_multi_use_incident=True,
+        state_root=state_root,
+        approval_task_id=approval_task_id,
+        target_sha256=target_sha256,
+        intent_sha256=intent_sha256,
+        result_sha256=result_sha256,
+        resource_db=resource_db,
+        now=now,
+        authority_store=authority_store,
+        readback=readback,
+        scheduler_readback=scheduler_readback,
+    )
 
 
 def apply_runtime_refresh(
@@ -5876,6 +7342,9 @@ def apply_runtime_refresh(
     )
     current_authority = _read_authority_task(store, expected_authority["task_id"])
     _metadata, authority_contract = _runtime_authority_metadata(current_authority["spec"])
+    _validate_intent_authority_contract_generation(
+        expected_authority=expected_authority, authority=authority_contract
+    )
     source_precondition = _validated_runtime_source_precondition(
         authority_contract.get("source_precondition")
     )
@@ -6223,6 +7692,12 @@ def parser() -> argparse.ArgumentParser:
     closeout.add_argument("--intent-sha256", required=True)
     closeout.add_argument("--result-sha256", required=True)
 
+    incident_closeout = sub.add_parser("closeout-authority-incident")
+    incident_closeout.add_argument("--approval-task-id", required=True)
+    incident_closeout.add_argument("--target-sha256", required=True)
+    incident_closeout.add_argument("--intent-sha256", required=True)
+    incident_closeout.add_argument("--result-sha256", required=True)
+
     sub.add_parser("status")
     return value
 
@@ -6304,6 +7779,16 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if result.get("status") in {"deployed", "already_current"} else 2
         if args.command == "closeout-authority":
             result = closeout_runtime_refresh_authority(
+                state_root=state_root,
+                approval_task_id=args.approval_task_id,
+                target_sha256=args.target_sha256,
+                intent_sha256=args.intent_sha256,
+                result_sha256=args.result_sha256,
+            )
+            print(json.dumps(result, sort_keys=True))
+            return 0
+        if args.command == "closeout-authority-incident":
+            result = closeout_historical_multi_use_runtime_refresh_authority(
                 state_root=state_root,
                 approval_task_id=args.approval_task_id,
                 target_sha256=args.target_sha256,

@@ -86,6 +86,73 @@ def test_revision_cas_and_idempotent_replay(tmp_path: Path) -> None:
         )
 
 
+def test_task_spec_by_digest_reads_historical_revision_without_mutation(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    original = _spec()
+    first = store.put_task_spec(
+        original, idempotency_key="digest-r1", expected_revision=None, source="test"
+    )
+    store.put_task_spec(
+        _spec(title="second", marker="b"),
+        idempotency_key="digest-r2",
+        expected_revision=1,
+        source="test",
+    )
+
+    historical = store.task_spec_by_digest("TEST-T001", first["spec_sha256"])
+
+    assert historical is not None
+    assert historical["revision"] == 1
+    assert historical["spec_sha256"] == first["spec_sha256"]
+    assert historical["spec"] == original
+    assert store.task_spec_by_digest("TEST-T001", "f" * 64) is None
+    assert store.task_spec("TEST-T001")["revision"] == 2
+
+
+def test_reserved_runtime_closeout_namespace_and_receipt_are_typed(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    store.put_task_spec(
+        _spec(),
+        idempotency_key="seed-closeout",
+        expected_revision=None,
+        source="test",
+    )
+    closeout_spec = _spec(title="verified")
+    closeout_spec["metadata"]["runtime_closeout"] = {
+        "kind": "bureau_runtime_refresh_no_run_closeout",
+        "status": "verified",
+        "task_id": "TEST-T001",
+        "runtime_result_sha256": "a" * 64,
+    }
+    key = "runtime-refresh-no-run-closeout:TEST-T001:" + "a" * 64
+
+    with pytest.raises(StateError, match="namespace is reserved"):
+        store.put_task_spec(
+            closeout_spec,
+            idempotency_key=key,
+            expected_revision=1,
+            source="runtime-refresh-no-run-closeout",
+        )
+
+    written = store.put_runtime_refresh_no_run_closeout_task_spec(
+        closeout_spec,
+        idempotency_key=key,
+        expected_revision=1,
+    )
+    receipt = store.task_spec_mutation_receipt(key)
+    assert receipt is not None
+    assert receipt["task_id"] == "TEST-T001"
+    assert receipt["requested_sha256"] == written["spec_sha256"]
+    assert receipt["resulting_revision"] == written["revision"]
+    assert receipt["resulting_task_spec"]["spec"] == closeout_spec
+    assert receipt["resulting_task_spec"]["source"] == "runtime-refresh-no-run-closeout"
+    assert store.task_spec_mutation_receipt("missing") is None
+
+
 def test_reverting_to_prior_content_creates_a_new_revision(tmp_path: Path) -> None:
     store = _store(tmp_path)
     original = _spec()
@@ -416,3 +483,40 @@ def test_legacy_import_remains_readable_and_replayable(tmp_path: Path) -> None:
     replay = store.replay_projection()
     assert replay["task_specs"]["matches_current"] is True
     assert replay["task_specs"]["projection"]["tasks"]["LEGACY-REPLAY"]["spec"] == legacy_spec
+
+
+
+def test_reserved_runtime_closeout_cannot_bless_preexisting_identical_revision(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    store.put_task_spec(
+        _spec(),
+        idempotency_key="seed-reserved-origin",
+        expected_revision=None,
+        source="test",
+    )
+    closeout_spec = _spec(title="verified")
+    closeout_spec["metadata"]["runtime_closeout"] = {
+        "kind": "bureau_runtime_refresh_no_run_closeout",
+        "status": "verified",
+        "task_id": "TEST-T001",
+        "runtime_result_sha256": "b" * 64,
+    }
+    ordinary = store.put_task_spec(
+        closeout_spec,
+        idempotency_key="ordinary-preexisting-closeout",
+        expected_revision=1,
+        source="ordinary-writer",
+    )
+    assert ordinary["changed"] is True
+    key = "runtime-refresh-no-run-closeout:TEST-T001:" + "b" * 64
+
+    with pytest.raises(StateError, match="must create its authenticated TaskSpec revision"):
+        store.put_runtime_refresh_no_run_closeout_task_spec(
+            closeout_spec,
+            idempotency_key=key,
+            expected_revision=ordinary["revision"],
+        )
+
+    assert store.task_spec_mutation_receipt(key) is None

@@ -126,7 +126,7 @@
     },
     "runtime_refresh_authority": {
       "schema_version": 1,
-      "mode": "single-use-target-bound",
+      "mode": "single-use-target-bound-source-precondition-v1",
       "single_use": true,
       "required_action_class": "runtime_mutation",
       "required_approval_level": "break_glass",
@@ -162,6 +162,71 @@
           "permission to refresh from an unrelated or diverged deployed source",
           "permission to continue after deployment/Registry identity drift"
         ]
+      },
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "fresh-current-main": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "source-ancestry-precondition": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "single-runtime-effect": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "hall-of-memory-resource-visible": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "immutable-readback",
+              "state-store-integrity",
+              "registry-resource-intake"
+            ]
+          },
+          "runtime-only-scope": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ]
+          }
+        }
+      }
+    },
+    "no_run_closeout_registry_resource_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5d65409c452e2148623cf9ed",
+      "resource": {
+        "id": "repo.hall-of-memory",
+        "type": "git-repository",
+        "path": "/home/alex/repos/hall-of-memory",
+        "github_slug": "Hall-of-Memory/Hall-of-Memory",
+        "grabowski_key": "repo:/home/alex/repos/hall-of-memory"
       }
     }
   }

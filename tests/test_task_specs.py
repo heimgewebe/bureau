@@ -111,6 +111,48 @@ def test_task_spec_by_digest_reads_historical_revision_without_mutation(
     assert store.task_spec("TEST-T001")["revision"] == 2
 
 
+def test_reserved_runtime_closeout_namespace_and_receipt_are_typed(
+    tmp_path: Path,
+) -> None:
+    store = _store(tmp_path)
+    store.put_task_spec(
+        _spec(),
+        idempotency_key="seed-closeout",
+        expected_revision=None,
+        source="test",
+    )
+    closeout_spec = _spec(title="verified")
+    closeout_spec["metadata"]["runtime_closeout"] = {
+        "kind": "bureau_runtime_refresh_no_run_closeout",
+        "status": "verified",
+        "task_id": "TEST-T001",
+        "runtime_result_sha256": "a" * 64,
+    }
+    key = "runtime-refresh-no-run-closeout:TEST-T001:" + "a" * 64
+
+    with pytest.raises(StateError, match="namespace is reserved"):
+        store.put_task_spec(
+            closeout_spec,
+            idempotency_key=key,
+            expected_revision=1,
+            source="runtime-refresh-no-run-closeout",
+        )
+
+    written = store.put_runtime_refresh_no_run_closeout_task_spec(
+        closeout_spec,
+        idempotency_key=key,
+        expected_revision=1,
+    )
+    receipt = store.task_spec_mutation_receipt(key)
+    assert receipt is not None
+    assert receipt["task_id"] == "TEST-T001"
+    assert receipt["requested_sha256"] == written["spec_sha256"]
+    assert receipt["resulting_revision"] == written["revision"]
+    assert receipt["resulting_task_spec"]["spec"] == closeout_spec
+    assert receipt["resulting_task_spec"]["source"] == "runtime-refresh-no-run-closeout"
+    assert store.task_spec_mutation_receipt("missing") is None
+
+
 def test_reverting_to_prior_content_creates_a_new_revision(tmp_path: Path) -> None:
     store = _store(tmp_path)
     original = _spec()

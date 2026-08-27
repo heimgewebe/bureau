@@ -137,7 +137,53 @@
         "schema_version": 1
       },
       "successor_task_required_after_terminal": true,
-      "target_binding": "candidate.target_sha256"
+      "target_binding": "candidate.target_sha256",
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "fresh-current-main": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "source-ancestry-precondition": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "single-runtime-effect": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "runtime-only-scope": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ]
+          }
+        }
+      }
     },
     "source": "Bureau operator intake candidate 10915 / candidate-441cab1e12016e5282dbec62: release-registry-identity-mismatch blocks normal reviewed Bureau pickup while deployed Bureau source f3b2f41fcc7d8ec711edf72d08e8d9f1aba123db trails canonical main 87d8708c62cc4c724703e371a1d7c95bb174f3c7."
   },

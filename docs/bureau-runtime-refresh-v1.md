@@ -244,6 +244,13 @@ Vertrag implementiert absichtlich keine automatische Reconciliation.
 
 ## Receiptgebundener Closeout ohne Bureau-Run
 
+Der erfolgreiche No-Run-Closeout wird über den reservierten TaskSpec-Idempotency-
+Namensraum `runtime-refresh-no-run-closeout:<task>:<result>` geschrieben. Generische
+TaskSpec-Mutationen dürfen diesen Namensraum nicht belegen; beim Replay authentifiziert
+sein unveränderlicher Mutation-Receipt die ursprüngliche Closeout-Revision samt
+vollständiger Acceptance-Kapsel. Ein frei gesetztes `source`-Label ist dafür ausdrücklich
+keine Autorität.
+
 Ein Runtime-Refresh kann als Bootstrap stattfinden, bevor die neue Runtime einen normalen
 Bureau-Claim bilden kann. Nur für eine solche bereits erfolgreiche Single-Use-Autorität
 existiert `closeout-authority`. Der Befehl erzeugt keinen nachträglichen Claim, keine
@@ -282,7 +289,9 @@ Vor der einzigen TaskSpec-Wirkung werden konsistent geprüft:
   fachliches Sicherheitskriterium.
 
 Bei einer Authority mit `source_precondition` muss mindestens ein Acceptance-Kriterium
-explizit die Evidenzklasse `source-precondition` verlangen. Außerdem müssen historischer
+explizit die Evidenzklasse `source-precondition` verlangen. Die geschützten Registry-
+Bootstrap-Authorities führen deshalb für jedes eingefrorene Kriterium ein explizites
+`no_run_closeout_acceptance`-Mapping. Außerdem müssen historischer
 Intent und Result genau diese Source-Precondition samt Observation-/Ancestry-/Runtime-
 Identity-Evidenz tatsächlich gebunden haben. Fehlt das im historischen Runnervertrag,
 blockiert der Closeout als `authority-closeout-source-precondition-unproven`; die später

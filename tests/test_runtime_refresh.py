@@ -631,6 +631,7 @@ def revise_authority(
     mutate: Any,
     *,
     key: str,
+    source: str = "test",
 ) -> dict[str, Any]:
     current = store.task_spec(task_id)
     assert current is not None
@@ -640,7 +641,7 @@ def revise_authority(
         spec,
         idempotency_key=key,
         expected_revision=current["revision"],
-        source="test",
+        source=source,
     )
 
 
@@ -4824,6 +4825,7 @@ def test_no_run_closeout_rejects_rewritten_acceptance_evidence_hash_on_replay(
         task_id,
         rewrite_acceptance_evidence,
         key=f"tamper:acceptance-history:{field}",
+        source="runtime-refresh-no-run-closeout",
     )
     before_replay = store.task_spec(task_id)
 
@@ -7550,3 +7552,28 @@ def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: P
             readback=lambda **_: result["readback"],
         )
     assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"
+
+def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
+) -> None:
+    paths: list[Path] = []
+    for path in sorted((Path(__file__).parents[1] / "registry/tasks").glob("*.json")):
+        spec = json.loads(path.read_text(encoding="utf-8"))
+        metadata = spec.get("metadata")
+        authority = (
+            metadata.get("runtime_refresh_authority") if isinstance(metadata, dict) else None
+        )
+        if not isinstance(authority, dict) or "source_precondition" not in authority:
+            continue
+        paths.append(path)
+        assert authority["mode"] == refresh.RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
+        contract = refresh._validated_no_run_acceptance_contract(
+            spec=spec, authority=authority
+        )
+        assert set(contract["criteria"]) == {
+            criterion["id"] for criterion in spec["acceptance"]
+        }
+        assert any(
+            "source-precondition" in item["required_evidence"]
+            for item in contract["criteria"].values()
+        )
+    assert len(paths) == 6

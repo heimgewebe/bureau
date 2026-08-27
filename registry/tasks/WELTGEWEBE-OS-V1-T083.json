@@ -32,12 +32,9 @@
     ]
   },
   "required_capabilities": [
+    "repository",
     "github",
-    "github-actions",
-    "ci",
-    "observability",
-    "failure-recovery",
-    "branch-protection"
+    "testing"
   ],
   "acceptance": [
     {
@@ -73,10 +70,11 @@
   ],
   "metadata": {
     "candidate_id": "candidate-2eff6c29ac054035a115c6e1",
+    "candidate_event_id": 11739,
     "candidate_idempotency_key": "weltgewebe-github-actions-orphan-required-run-recovery-v1",
     "candidate_assessment": "promote",
     "candidate_exact_duplicates": [],
-    "registered_at": "2026-08-27T05:06:00Z",
+    "registered_at": "2026-08-27",
     "source_pr": "heimgewebe/weltgewebe#1796",
     "source_pr_head": "e99106c2cef8af8014285db69c978474dae1f098",
     "source_merge_commit": "4e1f339d601f064d1a0c9234910f305cb910f6aa",

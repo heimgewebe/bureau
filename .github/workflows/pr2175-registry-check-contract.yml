@@ -1,5 +1,5 @@
 name: PR 2175 registry-check contract repair
-run-name: PR 2175 registry-check contract repair r2
+run-name: PR 2175 registry-check contract repair r3
 
 on:
   push:

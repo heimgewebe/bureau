@@ -706,6 +706,10 @@ def green_pr_detail(main_commit: str = MAIN) -> dict[str, Any]:
         "statusCheckRollup": [
             {"name": "validate (3.10)", "conclusion": "SUCCESS"},
             {"name": "validate (3.12)", "conclusion": "SUCCESS"},
+            {
+                "name": "registry-registration-preflight/freshness",
+                "conclusion": "SUCCESS",
+            },
         ],
     }
 
@@ -769,6 +773,24 @@ def candidate(tmp_path: Path, **github_options: Any) -> tuple[dict[str, Any], Pa
         github=github,
     )
     return value, manifest_path
+
+
+def test_observe_requires_registry_freshness_by_default(tmp_path: Path) -> None:
+    detail = green_pr_detail()
+    detail["statusCheckRollup"] = [
+        {"name": "validate (3.10)", "conclusion": "SUCCESS"},
+        {"name": "validate (3.12)", "conclusion": "SUCCESS"},
+    ]
+
+    result, _ = candidate(tmp_path, detail=detail)
+
+    assert result["status"] == "blocked"
+    assert result["reason_codes"] == ["required-ci-not-green"]
+    assert result["required_checks"] == list(refresh.DEFAULT_REQUIRED_CHECKS)
+    assert (
+        result["check_summary"]["registry-registration-preflight/freshness"]["state"]
+        == "missing"
+    )
 
 
 def _compare_command_error(*, status: int) -> refresh.RuntimeRefreshError:
@@ -2512,10 +2534,7 @@ def test_observe_binds_exact_merged_main_and_green_ci(tmp_path: Path) -> None:
         "head_commit": HEAD,
         "merge_commit": MAIN,
     }
-    assert set(result["check_summary"]) == {
-        "validate (3.10)",
-        "validate (3.12)",
-    }
+    assert set(result["check_summary"]) == set(refresh.DEFAULT_REQUIRED_CHECKS)
     assert all(item["state"] == "success" for item in result["check_summary"].values())
     assert result["lag_commits"] == 1
     assert result["recovery_action"] == {

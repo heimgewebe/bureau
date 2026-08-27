@@ -32,11 +32,12 @@ from . import approval, legacy, registry_snapshot
 SCHEMA_VERSION = 1
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
 DEFAULT_REMOTE_URL = "git@github.com:heimgewebe/bureau.git"
-DEFAULT_REQUIRED_CHECKS = ("validate (3.10)", "validate (3.12)")
-DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS = (
-    *DEFAULT_REQUIRED_CHECKS,
+DEFAULT_REQUIRED_CHECKS = (
+    "validate (3.10)",
+    "validate (3.12)",
     "registry-registration-preflight/freshness",
 )
+DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS = DEFAULT_REQUIRED_CHECKS
 DEFAULT_SLO_SECONDS = 5400
 DEFAULT_INTENT_TTL_SECONDS = 900
 DEFAULT_MIN_LEASE_REMAINING_SECONDS = 600

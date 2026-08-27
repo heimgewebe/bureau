@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 import hashlib
 import json
 import os
@@ -127,6 +128,8 @@ RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES = frozenset(
         "lease-release",
         "run-lifecycle",
         "source-precondition",
+        "protected-publication-adoption",
+        "registry-resource-intake",
     }
 )
 
@@ -5184,6 +5187,379 @@ def _runtime_authority_acceptance_ids(spec: dict[str, Any]) -> list[str]:
     return criterion_ids
 
 
+
+def _validated_protected_publication_adoption_contract(
+    spec: dict[str, Any],
+) -> dict[str, Any] | None:
+    metadata = spec.get("metadata")
+    value = (
+        metadata.get("protected_publication_adoption")
+        if isinstance(metadata, dict)
+        else None
+    )
+    if value is None:
+        return None
+    fields = {
+        "schema_version",
+        "repository",
+        "publication_pr",
+        "publication_merge_commit",
+        "required_checks",
+    }
+    required_checks = value.get("required_checks") if isinstance(value, dict) else None
+    merge_commit = value.get("publication_merge_commit") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or set(value) != fields
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("repository") != DEFAULT_REPOSITORY
+        or not isinstance(value.get("publication_pr"), int)
+        or isinstance(value.get("publication_pr"), bool)
+        or value["publication_pr"] < 1
+        or not isinstance(merge_commit, str)
+        or len(merge_commit) != 40
+        or any(character not in "0123456789abcdef" for character in merge_commit)
+        or required_checks != list(DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-publication-adoption-contract-invalid",
+            "protected publication/adoption evidence contract is invalid",
+        )
+    return json.loads(json.dumps(value))
+
+
+def _validated_registry_resource_intake_contract(
+    spec: dict[str, Any],
+) -> dict[str, Any] | None:
+    metadata = spec.get("metadata")
+    value = (
+        metadata.get("no_run_closeout_registry_resource_intake")
+        if isinstance(metadata, dict)
+        else None
+    )
+    if value is None:
+        return None
+    fields = {"schema_version", "candidate_id", "resource"}
+    resource_fields = {"id", "type", "path", "github_slug", "grabowski_key"}
+    resource = value.get("resource") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or set(value) != fields
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or not isinstance(value.get("candidate_id"), str)
+        or not value["candidate_id"]
+        or not isinstance(resource, dict)
+        or set(resource) != resource_fields
+        or not all(
+            isinstance(resource.get(field), str) and resource[field]
+            for field in resource_fields
+        )
+        or resource.get("type") != "git-repository"
+        or not os.path.isabs(resource["path"])
+        or resource.get("grabowski_key")
+        != f"repo:{os.path.normpath(resource['path'])}"
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-contract-invalid",
+            "Registry resource/intake evidence contract is invalid",
+        )
+    return json.loads(json.dumps(value))
+
+
+def _prove_protected_publication_adoption(
+    *,
+    store: Any,
+    spec: dict[str, Any],
+    approval_task_id: str,
+    target_main_commit: str,
+    github: Callable[[list[str]], Any] = gh_preflight_json,
+) -> dict[str, Any]:
+    contract = _validated_protected_publication_adoption_contract(spec)
+    if contract is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "protected publication/adoption contract is missing",
+        )
+    repository = contract["repository"]
+    publication_pr = contract["publication_pr"]
+    publication_merge_commit = contract["publication_merge_commit"]
+    required_checks = tuple(contract["required_checks"])
+    relative = _runtime_authority_task_path(approval_task_id).as_posix()
+
+    protection = github(["api", f"repos/{repository}/branches/main/protection"])
+    required_status = (
+        protection.get("required_status_checks") if isinstance(protection, dict) else None
+    )
+    contexts = required_status.get("contexts") if isinstance(required_status, dict) else None
+    force_pushes = protection.get("allow_force_pushes") if isinstance(protection, dict) else None
+    deletions = protection.get("allow_deletions") if isinstance(protection, dict) else None
+    if (
+        not isinstance(required_status, dict)
+        or required_status.get("strict") is not True
+        or not isinstance(contexts, list)
+        or not set(required_checks).issubset(set(contexts))
+        or not isinstance(force_pushes, dict)
+        or force_pushes.get("enabled") is not False
+        or not isinstance(deletions, dict)
+        or deletions.get("enabled") is not False
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "main protection no longer proves the protected publication contract",
+        )
+
+    detail = github(
+        [
+            "pr",
+            "view",
+            str(publication_pr),
+            "--repo",
+            repository,
+            "--json",
+            "number,state,isDraft,mergedAt,mergeCommit,baseRefName,statusCheckRollup,files",
+        ]
+    )
+    merge = detail.get("mergeCommit") if isinstance(detail, dict) else None
+    merge_oid = merge.get("oid") if isinstance(merge, dict) else None
+    files = detail.get("files") if isinstance(detail, dict) else None
+    file_paths = (
+        [item.get("path") for item in files if isinstance(item, dict)]
+        if isinstance(files, list)
+        else []
+    )
+    if (
+        not isinstance(detail, dict)
+        or detail.get("number") != publication_pr
+        or detail.get("state") != "MERGED"
+        or detail.get("isDraft") is True
+        or detail.get("baseRefName") != "main"
+        or not detail.get("mergedAt")
+        or merge_oid != publication_merge_commit
+        or file_paths != [relative]
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication PR is not the exact create-only protected authority merge",
+        )
+    check_summary = summarize_required_checks(detail.get("statusCheckRollup"), required_checks)
+    bad_checks = [name for name, item in check_summary.items() if item["state"] != "success"]
+    if bad_checks:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication PR required checks are not green",
+            details={"checks": check_summary},
+        )
+
+    historical_file = github(
+        [
+            "api",
+            f"repos/{repository}/contents/{relative}?ref={publication_merge_commit}",
+        ]
+    )
+    encoded = historical_file.get("content") if isinstance(historical_file, dict) else None
+    if (
+        not isinstance(historical_file, dict)
+        or historical_file.get("type") != "file"
+        or historical_file.get("path") != relative
+        or historical_file.get("encoding") != "base64"
+        or not isinstance(encoded, str)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication TaskSpec blob is unavailable",
+        )
+    try:
+        raw = base64.b64decode("".join(encoded.splitlines()), validate=True)
+        historical_spec = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication TaskSpec blob is invalid",
+        ) from exc
+    if not isinstance(historical_spec, dict) or historical_spec.get("id") != approval_task_id:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical publication TaskSpec identity is invalid",
+        )
+    historical_metadata = historical_spec.get("metadata")
+    publication_path = (
+        historical_metadata.get("publication_path")
+        if isinstance(historical_metadata, dict)
+        else None
+    )
+    if (
+        not isinstance(publication_path, dict)
+        or publication_path.get("kind") != "normal-protected-pull-request"
+        or publication_path.get("state_store_transition")
+        != "seed-missing-preserve-state-store"
+        or publication_path.get("scope") != f"exactly {relative}"
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical TaskSpec did not declare protected missing-only adoption",
+        )
+
+    from . import task_specs
+
+    historical_spec_sha256 = task_specs.task_spec_digest(historical_spec)
+    idempotency_key = f"legacy-seed-exact:{approval_task_id}:{historical_spec_sha256}"
+    try:
+        receipt = store.task_spec_mutation_receipt(idempotency_key)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "cannot read the missing-only adoption mutation receipt",
+            details={"error": str(exc)},
+        ) from exc
+    resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("task_id") != approval_task_id
+        or receipt.get("expected_revision") is not None
+        or receipt.get("requested_sha256") != historical_spec_sha256
+        or receipt.get("resulting_revision") != 1
+        or not isinstance(resulting, dict)
+        or resulting.get("revision") != 1
+        or resulting.get("spec_sha256") != historical_spec_sha256
+        or resulting.get("source") != "legacy-git-exact-seed"
+        or resulting.get("spec") != historical_spec
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "StateStore does not contain the exact missing-only adoption receipt",
+        )
+
+    if target_main_commit == publication_merge_commit:
+        ancestry_ok = True
+    else:
+        compare = github(
+            [
+                "api",
+                f"repos/{repository}/compare/{publication_merge_commit}...{target_main_commit}",
+            ]
+        )
+        merge_base = compare.get("merge_base_commit") if isinstance(compare, dict) else None
+        ancestry_ok = (
+            isinstance(compare, dict)
+            and compare.get("status") == "ahead"
+            and compare.get("behind_by") == 0
+            and isinstance(merge_base, dict)
+            and merge_base.get("sha") == publication_merge_commit
+        )
+    if not ancestry_ok:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "publication merge is not an ancestor of the runtime target",
+        )
+    evidence = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_protected_publication_adoption_evidence",
+        "task_id": approval_task_id,
+        "publication_pr": publication_pr,
+        "publication_merge_commit": publication_merge_commit,
+        "target_main_commit": target_main_commit,
+        "task_path": relative,
+        "task_file_sha256": sha256_bytes(raw),
+        "task_spec_sha256": historical_spec_sha256,
+        "adoption_idempotency_key": idempotency_key,
+        "adoption_revision": 1,
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
+def _prove_registry_resource_intake(
+    *,
+    store: Any,
+    spec: dict[str, Any],
+    registry_root: Path,
+) -> dict[str, Any]:
+    contract = _validated_registry_resource_intake_contract(spec)
+    if contract is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "Registry resource/intake contract is missing",
+        )
+    raw_root = registry_root.expanduser()
+    if raw_root.is_symlink() or not raw_root.is_dir():
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "result-bound canonical Registry root is not an immutable directory",
+            details={"registry_root": str(raw_root)},
+        )
+    root = raw_root.resolve()
+    try:
+        registry = legacy.Registry.load(root)
+    except (legacy.ValidationError, OSError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "result-bound canonical Registry cannot be loaded",
+            details={"error": str(exc)},
+        ) from exc
+    expected = contract["resource"]
+    resource = registry.resources.get(expected["id"])
+    observed = (
+        {
+            "id": resource.id,
+            "type": resource.type,
+            "path": resource.path,
+            "github_slug": resource.github_slug,
+            "grabowski_key": resource.grabowski_key,
+        }
+        if resource is not None
+        else None
+    )
+    if observed != expected:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "result-bound canonical Registry lacks the exact required repository resource",
+            details={"expected": expected, "observed": observed},
+        )
+    from . import operator_intake
+
+    try:
+        assessment = operator_intake._candidate_assess(
+            registry,
+            store,
+            candidate_id=contract["candidate_id"],
+        )
+    except (operator_intake.OperatorIntakeError, legacy.StateError, OSError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            "typed candidate-intake assessment failed against the result-bound Registry",
+            details={"error": str(exc)},
+        ) from exc
+    target = assessment.get("target") if isinstance(assessment, dict) else None
+    claims = target.get("claims") if isinstance(target, dict) else None
+    expected_claims = [
+        {"resource": expected["id"], "mode": "write", "isolation": "worktree"}
+    ]
+    if (
+        not isinstance(assessment, dict)
+        or assessment.get("kind") != "bureau_candidate_assessment"
+        or assessment.get("status") != "assessed"
+        or assessment.get("candidate_id") != contract["candidate_id"]
+        or claims != expected_claims
+        or "repo" in assessment.get("missing_fields", [])
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-registry-resource-intake-unproven",
+            (
+                "typed candidate intake does not bind the candidate to the installed "
+                "repository resource"
+            ),
+        )
+    evidence = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_registry_resource_intake_evidence",
+        "candidate_id": contract["candidate_id"],
+        "resource": observed,
+        "registry_root": str(root),
+        "candidate_decision": assessment.get("decision"),
+        "candidate_event_id": assessment.get("event_id"),
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
 def _validated_no_run_acceptance_contract(
     *, spec: dict[str, Any], authority: dict[str, Any]
 ) -> dict[str, Any]:
@@ -5243,13 +5619,42 @@ def _validated_no_run_acceptance_contract(
             "authority-closeout-acceptance-contract-incomplete",
             "source-precondition authority has no criterion bound to source-precondition evidence",
         )
-    return {
+    required_evidence_classes = {
+        evidence_class
+        for item in normalized.values()
+        for evidence_class in item["required_evidence"]
+    }
+    publication_adoption = _validated_protected_publication_adoption_contract(spec)
+    registry_resource_intake = _validated_registry_resource_intake_contract(spec)
+    if ("protected-publication-adoption" in required_evidence_classes) != (
+        publication_adoption is not None
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-invalid",
+            (
+                "protected-publication-adoption evidence and its typed contract must "
+                "be declared together"
+            ),
+        )
+    if ("registry-resource-intake" in required_evidence_classes) != (
+        registry_resource_intake is not None
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-acceptance-contract-invalid",
+            "registry-resource-intake evidence and its typed contract must be declared together",
+        )
+    contract = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "kind": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_KIND,
         "criteria": normalized,
         "frozen_acceptance": json.loads(json.dumps(spec["acceptance"])),
         "source_precondition": source_precondition,
     }
+    if publication_adoption is not None:
+        contract["protected_publication_adoption"] = publication_adoption
+    if registry_resource_intake is not None:
+        contract["registry_resource_intake"] = registry_resource_intake
+    return contract
 
 
 def _validated_no_run_acceptance_evidence(value: Any) -> dict[str, Any]:
@@ -6627,6 +7032,49 @@ def _closeout_runtime_refresh_authority(
                 )
             _validate_source_precondition_result_evidence(result, intent)
             available_acceptance_evidence.add("source-precondition")
+        publication_adoption = _validated_protected_publication_adoption_contract(spec)
+        if publication_adoption is not None:
+            _prove_protected_publication_adoption(
+                store=store,
+                spec=spec,
+                approval_task_id=approval_task_id,
+                target_main_commit=intent["main_commit"],
+            )
+            available_acceptance_evidence.add("protected-publication-adoption")
+        registry_resource_intake = _validated_registry_resource_intake_contract(spec)
+        if registry_resource_intake is not None:
+            if deployed_success:
+                resource_install_receipt = result.get("install_receipt")
+                if not isinstance(resource_install_receipt, dict):
+                    raise RuntimeRefreshError(
+                        "authority-closeout-registry-resource-intake-unproven",
+                        "deployed result lacks the Registry root needed for typed intake evidence",
+                    )
+                registry_root = Path(
+                    str(resource_install_receipt.get("canonical_registry_root", ""))
+                )
+            else:
+                current_manifest, current_manifest_sha256 = load_manifest(
+                    Path(intent["prefix"]).expanduser().resolve()
+                    / "deployment-manifest.json"
+                )
+                if (
+                    current_manifest_sha256 != closeout_manifest_sha256
+                    or current_manifest.get("source_commit") != intent["main_commit"]
+                ):
+                    raise RuntimeRefreshError(
+                        "authority-closeout-registry-resource-intake-unproven",
+                        "already-current manifest does not bind the runtime target Registry",
+                    )
+                registry_root = Path(
+                    str(current_manifest.get("canonical_registry_root", ""))
+                )
+            _prove_registry_resource_intake(
+                store=store,
+                spec=spec,
+                registry_root=registry_root,
+            )
+            available_acceptance_evidence.add("registry-resource-intake")
         acceptance_evidence = _build_no_run_acceptance_evidence(
             spec=spec,
             authority=authority,

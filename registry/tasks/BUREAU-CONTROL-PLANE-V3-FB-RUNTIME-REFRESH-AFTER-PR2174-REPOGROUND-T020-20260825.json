@@ -182,8 +182,7 @@
           "protected-publication-and-missing-only-adoption": {
             "verifier": "runtime-refresh-no-run-evidence-v1",
             "required_evidence": [
-              "approval-intent",
-              "state-store-integrity"
+              "protected-publication-adoption"
             ]
           },
           "single-runtime-effect": {
@@ -224,6 +223,17 @@
         "queue mutation",
         "claim or dispatch authority",
         "runtime effect before protected merge and missing-only adoption"
+      ]
+    },
+    "protected_publication_adoption": {
+      "schema_version": 1,
+      "repository": "heimgewebe/bureau",
+      "publication_pr": 2176,
+      "publication_merge_commit": "b70db7ccf1337802604b260651ea21456694d49c",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
       ]
     }
   }

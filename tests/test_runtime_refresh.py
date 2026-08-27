@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import importlib.util
 import json
@@ -7577,3 +7578,226 @@ def test_registry_source_precondition_authorities_have_complete_no_run_acceptanc
             for item in contract["criteria"].values()
         )
     assert len(paths) == 6
+
+
+
+def test_protected_publication_adoption_proof_requires_exact_seed_receipt() -> None:
+    from bureau import task_specs as task_specs_module
+
+    task_id = "BUREAU-TEST-PROTECTED-PUBLICATION-ADOPTION"
+    merge_commit = "a" * 40
+    target_commit = "b" * 40
+    historical_spec = runtime_authority_spec(task_id)
+    historical_spec["metadata"]["publication_path"] = {
+        "kind": "normal-protected-pull-request",
+        "scope": f"exactly registry/tasks/{task_id}.json",
+        "state_store_transition": "seed-missing-preserve-state-store",
+    }
+    current_spec = json.loads(json.dumps(historical_spec))
+    current_spec["metadata"]["protected_publication_adoption"] = {
+        "schema_version": 1,
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "publication_pr": 2173,
+        "publication_merge_commit": merge_commit,
+        "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+    }
+    raw = (json.dumps(historical_spec, indent=2) + "\n").encode()
+    historical_digest = task_specs_module.task_spec_digest(historical_spec)
+    key = f"legacy-seed-exact:{task_id}:{historical_digest}"
+    receipt = {
+        "idempotency_key": key,
+        "task_id": task_id,
+        "expected_revision": None,
+        "requested_sha256": historical_digest,
+        "resulting_revision": 1,
+        "resulting_task_spec": {
+            "task_id": task_id,
+            "revision": 1,
+            "spec_sha256": historical_digest,
+            "spec": historical_spec,
+            "source": "legacy-git-exact-seed",
+        },
+    }
+
+    class ReceiptStore:
+        def __init__(self, value):
+            self.value = value
+            self.seen = None
+
+        def task_spec_mutation_receipt(self, idempotency_key: str):
+            self.seen = idempotency_key
+            return self.value
+
+    check_rollup = [
+        {"name": name, "status": "COMPLETED", "conclusion": "SUCCESS"}
+        for name in refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS
+    ]
+
+    def github(arguments: list[str]):
+        if arguments == ["api", f"repos/{refresh.DEFAULT_REPOSITORY}/branches/main/protection"]:
+            return {
+                "required_status_checks": {
+                    "strict": True,
+                    "contexts": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+                },
+                "allow_force_pushes": {"enabled": False},
+                "allow_deletions": {"enabled": False},
+            }
+        if arguments[:2] == ["pr", "view"]:
+            return {
+                "number": 2173,
+                "state": "MERGED",
+                "isDraft": False,
+                "mergedAt": "2026-08-25T00:00:00Z",
+                "mergeCommit": {"oid": merge_commit},
+                "baseRefName": "main",
+                "files": [{"path": f"registry/tasks/{task_id}.json"}],
+                "statusCheckRollup": check_rollup,
+            }
+        if arguments == [
+            "api",
+            f"repos/{refresh.DEFAULT_REPOSITORY}/contents/registry/tasks/{task_id}.json?ref={merge_commit}",
+        ]:
+            return {
+                "type": "file",
+                "path": f"registry/tasks/{task_id}.json",
+                "encoding": "base64",
+                "content": base64.b64encode(raw).decode(),
+            }
+        if arguments == [
+            "api",
+            f"repos/{refresh.DEFAULT_REPOSITORY}/compare/{merge_commit}...{target_commit}",
+        ]:
+            return {
+                "status": "ahead",
+                "behind_by": 0,
+                "merge_base_commit": {"sha": merge_commit},
+            }
+        raise AssertionError(arguments)
+
+    store = ReceiptStore(receipt)
+    evidence = refresh._prove_protected_publication_adoption(
+        store=store,
+        spec=current_spec,
+        approval_task_id=task_id,
+        target_main_commit=target_commit,
+        github=github,
+    )
+    assert store.seen == key
+    assert evidence["kind"] == "bureau_runtime_refresh_protected_publication_adoption_evidence"
+    assert evidence["adoption_revision"] == 1
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh._prove_protected_publication_adoption(
+            store=ReceiptStore(None),
+            spec=current_spec,
+            approval_task_id=task_id,
+            target_main_commit=target_commit,
+            github=github,
+        )
+    assert caught.value.code == "authority-closeout-protected-publication-adoption-unproven"
+
+
+def test_registry_resource_intake_proof_binds_resource_and_candidate(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from bureau import operator_intake
+
+    resources = tmp_path / "registry" / "resources"
+    resources.mkdir(parents=True)
+    (resources / "repo.json").write_text(
+        json.dumps({"schema_version": 1, "id": "repo", "type": "namespace", "parent": None})
+        + "\n",
+        encoding="utf-8",
+    )
+    expected = {
+        "id": "repo.hall-of-memory",
+        "type": "git-repository",
+        "path": "/home/alex/repos/hall-of-memory",
+        "github_slug": "Hall-of-Memory/Hall-of-Memory",
+        "grabowski_key": "repo:/home/alex/repos/hall-of-memory",
+    }
+    (resources / "hall-of-memory.json").write_text(
+        json.dumps({"schema_version": 1, "parent": "repo", **expected}) + "\n",
+        encoding="utf-8",
+    )
+    candidate_id = "candidate-5d65409c452e2148623cf9ed"
+    spec = runtime_authority_spec("BUREAU-TEST-REGISTRY-RESOURCE-INTAKE")
+    spec["metadata"]["no_run_closeout_registry_resource_intake"] = {
+        "schema_version": 1,
+        "candidate_id": candidate_id,
+        "resource": expected,
+    }
+    monkeypatch.setattr(
+        operator_intake,
+        "_candidate_assess",
+        lambda registry, store, **kwargs: {
+            "schema_version": 1,
+            "kind": "bureau_candidate_assessment",
+            "status": "assessed",
+            "candidate_id": candidate_id,
+            "event_id": 42,
+            "decision": "promote",
+            "target": {
+                "claims": [
+                    {"resource": expected["id"], "mode": "write", "isolation": "worktree"}
+                ]
+            },
+            "missing_fields": [],
+        },
+    )
+    evidence = refresh._prove_registry_resource_intake(
+        store=object(),
+        spec=spec,
+        registry_root=tmp_path,
+    )
+    assert evidence["resource"] == expected
+    assert evidence["candidate_id"] == candidate_id
+
+    bad = json.loads(json.dumps(spec))
+    bad_contract = bad["metadata"]["no_run_closeout_registry_resource_intake"]
+    bad_contract["resource"]["path"] = "/home/alex/repos/not-hall-of-memory"
+    bad_contract["resource"]["grabowski_key"] = "repo:/home/alex/repos/not-hall-of-memory"
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh._prove_registry_resource_intake(
+            store=object(),
+            spec=bad,
+            registry_root=tmp_path,
+        )
+    assert caught.value.code == "authority-closeout-registry-resource-intake-unproven"
+
+
+def test_registry_special_acceptance_criteria_require_dedicated_proof_classes() -> None:
+    root = Path(__file__).parents[1] / "registry" / "tasks"
+    publication_tasks = [
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PR2172-SOURCE-CONVERGENCE-20260825",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2174-REPOGROUND-T020-20260825",
+    ]
+    for task_id in publication_tasks:
+        spec = json.loads((root / f"{task_id}.json").read_text(encoding="utf-8"))
+        metadata = spec["metadata"]
+        assert (
+            metadata["protected_publication_adoption"]["repository"]
+            == refresh.DEFAULT_REPOSITORY
+        )
+        mapping = metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"]["criteria"]
+        assert mapping["protected-publication-and-missing-only-adoption"]["required_evidence"] == [
+            "protected-publication-adoption"
+        ]
+
+    hall = json.loads(
+        (
+            root
+            / "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824.json"
+        ).read_text(encoding="utf-8")
+    )
+    hall_metadata = hall["metadata"]
+    assert hall_metadata["no_run_closeout_registry_resource_intake"]["candidate_id"] == (
+        "candidate-5d65409c452e2148623cf9ed"
+    )
+    hall_mapping = hall_metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"][
+        "criteria"
+    ]
+    assert "registry-resource-intake" in hall_mapping["hall-of-memory-resource-visible"][
+        "required_evidence"
+    ]

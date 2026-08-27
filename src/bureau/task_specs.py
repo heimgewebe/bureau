@@ -258,6 +258,17 @@ def put_runtime_refresh_no_run_closeout(
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
     except (DocumentSchemaError, AcceptanceContractError) as exc:
         raise TaskSpecError(str(exc)) from exc
+    validate_schema(connection)
+    reserved_receipt = connection.execute(
+        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if reserved_receipt is None:
+        current = get_current(connection, canonical["id"])
+        if current is not None and current["spec_sha256"] == task_spec_digest(canonical):
+            raise TaskSpecError(
+                "runtime-refresh no-run closeout must create its authenticated TaskSpec revision"
+            )
     return _put_validated_material(
         connection,
         canonical,

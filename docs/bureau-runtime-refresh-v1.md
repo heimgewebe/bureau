@@ -297,6 +297,8 @@ Identity-Evidenz tatsächlich gebunden haben. Fehlt das im historischen Runnerve
 blockiert der Closeout als `authority-closeout-source-precondition-unproven`; die später
 beobachtete physische Runtime-Konvergenz wird nicht rückwirkend zur Gate-Evidenz erklärt.
 
+Die Acceptance-Klassen `protected-publication-adoption` und `registry-resource-intake` werden nicht pauschal aus erfolgreichem Runtime-Readback abgeleitet. Erstere revalidiert den exakten historischen Protected-PR-Merge und den unverwechselbaren `legacy-seed-exact`-Receipt der Missing-only-Adoption. Letztere liest den resultgebundenen kanonischen Registry-Snapshot, bindet die erwartete Repository-Resource feldgenau und fuehrt die typisierte Candidate-Intake-Klassifikation gegen genau diesen Snapshot aus.
+
 Nur dann setzt ein einziger `StateStore.put_task_spec()`-CAS den Zustand auf `verified` und
 persistiert `metadata.runtime_closeout` mit Task-ID, ursprünglicher Autoritätsrevision und
 -digest, Target, Intent, Runtime-Result, Source-Commit, Manifest-/Readback- sowie

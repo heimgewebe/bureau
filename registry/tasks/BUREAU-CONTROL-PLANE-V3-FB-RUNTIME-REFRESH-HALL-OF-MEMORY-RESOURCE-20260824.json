@@ -202,7 +202,8 @@
             "verifier": "runtime-refresh-no-run-evidence-v1",
             "required_evidence": [
               "immutable-readback",
-              "state-store-integrity"
+              "state-store-integrity",
+              "registry-resource-intake"
             ]
           },
           "runtime-only-scope": {
@@ -215,6 +216,17 @@
             ]
           }
         }
+      }
+    },
+    "no_run_closeout_registry_resource_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5d65409c452e2148623cf9ed",
+      "resource": {
+        "id": "repo.hall-of-memory",
+        "type": "git-repository",
+        "path": "/home/alex/repos/hall-of-memory",
+        "github_slug": "Hall-of-Memory/Hall-of-Memory",
+        "grabowski_key": "repo:/home/alex/repos/hall-of-memory"
       }
     }
   }

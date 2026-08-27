@@ -381,9 +381,16 @@ task_tests_path = Path("tests/test_task_specs.py")
 task_tests = task_tests_path.read_text(encoding="utf-8")
 receipt_test_anchor = r'''def test_reverting_to_prior_content_creates_a_new_revision(tmp_path: Path) -> None:
 '''
-receipt_test = r'''def test_reserved_runtime_closeout_namespace_and_receipt_are_typed(tmp_path: Path) -> None:
+receipt_test = r'''def test_reserved_runtime_closeout_namespace_and_receipt_are_typed(
+    tmp_path: Path,
+) -> None:
     store = _store(tmp_path)
-    store.put_task_spec(_spec(), idempotency_key="seed-closeout", expected_revision=None, source="test")
+    store.put_task_spec(
+        _spec(),
+        idempotency_key="seed-closeout",
+        expected_revision=None,
+        source="test",
+    )
     closeout_spec = _spec(title="verified")
     closeout_spec["metadata"]["runtime_closeout"] = {
         "kind": "bureau_runtime_refresh_no_run_closeout",
@@ -481,7 +488,8 @@ runtime_tests = replace_once(
 
 registry_regression = r'''
 
-def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts() -> None:
+def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
+) -> None:
     paths: list[Path] = []
     for path in sorted((Path(__file__).parents[1] / "registry/tasks").glob("*.json")):
         spec = json.loads(path.read_text(encoding="utf-8"))
@@ -523,16 +531,17 @@ doc_replacement = (
     "`no_run_closeout_acceptance`-Mapping. Außerdem müssen historischer\n"
 )
 docs = replace_once(docs, doc_anchor, doc_replacement, "acceptance migration docs")
-receipt_doc_anchor = "Ein Runtime-Refresh kann als Bootstrap stattfinden, bevor die neue Runtime einen normalen\n"
+receipt_doc_anchor = (
+    "Ein Runtime-Refresh kann als Bootstrap stattfinden, bevor die neue Runtime einen normalen\n"
+)
 receipt_doc_replacement = (
-    "Ein Runtime-Refresh kann als Bootstrap stattfinden, bevor die neue Runtime einen normalen\n"
-    "Bureau-Claim bilden kann. Der erfolgreiche No-Run-Closeout wird über den reservierten\n"
-    "TaskSpec-Idempotency-Namensraum `runtime-refresh-no-run-closeout:<task>:<result>`\n"
-    "geschrieben. Generische TaskSpec-Mutationen dürfen diesen Namensraum nicht belegen; beim\n"
-    "Replay authentifiziert sein unveränderlicher Mutation-Receipt die ursprüngliche Closeout-\n"
-    "Revision samt vollständiger Acceptance-Kapsel. Ein frei gesetztes `source`-Label ist\n"
-    "dafür ausdrücklich keine Autorität.\n\n"
-    "Ein Runtime-Refresh kann als Bootstrap stattfinden, bevor die neue Runtime einen normalen\n"
+    "Der erfolgreiche No-Run-Closeout wird über den reservierten TaskSpec-Idempotency-\n"
+    "Namensraum `runtime-refresh-no-run-closeout:<task>:<result>` geschrieben. Generische\n"
+    "TaskSpec-Mutationen dürfen diesen Namensraum nicht belegen; beim Replay authentifiziert\n"
+    "sein unveränderlicher Mutation-Receipt die ursprüngliche Closeout-Revision samt\n"
+    "vollständiger Acceptance-Kapsel. Ein frei gesetztes `source`-Label ist dafür ausdrücklich\n"
+    "keine Autorität.\n\n"
+    + receipt_doc_anchor
 )
 docs = replace_once(docs, receipt_doc_anchor, receipt_doc_replacement, "receipt anchor docs")
 docs_path.write_text(docs, encoding="utf-8")

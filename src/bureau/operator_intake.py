@@ -2052,6 +2052,43 @@ def _validate_task_spec_proposal_binding(
     return binding
 
 
+def _validate_register_replay_mutation(
+    store: StateStore,
+    *,
+    task_id: str,
+    proposal_sha256: str,
+    proposed_spec_sha256: str,
+) -> None:
+    idempotency_key = f"operator-intake:{proposal_sha256}"
+    try:
+        with store.connect() as connection:
+            mutation = connection.execute(
+                "SELECT task_id,expected_revision,requested_sha256,resulting_revision "
+                "FROM task_spec_mutations WHERE idempotency_key=?",
+                (idempotency_key,),
+            ).fetchone()
+    except sqlite3.Error as exc:
+        raise OperatorIntakeError(
+            "task-spec-register-replay-mutation-read-failed",
+            "cannot verify the TaskSpec mutation for register publication replay",
+            retryable=True,
+            details={"task_id": task_id},
+        ) from exc
+    if (
+        mutation is None
+        or mutation["task_id"] != task_id
+        or mutation["expected_revision"] is not None
+        or mutation["requested_sha256"] != proposed_spec_sha256
+        or type(mutation["resulting_revision"]) is not int
+        or mutation["resulting_revision"] != 1
+    ):
+        raise OperatorIntakeError(
+            "task-spec-register-replay-mutation-mismatch",
+            "existing register TaskSpec is not bound to this reviewed proposal mutation",
+            details={"task_id": task_id, "mutation_present": mutation is not None},
+        )
+
+
 def _inject_candidate_binding(task_json: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
     result = json.loads(legacy.canonical_json(task_json))
     metadata = result.setdefault("metadata", {})
@@ -2651,11 +2688,21 @@ def _validated_proposal(
     task_spec_binding = _validate_task_spec_proposal_binding(
         registry, store, plan=plan, task_json=task_json, event=current
     )
+    current_task_spec = store.task_spec(str(task_json.get("id", "")))
+    allow_existing_task_id = task_spec_binding["operation"] == "revise"
+    if task_spec_binding["operation"] == "register" and current_task_spec is not None:
+        _validate_register_replay_mutation(
+            store,
+            task_id=str(task_json.get("id", "")),
+            proposal_sha256=str(plan.get("proposal_sha256", "")),
+            proposed_spec_sha256=task_spec_binding["proposed_spec_sha256"],
+        )
+        allow_existing_task_id = True
     _validate_task_semantics(
         registry,
         store,
         task_json,
-        allow_existing_task_id=task_spec_binding["operation"] == "revise",
+        allow_existing_task_id=allow_existing_task_id,
     )
     content = _render_task(task_json)
     target_path = str(plan.get("target_path"))

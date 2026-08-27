@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply-fix:
-    if: ${{ github.event.head_commit.message == 'ci: activate guarded PR 2175 replay fix' }}
+    if: "${{ github.event.head_commit.message == 'ci: run guarded PR 2175 replay fix' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

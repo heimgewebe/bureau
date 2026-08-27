@@ -4,7 +4,6 @@ from pathlib import Path
 
 RUNTIME = Path("src/bureau/runtime_refresh.py")
 TEST = Path("tests/test_runtime_refresh.py")
-CHECK = "registry-registration-preflight/freshness"
 
 runtime_text = RUNTIME.read_text(encoding="utf-8")
 old_constants = '''DEFAULT_REQUIRED_CHECKS = ("validate (3.10)", "validate (3.12)")
@@ -65,10 +64,13 @@ regression = '''def test_observe_requires_registry_freshness_by_default(tmp_path
     assert result["status"] == "blocked"
     assert result["reason_codes"] == ["required-ci-not-green"]
     assert result["required_checks"] == list(refresh.DEFAULT_REQUIRED_CHECKS)
-    assert result["check_summary"][CHECK]["state"] == "missing"
+    assert (
+        result["check_summary"]["registry-registration-preflight/freshness"]["state"]
+        == "missing"
+    )
 
 
-'''.replace("CHECK", repr(CHECK))
+'''
 if test_text.count(candidate_anchor) != 1:
     raise SystemExit("candidate regression anchor drift")
 if "test_observe_requires_registry_freshness_by_default" in test_text:

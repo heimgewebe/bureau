@@ -7573,14 +7573,52 @@ def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: P
         )
     assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"
 
+def accepted_history_revision(repository: Path) -> str:
+    event_name = os.environ.get("GITHUB_EVENT_NAME")
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if event_name not in {"pull_request", "merge_group"} or not event_path:
+        return "HEAD"
+
+    try:
+        event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return "HEAD"
+    if not isinstance(event, dict):
+        return "HEAD"
+
+    if event_name == "pull_request":
+        pull_request = event.get("pull_request")
+        base = pull_request.get("base") if isinstance(pull_request, dict) else None
+    else:
+        merge_group = event.get("merge_group")
+        base = merge_group if isinstance(merge_group, dict) else None
+    candidate = base.get("sha") if isinstance(base, dict) else None
+    if not (
+        isinstance(candidate, str)
+        and len(candidate) == 40
+        and all(character in "0123456789abcdefABCDEF" for character in candidate)
+    ):
+        return "HEAD"
+
+    resolved = subprocess.run(
+        ["git", "rev-parse", "--verify", f"{candidate}^{{commit}}"],
+        cwd=repository,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    return resolved.stdout.strip() if resolved.returncode == 0 else "HEAD"
+
+
 def historical_registry_json_blobs(registry_root: Path) -> list[tuple[str, str]]:
     repository = Path(git(registry_root, "rev-parse", "--show-toplevel"))
     relative_registry = registry_root.resolve().relative_to(repository.resolve())
+    history_revision = accepted_history_revision(repository)
     result = subprocess.run(
         [
             "git",
             "log",
-            "HEAD",
+            history_revision,
             "-m",
             "--root",
             "--raw",
@@ -7815,6 +7853,62 @@ def test_source_precondition_history_ignores_text_match_and_commit_neighbor(
     assert authority_path.name in historical
     assert textual_decoy.name not in historical
     assert commit_neighbor.name not in historical
+
+
+def test_source_precondition_history_ignores_unaccepted_pr_intermediate_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+    accepted_base = git(repository, "rev-parse", "HEAD")
+
+    transient = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    transient["id"] = "BUREAU-TEST-UNACCEPTED-PR-SOURCE-PRECONDITION-AUTHORITY"
+    transient_path = registry_root / f"{transient['id']}.json"
+    transient_path.write_text(json.dumps(transient, indent=2) + "\n", encoding="utf-8")
+    git(repository, "add", transient_path.relative_to(repository).as_posix())
+    git(repository, "commit", "-m", "add transient pull-request authority")
+    transient_path.unlink()
+    git(repository, "add", "-u")
+    git(repository, "commit", "-m", "remove transient pull-request authority")
+
+    event_path = tmp_path / "pull-request-event.json"
+    event_path.write_text(
+        json.dumps({"pull_request": {"base": {"sha": accepted_base}}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert source_name in historical
+    assert transient_path.name not in historical
+    validate_source_precondition_authority_registry(registry_root)
+
+
+def test_pr_base_history_still_rejects_accepted_authority_deletion(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+    accepted_base = git(repository, "rev-parse", "HEAD")
+    (registry_root / source_name).unlink()
+    git(repository, "add", "-u")
+    git(repository, "commit", "-m", "delete accepted source-precondition authority")
+
+    event_path = tmp_path / "pull-request-event.json"
+    event_path.write_text(
+        json.dumps({"pull_request": {"base": {"sha": accepted_base}}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+
+    with pytest.raises(
+        AssertionError, match="historical source_precondition authorities disappeared"
+    ):
+        validate_source_precondition_authority_registry(registry_root)
 
 
 def test_registry_source_precondition_authorities_reject_historical_deletion(

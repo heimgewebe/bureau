@@ -30,7 +30,7 @@ def test_task_supply_service_uses_revision_bound_launcher_and_state_store_only()
         "ReadWritePaths=%h/.local/state/bureau-task-supply %h/.local/state/bureau"
         in text
     )
-    assert "RestrictAddressFamilies=AF_UNIX" in text
+    assert "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6" in text.splitlines()
 
 
 def test_task_supply_service_treats_blocked_as_successful_oneshot_only() -> None:

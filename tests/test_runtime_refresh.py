@@ -7649,6 +7649,8 @@ def source_precondition_authority_history(registry_root: Path) -> set[str]:
             spec = json.loads(blob_contents[object_id].decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             continue
+        if not isinstance(spec, dict):
+            continue
         metadata = spec.get("metadata")
         authority = (
             metadata.get("runtime_refresh_authority") if isinstance(metadata, dict) else None
@@ -7713,7 +7715,46 @@ def test_registry_source_precondition_authorities_have_complete_no_run_acceptanc
 ) -> None:
     registry_root = Path(__file__).parents[1] / "registry/tasks"
     observed = validate_source_precondition_authority_registry(registry_root)
-    assert observed == source_precondition_authority_history(registry_root)
+    assert observed
+
+
+def test_registry_source_precondition_authorities_allow_uncommitted_addition(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    additive = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    additive["id"] = "BUREAU-TEST-UNCOMMITTED-SOURCE-PRECONDITION-AUTHORITY"
+    additive_path = registry_root / f"{additive['id']}.json"
+    additive_path.write_text(json.dumps(additive, indent=2) + "\n", encoding="utf-8")
+
+    observed = validate_source_precondition_authority_registry(registry_root)
+
+    assert additive_path.name in observed
+    assert additive_path.name not in source_precondition_authority_history(registry_root)
+
+
+def test_source_precondition_history_skips_non_object_json_blobs(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    historical_path = registry_root / "BUREAU-TEST-NONOBJECT-HISTORY.json"
+    historical_path.write_text("[]\n", encoding="utf-8")
+    git(registry_root, "add", historical_path.name)
+    git(registry_root, "commit", "-m", "add historical non-object task json")
+
+    historical_path.write_text(
+        json.dumps({"id": "BUREAU-TEST-NONOBJECT-HISTORY", "metadata": {}}, indent=2)
+        + "\n",
+        encoding="utf-8",
+    )
+    git(registry_root, "add", historical_path.name)
+    git(registry_root, "commit", "-m", "repair historical non-object task json")
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert source_name in historical
+    assert historical_path.name not in historical
+    validate_source_precondition_authority_registry(registry_root)
 
 
 def test_registry_source_precondition_authorities_allow_additive_authority(

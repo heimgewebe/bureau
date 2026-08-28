@@ -7583,7 +7583,6 @@ def historical_registry_json_blobs(registry_root: Path) -> list[tuple[str, str]]
             "HEAD",
             "-m",
             "--root",
-            "-m",
             "--raw",
             "--no-abbrev",
             "--no-renames",
@@ -7777,42 +7776,6 @@ def test_source_precondition_history_ignores_text_match_and_commit_neighbor(
     assert commit_neighbor.name not in historical
 
 
-def test_source_precondition_history_includes_merge_result_only_authority(
-    tmp_path: Path,
-) -> None:
-    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
-    repository = registry_root.parents[1]
-
-    git(repository, "checkout", "-b", "feature")
-    (repository / "feature.txt").write_text("feature\n", encoding="utf-8")
-    git(repository, "add", "feature.txt")
-    git(repository, "commit", "-m", "feature parent")
-
-    git(repository, "checkout", "main")
-    (repository / "main.txt").write_text("main\n", encoding="utf-8")
-    git(repository, "add", "main.txt")
-    git(repository, "commit", "-m", "main parent")
-    git(repository, "merge", "--no-ff", "--no-commit", "feature")
-
-    authority = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
-    authority["id"] = "BUREAU-TEST-MERGE-RESULT-SOURCE-PRECONDITION-AUTHORITY"
-    authority_path = registry_root / f"{authority['id']}.json"
-    authority_path.write_text(json.dumps(authority, indent=2) + "\n", encoding="utf-8")
-    git(repository, "add", authority_path.relative_to(repository).as_posix())
-    git(repository, "commit", "-m", "merge with result-only authority")
-
-    relative_path = authority_path.relative_to(repository).as_posix()
-    for parent in ("HEAD^1", "HEAD^2"):
-        absent = subprocess.run(
-            ["git", "cat-file", "-e", f"{parent}:{relative_path}"],
-            cwd=repository,
-            capture_output=True,
-        )
-        assert absent.returncode != 0
-
-    assert authority_path.name in source_precondition_authority_history(registry_root)
-
-
 def test_registry_source_precondition_authorities_reject_historical_deletion(
     tmp_path: Path,
 ) -> None:
@@ -7850,6 +7813,15 @@ def test_source_precondition_history_includes_merge_result_only_authority(
     authority_path.write_text(json.dumps(authority, indent=2) + "\n", encoding="utf-8")
     git(repository, "add", authority_path.relative_to(repository).as_posix())
     git(repository, "commit", "-m", "merge with result-only authority")
+
+    relative_path = authority_path.relative_to(repository).as_posix()
+    for parent in ("HEAD^1", "HEAD^2"):
+        absent = subprocess.run(
+            ["git", "cat-file", "-e", f"{parent}:{relative_path}"],
+            cwd=repository,
+            capture_output=True,
+        )
+        assert absent.returncode != 0
 
     assert authority_path.name in source_precondition_authority_history(registry_root)
 

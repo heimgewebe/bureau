@@ -15,6 +15,7 @@ from .closure_observer import (
     record_manual_acceptance_authentication,
 )
 from .core import (
+    ACTIVE_STATES,
     BureauError,
     Claim,
     Dispatcher,
@@ -32,6 +33,7 @@ from .core import (
     lifecycle_diagnostics,
     preserve_workspace,
     runtime_drift_check,
+    sha256_json,
     verification_stamp,
     workspace_status,
 )
@@ -454,6 +456,8 @@ def parser() -> argparse.ArgumentParser:
     task_no_run_closeout.add_argument("--reviewer", required=True)
     task_no_run_closeout.add_argument("--apply", action="store_true")
     task_no_run_closeout.add_argument("--expected-preview-sha256")
+    runtime_closeout_prepare_parser = sub.add_parser("runtime-closeout-prepare")
+    runtime_closeout_prepare_parser.add_argument("run_id")
     complete = sub.add_parser("complete")
     complete.add_argument("run_id")
     complete.add_argument("--evidence", required=True)
@@ -613,6 +617,161 @@ def _state_root_path(args: argparse.Namespace) -> Path:
     return _state_path(args).parent
 
 
+_RUNTIME_CLOSEOUT_PREPARE_TTL_SECONDS = 300
+_RUNTIME_CLOSEOUT_PREPARE_MIN_REMAINING_SECONDS = 180
+
+
+def runtime_closeout_prepare(store: StateStore, run_id: str) -> dict[str, Any]:
+    """Build the exact narrow Grabowski lease request for one runtime closeout.
+
+    This is deliberately read-only. Grabowski remains the lease writer, while
+    :func:`runtime_closeout` remains the authority that revalidates the live
+    lease, runtime/Registry identity, task/plan revisions and terminal result.
+    """
+    run = store.run(run_id)
+    if run.get("state") not in ACTIVE_STATES:
+        raise RunStateConflict(
+            "runtime-closeout-run-not-active",
+            f"run {run_id} is not active for exact-runtime closeout preparation",
+            run_id=run_id,
+            details={"state": run.get("state")},
+        )
+    if run.get("run_id") != run_id:
+        raise RunStateConflict(
+            "runtime-closeout-run-binding-invalid",
+            "StateStore returned a run with a different identity",
+            run_id=run_id,
+        )
+    required_run_bindings: dict[str, str] = {}
+    for field in ("task_id", "task_sha256", "plan_sha256", "envelope_sha256"):
+        value = run.get(field)
+        if not isinstance(value, str) or not value:
+            raise RunStateConflict(
+                "runtime-closeout-run-binding-invalid",
+                f"active run lacks required {field} binding",
+                run_id=run_id,
+                details={"field": field},
+            )
+        required_run_bindings[field] = value
+
+    state_root = store.state_root.resolve()
+    closeout_parent = state_root / "runtime-closeout"
+    closeout_root = closeout_parent / run_id
+    if closeout_parent.is_symlink() or closeout_root.is_symlink():
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-invalid",
+            "runtime closeout path may not contain a symlink",
+            run_id=run_id,
+        )
+    resolved_parent = closeout_parent.resolve(strict=False)
+    resolved_closeout_root = closeout_root.resolve(strict=False)
+    if (
+        resolved_closeout_root.parent != resolved_parent
+        or state_root not in resolved_closeout_root.parents
+    ):
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-invalid",
+            "runtime closeout path escaped the canonical StateStore root",
+            run_id=run_id,
+        )
+    for candidate in (closeout_parent, closeout_root):
+        if candidate.exists() and (
+            not candidate.is_dir() or candidate.stat().st_uid != os.geteuid()
+        ):
+            raise RunStateConflict(
+                "runtime-closeout-temp-root-invalid",
+                "existing runtime closeout path is not an owned real directory",
+                run_id=run_id,
+            )
+    if closeout_root.exists() and any(closeout_root.iterdir()):
+        raise RunStateConflict(
+            "runtime-closeout-temp-root-not-empty",
+            "runtime closeout root contains pre-existing artifacts",
+            run_id=run_id,
+        )
+
+    # Reuse the exact hash-bound envelope and structural claim-intent admission
+    # that runtime_closeout applies before it touches live lease state. This
+    # prevents a "ready" receipt for legacy claim-next runs that completion
+    # would deterministically reject after the temporary lease was acquired.
+    from . import v2 as bureau_v2
+
+    envelope = bureau_v2._claim_bound_envelope(
+        store, run_id, required_run_bindings["envelope_sha256"]
+    )
+    intent = envelope.get("claim_intent")
+    if not isinstance(intent, dict):
+        raise RunStateConflict(
+            "runtime-closeout-pickup-lease-required",
+            "exact-runtime closeout requires a coordinated pickup lease binding",
+            run_id=run_id,
+        )
+    bureau_v2._validate_coordinated_claim_intent(intent)
+
+    task_id = required_run_bindings["task_id"]
+    owner_id = f"bureau-runtime-closeout:{run_id}"
+    resource_key = f"path:{resolved_closeout_root}"
+    metadata = {
+        "task_id": task_id,
+        "run_id": run_id,
+        "operation": "runtime-closeout",
+    }
+    lease_request = {
+        "owner_id": owner_id,
+        "resource_keys": [resource_key],
+        "purpose": f"Bureau exact-runtime closeout {run_id}",
+        "ttl_seconds": _RUNTIME_CLOSEOUT_PREPARE_TTL_SECONDS,
+        "metadata": metadata,
+    }
+    lease_request_sha256 = sha256_json(lease_request)
+    receipt = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_closeout_lease_prepare",
+        "status": "ready",
+        "effect_started": False,
+        "run_id": run_id,
+        "task_id": task_id,
+        "task_sha256": required_run_bindings["task_sha256"],
+        "plan_sha256": required_run_bindings["plan_sha256"],
+        "envelope_sha256": required_run_bindings["envelope_sha256"],
+        "state_root": str(state_root),
+        "closeout_owner_id": owner_id,
+        "closeout_resource_key": resource_key,
+        "minimum_remaining_seconds": _RUNTIME_CLOSEOUT_PREPARE_MIN_REMAINING_SECONDS,
+        "grabowski_resource_acquire": {
+            "tool": "grabowski_resource_acquire",
+            "arguments": lease_request,
+            "arguments_sha256": lease_request_sha256,
+        },
+        "required_live_validation": {
+            "owner_id": owner_id,
+            "task_id": task_id,
+            "required_resource_keys": [resource_key],
+            "required_metadata": metadata,
+            "minimum_remaining_seconds": _RUNTIME_CLOSEOUT_PREPARE_MIN_REMAINING_SECONDS,
+        },
+        "next_action": (
+            "Acquire exactly grabowski_resource_acquire.arguments through Grabowski, "
+            "then invoke complete --exact-runtime with the canonical evidence bundle. "
+            "The completion path revalidates all lease and revision bindings."
+        ),
+        "does_not_establish": [
+            "lease_acquisition",
+            "lease_ownership",
+            "pickup_lease_validity",
+            "runtime_identity_validity",
+            "registry_identity_validity",
+            "task_or_plan_revision_validity",
+            "acceptance_authentication",
+            "completion_authority",
+            "foreign_lease_release_authority",
+            "force_release_authority",
+            "deployment_authority",
+        ],
+    }
+    return {**receipt, "prepare_receipt_sha256": sha256_json(receipt)}
+
+
 _READ_ONLY_COMMANDS = frozenset(
     {
         "authority-inventory",
@@ -622,6 +781,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "explain-next",
         "frontier",
         "runtime-identity",
+        "runtime-closeout-prepare",
         "runtime-drift-check",
         "lease-contract",
         "lifecycle",
@@ -1763,6 +1923,8 @@ def main(argv: list[str] | None = None) -> int:
                 expected_evidence_sha256=args.expected_evidence_sha256,
                 reviewer=args.reviewer,
             )
+        elif args.command == "runtime-closeout-prepare":
+            value = runtime_closeout_prepare(store, args.run_id)
         elif args.command == "complete":
             if args.exact_runtime:
                 value = runtime_closeout(

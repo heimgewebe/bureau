@@ -58,7 +58,7 @@ Current reference units under `ops/systemd/`:
 | `bureau-state-restore-test.timer` | runs `bureau-state-restore-test.service` daily | Continuously proves event, TaskSpec, envelope and receipt roots without reactivating historical leases. |
 | `bureau-reconcile.service` | `%h/.local/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900` | Uses the same immutable Bureau launcher as interactive operator calls. |
 | `bureau-task-supply.service` | `%h/.local/bin/bureau task-supply-run --capability ... --mutation-authority --publish` | Revision-bound auxiliary scheduler; may auto-publish only blocker-free bounded StateStore refill and does not pass `--approval-available`. |
-| `bureau-task-supply.timer` | runs `bureau-task-supply.service` every five minutes | Keeps bounded claimable supply fresh without network access or a mutable source checkout. |
+| `bureau-task-supply.timer` | runs `bureau-task-supply.service` every five minutes | Keeps bounded claimable supply fresh without a mutable source checkout; the service permits only AF_UNIX/AF_INET/AF_INET6 so its fail-closed open-PR guard can make the required fresh GitHub observation. |
 | `bureau-source-pr-bridge.service` | `%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge` | Dedicated ops binary; needs compatibility shim before consolidation. |
 | `bureau-review-steward.service` | `%h/.local/share/bureau-review-steward/venv/bin/bureau-review-steward run` | Dedicated ops binary; needs compatibility shim before consolidation. |
 | `bureau-agent-frontier.service` | `%h/.local/libexec/bureau-agent-frontier` | Uses local libexec shim. Replacement must account for deployed shim path. |

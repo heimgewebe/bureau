@@ -690,6 +690,24 @@ def runtime_closeout_prepare(store: StateStore, run_id: str) -> dict[str, Any]:
             run_id=run_id,
         )
 
+    # Reuse the exact hash-bound envelope and structural claim-intent admission
+    # that runtime_closeout applies before it touches live lease state. This
+    # prevents a "ready" receipt for legacy claim-next runs that completion
+    # would deterministically reject after the temporary lease was acquired.
+    from . import v2 as bureau_v2
+
+    envelope = bureau_v2._claim_bound_envelope(
+        store, run_id, required_run_bindings["envelope_sha256"]
+    )
+    intent = envelope.get("claim_intent")
+    if not isinstance(intent, dict):
+        raise RunStateConflict(
+            "runtime-closeout-pickup-lease-required",
+            "exact-runtime closeout requires a coordinated pickup lease binding",
+            run_id=run_id,
+        )
+    bureau_v2._validate_coordinated_claim_intent(intent)
+
     task_id = required_run_bindings["task_id"]
     owner_id = f"bureau-runtime-closeout:{run_id}"
     resource_key = f"path:{resolved_closeout_root}"

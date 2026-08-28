@@ -7591,7 +7591,11 @@ def accepted_history_revision(repository: Path) -> str:
         base = pull_request.get("base") if isinstance(pull_request, dict) else None
     else:
         merge_group = event.get("merge_group")
-        base = merge_group if isinstance(merge_group, dict) else None
+        base = (
+            {"sha": merge_group.get("base_sha")}
+            if isinstance(merge_group, dict)
+            else None
+        )
     candidate = base.get("sha") if isinstance(base, dict) else None
     if not (
         isinstance(candidate, str)
@@ -7853,6 +7857,27 @@ def test_source_precondition_history_ignores_text_match_and_commit_neighbor(
     assert authority_path.name in historical
     assert textual_decoy.name not in historical
     assert commit_neighbor.name not in historical
+
+
+def test_accepted_history_revision_uses_merge_group_base_sha(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, _ = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+    accepted_base = git(repository, "rev-parse", "HEAD")
+    (repository / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+    git(repository, "add", "candidate.txt")
+    git(repository, "commit", "-m", "merge-group candidate")
+
+    event_path = tmp_path / "merge-group-event.json"
+    event_path.write_text(
+        json.dumps({"merge_group": {"base_sha": accepted_base}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "merge_group")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+
+    assert accepted_history_revision(repository) == accepted_base
 
 
 def test_source_precondition_history_ignores_unaccepted_pr_intermediate_authority(

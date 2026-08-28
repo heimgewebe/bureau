@@ -857,6 +857,72 @@ def test_squash_workspace_cleanup_preserves_on_contradictory_merge_evidence(
     assert workspace.is_dir()
 
 
+def test_squash_workspace_cleanup_preserves_if_head_changes_during_merge_proof(
+    registry_factory, tmp_path, monkeypatch
+):
+    _root, store, run_id, workspace, head_sha, merge_commit_sha = make_squash_cleanup_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = {
+        "schema_version": 1,
+        "status": "verified",
+        "repository": "heimgewebe/bureau-test",
+        "pull_request": 17,
+        "head_sha": head_sha,
+        "merge_commit_sha": merge_commit_sha,
+        "merged_at": "2026-08-28T10:00:00Z",
+        "base_ref": "main",
+        "main_sha": merge_commit_sha,
+        "comparison_status": "identical",
+        "proof_sha256": "f" * 64,
+    }
+
+    def observe(_repo, observed_head):
+        assert observed_head == head_sha
+        (workspace / "late-clean-change.txt").write_text("new revision\n")
+        git_output(workspace, "add", "late-clean-change.txt")
+        git_output(workspace, "commit", "-m", "late clean change")
+        return proof
+
+    monkeypatch.setattr(bureau_v2, "_workspace_squash_merge_proof", observe)
+    cleaned = cleanup_workspace(store, run_id)
+    assert cleaned["state"] == "preserved"
+    assert cleaned["detail"] == "workspace changed during merge proof"
+    assert cleaned["head"] != head_sha
+    assert workspace.is_dir()
+
+
+def test_squash_workspace_cleanup_preserves_if_workspace_turns_dirty_during_merge_proof(
+    registry_factory, tmp_path, monkeypatch
+):
+    _root, store, run_id, workspace, _head_sha, _merge_commit_sha = make_squash_cleanup_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+
+    def observe(_repo, _observed_head):
+        (workspace / "late-dirty-change.txt").write_text("uncommitted\n")
+        return {
+            "schema_version": 1,
+            "status": "verified",
+            "repository": "heimgewebe/bureau-test",
+            "pull_request": 17,
+            "head_sha": _observed_head,
+            "merge_commit_sha": "b" * 40,
+            "merged_at": "2026-08-28T10:00:00Z",
+            "base_ref": "main",
+            "main_sha": "b" * 40,
+            "comparison_status": "identical",
+            "proof_sha256": "f" * 64,
+        }
+
+    monkeypatch.setattr(bureau_v2, "_workspace_squash_merge_proof", observe)
+    cleaned = cleanup_workspace(store, run_id)
+    assert cleaned["state"] == "preserved"
+    assert cleaned["detail"] == "workspace changed during merge proof"
+    assert cleaned["dirty"] is True
+    assert workspace.is_dir()
+
+
 def test_workspace_squash_merge_proof_binds_exact_pr_head_and_current_main(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     root.mkdir()
@@ -866,6 +932,12 @@ def test_workspace_squash_merge_proof_binds_exact_pr_head_and_current_main(tmp_p
     merge_commit_sha = "b" * 40
     main_sha = "c" * 40
     calls = []
+
+    monkeypatch.setattr(
+        bureau_v2.github_repository,
+        "resolve_canonical_repository_identity",
+        lambda slug: bureau_v2.github_repository.CanonicalRepositoryIdentity(slug, slug),
+    )
 
     def api(endpoint, *, diagnostic):
         calls.append((endpoint, diagnostic))
@@ -925,6 +997,12 @@ def test_workspace_squash_merge_proof_rejects_stale_pr_head(tmp_path, monkeypatc
     git_output(root, "remote", "add", "origin", "https://github.com/heimgewebe/example.git")
     head_sha = "a" * 40
 
+    monkeypatch.setattr(
+        bureau_v2.github_repository,
+        "resolve_canonical_repository_identity",
+        lambda slug: bureau_v2.github_repository.CanonicalRepositoryIdentity(slug, slug),
+    )
+
     def api(endpoint, *, diagnostic):
         assert endpoint.startswith(f"repos/heimgewebe/example/commits/{head_sha}/pulls")
         return [
@@ -943,6 +1021,68 @@ def test_workspace_squash_merge_proof_rejects_stale_pr_head(tmp_path, monkeypatc
 
     monkeypatch.setattr(bureau_v2, "_workspace_github_api_json", api)
     assert bureau_v2._workspace_squash_merge_proof(root, head_sha) is None
+
+
+def test_workspace_squash_merge_proof_uses_canonical_repository_identity(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    root.mkdir()
+    git_output(root, "init", "-b", "main")
+    git_output(root, "remote", "add", "origin", "https://github.com/HEIMGEWEBE/old-name.git")
+    head_sha = "a" * 40
+    merge_commit_sha = "b" * 40
+    main_sha = "c" * 40
+    calls = []
+
+    def canonicalize(slug):
+        assert slug == "HEIMGEWEBE/old-name"
+        return bureau_v2.github_repository.CanonicalRepositoryIdentity(
+            supplied_slug=slug,
+            canonical_slug="heimgewebe/new-name",
+        )
+
+    monkeypatch.setattr(
+        bureau_v2.github_repository,
+        "resolve_canonical_repository_identity",
+        canonicalize,
+    )
+
+    def api(endpoint, *, diagnostic):
+        calls.append(endpoint)
+        if endpoint.startswith(f"repos/heimgewebe/new-name/commits/{head_sha}/pulls"):
+            return [{
+                "number": 17,
+                "state": "closed",
+                "merged_at": "2026-08-28T10:00:00Z",
+                "merge_commit_sha": merge_commit_sha,
+                "head": {"sha": head_sha},
+                "base": {"ref": "main", "repo": {"full_name": "HeimGewebe/New-Name"}},
+            }]
+        if endpoint == "repos/heimgewebe/new-name/pulls/17":
+            return {
+                "number": 17,
+                "state": "closed",
+                "merged": True,
+                "merged_at": "2026-08-28T10:00:00Z",
+                "merge_commit_sha": merge_commit_sha,
+                "head": {"sha": head_sha},
+                "base": {"ref": "main", "repo": {"full_name": "HEIMGEWEBE/NEW-NAME"}},
+            }
+        if endpoint == "repos/heimgewebe/new-name/branches/main":
+            return {"name": "main", "commit": {"sha": main_sha}}
+        if endpoint == f"repos/heimgewebe/new-name/compare/{merge_commit_sha}...{main_sha}":
+            return {
+                "status": "ahead",
+                "behind_by": 0,
+                "base_commit": {"sha": merge_commit_sha},
+                "merge_base_commit": {"sha": merge_commit_sha},
+            }
+        raise AssertionError(endpoint)
+
+    monkeypatch.setattr(bureau_v2, "_workspace_github_api_json", api)
+    proof = bureau_v2._workspace_squash_merge_proof(root, head_sha)
+    assert proof["repository"] == "heimgewebe/new-name"
+    assert proof["head_sha"] == head_sha
+    assert len(calls) == 5
 
 
 def test_workspace_cleanup_still_requires_terminal_run(

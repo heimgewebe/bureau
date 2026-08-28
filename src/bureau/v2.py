@@ -8519,6 +8519,15 @@ def _workspace_squash_merge_proof(repo: Path, head_sha: str) -> dict[str, Any] |
     repository = _github_repository_for_path(repo)
     if repository is None:
         return None
+    try:
+        repository_identity = github_repository.resolve_canonical_repository_identity(
+            repository
+        )
+    except github_repository.RepositoryCanonicalIdentityError as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot resolve canonical workspace repository identity: {exc}"
+        ) from exc
+    repository = repository_identity.canonical_slug
 
     pulls = _workspace_github_api_json(
         f"repos/{repository}/commits/{head_sha}/pulls?per_page={WORKSPACE_MERGE_PROOF_PR_LIMIT}",
@@ -8546,7 +8555,11 @@ def _workspace_squash_merge_proof(repo: Path, head_sha: str) -> dict[str, Any] |
         if not isinstance(base, dict) or base.get("ref") not in {"main", "master"}:
             continue
         base_repo = base.get("repo")
-        if not isinstance(base_repo, dict) or base_repo.get("full_name") != repository:
+        base_repo_name = base_repo.get("full_name") if isinstance(base_repo, dict) else None
+        if (
+            not isinstance(base_repo_name, str)
+            or base_repo_name.casefold() != repository.casefold()
+        ):
             raise OpenPullRequestObservationError(
                 "workspace merge proof base repository is contradictory"
             )
@@ -8597,7 +8610,8 @@ def _workspace_squash_merge_proof(repo: Path, head_sha: str) -> dict[str, Any] |
         or not isinstance(exact_base, dict)
         or exact_base.get("ref") != base_ref
         or not isinstance(exact_base_repo, dict)
-        or exact_base_repo.get("full_name") != repository
+        or not isinstance(exact_base_repo.get("full_name"), str)
+        or exact_base_repo["full_name"].casefold() != repository.casefold()
     ):
         raise OpenPullRequestObservationError(
             "workspace merge proof pull request identity changed during observation"
@@ -8707,6 +8721,16 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
             }
         if merge_proof is None:
             return preserve_workspace(store, run_id, "branch not merged")
+        current_status = workspace_status(store, run_id)
+        if (
+            current_status.get("head") != status["head"]
+            or current_status.get("dirty") is not False
+        ):
+            return preserve_workspace(
+                store,
+                run_id,
+                "workspace changed during merge proof",
+            )
     _git(
         repo,
         "worktree",

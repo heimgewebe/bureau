@@ -8476,6 +8476,198 @@ def preserve_workspace(store: StateStore, run_id: str, reason: str) -> dict[str,
     return workspace_status(store, run_id)
 
 
+WORKSPACE_MERGE_PROOF_SCHEMA_VERSION = 1
+WORKSPACE_MERGE_PROOF_PR_LIMIT = 100
+
+
+def _workspace_github_api_json(endpoint: str, *, diagnostic: str) -> Any:
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    try:
+        result = subprocess.run(
+            [binary, "api", endpoint],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(f"{diagnostic}: {exc}") from exc
+    if result.returncode != 0:
+        detail = "\n".join(
+            part for part in (result.stdout.strip(), result.stderr.strip()) if part
+        )
+        raise OpenPullRequestObservationError(
+            f"{diagnostic}: {detail or 'no diagnostic'}"
+        )
+    try:
+        return json.loads(result.stdout or "null")
+    except json.JSONDecodeError as exc:
+        raise OpenPullRequestObservationError(
+            f"{diagnostic}: invalid JSON: {exc}"
+        ) from exc
+
+
+def _workspace_squash_merge_proof(repo: Path, head_sha: str) -> dict[str, Any] | None:
+    """Return exact GitHub evidence that a non-ancestor workspace head was squash-merged.
+
+    This is deliberately a fallback for the normal Git ancestry proof.  Every network
+    read is rebound to the exact workspace head and the current base branch tip; an
+    absent, stale, ambiguous or contradictory observation fails closed.
+    """
+    if _GIT_OID_RE.fullmatch(head_sha) is None:
+        raise OpenPullRequestObservationError("workspace head is not a canonical git OID")
+    repository = _github_repository_for_path(repo)
+    if repository is None:
+        return None
+
+    pulls = _workspace_github_api_json(
+        f"repos/{repository}/commits/{head_sha}/pulls?per_page={WORKSPACE_MERGE_PROOF_PR_LIMIT}",
+        diagnostic=f"cannot observe pull requests for workspace head {head_sha}",
+    )
+    if not isinstance(pulls, list):
+        raise OpenPullRequestObservationError(
+            "workspace-head pull request observation is not a list"
+        )
+    if len(pulls) >= WORKSPACE_MERGE_PROOF_PR_LIMIT:
+        raise OpenPullRequestObservationError(
+            "workspace-head pull request observation reached its bound"
+        )
+
+    candidates: list[dict[str, Any]] = []
+    for item in pulls:
+        if not isinstance(item, dict):
+            raise OpenPullRequestObservationError(
+                "workspace-head pull request observation contains a non-object"
+            )
+        head = item.get("head")
+        if not isinstance(head, dict) or head.get("sha") != head_sha:
+            continue
+        base = item.get("base")
+        if not isinstance(base, dict) or base.get("ref") not in {"main", "master"}:
+            continue
+        base_repo = base.get("repo")
+        if not isinstance(base_repo, dict) or base_repo.get("full_name") != repository:
+            raise OpenPullRequestObservationError(
+                "workspace merge proof base repository is contradictory"
+            )
+        if item.get("state") != "closed" or not isinstance(item.get("merged_at"), str):
+            continue
+        number = item.get("number")
+        merge_commit_sha = item.get("merge_commit_sha")
+        if type(number) is not int or number <= 0:
+            raise OpenPullRequestObservationError(
+                "workspace merge proof has an invalid pull request number"
+            )
+        if not isinstance(merge_commit_sha, str) or _GIT_OID_RE.fullmatch(merge_commit_sha) is None:
+            raise OpenPullRequestObservationError(
+                "workspace merge proof has an invalid merge commit"
+            )
+        candidates.append(item)
+
+    if not candidates:
+        return None
+    if len(candidates) != 1:
+        raise OpenPullRequestObservationError(
+            "workspace head has ambiguous merged pull request evidence"
+        )
+
+    pull_request = candidates[0]
+    base = pull_request["base"]
+    base_ref = base["ref"]
+    merge_commit_sha = pull_request["merge_commit_sha"]
+    number = pull_request["number"]
+    merged_at = pull_request["merged_at"]
+
+    exact_pull_request = _workspace_github_api_json(
+        f"repos/{repository}/pulls/{number}",
+        diagnostic=f"cannot revalidate merged pull request {repository}#{number}",
+    )
+    exact_head = exact_pull_request.get("head") if isinstance(exact_pull_request, dict) else None
+    exact_base = exact_pull_request.get("base") if isinstance(exact_pull_request, dict) else None
+    exact_base_repo = exact_base.get("repo") if isinstance(exact_base, dict) else None
+    if (
+        not isinstance(exact_pull_request, dict)
+        or exact_pull_request.get("number") != number
+        or exact_pull_request.get("state") != "closed"
+        or exact_pull_request.get("merged") is not True
+        or exact_pull_request.get("merged_at") != merged_at
+        or exact_pull_request.get("merge_commit_sha") != merge_commit_sha
+        or not isinstance(exact_head, dict)
+        or exact_head.get("sha") != head_sha
+        or not isinstance(exact_base, dict)
+        or exact_base.get("ref") != base_ref
+        or not isinstance(exact_base_repo, dict)
+        or exact_base_repo.get("full_name") != repository
+    ):
+        raise OpenPullRequestObservationError(
+            "workspace merge proof pull request identity changed during observation"
+        )
+
+    branch = _workspace_github_api_json(
+        f"repos/{repository}/branches/{base_ref}",
+        diagnostic=f"cannot read current {repository}:{base_ref}",
+    )
+    branch_commit = branch.get("commit") if isinstance(branch, dict) else None
+    main_sha = branch_commit.get("sha") if isinstance(branch_commit, dict) else None
+    if (
+        not isinstance(branch, dict)
+        or branch.get("name") != base_ref
+        or not isinstance(main_sha, str)
+        or _GIT_OID_RE.fullmatch(main_sha) is None
+    ):
+        raise OpenPullRequestObservationError(
+            "workspace merge proof base-branch readback is invalid"
+        )
+
+    comparison = _workspace_github_api_json(
+        f"repos/{repository}/compare/{merge_commit_sha}...{main_sha}",
+        diagnostic=f"cannot bind merge commit {merge_commit_sha} to current {base_ref}",
+    )
+    base_commit = comparison.get("base_commit") if isinstance(comparison, dict) else None
+    merge_base = comparison.get("merge_base_commit") if isinstance(comparison, dict) else None
+    if (
+        not isinstance(comparison, dict)
+        or comparison.get("status") not in {"ahead", "identical"}
+        or comparison.get("behind_by") != 0
+        or not isinstance(base_commit, dict)
+        or base_commit.get("sha") != merge_commit_sha
+        or not isinstance(merge_base, dict)
+        or merge_base.get("sha") != merge_commit_sha
+    ):
+        raise OpenPullRequestObservationError(
+            "workspace merge proof does not establish that the merge commit is on current main"
+        )
+
+    final_branch = _workspace_github_api_json(
+        f"repos/{repository}/branches/{base_ref}",
+        diagnostic=f"cannot revalidate current {repository}:{base_ref}",
+    )
+    final_commit = final_branch.get("commit") if isinstance(final_branch, dict) else None
+    if (
+        not isinstance(final_branch, dict)
+        or final_branch.get("name") != base_ref
+        or not isinstance(final_commit, dict)
+        or final_commit.get("sha") != main_sha
+    ):
+        raise OpenPullRequestObservationError(
+            "workspace merge proof base branch changed during observation"
+        )
+
+    material = {
+        "schema_version": WORKSPACE_MERGE_PROOF_SCHEMA_VERSION,
+        "status": "verified",
+        "repository": repository,
+        "pull_request": number,
+        "head_sha": head_sha,
+        "merge_commit_sha": merge_commit_sha,
+        "merged_at": merged_at,
+        "base_ref": base_ref,
+        "main_sha": main_sha,
+        "comparison_status": comparison["status"],
+    }
+    return {**material, "proof_sha256": legacy.sha256_json(material)}
+
+
 def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> dict[str, Any]:
     status = workspace_status(store, run_id)
     if status["run_state"] not in TERMINAL_STATES:
@@ -8502,9 +8694,19 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
         return {**current, "cleanup": "already-missing"}
     if status["dirty"] and not force:
         return preserve_workspace(store, run_id, "dirty workspace")
-    if not status["merged"] and not force:
-        return preserve_workspace(store, run_id, "branch not merged")
     repo = Path(status["repository_path"])
+    merge_proof = None
+    if not status["merged"] and not force:
+        try:
+            merge_proof = _workspace_squash_merge_proof(repo, status["head"])
+        except OpenPullRequestObservationError as exc:
+            preserved = preserve_workspace(store, run_id, "branch not merged")
+            return {
+                **preserved,
+                "merge_proof": {"status": "unavailable", "diagnostic": str(exc)},
+            }
+        if merge_proof is None:
+            return preserve_workspace(store, run_id, "branch not merged")
     _git(
         repo,
         "worktree",
@@ -8514,14 +8716,20 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
     )
     if status["merged"]:
         _git(repo, "branch", "-d", status["branch"], check=False)
+    event_payload: dict[str, Any] = {"force": force}
+    if merge_proof is not None:
+        event_payload["merge_proof"] = merge_proof
     with store.immediate() as connection:
         connection.execute(
             "UPDATE workspaces SET state='removed',updated_at=? WHERE run_id=?",
             (legacy.utc_now(), run_id),
         )
-        store.event(connection, "workspace-removed", {"force": force}, run_id)
+        store.event(connection, "workspace-removed", event_payload, run_id)
     current = workspace_status(store, run_id)
-    return {**current, "cleanup": "removed"}
+    result = {**current, "cleanup": "removed"}
+    if merge_proof is not None:
+        result["merge_proof"] = merge_proof
+    return result
 
 
 def _current_verification_stamp(

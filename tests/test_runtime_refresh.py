@@ -7623,6 +7623,7 @@ def historical_registry_json_blobs(registry_root: Path) -> list[tuple[str, str]]
             "git",
             "log",
             history_revision,
+            "--first-parent",
             "-m",
             "--root",
             "--raw",
@@ -7904,6 +7905,35 @@ def test_source_precondition_history_ignores_unaccepted_pr_intermediate_authorit
     )
     monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
     monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert source_name in historical
+    assert transient_path.name not in historical
+    validate_source_precondition_authority_registry(registry_root)
+
+
+def test_push_history_ignores_merged_pr_intermediate_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+
+    git(repository, "switch", "-c", "transient-pr")
+    transient = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    transient["id"] = "BUREAU-TEST-MERGED-PR-TRANSIENT-SOURCE-PRECONDITION-AUTHORITY"
+    transient_path = registry_root / f"{transient['id']}.json"
+    transient_path.write_text(json.dumps(transient, indent=2) + "\n", encoding="utf-8")
+    git(repository, "add", transient_path.relative_to(repository).as_posix())
+    git(repository, "commit", "-m", "add transient pull-request authority")
+    transient_path.unlink()
+    git(repository, "add", "-u")
+    git(repository, "commit", "-m", "remove transient pull-request authority")
+
+    git(repository, "switch", "main")
+    git(repository, "merge", "--no-ff", "-m", "merge transient pull request", "transient-pr")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
 
     historical = source_precondition_authority_history(registry_root)
 

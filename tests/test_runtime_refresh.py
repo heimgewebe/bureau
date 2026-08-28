@@ -7573,10 +7573,23 @@ def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: P
         )
     assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"
 
-def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
-) -> None:
-    paths: list[Path] = []
-    for path in sorted((Path(__file__).parents[1] / "registry/tasks").glob("*.json")):
+SOURCE_PRECONDITION_AUTHORITY_BASELINE = frozenset(
+    {
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2158-BUREAU05-20260823.json",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2174-REPOGROUND-T020-20260825.json",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-CURRENT-MAIN-SUCCESSOR-20260823.json",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-CURRENT-MAIN-SUCCESSOR-20260824.json",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824.json",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PR2172-SOURCE-CONVERGENCE-20260825.json",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260827.json",
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260828.json",
+    }
+)
+
+
+def validate_source_precondition_authority_registry(registry_root: Path) -> set[str]:
+    observed: set[str] = set()
+    for path in sorted(registry_root.glob("*.json")):
         spec = json.loads(path.read_text(encoding="utf-8"))
         metadata = spec.get("metadata")
         authority = (
@@ -7584,7 +7597,7 @@ def test_registry_source_precondition_authorities_have_complete_no_run_acceptanc
         )
         if not isinstance(authority, dict) or "source_precondition" not in authority:
             continue
-        paths.append(path)
+        observed.add(path.name)
         assert authority["mode"] == refresh.RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
         contract = refresh._validated_no_run_acceptance_contract(
             spec=spec, authority=authority
@@ -7596,7 +7609,67 @@ def test_registry_source_precondition_authorities_have_complete_no_run_acceptanc
             "source-precondition" in item["required_evidence"]
             for item in contract["criteria"].values()
         )
-    assert len(paths) == 8
+
+    missing = SOURCE_PRECONDITION_AUTHORITY_BASELINE - observed
+    assert not missing, f"required source_precondition authorities disappeared: {sorted(missing)}"
+    return observed
+
+
+def source_precondition_authority_fixture(tmp_path: Path) -> Path:
+    source = Path(__file__).parents[1] / "registry/tasks"
+    target = tmp_path / "registry/tasks"
+    target.mkdir(parents=True)
+    for name in SOURCE_PRECONDITION_AUTHORITY_BASELINE:
+        shutil.copy2(source / name, target / name)
+    return target
+
+
+def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
+) -> None:
+    registry_root = Path(__file__).parents[1] / "registry/tasks"
+    observed = validate_source_precondition_authority_registry(registry_root)
+    assert observed >= SOURCE_PRECONDITION_AUTHORITY_BASELINE
+
+
+def test_registry_source_precondition_authorities_allow_additive_authority(
+    tmp_path: Path,
+) -> None:
+    registry_root = source_precondition_authority_fixture(tmp_path)
+    source_name = sorted(SOURCE_PRECONDITION_AUTHORITY_BASELINE)[0]
+    additive = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    additive["id"] = "BUREAU-TEST-ADDITIVE-SOURCE-PRECONDITION-AUTHORITY"
+    additive_path = registry_root / f"{additive['id']}.json"
+    additive_path.write_text(json.dumps(additive, indent=2) + "\n", encoding="utf-8")
+
+    observed = validate_source_precondition_authority_registry(registry_root)
+
+    assert additive_path.name in observed
+
+
+def test_registry_source_precondition_authorities_reject_baseline_deletion(
+    tmp_path: Path,
+) -> None:
+    registry_root = source_precondition_authority_fixture(tmp_path)
+    removed = sorted(SOURCE_PRECONDITION_AUTHORITY_BASELINE)[0]
+    (registry_root / removed).unlink()
+
+    with pytest.raises(AssertionError, match="source_precondition authorities disappeared"):
+        validate_source_precondition_authority_registry(registry_root)
+
+
+def test_registry_source_precondition_authorities_reject_malformed_addition(
+    tmp_path: Path,
+) -> None:
+    registry_root = source_precondition_authority_fixture(tmp_path)
+    source_name = sorted(SOURCE_PRECONDITION_AUTHORITY_BASELINE)[0]
+    malformed = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    malformed["id"] = "BUREAU-TEST-MALFORMED-SOURCE-PRECONDITION-AUTHORITY"
+    malformed["metadata"]["runtime_refresh_authority"]["mode"] = "invalid-mode"
+    malformed_path = registry_root / f"{malformed['id']}.json"
+    malformed_path.write_text(json.dumps(malformed, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(AssertionError):
+        validate_source_precondition_authority_registry(registry_root)
 
 
 

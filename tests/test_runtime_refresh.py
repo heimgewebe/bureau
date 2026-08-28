@@ -7573,25 +7573,88 @@ def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: P
         )
     assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"
 
-def source_precondition_authority_history(registry_root: Path) -> set[str]:
+def historical_registry_json_blobs(registry_root: Path) -> list[tuple[str, str]]:
     repository = Path(git(registry_root, "rev-parse", "--show-toplevel"))
     relative_registry = registry_root.resolve().relative_to(repository.resolve())
-    history = git(
-        repository,
-        "log",
-        "HEAD",
-        "--format=",
-        "--name-only",
-        "-G",
-        '"source_precondition"',
-        "--",
-        relative_registry.as_posix(),
+    result = subprocess.run(
+        [
+            "git",
+            "log",
+            "HEAD",
+            "--root",
+            "--raw",
+            "--no-abbrev",
+            "--no-renames",
+            "--diff-filter=AM",
+            "--format=commit:%H",
+            "--",
+            relative_registry.as_posix(),
+        ],
+        cwd=repository,
+        check=True,
+        text=True,
+        capture_output=True,
     )
-    return {
-        Path(line).name
-        for line in history.splitlines()
-        if line.strip().endswith(".json")
-    }
+    blobs: list[tuple[str, str]] = []
+    for line in result.stdout.splitlines():
+        if not line.startswith(":") or "\t" not in line:
+            continue
+        metadata, path = line.split("\t", 1)
+        fields = metadata.split()
+        assert len(fields) == 5
+        new_blob = fields[3]
+        if path.endswith(".json"):
+            blobs.append((new_blob, path))
+    return blobs
+
+
+def git_blob_batch(repository: Path, object_ids: set[str]) -> dict[str, bytes]:
+    ordered = sorted(object_ids)
+    if not ordered:
+        return {}
+    result = subprocess.run(
+        ["git", "cat-file", "--batch"],
+        cwd=repository,
+        input=("\n".join(ordered) + "\n").encode(),
+        check=True,
+        capture_output=True,
+    )
+    blobs: dict[str, bytes] = {}
+    offset = 0
+    for requested in ordered:
+        header_end = result.stdout.index(b"\n", offset)
+        header = result.stdout[offset:header_end].decode("ascii").split()
+        assert len(header) == 3
+        object_id, object_type, raw_size = header
+        assert object_id == requested
+        assert object_type == "blob"
+        size = int(raw_size)
+        content_start = header_end + 1
+        content_end = content_start + size
+        blobs[requested] = result.stdout[content_start:content_end]
+        assert result.stdout[content_end : content_end + 1] == b"\n"
+        offset = content_end + 1
+    assert offset == len(result.stdout)
+    return blobs
+
+
+def source_precondition_authority_history(registry_root: Path) -> set[str]:
+    repository = Path(git(registry_root, "rev-parse", "--show-toplevel"))
+    historical = historical_registry_json_blobs(registry_root)
+    blob_contents = git_blob_batch(repository, {object_id for object_id, _ in historical})
+    authorities: set[str] = set()
+    for object_id, path in historical:
+        try:
+            spec = json.loads(blob_contents[object_id].decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        metadata = spec.get("metadata")
+        authority = (
+            metadata.get("runtime_refresh_authority") if isinstance(metadata, dict) else None
+        )
+        if isinstance(authority, dict) and "source_precondition" in authority:
+            authorities.add(Path(path).name)
+    return authorities
 
 
 def validate_source_precondition_authority_registry(registry_root: Path) -> set[str]:
@@ -7667,6 +7730,49 @@ def test_registry_source_precondition_authorities_allow_additive_authority(
 
     assert additive_path.name in observed
     assert additive_path.name in source_precondition_authority_history(registry_root)
+
+
+def test_source_precondition_history_ignores_text_match_and_commit_neighbor(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    authority = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    authority["id"] = "BUREAU-TEST-HISTORICAL-SOURCE-PRECONDITION-AUTHORITY"
+    authority_path = registry_root / f"{authority['id']}.json"
+    authority_path.write_text(json.dumps(authority, indent=2) + "\n", encoding="utf-8")
+
+    textual_decoy = registry_root / "BUREAU-TEST-SOURCE-PRECONDITION-TEXT-DECOY.json"
+    textual_decoy.write_text(
+        json.dumps(
+            {
+                "id": "BUREAU-TEST-SOURCE-PRECONDITION-TEXT-DECOY",
+                "metadata": {"evidence": "source_precondition"},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commit_neighbor = registry_root / "BUREAU-TEST-SOURCE-PRECONDITION-NEIGHBOR.json"
+    commit_neighbor.write_text(
+        json.dumps(
+            {
+                "id": "BUREAU-TEST-SOURCE-PRECONDITION-NEIGHBOR",
+                "metadata": {"evidence": "ordinary"},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    git(registry_root, "add", authority_path.name, textual_decoy.name, commit_neighbor.name)
+    git(registry_root, "commit", "-m", "add authority with non-authority neighbors")
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert authority_path.name in historical
+    assert textual_decoy.name not in historical
+    assert commit_neighbor.name not in historical
 
 
 def test_registry_source_precondition_authorities_reject_historical_deletion(

@@ -7573,18 +7573,25 @@ def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: P
         )
     assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"
 
-SOURCE_PRECONDITION_AUTHORITY_BASELINE = frozenset(
-    {
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2158-BUREAU05-20260823.json",
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2174-REPOGROUND-T020-20260825.json",
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-CURRENT-MAIN-SUCCESSOR-20260823.json",
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-CURRENT-MAIN-SUCCESSOR-20260824.json",
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824.json",
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PR2172-SOURCE-CONVERGENCE-20260825.json",
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260827.json",
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260828.json",
+def source_precondition_authority_history(registry_root: Path) -> set[str]:
+    repository = Path(git(registry_root, "rev-parse", "--show-toplevel"))
+    relative_registry = registry_root.resolve().relative_to(repository.resolve())
+    history = git(
+        repository,
+        "log",
+        "HEAD",
+        "--format=",
+        "--name-only",
+        "-G",
+        '"source_precondition"',
+        "--",
+        relative_registry.as_posix(),
+    )
+    return {
+        Path(line).name
+        for line in history.splitlines()
+        if line.strip().endswith(".json")
     }
-)
 
 
 def validate_source_precondition_authority_registry(registry_root: Path) -> set[str]:
@@ -7610,63 +7617,83 @@ def validate_source_precondition_authority_registry(registry_root: Path) -> set[
             for item in contract["criteria"].values()
         )
 
-    missing = SOURCE_PRECONDITION_AUTHORITY_BASELINE - observed
-    assert not missing, f"required source_precondition authorities disappeared: {sorted(missing)}"
+    historical = source_precondition_authority_history(registry_root)
+    missing = historical - observed
+    assert not missing, f"historical source_precondition authorities disappeared: {sorted(missing)}"
     return observed
 
 
-def source_precondition_authority_fixture(tmp_path: Path) -> Path:
-    source = Path(__file__).parents[1] / "registry/tasks"
-    target = tmp_path / "registry/tasks"
+def source_precondition_authority_fixture(tmp_path: Path) -> tuple[Path, str]:
+    source_root = Path(__file__).parents[1] / "registry/tasks"
+    source_path = next(
+        path
+        for path in sorted(source_root.glob("*.json"))
+        if "source_precondition"
+        in json.loads(path.read_text(encoding="utf-8"))
+        .get("metadata", {})
+        .get("runtime_refresh_authority", {})
+    )
+    repository = tmp_path / "repository"
+    target = repository / "registry/tasks"
     target.mkdir(parents=True)
-    for name in SOURCE_PRECONDITION_AUTHORITY_BASELINE:
-        shutil.copy2(source / name, target / name)
-    return target
+    shutil.copy2(source_path, target / source_path.name)
+    git(repository, "init", "-b", "main")
+    git(repository, "config", "user.name", "Test")
+    git(repository, "config", "user.email", "test@example.invalid")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "baseline source-precondition authority")
+    return target, source_path.name
 
 
 def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
 ) -> None:
     registry_root = Path(__file__).parents[1] / "registry/tasks"
     observed = validate_source_precondition_authority_registry(registry_root)
-    assert observed >= SOURCE_PRECONDITION_AUTHORITY_BASELINE
+    assert observed == source_precondition_authority_history(registry_root)
 
 
 def test_registry_source_precondition_authorities_allow_additive_authority(
     tmp_path: Path,
 ) -> None:
-    registry_root = source_precondition_authority_fixture(tmp_path)
-    source_name = sorted(SOURCE_PRECONDITION_AUTHORITY_BASELINE)[0]
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
     additive = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
     additive["id"] = "BUREAU-TEST-ADDITIVE-SOURCE-PRECONDITION-AUTHORITY"
     additive_path = registry_root / f"{additive['id']}.json"
     additive_path.write_text(json.dumps(additive, indent=2) + "\n", encoding="utf-8")
+    git(registry_root, "add", additive_path.name)
+    git(registry_root, "commit", "-m", "add source-precondition authority")
 
     observed = validate_source_precondition_authority_registry(registry_root)
 
     assert additive_path.name in observed
+    assert additive_path.name in source_precondition_authority_history(registry_root)
 
 
-def test_registry_source_precondition_authorities_reject_baseline_deletion(
+def test_registry_source_precondition_authorities_reject_historical_deletion(
     tmp_path: Path,
 ) -> None:
-    registry_root = source_precondition_authority_fixture(tmp_path)
-    removed = sorted(SOURCE_PRECONDITION_AUTHORITY_BASELINE)[0]
-    (registry_root / removed).unlink()
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    (registry_root / source_name).unlink()
+    git(registry_root, "add", "-u")
+    git(registry_root, "commit", "-m", "delete source-precondition authority")
 
-    with pytest.raises(AssertionError, match="source_precondition authorities disappeared"):
+    with pytest.raises(
+        AssertionError, match="historical source_precondition authorities disappeared"
+    ):
         validate_source_precondition_authority_registry(registry_root)
 
 
 def test_registry_source_precondition_authorities_reject_malformed_addition(
     tmp_path: Path,
 ) -> None:
-    registry_root = source_precondition_authority_fixture(tmp_path)
-    source_name = sorted(SOURCE_PRECONDITION_AUTHORITY_BASELINE)[0]
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
     malformed = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
     malformed["id"] = "BUREAU-TEST-MALFORMED-SOURCE-PRECONDITION-AUTHORITY"
     malformed["metadata"]["runtime_refresh_authority"]["mode"] = "invalid-mode"
     malformed_path = registry_root / f"{malformed['id']}.json"
     malformed_path.write_text(json.dumps(malformed, indent=2) + "\n", encoding="utf-8")
+    git(registry_root, "add", malformed_path.name)
+    git(registry_root, "commit", "-m", "add malformed source-precondition authority")
 
     with pytest.raises(AssertionError):
         validate_source_precondition_authority_registry(registry_root)

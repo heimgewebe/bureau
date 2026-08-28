@@ -3,7 +3,8 @@
 
 Only two narrow Registry changes may bypass the full code suite:
 
-* task-only: one or more added/modified canonical task documents;
+* task-only: added/modified canonical task documents that do not touch a
+  runtime-refresh source-precondition authority;
 * queue-only: exactly one modification of ``registry/queue.json``.
 
 Every malformed, mixed, renamed, copied, deleted or unknown change falls back to
@@ -13,6 +14,7 @@ Every malformed, mixed, renamed, copied, deleted or unknown change falls back to
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -63,6 +65,49 @@ def classify_entries(entries: Sequence[Entry]) -> str:
     return FULL
 
 
+def _task_spec_at_revision(revision: str, path: str) -> dict[str, object] | None:
+    completed = subprocess.run(
+        ["git", "show", f"{revision}:{path}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0:
+        return None
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _has_source_precondition_authority(spec: dict[str, object]) -> bool:
+    metadata = spec.get("metadata")
+    authority = (
+        metadata.get("runtime_refresh_authority")
+        if isinstance(metadata, dict)
+        else None
+    )
+    return isinstance(authority, dict) and "source_precondition" in authority
+
+
+def task_changes_require_full_validation(
+    entries: Sequence[Entry], base_sha: str, head_sha: str
+) -> bool:
+    """Fail closed when task-only changes touch the runtime-refresh authority ratchet."""
+
+    for status, paths in entries:
+        if status not in {"A", "M"} or len(paths) != 1:
+            return True
+        path = paths[0]
+        revisions = (head_sha,) if status == "A" else (base_sha, head_sha)
+        for revision in revisions:
+            spec = _task_spec_at_revision(revision, path)
+            if spec is None or _has_source_precondition_authority(spec):
+                return True
+    return False
+
+
 def classify_git_diff(base_sha: str, head_sha: str) -> str:
     """Classify one three-dot Git comparison, failing closed to ``full``."""
 
@@ -84,7 +129,13 @@ def classify_git_diff(base_sha: str, head_sha: str) -> str:
         diagnostic = completed.stderr.strip() or "git diff failed"
         print(f"validation-scope: {diagnostic}", file=sys.stderr)
         return FULL
-    return classify_entries(parse_name_status(completed.stdout))
+    entries = parse_name_status(completed.stdout)
+    scope = classify_entries(entries)
+    if scope == TASK_ONLY and task_changes_require_full_validation(
+        entries, base_sha, head_sha
+    ):
+        return FULL
+    return scope
 
 
 def parser() -> argparse.ArgumentParser:

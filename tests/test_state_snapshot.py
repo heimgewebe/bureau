@@ -288,6 +288,13 @@ def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
         assert allow_not_found is True
         return None
 
+    original_git = source_pr_bridge._git
+
+    def forbid_shared_worktree_admin(repo, *arguments):
+        assert arguments[:1] != ("worktree",)
+        return original_git(repo, *arguments)
+
+    monkeypatch.setattr(source_pr_bridge, "_git", forbid_shared_worktree_admin)
     monkeypatch.setattr(source_pr_bridge, "_json", fake_json)
     monkeypatch.setattr(
         state_snapshot,

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from . import legacy
+from .github_observer import observe_pull_requests
 from .state_backup import (
     DEFAULT_BACKUP_ROOT,
     DEFAULT_RESTORE_RECEIPT_ROOT,
@@ -829,9 +830,14 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    github = _load_json(args.github_observations) if args.github_observations else None
+    root = args.root.expanduser().resolve()
+    github = (
+        _load_json(args.github_observations)
+        if args.github_observations
+        else observe_pull_requests(root, state_root=args.state_root)
+    )
     value = doctor_projection(
-        args.root.expanduser().resolve(),
+        root,
         state_root=args.state_root,
         github=github,
         github_max_age_seconds=args.github_max_age,

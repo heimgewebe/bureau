@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from bureau import doctor as doctor_module
 from bureau import legacy
 from bureau.doctor import (
     closeout_plan_projection,
@@ -544,3 +545,72 @@ def test_reviewed_closeout_plan_is_hash_bound_and_still_has_no_effect() -> None:
         review_closeout_plan(
             plan, expected_plan_sha256="0" * 64, reviewer="independent-reviewer"
         )
+
+
+def test_cli_observes_github_by_default(monkeypatch, tmp_path: Path, capsys) -> None:
+    root = tmp_path / "registry"
+    root.mkdir()
+    state_root = tmp_path / "state"
+    observation = {"source": "github", "healthy": True, "pull_requests": []}
+    seen: dict[str, object] = {}
+
+    def observe(observed_root: Path, *, state_root: Path | None = None):
+        seen["observe_root"] = observed_root
+        seen["observe_state_root"] = state_root
+        return observation
+
+    def project(projected_root: Path, **kwargs):
+        seen["project_root"] = projected_root
+        seen["project_github"] = kwargs["github"]
+        return {"kind": "doctor-test", "github_source": kwargs["github"]["source"]}
+
+    monkeypatch.setattr(doctor_module, "observe_pull_requests", observe)
+    monkeypatch.setattr(doctor_module, "doctor_projection", project)
+
+    assert doctor_module.main(["--root", str(root), "--state-root", str(state_root)]) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert seen["observe_root"] == root.resolve()
+    assert seen["observe_state_root"] == state_root
+    assert seen["project_root"] == root.resolve()
+    assert seen["project_github"] is observation
+    assert payload["github_source"] == "github"
+
+
+def test_cli_explicit_github_observations_skip_live_observer(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
+    root = tmp_path / "registry"
+    root.mkdir()
+    observation_path = tmp_path / "github.json"
+    observation = {"source": "fixture", "healthy": True, "pull_requests": []}
+    observation_path.write_text(json.dumps(observation), encoding="utf-8")
+    seen: dict[str, object] = {}
+
+    def unexpected_observer(*args, **kwargs):
+        raise AssertionError("explicit GitHub observations must not trigger a live fetch")
+
+    def project(projected_root: Path, **kwargs):
+        seen["project_root"] = projected_root
+        seen["project_github"] = kwargs["github"]
+        return {"kind": "doctor-test", "github_source": kwargs["github"]["source"]}
+
+    monkeypatch.setattr(doctor_module, "observe_pull_requests", unexpected_observer)
+    monkeypatch.setattr(doctor_module, "doctor_projection", project)
+
+    assert (
+        doctor_module.main(
+            [
+                "--root",
+                str(root),
+                "--github-observations",
+                str(observation_path),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert seen["project_root"] == root.resolve()
+    assert seen["project_github"] == observation
+    assert payload["github_source"] == "fixture"

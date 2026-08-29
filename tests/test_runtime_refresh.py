@@ -7573,10 +7573,139 @@ def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: P
         )
     assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"
 
-def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
-) -> None:
-    paths: list[Path] = []
-    for path in sorted((Path(__file__).parents[1] / "registry/tasks").glob("*.json")):
+def accepted_history_revision(repository: Path) -> str:
+    event_name = os.environ.get("GITHUB_EVENT_NAME")
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if event_name not in {"pull_request", "merge_group"} or not event_path:
+        return "HEAD"
+
+    try:
+        event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return "HEAD"
+    if not isinstance(event, dict):
+        return "HEAD"
+
+    if event_name == "pull_request":
+        pull_request = event.get("pull_request")
+        base = pull_request.get("base") if isinstance(pull_request, dict) else None
+    else:
+        merge_group = event.get("merge_group")
+        base = (
+            {"sha": merge_group.get("base_sha")}
+            if isinstance(merge_group, dict)
+            else None
+        )
+    candidate = base.get("sha") if isinstance(base, dict) else None
+    if not (
+        isinstance(candidate, str)
+        and len(candidate) == 40
+        and all(character in "0123456789abcdefABCDEF" for character in candidate)
+    ):
+        return "HEAD"
+
+    resolved = subprocess.run(
+        ["git", "rev-parse", "--verify", f"{candidate}^{{commit}}"],
+        cwd=repository,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    return resolved.stdout.strip() if resolved.returncode == 0 else "HEAD"
+
+
+def historical_registry_json_blobs(registry_root: Path) -> list[tuple[str, str]]:
+    repository = Path(git(registry_root, "rev-parse", "--show-toplevel"))
+    relative_registry = registry_root.resolve().relative_to(repository.resolve())
+    history_revision = accepted_history_revision(repository)
+    result = subprocess.run(
+        [
+            "git",
+            "log",
+            history_revision,
+            "--first-parent",
+            "-m",
+            "--root",
+            "--raw",
+            "--no-abbrev",
+            "--no-renames",
+            "--diff-filter=AM",
+            "--format=commit:%H",
+            "--",
+            relative_registry.as_posix(),
+        ],
+        cwd=repository,
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    blobs: list[tuple[str, str]] = []
+    for line in result.stdout.splitlines():
+        if not line.startswith(":") or "\t" not in line:
+            continue
+        metadata, path = line.split("\t", 1)
+        fields = metadata.split()
+        assert len(fields) == 5
+        new_blob = fields[3]
+        if path.endswith(".json"):
+            blobs.append((new_blob, path))
+    return blobs
+
+
+def git_blob_batch(repository: Path, object_ids: set[str]) -> dict[str, bytes]:
+    ordered = sorted(object_ids)
+    if not ordered:
+        return {}
+    result = subprocess.run(
+        ["git", "cat-file", "--batch"],
+        cwd=repository,
+        input=("\n".join(ordered) + "\n").encode(),
+        check=True,
+        capture_output=True,
+    )
+    blobs: dict[str, bytes] = {}
+    offset = 0
+    for requested in ordered:
+        header_end = result.stdout.index(b"\n", offset)
+        header = result.stdout[offset:header_end].decode("ascii").split()
+        assert len(header) == 3
+        object_id, object_type, raw_size = header
+        assert object_id == requested
+        assert object_type == "blob"
+        size = int(raw_size)
+        content_start = header_end + 1
+        content_end = content_start + size
+        blobs[requested] = result.stdout[content_start:content_end]
+        assert result.stdout[content_end : content_end + 1] == b"\n"
+        offset = content_end + 1
+    assert offset == len(result.stdout)
+    return blobs
+
+
+def source_precondition_authority_history(registry_root: Path) -> set[str]:
+    repository = Path(git(registry_root, "rev-parse", "--show-toplevel"))
+    historical = historical_registry_json_blobs(registry_root)
+    blob_contents = git_blob_batch(repository, {object_id for object_id, _ in historical})
+    authorities: set[str] = set()
+    for object_id, path in historical:
+        try:
+            spec = json.loads(blob_contents[object_id].decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(spec, dict):
+            continue
+        metadata = spec.get("metadata")
+        authority = (
+            metadata.get("runtime_refresh_authority") if isinstance(metadata, dict) else None
+        )
+        if isinstance(authority, dict) and "source_precondition" in authority:
+            authorities.add(Path(path).name)
+    return authorities
+
+
+def validate_source_precondition_authority_registry(registry_root: Path) -> set[str]:
+    observed: set[str] = set()
+    for path in sorted(registry_root.glob("*.json")):
         spec = json.loads(path.read_text(encoding="utf-8"))
         metadata = spec.get("metadata")
         authority = (
@@ -7584,7 +7713,7 @@ def test_registry_source_precondition_authorities_have_complete_no_run_acceptanc
         )
         if not isinstance(authority, dict) or "source_precondition" not in authority:
             continue
-        paths.append(path)
+        observed.add(path.name)
         assert authority["mode"] == refresh.RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
         contract = refresh._validated_no_run_acceptance_contract(
             spec=spec, authority=authority
@@ -7596,7 +7725,320 @@ def test_registry_source_precondition_authorities_have_complete_no_run_acceptanc
             "source-precondition" in item["required_evidence"]
             for item in contract["criteria"].values()
         )
-    assert len(paths) == 8
+
+    historical = source_precondition_authority_history(registry_root)
+    missing = historical - observed
+    assert not missing, f"historical source_precondition authorities disappeared: {sorted(missing)}"
+    return observed
+
+
+def source_precondition_authority_fixture(tmp_path: Path) -> tuple[Path, str]:
+    source_root = Path(__file__).parents[1] / "registry/tasks"
+    source_path = next(
+        path
+        for path in sorted(source_root.glob("*.json"))
+        if "source_precondition"
+        in json.loads(path.read_text(encoding="utf-8"))
+        .get("metadata", {})
+        .get("runtime_refresh_authority", {})
+    )
+    repository = tmp_path / "repository"
+    target = repository / "registry/tasks"
+    target.mkdir(parents=True)
+    shutil.copy2(source_path, target / source_path.name)
+    git(repository, "init", "-b", "main")
+    git(repository, "config", "user.name", "Test")
+    git(repository, "config", "user.email", "test@example.invalid")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "baseline source-precondition authority")
+    return target, source_path.name
+
+
+def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
+) -> None:
+    registry_root = Path(__file__).parents[1] / "registry/tasks"
+    observed = validate_source_precondition_authority_registry(registry_root)
+    assert observed
+
+
+def test_registry_source_precondition_authorities_allow_uncommitted_addition(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    additive = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    additive["id"] = "BUREAU-TEST-UNCOMMITTED-SOURCE-PRECONDITION-AUTHORITY"
+    additive_path = registry_root / f"{additive['id']}.json"
+    additive_path.write_text(json.dumps(additive, indent=2) + "\n", encoding="utf-8")
+
+    observed = validate_source_precondition_authority_registry(registry_root)
+
+    assert additive_path.name in observed
+    assert additive_path.name not in source_precondition_authority_history(registry_root)
+
+
+def test_source_precondition_history_skips_non_object_json_blobs(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    historical_path = registry_root / "BUREAU-TEST-NONOBJECT-HISTORY.json"
+    historical_path.write_text("[]\n", encoding="utf-8")
+    git(registry_root, "add", historical_path.name)
+    git(registry_root, "commit", "-m", "add historical non-object task json")
+
+    historical_path.write_text(
+        json.dumps({"id": "BUREAU-TEST-NONOBJECT-HISTORY", "metadata": {}}, indent=2)
+        + "\n",
+        encoding="utf-8",
+    )
+    git(registry_root, "add", historical_path.name)
+    git(registry_root, "commit", "-m", "repair historical non-object task json")
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert source_name in historical
+    assert historical_path.name not in historical
+    validate_source_precondition_authority_registry(registry_root)
+
+
+def test_registry_source_precondition_authorities_allow_additive_authority(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    additive = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    additive["id"] = "BUREAU-TEST-ADDITIVE-SOURCE-PRECONDITION-AUTHORITY"
+    additive_path = registry_root / f"{additive['id']}.json"
+    additive_path.write_text(json.dumps(additive, indent=2) + "\n", encoding="utf-8")
+    git(registry_root, "add", additive_path.name)
+    git(registry_root, "commit", "-m", "add source-precondition authority")
+
+    observed = validate_source_precondition_authority_registry(registry_root)
+
+    assert additive_path.name in observed
+    assert additive_path.name in source_precondition_authority_history(registry_root)
+
+
+def test_source_precondition_history_ignores_text_match_and_commit_neighbor(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    authority = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    authority["id"] = "BUREAU-TEST-HISTORICAL-SOURCE-PRECONDITION-AUTHORITY"
+    authority_path = registry_root / f"{authority['id']}.json"
+    authority_path.write_text(json.dumps(authority, indent=2) + "\n", encoding="utf-8")
+
+    textual_decoy = registry_root / "BUREAU-TEST-SOURCE-PRECONDITION-TEXT-DECOY.json"
+    textual_decoy.write_text(
+        json.dumps(
+            {
+                "id": "BUREAU-TEST-SOURCE-PRECONDITION-TEXT-DECOY",
+                "metadata": {"evidence": "source_precondition"},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commit_neighbor = registry_root / "BUREAU-TEST-SOURCE-PRECONDITION-NEIGHBOR.json"
+    commit_neighbor.write_text(
+        json.dumps(
+            {
+                "id": "BUREAU-TEST-SOURCE-PRECONDITION-NEIGHBOR",
+                "metadata": {"evidence": "ordinary"},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    git(registry_root, "add", authority_path.name, textual_decoy.name, commit_neighbor.name)
+    git(registry_root, "commit", "-m", "add authority with non-authority neighbors")
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert authority_path.name in historical
+    assert textual_decoy.name not in historical
+    assert commit_neighbor.name not in historical
+
+
+def test_accepted_history_revision_uses_merge_group_base_sha(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, _ = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+    accepted_base = git(repository, "rev-parse", "HEAD")
+    (repository / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+    git(repository, "add", "candidate.txt")
+    git(repository, "commit", "-m", "merge-group candidate")
+
+    event_path = tmp_path / "merge-group-event.json"
+    event_path.write_text(
+        json.dumps({"merge_group": {"base_sha": accepted_base}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "merge_group")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+
+    assert accepted_history_revision(repository) == accepted_base
+
+
+def test_source_precondition_history_ignores_unaccepted_pr_intermediate_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+    accepted_base = git(repository, "rev-parse", "HEAD")
+
+    transient = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    transient["id"] = "BUREAU-TEST-UNACCEPTED-PR-SOURCE-PRECONDITION-AUTHORITY"
+    transient_path = registry_root / f"{transient['id']}.json"
+    transient_path.write_text(json.dumps(transient, indent=2) + "\n", encoding="utf-8")
+    git(repository, "add", transient_path.relative_to(repository).as_posix())
+    git(repository, "commit", "-m", "add transient pull-request authority")
+    transient_path.unlink()
+    git(repository, "add", "-u")
+    git(repository, "commit", "-m", "remove transient pull-request authority")
+
+    event_path = tmp_path / "pull-request-event.json"
+    event_path.write_text(
+        json.dumps({"pull_request": {"base": {"sha": accepted_base}}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert source_name in historical
+    assert transient_path.name not in historical
+    validate_source_precondition_authority_registry(registry_root)
+
+
+def test_push_history_ignores_merged_pr_intermediate_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+
+    git(repository, "switch", "-c", "transient-pr")
+    transient = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    transient["id"] = "BUREAU-TEST-MERGED-PR-TRANSIENT-SOURCE-PRECONDITION-AUTHORITY"
+    transient_path = registry_root / f"{transient['id']}.json"
+    transient_path.write_text(json.dumps(transient, indent=2) + "\n", encoding="utf-8")
+    git(repository, "add", transient_path.relative_to(repository).as_posix())
+    git(repository, "commit", "-m", "add transient pull-request authority")
+    transient_path.unlink()
+    git(repository, "add", "-u")
+    git(repository, "commit", "-m", "remove transient pull-request authority")
+
+    git(repository, "switch", "main")
+    git(repository, "merge", "--no-ff", "-m", "merge transient pull request", "transient-pr")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
+
+    historical = source_precondition_authority_history(registry_root)
+
+    assert source_name in historical
+    assert transient_path.name not in historical
+    validate_source_precondition_authority_registry(registry_root)
+
+
+def test_pr_base_history_still_rejects_accepted_authority_deletion(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+    accepted_base = git(repository, "rev-parse", "HEAD")
+    (registry_root / source_name).unlink()
+    git(repository, "add", "-u")
+    git(repository, "commit", "-m", "delete accepted source-precondition authority")
+
+    event_path = tmp_path / "pull-request-event.json"
+    event_path.write_text(
+        json.dumps({"pull_request": {"base": {"sha": accepted_base}}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+
+    with pytest.raises(
+        AssertionError, match="historical source_precondition authorities disappeared"
+    ):
+        validate_source_precondition_authority_registry(registry_root)
+
+
+def test_registry_source_precondition_authorities_reject_historical_deletion(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    (registry_root / source_name).unlink()
+    git(registry_root, "add", "-u")
+    git(registry_root, "commit", "-m", "delete source-precondition authority")
+
+    with pytest.raises(
+        AssertionError, match="historical source_precondition authorities disappeared"
+    ):
+        validate_source_precondition_authority_registry(registry_root)
+
+
+def test_source_precondition_history_includes_merge_result_only_authority(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    repository = registry_root.parents[1]
+
+    git(repository, "switch", "-c", "side")
+    (repository / "side.txt").write_text("side\n", encoding="utf-8")
+    git(repository, "add", "side.txt")
+    git(repository, "commit", "-m", "side parent")
+
+    git(repository, "switch", "main")
+    (repository / "main.txt").write_text("main\n", encoding="utf-8")
+    git(repository, "add", "main.txt")
+    git(repository, "commit", "-m", "main parent")
+    git(repository, "merge", "--no-ff", "--no-commit", "side")
+
+    authority = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    authority["id"] = "BUREAU-TEST-MERGE-RESULT-SOURCE-PRECONDITION-AUTHORITY"
+    authority_path = registry_root / f"{authority['id']}.json"
+    authority_path.write_text(json.dumps(authority, indent=2) + "\n", encoding="utf-8")
+    git(repository, "add", authority_path.relative_to(repository).as_posix())
+    git(repository, "commit", "-m", "merge with result-only authority")
+
+    relative_path = authority_path.relative_to(repository).as_posix()
+    for parent in ("HEAD^1", "HEAD^2"):
+        absent = subprocess.run(
+            ["git", "cat-file", "-e", f"{parent}:{relative_path}"],
+            cwd=repository,
+            capture_output=True,
+        )
+        assert absent.returncode != 0
+
+    assert authority_path.name in source_precondition_authority_history(registry_root)
+
+    authority_path.unlink()
+    git(repository, "add", "-u")
+    git(repository, "commit", "-m", "delete merge-result authority")
+
+    with pytest.raises(
+        AssertionError, match="historical source_precondition authorities disappeared"
+    ):
+        validate_source_precondition_authority_registry(registry_root)
+
+
+def test_registry_source_precondition_authorities_reject_malformed_addition(
+    tmp_path: Path,
+) -> None:
+    registry_root, source_name = source_precondition_authority_fixture(tmp_path)
+    malformed = json.loads((registry_root / source_name).read_text(encoding="utf-8"))
+    malformed["id"] = "BUREAU-TEST-MALFORMED-SOURCE-PRECONDITION-AUTHORITY"
+    malformed["metadata"]["runtime_refresh_authority"]["mode"] = "invalid-mode"
+    malformed_path = registry_root / f"{malformed['id']}.json"
+    malformed_path.write_text(json.dumps(malformed, indent=2) + "\n", encoding="utf-8")
+    git(registry_root, "add", malformed_path.name)
+    git(registry_root, "commit", "-m", "add malformed source-precondition authority")
+
+    with pytest.raises(AssertionError):
+        validate_source_precondition_authority_registry(registry_root)
 
 
 

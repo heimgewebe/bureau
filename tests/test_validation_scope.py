@@ -111,3 +111,85 @@ def test_git_diff_queue_only_result_uses_unfiltered_statuses(monkeypatch):
         'capture_output': True,
         'text': True,
     }
+
+
+def test_git_diff_source_precondition_authority_addition_forces_full(monkeypatch):
+    base = "a" * 40
+    head = "b" * 40
+    path = "registry/tasks/AUTH.json"
+
+    def fake_run(argv, **kwargs):
+        if argv[:3] == ["git", "diff", "--name-status"]:
+            return subprocess.CompletedProcess(
+                args=argv, returncode=0, stdout=f"A\t{path}\n", stderr=""
+            )
+        assert argv == ["git", "show", f"{head}:{path}"]
+        return subprocess.CompletedProcess(
+            args=argv,
+            returncode=0,
+            stdout='{"metadata":{"runtime_refresh_authority":{"source_precondition":{}}}}',
+            stderr="",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert classify_git_diff(base, head) == FULL
+
+
+def test_git_diff_source_precondition_authority_removal_forces_full(monkeypatch):
+    base = "a" * 40
+    head = "b" * 40
+    path = "registry/tasks/AUTH.json"
+    responses = {
+        f"{base}:{path}": '{"metadata":{"runtime_refresh_authority":{"source_precondition":{}}}}',
+        f"{head}:{path}": '{"metadata":{}}',
+    }
+
+    def fake_run(argv, **kwargs):
+        if argv[:3] == ["git", "diff", "--name-status"]:
+            return subprocess.CompletedProcess(
+                args=argv, returncode=0, stdout=f"M\t{path}\n", stderr=""
+            )
+        assert argv[:2] == ["git", "show"]
+        return subprocess.CompletedProcess(
+            args=argv, returncode=0, stdout=responses[argv[2]], stderr=""
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert classify_git_diff(base, head) == FULL
+
+
+def test_git_diff_ordinary_task_addition_stays_task_only(monkeypatch):
+    base = "a" * 40
+    head = "b" * 40
+    path = "registry/tasks/ORDINARY.json"
+
+    def fake_run(argv, **kwargs):
+        if argv[:3] == ["git", "diff", "--name-status"]:
+            return subprocess.CompletedProcess(
+                args=argv, returncode=0, stdout=f"A\t{path}\n", stderr=""
+            )
+        assert argv == ["git", "show", f"{head}:{path}"]
+        return subprocess.CompletedProcess(
+            args=argv, returncode=0, stdout='{"metadata":{}}', stderr=""
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert classify_git_diff(base, head) == TASK_ONLY
+
+
+def test_git_diff_unreadable_task_spec_fails_closed_to_full(monkeypatch):
+    base = "a" * 40
+    head = "b" * 40
+    path = "registry/tasks/BROKEN.json"
+
+    def fake_run(argv, **kwargs):
+        if argv[:3] == ["git", "diff", "--name-status"]:
+            return subprocess.CompletedProcess(
+                args=argv, returncode=0, stdout=f"A\t{path}\n", stderr=""
+            )
+        return subprocess.CompletedProcess(
+            args=argv, returncode=128, stdout="", stderr="missing"
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert classify_git_diff(base, head) == FULL

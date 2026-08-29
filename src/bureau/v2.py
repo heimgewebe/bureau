@@ -8790,6 +8790,29 @@ def _runtime_registry_snapshot_identity(
     return source_commit, manifest_sha256
 
 
+class _TaskSpecConnectionReader:
+    """Expose replay reads on the caller's existing StateStore snapshot."""
+
+    def __init__(self, connection: sqlite3.Connection):
+        self._connection = connection
+
+    def task_spec_by_digest(
+        self, task_id: str, spec_sha256: str
+    ) -> dict[str, Any] | None:
+        try:
+            return task_specs.get_by_digest(self._connection, task_id, spec_sha256)
+        except task_specs.TaskSpecError as exc:
+            raise legacy.StateError(str(exc)) from exc
+
+    def task_spec_mutation_receipt(
+        self, idempotency_key: str
+    ) -> dict[str, Any] | None:
+        try:
+            return task_specs.get_mutation_receipt(self._connection, idempotency_key)
+        except task_specs.TaskSpecError as exc:
+            raise legacy.StateError(str(exc)) from exc
+
+
 def _runtime_closeout_matches_receipt_bound_task(
     task: legacy.Task,
     runtime_closeout: dict[str, Any],
@@ -8834,9 +8857,23 @@ def _runtime_closeout_matches_receipt_bound_task(
         )
     except runtime_refresh.RuntimeRefreshError:
         return False
-    if historical_closeout != runtime_closeout:
+    if (
+        historical_closeout != runtime_closeout
+        or task_revision_sha256(historical_spec) != task.sha256
+    ):
         return False
-    return task_revision_sha256(historical_spec) == task.sha256
+    try:
+        _, authority = runtime_refresh._runtime_authority_metadata(historical_spec)
+        runtime_refresh._validate_no_run_acceptance_replay_binding(
+            store=_TaskSpecConnectionReader(connection),
+            current=historical,
+            spec=historical_spec,
+            authority=authority,
+            closeout=runtime_closeout,
+        )
+    except runtime_refresh.RuntimeRefreshError:
+        return False
+    return True
 
 
 def _current_verification_stamp(

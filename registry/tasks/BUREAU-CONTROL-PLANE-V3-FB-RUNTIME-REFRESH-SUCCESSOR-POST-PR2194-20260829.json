@@ -10,7 +10,7 @@
       }
     },
     {
-      "assertion": "Immediately before prepare-intent and again before apply, a typed precondition readback proves that active deployment-manifest source_commit and canonical Registry source identity are equal, and that this active source is exactly the registered deployed source 38dd8067d1f27c955ba1fca2d42f4eabe1593c0e or a verified Git ancestor of the freshly selected target main commit. Any deployment/Registry identity mismatch, unrelated or diverged source history, unavailable ancestry proof, or target drift blocks the runtime effect fail-closed.",
+      "assertion": "Immediately before prepare-intent and again before apply, a typed precondition readback proves that active deployment-manifest source_commit and canonical Registry source identity are equal, and that this active source is exactly the registered deployed source 38dd8067d1f27c955ba1fca2d42f4eabe1593c0e or a verified Git ancestor of the freshly selected target main commit. Any deployment/Registry identity mismatch, unrelated or diverged source history, unavailable ancestry proof or target drift blocks the runtime effect fail-closed.",
       "evidence_type": "object",
       "id": "source-ancestry-precondition",
       "verifier": "manual_observation",
@@ -19,12 +19,12 @@
       }
     },
     {
-      "assertion": "The exact authority TaskSpec is merged through the protected create-only Registry path and adopted missing-only into the authoritative StateStore. The StateStore readback shows this exact task ID nonterminal in ready or active state before any runtime effect; no existing TaskSpec is overwritten or reset.",
+      "assertion": "Before the runtime effect, the authoritative StateStore exposes this exact task ID as a nonterminal ready or active Runtime Refresh Authority, and the approval intent binds the exact observed TaskSpec revision and digest. This criterion proves current authority binding and StateStore integrity only; protected publication and missing-only adoption provenance are separately required as an operator pre-effect receipt and are not overstated by the no-run closeout.",
       "evidence_type": "object",
-      "id": "authority-state-store-binding",
+      "id": "authority-state-store-preflight",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-successor-post-pr2194-20260829:state-store-binding"
+        "observation_scope": "bureau:runtime-refresh-successor-post-pr2194-20260829:state-store-preflight"
       }
     },
     {
@@ -43,15 +43,6 @@
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "bureau:runtime-refresh-successor-post-pr2194-20260829:immutable-readback"
-      }
-    },
-    {
-      "assertion": "After successful convergence, a fresh typed operator-intake proposal or publication preview for one already recorded CATBOT audit candidate is no longer blocked by release-registry-identity-mismatch. This criterion proves only restoration of the normal intake path, not completion of any CATBOT remediation.",
-      "evidence_type": "object",
-      "id": "catbot-intake-unblocked",
-      "verifier": "manual_observation",
-      "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-successor-post-pr2194-20260829:catbot-intake-unblocked"
       }
     },
     {
@@ -76,7 +67,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Single-use target-bound bootstrap only. The current direct user request '@grabowski umsetzen' authorizes the Bureau runtime convergence needed to continue the CATBOT audit follow-ups. No effect may start until fresh GitHub main/CI observation, exact target binding, authoritative TaskSpec StateStore preflight, typed source-ancestry precondition, live intent-bound leases and immutable runtime readback gates all pass. Repeat source ancestry immediately before apply; no blind retry after any effect-started ambiguity."
+      "note": "Single-use target-bound bootstrap only. The current direct user request '@grabowski umsetzen' authorizes the Bureau runtime convergence needed to continue the CATBOT audit follow-ups. No effect may start until fresh GitHub main/CI observation, an exact adopt-authority missing-only receipt for this protected create-only PR, exact target binding, authoritative TaskSpec StateStore preflight, typed source-ancestry precondition, live intent-bound leases and immutable runtime readback gates all pass. Repeat source ancestry immediately before apply; no blind retry after any effect-started ambiguity."
     },
     "grabowski_resources": [
       "component:bureau-runtime-identity"
@@ -85,7 +76,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau"
   },
-  "goal": "Provide and consume exactly one new target-bound Bureau runtime refresh from deployed source 38dd8067d1f27c955ba1fca2d42f4eabe1593c0e to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. At registration the fresh remote main is 7fc32d53dbce176b3130f765f6081b79437af9e7; the actual target is selected again immediately before prepare-intent/apply and may include only legitimate protected-main successors. The sole purpose is to restore Bureau runtime/main identity so the already recorded CATBOT audit candidates can proceed through the normal reviewed typed intake path. This authority grants no CATBOT host mutation, queue, claim, dispatch, task-supply, product-code, foreign-work or general repository authority.",
+  "goal": "Provide and consume exactly one new target-bound Bureau runtime refresh from deployed source 38dd8067d1f27c955ba1fca2d42f4eabe1593c0e to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. At registration the fresh remote main is 7fc32d53dbce176b3130f765f6081b79437af9e7; the actual target is selected again immediately before prepare-intent/apply and may include only legitimate protected-main successors. The sole purpose is to restore Bureau runtime/main identity so the already recorded CATBOT audit candidates can subsequently be exercised through the normal reviewed typed intake path. The actual post-refresh CATBOT proposal test is deliberately outside this authority's no-run closeout and must be executed separately before claiming the intake path restored. This authority grants no CATBOT host mutation, queue, claim, dispatch, task-supply, product-code, foreign-work or general repository authority.",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2194-20260829",
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
@@ -95,12 +86,23 @@
       "runtime target before fresh post-publication observation",
       "permission to reuse any consumed or previously target-bound runtime authority",
       "permission to bypass stale-runtime, bootstrap, review, source-ancestry or CI gates",
+      "protected publication or missing-only adoption provenance from generic StateStore health alone",
+      "successful CATBOT typed proposal before an explicit post-refresh probe",
       "completion or authorization of CATBOT host remediation",
       "queue, claim, dispatch or task-supply publication authority",
       "general repository or foreign-work mutation authority"
     ],
     "main_at_registration": "7fc32d53dbce176b3130f765f6081b79437af9e7",
-    "post_refresh_live_target": "Read back exact Bureau runtime convergence, prove normal typed intake no longer fails with release-registry-identity-mismatch, then publish only the independently reviewed CATBOT audit follow-up TaskSpecs and execute them under their own task/host scopes.",
+    "operator_execution_preconditions": {
+      "before_prepare_intent": [
+        "fresh protected-main and required-check readback",
+        "typed adopt-authority receipt bound to the exact create-only publication PR, merge commit and TaskSpec file digest",
+        "authoritative StateStore readback of the exact nonterminal TaskSpec revision/digest",
+        "source-precondition readback"
+      ],
+      "note": "The current runtime-refresh no-run evidence schema cannot truthfully infer protected publication/adoption provenance from StateStore health, and it has no evidence class that executes an arbitrary operator-task-propose probe. Those claims are therefore kept out of automatic closeout; this run must preserve the typed adoption receipt and perform the CATBOT proposal probe explicitly after convergence."
+    },
+    "post_refresh_live_target": "After authority closeout, run a fresh typed operator-task-propose or equivalent publication preview for an already recorded CATBOT audit candidate and require that release-registry-identity-mismatch is absent. Only then publish independently reviewed CATBOT follow-up TaskSpecs and execute them under their own task/host scopes.",
     "publication_path": {
       "does_not_establish": [
         "generic StateStore setter",
@@ -171,7 +173,7 @@
               "source-precondition"
             ]
           },
-          "authority-state-store-binding": {
+          "authority-state-store-preflight": {
             "verifier": "runtime-refresh-no-run-evidence-v1",
             "required_evidence": [
               "approval-intent",
@@ -187,14 +189,6 @@
             ]
           },
           "immutable-runtime-readback": {
-            "verifier": "runtime-refresh-no-run-evidence-v1",
-            "required_evidence": [
-              "runtime-result",
-              "immutable-readback",
-              "state-store-integrity"
-            ]
-          },
-          "catbot-intake-unblocked": {
             "verifier": "runtime-refresh-no-run-evidence-v1",
             "required_evidence": [
               "runtime-result",

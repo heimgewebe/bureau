@@ -6,7 +6,7 @@
       "id": "fresh-current-main",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2184-20260828:fresh-main"
+        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2191-20260829:fresh-main"
       }
     },
     {
@@ -15,7 +15,7 @@
       "id": "source-ancestry-precondition",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2184-20260828:source-ancestry-precondition"
+        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2191-20260829:source-ancestry-precondition"
       }
     },
     {
@@ -24,7 +24,7 @@
       "id": "single-runtime-effect",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2184-20260828:single-effect"
+        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2191-20260829:single-effect"
       }
     },
     {
@@ -33,7 +33,7 @@
       "id": "immutable-runtime-readback",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2184-20260828:immutable-readback"
+        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2191-20260829:immutable-readback"
       }
     },
     {
@@ -42,7 +42,7 @@
       "id": "runtime-only-scope",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2184-20260828:scope-only"
+        "observation_scope": "bureau:runtime-refresh-unused-successor-post-pr2191-20260829:scope-only"
       }
     }
   ],

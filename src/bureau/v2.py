@@ -8844,6 +8844,7 @@ def _current_verification_stamp(
     task_id: str,
     row: sqlite3.Row | None,
     connection: sqlite3.Connection,
+    runtime_snapshot_identity: tuple[str, str] | None,
 ) -> dict[str, Any] | None:
     task = registry.tasks.get(task_id)
     if task is None:
@@ -8868,26 +8869,25 @@ def _current_verification_stamp(
     runtime_closeout = _validated_task_runtime_closeout(task)
     if (
         runtime_closeout is not None
+        and runtime_snapshot_identity is not None
         and _runtime_closeout_matches_receipt_bound_task(
             task, runtime_closeout, connection
         )
     ):
-        snapshot_identity = _runtime_registry_snapshot_identity(registry)
-        if snapshot_identity is not None:
-            snapshot_source_commit, manifest_sha256 = snapshot_identity
-            if (
-                snapshot_source_commit == runtime_closeout.get("source_commit")
-                and manifest_sha256 == runtime_closeout.get("manifest_sha256")
-            ):
-                return {
-                    "schema_version": 1,
-                    "kind": "bureau_runtime_refresh_snapshot_verification",
-                    "task_sha256": task.sha256,
-                    "plan_sha256": current_plan,
-                    "receipt_sha256": legacy.sha256_json(runtime_closeout),
-                    "source_commit": snapshot_source_commit,
-                    "manifest_sha256": manifest_sha256,
-                }
+        snapshot_source_commit, manifest_sha256 = runtime_snapshot_identity
+        if (
+            snapshot_source_commit == runtime_closeout.get("source_commit")
+            and manifest_sha256 == runtime_closeout.get("manifest_sha256")
+        ):
+            return {
+                "schema_version": 1,
+                "kind": "bureau_runtime_refresh_snapshot_verification",
+                "task_sha256": task.sha256,
+                "plan_sha256": current_plan,
+                "receipt_sha256": legacy.sha256_json(runtime_closeout),
+                "source_commit": snapshot_source_commit,
+                "manifest_sha256": manifest_sha256,
+            }
     return None
 
 
@@ -8898,24 +8898,44 @@ def _current_verification_stamps(
         row["task_id"]: row
         for row in connection.execute("SELECT * FROM task_status")
     }
+    runtime_snapshot_identity = None
+    if any(
+        _validated_task_runtime_closeout(task) is not None
+        for task in registry.tasks.values()
+    ):
+        runtime_snapshot_identity = _runtime_registry_snapshot_identity(registry)
     return {
         task_id: stamp
         for task_id in registry.tasks
-        if (stamp := _current_verification_stamp(
-                registry, task_id, rows.get(task_id), connection
-            ))
+        if (
+            stamp := _current_verification_stamp(
+                registry,
+                task_id,
+                rows.get(task_id),
+                connection,
+                runtime_snapshot_identity,
+            )
+        )
         is not None
     }
 
 
 def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> dict[str, Any]:
-    if task_id not in registry.tasks:
+    task = registry.tasks.get(task_id)
+    if task is None:
         raise legacy.StateError(f"unknown task {task_id}")
+    runtime_snapshot_identity = (
+        _runtime_registry_snapshot_identity(registry)
+        if _validated_task_runtime_closeout(task) is not None
+        else None
+    )
     with store.connect() as connection:
         row = connection.execute(
             "SELECT * FROM task_status WHERE task_id=?", (task_id,)
         ).fetchone()
-        stamp = _current_verification_stamp(registry, task_id, row, connection)
+        stamp = _current_verification_stamp(
+            registry, task_id, row, connection, runtime_snapshot_identity
+        )
     if stamp is not None:
         return stamp
     raise legacy.StateError(f"task {task_id} has no current verification")

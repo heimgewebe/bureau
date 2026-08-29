@@ -3455,6 +3455,68 @@ def test_runtime_closeout_is_current_verification_only_for_matching_intact_snaps
     assert drifted["recommended_state"] == "active"
 
 
+def test_runtime_closeout_snapshot_identity_is_validated_once_per_lifecycle_scan(
+    registry_factory, tmp_path, monkeypatch
+):
+    source_commit = "e" * 40
+    root = _seal_runtime_registry_snapshot(registry_factory(2), source_commit)
+    manifest_sha256 = _runtime_registry_manifest_sha256(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    for task_id in registry.tasks:
+        current = store.task_spec(task_id)
+        assert current is not None
+        closed = json.loads(json.dumps(current["spec"]))
+        closed["state"] = "verified"
+        metadata = closed.setdefault("metadata", {})
+        metadata.pop("verification", None)
+        metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
+        metadata["runtime_closeout"] = _runtime_closeout_fixture(
+            task_id, manifest_sha256=manifest_sha256
+        )
+        store.put_runtime_refresh_no_run_closeout_task_spec(
+            closed,
+            idempotency_key=(
+                f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}"
+            ),
+            expected_revision=current["revision"],
+        )
+
+    original = bureau_v2._runtime_registry_snapshot_identity
+    calls = 0
+
+    def counted_snapshot_identity(candidate_registry):
+        nonlocal calls
+        calls += 1
+        return original(candidate_registry)
+
+    monkeypatch.setattr(
+        bureau_v2, "_runtime_registry_snapshot_identity", counted_snapshot_identity
+    )
+
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+
+    assert lifecycle["unverified_verified_task_ids"] == []
+    assert calls == 1
+
+
+def test_lifecycle_scan_skips_snapshot_validation_without_runtime_closeout(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+
+    def unexpected_snapshot_identity(_registry):
+        pytest.fail("runtime snapshot identity must stay lazy without a closeout candidate")
+
+    monkeypatch.setattr(
+        bureau_v2, "_runtime_registry_snapshot_identity", unexpected_snapshot_identity
+    )
+
+    lifecycle_diagnostics(registry, store)
+
+
 def test_runtime_closeout_later_taskspec_revision_invalidates_verification_stamp(
     registry_factory, tmp_path, monkeypatch
 ):

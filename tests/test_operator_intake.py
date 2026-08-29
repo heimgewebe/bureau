@@ -3173,16 +3173,16 @@ def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
     preview = publication_preview(registry, store, plan_path=plan_path)
     receipt = tmp_path / "receipt.json"
     original_replay_projection = store.replay_projection
-    fail_once = True
+    failures_remaining = 2
 
-    def replay_projection_with_one_failure():
-        nonlocal fail_once
-        if fail_once:
-            fail_once = False
+    def replay_projection_with_two_failures():
+        nonlocal failures_remaining
+        if failures_remaining:
+            failures_remaining -= 1
             raise RuntimeError("injected projection failure before publication receipt")
         return original_replay_projection()
 
-    monkeypatch.setattr(store, "replay_projection", replay_projection_with_one_failure)
+    monkeypatch.setattr(store, "replay_projection", replay_projection_with_two_failures)
     plan = json.loads(plan_path.read_text())
     with pytest.raises(OperatorIntakeError) as caught:
         publish_task_proposal(
@@ -3210,12 +3210,33 @@ def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
     assert not receipt.exists()
 
     retry_preview = publication_preview(registry, store, plan_path=plan_path)
+    retry_resource_db = _lease_db(retry_preview, tmp_path)
+    with pytest.raises(OperatorIntakeError) as replay_caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=retry_resource_db,
+            workspace_root=tmp_path / "workspaces-retry-failed",
+            receipt_path=receipt,
+        )
+
+    assert replay_caught.value.code == "task-spec-projection-postcommit-failed"
+    assert replay_caught.value.effect_started is False
+    assert replay_caught.value.ambiguity is True
+    assert replay_caught.value.retryable is False
+    assert replay_caught.value.publication_phase == "committed_locally"
+    assert replay_caught.value.details["task_spec_revision"]["idempotent_replay"] is True
+    assert store.task_spec(plan["task_id"])["revision"] == 1
+    assert not receipt.exists()
+
     recovered = publish_task_proposal(
         registry,
         store,
         plan_path=plan_path,
         lease_binding=_lease_binding(),
-        resource_db=_lease_db(retry_preview, tmp_path),
+        resource_db=retry_resource_db,
         workspace_root=tmp_path / "workspaces-retry",
         receipt_path=receipt,
     )

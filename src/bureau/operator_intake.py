@@ -3033,7 +3033,7 @@ def publish_task_proposal(
             "task-spec-projection-postcommit-failed",
             "StateStore TaskSpec publication committed but projection replay failed",
             retryable=False,
-            effect_started=True,
+            effect_started=bool(task_spec_revision.get("changed", True)),
             ambiguity=True,
             required_readback=[
                 f"StateStore TaskSpec {plan['task_id']}",

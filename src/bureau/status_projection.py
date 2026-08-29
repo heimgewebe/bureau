@@ -741,7 +741,7 @@ def status_projection(
     )
     observations_by_task: dict[str, list[dict[str, Any]]] = {}
     historical_observations_by_task: dict[str, list[dict[str, Any]]] = {}
-    if github_observed:
+    if github_observed and github_healthy:
         for observation in github.get("pull_requests", []):
             task_id = observation.get("task_id")
             if isinstance(task_id, str) and task_id:

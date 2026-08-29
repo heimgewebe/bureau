@@ -262,12 +262,20 @@ def test_ci_unknown_stays_unknown(registry_factory) -> None:
 
 def test_blocked_github_observation_stays_blocked(registry_factory) -> None:
     root = registry_factory()
+    historical = dict(github_observation(TASK_1, state="MERGED")["pull_requests"][0])
     projection = project(
         root,
-        github=github_observation(None, healthy=False, blocked_reason="gh unavailable"),
+        github=github_observation(
+            None,
+            healthy=False,
+            blocked_reason="gh unavailable",
+            historical_pull_requests=[historical],
+        ),
     )
     entry = task_entry(projection, TASK_1)
     assert any("github-observation-blocked" in reason for reason in entry["blocked_reasons"])
+    assert entry["github"] is None
+    assert entry["github_history"] == []
     assert projection["healthy"] is False
     assert projection["github_observation"]["blocked_reason"] == "gh unavailable"
 

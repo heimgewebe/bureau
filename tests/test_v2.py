@@ -3310,7 +3310,9 @@ def test_runtime_drift_check_blocks_authoritative_task_spec_drift(
     assert stale[0]["stored_plan_sha256"] == stale[0]["current_plan_sha256"]
 
 
-def _runtime_closeout_fixture(task_id: str) -> dict[str, object]:
+def _runtime_closeout_fixture(
+    task_id: str, *, manifest_sha256: str = "f" * 64
+) -> dict[str, object]:
     return {
         "schema_version": 1,
         "kind": "bureau_runtime_refresh_no_run_closeout",
@@ -3322,7 +3324,7 @@ def _runtime_closeout_fixture(task_id: str) -> dict[str, object]:
         "intent_sha256": "c" * 64,
         "runtime_result_sha256": "d" * 64,
         "source_commit": "e" * 40,
-        "manifest_sha256": "f" * 64,
+        "manifest_sha256": manifest_sha256,
         "readback_sha256": "1" * 64,
         "lease_binding_sha256": "2" * 64,
         "lease_release_sha256": "3" * 64,
@@ -3370,6 +3372,12 @@ def _seal_runtime_registry_snapshot(root: Path, source_commit: str) -> Path:
     return snapshot_root
 
 
+def _runtime_registry_manifest_sha256(root: Path) -> str:
+    return hashlib.sha256(
+        (root.parent.parent / "deployment-manifest.json").read_bytes()
+    ).hexdigest()
+
+
 def _runtime_authority_receipts_fixture(task_id: str) -> dict[str, object]:
     return {
         "target_binding_receipt": {
@@ -3402,6 +3410,7 @@ def test_runtime_closeout_is_current_verification_only_for_matching_intact_snaps
 ):
     source_commit = "e" * 40
     root = _seal_runtime_registry_snapshot(registry_factory(1), source_commit)
+    manifest_sha256 = _runtime_registry_manifest_sha256(root)
     registry, store, _ = setup(root, tmp_path, monkeypatch)
     store.import_registry_task_specs(registry)
     task_id = next(iter(registry.tasks))
@@ -3412,7 +3421,9 @@ def test_runtime_closeout_is_current_verification_only_for_matching_intact_snaps
     metadata = closed.setdefault("metadata", {})
     metadata.pop("verification", None)
     metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
-    metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture(
+        task_id, manifest_sha256=manifest_sha256
+    )
     store.put_runtime_refresh_no_run_closeout_task_spec(
         closed,
         idempotency_key=f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}",
@@ -3449,6 +3460,7 @@ def test_runtime_closeout_later_taskspec_revision_invalidates_verification_stamp
 ):
     source_commit = "e" * 40
     root = _seal_runtime_registry_snapshot(registry_factory(1), source_commit)
+    manifest_sha256 = _runtime_registry_manifest_sha256(root)
     registry, store, _ = setup(root, tmp_path, monkeypatch)
     store.import_registry_task_specs(registry)
     task_id = next(iter(registry.tasks))
@@ -3459,7 +3471,9 @@ def test_runtime_closeout_later_taskspec_revision_invalidates_verification_stamp
     metadata = closed.setdefault("metadata", {})
     metadata.pop("verification", None)
     metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
-    metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture(
+        task_id, manifest_sha256=manifest_sha256
+    )
     store.put_runtime_refresh_no_run_closeout_task_spec(
         closed,
         idempotency_key=f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}",
@@ -3490,10 +3504,13 @@ def test_runtime_closeout_later_taskspec_revision_invalidates_verification_stamp
     assert lifecycle["recommended_state"] == "active"
 
 
-def test_runtime_closeout_source_commit_mismatch_remains_unverified(
+def test_runtime_closeout_manifest_digest_mismatch_remains_unverified(
     registry_factory, tmp_path, monkeypatch
 ):
-    root = _seal_runtime_registry_snapshot(registry_factory(1), "9" * 40)
+    source_commit = "e" * 40
+    root = _seal_runtime_registry_snapshot(registry_factory(1), source_commit)
+    manifest_sha256 = _runtime_registry_manifest_sha256(root)
+    assert manifest_sha256 != "f" * 64
     registry, store, _ = setup(root, tmp_path, monkeypatch)
     store.import_registry_task_specs(registry)
     task_id = next(iter(registry.tasks))
@@ -3505,6 +3522,36 @@ def test_runtime_closeout_source_commit_mismatch_remains_unverified(
     metadata.pop("verification", None)
     metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
     metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
+    store.put_runtime_refresh_no_run_closeout_task_spec(
+        closed,
+        idempotency_key=f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}",
+        expected_revision=current["revision"],
+    )
+
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["unverified_verified_task_ids"] == [task_id]
+    with pytest.raises(StateError, match="no current verification"):
+        verification_stamp(Dispatcher(registry, store).registry, store, task_id)
+
+
+def test_runtime_closeout_source_commit_mismatch_remains_unverified(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = _seal_runtime_registry_snapshot(registry_factory(1), "9" * 40)
+    manifest_sha256 = _runtime_registry_manifest_sha256(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    closed = json.loads(json.dumps(current["spec"]))
+    closed["state"] = "verified"
+    metadata = closed.setdefault("metadata", {})
+    metadata.pop("verification", None)
+    metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture(
+        task_id, manifest_sha256=manifest_sha256
+    )
     store.put_runtime_refresh_no_run_closeout_task_spec(
         closed,
         idempotency_key=f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}",

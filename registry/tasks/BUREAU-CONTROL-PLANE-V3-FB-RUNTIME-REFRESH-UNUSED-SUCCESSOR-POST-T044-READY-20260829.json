@@ -81,7 +81,7 @@
       "general repository or foreign-work mutation authority"
     ],
     "main_at_registration": "8f1c6d057d53a69e0053f2915ca37b157e644c8b",
-    "observation_sha256_at_registration": "5c879d840f17f7e845b235e1c0065aba89cd2767cc057e8a4f82e8d3123168a9",
+    "observation_sha256_at_registration": "520d36063589d3c71e4a906c103297f90acc67e92b0935bdec762946e5f01594",
     "post_refresh_live_target": "Read back exact Bureau runtime convergence; then publish only the already-reviewed T084 scope correction, prove PR #1812 path-disjointness, and continue the first real staging GewebeZelle without touching production or foreign work.",
     "publication_path": {
       "does_not_establish": [

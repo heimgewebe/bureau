@@ -3,32 +3,56 @@
     {
       "assertion": "Das Restfenster zwischen finaler autoritativer Registry-Lesung und SQLite-Commit wird auf einer exakten Revision mit einem hermetischen Reproducer nachgestellt oder als formal vorhanden, aber praktisch nicht reproduzierbar revisionsgebunden klassifiziert.",
       "evidence_type": "object",
-      "id": "residual-race-reproduction"
+      "id": "residual-race-reproduction",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:bureau-truth-model-v2-t024:residual-race-reproduction"
+      }
     },
     {
       "assertion": "Eine explizite Entscheidung implement oder no-change vergleicht mindestens gemeinsamen Registry-Writer-Vertrag, enges Write-Gate und Beibehaltung des dokumentierten Restrisikos nach Nutzen, Komplexität, Crash-Sicherheit und Deadlock-Risiko.",
       "evidence_type": "object",
-      "id": "coordination-decision"
+      "id": "coordination-decision",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:bureau-truth-model-v2-t024:coordination-decision"
+      }
     },
     {
       "assertion": "Bei implement können Registry-Schreiber und complete_run nicht still widersprüchliche Task- und Run-Wahrheiten erzeugen; Verlierer werden deterministisch maschinenlesbar abgelehnt, unklare Ausgänge verlangen autoritativen Readback. Bei no-change ist dieser Punkt als nicht anwendbar gebunden.",
       "evidence_type": "object",
-      "id": "single-effect-contract"
+      "id": "single-effect-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:bureau-truth-model-v2-t024:single-effect-contract"
+      }
     },
     {
       "assertion": "Bei implement bleiben Crash, Timeout und Prozessverlust vor, während und nach der gemeinsamen Koordination fail-closed und idempotent; kein Recovery-Pfad darf fremde Registry-Bytes oder Run-Wahrheit überschreiben. Bei no-change ist dieser Punkt als nicht anwendbar gebunden.",
       "evidence_type": "object",
-      "id": "crash-recovery-contract"
+      "id": "crash-recovery-contract",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:bureau-truth-model-v2-t024:crash-recovery-contract"
+      }
     },
     {
       "assertion": "Hermetische Race-, Crash-, Replay-, Idempotenz- und Drift-Tests sowie make validate sind auf dem exakten finalen Head grün; bei no-change belegt der Abschluss, dass keine neue Mutationslogik entstand.",
       "evidence_type": "object",
-      "id": "compatibility-tests"
+      "id": "compatibility-tests",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:bureau-truth-model-v2-t024:compatibility-tests"
+      }
     },
     {
       "assertion": "Es entsteht keine zweite Registry-, Lifecycle-, Queue- oder Dispatch-Wahrheit und kein Approval-, Review-, Lease-, Merge- oder Deployment-Bypass.",
-      "evidence_type": "boolean",
-      "id": "truth-boundary"
+      "evidence_type": "object",
+      "id": "truth-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:bureau-truth-model-v2-t024:truth-boundary"
+      }
     }
   ],
   "claims": [

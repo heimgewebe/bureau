@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-FU-COMPLETED-RETAINED-DESCENDANT-HEAD-RECONCILE-20260829",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Completed-retained Descendant-Head sicher reconciliieren",
+  "goal": "Den Checkout-Terminal-Reconciliation-Vertrag so erweitern, dass ein bereits completed_retained geschlossener Work-Lane-Checkout, dessen Branch danach sauber und ausschließlich als Git-Descendant des gebundenen Heads fortgelaufen ist, nur bei exaktem Terminal- und Merge-Beweis des aktuellen Heads sicher auf diesen Descendant-Head rebind-et und anschließend normal terminalisiert bzw. archivierungsfähig wird. Die Erweiterung darf keine beliebigen Post-Closeout-Mutationen legitimieren und muss Dirty-State, Nicht-Descendants, fehlenden Merge-Beweis, fremde Owner, Live-Koordination und widersprüchliche Quellterminalität weiterhin fail-closed blockieren.",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 15
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "git",
+    "github",
+    "python",
+    "testing",
+    "resource-leases",
+    "checkout-lifecycle"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "workspace_isolation": "worktree",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_checkout_terminal_reconciliation.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_checkouts.py",
+      "path:/home/alex/repos/grabowski/tests/test_checkout_terminal_reconciliation.py",
+      "path:/home/alex/repos/grabowski/tests/test_checkouts.py",
+      "path:/home/alex/repos/grabowski/docs/checkout-lifecycle.md"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur den evidence-/CAS-gebundenen Lifecycle-Reconcile für den eng definierten completed_retained+descendant+exact-merge-Fall erweitern. Keine Branch-/Worktree-Löschung, kein Reset, kein Force, keine fremden Leases und keine Lockerung der Dirty-/Owner-/Koordinations-/Terminalitätsgates."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "exact-preimage-contract",
+      "assertion": "Preview und Apply binden checkout_key, Owner, Source-Lane, phase=completed_retained, den alten expected_head, den aktuellen sauberen Checkout-Head, expected_branch, Git-Ancestor-Relation, Retention, Prozesse, Leases und sonstige Live-Koordination revisionsgebunden. Ohne vollständige Preimage-Evidenz bleibt safe_to_apply=false.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:exact-preimage-contract"
+      }
+    },
+    {
+      "id": "descendant-and-merge-proof",
+      "assertion": "Ein Rebind ist nur zulässig, wenn Git den alten expected_head als echten Ancestor des aktuellen Branch-Heads bestätigt und genau der aktuelle Head über einen gemergten Pull Request in den Repository-Default-Branch oder eine mindestens gleich starke unveränderliche Terminalquelle belegt ist. Nur Remote-Sicherung, Branch-Gleichheit oder Head-Nähe reichen nicht.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:descendant-and-exact-merge-proof"
+      }
+    },
+    {
+      "id": "atomic-binding-retention-rebind",
+      "assertion": "Bei zulässigem Fall werden Lifecycle-Binding und zugehörige Retention im selben CAS-konformen Effekt auf den exakten aktuellen Descendant-Head gebunden; Owner, Source, Branch und historische Terminalevidenz bleiben erhalten. Ein partieller Rebind darf nicht als Erfolg gelten.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:atomic-binding-retention-cas"
+      }
+    },
+    {
+      "id": "post-closeout-fail-closed-boundaries",
+      "assertion": "Dirty Checkout, Nicht-Descendant, ungemergter aktueller Head, anderer Branch, Owner-/Source-Widerspruch, aktiver Prozess, wirksame Lease, sonstige blockierende Koordination oder widersprüchliche Terminalevidenz stoppen vor Wirkung. Der Fix darf keine generische Autorität für nachträgliche Änderungen an completed_retained Checkouts erzeugen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:fail-closed-boundaries"
+      }
+    },
+    {
+      "id": "pr979-regression-shape",
+      "assertion": "Ein Regressionstest reproduziert den realen PR-979-Fall: Work-Lane auf Head A terminalisiert und completed_retained, derselbe saubere Branch läuft danach auf Descendant Head B weiter, Head B wird exakt in main gemergt, der Reconcile rebind-et A nach B revisionsgebunden und macht den Checkout anschließend ohne Identitätsdrift normal terminal- bzw. archivierbar.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:pr979-regression-proof"
+      }
+    },
+    {
+      "id": "negative-regression-matrix",
+      "assertion": "Tests decken mindestens B nicht gemergt, B nicht Descendant, Branch-Wechsel, Dirty-State, Live-Lease oder Prozess, Owner-/Source-Drift, Preview-TOCTOU und CAS-Drift ab. Alle Fälle bleiben wirkungslos blockiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:negative-regression-matrix"
+      }
+    },
+    {
+      "id": "no-history-rewrite-or-cleanup-authority",
+      "assertion": "Die Änderung löscht oder verändert keine Branches, Worktrees, Commits, Archive oder fremde Lifecycle-Zustände und verwendet weder reset, stash, clean, rebase noch force. Physische Cleanup-Autorität bleibt ein separater bestehender Vertrag.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:no-history-rewrite-or-cleanup-authority"
+      }
+    },
+    {
+      "id": "post-reconcile-readback",
+      "assertion": "Nach Apply zeigen Checkout-Lifecycle-Inventar und current_work keine terminal-binding-head-mismatch-/managed_lifecycle_drift-Evidenz mehr für den exakt reconcilierten Fall; der nachgelagerte Terminal-/Hygiene-Preview wird frisch gelesen und muss den neuen Head erkennen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:post-apply-live-readback"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei jeder Grenzlockerung oder unklarer Terminalität den revisionsgebundenen Code normal revertieren. Bestehende Bindings, Retentions, Worktrees und Git-Historie nicht rückwirkend umschreiben oder löschen; ungeklärte Fälle bleiben managed_lifecycle_drift."
+  },
+  "metadata": {
+    "source": "PR #979 post-merge closeout",
+    "observed_at": "2026-08-29T07:52:37+02:00",
+    "source_candidate": "candidate-3d7bdca60a24cd4d12846105",
+    "source_event_id": 12277,
+    "checkout_key": "a667db2511b82aef57f963fcab5e6ad9429f3a87ca2f4de08d9d196ddcf06f60",
+    "source_lane": "e85bc6116cda2ca2b95dd2225f54db40",
+    "bound_terminal_head": "006b0893f45701e7cb0d31ab61b005cb5c3f32b0",
+    "actual_merged_head": "a7cd646ebde174995b37b7aadea39c68b0e04149",
+    "merge_commit": "5e4e525987980270dca298b5cb0ac1786c0694d0",
+    "terminal_preview_receipt_sha256": "f98e5e09c5e71489a5468f9b1c3a6c2226fea9ff6a82ddb8e3dafa4f223024ae",
+    "hygiene_receipt_sha256": "6418a6bb1b1b5607094aa0e5261e1f4496bfe798e32bb555de4b802306306187",
+    "observation": "Der konkrete Checkout ist clean und unkoordiniert, aber managed_lifecycle_drift. checkout-binding-terminal-preview blockiert mit present-checkout-not-active und work-lane-head-after-terminal-closeout, obwohl der aktuelle Branch-Head ein Git-Descendant des gebundenen Terminal-Heads und exakt über PR #979 in main gemergt ist. Der engere Terminal-Reconcile unterstützt Descendant-Rebind vor terminalem Closeout, nicht nach bereits abgeschlossenem completed_retained-Closeout.",
+    "acceptance_verifier_note": "Die künftige Implementierungs-PR- und Head-Identität ist bei Registry-Aufnahme noch nicht bekannt. Deshalb werden die semantischen Kriterien nicht mit erfundenen code_merged- oder required_ci_green-Zielen befüllt, sondern mit dem bounded manual_observation-Vertrag. Jede spätere Evidence bleibt task-/plan-/scope-revisionsgebunden und höchstens 24 Stunden alt; die konkrete PR-/CI-Abnahme bleibt zusätzlich im execution policy review-before-effect verpflichtend.",
+    "related_tasks": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T140",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T165"
+    ],
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die typed Task-Publikation wurde beim Vorschlag fail-closed mit release-registry-identity-mismatch blockiert: deployed Bureau source 44b102da2d47f0fe5f469075f379a733ae1c3246, aktueller Registry-Checkout f5079ead836a6a1774b04f7fbc00a100bb25e6cc. Deshalb erfolgt nur die eng gebundene Registrierung einer einzelnen Taskdatei über einen normalen geschützten PR; Queue, Claim, Dispatch und Task-Verifikation bleiben unberührt.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "implementation readiness",
+        "runtime mutation authority"
+      ]
+    },
+    "does_not_establish": [
+      "dass beliebige post-closeout Branch-Fortschritte legitim sind",
+      "Cleanup- oder Branch-Löschautorität",
+      "Autorität über Dirty-, fremde oder live koordinierte Checkouts",
+      "dass der konkrete PR-979-Checkout vor Umsetzung dieses Vertrags manuell gelöscht werden darf"
+    ]
+  }
+}

@@ -212,6 +212,16 @@ def summarize_checks(rollup: Any) -> dict[str, Any]:
     return {"summary": summary, "items": items}
 
 
+def _canonical_task_id(value: str, known_task_ids: set[str]) -> str | None:
+    normalized = value.lower().replace("_", "-")
+    matches = [
+        task_id
+        for task_id in known_task_ids
+        if task_id.lower().replace("_", "-") == normalized
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def _branch_candidate_tasks(
     head_ref: str,
     known_task_ids: set[str],
@@ -675,9 +685,11 @@ def observe_pull_requests(
             bindings = [binding]
             if historical and not markers["runs"] and len(markers["tasks"]) > 1:
                 bindings = []
-                for task_id in markers["tasks"]:
+                for task_marker in markers["tasks"]:
+                    canonical_task_id = _canonical_task_id(task_marker, known_task_ids)
+                    task_id = canonical_task_id or task_marker
                     notes = ["historical-multi-task-marker-fanout"]
-                    if known_task_ids and task_id not in known_task_ids:
+                    if known_task_ids and canonical_task_id is None:
                         notes.append("task-marker-not-found-in-registry")
                     bindings.append(
                         {

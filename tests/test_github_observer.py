@@ -242,7 +242,7 @@ def test_historical_multi_task_marker_fans_out_without_open_ambiguity(
 ) -> None:
     historical = pull_request(
         19,
-        body="Bureau-Tasks: BUR-X-T001, BUR-X-T002",
+        body="Bureau-Tasks: bur_x_t001, BUR_X_T002",
         state="MERGED",
     )
     result = observe(

@@ -261,9 +261,15 @@ def parser() -> argparse.ArgumentParser:
     rlens_policy.add_argument("--task-id")
     sub.add_parser("lifecycle")
     lifecycle_reconcile = sub.add_parser("lifecycle-reconcile")
-    lifecycle_reconcile.add_argument("--task-id")
+    lifecycle_reconcile_selectors = lifecycle_reconcile.add_mutually_exclusive_group()
+    lifecycle_reconcile_selectors.add_argument("--task-id")
+    lifecycle_reconcile_selectors.add_argument("--initiative-id")
     lifecycle_reconcile_apply = sub.add_parser("lifecycle-reconcile-apply")
-    lifecycle_reconcile_apply.add_argument("--task-id")
+    lifecycle_reconcile_apply_selectors = (
+        lifecycle_reconcile_apply.add_mutually_exclusive_group()
+    )
+    lifecycle_reconcile_apply_selectors.add_argument("--task-id")
+    lifecycle_reconcile_apply_selectors.add_argument("--initiative-id")
     source_check = sub.add_parser("source-check")
     source_check.add_argument("source", choices=["weltgewebe"])
     source_check.add_argument("--repo", required=True)
@@ -1622,7 +1628,11 @@ def main(argv: list[str] | None = None) -> int:
 
             apply_lifecycle = args.command == "lifecycle-reconcile-apply"
             value = reconcile_initiative_lifecycle(
-                registry, store, apply=apply_lifecycle, task_id=args.task_id
+                registry,
+                store,
+                apply=apply_lifecycle,
+                task_id=args.task_id,
+                initiative_id=args.initiative_id,
             )
         elif args.command == "task-no-run-closeout":
             evidence_path = Path(args.evidence).expanduser()

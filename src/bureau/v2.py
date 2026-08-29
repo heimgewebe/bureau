@@ -10029,8 +10029,17 @@ def _initiative_lifecycle_reconcile_candidates(
 
 
 def reconcile_initiative_lifecycle(
-    registry: Registry, store: StateStore, *, apply: bool = False, task_id: str | None = None
+    registry: Registry,
+    store: StateStore,
+    *,
+    apply: bool = False,
+    task_id: str | None = None,
+    initiative_id: str | None = None,
 ) -> dict[str, Any]:
+    if task_id is not None and initiative_id is not None:
+        raise legacy.StateError(
+            "task_id and initiative_id are mutually exclusive lifecycle reconcile selectors"
+        )
     source_registry = Registry.load(registry.root)
     operational_registry, task_authority, task_revisions = authoritative_task_registry(
         source_registry, store
@@ -10065,6 +10074,16 @@ def reconcile_initiative_lifecycle(
                 f"{suffix}"
             )
         task_candidates = matching_task_candidates
+    elif initiative_id is not None:
+        if (
+            initiative_id not in source_registry.initiatives
+            or initiative_id not in operational_registry.initiatives
+        ):
+            raise legacy.StateError(f"unknown initiative {initiative_id}")
+        # Initiative-scoped reconciliation must not project or apply unrelated
+        # task lifecycle candidates. The initiative recommendation is derived
+        # from the current authoritative task states exactly as observed.
+        task_candidates = []
 
     projected_overlays = dict(overlays)
     for candidate in task_candidates:
@@ -10077,6 +10096,23 @@ def reconcile_initiative_lifecycle(
         []
         if task_id is not None
         else _initiative_lifecycle_reconcile_candidates(diagnostics)
+    )
+    if initiative_id is not None:
+        matching_initiative_candidates = [
+            candidate
+            for candidate in initiative_candidates
+            if candidate["initiative_id"] == initiative_id
+        ]
+        if len(matching_initiative_candidates) != 1:
+            raise legacy.StateError(
+                f"initiative {initiative_id} has no deterministic lifecycle reconcile candidate"
+            )
+        initiative_candidates = matching_initiative_candidates
+
+    response_diagnostics = (
+        [item for item in diagnostics if item["initiative_id"] == initiative_id]
+        if initiative_id is not None
+        else diagnostics
     )
 
     changed_tasks: list[dict[str, Any]] = []
@@ -10133,6 +10169,15 @@ def reconcile_initiative_lifecycle(
                     for candidate in fresh_task_candidates
                     if candidate["task_id"] == task_id
                 ]
+            elif initiative_id is not None:
+                if (
+                    initiative_id not in fresh_source_registry.initiatives
+                    or initiative_id not in fresh_operational_registry.initiatives
+                ):
+                    raise legacy.StateError(
+                        f"initiative {initiative_id} changed during lifecycle reconcile"
+                    )
+                fresh_task_candidates = []
             if fresh_task_candidates != task_candidates:
                 rejection = (
                     fresh_task_rejection_reasons.get(task_id) if task_id else None
@@ -10159,6 +10204,12 @@ def reconcile_initiative_lifecycle(
                 if task_id is not None
                 else _initiative_lifecycle_reconcile_candidates(fresh_diagnostics)
             )
+            if initiative_id is not None:
+                fresh_initiative_candidates = [
+                    candidate
+                    for candidate in fresh_initiative_candidates
+                    if candidate["initiative_id"] == initiative_id
+                ]
             if fresh_initiative_candidates != initiative_candidates:
                 raise legacy.StateError(
                     "initiative lifecycle inputs changed during reconcile"
@@ -10219,15 +10270,15 @@ def reconcile_initiative_lifecycle(
                 )
 
             for candidate in initiative_candidates:
-                initiative_id = candidate["initiative_id"]
+                candidate_initiative_id = candidate["initiative_id"]
                 row = connection.execute(
                     "SELECT state FROM initiative_status WHERE initiative_id=?",
-                    (initiative_id,),
+                    (candidate_initiative_id,),
                 ).fetchone()
                 current_state = (
                     str(row["state"])
                     if row is not None
-                    else fresh_source_registry.initiatives[initiative_id].state
+                    else fresh_source_registry.initiatives[candidate_initiative_id].state
                 )
                 if current_state != candidate["from_state"]:
                     raise legacy.StateError(
@@ -10236,36 +10287,37 @@ def reconcile_initiative_lifecycle(
                 fresh_task_states = {
                     task.id: fresh_projected_overlays.get(task.id, task.state)
                     for task in operational_registry.tasks.values()
-                    if task.initiative == initiative_id
+                    if task.initiative == candidate_initiative_id
                 }
-                fresh_diagnostic = fresh_diagnostics_by_id[initiative_id]
+                fresh_diagnostic = fresh_diagnostics_by_id[candidate_initiative_id]
                 if (
                     fresh_task_states != candidate["task_states"]
                     or fresh_diagnostic["declared_state"] != current_state
                     or fresh_diagnostic["recommended_state"] != candidate["to_state"]
                 ):
                     raise legacy.StateError(
-                        f"initiative {initiative_id} lifecycle inputs changed during reconcile"
+                        f"initiative {candidate_initiative_id} lifecycle inputs changed "
+                        "during reconcile"
                     )
                 now = legacy.utc_now()
                 connection.execute(
                     "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
                     "ON CONFLICT(initiative_id) DO UPDATE SET "
                     "state=excluded.state,updated_at=excluded.updated_at",
-                    (initiative_id, candidate["to_state"], now),
+                    (candidate_initiative_id, candidate["to_state"], now),
                 )
                 store.event(
                     connection,
                     "initiative-state-set",
                     {
-                        "initiative_id": initiative_id,
+                        "initiative_id": candidate_initiative_id,
                         "state": candidate["to_state"],
                     },
-                    initiative_id=initiative_id,
+                    initiative_id=candidate_initiative_id,
                 )
                 changed_initiatives.append(
                     {
-                        "initiative_id": initiative_id,
+                        "initiative_id": candidate_initiative_id,
                         "from_state": candidate["from_state"],
                         "to_state": candidate["to_state"],
                         "authority": "state-store",
@@ -10279,6 +10331,8 @@ def reconcile_initiative_lifecycle(
         **(
             {"task_selector": task_id, "scope": "task"}
             if task_id is not None
+            else {"initiative_selector": initiative_id, "scope": "initiative"}
+            if initiative_id is not None
             else {}
         ),
         "state_store_only": True,
@@ -10307,7 +10361,7 @@ def reconcile_initiative_lifecycle(
         "excluded_recommendations": sorted(
             {
                 item["recommended_state"]
-                for item in diagnostics
+                for item in response_diagnostics
                 if not item["consistent"]
                 and (item["declared_state"], item["recommended_state"])
                 not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS

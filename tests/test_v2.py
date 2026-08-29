@@ -1759,6 +1759,48 @@ def test_lifecycle_reconcile_initiative_selector_limits_preview_and_apply(
     assert row["state"] == "waiting"
 
 
+def test_lifecycle_reconcile_initiative_selector_filters_excluded_recommendations(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+
+    diagnostics = [
+        {
+            "initiative_id": "BUR-TEST-001",
+            "declared_state": "waiting",
+            "recommended_state": "active",
+            "task_states": {},
+            "unverified_verified_task_ids": [],
+            "consistent": False,
+        },
+        {
+            "initiative_id": "BUR-OTHER",
+            "declared_state": "completed",
+            "recommended_state": "reopen-required",
+            "task_states": {},
+            "unverified_verified_task_ids": [],
+            "consistent": False,
+        },
+    ]
+    monkeypatch.setattr(
+        bureau_v2,
+        "_lifecycle_diagnostics_from_overlays",
+        lambda *args, **kwargs: diagnostics,
+    )
+
+    broad = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    scoped = bureau_v2.reconcile_initiative_lifecycle(
+        registry, store, initiative_id="BUR-TEST-001"
+    )
+
+    assert broad["excluded_recommendations"] == ["reopen-required"]
+    assert scoped["candidate_count"] == 1
+    assert scoped["candidates"][0]["initiative_id"] == "BUR-TEST-001"
+    assert scoped["excluded_recommendations"] == []
+
+
 def test_lifecycle_reconcile_initiative_selector_rejects_unknown_and_combined_scope(
     registry_factory, tmp_path, monkeypatch
 ):

@@ -9978,6 +9978,12 @@ def reconcile_initiative_lifecycle(
             )
         initiative_candidates = matching_initiative_candidates
 
+    response_diagnostics = (
+        [item for item in diagnostics if item["initiative_id"] == initiative_id]
+        if initiative_id is not None
+        else diagnostics
+    )
+
     changed_tasks: list[dict[str, Any]] = []
     changed_initiatives: list[dict[str, Any]] = []
     if apply and (task_candidates or initiative_candidates):
@@ -10224,7 +10230,7 @@ def reconcile_initiative_lifecycle(
         "excluded_recommendations": sorted(
             {
                 item["recommended_state"]
-                for item in diagnostics
+                for item in response_diagnostics
                 if not item["consistent"]
                 and (item["declared_state"], item["recommended_state"])
                 not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS

@@ -1629,6 +1629,187 @@ def test_lifecycle_reconcile_cli_accepts_task_selector():
         assert args.task_id == "BUR-TEST-001-T001"
 
 
+def test_lifecycle_reconcile_cli_accepts_initiative_selector_and_rejects_combination():
+    for command in ("lifecycle-reconcile", "lifecycle-reconcile-apply"):
+        args = bureau_cli.parser().parse_args(
+            [command, "--initiative-id", "BUR-TEST-001"]
+        )
+        assert args.initiative_id == "BUR-TEST-001"
+        assert args.task_id is None
+        with pytest.raises(SystemExit):
+            bureau_cli.parser().parse_args(
+                [
+                    command,
+                    "--task-id",
+                    "BUR-TEST-001-T001",
+                    "--initiative-id",
+                    "BUR-TEST-001",
+                ]
+            )
+
+
+def test_lifecycle_reconcile_initiative_selector_limits_preview_and_apply(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(3)
+    task_paths = {
+        json.loads(path.read_text())["id"]: path
+        for path in (root / "registry/tasks").glob("*.json")
+    }
+    blocked_id, dependency_id, planned_id = sorted(task_paths)
+    blocked = json.loads(task_paths[blocked_id].read_text())
+    blocked["state"] = "blocked"
+    task_paths[blocked_id].write_text(json.dumps(blocked))
+    remove_from_queue(root, blocked_id)
+
+    secondary_initiative = json.loads(
+        (root / "registry/initiatives/main.json").read_text()
+    )
+    secondary_initiative["id"] = "BUR-TEST-002"
+    secondary_initiative["title"] = "Unrelated lifecycle task candidates"
+    (root / "registry/initiatives/secondary.json").write_text(
+        json.dumps(secondary_initiative)
+    )
+    for unrelated_id in (dependency_id, planned_id):
+        unrelated = json.loads(task_paths[unrelated_id].read_text())
+        unrelated["initiative"] = "BUR-TEST-002"
+        task_paths[unrelated_id].write_text(json.dumps(unrelated))
+
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+
+    dependency = store.task_spec(dependency_id)
+    assert dependency is not None
+    dependency_spec = json.loads(json.dumps(dependency["spec"]))
+    dependency_spec["state"] = "verified"
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="initiative-scope-dependency-verified",
+        expected_revision=dependency["revision"],
+        source="test",
+    )
+
+    planned = store.task_spec(planned_id)
+    assert planned is not None
+    planned_spec = json.loads(json.dumps(planned["spec"]))
+    planned_spec["state"] = "planned"
+    planned_spec["depends_on"] = [dependency_id]
+    store.put_task_spec(
+        planned_spec,
+        idempotency_key="initiative-scope-dependent-planned",
+        expected_revision=planned["revision"],
+        source="test",
+    )
+
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    current_dependency = store.task_spec(dependency_id)
+    assert current_dependency is not None
+    dependency_spec = json.loads(json.dumps(current_dependency["spec"]))
+    dependency_task = operational.tasks[dependency_id]
+    dependency_spec.setdefault("metadata", {})["verification"] = {
+        "task_sha256": dependency_task.sha256,
+        "plan_sha256": plan_sha256(operational, dependency_task.initiative),
+    }
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="initiative-scope-dependency-evidence",
+        expected_revision=current_dependency["revision"],
+        source="test",
+    )
+
+    broad = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert broad["task_candidate_count"] == 1
+    assert broad["task_candidates"][0]["task_id"] == planned_id
+    assert broad["candidate_count"] == 1
+
+    scoped = bureau_v2.reconcile_initiative_lifecycle(
+        registry, store, initiative_id="BUR-TEST-001"
+    )
+    assert scoped["scope"] == "initiative"
+    assert scoped["initiative_selector"] == "BUR-TEST-001"
+    assert scoped["task_candidate_count"] == 0
+    assert scoped["task_candidates"] == []
+    assert scoped["candidate_count"] == 1
+    assert scoped["candidates"][0]["initiative_id"] == "BUR-TEST-001"
+    assert scoped["candidates"][0]["from_state"] == "active"
+    assert scoped["candidates"][0]["to_state"] == "waiting"
+
+    task_specs_before = {
+        task_id: store.task_spec(task_id) for task_id in sorted(registry.tasks)
+    }
+    applied = bureau_v2.reconcile_initiative_lifecycle(
+        registry, store, apply=True, initiative_id="BUR-TEST-001"
+    )
+    assert applied["scope"] == "initiative"
+    assert applied["initiative_selector"] == "BUR-TEST-001"
+    assert applied["changed_task_count"] == 0
+    assert applied["changed_tasks"] == []
+    assert applied["changed_count"] == 1
+    assert applied["changed"][0]["initiative_id"] == "BUR-TEST-001"
+    assert applied["total_changed_count"] == 1
+    assert {
+        task_id: store.task_spec(task_id) for task_id in sorted(registry.tasks)
+    } == task_specs_before
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is not None
+    assert row["state"] == "waiting"
+
+
+def test_lifecycle_reconcile_initiative_selector_rejects_unknown_and_combined_scope(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    before = store.task_spec(task_id)
+
+    with pytest.raises(StateError, match="unknown initiative BUR-TEST-999"):
+        bureau_v2.reconcile_initiative_lifecycle(
+            registry, store, initiative_id="BUR-TEST-999"
+        )
+    with pytest.raises(StateError, match="task_id and initiative_id are mutually exclusive"):
+        bureau_v2.reconcile_initiative_lifecycle(
+            registry,
+            store,
+            task_id=task_id,
+            initiative_id="BUR-TEST-001",
+        )
+
+    assert store.task_spec(task_id) == before
+
+
+def test_lifecycle_reconcile_initiative_selector_rechecks_candidate_inside_apply(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "blocked"
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    overlays = iter([{task["id"]: "blocked"}, {task["id"]: "ready"}])
+    monkeypatch.setattr(store, "overlays", lambda connection, selected: next(overlays))
+
+    with pytest.raises(StateError, match="initiative lifecycle inputs changed during reconcile"):
+        bureau_v2.reconcile_initiative_lifecycle(
+            registry, store, apply=True, initiative_id="BUR-TEST-001"
+        )
+
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM initiative_status WHERE initiative_id=?",
+            ("BUR-TEST-001",),
+        ).fetchone()
+    assert row is None
+
+
 def test_lifecycle_reconcile_task_selector_limits_preview_and_apply(
     registry_factory, tmp_path, monkeypatch
 ):

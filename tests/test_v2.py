@@ -3648,6 +3648,7 @@ def _put_runtime_closeout_fixture_revision(
     manifest_sha256: str,
     typed_acceptance: bool = False,
     available_evidence: list[str] | None = None,
+    closeout_acceptance_assertion: str | None = None,
 ) -> dict[str, object]:
     current = store.task_spec(task_id)
     assert current is not None
@@ -3708,6 +3709,8 @@ def _put_runtime_closeout_fixture_revision(
 
     closed = json.loads(json.dumps(staged["spec"]))
     closed["state"] = "verified"
+    if closeout_acceptance_assertion is not None:
+        closed["acceptance"][0]["assertion"] = closeout_acceptance_assertion
     metadata = closed.setdefault("metadata", {})
     metadata.pop("verification", None)
     runtime_authority = dict(metadata["runtime_refresh_authority"])
@@ -3901,6 +3904,32 @@ def test_runtime_closeout_later_taskspec_revision_invalidates_verification_stamp
     revised_operational = Dispatcher(registry, store).registry
     with pytest.raises(StateError, match="no current verification"):
         verification_stamp(revised_operational, store, task_id)
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["unverified_verified_task_ids"] == [task_id]
+    assert lifecycle["recommended_state"] == "active"
+
+
+def test_runtime_closeout_evidence_free_authority_revision_drift_remains_unverified(
+    registry_factory, tmp_path, monkeypatch
+):
+    source_commit = "e" * 40
+    root = _seal_runtime_registry_snapshot(registry_factory(1), source_commit)
+    manifest_sha256 = _runtime_registry_manifest_sha256(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    _put_runtime_closeout_fixture_revision(
+        store,
+        task_id,
+        manifest_sha256=manifest_sha256,
+        closeout_acceptance_assertion=(
+            "A closeout revision cannot silently replace the authority acceptance contract."
+        ),
+    )
+
+    operational = Dispatcher(registry, store).registry
+    with pytest.raises(StateError, match="no current verification"):
+        verification_stamp(operational, store, task_id)
     lifecycle = lifecycle_diagnostics(registry, store)[0]
     assert lifecycle["unverified_verified_task_ids"] == [task_id]
     assert lifecycle["recommended_state"] == "active"

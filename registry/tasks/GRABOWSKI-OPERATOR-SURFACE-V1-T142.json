@@ -2,35 +2,75 @@
   "acceptance": [
     {
       "id": "cross-invocation-stability",
-      "assertion": "Ein echter Connector kann Begin, Acknowledge und die exakt gebundene Zielmutation in drei getrennten MCP-Aufrufen ausführen; alle drei Aufrufe verwenden nachweislich dieselbe revisions- und serverinstanzgebundene Aufruferidentität."
+      "assertion": "Ein echter Connector kann Begin, Acknowledge und die exakt gebundene Zielmutation in drei getrennten MCP-Aufrufen ausführen; alle drei Aufrufe verwenden nachweislich dieselbe revisions- und serverinstanzgebundene Aufruferidentität.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:cross-invocation-stability"
+      }
     },
     {
       "id": "cross-client-isolation",
-      "assertion": "Zwei gleichzeitig verbundene Connectoren erhalten unterschiedliche Identitäten; keiner kann Challenge, Verifikation oder Zielmutation des anderen bestätigen, konsumieren, ersetzen oder entwerten."
+      "assertion": "Zwei gleichzeitig verbundene Connectoren erhalten unterschiedliche Identitäten; keiner kann Challenge, Verifikation oder Zielmutation des anderen bestätigen, konsumieren, ersetzen oder entwerten.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:cross-client-isolation"
+      }
     },
     {
       "id": "no-object-identity-authority",
-      "assertion": "Python-Objektidentität, Weakref-Lebensdauer und pro Aufruf neu erzeugte FastMCP-Wrapper sind keine Autoritätsquelle. Fehlt eine stabile transport- oder protokollgebundene Identität, scheitert Mutation vor dem Handshake fail-closed."
+      "assertion": "Python-Objektidentität, Weakref-Lebensdauer und pro Aufruf neu erzeugte FastMCP-Wrapper sind keine Autoritätsquelle. Fehlt eine stabile transport- oder protokollgebundene Identität, scheitert Mutation vor dem Handshake fail-closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:no-object-identity-authority"
+      }
     },
     {
       "id": "exact-intent-only",
-      "assertion": "Jede erzeugbare Challenge und Verifikation ist zwingend an exaktes Werkzeug und kanonischen Argumentdigest gebunden; der Core-Pfad akzeptiert keine ungebundene mutation_intent=None-Autorität."
+      "assertion": "Jede erzeugbare Challenge und Verifikation ist zwingend an exaktes Werkzeug und kanonischen Argumentdigest gebunden; der Core-Pfad akzeptiert keine ungebundene mutation_intent=None-Autorität.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:exact-intent-only"
+      }
     },
     {
       "id": "readonly-independent",
-      "assertion": "Read-only-Werkzeuge bleiben ohne Transportverifikation nutzbar und verändern weder Challenge- noch Verifikationszustände."
+      "assertion": "Read-only-Werkzeuge bleiben ohne Transportverifikation nutzbar und verändern weder Challenge- noch Verifikationszustände.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:readonly-independent"
+      }
     },
     {
       "id": "deployed-network-proof",
-      "assertion": "Ein revisionsgebundener Integrationstest gegen eine deployte Runtime belegt mindestens: drei getrennte Aufrufe desselben Connectors erfolgreich, fremder Connector abgewiesen, Replay abgewiesen, Runtime-Neustart abgewiesen und fehlende stabile Identität abgewiesen."
+      "assertion": "Ein revisionsgebundener Integrationstest gegen eine deployte Runtime belegt mindestens: drei getrennte Aufrufe desselben Connectors erfolgreich, fremder Connector abgewiesen, Replay abgewiesen, Runtime-Neustart abgewiesen und fehlende stabile Identität abgewiesen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:deployed-network-proof"
+      }
     },
     {
       "id": "compatibility-boundary",
-      "assertion": "Migration und Connector-Kompatibilitätsgrenze sind dokumentiert. Bestehende schema-v3-Zustände mit objektgebundenen Scopes autorisieren nach der Umstellung keine Mutation."
+      "assertion": "Migration und Connector-Kompatibilitätsgrenze sind dokumentiert. Bestehende schema-v3-Zustände mit objektgebundenen Scopes autorisieren nach der Umstellung keine Mutation.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:compatibility-boundary"
+      }
     },
     {
       "id": "no-authority-regression",
-      "assertion": "Lease-, Review-, Merge-, Deployment-, Recovery- und Kill-Switch-Grenzen bleiben unverändert; insbesondere entsteht kein globaler oder nur durch identische Zielargumente teilbarer Tokenpool."
+      "assertion": "Lease-, Review-, Merge-, Deployment-, Recovery- und Kill-Switch-Grenzen bleiben unverändert; insbesondere entsteht kein globaler oder nur durch identische Zielargumente teilbarer Tokenpool.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:legacy-acceptance-repair:grabowski-operator-surface-v1-t142:no-authority-regression"
+      }
     }
   ],
   "claims": [],

@@ -278,6 +278,15 @@ def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
     before_db = _file_sha256(state_root / "bureau.sqlite3")
     before_queue = _file_sha256(registry / "registry/queue.json")
     origin, checkout = _git_checkout(tmp_path, registry)
+    push_origin = tmp_path / "snapshot-push-origin.git"
+    subprocess.run(
+        ["git", "init", "--bare", str(push_origin)],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    _run_git(checkout, "remote", "set-url", "--push", "origin", str(push_origin))
 
     def fake_json(arguments, *, allow_not_found=False):
         assert arguments == [
@@ -288,6 +297,13 @@ def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
         assert allow_not_found is True
         return None
 
+    original_git = source_pr_bridge._git
+
+    def forbid_shared_worktree_admin(repo, *arguments):
+        assert arguments[:1] != ("worktree",)
+        return original_git(repo, *arguments)
+
+    monkeypatch.setattr(source_pr_bridge, "_git", forbid_shared_worktree_admin)
     monkeypatch.setattr(source_pr_bridge, "_json", fake_json)
     monkeypatch.setattr(
         state_snapshot,
@@ -302,13 +318,29 @@ def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
     )
 
     branch_ref = _run_git(
-        origin, "rev-parse", f"refs/heads/{source_pr_bridge.STATE_SNAPSHOT_BRANCH}"
+        push_origin, "rev-parse", f"refs/heads/{source_pr_bridge.STATE_SNAPSHOT_BRANCH}"
+    )
+    assert (
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(origin),
+                "show-ref",
+                "--verify",
+                "--quiet",
+                f"refs/heads/{source_pr_bridge.STATE_SNAPSHOT_BRANCH}",
+            ],
+            check=False,
+            timeout=30,
+        ).returncode
+        == 1
     )
     observed = subprocess.run(
         [
             "git",
             "-C",
-            str(origin),
+            str(push_origin),
             "show",
             f"{branch_ref}:{state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()}",
         ],

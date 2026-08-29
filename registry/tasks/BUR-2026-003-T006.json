@@ -47,19 +47,28 @@
     {
       "id": "preconditions-bound",
       "assertion": "The orchestration refuses to run unless runtime drift and approval preconditions are satisfied.",
-      "verifier": "tests",
-      "evidence_type": "string"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:bur-2026-003-t006:preconditions-bound"
+      },
+      "evidence_type": "object"
     },
     {
       "id": "dry-run-first",
       "assertion": "Dry-run explains proposed fetch/import actions before mutation.",
-      "verifier": "CLI fixture",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:bur-2026-003-t006:dry-run-first"
+      },
       "evidence_type": "object"
     },
     {
       "id": "conflict-report",
       "assertion": "Conflicts are reported with repo, branch, source, and required human decision.",
-      "verifier": "fixture",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:bur-2026-003-t006:conflict-report"
+      },
       "evidence_type": "object"
     }
   ],

@@ -18,7 +18,14 @@ from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from . import github_repository, legacy, runtime_refresh, state_events, task_specs
+from . import (
+    github_repository,
+    legacy,
+    registry_snapshot,
+    runtime_refresh,
+    state_events,
+    task_specs,
+)
 from .acceptance import AcceptanceContractError, validate_acceptance_contract
 from .adapters import AdapterRegistry
 from .approval import (
@@ -8756,6 +8763,31 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
     return result
 
 
+def _runtime_registry_snapshot_source_commit(registry: Registry) -> str | None:
+    """Return the manifest-anchored source of an intact runtime Registry snapshot."""
+    root = registry.root.expanduser().resolve()
+    if root.parent.name != "registry-snapshots":
+        return None
+    manifest_path = root.parent.parent / "deployment-manifest.json"
+    try:
+        if manifest_path.is_symlink() or not manifest_path.is_file():
+            return None
+        manifest, _ = runtime_refresh.load_manifest(manifest_path)
+        source_commit = manifest.get("source_commit")
+        if not isinstance(source_commit, str) or _GIT_OID_RE.fullmatch(source_commit) is None:
+            return None
+        identity = registry_snapshot.canonical_registry_identity(manifest)
+    except (OSError, TypeError, ValueError, runtime_refresh.RuntimeRefreshError):
+        return None
+    if (
+        identity.get("valid") is not True
+        or identity.get("root") != str(root)
+        or identity.get("source_commit") != source_commit
+    ):
+        return None
+    return source_commit
+
+
 def _current_verification_stamp(
     registry: Registry, task_id: str, row: sqlite3.Row | None
 ) -> dict[str, Any] | None:
@@ -8779,6 +8811,18 @@ def _current_verification_stamp(
         and verification.get("plan_sha256") == current_plan
     ):
         return dict(verification)
+    runtime_closeout = _validated_task_runtime_closeout(task)
+    if runtime_closeout is not None:
+        snapshot_source_commit = _runtime_registry_snapshot_source_commit(registry)
+        if snapshot_source_commit == runtime_closeout.get("source_commit"):
+            return {
+                "schema_version": 1,
+                "kind": "bureau_runtime_refresh_snapshot_verification",
+                "task_sha256": task.sha256,
+                "plan_sha256": current_plan,
+                "receipt_sha256": legacy.sha256_json(runtime_closeout),
+                "source_commit": snapshot_source_commit,
+            }
     return None
 
 

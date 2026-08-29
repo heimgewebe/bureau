@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
-from bureau import closure_observer, legacy
+from bureau import closure_observer, legacy, registry_snapshot
 from bureau import v2 as bureau_v2
 from bureau.adapters import AdapterRegistry, Observation
 from bureau.core import (
@@ -3331,6 +3331,45 @@ def _runtime_closeout_fixture(task_id: str) -> dict[str, object]:
     }
 
 
+def _seal_runtime_registry_snapshot(root: Path, source_commit: str) -> Path:
+    prefix = root.parent / f"runtime-{root.name}"
+    snapshot_root = prefix / "registry-snapshots" / f"{source_commit[:12]}-fixture"
+    shutil.copytree(root, snapshot_root)
+    paths = sorted(
+        path.relative_to(snapshot_root)
+        for path in (snapshot_root / "registry").rglob("*")
+        if path.is_file() and not path.is_symlink()
+    )
+    tree_sha256 = registry_snapshot.snapshot_tree_sha256(snapshot_root, paths)
+    assert tree_sha256 is not None
+    inventory_path = snapshot_root / ".bureau-runtime-snapshot.json"
+    inventory = {
+        "schema_version": 1,
+        "kind": "bureau_registry_snapshot",
+        "source_commit": source_commit,
+        "tree_sha256": tree_sha256,
+        "paths": [path.as_posix() for path in paths],
+    }
+    inventory_path.write_text(
+        json.dumps(inventory, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    manifest = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_deployment",
+        "source_commit": source_commit,
+        "canonical_registry_root": str(snapshot_root),
+        "canonical_registry_inventory_path": str(inventory_path),
+        "canonical_registry_inventory_sha256": hashlib.sha256(
+            inventory_path.read_bytes()
+        ).hexdigest(),
+        "canonical_registry_tree_sha256": tree_sha256,
+    }
+    (prefix / "deployment-manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    return snapshot_root
+
+
 def _runtime_authority_receipts_fixture(task_id: str) -> dict[str, object]:
     return {
         "target_binding_receipt": {
@@ -3356,6 +3395,82 @@ def _runtime_authority_receipts_fixture(task_id: str) -> dict[str, object]:
             "consumed_at": "2026-08-13T06:55:00Z",
         },
     }
+
+
+def test_runtime_closeout_is_current_verification_only_for_matching_intact_snapshot(
+    registry_factory, tmp_path, monkeypatch
+):
+    source_commit = "e" * 40
+    root = _seal_runtime_registry_snapshot(registry_factory(1), source_commit)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    closed = json.loads(json.dumps(current["spec"]))
+    closed["state"] = "verified"
+    metadata = closed.setdefault("metadata", {})
+    metadata.pop("verification", None)
+    metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
+    store.put_task_spec(
+        closed,
+        idempotency_key="runtime-closeout-snapshot-verification",
+        expected_revision=current["revision"],
+        source="runtime-refresh-no-run-closeout",
+    )
+
+    operational = Dispatcher(registry, store).registry
+    stamp = verification_stamp(operational, store, task_id)
+    assert stamp["kind"] == "bureau_runtime_refresh_snapshot_verification"
+    assert stamp["source_commit"] == source_commit
+    assert stamp["task_sha256"] == operational.tasks[task_id].sha256
+    assert stamp["plan_sha256"] == plan_sha256(operational, operational.tasks[task_id].initiative)
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["unverified_verified_task_ids"] == []
+    assert lifecycle["recommended_state"] == "completion-ready"
+
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text(encoding="utf-8"))
+    initiative["current_plan"] = {
+        "repository": "test",
+        "path": "changed-plan.md",
+        "commit": "7" * 40,
+        "document_sha256": "8" * 64,
+    }
+    initiative_path.write_text(json.dumps(initiative), encoding="utf-8")
+
+    drifted = lifecycle_diagnostics(registry, store)[0]
+    assert drifted["unverified_verified_task_ids"] == [task_id]
+    assert drifted["recommended_state"] == "active"
+
+
+def test_runtime_closeout_source_commit_mismatch_remains_unverified(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = _seal_runtime_registry_snapshot(registry_factory(1), "9" * 40)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    closed = json.loads(json.dumps(current["spec"]))
+    closed["state"] = "verified"
+    metadata = closed.setdefault("metadata", {})
+    metadata.pop("verification", None)
+    metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
+    store.put_task_spec(
+        closed,
+        idempotency_key="runtime-closeout-source-mismatch",
+        expected_revision=current["revision"],
+        source="runtime-refresh-no-run-closeout",
+    )
+
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["unverified_verified_task_ids"] == [task_id]
+    with pytest.raises(StateError, match="no current verification"):
+        verification_stamp(Dispatcher(registry, store).registry, store, task_id)
 
 
 def test_runtime_drift_check_accepts_validated_runtime_closeout_supersession(

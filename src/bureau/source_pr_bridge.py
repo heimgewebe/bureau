@@ -139,12 +139,14 @@ def publish_state_snapshot(
     """Transport one already-generated, verified snapshot without changing bytes."""
     snapshot_bytes, snapshot_payload = _verified_snapshot_bytes(snapshot)
     upstream_origin = _git(root, "remote", "get-url", "origin")
+    upstream_push_origin = _git(root, "remote", "get-url", "--push", "origin")
     _git(root, "fetch", "origin", base)
     remote_head = _git(root, "rev-parse", f"origin/{base}")
     with tempfile.TemporaryDirectory(prefix="bureau-state-snapshot-") as raw_tmp:
         worktree = Path(raw_tmp) / "checkout"
         _clone_shared_transport(root, worktree)
         _git(worktree, "remote", "set-url", "origin", upstream_origin)
+        _git(worktree, "remote", "set-url", "--push", "origin", upstream_push_origin)
         _git(worktree, "checkout", "--detach", remote_head)
         if _git(worktree, "status", "--porcelain"):
             raise StateSnapshotTransportError("snapshot transport checkout is not clean")

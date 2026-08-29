@@ -72,6 +72,30 @@ def _git(repo: Path, *arguments: str) -> str:
     return process.stdout.strip()
 
 
+def _clone_shared_transport(source: Path, destination: Path) -> None:
+    """Create a separate Git admin area while borrowing immutable objects locally."""
+    process = subprocess.run(
+        [
+            "git",
+            "clone",
+            "--quiet",
+            "--no-checkout",
+            "--shared",
+            str(source),
+            str(destination),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=120,
+    )
+    if process.returncode != 0:
+        detail = "\n".join(
+            part for part in (process.stdout.strip(), process.stderr.strip()) if part
+        )
+        raise GitCommandError(f"git clone shared transport failed: {detail}")
+
+
 def publish_now_refill(
     root: Path,
     *,
@@ -114,71 +138,75 @@ def publish_state_snapshot(
 ) -> dict[str, Any]:
     """Transport one already-generated, verified snapshot without changing bytes."""
     snapshot_bytes, snapshot_payload = _verified_snapshot_bytes(snapshot)
+    upstream_origin = _git(root, "remote", "get-url", "origin")
+    upstream_push_origin = _git(root, "remote", "get-url", "--push", "origin")
     _git(root, "fetch", "origin", base)
     remote_head = _git(root, "rev-parse", f"origin/{base}")
     with tempfile.TemporaryDirectory(prefix="bureau-state-snapshot-") as raw_tmp:
         worktree = Path(raw_tmp) / "checkout"
-        _git(root, "worktree", "add", "--detach", str(worktree), remote_head)
-        try:
-            target = worktree / state_snapshot.PUBLIC_SNAPSHOT_PATH
-            target.write_bytes(snapshot_bytes)
-            if target.read_bytes() != snapshot_bytes:
-                raise StateSnapshotTransportError("snapshot worktree copy changed bytes")
-            observed = state_snapshot.decode_public_snapshot(target.read_bytes())
-            if observed["snapshot_sha256"] != snapshot_payload["snapshot_sha256"]:
-                raise StateSnapshotTransportError("snapshot worktree digest changed")
-            relative = state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()
-            if not _git(worktree, "status", "--porcelain", "--", relative):
-                return {
-                    "status": "not-applied",
-                    "reason": "snapshot-unchanged",
-                    "base": base,
-                    "base_sha": remote_head,
-                    "snapshot_sha256": snapshot_payload["snapshot_sha256"],
-                }
-            changed_paths = {
-                line[3:] for line in _git(worktree, "status", "--porcelain").splitlines()
-            }
-            if changed_paths != {relative}:
-                raise StateSnapshotTransportError("state snapshot publication changed extra paths")
-            _git(worktree, "add", "--", relative)
-            _git(
-                worktree,
-                "-c",
-                f"user.name={NOW_REFILL_GIT_AUTHOR_NAME}",
-                "-c",
-                f"user.email={NOW_REFILL_GIT_AUTHOR_EMAIL}",
-                "commit",
-                "-m",
-                STATE_SNAPSHOT_COMMIT_MESSAGE,
-            )
-            head_sha = _git(worktree, "rev-parse", "HEAD")
-            existing_ref = _json(
-                ["api", f"repos/{repository}/git/ref/heads/{branch}"],
-                allow_not_found=True,
-            )
-            if existing_ref is None:
-                _git(worktree, "push", "origin", f"HEAD:refs/heads/{branch}")
-            else:
-                expected_remote = str(existing_ref["object"]["sha"])
-                _git(
-                    worktree,
-                    "push",
-                    f"--force-with-lease=refs/heads/{branch}:{expected_remote}",
-                    "origin",
-                    f"HEAD:refs/heads/{branch}",
-                )
+        _clone_shared_transport(root, worktree)
+        _git(worktree, "remote", "set-url", "origin", upstream_origin)
+        _git(worktree, "remote", "set-url", "--push", "origin", upstream_push_origin)
+        _git(worktree, "checkout", "--detach", remote_head)
+        if _git(worktree, "status", "--porcelain"):
+            raise StateSnapshotTransportError("snapshot transport checkout is not clean")
+        target = worktree / state_snapshot.PUBLIC_SNAPSHOT_PATH
+        target.write_bytes(snapshot_bytes)
+        if target.read_bytes() != snapshot_bytes:
+            raise StateSnapshotTransportError("snapshot worktree copy changed bytes")
+        observed = state_snapshot.decode_public_snapshot(target.read_bytes())
+        if observed["snapshot_sha256"] != snapshot_payload["snapshot_sha256"]:
+            raise StateSnapshotTransportError("snapshot worktree digest changed")
+        relative = state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()
+        if not _git(worktree, "status", "--porcelain", "--", relative):
             return {
-                "status": "published",
-                "branch": branch,
+                "status": "not-applied",
+                "reason": "snapshot-unchanged",
                 "base": base,
                 "base_sha": remote_head,
-                "head_sha": head_sha,
-                "path": relative,
                 "snapshot_sha256": snapshot_payload["snapshot_sha256"],
             }
-        finally:
-            _git(root, "worktree", "remove", "--force", str(worktree))
+        changed_paths = {
+            line[3:] for line in _git(worktree, "status", "--porcelain").splitlines()
+        }
+        if changed_paths != {relative}:
+            raise StateSnapshotTransportError("state snapshot publication changed extra paths")
+        _git(worktree, "add", "--", relative)
+        _git(
+            worktree,
+            "-c",
+            f"user.name={NOW_REFILL_GIT_AUTHOR_NAME}",
+            "-c",
+            f"user.email={NOW_REFILL_GIT_AUTHOR_EMAIL}",
+            "commit",
+            "-m",
+            STATE_SNAPSHOT_COMMIT_MESSAGE,
+        )
+        head_sha = _git(worktree, "rev-parse", "HEAD")
+        existing_ref = _json(
+            ["api", f"repos/{repository}/git/ref/heads/{branch}"],
+            allow_not_found=True,
+        )
+        if existing_ref is None:
+            _git(worktree, "push", "origin", f"HEAD:refs/heads/{branch}")
+        else:
+            expected_remote = str(existing_ref["object"]["sha"])
+            _git(
+                worktree,
+                "push",
+                f"--force-with-lease=refs/heads/{branch}:{expected_remote}",
+                "origin",
+                f"HEAD:refs/heads/{branch}",
+            )
+        return {
+            "status": "published",
+            "branch": branch,
+            "base": base,
+            "base_sha": remote_head,
+            "head_sha": head_sha,
+            "path": relative,
+            "snapshot_sha256": snapshot_payload["snapshot_sha256"],
+        }
 
 
 class StateSnapshotTransportError(ValueError):

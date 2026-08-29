@@ -11,6 +11,7 @@
       "path:/home/alex/repos/bureau/src/bureau/status_projection.py",
       "path:/home/alex/repos/bureau/tests/test_doctor.py",
       "path:/home/alex/repos/bureau/tests/test_github_observer.py",
+      "path:/home/alex/repos/bureau/tests/test_github_repository_identifiers.py",
       "path:/home/alex/repos/bureau/tests/test_status_projection.py",
       "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T003.json"
     ]
@@ -100,6 +101,7 @@
         "path:/home/alex/repos/bureau/src/bureau/status_projection.py",
         "path:/home/alex/repos/bureau/tests/test_doctor.py",
         "path:/home/alex/repos/bureau/tests/test_github_observer.py",
+        "path:/home/alex/repos/bureau/tests/test_github_repository_identifiers.py",
         "path:/home/alex/repos/bureau/tests/test_status_projection.py",
         "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T003.json"
       ],

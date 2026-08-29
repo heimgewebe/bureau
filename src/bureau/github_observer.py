@@ -34,6 +34,8 @@ GH_PR_LIST_FIELDS = (
     "mergeStateStatus,reviewDecision,statusCheckRollup,body,labels,updatedAt"
 )
 
+OPEN_PULL_REQUEST_LIMIT = 1000
+
 BUREAU_RUN_MARKER_RE = re.compile(r"Bureau-Run:\s*([A-Za-z0-9][A-Za-z0-9._/-]*)")
 BUREAU_TASK_MARKER_RE = re.compile(r"Bureau-Task:\s*([A-Za-z0-9][A-Za-z0-9._/-]*)")
 BUREAU_TASK_LINE_RE = re.compile(
@@ -297,8 +299,9 @@ def github_pull_requests(
 ) -> dict[str, Any]:
     """Fetch current open PRs plus complete closed/merged lifecycle history.
 
-    Open PRs retain the existing rich ``gh pr list`` projection because current
-    reservation health depends on check/review fields. Historical evidence uses
+    Open PRs retain the rich ``gh pr list`` projection because current reservation
+    health depends on check/review fields. The open set is bounded; saturating the
+    bound blocks the observation instead of silently truncating truth. History uses
     the paginated REST pulls endpoint instead: every closed pull request is
     retrieved, ``merged_at`` distinguishes MERGED from CLOSED, and timeout or
     parse failure blocks the observation rather than silently truncating it.
@@ -313,7 +316,7 @@ def github_pull_requests(
         "--state",
         "open",
         "--limit",
-        "100",
+        str(OPEN_PULL_REQUEST_LIMIT),
         "--json",
         GH_PR_LIST_FIELDS,
     ]
@@ -351,6 +354,16 @@ def github_pull_requests(
             "pull_requests": [],
             "historical_pull_requests": [],
             "error": f"gh pr list open returned non-list JSON for {repository}",
+        }
+    if len(open_value) >= OPEN_PULL_REQUEST_LIMIT:
+        return {
+            "available": False,
+            "pull_requests": [],
+            "historical_pull_requests": [],
+            "error": (
+                "complete open PR set unavailable: observer limit "
+                f"{OPEN_PULL_REQUEST_LIMIT} reached for {repository}"
+            ),
         }
     open_pull_requests = [item for item in open_value if isinstance(item, dict)]
 

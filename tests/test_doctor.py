@@ -552,15 +552,27 @@ def test_cli_observes_github_by_default(monkeypatch, tmp_path: Path, capsys) -> 
     root.mkdir()
     state_root = tmp_path / "state"
     observation = {"source": "github", "healthy": True, "pull_requests": []}
+    registry = object()
     seen: dict[str, object] = {}
 
-    def observe(observed_root: Path, *, state_root: Path | None = None):
+    monkeypatch.setattr(
+        doctor_module.legacy.Registry, "load", staticmethod(lambda observed_root: registry)
+    )
+
+    def observe(
+        observed_root: Path,
+        *,
+        registry: object | None = None,
+        state_root: Path | None = None,
+    ):
         seen["observe_root"] = observed_root
+        seen["observe_registry"] = registry
         seen["observe_state_root"] = state_root
         return observation
 
     def project(projected_root: Path, **kwargs):
         seen["project_root"] = projected_root
+        seen["project_registry"] = kwargs["registry"]
         seen["project_github"] = kwargs["github"]
         return {"kind": "doctor-test", "github_source": kwargs["github"]["source"]}
 
@@ -571,8 +583,10 @@ def test_cli_observes_github_by_default(monkeypatch, tmp_path: Path, capsys) -> 
     payload = json.loads(capsys.readouterr().out)
 
     assert seen["observe_root"] == root.resolve()
+    assert seen["observe_registry"] is registry
     assert seen["observe_state_root"] == state_root
     assert seen["project_root"] == root.resolve()
+    assert seen["project_registry"] is registry
     assert seen["project_github"] is observation
     assert payload["github_source"] == "github"
 
@@ -585,13 +599,19 @@ def test_cli_explicit_github_observations_skip_live_observer(
     observation_path = tmp_path / "github.json"
     observation = {"source": "fixture", "healthy": True, "pull_requests": []}
     observation_path.write_text(json.dumps(observation), encoding="utf-8")
+    registry = object()
     seen: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        doctor_module.legacy.Registry, "load", staticmethod(lambda observed_root: registry)
+    )
 
     def unexpected_observer(*args, **kwargs):
         raise AssertionError("explicit GitHub observations must not trigger a live fetch")
 
     def project(projected_root: Path, **kwargs):
         seen["project_root"] = projected_root
+        seen["project_registry"] = kwargs["registry"]
         seen["project_github"] = kwargs["github"]
         return {"kind": "doctor-test", "github_source": kwargs["github"]["source"]}
 
@@ -612,5 +632,6 @@ def test_cli_explicit_github_observations_skip_live_observer(
     payload = json.loads(capsys.readouterr().out)
 
     assert seen["project_root"] == root.resolve()
+    assert seen["project_registry"] is registry
     assert seen["project_github"] == observation
     assert payload["github_source"] == "fixture"

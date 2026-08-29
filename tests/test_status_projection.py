@@ -304,6 +304,27 @@ def test_stale_github_observation_stays_visible(registry_factory) -> None:
     assert projection["healthy"] is False
 
 
+def test_stale_github_history_is_blocked_from_lifecycle_projection(registry_factory) -> None:
+    root = registry_factory()
+    historical = dict(github_observation(TASK_1, state="MERGED")["pull_requests"][0])
+    projection = project(
+        root,
+        github=github_observation(
+            None,
+            observed_at="2026-07-07T09:00:00Z",
+            historical_pull_requests=[historical],
+        ),
+        github_max_age_seconds=600,
+    )
+    entry = task_entry(projection, TASK_1)
+
+    assert entry["github"] is None
+    assert entry["github_history"] == []
+    assert "github-observation-stale" in entry["stale_reasons"]
+    assert projection["github_observation"]["stale"] is True
+    assert projection["healthy"] is False
+
+
 def test_merged_pr_without_bureau_evidence_is_not_verified(registry_factory) -> None:
     root = registry_factory()
     projection = project(root, github=github_observation(TASK_1, state="MERGED"))

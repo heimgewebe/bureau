@@ -763,6 +763,7 @@ def dashboard_projection(
 def doctor_projection(
     root: Path,
     *,
+    registry: legacy.Registry | None = None,
     state_root: Path | None = None,
     github: dict[str, Any] | None = None,
     github_max_age_seconds: float = DEFAULT_GITHUB_MAX_AGE_SECONDS,
@@ -773,6 +774,7 @@ def doctor_projection(
     generated_at = now or _iso(_utc_now())
     base = status_projection(
         root,
+        registry=registry,
         state_root=state_root,
         github=github,
         github_max_age_seconds=github_max_age_seconds,
@@ -831,13 +833,17 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     root = args.root.expanduser().resolve()
+    registry = legacy.Registry.load(root)
     github = (
         _load_json(args.github_observations)
         if args.github_observations
-        else observe_pull_requests(root, state_root=args.state_root)
+        else observe_pull_requests(
+            root, registry=registry, state_root=args.state_root
+        )
     )
     value = doctor_projection(
         root,
+        registry=registry,
         state_root=args.state_root,
         github=github,
         github_max_age_seconds=args.github_max_age,

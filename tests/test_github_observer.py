@@ -12,6 +12,7 @@ from bureau.github_observer import (
     BINDING_BUREAU_TASK,
     BINDING_UNMATCHED,
     OBSERVATION_DOES_NOT_ESTABLISH,
+    OPEN_PULL_REQUEST_LIMIT,
     bind_pull_request,
     extract_markers,
     filter_observation_by_task,
@@ -108,10 +109,30 @@ def test_github_pull_requests_fetches_open_and_complete_lifecycle_history(tmp_pa
     calls = args_log.read_text(encoding="utf-8").splitlines()
     assert len(calls) == 2
     assert "--state open" in calls[0]
-    assert "--limit 100" in calls[0]
+    assert f"--limit {OPEN_PULL_REQUEST_LIMIT}" in calls[0]
     assert "api --paginate" in calls[1]
     assert "pulls?state=closed&per_page=100" in calls[1]
     assert "--limit" not in calls[1]
+
+
+def test_github_open_pull_request_limit_fails_closed_instead_of_truncating(
+    tmp_path: Path,
+) -> None:
+    gh = fake_gh(
+        tmp_path,
+        "case \"$*\" in "
+        "*\"--state open\"*) python3 -c \"import json; "
+        "print(json.dumps([{'number': i, 'state': 'OPEN'} "
+        f"for i in range({OPEN_PULL_REQUEST_LIMIT})]))\" ;; "
+        "*) exit 9 ;; esac",
+    )
+
+    result = github_pull_requests("heimgewebe/bureau", gh_bin=gh)
+
+    assert result["available"] is False
+    assert result["pull_requests"] == []
+    assert result["historical_pull_requests"] == []
+    assert f"observer limit {OPEN_PULL_REQUEST_LIMIT} reached" in result["error"]
 
 
 def test_github_history_timeout_fails_closed_instead_of_truncating(tmp_path: Path) -> None:

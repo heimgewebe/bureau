@@ -48,35 +48,75 @@
   "acceptance": [
     {
       "id": "exact-preimage-contract",
-      "assertion": "Preview und Apply binden checkout_key, Owner, Source-Lane, phase=completed_retained, den alten expected_head, den aktuellen sauberen Checkout-Head, expected_branch, Git-Ancestor-Relation, Retention, Prozesse, Leases und sonstige Live-Koordination revisionsgebunden. Ohne vollständige Preimage-Evidenz bleibt safe_to_apply=false."
+      "assertion": "Preview und Apply binden checkout_key, Owner, Source-Lane, phase=completed_retained, den alten expected_head, den aktuellen sauberen Checkout-Head, expected_branch, Git-Ancestor-Relation, Retention, Prozesse, Leases und sonstige Live-Koordination revisionsgebunden. Ohne vollständige Preimage-Evidenz bleibt safe_to_apply=false.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:exact-preimage-contract"
+      }
     },
     {
       "id": "descendant-and-merge-proof",
-      "assertion": "Ein Rebind ist nur zulässig, wenn Git den alten expected_head als echten Ancestor des aktuellen Branch-Heads bestätigt und genau der aktuelle Head über einen gemergten Pull Request in den Repository-Default-Branch oder eine mindestens gleich starke unveränderliche Terminalquelle belegt ist. Nur Remote-Sicherung, Branch-Gleichheit oder Head-Nähe reichen nicht."
+      "assertion": "Ein Rebind ist nur zulässig, wenn Git den alten expected_head als echten Ancestor des aktuellen Branch-Heads bestätigt und genau der aktuelle Head über einen gemergten Pull Request in den Repository-Default-Branch oder eine mindestens gleich starke unveränderliche Terminalquelle belegt ist. Nur Remote-Sicherung, Branch-Gleichheit oder Head-Nähe reichen nicht.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:descendant-and-exact-merge-proof"
+      }
     },
     {
       "id": "atomic-binding-retention-rebind",
-      "assertion": "Bei zulässigem Fall werden Lifecycle-Binding und zugehörige Retention im selben CAS-konformen Effekt auf den exakten aktuellen Descendant-Head gebunden; Owner, Source, Branch und historische Terminalevidenz bleiben erhalten. Ein partieller Rebind darf nicht als Erfolg gelten."
+      "assertion": "Bei zulässigem Fall werden Lifecycle-Binding und zugehörige Retention im selben CAS-konformen Effekt auf den exakten aktuellen Descendant-Head gebunden; Owner, Source, Branch und historische Terminalevidenz bleiben erhalten. Ein partieller Rebind darf nicht als Erfolg gelten.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:atomic-binding-retention-cas"
+      }
     },
     {
       "id": "post-closeout-fail-closed-boundaries",
-      "assertion": "Dirty Checkout, Nicht-Descendant, ungemergter aktueller Head, anderer Branch, Owner-/Source-Widerspruch, aktiver Prozess, wirksame Lease, sonstige blockierende Koordination oder widersprüchliche Terminalevidenz stoppen vor Wirkung. Der Fix darf keine generische Autorität für nachträgliche Änderungen an completed_retained Checkouts erzeugen."
+      "assertion": "Dirty Checkout, Nicht-Descendant, ungemergter aktueller Head, anderer Branch, Owner-/Source-Widerspruch, aktiver Prozess, wirksame Lease, sonstige blockierende Koordination oder widersprüchliche Terminalevidenz stoppen vor Wirkung. Der Fix darf keine generische Autorität für nachträgliche Änderungen an completed_retained Checkouts erzeugen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:fail-closed-boundaries"
+      }
     },
     {
       "id": "pr979-regression-shape",
-      "assertion": "Ein Regressionstest reproduziert den realen PR-979-Fall: Work-Lane auf Head A terminalisiert und completed_retained, derselbe saubere Branch läuft danach auf Descendant Head B weiter, Head B wird exakt in main gemergt, der Reconcile rebind-et A nach B revisionsgebunden und macht den Checkout anschließend ohne Identitätsdrift normal terminal- bzw. archivierbar."
+      "assertion": "Ein Regressionstest reproduziert den realen PR-979-Fall: Work-Lane auf Head A terminalisiert und completed_retained, derselbe saubere Branch läuft danach auf Descendant Head B weiter, Head B wird exakt in main gemergt, der Reconcile rebind-et A nach B revisionsgebunden und macht den Checkout anschließend ohne Identitätsdrift normal terminal- bzw. archivierbar.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:pr979-regression-proof"
+      }
     },
     {
       "id": "negative-regression-matrix",
-      "assertion": "Tests decken mindestens B nicht gemergt, B nicht Descendant, Branch-Wechsel, Dirty-State, Live-Lease oder Prozess, Owner-/Source-Drift, Preview-TOCTOU und CAS-Drift ab. Alle Fälle bleiben wirkungslos blockiert."
+      "assertion": "Tests decken mindestens B nicht gemergt, B nicht Descendant, Branch-Wechsel, Dirty-State, Live-Lease oder Prozess, Owner-/Source-Drift, Preview-TOCTOU und CAS-Drift ab. Alle Fälle bleiben wirkungslos blockiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:negative-regression-matrix"
+      }
     },
     {
       "id": "no-history-rewrite-or-cleanup-authority",
-      "assertion": "Die Änderung löscht oder verändert keine Branches, Worktrees, Commits, Archive oder fremde Lifecycle-Zustände und verwendet weder reset, stash, clean, rebase noch force. Physische Cleanup-Autorität bleibt ein separater bestehender Vertrag."
+      "assertion": "Die Änderung löscht oder verändert keine Branches, Worktrees, Commits, Archive oder fremde Lifecycle-Zustände und verwendet weder reset, stash, clean, rebase noch force. Physische Cleanup-Autorität bleibt ein separater bestehender Vertrag.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:no-history-rewrite-or-cleanup-authority"
+      }
     },
     {
       "id": "post-reconcile-readback",
-      "assertion": "Nach Apply zeigen Checkout-Lifecycle-Inventar und current_work keine terminal-binding-head-mismatch-/managed_lifecycle_drift-Evidenz mehr für den exakt reconcilierten Fall; der nachgelagerte Terminal-/Hygiene-Preview wird frisch gelesen und muss den neuen Head erkennen."
+      "assertion": "Nach Apply zeigen Checkout-Lifecycle-Inventar und current_work keine terminal-binding-head-mismatch-/managed_lifecycle_drift-Evidenz mehr für den exakt reconcilierten Fall; der nachgelagerte Terminal-/Hygiene-Preview wird frisch gelesen und muss den neuen Head erkennen.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "completed-retained-descendant-reconcile:post-apply-live-readback"
+      }
     }
   ],
   "rollback": {
@@ -95,6 +135,7 @@
     "terminal_preview_receipt_sha256": "f98e5e09c5e71489a5468f9b1c3a6c2226fea9ff6a82ddb8e3dafa4f223024ae",
     "hygiene_receipt_sha256": "6418a6bb1b1b5607094aa0e5261e1f4496bfe798e32bb555de4b802306306187",
     "observation": "Der konkrete Checkout ist clean und unkoordiniert, aber managed_lifecycle_drift. checkout-binding-terminal-preview blockiert mit present-checkout-not-active und work-lane-head-after-terminal-closeout, obwohl der aktuelle Branch-Head ein Git-Descendant des gebundenen Terminal-Heads und exakt über PR #979 in main gemergt ist. Der engere Terminal-Reconcile unterstützt Descendant-Rebind vor terminalem Closeout, nicht nach bereits abgeschlossenem completed_retained-Closeout.",
+    "acceptance_verifier_note": "Die künftige Implementierungs-PR- und Head-Identität ist bei Registry-Aufnahme noch nicht bekannt. Deshalb werden die semantischen Kriterien nicht mit erfundenen code_merged- oder required_ci_green-Zielen befüllt, sondern mit dem bounded manual_observation-Vertrag. Jede spätere Evidence bleibt task-/plan-/scope-revisionsgebunden und höchstens 24 Stunden alt; die konkrete PR-/CI-Abnahme bleibt zusätzlich im execution policy review-before-effect verpflichtend.",
     "related_tasks": [
       "GRABOWSKI-OPERATOR-SURFACE-V1-T140",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T165"

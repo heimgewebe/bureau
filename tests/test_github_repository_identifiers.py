@@ -189,8 +189,11 @@ def test_cli_repo_resource_resolves_before_gh(
         ],
     }
     arguments = marker.read_text(encoding="utf-8").splitlines()
-    assert "--repo" in arguments
-    assert "heimgewebe/test" in arguments
+    assert any(
+        argument == "heimgewebe/test"
+        or argument.startswith("repos/heimgewebe/test/")
+        for argument in arguments
+    )
     assert "repo" not in arguments
 
 

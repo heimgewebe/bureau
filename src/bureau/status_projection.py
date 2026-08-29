@@ -84,6 +84,7 @@ GITHUB_FIELDS = (
     "merge_state",
     "ambiguous_reason",
     "observed_at",
+    "updated_at",
 )
 
 
@@ -739,11 +740,16 @@ def status_projection(
         )
     )
     observations_by_task: dict[str, list[dict[str, Any]]] = {}
+    historical_observations_by_task: dict[str, list[dict[str, Any]]] = {}
     if github_observed:
         for observation in github.get("pull_requests", []):
             task_id = observation.get("task_id")
             if isinstance(task_id, str) and task_id:
                 observations_by_task.setdefault(task_id, []).append(observation)
+        for observation in github.get("historical_pull_requests", []):
+            task_id = observation.get("task_id")
+            if isinstance(task_id, str) and task_id:
+                historical_observations_by_task.setdefault(task_id, []).append(observation)
 
     projection_findings: list[dict[str, Any]] = []
     task_authority_error = state.get("task_authority_error")
@@ -828,6 +834,13 @@ def status_projection(
         ]
 
         task_github: dict[str, Any] | None = None
+        task_github_history = [
+            _public_github(item)
+            for item in sorted(
+                historical_observations_by_task.get(task.id, []),
+                key=lambda item: (str(item.get("updated_at") or ""), int(item.get("number") or 0)),
+            )
+        ]
         if not github_observed:
             unknowns.append("github-not-observed")
         elif not github_healthy:
@@ -903,6 +916,7 @@ def status_projection(
                 "workspace": workspace,
                 "receipts": receipts,
                 "github": task_github,
+                "github_history": task_github_history,
                 "findings": findings,
                 "unknowns": unknowns,
                 "stale_reasons": stale_reasons,

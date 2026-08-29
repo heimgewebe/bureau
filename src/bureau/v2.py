@@ -8837,11 +8837,16 @@ def _runtime_closeout_matches_receipt_bound_task(
     return task_revision_sha256(historical_spec) == task.sha256
 
 
+_RUNTIME_SNAPSHOT_SOURCE_UNSET = object()
+
+
 def _current_verification_stamp(
     registry: Registry,
     task_id: str,
     row: sqlite3.Row | None,
     connection: sqlite3.Connection,
+    *,
+    runtime_snapshot_source_commit: str | None | object = _RUNTIME_SNAPSHOT_SOURCE_UNSET,
 ) -> dict[str, Any] | None:
     task = registry.tasks.get(task_id)
     if task is None:
@@ -8870,7 +8875,9 @@ def _current_verification_stamp(
             task, runtime_closeout, connection
         )
     ):
-        snapshot_source_commit = _runtime_registry_snapshot_source_commit(registry)
+        snapshot_source_commit = runtime_snapshot_source_commit
+        if snapshot_source_commit is _RUNTIME_SNAPSHOT_SOURCE_UNSET:
+            snapshot_source_commit = _runtime_registry_snapshot_source_commit(registry)
         if snapshot_source_commit == runtime_closeout.get("source_commit"):
             return {
                 "schema_version": 1,
@@ -8890,12 +8897,19 @@ def _current_verification_stamps(
         row["task_id"]: row
         for row in connection.execute("SELECT * FROM task_status")
     }
+    runtime_snapshot_source_commit = _runtime_registry_snapshot_source_commit(registry)
     return {
         task_id: stamp
         for task_id in registry.tasks
-        if (stamp := _current_verification_stamp(
-                registry, task_id, rows.get(task_id), connection
-            ))
+        if (
+            stamp := _current_verification_stamp(
+                registry,
+                task_id,
+                rows.get(task_id),
+                connection,
+                runtime_snapshot_source_commit=runtime_snapshot_source_commit,
+            )
+        )
         is not None
     }
 

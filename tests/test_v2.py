@@ -3413,11 +3413,10 @@ def test_runtime_closeout_is_current_verification_only_for_matching_intact_snaps
     metadata.pop("verification", None)
     metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
     metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
-    store.put_task_spec(
+    store.put_runtime_refresh_no_run_closeout_task_spec(
         closed,
-        idempotency_key="runtime-closeout-snapshot-verification",
+        idempotency_key=f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}",
         expected_revision=current["revision"],
-        source="runtime-refresh-no-run-closeout",
     )
 
     operational = Dispatcher(registry, store).registry
@@ -3445,6 +3444,52 @@ def test_runtime_closeout_is_current_verification_only_for_matching_intact_snaps
     assert drifted["recommended_state"] == "active"
 
 
+def test_runtime_closeout_later_taskspec_revision_invalidates_verification_stamp(
+    registry_factory, tmp_path, monkeypatch
+):
+    source_commit = "e" * 40
+    root = _seal_runtime_registry_snapshot(registry_factory(1), source_commit)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    closed = json.loads(json.dumps(current["spec"]))
+    closed["state"] = "verified"
+    metadata = closed.setdefault("metadata", {})
+    metadata.pop("verification", None)
+    metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
+    metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
+    store.put_runtime_refresh_no_run_closeout_task_spec(
+        closed,
+        idempotency_key=f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}",
+        expected_revision=current["revision"],
+    )
+
+    operational = Dispatcher(registry, store).registry
+    assert verification_stamp(operational, store, task_id)["kind"] == (
+        "bureau_runtime_refresh_snapshot_verification"
+    )
+
+    verified = store.task_spec(task_id)
+    assert verified is not None
+    revised = json.loads(json.dumps(verified["spec"]))
+    revised["acceptance"][0]["assertion"] = "A later acceptance contract must be proven anew."
+    store.put_task_spec(
+        revised,
+        idempotency_key="runtime-closeout-later-acceptance-revision",
+        expected_revision=verified["revision"],
+        source="test",
+    )
+
+    revised_operational = Dispatcher(registry, store).registry
+    with pytest.raises(StateError, match="no current verification"):
+        verification_stamp(revised_operational, store, task_id)
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["unverified_verified_task_ids"] == [task_id]
+    assert lifecycle["recommended_state"] == "active"
+
+
 def test_runtime_closeout_source_commit_mismatch_remains_unverified(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -3460,11 +3505,10 @@ def test_runtime_closeout_source_commit_mismatch_remains_unverified(
     metadata.pop("verification", None)
     metadata["runtime_refresh_authority"] = _runtime_authority_receipts_fixture(task_id)
     metadata["runtime_closeout"] = _runtime_closeout_fixture(task_id)
-    store.put_task_spec(
+    store.put_runtime_refresh_no_run_closeout_task_spec(
         closed,
-        idempotency_key="runtime-closeout-source-mismatch",
+        idempotency_key=f"runtime-refresh-no-run-closeout:{task_id}:{'d' * 64}",
         expected_revision=current["revision"],
-        source="runtime-refresh-no-run-closeout",
     )
 
     lifecycle = lifecycle_diagnostics(registry, store)[0]

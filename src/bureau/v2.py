@@ -8788,8 +8788,60 @@ def _runtime_registry_snapshot_source_commit(registry: Registry) -> str | None:
     return source_commit
 
 
+def _runtime_closeout_matches_receipt_bound_task(
+    task: legacy.Task,
+    runtime_closeout: dict[str, Any],
+    connection: sqlite3.Connection,
+) -> bool:
+    """Authenticate one runtime closeout against its immutable verified TaskSpec."""
+    result_sha256 = runtime_closeout.get("runtime_result_sha256")
+    if not isinstance(result_sha256, str):
+        return False
+    idempotency_key = (
+        f"runtime-refresh-no-run-closeout:{task.id}:{result_sha256}"
+    )
+    try:
+        receipt = task_specs.get_mutation_receipt(connection, idempotency_key)
+    except task_specs.TaskSpecError:
+        return False
+    if receipt is None or receipt.get("task_id") != task.id:
+        return False
+    historical = receipt.get("resulting_task_spec")
+    if (
+        not isinstance(historical, dict)
+        or historical.get("source") != "runtime-refresh-no-run-closeout"
+        or historical.get("spec_sha256") != receipt.get("requested_sha256")
+    ):
+        return False
+    historical_spec = historical.get("spec")
+    if (
+        not isinstance(historical_spec, dict)
+        or historical_spec.get("id") != task.id
+        or historical_spec.get("state") != "verified"
+    ):
+        return False
+    historical_metadata = historical_spec.get("metadata")
+    historical_closeout_value = (
+        historical_metadata.get("runtime_closeout")
+        if isinstance(historical_metadata, dict)
+        else None
+    )
+    try:
+        historical_closeout = runtime_refresh._validated_runtime_closeout(
+            historical_closeout_value
+        )
+    except runtime_refresh.RuntimeRefreshError:
+        return False
+    if historical_closeout != runtime_closeout:
+        return False
+    return task_revision_sha256(historical_spec) == task.sha256
+
+
 def _current_verification_stamp(
-    registry: Registry, task_id: str, row: sqlite3.Row | None
+    registry: Registry,
+    task_id: str,
+    row: sqlite3.Row | None,
+    connection: sqlite3.Connection,
 ) -> dict[str, Any] | None:
     task = registry.tasks.get(task_id)
     if task is None:
@@ -8812,7 +8864,12 @@ def _current_verification_stamp(
     ):
         return dict(verification)
     runtime_closeout = _validated_task_runtime_closeout(task)
-    if runtime_closeout is not None:
+    if (
+        runtime_closeout is not None
+        and _runtime_closeout_matches_receipt_bound_task(
+            task, runtime_closeout, connection
+        )
+    ):
         snapshot_source_commit = _runtime_registry_snapshot_source_commit(registry)
         if snapshot_source_commit == runtime_closeout.get("source_commit"):
             return {
@@ -8836,7 +8893,9 @@ def _current_verification_stamps(
     return {
         task_id: stamp
         for task_id in registry.tasks
-        if (stamp := _current_verification_stamp(registry, task_id, rows.get(task_id)))
+        if (stamp := _current_verification_stamp(
+                registry, task_id, rows.get(task_id), connection
+            ))
         is not None
     }
 
@@ -8848,7 +8907,7 @@ def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> d
         row = connection.execute(
             "SELECT * FROM task_status WHERE task_id=?", (task_id,)
         ).fetchone()
-    stamp = _current_verification_stamp(registry, task_id, row)
+        stamp = _current_verification_stamp(registry, task_id, row, connection)
     if stamp is not None:
         return stamp
     raise legacy.StateError(f"task {task_id} has no current verification")

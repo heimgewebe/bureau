@@ -422,6 +422,38 @@ def test_open_pr_suppresses_closed_attempt_even_after_later_metadata_update() ->
 
 
 
+def test_merged_replacement_suppresses_closed_attempt_even_after_later_metadata_update() -> None:
+    drift = truth_drift_projection(
+        {
+            "tasks": [
+                _truth_task(
+                    "TASK-MERGED-REPLACEMENT",
+                    github_history=[
+                        {
+                            "state": "MERGED",
+                            "number": 20,
+                            "head_sha": "d" * 40,
+                            "updated_at": "2026-08-29T07:00:00Z",
+                        },
+                        {
+                            "state": "CLOSED",
+                            "number": 12,
+                            "review_decision": None,
+                            "updated_at": "2026-08-29T08:00:00Z",
+                        },
+                    ],
+                )
+            ]
+        }
+    )
+
+    assert drift["counts"]["merged-implementation-open-task"] == 1
+    assert drift["counts"]["closed-pr-without-decision"] == 0
+    assert all(
+        item["code"] != "closed-pr-without-decision" for item in drift["findings"]
+    )
+
+
 def test_ambiguous_open_bindings_suppress_closed_attempt_drift() -> None:
     task = _truth_task(
         "TASK-AMBIGUOUS-OPEN",

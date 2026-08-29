@@ -352,6 +352,7 @@ def truth_drift_projection(projection: Mapping[str, Any]) -> dict[str, Any]:
 
         if (
             closed_github is not None
+            and merged_github is None
             and not terminal
             and not current_open_present
             and isinstance(latest_github, Mapping)

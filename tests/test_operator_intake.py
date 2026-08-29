@@ -3183,7 +3183,8 @@ def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
         return original_replay_projection()
 
     monkeypatch.setattr(store, "replay_projection", replay_projection_with_one_failure)
-    with pytest.raises(RuntimeError, match="injected projection failure"):
+    plan = json.loads(plan_path.read_text())
+    with pytest.raises(OperatorIntakeError) as caught:
         publish_task_proposal(
             registry,
             store,
@@ -3194,7 +3195,14 @@ def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
             receipt_path=receipt,
         )
 
-    plan = json.loads(plan_path.read_text())
+    assert caught.value.code == "task-spec-projection-postcommit-failed"
+    assert caught.value.effect_started is True
+    assert caught.value.ambiguity is True
+    assert caught.value.retryable is False
+    assert caught.value.publication_phase == "committed_locally"
+    assert f"StateStore TaskSpec {plan['task_id']}" in caught.value.required_readback
+    assert "StateStore projection replay" in caught.value.required_readback
+    assert "publication lease rows" in caught.value.required_readback
     committed = store.task_spec(plan["task_id"])
     assert committed is not None
     assert committed["revision"] == 1

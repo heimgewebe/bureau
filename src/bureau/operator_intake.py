@@ -3026,7 +3026,27 @@ def publish_task_proposal(
             retryable=False,
             required_readback=[f"StateStore TaskSpec {plan['task_id']}"],
         )
-    projection = store.replay_projection()
+    try:
+        projection = store.replay_projection()
+    except Exception as exc:
+        raise OperatorIntakeError(
+            "task-spec-projection-postcommit-failed",
+            "StateStore TaskSpec publication committed but projection replay failed",
+            retryable=False,
+            effect_started=True,
+            ambiguity=True,
+            required_readback=[
+                f"StateStore TaskSpec {plan['task_id']}",
+                "StateStore projection replay",
+                "publication lease rows",
+            ],
+            details={
+                "task_id": plan["task_id"],
+                "task_spec_revision": task_spec_revision,
+                "cause_type": type(exc).__name__,
+            },
+            publication_phase="committed_locally",
+        ) from exc
     try:
         lease_release = _release_unchanged_publication_leases(normalized_leases)
     except OperatorIntakeError as exc:

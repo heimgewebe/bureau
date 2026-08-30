@@ -53,6 +53,15 @@
       "verifier_config": {
         "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:scope-only"
       }
+    },
+    {
+      "assertion": "Before no-run closeout can verify this authority, the current TaskSpec revision binds PR #2211 to its exact protected merge commit and typed proof revalidates the create-only PR scope, required checks, historical TaskSpec blob and legacy-seed-exact missing-only StateStore adoption receipt. The bootstrap Null-SHA sentinel is intentionally unverifiable and must be replaced only after the real merge commit is known.",
+      "evidence_type": "object",
+      "id": "protected-publication-and-missing-only-adoption",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:protected-publication-adoption"
+      }
     }
   ],
   "claims": [
@@ -89,7 +98,8 @@
       "permission to bypass protected publication, missing-only adoption, source-ancestry, execution-context, review or CI gates",
       "completion or authorization of Operational Guidance implementation",
       "queue, claim, dispatch or task-supply publication authority",
-      "general repository or foreign-work mutation authority"
+      "general repository or foreign-work mutation authority",
+      "that the bootstrap Null-SHA protected_publication_adoption sentinel proves a merge or permits no-run closeout"
     ],
     "main_at_registration": "a3101fed10577c06244f61697441ae9a57452b13",
     "operator_execution_preconditions": {
@@ -107,7 +117,7 @@
         "inside that transient task context, a read-only preflight of findmnt -T /home/alex/.local/share/bureau must prove the containing mount is rw before bureau-runtime-refresh apply is invoked",
         "direct grabowski_terminal_run or local grabowski_fleet_run execution of bureau-runtime-refresh apply is forbidden because those surfaces were proven to expose the host root read-only"
       ],
-      "note": "Protected publication/missing-only adoption, predecessor reconciliation and the transient rw execution context are separate mandatory pre-effect operator gates. The no-run closeout contract intentionally does not claim or substitute for those operator-only provenance checks."
+      "note": "Protected publication/missing-only adoption, predecessor reconciliation and the transient rw execution context are separate mandatory pre-effect operator gates. The bootstrap protected_publication_adoption merge commit is an intentional Null-SHA fail-closed sentinel: it cannot satisfy no-run closeout. After a successful runtime refresh, revise only that publication merge binding to the actual PR #2211 merge commit through the now-current normal TaskSpec path before closeout."
     },
     "predecessor_reconciliation": {
       "predecessor_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2206-20260830",
@@ -250,11 +260,28 @@
               "lease-release",
               "run-lifecycle"
             ]
+          },
+          "protected-publication-and-missing-only-adoption": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "protected-publication-adoption"
+            ]
           }
         }
       }
     },
-    "source": "Fresh T191 runtime-refresh reconciliation on 2026-08-30. Predecessor result 728ebe527dfcc360b8611afb2ab982c4d074fe196a41cfe2bbc824d0377c8b51 is status=unclear/effect_started=true after installer EROFS while creating a temporary target Registry snapshot. Post-failure typed readback proves deployment manifest/runtime/canonical Registry remain on 90647998ade46187d9042e822d468c71f5f597f8, StateStore integrity is OK, and neither an a3101fed target release nor target Registry snapshot exists. Direct MCP execution sees the root mount read-only; transient Grabowski task 1d495be7a2294ce2bfdae402 sees the same host path on ext4 rw. Candidate candidate-ef614e52bfb3a6242226020c event 12819 is promote with no exact duplicate."
+    "source": "Fresh T191 runtime-refresh reconciliation on 2026-08-30. Predecessor result 728ebe527dfcc360b8611afb2ab982c4d074fe196a41cfe2bbc824d0377c8b51 is status=unclear/effect_started=true after installer EROFS while creating a temporary target Registry snapshot. Post-failure typed readback proves deployment manifest/runtime/canonical Registry remain on 90647998ade46187d9042e822d468c71f5f597f8, StateStore integrity is OK, and neither an a3101fed target release nor target Registry snapshot exists. Direct MCP execution sees the root mount read-only; transient Grabowski task 1d495be7a2294ce2bfdae402 sees the same host path on ext4 rw. Candidate candidate-ef614e52bfb3a6242226020c event 12819 is promote with no exact duplicate.",
+    "protected_publication_adoption": {
+      "schema_version": 1,
+      "repository": "heimgewebe/bureau",
+      "publication_pr": 2211,
+      "publication_merge_commit": "0000000000000000000000000000000000000000",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ]
+    }
   },
   "priority": {
     "lane": "now",

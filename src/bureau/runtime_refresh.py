@@ -1140,10 +1140,14 @@ def runtime_prefix_execution_context_preflight(
     task_attempt = _grabowski_task_unit_attempt(unit)
     grabowski_task_executor = task_attempt is not None
     expected_task_attempt = _grabowski_task_unit_attempt(expected_grabowski_task_unit)
-    executor_matches_lease_task = bool(
-        grabowski_task_executor
-        and expected_task_attempt is not None
-        and unit == expected_grabowski_task_unit
+    executor_matches_expected_unit = (
+        None
+        if expected_grabowski_task_unit is None
+        else bool(
+            grabowski_task_executor
+            and expected_task_attempt is not None
+            and unit == expected_grabowski_task_unit
+        )
     )
     evidence = bind_digest(
         {
@@ -1162,7 +1166,7 @@ def runtime_prefix_execution_context_preflight(
                 require_grabowski_task_executor
             ),
             "expected_grabowski_task_unit": expected_grabowski_task_unit,
-            "executor_matches_lease_task": executor_matches_lease_task,
+            "executor_matches_expected_unit": executor_matches_expected_unit,
             "observed_at": isoformat(now or utc_now()),
         },
         "execution_context_sha256",
@@ -1179,10 +1183,14 @@ def runtime_prefix_execution_context_preflight(
             "runtime-refresh apply must run in a transient Grabowski systemd task",
             details={"execution_context_preflight": evidence},
         )
-    if require_grabowski_task_executor and not executor_matches_lease_task:
+    if (
+        require_grabowski_task_executor
+        and expected_grabowski_task_unit is not None
+        and executor_matches_expected_unit is not True
+    ):
         raise RuntimeRefreshError(
-            "runtime-executor-lease-task-mismatch",
-            "runtime-refresh executor differs from the exact lease task unit",
+            "runtime-executor-unit-drift",
+            "runtime-refresh executor changed after lease metadata was validated",
             details={"execution_context_preflight": evidence},
         )
     return evidence
@@ -7556,13 +7564,18 @@ def apply_runtime_refresh(
             details={"resource_keys": forbidden_scheduler_resources},
         )
     required_lease_metadata = None
+    expected_executor_unit = None
     if require_grabowski_task_executor:
-        _lease_owner, expected_executor_unit = _validate_binding_identity(lease_binding)
-        if _grabowski_task_unit_attempt(expected_executor_unit) is None:
+        executor_identity_preflight = runtime_prefix_execution_context_preflight(
+            prefix=prefix,
+            now=current,
+            require_grabowski_task_executor=True,
+        )
+        expected_executor_unit = executor_identity_preflight["systemd_unit"]
+        if not isinstance(expected_executor_unit, str):
             raise RuntimeRefreshError(
-                "runtime-executor-lease-task-invalid",
-                "runtime-refresh lease task ID is not a canonical Grabowski task unit",
-                details={"lease_task_id": expected_executor_unit},
+                "runtime-executor-identity-unobserved",
+                "runtime-refresh did not produce a concrete transient executor unit",
             )
         required_lease_metadata = {"executor_unit": expected_executor_unit}
     binding = validate_live_lease_binding(
@@ -7663,9 +7676,7 @@ def apply_runtime_refresh(
         prefix=prefix,
         now=current,
         require_grabowski_task_executor=require_grabowski_task_executor,
-        expected_grabowski_task_unit=(
-            binding["task_id"] if require_grabowski_task_executor else None
-        ),
+        expected_grabowski_task_unit=expected_executor_unit,
     )
 
     # This CAS is the last authority operation before the attempt ledger and

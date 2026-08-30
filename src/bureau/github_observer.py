@@ -689,7 +689,7 @@ def observe_pull_requests(
                 runs_by_branch=runs_by_branch,
             )
             bindings = [binding]
-            if historical and not markers["runs"] and len(markers["tasks"]) > 1:
+            if historical and len(markers["tasks"]) > 1:
                 bindings = []
                 for task_marker in markers["tasks"]:
                     canonical_task_id = _canonical_task_id(task_marker, known_task_ids)

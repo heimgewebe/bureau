@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from . import legacy, task_specs
+from . import legacy, state_events, task_specs
 from .acceptance import (
     PASSED,
     AcceptanceContractError,
@@ -490,6 +490,45 @@ def _validated_replay(
     }
 
 
+
+def _backfill_replayed_task_projection(
+    connection: Any,
+    store: StateStore,
+    *,
+    task_id: str,
+) -> bool:
+    rows = [
+        dict(row)
+        for row in connection.execute(
+            "SELECT event_id,run_id,event_type,event_schema_version,payload_json "
+            "FROM events ORDER BY event_id"
+        )
+    ]
+    base_rows, _task_spec_rows = task_specs.split_event_rows(rows)
+    try:
+        replayed = state_events.replay(base_rows)["projection"]
+        current = state_events.current_projection(connection)
+        diff = state_events.projection_diff(replayed, current)
+    except state_events.StateEventError as exc:
+        raise legacy.StateError(str(exc)) from exc
+    if task_id not in diff["tasks"]:
+        return False
+    if any(
+        key != "tasks" or entity_id != task_id
+        for key, values in diff.items()
+        for entity_id in values
+    ):
+        raise legacy.StateError(
+            "task no-run closeout replay refuses unrelated StateStore drift"
+        )
+    store.append_task_projection_delta(
+        connection,
+        trigger="task-no-run-closeout-replay",
+        task_id=task_id,
+    )
+    return True
+
+
 def apply_task_no_run_closeout(
     registry: Any,
     store: StateStore,
@@ -519,6 +558,7 @@ def apply_task_no_run_closeout(
             raise legacy.StateError("task no-run closeout preview changed before apply")
         replay = _validated_replay(preview, expected_preview_sha256)
         if replay is not None:
+            _backfill_replayed_task_projection(connection, store, task_id=task_id)
             return replay
         current = task_specs.get_current(connection, task_id)
         if current is None:

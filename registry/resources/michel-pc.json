@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "host.michel-pc",
+  "type": "capacity",
+  "parent": "root",
+  "capacity": 1,
+  "grabowski_key": "host:michel-pc"
+}

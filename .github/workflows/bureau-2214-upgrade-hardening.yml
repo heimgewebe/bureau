@@ -1,0 +1,52 @@
+name: bureau-2214-upgrade-hardening
+
+on:
+  push:
+    branches:
+      - fix/issue-2177-no-run-projection-p1-successor-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 3
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Verify exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD~2)" = "4b2f523e8ef1c719ff9e49fd16c8455a22d75083"
+          test "$(git hash-object src/bureau/task_closeout.py)" = "eb8eb285b9ab4b7b6c09e331d893d68516339018"
+          test "$(git hash-object tests/test_task_closeout.py)" = "a67a5b4c491c85303f9c913bf051b4cf5f2f0a75"
+      - name: Apply upgrade hardening
+        run: python .github/bureau-2214-upgrade-hardening.py
+      - name: Validate hardened patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python -m pip install -q -e '.[dev]'
+          PYTHONPATH=src pytest -q tests/test_task_closeout.py tests/test_state_events.py
+          ruff check src/bureau/task_closeout.py tests/test_task_closeout.py
+          make validate
+      - name: Publish hardened successor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/bureau-2214-upgrade-hardening.py
+          rm .github/workflows/bureau-2214-upgrade-hardening.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(state): harden no-run replay upgrade backfill"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

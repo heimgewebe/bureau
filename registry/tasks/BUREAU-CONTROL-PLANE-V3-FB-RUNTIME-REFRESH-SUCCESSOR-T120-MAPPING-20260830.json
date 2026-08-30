@@ -1,0 +1,301 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, GitHub main is freshly observed; the exact target contains this protected authority merge and all then-current legitimate main merges, and required validate (3.10), validate (3.12), registry-registration-preflight/freshness or equivalent protected-main registration checks for that exact revision are successful.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t120-mapping-20260830:fresh-main"
+      }
+    },
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, a typed precondition readback proves that active deployment-manifest source_commit and canonical Registry source identity are equal, and that this active source is exactly the registered deployed source 90647998ade46187d9042e822d468c71f5f597f8 or a verified Git ancestor of the freshly selected target main commit. Any deployment/Registry identity mismatch, unrelated or diverged source history, unavailable ancestry proof or target drift blocks the runtime effect fail-closed.",
+      "evidence_type": "object",
+      "id": "source-ancestry-precondition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t120-mapping-20260830:source-ancestry-precondition"
+      }
+    },
+    {
+      "assertion": "Before the runtime effect, the authoritative StateStore exposes this exact task ID as a ready Runtime Refresh Authority on a revision later than the initial planned adoption; that current revision/digest must contain metadata.protected_publication_adoption bound to PR #2210 and its actual merge commit, and the approval intent must bind the same current revision/digest. Protected publication, missing-only adoption and proof-bearing planned->ready activation provenance are independently retained.",
+      "evidence_type": "object",
+      "id": "authority-state-store-preflight",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t120-mapping-20260830:state-store-preflight"
+      }
+    },
+    {
+      "assertion": "This authority starts at most one runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are read back from intent, attempt/result, manifest, launcher, package, snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "id": "single-runtime-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t120-mapping-20260830:single-effect"
+      }
+    },
+    {
+      "assertion": "After a successful refresh, deployment manifest, immutable release, package tree, launcher pair and canonical Registry snapshot bind the same freshly observed source commit, and Bureau runtime identity and StateStore integrity are valid at that exact target.",
+      "evidence_type": "object",
+      "id": "immutable-runtime-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t120-mapping-20260830:immutable-readback"
+      }
+    },
+    {
+      "assertion": "The authority is consumed exactly once after successful immutable readback and grants no mapping/T120 completion, GitHub repository-settings, queue, claim expansion for T120, dispatch, task-supply, product-code, foreign-work or general repository mutation authority. Historical consumed authorities remain terminal and are not reused.",
+      "evidence_type": "object",
+      "id": "runtime-only-scope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t120-mapping-20260830:scope-only"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound bootstrap only. The current direct user request to continue T120 fleet-wide through mapping closeout, reconciliation, hardening, T057 proof and terminalization authorizes only the Bureau runtime convergence strictly necessary to restore normal T120/mapping control-plane claims. No runtime effect may start until fresh protected-main/CI observation, exact create-only protected publication plus missing-only adopt-authority receipt, exact target binding, authoritative StateStore TaskSpec preflight, typed deployment/Registry source-identity and ancestry precondition, exact live intent-bound leases and immutable post-readback gates all pass. Repeat source ancestry immediately before apply. On any effect-started ambiguity read back intent/attempt/result/manifest/Registry first; no blind retry. The create-only publication MUST remain state=planned. That planned revision may be adopted missing-only but cannot authorize prepare-intent/apply. Before any runtime effect, an exact post-merge activation CAS must prove PR #2210, its actual merge commit, branch protection, required checks, exact introduced TaskSpec bytes and the missing-only seed receipt; the CAS must atomically add metadata.protected_publication_adoption, add the protected-publication-and-missing-only-adoption acceptance criterion, add its no-run protected-publication-adoption evidence binding, and only then change state to ready. A direct planned->runtime effect is forbidden and fails the installed runtime state gate."
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Publish one initially non-runnable planned Runtime Refresh Authority, prove its exact protected publication and missing-only adoption, activate it by one exact StateStore CAS revision carrying the typed publication/adoption contract, then consume exactly one target-bound Bureau runtime refresh from the currently deployed source 90647998ade46187d9042e822d468c71f5f597f8 to the freshly re-observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The sole purpose is to restore Bureau runtime/main identity so the already merged T120 repository-mapping follow-up can be post-merge closed out and GRABOWSKI-OPERATOR-SURFACE-V1-T120 can subsequently acquire normal exact claims. This authority grants no mapping completion by itself, no T120 completion, no GitHub repository-settings mutation, no queue/dispatch/task-supply effect, no product-code mutation and no foreign-work authority.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-T120-MAPPING-20260830",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "deployed_manifest_sha256_at_registration": "8729c4fce1ba0815fc2f3c3a8face61578838f5e4171874ced9fa7f9f9cf37fd",
+    "deployed_source_at_registration": "90647998ade46187d9042e822d468c71f5f597f8",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse a consumed or previously target-bound authority",
+      "permission to bypass stale-runtime, protected-publication, review, CI, source-ancestry or StateStore gates",
+      "mapping follow-up completion",
+      "T120 claim, reconciliation or completion",
+      "permission to read repository-specific GitHub protection state before T120 owns the exact repo.* write claim",
+      "permission to mutate GitHub repository settings",
+      "queue, dispatch, task-supply, product-code or foreign-work authority",
+      "runtime mutation authority while StateStore state is planned",
+      "permission to activate without exact protected-publication/adoption proof"
+    ],
+    "main_at_registration": "715af443e551aa2d044ee2ec1b138039e02bc917",
+    "operator_execution_preconditions": {
+      "before_prepare_intent": [
+        "fresh protected-main and exact required-check readback",
+        "typed adopt-authority receipt bound to exact create-only publication PR, merge commit and TaskSpec file digest",
+        "authoritative StateStore readback proves the create-only adopted revision was planned and the current revision is a later exact CAS activation in ready state",
+        "current TaskSpec contains metadata.protected_publication_adoption bound to PR #2210 and its actual merge commit",
+        "current activated TaskSpec contains protected-publication-and-missing-only-adoption acceptance and maps it to protected-publication-adoption evidence; the initial planned bootstrap intentionally contained neither half of that evidence/contract pair",
+        "fresh typed protected-publication/adoption proof succeeds against current StateStore and target main",
+        "fresh deployment/Registry source-identity and source-ancestry precondition"
+      ],
+      "before_apply": [
+        "repeat fresh protected-main and exact required-check readback",
+        "repeat authoritative TaskSpec binding",
+        "repeat deployment/Registry source-identity and source-ancestry precondition",
+        "prove exact intent-bound live leases"
+      ],
+      "after_apply": [
+        "immutable runtime/readback identity",
+        "StateStore integrity",
+        "result-bound authority closeout",
+        "release only this refresh own leases"
+      ],
+      "note": "Protected publication and missing-only adoption are mandatory pre-effect gates and are not inferred from generic StateStore health. The runtime authority does not establish mapping or T120 completion."
+    },
+    "post_refresh_live_target": "After authority closeout, freshly retry the mapping follow-up through the normal Bureau pickup path; require release-registry-identity-mismatch to be absent before any mapping closeout or T120 claim acquisition. Then reverify mapping acceptance on current Bureau main before T120 continues.",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Installed immutable Bureau runtime and canonical Registry are integrity-bound to 90647998ade46187d9042e822d468c71f5f597f8 while fresh protected main is 715af443e551aa2d044ee2ec1b138039e02bc917. Recent single-use authorities are StateStore-terminal/verified and no protected ready authority is missing from StateStore. Normal TaskSpec publication is fail-closed on release-registry-identity-mismatch; exactly one create-only successor therefore enters through protected Git and is adopted missing-only after merge.",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-T120-MAPPING-20260830.json",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "T120 or mapping claim authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ],
+      "initial_state": "planned",
+      "post_adoption_activation": "exact proof-bearing StateStore CAS to ready; actual publication merge commit must be observed after merge, never predicted"
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound-source-precondition-v1",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "source_precondition": {
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ],
+        "fail_closed": true,
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+        "registered_manifest_sha256": "8729c4fce1ba0815fc2f3c3a8face61578838f5e4171874ced9fa7f9f9cf37fd",
+        "registered_registry_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "schema_version": 1
+      },
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256",
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "fresh-current-main": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "source-ancestry-precondition": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "authority-state-store-preflight": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "state-store-integrity"
+            ]
+          },
+          "single-runtime-effect": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "runtime-only-scope": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ]
+          }
+        }
+      }
+    },
+    "source": "Fresh T120 live audit: normal mapping pickup fails before claim/effect with release-registry-identity-mismatch because installed Bureau deployment and canonical runtime Registry are both bound to 90647998ade46187d9042e822d468c71f5f597f8 while protected main is 715af443e551aa2d044ee2ec1b138039e02bc917. Runtime status proves deployment/Registry identity, 19-commit forward ancestry and no open ambiguous refresh attempt; exact bound checks validate (3.10), validate (3.12) and registry-registration-preflight/freshness are successful. Current StateStore inspection proves recent single-use refresh authorities terminal/verified; protected Registry scan found zero ready/active runtime-refresh task files absent from StateStore. Operator-intake candidate candidate-ef111ae2cf25f75da957163b event 12809 is digest-bound to runtime observation a48721dd9929893abc9b933d810ec1cc1ba7d21fbaf50db0e5528d5c6605729b and assessed promote for repo.bureau.",
+    "registration_observation": {
+      "schema_version": 1,
+      "repository": "heimgewebe/bureau",
+      "deployed_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+      "canonical_registry_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+      "deployment_manifest_sha256": "8729c4fce1ba0815fc2f3c3a8face61578838f5e4171874ced9fa7f9f9cf37fd",
+      "github_main": "715af443e551aa2d044ee2ec1b138039e02bc917",
+      "observed_at": "2026-08-30T13:22:17.315732Z",
+      "source_ancestry_to_main": true,
+      "ahead_by": 19,
+      "behind_by": 0,
+      "required_checks": {
+        "validate (3.10)": "success",
+        "validate (3.12)": "success",
+        "registry-registration-preflight/freshness": "success"
+      },
+      "source_candidate_id": "candidate-ef111ae2cf25f75da957163b",
+      "source_candidate_event_id": 12809,
+      "source_observation_sha256": "a48721dd9929893abc9b933d810ec1cc1ba7d21fbaf50db0e5528d5c6605729b"
+    },
+    "post_publication_activation": {
+      "schema_version": 1,
+      "initial_state": "planned",
+      "activation_state": "ready",
+      "publication_pr": 2210,
+      "required_state_store_transition": "compare-and-swap-current-revision",
+      "required_activation_source": "runtime-refresh-protected-publication-activation",
+      "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned->ready.",
+      "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "required_preconditions": [
+        "exact protected publication PR is merged and its real merge commit is known",
+        "adopt-authority has seeded exactly the publication TaskSpec as planned using missing-only legacy-seed-exact semantics",
+        "current StateStore revision/digest still equal the adoption receipt",
+        "construct one activated candidate from that exact revision which adds metadata.protected_publication_adoption, adds protected-publication-and-missing-only-adoption to acceptance, adds the matching no-run protected-publication-adoption evidence requirement, and changes state planned->ready",
+        "validate the activated candidate with the installed runtime authority validator and no-run acceptance validator before CAS",
+        "prove protected publication/adoption against the real PR/merge and exact missing-only receipt before CAS",
+        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent"
+      ],
+      "does_not_establish": [
+        "runtime authority while current StateStore state remains planned",
+        "permission to invent or predict publication_merge_commit",
+        "permission to activate from a StateStore revision other than the exact adoption receipt",
+        "permission to skip a second proof/readback after activation"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "The currently deployed Bureau runtime at 90647998ade46187d9042e822d468c71f5f597f8 remains authoritative until a new immutable result is fully read back. If source ancestry, target freshness, CI, deployment/Registry identity, TaskSpec binding or the new runtime effect becomes unclear, preserve all precondition, intent, attempt/result, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Single-Use Bureau-Runtime-Refresh f\u00fcr T120-Mapping-Closeout"
+}

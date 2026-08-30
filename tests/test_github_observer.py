@@ -266,6 +266,31 @@ def test_historical_multi_task_marker_fans_out_without_open_ambiguity(
     assert all("historical-multi-task-marker-fanout" in item["notes"] for item in history)
 
 
+def test_historical_single_task_marker_uses_canonical_registry_id(tmp_path: Path) -> None:
+    historical = pull_request(
+        18,
+        body="Bureau-Task: bur_x_t001",
+        state="MERGED",
+    )
+    result = observe(
+        [],
+        tmp_path,
+        historical_pull_requests=[historical],
+        registry=type(
+            "Registry",
+            (),
+            {"tasks": {"BUR-X-T001": object()}},
+        )(),
+    )
+
+    assert result["pull_requests"] == []
+    assert result["binding_healthy"] is True
+    assert result["hard_findings"] == []
+    history = result["historical_pull_requests"]
+    assert len(history) == 1
+    assert history[0]["task_id"] == "BUR-X-T001"
+    assert "task-marker-not-found-in-registry" not in history[0]["notes"]
+
 
 def test_branch_fallback_yields_weak_confidence() -> None:
     binding = bind(

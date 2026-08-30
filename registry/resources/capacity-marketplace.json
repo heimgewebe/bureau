@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "repo.capacity-marketplace",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/capacity-marketplace",
+  "github_slug": "heimgewebe/capacity-marketplace",
+  "grabowski_key": "repo:/home/alex/repos/capacity-marketplace",
+  "metadata": {
+    "role": "canonical local checkout mapping for heimgewebe/capacity-marketplace",
+    "mapping_verified_at": "2026-08-30",
+    "mapping_evidence": "T120 fresh local checkout and origin readback",
+    "boundaries": ["mapping_only_does_not_establish_captain_eligibility", "github_settings_unchanged"]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "repo.snippet-engine-control",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/snippet-engine-control",
+  "github_slug": "heimgewebe/snippet-engine-control",
+  "grabowski_key": "repo:/home/alex/repos/snippet-engine-control",
+  "metadata": {
+    "role": "canonical local checkout mapping for heimgewebe/snippet-engine-control",
+    "mapping_verified_at": "2026-08-30",
+    "mapping_evidence": "T120 fresh local checkout and origin readback",
+    "boundaries": ["mapping_only_does_not_establish_captain_eligibility", "github_settings_unchanged"]
+  }
+}

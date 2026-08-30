@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "repo.reposkop",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/reposkop",
+  "github_slug": "heimgewebe/reposkop",
+  "grabowski_key": "repo:/home/alex/repos/reposkop",
+  "metadata": {
+    "role": "canonical local checkout mapping for heimgewebe/reposkop",
+    "mapping_verified_at": "2026-08-30",
+    "mapping_evidence": "T120 fresh local checkout and origin readback",
+    "boundaries": ["mapping_only_does_not_establish_captain_eligibility", "github_settings_unchanged"]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "repo.heimgeist",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/heimgeist",
+  "github_slug": "heimgewebe/heimgeist",
+  "grabowski_key": "repo:/home/alex/repos/heimgeist",
+  "metadata": {
+    "role": "canonical local checkout mapping for heimgewebe/heimgeist",
+    "mapping_verified_at": "2026-08-30",
+    "mapping_evidence": "T120 fresh local checkout and origin readback",
+    "boundaries": ["mapping_only_does_not_establish_captain_eligibility", "github_settings_unchanged"]
+  }
+}

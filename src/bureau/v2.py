@@ -18,7 +18,14 @@ from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from . import github_repository, legacy, runtime_refresh, state_events, task_specs
+from . import (
+    github_repository,
+    legacy,
+    registry_snapshot,
+    runtime_refresh,
+    state_events,
+    task_specs,
+)
 from .acceptance import AcceptanceContractError, validate_acceptance_contract
 from .adapters import AdapterRegistry
 from .approval import (
@@ -8756,8 +8763,125 @@ def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> di
     return result
 
 
+def _runtime_registry_snapshot_identity(
+    registry: Registry,
+) -> tuple[str, str] | None:
+    """Return the manifest-bound source and digest of an intact runtime snapshot."""
+    root = registry.root.expanduser().resolve()
+    if root.parent.name != "registry-snapshots":
+        return None
+    manifest_path = root.parent.parent / "deployment-manifest.json"
+    try:
+        if manifest_path.is_symlink() or not manifest_path.is_file():
+            return None
+        manifest, manifest_sha256 = runtime_refresh.load_manifest(manifest_path)
+        source_commit = manifest.get("source_commit")
+        if not isinstance(source_commit, str) or _GIT_OID_RE.fullmatch(source_commit) is None:
+            return None
+        identity = registry_snapshot.canonical_registry_identity(manifest)
+    except (OSError, TypeError, ValueError, runtime_refresh.RuntimeRefreshError):
+        return None
+    if (
+        identity.get("valid") is not True
+        or identity.get("root") != str(root)
+        or identity.get("source_commit") != source_commit
+    ):
+        return None
+    return source_commit, manifest_sha256
+
+
+class _TaskSpecConnectionReader:
+    """Expose replay reads on the caller's existing StateStore snapshot."""
+
+    def __init__(self, connection: sqlite3.Connection):
+        self._connection = connection
+
+    def task_spec_by_digest(
+        self, task_id: str, spec_sha256: str
+    ) -> dict[str, Any] | None:
+        try:
+            return task_specs.get_by_digest(self._connection, task_id, spec_sha256)
+        except task_specs.TaskSpecError as exc:
+            raise legacy.StateError(str(exc)) from exc
+
+    def task_spec_mutation_receipt(
+        self, idempotency_key: str
+    ) -> dict[str, Any] | None:
+        try:
+            return task_specs.get_mutation_receipt(self._connection, idempotency_key)
+        except task_specs.TaskSpecError as exc:
+            raise legacy.StateError(str(exc)) from exc
+
+
+def _runtime_closeout_matches_receipt_bound_task(
+    task: legacy.Task,
+    runtime_closeout: dict[str, Any],
+    connection: sqlite3.Connection,
+) -> bool:
+    """Authenticate one runtime closeout against its immutable verified TaskSpec."""
+    result_sha256 = runtime_closeout.get("runtime_result_sha256")
+    if not isinstance(result_sha256, str):
+        return False
+    idempotency_key = (
+        f"runtime-refresh-no-run-closeout:{task.id}:{result_sha256}"
+    )
+    try:
+        receipt = task_specs.get_mutation_receipt(connection, idempotency_key)
+    except task_specs.TaskSpecError:
+        return False
+    if receipt is None or receipt.get("task_id") != task.id:
+        return False
+    historical = receipt.get("resulting_task_spec")
+    if (
+        not isinstance(historical, dict)
+        or historical.get("source") != "runtime-refresh-no-run-closeout"
+        or historical.get("spec_sha256") != receipt.get("requested_sha256")
+    ):
+        return False
+    historical_spec = historical.get("spec")
+    if (
+        not isinstance(historical_spec, dict)
+        or historical_spec.get("id") != task.id
+        or historical_spec.get("state") != "verified"
+    ):
+        return False
+    historical_metadata = historical_spec.get("metadata")
+    historical_closeout_value = (
+        historical_metadata.get("runtime_closeout")
+        if isinstance(historical_metadata, dict)
+        else None
+    )
+    try:
+        historical_closeout = runtime_refresh._validated_runtime_closeout(
+            historical_closeout_value
+        )
+    except runtime_refresh.RuntimeRefreshError:
+        return False
+    if (
+        historical_closeout != runtime_closeout
+        or task_revision_sha256(historical_spec) != task.sha256
+    ):
+        return False
+    try:
+        _, authority = runtime_refresh._runtime_authority_metadata(historical_spec)
+        runtime_refresh._validate_no_run_acceptance_replay_binding(
+            store=_TaskSpecConnectionReader(connection),
+            current=historical,
+            spec=historical_spec,
+            authority=authority,
+            closeout=runtime_closeout,
+        )
+    except runtime_refresh.RuntimeRefreshError:
+        return False
+    return True
+
+
 def _current_verification_stamp(
-    registry: Registry, task_id: str, row: sqlite3.Row | None
+    registry: Registry,
+    task_id: str,
+    row: sqlite3.Row | None,
+    connection: sqlite3.Connection,
+    runtime_snapshot_identity: tuple[str, str] | None,
 ) -> dict[str, Any] | None:
     task = registry.tasks.get(task_id)
     if task is None:
@@ -8779,6 +8903,28 @@ def _current_verification_stamp(
         and verification.get("plan_sha256") == current_plan
     ):
         return dict(verification)
+    runtime_closeout = _validated_task_runtime_closeout(task)
+    if (
+        runtime_closeout is not None
+        and runtime_snapshot_identity is not None
+        and _runtime_closeout_matches_receipt_bound_task(
+            task, runtime_closeout, connection
+        )
+    ):
+        snapshot_source_commit, manifest_sha256 = runtime_snapshot_identity
+        if (
+            snapshot_source_commit == runtime_closeout.get("source_commit")
+            and manifest_sha256 == runtime_closeout.get("manifest_sha256")
+        ):
+            return {
+                "schema_version": 1,
+                "kind": "bureau_runtime_refresh_snapshot_verification",
+                "task_sha256": task.sha256,
+                "plan_sha256": current_plan,
+                "receipt_sha256": legacy.sha256_json(runtime_closeout),
+                "source_commit": snapshot_source_commit,
+                "manifest_sha256": manifest_sha256,
+            }
     return None
 
 
@@ -8789,22 +8935,44 @@ def _current_verification_stamps(
         row["task_id"]: row
         for row in connection.execute("SELECT * FROM task_status")
     }
+    runtime_snapshot_identity = None
+    if any(
+        _validated_task_runtime_closeout(task) is not None
+        for task in registry.tasks.values()
+    ):
+        runtime_snapshot_identity = _runtime_registry_snapshot_identity(registry)
     return {
         task_id: stamp
         for task_id in registry.tasks
-        if (stamp := _current_verification_stamp(registry, task_id, rows.get(task_id)))
+        if (
+            stamp := _current_verification_stamp(
+                registry,
+                task_id,
+                rows.get(task_id),
+                connection,
+                runtime_snapshot_identity,
+            )
+        )
         is not None
     }
 
 
 def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> dict[str, Any]:
-    if task_id not in registry.tasks:
+    task = registry.tasks.get(task_id)
+    if task is None:
         raise legacy.StateError(f"unknown task {task_id}")
+    runtime_snapshot_identity = (
+        _runtime_registry_snapshot_identity(registry)
+        if _validated_task_runtime_closeout(task) is not None
+        else None
+    )
     with store.connect() as connection:
         row = connection.execute(
             "SELECT * FROM task_status WHERE task_id=?", (task_id,)
         ).fetchone()
-    stamp = _current_verification_stamp(registry, task_id, row)
+        stamp = _current_verification_stamp(
+            registry, task_id, row, connection, runtime_snapshot_identity
+        )
     if stamp is not None:
         return stamp
     raise legacy.StateError(f"task {task_id} has no current verification")

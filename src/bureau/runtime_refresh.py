@@ -5882,7 +5882,14 @@ def _validate_no_run_acceptance_replay_binding(
                     "task_spec_sha256": closeout["authority_spec_sha256"],
                 },
             )
-        _, bound_authority = _runtime_authority_metadata(bound_task_spec["spec"])
+        bound_spec = bound_task_spec.get("spec")
+        if not isinstance(bound_spec, dict):
+            raise RuntimeRefreshError(
+                "authority-closeout-acceptance-task-spec-binding-invalid",
+                "evidence-free closeout is bound to malformed TaskSpec history",
+                details={"revision": bound_task_spec.get("revision")},
+            )
+        _, bound_authority = _runtime_authority_metadata(bound_spec)
         if bound_authority.get("no_run_closeout_acceptance") is not None:
             raise RuntimeRefreshError(
                 "authority-closeout-acceptance-evidence-missing",
@@ -5890,6 +5897,28 @@ def _validate_no_run_acceptance_replay_binding(
                 details={
                     "revision": bound_task_spec["revision"],
                     "task_spec_sha256": closeout["authority_spec_sha256"],
+                },
+            )
+        closeout_material = json.loads(json.dumps(spec))
+        authority_material = json.loads(json.dumps(bound_spec))
+        for candidate in (closeout_material, authority_material):
+            candidate.pop("state", None)
+            metadata = candidate.get("metadata")
+            if not isinstance(metadata, dict):
+                continue
+            metadata.pop("verification", None)
+            metadata.pop("runtime_closeout", None)
+            runtime_authority = metadata.get("runtime_refresh_authority")
+            if isinstance(runtime_authority, dict):
+                runtime_authority.pop("target_binding_receipt", None)
+                runtime_authority.pop("consumption", None)
+        if closeout_material != authority_material:
+            raise RuntimeRefreshError(
+                "authority-closeout-task-spec-drift",
+                "evidence-free closeout changed task material after its bound authority revision",
+                details={
+                    "authority_revision": bound_task_spec["revision"],
+                    "authority_spec_sha256": closeout["authority_spec_sha256"],
                 },
             )
         return

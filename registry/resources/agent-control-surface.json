@@ -27,8 +27,6 @@
       "no_task_priority_authority",
       "no_merge_authorization",
       "no_remote_access_security"
-    ],
-    "mapping_verified_at": "2026-08-30",
-    "mapping_evidence": "T120 fresh local checkout and origin readback"
+    ]
   }
 }

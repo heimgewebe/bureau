@@ -4425,6 +4425,203 @@ def test_distinct_intents_for_same_target_share_one_effect_attempt(tmp_path: Pat
     assert effects == 1
 
 
+def test_runtime_prefix_execution_context_preflight_binds_writable_namespace(
+    tmp_path: Path,
+) -> None:
+    prefix = tmp_path / "prefix"
+    prefix.mkdir()
+
+    evidence = refresh.runtime_prefix_execution_context_preflight(
+        prefix=prefix, now=NOW
+    )
+
+    refresh.verify_digest(evidence, "execution_context_sha256")
+    assert evidence["kind"] == "bureau_runtime_refresh_execution_context_preflight"
+    assert evidence["prefix"] == str(prefix.resolve())
+    assert evidence["filesystem_read_only"] is False
+    assert evidence["path_writable"] is True
+    assert evidence["writable"] is True
+
+
+def test_runtime_prefix_execution_context_preflight_rejects_read_only_namespace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prefix = tmp_path / "prefix"
+    prefix.mkdir()
+    real_statvfs = refresh.os.statvfs(prefix)
+    monkeypatch.setattr(
+        refresh.os,
+        "statvfs",
+        lambda _path: SimpleNamespace(f_flag=real_statvfs.f_flag | refresh.os.ST_RDONLY),
+    )
+    monkeypatch.setattr(refresh.os, "access", lambda _path, _mode: False)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.runtime_prefix_execution_context_preflight(prefix=prefix, now=NOW)
+
+    assert caught.value.code == "runtime-prefix-read-only"
+    evidence = caught.value.details["execution_context_preflight"]
+    refresh.verify_digest(evidence, "execution_context_sha256")
+    assert evidence["filesystem_read_only"] is True
+    assert evidence["path_writable"] is False
+    assert evidence["writable"] is False
+
+
+def test_runtime_prefix_execution_context_preflight_requires_grabowski_task_executor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prefix = tmp_path / "prefix"
+    prefix.mkdir()
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: ("grabowski-operator.service", "a" * 32),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.runtime_prefix_execution_context_preflight(
+            prefix=prefix, now=NOW, require_grabowski_task_executor=True
+        )
+
+    assert caught.value.code == "runtime-executor-not-grabowski-task"
+    evidence = caught.value.details["execution_context_preflight"]
+    refresh.verify_digest(evidence, "execution_context_sha256")
+    assert evidence["systemd_unit"] == "grabowski-operator.service"
+    assert evidence["grabowski_task_executor"] is False
+    assert evidence["grabowski_task_executor_required"] is True
+
+
+def test_runtime_prefix_execution_context_preflight_accepts_grabowski_task_executor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prefix = tmp_path / "prefix"
+    prefix.mkdir()
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: ("grabowski-task-test-a1.service", "b" * 32),
+    )
+
+    evidence = refresh.runtime_prefix_execution_context_preflight(
+        prefix=prefix, now=NOW, require_grabowski_task_executor=True
+    )
+
+    refresh.verify_digest(evidence, "execution_context_sha256")
+    assert evidence["grabowski_task_executor"] is True
+    assert evidence["grabowski_task_executor_required"] is True
+
+
+def test_main_apply_requires_grabowski_task_executor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_apply(**kwargs: Any) -> dict[str, Any]:
+        captured.update(kwargs)
+        return {"status": "deployed"}
+
+    monkeypatch.setattr(refresh, "apply_runtime_refresh", fake_apply)
+    result = refresh.main(
+        [
+            "--state-root",
+            str(tmp_path / "state"),
+            "--manifest",
+            str(tmp_path / "manifest.json"),
+            "apply",
+            "--intent",
+            str(tmp_path / "intent.json"),
+            "--lease-owner",
+            "runtime-refresh:test",
+            "--lease-task-id",
+            "BUREAU-TEST",
+        ]
+    )
+
+    assert result == 0
+    assert captured["require_grabowski_task_executor"] is True
+    assert json.loads(capsys.readouterr().out)["status"] == "deployed"
+
+
+def test_apply_read_only_execution_context_does_not_bind_authority_or_start_attempt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
+    store = authority_store_for_intent(intent)
+    before = store.task_spec(intent["approval_task_id"])
+    assert before is not None
+    source_preparer_called = False
+    installer_called = False
+
+    def reject_preflight(
+        *,
+        prefix: Path,
+        now: datetime | None = None,
+        require_grabowski_task_executor: bool = False,
+    ) -> dict[str, Any]:
+        raise refresh.RuntimeRefreshError(
+            "runtime-prefix-read-only",
+            "injected read-only execution context",
+            details={"prefix": str(prefix), "observed_at": refresh.isoformat(now or NOW)},
+        )
+
+    def source_preparer(**_: Any) -> dict[str, Any]:
+        nonlocal source_preparer_called
+        source_preparer_called = True
+        raise AssertionError("source preparation must not run after failed preflight")
+
+    def installer(**_: Any) -> dict[str, Any]:
+        nonlocal installer_called
+        installer_called = True
+        raise AssertionError("installer must not run after failed preflight")
+
+    monkeypatch.setattr(
+        refresh, "runtime_prefix_execution_context_preflight", reject_preflight
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: observed,
+            source_preparer=source_preparer,
+            installer=installer,
+        )
+
+    assert caught.value.code == "runtime-prefix-read-only"
+    after = store.task_spec(intent["approval_task_id"])
+    assert after == before
+    attempt = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not attempt.exists()
+    assert source_preparer_called is False
+    assert installer_called is False
+
+
+def test_apply_binds_execution_context_preflight_into_attempt_and_result(
+    tmp_path: Path,
+) -> None:
+    _observed, _manifest, intent, _intent_path, _store, result, _resource_db = (
+        apply_successfully(tmp_path)
+    )
+    evidence = result["execution_context_preflight"]
+    refresh.verify_digest(evidence, "execution_context_sha256")
+    assert evidence["writable"] is True
+
+    started_path = (
+        Path(intent["state_root"])
+        / "attempts"
+        / intent["target_sha256"]
+        / "started.json"
+    )
+    started = refresh.read_json(started_path)
+    refresh.verify_digest(started, "start_sha256")
+    assert started["execution_context_preflight"] == evidence
+
+
 def test_apply_installer_failure_is_durable_unclear_and_never_retried(
     tmp_path: Path,
 ) -> None:

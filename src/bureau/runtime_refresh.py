@@ -1062,6 +1062,101 @@ def validate_runtime_user_unit_dir(expected: Path) -> Path:
     return observed_path
 
 
+def _current_systemd_execution_identity() -> tuple[str | None, str | None]:
+    """Return the current systemd service unit and invocation identity, if proven."""
+    try:
+        cgroup = Path("/proc/self/cgroup").read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RuntimeRefreshError(
+            "runtime-executor-identity-unobserved",
+            "runtime-refresh cannot observe the current process cgroup",
+            details={"error": str(exc)},
+        ) from exc
+    if len(cgroup) > 8192:
+        raise RuntimeRefreshError(
+            "runtime-executor-identity-unobserved",
+            "runtime-refresh process cgroup evidence is unexpectedly large",
+        )
+    unit = None
+    for line in cgroup.splitlines():
+        parts = line.split(":", 2)
+        if len(parts) != 3:
+            continue
+        for component in reversed(parts[2].split("/")):
+            if component.endswith(".service"):
+                unit = component
+                break
+        if unit is not None:
+            break
+    invocation_id = os.environ.get("INVOCATION_ID")
+    if invocation_id is not None:
+        invocation_id = invocation_id.strip()
+        if (
+            len(invocation_id) != 32
+            or any(character not in "0123456789abcdef" for character in invocation_id)
+        ):
+            invocation_id = None
+    return unit, invocation_id
+
+
+def runtime_prefix_execution_context_preflight(
+    *,
+    prefix: Path,
+    now: datetime | None = None,
+    require_grabowski_task_executor: bool = False,
+) -> dict[str, Any]:
+    """Prove the runtime prefix and executor are safe before a one-shot effect."""
+    resolved = prefix.expanduser().resolve()
+    try:
+        filesystem = os.statvfs(resolved)
+        path_writable = os.access(resolved, os.W_OK)
+    except OSError as exc:
+        raise RuntimeRefreshError(
+            "runtime-prefix-writability-unobserved",
+            "runtime-refresh cannot prove the bound runtime prefix is writable",
+            details={"prefix": str(resolved), "error": str(exc)},
+        ) from exc
+    unit, invocation_id = _current_systemd_execution_identity()
+    filesystem_read_only = bool(filesystem.f_flag & os.ST_RDONLY)
+    grabowski_task_executor = bool(
+        unit is not None
+        and unit.startswith("grabowski-task-")
+        and unit.endswith(".service")
+    )
+    evidence = bind_digest(
+        {
+            "schema_version": SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_execution_context_preflight",
+            "prefix": str(resolved),
+            "filesystem_flags": int(filesystem.f_flag),
+            "filesystem_read_only": filesystem_read_only,
+            "path_writable": bool(path_writable),
+            "writable": not filesystem_read_only and bool(path_writable),
+            "systemd_unit": unit,
+            "systemd_invocation_id": invocation_id,
+            "grabowski_task_executor": grabowski_task_executor,
+            "grabowski_task_executor_required": bool(
+                require_grabowski_task_executor
+            ),
+            "observed_at": isoformat(now or utc_now()),
+        },
+        "execution_context_sha256",
+    )
+    if evidence["writable"] is not True:
+        raise RuntimeRefreshError(
+            "runtime-prefix-read-only",
+            "runtime-refresh execution context cannot write the bound runtime prefix",
+            details={"execution_context_preflight": evidence},
+        )
+    if require_grabowski_task_executor and not grabowski_task_executor:
+        raise RuntimeRefreshError(
+            "runtime-executor-not-grabowski-task",
+            "runtime-refresh apply must run in a transient Grabowski systemd task",
+            details={"execution_context_preflight": evidence},
+        )
+    return evidence
+
+
 def _scheduler_staging_path(path: Path) -> Path:
     """Return the deterministic sibling staging path covered by scheduler leases."""
     return path.parent / f".{path.name}.bureau-runtime-refresh-stage"
@@ -7266,6 +7361,7 @@ def apply_runtime_refresh(
     installer: Callable[..., dict[str, Any]] = run_installer,
     readback: Callable[..., dict[str, Any]] = readback_install,
     authority_store: Any | None = None,
+    require_grabowski_task_executor: bool = False,
 ) -> dict[str, Any]:
     current = now or utc_now()
     intent = read_json(intent_path)
@@ -7515,6 +7611,15 @@ def apply_runtime_refresh(
             "deployed-boundary-drift", "deployed runtime changed after intent"
         )
 
+    # Prove the actual process namespace can write the bound runtime prefix before
+    # consuming any single-use authority or creating an attempt ledger. This blocks
+    # read-only MCP/sandbox execution contexts before they can burn an authority.
+    execution_context_preflight = runtime_prefix_execution_context_preflight(
+        prefix=prefix,
+        now=current,
+        require_grabowski_task_executor=require_grabowski_task_executor,
+    )
+
     # This CAS is the last authority operation before the attempt ledger and
     # runtime effects. It prevents two targets from racing on one TaskSpec.
     bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
@@ -7527,6 +7632,7 @@ def apply_runtime_refresh(
             "main_commit": intent["main_commit"],
             "authority_task_spec": bound_authority,
             "lease_binding": binding,
+            "execution_context_preflight": execution_context_preflight,
             **source_precondition_result_fields,
             "started_at": isoformat(current),
             "effect_started": False,
@@ -7581,6 +7687,7 @@ def apply_runtime_refresh(
                 "install_receipt": install_receipt,
                 "readback": evidence,
                 "lease_binding": binding,
+                "execution_context_preflight": execution_context_preflight,
                 **source_precondition_result_fields,
                 "finished_at": isoformat(utc_now()),
                 "effect_started": True,
@@ -7616,6 +7723,7 @@ def apply_runtime_refresh(
             "authority_task_spec": bound_authority,
             "error": error,
             "lease_binding": binding,
+            "execution_context_preflight": execution_context_preflight,
             **source_precondition_result_fields,
             "finished_at": isoformat(utc_now()),
             "effect_started": effect_started,
@@ -7804,6 +7912,7 @@ def main(argv: list[str] | None = None) -> int:
                 },
                 manifest_path=manifest_path,
                 state_root=state_root,
+                require_grabowski_task_executor=True,
             )
             print(json.dumps(result, sort_keys=True))
             return 0 if result.get("status") in {"deployed", "already_current"} else 2

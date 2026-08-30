@@ -12,8 +12,11 @@ from bureau.github_observer import (
     BINDING_BUREAU_TASK,
     BINDING_UNMATCHED,
     OBSERVATION_DOES_NOT_ESTABLISH,
+    OPEN_PULL_REQUEST_LIMIT,
     bind_pull_request,
     extract_markers,
+    filter_observation_by_task,
+    github_pull_requests,
     observation_is_stale,
     observe_pull_requests,
     summarize_checks,
@@ -77,6 +80,100 @@ def fake_gh(tmp_path: Path, script: str) -> str:
     return str(path)
 
 
+def test_github_pull_requests_fetches_open_and_complete_lifecycle_history(tmp_path: Path) -> None:
+    args_log = tmp_path / "gh-args.log"
+    gh = fake_gh(
+        tmp_path,
+        f"printf '%s\\n' \"$*\" >> '{args_log}'; "
+        "case \"$*\" in "
+        "*\"--state open\"*) printf '%s\\n' "
+        "'[{\"number\":7,\"state\":\"OPEN\"}]' ;; "
+        "*\"api --paginate\"*) printf '%s\\n' "
+        "'{\"number\":1,\"state\":\"MERGED\",\"updatedAt\":\"2026-06-01T00:00:00Z\"}' "
+        "'{\"number\":8,\"state\":\"CLOSED\",\"updatedAt\":\"2026-07-01T00:00:00Z\"}' "
+        "'{\"number\":9,\"state\":\"MERGED\",\"updatedAt\":\"2026-07-02T00:00:00Z\"}' ;; "
+        "*) exit 9 ;; esac",
+    )
+
+    result = github_pull_requests("heimgewebe/bureau", gh_bin=gh)
+
+    assert result["available"] is True
+    assert [item["state"] for item in result["pull_requests"]] == ["OPEN"]
+    assert [item["number"] for item in result["historical_pull_requests"]] == [1, 8, 9]
+    assert [item["state"] for item in result["historical_pull_requests"]] == [
+        "MERGED",
+        "CLOSED",
+        "MERGED",
+    ]
+    assert result["error"] is None
+    calls = args_log.read_text(encoding="utf-8").splitlines()
+    assert len(calls) == 2
+    assert "--state open" in calls[0]
+    assert f"--limit {OPEN_PULL_REQUEST_LIMIT}" in calls[0]
+    assert "api --paginate" in calls[1]
+    assert "pulls?state=closed&per_page=100" in calls[1]
+    assert "--limit" not in calls[1]
+
+
+def test_github_open_pull_request_limit_fails_closed_instead_of_truncating(
+    tmp_path: Path,
+) -> None:
+    gh = fake_gh(
+        tmp_path,
+        "case \"$*\" in "
+        "*\"--state open\"*) python3 -c \"import json; "
+        "print(json.dumps([{'number': i, 'state': 'OPEN'} "
+        f"for i in range({OPEN_PULL_REQUEST_LIMIT})]))\" ;; "
+        "*) exit 9 ;; esac",
+    )
+
+    result = github_pull_requests("heimgewebe/bureau", gh_bin=gh)
+
+    assert result["available"] is False
+    assert result["pull_requests"] == []
+    assert result["historical_pull_requests"] == []
+    assert f"observer limit {OPEN_PULL_REQUEST_LIMIT} reached" in result["error"]
+
+
+def test_github_history_timeout_fails_closed_instead_of_truncating(tmp_path: Path) -> None:
+    gh = fake_gh(
+        tmp_path,
+        "case \"$*\" in "
+        "*\"--state open\"*) printf '%s\\n' '[]' ;; "
+        "*\"api --paginate\"*) sleep 2; printf '%s\\n' '{}' ;; "
+        "*) exit 9 ;; esac",
+    )
+
+    result = github_pull_requests("heimgewebe/bureau", gh_bin=gh, timeout=1)
+
+    assert result["available"] is False
+    assert result["pull_requests"] == []
+    assert result["historical_pull_requests"] == []
+    assert "complete GitHub lifecycle history unavailable" in result["error"]
+
+
+
+def test_task_filter_scopes_historical_evidence_in_all_health_states() -> None:
+    observation = {
+        "healthy": True,
+        "binding_healthy": False,
+        "pull_requests": [
+            {"task_id": "TASK-1", "number": 1},
+            {"task_id": "TASK-2", "number": 2},
+        ],
+        "historical_pull_requests": [
+            {"task_id": "TASK-1", "number": 11, "state": "MERGED"},
+            {"task_id": "TASK-2", "number": 12, "state": "CLOSED"},
+        ],
+        "hard_findings": [],
+    }
+
+    for healthy in (True, False):
+        filtered = filter_observation_by_task({**observation, "healthy": healthy}, "TASK-1")
+        assert [item["number"] for item in filtered["pull_requests"]] == [1]
+        assert [item["number"] for item in filtered["historical_pull_requests"]] == [11]
+
+
 def test_extract_markers_collects_unique_run_and_task_markers() -> None:
     markers = extract_markers(
         "Bureau-Run: BUR-RUN-20260707T000000Z-abc",
@@ -138,6 +235,65 @@ def test_structured_label_marker_overrides_branch_fallback(tmp_path: Path) -> No
 def test_structured_body_marker_accepts_multiple_tasks() -> None:
     markers = extract_markers("Bureau-Tasks: BUR-X-T001, BUR-X-T002")
     assert markers == {"runs": [], "tasks": ["BUR-X-T001", "BUR-X-T002"]}
+
+
+def test_historical_multi_task_marker_fans_out_without_open_ambiguity(
+    tmp_path: Path,
+) -> None:
+    historical = pull_request(
+        19,
+        body="Bureau-Run: BUR-RUN-404\nBureau-Tasks: bur_x_t001, BUR_X_T002",
+        state="MERGED",
+    )
+    result = observe(
+        [],
+        tmp_path,
+        historical_pull_requests=[historical],
+        registry=type(
+            "Registry",
+            (),
+            {"tasks": {"BUR-X-T001": object(), "BUR-X-T002": object()}},
+        )(),
+    )
+
+    assert result["pull_requests"] == []
+    assert result["binding_healthy"] is True
+    assert result["hard_findings"] == []
+    history = result["historical_pull_requests"]
+    assert [item["task_id"] for item in history] == ["BUR-X-T001", "BUR-X-T002"]
+    assert all(item["binding"] == BINDING_BUREAU_TASK for item in history)
+    assert all(item["confidence"] == 0.95 for item in history)
+    assert all("historical-multi-task-marker-fanout" in item["notes"] for item in history)
+
+
+def test_historical_single_task_marker_with_run_uses_canonical_registry_id(
+    tmp_path: Path,
+) -> None:
+    historical = pull_request(
+        18,
+        body="Bureau-Run: BUR-RUN-404\nBureau-Task: bur_x_t001",
+        state="MERGED",
+    )
+    result = observe(
+        [],
+        tmp_path,
+        historical_pull_requests=[historical],
+        registry=type(
+            "Registry",
+            (),
+            {"tasks": {"BUR-X-T001": object()}},
+        )(),
+    )
+
+    assert result["pull_requests"] == []
+    assert result["binding_healthy"] is True
+    assert result["hard_findings"] == []
+    history = result["historical_pull_requests"]
+    assert len(history) == 1
+    assert history[0]["binding"] == BINDING_BUREAU_RUN
+    assert history[0]["task_id"] == "BUR-X-T001"
+    assert "task-marker-not-found-in-registry" not in history[0]["notes"]
+    assert "run-marker-not-found-in-state-store" in history[0]["notes"]
 
 
 def test_branch_fallback_yields_weak_confidence() -> None:

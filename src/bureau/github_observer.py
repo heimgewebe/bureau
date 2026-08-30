@@ -34,6 +34,8 @@ GH_PR_LIST_FIELDS = (
     "mergeStateStatus,reviewDecision,statusCheckRollup,body,labels,updatedAt"
 )
 
+OPEN_PULL_REQUEST_LIMIT = 1000
+
 BUREAU_RUN_MARKER_RE = re.compile(r"Bureau-Run:\s*([A-Za-z0-9][A-Za-z0-9._/-]*)")
 BUREAU_TASK_MARKER_RE = re.compile(r"Bureau-Task:\s*([A-Za-z0-9][A-Za-z0-9._/-]*)")
 BUREAU_TASK_LINE_RE = re.compile(
@@ -210,6 +212,16 @@ def summarize_checks(rollup: Any) -> dict[str, Any]:
     return {"summary": summary, "items": items}
 
 
+def _canonical_task_id(value: str, known_task_ids: set[str]) -> str | None:
+    normalized = value.lower().replace("_", "-")
+    matches = [
+        task_id
+        for task_id in known_task_ids
+        if task_id.lower().replace("_", "-") == normalized
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def _branch_candidate_tasks(
     head_ref: str,
     known_task_ids: set[str],
@@ -295,9 +307,17 @@ def github_pull_requests(
     gh_bin: str | None = None,
     timeout: int = 30,
 ) -> dict[str, Any]:
-    """Fetch open PR facts via gh. Any failure yields a blocked result."""
+    """Fetch current open PRs plus complete closed/merged lifecycle history.
+
+    Open PRs retain the rich ``gh pr list`` projection because current reservation
+    health depends on check/review fields. The open set is bounded; saturating the
+    bound blocks the observation instead of silently truncating truth. History uses
+    the paginated REST pulls endpoint instead: every closed pull request is
+    retrieved, ``merged_at`` distinguishes MERGED from CLOSED, and timeout or
+    parse failure blocks the observation rather than silently truncating it.
+    """
     binary = gh_bin or os.environ.get("BUREAU_GH_BIN", "gh")
-    command = [
+    open_command = [
         binary,
         "pr",
         "list",
@@ -306,44 +326,144 @@ def github_pull_requests(
         "--state",
         "open",
         "--limit",
-        "100",
+        str(OPEN_PULL_REQUEST_LIMIT),
         "--json",
         GH_PR_LIST_FIELDS,
     ]
     try:
-        result = subprocess.run(
-            command, text=True, capture_output=True, check=False, timeout=timeout
+        open_result = subprocess.run(
+            open_command, text=True, capture_output=True, check=False, timeout=timeout
         )
     except (OSError, subprocess.SubprocessError) as exc:
         return {
             "available": False,
             "pull_requests": [],
-            "error": f"gh unavailable: {type(exc).__name__}: {exc}",
+            "historical_pull_requests": [],
+            "error": f"gh unavailable for open PRs: {type(exc).__name__}: {exc}",
         }
-    if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip() or "no diagnostic"
+    if open_result.returncode != 0:
+        detail = open_result.stderr.strip() or open_result.stdout.strip() or "no diagnostic"
         return {
             "available": False,
             "pull_requests": [],
-            "error": f"gh pr list failed for {repository}: {detail}",
+            "historical_pull_requests": [],
+            "error": f"gh pr list open failed for {repository}: {detail}",
         }
     try:
-        value = json.loads(result.stdout or "[]")
+        open_value = json.loads(open_result.stdout or "[]")
     except json.JSONDecodeError as exc:
         return {
             "available": False,
             "pull_requests": [],
-            "error": f"gh pr list returned invalid JSON for {repository}: {exc}",
+            "historical_pull_requests": [],
+            "error": f"gh pr list open returned invalid JSON for {repository}: {exc}",
         }
-    if not isinstance(value, list):
+    if not isinstance(open_value, list):
         return {
             "available": False,
             "pull_requests": [],
-            "error": f"gh pr list returned non-list JSON for {repository}",
+            "historical_pull_requests": [],
+            "error": f"gh pr list open returned non-list JSON for {repository}",
         }
+    if len(open_value) >= OPEN_PULL_REQUEST_LIMIT:
+        return {
+            "available": False,
+            "pull_requests": [],
+            "historical_pull_requests": [],
+            "error": (
+                "complete open PR set unavailable: observer limit "
+                f"{OPEN_PULL_REQUEST_LIMIT} reached for {repository}"
+            ),
+        }
+    open_pull_requests = [item for item in open_value if isinstance(item, dict)]
+
+    history_projection = (
+        '.[] | {number, title, body, url:.html_url, '
+        'state:(if .merged_at == null then "CLOSED" else "MERGED" end), '
+        'isDraft:.draft, headRefName:.head.ref, headRefOid:.head.sha, '
+        'baseRefName:.base.ref, mergeStateStatus:"UNKNOWN", reviewDecision:"", '
+        'statusCheckRollup:null, updatedAt:.updated_at, '
+        'labels:[.labels[]? | {name:.name}]}'
+    )
+    history_command = [
+        binary,
+        "api",
+        "--paginate",
+        f"repos/{repository}/pulls?state=closed&per_page=100&sort=updated&direction=desc",
+        "--jq",
+        history_projection,
+    ]
+    try:
+        history_result = subprocess.run(
+            history_command, text=True, capture_output=True, check=False, timeout=timeout
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {
+            "available": False,
+            "pull_requests": [],
+            "historical_pull_requests": [],
+            "error": (
+                "complete GitHub lifecycle history unavailable within the observer "
+                f"budget: {type(exc).__name__}: {exc}"
+            ),
+        }
+    if history_result.returncode != 0:
+        detail = history_result.stderr.strip() or history_result.stdout.strip() or "no diagnostic"
+        return {
+            "available": False,
+            "pull_requests": [],
+            "historical_pull_requests": [],
+            "error": f"gh api lifecycle history failed for {repository}: {detail}",
+        }
+
+    historical_pull_requests: list[dict[str, Any]] = []
+    historical_by_number: dict[int, dict[str, Any]] = {}
+    for line_number, line in enumerate(history_result.stdout.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            item = json.loads(line)
+        except json.JSONDecodeError as exc:
+            return {
+                "available": False,
+                "pull_requests": [],
+                "historical_pull_requests": [],
+                "error": (
+                    f"gh api lifecycle history returned invalid JSON line {line_number} "
+                    f"for {repository}: {exc}"
+                ),
+            }
+        candidates = item if isinstance(item, list) else [item]
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                continue
+            lifecycle_state = str(candidate.get("state") or "").upper()
+            if lifecycle_state not in {"CLOSED", "MERGED"}:
+                continue
+            number = candidate.get("number")
+            if not isinstance(number, int):
+                continue
+            duplicate = historical_by_number.get(number)
+            if duplicate is None:
+                historical_by_number[number] = candidate
+            elif duplicate != candidate:
+                return {
+                    "available": False,
+                    "pull_requests": [],
+                    "historical_pull_requests": [],
+                    "error": (
+                        f"gh api returned conflicting historical PR {number} "
+                        f"for {repository}"
+                    ),
+                }
+    historical_pull_requests = sorted(
+        historical_by_number.values(),
+        key=lambda item: (str(item.get("updatedAt") or ""), int(item.get("number") or 0)),
+    )
     return {
         "available": True,
-        "pull_requests": [item for item in value if isinstance(item, dict)],
+        "pull_requests": open_pull_requests,
+        "historical_pull_requests": historical_pull_requests,
         "error": None,
     }
 
@@ -367,6 +487,7 @@ def _blocked_observation(
             }
         ],
         "pull_requests": [],
+        "historical_pull_requests": [],
         "does_not_establish": list(OBSERVATION_DOES_NOT_ESTABLISH),
     }
 
@@ -501,13 +622,15 @@ def observe_pull_requests(
     state_db: Path | None = None,
     state_root: Path | None = None,
     pull_requests: list[dict[str, Any]] | None = None,
+    historical_pull_requests: list[dict[str, Any]] | None = None,
     gh_bin: str | None = None,
     now: str | None = None,
 ) -> dict[str, Any]:
-    """Observe open PRs and bind them to Bureau runs and tasks.
+    """Observe open PRs plus separate non-blocking lifecycle history.
 
-    Returns evidence only. A blocked or ambiguous observation is reported as
-    such and never coerced into success.
+    Returns evidence only. Open-PR binding ambiguity remains fail-closed.
+    Closed and merged PRs are bound as historical evidence but never enter the
+    open-PR binding health gate.
     """
     observed_at = now or _utc_now()
     if repository is None:
@@ -524,6 +647,9 @@ def observe_pull_requests(
         if not fetched["available"]:
             return _blocked_observation(repository, fetched["error"], observed_at)
         pull_requests = fetched["pull_requests"]
+        historical_pull_requests = fetched["historical_pull_requests"]
+    elif historical_pull_requests is None:
+        historical_pull_requests = []
     state_path = _runtime_state_db_path(state_db, state_root)
     runs_by_id, runs_by_branch, state_notes = _run_index(state_path)
     try:
@@ -534,46 +660,82 @@ def observe_pull_requests(
         return _blocked_observation(repository, str(exc), observed_at)
     state_notes.extend(authority_notes)
     known_task_ids = set(binding_registry.tasks) if binding_registry is not None else set()
-    observations: list[dict[str, Any]] = []
-    for pull_request in pull_requests:
-        number = pull_request.get("number")
-        if not isinstance(number, int):
-            continue
-        labels = pull_request.get("labels")
-        title = str(pull_request.get("title") or "")
-        body = str(pull_request.get("body") or "")
-        markers = extract_markers(title, body, labels=labels)
-        binding_exception = extract_binding_exception(title, body, labels=labels)
-        head_ref = str(pull_request.get("headRefName") or "")
-        binding = bind_pull_request(
-            markers,
-            head_ref,
-            known_task_ids=known_task_ids,
-            runs_by_id=runs_by_id,
-            runs_by_branch=runs_by_branch,
-        )
-        review_decision = str(pull_request.get("reviewDecision") or "")
-        observations.append(
-            {
-                "repository": repository,
-                "number": number,
-                "url": str(pull_request.get("url") or ""),
-                "title": title,
-                "state": str(pull_request.get("state") or "OPEN"),
-                "is_draft": bool(pull_request.get("isDraft", False)),
-                "head_ref": head_ref,
-                "head_sha": str(pull_request.get("headRefOid") or ""),
-                "base_ref": str(pull_request.get("baseRefName") or ""),
-                "merge_state": str(pull_request.get("mergeStateStatus") or "UNKNOWN"),
-                "review_decision": review_decision,
-                "review_blocked": review_decision == "CHANGES_REQUESTED",
-                "checks": summarize_checks(pull_request.get("statusCheckRollup")),
-                "updated_at": str(pull_request.get("updatedAt") or ""),
-                "observed_at": observed_at,
-                "binding_exception": binding_exception,
-                **binding,
-            }
-        )
+
+    def project(
+        raw_pull_requests: list[dict[str, Any]], *, historical: bool = False
+    ) -> list[dict[str, Any]]:
+        projected: list[dict[str, Any]] = []
+        for pull_request in raw_pull_requests:
+            number = pull_request.get("number")
+            if not isinstance(number, int):
+                continue
+            labels = pull_request.get("labels")
+            title = str(pull_request.get("title") or "")
+            body = str(pull_request.get("body") or "")
+            markers = extract_markers(title, body, labels=labels)
+            binding_exception = extract_binding_exception(title, body, labels=labels)
+            head_ref = str(pull_request.get("headRefName") or "")
+            binding_markers = markers
+            if historical and len(markers["tasks"]) == 1:
+                task_marker = markers["tasks"][0]
+                canonical_task_id = _canonical_task_id(task_marker, known_task_ids)
+                if canonical_task_id is not None:
+                    binding_markers = {**markers, "tasks": [canonical_task_id]}
+            binding = bind_pull_request(
+                binding_markers,
+                head_ref,
+                known_task_ids=known_task_ids,
+                runs_by_id=runs_by_id,
+                runs_by_branch=runs_by_branch,
+            )
+            bindings = [binding]
+            if historical and len(markers["tasks"]) > 1:
+                bindings = []
+                for task_marker in markers["tasks"]:
+                    canonical_task_id = _canonical_task_id(task_marker, known_task_ids)
+                    task_id = canonical_task_id or task_marker
+                    notes = ["historical-multi-task-marker-fanout"]
+                    if known_task_ids and canonical_task_id is None:
+                        notes.append("task-marker-not-found-in-registry")
+                    bindings.append(
+                        {
+                            "binding": BINDING_BUREAU_TASK,
+                            "confidence": BINDING_CONFIDENCE[BINDING_BUREAU_TASK],
+                            "task_id": task_id,
+                            "run_id": None,
+                            "ambiguous_reason": None,
+                            "notes": notes,
+                        }
+                    )
+            review_decision = str(pull_request.get("reviewDecision") or "")
+            for projected_binding in bindings:
+                projected.append(
+                    {
+                        "repository": repository,
+                        "number": number,
+                        "url": str(pull_request.get("url") or ""),
+                        "title": title,
+                        "state": str(pull_request.get("state") or "OPEN"),
+                        "is_draft": bool(pull_request.get("isDraft", False)),
+                        "head_ref": head_ref,
+                        "head_sha": str(pull_request.get("headRefOid") or ""),
+                        "base_ref": str(pull_request.get("baseRefName") or ""),
+                        "merge_state": str(
+                            pull_request.get("mergeStateStatus") or "UNKNOWN"
+                        ),
+                        "review_decision": review_decision,
+                        "review_blocked": review_decision == "CHANGES_REQUESTED",
+                        "checks": summarize_checks(pull_request.get("statusCheckRollup")),
+                        "updated_at": str(pull_request.get("updatedAt") or ""),
+                        "observed_at": observed_at,
+                        "binding_exception": binding_exception,
+                        **projected_binding,
+                    }
+                )
+        return projected
+
+    observations = project(pull_requests)
+    historical_observations = project(historical_pull_requests, historical=True)
     _mark_shared_task_ambiguity(observations)
     hard_findings = _binding_hard_findings(
         observations, registry=binding_registry, repository=repository
@@ -589,6 +751,7 @@ def observe_pull_requests(
         "hard_findings": hard_findings,
         "notes": state_notes,
         "pull_requests": observations,
+        "historical_pull_requests": historical_observations,
         "does_not_establish": list(OBSERVATION_DOES_NOT_ESTABLISH),
     }
 
@@ -716,6 +879,11 @@ def filter_observation_by_task(
     ambiguity can fail closed. The CLI may then present a task-scoped view;
     that view must not inherit hard findings from unrelated tasks.
     """
+    historical_pull_requests = [
+        item
+        for item in observation.get("historical_pull_requests", [])
+        if item.get("task_id") == task_id
+    ]
     if not observation.get("healthy"):
         return {
             **observation,
@@ -724,6 +892,7 @@ def filter_observation_by_task(
                 for item in observation.get("pull_requests", [])
                 if item.get("task_id") == task_id
             ],
+            "historical_pull_requests": historical_pull_requests,
         }
     pull_requests = [
         item
@@ -737,6 +906,7 @@ def filter_observation_by_task(
     return {
         **observation,
         "pull_requests": pull_requests,
+        "historical_pull_requests": historical_pull_requests,
         "binding_healthy": not hard_findings,
         "hard_findings": hard_findings,
     }

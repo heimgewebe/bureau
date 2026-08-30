@@ -98,6 +98,7 @@ def github_observation(
     healthy: bool = True,
     blocked_reason: str | None = None,
     extra_pull_requests: list[dict[str, object]] | None = None,
+    historical_pull_requests: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     pull_requests: list[dict[str, object]] = []
     if task_id is not None:
@@ -136,6 +137,7 @@ def github_observation(
         "blocked_reason": blocked_reason,
         "notes": [],
         "pull_requests": pull_requests,
+        "historical_pull_requests": historical_pull_requests or [],
         "does_not_establish": ["task_completion", "merge_readiness"],
     }
 
@@ -260,12 +262,20 @@ def test_ci_unknown_stays_unknown(registry_factory) -> None:
 
 def test_blocked_github_observation_stays_blocked(registry_factory) -> None:
     root = registry_factory()
+    historical = dict(github_observation(TASK_1, state="MERGED")["pull_requests"][0])
     projection = project(
         root,
-        github=github_observation(None, healthy=False, blocked_reason="gh unavailable"),
+        github=github_observation(
+            None,
+            healthy=False,
+            blocked_reason="gh unavailable",
+            historical_pull_requests=[historical],
+        ),
     )
     entry = task_entry(projection, TASK_1)
     assert any("github-observation-blocked" in reason for reason in entry["blocked_reasons"])
+    assert entry["github"] is None
+    assert entry["github_history"] == []
     assert projection["healthy"] is False
     assert projection["github_observation"]["blocked_reason"] == "gh unavailable"
 
@@ -294,6 +304,27 @@ def test_stale_github_observation_stays_visible(registry_factory) -> None:
     assert projection["healthy"] is False
 
 
+def test_stale_github_history_is_blocked_from_lifecycle_projection(registry_factory) -> None:
+    root = registry_factory()
+    historical = dict(github_observation(TASK_1, state="MERGED")["pull_requests"][0])
+    projection = project(
+        root,
+        github=github_observation(
+            None,
+            observed_at="2026-07-07T09:00:00Z",
+            historical_pull_requests=[historical],
+        ),
+        github_max_age_seconds=600,
+    )
+    entry = task_entry(projection, TASK_1)
+
+    assert entry["github"] is None
+    assert entry["github_history"] == []
+    assert "github-observation-stale" in entry["stale_reasons"]
+    assert projection["github_observation"]["stale"] is True
+    assert projection["healthy"] is False
+
+
 def test_merged_pr_without_bureau_evidence_is_not_verified(registry_factory) -> None:
     root = registry_factory()
     projection = project(root, github=github_observation(TASK_1, state="MERGED"))
@@ -301,6 +332,28 @@ def test_merged_pr_without_bureau_evidence_is_not_verified(registry_factory) -> 
     assert entry["effective_state"] == "ready"
     codes = [finding["code"] for finding in entry["findings"]]
     assert "merged-pr-without-bureau-verification" in codes
+
+
+def test_historical_github_pr_is_projected_without_open_binding_ambiguity(
+    registry_factory,
+) -> None:
+    root = registry_factory()
+    historical = dict(github_observation(TASK_1, state="MERGED")["pull_requests"][0])
+    projection = project(
+        root,
+        github=github_observation(
+            None,
+            historical_pull_requests=[historical],
+        ),
+    )
+    entry = task_entry(projection, TASK_1)
+
+    assert entry["github"] is None
+    assert [item["state"] for item in entry["github_history"]] == ["MERGED"]
+    assert entry["github_history"][0]["updated_at"] == NOW
+    codes = [finding["code"] for finding in entry["findings"]]
+    assert "github-binding-ambiguous" not in codes
+
 
 
 def test_ambiguous_github_binding_is_a_hard_finding(registry_factory) -> None:

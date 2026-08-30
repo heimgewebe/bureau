@@ -84,6 +84,7 @@ GITHUB_FIELDS = (
     "merge_state",
     "ambiguous_reason",
     "observed_at",
+    "updated_at",
 )
 
 
@@ -739,11 +740,21 @@ def status_projection(
         )
     )
     observations_by_task: dict[str, list[dict[str, Any]]] = {}
-    if github_observed:
+    historical_observations_by_task: dict[str, list[dict[str, Any]]] = {}
+    stale_historical_task_ids: set[str] = set()
+    if github_observed and github_healthy:
         for observation in github.get("pull_requests", []):
             task_id = observation.get("task_id")
             if isinstance(task_id, str) and task_id:
                 observations_by_task.setdefault(task_id, []).append(observation)
+        for observation in github.get("historical_pull_requests", []):
+            task_id = observation.get("task_id")
+            if not isinstance(task_id, str) or not task_id:
+                continue
+            if github_stale:
+                stale_historical_task_ids.add(task_id)
+            else:
+                historical_observations_by_task.setdefault(task_id, []).append(observation)
 
     projection_findings: list[dict[str, Any]] = []
     task_authority_error = state.get("task_authority_error")
@@ -828,6 +839,15 @@ def status_projection(
         ]
 
         task_github: dict[str, Any] | None = None
+        task_github_history = [
+            _public_github(item)
+            for item in sorted(
+                historical_observations_by_task.get(task.id, []),
+                key=lambda item: (str(item.get("updated_at") or ""), int(item.get("number") or 0)),
+            )
+        ]
+        if github_stale and task.id in stale_historical_task_ids:
+            stale_reasons.append("github-observation-stale")
         if not github_observed:
             unknowns.append("github-not-observed")
         elif not github_healthy:
@@ -858,7 +878,7 @@ def status_projection(
                 checks = task_github.get("checks") or {}
                 if checks.get("summary") == CI_UNKNOWN:
                     unknowns.append("ci-unknown")
-                if github_stale:
+                if github_stale and "github-observation-stale" not in stale_reasons:
                     stale_reasons.append("github-observation-stale")
                 if (
                     str(task_github.get("state", "")).upper() == "MERGED"
@@ -903,6 +923,7 @@ def status_projection(
                 "workspace": workspace,
                 "receipts": receipts,
                 "github": task_github,
+                "github_history": task_github_history,
                 "findings": findings,
                 "unknowns": unknowns,
                 "stale_reasons": stale_reasons,

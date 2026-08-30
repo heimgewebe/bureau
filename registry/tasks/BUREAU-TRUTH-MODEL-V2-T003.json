@@ -6,7 +6,13 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "path:/home/alex/repos/bureau/.bureau-scopes/truth-model-v2",
+      "path:/home/alex/repos/bureau/src/bureau/doctor.py",
+      "path:/home/alex/repos/bureau/src/bureau/github_observer.py",
+      "path:/home/alex/repos/bureau/src/bureau/status_projection.py",
+      "path:/home/alex/repos/bureau/tests/test_doctor.py",
+      "path:/home/alex/repos/bureau/tests/test_github_observer.py",
+      "path:/home/alex/repos/bureau/tests/test_github_repository_identifiers.py",
+      "path:/home/alex/repos/bureau/tests/test_status_projection.py",
       "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T003.json"
     ]
   },
@@ -24,7 +30,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T003",
   "title": "Detect registry and implementation drift with reviewed closeout plans",
-  "state": "planned",
+  "state": "ready",
   "goal": "Find merged implementations, runtime evidence and lifecycle states that diverge, then produce reviewed closeout plans without blind verification.",
   "priority": {
     "lane": "later",
@@ -36,24 +42,48 @@
   "acceptance": [
     {
       "id": "drift-classes",
-      "assertion": "Doctor identifies merged implementation with open task, verified task still queued, closed PR without decision, runtime proof without closeout and queue/state lane mismatch."
+      "assertion": "Doctor identifies merged implementation with open task, verified task still queued, closed PR without decision, runtime proof without closeout and queue/state lane mismatch.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:truth-model-v2-t003:drift-classes"
+      }
     },
     {
       "id": "acceptance-recheck",
-      "assertion": "A merged PR is evidence to inspect, not sufficient by itself; acceptance and current tests are rechecked."
+      "assertion": "A merged PR is evidence to inspect, not sufficient by itself; acceptance and current tests are rechecked.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:truth-model-v2-t003:acceptance-recheck"
+      }
     },
     {
       "id": "reviewed-closeout",
-      "assertion": "Any lifecycle or queue mutation requires a reviewed, hash-bound plan with rollback or refusal semantics."
+      "assertion": "Any lifecycle or queue mutation requires a reviewed, hash-bound plan with rollback or refusal semantics.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:truth-model-v2-t003:reviewed-closeout"
+      }
     },
     {
       "id": "no-auto-verify",
-      "assertion": "The detector cannot verify tasks, merge PRs or dispatch work."
+      "assertion": "The detector cannot verify tasks, merge PRs or dispatch work.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:truth-model-v2-t003:no-auto-verify"
+      }
     }
   ],
+  "rollback": {
+    "strategy": "Revert only the read-only drift projection, inert review-plan contract and typed TaskSpec migration. Preserve StateStore history and external GitHub/runtime evidence; no detector output may be treated as mutation authority during rollback."
+  },
   "metadata": {
     "registered_at": "2026-07-12T06:00:00Z",
     "source": "Bureau total audit and Truth Model v2 design",
+    "activation_note": "2026-08-29: dependency T001 is verified; TaskSpec acceptance was migrated to the current typed contract after the legacy untyped criteria blocked canonical pickup.",
     "does_not_establish": [
       "automatic verification",
       "automatic queue mutation",
@@ -66,7 +96,13 @@
       "schema_version": 2,
       "global_repo_lease_required": false,
       "work_resource_keys": [
-        "path:/home/alex/repos/bureau/.bureau-scopes/truth-model-v2",
+        "path:/home/alex/repos/bureau/src/bureau/doctor.py",
+        "path:/home/alex/repos/bureau/src/bureau/github_observer.py",
+        "path:/home/alex/repos/bureau/src/bureau/status_projection.py",
+        "path:/home/alex/repos/bureau/tests/test_doctor.py",
+        "path:/home/alex/repos/bureau/tests/test_github_observer.py",
+        "path:/home/alex/repos/bureau/tests/test_github_repository_identifiers.py",
+        "path:/home/alex/repos/bureau/tests/test_status_projection.py",
         "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T003.json"
       ],
       "merge_gate_resource_key": "path:/home/alex/repos/bureau/.bureau-scopes/merge-main"

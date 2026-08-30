@@ -23,11 +23,11 @@ def test_repository_inventory_catalogues_agent_control_surface():
 
     assert resource.type == "git-repository"
     assert resource.parent == "repo"
-    assert resource.path == "/home/alex/repos/heimgewebe/agent-control-surface"
+    assert resource.path == "/home/alex/repos/agent-control-surface"
     assert resource.github_slug == "heimgewebe/agent-control-surface"
     assert (
         resource.grabowski_key
-        == "repo:/home/alex/repos/heimgewebe/agent-control-surface"
+        == "repo:/home/alex/repos/agent-control-surface"
     )
     assert raw["metadata"] == {
         "purpose": (

@@ -7555,8 +7555,22 @@ def apply_runtime_refresh(
             "scheduler convergence intent contains broad directory leases",
             details={"resource_keys": forbidden_scheduler_resources},
         )
+    required_lease_metadata = None
+    if require_grabowski_task_executor:
+        _lease_owner, expected_executor_unit = _validate_binding_identity(lease_binding)
+        if _grabowski_task_unit_attempt(expected_executor_unit) is None:
+            raise RuntimeRefreshError(
+                "runtime-executor-lease-task-invalid",
+                "runtime-refresh lease task ID is not a canonical Grabowski task unit",
+                details={"lease_task_id": expected_executor_unit},
+            )
+        required_lease_metadata = {"executor_unit": expected_executor_unit}
     binding = validate_live_lease_binding(
-        intent, lease_binding, resource_db=resource_db, now=current
+        intent,
+        lease_binding,
+        resource_db=resource_db,
+        now=current,
+        required_metadata=required_lease_metadata,
     )
 
     required_checks = tuple(intent["required_checks"])

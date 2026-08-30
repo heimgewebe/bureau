@@ -4578,12 +4578,83 @@ def test_main_apply_requires_grabowski_task_executor(
     assert json.loads(capsys.readouterr().out)["status"] == "deployed"
 
 
+def test_apply_executor_requires_matching_live_lease_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    executor_unit = "grabowski-task-t016-a1.service"
+    lease_binding, resource_db = lease_for(
+        tmp_path / "leases",
+        intent,
+        metadata={"executor_unit": "grabowski-task-other-a1.service"},
+    )
+    lease_binding["task_id"] = executor_unit
+    store = authority_store_for_intent(intent)
+    before = store.task_spec(intent["approval_task_id"])
+    assert before is not None
+    preflight_called = False
+
+    def preflight(**_: Any) -> dict[str, Any]:
+        nonlocal preflight_called
+        preflight_called = True
+        raise AssertionError("execution preflight must not run with mismatched lease metadata")
+
+    monkeypatch.setattr(refresh, "runtime_prefix_execution_context_preflight", preflight)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            require_grabowski_task_executor=True,
+        )
+
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert preflight_called is False
+    assert store.task_spec(intent["approval_task_id"]) == before
+    attempt = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not attempt.exists()
+
+
+def test_apply_rejects_noncanonical_lease_task_before_live_lease_read(
+    tmp_path: Path
+) -> None:
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
+    lease_binding["task_id"] = "not-a-grabowski-task"
+    store = authority_store_for_intent(intent)
+    before = store.task_spec(intent["approval_task_id"])
+    assert before is not None
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            require_grabowski_task_executor=True,
+        )
+
+    assert caught.value.code == "runtime-executor-lease-task-invalid"
+    assert store.task_spec(intent["approval_task_id"]) == before
+    attempt = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not attempt.exists()
+
+
 def test_apply_read_only_execution_context_does_not_bind_authority_or_start_attempt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
-    lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
-    lease_binding["task_id"] = "grabowski-task-t016-a1.service"
+    executor_unit = "grabowski-task-t016-a1.service"
+    lease_binding, resource_db = lease_for(
+        tmp_path / "leases", intent, metadata={"executor_unit": executor_unit}
+    )
+    lease_binding["task_id"] = executor_unit
     store = authority_store_for_intent(intent)
     before = store.task_spec(intent["approval_task_id"])
     assert before is not None

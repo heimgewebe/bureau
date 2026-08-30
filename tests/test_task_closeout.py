@@ -162,6 +162,8 @@ def test_apply_verifies_without_creating_run(
         assert status["plan_sha256"] == receipt["plan_sha256"]
         assert status["state"] == "verified"
         assert status["receipt_sha256"] == receipt["receipt_sha256"]
+    projection_replay = store.replay_projection()
+    assert projection_replay["matches_current"] is True
     effective, _, _ = authoritative_task_registry(registry, store)
     stamp = verification_stamp(effective, store, task_id)
     assert stamp["receipt_sha256"] == receipt["receipt_sha256"]

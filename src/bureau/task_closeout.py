@@ -577,6 +577,11 @@ def apply_task_no_run_closeout(
             or status_readback["receipt_sha256"] != verification["receipt_sha256"]
         ):
             raise legacy.StateError("task no-run closeout task_status readback mismatch")
+        store.append_task_projection_delta(
+            connection,
+            trigger="task-no-run-closeout",
+            task_id=task_id,
+        )
     effective, _, _ = authoritative_task_registry(registry, store)
     stamp = verification_stamp(effective, store, task_id)
     if (

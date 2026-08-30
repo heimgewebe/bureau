@@ -4480,7 +4480,10 @@ def test_runtime_prefix_execution_context_preflight_requires_grabowski_task_exec
 
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.runtime_prefix_execution_context_preflight(
-            prefix=prefix, now=NOW, require_grabowski_task_executor=True
+            prefix=prefix,
+            now=NOW,
+            require_grabowski_task_executor=True,
+            expected_grabowski_task_unit="grabowski-task-target-a1.service",
         )
 
     assert caught.value.code == "runtime-executor-not-grabowski-task"
@@ -4503,12 +4506,45 @@ def test_runtime_prefix_execution_context_preflight_accepts_grabowski_task_execu
     )
 
     evidence = refresh.runtime_prefix_execution_context_preflight(
-        prefix=prefix, now=NOW, require_grabowski_task_executor=True
+        prefix=prefix,
+        now=NOW,
+        require_grabowski_task_executor=True,
+        expected_grabowski_task_unit="grabowski-task-test-a1.service",
     )
 
     refresh.verify_digest(evidence, "execution_context_sha256")
     assert evidence["grabowski_task_executor"] is True
+    assert evidence["grabowski_task_attempt"] == 1
     assert evidence["grabowski_task_executor_required"] is True
+    assert evidence["expected_grabowski_task_unit"] == "grabowski-task-test-a1.service"
+    assert evidence["executor_matches_lease_task"] is True
+
+
+def test_runtime_prefix_execution_context_preflight_rejects_other_task_or_attempt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prefix = tmp_path / "prefix"
+    prefix.mkdir()
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: ("grabowski-task-test-a2.service", "c" * 32),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.runtime_prefix_execution_context_preflight(
+            prefix=prefix,
+            now=NOW,
+            require_grabowski_task_executor=True,
+            expected_grabowski_task_unit="grabowski-task-test-a1.service",
+        )
+
+    assert caught.value.code == "runtime-executor-lease-task-mismatch"
+    evidence = caught.value.details["execution_context_preflight"]
+    refresh.verify_digest(evidence, "execution_context_sha256")
+    assert evidence["systemd_unit"] == "grabowski-task-test-a2.service"
+    assert evidence["grabowski_task_attempt"] == 2
+    assert evidence["executor_matches_lease_task"] is False
 
 
 def test_main_apply_requires_grabowski_task_executor(
@@ -4533,7 +4569,7 @@ def test_main_apply_requires_grabowski_task_executor(
             "--lease-owner",
             "runtime-refresh:test",
             "--lease-task-id",
-            "BUREAU-TEST",
+            "grabowski-task-test-a1.service",
         ]
     )
 
@@ -4547,6 +4583,7 @@ def test_apply_read_only_execution_context_does_not_bind_authority_or_start_atte
 ) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
     lease_binding, resource_db = lease_for(tmp_path / "leases", intent)
+    lease_binding["task_id"] = "grabowski-task-t016-a1.service"
     store = authority_store_for_intent(intent)
     before = store.task_spec(intent["approval_task_id"])
     assert before is not None
@@ -4558,7 +4595,10 @@ def test_apply_read_only_execution_context_does_not_bind_authority_or_start_atte
         prefix: Path,
         now: datetime | None = None,
         require_grabowski_task_executor: bool = False,
+        expected_grabowski_task_unit: str | None = None,
     ) -> dict[str, Any]:
+        assert require_grabowski_task_executor is True
+        assert expected_grabowski_task_unit == "grabowski-task-t016-a1.service"
         raise refresh.RuntimeRefreshError(
             "runtime-prefix-read-only",
             "injected read-only execution context",
@@ -4590,6 +4630,7 @@ def test_apply_read_only_execution_context_does_not_bind_authority_or_start_atte
             observer=lambda **_: observed,
             source_preparer=source_preparer,
             installer=installer,
+            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "runtime-prefix-read-only"

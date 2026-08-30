@@ -1099,13 +1099,32 @@ def _current_systemd_execution_identity() -> tuple[str | None, str | None]:
     return unit, invocation_id
 
 
+def _grabowski_task_unit_attempt(unit: str | None) -> int | None:
+    """Return the positive attempt number for one canonical Grabowski task unit."""
+    if not isinstance(unit, str):
+        return None
+    prefix = "grabowski-task-"
+    suffix = ".service"
+    if not unit.startswith(prefix) or not unit.endswith(suffix):
+        return None
+    body = unit[len(prefix) : -len(suffix)]
+    task_id, separator, attempt_text = body.rpartition("-a")
+    if not separator or not task_id or not attempt_text.isdecimal():
+        return None
+    attempt = int(attempt_text)
+    if attempt < 1 or attempt > 1_000_000:
+        return None
+    return attempt
+
+
 def runtime_prefix_execution_context_preflight(
     *,
     prefix: Path,
     now: datetime | None = None,
     require_grabowski_task_executor: bool = False,
+    expected_grabowski_task_unit: str | None = None,
 ) -> dict[str, Any]:
-    """Prove the runtime prefix and executor are safe before a one-shot effect."""
+    """Prove the runtime prefix and exact executor are safe before a one-shot effect."""
     resolved = prefix.expanduser().resolve()
     try:
         filesystem = os.statvfs(resolved)
@@ -1118,10 +1137,13 @@ def runtime_prefix_execution_context_preflight(
         ) from exc
     unit, invocation_id = _current_systemd_execution_identity()
     filesystem_read_only = bool(filesystem.f_flag & os.ST_RDONLY)
-    grabowski_task_executor = bool(
-        unit is not None
-        and unit.startswith("grabowski-task-")
-        and unit.endswith(".service")
+    task_attempt = _grabowski_task_unit_attempt(unit)
+    grabowski_task_executor = task_attempt is not None
+    expected_task_attempt = _grabowski_task_unit_attempt(expected_grabowski_task_unit)
+    executor_matches_lease_task = bool(
+        grabowski_task_executor
+        and expected_task_attempt is not None
+        and unit == expected_grabowski_task_unit
     )
     evidence = bind_digest(
         {
@@ -1135,9 +1157,12 @@ def runtime_prefix_execution_context_preflight(
             "systemd_unit": unit,
             "systemd_invocation_id": invocation_id,
             "grabowski_task_executor": grabowski_task_executor,
+            "grabowski_task_attempt": task_attempt,
             "grabowski_task_executor_required": bool(
                 require_grabowski_task_executor
             ),
+            "expected_grabowski_task_unit": expected_grabowski_task_unit,
+            "executor_matches_lease_task": executor_matches_lease_task,
             "observed_at": isoformat(now or utc_now()),
         },
         "execution_context_sha256",
@@ -1152,6 +1177,12 @@ def runtime_prefix_execution_context_preflight(
         raise RuntimeRefreshError(
             "runtime-executor-not-grabowski-task",
             "runtime-refresh apply must run in a transient Grabowski systemd task",
+            details={"execution_context_preflight": evidence},
+        )
+    if require_grabowski_task_executor and not executor_matches_lease_task:
+        raise RuntimeRefreshError(
+            "runtime-executor-lease-task-mismatch",
+            "runtime-refresh executor differs from the exact lease task unit",
             details={"execution_context_preflight": evidence},
         )
     return evidence
@@ -7618,6 +7649,9 @@ def apply_runtime_refresh(
         prefix=prefix,
         now=current,
         require_grabowski_task_executor=require_grabowski_task_executor,
+        expected_grabowski_task_unit=(
+            binding["task_id"] if require_grabowski_task_executor else None
+        ),
     )
 
     # This CAS is the last authority operation before the attempt ledger and

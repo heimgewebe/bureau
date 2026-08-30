@@ -1,0 +1,52 @@
+name: bureau-2213-p1-successor
+
+on:
+  push:
+    branches:
+      - fix/issue-2177-no-run-projection-p1-successor-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 3
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Verify exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD~2)" = "b33d00ef39a9e5807afa0618e41d393a43c6ae6d"
+          test "$(git hash-object src/bureau/task_closeout.py)" = "c802df73dcde9d01cb0332367c2dfd2774977638"
+          test "$(git hash-object tests/test_task_closeout.py)" = "56e8d24519e18352d16bccfe1c45e7713574bbf9"
+      - name: Apply bounded P1 fix
+        run: python .github/bureau-2213-p1-successor.py
+      - name: Validate patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python -m pip install -q -e '.[dev]'
+          PYTHONPATH=src pytest -q tests/test_task_closeout.py tests/test_state_events.py
+          ruff check src/bureau/task_closeout.py tests/test_task_closeout.py
+          make validate
+      - name: Publish validated successor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/bureau-2213-p1-successor.py
+          rm .github/workflows/bureau-2213-p1-successor.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(state): backfill no-run replay projection"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

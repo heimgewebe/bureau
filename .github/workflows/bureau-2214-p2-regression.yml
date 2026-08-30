@@ -1,0 +1,50 @@
+name: bureau-2214-p2-regression
+
+on:
+  push:
+    branches:
+      - fix/issue-2177-no-run-projection-p1-successor-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  test-publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 3
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Verify exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD~2)" = "909c0c56beca669a20efe3433176229cd170b029"
+          test "$(git hash-object tests/test_task_closeout.py)" = "2185d36557f6423b5441249f2ede2c6bce4b7e86"
+      - name: Apply P2 regression test
+        run: python .github/bureau-2214-p2-regression.py
+      - name: Validate P2 regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python -m pip install -q -e '.[dev]'
+          PYTHONPATH=src pytest -q tests/test_task_closeout.py tests/test_state_events.py
+          ruff check tests/test_task_closeout.py
+      - name: Publish regression test
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/bureau-2214-p2-regression.py
+          rm .github/workflows/bureau-2214-p2-regression.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "test(state): cover journaled replay with unrelated mismatch"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

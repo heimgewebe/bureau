@@ -1123,20 +1123,50 @@ def runtime_prefix_execution_context_preflight(
     now: datetime | None = None,
     require_grabowski_task_executor: bool = False,
     expected_grabowski_task_unit: str | None = None,
+    mutation_roots: dict[str, Path] | None = None,
 ) -> dict[str, Any]:
-    """Prove the runtime prefix and exact executor are safe before a one-shot effect."""
-    resolved = prefix.expanduser().resolve()
-    try:
-        filesystem = os.statvfs(resolved)
-        path_writable = os.access(resolved, os.W_OK)
-    except OSError as exc:
-        raise RuntimeRefreshError(
-            "runtime-prefix-writability-unobserved",
-            "runtime-refresh cannot prove the bound runtime prefix is writable",
-            details={"prefix": str(resolved), "error": str(exc)},
-        ) from exc
+    """Prove executor identity and all requested mutation roots before authority use."""
+    requested_roots = {"prefix": prefix}
+    if mutation_roots is not None:
+        requested_roots.update(mutation_roots)
+    root_evidence: dict[str, dict[str, Any]] = {}
+    for label, raw_path in requested_roots.items():
+        resolved = raw_path.expanduser().resolve()
+        probe = resolved
+        while not probe.exists() and probe != probe.parent:
+            probe = probe.parent
+        if not probe.exists():
+            raise RuntimeRefreshError(
+                "runtime-mutation-root-writability-unobserved",
+                "runtime-refresh cannot resolve a filesystem boundary for a mutation root",
+                details={"label": label, "path": str(resolved)},
+            )
+        try:
+            filesystem = os.statvfs(probe)
+            path_writable = os.access(probe, os.W_OK)
+        except OSError as exc:
+            raise RuntimeRefreshError(
+                "runtime-mutation-root-writability-unobserved",
+                "runtime-refresh cannot prove a bound mutation root is writable",
+                details={
+                    "label": label,
+                    "path": str(resolved),
+                    "probe_path": str(probe),
+                    "error": str(exc),
+                },
+            ) from exc
+        filesystem_read_only = bool(filesystem.f_flag & os.ST_RDONLY)
+        root_evidence[label] = {
+            "path": str(resolved),
+            "probe_path": str(probe),
+            "target_exists": resolved.exists(),
+            "filesystem_flags": int(filesystem.f_flag),
+            "filesystem_read_only": filesystem_read_only,
+            "path_writable": bool(path_writable),
+            "writable": not filesystem_read_only and bool(path_writable),
+        }
+    prefix_evidence = root_evidence["prefix"]
     unit, invocation_id = _current_systemd_execution_identity()
-    filesystem_read_only = bool(filesystem.f_flag & os.ST_RDONLY)
     task_attempt = _grabowski_task_unit_attempt(unit)
     grabowski_task_executor = task_attempt is not None
     expected_task_attempt = _grabowski_task_unit_attempt(expected_grabowski_task_unit)
@@ -1153,11 +1183,12 @@ def runtime_prefix_execution_context_preflight(
         {
             "schema_version": SCHEMA_VERSION,
             "kind": "bureau_runtime_refresh_execution_context_preflight",
-            "prefix": str(resolved),
-            "filesystem_flags": int(filesystem.f_flag),
-            "filesystem_read_only": filesystem_read_only,
-            "path_writable": bool(path_writable),
-            "writable": not filesystem_read_only and bool(path_writable),
+            "prefix": prefix_evidence["path"],
+            "filesystem_flags": prefix_evidence["filesystem_flags"],
+            "filesystem_read_only": prefix_evidence["filesystem_read_only"],
+            "path_writable": prefix_evidence["path_writable"],
+            "writable": all(item["writable"] for item in root_evidence.values()),
+            "mutation_roots": root_evidence,
             "systemd_unit": unit,
             "systemd_invocation_id": invocation_id,
             "grabowski_task_executor": grabowski_task_executor,
@@ -1172,10 +1203,21 @@ def runtime_prefix_execution_context_preflight(
         "execution_context_sha256",
     )
     if evidence["writable"] is not True:
+        blocked = sorted(
+            label for label, item in root_evidence.items() if item["writable"] is not True
+        )
+        code = (
+            "runtime-prefix-read-only"
+            if blocked == ["prefix"] and len(root_evidence) == 1
+            else "runtime-mutation-root-read-only"
+        )
         raise RuntimeRefreshError(
-            "runtime-prefix-read-only",
-            "runtime-refresh execution context cannot write the bound runtime prefix",
-            details={"execution_context_preflight": evidence},
+            code,
+            "runtime-refresh execution context cannot write every bound mutation root",
+            details={
+                "blocked_mutation_roots": blocked,
+                "execution_context_preflight": evidence,
+            },
         )
     if require_grabowski_task_executor and not grabowski_task_executor:
         raise RuntimeRefreshError(
@@ -7425,6 +7467,60 @@ def apply_runtime_refresh(
         / "no-effect-results"
         / f"{intent['intent_sha256']}.json"
     )
+    prefix = Path(intent["prefix"]).expanduser().resolve()
+    bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
+    user_unit_dir = Path(intent["user_unit_dir"]).expanduser().resolve()
+    libexec_dir = Path(intent["libexec_dir"]).expanduser().resolve()
+    runtime_user_unit_dir = Path(intent["runtime_user_unit_dir"]).expanduser().resolve()
+    validate_runtime_user_unit_dir(runtime_user_unit_dir)
+    expected_executor_unit: str | None = None
+
+    def execution_preflight(
+        mutation_roots: dict[str, Path] | None = None,
+    ) -> dict[str, Any]:
+        nonlocal expected_executor_unit
+        evidence = runtime_prefix_execution_context_preflight(
+            prefix=prefix,
+            now=current,
+            require_grabowski_task_executor=require_grabowski_task_executor,
+            expected_grabowski_task_unit=(
+                expected_executor_unit if require_grabowski_task_executor else None
+            ),
+            mutation_roots=mutation_roots,
+        )
+        if require_grabowski_task_executor and expected_executor_unit is None:
+            observed_unit = evidence.get("systemd_unit")
+            if not isinstance(observed_unit, str):
+                raise RuntimeRefreshError(
+                    "runtime-executor-identity-unobserved",
+                    "runtime-refresh did not produce a concrete transient executor unit",
+                )
+            expected_executor_unit = observed_unit
+        return evidence
+
+    def validate_execution_bound_leases() -> dict[str, Any]:
+        if require_grabowski_task_executor and expected_executor_unit is None:
+            execution_preflight()
+        required_metadata = (
+            {"executor_unit": expected_executor_unit}
+            if require_grabowski_task_executor
+            else None
+        )
+        return validate_live_lease_binding(
+            intent,
+            lease_binding,
+            resource_db=resource_db,
+            now=current,
+            required_metadata=required_metadata,
+        )
+
+    def guard_authority_consumption() -> dict[str, Any] | None:
+        if not require_grabowski_task_executor:
+            return None
+        execution_preflight()
+        guarded_binding = validate_execution_bound_leases()
+        execution_preflight()
+        return guarded_binding
     if no_effect_result_path.exists():
         existing = _validate_result_for_intent(read_json(no_effect_result_path), intent)
         if (
@@ -7435,6 +7531,7 @@ def apply_runtime_refresh(
                 "no-effect-result-invalid",
                 "intent-bound no-effect result is not an already-current success",
             )
+        guard_authority_consumption()
         consume_runtime_refresh_authority(
             store=store, intent=intent, result=existing, now=current
         )
@@ -7467,6 +7564,7 @@ def apply_runtime_refresh(
             )
         existing = _validate_result_for_intent(existing, result_intent)
         if existing.get("status") in {"deployed", "already_current"}:
+            guard_authority_consumption()
             consume_runtime_refresh_authority(
                 store=store, intent=result_intent, result=existing, now=current
             )
@@ -7518,12 +7616,6 @@ def apply_runtime_refresh(
             "source-precondition-intent-drift",
             "runtime-refresh intent source precondition differs from current authority",
         )
-    prefix = Path(intent["prefix"]).expanduser().resolve()
-    bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
-    user_unit_dir = Path(intent["user_unit_dir"]).expanduser().resolve()
-    libexec_dir = Path(intent["libexec_dir"]).expanduser().resolve()
-    runtime_user_unit_dir = Path(intent["runtime_user_unit_dir"]).expanduser().resolve()
-    validate_runtime_user_unit_dir(runtime_user_unit_dir)
     intent_resource_keys = set(intent.get("required_resource_keys", []))
     live_launcher_keys = set(launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir))
     unleased_launcher_drift = sorted(live_launcher_keys - intent_resource_keys)
@@ -7563,28 +7655,7 @@ def apply_runtime_refresh(
             "scheduler convergence intent contains broad directory leases",
             details={"resource_keys": forbidden_scheduler_resources},
         )
-    required_lease_metadata = None
-    expected_executor_unit = None
-    if require_grabowski_task_executor:
-        executor_identity_preflight = runtime_prefix_execution_context_preflight(
-            prefix=prefix,
-            now=current,
-            require_grabowski_task_executor=True,
-        )
-        expected_executor_unit = executor_identity_preflight["systemd_unit"]
-        if not isinstance(expected_executor_unit, str):
-            raise RuntimeRefreshError(
-                "runtime-executor-identity-unobserved",
-                "runtime-refresh did not produce a concrete transient executor unit",
-            )
-        required_lease_metadata = {"executor_unit": expected_executor_unit}
-    binding = validate_live_lease_binding(
-        intent,
-        lease_binding,
-        resource_db=resource_db,
-        now=current,
-        required_metadata=required_lease_metadata,
-    )
+    binding = validate_execution_bound_leases()
 
     required_checks = tuple(intent["required_checks"])
     live = observer(
@@ -7626,6 +7697,9 @@ def apply_runtime_refresh(
                 "already-current-evidence-invalid",
                 "already-current result lacks authoritative scheduler or manifest evidence",
             )
+        guarded_binding = guard_authority_consumption()
+        if guarded_binding is not None:
+            binding = guarded_binding
         bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
         result = _write_attempt_result(
             no_effect_result_path,
@@ -7669,14 +7743,21 @@ def apply_runtime_refresh(
             "deployed-boundary-drift", "deployed runtime changed after intent"
         )
 
-    # Prove the actual process namespace can write the bound runtime prefix before
-    # consuming any single-use authority or creating an attempt ledger. This blocks
-    # read-only MCP/sandbox execution contexts before they can burn an authority.
-    execution_context_preflight = runtime_prefix_execution_context_preflight(
-        prefix=prefix,
-        now=current,
-        require_grabowski_task_executor=require_grabowski_task_executor,
-        expected_grabowski_task_unit=expected_executor_unit,
+    # Revalidate exact live leases after remote observation and immediately before
+    # the final namespace check/CAS so same-owner metadata drift cannot burn authority.
+    binding = validate_execution_bound_leases()
+
+    # Prove the actual process namespace can write every installer mutation root before
+    # consuming any single-use authority or creating an attempt ledger.
+    execution_context_preflight = execution_preflight(
+        {
+            "bin_dir": bin_dir,
+            "user_unit_dir": user_unit_dir,
+            "libexec_dir": libexec_dir,
+            "runtime_user_unit_dir": runtime_user_unit_dir,
+        }
+        if require_grabowski_task_executor
+        else None
     )
 
     # This CAS is the last authority operation before the attempt ledger and

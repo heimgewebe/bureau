@@ -4467,6 +4467,45 @@ def test_runtime_prefix_execution_context_preflight_rejects_read_only_namespace(
     assert evidence["writable"] is False
 
 
+def test_runtime_prefix_execution_context_preflight_rejects_read_only_secondary_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prefix = tmp_path / "prefix"
+    libexec = tmp_path / "libexec"
+    prefix.mkdir()
+    libexec.mkdir()
+    real_statvfs = refresh.os.statvfs
+    real_access = refresh.os.access
+
+    def statvfs(path: Any) -> Any:
+        observed = real_statvfs(path)
+        if Path(path).resolve() == libexec.resolve():
+            return SimpleNamespace(f_flag=observed.f_flag | refresh.os.ST_RDONLY)
+        return observed
+
+    def access(path: Any, mode: int) -> bool:
+        if Path(path).resolve() == libexec.resolve():
+            return False
+        return real_access(path, mode)
+
+    monkeypatch.setattr(refresh.os, "statvfs", statvfs)
+    monkeypatch.setattr(refresh.os, "access", access)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.runtime_prefix_execution_context_preflight(
+            prefix=prefix,
+            now=NOW,
+            mutation_roots={"libexec_dir": libexec},
+        )
+
+    assert caught.value.code == "runtime-mutation-root-read-only"
+    assert caught.value.details["blocked_mutation_roots"] == ["libexec_dir"]
+    evidence = caught.value.details["execution_context_preflight"]
+    refresh.verify_digest(evidence, "execution_context_sha256")
+    assert evidence["mutation_roots"]["prefix"]["writable"] is True
+    assert evidence["mutation_roots"]["libexec_dir"]["writable"] is False
+
+
 def test_runtime_prefix_execution_context_preflight_requires_grabowski_task_executor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -4615,9 +4654,264 @@ def test_apply_executor_requires_matching_live_lease_metadata(
     assert not attempt.exists()
 
 
+def test_cached_success_requires_executor_bound_live_leases_before_consumption(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    store = authority_store_for_intent(intent)
+    bound = refresh.bind_runtime_refresh_authority(store=store, intent=intent, now=NOW)
+    no_effect_path = (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    existing = refresh._write_attempt_result(
+        no_effect_path,
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "already_current",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound,
+            "finished_at": refresh.isoformat(NOW),
+            "effect_started": False,
+        },
+    )
+    expected_executor = "grabowski-task-target-a1.service"
+    observed_executor = "grabowski-task-other-a1.service"
+    lease_binding, resource_db = lease_for(
+        tmp_path / "leases",
+        intent,
+        metadata={"executor_unit": expected_executor},
+    )
+    lease_binding["task_id"] = intent["approval_task_id"]
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: (observed_executor, "2" * 32),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            authority_store=store,
+            require_grabowski_task_executor=True,
+        )
+
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    current = store.task_spec(intent["approval_task_id"])
+    assert current is not None
+    authority = current["spec"]["metadata"]["runtime_refresh_authority"]
+    assert authority.get("consumption") is None
+    assert refresh.read_json(no_effect_path)["result_sha256"] == existing["result_sha256"]
+
+
+def test_already_current_executor_drift_blocks_before_authority_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    force_writable_execution_namespace(monkeypatch)
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+            "main_commit": MAIN,
+            "reason_codes": [],
+            "scheduler": scheduler,
+        }
+    )
+    live = refresh.bind_digest(live, "observation_sha256")
+    first_unit = "grabowski-task-target-a1.service"
+    second_unit = "grabowski-task-target-a2.service"
+    lease_binding, resource_db = lease_for(
+        tmp_path / "leases", intent, metadata={"executor_unit": first_unit}
+    )
+    lease_binding["task_id"] = intent["approval_task_id"]
+    identities = iter([(first_unit, "3" * 32), (second_unit, "4" * 32)])
+    monkeypatch.setattr(
+        refresh, "_current_systemd_execution_identity", lambda: next(identities)
+    )
+    store = authority_store_for_intent(intent)
+    before = store.task_spec(intent["approval_task_id"])
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=lambda **_: live,
+            authority_store=store,
+            require_grabowski_task_executor=True,
+        )
+
+    assert caught.value.code == "runtime-executor-unit-drift"
+    assert store.task_spec(intent["approval_task_id"]) == before
+    no_effect_path = (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    assert not no_effect_path.exists()
+
+
+def rewrite_executor_unit_lease_metadata(resource_db: Path, executor_unit: str) -> None:
+    metadata = {"executor_unit": executor_unit}
+    metadata_json = json.dumps(
+        metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+    digest = hashlib.sha256(metadata_json.encode("utf-8")).hexdigest()
+    connection = sqlite3.connect(resource_db)
+    connection.execute(
+        "UPDATE leases SET metadata_sha256 = ?, metadata_json = ?",
+        (digest, metadata_json),
+    )
+    connection.commit()
+    connection.close()
+
+
+def test_already_current_revalidates_lease_metadata_immediately_before_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    force_writable_execution_namespace(monkeypatch)
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    write_manifest(manifest_path, MAIN)
+    scheduler = {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_scheduler_readback",
+        "source_commit": MAIN,
+        "authoritative": True,
+    }
+    live = dict(observed)
+    live.update(
+        {
+            "status": "already_current",
+            "deployed_source_commit": MAIN,
+            "deployed_manifest_sha256": refresh.sha256_bytes(manifest_path.read_bytes()),
+            "main_commit": MAIN,
+            "reason_codes": [],
+            "scheduler": scheduler,
+        }
+    )
+    live = refresh.bind_digest(live, "observation_sha256")
+    executor_unit = "grabowski-task-target-a1.service"
+    lease_binding, resource_db = lease_for(
+        tmp_path / "leases", intent, metadata={"executor_unit": executor_unit}
+    )
+    lease_binding["task_id"] = intent["approval_task_id"]
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: (executor_unit, "5" * 32),
+    )
+    store = authority_store_for_intent(intent)
+    before = store.task_spec(intent["approval_task_id"])
+
+    def observer(**_: Any) -> dict[str, Any]:
+        rewrite_executor_unit_lease_metadata(
+            resource_db, "grabowski-task-other-a1.service"
+        )
+        return live
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=observer,
+            authority_store=store,
+            require_grabowski_task_executor=True,
+        )
+
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert store.task_spec(intent["approval_task_id"]) == before
+    no_effect_path = (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    assert not no_effect_path.exists()
+
+
+def test_candidate_revalidates_lease_metadata_after_observation_before_cas(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    force_writable_execution_namespace(monkeypatch)
+    observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    executor_unit = "grabowski-task-target-a1.service"
+    lease_binding, resource_db = lease_for(
+        tmp_path / "leases", intent, metadata={"executor_unit": executor_unit}
+    )
+    lease_binding["task_id"] = intent["approval_task_id"]
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: (executor_unit, "6" * 32),
+    )
+    store = authority_store_for_intent(intent)
+    before = store.task_spec(intent["approval_task_id"])
+
+    def observer(**_: Any) -> dict[str, Any]:
+        rewrite_executor_unit_lease_metadata(
+            resource_db, "grabowski-task-other-a1.service"
+        )
+        return observed
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            observer=observer,
+            authority_store=store,
+            require_grabowski_task_executor=True,
+        )
+
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert store.task_spec(intent["approval_task_id"]) == before
+    attempt = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    assert not attempt.exists()
+
+
+def force_writable_execution_namespace(monkeypatch: pytest.MonkeyPatch) -> None:
+    real_statvfs = refresh.os.statvfs
+
+    def statvfs(path: Any) -> Any:
+        observed = real_statvfs(path)
+        return SimpleNamespace(f_flag=observed.f_flag & ~refresh.os.ST_RDONLY)
+
+    monkeypatch.setattr(refresh.os, "statvfs", statvfs)
+    monkeypatch.setattr(refresh.os, "access", lambda _path, _mode: True)
+
+
 def test_apply_strict_executor_preserves_lease_task_id_semantics(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    force_writable_execution_namespace(monkeypatch)
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
     executor_unit = "grabowski-task-t016-a1.service"
     lease_binding, resource_db = lease_for(
@@ -4643,8 +4937,16 @@ def test_apply_strict_executor_preserves_lease_task_id_semantics(
         now=NOW,
         observer=lambda **_: observed,
         source_preparer=source_preparer,
-        installer=lambda **_: {"manifest_sha256": "a" * 64, "rollback": {"directory": "/rollback"}},
-        readback=lambda **_: {"source_commit": MAIN, "manifest_sha256": "a" * 64, "check_valid": True, "runtime_identity_valid": True},
+        installer=lambda **_: {
+            "manifest_sha256": "a" * 64,
+            "rollback": {"directory": "/rollback"},
+        },
+        readback=lambda **_: {
+            "source_commit": MAIN,
+            "manifest_sha256": "a" * 64,
+            "check_valid": True,
+            "runtime_identity_valid": True,
+        },
         require_grabowski_task_executor=True,
     )
 
@@ -4659,6 +4961,7 @@ def test_apply_strict_executor_preserves_lease_task_id_semantics(
 def test_apply_executor_unit_drift_blocks_before_authority_cas(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    force_writable_execution_namespace(monkeypatch)
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
     first_unit = "grabowski-task-t016-a1.service"
     second_unit = "grabowski-task-t016-a2.service"
@@ -4712,6 +5015,7 @@ def test_apply_read_only_execution_context_does_not_bind_authority_or_start_atte
         now: datetime | None = None,
         require_grabowski_task_executor: bool = False,
         expected_grabowski_task_unit: str | None = None,
+        mutation_roots: dict[str, Path] | None = None,
     ) -> dict[str, Any]:
         assert require_grabowski_task_executor is True
         assert expected_grabowski_task_unit is None

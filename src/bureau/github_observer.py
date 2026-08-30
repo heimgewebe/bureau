@@ -676,7 +676,7 @@ def observe_pull_requests(
             binding_exception = extract_binding_exception(title, body, labels=labels)
             head_ref = str(pull_request.get("headRefName") or "")
             binding_markers = markers
-            if historical and not markers["runs"] and len(markers["tasks"]) == 1:
+            if historical and len(markers["tasks"]) == 1:
                 task_marker = markers["tasks"][0]
                 canonical_task_id = _canonical_task_id(task_marker, known_task_ids)
                 if canonical_task_id is not None:

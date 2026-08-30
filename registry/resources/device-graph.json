@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "repo.device-graph",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/device-graph",
+  "github_slug": "heimgewebe/device-graph",
+  "grabowski_key": "repo:/home/alex/repos/device-graph",
+  "metadata": {
+    "role": "canonical local checkout mapping for heimgewebe/device-graph",
+    "mapping_verified_at": "2026-08-30",
+    "mapping_evidence": "T120 fresh local checkout and origin readback",
+    "boundaries": ["mapping_only_does_not_establish_captain_eligibility", "github_settings_unchanged"]
+  }
+}

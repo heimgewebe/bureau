@@ -3,9 +3,9 @@
   "id": "repo.agent-control-surface",
   "type": "git-repository",
   "parent": "repo",
-  "path": "/home/alex/repos/heimgewebe/agent-control-surface",
+  "path": "/home/alex/repos/agent-control-surface",
   "github_slug": "heimgewebe/agent-control-surface",
-  "grabowski_key": "repo:/home/alex/repos/heimgewebe/agent-control-surface",
+  "grabowski_key": "repo:/home/alex/repos/agent-control-surface",
   "metadata": {
     "purpose": "local manual control surface for Jules sessions and guarded step-by-step Git workflows",
     "scope": "catalog-only",
@@ -27,6 +27,8 @@
       "no_task_priority_authority",
       "no_merge_authorization",
       "no_remote_access_security"
-    ]
+    ],
+    "mapping_verified_at": "2026-08-30",
+    "mapping_evidence": "T120 fresh local checkout and origin readback"
   }
 }

@@ -3544,7 +3544,12 @@ def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) 
 
 
 def consume_runtime_refresh_authority(
-    *, store: Any, intent: dict[str, Any], result: dict[str, Any], now: datetime
+    *,
+    store: Any,
+    intent: dict[str, Any],
+    result: dict[str, Any],
+    now: datetime,
+    before_initial_consumption: Callable[[], Any] | None = None,
 ) -> dict[str, Any]:
     """CAS-bind a successful immutable result to its single-use TaskSpec authority."""
     expected = _intent_authority_record(intent)
@@ -3567,11 +3572,12 @@ def consume_runtime_refresh_authority(
         "result_sha256": result["result_sha256"],
         "consumed_at": isoformat(now),
     }
-    current = _read_authority_task(store, expected["task_id"])
-    spec = current["spec"]
-    _metadata, authority = _runtime_authority_metadata(spec)
-    existing_value = authority.get("consumption")
-    if existing_value is not None:
+    def consumed_replay(
+        current_task: dict[str, Any], current_authority: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        existing_value = current_authority.get("consumption")
+        if existing_value is None:
+            return None
         existing = _validated_authority_consumption(existing_value)
         comparable = dict(expected_consumption)
         comparable["consumed_at"] = existing["consumed_at"]
@@ -3583,11 +3589,28 @@ def consume_runtime_refresh_authority(
             )
         return {
             "task_id": expected["task_id"],
-            "revision": current["revision"],
-            "spec_sha256": current["spec_sha256"],
+            "revision": current_task["revision"],
+            "spec_sha256": current_task["spec_sha256"],
             "consumption": existing,
             "idempotent_replay": True,
         }
+
+    current = _read_authority_task(store, expected["task_id"])
+    spec = current["spec"]
+    _metadata, authority = _runtime_authority_metadata(spec)
+    replay = consumed_replay(current, authority)
+    if replay is not None:
+        return replay
+    if before_initial_consumption is not None:
+        before_initial_consumption()
+        # The guard may be non-trivial. Re-read the TaskSpec afterwards so a
+        # concurrent exact consumption becomes a safe replay rather than stale-CAS noise.
+        current = _read_authority_task(store, expected["task_id"])
+        spec = current["spec"]
+        _metadata, authority = _runtime_authority_metadata(spec)
+        replay = consumed_replay(current, authority)
+        if replay is not None:
+            return replay
     _validate_intent_authority_contract_generation(
         expected_authority=expected, authority=authority
     )
@@ -7466,8 +7489,9 @@ def apply_runtime_refresh(
     authority_store: Any | None = None,
 ) -> dict[str, Any]:
     current = now or utc_now()
-    # Production invariant: every apply must prove the exact transient Grabowski
-    # executor and executor-bound live leases before any authority consumption.
+    # Production invariant: every initial authority consumption must prove the exact
+    # transient Grabowski executor and executor-bound live leases. Exact replay of an
+    # already-consumed successful result requires no new runtime effect or lease.
     require_grabowski_task_executor = True
     intent = read_json(intent_path)
     verify_digest(intent, "intent_sha256")
@@ -7555,9 +7579,12 @@ def apply_runtime_refresh(
                 "no-effect-result-invalid",
                 "intent-bound no-effect result is not an already-current success",
             )
-        guard_authority_consumption()
         consume_runtime_refresh_authority(
-            store=store, intent=intent, result=existing, now=current
+            store=store,
+            intent=intent,
+            result=existing,
+            now=current,
+            before_initial_consumption=guard_authority_consumption,
         )
         return {**existing, "reused": True}
     if result_path.exists():
@@ -7588,9 +7615,12 @@ def apply_runtime_refresh(
             )
         existing = _validate_result_for_intent(existing, result_intent)
         if existing.get("status") in {"deployed", "already_current"}:
-            guard_authority_consumption()
             consume_runtime_refresh_authority(
-                store=store, intent=result_intent, result=existing, now=current
+                store=store,
+                intent=result_intent,
+                result=existing,
+                now=current,
+                before_initial_consumption=guard_authority_consumption,
             )
         else:
             validate_authoritative_runtime_refresh_task(

@@ -4224,7 +4224,7 @@ def test_apply_success_is_one_shot_and_preserves_foreign_dirty_checkout(
 
 
 def test_success_consumes_authority_and_exact_result_replay_is_idempotent(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     (
         observed,
@@ -4252,6 +4252,12 @@ def test_success_consumes_authority_and_exact_result_replay_is_idempotent(
         "consumed_at": refresh.isoformat(NOW),
     }
     revision_after_success = current["revision"]
+    release_test_leases(resource_db)
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: pytest.fail("consumed result replay must not require an executor"),
+    )
 
     replay = refresh.apply_runtime_refresh(
         intent_path=intent_path,

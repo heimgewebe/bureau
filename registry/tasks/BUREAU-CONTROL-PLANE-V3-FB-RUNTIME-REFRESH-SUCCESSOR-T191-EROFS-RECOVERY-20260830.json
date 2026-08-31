@@ -1,0 +1,342 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, GitHub main is freshly observed; the exact target contains this protected authority merge and all then-current legitimate protected-main merges, and required validate (3.10), validate (3.12), main-push-revalidation and registry-registration-preflight/freshness or equivalent registration checks for that exact revision are successful.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:fresh-main"
+      }
+    },
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, typed readback proves that deployment-manifest source_commit and canonical Registry source identity are both exactly 90647998ade46187d9042e822d468c71f5f597f8 or a later mutually identical deployed source, and that the active source is a verified Git ancestor of the freshly selected target main commit. Deployment/Registry mismatch, diverged history, unavailable ancestry proof or target drift blocks the runtime effect fail-closed.",
+      "evidence_type": "object",
+      "id": "source-ancestry-precondition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:source-ancestry-precondition"
+      }
+    },
+    {
+      "assertion": "Before the runtime effect, the authoritative StateStore exposes this exact task ID as a nonterminal ready or active Runtime Refresh Authority, and the approval intent binds the exact observed TaskSpec revision and digest.",
+      "evidence_type": "object",
+      "id": "authority-state-store-preflight",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:state-store-preflight"
+      }
+    },
+    {
+      "assertion": "This authority starts at most one runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are reconstructed from intent, attempt/result, manifest, launcher, package, snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "id": "single-runtime-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:single-effect"
+      }
+    },
+    {
+      "assertion": "After a successful refresh, deployment manifest, immutable release, package tree, launcher pair and canonical Registry snapshot bind the same freshly observed source commit, and Bureau runtime identity plus StateStore integrity are valid at that exact target.",
+      "evidence_type": "object",
+      "id": "immutable-runtime-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:immutable-readback"
+      }
+    },
+    {
+      "assertion": "The authority is consumed exactly once after successful immutable readback and grants no queue, claim, dispatch, task-supply, product-code, foreign-work or general repository mutation authority. Historical consumed or effect-started authorities remain unavailable for reuse.",
+      "evidence_type": "object",
+      "id": "runtime-only-scope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:scope-only"
+      }
+    },
+    {
+      "assertion": "Before no-run closeout can verify this authority, the current TaskSpec revision binds PR #2211 to its exact protected merge commit and typed proof revalidates the create-only PR scope, required checks, historical TaskSpec blob and legacy-seed-exact missing-only StateStore adoption receipt. The bootstrap Null-SHA sentinel is intentionally unverifiable and must be replaced only after the real merge commit is known.",
+      "evidence_type": "object",
+      "id": "protected-publication-and-missing-only-adoption",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-successor-t191-erofs-recovery-20260830:protected-publication-adoption"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use target-bound recovery successor only. The direct user continuation of T191 authorizes exactly the Bureau runtime convergence required to resume Operational Guidance. The predecessor effect-started attempt is never retried or reused. No new effect may start until protected publication/missing-only adoption, authoritative StateStore preflight, fresh source ancestry, reconciled no-cutover evidence for predecessor result 728ebe527dfcc360b8611afb2ab982c4d074fe196a41cfe2bbc824d0377c8b51, exact intent-bound leases, and the transient systemd-user rw execution-context gate all pass."
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Provide and consume exactly one fresh target-bound Bureau runtime refresh successor after the reconciled T191 predecessor failed with effect_started=true before cutover because its direct MCP execution namespace exposed the Bureau runtime prefix read-only. The predecessor result 728ebe527dfcc360b8611afb2ab982c4d074fe196a41cfe2bbc824d0377c8b51 remains preserved and is never retried. Before this successor may apply, immutable readback must still prove deployment manifest, runtime and canonical Registry remain on 90647998ade46187d9042e822d468c71f5f597f8 with no predecessor target release or Registry snapshot, and a transient Grabowski systemd-user task must freshly prove /home/alex/.local/share/bureau is writable. The actual target is selected again immediately before prepare-intent/apply from protected current main. The sole purpose is to restore Bureau runtime/main identity so GRABOWSKI-OPERATOR-SURFACE-V1-T191 Revision 2 can be published and resumed.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-T191-EROFS-RECOVERY-20260830",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "deployed_manifest_sha256_at_registration": "8729c4fce1ba0815fc2f3c3a8face61578838f5e4171874ced9fa7f9f9cf37fd",
+    "deployed_source_at_registration": "90647998ade46187d9042e822d468c71f5f597f8",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to retry or reuse predecessor target 54c4c5171d1317152d8612156e8af77fd8e3ecfa60c75f2294dbce4681430ebe or intent 881bbde1afffc7b0c125ff773bb530b0c44df8c13959bb0b04eb80660823b8d3",
+      "permission to release predecessor unclear-attempt leases through a terminal-success release path",
+      "permission to bypass protected publication, missing-only adoption, source-ancestry, execution-context, review or CI gates",
+      "completion or authorization of Operational Guidance implementation",
+      "queue, claim, dispatch or task-supply publication authority",
+      "general repository or foreign-work mutation authority",
+      "that the bootstrap Null-SHA protected_publication_adoption sentinel proves a merge or permits no-run closeout",
+      "that runtime_execution_context is enforced before the matching Grabowski executor release is merged and deployed"
+    ],
+    "main_at_registration": "a3101fed10577c06244f61697441ae9a57452b13",
+    "operator_execution_preconditions": {
+      "before_prepare_intent": [
+        "fresh protected-main and required-check readback",
+        "typed adopt-authority receipt bound to the exact create-only publication PR, merge commit and TaskSpec file digest",
+        "authoritative StateStore readback of the exact nonterminal TaskSpec revision/digest",
+        "source-precondition readback",
+        "predecessor reconciliation still proves deployment manifest/runtime/Registry source 90647998ade46187d9042e822d468c71f5f597f8 or a later mutually identical deployed source and proves no predecessor target release or Registry snapshot became canonical"
+      ],
+      "before_apply": [
+        "all before_prepare_intent gates are freshly revalidated",
+        "acquire exactly the new intent required_resource_keys under one standalone lease owner; never reuse or force-release predecessor owner runtime-refresh:t191:881bbde1",
+        "start apply only through the reserved grabowski_task_start request grabowski-bureau-runtime-refresh-apply on heim-pc with cwd=/home/alex, resume_policy=never and server-owned operation identity and server-injected Grabowski task-id/systemd-unit evidence; the task itself receives no duplicate runtime resource leases and passes the standalone lease owner to bureau-runtime-refresh apply",
+        "the reserved executor must re-read this exact TaskSpec revision/digest from the authoritative StateStore and require metadata.runtime_execution_context to equal the server-owned contract before task execution",
+        "inside that same transient systemd-user process namespace, findmnt + statvfs + os.access must prove every runtime mutation root prefix/bin_dir/libexec_dir/user_unit_dir/runtime_user_unit_dir/state_root plus authority_state_store.state_root is an rw searchable writable directory before bureau-runtime-refresh apply is execd",
+        "direct grabowski_terminal_run, grabowski_job_start, local grabowski_fleet_run, direct grabowski_task_start apply, and obvious wrapped/Python-API runtime_refresh apply routes are fail-closed on the deployed Grabowski executor surface"
+      ],
+      "note": "Protected publication/missing-only adoption, predecessor reconciliation and the typed runtime_execution_context contract are separate mandatory pre-effect gates. Grabowski must consume the exact TaskSpec revision/digest and bind its concrete Grabowski task-id/systemd-unit and prove all bound mutation roots including the authoritative StateStore root writable/searchable inside the same systemd-user task before exec of bureau-runtime-refresh apply. The bootstrap protected_publication_adoption merge commit remains an intentional Null-SHA fail-closed sentinel and cannot satisfy no-run closeout; after successful runtime convergence, revise only that publication merge binding to the actual PR #2211 merge commit through the now-current normal TaskSpec path before closeout."
+    },
+    "predecessor_reconciliation": {
+      "predecessor_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2206-20260830",
+      "predecessor_authority_revision": 1,
+      "predecessor_authority_spec_sha256": "dfd0e34b757bc2ee1ef0d06a3f3779cbf243bee0b792e94fef1afa80699400c5",
+      "predecessor_bound_revision": 2,
+      "predecessor_bound_spec_sha256": "9674f7ffc1356c267263a0ac16c5df175dfe1c9ffba089a26d62972fe1dd1dea",
+      "predecessor_target_sha256": "54c4c5171d1317152d8612156e8af77fd8e3ecfa60c75f2294dbce4681430ebe",
+      "predecessor_intent_sha256": "881bbde1afffc7b0c125ff773bb530b0c44df8c13959bb0b04eb80660823b8d3",
+      "predecessor_result_sha256": "728ebe527dfcc360b8611afb2ab982c4d074fe196a41cfe2bbc824d0377c8b51",
+      "predecessor_result_file_sha256": "f083321f4dc1bd968ec0f6ec6c4f6c6e557b2a3170b8e92e99cd9d22529cdb4a",
+      "predecessor_status": "unclear",
+      "predecessor_effect_started": true,
+      "failure_code": "installer-returned-nonzero",
+      "failure_class": "execution-context-read-only-filesystem",
+      "no_cutover_readback": {
+        "deployment_manifest_sha256": "8729c4fce1ba0815fc2f3c3a8face61578838f5e4171874ced9fa7f9f9cf37fd",
+        "deployed_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+        "canonical_registry_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+        "predecessor_target_release_present": false,
+        "predecessor_target_registry_snapshot_present": false,
+        "runtime_identity_status": "ok",
+        "state_store_integrity": "ok"
+      },
+      "execution_context_evidence": {
+        "direct_mcp_mount": "ext4 ro",
+        "transient_task_id": "1d495be7a2294ce2bfdae402",
+        "transient_systemd_user_mount": "ext4 rw",
+        "transient_task_lifecycle_receipt_sha256": "bff1c003db83cd53bbf39a503b59098f9c65cb5f8ba5dffdf8decb3df6bc9227",
+        "required_future_surface": "grabowski_task_start/systemd-user",
+        "friction_event_id": "d2df7bc341d24f498b6e637705f2f0a3"
+      },
+      "does_not_establish": [
+        "successful predecessor runtime deployment",
+        "safe retry of predecessor",
+        "permission to reinterpret unclear as failed-before-effect",
+        "automatic release of predecessor leases",
+        "future writable execution context without fresh preflight"
+      ]
+    },
+    "post_refresh_live_target": "After successful immutable readback and authority closeout, rerun the reviewed T191 scope-revision operator-task-propose for candidate-9eb3579f771acd61da0a73ab and require release-registry-identity-mismatch to be absent before resuming the Operational Guidance work lane.",
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "The installed immutable Bureau runtime and canonical Registry snapshot remain integrity-bound to 90647998ade46187d9042e822d468c71f5f597f8. The prior T191 runtime authority has one effect-started unclear target-bound attempt and is not reusable; immutable reconciliation proves the attempt stopped before any target release or Registry snapshot became canonical. Exactly one create-only successor therefore enters through protected Git and is adopted missing-only after merge.",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-T191-EROFS-RECOVERY-20260830.json",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound-source-precondition-v1",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "source_precondition": {
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ],
+        "fail_closed": true,
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+        "registered_manifest_sha256": "8729c4fce1ba0815fc2f3c3a8face61578838f5e4171874ced9fa7f9f9cf37fd",
+        "registered_registry_source_commit": "90647998ade46187d9042e822d468c71f5f597f8",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "schema_version": 1
+      },
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256",
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "fresh-current-main": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "source-ancestry-precondition": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "authority-state-store-preflight": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "state-store-integrity"
+            ]
+          },
+          "single-runtime-effect": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "runtime-only-scope": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ]
+          },
+          "protected-publication-and-missing-only-adoption": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "protected-publication-adoption"
+            ]
+          }
+        }
+      }
+    },
+    "source": "Fresh T191 runtime-refresh reconciliation on 2026-08-30. Predecessor result 728ebe527dfcc360b8611afb2ab982c4d074fe196a41cfe2bbc824d0377c8b51 is status=unclear/effect_started=true after installer EROFS while creating a temporary target Registry snapshot. Post-failure typed readback proves deployment manifest/runtime/canonical Registry remain on 90647998ade46187d9042e822d468c71f5f597f8, StateStore integrity is OK, and neither an a3101fed target release nor target Registry snapshot exists. Direct MCP execution sees the root mount read-only; transient Grabowski task 1d495be7a2294ce2bfdae402 sees the same host path on ext4 rw. Candidate candidate-ef614e52bfb3a6242226020c event 12819 is promote with no exact duplicate.",
+    "protected_publication_adoption": {
+      "schema_version": 1,
+      "repository": "heimgewebe/bureau",
+      "publication_pr": 2211,
+      "publication_merge_commit": "0000000000000000000000000000000000000000",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ]
+    },
+    "runtime_execution_context": {
+      "schema_version": 1,
+      "kind": "grabowski_bureau_runtime_refresh_execution_context",
+      "executor_tool": "grabowski_task_start",
+      "reserved_command": "grabowski-bureau-runtime-refresh-apply",
+      "host": "heim-pc",
+      "cwd": "/home/alex",
+      "execution_backend": "systemd-user",
+      "resume_policy": "never",
+      "writability_evidence": [
+        "findmnt",
+        "statvfs",
+        "os.access"
+      ],
+      "required_writable_intent_roots": [
+        "prefix",
+        "bin_dir",
+        "libexec_dir",
+        "user_unit_dir",
+        "runtime_user_unit_dir",
+        "state_root",
+        "authority_state_store.state_root"
+      ],
+      "directory_access": [
+        "W_OK",
+        "X_OK"
+      ],
+      "forbid_generic_surfaces": [
+        "grabowski_terminal_run",
+        "grabowski_job_start",
+        "grabowski_fleet_run",
+        "grabowski_task_start:direct-apply"
+      ],
+      "task_identity_evidence": "server-injected-task-id-and-systemd-unit-v1"
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "The currently deployed Bureau runtime at 90647998ade46187d9042e822d468c71f5f597f8 remains authoritative until a new immutable result is fully read back. The predecessor workspace, target binding, intent/result and unclear-attempt leases remain evidence and are not retried or force-released. If this successor source ancestry, target freshness, execution-context preflight, CI, deployment/Registry identity or runtime effect becomes unclear, preserve all evidence and stop; any further effect requires another separately reviewed successor."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-Use Bureau Runtime Refresh successor after T191 EROFS reconciliation"
+}

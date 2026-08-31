@@ -133,7 +133,7 @@
     "unblock_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T169",
     "publication_path": {
       "kind": "normal-protected-pull-request",
-      "scope": "exactly this one new task file",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T169-20260831.json",
       "state_store_transition": "seed-missing-preserve-state-store",
       "reason": "The normal typed task publisher is intentionally blocked by release-registry-identity mismatch. The documented runtime-drift bootstrap permits only a new exact single-use Authority as a protected one-file PR followed by missing-only StateStore adoption.",
       "does_not_establish": [

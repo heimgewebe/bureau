@@ -5327,6 +5327,18 @@ def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) ->
     assert result["effect_started"] is False
     assert result["scheduler"] == scheduler
     assert result["manifest_sha256"] == live["deployed_manifest_sha256"]
+    execution_context = result["execution_context_preflight"]
+    assert execution_context["kind"] == "bureau_runtime_refresh_execution_context_preflight"
+    assert execution_context["systemd_unit"] == TEST_EXECUTOR_UNIT
+    assert execution_context["expected_grabowski_task_unit"] == TEST_EXECUTOR_UNIT
+    assert execution_context["executor_matches_expected_unit"] is True
+    assert execution_context["writable"] is True
+    no_effect = (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    assert refresh.read_json(no_effect)["execution_context_preflight"] == execution_context
 
 
 def test_already_current_no_effect_authority_can_closeout(tmp_path: Path) -> None:

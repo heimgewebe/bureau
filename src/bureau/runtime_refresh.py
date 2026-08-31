@@ -7567,8 +7567,11 @@ def apply_runtime_refresh(
             return None
         execution_preflight()
         guarded_binding = validate_execution_bound_leases()
-        execution_preflight()
-        return guarded_binding
+        final_execution_context_preflight = execution_preflight()
+        return {
+            "lease_binding": guarded_binding,
+            "execution_context_preflight": final_execution_context_preflight,
+        }
     if no_effect_result_path.exists():
         existing = _validate_result_for_intent(read_json(no_effect_result_path), intent)
         if (
@@ -7751,9 +7754,11 @@ def apply_runtime_refresh(
                 "already-current-evidence-invalid",
                 "already-current result lacks authoritative scheduler or manifest evidence",
             )
-        guarded_binding = guard_authority_consumption()
-        if guarded_binding is not None:
-            binding = guarded_binding
+        guarded = guard_authority_consumption()
+        execution_context_preflight = None
+        if guarded is not None:
+            binding = guarded["lease_binding"]
+            execution_context_preflight = guarded["execution_context_preflight"]
         bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
         result = _write_attempt_result(
             no_effect_result_path,
@@ -7771,6 +7776,7 @@ def apply_runtime_refresh(
                 "finished_at": isoformat(current),
                 "effect_started": False,
                 "lease_binding": binding,
+                "execution_context_preflight": execution_context_preflight,
                 **source_precondition_result_fields,
             },
         )

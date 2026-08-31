@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import importlib.util
+import inspect
 import json
 import os
 import shutil
@@ -25,6 +26,21 @@ NOW = datetime(2026, 7, 14, 8, 0, tzinfo=timezone.utc)
 DEPLOYED = "1" * 40
 MAIN = "2" * 40
 HEAD = "3" * 40
+TEST_EXECUTOR_UNIT = "grabowski-task-test-a1.service"
+
+
+@pytest.fixture(autouse=True)
+def test_runtime_refresh_executor_contract(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    runtime_root = tmp_path / "xdg-runtime"
+    (runtime_root / "systemd/user").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: (TEST_EXECUTOR_UNIT, "0" * 32),
+    )
 
 
 class FakeUserSystemd:
@@ -1740,7 +1756,9 @@ def lease_for(
     acquired = int((current - timedelta(minutes=1)).timestamp())
     expiry = int((expires_at or current + timedelta(hours=1)).timestamp())
     omitted = omit or set()
-    lease_metadata = metadata or {}
+    lease_metadata = (
+        {"executor_unit": TEST_EXECUTOR_UNIT} if metadata is None else metadata
+    )
     metadata_json = json.dumps(
         lease_metadata,
         sort_keys=True,
@@ -4237,7 +4255,7 @@ def test_success_consumes_authority_and_exact_result_replay_is_idempotent(
 
     replay = refresh.apply_runtime_refresh(
         intent_path=intent_path,
-        lease_binding={"owner_id": "ignored", "task_id": "ignored"},
+        lease_binding={"owner_id": "chatgpt-t016", "task_id": "grabowski-task-t016"},
         manifest_path=manifest_path,
         state_root=Path(intent["state_root"]),
         resource_db=resource_db,
@@ -4329,7 +4347,7 @@ def test_tampered_result_and_consumption_are_rejected_on_replay(tmp_path: Path) 
     with pytest.raises(refresh.RuntimeRefreshError) as result_error:
         refresh.apply_runtime_refresh(
             intent_path=intent_path,
-            lease_binding={"owner_id": "ignored", "task_id": "ignored"},
+            lease_binding={"owner_id": "chatgpt-t016", "task_id": "grabowski-task-t016"},
             manifest_path=manifest_path,
             state_root=Path(intent["state_root"]),
             resource_db=resource_db,
@@ -4351,7 +4369,7 @@ def test_tampered_result_and_consumption_are_rejected_on_replay(tmp_path: Path) 
     with pytest.raises(refresh.RuntimeRefreshError) as consumption_error:
         refresh.apply_runtime_refresh(
             intent_path=intent_path,
-            lease_binding={"owner_id": "ignored", "task_id": "ignored"},
+            lease_binding={"owner_id": "chatgpt-t016", "task_id": "grabowski-task-t016"},
             manifest_path=manifest_path,
             state_root=Path(intent["state_root"]),
             resource_db=resource_db,
@@ -4406,12 +4424,15 @@ def test_distinct_intents_for_same_target_share_one_effect_attempt(tmp_path: Pat
         installer=installer,
         readback=readback,
     )
+    second_binding, second_resource_db = lease_for(
+        tmp_path / "second-leases", second_intent
+    )
     second = refresh.apply_runtime_refresh(
         intent_path=second_path,
-        lease_binding=binding,
+        lease_binding=second_binding,
         manifest_path=manifest_path,
         state_root=Path(first_intent["state_root"]),
-        resource_db=resource_db,
+        resource_db=second_resource_db,
         now=NOW + timedelta(seconds=1),
         observer=lambda **_: pytest.fail("target result must be reused before observation"),
         source_preparer=lambda **_: pytest.fail("source preparation must not repeat"),
@@ -4506,6 +4527,52 @@ def test_runtime_prefix_execution_context_preflight_rejects_read_only_secondary_
     assert evidence["mutation_roots"]["libexec_dir"]["writable"] is False
 
 
+def test_runtime_prefix_execution_context_preflight_rejects_existing_file_root(
+    tmp_path: Path,
+) -> None:
+    prefix = tmp_path / "prefix"
+    prefix.write_text("not-a-directory", encoding="utf-8")
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.runtime_prefix_execution_context_preflight(prefix=prefix, now=NOW)
+
+    assert caught.value.code == "runtime-mutation-root-not-directory"
+    assert caught.value.details["non_directory_mutation_roots"] == ["prefix"]
+    evidence = caught.value.details["mutation_roots"]["prefix"]
+    assert evidence["probe_is_directory"] is False
+    assert evidence["writable"] is False
+
+
+def test_runtime_prefix_execution_context_preflight_requires_search_permission(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prefix = tmp_path / "prefix"
+    prefix.mkdir()
+    real_access = refresh.os.access
+
+    def access(path: Any, mode: int) -> bool:
+        if Path(path).resolve() == prefix.resolve() and mode in {
+            refresh.os.X_OK,
+            refresh.os.W_OK | refresh.os.X_OK,
+        }:
+            return False
+        return real_access(path, mode)
+
+    monkeypatch.setattr(refresh.os, "access", access)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.runtime_prefix_execution_context_preflight(prefix=prefix, now=NOW)
+
+    assert caught.value.code == "runtime-prefix-read-only"
+    evidence = caught.value.details["execution_context_preflight"]
+    root = evidence["mutation_roots"]["prefix"]
+    assert root["probe_is_directory"] is True
+    assert root["path_writable"] is True
+    assert root["path_searchable"] is False
+    assert root["path_writable_and_searchable"] is False
+    assert root["writable"] is False
+
+
 def test_runtime_prefix_execution_context_preflight_requires_grabowski_task_executor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -4586,6 +4653,11 @@ def test_runtime_prefix_execution_context_preflight_rejects_other_task_or_attemp
     assert evidence["executor_matches_expected_unit"] is False
 
 
+def test_apply_runtime_refresh_exposes_no_executor_opt_out() -> None:
+    parameters = inspect.signature(refresh.apply_runtime_refresh).parameters
+    assert "require_grabowski_task_executor" not in parameters
+
+
 def test_main_apply_requires_grabowski_task_executor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -4613,7 +4685,7 @@ def test_main_apply_requires_grabowski_task_executor(
     )
 
     assert result == 0
-    assert captured["require_grabowski_task_executor"] is True
+    assert "require_grabowski_task_executor" not in captured
     assert json.loads(capsys.readouterr().out)["status"] == "deployed"
 
 
@@ -4645,7 +4717,6 @@ def test_apply_executor_requires_matching_live_lease_metadata(
             state_root=Path(intent["state_root"]),
             resource_db=resource_db,
             now=NOW,
-            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "lease-metadata-binding-mismatch"
@@ -4702,7 +4773,6 @@ def test_cached_success_requires_executor_bound_live_leases_before_consumption(
             resource_db=resource_db,
             now=NOW,
             authority_store=store,
-            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "lease-metadata-binding-mismatch"
@@ -4760,7 +4830,6 @@ def test_already_current_executor_drift_blocks_before_authority_binding(
             now=NOW,
             observer=lambda **_: live,
             authority_store=store,
-            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "runtime-executor-unit-drift"
@@ -4841,7 +4910,6 @@ def test_already_current_revalidates_lease_metadata_immediately_before_binding(
             now=NOW,
             observer=observer,
             authority_store=store,
-            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "lease-metadata-binding-mismatch"
@@ -4888,7 +4956,6 @@ def test_candidate_revalidates_lease_metadata_after_observation_before_cas(
             now=NOW,
             observer=observer,
             authority_store=store,
-            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "lease-metadata-binding-mismatch"
@@ -4947,7 +5014,6 @@ def test_apply_strict_executor_preserves_lease_task_id_semantics(
             "check_valid": True,
             "runtime_identity_valid": True,
         },
-        require_grabowski_task_executor=True,
     )
 
     assert result["status"] == "deployed"
@@ -4985,7 +5051,6 @@ def test_apply_executor_unit_drift_blocks_before_authority_cas(
             resource_db=resource_db,
             now=NOW,
             observer=lambda **_: observed,
-            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "runtime-executor-unit-drift"
@@ -5050,7 +5115,6 @@ def test_apply_read_only_execution_context_does_not_bind_authority_or_start_atte
             observer=lambda **_: observed,
             source_preparer=source_preparer,
             installer=installer,
-            require_grabowski_task_executor=True,
         )
 
     assert caught.value.code == "runtime-prefix-read-only"

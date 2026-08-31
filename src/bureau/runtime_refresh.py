@@ -1143,7 +1143,10 @@ def runtime_prefix_execution_context_preflight(
             )
         try:
             filesystem = os.statvfs(probe)
+            probe_is_directory = probe.is_dir()
             path_writable = os.access(probe, os.W_OK)
+            path_searchable = os.access(probe, os.X_OK)
+            path_writable_and_searchable = os.access(probe, os.W_OK | os.X_OK)
         except OSError as exc:
             raise RuntimeRefreshError(
                 "runtime-mutation-root-writability-unobserved",
@@ -1162,9 +1165,28 @@ def runtime_prefix_execution_context_preflight(
             "target_exists": resolved.exists(),
             "filesystem_flags": int(filesystem.f_flag),
             "filesystem_read_only": filesystem_read_only,
+            "probe_is_directory": bool(probe_is_directory),
             "path_writable": bool(path_writable),
-            "writable": not filesystem_read_only and bool(path_writable),
+            "path_searchable": bool(path_searchable),
+            "path_writable_and_searchable": bool(path_writable_and_searchable),
+            "writable": (
+                bool(probe_is_directory)
+                and not filesystem_read_only
+                and bool(path_writable_and_searchable)
+            ),
         }
+    non_directories = sorted(
+        label for label, item in root_evidence.items() if item["probe_is_directory"] is not True
+    )
+    if non_directories:
+        raise RuntimeRefreshError(
+            "runtime-mutation-root-not-directory",
+            "runtime-refresh mutation roots must resolve through searchable directories",
+            details={
+                "non_directory_mutation_roots": non_directories,
+                "mutation_roots": root_evidence,
+            },
+        )
     prefix_evidence = root_evidence["prefix"]
     unit, invocation_id = _current_systemd_execution_identity()
     task_attempt = _grabowski_task_unit_attempt(unit)
@@ -7442,9 +7464,11 @@ def apply_runtime_refresh(
     installer: Callable[..., dict[str, Any]] = run_installer,
     readback: Callable[..., dict[str, Any]] = readback_install,
     authority_store: Any | None = None,
-    require_grabowski_task_executor: bool = False,
 ) -> dict[str, Any]:
     current = now or utc_now()
+    # Production invariant: every apply must prove the exact transient Grabowski
+    # executor and executor-bound live leases before any authority consumption.
+    require_grabowski_task_executor = True
     intent = read_json(intent_path)
     verify_digest(intent, "intent_sha256")
     if intent.get("kind") != "bureau_runtime_refresh_intent":
@@ -8052,7 +8076,6 @@ def main(argv: list[str] | None = None) -> int:
                 },
                 manifest_path=manifest_path,
                 state_root=state_root,
-                require_grabowski_task_executor=True,
             )
             print(json.dumps(result, sort_keys=True))
             return 0 if result.get("status") in {"deployed", "already_current"} else 2

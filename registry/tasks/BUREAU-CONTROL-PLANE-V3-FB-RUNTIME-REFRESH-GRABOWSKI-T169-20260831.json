@@ -113,7 +113,7 @@
     },
     {
       "id": "t169-typed-intake-unblocked",
-      "assertion": "Nach erfolgreicher Konvergenz wird candidate-00bb5e0d6d08fb475c9b06a3 frisch gegen aktuelle Registry-Wahrheit bewertet. Der normale operator-task-propose -> review -> preview -> publish-Vertrag kann GRABOWSKI-OPERATOR-SURFACE-V1-T169 ohne release-registry-identity-mismatch weiterführen. Diese Authority selbst veröffentlicht oder implementiert T169 nicht.",
+      "assertion": "Nach erfolgreicher Konvergenz binden aktive Runtime-Source und kanonischer Registry-Snapshot denselben frisch deployten current-main-Commit; der bisherige release-registry-identity-mismatch ist damit als Blocker des normalen operator-task-propose -> review -> preview -> publish-Vertrags beseitigt. Candidate candidate-00bb5e0d6d08fb475c9b06a3 wird danach separat frisch gegen aktuelle Registry-Wahrheit bewertet. Diese Authority veröffentlicht oder implementiert T169 nicht.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -145,7 +145,7 @@
     },
     "runtime_refresh_authority": {
       "schema_version": 1,
-      "mode": "single-use-target-bound",
+      "mode": "single-use-target-bound-source-precondition-v1",
       "single_use": true,
       "target_binding": "candidate.target_sha256",
       "required_action_class": "runtime_mutation",
@@ -157,7 +157,104 @@
       ],
       "forbid_historical_target_reuse": true,
       "forbid_foreign_task_substitution": true,
-      "successor_task_required_after_terminal": true
+      "successor_task_required_after_terminal": true,
+      "source_precondition": {
+        "schema_version": 1,
+        "policy": "registered-source-or-verified-target-ancestor",
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "require_deployment_registry_identity_match": true,
+        "registered_deployed_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+        "registered_manifest_sha256": "29b3ec71a1f73cfc064e9919cf72bd57cb70ce9b4d30b1b27aa4ea45511489b3",
+        "registered_registry_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "fail_closed": true,
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ]
+      },
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "verified-ancestor-or-exact-target-runtime-bound": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "fresh-main-contains-authority": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "historical-refresh-not-reused": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history"
+            ]
+          },
+          "fresh-target-per-execution": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "break-glass-target-binding": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "authoritative-task-preflight": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "state-store-integrity"
+            ]
+          },
+          "live-lease-binding": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "lease-release"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "t169-typed-intake-unblocked": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          }
+        }
+      }
     },
     "does_not_establish": [
       "a runtime target before fresh observation",

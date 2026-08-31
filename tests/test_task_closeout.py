@@ -162,6 +162,8 @@ def test_apply_verifies_without_creating_run(
         assert status["plan_sha256"] == receipt["plan_sha256"]
         assert status["state"] == "verified"
         assert status["receipt_sha256"] == receipt["receipt_sha256"]
+    projection_replay = store.replay_projection()
+    assert projection_replay["matches_current"] is True
     effective, _, _ = authoritative_task_registry(registry, store)
     stamp = verification_stamp(effective, store, task_id)
     assert stamp["receipt_sha256"] == receipt["receipt_sha256"]
@@ -190,6 +192,344 @@ def test_apply_blocks_claim_from_dispatcher_instantiated_before_closeout(
         assert connection.execute(
             "SELECT COUNT(*) FROM runs WHERE task_id=?", (task_id,)
         ).fetchone()[0] == 0
+
+
+
+def test_idempotent_replay_backfills_historical_task_projection(
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    preview = preview_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+    )
+    real_append = store.append_task_projection_delta
+    monkeypatch.setattr(
+        store, "append_task_projection_delta", lambda *args, **kwargs: None
+    )
+    first = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert first["idempotent"] is False
+    with pytest.raises(StateError, match="replayed state projection does not match"):
+        store.replay_projection()
+
+    monkeypatch.setattr(store, "append_task_projection_delta", real_append)
+    second = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert second["idempotent"] is True
+    assert store.replay_projection()["matches_current"] is True
+
+    with store.connect() as connection:
+        event_count = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+    third = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert third["idempotent"] is True
+    with store.connect() as connection:
+        assert (
+            connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+            == event_count
+        )
+
+
+def test_idempotent_replay_refuses_unrelated_drift_while_backfilling(
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    preview = preview_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+    )
+    real_append = store.append_task_projection_delta
+    monkeypatch.setattr(
+        store, "append_task_projection_delta", lambda *args, **kwargs: None
+    )
+    apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    monkeypatch.setattr(store, "append_task_projection_delta", real_append)
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO task_status("
+            "task_id,state,receipt_sha256,updated_at,task_sha256,plan_sha256"
+            ") VALUES(?,?,?,?,?,?)",
+            ("UNRELATED-TASK", "verified", "a" * 64, NOW, "b" * 64, "c" * 64),
+        )
+
+    with pytest.raises(StateError, match="refuses unrelated StateStore drift"):
+        apply_task_no_run_closeout(
+            registry,
+            store,
+            task_id,
+            evidence,
+            reviewer=REVIEWER,
+            expected_preview_sha256=preview["preview_sha256"],
+            now=NOW,
+        )
+
+
+def test_idempotent_replay_ignores_unrelated_drift_when_target_is_journaled(
+    registry_factory, tmp_path: Path
+) -> None:
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    preview = preview_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+    )
+    first = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert first["idempotent"] is False
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO task_status("
+            "task_id,state,receipt_sha256,updated_at,task_sha256,plan_sha256"
+            ") VALUES(?,?,?,?,?,?)",
+            ("UNRELATED-TASK", "verified", "a" * 64, NOW, "b" * 64, "c" * 64),
+        )
+    with store.connect() as connection:
+        event_count = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+
+    second = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert second["idempotent"] is True
+    with store.connect() as connection:
+        assert (
+            connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+            == event_count
+        )
+
+
+
+
+def test_idempotent_replay_skips_unrelated_root_mismatch_when_target_is_journaled(
+    registry_factory, tmp_path: Path
+) -> None:
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    preview = preview_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+    )
+    first = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert first["idempotent"] is False
+
+    store.set_initiative_state("INIT-A", "active")
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE initiative_status SET state='waiting' WHERE initiative_id='INIT-A'"
+        )
+    store.set_initiative_state("INIT-B", "active")
+    with pytest.raises(StateError, match="projection replay root digest mismatch"):
+        store.replay_projection()
+    with store.connect() as connection:
+        event_count = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+        repair_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='state-projection-repair-v1'"
+        ).fetchone()[0]
+
+    second = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert second["idempotent"] is True
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM events").fetchone()[0] == event_count
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='state-projection-repair-v1'"
+        ).fetchone()[0] == repair_count
+    with pytest.raises(StateError, match="projection replay root digest mismatch"):
+        store.replay_projection()
+
+
+def test_idempotent_replay_backfills_multiple_historical_tasks_atomically(
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = registry_factory(task_count=2)
+    registry = Registry.load(root)
+    state_root = tmp_path / "multi-state"
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    task_ids = sorted(registry.tasks)
+    with store.immediate() as connection:
+        for task_id in task_ids:
+            task_specs.put(
+                connection,
+                registry.tasks[task_id].raw,
+                idempotency_key=f"seed-no-run-closeout-{task_id}",
+                expected_revision=None,
+                source="test-seed",
+            )
+    real_append = store.append_task_projection_delta
+    monkeypatch.setattr(
+        store, "append_task_projection_delta", lambda *args, **kwargs: None
+    )
+    for task_id in task_ids:
+        evidence = _evidence_path(tmp_path, registry, store, task_id)
+        preview = preview_task_no_run_closeout(
+            registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+        )
+        receipt = apply_task_no_run_closeout(
+            registry,
+            store,
+            task_id,
+            evidence,
+            reviewer=REVIEWER,
+            expected_preview_sha256=preview["preview_sha256"],
+            now=NOW,
+        )
+        assert receipt["idempotent"] is False
+    monkeypatch.setattr(store, "append_task_projection_delta", real_append)
+    with pytest.raises(StateError, match="replayed state projection does not match"):
+        store.replay_projection()
+
+    target = task_ids[0]
+    evidence = _evidence_path(tmp_path, registry, store, target)
+    preview = preview_task_no_run_closeout(
+        registry, store, target, evidence, reviewer=REVIEWER, now=NOW
+    )
+    with store.connect() as connection:
+        before = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+    receipt = apply_task_no_run_closeout(
+        registry,
+        store,
+        target,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert receipt["idempotent"] is True
+    assert store.replay_projection()["matches_current"] is True
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM events").fetchone()[0] == before + 1
+
+    other = task_ids[1]
+    evidence = _evidence_path(tmp_path, registry, store, other)
+    preview = preview_task_no_run_closeout(
+        registry, store, other, evidence, reviewer=REVIEWER, now=NOW
+    )
+    with store.connect() as connection:
+        before = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+    receipt = apply_task_no_run_closeout(
+        registry,
+        store,
+        other,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert receipt["idempotent"] is True
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM events").fetchone()[0] == before
+
+
+def test_idempotent_replay_repairs_later_root_mismatch(
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    preview = preview_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+    )
+    real_append = store.append_task_projection_delta
+    monkeypatch.setattr(
+        store, "append_task_projection_delta", lambda *args, **kwargs: None
+    )
+    apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    monkeypatch.setattr(store, "append_task_projection_delta", real_append)
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO initiative_status(initiative_id,state,updated_at) VALUES(?,?,?) "
+            "ON CONFLICT(initiative_id) DO UPDATE SET "
+            "state=excluded.state,updated_at=excluded.updated_at",
+            ("BUR-TEST-001", "active", NOW),
+        )
+        store.event(
+            connection,
+            "initiative-state-set",
+            {"initiative_id": "BUR-TEST-001", "state": "active"},
+            initiative_id="BUR-TEST-001",
+        )
+    with pytest.raises(StateError, match="projection replay root digest mismatch"):
+        store.replay_projection()
+
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    preview = preview_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW
+    )
+    receipt = apply_task_no_run_closeout(
+        registry,
+        store,
+        task_id,
+        evidence,
+        reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+        now=NOW,
+    )
+    assert receipt["idempotent"] is True
+    replay = store.replay_projection()
+    assert replay["matches_current"] is True
+    assert replay["repair_checkpoint_count"] == 1
 
 
 def test_apply_is_idempotent_for_same_verified_receipt(registry_factory, tmp_path: Path) -> None:

@@ -3428,6 +3428,7 @@ class StateStore:
         *,
         trigger: str,
         run_id: str | None = None,
+        task_id: str | None = None,
         initiative_id: str | None = None,
     ) -> None:
         try:
@@ -3435,6 +3436,7 @@ class StateStore:
                 connection,
                 trigger=trigger,
                 run_id=run_id,
+                task_id=task_id,
                 initiative_id=initiative_id,
             )
         except state_events.StateEventError as exc:
@@ -3443,6 +3445,19 @@ class StateStore:
             self._insert_event(
                 connection, state_events.PROJECTION_EVENT_TYPE, payload, run_id
             )
+
+    def append_task_projection_delta(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        trigger: str,
+        task_id: str,
+    ) -> None:
+        if not task_id:
+            raise legacy.StateError("task projection delta task_id must be non-empty")
+        self._append_projection_snapshot(
+            connection, trigger=trigger, task_id=task_id
+        )
 
     def event(
         self,

@@ -221,6 +221,7 @@ def delta_payload(
     *,
     trigger: str,
     run_id: str | None = None,
+    task_id: str | None = None,
     initiative_id: str | None = None,
 ) -> dict[str, Any] | None:
     projection = current_projection(connection)
@@ -231,14 +232,16 @@ def delta_payload(
             return None
         changes["runs"][run_id] = run
         changes["claims"][run_id] = projection["claims"].get(run_id, [])
-        task_id = run["task_id"]
-        changes["tasks"][task_id] = projection["tasks"].get(task_id)
+        run_task_id = run["task_id"]
+        changes["tasks"][run_task_id] = projection["tasks"].get(run_task_id)
         changes["acceptances"][run_id] = projection["acceptances"].get(run_id)
         bound_initiative = _run_initiative_id(connection, run_id)
         if bound_initiative is not None:
             changes["initiatives"][bound_initiative] = projection["initiatives"].get(
                 bound_initiative
             )
+    if task_id is not None:
+        changes["tasks"][task_id] = projection["tasks"].get(task_id)
     if initiative_id is not None:
         changes["initiatives"][initiative_id] = projection["initiatives"].get(initiative_id)
     if not any(changes[key] for key in PROJECTION_KEYS):

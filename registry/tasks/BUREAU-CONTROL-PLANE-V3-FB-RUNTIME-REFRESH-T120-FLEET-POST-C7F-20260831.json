@@ -295,10 +295,15 @@
         "bin_dir",
         "libexec_dir",
         "user_unit_dir",
-        "runtime_user_unit_dir",
         "state_root",
         "authority_state_store.state_root"
       ],
+      "absence_tolerant_intent_roots": {
+        "runtime_user_unit_dir": {
+          "when_present": "writable-searchable-rw-directory",
+          "when_absent": "writable-searchable-rw-direct-parent"
+        }
+      },
       "directory_access": [
         "W_OK",
         "X_OK"

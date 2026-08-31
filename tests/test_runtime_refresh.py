@@ -409,7 +409,9 @@ def protected_publication_activation_spec(
     spec["acceptance"].append(
         {
             "id": "protected-publication-and-missing-only-adoption",
-            "assertion": "Protected publication and missing-only adoption are proven before effect.",
+            "assertion": (
+                "Protected publication and missing-only adoption are proven before effect."
+            ),
             "evidence_type": "object",
             "verifier": "manual_observation",
             "verifier_config": {
@@ -427,7 +429,10 @@ def protected_publication_activation_spec(
 
 
 def seed_protected_publication_activation_store(
-    root: Path, task_id: str, *, activation_source: str = "runtime-refresh-protected-publication-activation"
+    root: Path,
+    task_id: str,
+    *,
+    activation_source: str = "runtime-refresh-protected-publication-activation",
 ) -> StateStore:
     state_root = root.resolve()
     store = StateStore(state_root / "bureau.sqlite3", state_root)

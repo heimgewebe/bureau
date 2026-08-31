@@ -2916,7 +2916,8 @@ def _validate_pre_effect_protected_publication_activation(
     ):
         raise RuntimeRefreshError(
             "authority-preflight-protected-publication-activation-invalid",
-            "activated runtime authority is not bound to its protected publication/adoption acceptance",
+            "activated runtime authority is not bound to its protected "
+            "publication/adoption acceptance",
         )
     try:
         _prove_protected_publication_adoption(

@@ -118,7 +118,7 @@
         "fresh deployment/Registry source-identity and source-ancestry precondition",
         "fresh runtime_execution_context writable-root proof"
       ],
-      "note": "The authority restores runtime/main identity only. It does not mutate GitHub settings or complete T120."
+      "note": "The authority restores Bureau runtime/main identity only. It does not publish or claim RAB-V1-T002K and does not authorize any benchmark provider process."
     },
     "post_publication_activation": {
       "activation_state": "ready",
@@ -149,7 +149,7 @@
       "required_state_store_transition": "compare-and-swap-current-revision",
       "schema_version": 1
     },
-    "post_refresh_live_target": "After authority closeout, freshly re-read GRABOWSKI-OPERATOR-SURFACE-V1-T120 run BUR-RUN-20260831T105641Z-f7150c88f9. Require it to remain nonterminal and its existing service/repo reservations to be authoritatively present before any new repo.* claim expansion. If it became stale or terminal during refresh, reconcile that lifecycle separately rather than fabricating continuity.",
+    "post_refresh_live_target": "After authority closeout, freshly re-run Projection Replay and the RAB-V1-T002K publication gates. Require RAB-V1-T002K to remain absent before first publication, require /home/alex/.local/state/grabowski/rab-v1-t002k-r2-live-pair to remain absent, and freshly revalidate the existing candidate and reviewed proposal before any T002K mutation. Any drift or unexpected existing state blocks continuation fail-closed.",
     "publication_path": {
       "does_not_establish": [
         "generic StateStore setter",

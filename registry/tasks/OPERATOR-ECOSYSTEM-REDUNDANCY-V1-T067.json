@@ -96,7 +96,7 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
     "source": "chatgpt_operator_cutover_2026-08-31",
-    "observed_at": "2026-08-31T10:40:00+02:00",
+    "observed_at": "2026-08-31T11:22:00+02:00",
     "cutover_evidence": {
       "plexer": {
         "pull_request": 104,
@@ -110,10 +110,13 @@
       },
       "heimgeist": {
         "pull_request": 100,
-        "merge_commit": "4b92bae2c684860399b333cd908878726e6ef4e8",
+        "freeze_merge_commit": "4b92bae2c684860399b333cd908878726e6ef4e8",
+        "current_main": "b172741a74a2979af3d8968dbc390ba276c50abb",
         "ci": "PASS",
         "renovate_disabled": true,
-        "command_dispatch_removed": true
+        "command_dispatch_removed": true,
+        "archive_preparation_pull_requests": [101, 102],
+        "github_archived": false
       },
       "superseded_metarepo_attempt": {
         "pull_request": 726,
@@ -121,10 +124,27 @@
         "reason": "Pointwise historical reclassification conflicted with Metarepo's full-audit consumer-evidence contract; replaced by #727, which keeps the schema as an independent decoding contract while retiring Heimgeist runtime/dispatch authority."
       }
     },
+    "archive_attempts": [
+      {
+        "pull_request": 101,
+        "merge_commit": "574bb4255d6603fda81761ed47dd95d80a26edb3",
+        "workflow_run_id": 33376978902,
+        "result": "blocked_no_effect",
+        "detail": "The Heimgewebe GitHub App token was created successfully, but the combined verify/archive step returned HTTP 403. An immediate authoritative GitHub readback confirmed archived=false."
+      },
+      {
+        "pull_request": 102,
+        "merge_commit": "b172741a74a2979af3d8968dbc390ba276c50abb",
+        "workflow_run_id": 33377256659,
+        "result": "blocked_no_effect",
+        "detail": "Read-only repository identity, main-head and freeze-ancestry checks succeeded with the workflow GITHUB_TOKEN. The isolated archive PATCH using the Heimgewebe GitHub App token then returned HTTP 403 Resource not accessible by integration. Immediate GitHub readback again confirmed archived=false."
+      }
+    ],
     "known_blocker": {
-      "kind": "connector_capability",
-      "detail": "The currently published GitHub connector exposes repository/PR/file mutations but no repository-settings mutation for archived=true; plugin search returned no additional GitHub archive-capable surface.",
-      "does_not_establish": "that no future or refreshed connector can perform the archive effect"
+      "kind": "github_repository_administration_permission",
+      "detail": "The connected user-facing GitHub surface has repository admin access but exposes no repository-settings/archive mutation. The existing Heimgewebe GitHub App token can be created for heimgewebe/heimgeist but its isolated PATCH of archived=true is denied with HTTP 403 after all read-only identity and freeze checks pass.",
+      "required_next_capability": "An authorized repository-settings mutation with Administration: write, for example an admin-capable connector/tool or an explicit GitHub repository Settings archive action.",
+      "does_not_establish": "that a future admin-capable connector, user-authorized settings action, or differently permissioned token will remain unavailable"
     },
     "does_not_establish": [
       "github_archived_true_before_authoritative_readback",

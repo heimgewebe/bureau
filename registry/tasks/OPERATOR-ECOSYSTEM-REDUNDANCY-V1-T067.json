@@ -2,31 +2,66 @@
   "acceptance": [
     {
       "assertion": "Vor der Archivmutation werden Heimgeist-main, offener PR-Zustand und GitHub-Archivstatus frisch gelesen; main entspricht mindestens dem gemergten Freeze #100 und es existiert keine offene produktive Heimgeist-Arbeit, die durch die Archivierung abgeschnitten würde.",
-      "id": "fresh-prearchive-readback"
+      "evidence_type": "object",
+      "id": "fresh-prearchive-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heimgeist-prearchive-github-readback"
+      }
     },
     {
       "assertion": "Der bereits gemergte Plexer-Cutover #104 ist auf main vorhanden und verhindert neue Heimgeist-Livezustellungen auch bei gesetzten HEIMGEIST_URL/HEIMGEIST_TOKEN; der Metarepo-Cutover #727 ist auf main vorhanden und sperrt Heimgeist fail-closed als Command-Dispatch-Ziel.",
-      "id": "consumer-and-dispatch-cutover-bound"
+      "evidence_type": "object",
+      "id": "consumer-and-dispatch-cutover-bound",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heimgeist-cutover-main-readback"
+      }
     },
     {
       "assertion": "Das GitHub-Repository heimgewebe/heimgeist wird über eine autorisierte Repository-Settings-Fläche archiviert; bei unklarem Mutationsergebnis erfolgt zuerst ein autoritativer Readback und kein blinder Retry.",
-      "id": "github-archive-effect"
+      "evidence_type": "object",
+      "id": "github-archive-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heimgeist-github-archive-effect"
+      }
     },
     {
       "assertion": "Ein frischer GitHub-Readback nach der Mutation bestätigt archived=true und bindet den weiterhin sichtbaren main-Head an den gemergten Heimgeist-Freeze #100 beziehungsweise dessen Nachfolger ohne nachträgliche Produktentwicklung.",
-      "id": "github-archive-readback"
+      "evidence_type": "object",
+      "id": "github-archive-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heimgeist-github-archived-readback"
+      }
     },
     {
       "assertion": "Erst nach belegtem archived=true wird Systemkatalog von transition auf archived aktualisiert: Zweck historische Referenz, keine Truth-Ownership, keine aktive Runtime-/Dispatch-/Produktionsautorität; der stale T034-Verweis wird aus der aktuellen Lifecycle-Projektion entfernt und durch aktuelle PR-/Archive-Belege ersetzt.",
-      "id": "systemkatalog-archived-reference"
+      "evidence_type": "object",
+      "id": "systemkatalog-archived-reference",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "systemkatalog-heimgeist-archived-reference-readback"
+      }
     },
     {
       "assertion": "Die aktuelle Systemkatalog-Relation repo:heimgeist -> artifact:ecosystem-map wird entfernt oder ausdrücklich historisch/non-operative klassifiziert, sodass ein archiviertes Repository nicht als aktueller Beobachter erscheint.",
-      "id": "relation-closeout"
+      "evidence_type": "object",
+      "id": "relation-closeout",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "systemkatalog-heimgeist-relation-closeout"
+      }
     },
     {
       "assertion": "Systemkatalog-CI und GitHub-Checks sind auf dem exakten Projektions-Head grün; anschließend wird der finale Heimgeist-Archivstatus erneut gegen GitHub und die Systemkatalog-Projektion zurückgelesen.",
-      "id": "projection-validation-and-final-readback"
+      "evidence_type": "object",
+      "id": "projection-validation-and-final-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heimgeist-archive-final-cross-source-readback"
+      }
     }
   ],
   "claims": [

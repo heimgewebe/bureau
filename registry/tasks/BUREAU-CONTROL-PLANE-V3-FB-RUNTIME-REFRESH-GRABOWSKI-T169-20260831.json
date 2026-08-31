@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T169-20260831",
+  "title": "Single-Use Bureau-Runtime-Refresh für Grabowski T169",
+  "state": "ready",
+  "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh von der unmittelbar vor Ausführung frisch integrity-valid beobachteten aktiven Bureau-Runtime auf den dann frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst über einen geschützten Ein-Datei-PR gemergt und missing-only in den autoritativen StateStore adoptiert wurde. Der bei Registrierung beobachtete Runtime-Stand 443d79926db5244857293ca01ffa4514e6fd955e bleibt nur Last-known-good-Anker; auch ein zwischenzeitlich durch eine andere legitime Authority deployter, frisch als Vorfahr des neuen Ziel-main verifizierter Runtime-Stand ist als Ausgangspunkt zulässig. Übersprungen werden darf der Effekt ausschließlich, wenn aktive Runtime-Source und kanonischer Registry-Snapshot bereits exakt den frisch beobachteten Zielstand mit dieser Authority binden. Zweck ist ausschließlich, den release-registry-identity-mismatch zu schließen, der den normalen typisierten Proposal-/Review-/Publish-Pfad für candidate-00bb5e0d6d08fb475c9b06a3 / GRABOWSKI-OPERATOR-SURFACE-V1-T169 blockiert. Diese Authority publiziert, claimt oder implementiert T169 nicht selbst und verändert weder Queue noch Dispatch noch fremde Arbeit.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use T169 runtime authority. Vor einem Runtime-Effekt sind frischer current-main-Readback mit dieser gemergten Authority, grüne Required-Checks, approval_task_id exakt diese Task-ID, approval_reference exakt der frische target_sha256, autoritativer StateStore-Preflight, expliziter SSH-Remote und exakte intentgebundene Live-Leases Pflicht. Die aktive Runtime muss integrity-valid und entweder der registrierte Last-known-good-Stand oder ein frisch verifizierter Vorfahr des exakten Ziel-main sein. Kein redundanter Effekt ist nur zulässig, wenn Runtime-Source und kanonischer Registry-Snapshot bereits exakt auf dem frisch beobachteten Zielstand mit dieser Authority liegen."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "verified-ancestor-or-exact-target-runtime-bound",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply werden aktive Runtime-Source, ihr kanonischer Registry-Snapshot und der frische GitHub-main-Zielstand gemeinsam gelesen. Der aktive Runtime-Source-Commit darf 443d79926db5244857293ca01ffa4514e6fd955e oder ein durch einen anderen legitimen Refresh entstandener Zwischenstand sein, sofern er frisch als Vorfahr des exakten Ziel-main mit dieser Authority verifiziert ist. Nur wenn Runtime-Source und kanonischer Registry-Snapshot bereits exakt auf dem frisch beobachteten Zielstand mit dieser Authority liegen, darf ohne Runtime-Effekt abgeschlossen werden. Eine nicht integrity-valide Runtime, ein nicht als Zielvorfahr belegbarer Source-Commit oder eine unklare Registry-Identität blockieren fail-closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:runtime-precondition"
+      }
+    },
+    {
+      "id": "fresh-main-contains-authority",
+      "assertion": "Unmittelbar vor dem einzigen möglichen Refresh wird GitHub main frisch gelesen. Der Ziel-main ist ein Nachfolger des bei Registrierung beobachteten c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea, enthält diese gemergte Authority-TaskSpec und alle legitimen Zwischenmerges; die für den exakten Zielstand erforderlichen Checks sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:fresh-main"
+      }
+    },
+    {
+      "id": "historical-refresh-not-reused",
+      "assertion": "Keine historische, T168-, T120-, T191- oder sonst zweckfremde Runtime-Refresh-Authority, kein früheres target_sha256 und kein früherer Intent werden substituiert oder wiederholt. Der mögliche Effekt ist exakt an diese neue Task-ID, eine frische Observation, einen neuen target_sha256 und einen neuen Intent gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:no-historical-reuse"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent und erneut vor apply werden aktueller GitHub-main, Required-Checks, Deployment-Manifest, Registry-Identität und target_sha256 frisch beobachtet. Jede Main-, Check-, Registry-, Manifest- oder Targetdrift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:fresh-target"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; der Source-Remote ist explizit git@github.com:heimgewebe/bureau.git. Ohne diese Bindungen und die erforderliche Break-Glass-Authority beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird diese aktuelle autoritative StateStore-TaskSpec gelesen. Sie ist nichtterminal, runtime_mutation/break_glass, single-use, unverbraucht und exakt auf diese Task-ID gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:authoritative-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:live-leases"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach einem apply binden Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben neuen source commit; StateStore-Integrität und Runtime-Identity sind gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:immutable-readback"
+      }
+    },
+    {
+      "id": "t169-typed-intake-unblocked",
+      "assertion": "Nach erfolgreicher Konvergenz wird candidate-00bb5e0d6d08fb475c9b06a3 frisch gegen aktuelle Registry-Wahrheit bewertet. Der normale operator-task-propose -> review -> preview -> publish-Vertrag kann GRABOWSKI-OPERATOR-SURFACE-V1-T169 ohne release-registry-identity-mismatch weiterführen. Diese Authority selbst veröffentlicht oder implementiert T169 nicht.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:typed-intake-restored"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keinen Apply blind wiederholen und keine neue Deployment-Wahrheit behaupten. Den letzten integrity-valid immutable Bureau-Release erhalten, nur resultgebunden reconciliieren und für einen späteren neuen Zielstand eine neue explizite Successor-Authority verwenden. Hat ein anderer legitimer Refresh vor dem Effekt einen Zwischenstand deployt, diesen nur nach frischem Ancestor- und Registry-Readback als Ausgangspunkt akzeptieren; ein redundanter Deploy entfällt ausschließlich bei exakter Runtime-Source- und Registry-Snapshot-Gleichheit mit dem aktuellen Zielstand."
+  },
+  "metadata": {
+    "source": "Heim-PC OS evaluation continuation on 2026-08-31 after cross-distro proof showed the staged APT apply can remove systemd --pipe while preserving wait/exit semantics, but typed T169 proposal remained blocked only by Bureau release-registry-identity mismatch.",
+    "main_at_registration": "c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea",
+    "deployed_source_at_registration": "443d79926db5244857293ca01ffa4514e6fd955e",
+    "unblock_candidate_id": "candidate-00bb5e0d6d08fb475c9b06a3",
+    "unblock_candidate_event_id": 12938,
+    "unblock_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T169",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly this one new task file",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The normal typed task publisher is intentionally blocked by release-registry-identity mismatch. The documented runtime-drift bootstrap permits only a new exact single-use Authority as a protected one-file PR followed by missing-only StateStore adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI"
+      ]
+    },
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound",
+      "single_use": true,
+      "target_binding": "candidate.target_sha256",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "forbid_historical_target_reuse": true,
+      "forbid_foreign_task_substitution": true,
+      "successor_task_required_after_terminal": true
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse historical or purpose-foreign refresh authority, target or intent",
+      "permission to publish or implement T169 through this bootstrap task",
+      "queue, claim or dispatch authority",
+      "foreign-work mutation authority"
+    ]
+  }
+}

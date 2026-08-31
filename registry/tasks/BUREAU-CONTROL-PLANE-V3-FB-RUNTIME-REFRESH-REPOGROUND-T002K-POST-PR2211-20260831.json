@@ -1,0 +1,337 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, GitHub main is freshly observed; the exact target contains this protected authority publication and all then-current legitimate protected-main successors, and validate (3.10), validate (3.12), registry-registration-preflight/freshness or equivalent protected-main registration checks for that exact revision are successful.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-repoground-t002k-post-pr2211-20260831:fresh-main"
+      }
+    },
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, typed readback proves that deployment-manifest source_commit and canonical Registry source identity are mutually identical and are exactly the registered deployed source 443d79926db5244857293ca01ffa4514e6fd955e or a later mutually identical deployed source, and that the active source is a verified Git ancestor of the freshly selected target main commit. Any deployment/Registry mismatch, diverged history, unavailable ancestry proof or target drift blocks the runtime effect fail-closed.",
+      "evidence_type": "object",
+      "id": "source-ancestry-precondition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-repoground-t002k-post-pr2211-20260831:source-ancestry"
+      }
+    },
+    {
+      "assertion": "Before the runtime effect, the authoritative StateStore exposes this exact task ID as a ready Runtime Refresh Authority on a revision later than the initial planned adoption; that current revision/digest contains metadata.protected_publication_adoption bound to the actual protected publication PR and merge commit, and the approval intent binds the same current revision/digest.",
+      "evidence_type": "object",
+      "id": "authority-state-store-preflight",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-repoground-t002k-post-pr2211-20260831:state-store-preflight"
+      }
+    },
+    {
+      "assertion": "This authority starts at most one Bureau runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are read back from intent, attempt/result, manifest, launcher, package, Registry snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "id": "single-runtime-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-repoground-t002k-post-pr2211-20260831:single-effect"
+      }
+    },
+    {
+      "assertion": "After a successful refresh, deployment manifest, immutable release, package tree, launcher pair and canonical Registry snapshot bind the same freshly observed source commit, and Bureau runtime identity plus StateStore integrity are valid at that exact target before any RAB-V1-T002K publication or benchmark lifecycle mutation continues.",
+      "evidence_type": "object",
+      "id": "immutable-runtime-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-repoground-t002k-post-pr2211-20260831:immutable-readback"
+      }
+    },
+    {
+      "assertion": "The authority is consumed exactly once after successful immutable readback and grants no T002K publication, claim, one-shot authorization, treatment or baseline provider execution, queue/dispatch/task-supply effect, product-code mutation or foreign-work authority. Foreign PR #2220, the stale T120 run and its reservations remain separate coordination state.",
+      "evidence_type": "object",
+      "id": "runtime-only-scope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-repoground-t002k-post-pr2211-20260831:scope-only"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-use target-bound RepoGround T002K bootstrap only. The current direct user instruction '@grabowski umsetzen' authorizes exactly the Bureau runtime convergence necessary to unblock the already reviewed RAB-V1-T002K publication chain. No runtime effect may start until exact protected publication plus missing-only adoption, proof-bearing planned-to-ready activation, fresh protected-main/CI observation, authoritative StateStore TaskSpec preflight, deployment/Registry source-identity and ancestry proof, exact intent-bound leases, the typed execution-context gate and immutable post-readback all pass. This task does not authorize T002K publication, claim, one-shot authorization or any benchmark provider process.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Publish one initially non-runnable planned Runtime Refresh Authority through an exact one-file protected pull request, adopt it missing-only into the authoritative StateStore, activate it by one proof-bearing StateStore CAS revision, and consume at most one target-bound Bureau runtime refresh from deployed source 443d79926db5244857293ca01ffa4514e6fd955e to a freshly observed protected heimgewebe/bureau main that contains this authority publication and all then-current legitimate protected-main successors. The sole purpose is to restore Bureau runtime/main identity so RAB-V1-T002K can then be published through its already reviewed StateStore proposal and continue to provider-free preflight. This authority itself performs no T002K publication, claim, one-shot authorization, benchmark provider process, queue/dispatch/task-supply action, product-code mutation or foreign-work mutation.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-REPOGROUND-T002K-POST-PR2211-20260831",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "deployed_manifest_sha256_at_registration": "29b3ec71a1f73cfc064e9919cf72bd57cb70ce9b4d30b1b27aa4ea45511489b3",
+    "deployed_source_at_registration": "443d79926db5244857293ca01ffa4514e6fd955e",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse a consumed, previously target-bound or purpose-specific authority",
+      "permission to bypass protected-publication, review, CI, source-ancestry, executor or StateStore gates",
+      "RAB-V1-T002K publication, claim or completion",
+      "benchmark one-shot authorization",
+      "treatment or baseline provider execution",
+      "manual event fabrication or raw SQL repair",
+      "queue, dispatch, task-supply, product-code or foreign-work authority",
+      "runtime mutation authority while StateStore state is planned"
+    ],
+    "main_at_registration": "c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea",
+    "operator_execution_preconditions": {
+      "after_apply": [
+        "immutable runtime/readback identity",
+        "StateStore integrity",
+        "result-bound authority closeout",
+        "release only this refresh own unchanged leases",
+        "then separately re-run Projection Replay and RAB-V1-T002K publication gates before any benchmark mutation"
+      ],
+      "before_apply": [
+        "repeat fresh protected-main and exact required-check readback",
+        "repeat authoritative TaskSpec binding",
+        "repeat deployment/Registry source-identity and source-ancestry precondition",
+        "prove exact intent-bound live leases and required executor identity"
+      ],
+      "before_prepare_intent": [
+        "fresh protected-main and exact required-check readback",
+        "typed adopt-authority receipt bound to exact create-only publication PR, merge commit and TaskSpec file digest",
+        "authoritative StateStore readback proves the adopted revision was planned and the current revision is a later exact CAS activation in ready state",
+        "current TaskSpec contains metadata.protected_publication_adoption bound to the real protected publication PR and merge commit",
+        "current activated TaskSpec contains protected-publication-and-missing-only-adoption acceptance and matching protected-publication-adoption no-run evidence",
+        "fresh typed protected-publication/adoption proof succeeds against current StateStore and target main",
+        "fresh deployment/Registry source-identity and source-ancestry precondition",
+        "fresh runtime_execution_context writable-root proof"
+      ],
+      "note": "The authority restores runtime/main identity only. It does not mutate GitHub settings or complete T120."
+    },
+    "post_publication_activation": {
+      "activation_state": "ready",
+      "does_not_establish": [
+        "runtime authority while current StateStore state remains planned",
+        "permission to invent or predict publication PR or merge commit",
+        "permission to activate from a StateStore revision other than the exact adoption receipt",
+        "permission to skip a second proof/readback after activation"
+      ],
+      "initial_state": "planned",
+      "required_activation_source": "runtime-refresh-protected-publication-activation",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned to ready.",
+      "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",
+      "required_preconditions": [
+        "exact one-file protected publication PR is merged and its real merge commit is known",
+        "adopt-authority has seeded exactly the publication TaskSpec as planned using missing-only legacy-seed-exact semantics",
+        "current StateStore revision/digest still equal the adoption receipt",
+        "construct one activated candidate from that exact revision which adds metadata.protected_publication_adoption, adds protected-publication-and-missing-only-adoption to acceptance, adds the matching no-run protected-publication-adoption evidence requirement, and changes state planned to ready",
+        "validate the activated candidate with the installed runtime authority validator and no-run acceptance validator before CAS",
+        "prove protected publication/adoption against the real PR/merge and exact missing-only receipt before CAS",
+        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent"
+      ],
+      "required_state_store_transition": "compare-and-swap-current-revision",
+      "schema_version": 1
+    },
+    "post_refresh_live_target": "After authority closeout, freshly re-read GRABOWSKI-OPERATOR-SURFACE-V1-T120 run BUR-RUN-20260831T105641Z-f7150c88f9. Require it to remain nonterminal and its existing service/repo reservations to be authoritatively present before any new repo.* claim expansion. If it became stale or terminal during refresh, reconcile that lifecycle separately rather than fabricating continuity.",
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "T002K publication, claim or benchmark authority",
+        "foreign PR #2220 authority",
+        "runtime effect before protected merge, missing-only adoption and proof-bearing activation"
+      ],
+      "initial_state": "planned",
+      "kind": "normal-protected-pull-request",
+      "post_adoption_activation": "exact proof-bearing StateStore CAS to ready; actual publication PR and merge commit must be observed and bound after protected publication, never inferred",
+      "reason": "The active Bureau runtime and canonical runtime Registry are identity-proven at 443d79926db5244857293ca01ffa4514e6fd955e while fresh protected main is c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea. Foreign PR #2220 publishes a T120-specific authority and remains outside this lane. Existing runtime-refresh authorities are consumed, already target-bound, or purpose-specific and are not substituted. Exactly one create-only planned RepoGround T002K successor therefore enters through protected Git and is adopted missing-only after merge.",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-REPOGROUND-T002K-POST-PR2211-20260831.json",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "registration_observation": {
+      "ahead_by": 5,
+      "behind_by": 0,
+      "canonical_registry_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+      "deployed_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+      "deployment_manifest_sha256": "29b3ec71a1f73cfc064e9919cf72bd57cb70ce9b4d30b1b27aa4ea45511489b3",
+      "github_main": "c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea",
+      "observed_at": "2026-08-31T12:39:10.078840Z",
+      "registration_target_sha256": "3df0e688b773d3f0097161657b89e597032e5ddcd932c7a313f7ffcc0709aff7",
+      "repository": "heimgewebe/bureau",
+      "required_checks": {
+        "registry-registration-preflight/freshness": "success",
+        "validate (3.10)": "success",
+        "validate (3.12)": "success"
+      },
+      "schema_version": 1,
+      "source_ancestry_to_main": true,
+      "source_observation_sha256": "a2a38daf7ffce17bcce70e59016af18e0fa777de4d48805e0e5d5cf23ffc2613",
+      "source_work_lane_id": "ffa039f6353dc1f290ccd00a962ea342"
+    },
+    "runtime_execution_context": {
+      "cwd": "/home/alex",
+      "directory_access": [
+        "W_OK",
+        "X_OK"
+      ],
+      "execution_backend": "systemd-user",
+      "executor_tool": "grabowski_task_start",
+      "forbid_generic_surfaces": [
+        "grabowski_terminal_run",
+        "grabowski_job_start",
+        "grabowski_fleet_run",
+        "grabowski_task_start:direct-apply"
+      ],
+      "host": "heim-pc",
+      "kind": "grabowski_bureau_runtime_refresh_execution_context",
+      "required_writable_intent_roots": [
+        "prefix",
+        "bin_dir",
+        "libexec_dir",
+        "user_unit_dir",
+        "runtime_user_unit_dir",
+        "state_root",
+        "authority_state_store.state_root"
+      ],
+      "reserved_command": "grabowski-bureau-runtime-refresh-apply",
+      "resume_policy": "never",
+      "schema_version": 1,
+      "task_identity_evidence": "server-injected-task-id-and-systemd-unit-v1",
+      "writability_evidence": [
+        "findmnt",
+        "statvfs",
+        "os.access"
+      ]
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound-source-precondition-v1",
+      "no_run_closeout_acceptance": {
+        "criteria": {
+          "authority-state-store-preflight": {
+            "required_evidence": [
+              "approval-intent",
+              "state-store-integrity"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "fresh-current-main": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "immutable-runtime-readback": {
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "runtime-only-scope": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "single-runtime-effect": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "source-ancestry-precondition": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          }
+        },
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "schema_version": 1
+      },
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "source_precondition": {
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ],
+        "fail_closed": true,
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+        "registered_manifest_sha256": "29b3ec71a1f73cfc064e9919cf72bd57cb70ce9b4d30b1b27aa4ea45511489b3",
+        "registered_registry_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "schema_version": 1
+      },
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "source": "Fresh RepoGround T002K continuation audit on 2026-08-31: Bureau deployment manifest and canonical runtime Registry are identity-proven at 443d79926db5244857293ca01ffa4514e6fd955e (manifest 29b3ec71a1f73cfc064e9919cf72bd57cb70ce9b4d30b1b27aa4ea45511489b3). Fresh protected main is c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea, five commits ahead with proven ancestry and validate 3.10/3.12 plus registry-registration-preflight/freshness successful. Projection Replay is currently clean. Foreign PR #2220 is T120-specific and remains open; it is not taken over or substituted. RAB-V1-T002K remains absent and its provider process count remains zero."
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "The currently deployed Bureau runtime at 443d79926db5244857293ca01ffa4514e6fd955e remains authoritative until a new immutable result is fully read back. If protected publication, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, execution-context writability or the runtime effect becomes unclear, preserve all publication, adoption, intent, attempt/result, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Single-Use Bureau-Runtime-Refresh für RepoGround T002K nach PR #2211"
+}

@@ -478,9 +478,8 @@ def _github_arguments_are_read_only(arguments: list[str]) -> bool:
             method = item[2:].upper()
             index += 1
         else:
-            if (
-                item in {"-f", "-F", "--field", "--raw-field", "--input"}
-                or item.startswith(("-f", "-F", "--field=", "--raw-field=", "--input="))
+            if item in {"-f", "-F", "--field", "--raw-field", "--input"} or item.startswith(
+                ("-f", "-F", "--field=", "--raw-field=", "--input=")
             ):
                 return False
             index += 1
@@ -520,10 +519,7 @@ def gh_preflight_json(
         try:
             return gh_json(arguments, timeout=timeout)
         except RuntimeRefreshError as exc:
-            if (
-                not _github_http_503(exc)
-                or attempt >= len(GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS)
-            ):
+            if not _github_http_503(exc) or attempt >= len(GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS):
                 raise
             sleeper(GITHUB_PREFLIGHT_RETRY_DELAYS_SECONDS[attempt])
     raise AssertionError("bounded GitHub preflight retry loop exhausted unexpectedly")
@@ -1091,9 +1087,8 @@ def _current_systemd_execution_identity() -> tuple[str | None, str | None]:
     invocation_id = os.environ.get("INVOCATION_ID")
     if invocation_id is not None:
         invocation_id = invocation_id.strip()
-        if (
-            len(invocation_id) != 32
-            or any(character not in "0123456789abcdef" for character in invocation_id)
+        if len(invocation_id) != 32 or any(
+            character not in "0123456789abcdef" for character in invocation_id
         ):
             invocation_id = None
     return unit, invocation_id
@@ -1215,9 +1210,7 @@ def runtime_prefix_execution_context_preflight(
             "systemd_invocation_id": invocation_id,
             "grabowski_task_executor": grabowski_task_executor,
             "grabowski_task_attempt": task_attempt,
-            "grabowski_task_executor_required": bool(
-                require_grabowski_task_executor
-            ),
+            "grabowski_task_executor_required": bool(require_grabowski_task_executor),
             "expected_grabowski_task_unit": expected_grabowski_task_unit,
             "executor_matches_expected_unit": executor_matches_expected_unit,
             "observed_at": isoformat(now or utc_now()),
@@ -1287,11 +1280,7 @@ def scheduler_resource_keys(
             for unit_root in (user_unit_dir, runtime_user_unit_dir)
             for name in RUNTIME_SCHEDULER_NAMES
         )
-        staged_paths.add(
-            user_unit_dir
-            / "timers.target.wants"
-            / f"{REQUIRED_RUNTIME_TIMER}.timer"
-        )
+        staged_paths.add(user_unit_dir / "timers.target.wants" / f"{REQUIRED_RUNTIME_TIMER}.timer")
     keys = {
         *(f"path:{path}" for path in leased_paths),
         *(f"path:{_scheduler_staging_path(path)}" for path in staged_paths),
@@ -1426,9 +1415,7 @@ def _scheduler_artifacts(
     return artifacts
 
 
-def _validate_scheduler_parent(
-    path: Path, *, label: str, allow_absent: bool = False
-) -> None:
+def _validate_scheduler_parent(path: Path, *, label: str, allow_absent: bool = False) -> None:
     if not path.is_absolute():
         raise RuntimeRefreshError(
             "scheduler-parent-invalid",
@@ -1494,9 +1481,7 @@ def _live_artifact_matches(item: dict[str, Any]) -> bool:
         return False
 
 
-def _parse_systemctl_show(
-    output: str, *, unit: str, properties: tuple[str, ...]
-) -> dict[str, str]:
+def _parse_systemctl_show(output: str, *, unit: str, properties: tuple[str, ...]) -> dict[str, str]:
     values: dict[str, str] = {}
     for line in output.splitlines():
         key, separator, value = line.partition("=")
@@ -1544,9 +1529,7 @@ def _scheduler_unit_state(
     kind: str,
     command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]],
 ) -> dict[str, str]:
-    properties = (
-        SYSTEMD_TIMER_PROPERTIES if kind == "timer" else SYSTEMD_SERVICE_PROPERTIES
-    )
+    properties = SYSTEMD_TIMER_PROPERTIES if kind == "timer" else SYSTEMD_SERVICE_PROPERTIES
     output = _scheduler_systemctl(
         [
             "show",
@@ -1680,9 +1663,7 @@ def _timer_states(
     *, command_runner: Callable[[list[str]], subprocess.CompletedProcess[str]]
 ) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]]]:
     timers = {
-        name: _scheduler_unit_state(
-            f"{name}.timer", kind="timer", command_runner=command_runner
-        )
+        name: _scheduler_unit_state(f"{name}.timer", kind="timer", command_runner=command_runner)
         for name in RUNTIME_SCHEDULER_NAMES
     }
     services = {
@@ -1700,9 +1681,7 @@ def _restore_scheduler_files(preimage: dict[str, Any]) -> list[dict[str, Any]]:
         try:
             _restore_artifact(record)
         except Exception as exc:
-            failures.append(
-                {"operation": ["restore", record["path"]], "error": repr(exc)}
-            )
+            failures.append({"operation": ["restore", record["path"]], "error": repr(exc)})
     for record in preimage["artifacts"]:
         path = Path(record["path"])
         try:
@@ -1715,14 +1694,11 @@ def _restore_scheduler_files(preimage: dict[str, Any]) -> list[dict[str, Any]]:
                 matches = not path.is_symlink() and path.is_file()
                 if matches:
                     content = path.read_bytes()
-                    matches = (
-                        sha256_bytes(content) == record["sha256"]
-                        and stat.S_IMODE(path.stat().st_mode) == int(record["mode"], 8)
-                    )
+                    matches = sha256_bytes(content) == record["sha256"] and stat.S_IMODE(
+                        path.stat().st_mode
+                    ) == int(record["mode"], 8)
             if not matches:
-                failures.append(
-                    {"operation": ["verify-preimage", record["path"]]}
-                )
+                failures.append({"operation": ["verify-preimage", record["path"]]})
         except Exception as exc:
             failures.append(
                 {
@@ -1745,9 +1721,7 @@ def _restore_scheduler_enablement_links(
         try:
             _restore_artifact(record)
         except Exception as exc:
-            failures.append(
-                {"operation": ["restore", record["path"]], "error": repr(exc)}
-            )
+            failures.append({"operation": ["restore", record["path"]], "error": repr(exc)})
     for record in records:
         path = Path(record["path"])
         try:
@@ -1760,14 +1734,11 @@ def _restore_scheduler_enablement_links(
                 matches = not path.is_symlink() and path.is_file()
                 if matches:
                     content = path.read_bytes()
-                    matches = (
-                        sha256_bytes(content) == record["sha256"]
-                        and stat.S_IMODE(path.stat().st_mode) == int(record["mode"], 8)
-                    )
+                    matches = sha256_bytes(content) == record["sha256"] and stat.S_IMODE(
+                        path.stat().st_mode
+                    ) == int(record["mode"], 8)
             if not matches:
-                failures.append(
-                    {"operation": ["verify-preimage", record["path"]]}
-                )
+                failures.append({"operation": ["verify-preimage", record["path"]]})
         except Exception as exc:
             failures.append(
                 {
@@ -1887,9 +1858,7 @@ def _restore_scheduler_preimage(
     attempt(["stop", *timer_units])
     failures.extend(_restore_scheduler_files(preimage))
     failures.extend(
-        _restore_scheduler_enablement_links(
-            preimage, mutated_paths=mutated_enablement_paths
-        )
+        _restore_scheduler_enablement_links(preimage, mutated_paths=mutated_enablement_paths)
     )
     attempt(["daemon-reload"])
     for name in RUNTIME_SCHEDULER_NAMES:
@@ -1983,9 +1952,7 @@ def _scheduler_readback(
                     "observed_mode": f"{observed_mode:04o}",
                 },
             )
-        artifact_evidence.append(
-            {**item, "live_sha256": observed_sha256, "matches_release": True}
-        )
+        artifact_evidence.append({**item, "live_sha256": observed_sha256, "matches_release": True})
 
     timers, services = _timer_states(command_runner=command_runner)
     for name in RUNTIME_SCHEDULER_NAMES:
@@ -2097,8 +2064,7 @@ def converge_user_scheduler(
     changed = [item for item in artifacts if not _live_artifact_matches(item)]
     timers, services = _timer_states(command_runner=runner)
     intents = {
-        name: _timer_intent(timers[name], unit=f"{name}.timer")
-        for name in RUNTIME_SCHEDULER_NAMES
+        name: _timer_intent(timers[name], unit=f"{name}.timer") for name in RUNTIME_SCHEDULER_NAMES
     }
     rollback_root = rollback_directory / "scheduler"
     if rollback_root.exists():
@@ -2116,18 +2082,14 @@ def converge_user_scheduler(
             "name": REQUIRED_RUNTIME_TIMER,
             "kind": "persistent-wants-link",
             "live_path": str(
-                user_unit_dir
-                / "timers.target.wants"
-                / f"{REQUIRED_RUNTIME_TIMER}.timer"
+                user_unit_dir / "timers.target.wants" / f"{REQUIRED_RUNTIME_TIMER}.timer"
             ),
         },
         {
             "name": REQUIRED_RUNTIME_TIMER,
             "kind": "runtime-wants-link",
             "live_path": str(
-                runtime_user_unit_dir
-                / "timers.target.wants"
-                / f"{REQUIRED_RUNTIME_TIMER}.timer"
+                runtime_user_unit_dir / "timers.target.wants" / f"{REQUIRED_RUNTIME_TIMER}.timer"
             ),
         },
     ]
@@ -2141,8 +2103,7 @@ def converge_user_scheduler(
         "services": services,
         "timer_intent": intents,
         "enablement_links": [
-            _snapshot_live_artifact(item, backup_files)
-            for item in required_enablement_links
+            _snapshot_live_artifact(item, backup_files) for item in required_enablement_links
         ],
     }
     preimage_path = rollback_root / "preimage.json"
@@ -2173,20 +2134,16 @@ def converge_user_scheduler(
         persistent_link = Path(required_enablement_links[0]["live_path"])
         link_matches = False
         try:
-            link_matches = (
-                persistent_link.is_symlink()
-                and persistent_link.resolve(strict=False)
-                == required_timer_unit.resolve(strict=False)
-            )
+            link_matches = persistent_link.is_symlink() and persistent_link.resolve(
+                strict=False
+            ) == required_timer_unit.resolve(strict=False)
         except (OSError, RuntimeError):
             link_matches = False
         if not link_matches:
             # Mark the leased exact path before replace/fsync so rollback also
             # covers an ambiguous failure after the namespace mutation.
             mutated_enablement_paths.add(str(persistent_link))
-            _replace_with_symlink(
-                persistent_link, f"../{REQUIRED_RUNTIME_TIMER}.timer"
-            )
+            _replace_with_symlink(persistent_link, f"../{REQUIRED_RUNTIME_TIMER}.timer")
         systemd_mutated = True
         _run_scheduler_command(["daemon-reload"], command_runner=runner)
         _run_scheduler_command(
@@ -2230,11 +2187,15 @@ def converge_user_scheduler(
                 rollback_failures.append(
                     {"operation": ["restore-install"], "error": repr(rollback_exc)}
                 )
-        error = exc.as_dict() if isinstance(exc, RuntimeRefreshError) else {
-            "code": "scheduler-convergence-unexpected",
-            "message": repr(exc),
-            "details": {},
-        }
+        error = (
+            exc.as_dict()
+            if isinstance(exc, RuntimeRefreshError)
+            else {
+                "code": "scheduler-convergence-unexpected",
+                "message": repr(exc),
+                "details": {},
+            }
+        )
         if rollback_failures:
             raise RuntimeRefreshError(
                 "scheduler-convergence-recovery-required",
@@ -2293,9 +2254,7 @@ def readback_user_scheduler(
     )
 
 
-def _scheduler_closeout_readbacks_match(
-    persisted: dict[str, Any], current: dict[str, Any]
-) -> bool:
+def _scheduler_closeout_readbacks_match(persisted: dict[str, Any], current: dict[str, Any]) -> bool:
     """Compare result-bound scheduler invariants while ignoring transient service state."""
     if current == persisted:
         return True
@@ -2854,35 +2813,24 @@ def _validated_post_publication_activation_contract(
         "required_activation_source": value["required_activation_source"],
     }
 
-def _without_runtime_authority_receipts(spec: dict[str, Any]) -> dict[str, Any]:
-    comparable = json.loads(json.dumps(spec))
-    metadata = comparable.get("metadata")
-    authority = metadata.get("runtime_refresh_authority") if isinstance(metadata, dict) else None
-    if isinstance(authority, dict):
-        authority.pop("target_binding_receipt", None)
-        authority.pop("consumption", None)
-    return comparable
 
-def _validate_protected_publication_activation_receipt(
+def _validated_protected_publication_mutation_receipt(
     *,
     store: Any,
-    current: dict[str, Any],
+    idempotency_key: str,
     approval_task_id: str,
-    publication_merge_commit: str,
-    adoption_spec_sha256: str,
-) -> None:
+    expected_revision: int,
+    resulting_revision: int,
+    source: str,
+) -> dict[str, Any]:
     from . import task_specs
 
-    idempotency_key = (
-        "runtime-refresh-protected-publication-activation:"
-        f"{approval_task_id}:{publication_merge_commit}:{adoption_spec_sha256}"
-    )
     try:
         receipt = store.task_spec_mutation_receipt(idempotency_key)
     except (legacy.StateError, OSError, sqlite3.Error) as exc:
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-receipt-invalid",
-            "cannot read the protected-publication activation mutation receipt",
+            "cannot read a protected-publication authority mutation receipt",
             details={"idempotency_key": idempotency_key, "error": str(exc)},
         ) from exc
     resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
@@ -2892,20 +2840,68 @@ def _validate_protected_publication_activation_receipt(
     )
     if (
         not isinstance(receipt, dict)
+        or receipt.get("idempotency_key") != idempotency_key
         or receipt.get("task_id") != approval_task_id
-        or receipt.get("expected_revision") != 1
-        or receipt.get("resulting_revision") != 2
+        or receipt.get("expected_revision") != expected_revision
+        or receipt.get("resulting_revision") != resulting_revision
         or not _is_sha256(receipt.get("requested_sha256"))
         or not isinstance(resulting, dict)
         or resulting.get("task_id") != approval_task_id
-        or resulting.get("revision") != 2
+        or resulting.get("revision") != resulting_revision
+        or resulting.get("parent_revision") != expected_revision
         or resulting.get("spec_sha256") != receipt.get("requested_sha256")
         or resulting.get("spec_sha256") != resulting_digest
-        or resulting.get("source") != "runtime-refresh-protected-publication-activation"
+        or resulting.get("source") != source
         or not isinstance(resulting_spec, dict)
         or resulting_spec.get("id") != approval_task_id
-        or resulting_spec.get("state") != "ready"
     ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-invalid",
+            "StateStore does not contain the exact protected-publication "
+            "authority mutation receipt",
+            details={"idempotency_key": idempotency_key},
+        )
+    return resulting
+
+
+def _task_spec_is_exact_receipt_readback(
+    current: dict[str, Any], resulting: dict[str, Any]
+) -> bool:
+    return set(current) == set(resulting) | {"updated_at"} and all(
+        current.get(key) == value for key, value in resulting.items()
+    )
+
+
+def _spec_with_runtime_authority_evidence(
+    spec: dict[str, Any], *, name: str, value: dict[str, Any]
+) -> dict[str, Any]:
+    expected = json.loads(json.dumps(spec))
+    expected["metadata"]["runtime_refresh_authority"][name] = value
+    return expected
+
+
+def _validate_protected_publication_activation_receipt(
+    *,
+    store: Any,
+    current: dict[str, Any],
+    approval_task_id: str,
+    publication_merge_commit: str,
+    adoption_spec_sha256: str,
+) -> None:
+    idempotency_key = (
+        "runtime-refresh-protected-publication-activation:"
+        f"{approval_task_id}:{publication_merge_commit}:{adoption_spec_sha256}"
+    )
+    activation = _validated_protected_publication_mutation_receipt(
+        store=store,
+        idempotency_key=idempotency_key,
+        approval_task_id=approval_task_id,
+        expected_revision=1,
+        resulting_revision=2,
+        source="runtime-refresh-protected-publication-activation",
+    )
+    activation_spec = activation["spec"]
+    if activation_spec.get("state") != "ready":
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-receipt-invalid",
             "StateStore does not contain the exact protected-publication activation receipt",
@@ -2914,15 +2910,72 @@ def _validate_protected_publication_activation_receipt(
 
     revision = current["revision"]
     if revision == 2:
-        matches_activation = set(current) == set(resulting) | {"updated_at"} and all(
-            current.get(key) == value for key, value in resulting.items()
-        )
-    else:
+        matches_activation = _task_spec_is_exact_receipt_readback(current, activation)
+    elif revision in {3, 4}:
         current_spec = current.get("spec")
-        matches_activation = (
-            isinstance(current_spec, dict)
-            and _without_runtime_authority_receipts(current_spec) == resulting_spec
+        current_metadata = current_spec.get("metadata") if isinstance(current_spec, dict) else None
+        current_authority = (
+            current_metadata.get("runtime_refresh_authority")
+            if isinstance(current_metadata, dict)
+            else None
         )
+        binding_value = (
+            current_authority.get("target_binding_receipt")
+            if isinstance(current_authority, dict)
+            else None
+        )
+        binding = _validated_authority_target_binding(binding_value)
+        binding_key = f"runtime-refresh-bind:{approval_task_id}:{binding['intent_sha256']}"
+        bound = _validated_protected_publication_mutation_receipt(
+            store=store,
+            idempotency_key=binding_key,
+            approval_task_id=approval_task_id,
+            expected_revision=2,
+            resulting_revision=3,
+            source="runtime-refresh-authority-target-binding",
+        )
+        expected_bound_spec = _spec_with_runtime_authority_evidence(
+            activation_spec, name="target_binding_receipt", value=binding
+        )
+        matches_activation = (
+            binding["task_id"] == approval_task_id
+            and binding["authority_revision"] == 2
+            and binding["authority_spec_sha256"] == activation["spec_sha256"]
+            and bound["spec"] == expected_bound_spec
+        )
+        if revision == 3:
+            matches_activation = matches_activation and _task_spec_is_exact_receipt_readback(
+                current, bound
+            )
+        else:
+            consumption_value = current_authority.get("consumption")
+            consumption = _validated_authority_consumption(consumption_value)
+            consumption_key = (
+                f"runtime-refresh-consume:{approval_task_id}:{consumption['result_sha256']}"
+            )
+            consumed = _validated_protected_publication_mutation_receipt(
+                store=store,
+                idempotency_key=consumption_key,
+                approval_task_id=approval_task_id,
+                expected_revision=3,
+                resulting_revision=4,
+                source="runtime-refresh-authority-consumption",
+            )
+            expected_consumed_spec = _spec_with_runtime_authority_evidence(
+                bound["spec"], name="consumption", value=consumption
+            )
+            matches_activation = (
+                matches_activation
+                and consumption["task_id"] == approval_task_id
+                and consumption["authority_revision"] == 2
+                and consumption["authority_spec_sha256"] == activation["spec_sha256"]
+                and consumption["target_sha256"] == binding["target_sha256"]
+                and consumption["intent_sha256"] == binding["intent_sha256"]
+                and consumed["spec"] == expected_consumed_spec
+                and _task_spec_is_exact_receipt_readback(current, consumed)
+            )
+    else:
+        matches_activation = False
     if not matches_activation:
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-receipt-invalid",
@@ -2932,6 +2985,7 @@ def _validate_protected_publication_activation_receipt(
                 "observed_revision": revision,
             },
         )
+
 
 def _validate_pre_effect_protected_publication_activation(
     *,
@@ -3019,6 +3073,7 @@ def _validate_pre_effect_protected_publication_activation(
         publication_merge_commit=publication_merge_commit,
         adoption_spec_sha256=adoption_spec_sha256,
     )
+
 
 def validate_authoritative_runtime_refresh_task(
     *,
@@ -3162,8 +3217,7 @@ def _validate_runtime_refresh_authority_adoption_spec(
     publication = metadata.get("publication_path")
     if not isinstance(publication, dict) or (
         publication.get("kind") != "normal-protected-pull-request"
-        or publication.get("state_store_transition")
-        != "seed-missing-preserve-state-store"
+        or publication.get("state_store_transition") != "seed-missing-preserve-state-store"
     ):
         raise RuntimeRefreshError(
             "authority-adoption-publication-contract-invalid",
@@ -3293,9 +3347,7 @@ def verify_runtime_refresh_authority_publication(
 
     protection = github(["api", f"repos/{repository}/branches/main/protection"])
     protected_status = (
-        protection.get("required_status_checks")
-        if isinstance(protection, dict)
-        else None
+        protection.get("required_status_checks") if isinstance(protection, dict) else None
     )
     protected_contexts = (
         protected_status.get("contexts") if isinstance(protected_status, dict) else None
@@ -3306,9 +3358,7 @@ def verify_runtime_refresh_authority_publication(
         not isinstance(protected_status, dict)
         or protected_status.get("strict") is not True
         or not isinstance(protected_contexts, list)
-        or any(
-            not isinstance(context, str) or not context for context in protected_contexts
-        )
+        or any(not isinstance(context, str) or not context for context in protected_contexts)
         or not set(required_checks).issubset(set(protected_contexts))
         or not isinstance(force_pushes, dict)
         or force_pushes.get("enabled") is not False
@@ -3418,9 +3468,7 @@ def verify_runtime_refresh_authority_publication(
     merge_blob = _git_stdout(
         root, ["rev-parse", f"{publication_merge_commit}:{relative.as_posix()}"]
     )
-    main_blob = _git_stdout(
-        root, ["rev-parse", f"{expected_main_commit}:{relative.as_posix()}"]
-    )
+    main_blob = _git_stdout(root, ["rev-parse", f"{expected_main_commit}:{relative.as_posix()}"])
     if merge_blob != main_blob:
         raise RuntimeRefreshError(
             "authority-adoption-task-file-drift",
@@ -3435,6 +3483,7 @@ def verify_runtime_refresh_authority_publication(
 
     if registry is None:
         from .v2 import Registry
+
         try:
             registry = Registry.load(root)
         except (legacy.ValidationError, OSError) as exc:
@@ -3509,10 +3558,9 @@ def adopt_runtime_refresh_authority(
         spec=spec,
         approval_task_id=approval_task_id,
     )
-    if (
-        current.get("revision") != result.get("revision")
-        or current.get("spec_sha256") != result.get("spec_sha256")
-    ):
+    if current.get("revision") != result.get("revision") or current.get(
+        "spec_sha256"
+    ) != result.get("spec_sha256"):
         raise RuntimeRefreshError(
             "authority-adoption-readback-drift",
             "adopted runtime authority differs from the exact mutation receipt",
@@ -3615,9 +3663,7 @@ def bind_runtime_refresh_authority(
     current = _read_authority_task(store, expected["task_id"])
     spec = json.loads(json.dumps(current["spec"]))
     metadata, authority = _runtime_authority_metadata(spec)
-    _validate_intent_authority_contract_generation(
-        expected_authority=expected, authority=authority
-    )
+    _validate_intent_authority_contract_generation(expected_authority=expected, authority=authority)
     binding = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "kind": RUNTIME_AUTHORITY_BINDING_KIND,
@@ -3661,9 +3707,7 @@ def bind_runtime_refresh_authority(
 def _validate_source_precondition_result_evidence(
     result: dict[str, Any], intent: dict[str, Any]
 ) -> None:
-    source_precondition = _validated_runtime_source_precondition(
-        intent.get("source_precondition")
-    )
+    source_precondition = _validated_runtime_source_precondition(intent.get("source_precondition"))
     if source_precondition is None:
         return
     evidence = result.get("source_precondition_evidence")
@@ -3673,9 +3717,7 @@ def _validate_source_precondition_result_evidence(
         "source_ancestry",
         "runtime_source_identity",
     }
-    observation_sha256 = (
-        evidence.get("observation_sha256") if isinstance(evidence, dict) else None
-    )
+    observation_sha256 = evidence.get("observation_sha256") if isinstance(evidence, dict) else None
     state_root_value = intent.get("state_root")
     if (
         not isinstance(evidence, dict)
@@ -3716,8 +3758,7 @@ def _validate_source_precondition_result_evidence(
         or observation.get("main_commit") != intent.get("main_commit")
         or observation.get("observation_sha256") != observation_sha256
         or observation.get("source_ancestry") != evidence.get("source_ancestry")
-        or observation.get("runtime_source_identity")
-        != evidence.get("runtime_source_identity")
+        or observation.get("runtime_source_identity") != evidence.get("runtime_source_identity")
     ):
         raise RuntimeRefreshError(
             "source-precondition-result-evidence-invalid",
@@ -3725,10 +3766,9 @@ def _validate_source_precondition_result_evidence(
         )
     _validate_candidate_source_precondition(observation, source_precondition)
     if result.get("status") == "already_current":
-        if (
-            observation.get("status") != "already_current"
-            or result.get("observed_target_sha256") != observation.get("target_sha256")
-        ):
+        if observation.get("status") != "already_current" or result.get(
+            "observed_target_sha256"
+        ) != observation.get("target_sha256"):
             raise RuntimeRefreshError(
                 "source-precondition-result-evidence-invalid",
                 "already-current result is not bound to its persisted live observation",
@@ -3786,6 +3826,7 @@ def consume_runtime_refresh_authority(
         "result_sha256": result["result_sha256"],
         "consumed_at": isoformat(now),
     }
+
     def consumed_replay(
         current_task: dict[str, Any], current_authority: dict[str, Any]
     ) -> dict[str, Any] | None:
@@ -3825,9 +3866,7 @@ def consume_runtime_refresh_authority(
         replay = consumed_replay(current, authority)
         if replay is not None:
             return replay
-    _validate_intent_authority_contract_generation(
-        expected_authority=expected, authority=authority
-    )
+    _validate_intent_authority_contract_generation(expected_authority=expected, authority=authority)
     bound_authority = result.get("authority_task_spec")
     if not isinstance(bound_authority, dict):
         raise RuntimeRefreshError(
@@ -4023,10 +4062,9 @@ def prepare_intent(
                 },
             )
         _validate_candidate_source_precondition(fresh_candidate, source_precondition)
-        if (
-            fresh_candidate.get("main_commit") != candidate.get("main_commit")
-            or fresh_candidate.get("target_sha256") != candidate.get("target_sha256")
-        ):
+        if fresh_candidate.get("main_commit") != candidate.get(
+            "main_commit"
+        ) or fresh_candidate.get("target_sha256") != candidate.get("target_sha256"):
             raise RuntimeRefreshError(
                 "source-precondition-target-drift",
                 "fresh source-precondition observation differs from the reviewed deployment target",
@@ -4869,9 +4907,7 @@ def run_installer(
                 raise RuntimeRefreshError(
                     error["code"],
                     error["message"],
-                    details=error.get("details")
-                    if isinstance(error.get("details"), dict)
-                    else {},
+                    details=error.get("details") if isinstance(error.get("details"), dict) else {},
                 )
         raise RuntimeRefreshError(
             "installer-returned-nonzero",
@@ -4931,10 +4967,7 @@ def readback_install(
             "readback-manifest-mismatch", "installer receipt manifest hash mismatch"
         )
     scheduler_receipt = install_receipt.get("scheduler")
-    if (
-        not isinstance(scheduler_receipt, dict)
-        or manifest.get("scheduler") != scheduler_receipt
-    ):
+    if not isinstance(scheduler_receipt, dict) or manifest.get("scheduler") != scheduler_receipt:
         raise RuntimeRefreshError(
             "scheduler-manifest-receipt-mismatch",
             "scheduler deployment is missing, malformed, or differs between manifest "
@@ -5076,9 +5109,7 @@ def _validate_historical_install_receipt(
             "historical installer receipt identity is incomplete",
         )
     receipts_root = _historical_nonsymlink_path(prefix / "receipts", label="receipt root")
-    receipt_path = _historical_nonsymlink_path(
-        Path(receipt_path_value), label="install receipt"
-    )
+    receipt_path = _historical_nonsymlink_path(Path(receipt_path_value), label="install receipt")
     try:
         receipt_path.relative_to(receipts_root)
     except ValueError as exc:
@@ -5130,14 +5161,9 @@ def _historical_runtime_snapshot(
 
     manifest_matches = 0
 
-    def matches(
-        manifest_path: Path, launcher_paths: tuple[Path, Path, Path]
-    ) -> bool:
+    def matches(manifest_path: Path, launcher_paths: tuple[Path, Path, Path]) -> bool:
         nonlocal manifest_matches
-        if (
-            _historical_artifact_sha256(manifest_path, label="manifest")
-            != expected_manifest_sha256
-        ):
+        if _historical_artifact_sha256(manifest_path, label="manifest") != expected_manifest_sha256:
             return False
         manifest_matches += 1
         return all(
@@ -5161,9 +5187,7 @@ def _historical_runtime_snapshot(
             )
         try:
             backup_directories = sorted(
-                path
-                for path in backups_root.iterdir()
-                if path.is_dir() and not path.is_symlink()
+                path for path in backups_root.iterdir() if path.is_dir() and not path.is_symlink()
             )
         except OSError as exc:
             raise RuntimeRefreshError(
@@ -5625,16 +5649,11 @@ def _runtime_authority_acceptance_ids(spec: dict[str, Any]) -> list[str]:
     return criterion_ids
 
 
-
 def _validated_protected_publication_adoption_contract(
     spec: dict[str, Any],
 ) -> dict[str, Any] | None:
     metadata = spec.get("metadata")
-    value = (
-        metadata.get("protected_publication_adoption")
-        if isinstance(metadata, dict)
-        else None
-    )
+    value = metadata.get("protected_publication_adoption") if isinstance(metadata, dict) else None
     if value is None:
         return None
     fields = {
@@ -5689,13 +5708,11 @@ def _validated_registry_resource_intake_contract(
         or not isinstance(resource, dict)
         or set(resource) != resource_fields
         or not all(
-            isinstance(resource.get(field), str) and resource[field]
-            for field in resource_fields
+            isinstance(resource.get(field), str) and resource[field] for field in resource_fields
         )
         or resource.get("type") != "git-repository"
         or not os.path.isabs(resource["path"])
-        or resource.get("grabowski_key")
-        != f"repo:{os.path.normpath(resource['path'])}"
+        or resource.get("grabowski_key") != f"repo:{os.path.normpath(resource['path'])}"
     ):
         raise RuntimeRefreshError(
             "authority-closeout-registry-resource-intake-contract-invalid",
@@ -5828,8 +5845,7 @@ def _prove_protected_publication_adoption(
     if (
         not isinstance(publication_path, dict)
         or publication_path.get("kind") != "normal-protected-pull-request"
-        or publication_path.get("state_store_transition")
-        != "seed-missing-preserve-state-store"
+        or publication_path.get("state_store_transition") != "seed-missing-preserve-state-store"
         or publication_path.get("scope") != f"exactly {relative}"
     ):
         raise RuntimeRefreshError(
@@ -5968,9 +5984,7 @@ def _prove_registry_resource_intake(
         ) from exc
     target = assessment.get("target") if isinstance(assessment, dict) else None
     claims = target.get("claims") if isinstance(target, dict) else None
-    expected_claims = [
-        {"resource": expected["id"], "mode": "write", "isolation": "worktree"}
-    ]
+    expected_claims = [{"resource": expected["id"], "mode": "write", "isolation": "worktree"}]
     if (
         not isinstance(assessment, dict)
         or assessment.get("kind") != "bureau_candidate_assessment"
@@ -6050,8 +6064,7 @@ def _validated_no_run_acceptance_contract(
         authority.get("source_precondition")
     )
     if source_precondition is not None and not any(
-        "source-precondition" in item["required_evidence"]
-        for item in normalized.values()
+        "source-precondition" in item["required_evidence"] for item in normalized.values()
     ):
         raise RuntimeRefreshError(
             "authority-closeout-acceptance-contract-incomplete",
@@ -6217,8 +6230,7 @@ def _historical_no_run_closeout_acceptance_evidence(
     closeout: dict[str, Any],
 ) -> dict[str, Any]:
     idempotency_key = (
-        f"runtime-refresh-no-run-closeout:{closeout['task_id']}:"
-        f"{closeout['runtime_result_sha256']}"
+        f"runtime-refresh-no-run-closeout:{closeout['task_id']}:{closeout['runtime_result_sha256']}"
     )
     try:
         receipt = store.task_spec_mutation_receipt(idempotency_key)
@@ -6270,9 +6282,7 @@ def _historical_no_run_closeout_acceptance_evidence(
         key: value for key, value in closeout.items() if key != "acceptance_evidence"
     }
     historical_stable = {
-        key: value
-        for key, value in historical_closeout.items()
-        if key != "acceptance_evidence"
+        key: value for key, value in historical_closeout.items() if key != "acceptance_evidence"
     }
     if historical_stable != stable_closeout:
         raise RuntimeRefreshError(
@@ -6359,9 +6369,7 @@ def _validate_no_run_acceptance_replay_binding(
                 },
             )
         return
-    current_contract = _validated_no_run_acceptance_contract(
-        spec=spec, authority=authority
-    )
+    current_contract = _validated_no_run_acceptance_contract(spec=spec, authority=authority)
     expected_current_bindings = {
         "contract_sha256": sha256_bytes(canonical_bytes(current_contract)),
         "criterion_ids": sorted(current_contract["criteria"]),
@@ -6390,9 +6398,7 @@ def _validate_no_run_acceptance_replay_binding(
         )
     available_evidence = set(acceptance_evidence["available_evidence"])
     missing_evidence = {
-        criterion_id: sorted(
-            set(item["required_evidence"]) - available_evidence
-        )
+        criterion_id: sorted(set(item["required_evidence"]) - available_evidence)
         for criterion_id, item in current_contract["criteria"].items()
         if set(item["required_evidence"]) - available_evidence
     }
@@ -6468,18 +6474,13 @@ def _validate_no_run_acceptance_replay_binding(
             "historical": historical_acceptance_evidence.get(key),
             "acceptance_evidence": acceptance_evidence.get(key),
         }
-        for key in sorted(
-            set(historical_acceptance_evidence) | set(acceptance_evidence)
-        )
+        for key in sorted(set(historical_acceptance_evidence) | set(acceptance_evidence))
         if historical_acceptance_evidence.get(key) != acceptance_evidence.get(key)
     }
     if history_mismatched:
         raise RuntimeRefreshError(
             "authority-closeout-acceptance-evidence-history-drift",
-            (
-                "stored no-run acceptance evidence no longer matches its immutable "
-                "closeout revision"
-            ),
+            ("stored no-run acceptance evidence no longer matches its immutable closeout revision"),
             details={"mismatched": history_mismatched},
         )
 
@@ -6543,9 +6544,7 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
         )
     parse_time(value["closed_at"])
     if "acceptance_evidence" in value:
-        acceptance_evidence = _validated_no_run_acceptance_evidence(
-            value["acceptance_evidence"]
-        )
+        acceptance_evidence = _validated_no_run_acceptance_evidence(value["acceptance_evidence"])
         expected_acceptance_bindings = {
             "task_id": value["task_id"],
             "runtime_result_sha256": value["runtime_result_sha256"],
@@ -6580,9 +6579,7 @@ def _runtime_incident_provenance_receipts(
     )
     binding_value = authority.get("target_binding_receipt")
     binding = (
-        _validated_authority_target_binding(binding_value)
-        if binding_value is not None
-        else None
+        _validated_authority_target_binding(binding_value) if binding_value is not None else None
     )
     receipts = {
         "consumption": consumption,
@@ -6864,9 +6861,7 @@ def _validated_terminal_authority_run(
             details={"run_id": run_id},
         )
     if any(
-        envelope.get(key) != value
-        for key, value in bindings.items()
-        if key != "envelope_sha256"
+        envelope.get(key) != value for key, value in bindings.items() if key != "envelope_sha256"
     ):
         raise RuntimeRefreshError(
             "authority-closeout-run-envelope-binding-mismatch",
@@ -6962,12 +6957,8 @@ def _closeout_runtime_refresh_authority(
     intent_path = resolved_state_root / "intents" / f"{intent_sha256}.json"
     started_path = resolved_state_root / "attempts" / target_sha256 / "started.json"
     effect_result_path = resolved_state_root / "attempts" / target_sha256 / "result.json"
-    no_effect_result_path = (
-        resolved_state_root / "no-effect-results" / f"{intent_sha256}.json"
-    )
-    result_path = (
-        effect_result_path if effect_result_path.exists() else no_effect_result_path
-    )
+    no_effect_result_path = resolved_state_root / "no-effect-results" / f"{intent_sha256}.json"
+    result_path = effect_result_path if effect_result_path.exists() else no_effect_result_path
     intent = read_json(intent_path)
     verify_digest(intent, "intent_sha256")
     if (
@@ -6994,12 +6985,9 @@ def _closeout_runtime_refresh_authority(
             "authority-closeout-result-mismatch",
             "persisted result digest differs from the requested closeout",
         )
-    deployed_success = (
-        result.get("status") == "deployed" and result.get("effect_started") is True
-    )
+    deployed_success = result.get("status") == "deployed" and result.get("effect_started") is True
     no_effect_success = (
-        result.get("status") == "already_current"
-        and result.get("effect_started") is False
+        result.get("status") == "already_current" and result.get("effect_started") is False
     )
     if not (deployed_success or no_effect_success):
         raise RuntimeRefreshError(
@@ -7097,10 +7085,7 @@ def _closeout_runtime_refresh_authority(
     else:
         persisted_readback = result.get("scheduler")
         closeout_manifest_sha256 = result.get("manifest_sha256")
-        if (
-            not isinstance(persisted_readback, dict)
-            or not _is_sha256(closeout_manifest_sha256)
-        ):
+        if not isinstance(persisted_readback, dict) or not _is_sha256(closeout_manifest_sha256):
             raise RuntimeRefreshError(
                 "authority-closeout-result-invalid",
                 "already-current result lacks scheduler or manifest evidence",
@@ -7109,9 +7094,7 @@ def _closeout_runtime_refresh_authority(
             persisted_readback, expected_commit=intent["main_commit"]
         )
     readback_matches = (
-        _install_closeout_readbacks_match(
-            persisted_readback, current_readback, install_receipt
-        )
+        _install_closeout_readbacks_match(persisted_readback, current_readback, install_receipt)
         if deployed_success
         else _scheduler_closeout_readbacks_match(persisted_readback, current_readback)
     )
@@ -7158,8 +7141,7 @@ def _closeout_runtime_refresh_authority(
             ) from exc
         if (
             incident_authority_spec is None
-            or incident_authority_spec.get("revision")
-            != existing_incident["authority_revision"]
+            or incident_authority_spec.get("revision") != existing_incident["authority_revision"]
         ):
             raise RuntimeRefreshError(
                 "authority-incident-closeout-authority-binding-invalid",
@@ -7201,8 +7183,8 @@ def _closeout_runtime_refresh_authority(
                 "incident closeout is bound to other evidence",
                 details={"mismatched": mismatched_incident_bindings},
             )
-        incident_provenance, incident_provenance_sha256 = (
-            _runtime_incident_provenance_receipts(authority)
+        incident_provenance, incident_provenance_sha256 = _runtime_incident_provenance_receipts(
+            authority
         )
         incident_consumption = incident_provenance["consumption"]
         incident_binding = incident_provenance["target_binding_receipt"]
@@ -7282,10 +7264,7 @@ def _closeout_runtime_refresh_authority(
                     "retained incident target binding differs from canonical closeout evidence",
                     details={"mismatched": mismatched_incident_receipt},
                 )
-        if (
-            existing_incident["provenance_receipts_sha256"]
-            != incident_provenance_sha256
-        ):
+        if existing_incident["provenance_receipts_sha256"] != incident_provenance_sha256:
             raise RuntimeRefreshError(
                 "authority-incident-closeout-provenance-drift",
                 "incident closeout provenance receipt presence or content changed",
@@ -7306,9 +7285,7 @@ def _closeout_runtime_refresh_authority(
                 "authority-incident-closeout-history-drift",
                 "incident closeout no longer matches the complete historical effect ledger",
                 details={
-                    "stored_effect_history_sha256": existing_incident[
-                        "effect_history_sha256"
-                    ],
+                    "stored_effect_history_sha256": existing_incident["effect_history_sha256"],
                     "current_effect_history_sha256": current_effect_history_sha256,
                     "stored_effect_count": existing_incident["effect_count"],
                     "current_effect_count": len(effect_history),
@@ -7523,8 +7500,7 @@ def _closeout_runtime_refresh_authority(
                 )
             else:
                 current_manifest, current_manifest_sha256 = load_manifest(
-                    Path(intent["prefix"]).expanduser().resolve()
-                    / "deployment-manifest.json"
+                    Path(intent["prefix"]).expanduser().resolve() / "deployment-manifest.json"
                 )
                 if (
                     current_manifest_sha256 != closeout_manifest_sha256
@@ -7534,9 +7510,7 @@ def _closeout_runtime_refresh_authority(
                         "authority-closeout-registry-resource-intake-unproven",
                         "already-current manifest does not bind the runtime target Registry",
                     )
-                registry_root = Path(
-                    str(current_manifest.get("canonical_registry_root", ""))
-                )
+                registry_root = Path(str(current_manifest.get("canonical_registry_root", "")))
             _prove_registry_resource_intake(
                 store=store,
                 spec=spec,
@@ -7612,9 +7586,7 @@ def _closeout_runtime_refresh_authority(
         source=mutation_source,
     )
     readback_task = _read_authority_task(store, approval_task_id)
-    observed_closeout = closeout_validator(
-        readback_task["spec"]["metadata"].get(closeout_field)
-    )
+    observed_closeout = closeout_validator(readback_task["spec"]["metadata"].get(closeout_field))
     if (
         readback_task.get("revision") != changed.get("revision")
         or readback_task.get("spec_sha256") != changed.get("spec_sha256")
@@ -7728,9 +7700,7 @@ def apply_runtime_refresh(
     started_path = attempt_dir / "started.json"
     result_path = attempt_dir / "result.json"
     no_effect_result_path = (
-        resolved_state_root
-        / "no-effect-results"
-        / f"{intent['intent_sha256']}.json"
+        resolved_state_root / "no-effect-results" / f"{intent['intent_sha256']}.json"
     )
     prefix = Path(intent["prefix"]).expanduser().resolve()
     bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
@@ -7767,9 +7737,7 @@ def apply_runtime_refresh(
         if require_grabowski_task_executor and expected_executor_unit is None:
             execution_preflight()
         required_metadata = (
-            {"executor_unit": expected_executor_unit}
-            if require_grabowski_task_executor
-            else None
+            {"executor_unit": expected_executor_unit} if require_grabowski_task_executor else None
         )
         return validate_live_lease_binding(
             intent,
@@ -7786,6 +7754,7 @@ def apply_runtime_refresh(
         guarded_binding = validate_execution_bound_leases()
         execution_preflight()
         return guarded_binding
+
     if no_effect_result_path.exists():
         existing = _validate_result_for_intent(read_json(no_effect_result_path), intent)
         if (
@@ -8276,10 +8245,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(output, sort_keys=True))
             return 0
         if args.command == "adopt-authority":
-            checks = (
-                tuple(args.required_check)
-                or DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS
-            )
+            checks = tuple(args.required_check) or DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS
             result = adopt_runtime_refresh_authority(
                 registry_root=_resolved(args.registry_root),
                 repository=args.repository,

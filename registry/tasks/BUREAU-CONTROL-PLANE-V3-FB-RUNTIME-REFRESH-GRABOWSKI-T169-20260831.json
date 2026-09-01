@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T169-20260831",
+  "title": "Single-Use Bureau-Runtime-Refresh für Grabowski T169",
+  "state": "planned",
+  "goal": "Eine zunächst nicht ausführbare planned Runtime Refresh Authority geschützt als genau eine neue TaskSpec veröffentlichen, nach dem real beobachteten Merge missing-only in den autoritativen StateStore übernehmen und erst durch einen exakten proof-bearing CAS auf eine spätere ready-Revision aktivieren. Diese Aktivierung ist nur zulässig, wenn die frische post-publication Runtime-/Registry-/main-Beobachtung für den exakten Zielstand weiterhin einen deploybaren candidate/alert ergibt. Sind aktive Runtime-Source und kanonischer Registry-Snapshot bereits vor der Aktivierung exakt auf dem frisch beobachteten Ziel-main, wird diese Authority nicht aktiviert, kein prepare-intent erzeugt und kein Runtime-No-Run-Closeout behauptet. Ist dagegen bereits ein exakt gebundener Intent erzeugt und konvergiert die Runtime danach vor apply auf dessen main_commit, darf apply ausschließlich mit autoritativer Scheduler-/Manifest-Evidenz als already_current ohne Installer-Effekt abschließen und die Authority verbrauchen. Zweck ist ausschließlich, den release-registry-identity-mismatch zu schließen, der den normalen typisierten Proposal-/Review-/Publish-Pfad für candidate-00bb5e0d6d08fb475c9b06a3 / GRABOWSKI-OPERATOR-SURFACE-V1-T169 blockiert. Diese Authority publiziert, claimt oder implementiert T169 nicht selbst und verändert weder Queue noch Dispatch noch fremde Arbeit.",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "testing",
+    "rollback"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Single-use T169 runtime authority mit zweistufiger Publication. Die create-only PR-Revision MUSS state=planned bleiben und darf nach Merge nur missing-only in den StateStore übernommen werden. Kein Runtime-Effekt und kein prepare-intent sind im planned-Zustand zulässig. Erst ein exakter post-merge StateStore-CAS darf aus der exakt adoptierten Revision eine spätere ready-Revision machen; er muss den realen PR #2222, dessen tatsächlichen Merge-Commit, Required Checks, exakte TaskSpec-Datei und missing-only Adoption beweisen und atomar metadata.protected_publication_adoption, die Acceptance protected-publication-and-missing-only-adoption sowie deren no-run required_evidence=[protected-publication-adoption] ergänzen. Vor diesem CAS ist eine frische Runtime-/Registry-/main-Beobachtung Pflicht: ergibt sie already_current, wird nicht aktiviert und kein Intent erzeugt. Nur ein nach Intent-Erstellung beim apply beobachtetes already_current darf als intent-bound No-Effect-Ergebnis verbrauchen. Danach gelten weiterhin frischer current-main-Readback, approval_task_id exakt diese Task-ID, approval_reference exakt target_sha256, autoritativer StateStore-Preflight, expliziter SSH-Remote, source_precondition und exakte intentgebundene Live-Leases. Kein redundanter oder historischer Runtime-Effekt."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "verified-ancestor-or-exact-target-runtime-bound",
+      "assertion": "Vor der proof-bearing planned->ready-Aktivierung sowie vor prepare-intent werden aktive Runtime-Source, kanonischer Registry-Snapshot und frischer GitHub-main-Zielstand gemeinsam gelesen. Die geplante Bootstrap-Revision selbst ist niemals Runtime-Autorität. Aktiviert werden darf nur eine spätere CAS-Revision, wenn Deployment und Registry identity-valid übereinstimmen und die frische Runtime-Refresh-Beobachtung für den exakten Zielstand candidate oder alert ist; ein registrierter oder legitimer Zwischen-Source muss frisch als Vorfahr des Ziel-main belegt sein. Ist der Zielstand bereits vor Aktivierung already_current, wird diese Authority nicht aktiviert und es entsteht kein Intent oder Runtime-No-Run-Closeout. Nur wenn bereits ein exakt gebundener Intent existiert und apply danach denselben intent.main_commit als already_current mit autoritativer Scheduler- und Manifest-Evidenz beobachtet, darf ohne Installer-Effekt abgeschlossen und die Authority verbraucht werden. Eine nicht integrity-valide Runtime, unklare Registry-Identität, fehlende Ancestry oder Targetdrift blockieren fail-closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:runtime-precondition"
+      }
+    },
+    {
+      "id": "fresh-main-contains-authority",
+      "assertion": "Unmittelbar vor dem einzigen möglichen Refresh wird GitHub main frisch gelesen. Der Ziel-main ist ein Nachfolger des bei Registrierung beobachteten c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea, enthält diese gemergte Authority-TaskSpec und alle legitimen Zwischenmerges; die für den exakten Zielstand erforderlichen Checks sind grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:fresh-main"
+      }
+    },
+    {
+      "id": "historical-refresh-not-reused",
+      "assertion": "Keine historische, T168-, T120-, T191- oder sonst zweckfremde Runtime-Refresh-Authority, kein früheres target_sha256 und kein früherer Intent werden substituiert oder wiederholt. Der mögliche Effekt ist exakt an diese neue Task-ID, eine frische Observation, einen neuen target_sha256 und einen neuen Intent gebunden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:no-historical-reuse"
+      }
+    },
+    {
+      "id": "fresh-target-per-execution",
+      "assertion": "Unmittelbar vor prepare-intent und erneut vor apply werden aktueller GitHub-main, Required-Checks, Deployment-Manifest, Registry-Identität und target_sha256 frisch beobachtet. Jede Main-, Check-, Registry-, Manifest- oder Targetdrift verwirft ältere Observations oder Intents.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:fresh-target"
+      }
+    },
+    {
+      "id": "break-glass-target-binding",
+      "assertion": "prepare-intent bindet approval_task_id exakt an diese TaskSpec und approval_reference exakt an den frisch beobachteten target_sha256; der Source-Remote ist explizit git@github.com:heimgewebe/bureau.git. Ohne diese Bindungen und die erforderliche Break-Glass-Authority beginnt kein Runtime-Effekt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:target-binding"
+      }
+    },
+    {
+      "id": "authoritative-task-preflight",
+      "assertion": "Vor prepare-intent und erneut unmittelbar vor apply wird die aktuelle autoritative StateStore-TaskSpec gelesen. Sie muss eine spätere, proof-bearing CAS-Revision als die initial missing-only adoptierte planned-Revision sein, state ready oder active tragen, metadata.protected_publication_adoption an PR #2222 und dessen realen Merge-Commit binden und in derselben Aktivierungsrevision die Acceptance protected-publication-and-missing-only-adoption samt passender no-run protected-publication-adoption-Evidenzanforderung enthalten. Die planned Bootstrap-Revision allein ist ausdrücklich keine Runtime-Autorität.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:authoritative-preflight"
+      }
+    },
+    {
+      "id": "live-lease-binding",
+      "assertion": "apply verwendet ausschließlich die exakten Resource-Keys des frischen Runtime-Refresh-Intents unter identischem Owner-/Task-/Target-Binding; fehlende, fremde, abgelaufene oder driftende Leases brechen vor Wirkung fail-closed ab.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:live-leases"
+      }
+    },
+    {
+      "id": "immutable-runtime-readback",
+      "assertion": "Nach einem apply binden Deployment-Manifest, immutable Release, Paketbaum, Launcher und kanonischer Registry-Snapshot denselben neuen source commit; StateStore-Integrität und Runtime-Identity sind gültig. Eigene Refresh-Leases werden erst nach eindeutigem resultgebundenem Readback freigegeben.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:immutable-readback"
+      }
+    },
+    {
+      "id": "t169-typed-intake-unblocked",
+      "assertion": "Nach erfolgreicher Konvergenz binden aktive Runtime-Source und kanonischer Registry-Snapshot denselben frisch deployten current-main-Commit; der bisherige release-registry-identity-mismatch ist damit als Blocker des normalen operator-task-propose -> review -> preview -> publish-Vertrags beseitigt. Candidate candidate-00bb5e0d6d08fb475c9b06a3 wird danach separat frisch gegen aktuelle Registry-Wahrheit bewertet. Diese Authority veröffentlicht oder implementiert T169 nicht.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-t169:typed-intake-restored"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Solange die Authority nur planned/adoptiert ist, bleibt sie nicht ausführbar. Ist die Runtime vor Aktivierung bereits auf dem Zielstand, keine Aktivierung und keinen Intent erzeugen; die geplante Authority nur über einen separaten normalen StateStore-Closeout/Supersession-Pfad behandeln, nicht über Runtime-No-Run. Bei fehlgeschlagenem oder unklarem post-activation Refresh keinen Apply blind wiederholen und keine neue Deployment-Wahrheit behaupten. Den letzten integrity-valid immutable Bureau-Release erhalten, nur resultgebunden reconciliieren und für einen späteren neuen Zielstand eine neue explizite Successor-Authority verwenden."
+  },
+  "metadata": {
+    "source": "Heim-PC OS evaluation continuation on 2026-08-31 after cross-distro proof showed the staged APT apply can remove systemd --pipe while preserving wait/exit semantics, but typed T169 proposal remained blocked only by Bureau release-registry-identity mismatch.",
+    "main_at_registration": "c7f5eabfa7a39a2b85f7aa241eff9c3aa0e663ea",
+    "deployed_source_at_registration": "443d79926db5244857293ca01ffa4514e6fd955e",
+    "unblock_candidate_id": "candidate-00bb5e0d6d08fb475c9b06a3",
+    "unblock_candidate_event_id": 12938,
+    "unblock_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T169",
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T169-20260831.json",
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "reason": "The normal typed task publisher is intentionally blocked by release-registry-identity mismatch. The documented runtime-drift bootstrap permits only a new exact single-use Authority as a protected one-file PR followed by missing-only StateStore adoption.",
+      "does_not_establish": [
+        "typed publication bypass authority for ordinary tasks",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI"
+      ],
+      "initial_state": "planned",
+      "post_adoption_activation": "exact proof-bearing StateStore CAS to ready; actual publication merge commit must be observed after merge, never predicted"
+    },
+    "runtime_refresh_authority": {
+      "schema_version": 1,
+      "mode": "single-use-target-bound-source-precondition-v1",
+      "single_use": true,
+      "target_binding": "candidate.target_sha256",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "forbid_historical_target_reuse": true,
+      "forbid_foreign_task_substitution": true,
+      "successor_task_required_after_terminal": true,
+      "source_precondition": {
+        "schema_version": 1,
+        "policy": "registered-source-or-verified-target-ancestor",
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "require_deployment_registry_identity_match": true,
+        "registered_deployed_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+        "registered_manifest_sha256": "29b3ec71a1f73cfc064e9919cf72bd57cb70ce9b4d30b1b27aa4ea45511489b3",
+        "registered_registry_source_commit": "443d79926db5244857293ca01ffa4514e6fd955e",
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "fail_closed": true,
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ]
+      },
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "verified-ancestor-or-exact-target-runtime-bound": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "fresh-main-contains-authority": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "historical-refresh-not-reused": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history"
+            ]
+          },
+          "fresh-target-per-execution": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "break-glass-target-binding": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "authoritative-task-preflight": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "state-store-integrity"
+            ]
+          },
+          "live-lease-binding": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "lease-release"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "t169-typed-intake-unblocked": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          }
+        }
+      }
+    },
+    "does_not_establish": [
+      "a runtime target before fresh observation",
+      "runtime effect without target-bound break-glass evidence",
+      "permission to reuse historical or purpose-foreign refresh authority, target or intent",
+      "permission to publish or implement T169 through this bootstrap task",
+      "queue, claim or dispatch authority",
+      "foreign-work mutation authority",
+      "runtime mutation authority while StateStore state is planned",
+      "permission to activate without exact protected-publication/adoption proof",
+      "permission to treat already_current before intent creation as a runtime no-run closeout"
+    ],
+    "operator_execution_preconditions": {
+      "before_prepare_intent": [
+        "fresh protected-main and exact required-check readback",
+        "typed adopt-authority receipt bound to exact create-only publication PR, actual merge commit and TaskSpec file digest",
+        "authoritative StateStore readback proves the create-only adopted revision was planned and the current revision is a later exact CAS activation in ready state",
+        "current activated TaskSpec contains metadata.protected_publication_adoption bound to PR #2222 and its actual merge commit",
+        "current activated TaskSpec contains protected-publication-and-missing-only-adoption acceptance and maps it to protected-publication-adoption no-run evidence; the initial planned bootstrap intentionally contains neither half of that pair",
+        "fresh typed protected-publication/adoption proof succeeds against current StateStore and target main",
+        "fresh deployment/Registry source-identity and source-ancestry precondition yields candidate or alert; if it is already_current before activation, do not activate and do not create an intent"
+      ],
+      "before_apply": [
+        "repeat fresh protected-main and exact required-check readback",
+        "repeat authoritative activated TaskSpec and protected-publication/adoption binding",
+        "repeat deployment/Registry source-identity and source-ancestry precondition",
+        "prove exact intent-bound live leases",
+        "already_current is admissible only here after an intent already exists and only for the same intent.main_commit with authoritative scheduler and manifest evidence"
+      ],
+      "after_apply": [
+        "immutable runtime/readback identity or intent-bound already_current no-effect evidence",
+        "StateStore integrity",
+        "result-bound authority closeout",
+        "release only this refresh own leases"
+      ],
+      "note": "Protected publication and missing-only adoption are mandatory pre-effect gates. The initial planned revision cannot create an intent. Pre-activation already_current means no activation/no runtime closeout; post-intent already_current may close through the existing apply no-effect contract."
+    },
+    "post_publication_activation": {
+      "schema_version": 1,
+      "initial_state": "planned",
+      "activation_state": "ready",
+      "publication_pr": 2222,
+      "required_state_store_transition": "compare-and-swap-current-revision",
+      "required_activation_source": "runtime-refresh-protected-publication-activation",
+      "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned->ready.",
+      "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "activation_runtime_precondition": {
+        "required_observation_status": [
+          "candidate",
+          "alert"
+        ],
+        "already_current_before_activation": "do-not-activate; create no prepare-intent/apply and claim no runtime no-run closeout through this authority",
+        "already_current_after_intent": "apply may consume an already_current no-effect result only when the intent already exists and authoritative scheduler/manifest evidence binds the same intent.main_commit"
+      },
+      "required_preconditions": [
+        "exact protected publication PR is merged and its real merge commit is known",
+        "adopt-authority has seeded exactly the publication TaskSpec as planned using missing-only legacy-seed-exact semantics",
+        "current StateStore revision/digest still equal the adoption receipt",
+        "fresh Runtime/Registry/main observation is candidate or alert for the exact target; already_current before activation stops activation",
+        "construct one activated candidate from that exact revision which adds metadata.protected_publication_adoption, adds protected-publication-and-missing-only-adoption to acceptance, adds the matching no-run protected-publication-adoption evidence requirement, and changes state planned->ready",
+        "validate the activated candidate with the installed runtime authority validator and no-run acceptance validator before CAS",
+        "prove protected publication/adoption against the real PR/merge and exact missing-only receipt before CAS",
+        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent"
+      ],
+      "does_not_establish": [
+        "runtime authority while current StateStore state remains planned",
+        "permission to invent or predict publication_merge_commit",
+        "permission to activate from a StateStore revision other than the exact adoption receipt",
+        "permission to activate when the fresh observation is already_current",
+        "permission to treat pre-intent already_current as a runtime no-run closeout",
+        "permission to skip a second proof/readback after activation"
+      ]
+    }
+  }
+}

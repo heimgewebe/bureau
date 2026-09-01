@@ -30,7 +30,9 @@ TEST_EXECUTOR_UNIT = "grabowski-task-test-a1.service"
 
 
 @pytest.fixture(autouse=True)
-def test_runtime_refresh_executor_contract(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_runtime_refresh_executor_contract(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     runtime_root = tmp_path / "xdg-runtime"
     (runtime_root / "systemd/user").mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(runtime_root))
@@ -84,12 +86,16 @@ class FakeUserSystemd:
                         self._enablement_link(unit, runtime=False).parent.mkdir(
                             parents=True, exist_ok=True
                         )
-                        self._enablement_link(unit, runtime=False).symlink_to(f"../{unit}")
+                        self._enablement_link(unit, runtime=False).symlink_to(
+                            f"../{unit}"
+                        )
                     elif unit_file == "enabled-runtime":
                         self._enablement_link(unit, runtime=True).parent.mkdir(
                             parents=True, exist_ok=True
                         )
-                        self._enablement_link(unit, runtime=True).symlink_to(str(fragment))
+                        self._enablement_link(unit, runtime=True).symlink_to(
+                            str(fragment)
+                        )
 
     def _enablement_link(self, unit: str, *, runtime: bool) -> Path:
         root = self.runtime_unit_root if runtime else self.unit_root
@@ -132,7 +138,9 @@ class FakeUserSystemd:
         if command == "show":
             unit = arguments[1]
             properties = arguments[-1].removeprefix("--property=").split(",")
-            output = "\n".join(f"{key}={self.states[unit][key]}" for key in properties)
+            output = "\n".join(
+                f"{key}={self.states[unit][key]}" for key in properties
+            )
             return subprocess.CompletedProcess(argv, 0, stdout=output + "\n", stderr="")
         if command == "daemon-reload":
             self._reload()
@@ -182,7 +190,9 @@ def successful_systemd_analyze(argv: list[str]) -> subprocess.CompletedProcess[s
 
 def successful_cycle_validation(**kwargs: Any) -> dict[str, Any]:
     release = kwargs["canonical_root"]
-    assert all(path.is_relative_to(release) for path in kwargs["module_paths"].values())
+    assert all(
+        path.is_relative_to(release) for path in kwargs["module_paths"].values()
+    )
     return {
         "status": "ok",
         "activatable": False,
@@ -420,7 +430,6 @@ def protected_publication_activation_spec(
     }
     return spec
 
-
 def protected_publication_activation_proof(
     task_id: str, *, activation_publication_pr: int | None = 2222
 ) -> dict[str, Any]:
@@ -436,7 +445,6 @@ def protected_publication_activation_proof(
         "publication_merge_commit": "4" * 40,
         "task_spec_sha256": task_specs_module.task_spec_digest(planned),
     }
-
 
 def seed_protected_publication_activation_store(
     root: Path,
@@ -479,7 +487,6 @@ def seed_protected_publication_activation_store(
     )
     return store
 
-
 def bind_protected_publication_activation_store(
     store: StateStore, task_id: str
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -504,7 +511,6 @@ def bind_protected_publication_activation_store(
         source="runtime-refresh-authority-target-binding",
     )
     return binding, bound
-
 
 def consume_protected_publication_activation_store(
     store: StateStore, task_id: str
@@ -533,7 +539,6 @@ def consume_protected_publication_activation_store(
         source="runtime-refresh-authority-consumption",
     )
     return consumption, consumed
-
 
 def source_precondition_contract() -> dict[str, Any]:
     return {
@@ -565,9 +570,9 @@ def seed_authority_store(
         spec["metadata"]["runtime_refresh_authority"]["mode"] = (
             refresh.RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
         )
-        spec["metadata"]["runtime_refresh_authority"]["no_run_closeout_acceptance"]["criteria"][
-            "runtime-authority-proof"
-        ]["required_evidence"].append("source-precondition")
+        spec["metadata"]["runtime_refresh_authority"]["no_run_closeout_acceptance"][
+            "criteria"
+        ]["runtime-authority-proof"]["required_evidence"].append("source-precondition")
         spec["metadata"]["runtime_refresh_authority"]["source_precondition"] = (
             source_precondition_contract()
         )
@@ -629,7 +634,6 @@ def test_protected_publication_activation_requires_activation_receipt(
         )
     assert raised.value.code == ("authority-preflight-publication-activation-receipt-invalid")
 
-
 def test_protected_publication_activation_requires_pre_effect_proof(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -678,7 +682,6 @@ def test_protected_publication_activation_accepts_bound_pre_effect_proof(
     assert observed["approval_task_id"] == task_id
     assert observed["target_main_commit"] == MAIN
 
-
 def test_protected_publication_activation_accepts_missing_activation_publication_pr(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -700,7 +703,6 @@ def test_protected_publication_activation_accepts_missing_activation_publication
         target_main_commit=MAIN,
     )
     assert observed["revision"] == 2
-
 
 def test_protected_publication_activation_rejects_mismatched_activation_publication_pr(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -725,7 +727,6 @@ def test_protected_publication_activation_rejects_mismatched_activation_publicat
         )
     assert raised.value.code == ("authority-preflight-protected-publication-activation-invalid")
 
-
 def test_protected_publication_activation_rejects_unreceipted_ready_revision(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -748,7 +749,6 @@ def test_protected_publication_activation_rejects_unreceipted_ready_revision(
             target_main_commit=MAIN,
         )
     assert raised.value.code == ("authority-preflight-publication-activation-receipt-invalid")
-
 
 def test_protected_publication_activation_allows_only_later_binding_and_consumption(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -784,7 +784,6 @@ def test_protected_publication_activation_allows_only_later_binding_and_consumpt
     assert binding["authority_spec_sha256"] == consumption["authority_spec_sha256"]
     assert consumed["revision"] == 4
     assert observed["revision"] == 4
-
 
 @pytest.mark.parametrize(
     ("tampering", "expected_code"),
@@ -846,7 +845,6 @@ def test_protected_publication_activation_rejects_generic_later_receipt_tamperin
             target_main_commit=MAIN,
         )
     assert raised.value.code == expected_code
-
 
 def test_runtime_authority_adoption_is_exact_idempotent_and_not_execution_authority(
     tmp_path: Path,
@@ -1228,7 +1226,8 @@ def test_observe_requires_registry_freshness_by_default(tmp_path: Path) -> None:
     assert result["reason_codes"] == ["required-ci-not-green"]
     assert result["required_checks"] == list(refresh.DEFAULT_REQUIRED_CHECKS)
     assert (
-        result["check_summary"]["registry-registration-preflight/freshness"]["state"] == "missing"
+        result["check_summary"]["registry-registration-preflight/freshness"]["state"]
+        == "missing"
     )
 
 
@@ -1603,8 +1602,10 @@ def test_legacy_authority_mode_rejects_new_source_precondition_generation(
 def test_historical_intent_without_generation_cannot_bind_or_consume_new_authority(
     tmp_path: Path,
 ) -> None:
-    _observed, _manifest_path, current_intent, _intent_path = prepare_source_precondition_intent(
-        tmp_path, task_id="BUREAU-SOURCE-PRECONDITION-HISTORICAL-RUNNER"
+    _observed, _manifest_path, current_intent, _intent_path = (
+        prepare_source_precondition_intent(
+            tmp_path, task_id="BUREAU-SOURCE-PRECONDITION-HISTORICAL-RUNNER"
+        )
     )
     store = authority_store_for_intent(current_intent)
     historical_intent = json.loads(json.dumps(current_intent))
@@ -1615,7 +1616,9 @@ def test_historical_intent_without_generation_cannot_bind_or_consume_new_authori
     assert before is not None
 
     with pytest.raises(refresh.RuntimeRefreshError) as bind_error:
-        refresh.bind_runtime_refresh_authority(store=store, intent=historical_intent, now=NOW)
+        refresh.bind_runtime_refresh_authority(
+            store=store, intent=historical_intent, now=NOW
+        )
     assert bind_error.value.code == "authority-runner-contract-generation-missing"
     assert store.task_spec(historical_intent["approval_task_id"]) == before
 
@@ -1921,7 +1924,9 @@ def test_apply_persists_source_precondition_proof_before_source_preparation(
     assert proof["observation_path"] == str(expected_path)
     assert proof["source_ancestry"] == observed["source_ancestry"]
     assert proof["runtime_source_identity"] == observed["runtime_source_identity"]
-    started = refresh.read_json(state_root / "attempts" / intent["target_sha256"] / "started.json")
+    started = refresh.read_json(
+        state_root / "attempts" / intent["target_sha256"] / "started.json"
+    )
     assert started["source_precondition_evidence"] == proof
 
 
@@ -1965,7 +1970,9 @@ def test_apply_deployed_result_binds_source_precondition_proof(tmp_path: Path) -
     assert result["effect_started"] is True
     assert proof["observation_sha256"] == observed["observation_sha256"]
     assert refresh.read_json(Path(proof["observation_path"])) == observed
-    started = refresh.read_json(state_root / "attempts" / intent["target_sha256"] / "started.json")
+    started = refresh.read_json(
+        state_root / "attempts" / intent["target_sha256"] / "started.json"
+    )
     assert started["source_precondition_evidence"] == proof
 
     proof_path = Path(proof["observation_path"])
@@ -2171,7 +2178,9 @@ def lease_for(
     acquired = int((current - timedelta(minutes=1)).timestamp())
     expiry = int((expires_at or current + timedelta(hours=1)).timestamp())
     omitted = omit or set()
-    lease_metadata = {"executor_unit": TEST_EXECUTOR_UNIT} if metadata is None else metadata
+    lease_metadata = (
+        {"executor_unit": TEST_EXECUTOR_UNIT} if metadata is None else metadata
+    )
     metadata_json = json.dumps(
         lease_metadata,
         sort_keys=True,
@@ -2563,17 +2572,13 @@ def historical_runtime_artifacts(
         path.write_bytes(f"#!/bin/sh\necho successor-{name}\n".encode())
         path.chmod(0o755)
     assert manifest_path.read_bytes() == successor_bytes
-    return (
-        install_receipt,
-        historical_readback,
-        {
-            "manifest": manifest_path,
-            "backup": backup,
-            "release": release,
-            "registry_task": registry_task,
-            "receipt": receipt_path,
-        },
-    )
+    return install_receipt, historical_readback, {
+        "manifest": manifest_path,
+        "backup": backup,
+        "release": release,
+        "registry_task": registry_task,
+        "receipt": receipt_path,
+    }
 
 
 def replace_historical_result(
@@ -2726,7 +2731,9 @@ def test_observe_reports_already_current_only_when_scheduler_converged(
         calls.append(arguments)
         return {"sha": MAIN}
 
-    def scheduler_reader(receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+    def scheduler_reader(
+        receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
         scheduler_calls.append((receipt, expected_commit))
         return {"authoritative": True}
 
@@ -2782,7 +2789,9 @@ def test_observe_source_current_live_scheduler_drift_requires_prepare_intent(
     scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
     write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
 
-    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
         assert expected_commit == MAIN
         raise refresh.RuntimeRefreshError(
             "scheduler-readback-load-state-invalid",
@@ -2798,7 +2807,10 @@ def test_observe_source_current_live_scheduler_drift_requires_prepare_intent(
     )
 
     assert result["status"] == "alert"
-    assert result["scheduler_target_state"] == "drift:scheduler-readback-load-state-invalid"
+    assert (
+        result["scheduler_target_state"]
+        == "drift:scheduler-readback-load-state-invalid"
+    )
     assert result["reason_codes"] == ["scheduler-readback-load-state-invalid"]
     assert result["recovery_action"]["action"] == "prepare-intent"
     assert result["recovery_action"]["eligible"] is True
@@ -2827,7 +2839,9 @@ def test_observe_source_current_failed_service_is_not_auto_reconvergeable(
     scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
     write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
 
-    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
         assert expected_commit == MAIN
         raise refresh.RuntimeRefreshError(
             "scheduler-required-service-invalid",
@@ -2843,27 +2857,26 @@ def test_observe_source_current_failed_service_is_not_auto_reconvergeable(
     )
 
     assert result["status"] == "blocked"
-    assert result["scheduler_target_state"] == "blocked:scheduler-required-service-invalid"
+    assert (
+        result["scheduler_target_state"]
+        == "blocked:scheduler-required-service-invalid"
+    )
     assert result["reason_codes"] == ["scheduler-required-service-invalid"]
     assert result["recovery_action"]["action"] == "resolve-reason-codes"
     assert result["recovery_action"]["eligible"] is False
+
 
 
 def test_observe_source_current_scheduler_timeout_blocks(tmp_path: Path) -> None:
     manifest = tmp_path / "deployment-manifest.json"
     scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
     write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
-
     def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
         assert expected_commit == MAIN
         raise subprocess.TimeoutExpired(cmd=["systemctl", "--user"], timeout=60)
-
     result = refresh.observe_runtime_refresh(
-        repository="heimgewebe/bureau",
-        manifest_path=manifest,
-        now=NOW,
-        github=lambda _arguments: {"sha": MAIN},
-        scheduler_reader=scheduler_reader,
+        repository="heimgewebe/bureau", manifest_path=manifest, now=NOW,
+        github=lambda _arguments: {"sha": MAIN}, scheduler_reader=scheduler_reader,
     )
     assert result["status"] == "blocked"
     assert result["reason_codes"] == ["scheduler-readback-timeout"]
@@ -2876,7 +2889,9 @@ def test_observe_source_current_scheduler_io_failure_blocks(tmp_path: Path) -> N
     scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
     write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
 
-    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
         assert expected_commit == MAIN
         raise FileNotFoundError("scheduler artifact disappeared during readback")
 
@@ -2899,19 +2914,14 @@ def test_observe_source_current_unsafe_fragment_blocks(tmp_path: Path) -> None:
     manifest = tmp_path / "deployment-manifest.json"
     scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
     write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
-
     def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
         assert expected_commit == MAIN
         raise refresh.RuntimeRefreshError(
             "scheduler-readback-fragment-unsafe", "scheduler path is a directory"
         )
-
     result = refresh.observe_runtime_refresh(
-        repository="heimgewebe/bureau",
-        manifest_path=manifest,
-        now=NOW,
-        github=lambda _arguments: {"sha": MAIN},
-        scheduler_reader=scheduler_reader,
+        repository="heimgewebe/bureau", manifest_path=manifest, now=NOW,
+        github=lambda _arguments: {"sha": MAIN}, scheduler_reader=scheduler_reader,
     )
     assert result["status"] == "blocked"
     assert result["reason_codes"] == ["scheduler-readback-fragment-unsafe"]
@@ -2925,7 +2935,9 @@ def test_observe_source_current_invalid_scheduler_evidence_blocks(
     scheduler_receipt = {"kind": "bureau_runtime_scheduler_readback"}
     write_manifest(manifest, MAIN, scheduler=scheduler_receipt)
 
-    def scheduler_reader(_receipt: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+    def scheduler_reader(
+        _receipt: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
         assert expected_commit == MAIN
         raise refresh.RuntimeRefreshError(
             "scheduler-receipt-invalid",
@@ -3054,7 +3066,10 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
             f"path:{tmp_path.resolve() / f'systemd/user/{name}.timer'}"
             in intent["required_resource_keys"]
         )
-        assert f"path:{tmp_path.resolve() / f'libexec/{name}'}" in intent["required_resource_keys"]
+        assert (
+            f"path:{tmp_path.resolve() / f'libexec/{name}'}"
+            in intent["required_resource_keys"]
+        )
         assert (
             f"path:{tmp_path.resolve() / f'systemd/user/timers.target.wants/{name}.timer'}"
             in intent["required_resource_keys"]
@@ -3454,9 +3469,15 @@ def test_scheduler_resources_are_required_by_live_lease_validation(tmp_path: Pat
     missing_key = (
         f"path:{refresh._scheduler_staging_path(tmp_path.resolve() / 'libexec/bureau-task-supply')}"
     )
-    assert f"path:{tmp_path.resolve() / 'systemd/user'}" not in intent["required_resource_keys"]
-    assert f"path:{tmp_path.resolve() / 'libexec'}" not in intent["required_resource_keys"]
-    binding, resource_db = lease_for(tmp_path / "scheduler-lease-gap", intent, omit={missing_key})
+    assert f"path:{tmp_path.resolve() / 'systemd/user'}" not in intent[
+        "required_resource_keys"
+    ]
+    assert f"path:{tmp_path.resolve() / 'libexec'}" not in intent[
+        "required_resource_keys"
+    ]
+    binding, resource_db = lease_for(
+        tmp_path / "scheduler-lease-gap", intent, omit={missing_key}
+    )
 
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.validate_live_lease_binding(
@@ -3471,7 +3492,9 @@ def test_scheduler_resources_are_required_by_live_lease_validation(tmp_path: Pat
 
 
 @pytest.mark.parametrize("mode", [0o644, 0o755])
-def test_atomic_write_applies_exact_mode_under_restrictive_umask(tmp_path: Path, mode: int) -> None:
+def test_atomic_write_applies_exact_mode_under_restrictive_umask(
+    tmp_path: Path, mode: int
+) -> None:
     path = tmp_path / f"artifact-{mode:o}"
     previous_umask = os.umask(0o077)
     try:
@@ -3507,13 +3530,9 @@ def test_scheduler_readback_distinguishes_replaceable_and_unsafe_fragments(
     timer_intent = {name: "absent" for name in refresh.RUNTIME_SCHEDULER_NAMES}
     with pytest.raises(refresh.RuntimeRefreshError) as missing:
         refresh._scheduler_readback(
-            source_commit=source_commit,
-            release_id=release_id,
-            release=release,
-            user_unit_dir=user_unit_dir,
-            libexec_dir=libexec_dir,
-            prior_timers=prior_timers,
-            timer_intent=timer_intent,
+            source_commit=source_commit, release_id=release_id, release=release,
+            user_unit_dir=user_unit_dir, libexec_dir=libexec_dir,
+            prior_timers=prior_timers, timer_intent=timer_intent,
             command_runner=lambda _argv: pytest.fail("systemd read must not run"),
         )
     assert missing.value.code == "scheduler-readback-fragment-replaceable"
@@ -3522,13 +3541,9 @@ def test_scheduler_readback_distinguishes_replaceable_and_unsafe_fragments(
     first_path.mkdir(parents=True)
     with pytest.raises(refresh.RuntimeRefreshError) as unsafe:
         refresh._scheduler_readback(
-            source_commit=source_commit,
-            release_id=release_id,
-            release=release,
-            user_unit_dir=user_unit_dir,
-            libexec_dir=libexec_dir,
-            prior_timers=prior_timers,
-            timer_intent=timer_intent,
+            source_commit=source_commit, release_id=release_id, release=release,
+            user_unit_dir=user_unit_dir, libexec_dir=libexec_dir,
+            prior_timers=prior_timers, timer_intent=timer_intent,
             command_runner=lambda _argv: pytest.fail("systemd read must not run"),
         )
     assert unsafe.value.code == "scheduler-readback-fragment-unsafe"
@@ -3582,10 +3597,12 @@ def test_release_task_supply_absent_live_is_converged_enabled_and_waiting(
     assert len(result["changed_artifacts"]) == len(refresh.RUNTIME_SCHEDULER_NAMES) * 3
     for artifact in result["artifacts"]:
         assert artifact["matches_release"] is True
-        assert (
-            Path(artifact["live_path"]).read_bytes() == Path(artifact["source_path"]).read_bytes()
-        )
-    preimage = json.loads(Path(result["rollback_preimage_path"]).read_text(encoding="utf-8"))
+        assert Path(artifact["live_path"]).read_bytes() == Path(
+            artifact["source_path"]
+        ).read_bytes()
+    preimage = json.loads(
+        Path(result["rollback_preimage_path"]).read_text(encoding="utf-8")
+    )
     assert {item["preimage_kind"] for item in preimage["artifacts"]} == {"absent"}
     repeated_readback = refresh.readback_user_scheduler(
         result,
@@ -3613,7 +3630,9 @@ def test_scheduler_convergence_preserves_existing_timer_intent(tmp_path: Path) -
     libexec_root.mkdir()
     for name in refresh.RUNTIME_SCHEDULER_NAMES:
         for suffix in ("service", "timer"):
-            (unit_root / f"{name}.{suffix}").write_text(f"old {name}.{suffix}\n", encoding="utf-8")
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"old {name}.{suffix}\n", encoding="utf-8"
+            )
         executable = libexec_root / name
         executable.write_text(f"old {name}\n", encoding="utf-8")
         executable.chmod(0o755)
@@ -3696,12 +3715,16 @@ def test_foreign_timer_enablement_link_survives_convergence_and_later_rollback(
     libexec_root.mkdir()
     for name in refresh.RUNTIME_SCHEDULER_NAMES:
         for suffix in ("service", "timer"):
-            (unit_root / f"{name}.{suffix}").write_text(f"old {name}.{suffix}\n", encoding="utf-8")
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"old {name}.{suffix}\n", encoding="utf-8"
+            )
         executable = libexec_root / name
         executable.write_text(f"old {name}\n", encoding="utf-8")
         executable.chmod(0o755)
     systemd = FakeUserSystemd(unit_root)
-    foreign_link = unit_root / "custom-maintenance.target.wants/bureau-operator-control.timer"
+    foreign_link = (
+        unit_root / "custom-maintenance.target.wants/bureau-operator-control.timer"
+    )
     foreign_link.parent.mkdir()
     foreign_link.symlink_to("../bureau-operator-control.timer")
 
@@ -3723,7 +3746,9 @@ def test_foreign_timer_enablement_link_survives_convergence_and_later_rollback(
 
     assert foreign_link.is_symlink()
     assert os.readlink(foreign_link) == "../bureau-operator-control.timer"
-    assert systemd.states["bureau-operator-control.timer"]["UnitFileState"] == ("disabled")
+    assert systemd.states["bureau-operator-control.timer"]["UnitFileState"] == (
+        "disabled"
+    )
 
     later_rollback = tmp_path / "later-rollback"
     later_rollback.mkdir()
@@ -3792,11 +3817,17 @@ def test_required_timer_rollback_restores_exact_link_intent_and_active_state(
     )
     systemd = FakeUserSystemd(unit_root, timer_states=configured)
     state_before = json.loads(json.dumps(systemd.states))
-    persistent_link = systemd._enablement_link("bureau-task-supply.timer", runtime=False)
+    persistent_link = systemd._enablement_link(
+        "bureau-task-supply.timer", runtime=False
+    )
     runtime_link = systemd._enablement_link("bureau-task-supply.timer", runtime=True)
 
     def link_preimage(path: Path) -> tuple[str, str | None]:
-        return ("symlink", os.readlink(path)) if path.is_symlink() else ("absent", None)
+        return (
+            ("symlink", os.readlink(path))
+            if path.is_symlink()
+            else ("absent", None)
+        )
 
     links_before = {
         persistent_link: link_preimage(persistent_link),
@@ -3827,8 +3858,13 @@ def test_required_timer_rollback_restores_exact_link_intent_and_active_state(
     assert systemd.states == state_before
     assert {path: link_preimage(path) for path in links_before} == links_before
     assert not any(command[0] in {"enable", "disable"} for command in systemd.commands)
-    preimage = json.loads(Path(caught.value.details["preimage_path"]).read_text(encoding="utf-8"))
-    assert {record["path"]: record["preimage_kind"] for record in preimage["enablement_links"]} == {
+    preimage = json.loads(
+        Path(caught.value.details["preimage_path"]).read_text(encoding="utf-8")
+    )
+    assert {
+        record["path"]: record["preimage_kind"]
+        for record in preimage["enablement_links"]
+    } == {
         str(persistent_link): links_before[persistent_link][0],
         str(runtime_link): links_before[runtime_link][0],
     }
@@ -3998,10 +4034,13 @@ def test_systemd_analyze_failure_restores_files_without_activation(
         )
 
     assert caught.value.code == "scheduler-convergence-rolled-back"
-    assert caught.value.details["cause"]["code"] == ("scheduler-candidate-systemd-verify-failed")
+    assert caught.value.details["cause"]["code"] == (
+        "scheduler-candidate-systemd-verify-failed"
+    )
     assert validation_commands[0][:3] == ["systemd-analyze", "--user", "verify"]
     assert not any(
-        command[0] in {"daemon-reload", "enable", "start"} for command in systemd.commands
+        command[0] in {"daemon-reload", "enable", "start"}
+        for command in systemd.commands
     )
     assert systemd.states == state_before
     for path, (content, mode) in original.items():
@@ -4040,9 +4079,12 @@ def test_candidate_cycle_deployment_drift_prevents_activation(tmp_path: Path) ->
             },
         )
 
-    assert caught.value.details["cause"]["code"] == ("scheduler-candidate-cycle-deployment-drift")
+    assert caught.value.details["cause"]["code"] == (
+        "scheduler-candidate-cycle-deployment-drift"
+    )
     assert not any(
-        command[0] in {"daemon-reload", "enable", "start"} for command in systemd.commands
+        command[0] in {"daemon-reload", "enable", "start"}
+        for command in systemd.commands
     )
     for name in refresh.RUNTIME_SCHEDULER_NAMES:
         assert not (unit_root / f"{name}.service").exists()
@@ -4810,7 +4852,9 @@ def test_distinct_intents_for_same_target_share_one_effect_attempt(tmp_path: Pat
         installer=installer,
         readback=readback,
     )
-    second_binding, second_resource_db = lease_for(tmp_path / "second-leases", second_intent)
+    second_binding, second_resource_db = lease_for(
+        tmp_path / "second-leases", second_intent
+    )
     second = refresh.apply_runtime_refresh(
         intent_path=second_path,
         lease_binding=second_binding,
@@ -4836,7 +4880,9 @@ def test_runtime_prefix_execution_context_preflight_binds_writable_namespace(
     prefix = tmp_path / "prefix"
     prefix.mkdir()
 
-    evidence = refresh.runtime_prefix_execution_context_preflight(prefix=prefix, now=NOW)
+    evidence = refresh.runtime_prefix_execution_context_preflight(
+        prefix=prefix, now=NOW
+    )
 
     refresh.verify_digest(evidence, "execution_context_sha256")
     assert evidence["kind"] == "bureau_runtime_refresh_execution_context_preflight"
@@ -5114,7 +5160,9 @@ def test_cached_success_requires_executor_bound_live_leases_before_consumption(
     store = authority_store_for_intent(intent)
     bound = refresh.bind_runtime_refresh_authority(store=store, intent=intent, now=NOW)
     no_effect_path = (
-        Path(intent["state_root"]) / "no-effect-results" / f"{intent['intent_sha256']}.json"
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
     )
     existing = refresh._write_attempt_result(
         no_effect_path,
@@ -5194,7 +5242,9 @@ def test_already_current_executor_drift_blocks_before_authority_binding(
     )
     lease_binding["task_id"] = intent["approval_task_id"]
     identities = iter([(first_unit, "3" * 32), (second_unit, "4" * 32)])
-    monkeypatch.setattr(refresh, "_current_systemd_execution_identity", lambda: next(identities))
+    monkeypatch.setattr(
+        refresh, "_current_systemd_execution_identity", lambda: next(identities)
+    )
     store = authority_store_for_intent(intent)
     before = store.task_spec(intent["approval_task_id"])
 
@@ -5213,14 +5263,18 @@ def test_already_current_executor_drift_blocks_before_authority_binding(
     assert caught.value.code == "runtime-executor-unit-drift"
     assert store.task_spec(intent["approval_task_id"]) == before
     no_effect_path = (
-        Path(intent["state_root"]) / "no-effect-results" / f"{intent['intent_sha256']}.json"
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
     )
     assert not no_effect_path.exists()
 
 
 def rewrite_executor_unit_lease_metadata(resource_db: Path, executor_unit: str) -> None:
     metadata = {"executor_unit": executor_unit}
-    metadata_json = json.dumps(metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    metadata_json = json.dumps(
+        metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
     digest = hashlib.sha256(metadata_json.encode("utf-8")).hexdigest()
     connection = sqlite3.connect(resource_db)
     connection.execute(
@@ -5269,7 +5323,9 @@ def test_already_current_revalidates_lease_metadata_immediately_before_binding(
     before = store.task_spec(intent["approval_task_id"])
 
     def observer(**_: Any) -> dict[str, Any]:
-        rewrite_executor_unit_lease_metadata(resource_db, "grabowski-task-other-a1.service")
+        rewrite_executor_unit_lease_metadata(
+            resource_db, "grabowski-task-other-a1.service"
+        )
         return live
 
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
@@ -5287,7 +5343,9 @@ def test_already_current_revalidates_lease_metadata_immediately_before_binding(
     assert caught.value.code == "lease-metadata-binding-mismatch"
     assert store.task_spec(intent["approval_task_id"]) == before
     no_effect_path = (
-        Path(intent["state_root"]) / "no-effect-results" / f"{intent['intent_sha256']}.json"
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
     )
     assert not no_effect_path.exists()
 
@@ -5311,7 +5369,9 @@ def test_candidate_revalidates_lease_metadata_after_observation_before_cas(
     before = store.task_spec(intent["approval_task_id"])
 
     def observer(**_: Any) -> dict[str, Any]:
-        rewrite_executor_unit_lease_metadata(resource_db, "grabowski-task-other-a1.service")
+        rewrite_executor_unit_lease_metadata(
+            resource_db, "grabowski-task-other-a1.service"
+        )
         return observed
 
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
@@ -5404,7 +5464,9 @@ def test_apply_executor_unit_drift_blocks_before_authority_cas(
     )
     lease_binding["task_id"] = intent["approval_task_id"]
     identities = iter([(first_unit, "f" * 32), (second_unit, "1" * 32)])
-    monkeypatch.setattr(refresh, "_current_systemd_execution_identity", lambda: next(identities))
+    monkeypatch.setattr(
+        refresh, "_current_systemd_execution_identity", lambda: next(identities)
+    )
     store = authority_store_for_intent(intent)
     before = store.task_spec(intent["approval_task_id"])
 
@@ -5466,7 +5528,9 @@ def test_apply_read_only_execution_context_does_not_bind_authority_or_start_atte
         installer_called = True
         raise AssertionError("installer must not run after failed preflight")
 
-    monkeypatch.setattr(refresh, "runtime_prefix_execution_context_preflight", reject_preflight)
+    monkeypatch.setattr(
+        refresh, "runtime_prefix_execution_context_preflight", reject_preflight
+    )
 
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.apply_runtime_refresh(
@@ -5493,15 +5557,18 @@ def test_apply_read_only_execution_context_does_not_bind_authority_or_start_atte
 def test_apply_binds_execution_context_preflight_into_attempt_and_result(
     tmp_path: Path,
 ) -> None:
-    _observed, _manifest, intent, _intent_path, _store, result, _resource_db = apply_successfully(
-        tmp_path
+    _observed, _manifest, intent, _intent_path, _store, result, _resource_db = (
+        apply_successfully(tmp_path)
     )
     evidence = result["execution_context_preflight"]
     refresh.verify_digest(evidence, "execution_context_sha256")
     assert evidence["writable"] is True
 
     started_path = (
-        Path(intent["state_root"]) / "attempts" / intent["target_sha256"] / "started.json"
+        Path(intent["state_root"])
+        / "attempts"
+        / intent["target_sha256"]
+        / "started.json"
     )
     started = refresh.read_json(started_path)
     refresh.verify_digest(started, "start_sha256")
@@ -5643,7 +5710,6 @@ def test_apply_already_current_target_drift_closes_without_effect_ledger(
     assert no_effect.is_file()
     assert refresh.read_json(no_effect)["result_sha256"] == result["result_sha256"]
 
-
 def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
     write_manifest(manifest_path, MAIN)
@@ -5737,7 +5803,9 @@ def test_already_current_no_effect_authority_can_closeout(tmp_path: Path) -> Non
     assert not (effect_attempt / "started.json").exists()
     assert not (effect_attempt / "result.json").exists()
     assert (
-        Path(intent["state_root"]) / "no-effect-results" / f"{intent['intent_sha256']}.json"
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
     ).is_file()
     release_test_leases(resource_db)
 
@@ -5854,7 +5922,9 @@ def test_no_run_closeout_rejects_cross_bound_acceptance_evidence_on_replay(
         evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
         evidence["runtime_result_sha256"] = "f" * 64
         evidence.pop("evidence_sha256")
-        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(evidence, "evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
 
     revise_authority(
         store,
@@ -5916,7 +5986,9 @@ def test_no_run_closeout_rejects_rewritten_acceptance_evidence_hash_on_replay(
         evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
         evidence[field] = ("e" if original == "f" * 64 else "f") * 64
         evidence.pop("evidence_sha256")
-        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(evidence, "evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
 
     revise_authority(
         store,
@@ -6018,7 +6090,9 @@ def test_no_run_closeout_rejects_missing_required_evidence_class_on_replay(
         evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
         evidence["available_evidence"].remove("state-store-integrity")
         evidence.pop("evidence_sha256")
-        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(evidence, "evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
 
     revise_authority(
         store,
@@ -6074,7 +6148,9 @@ def test_no_run_closeout_rejects_frozen_acceptance_contract_drift_on_replay(
                 "assertion": "A later frozen criterion must have its own typed evidence.",
                 "evidence_type": "object",
                 "verifier": "manual_observation",
-                "verifier_config": {"observation_scope": f"test:{task_id}:post-closeout-proof"},
+                "verifier_config": {
+                    "observation_scope": f"test:{task_id}:post-closeout-proof"
+                },
             }
         )
         authority = spec["metadata"]["runtime_refresh_authority"]
@@ -6190,7 +6266,9 @@ def test_no_run_closeout_rejects_unbound_acceptance_task_spec_on_replay(
         evidence = json.loads(json.dumps(runtime_closeout["acceptance_evidence"]))
         evidence["task_spec_sha256"] = "f" * 64
         evidence.pop("evidence_sha256")
-        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(evidence, "evidence_sha256")
+        runtime_closeout["acceptance_evidence"] = refresh.bind_digest(
+            evidence, "evidence_sha256"
+        )
 
     revise_authority(
         store,
@@ -6379,7 +6457,8 @@ def test_historical_readback_uses_release_bound_scheduler_semantics(
     tmp_path: Path,
 ) -> None:
     task_id = (
-        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-AGENT-COMPETITION-PUBLISH-20260818"
+        "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-"
+        "AGENT-COMPETITION-PUBLISH-20260818"
     )
     intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
     historical_scheduler_names = (
@@ -6735,7 +6814,9 @@ def test_no_run_closeout_rejects_historical_multi_use_of_single_use_authority(
     assert replay["closeout"] == incident["closeout"]
 
     def restore_incident_closeout(spec: dict[str, Any]) -> None:
-        spec["metadata"]["runtime_incident_closeout"] = json.loads(json.dumps(incident["closeout"]))
+        spec["metadata"]["runtime_incident_closeout"] = json.loads(
+            json.dumps(incident["closeout"])
+        )
 
     def tamper_incident_evidence(spec: dict[str, Any]) -> None:
         closeout = spec["metadata"]["runtime_incident_closeout"]
@@ -6800,7 +6881,10 @@ def test_no_run_closeout_rejects_historical_multi_use_of_single_use_authority(
             authority_store=store,
             readback=lambda **_: result["readback"],
         )
-    assert authority_drift.value.code == "authority-incident-closeout-authority-binding-invalid"
+    assert (
+        authority_drift.value.code
+        == "authority-incident-closeout-authority-binding-invalid"
+    )
 
     revise_authority(
         store,
@@ -6915,7 +6999,9 @@ def test_no_run_closeout_rejects_historical_multi_use_of_single_use_authority(
         },
         "start_sha256",
     )
-    refresh.create_only(third_attempt / "started.json", refresh.canonical_bytes(third_started))
+    refresh.create_only(
+        third_attempt / "started.json", refresh.canonical_bytes(third_started)
+    )
     refresh._write_attempt_result(
         third_attempt / "result.json",
         {
@@ -7043,7 +7129,9 @@ def test_incident_replay_rejects_removed_preexisting_provenance_receipt(
     after_incident = store.task_spec(task_id)
     assert after_incident is not None
     after_authority = after_incident["spec"]["metadata"]["runtime_refresh_authority"]
-    receipts, receipts_sha256 = refresh._runtime_incident_provenance_receipts(after_authority)
+    receipts, receipts_sha256 = refresh._runtime_incident_provenance_receipts(
+        after_authority
+    )
     assert receipts["consumption"] is not None
     assert receipts["target_binding_receipt"] is not None
     assert incident["closeout"]["provenance_receipts_sha256"] == receipts_sha256
@@ -7051,10 +7139,12 @@ def test_incident_replay_rejects_removed_preexisting_provenance_receipt(
     def remove_binding(spec: dict[str, Any]) -> None:
         authority = spec["metadata"]["runtime_refresh_authority"]
         authority.pop("target_binding_receipt", None)
-        _, rewritten_provenance_sha256 = refresh._runtime_incident_provenance_receipts(authority)
-        spec["metadata"]["runtime_incident_closeout"]["provenance_receipts_sha256"] = (
-            rewritten_provenance_sha256
+        _, rewritten_provenance_sha256 = refresh._runtime_incident_provenance_receipts(
+            authority
         )
+        spec["metadata"]["runtime_incident_closeout"][
+            "provenance_receipts_sha256"
+        ] = rewritten_provenance_sha256
 
     revise_authority(
         store,
@@ -7291,7 +7381,9 @@ else:
     }
     scheduler_calls: list[tuple[dict[str, Any], str]] = []
 
-    def scheduler_readback(evidence: dict[str, Any], *, expected_commit: str) -> dict[str, Any]:
+    def scheduler_readback(
+        evidence: dict[str, Any], *, expected_commit: str
+    ) -> dict[str, Any]:
         scheduler_calls.append((evidence, expected_commit))
         return {"kind": "live-scheduler-readback", "authoritative": True}
 
@@ -7395,7 +7487,9 @@ def scheduler_installer_approval(
     libexec_dir: Path,
     runtime_user_unit_dir: Path | None = None,
 ) -> Path:
-    bound_runtime_user_unit_dir = runtime_user_unit_dir or refresh.default_runtime_user_unit_dir()
+    bound_runtime_user_unit_dir = (
+        runtime_user_unit_dir or refresh.default_runtime_user_unit_dir()
+    )
     path = write_runtime_approval_intent(
         source,
         tmp_path,
@@ -7411,7 +7505,9 @@ def scheduler_installer_approval(
         libexec_dir=libexec_dir,
         runtime_user_unit_dir=bound_runtime_user_unit_dir,
     )
-    path.write_bytes(refresh.canonical_bytes(refresh.bind_digest(intent, "intent_sha256")))
+    path.write_bytes(
+        refresh.canonical_bytes(refresh.bind_digest(intent, "intent_sha256"))
+    )
     return path
 
 
@@ -7734,7 +7830,9 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
     assert result == 2
     error = json.loads(capsys.readouterr().err.strip().splitlines()[-1])["error"]
     assert error["code"] == "scheduler-convergence-rolled-back"
-    assert "injected durable receipt write failure" in error["details"]["cause"]["message"]
+    assert "injected durable receipt write failure" in error["details"]["cause"][
+        "message"
+    ]
     for path, (content, mode) in install_preimage.items():
         assert path.read_bytes() == content
         assert path.stat().st_mode & 0o777 == mode
@@ -7804,7 +7902,9 @@ def test_launcher_directory_fsync_failure_after_replace_restores_exact_preimage(
     real_replace = installer.os.replace
     real_fsync_directory = installer.fsync_directory
 
-    def fake_run(argv: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def fake_run(
+        argv: list[str], **_kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
         if argv[0] == "systemctl":
             return systemd(argv)
         if argv[:3] == ["systemd-analyze", "--user", "verify"]:
@@ -7909,13 +8009,15 @@ def test_scheduler_rollback_does_not_restore_unmutated_unleased_launchers(
         runtime_user_unit_dir=runtime_unit_root,
     )
     approval = json.loads(approval_path.read_text(encoding="utf-8"))
-    assert {f"path:{path}" for path in launcher_paths.values()}.isdisjoint(
-        approval["required_resource_keys"]
-    )
+    assert {
+        f"path:{path}" for path in launcher_paths.values()
+    }.isdisjoint(approval["required_resource_keys"])
     systemd = FakeUserSystemd(unit_root, runtime_unit_root=runtime_unit_root)
     state_before = json.loads(json.dumps(systemd.states))
 
-    def fake_run(argv: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def fake_run(
+        argv: list[str], **_kwargs: Any
+    ) -> subprocess.CompletedProcess[str]:
         if argv[0] == "systemctl":
             return systemd(argv)
         if argv[:3] == ["systemd-analyze", "--user", "verify"]:
@@ -8451,6 +8553,7 @@ def test_real_non_systemd_installer_supports_custom_layout(tmp_path: Path) -> No
     assert json.loads(upgraded_status.stdout)["deployed_source_commit"] == target_head
 
 
+
 def test_no_run_closeout_allows_one_authenticated_succeeded_run(tmp_path: Path) -> None:
     task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
     intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
@@ -8516,14 +8619,10 @@ def test_no_run_closeout_rejects_succeeded_run_with_reservation(tmp_path: Path) 
     release_test_leases(resource_db)
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.closeout_runtime_refresh_authority(
-            state_root=Path(intent["state_root"]),
-            approval_task_id=task_id,
-            target_sha256=intent["target_sha256"],
-            intent_sha256=intent["intent_sha256"],
-            result_sha256=result["result_sha256"],
-            resource_db=resource_db,
-            now=NOW + timedelta(minutes=20),
-            authority_store=store,
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
             readback=lambda **_: result["readback"],
         )
     assert caught.value.code == "authority-closeout-run-reservations-present"
@@ -8541,9 +8640,9 @@ def test_no_run_closeout_rejects_succeeded_run_with_reservation(tmp_path: Path) 
             "authority-closeout-run-receipt-acceptance-incomplete",
         ),
         (
-            lambda r: r["evidence"]["terminal-run-proof"]["_source_authentication"].__setitem__(
-                "plan_sha256", "c" * 64
-            ),
+            lambda r: r["evidence"]["terminal-run-proof"][
+                "_source_authentication"
+            ].__setitem__("plan_sha256", "c" * 64),
             "authority-closeout-run-receipt-authentication-invalid",
         ),
     ],
@@ -8557,14 +8656,10 @@ def test_no_run_closeout_rejects_bad_succeeded_run_receipt(
     release_test_leases(resource_db)
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.closeout_runtime_refresh_authority(
-            state_root=Path(intent["state_root"]),
-            approval_task_id=task_id,
-            target_sha256=intent["target_sha256"],
-            intent_sha256=intent["intent_sha256"],
-            result_sha256=result["result_sha256"],
-            resource_db=resource_db,
-            now=NOW + timedelta(minutes=20),
-            authority_store=store,
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
             readback=lambda **_: result["readback"],
         )
     assert caught.value.code == code
@@ -8578,17 +8673,14 @@ def test_no_run_closeout_rejects_multiple_runs(tmp_path: Path) -> None:
     release_test_leases(resource_db)
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.closeout_runtime_refresh_authority(
-            state_root=Path(intent["state_root"]),
-            approval_task_id=task_id,
-            target_sha256=intent["target_sha256"],
-            intent_sha256=intent["intent_sha256"],
-            result_sha256=result["result_sha256"],
-            resource_db=resource_db,
-            now=NOW + timedelta(minutes=20),
-            authority_store=store,
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
             readback=lambda **_: result["readback"],
         )
     assert caught.value.code == "authority-closeout-run-count-invalid"
+
 
 
 def test_no_run_closeout_rejects_missing_succeeded_run_receipt(tmp_path: Path) -> None:
@@ -8600,14 +8692,10 @@ def test_no_run_closeout_rejects_missing_succeeded_run_receipt(tmp_path: Path) -
     release_test_leases(resource_db)
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.closeout_runtime_refresh_authority(
-            state_root=Path(intent["state_root"]),
-            approval_task_id=task_id,
-            target_sha256=intent["target_sha256"],
-            intent_sha256=intent["intent_sha256"],
-            result_sha256=result["result_sha256"],
-            resource_db=resource_db,
-            now=NOW + timedelta(minutes=20),
-            authority_store=store,
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
             readback=lambda **_: result["readback"],
         )
     assert caught.value.code == "authority-closeout-run-receipt-missing"
@@ -8627,18 +8715,13 @@ def test_no_run_closeout_rejects_succeeded_run_receipt_digest_tamper(tmp_path: P
     release_test_leases(resource_db)
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.closeout_runtime_refresh_authority(
-            state_root=Path(intent["state_root"]),
-            approval_task_id=task_id,
-            target_sha256=intent["target_sha256"],
-            intent_sha256=intent["intent_sha256"],
-            result_sha256=result["result_sha256"],
-            resource_db=resource_db,
-            now=NOW + timedelta(minutes=20),
-            authority_store=store,
+            state_root=Path(intent["state_root"]), approval_task_id=task_id,
+            target_sha256=intent["target_sha256"], intent_sha256=intent["intent_sha256"],
+            result_sha256=result["result_sha256"], resource_db=resource_db,
+            now=NOW + timedelta(minutes=20), authority_store=store,
             readback=lambda **_: result["readback"],
         )
     assert caught.value.code == "authority-closeout-run-receipt-digest-mismatch"
-
 
 def accepted_history_revision(repository: Path) -> str:
     event_name = os.environ.get("GITHUB_EVENT_NAME")
@@ -8658,7 +8741,11 @@ def accepted_history_revision(repository: Path) -> str:
         base = pull_request.get("base") if isinstance(pull_request, dict) else None
     else:
         merge_group = event.get("merge_group")
-        base = {"sha": merge_group.get("base_sha")} if isinstance(merge_group, dict) else None
+        base = (
+            {"sha": merge_group.get("base_sha")}
+            if isinstance(merge_group, dict)
+            else None
+        )
     candidate = base.get("sha") if isinstance(base, dict) else None
     if not (
         isinstance(candidate, str)
@@ -8778,8 +8865,12 @@ def validate_source_precondition_authority_registry(registry_root: Path) -> set[
             continue
         observed.add(path.name)
         assert authority["mode"] == refresh.RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
-        contract = refresh._validated_no_run_acceptance_contract(spec=spec, authority=authority)
-        assert set(contract["criteria"]) == {criterion["id"] for criterion in spec["acceptance"]}
+        contract = refresh._validated_no_run_acceptance_contract(
+            spec=spec, authority=authority
+        )
+        assert set(contract["criteria"]) == {
+            criterion["id"] for criterion in spec["acceptance"]
+        }
         assert any(
             "source-precondition" in item["required_evidence"]
             for item in contract["criteria"].values()
@@ -8813,9 +8904,8 @@ def source_precondition_authority_fixture(tmp_path: Path) -> tuple[Path, str]:
     return target, source_path.name
 
 
-def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts() -> (
-    None
-):
+def test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts(
+) -> None:
     registry_root = Path(__file__).parents[1] / "registry/tasks"
     observed = validate_source_precondition_authority_registry(registry_root)
     assert observed
@@ -8846,7 +8936,8 @@ def test_source_precondition_history_skips_non_object_json_blobs(
     git(registry_root, "commit", "-m", "add historical non-object task json")
 
     historical_path.write_text(
-        json.dumps({"id": "BUREAU-TEST-NONOBJECT-HISTORY", "metadata": {}}, indent=2) + "\n",
+        json.dumps({"id": "BUREAU-TEST-NONOBJECT-HISTORY", "metadata": {}}, indent=2)
+        + "\n",
         encoding="utf-8",
     )
     git(registry_root, "add", historical_path.name)
@@ -9100,6 +9191,7 @@ def test_registry_source_precondition_authorities_reject_malformed_addition(
         validate_source_precondition_authority_registry(registry_root)
 
 
+
 def test_protected_publication_adoption_proof_requires_exact_seed_receipt() -> None:
     from bureau import task_specs as task_specs_module
 
@@ -9225,7 +9317,8 @@ def test_registry_resource_intake_proof_binds_resource_and_candidate(
     resources = tmp_path / "registry" / "resources"
     resources.mkdir(parents=True)
     (resources / "repo.json").write_text(
-        json.dumps({"schema_version": 1, "id": "repo", "type": "namespace", "parent": None}) + "\n",
+        json.dumps({"schema_version": 1, "id": "repo", "type": "namespace", "parent": None})
+        + "\n",
         encoding="utf-8",
     )
     expected = {
@@ -9257,7 +9350,9 @@ def test_registry_resource_intake_proof_binds_resource_and_candidate(
             "event_id": 42,
             "decision": "promote",
             "target": {
-                "claims": [{"resource": expected["id"], "mode": "write", "isolation": "worktree"}]
+                "claims": [
+                    {"resource": expected["id"], "mode": "write", "isolation": "worktree"}
+                ]
             },
             "missing_fields": [],
         },
@@ -9293,7 +9388,8 @@ def test_registry_special_acceptance_criteria_require_dedicated_proof_classes() 
         spec = json.loads((root / f"{task_id}.json").read_text(encoding="utf-8"))
         metadata = spec["metadata"]
         assert (
-            metadata["protected_publication_adoption"]["repository"] == refresh.DEFAULT_REPOSITORY
+            metadata["protected_publication_adoption"]["repository"]
+            == refresh.DEFAULT_REPOSITORY
         )
         mapping = metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"]["criteria"]
         assert mapping["protected-publication-and-missing-only-adoption"]["required_evidence"] == [
@@ -9313,7 +9409,6 @@ def test_registry_special_acceptance_criteria_require_dedicated_proof_classes() 
     hall_mapping = hall_metadata["runtime_refresh_authority"]["no_run_closeout_acceptance"][
         "criteria"
     ]
-    assert (
-        "registry-resource-intake"
-        in hall_mapping["hall-of-memory-resource-visible"]["required_evidence"]
-    )
+    assert "registry-resource-intake" in hall_mapping["hall-of-memory-resource-visible"][
+        "required_evidence"
+    ]

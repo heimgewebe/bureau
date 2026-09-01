@@ -2855,6 +2855,39 @@ def _validated_post_publication_activation_contract(
     }
 
 
+def _validate_protected_publication_adoption_bootstrap(
+    *, historical_spec: dict[str, Any], publication_pr: int
+) -> None:
+    metadata = historical_spec.get("metadata")
+    if not isinstance(metadata, dict):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical protected-publication TaskSpec metadata is invalid",
+        )
+    activation = _validated_post_publication_activation_contract(metadata)
+    if activation is None:
+        return
+    authority = metadata.get("runtime_refresh_authority")
+    declared_publication_pr = activation["publication_pr"]
+    if (
+        historical_spec.get("state") != "planned"
+        or metadata.get("protected_publication_adoption") is not None
+        or metadata.get("runtime_closeout") is not None
+        or not isinstance(authority, dict)
+        or authority.get("target_binding_receipt") is not None
+        or authority.get("consumption") is not None
+        or (
+            declared_publication_pr is not None
+            and declared_publication_pr != publication_pr
+        )
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical protected-publication TaskSpec is not the declared planned "
+            "unactivated bootstrap",
+        )
+
+
 def _validate_protected_publication_activation_receipt(
     *,
     store: Any,
@@ -5852,6 +5885,10 @@ def _prove_protected_publication_adoption(
             "authority-closeout-protected-publication-adoption-unproven",
             "historical TaskSpec did not declare protected missing-only adoption",
         )
+
+    _validate_protected_publication_adoption_bootstrap(
+        historical_spec=historical_spec, publication_pr=publication_pr
+    )
 
     from . import task_specs
 

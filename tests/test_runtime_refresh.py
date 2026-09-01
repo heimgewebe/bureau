@@ -404,13 +404,14 @@ def protected_publication_activation_spec(
     if activation_publication_pr is not None:
         activation["publication_pr"] = activation_publication_pr
     spec["metadata"]["post_publication_activation"] = activation
-    spec["metadata"]["protected_publication_adoption"] = {
-        "schema_version": 1,
-        "repository": refresh.DEFAULT_REPOSITORY,
-        "publication_pr": 2222,
-        "publication_merge_commit": "4" * 40,
-        "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
-    }
+    if state != "planned":
+        spec["metadata"]["protected_publication_adoption"] = {
+            "schema_version": 1,
+            "repository": refresh.DEFAULT_REPOSITORY,
+            "publication_pr": 2222,
+            "publication_merge_commit": "4" * 40,
+            "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+        }
     spec["acceptance"].append(
         {
             "id": "protected-publication-and-missing-only-adoption",
@@ -545,6 +546,51 @@ def test_legacy_runtime_authority_preflight_does_not_require_publication_activat
         store=store, approval_task_id=task_id, target_sha256="a" * 64
     )
     assert observed["task_id"] == task_id
+
+
+def test_protected_publication_activation_requires_planned_unactivated_bootstrap() -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-BOOTSTRAP"
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    refresh._validate_protected_publication_adoption_bootstrap(
+        historical_spec=planned, publication_pr=2222
+    )
+
+    ready = json.loads(json.dumps(planned))
+    ready["state"] = "ready"
+    with pytest.raises(refresh.RuntimeRefreshError) as ready_error:
+        refresh._validate_protected_publication_adoption_bootstrap(
+            historical_spec=ready, publication_pr=2222
+        )
+    assert (
+        ready_error.value.code
+        == "authority-closeout-protected-publication-adoption-unproven"
+    )
+
+    evidenced = json.loads(json.dumps(planned))
+    evidenced["metadata"]["protected_publication_adoption"] = {
+        "schema_version": 1,
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "publication_pr": 2222,
+        "publication_merge_commit": "4" * 40,
+        "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+    }
+    with pytest.raises(refresh.RuntimeRefreshError) as evidence_error:
+        refresh._validate_protected_publication_adoption_bootstrap(
+            historical_spec=evidenced, publication_pr=2222
+        )
+    assert (
+        evidence_error.value.code
+        == "authority-closeout-protected-publication-adoption-unproven"
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as pr_error:
+        refresh._validate_protected_publication_adoption_bootstrap(
+            historical_spec=planned, publication_pr=2223
+        )
+    assert (
+        pr_error.value.code
+        == "authority-closeout-protected-publication-adoption-unproven"
+    )
 
 
 def test_protected_publication_activation_requires_exact_target_main(

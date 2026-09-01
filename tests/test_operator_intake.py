@@ -747,6 +747,21 @@ def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
         "allowed_fields": candidate_record_request_contract()["allowed_fields"],
     }
 
+    with pytest.raises(OperatorIntakeError) as record_missing_error:
+        candidate_record_request(None, store, {"schema_version": 1})
+
+    assert record_missing_error.value.code == "request-fields-missing"
+    assert record_missing_error.value.retryable is False
+    assert record_missing_error.value.effect_started is False
+    assert record_missing_error.value.details == {
+        "missing_fields": [
+            "desired_outcome",
+            "idempotency_key",
+            "source_kind",
+            "title",
+        ]
+    }
+
     with pytest.raises(OperatorIntakeError) as operation_error:
         candidate_record_request(
             None,

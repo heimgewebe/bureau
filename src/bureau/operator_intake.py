@@ -821,6 +821,13 @@ def candidate_record_request(
                 "allowed_fields": contract["allowed_fields"],
             },
         )
+    missing = sorted(set(contract["required_fields"]) - set(legacy_request))
+    if missing:
+        raise OperatorIntakeError(
+            "request-fields-missing",
+            "candidate request is missing required fields",
+            details={"missing_fields": missing},
+        )
     payload = {key: value for key, value in legacy_request.items() if key != "schema_version"}
     return candidate_record(registry, store, **payload)
 

@@ -149,6 +149,11 @@ def get_current(connection: sqlite3.Connection, task_id: str) -> dict[str, Any] 
     return {**revision, "updated_at": str(pointer["updated_at"])}
 
 
+def get_revision(connection: sqlite3.Connection, task_id: str, revision: int) -> dict[str, Any]:
+    validate_schema(connection)
+    return _validated_row(_revision_row(connection, task_id, revision))
+
+
 def get_by_digest(
     connection: sqlite3.Connection, task_id: str, spec_sha256: str
 ) -> dict[str, Any] | None:

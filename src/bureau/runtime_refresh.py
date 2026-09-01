@@ -2883,7 +2883,7 @@ def _validated_post_publication_activation_contract(
 
 def _historical_protected_publication_bootstrap(
     *, store: Any, approval_task_id: str
-) -> tuple[dict[str, Any], dict[str, Any]] | None:
+) -> tuple[dict[str, Any], dict[str, Any] | None] | None:
     historical = _read_authority_task_revision(store, approval_task_id, 1)
     historical_spec = historical.get("spec")
     if not isinstance(historical_spec, dict):
@@ -2899,6 +2899,9 @@ def _historical_protected_publication_bootstrap(
         "normal-protected-pull-request"
     ):
         return None
+    activation = _validated_post_publication_activation_contract(metadata)
+    if activation is None:
+        return historical, None
     relative = _runtime_authority_task_path(approval_task_id).as_posix()
     if (
         publication_path.get("state_store_transition")
@@ -2909,12 +2912,6 @@ def _historical_protected_publication_bootstrap(
         raise RuntimeRefreshError(
             "authority-closeout-protected-publication-adoption-unproven",
             "historical TaskSpec protected-publication bootstrap contract is invalid",
-        )
-    activation = _validated_post_publication_activation_contract(metadata)
-    if activation is None:
-        raise RuntimeRefreshError(
-            "authority-closeout-protected-publication-adoption-unproven",
-            "historical protected-publication TaskSpec did not declare post-publication activation",
         )
     return historical, activation
 
@@ -2930,10 +2927,7 @@ def _validate_protected_publication_adoption_bootstrap(
         )
     activation = _validated_post_publication_activation_contract(metadata)
     if activation is None:
-        raise RuntimeRefreshError(
-            "authority-closeout-protected-publication-adoption-unproven",
-            "historical protected-publication TaskSpec did not declare post-publication activation",
-        )
+        return
     authority = metadata.get("runtime_refresh_authority")
     declared_publication_pr = activation["publication_pr"]
     if (
@@ -3077,6 +3071,13 @@ def _validate_pre_effect_protected_publication_activation(
             )
         return
     historical, historical_activation = historical_bootstrap
+    if historical_activation is None:
+        if activation is not None:
+            raise RuntimeRefreshError(
+                "authority-preflight-protected-publication-activation-invalid",
+                "current TaskSpec claims protected activation absent from the immutable bootstrap",
+            )
+        return
     if activation is None or activation != historical_activation:
         raise RuntimeRefreshError(
             "authority-preflight-protected-publication-activation-invalid",

@@ -799,10 +799,43 @@ def test_protected_publication_activation_requires_marker_in_historical_bootstra
             target_sha256="a" * 64,
             target_main_commit=MAIN,
         )
-    assert (
-        raised.value.code
-        == "authority-closeout-protected-publication-adoption-unproven"
+    assert raised.value.code == "authority-preflight-protected-publication-activation-invalid"
+
+
+def test_legacy_protected_publication_authority_without_activation_marker_stays_valid(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-LEGACY-COMPAT"
+    state_root = (tmp_path / "legacy-protected").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    legacy = runtime_authority_spec(task_id)
+    legacy["metadata"]["publication_path"] = {
+        "kind": "normal-protected-pull-request",
+        "scope": f"exactly registry/tasks/{task_id}.json",
+        "state_store_transition": "seed-missing-preserve-state-store",
+    }
+    store.put_task_spec(
+        legacy,
+        idempotency_key=f"legacy-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
     )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: pytest.fail(
+            "legacy protected authority must not enter the new activation gate"
+        ),
+    )
+
+    result = refresh.validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=task_id,
+        target_sha256="a" * 64,
+    )
+
+    assert result["task_id"] == task_id
+    assert result["state"] == "ready"
 
 
 def test_protected_publication_activation_rejects_current_marker_removal_from_history(

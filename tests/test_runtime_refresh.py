@@ -5394,6 +5394,12 @@ def test_cached_success_requires_executor_bound_live_leases_before_consumption(
     _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
     store = authority_store_for_intent(intent)
     bound = refresh.bind_runtime_refresh_authority(store=store, intent=intent, now=NOW)
+    execution_context = refresh.runtime_prefix_execution_context_preflight(
+        prefix=Path(intent["prefix"]),
+        now=NOW,
+        require_grabowski_task_executor=True,
+        expected_grabowski_task_unit=TEST_EXECUTOR_UNIT,
+    )
     no_effect_path = (
         Path(intent["state_root"])
         / "no-effect-results"
@@ -5411,6 +5417,7 @@ def test_cached_success_requires_executor_bound_live_leases_before_consumption(
             "authority_task_spec": bound,
             "finished_at": refresh.isoformat(NOW),
             "effect_started": False,
+            "execution_context_preflight": execution_context,
         },
     )
     expected_executor = "grabowski-task-target-a1.service"
@@ -5444,6 +5451,123 @@ def test_cached_success_requires_executor_bound_live_leases_before_consumption(
     authority = current["spec"]["metadata"]["runtime_refresh_authority"]
     assert authority.get("consumption") is None
     assert refresh.read_json(no_effect_path)["result_sha256"] == existing["result_sha256"]
+
+
+def test_cached_unconsumed_no_effect_without_execution_context_cannot_consume_authority(
+    tmp_path: Path,
+) -> None:
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    store = authority_store_for_intent(intent)
+    bound = refresh.bind_runtime_refresh_authority(store=store, intent=intent, now=NOW)
+    no_effect_path = (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    existing = refresh._write_attempt_result(
+        no_effect_path,
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "already_current",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound,
+            "finished_at": refresh.isoformat(NOW),
+            "effect_started": False,
+        },
+    )
+    lease_binding, resource_db = lease_for(tmp_path / "legacy-no-effect-leases", intent)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.apply_runtime_refresh(
+            intent_path=intent_path,
+            lease_binding=lease_binding,
+            manifest_path=manifest_path,
+            state_root=Path(intent["state_root"]),
+            resource_db=resource_db,
+            now=NOW,
+            authority_store=store,
+        )
+
+    assert caught.value.code == "authority-consumption-execution-context-missing"
+    current = store.task_spec(intent["approval_task_id"])
+    assert current is not None
+    authority = current["spec"]["metadata"]["runtime_refresh_authority"]
+    assert authority.get("consumption") is None
+    assert refresh.read_json(no_effect_path)["result_sha256"] == existing["result_sha256"]
+
+
+def test_consumed_legacy_no_effect_without_execution_context_replays_idempotently(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    store = authority_store_for_intent(intent)
+    bound = refresh.bind_runtime_refresh_authority(store=store, intent=intent, now=NOW)
+    no_effect_path = (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    existing = refresh._write_attempt_result(
+        no_effect_path,
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "already_current",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound,
+            "finished_at": refresh.isoformat(NOW),
+            "effect_started": False,
+        },
+    )
+    expected = refresh._intent_authority_record(intent)
+    consumption = {
+        "schema_version": refresh.RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": refresh.RUNTIME_AUTHORITY_CONSUMPTION_KIND,
+        "status": "consumed",
+        "task_id": expected["task_id"],
+        "authority_revision": expected["revision"],
+        "authority_spec_sha256": expected["spec_sha256"],
+        "target_sha256": intent["target_sha256"],
+        "intent_sha256": intent["intent_sha256"],
+        "result_sha256": existing["result_sha256"],
+        "consumed_at": refresh.isoformat(NOW),
+    }
+    revise_authority(
+        store,
+        intent["approval_task_id"],
+        lambda spec: spec["metadata"]["runtime_refresh_authority"].__setitem__(
+            "consumption", consumption
+        ),
+        key="legacy-no-effect-consumed",
+    )
+    lease_binding, resource_db = lease_for(tmp_path / "consumed-legacy-leases", intent)
+    release_test_leases(resource_db)
+    monkeypatch.setattr(
+        refresh,
+        "_current_systemd_execution_identity",
+        lambda: pytest.fail("consumed legacy replay must not require an executor"),
+    )
+
+    replay = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=lease_binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW + timedelta(seconds=1),
+        authority_store=store,
+        observer=lambda **_: pytest.fail("consumed legacy replay must not re-observe"),
+        source_preparer=lambda **_: pytest.fail("consumed legacy replay must not prepare source"),
+        installer=lambda **_: pytest.fail("consumed legacy replay must not install"),
+    )
+
+    assert replay["result_sha256"] == existing["result_sha256"]
+    assert replay["reused"] is True
 
 
 def test_already_current_executor_drift_blocks_before_authority_binding(
@@ -5984,6 +6108,18 @@ def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) ->
     assert result["effect_started"] is False
     assert result["scheduler"] == scheduler
     assert result["manifest_sha256"] == live["deployed_manifest_sha256"]
+    execution_context = result["execution_context_preflight"]
+    assert execution_context["kind"] == "bureau_runtime_refresh_execution_context_preflight"
+    assert execution_context["systemd_unit"] == TEST_EXECUTOR_UNIT
+    assert execution_context["expected_grabowski_task_unit"] == TEST_EXECUTOR_UNIT
+    assert execution_context["executor_matches_expected_unit"] is True
+    assert execution_context["writable"] is True
+    no_effect = (
+        Path(intent["state_root"])
+        / "no-effect-results"
+        / f"{intent['intent_sha256']}.json"
+    )
+    assert refresh.read_json(no_effect)["execution_context_preflight"] == execution_context
 
 
 def test_already_current_no_effect_authority_can_closeout(tmp_path: Path) -> None:

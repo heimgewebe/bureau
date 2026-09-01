@@ -38,7 +38,6 @@
     },
     "reused_existing_tasks": [
       "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
       "OPERATOR-INTEGRATION-LOOP-V1-T004"
     ],
     "new_task_count": 10,
@@ -95,6 +94,18 @@
     },
     "additional_registered_tasks": [
       "OPERATOR-MACHINE-READABILITY-V1-T017"
-    ]
+    ],
+    "historical_stopped_experiments": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T047"
+    ],
+    "t047_empirical_stop_reconciliation_20260901": {
+      "decision": "Do not require or reuse the cancelled T047 product surface. Preserve its STOP result as historical evidence while the machine-readability initiative continues through structural snapshot and direct end-to-end proofs.",
+      "grabowski_pr": 981,
+      "pilot_promotion": "stop",
+      "does_not_establish": [
+        "completion of T002 or T010",
+        "behavioral conformance authority"
+      ]
+    }
   }
 }

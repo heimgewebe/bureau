@@ -62,7 +62,6 @@
     "OPERATOR-MACHINE-READABILITY-V1-T004",
     "OPERATOR-MACHINE-READABILITY-V1-T005",
     "OPERATOR-INTEGRATION-LOOP-V1-T004",
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
     "OPERATOR-MACHINE-READABILITY-V1-T007",
     "OPERATOR-MACHINE-READABILITY-V1-T008",
     "OPERATOR-MACHINE-READABILITY-V1-T011"
@@ -102,8 +101,7 @@
     "observed_at": "2026-07-13T15:00:00Z",
     "risk": "A well-designed contract has no operational value if fresh ChatGPT clients do not discover or obey it consistently.",
     "reuses_existing_tasks": [
-      "OPERATOR-INTEGRATION-LOOP-V1-T004",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T047"
+      "OPERATOR-INTEGRATION-LOOP-V1-T004"
     ],
     "does_not_establish": [
       "general_agent_reliability",
@@ -128,6 +126,20 @@
         "merge or deployment authority",
         "verification authority",
         "safe mutation of terminal historical tasks"
+      ]
+    },
+    "t047_empirical_stop_reconciliation_20260901": {
+      "decision": "Remove T047 as a formal dependency and reusable product surface. T010 tests fresh-session operator-entry consumption directly from bounded source/tool/receipt evidence and does not require the cancelled client-behavior projection.",
+      "evidence": {
+        "t047_state": "cancelled",
+        "grabowski_pr": 981,
+        "pilot_promotion": "stop",
+        "actionable_incremental_findings": 0
+      },
+      "does_not_establish": [
+        "that T010 is ready before its remaining dependencies are verified",
+        "that T010 may infer hidden model intent or comprehension",
+        "a replacement behavior-evidence runtime contract"
       ]
     }
   }

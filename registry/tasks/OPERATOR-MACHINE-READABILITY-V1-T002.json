@@ -52,7 +52,7 @@
     },
     {
       "id": "behavior-boundary",
-      "assertion": "The surface does not expose or imply a universal client_compliant result, model comprehension, hidden intent or correct future behavior; those remain separate from structural snapshot compatibility and from GRABOWSKI-OPERATOR-SURFACE-V1-T047 behavior evidence."
+      "assertion": "The surface does not expose or imply a universal client_compliant result, model comprehension, hidden intent or correct future behavior; those remain separate from structural snapshot compatibility. The cancelled T047 experiment supplies no behavior-evidence runtime contract."
     }
   ],
   "metadata": {
@@ -60,8 +60,7 @@
     "observed_at": "2026-07-13T15:00:00Z",
     "observation": "grabowski_contract_drift reported connector_snapshot_observable=false and structural client snapshot compatibility could not be determined.",
     "related_existing_tasks": [
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T047"
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T021"
     ],
     "does_not_establish": [
       "current_connector_noncompliance",
@@ -78,6 +77,18 @@
       "runtime_release_id": "29abfc87a9a4-srcset38a78c585776-locke6664d600b6c-contract2ada01660eb3",
       "runtime_tool_names_sha256": "f80a4cbd82ec894b4fe0f6256fe634f998334f535903b4bc6c4f673b1e864670",
       "interpretation": "This is additional evidence for T002 drift/reconnection scope, not a failure of T017 fresh-session adoption and not a reason to create a duplicate task."
+    },
+    "historical_related_experiments": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T047"
+    ],
+    "t047_empirical_stop_reconciliation_20260901": {
+      "decision": "Treat T047 only as historical negative evidence. T002 remains about connector snapshot identity and structural compatibility, not behavioral conformance.",
+      "grabowski_pr": 981,
+      "pilot_promotion": "stop",
+      "does_not_establish": [
+        "observed behavioral conformance",
+        "a client_behavior_evidence runtime surface"
+      ]
     }
   }
 }

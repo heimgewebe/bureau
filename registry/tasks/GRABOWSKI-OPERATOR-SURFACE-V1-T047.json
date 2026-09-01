@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Measure rule-bound client behavior without claiming compliance",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Add evidence-bound observability for externally visible agent behavior under the Agent-facing Contract while preserving the distinction between server instruction integrity, connector snapshot freshness, observed tool-use conformance and unobservable model comprehension or intent.",
   "priority": {
     "lane": "later",
@@ -83,6 +83,58 @@
       "individual_tool_correctness",
       "future_action_authority",
       "automatic_enforcement_or_sanction"
-    ]
+    ],
+    "trajectory_shadow_closeout_20260901": {
+      "status": "empirical_stop",
+      "closed_at": "2026-09-01",
+      "decision": "Cancel the planned T047 productization path. The merged read-only trajectory-shadow pilot found no promotion-grade actionable incremental information beyond existing Grabowski evidence, so the planned client_behavior_evidence projection and any online/advisory recovery path are intentionally not built.",
+      "evidence": {
+        "grabowski_pr": 981,
+        "grabowski_merge_commit": "ff28041098c4d0e7bc93fba94549810aa336beea",
+        "pilot_report": "experimental/trajectory_shadow/pilot_report_2026-08-28.json",
+        "pilot_report_kind": "experimental_trajectory_shadow_pilot_report",
+        "pilot_decision": {
+          "promotion": "stop",
+          "online_shadow": false,
+          "trajectory_evidence_v1": false
+        },
+        "cohort": {
+          "analyzed_runs": 31,
+          "baseline_success": 10,
+          "baseline_blocked": 4,
+          "baseline_unknown": 17,
+          "exact_session_bindings": 73,
+          "normalized_events": 2393
+        },
+        "incremental_information": {
+          "high_confidence_findings": 0,
+          "actionable_items": 0,
+          "actionable_runs": 0,
+          "recoverable_cases": 0,
+          "existing_recovery_action_earlier_opportunities": 0,
+          "evidence_supported_runtime_seconds_saved": 0,
+          "evidence_supported_tool_actions_saved": 0
+        },
+        "revalidated_on_grabowski_origin_main": "c7989cd9c4128278c30ce31f565ff88ae7f65af3",
+        "revalidation_tests": "tests/test_trajectory_shadow.py + tests/test_trajectory_shadow_wrapper_options.py: 15 passed, 17 subtests passed"
+      },
+      "acceptance_status": {
+        "status": "not_satisfied_by_design",
+        "reason": "T047 acceptance requires a versioned runtime behavior-evidence projection and live proof. The empirical precondition for building that machinery failed, so claiming verification would be false."
+      },
+      "reopen_only_if": [
+        "a materially more failure-rich, exactly attributable real cohort exists",
+        "trajectory detectors demonstrate externally validated actionable incremental information beyond the existing Grabowski baseline",
+        "an existing bounded recovery action can be shown to improve timing or outcome without widening authority"
+      ],
+      "does_not_establish": [
+        "that trajectory evidence is universally useless",
+        "that T047 acceptance criteria were satisfied",
+        "a public trajectory_evidence_v1 or client_behavior_evidence contract",
+        "online shadow analysis",
+        "advisory or automatic recovery authority",
+        "permission to collect prompts, chain of thought, file contents, credentials or raw tool outputs"
+      ]
+    }
   }
 }

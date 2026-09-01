@@ -112,6 +112,27 @@
         "merge or deployment authority",
         "completion of other initiative tasks"
       ]
+    },
+    "t047_trajectory_shadow_closeout_20260901": {
+      "task": "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
+      "from_state": "planned",
+      "to_state": "cancelled",
+      "reason": "The T047-adjacent trajectory-shadow experiment was implemented and merged in Grabowski PR #981, then stopped at its empirical usefulness gate: 31 analyzed runs produced zero promotion-grade actionable incremental findings and zero earlier bounded recovery opportunities. Do not build the planned behavior-evidence product surface without new evidence.",
+      "evidence": {
+        "grabowski_pr": 981,
+        "merge_commit": "ff28041098c4d0e7bc93fba94549810aa336beea",
+        "pilot_report": "experimental/trajectory_shadow/pilot_report_2026-08-28.json",
+        "analyzed_runs": 31,
+        "actionable_incremental_findings": 0,
+        "recoverable_cases": 0,
+        "promotion": "stop"
+      },
+      "does_not_establish": [
+        "completion of the original T047 acceptance contract",
+        "trajectory evidence is permanently useless",
+        "online shadow, advisory recovery or automatic recovery authority",
+        "completion of other GRABOWSKI-OPERATOR-SURFACE-V1 tasks"
+      ]
     }
   },
   "parallelism": {

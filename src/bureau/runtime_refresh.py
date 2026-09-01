@@ -111,6 +111,9 @@ RUNTIME_AUTHORITY_SUPPORTED_MODES = frozenset(
 RUNTIME_AUTHORITY_TARGET_BINDING = "candidate.target_sha256"
 RUNTIME_AUTHORITY_ALLOWED_STATES = ("ready", "active")
 RUNTIME_AUTHORITY_BINDING_KIND = "bureau_runtime_refresh_authority_target_binding"
+RUNTIME_AUTHORITY_POST_PUBLICATION_ACTIVATION_LEGACY_CUTOFF = datetime(
+    2026, 9, 1, 6, 19, 42, tzinfo=timezone.utc
+)
 RUNTIME_AUTHORITY_CONSUMPTION_KIND = "bureau_runtime_refresh_authority_consumption"
 RUNTIME_AUTHORITY_CLOSEOUT_KIND = "bureau_runtime_refresh_no_run_closeout"
 RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND = "bureau_runtime_refresh_multi_use_incident_closeout"
@@ -2901,6 +2904,29 @@ def _historical_protected_publication_bootstrap(
         return None
     activation = _validated_post_publication_activation_contract(metadata)
     if activation is None:
+        created_at = historical.get("created_at")
+        try:
+            created_at_time = parse_time(created_at) if isinstance(created_at, str) else None
+        except (TypeError, ValueError):
+            created_at_time = None
+        if (
+            created_at_time is None
+            or created_at_time
+            >= RUNTIME_AUTHORITY_POST_PUBLICATION_ACTIVATION_LEGACY_CUTOFF
+        ):
+            raise RuntimeRefreshError(
+                "authority-preflight-protected-publication-activation-invalid",
+                "markerless protected-publication bootstrap is not grandfathered by "
+                "the immutable activation cutoff",
+                details={
+                    "task_id": approval_task_id,
+                    "revision": historical.get("revision"),
+                    "created_at": created_at,
+                    "cutoff": isoformat(
+                        RUNTIME_AUTHORITY_POST_PUBLICATION_ACTIVATION_LEGACY_CUTOFF
+                    ),
+                },
+            )
         return historical, None
     relative = _runtime_authority_task_path(approval_task_id).as_posix()
     if (

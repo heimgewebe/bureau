@@ -616,6 +616,41 @@ def test_protected_publication_activation_rejects_spoofed_source_without_bound_r
     )
 
 
+def test_protected_publication_activation_rejects_intervening_spoofed_revision(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-INTERVENING-SPOOF"
+    store = seed_protected_publication_activation_store(
+        tmp_path / "intervening-spoof", task_id
+    )
+    activated = store.task_spec(task_id)
+    assert isinstance(activated, dict)
+    spoofed = json.loads(json.dumps(activated["spec"]))
+    spoofed["metadata"]["test_intervening_revision"] = True
+    store.put_task_spec(
+        spoofed,
+        idempotency_key=f"generic-after-activation:{task_id}",
+        expected_revision=activated["revision"],
+        source="runtime-refresh-protected-publication-activation",
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: protected_publication_proof(store, task_id),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store,
+            approval_task_id=task_id,
+            target_sha256="a" * 64,
+            target_main_commit=MAIN,
+        )
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-receipt-unproven"
+    )
+
+
 def test_protected_publication_activation_accepts_publication_pr_from_adoption_evidence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

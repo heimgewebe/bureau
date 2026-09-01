@@ -2472,6 +2472,32 @@ def _read_authority_task(store: Any, task_id: str) -> dict[str, Any]:
     return current
 
 
+def _read_authority_task_revision(
+    store: Any, task_id: str, revision: int
+) -> dict[str, Any]:
+    from . import task_specs
+
+    try:
+        with store.connect() as connection:
+            return task_specs.get_revision(connection, task_id, revision)
+    except (
+        AttributeError,
+        legacy.StateError,
+        task_specs.TaskSpecError,
+        OSError,
+        sqlite3.Error,
+    ) as exc:
+        raise RuntimeRefreshError(
+            "authority-state-store-history-invalid",
+            "authoritative StateStore TaskSpec history read failed",
+            details={
+                "task_id": task_id,
+                "revision": revision,
+                "error": str(exc),
+            },
+        ) from exc
+
+
 def _put_authority_task(
     store: Any,
     spec: dict[str, Any],
@@ -2855,6 +2881,44 @@ def _validated_post_publication_activation_contract(
     }
 
 
+def _historical_protected_publication_bootstrap(
+    *, store: Any, approval_task_id: str
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    historical = _read_authority_task_revision(store, approval_task_id, 1)
+    historical_spec = historical.get("spec")
+    if not isinstance(historical_spec, dict):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical TaskSpec bootstrap payload is invalid",
+        )
+    metadata = historical_spec.get("metadata")
+    publication_path = (
+        metadata.get("publication_path") if isinstance(metadata, dict) else None
+    )
+    if not isinstance(publication_path, dict) or publication_path.get("kind") != (
+        "normal-protected-pull-request"
+    ):
+        return None
+    relative = _runtime_authority_task_path(approval_task_id).as_posix()
+    if (
+        publication_path.get("state_store_transition")
+        != "seed-missing-preserve-state-store"
+        or publication_path.get("scope") != f"exactly {relative}"
+        or publication_path.get("initial_state") != "planned"
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical TaskSpec protected-publication bootstrap contract is invalid",
+        )
+    activation = _validated_post_publication_activation_contract(metadata)
+    if activation is None:
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical protected-publication TaskSpec did not declare post-publication activation",
+        )
+    return historical, activation
+
+
 def _validate_protected_publication_adoption_bootstrap(
     *, historical_spec: dict[str, Any], publication_pr: int
 ) -> None:
@@ -2866,7 +2930,10 @@ def _validate_protected_publication_adoption_bootstrap(
         )
     activation = _validated_post_publication_activation_contract(metadata)
     if activation is None:
-        return
+        raise RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "historical protected-publication TaskSpec did not declare post-publication activation",
+        )
     authority = metadata.get("runtime_refresh_authority")
     declared_publication_pr = activation["publication_pr"]
     if (
@@ -2996,10 +3063,25 @@ def _validate_pre_effect_protected_publication_activation(
     authority: dict[str, Any],
     approval_task_id: str,
     target_main_commit: str | None,
+    require_remote_adoption_proof: bool,
 ) -> None:
+    historical_bootstrap = _historical_protected_publication_bootstrap(
+        store=store, approval_task_id=approval_task_id
+    )
     activation = _validated_post_publication_activation_contract(metadata)
-    if activation is None:
+    if historical_bootstrap is None:
+        if activation is not None:
+            raise RuntimeRefreshError(
+                "authority-preflight-protected-publication-activation-invalid",
+                "current TaskSpec claims protected activation absent from the immutable bootstrap",
+            )
         return
+    historical, historical_activation = historical_bootstrap
+    if activation is None or activation != historical_activation:
+        raise RuntimeRefreshError(
+            "authority-preflight-protected-publication-activation-invalid",
+            "current TaskSpec does not preserve the immutable protected activation declaration",
+        )
     revision = current.get("revision")
     if not isinstance(revision, int) or isinstance(revision, bool) or revision < 2:
         raise RuntimeRefreshError(
@@ -3026,13 +3108,21 @@ def _validate_pre_effect_protected_publication_activation(
             "activated runtime authority lacks the structured publication/adoption contract",
             details={"cause_code": exc.code},
         ) from exc
+    if publication is None:
+        raise RuntimeRefreshError(
+            "authority-preflight-protected-publication-activation-invalid",
+            "activated runtime authority has no protected publication/adoption evidence",
+        )
+    _validate_protected_publication_adoption_bootstrap(
+        historical_spec=historical["spec"],
+        publication_pr=publication["publication_pr"],
+    )
     criterion = acceptance_contract["criteria"].get(
         "protected-publication-and-missing-only-adoption"
     )
     activation_publication_pr = activation["publication_pr"]
     if (
-        publication is None
-        or (
+        (
             activation_publication_pr is not None
             and publication.get("publication_pr") != activation_publication_pr
         )
@@ -3045,19 +3135,26 @@ def _validate_pre_effect_protected_publication_activation(
             "activated runtime authority is not bound to its protected "
             "publication/adoption acceptance",
         )
-    try:
-        adoption_proof = _prove_protected_publication_adoption(
-            store=store,
-            spec=spec,
-            approval_task_id=approval_task_id,
-            target_main_commit=target_main_commit,
-        )
-    except RuntimeRefreshError as exc:
-        raise RuntimeRefreshError(
-            "authority-preflight-protected-publication-adoption-unproven",
-            "protected publication and missing-only adoption are not proven before runtime effect",
-            details={"cause_code": exc.code},
-        ) from exc
+    if require_remote_adoption_proof:
+        try:
+            adoption_proof = _prove_protected_publication_adoption(
+                store=store,
+                spec=spec,
+                approval_task_id=approval_task_id,
+                target_main_commit=target_main_commit,
+            )
+        except RuntimeRefreshError as exc:
+            raise RuntimeRefreshError(
+                "authority-preflight-protected-publication-adoption-unproven",
+                "protected publication and missing-only adoption are not proven "
+                "before runtime effect",
+                details={"cause_code": exc.code},
+            ) from exc
+    else:
+        adoption_proof = {
+            "adoption_revision": historical["revision"],
+            "task_spec_sha256": historical["spec_sha256"],
+        }
     _validate_protected_publication_activation_receipt(
         store=store,
         current=current,
@@ -3069,7 +3166,7 @@ def _validate_pre_effect_protected_publication_activation(
     )
 
 
-def validate_authoritative_runtime_refresh_task(
+def _validate_authoritative_runtime_refresh_task(
     *,
     store: Any,
     approval_task_id: str,
@@ -3080,6 +3177,7 @@ def validate_authoritative_runtime_refresh_task(
     allow_bound_intent: bool = False,
     expected_consumption: dict[str, Any] | None = None,
     target_main_commit: str | None = None,
+    require_remote_adoption_proof: bool,
 ) -> dict[str, Any]:
     """Read and validate the current StateStore TaskSpec as runtime authority."""
     if not approval_task_id or not _is_sha256(target_sha256):
@@ -3141,6 +3239,7 @@ def validate_authoritative_runtime_refresh_task(
         authority=authority,
         approval_task_id=approval_task_id,
         target_main_commit=target_main_commit,
+        require_remote_adoption_proof=require_remote_adoption_proof,
     )
     consumption_value = authority.get("consumption")
     consumption = (
@@ -3196,6 +3295,32 @@ def validate_authoritative_runtime_refresh_task(
         "target_sha256": target_sha256,
         "target_binding_receipt": binding,
     }
+
+
+def validate_authoritative_runtime_refresh_task(
+    *,
+    store: Any,
+    approval_task_id: str,
+    target_sha256: str,
+    expected_revision: int | None = None,
+    expected_spec_sha256: str | None = None,
+    expected_intent_sha256: str | None = None,
+    allow_bound_intent: bool = False,
+    expected_consumption: dict[str, Any] | None = None,
+    target_main_commit: str | None = None,
+) -> dict[str, Any]:
+    return _validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=approval_task_id,
+        target_sha256=target_sha256,
+        expected_revision=expected_revision,
+        expected_spec_sha256=expected_spec_sha256,
+        expected_intent_sha256=expected_intent_sha256,
+        allow_bound_intent=allow_bound_intent,
+        expected_consumption=expected_consumption,
+        target_main_commit=target_main_commit,
+        require_remote_adoption_proof=True,
+    )
 
 
 def _validate_runtime_refresh_authority_adoption_spec(
@@ -3916,7 +4041,7 @@ def consume_runtime_refresh_authority(
                 "observed_spec_sha256": current.get("spec_sha256"),
             },
         )
-    validate_authoritative_runtime_refresh_task(
+    _validate_authoritative_runtime_refresh_task(
         store=store,
         approval_task_id=expected["task_id"],
         target_sha256=intent["target_sha256"],
@@ -3925,6 +4050,7 @@ def consume_runtime_refresh_authority(
         expected_intent_sha256=intent["intent_sha256"],
         allow_bound_intent=True,
         target_main_commit=intent["main_commit"],
+        require_remote_adoption_proof=False,
     )
     binding = _validated_authority_target_binding(authority.get("target_binding_receipt"))
     if (

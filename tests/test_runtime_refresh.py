@@ -763,6 +763,162 @@ def test_protected_publication_activation_receipt_survives_target_binding(
     assert result["target_binding_receipt"]["authority_revision"] == 2
 
 
+def test_protected_publication_activation_requires_marker_in_historical_bootstrap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-HISTORICAL-MARKER"
+    state_root = (tmp_path / "historical-marker").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    planned["metadata"].pop("post_publication_activation")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    store.put_task_spec(
+        ready,
+        idempotency_key=(
+            f"runtime-refresh-protected-publication-activation:{task_id}:"
+            f"{'4' * 40}:{adopted['spec_sha256']}"
+        ),
+        expected_revision=adopted["revision"],
+        source="runtime-refresh-protected-publication-activation",
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: pytest.fail("historical marker failure must precede remote proof"),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store,
+            approval_task_id=task_id,
+            target_sha256="a" * 64,
+            target_main_commit=MAIN,
+        )
+    assert (
+        raised.value.code
+        == "authority-closeout-protected-publication-adoption-unproven"
+    )
+
+
+def test_protected_publication_activation_rejects_current_marker_removal_from_history(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-CURRENT-MARKER"
+    store = seed_protected_publication_activation_store(tmp_path / "current-marker", task_id)
+    activated = store.task_spec(task_id)
+    assert isinstance(activated, dict)
+    markerless = json.loads(json.dumps(activated["spec"]))
+    markerless["metadata"].pop("post_publication_activation")
+    markerless["metadata"].pop("protected_publication_adoption")
+    store.put_task_spec(
+        markerless,
+        idempotency_key=f"generic-marker-removal:{task_id}",
+        expected_revision=activated["revision"],
+        source="generic-state-edit",
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: pytest.fail("historical activation mismatch must precede remote proof"),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store,
+            approval_task_id=task_id,
+            target_sha256="a" * 64,
+            target_main_commit=MAIN,
+        )
+    assert raised.value.code == "authority-preflight-protected-publication-activation-invalid"
+
+
+def test_protected_publication_consumption_uses_local_history_after_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-LOCAL-CONSUME"
+    target_sha256 = "a" * 64
+    store = seed_protected_publication_activation_store(tmp_path / "local-consume", task_id)
+    activated = store.task_spec(task_id)
+    assert isinstance(activated, dict)
+    authority_task_spec = {
+        "schema_version": refresh.RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "task_id": task_id,
+        "revision": activated["revision"],
+        "spec_sha256": activated["spec_sha256"],
+        "state": "ready",
+        "contract_mode": activated["spec"]["metadata"]["runtime_refresh_authority"][
+            "mode"
+        ],
+        "target_sha256": target_sha256,
+        "target_binding_receipt": None,
+    }
+    intent = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_intent",
+            "approval_task_id": task_id,
+            "target_sha256": target_sha256,
+            "main_commit": MAIN,
+            "authority_task_spec": authority_task_spec,
+        },
+        "intent_sha256",
+    )
+    binding = {
+        "schema_version": refresh.RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": refresh.RUNTIME_AUTHORITY_BINDING_KIND,
+        "task_id": task_id,
+        "authority_revision": activated["revision"],
+        "authority_spec_sha256": activated["spec_sha256"],
+        "target_sha256": target_sha256,
+        "intent_sha256": intent["intent_sha256"],
+        "bound_at": refresh.isoformat(NOW),
+    }
+    bound_spec = json.loads(json.dumps(activated["spec"]))
+    bound_spec["metadata"]["runtime_refresh_authority"]["target_binding_receipt"] = binding
+    changed = store.put_task_spec(
+        bound_spec,
+        idempotency_key=f"runtime-refresh-bind:{task_id}:{intent['intent_sha256']}",
+        expected_revision=activated["revision"],
+        source="runtime-refresh-authority-target-binding",
+    )
+    result = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "deployed",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": target_sha256,
+            "main_commit": MAIN,
+            "authority_task_spec": {
+                "task_id": task_id,
+                "revision": changed["revision"],
+                "spec_sha256": changed["spec_sha256"],
+                "authority_revision": activated["revision"],
+                "authority_spec_sha256": activated["spec_sha256"],
+                "target_binding_receipt": binding,
+            },
+            "finished_at": refresh.isoformat(NOW),
+            "effect_started": True,
+            "lease_binding": {"lease_binding_sha256": "a" * 64},
+        },
+        "result_sha256",
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: pytest.fail("post-effect consumption must not requery GitHub proof"),
+    )
+    consumed = refresh.consume_runtime_refresh_authority(
+        store=store, intent=intent, result=result, now=NOW
+    )
+    assert consumed["consumption"]["result_sha256"] == result["result_sha256"]
+
+
+
 def test_protected_publication_activation_requires_pre_effect_proof(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -9164,13 +9320,11 @@ def test_protected_publication_adoption_proof_requires_exact_seed_receipt() -> N
     task_id = "BUREAU-TEST-PROTECTED-PUBLICATION-ADOPTION"
     merge_commit = "a" * 40
     target_commit = "b" * 40
-    historical_spec = runtime_authority_spec(task_id)
-    historical_spec["metadata"]["publication_path"] = {
-        "kind": "normal-protected-pull-request",
-        "scope": f"exactly registry/tasks/{task_id}.json",
-        "state_store_transition": "seed-missing-preserve-state-store",
-    }
+    historical_spec = protected_publication_activation_spec(
+        task_id, state="planned", activation_publication_pr=2173
+    )
     current_spec = json.loads(json.dumps(historical_spec))
+    current_spec["state"] = "ready"
     current_spec["metadata"]["protected_publication_adoption"] = {
         "schema_version": 1,
         "repository": refresh.DEFAULT_REPOSITORY,

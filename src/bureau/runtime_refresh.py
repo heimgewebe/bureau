@@ -2817,6 +2817,225 @@ def _validate_runtime_refresh_authority_contract(
     return metadata, authority, str(state)
 
 
+def _validated_post_publication_activation_contract(
+    metadata: dict[str, Any],
+) -> dict[str, Any] | None:
+    value = metadata.get("post_publication_activation")
+    if value is None:
+        return None
+    publication_pr = value.get("publication_pr") if isinstance(value, dict) else None
+    required_checks = value.get("required_checks") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("initial_state") != "planned"
+        or value.get("activation_state") != "ready"
+        or (
+            publication_pr is not None
+            and (
+                not isinstance(publication_pr, int)
+                or isinstance(publication_pr, bool)
+                or publication_pr < 1
+            )
+        )
+        or value.get("required_state_store_transition")
+        != "compare-and-swap-current-revision"
+        or value.get("required_activation_source")
+        != "runtime-refresh-protected-publication-activation"
+        or required_checks != list(DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS)
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-contract-invalid",
+            "post-publication runtime authority activation contract is invalid",
+        )
+    return {
+        "publication_pr": publication_pr,
+        "required_checks": list(required_checks),
+        "required_activation_source": value["required_activation_source"],
+    }
+
+
+def _validate_protected_publication_activation_receipt(
+    *,
+    store: Any,
+    current: dict[str, Any],
+    authority: dict[str, Any],
+    activation: dict[str, Any],
+    publication: dict[str, Any],
+    adoption_proof: dict[str, Any],
+    approval_task_id: str,
+) -> None:
+    adoption_revision = adoption_proof.get("adoption_revision")
+    adoption_spec_sha256 = adoption_proof.get("task_spec_sha256")
+    publication_merge_commit = publication.get("publication_merge_commit")
+    if (
+        not isinstance(adoption_revision, int)
+        or isinstance(adoption_revision, bool)
+        or adoption_revision < 1
+        or not _is_sha256(adoption_spec_sha256)
+        or not isinstance(publication_merge_commit, str)
+        or len(publication_merge_commit) != 40
+        or any(
+            character not in "0123456789abcdef"
+            for character in publication_merge_commit
+        )
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-unproven",
+            "protected-publication adoption proof cannot identify the activation CAS baseline",
+        )
+
+    binding_value = authority.get("target_binding_receipt")
+    consumption_value = authority.get("consumption")
+    if binding_value is not None:
+        binding = _validated_authority_target_binding(binding_value)
+        if binding.get("task_id") != approval_task_id:
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-receipt-unproven",
+                "target binding is not derived from this protected-publication authority",
+            )
+        activation_revision = binding["authority_revision"]
+        activation_spec_sha256 = binding["authority_spec_sha256"]
+    else:
+        if consumption_value is not None:
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-receipt-unproven",
+                "consumed protected-publication authority is missing its target binding",
+            )
+        activation_revision = current.get("revision")
+        activation_spec_sha256 = current.get("spec_sha256")
+
+    if (
+        activation_revision != adoption_revision + 1
+        or not _is_sha256(activation_spec_sha256)
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-unproven",
+            "ready protected-publication authority is not the direct adoption successor",
+            details={
+                "adoption_revision": adoption_revision,
+                "activation_revision": activation_revision,
+            },
+        )
+
+    idempotency_key = (
+        f"{activation['required_activation_source']}:{approval_task_id}:"
+        f"{publication_merge_commit}:{adoption_spec_sha256}"
+    )
+    try:
+        receipt = store.task_spec_mutation_receipt(idempotency_key)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-unproven",
+            "cannot read the protected-publication activation mutation receipt",
+            details={"error": str(exc)},
+        ) from exc
+    resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
+    resulting_spec = resulting.get("spec") if isinstance(resulting, dict) else None
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("task_id") != approval_task_id
+        or receipt.get("expected_revision") != adoption_revision
+        or receipt.get("requested_sha256") != activation_spec_sha256
+        or receipt.get("resulting_revision") != activation_revision
+        or not isinstance(resulting, dict)
+        or resulting.get("task_id") != approval_task_id
+        or resulting.get("revision") != activation_revision
+        or resulting.get("parent_revision") != adoption_revision
+        or resulting.get("spec_sha256") != activation_spec_sha256
+        or resulting.get("source") != activation["required_activation_source"]
+        or not isinstance(resulting_spec, dict)
+        or resulting_spec.get("id") != approval_task_id
+        or resulting_spec.get("state") != "ready"
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-unproven",
+            "StateStore does not contain the exact protected-publication activation CAS receipt",
+        )
+
+
+def _validate_pre_effect_protected_publication_activation(
+    *,
+    store: Any,
+    current: dict[str, Any],
+    spec: dict[str, Any],
+    metadata: dict[str, Any],
+    authority: dict[str, Any],
+    approval_task_id: str,
+    target_main_commit: str | None,
+) -> None:
+    activation = _validated_post_publication_activation_contract(metadata)
+    if activation is None:
+        return
+    revision = current.get("revision")
+    if not isinstance(revision, int) or isinstance(revision, bool) or revision < 2:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-revision-invalid",
+            "activated protected-publication authority must follow the adopted bootstrap revision",
+        )
+    if (
+        not isinstance(target_main_commit, str)
+        or len(target_main_commit) != 40
+        or any(character not in "0123456789abcdef" for character in target_main_commit)
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-target-invalid",
+            "activated protected-publication authority requires an exact target main commit",
+        )
+    try:
+        publication = _validated_protected_publication_adoption_contract(spec)
+        acceptance_contract = _validated_no_run_acceptance_contract(
+            spec=spec, authority=authority
+        )
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-protected-publication-activation-invalid",
+            "activated runtime authority lacks the structured publication/adoption contract",
+            details={"cause_code": exc.code},
+        ) from exc
+    criterion = acceptance_contract["criteria"].get(
+        "protected-publication-and-missing-only-adoption"
+    )
+    activation_publication_pr = activation["publication_pr"]
+    if (
+        publication is None
+        or (
+            activation_publication_pr is not None
+            and publication.get("publication_pr") != activation_publication_pr
+        )
+        or publication.get("required_checks") != activation["required_checks"]
+        or not isinstance(criterion, dict)
+        or "protected-publication-adoption" not in criterion.get("required_evidence", [])
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-protected-publication-activation-invalid",
+            "activated runtime authority is not bound to its protected "
+            "publication/adoption acceptance",
+        )
+    try:
+        adoption_proof = _prove_protected_publication_adoption(
+            store=store,
+            spec=spec,
+            approval_task_id=approval_task_id,
+            target_main_commit=target_main_commit,
+        )
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-protected-publication-adoption-unproven",
+            "protected publication and missing-only adoption are not proven before runtime effect",
+            details={"cause_code": exc.code},
+        ) from exc
+    _validate_protected_publication_activation_receipt(
+        store=store,
+        current=current,
+        authority=authority,
+        activation=activation,
+        publication=publication,
+        adoption_proof=adoption_proof,
+        approval_task_id=approval_task_id,
+    )
+
+
 def validate_authoritative_runtime_refresh_task(
     *,
     store: Any,
@@ -2827,6 +3046,7 @@ def validate_authoritative_runtime_refresh_task(
     expected_intent_sha256: str | None = None,
     allow_bound_intent: bool = False,
     expected_consumption: dict[str, Any] | None = None,
+    target_main_commit: str | None = None,
 ) -> dict[str, Any]:
     """Read and validate the current StateStore TaskSpec as runtime authority."""
     if not approval_task_id or not _is_sha256(target_sha256):
@@ -2879,6 +3099,15 @@ def validate_authoritative_runtime_refresh_task(
         spec=spec,
         approval_task_id=approval_task_id,
         allow_planned=False,
+    )
+    _validate_pre_effect_protected_publication_activation(
+        store=store,
+        current=current,
+        spec=spec,
+        metadata=metadata,
+        authority=authority,
+        approval_task_id=approval_task_id,
+        target_main_commit=target_main_commit,
     )
     consumption_value = authority.get("consumption")
     consumption = (
@@ -3397,6 +3626,7 @@ def bind_runtime_refresh_authority(
         target_sha256=expected["target_sha256"],
         expected_revision=expected["revision"],
         expected_spec_sha256=expected["spec_sha256"],
+        target_main_commit=intent["main_commit"],
     )
     current = _read_authority_task(store, expected["task_id"])
     spec = json.loads(json.dumps(current["spec"]))
@@ -3661,6 +3891,7 @@ def consume_runtime_refresh_authority(
         expected_spec_sha256=bound_authority["spec_sha256"],
         expected_intent_sha256=intent["intent_sha256"],
         allow_bound_intent=True,
+        target_main_commit=intent["main_commit"],
     )
     binding = _validated_authority_target_binding(authority.get("target_binding_receipt"))
     if (
@@ -3779,6 +4010,7 @@ def prepare_intent(
         store=store,
         approval_task_id=approval_task_id.strip(),
         target_sha256=candidate["target_sha256"],
+        target_main_commit=candidate["main_commit"],
     )
     current_authority = _read_authority_task(store, approval_task_id.strip())
     _metadata, authority_contract = _runtime_authority_metadata(current_authority["spec"])
@@ -7231,6 +7463,7 @@ def _closeout_runtime_refresh_authority(
         expected_intent_sha256=intent_sha256,
         allow_bound_intent=True,
         expected_consumption=expected_consumption,
+        target_main_commit=intent["main_commit"],
     )
     if historical_multi_use_incident:
         _, provenance_receipts_sha256 = _runtime_incident_provenance_receipts(authority)
@@ -7629,6 +7862,7 @@ def apply_runtime_refresh(
                 target_sha256=expected_authority["target_sha256"],
                 expected_intent_sha256=intent["intent_sha256"],
                 allow_bound_intent=True,
+                target_main_commit=intent["main_commit"],
             )
         return {**existing, "reused": True}
     if started_path.exists():
@@ -7638,6 +7872,7 @@ def apply_runtime_refresh(
             target_sha256=expected_authority["target_sha256"],
             expected_intent_sha256=intent["intent_sha256"],
             allow_bound_intent=True,
+            target_main_commit=intent["main_commit"],
         )
         started = read_json(started_path)
         return {
@@ -7656,6 +7891,7 @@ def apply_runtime_refresh(
         target_sha256=expected_authority["target_sha256"],
         expected_revision=expected_authority["revision"],
         expected_spec_sha256=expected_authority["spec_sha256"],
+        target_main_commit=intent["main_commit"],
     )
     current_authority = _read_authority_task(store, expected_authority["task_id"])
     _metadata, authority_contract = _runtime_authority_metadata(current_authority["spec"])

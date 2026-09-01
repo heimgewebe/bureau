@@ -379,6 +379,118 @@ def runtime_authority_spec(task_id: str, *, state: str = "ready") -> dict[str, A
     }
 
 
+def protected_publication_activation_spec(
+    task_id: str,
+    *,
+    state: str = "ready",
+    activation_publication_pr: int | None = 2222,
+) -> dict[str, Any]:
+    spec = runtime_authority_spec(task_id, state=state)
+    task_path = f"registry/tasks/{task_id}.json"
+    spec["metadata"]["publication_path"] = {
+        "kind": "normal-protected-pull-request",
+        "scope": f"exactly {task_path}",
+        "state_store_transition": "seed-missing-preserve-state-store",
+        "initial_state": "planned",
+    }
+    activation = {
+        "schema_version": 1,
+        "initial_state": "planned",
+        "activation_state": "ready",
+        "required_state_store_transition": "compare-and-swap-current-revision",
+        "required_activation_source": "runtime-refresh-protected-publication-activation",
+        "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+    }
+    if activation_publication_pr is not None:
+        activation["publication_pr"] = activation_publication_pr
+    spec["metadata"]["post_publication_activation"] = activation
+    spec["metadata"]["protected_publication_adoption"] = {
+        "schema_version": 1,
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "publication_pr": 2222,
+        "publication_merge_commit": "4" * 40,
+        "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
+    }
+    spec["acceptance"].append(
+        {
+            "id": "protected-publication-and-missing-only-adoption",
+            "assertion": (
+                "Protected publication and missing-only adoption are proven before effect."
+            ),
+            "evidence_type": "object",
+            "verifier": "manual_observation",
+            "verifier_config": {
+                "observation_scope": f"test:{task_id}:protected-publication"
+            },
+        }
+    )
+    spec["metadata"]["runtime_refresh_authority"]["no_run_closeout_acceptance"][
+        "criteria"
+    ]["protected-publication-and-missing-only-adoption"] = {
+        "verifier": refresh.RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER,
+        "required_evidence": ["protected-publication-adoption"],
+    }
+    return spec
+
+
+def seed_protected_publication_activation_store(
+    root: Path,
+    task_id: str,
+    *,
+    activation_source: str = "runtime-refresh-protected-publication-activation",
+    activation_idempotency_key: str | None = None,
+    activation_publication_pr: int | None = 2222,
+) -> StateStore:
+    state_root = root.resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(
+        task_id,
+        state="planned",
+        activation_publication_pr=activation_publication_pr,
+    )
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(
+        task_id,
+        state="ready",
+        activation_publication_pr=activation_publication_pr,
+    )
+    key = activation_idempotency_key or (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    store.put_task_spec(
+        ready,
+        idempotency_key=key,
+        expected_revision=adopted["revision"],
+        source=activation_source,
+    )
+    return store
+
+
+def protected_publication_proof(store: StateStore, task_id: str) -> dict[str, Any]:
+    receipt = store.task_spec_mutation_receipt(f"seed-protected:{task_id}")
+    assert isinstance(receipt, dict)
+    return {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_protected_publication_adoption_evidence",
+        "task_id": task_id,
+        "publication_pr": 2222,
+        "publication_merge_commit": "4" * 40,
+        "target_main_commit": MAIN,
+        "task_path": f"registry/tasks/{task_id}.json",
+        "task_file_sha256": "c" * 64,
+        "task_spec_sha256": receipt["requested_sha256"],
+        "adoption_idempotency_key": receipt["idempotency_key"],
+        "adoption_revision": receipt["resulting_revision"],
+        "evidence_sha256": "b" * 64,
+    }
+
+
 def source_precondition_contract() -> dict[str, Any]:
     return {
         "schema_version": 1,
@@ -422,6 +534,201 @@ def seed_authority_store(
         source="test",
     )
     return store
+
+
+def test_legacy_runtime_authority_preflight_does_not_require_publication_activation(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-LEGACY-PREFLIGHT"
+    store = seed_authority_store(tmp_path / "legacy-preflight", task_id)
+    observed = refresh.validate_authoritative_runtime_refresh_task(
+        store=store, approval_task_id=task_id, target_sha256="a" * 64
+    )
+    assert observed["task_id"] == task_id
+
+
+def test_protected_publication_activation_requires_exact_target_main(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-TARGET"
+    store = seed_protected_publication_activation_store(tmp_path / "missing-target", task_id)
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: pytest.fail("proof must not run without an exact target main"),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store, approval_task_id=task_id, target_sha256="a" * 64
+        )
+    assert raised.value.code == "authority-preflight-publication-target-invalid"
+
+
+def test_protected_publication_activation_rejects_wrong_activation_source_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-SOURCE"
+    store = seed_protected_publication_activation_store(
+        tmp_path / "wrong-source", task_id, activation_source="test-generic-cas"
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: protected_publication_proof(store, task_id),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store,
+            approval_task_id=task_id,
+            target_sha256="a" * 64,
+            target_main_commit=MAIN,
+        )
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-receipt-unproven"
+    )
+
+
+def test_protected_publication_activation_rejects_spoofed_source_without_bound_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-SPOOFED-SOURCE"
+    store = seed_protected_publication_activation_store(
+        tmp_path / "spoofed-source",
+        task_id,
+        activation_idempotency_key=f"generic-cas:{task_id}",
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: protected_publication_proof(store, task_id),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store,
+            approval_task_id=task_id,
+            target_sha256="a" * 64,
+            target_main_commit=MAIN,
+        )
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-receipt-unproven"
+    )
+
+
+def test_protected_publication_activation_accepts_publication_pr_from_adoption_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-PR-COMPAT"
+    store = seed_protected_publication_activation_store(
+        tmp_path / "publication-pr-compat",
+        task_id,
+        activation_publication_pr=None,
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: protected_publication_proof(store, task_id),
+    )
+    result = refresh.validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=task_id,
+        target_sha256="a" * 64,
+        target_main_commit=MAIN,
+    )
+    assert result["task_id"] == task_id
+
+
+def test_protected_publication_activation_receipt_survives_target_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-BOUND"
+    target_sha256 = "a" * 64
+    intent_sha256 = "d" * 64
+    store = seed_protected_publication_activation_store(tmp_path / "bound", task_id)
+    activated = store.task_spec(task_id)
+    assert isinstance(activated, dict)
+    bound = json.loads(json.dumps(activated["spec"]))
+    bound["metadata"]["runtime_refresh_authority"]["target_binding_receipt"] = {
+        "schema_version": 1,
+        "kind": refresh.RUNTIME_AUTHORITY_BINDING_KIND,
+        "task_id": task_id,
+        "authority_revision": activated["revision"],
+        "authority_spec_sha256": activated["spec_sha256"],
+        "target_sha256": target_sha256,
+        "intent_sha256": intent_sha256,
+        "bound_at": "2026-07-14T08:00:00Z",
+    }
+    store.put_task_spec(
+        bound,
+        idempotency_key=f"runtime-refresh-bind:{task_id}:{intent_sha256}",
+        expected_revision=activated["revision"],
+        source="runtime-refresh-authority-target-binding",
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: protected_publication_proof(store, task_id),
+    )
+    result = refresh.validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=task_id,
+        target_sha256=target_sha256,
+        expected_intent_sha256=intent_sha256,
+        allow_bound_intent=True,
+        target_main_commit=MAIN,
+    )
+    assert result["task_id"] == task_id
+    assert result["target_binding_receipt"]["authority_revision"] == 2
+
+
+def test_protected_publication_activation_requires_pre_effect_proof(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-PROOF"
+    store = seed_protected_publication_activation_store(tmp_path / "proof-fail", task_id)
+
+    def reject_proof(**_: Any) -> dict[str, Any]:
+        raise refresh.RuntimeRefreshError(
+            "authority-closeout-protected-publication-adoption-unproven",
+            "test publication proof missing",
+        )
+
+    monkeypatch.setattr(refresh, "_prove_protected_publication_adoption", reject_proof)
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store,
+            approval_task_id=task_id,
+            target_sha256="a" * 64,
+            target_main_commit=MAIN,
+        )
+    assert raised.value.code == "authority-preflight-protected-publication-adoption-unproven"
+    assert raised.value.details["cause_code"] == (
+        "authority-closeout-protected-publication-adoption-unproven"
+    )
+
+
+def test_protected_publication_activation_accepts_bound_pre_effect_proof(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-PASS"
+    store = seed_protected_publication_activation_store(tmp_path / "proof-pass", task_id)
+    observed: dict[str, Any] = {}
+
+    def accept_proof(**kwargs: Any) -> dict[str, Any]:
+        observed.update(kwargs)
+        return protected_publication_proof(store, task_id)
+
+    monkeypatch.setattr(refresh, "_prove_protected_publication_adoption", accept_proof)
+    result = refresh.validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=task_id,
+        target_sha256="a" * 64,
+        target_main_commit=MAIN,
+    )
+    assert result["task_id"] == task_id
+    assert observed["approval_task_id"] == task_id
+    assert observed["target_main_commit"] == MAIN
 
 
 def test_runtime_authority_adoption_is_exact_idempotent_and_not_execution_authority(

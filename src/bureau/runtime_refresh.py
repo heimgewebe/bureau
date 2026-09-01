@@ -111,6 +111,9 @@ RUNTIME_AUTHORITY_SUPPORTED_MODES = frozenset(
 RUNTIME_AUTHORITY_TARGET_BINDING = "candidate.target_sha256"
 RUNTIME_AUTHORITY_ALLOWED_STATES = ("ready", "active")
 RUNTIME_AUTHORITY_BINDING_KIND = "bureau_runtime_refresh_authority_target_binding"
+RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID = (
+    "protected-publication-and-missing-only-adoption"
+)
 RUNTIME_AUTHORITY_POST_PUBLICATION_ACTIVATION_LEGACY_CUTOFF = datetime(
     2026, 9, 1, 6, 19, 42, tzinfo=timezone.utc
 )
@@ -2975,6 +2978,91 @@ def _validate_protected_publication_adoption_bootstrap(
         )
 
 
+def _protected_publication_activation_acceptance(
+    approval_task_id: str,
+) -> dict[str, Any]:
+    return {
+        "id": RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID,
+        "assertion": (
+            "The exact protected publication PR and real merge commit plus the exact "
+            "missing-only StateStore adoption receipt are proven before any runtime effect."
+        ),
+        "evidence_type": "object",
+        "verifier": "manual_observation",
+        "verifier_config": {
+            "observation_scope": (
+                f"bureau:runtime-refresh:{approval_task_id}:protected-publication-adoption"
+            )
+        },
+    }
+
+
+def _expected_protected_publication_activation_spec(
+    *,
+    historical_spec: dict[str, Any],
+    publication: dict[str, Any],
+    approval_task_id: str,
+) -> dict[str, Any]:
+    metadata, authority, state = _validate_runtime_refresh_authority_contract(
+        spec=historical_spec,
+        approval_task_id=approval_task_id,
+        allow_planned=True,
+    )
+    if state != "planned":
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-delta-invalid",
+            "protected-publication activation baseline is not planned",
+        )
+    if metadata.get("protected_publication_adoption") is not None:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-delta-invalid",
+            "planned protected-publication baseline already contains adoption evidence",
+        )
+    acceptance = historical_spec.get("acceptance")
+    if not isinstance(acceptance, list):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-delta-invalid",
+            "planned protected-publication baseline acceptance is invalid",
+        )
+    existing_ids = {
+        item.get("id")
+        for item in acceptance
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID in existing_ids:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-delta-invalid",
+            "planned bootstrap already contains activation-only acceptance",
+        )
+    no_run = authority.get("no_run_closeout_acceptance")
+    criteria = no_run.get("criteria") if isinstance(no_run, dict) else None
+    if (
+        not isinstance(criteria, dict)
+        or RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID in criteria
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-delta-invalid",
+            "planned bootstrap no-run contract already contains activation-only evidence",
+        )
+
+    candidate = json.loads(json.dumps(historical_spec))
+    candidate["state"] = "ready"
+    candidate_metadata, candidate_authority = _runtime_authority_metadata(candidate)
+    candidate_metadata["protected_publication_adoption"] = json.loads(
+        json.dumps(publication)
+    )
+    candidate["acceptance"].append(
+        _protected_publication_activation_acceptance(approval_task_id)
+    )
+    candidate_authority["no_run_closeout_acceptance"]["criteria"][
+        RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID
+    ] = {
+        "verifier": RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER,
+        "required_evidence": ["protected-publication-adoption"],
+    }
+    return candidate
+
+
 def _validate_protected_publication_activation_receipt(
     *,
     store: Any,
@@ -2983,6 +3071,7 @@ def _validate_protected_publication_activation_receipt(
     activation: dict[str, Any],
     publication: dict[str, Any],
     adoption_proof: dict[str, Any],
+    historical_spec: dict[str, Any],
     approval_task_id: str,
 ) -> None:
     adoption_revision = adoption_proof.get("adoption_revision")
@@ -3052,6 +3141,11 @@ def _validate_protected_publication_activation_receipt(
         ) from exc
     resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
     resulting_spec = resulting.get("spec") if isinstance(resulting, dict) else None
+    expected_activation_spec = _expected_protected_publication_activation_spec(
+        historical_spec=historical_spec,
+        publication=publication,
+        approval_task_id=approval_task_id,
+    )
     if (
         not isinstance(receipt, dict)
         or receipt.get("task_id") != approval_task_id
@@ -3067,6 +3161,7 @@ def _validate_protected_publication_activation_receipt(
         or not isinstance(resulting_spec, dict)
         or resulting_spec.get("id") != approval_task_id
         or resulting_spec.get("state") != "ready"
+        or resulting_spec != expected_activation_spec
     ):
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-receipt-unproven",
@@ -3189,6 +3284,7 @@ def _validate_pre_effect_protected_publication_activation(
         activation=activation,
         publication=publication,
         adoption_proof=adoption_proof,
+        historical_spec=historical["spec"],
         approval_task_id=approval_task_id,
     )
 

@@ -412,25 +412,16 @@ def protected_publication_activation_spec(
             "publication_merge_commit": "4" * 40,
             "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
         }
-    spec["acceptance"].append(
-        {
-            "id": "protected-publication-and-missing-only-adoption",
-            "assertion": (
-                "Protected publication and missing-only adoption are proven before effect."
-            ),
-            "evidence_type": "object",
-            "verifier": "manual_observation",
-            "verifier_config": {
-                "observation_scope": f"test:{task_id}:protected-publication"
-            },
+    if state != "planned":
+        spec["acceptance"].append(
+            refresh._protected_publication_activation_acceptance(task_id)
+        )
+        spec["metadata"]["runtime_refresh_authority"]["no_run_closeout_acceptance"][
+            "criteria"
+        ][refresh.RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID] = {
+            "verifier": refresh.RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER,
+            "required_evidence": ["protected-publication-adoption"],
         }
-    )
-    spec["metadata"]["runtime_refresh_authority"]["no_run_closeout_acceptance"][
-        "criteria"
-    ]["protected-publication-and-missing-only-adoption"] = {
-        "verifier": refresh.RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER,
-        "required_evidence": ["protected-publication-adoption"],
-    }
     return spec
 
 
@@ -988,6 +979,56 @@ def test_protected_publication_consumption_uses_local_history_after_effect(
         store=store, intent=intent, result=result, now=NOW
     )
     assert consumed["consumption"]["result_sha256"] == result["result_sha256"]
+
+
+
+def test_protected_publication_activation_rejects_weakened_contract_delta(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-WEAKENED-DELTA"
+    state_root = (tmp_path / "weakened-delta").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    planned_authority = planned["metadata"]["runtime_refresh_authority"]
+    planned_authority["mode"] = refresh.RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
+    planned_authority["source_precondition"] = source_precondition_contract()
+    planned_authority["no_run_closeout_acceptance"]["criteria"][
+        "runtime-authority-proof"
+    ]["required_evidence"].append("source-precondition")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+
+    weakened = protected_publication_activation_spec(task_id, state="ready")
+    store.put_task_spec(
+        weakened,
+        idempotency_key=(
+            f"runtime-refresh-protected-publication-activation:{task_id}:"
+            f"{'4' * 40}:{adopted['spec_sha256']}"
+        ),
+        expected_revision=adopted["revision"],
+        source="runtime-refresh-protected-publication-activation",
+    )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: protected_publication_proof(store, task_id),
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.validate_authoritative_runtime_refresh_task(
+            store=store,
+            approval_task_id=task_id,
+            target_sha256="a" * 64,
+            target_main_commit=MAIN,
+        )
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-receipt-unproven"
+    )
 
 
 

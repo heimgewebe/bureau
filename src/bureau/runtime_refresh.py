@@ -2824,17 +2824,22 @@ def _validated_post_publication_activation_contract(
     if value is None:
         return None
     publication_pr = value.get("publication_pr") if isinstance(value, dict) else None
+    publication_pr_present = isinstance(value, dict) and "publication_pr" in value
     required_checks = value.get("required_checks") if isinstance(value, dict) else None
     if (
         not isinstance(value, dict)
         or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
         or value.get("initial_state") != "planned"
         or value.get("activation_state") != "ready"
-        or not isinstance(publication_pr, int)
-        or isinstance(publication_pr, bool)
-        or publication_pr < 1
-        or value.get("required_state_store_transition")
-        != "compare-and-swap-current-revision"
+        or (
+            publication_pr_present
+            and (
+                not isinstance(publication_pr, int)
+                or isinstance(publication_pr, bool)
+                or publication_pr < 1
+            )
+        )
+        or value.get("required_state_store_transition") != "compare-and-swap-current-revision"
         or value.get("required_activation_source")
         != "runtime-refresh-protected-publication-activation"
         or required_checks != list(DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS)
@@ -2849,6 +2854,84 @@ def _validated_post_publication_activation_contract(
         "required_activation_source": value["required_activation_source"],
     }
 
+def _without_runtime_authority_receipts(spec: dict[str, Any]) -> dict[str, Any]:
+    comparable = json.loads(json.dumps(spec))
+    metadata = comparable.get("metadata")
+    authority = metadata.get("runtime_refresh_authority") if isinstance(metadata, dict) else None
+    if isinstance(authority, dict):
+        authority.pop("target_binding_receipt", None)
+        authority.pop("consumption", None)
+    return comparable
+
+def _validate_protected_publication_activation_receipt(
+    *,
+    store: Any,
+    current: dict[str, Any],
+    approval_task_id: str,
+    publication_merge_commit: str,
+    adoption_spec_sha256: str,
+) -> None:
+    from . import task_specs
+
+    idempotency_key = (
+        "runtime-refresh-protected-publication-activation:"
+        f"{approval_task_id}:{publication_merge_commit}:{adoption_spec_sha256}"
+    )
+    try:
+        receipt = store.task_spec_mutation_receipt(idempotency_key)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-invalid",
+            "cannot read the protected-publication activation mutation receipt",
+            details={"idempotency_key": idempotency_key, "error": str(exc)},
+        ) from exc
+    resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
+    resulting_spec = resulting.get("spec") if isinstance(resulting, dict) else None
+    resulting_digest = (
+        task_specs.task_spec_digest(resulting_spec) if isinstance(resulting_spec, dict) else None
+    )
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("task_id") != approval_task_id
+        or receipt.get("expected_revision") != 1
+        or receipt.get("resulting_revision") != 2
+        or not _is_sha256(receipt.get("requested_sha256"))
+        or not isinstance(resulting, dict)
+        or resulting.get("task_id") != approval_task_id
+        or resulting.get("revision") != 2
+        or resulting.get("spec_sha256") != receipt.get("requested_sha256")
+        or resulting.get("spec_sha256") != resulting_digest
+        or resulting.get("source") != "runtime-refresh-protected-publication-activation"
+        or not isinstance(resulting_spec, dict)
+        or resulting_spec.get("id") != approval_task_id
+        or resulting_spec.get("state") != "ready"
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-invalid",
+            "StateStore does not contain the exact protected-publication activation receipt",
+            details={"idempotency_key": idempotency_key},
+        )
+
+    revision = current["revision"]
+    if revision == 2:
+        matches_activation = set(current) == set(resulting) | {"updated_at"} and all(
+            current.get(key) == value for key, value in resulting.items()
+        )
+    else:
+        current_spec = current.get("spec")
+        matches_activation = (
+            isinstance(current_spec, dict)
+            and _without_runtime_authority_receipts(current_spec) == resulting_spec
+        )
+    if not matches_activation:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-invalid",
+            "authoritative TaskSpec does not descend exactly from the receipted ready activation",
+            details={
+                "idempotency_key": idempotency_key,
+                "observed_revision": revision,
+            },
+        )
 
 def _validate_pre_effect_protected_publication_activation(
     *,
@@ -2878,26 +2961,9 @@ def _validate_pre_effect_protected_publication_activation(
             "authority-preflight-publication-target-invalid",
             "activated protected-publication authority requires an exact target main commit",
         )
-    binding_value = authority.get("target_binding_receipt")
-    consumption_value = authority.get("consumption")
-    if (
-        binding_value is None
-        and consumption_value is None
-        and current.get("source") != activation["required_activation_source"]
-    ):
-        raise RuntimeRefreshError(
-            "authority-preflight-publication-activation-source-invalid",
-            "ready protected-publication authority was not produced by the required activation CAS",
-            details={
-                "required_source": activation["required_activation_source"],
-                "observed_source": current.get("source"),
-            },
-        )
     try:
         publication = _validated_protected_publication_adoption_contract(spec)
-        acceptance_contract = _validated_no_run_acceptance_contract(
-            spec=spec, authority=authority
-        )
+        acceptance_contract = _validated_no_run_acceptance_contract(spec=spec, authority=authority)
     except RuntimeRefreshError as exc:
         raise RuntimeRefreshError(
             "authority-preflight-protected-publication-activation-invalid",
@@ -2907,9 +2973,14 @@ def _validate_pre_effect_protected_publication_activation(
     criterion = acceptance_contract["criteria"].get(
         "protected-publication-and-missing-only-adoption"
     )
+    effective_publication_pr = (
+        publication.get("publication_pr")
+        if publication is not None and activation["publication_pr"] is None
+        else activation["publication_pr"]
+    )
     if (
         publication is None
-        or publication.get("publication_pr") != activation["publication_pr"]
+        or publication.get("publication_pr") != effective_publication_pr
         or publication.get("required_checks") != activation["required_checks"]
         or not isinstance(criterion, dict)
         or "protected-publication-adoption" not in criterion.get("required_evidence", [])
@@ -2920,7 +2991,7 @@ def _validate_pre_effect_protected_publication_activation(
             "publication/adoption acceptance",
         )
     try:
-        _prove_protected_publication_adoption(
+        proof = _prove_protected_publication_adoption(
             store=store,
             spec=spec,
             approval_task_id=approval_task_id,
@@ -2932,7 +3003,22 @@ def _validate_pre_effect_protected_publication_activation(
             "protected publication and missing-only adoption are not proven before runtime effect",
             details={"cause_code": exc.code},
         ) from exc
-
+    publication_merge_commit = proof.get("publication_merge_commit")
+    adoption_spec_sha256 = proof.get("task_spec_sha256")
+    if publication_merge_commit != publication.get("publication_merge_commit") or not _is_sha256(
+        adoption_spec_sha256
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-protected-publication-adoption-unproven",
+            "protected publication proof lacks the activation receipt binding",
+        )
+    _validate_protected_publication_activation_receipt(
+        store=store,
+        current=current,
+        approval_task_id=approval_task_id,
+        publication_merge_commit=publication_merge_commit,
+        adoption_spec_sha256=adoption_spec_sha256,
+    )
 
 def validate_authoritative_runtime_refresh_task(
     *,

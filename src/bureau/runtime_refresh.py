@@ -4054,6 +4054,37 @@ def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) 
     return result
 
 
+def _validate_no_effect_execution_context(result: dict[str, Any]) -> dict[str, Any]:
+    evidence = result.get("execution_context_preflight")
+    if not isinstance(evidence, dict):
+        raise RuntimeRefreshError(
+            "authority-consumption-execution-context-missing",
+            "an unconsumed no-effect result lacks persisted executor preflight evidence",
+        )
+    verify_digest(evidence, "execution_context_sha256")
+    roots = evidence.get("mutation_roots")
+    prefix = roots.get("prefix") if isinstance(roots, dict) else None
+    expected_unit = evidence.get("expected_grabowski_task_unit")
+    if (
+        evidence.get("schema_version") != SCHEMA_VERSION
+        or evidence.get("kind") != "bureau_runtime_refresh_execution_context_preflight"
+        or evidence.get("writable") is not True
+        or evidence.get("grabowski_task_executor") is not True
+        or evidence.get("grabowski_task_executor_required") is not True
+        or evidence.get("executor_matches_expected_unit") is not True
+        or not isinstance(expected_unit, str)
+        or _grabowski_task_unit_attempt(expected_unit) is None
+        or evidence.get("systemd_unit") != expected_unit
+        or not isinstance(prefix, dict)
+        or prefix.get("writable") is not True
+    ):
+        raise RuntimeRefreshError(
+            "authority-consumption-execution-context-invalid",
+            "an unconsumed no-effect result has invalid executor preflight evidence",
+        )
+    return evidence
+
+
 def consume_runtime_refresh_authority(
     *,
     store: Any,
@@ -4112,6 +4143,8 @@ def consume_runtime_refresh_authority(
     replay = consumed_replay(current, authority)
     if replay is not None:
         return replay
+    if result.get("status") == "already_current":
+        _validate_no_effect_execution_context(result)
     if before_initial_consumption is not None:
         before_initial_consumption()
         # The guard may be non-trivial. Re-read the TaskSpec afterwards so a
@@ -8086,8 +8119,11 @@ def apply_runtime_refresh(
             return None
         execution_preflight()
         guarded_binding = validate_execution_bound_leases()
-        execution_preflight()
-        return guarded_binding
+        final_execution_context_preflight = execution_preflight()
+        return {
+            "lease_binding": guarded_binding,
+            "execution_context_preflight": final_execution_context_preflight,
+        }
     if no_effect_result_path.exists():
         existing = _validate_result_for_intent(read_json(no_effect_result_path), intent)
         if (
@@ -8273,9 +8309,11 @@ def apply_runtime_refresh(
                 "already-current-evidence-invalid",
                 "already-current result lacks authoritative scheduler or manifest evidence",
             )
-        guarded_binding = guard_authority_consumption()
-        if guarded_binding is not None:
-            binding = guarded_binding
+        guarded = guard_authority_consumption()
+        execution_context_preflight = None
+        if guarded is not None:
+            binding = guarded["lease_binding"]
+            execution_context_preflight = guarded["execution_context_preflight"]
         bound_authority = bind_runtime_refresh_authority(store=store, intent=intent, now=current)
         result = _write_attempt_result(
             no_effect_result_path,
@@ -8293,6 +8331,7 @@ def apply_runtime_refresh(
                 "finished_at": isoformat(current),
                 "effect_started": False,
                 "lease_binding": binding,
+                "execution_context_preflight": execution_context_preflight,
                 **source_precondition_result_fields,
             },
         )

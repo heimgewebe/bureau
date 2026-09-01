@@ -4054,12 +4054,17 @@ def _validate_result_for_intent(result: dict[str, Any], intent: dict[str, Any]) 
     return result
 
 
-def _validate_no_effect_execution_context(result: dict[str, Any]) -> dict[str, Any]:
-    evidence = result.get("execution_context_preflight")
+def _validate_executor_execution_context(
+    evidence: Any,
+    *,
+    missing_code: str,
+    invalid_code: str,
+    subject: str,
+) -> dict[str, Any]:
     if not isinstance(evidence, dict):
         raise RuntimeRefreshError(
-            "authority-consumption-execution-context-missing",
-            "an unconsumed no-effect result lacks persisted executor preflight evidence",
+            missing_code,
+            f"{subject} lacks executor preflight evidence",
         )
     verify_digest(evidence, "execution_context_sha256")
     roots = evidence.get("mutation_roots")
@@ -4079,10 +4084,33 @@ def _validate_no_effect_execution_context(result: dict[str, Any]) -> dict[str, A
         or prefix.get("writable") is not True
     ):
         raise RuntimeRefreshError(
-            "authority-consumption-execution-context-invalid",
-            "an unconsumed no-effect result has invalid executor preflight evidence",
+            invalid_code,
+            f"{subject} has invalid executor preflight evidence",
         )
     return evidence
+
+
+def _validate_no_effect_execution_context(result: dict[str, Any]) -> dict[str, Any]:
+    return _validate_executor_execution_context(
+        result.get("execution_context_preflight"),
+        missing_code="authority-consumption-execution-context-missing",
+        invalid_code="authority-consumption-execution-context-invalid",
+        subject="an unconsumed no-effect result",
+    )
+
+
+def _validate_live_consumption_execution_context(guard: Any) -> dict[str, Any]:
+    evidence = (
+        guard.get("execution_context_preflight")
+        if isinstance(guard, dict)
+        else None
+    )
+    return _validate_executor_execution_context(
+        evidence,
+        missing_code="authority-consumption-live-execution-context-missing",
+        invalid_code="authority-consumption-live-execution-context-invalid",
+        subject="the live authority-consumption guard",
+    )
 
 
 def consume_runtime_refresh_authority(
@@ -4143,10 +4171,11 @@ def consume_runtime_refresh_authority(
     replay = consumed_replay(current, authority)
     if replay is not None:
         return replay
+    cached_execution_context = None
     if result.get("status") == "already_current":
-        _validate_no_effect_execution_context(result)
+        cached_execution_context = _validate_no_effect_execution_context(result)
     if before_initial_consumption is not None:
-        before_initial_consumption()
+        live_guard = before_initial_consumption()
         # The guard may be non-trivial. Re-read the TaskSpec afterwards so a
         # concurrent exact consumption becomes a safe replay rather than stale-CAS noise.
         current = _read_authority_task(store, expected["task_id"])
@@ -4155,6 +4184,27 @@ def consume_runtime_refresh_authority(
         replay = consumed_replay(current, authority)
         if replay is not None:
             return replay
+        if cached_execution_context is not None:
+            live_execution_context = _validate_live_consumption_execution_context(
+                live_guard
+            )
+            identity_fields = ("systemd_unit", "expected_grabowski_task_unit")
+            mismatched = {
+                field: {
+                    "cached": cached_execution_context.get(field),
+                    "live": live_execution_context.get(field),
+                }
+                for field in identity_fields
+                if cached_execution_context.get(field)
+                != live_execution_context.get(field)
+            }
+            if mismatched:
+                raise RuntimeRefreshError(
+                    "authority-consumption-execution-context-drift",
+                    "cached no-effect result executor differs from the live "
+                    "authority-consumption executor",
+                    details={"mismatched": mismatched},
+                )
     _validate_intent_authority_contract_generation(
         expected_authority=expected, authority=authority
     )

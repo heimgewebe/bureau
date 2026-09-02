@@ -4,7 +4,7 @@
   "type": "service",
   "parent": "root",
   "metadata": {
-    "boundary": "Exclusive disposable non-production runtime surface for T003 cutover-readiness rehearsal. It may expose a blank virtual block device and disposable restore scratch only after fresh evidence proves that the backing target is not the productive Heim-PC root/system disk, not any mounted production filesystem and not production EFI/firmware state. The sandbox may consume independent off-host backup material read-only for restore testing but grants no production-device write authority.",
+    "boundary": "Exclusive disposable non-production runtime surface for T003 cutover-readiness rehearsal. Before any block-device or boot effect, the sandbox materializes and verifies a content-addressed immutable whole-source snapshot from the exact reviewed Heim-PC Git revision selected after T001, T002, T004 and T005 are terminal, binding Git commit/tree plus the reviewed Control Release Set/lock identity. Rebuild, reconstruction and boot consume only that sandbox-owned snapshot; after binding, no mutable /home/alex/repos/heim-pc checkout, branch, lock or unpinned remote source may participate. The sandbox may expose a blank virtual block device and disposable restore scratch only after fresh evidence proves that the backing target is not the productive Heim-PC root/system disk, not any mounted production filesystem and not production EFI/firmware state. Independent off-host backup material may be consumed read-only for restore testing but grants no production-device write authority.",
     "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
     "lifecycle": "ephemeral-test-only",
     "does_not_establish": [
@@ -12,6 +12,7 @@
       "production storage mutation authority",
       "production EFI or firmware mutation authority",
       "production NixOS install or activation authority",
+      "mutable worktree source authority",
       "off-host backup completeness",
       "cutover approval"
     ]

@@ -117,6 +117,12 @@ RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID = (
 RUNTIME_AUTHORITY_POST_PUBLICATION_ACTIVATION_LEGACY_CUTOFF = datetime(
     2026, 9, 1, 6, 19, 42, tzinfo=timezone.utc
 )
+RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_LEGACY_CUTOFF = datetime(
+    2026, 9, 2, 13, 40, 0, tzinfo=timezone.utc
+)
+RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD = (
+    "protected_publication_activation_observation"
+)
 RUNTIME_AUTHORITY_CONSUMPTION_KIND = "bureau_runtime_refresh_authority_consumption"
 RUNTIME_AUTHORITY_CLOSEOUT_KIND = "bureau_runtime_refresh_no_run_closeout"
 RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND = "bureau_runtime_refresh_multi_use_incident_closeout"
@@ -2519,6 +2525,12 @@ def _put_authority_task(
                 idempotency_key=idempotency_key,
                 expected_revision=expected_revision,
             )
+        if source == "runtime-refresh-protected-publication-activation":
+            return store.put_runtime_refresh_protected_publication_activation_task_spec(
+                spec,
+                idempotency_key=idempotency_key,
+                expected_revision=expected_revision,
+            )
         return store.put_task_spec(
             spec,
             idempotency_key=idempotency_key,
@@ -2678,11 +2690,7 @@ def _validated_runtime_source_precondition(value: Any) -> dict[str, Any] | None:
     return dict(value)
 
 
-def _validate_candidate_source_precondition(
-    candidate: dict[str, Any], source_precondition: dict[str, Any] | None
-) -> None:
-    if source_precondition is None:
-        return
+def _validate_candidate_runtime_source_identity(candidate: dict[str, Any]) -> None:
     ancestry = candidate.get("source_ancestry")
     identity = candidate.get("runtime_source_identity")
     deployed = candidate.get("deployed_source_commit")
@@ -2737,6 +2745,14 @@ def _validate_candidate_source_precondition(
             "runtime-source-identity-unproven",
             "deployment manifest and canonical Registry source identity do not match",
         )
+
+
+def _validate_candidate_source_precondition(
+    candidate: dict[str, Any], source_precondition: dict[str, Any] | None
+) -> None:
+    if source_precondition is None:
+        return
+    _validate_candidate_runtime_source_identity(candidate)
 
 
 def _validate_runtime_refresh_authority_contract(
@@ -2880,11 +2896,73 @@ def _validated_post_publication_activation_contract(
             "authority-preflight-publication-activation-contract-invalid",
             "post-publication runtime authority activation contract is invalid",
         )
-    return {
-        "publication_pr": publication_pr,
-        "required_checks": list(required_checks),
-        "required_activation_source": value["required_activation_source"],
-    }
+    normalized = json.loads(json.dumps(value))
+    normalized["publication_pr"] = publication_pr
+    normalized["required_checks"] = list(required_checks)
+    return normalized
+
+
+def _validated_protected_publication_activation_observation(
+    value: Any,
+    *,
+    activation_created_at: str,
+    target_main_commit: str,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation lacks typed runtime observation evidence",
+        )
+    try:
+        verify_digest(value, "observation_sha256")
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime observation digest is invalid",
+            details={"cause_code": exc.code},
+        ) from exc
+    if (
+        value.get("schema_version") != SCHEMA_VERSION
+        or value.get("kind") != "bureau_runtime_refresh_observation"
+        or value.get("status") not in {"candidate", "alert"}
+        or value.get("main_commit") != target_main_commit
+        or not _is_sha256(value.get("target_sha256"))
+        or value.get("target_sha256")
+        != sha256_bytes(canonical_bytes(_target_payload(value)))
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime observation is not deployable or target-bound",
+            details={
+                "status": value.get("status"),
+                "observed_main_commit": value.get("main_commit"),
+                "target_main_commit": target_main_commit,
+            },
+        )
+    try:
+        activated_at = parse_time(activation_created_at)
+        observed_at = parse_time(value.get("observed_at"))
+    except (TypeError, ValueError) as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime observation timestamp is invalid",
+        ) from exc
+    age_seconds = int((activated_at - observed_at).total_seconds())
+    if age_seconds < -30 or age_seconds > 300:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime observation is not fresh at the activation CAS",
+            details={"age_seconds": age_seconds, "max_age_seconds": 300},
+        )
+    try:
+        _validate_candidate_runtime_source_identity(value)
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime source identity is not proven",
+            details={"cause_code": exc.code},
+        ) from exc
+    return json.loads(json.dumps(value))
 
 
 def _historical_protected_publication_bootstrap(
@@ -2962,6 +3040,7 @@ def _validate_protected_publication_adoption_bootstrap(
     if (
         historical_spec.get("state") != "planned"
         or metadata.get("protected_publication_adoption") is not None
+        or metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD) is not None
         or metadata.get("runtime_closeout") is not None
         or not isinstance(authority, dict)
         or authority.get("target_binding_receipt") is not None
@@ -3002,6 +3081,7 @@ def _expected_protected_publication_activation_spec(
     historical_spec: dict[str, Any],
     publication: dict[str, Any],
     approval_task_id: str,
+    activation_observation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     metadata, authority, state = _validate_runtime_refresh_authority_contract(
         spec=historical_spec,
@@ -3051,6 +3131,10 @@ def _expected_protected_publication_activation_spec(
     candidate_metadata["protected_publication_adoption"] = json.loads(
         json.dumps(publication)
     )
+    if activation_observation is not None:
+        candidate_metadata[RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD] = json.loads(
+            json.dumps(activation_observation)
+        )
     candidate["acceptance"].append(
         _protected_publication_activation_acceptance(approval_task_id)
     )
@@ -3073,6 +3157,7 @@ def _validate_protected_publication_activation_receipt(
     adoption_proof: dict[str, Any],
     historical_spec: dict[str, Any],
     approval_task_id: str,
+    target_main_commit: str,
 ) -> None:
     adoption_revision = adoption_proof.get("adoption_revision")
     adoption_spec_sha256 = adoption_proof.get("task_spec_sha256")
@@ -3141,10 +3226,55 @@ def _validate_protected_publication_activation_receipt(
         ) from exc
     resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
     resulting_spec = resulting.get("spec") if isinstance(resulting, dict) else None
+    activation_record = _read_authority_task_revision(
+        store, approval_task_id, activation_revision
+    )
+    activation_record_spec = activation_record.get("spec")
+    activation_created_at = activation_record.get("created_at")
+    if (
+        not isinstance(activation_record_spec, dict)
+        or activation_record.get("spec_sha256") != activation_spec_sha256
+        or not isinstance(activation_created_at, str)
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-unproven",
+            "protected-publication activation revision cannot be reconstructed exactly",
+        )
+    try:
+        activation_time = parse_time(activation_created_at)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-receipt-unproven",
+            "protected-publication activation revision timestamp is invalid",
+        ) from exc
+    activation_metadata = activation_record_spec.get("metadata")
+    activation_observation_value = (
+        activation_metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
+        if isinstance(activation_metadata, dict)
+        else None
+    )
+    observation_required = (
+        activation_time >= RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_LEGACY_CUTOFF
+    )
+    if observation_required and activation_observation_value is None:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "post-cutoff protected-publication activation has no typed runtime observation",
+        )
+    activation_observation = (
+        _validated_protected_publication_activation_observation(
+            activation_observation_value,
+            activation_created_at=activation_created_at,
+            target_main_commit=target_main_commit,
+        )
+        if activation_observation_value is not None
+        else None
+    )
     expected_activation_spec = _expected_protected_publication_activation_spec(
         historical_spec=historical_spec,
         publication=publication,
         approval_task_id=approval_task_id,
+        activation_observation=activation_observation,
     )
     if (
         not isinstance(receipt, dict)
@@ -3286,6 +3416,7 @@ def _validate_pre_effect_protected_publication_activation(
         adoption_proof=adoption_proof,
         historical_spec=historical["spec"],
         approval_task_id=approval_task_id,
+        target_main_commit=target_main_commit,
     )
 
 

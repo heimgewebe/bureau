@@ -14,6 +14,9 @@ TASK_SPEC_EVENT_TYPE = "task-spec-revision-set"
 TASK_SPEC_EVENT_SCHEMA_VERSION = state_events.EVENT_SCHEMA_VERSION
 TASK_SPEC_PROJECTION_SCHEMA_VERSION = 1
 RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX = "runtime-refresh-no-run-closeout:"
+RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX = (
+    "runtime-refresh-protected-publication-activation:"
+)
 
 
 class TaskSpecError(ValueError):
@@ -283,6 +286,116 @@ def put_runtime_refresh_no_run_closeout(
     )
 
 
+def _validate_runtime_refresh_protected_publication_activation_mutation(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _canonical_spec(spec)
+    metadata = canonical.get("metadata")
+    publication = (
+        metadata.get("protected_publication_adoption")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    activation = (
+        metadata.get("post_publication_activation")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    observation = (
+        metadata.get("protected_publication_activation_observation")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    merge_commit = (
+        publication.get("publication_merge_commit")
+        if isinstance(publication, Mapping)
+        else None
+    )
+    if (
+        canonical.get("state") != "ready"
+        or not isinstance(activation, Mapping)
+        or activation.get("initial_state") != "planned"
+        or activation.get("activation_state") != "ready"
+        or activation.get("required_activation_source")
+        != "runtime-refresh-protected-publication-activation"
+        or not isinstance(publication, Mapping)
+        or not isinstance(merge_commit, str)
+        or len(merge_commit) != 40
+        or any(character not in "0123456789abcdef" for character in merge_commit)
+        or not isinstance(observation, Mapping)
+        or not isinstance(observation.get("observation_sha256"), str)
+        or len(str(observation.get("observation_sha256"))) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in str(observation.get("observation_sha256"))
+        )
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation mutation contract is invalid"
+        )
+    validate_schema(connection)
+    current = get_current(connection, canonical["id"])
+    if (
+        current is None
+        or expected_revision is None
+        or current.get("revision") != expected_revision
+        or not isinstance(current.get("spec"), Mapping)
+        or current["spec"].get("state") != "planned"
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation requires exact planned CAS baseline"
+        )
+    expected_key = (
+        f"{RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX}"
+        f"{canonical['id']}:{merge_commit}:{current['spec_sha256']}"
+    )
+    if idempotency_key != expected_key:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation idempotency binding is invalid"
+        )
+    return canonical
+
+
+def put_runtime_refresh_protected_publication_activation(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _validate_runtime_refresh_protected_publication_activation_mutation(
+        connection,
+        spec,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+    )
+    try:
+        validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
+    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        raise TaskSpecError(str(exc)) from exc
+    reserved_receipt = connection.execute(
+        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if reserved_receipt is None:
+        current = get_current(connection, canonical["id"])
+        if current is not None and current["spec_sha256"] == task_spec_digest(canonical):
+            raise TaskSpecError(
+                "runtime-refresh protected-publication activation must create its authenticated TaskSpec revision"
+            )
+    return _put_validated_material(
+        connection,
+        canonical,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source="runtime-refresh-protected-publication-activation",
+    )
+
+
 def current_projection(connection: sqlite3.Connection) -> dict[str, Any]:
     validate_schema(connection)
     tasks: dict[str, dict[str, Any]] = {}
@@ -515,6 +628,12 @@ def put(
     if idempotency_key.startswith(RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX):
         raise TaskSpecError(
             "runtime-refresh no-run closeout idempotency namespace is reserved"
+        )
+    if idempotency_key.startswith(
+        RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation idempotency namespace is reserved"
         )
     try:
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")

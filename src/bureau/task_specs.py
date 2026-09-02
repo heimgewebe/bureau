@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from collections.abc import Iterable, Mapping
@@ -14,6 +15,9 @@ TASK_SPEC_EVENT_TYPE = "task-spec-revision-set"
 TASK_SPEC_EVENT_SCHEMA_VERSION = state_events.EVENT_SCHEMA_VERSION
 TASK_SPEC_PROJECTION_SCHEMA_VERSION = 1
 RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX = "runtime-refresh-no-run-closeout:"
+RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX = (
+    "runtime-refresh-protected-publication-activation:"
+)
 
 
 class TaskSpecError(ValueError):
@@ -283,6 +287,215 @@ def put_runtime_refresh_no_run_closeout(
     )
 
 
+def _validate_runtime_refresh_protected_publication_activation_mutation(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _canonical_spec(spec)
+    metadata = canonical.get("metadata")
+    publication = (
+        metadata.get("protected_publication_adoption")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    activation = (
+        metadata.get("post_publication_activation")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    observation = (
+        metadata.get("protected_publication_activation_observation")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    observation_payload = dict(observation) if isinstance(observation, Mapping) else {}
+    observation_digest = observation_payload.pop("observation_sha256", None)
+    expected_observation_digest = hashlib.sha256(
+        (legacy.canonical_json(observation_payload) + "\n").encode()
+    ).hexdigest()
+    target_payload = {
+        key: observation.get(key) if isinstance(observation, Mapping) else None
+        for key in (
+            "repository",
+            "main_commit",
+            "pull_request",
+            "merged_at",
+            "required_checks",
+            "check_summary",
+            "deployed_source_commit",
+            "deployed_manifest_sha256",
+            "lag_commits",
+            "scheduler_target_state",
+        )
+    }
+    expected_target_sha256 = hashlib.sha256(
+        (legacy.canonical_json(target_payload) + "\n").encode()
+    ).hexdigest()
+    source_identity = (
+        observation.get("runtime_source_identity")
+        if isinstance(observation, Mapping)
+        else None
+    )
+    source_ancestry = (
+        observation.get("source_ancestry")
+        if isinstance(observation, Mapping)
+        else None
+    )
+    merge_commit = (
+        publication.get("publication_merge_commit")
+        if isinstance(publication, Mapping)
+        else None
+    )
+    if (
+        canonical.get("state") != "ready"
+        or not isinstance(activation, Mapping)
+        or activation.get("initial_state") != "planned"
+        or activation.get("activation_state") != "ready"
+        or activation.get("required_activation_source")
+        != "runtime-refresh-protected-publication-activation"
+        or not isinstance(publication, Mapping)
+        or not isinstance(merge_commit, str)
+        or len(merge_commit) != 40
+        or any(character not in "0123456789abcdef" for character in merge_commit)
+        or not isinstance(observation, Mapping)
+        or observation.get("schema_version") != 1
+        or observation.get("kind") != "bureau_runtime_refresh_observation"
+        or observation.get("status") not in {"candidate", "alert"}
+        or not isinstance(observation.get("observed_at"), str)
+        or not isinstance(observation.get("main_commit"), str)
+        or len(str(observation.get("main_commit"))) != 40
+        or any(
+            character not in "0123456789abcdef"
+            for character in str(observation.get("main_commit"))
+        )
+        or not isinstance(observation.get("target_sha256"), str)
+        or observation.get("target_sha256") != expected_target_sha256
+        or observation_digest != expected_observation_digest
+        or not isinstance(source_identity, Mapping)
+        or source_identity.get("schema_version") != 1
+        or source_identity.get("status") != "proven"
+        or source_identity.get("deployed_source_commit")
+        != observation.get("deployed_source_commit")
+        or source_identity.get("registry_source_commit")
+        != observation.get("deployed_source_commit")
+        or source_identity.get("registry_reasons") != []
+        or not isinstance(source_ancestry, Mapping)
+        or source_ancestry.get("schema_version") != 1
+        or source_ancestry.get("status") != "proven"
+        or source_ancestry.get("deployed_source_commit")
+        != observation.get("deployed_source_commit")
+        or source_ancestry.get("main_commit") != observation.get("main_commit")
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation mutation contract is invalid"
+        )
+    validate_schema(connection)
+    if (
+        not isinstance(expected_revision, int)
+        or isinstance(expected_revision, bool)
+        or expected_revision < 1
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation requires exact planned CAS baseline"
+        )
+    replay = connection.execute(
+        "SELECT task_id,expected_revision,requested_sha256,resulting_revision "
+        "FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if replay is not None:
+        baseline = get_revision(connection, canonical["id"], expected_revision)
+        expected_key = (
+            f"{RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX}"
+            f"{canonical['id']}:{merge_commit}:{baseline['spec_sha256']}"
+        )
+        digest = task_spec_digest(canonical)
+        resulting_revision = replay["resulting_revision"]
+        result = (
+            get_revision(connection, canonical["id"], int(resulting_revision))
+            if isinstance(resulting_revision, int)
+            else None
+        )
+        if (
+            idempotency_key != expected_key
+            or not isinstance(baseline.get("spec"), Mapping)
+            or baseline["spec"].get("state") != "planned"
+            or replay["task_id"] != canonical["id"]
+            or replay["expected_revision"] != expected_revision
+            or replay["requested_sha256"] != digest
+            or resulting_revision != expected_revision + 1
+            or not isinstance(result, dict)
+            or result.get("spec_sha256") != digest
+            or result.get("source")
+            != "runtime-refresh-protected-publication-activation"
+            or result.get("spec") != canonical
+        ):
+            raise TaskSpecError(
+                "runtime-refresh protected-publication activation replay binding is invalid"
+            )
+        return canonical
+
+    current = get_current(connection, canonical["id"])
+    if (
+        current is None
+        or current.get("revision") != expected_revision
+        or not isinstance(current.get("spec"), Mapping)
+        or current["spec"].get("state") != "planned"
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation requires exact planned CAS baseline"
+        )
+    expected_key = (
+        f"{RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX}"
+        f"{canonical['id']}:{merge_commit}:{current['spec_sha256']}"
+    )
+    if idempotency_key != expected_key:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation idempotency binding is invalid"
+        )
+    return canonical
+
+
+def put_runtime_refresh_protected_publication_activation(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _validate_runtime_refresh_protected_publication_activation_mutation(
+        connection,
+        spec,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+    )
+    try:
+        validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
+    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        raise TaskSpecError(str(exc)) from exc
+    reserved_receipt = connection.execute(
+        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if reserved_receipt is None:
+        current = get_current(connection, canonical["id"])
+        if current is not None and current["spec_sha256"] == task_spec_digest(canonical):
+            raise TaskSpecError(
+                "runtime-refresh protected-publication activation must create its "
+                "authenticated TaskSpec revision"
+            )
+    return _put_validated_material(
+        connection,
+        canonical,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source="runtime-refresh-protected-publication-activation",
+    )
+
+
 def current_projection(connection: sqlite3.Connection) -> dict[str, Any]:
     validate_schema(connection)
     tasks: dict[str, dict[str, Any]] = {}
@@ -515,6 +728,12 @@ def put(
     if idempotency_key.startswith(RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX):
         raise TaskSpecError(
             "runtime-refresh no-run closeout idempotency namespace is reserved"
+        )
+    if idempotency_key.startswith(
+        RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation idempotency namespace is reserved"
         )
     try:
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")

@@ -585,18 +585,37 @@ def _first_parent_lag_commits(
 
 
 def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
-    if path.is_symlink() or not path.is_file():
+    if path.is_symlink():
         raise RuntimeRefreshError("invalid-json-path", f"not a regular file: {path}")
+    descriptor = -1
     try:
-        manifest_bytes = path.read_bytes()
+        descriptor = os.open(
+            path,
+            os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+        )
     except OSError as exc:
-        raise RuntimeRefreshError("invalid-json", f"cannot read JSON: {path}") from exc
-    if len(manifest_bytes) > MAX_JSON_BYTES:
-        raise RuntimeRefreshError("json-too-large", f"JSON file exceeds limit: {path}")
+        raise RuntimeRefreshError("invalid-json-path", f"not a regular file: {path}") from exc
     try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise RuntimeRefreshError(
+                "invalid-json-path", f"not a regular file: {path}"
+            )
+        if metadata.st_size > MAX_JSON_BYTES:
+            raise RuntimeRefreshError("json-too-large", f"JSON file exceeds limit: {path}")
+        with os.fdopen(descriptor, "rb", closefd=True) as stream:
+            descriptor = -1
+            manifest_bytes = stream.read(MAX_JSON_BYTES + 1)
+        if len(manifest_bytes) > MAX_JSON_BYTES:
+            raise RuntimeRefreshError("json-too-large", f"JSON file exceeds limit: {path}")
         value = json.loads(manifest_bytes.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except RuntimeRefreshError:
+        raise
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise RuntimeRefreshError("invalid-json", f"cannot read JSON: {path}") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
     if not isinstance(value, dict):
         raise RuntimeRefreshError(
             "invalid-json-object",

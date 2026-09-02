@@ -465,34 +465,22 @@ def test_load_manifest_hashes_the_exact_bytes_it_parses_during_atomic_replace(
     )
     manifest_path.write_bytes(first_bytes)
     replacement_path.write_bytes(second_bytes)
+    original_open = os.open
     original_read_bytes = Path.read_bytes
-    original_read_text = Path.read_text
-    read_bytes_calls = 0
-    read_text_calls = 0
+    open_calls = 0
     replacement_done = False
 
-    def replace_after_text(self: Path, *args: Any, **kwargs: Any) -> str:
-        nonlocal read_text_calls, replacement_done
-        text = original_read_text(self, *args, **kwargs)
-        if self == manifest_path:
-            read_text_calls += 1
+    def replace_after_open(path: Any, flags: int, *args: Any, **kwargs: Any) -> int:
+        nonlocal open_calls, replacement_done
+        descriptor = original_open(path, flags, *args, **kwargs)
+        if Path(path) == manifest_path:
+            open_calls += 1
             if not replacement_done:
                 replacement_path.replace(manifest_path)
                 replacement_done = True
-        return text
+        return descriptor
 
-    def replace_after_bytes(self: Path) -> bytes:
-        nonlocal read_bytes_calls, replacement_done
-        payload = original_read_bytes(self)
-        if self == manifest_path:
-            read_bytes_calls += 1
-            if not replacement_done:
-                replacement_path.replace(manifest_path)
-                replacement_done = True
-        return payload
-
-    monkeypatch.setattr(Path, "read_text", replace_after_text)
-    monkeypatch.setattr(Path, "read_bytes", replace_after_bytes)
+    monkeypatch.setattr(os, "open", replace_after_open)
 
     manifest, manifest_sha256 = refresh.load_manifest(manifest_path)
 
@@ -500,8 +488,26 @@ def test_load_manifest_hashes_the_exact_bytes_it_parses_during_atomic_replace(
     assert manifest_sha256 == refresh.sha256_bytes(first_bytes)
     assert manifest_sha256 != refresh.sha256_bytes(second_bytes)
     assert original_read_bytes(manifest_path) == second_bytes
-    assert read_bytes_calls == 1
-    assert read_text_calls == 0
+    assert open_calls == 1
+
+
+def test_load_manifest_rejects_oversized_file_before_reading_payload(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest_path = tmp_path / "deployment-manifest.json"
+    with manifest_path.open("wb") as stream:
+        stream.truncate(refresh.MAX_JSON_BYTES + 1)
+
+    def unexpected_fdopen(*args: Any, **kwargs: Any) -> Any:
+        del args, kwargs
+        raise AssertionError("oversized manifest payload must not be read")
+
+    monkeypatch.setattr(os, "fdopen", unexpected_fdopen)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.load_manifest(manifest_path)
+
+    assert raised.value.code == "json-too-large"
 
 
 def test_installed_activation_candidate_validator_rejects_noncanonical_manifest(

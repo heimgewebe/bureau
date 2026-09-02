@@ -2932,7 +2932,8 @@ def _validated_protected_publication_activation_observation(
     ):
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-observation-unproven",
-            "protected-publication activation runtime observation is not deployable or target-bound",
+            "protected-publication activation runtime observation is not deployable "
+            "or target-bound",
             details={
                 "status": value.get("status"),
                 "observed_main_commit": value.get("main_commit"),
@@ -2951,7 +2952,8 @@ def _validated_protected_publication_activation_observation(
     if age_seconds < -30 or age_seconds > 300:
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-observation-unproven",
-            "protected-publication activation runtime observation is not fresh at the activation CAS",
+            "protected-publication activation runtime observation is not fresh "
+            "at the activation CAS",
             details={"age_seconds": age_seconds, "max_age_seconds": 300},
         )
     try:
@@ -3962,6 +3964,322 @@ def adopt_runtime_refresh_authority(
             "queue mutation",
             "claim or dispatch authority",
             "adoption authority for any other Registry task",
+        ],
+    }
+
+
+def _local_protected_publication_adoption_proof(
+    *,
+    store: Any,
+    approval_task_id: str,
+    historical_spec: dict[str, Any],
+    publication: dict[str, Any],
+    target_main_commit: str,
+    task_file_sha256: str,
+) -> dict[str, Any]:
+    from . import task_specs
+
+    historical_spec_sha256 = task_specs.task_spec_digest(historical_spec)
+    idempotency_key = f"legacy-seed-exact:{approval_task_id}:{historical_spec_sha256}"
+    try:
+        receipt = store.task_spec_mutation_receipt(idempotency_key)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-activation-adoption-receipt-unproven",
+            "cannot read the exact missing-only adoption receipt before activation",
+            details={"error": str(exc)},
+        ) from exc
+    resulting = receipt.get("resulting_task_spec") if isinstance(receipt, dict) else None
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("task_id") != approval_task_id
+        or receipt.get("expected_revision") is not None
+        or receipt.get("requested_sha256") != historical_spec_sha256
+        or receipt.get("resulting_revision") != 1
+        or not isinstance(resulting, dict)
+        or resulting.get("task_id") != approval_task_id
+        or resulting.get("revision") != 1
+        or resulting.get("spec_sha256") != historical_spec_sha256
+        or resulting.get("source") != "legacy-git-exact-seed"
+        or resulting.get("spec") != historical_spec
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-adoption-receipt-unproven",
+            "StateStore does not contain the exact missing-only adoption baseline",
+        )
+    if not _is_sha256(task_file_sha256):
+        raise RuntimeRefreshError(
+            "authority-activation-task-file-digest-invalid",
+            "protected publication TaskSpec file digest is invalid",
+        )
+    evidence = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_protected_publication_adoption_evidence",
+        "task_id": approval_task_id,
+        "publication_pr": publication["publication_pr"],
+        "publication_merge_commit": publication["publication_merge_commit"],
+        "target_main_commit": target_main_commit,
+        "task_path": _runtime_authority_task_path(approval_task_id).as_posix(),
+        "task_file_sha256": task_file_sha256,
+        "task_spec_sha256": historical_spec_sha256,
+        "adoption_idempotency_key": idempotency_key,
+        "adoption_revision": 1,
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
+def activate_runtime_refresh_authority(
+    *,
+    registry_root: Path,
+    manifest_path: Path,
+    repository: str,
+    approval_task_id: str,
+    publication_pr: int,
+    publication_merge_commit: str,
+    expected_main_commit: str,
+    expected_task_file_sha256: str,
+    required_checks: tuple[str, ...] = DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS,
+    authority_store: Any | None = None,
+    github: Callable[[list[str]], Any] = gh_preflight_json,
+    registry: Any | None = None,
+    observer: Callable[..., dict[str, Any]] = observe_runtime_refresh,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    if repository != DEFAULT_REPOSITORY:
+        raise RuntimeRefreshError(
+            "authority-activation-repository-invalid",
+            "protected runtime authority activation is bound to the canonical Bureau repository",
+            details={"observed_repository": repository},
+        )
+    if list(required_checks) != list(DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS):
+        raise RuntimeRefreshError(
+            "authority-activation-required-checks-invalid",
+            "protected runtime authority activation requires the canonical publication checks",
+            details={"observed_required_checks": list(required_checks)},
+        )
+    current_time = now or utc_now()
+    store = authority_store or _default_authority_store()
+    state_store_binding = _authority_store_binding(store)
+    current = _read_authority_task(store, approval_task_id)
+    spec = current.get("spec")
+    if not isinstance(spec, dict):
+        raise RuntimeRefreshError(
+            "authority-activation-task-invalid",
+            "runtime authority TaskSpec readback is invalid before activation",
+        )
+    metadata, authority, state = _validate_runtime_refresh_authority_contract(
+        spec=spec, approval_task_id=approval_task_id, allow_planned=True
+    )
+    activation = _validated_post_publication_activation_contract(metadata)
+    if activation is None:
+        raise RuntimeRefreshError(
+            "authority-activation-contract-missing",
+            "runtime authority has no protected post-publication activation contract",
+        )
+    if (
+        activation.get("publication_pr") is not None
+        and activation["publication_pr"] != publication_pr
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-publication-mismatch",
+            "activation request does not match the TaskSpec publication PR",
+        )
+    publication_contract = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "repository": repository,
+        "publication_pr": publication_pr,
+        "publication_merge_commit": publication_merge_commit,
+        "required_checks": list(required_checks),
+    }
+
+    if state == "ready":
+        publication = _validated_protected_publication_adoption_contract(spec)
+        if publication != publication_contract:
+            raise RuntimeRefreshError(
+                "authority-activation-replay-publication-mismatch",
+                "ready authority publication binding differs from the activation request",
+            )
+        observation_value = metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
+        observation = _validated_protected_publication_activation_observation(
+            observation_value,
+            activation_created_at=current["created_at"],
+            target_main_commit=expected_main_commit,
+        )
+        historical = _read_authority_task_revision(store, approval_task_id, 1)
+        historical_spec = historical.get("spec")
+        if not isinstance(historical_spec, dict):
+            raise RuntimeRefreshError(
+                "authority-activation-replay-history-invalid",
+                "ready authority activation baseline cannot be reconstructed",
+            )
+        adoption_proof = _local_protected_publication_adoption_proof(
+            store=store,
+            approval_task_id=approval_task_id,
+            historical_spec=historical_spec,
+            publication=publication_contract,
+            target_main_commit=expected_main_commit,
+            task_file_sha256=expected_task_file_sha256,
+        )
+        _validate_protected_publication_activation_receipt(
+            store=store,
+            current=current,
+            authority=authority,
+            activation=_validated_post_publication_activation_contract(
+                historical_spec["metadata"]
+            ),
+            publication=publication_contract,
+            adoption_proof=adoption_proof,
+            historical_spec=historical_spec,
+            approval_task_id=approval_task_id,
+            target_main_commit=expected_main_commit,
+        )
+        return {
+            "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_authority_activation",
+            "status": "already_ready",
+            "task_id": approval_task_id,
+            "revision": current["revision"],
+            "spec_sha256": current["spec_sha256"],
+            "target_main_commit": expected_main_commit,
+            "target_sha256": observation["target_sha256"],
+            "observation_sha256": observation["observation_sha256"],
+            "state_store": state_store_binding,
+            "idempotent_replay": True,
+        }
+    if state != "planned":
+        raise RuntimeRefreshError(
+            "authority-activation-state-invalid",
+            "only an exact planned protected authority can be activated",
+            details={"state": state},
+        )
+
+    validated_registry, publication = verify_runtime_refresh_authority_publication(
+        registry_root=registry_root,
+        repository=repository,
+        approval_task_id=approval_task_id,
+        publication_pr=publication_pr,
+        publication_merge_commit=publication_merge_commit,
+        expected_main_commit=expected_main_commit,
+        expected_task_file_sha256=expected_task_file_sha256,
+        required_checks=required_checks,
+        github=github,
+        registry=registry,
+    )
+    task = getattr(validated_registry, "tasks", {}).get(approval_task_id)
+    if (
+        current.get("revision") != 1
+        or current.get("spec_sha256") is None
+        or getattr(task, "raw", None) != spec
+        or publication.get("task_state") != "planned"
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-adoption-drift",
+            "planned StateStore authority differs from the exact protected publication",
+        )
+    adoption_proof = _local_protected_publication_adoption_proof(
+        store=store,
+        approval_task_id=approval_task_id,
+        historical_spec=spec,
+        publication=publication_contract,
+        target_main_commit=expected_main_commit,
+        task_file_sha256=expected_task_file_sha256,
+    )
+    observation = observer(
+        repository=repository,
+        manifest_path=manifest_path.expanduser().resolve(),
+        required_checks=required_checks,
+        now=current_time,
+    )
+    verify_digest(observation, "observation_sha256")
+    if observation.get("status") not in {"candidate", "alert"}:
+        raise RuntimeRefreshError(
+            "authority-activation-observation-not-deployable",
+            "fresh runtime observation does not justify planned-to-ready activation",
+            details={
+                "status": observation.get("status"),
+                "reason_codes": observation.get("reason_codes"),
+            },
+        )
+    if observation.get("main_commit") != expected_main_commit:
+        raise RuntimeRefreshError(
+            "authority-activation-main-drift",
+            "fresh runtime observation differs from the reviewed activation target",
+            details={
+                "expected_main_commit": expected_main_commit,
+                "observed_main_commit": observation.get("main_commit"),
+            },
+        )
+    _validate_candidate_runtime_source_identity(observation)
+    source_precondition = _validated_runtime_source_precondition(
+        authority.get("source_precondition")
+    )
+    _validate_candidate_source_precondition(observation, source_precondition)
+
+    reread = _read_authority_task(store, approval_task_id)
+    if (
+        reread.get("revision") != current.get("revision")
+        or reread.get("spec_sha256") != current.get("spec_sha256")
+        or reread.get("spec") != spec
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-task-drift",
+            "planned authority changed during activation preflight",
+        )
+    ready = _expected_protected_publication_activation_spec(
+        historical_spec=spec,
+        publication=publication_contract,
+        approval_task_id=approval_task_id,
+        activation_observation=observation,
+    )
+    idempotency_key = (
+        f"{activation['required_activation_source']}:{approval_task_id}:"
+        f"{publication_merge_commit}:{current['spec_sha256']}"
+    )
+    changed = _put_authority_task(
+        store,
+        ready,
+        idempotency_key=idempotency_key,
+        expected_revision=current["revision"],
+        source=activation["required_activation_source"],
+    )
+    readback = _read_authority_task(store, approval_task_id)
+    if (
+        readback.get("revision") != changed.get("revision")
+        or readback.get("spec_sha256") != changed.get("spec_sha256")
+        or readback.get("spec") != ready
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-readback-failed",
+            "activated TaskSpec readback differs from the exact CAS result",
+        )
+    _validate_protected_publication_activation_receipt(
+        store=store,
+        current=readback,
+        authority=readback["spec"]["metadata"]["runtime_refresh_authority"],
+        activation=activation,
+        publication=publication_contract,
+        adoption_proof=adoption_proof,
+        historical_spec=spec,
+        approval_task_id=approval_task_id,
+        target_main_commit=expected_main_commit,
+    )
+    return {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": "bureau_runtime_refresh_authority_activation",
+        "status": "ready",
+        "task_id": approval_task_id,
+        "revision": readback["revision"],
+        "spec_sha256": readback["spec_sha256"],
+        "target_main_commit": expected_main_commit,
+        "target_sha256": observation["target_sha256"],
+        "observation_sha256": observation["observation_sha256"],
+        "state_store": state_store_binding,
+        "publication": publication_contract,
+        "idempotent_replay": False,
+        "does_not_establish": [
+            "runtime mutation permission without prepare-intent approval",
+            "future main stability",
+            "future runtime drift absence",
         ],
     }
 
@@ -8740,6 +9058,16 @@ def parser() -> argparse.ArgumentParser:
     adopt.add_argument("--task-file-sha256", required=True)
     adopt.add_argument("--required-check", action="append", default=[])
 
+    activate = sub.add_parser("activate-authority")
+    activate.add_argument("--registry-root", required=True, type=Path)
+    activate.add_argument("--repository", default=DEFAULT_REPOSITORY)
+    activate.add_argument("--approval-task-id", required=True)
+    activate.add_argument("--publication-pr", required=True, type=int)
+    activate.add_argument("--publication-merge-commit", required=True)
+    activate.add_argument("--expected-main-commit", required=True)
+    activate.add_argument("--task-file-sha256", required=True)
+    activate.add_argument("--required-check", action="append", default=[])
+
     intent = sub.add_parser("prepare-intent")
     intent.add_argument("--candidate", required=True, type=Path)
     intent.add_argument("--prefix", default="~/.local/share/bureau", type=Path)
@@ -8804,6 +9132,24 @@ def main(argv: list[str] | None = None) -> int:
             )
             result = adopt_runtime_refresh_authority(
                 registry_root=_resolved(args.registry_root),
+                repository=args.repository,
+                approval_task_id=args.approval_task_id,
+                publication_pr=args.publication_pr,
+                publication_merge_commit=args.publication_merge_commit,
+                expected_main_commit=args.expected_main_commit,
+                expected_task_file_sha256=args.task_file_sha256,
+                required_checks=checks,
+            )
+            print(json.dumps(result, sort_keys=True))
+            return 0
+        if args.command == "activate-authority":
+            checks = (
+                tuple(args.required_check)
+                or DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS
+            )
+            result = activate_runtime_refresh_authority(
+                registry_root=_resolved(args.registry_root),
+                manifest_path=manifest_path,
                 repository=args.repository,
                 approval_task_id=args.approval_task_id,
                 publication_pr=args.publication_pr,

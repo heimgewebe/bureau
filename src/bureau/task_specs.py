@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from collections.abc import Iterable, Mapping
@@ -310,6 +311,39 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         if isinstance(metadata, Mapping)
         else None
     )
+    observation_payload = dict(observation) if isinstance(observation, Mapping) else {}
+    observation_digest = observation_payload.pop("observation_sha256", None)
+    expected_observation_digest = hashlib.sha256(
+        (legacy.canonical_json(observation_payload) + "\n").encode()
+    ).hexdigest()
+    target_payload = {
+        key: observation.get(key) if isinstance(observation, Mapping) else None
+        for key in (
+            "repository",
+            "main_commit",
+            "pull_request",
+            "merged_at",
+            "required_checks",
+            "check_summary",
+            "deployed_source_commit",
+            "deployed_manifest_sha256",
+            "lag_commits",
+            "scheduler_target_state",
+        )
+    }
+    expected_target_sha256 = hashlib.sha256(
+        (legacy.canonical_json(target_payload) + "\n").encode()
+    ).hexdigest()
+    source_identity = (
+        observation.get("runtime_source_identity")
+        if isinstance(observation, Mapping)
+        else None
+    )
+    source_ancestry = (
+        observation.get("source_ancestry")
+        if isinstance(observation, Mapping)
+        else None
+    )
     merge_commit = (
         publication.get("publication_merge_commit")
         if isinstance(publication, Mapping)
@@ -327,12 +361,33 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         or len(merge_commit) != 40
         or any(character not in "0123456789abcdef" for character in merge_commit)
         or not isinstance(observation, Mapping)
-        or not isinstance(observation.get("observation_sha256"), str)
-        or len(str(observation.get("observation_sha256"))) != 64
+        or observation.get("schema_version") != 1
+        or observation.get("kind") != "bureau_runtime_refresh_observation"
+        or observation.get("status") not in {"candidate", "alert"}
+        or not isinstance(observation.get("observed_at"), str)
+        or not isinstance(observation.get("main_commit"), str)
+        or len(str(observation.get("main_commit"))) != 40
         or any(
             character not in "0123456789abcdef"
-            for character in str(observation.get("observation_sha256"))
+            for character in str(observation.get("main_commit"))
         )
+        or not isinstance(observation.get("target_sha256"), str)
+        or observation.get("target_sha256") != expected_target_sha256
+        or observation_digest != expected_observation_digest
+        or not isinstance(source_identity, Mapping)
+        or source_identity.get("schema_version") != 1
+        or source_identity.get("status") != "proven"
+        or source_identity.get("deployed_source_commit")
+        != observation.get("deployed_source_commit")
+        or source_identity.get("registry_source_commit")
+        != observation.get("deployed_source_commit")
+        or source_identity.get("registry_reasons") != []
+        or not isinstance(source_ancestry, Mapping)
+        or source_ancestry.get("schema_version") != 1
+        or source_ancestry.get("status") != "proven"
+        or source_ancestry.get("deployed_source_commit")
+        != observation.get("deployed_source_commit")
+        or source_ancestry.get("main_commit") != observation.get("main_commit")
     ):
         raise TaskSpecError(
             "runtime-refresh protected-publication activation mutation contract is invalid"
@@ -385,7 +440,8 @@ def put_runtime_refresh_protected_publication_activation(
         current = get_current(connection, canonical["id"])
         if current is not None and current["spec_sha256"] == task_spec_digest(canonical):
             raise TaskSpecError(
-                "runtime-refresh protected-publication activation must create its authenticated TaskSpec revision"
+                "runtime-refresh protected-publication activation must create its "
+                "authenticated TaskSpec revision"
             )
     return _put_validated_material(
         connection,

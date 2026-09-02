@@ -2099,9 +2099,9 @@ def _validate_task_revision_identity_continuity(
     resource_overlap = _task_revision_resource_scope(before) & _task_revision_resource_scope(
         after
     )
-    # Read-only revisions do not gain mutation authority. A later transition back to
-    # write scope is validated against the last write-capable TaskSpec by the binding
-    # layer, so a read-only closeout cannot launder an unrelated writable identity.
+    # Read-only revisions do not gain mutation authority. Any later transition to
+    # write scope is validated against revision 1 by the binding layer, so read-only
+    # drift cannot launder an unrelated writable identity.
     if not after_scope:
         return
     title_continuous, title_evidence = _task_revision_text_is_continuous(
@@ -2170,27 +2170,25 @@ def _validate_task_revision_identity_continuity(
 def _task_revision_identity_baseline(
     store: StateStore, current: dict[str, Any]
 ) -> dict[str, Any]:
-    current_spec = current["spec"]
-    if _task_revision_write_scope(current_spec):
-        return current
     task_id = str(current["task_id"])
     current_revision = int(current["revision"])
+    if current_revision == 1:
+        return current
     from . import task_specs as task_specs_module
 
     try:
         with store.connect() as connection:
-            for revision in range(current_revision - 1, 0, -1):
-                candidate = task_specs_module.get_revision(connection, task_id, revision)
-                if _task_revision_write_scope(candidate["spec"]):
-                    return candidate
+            # The permanent task id is born with revision 1. Every later write-capable
+            # revision must remain recognizable against that stable origin rather than
+            # inheriting identity from a chain of individually plausible edits.
+            return task_specs_module.get_revision(connection, task_id, 1)
     except (sqlite3.Error, task_specs_module.TaskSpecError) as exc:
         raise OperatorIntakeError(
             "task-revision-identity-baseline-read-failed",
-            "cannot reconstruct the last write-capable TaskSpec identity baseline",
+            "cannot reconstruct the initial TaskSpec identity baseline",
             retryable=True,
             details={"task_id": task_id, "current_revision": current_revision},
         ) from exc
-    return current
 
 
 def _task_spec_proposal_binding(

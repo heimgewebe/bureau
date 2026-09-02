@@ -4193,7 +4193,7 @@ def test_task_revision_identity_guard_rejects_initiative_rebind() -> None:
     assert raised.value.code == "task-revision-initiative-mismatch"
 
 
-def test_task_propose_reactivation_uses_last_write_capable_identity(
+def test_task_propose_reactivation_uses_initial_identity(
     registry_factory, tmp_path
 ) -> None:
     root = registry_factory(task_count=2, mode="write")
@@ -4252,6 +4252,139 @@ def test_task_propose_reactivation_uses_last_write_capable_identity(
             task_json=reactivation,
             publishing_task_id="BUR-TEST-001-T001",
             path=tmp_path / "laundered-read-reactivation.proposal.json",
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_propose_first_write_after_read_drift_uses_initial_identity(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="read")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    original = store.task_spec(task_id)
+    assert original is not None
+
+    drifted_read = json.loads(json.dumps(original["spec"]))
+    drifted_read["title"] = "Inspect unrelated dashboard metrics"
+    drifted_read["acceptance"][0]["id"] = "dashboard-proof"
+    with store.connect() as connection:
+        task_specs_module.put(
+            connection,
+            drifted_read,
+            idempotency_key="test:read-only-identity-drift",
+            expected_revision=int(original["revision"]),
+            source="test",
+        )
+    current = store.task_spec(task_id)
+    assert current is not None
+    proposed = json.loads(json.dumps(current["spec"]))
+    proposed["claims"][0]["mode"] = "write"
+    operator_intake_module._validate_task_revision_identity_continuity(
+        current["spec"], proposed
+    )
+    identity_baseline = operator_intake_module._task_revision_identity_baseline(
+        store, current
+    )
+    assert identity_baseline["revision"] == original["revision"]
+
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:first-write-after-read-drift",
+        title="Attempt first write after read drift",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:first-write-after-read-drift",
+        source_sha256="a" * 64,
+        desired_outcome="Reject write activation after unrelated read-only identity drift",
+        repo="repo.beta",
+        task_id=task_id,
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=proposed,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "first-write-after-read-drift.proposal.json",
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_propose_write_chain_uses_first_write_identity(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    task_path = root / "registry/tasks/BUR-TEST-001-T002.json"
+    task = json.loads(task_path.read_text())
+    task["title"] = "Repair Avira updater service"
+    task_path.write_text(json.dumps(task))
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    original = store.task_spec(task_id)
+    assert original is not None
+
+    intermediate = json.loads(json.dumps(original["spec"]))
+    intermediate["title"] = "Repair updater service database"
+    with store.connect() as connection:
+        task_specs_module.put(
+            connection,
+            intermediate,
+            idempotency_key="test:gradual-write-drift-intermediate",
+            expected_revision=int(original["revision"]),
+            source="test",
+        )
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert int(current["revision"]) == int(original["revision"]) + 1
+
+    proposed = json.loads(json.dumps(current["spec"]))
+    proposed["title"] = "Repair service database dashboard"
+    # The immediate predecessor still looks locally continuous. The stable baseline
+    # must be what prevents gradual laundering of the permanent task identity.
+    operator_intake_module._validate_task_revision_identity_continuity(
+        current["spec"], proposed
+    )
+    identity_baseline = operator_intake_module._task_revision_identity_baseline(
+        store, current
+    )
+    assert identity_baseline["revision"] == original["revision"]
+
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:gradual-write-drift",
+        title="Attempt gradual write identity drift",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:gradual-write-drift",
+        source_sha256="9" * 64,
+        desired_outcome="Reject gradual semantic drift under one permanent task id",
+        repo="repo.beta",
+        task_id=task_id,
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=proposed,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "gradual-write-drift.proposal.json",
         )
     assert raised.value.code == "task-revision-identity-discontinuity"
 

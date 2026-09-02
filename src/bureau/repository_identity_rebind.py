@@ -211,9 +211,25 @@ def _candidates(
     for item in _task_rows(connection, registry):
         if item["effective_state"] in _TERMINAL_TASK_STATES:
             continue
-        if _has_old_binding(
+        residue = sorted(
+            set(
+                task_specs._old_repository_binding_residue(
+                    item["spec"],
+                    old_resource_id=old_resource_id,
+                    old_repository_path=old_path,
+                )
+            )
+        )
+        has_supported_binding = _has_old_binding(
             item["spec"], old_resource_id=old_resource_id, old_path=old_path
-        ):
+        )
+        if residue and not has_supported_binding:
+            raise legacy.StateError(
+                "repository identity rebind found old technical bindings outside "
+                f"approved rebind surfaces for task {item['task_id']}: "
+                + ", ".join(residue)
+            )
+        if has_supported_binding:
             result[item["task_id"]] = item
     return result
 

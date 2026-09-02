@@ -496,6 +496,43 @@ def test_regular_taskspec_put_still_rejects_legacy_acceptance(tmp_path: Path) ->
     assert store.task_spec("TASK-A")["revision"] == 1
 
 
+@pytest.mark.parametrize("residual_kind", ("path", "resource"))
+def test_plan_rejects_old_binding_only_in_unapproved_metadata(
+    tmp_path: Path, residual_kind: str
+) -> None:
+    root, old_path, new_path = _registry_root(tmp_path, legacy=True)
+    task_path = root / "registry/tasks/TASK-B.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["claims"][0]["resource"] = NEW_RESOURCE
+    task["execution"]["working_repository"] = str(new_path)
+    task["execution"]["grabowski_resources"] = [
+        f"repo:{new_path}",
+        f"path:{new_path}/apps/web",
+        f"repo:{new_path}:operation:test-scope",
+    ]
+    task["metadata"]["unapproved_old_binding"] = (
+        str(old_path) if residual_kind == "path" else OLD_RESOURCE
+    )
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+
+    with pytest.raises(
+        StateError,
+        match=r"old technical bindings outside approved rebind surfaces for task TASK-B",
+    ):
+        build_plan(
+            registry,
+            store,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+        )
+
+    assert store.task_spec("TASK-A")["revision"] == 1
+    assert store.task_spec("TASK-B")["revision"] == 1
+
+
 def test_preview_rejects_old_repository_path_in_unapproved_metadata(tmp_path: Path) -> None:
     _, old_path, new_path = _registry_root(
         tmp_path, task_ids=("TASK-A",), legacy=True

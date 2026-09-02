@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
-from bureau import weltgewebe_source
+from bureau import fetch_orchestration, weltgewebe_source
+from bureau.approval import ApprovalRequired, explicit_operator_approval, reviewed_receipt_approval
 from bureau.core import Registry, ValidationError
 from bureau.weltgewebe_source import source_check, source_sync
 
@@ -335,3 +336,165 @@ def test_registry_rejects_unknown_source_property(registry_factory, source_repo)
     target.write_text(json.dumps(snapshot), encoding="utf-8")
     with pytest.raises(ValidationError, match="unexpected"):
         Registry.load(root)
+
+
+
+def test_source_sync_expected_commit_fails_before_write(registry_factory, source_repo):
+    root = registry_factory(1)
+    original = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=source_repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    write_source(source_repo, [task("TASK-ONE-001", "open", "moved")])
+    commit_source(source_repo, "moved")
+
+    with pytest.raises(ValidationError, match="source ref moved after preview"):
+        source_sync(root, source_repo, "HEAD", apply=True, expected_commit_sha=original)
+    assert not (root / "registry/sources/weltgewebe.json").exists()
+
+
+def test_source_import_is_plan_bound_and_requires_reviewed_receipt(
+    registry_factory, source_repo, monkeypatch
+):
+    root = registry_factory(1)
+    monkeypatch.setattr(
+        fetch_orchestration,
+        "_runtime_gate",
+        lambda *args, **kwargs: {
+            "execution_blocked": False,
+            "reason_code": "runtime-clear",
+            "summary": "runtime clear",
+        },
+    )
+    plan = fetch_orchestration.source_import_plan(
+        root,
+        source_repo,
+        "HEAD",
+        task_id="BUR-TEST-001-T006",
+    )
+    assert plan["read_only"] is True
+    assert plan["allowed"] is True
+    assert plan["target_preimage"] == {"exists": False, "sha256": None}
+    assert plan["source"]["commit_sha"] == subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=source_repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert not (root / "registry/sources/weltgewebe.json").exists()
+
+    operator = explicit_operator_approval(
+        source="test",
+        approved=True,
+        reference=plan["plan_sha256"],
+        task_id="BUR-TEST-001-T006",
+    )
+    with pytest.raises(ApprovalRequired):
+        fetch_orchestration.apply_source_import_plan(
+            root,
+            source_repo,
+            "HEAD",
+            expected_plan_sha256=plan["plan_sha256"],
+            approval=operator,
+            task_id="BUR-TEST-001-T006",
+        )
+    assert not (root / "registry/sources/weltgewebe.json").exists()
+
+    reviewed = reviewed_receipt_approval(
+        reviewer="reviewer",
+        reference=plan["plan_sha256"],
+        task_id="BUR-TEST-001-T006",
+    )
+    receipt = fetch_orchestration.apply_source_import_plan(
+        root,
+        source_repo,
+        "HEAD",
+        expected_plan_sha256=plan["plan_sha256"],
+        approval=reviewed,
+        task_id="BUR-TEST-001-T006",
+    )
+    assert receipt["status"] == "applied"
+    assert receipt["document_sha256"] == plan["document_sha256"]
+    assert receipt["source"]["commit_sha"] == plan["source"]["commit_sha"]
+    assert receipt["receipt_sha256"]
+    assert (root / "registry/sources/weltgewebe.json").is_file()
+
+def test_source_import_rejects_destination_drift_after_replan(
+    registry_factory, source_repo, monkeypatch
+) -> None:
+    root = registry_factory(1)
+    monkeypatch.setattr(
+        fetch_orchestration,
+        "_runtime_gate",
+        lambda *args, **kwargs: {
+            "execution_blocked": False,
+            "reason_code": "runtime-clear",
+            "summary": "runtime clear",
+        },
+    )
+    plan = fetch_orchestration.source_import_plan(
+        root, source_repo, "HEAD", task_id="BUR-TEST-001-T006"
+    )
+    reviewed = reviewed_receipt_approval(
+        reviewer="reviewer",
+        reference=plan["plan_sha256"],
+        task_id="BUR-TEST-001-T006",
+    )
+    target = root / "registry/sources/weltgewebe.json"
+    real_source_sync = fetch_orchestration.source_sync
+    calls = 0
+
+    def racing_source_sync(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('{"newer": true}\n', encoding="utf-8")
+        return real_source_sync(*args, **kwargs)
+
+    monkeypatch.setattr(fetch_orchestration, "source_sync", racing_source_sync)
+
+    with pytest.raises(ValidationError, match="source target changed after preview"):
+        fetch_orchestration.apply_source_import_plan(
+            root,
+            source_repo,
+            "HEAD",
+            expected_plan_sha256=plan["plan_sha256"],
+            approval=reviewed,
+            task_id="BUR-TEST-001-T006",
+        )
+
+    assert target.read_text(encoding="utf-8") == '{"newer": true}\n'
+
+def test_source_sync_rechecks_target_after_tempfile_before_replace(
+    registry_factory, source_repo, monkeypatch
+) -> None:
+    root = registry_factory(1)
+    preview = source_sync(root, source_repo, "HEAD")
+    target = root / "registry/sources/weltgewebe.json"
+    real_mkstemp = weltgewebe_source.tempfile.mkstemp
+
+    def racing_mkstemp(*args, **kwargs):
+        descriptor, name = real_mkstemp(*args, **kwargs)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('{"manual": true}\n', encoding="utf-8")
+        return descriptor, name
+
+    monkeypatch.setattr(weltgewebe_source.tempfile, "mkstemp", racing_mkstemp)
+
+    with pytest.raises(ValidationError, match="source target changed after preview"):
+        source_sync(
+            root,
+            source_repo,
+            "HEAD",
+            apply=True,
+            expected_commit_sha=preview["commit_sha"],
+            expected_target_preimage=preview["target_preimage"],
+        )
+
+    assert target.read_text(encoding="utf-8") == '{"manual": true}\n'
+    assert list(target.parent.glob(f".{target.name}.*")) == []

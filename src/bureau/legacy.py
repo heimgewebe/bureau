@@ -15,6 +15,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .task_identity import assess_task_reference as assess_canonical_task_reference
+from .task_identity import is_bare_local_task_ordinal
+
 ACTIVE_STATES = ("assigned", "running", "verifying")
 LANE_ORDER = {"now": 0, "next": 1, "later": 2}
 TERMINAL_TASK_STATES = frozenset({"verified", "cancelled", "superseded"})
@@ -352,6 +355,27 @@ class Registry:
             raise ValidationError(f"duplicate id {key} in {path}")
         mapping[key] = item
 
+    def task_reference_assessment(
+        self, reference: str, *, namespace: str | None = None
+    ) -> dict[str, Any]:
+        """Resolve task references without treating local T-numbers as global ids."""
+        return assess_canonical_task_reference(
+            reference, self.tasks, namespace=namespace
+        )
+
+    def _bare_local_reference_error(self, reference: str, *, context: str) -> str:
+        assessment = self.task_reference_assessment(reference)
+        candidates = assessment["candidate_task_ids"]
+        suffix = (
+            "; canonical candidates: " + ", ".join(candidates)
+            if candidates
+            else ""
+        )
+        return (
+            f"{context} uses bare local task ordinal {reference}; canonical full task id "
+            f"or explicit namespace required{suffix}"
+        )
+
     def validate(self) -> None:
         errors: list[str] = []
         parent_by_child: dict[str, str] = {}
@@ -477,7 +501,12 @@ class Registry:
                 errors.append(f"initiative {initiative.id} has invalid parallelism")
 
         for task in self.tasks.values():
-            if not ID_RE.fullmatch(task.id):
+            if is_bare_local_task_ordinal(task.id):
+                errors.append(
+                    f"task {task.id} uses bare local task ordinal as canonical id; "
+                    "canonical full task id required"
+                )
+            elif not ID_RE.fullmatch(task.id):
                 errors.append(f"invalid task id {task.id}")
             if task.initiative not in self.initiatives:
                 errors.append(f"task {task.id} has unknown initiative {task.initiative}")
@@ -553,7 +582,16 @@ class Registry:
             if isinstance(metadata, dict):
                 if "parent_task" in metadata:
                     parent_task = metadata["parent_task"]
-                    if not isinstance(parent_task, str) or not ID_RE.fullmatch(parent_task):
+                    if not isinstance(parent_task, str):
+                        errors.append(f"task {task.id} has invalid metadata.parent_task")
+                    elif is_bare_local_task_ordinal(parent_task):
+                        errors.append(
+                            self._bare_local_reference_error(
+                                parent_task,
+                                context=f"task {task.id} metadata.parent_task",
+                            )
+                        )
+                    elif not ID_RE.fullmatch(parent_task):
                         errors.append(f"task {task.id} has invalid metadata.parent_task")
                     elif parent_task == task.id:
                         errors.append(f"task {task.id} cannot parent itself")
@@ -572,7 +610,13 @@ class Registry:
                         f"task {task.id} metadata.independently_executable must be boolean"
                     )
             for dependency in task.depends_on:
-                if dependency not in self.tasks:
+                if is_bare_local_task_ordinal(dependency):
+                    errors.append(
+                        self._bare_local_reference_error(
+                            dependency, context=f"task {task.id} dependency"
+                        )
+                    )
+                elif dependency not in self.tasks:
                     errors.append(f"task {task.id} has unknown dependency {dependency}")
             for claim in task.claims:
                 if claim.resource not in self.resources:
@@ -594,6 +638,13 @@ class Registry:
         }
         for lane, task_ids in self.queue.items():
             for task_id in task_ids:
+                if is_bare_local_task_ordinal(task_id):
+                    errors.append(
+                        self._bare_local_reference_error(
+                            task_id, context=f"queue {lane}"
+                        )
+                    )
+                    continue
                 task = self.tasks.get(task_id)
                 if task is None:
                     errors.append(f"queue {lane} has unknown task {task_id}")

@@ -40,7 +40,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.weltgewebe"
+      "resource": "repo.commonthing"
     }
   ],
   "depends_on": [

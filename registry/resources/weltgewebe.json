@@ -1,9 +1,12 @@
 {
-  "grabowski_key": "repo:/home/alex/repos/weltgewebe",
-  "id": "repo.weltgewebe",
-  "parent": "repo",
-  "path": "/home/alex/repos/weltgewebe",
-  "github_slug": "heimgewebe/weltgewebe",
   "schema_version": 1,
-  "type": "git-repository"
+  "id": "repo.weltgewebe",
+  "type": "external",
+  "parent": "repo",
+  "metadata": {
+    "retired_at": "2026-09-02T06:05:25Z",
+    "canonical_successor": "repo.commonthing",
+    "historical_path": "/home/alex/repos/weltgewebe",
+    "reason": "Repository was renamed to commonThing; retained only so historical task claims remain resolvable."
+  }
 }

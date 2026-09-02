@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "component.weltgewebe.node-panel-mutation-tests",
   "type": "component",
-  "parent": "repo.weltgewebe",
+  "parent": "repo.commonthing",
   "metadata": {
     "purpose": "Exact coordination scope for hardening the NodePanel edit-tab edge cases in WELTGEWEBE-PR-MAINTENANCE-V2-T006.",
     "canonical_paths": [

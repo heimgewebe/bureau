@@ -12,7 +12,7 @@
   },
   "claims": [
     {
-      "resource": "repo.weltgewebe",
+      "resource": "repo.commonthing",
       "mode": "write",
       "isolation": "worktree"
     }

@@ -22,7 +22,7 @@
     "purpose": "Exact coordination scope for the report-truth contract, central lifecycle generators, validator, regression tests and generated inventories in WELTGEWEBE-OS-V1-T052.",
     "source_task": "WELTGEWEBE-OS-V1-T052"
   },
-  "parent": "repo.weltgewebe",
+  "parent": "repo.commonthing",
   "schema_version": 1,
   "type": "component"
 }

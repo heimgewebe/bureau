@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "component.weltgewebe.map-thread-motion-t064",
   "type": "component",
-  "parent": "repo.weltgewebe",
+  "parent": "repo.commonthing",
   "metadata": {
     "purpose": "Exact coordination scope for the required WELTGEWEBE-OS-V1-T064 event-bound thread motion controller, untouched map-route integration and dedicated regression coverage. The optional spool reaction is deliberately omitted from this implementation slice.",
     "canonical_paths": [

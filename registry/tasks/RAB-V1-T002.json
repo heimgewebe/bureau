@@ -24,7 +24,7 @@
       "isolation": "none"
     },
     {
-      "resource": "repo.weltgewebe",
+      "resource": "repo.commonthing",
       "mode": "read",
       "isolation": "none"
     }

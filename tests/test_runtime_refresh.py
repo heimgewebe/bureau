@@ -822,11 +822,30 @@ def test_protected_publication_activation_rejects_stale_runtime_observation(
     observation = protected_publication_activation_observation(
         observed_at=datetime(2026, 9, 2, 12, 0, tzinfo=timezone.utc)
     )
-    store = seed_protected_publication_activation_store(
-        tmp_path / "stale-observation",
-        task_id,
-        activation_observation=observation,
+    state_root = (tmp_path / "stale-observation").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
     )
+    ready = protected_publication_activation_spec(
+        task_id, state="ready", activation_observation=observation
+    )
+    from bureau import task_specs
+    with store.immediate() as connection:
+        task_specs._put_validated_material(
+            connection,
+            task_specs._canonical_spec(ready),
+            idempotency_key=(
+                f"runtime-refresh-protected-publication-activation:{task_id}:"
+                f"{'4' * 40}:{adopted['spec_sha256']}"
+            ),
+            expected_revision=adopted["revision"],
+            source="runtime-refresh-protected-publication-activation",
+        )
     monkeypatch.setattr(
         refresh,
         "_prove_protected_publication_adoption",
@@ -1675,6 +1694,43 @@ def test_activate_runtime_refresh_authority_replays_after_late_target_binding(
     assert replay["observation_sha256"] == observation["observation_sha256"]
     assert replay["idempotent_replay"] is True
 
+
+
+def test_protected_publication_activation_specialized_cas_rejects_stale_observation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATION-CAS-STALE"
+    state_root = (tmp_path / "activation-cas-stale").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    now = datetime(2026, 9, 2, 16, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(legacy, "utc_now", lambda: refresh.isoformat(now))
+    stale = protected_publication_activation_observation(
+        observed_at=now - timedelta(minutes=10)
+    )
+    ready = protected_publication_activation_spec(
+        task_id, state="ready", activation_observation=stale
+    )
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    with pytest.raises(legacy.StateError) as raised:
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            ready, idempotency_key=key, expected_revision=adopted["revision"]
+        )
+    assert "observation is not fresh" in str(raised.value)
+    current = store.task_spec(task_id)
+    assert isinstance(current, dict)
+    assert current["revision"] == 1
+    assert current["spec"]["state"] == "planned"
+    assert store.task_spec_mutation_receipt(key) is None
 
 def test_protected_publication_activation_specialized_cas_replays_exact_response_loss(
     tmp_path: Path,

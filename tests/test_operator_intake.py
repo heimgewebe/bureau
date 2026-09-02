@@ -3960,6 +3960,18 @@ def test_task_revision_identity_guard_rejects_one_weak_shared_subject_token() ->
     assert raised.value.code == "task-revision-identity-discontinuity"
 
 
+def test_task_revision_identity_guard_rejects_two_weak_tokens_across_resources() -> None:
+    before = _identity_revision_task(
+        title="Create secure reliable backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Create secure reliable dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
 def test_task_revision_identity_guard_allows_single_complete_subject_token() -> None:
     before = _identity_revision_task(
         title="Create backup", resource="repo.backup"

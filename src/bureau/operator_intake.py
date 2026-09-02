@@ -1949,15 +1949,26 @@ _TASK_REVISION_GENERIC_TOKENS = frozenset(
 )
 
 
-def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
+def _task_revision_resource_scope(task_json: dict[str, Any]) -> set[str]:
     scope: set[str] = set()
     for claim in task_json.get("claims", []):
-        if not isinstance(claim, dict) or claim.get("mode") not in {"write", "exclusive"}:
+        if not isinstance(claim, dict):
             continue
         resource = claim.get("resource")
         if isinstance(resource, str) and resource:
             scope.add(resource)
     return scope
+
+
+def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
+    return {
+        str(claim["resource"])
+        for claim in task_json.get("claims", [])
+        if isinstance(claim, dict)
+        and claim.get("mode") in {"write", "exclusive"}
+        and isinstance(claim.get("resource"), str)
+        and claim.get("resource")
+    }
 
 
 def _task_revision_text_evidence(
@@ -1983,15 +1994,26 @@ def _task_revision_text_evidence(
     return overlap / shorter, overlap, shorter, exact
 
 
-def _task_revision_text_is_continuous(before: Any, after: Any) -> tuple[bool, dict[str, Any]]:
+def _task_revision_text_is_continuous(
+    before: Any, after: Any, *, resource_continuity: bool
+) -> tuple[bool, dict[str, Any]]:
     continuity, subject_overlap, shorter_subject_count, exact = (
         _task_revision_text_evidence(before, after)
+    )
+    minimum_overlap = (
+        _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        if resource_continuity
+        else _TASK_REVISION_SUBJECT_OVERLAP_MIN + 1
     )
     continuous = exact or (
         continuity >= _TASK_REVISION_TEXT_CONTINUITY_MIN
         and (
-            subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
-            or (subject_overlap == 1 and shorter_subject_count == 1)
+            subject_overlap >= minimum_overlap
+            or (
+                resource_continuity
+                and subject_overlap == 1
+                and shorter_subject_count == 1
+            )
         )
     )
     return continuous, {
@@ -1999,6 +2021,8 @@ def _task_revision_text_is_continuous(before: Any, after: Any) -> tuple[bool, di
         "subject_token_overlap": subject_overlap,
         "shorter_subject_token_count": shorter_subject_count,
         "exact_nonempty_text": exact,
+        "resource_continuity": resource_continuity,
+        "minimum_subject_token_overlap": minimum_overlap,
     }
 
 
@@ -2017,16 +2041,23 @@ def _validate_task_revision_identity_continuity(
         )
     before_scope = _task_revision_write_scope(before)
     after_scope = _task_revision_write_scope(after)
+    resource_overlap = _task_revision_resource_scope(before) & _task_revision_resource_scope(
+        after
+    )
     # A write -> read revision may legitimately be a revalidation/closeout. Any
     # revision that becomes or remains write-capable must retain recognizable task
     # subject continuity instead of turning one permanent id into unrelated work.
     if not after_scope:
         return
     title_continuous, title_evidence = _task_revision_text_is_continuous(
-        before.get("title"), after.get("title")
+        before.get("title"),
+        after.get("title"),
+        resource_continuity=bool(resource_overlap),
     )
     goal_continuous, goal_evidence = _task_revision_text_is_continuous(
-        before.get("goal"), after.get("goal")
+        before.get("goal"),
+        after.get("goal"),
+        resource_continuity=bool(resource_overlap),
     )
     if title_continuous or goal_continuous:
         return
@@ -2039,6 +2070,7 @@ def _validate_task_revision_identity_continuity(
             "before_write_scope": sorted(before_scope),
             "after_write_scope": sorted(after_scope),
             "write_scope_overlap": sorted(before_scope & after_scope),
+            "resource_overlap": sorted(resource_overlap),
             "title_evidence": title_evidence,
             "goal_evidence": goal_evidence,
             "minimum_text_continuity": _TASK_REVISION_TEXT_CONTINUITY_MIN,

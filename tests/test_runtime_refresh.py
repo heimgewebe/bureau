@@ -443,6 +443,44 @@ def protected_publication_activation_observation(
     return refresh.bind_digest(observation, "observation_sha256")
 
 
+def test_load_manifest_hashes_the_exact_bytes_it_parses_during_atomic_replace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest_path = tmp_path / "deployment-manifest.json"
+    replacement_path = tmp_path / "deployment-manifest.replacement.json"
+    source_commit = "a" * 40
+    first_bytes = refresh.canonical_bytes(
+        {
+            "kind": "bureau_runtime_deployment",
+            "source_commit": source_commit,
+            "release_id": "release-a",
+        }
+    )
+    second_bytes = refresh.canonical_bytes(
+        {
+            "kind": "bureau_runtime_deployment",
+            "source_commit": source_commit,
+            "release_id": "release-b",
+        }
+    )
+    manifest_path.write_bytes(first_bytes)
+    replacement_path.write_bytes(second_bytes)
+    original_read_text = Path.read_text
+
+    def replace_after_parse(self: Path, *args: Any, **kwargs: Any) -> str:
+        text = original_read_text(self, *args, **kwargs)
+        if self == manifest_path:
+            replacement_path.replace(manifest_path)
+        return text
+
+    monkeypatch.setattr(Path, "read_text", replace_after_parse)
+
+    manifest, manifest_sha256 = refresh.load_manifest(manifest_path)
+
+    assert manifest["release_id"] == "release-a"
+    assert manifest_sha256 == refresh.sha256_bytes(first_bytes)
+
+
 def test_installed_activation_candidate_validator_rejects_noncanonical_manifest(
     tmp_path: Path,
 ) -> None:

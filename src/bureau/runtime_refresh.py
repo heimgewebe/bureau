@@ -585,7 +585,23 @@ def _first_parent_lag_commits(
 
 
 def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
-    value = read_json(path)
+    if path.is_symlink() or not path.is_file():
+        raise RuntimeRefreshError("invalid-json-path", f"not a regular file: {path}")
+    try:
+        manifest_bytes = path.read_bytes()
+    except OSError as exc:
+        raise RuntimeRefreshError("invalid-json", f"cannot read JSON: {path}") from exc
+    if len(manifest_bytes) > MAX_JSON_BYTES:
+        raise RuntimeRefreshError("json-too-large", f"JSON file exceeds limit: {path}")
+    try:
+        value = json.loads(manifest_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeRefreshError("invalid-json", f"cannot read JSON: {path}") from exc
+    if not isinstance(value, dict):
+        raise RuntimeRefreshError(
+            "invalid-json-object",
+            f"JSON root is not an object: {path}",
+        )
     if value.get("kind") != "bureau_runtime_deployment":
         raise RuntimeRefreshError(
             "manifest-kind-invalid", "Bureau deployment manifest kind is invalid"
@@ -607,7 +623,7 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
                 "Bureau deployment manifest payload digest is invalid",
                 details={"expected": expected, "observed": manifest_payload_sha256},
             )
-    return value, sha256_bytes(path.read_bytes())
+    return value, sha256_bytes(manifest_bytes)
 
 
 def _validate_installed_runtime_activation_candidate(

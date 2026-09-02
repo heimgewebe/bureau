@@ -163,6 +163,39 @@ def test_semantic_duplicate_is_hint_only():
     assert result["semantic_hints"][0]["task_id"] == "EXAMPLE-V1-T002"
 
 
+def test_bare_local_ordinal_registration_fails_closed_and_names_candidates() -> None:
+    with pytest.raises(RegistrationPreflightError) as exc_info:
+        evaluate(
+            proposed_task=task("T191"),
+            proposed_path="registry/tasks/T191.json",
+            canonical_tasks=[
+                task("GRABOWSKI-OPERATOR-SURFACE-V1-T191"),
+                task("REPOGROUND-UNUSED-AUTHORITY-CLOSEOUT-V1-T191"),
+            ],
+        )
+
+    message = str(exc_info.value)
+    assert "canonical full task id or explicit namespace required" in message
+    assert "GRABOWSKI-OPERATOR-SURFACE-V1-T191" in message
+    assert "REPOGROUND-UNUSED-AUTHORITY-CLOSEOUT-V1-T191" in message
+
+
+def test_namespaced_task_ids_may_reuse_local_ordinal_without_collision() -> None:
+    proposed = task("EXAMPLE-V1-T191")
+    result = evaluate(
+        proposed_task=proposed,
+        proposed_path="registry/tasks/EXAMPLE-V1-T191.json",
+        canonical_tasks=[task("OTHER-LANE-V1-T191")],
+    )
+
+    assert result["decision"] == "allow"
+    assert result["task_identity"]["local_ordinal"] == "T191"
+    assert result["task_identity"]["local_ordinal_scope"] == "namespace_local"
+    assert result["task_identity"]["same_local_ordinal_task_ids"] == [
+        "OTHER-LANE-V1-T191"
+    ]
+
+
 def test_broad_bureau_scope_blocks_registration_preflight() -> None:
     proposed = {
         **task("EXAMPLE-V1-T001"),
@@ -222,6 +255,8 @@ def test_invalid_task_path_and_traversal_are_rejected():
         validate_task_path("EXAMPLE-V1-T001", "registry/tasks/../EXAMPLE-V1-T001.json")
     with pytest.raises(RegistrationPreflightError):
         task_path_for_id("../EXAMPLE-V1-T001")
+    with pytest.raises(RegistrationPreflightError, match="bare local task ordinal"):
+        task_path_for_id("T191")
 
 
 def test_concurrency_regression_second_attempt_blocks_after_reservation():

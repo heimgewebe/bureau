@@ -14,6 +14,22 @@ def test_repository_registry_loads_current_checkout():
     assert registry.tasks
 
 
+def test_registry_task_reference_assessment_requires_canonical_identity(registry_factory) -> None:
+    root = registry_factory(task_count=2)
+    registry = Registry.load(root)
+
+    bare = registry.task_reference_assessment("T001")
+    assert bare["status"] == "rejected"
+    assert bare["reason"] == "bare_local_ordinal_not_global_identity"
+    assert bare["candidate_task_ids"] == ["BUR-TEST-001-T001"]
+
+    scoped = registry.task_reference_assessment(
+        "T001", namespace="BUR-TEST-001"
+    )
+    assert scoped["status"] == "resolved"
+    assert scoped["canonical_task_id"] == "BUR-TEST-001-T001"
+
+
 def test_repository_inventory_catalogues_agent_control_surface():
     root = Path(__file__).resolve().parents[1]
     resource_path = root / "registry/resources/agent-control-surface.json"

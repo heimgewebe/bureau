@@ -7,7 +7,9 @@
   "goal": "Turn the canonical Heim-PC NixOS 26.05 executor architecture into a reversible production migration without weakening truth, recovery, hardware acceptance or closure-bound activation contracts.",
   "current_plan": {
     "repository": "heim-pc",
-    "path": "architecture/nixos-executor-2026.md"
+    "path": "architecture/nixos-executor-2026.md",
+    "commit": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9",
+    "document_sha256": "eed2cc60471151be7f4aa221be35810eb476c512d2647f4f856e8fccecf1bfe4"
   },
   "completion": [
     "Declared facts, runtime facts and hardware acceptance are implemented as separate source-bound evidence surfaces and the archived physical Gate A/B evidence is consumed without being mistaken for current live truth.",

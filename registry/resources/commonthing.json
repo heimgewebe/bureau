@@ -1,0 +1,9 @@
+{
+  "grabowski_key": "repo:/home/alex/repos/commonthing",
+  "id": "repo.commonthing",
+  "parent": "repo",
+  "path": "/home/alex/repos/commonthing",
+  "github_slug": "heimgewebe/commonthing",
+  "schema_version": 1,
+  "type": "git-repository"
+}

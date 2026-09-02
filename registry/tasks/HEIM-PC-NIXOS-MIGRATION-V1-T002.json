@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T002",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Implement managed Nix build and closure-bound activation",
+  "state": "planned",
+  "goal": "Implement the fail-closed managed Nix/NixOS build and activation path required by the canonical executor profile: repository/revision/control-release bound builds, exact system-closure receipts, effect classification, and activation that consumes only the already approved closure without reevaluating mutable source.",
+  "priority": {"lane": "now", "rank": 2},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": ["repo:/home/alex/repos/heim-pc", "host:heim-pc"],
+    "approval": {"action_class": "repository_mutation", "required_level": "operator"}
+  },
+  "claims": [
+    {"resource": "repo.heim-pc", "mode": "write", "isolation": "worktree"}
+  ],
+  "required_capabilities": ["repository", "shell", "grabowski"],
+  "depends_on": [],
+  "acceptance": [
+    {"id": "managed-build-bound", "assertion": "Automated Nix/NixOS builds run only through a managed path that binds repository, revision, Control Release Set, Nix inputs, resource budgets, leases and bounded receipts."},
+    {"id": "exact-closure-receipt", "assertion": "A successful build receipt exposes and binds the exact immutable NixOS system closure plus the Control Release Set digest used to produce it."},
+    {"id": "no-activation-reeval", "assertion": "Next-boot and persistent activation interfaces accept only the prebuilt approved closure and cannot silently reevaluate Git, branches, locks or remote inputs between review and activation."},
+    {"id": "effect-classifier", "assertion": "Normal, boot-critical and destructive effects are classified by possible effect rather than filename or stated intent; ambiguous cases escalate fail-closed and destructive storage/firmware effects cannot use the normal rebuild path."},
+    {"id": "authority-boundary", "assertion": "If a required activation or privilege primitive belongs to another canonical authority, the implementation uses that typed authority or creates an explicit dependency instead of duplicating a second truth or broad sudo/root shell path."},
+    {"id": "tests-and-ci", "assertion": "Focused build/activation/effect-classification tests plus required repository CI are green on the exact reviewed head before merge."}
+  ],
+  "metadata": {"source_candidate_event": 13345, "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9"}
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Prove safe one-disk NixOS production cutover",
+  "state": "planned",
+  "goal": "Prove a reversible one-disk production cutover for the sole Heim-PC SN850X without performing the production cutover: rehearse the exact canonical LUKS2+Btrfs topology from a blank virtual disk, classify all migration-relevant data, establish independently restorable off-host backup capacity and offline recovery material, and produce an exact reviewed destructive plan whose execution remains separately authorized.",
+  "priority": {"lane": "next", "rank": 3},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": ["repo:/home/alex/repos/heim-pc", "host:heim-pc", "host:heimberry"],
+    "approval": {"action_class": "repository_mutation", "required_level": "operator", "note": "This task may prepare tests, backup/recovery evidence and a destructive plan, but it does not authorize partitioning, mkfs, LUKS/EFI mutation, firmware changes, reboot or NixOS switch on the production host."}
+  },
+  "claims": [
+    {"resource": "repo.heim-pc", "mode": "write", "isolation": "worktree"},
+    {"resource": "host.heim-pc", "mode": "read", "isolation": "none"},
+    {"resource": "host.heimberry", "mode": "read", "isolation": "none"}
+  ],
+  "required_capabilities": ["repository", "shell", "grabowski"],
+  "depends_on": ["HEIM-PC-NIXOS-MIGRATION-V1-T001", "HEIM-PC-NIXOS-MIGRATION-V1-T002"],
+  "acceptance": [
+    {"id": "exact-storage-rehearsal", "assertion": "Starting from a blank disposable virtual disk, the exact canonical target topology GPT + EFI + recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is created declaratively, unlocked, mounted, booted and read back successfully; the earlier LUKS+ext4 VM proof is not substituted for this topology."},
+    {"id": "data-classification", "assertion": "Fresh inventory classifies migration-relevant non-reproducible data separately from caches/rebuildable state; current scoped Restic success is not treated as proof of complete cutover coverage."},
+    {"id": "independent-offhost-restore", "assertion": "Every critical migration data class has sufficient independent off-host storage and a staged restore test proving representative usable content; the presently capacity-constrained backup target must be remediated or replaced before this gate can pass."},
+    {"id": "offline-recovery", "assertion": "Independent bootable recovery media plus the required offline host/control closure, source/lock/trust roots and LUKS/recovery material are verified without Grabowski, Bureau, network or the production system SSD."},
+    {"id": "exact-one-disk-plan", "assertion": "A fresh device-bound plan identifies the exact production disk, partition/ESP/LUKS/Btrfs effects, point of no return, rollback/reconstruction path, expected approved system closure and mandatory post-boot readback; no device enumeration assumption is used as identity."},
+    {"id": "destructive-boundary", "assertion": "This task terminates before any production partitioning, formatting, LUKS mutation, EFI/Secure-Boot key mutation, firmware write, reboot into a new production OS or NixOS switch; such effects require a later explicit destructive-action approval bound to fresh recovery evidence."},
+    {"id": "tests-and-review", "assertion": "All VM/recovery/plan validation and required repository CI are green and the final one-disk plan receives explicit independent review before the task is considered ready for a separate cutover decision."}
+  ],
+  "metadata": {"source_candidate_event": 13254, "source_candidate_id": "candidate-e11f7813099772ab186ee249", "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9", "physical_evidence_archive": "20260902T112439Z-5eabac896f53"}
+}

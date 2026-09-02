@@ -13,7 +13,7 @@
   },
   "completion": [
     "Declared facts, runtime facts and hardware acceptance are implemented as separate source-bound evidence surfaces and the archived physical Gate A/B evidence is consumed without being mistaken for current live truth.",
-    "Managed Nix/NixOS implementation outputs and the independently implemented storage-rehearsal component patch are integrated through ancestry-preserving local Git merges, handed between pre-publication stages through content-addressed immutable artifacts, then prepared as one separately leased protected Heim-PC pull request by T008, exclusively merged by T009 through a Captain merge-commit path preserving T001/T002/T005/T006/T007 ancestry, and finally sealed by T010 from the exact terminal T009 merge-commit tree into the immutable published-source artifact that T003 alone consumes for reconstruction.",
+    "Managed Nix/NixOS implementation outputs and the independently implemented storage-rehearsal component patch are integrated through ancestry-preserving local Git merges, handed between pre-publication stages through content-addressed immutable artifacts, then prepared as one separately leased protected Heim-PC pull request by T008, exclusively merged by T009 through a Captain merge-commit path preserving T001/T002/T005/T006/T007 ancestry, and finally sealed by T010 from the exact terminal T009 merge-commit tree into the immutable published-source artifact. T011 must then re-build and live-prove the final closure from exactly that artifact before T003 may consume it for reconstruction.",
     "Automated Nix/NixOS builds and activations use a managed, receipt-bound path that binds the exact source artifact, system closure and effect class and fails closed before unauthorized host mutation.",
     "The exact production storage target topology GPT + EFI + recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is reconstructed from a blank virtual disk, booted, unlocked and restore-tested before production storage mutation.",
     "All migration-relevant non-reproducible data are classified and covered by an independently restorable off-host backup; current green scoped backups are not treated as full-cutover recovery evidence.",
@@ -31,14 +31,24 @@
       "executor_profile": "architecture/nixos-executor-2026.md"
     },
     "execution_graph": {
-      "initial_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T001", "HEIM-PC-NIXOS-MIGRATION-V1-T002"],
-      "post_initial_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T005", "HEIM-PC-NIXOS-MIGRATION-V1-T006"],
-      "post_source_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T004", "HEIM-PC-NIXOS-MIGRATION-V1-T007"],
+      "initial_parallel": [
+        "HEIM-PC-NIXOS-MIGRATION-V1-T001",
+        "HEIM-PC-NIXOS-MIGRATION-V1-T002"
+      ],
+      "post_initial_parallel": [
+        "HEIM-PC-NIXOS-MIGRATION-V1-T005",
+        "HEIM-PC-NIXOS-MIGRATION-V1-T006"
+      ],
+      "post_source_parallel": [
+        "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+        "HEIM-PC-NIXOS-MIGRATION-V1-T007"
+      ],
       "final_source_pr_preparation": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
       "final_source_merge": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
       "final_source_seal": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
       "final_cutover_readiness_proof": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
-      "scheduling_note": "These entries describe dependency and conflict boundaries, not artificial barriers: T004 may start as soon as T006 is terminal; T007 requires T005 and T006; T004 and T007 may execute concurrently; T008 requires T004 and T007 and terminates at an exact reviewed protected PR; T009 exclusively merges that PR; T010 seals the exact T009 merge-commit tree; T003 waits for all declared prerequisites including T010 published-source readback."
+      "scheduling_note": "These entries describe dependency and conflict boundaries, not artificial barriers: T004 may start as soon as T006 is terminal; T007 requires T005 and T006; T008 waits for T004 and T007 and terminates at an exact reviewed protected PR; T009 exclusively merges that PR; T010 seals the exact T009 merge-commit tree; T011 re-builds and live-proves the final closure from T010 published-source; T003 waits for all declared prerequisites including T011.",
+      "final_activation_reproof": "HEIM-PC-NIXOS-MIGRATION-V1-T011"
     },
     "source_artifacts": {
       "activation_proof": "artifact.heim-pc.nixos-activation-source",

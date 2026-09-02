@@ -6,9 +6,8 @@
   "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/published-source",
   "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/published-source",
   "metadata": {
-    "boundary": "Create-only content-addressed whole-source artifact produced by T010 only after T009 is terminal with an exact Captain merge receipt. T010 independently reads the exact T009 merge commit/tree, proves protected main still contains that merge commit and exact T007/T006/T005/T001/T002 ancestry, and archives exactly that merge-commit tree rather than a later moving main tip. The immutable manifest binds T009 terminal/Captain receipt digests, publication PR, pre-merge base, reviewed head/tree/diff, actual merge commit/tree, source archive/content digest, Control Release Set and lock/input identity. T003 consumes this artifact read-only as its sole declarative/reconstruction source.",
+    "boundary": "Create-only content-addressed whole-source artifact produced by T010 only after T009 is terminal with an exact Captain merge receipt. T010 archives exactly the T009 merge-commit tree rather than a later moving main tip. The immutable manifest binds T009 terminal/Captain receipt digests, publication PR, pre-merge base, reviewed head/tree/diff, actual merge commit/tree, predecessor ancestry, archive/content digest, Control Release Set and lock/input identity. T011 first consumes this artifact read-only to realize and live-prove the final receipt-bound NixOS closure; T003 later consumes the same immutable artifact and must bind that T011 closure proof before storage/cutover rehearsal.",
     "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
-    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
     "lifecycle": "immutable-until-initiative-closeout",
     "does_not_establish": [
       "production block-device identity",
@@ -18,6 +17,10 @@
       "future-main freshness",
       "cutover approval"
     ],
-    "source_merge_task": "HEIM-PC-NIXOS-MIGRATION-V1-T009"
+    "source_merge_task": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
+    "consumer_tasks": [
+      "HEIM-PC-NIXOS-MIGRATION-V1-T011",
+      "HEIM-PC-NIXOS-MIGRATION-V1-T003"
+    ]
   }
 }

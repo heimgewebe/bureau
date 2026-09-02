@@ -4,9 +4,7 @@
   "type": "service",
   "parent": "root",
   "metadata": {
-    "boundary": "Exclusive disposable non-production runtime surface for T004 managed NixOS build/activation and independent closure readback. T004 consumes only the separately leased immutable artifact.heim-pc.nixos-activation-source produced by T006; it does not materialize source from, read, or require authority over /home/alex/repos/heim-pc/.git or the mutable Heim-PC checkout. Nix evaluation/build consumes the artifact manifest-bound Git commit/tree, content digest, Control Release Set and lock/input identity, and the sandbox remains isolated from productive Heim-PC runtime, storage, EFI, firmware and persistent boot state.",
-    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
-    "source_artifact": "artifact.heim-pc.nixos-activation-source",
+    "boundary": "Exclusive disposable non-production runtime surface shared serially by T004 and T011. T004 proves the managed build/activation mechanism using only artifact.heim-pc.nixos-activation-source from T006; T011 later re-proves the final closure using only artifact.heim-pc.nixos-published-source from T010, bound to the exact terminal T009 merge-commit tree. Each task must hold the exclusive sandbox claim and its own exact immutable source-artifact lease; neither may read /home/alex/repos/heim-pc/.git, mutable checkouts, moving branches/main or unpinned remote inputs. The sandbox remains isolated from productive Heim-PC runtime, storage, EFI, firmware and persistent boot state.",
     "lifecycle": "ephemeral-test-only",
     "does_not_establish": [
       "production host mutation authority",
@@ -16,6 +14,14 @@
       "Git object-store read authority",
       "mutable worktree source authority",
       "shared runtime ownership"
-    ]
+    ],
+    "source_tasks": [
+      "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+      "HEIM-PC-NIXOS-MIGRATION-V1-T011"
+    ],
+    "source_artifacts": {
+      "early_mechanism_proof": "artifact.heim-pc.nixos-activation-source",
+      "final_published_reproof": "artifact.heim-pc.nixos-published-source"
+    }
   }
 }

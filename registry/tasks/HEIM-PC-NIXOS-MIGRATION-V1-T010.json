@@ -4,7 +4,7 @@
   "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
   "title": "Seal merged Heim-PC source for cutover rehearsal",
   "state": "planned",
-  "goal": "After T009 is terminal, bind its exact terminal Captain merge receipt and independently read the exact T009 merge commit/tree from heimgewebe/heim-pc. Prove protected main still contains that merge commit and its exact T007/T006/T005/T001/T002 ancestry, then create artifact.heim-pc.nixos-published-source from the exact T009 merge-commit tree—not from a later moving main tip. The immutable manifest becomes T003’s sole declarative/reconstruction source. T010 performs no repository ref mutation, merge, source edit, NixOS activation or cutover effect.",
+  "goal": "After T009 is terminal, bind its exact terminal Captain merge receipt and independently read the exact T009 merge commit/tree from heimgewebe/heim-pc. Prove protected main still contains that merge commit and its exact T007/T006/T005/T001/T002 ancestry, then create artifact.heim-pc.nixos-published-source from the exact T009 merge-commit tree—not from a later moving main tip. The immutable manifest first becomes T011’s sole final activation-reproof source and then T003’s sole declarative/reconstruction source. T010 performs no repository ref mutation, merge, source edit, NixOS activation or cutover effect.",
   "priority": {
     "lane": "next",
     "rank": 9
@@ -91,12 +91,12 @@
       }
     },
     {
-      "id": "t003-published-source-handoff",
-      "assertion": "T010 terminal evidence designates artifact.heim-pc.nixos-published-source as T003’s sole declarative/reconstruction source and binds its exact manifest/digest to the T009 merge commit/tree and predecessor ancestry. T003 must reject any alternate or moving source.",
+      "id": "t011-and-t003-published-source-handoff",
+      "assertion": "T010 terminal evidence designates artifact.heim-pc.nixos-published-source as T011’s sole final activation-reproof source and T003’s sole declarative/reconstruction source, binding the exact manifest/digest to the T009 merge commit/tree and predecessor ancestry. T011 must first prove the exact published-source closure; T003 must reject any alternate/moving source or activation proof not bound to this artifact.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "heim-pc:nixos-migration-v1:t010:t003-published-source-handoff"
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:t011-and-t003-published-source-handoff"
       }
     },
     {
@@ -113,7 +113,6 @@
     "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
     "source_identity": "exact T009 merge commit/tree",
     "published_source_artifact": "artifact.heim-pc.nixos-published-source",
-    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
     "does_not_establish": [
       "future-main freshness",
       "main-branch merge authority",
@@ -121,6 +120,11 @@
       "production storage mutation authority",
       "production device identity",
       "cutover approval"
-    ]
+    ],
+    "consumer_tasks": [
+      "HEIM-PC-NIXOS-MIGRATION-V1-T011",
+      "HEIM-PC-NIXOS-MIGRATION-V1-T003"
+    ],
+    "final_activation_reproof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T011"
   }
 }

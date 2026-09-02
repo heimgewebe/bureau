@@ -4,9 +4,10 @@
   "type": "service",
   "parent": "root",
   "metadata": {
-    "boundary": "Exclusive disposable non-production runtime surface for T003 cutover-readiness rehearsal. T003 consumes only the separately leased immutable artifact.heim-pc.nixos-rehearsal-source produced by T007; it does not materialize source from, read, or require authority over /home/alex/repos/heim-pc/.git or the mutable Heim-PC checkout. Reconstruction and boot consume the artifact manifest-bound Git commit/tree, content digest, Control Release Set and lock/input identity. The sandbox may expose a blank virtual block device and disposable restore scratch only after fresh evidence proves its backing is not the productive Heim-PC root/system disk, any mounted production filesystem, or production EFI/firmware state. Independent off-host backup material may be consumed read-only for restore testing but grants no production-device write authority.",
+    "boundary": "Exclusive disposable non-production runtime surface for T003 cutover-readiness rehearsal. T003 consumes only the separately leased immutable artifact.heim-pc.nixos-published-source produced by T010 from the exact terminal T009 merge-commit tree; it does not materialize source from, read, or require authority over /home/alex/repos/heim-pc/.git, mutable Heim-PC checkouts, moving branches or main itself. Reconstruction and boot consume the T010 artifact manifest-bound T009 merge commit/tree, predecessor ancestry, content digest, Control Release Set and lock/input identity. The sandbox may expose a blank virtual block device and disposable restore scratch only after fresh evidence proves its backing is not the productive Heim-PC root/system disk, any mounted production filesystem, or production EFI/firmware state. Independent off-host backup material may be consumed read-only for restore testing but grants no production-device write authority.",
     "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
-    "source_artifact": "artifact.heim-pc.nixos-rehearsal-source",
+    "source_artifact": "artifact.heim-pc.nixos-published-source",
+    "source_artifact_producer": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
     "lifecycle": "ephemeral-test-only",
     "does_not_establish": [
       "production block-device identity",
@@ -15,6 +16,7 @@
       "production NixOS install or activation authority",
       "Git object-store read authority",
       "mutable worktree source authority",
+      "moving main source authority",
       "off-host backup completeness",
       "cutover approval"
     ]

@@ -120,6 +120,12 @@ RUNTIME_AUTHORITY_POST_PUBLICATION_ACTIVATION_LEGACY_CUTOFF = datetime(
 RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD = (
     "protected_publication_activation_observation"
 )
+RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND = (
+    "bureau_runtime_refresh_protected_publication_activation_evidence"
+)
+RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF = datetime(
+    2026, 9, 2, 0, 0, 0, tzinfo=timezone.utc
+)
 RUNTIME_AUTHORITY_CONSUMPTION_KIND = "bureau_runtime_refresh_authority_consumption"
 RUNTIME_AUTHORITY_CLOSEOUT_KIND = "bureau_runtime_refresh_no_run_closeout"
 RUNTIME_AUTHORITY_INCIDENT_CLOSEOUT_KIND = "bureau_runtime_refresh_multi_use_incident_closeout"
@@ -2514,6 +2520,8 @@ def _put_authority_task(
     idempotency_key: str,
     expected_revision: int,
     source: str,
+    activation_observation: dict[str, Any] | None = None,
+    activation_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     try:
         if source == "runtime-refresh-no-run-closeout":
@@ -2527,6 +2535,8 @@ def _put_authority_task(
                 spec,
                 idempotency_key=idempotency_key,
                 expected_revision=expected_revision,
+                activation_observation=activation_observation,
+                activation_evidence=activation_evidence,
             )
         return store.put_task_spec(
             spec,
@@ -2974,6 +2984,138 @@ def _validated_protected_publication_activation_observation(
     return json.loads(json.dumps(value))
 
 
+def _protected_publication_activation_evidence(
+    *,
+    approval_task_id: str,
+    adoption_revision: int,
+    adoption_spec_sha256: str,
+    activation_spec_sha256: str,
+    idempotency_key: str,
+    publication_pr: int,
+    publication_merge_commit: str,
+    target_main_commit: str,
+    observation: dict[str, Any],
+) -> dict[str, Any]:
+    verify_digest(observation, "observation_sha256")
+    if (
+        not isinstance(adoption_revision, int)
+        or isinstance(adoption_revision, bool)
+        or adoption_revision < 1
+        or not _is_sha256(adoption_spec_sha256)
+        or not _is_sha256(activation_spec_sha256)
+        or not isinstance(publication_pr, int)
+        or isinstance(publication_pr, bool)
+        or publication_pr < 1
+        or not isinstance(publication_merge_commit, str)
+        or len(publication_merge_commit) != 40
+        or any(c not in "0123456789abcdef" for c in publication_merge_commit)
+        or not isinstance(target_main_commit, str)
+        or len(target_main_commit) != 40
+        or any(c not in "0123456789abcdef" for c in target_main_commit)
+        or not _is_sha256(observation.get("target_sha256"))
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-evidence-invalid",
+            "protected-publication activation evidence bindings are invalid",
+        )
+    material = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND,
+        "task_id": approval_task_id,
+        "adoption_revision": adoption_revision,
+        "adoption_spec_sha256": adoption_spec_sha256,
+        "activation_spec_sha256": activation_spec_sha256,
+        "idempotency_key": idempotency_key,
+        "publication_pr": publication_pr,
+        "publication_merge_commit": publication_merge_commit,
+        "target_main_commit": target_main_commit,
+        "target_sha256": observation["target_sha256"],
+        "observation_sha256": observation["observation_sha256"],
+        "observation": json.loads(json.dumps(observation)),
+    }
+    return bind_digest(material, "evidence_sha256")
+
+
+def _validated_protected_publication_activation_evidence(
+    value: Any,
+    *,
+    approval_task_id: str,
+    adoption_revision: int,
+    adoption_spec_sha256: str,
+    activation_spec_sha256: str,
+    idempotency_key: str,
+    publication_pr: int,
+    publication_merge_commit: str,
+    target_main_commit: str,
+    target_sha256: str | None,
+    activation_created_at: str,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation lacks atomic observation evidence",
+        )
+    try:
+        verify_digest(value, "evidence_sha256")
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-evidence-invalid",
+            "protected-publication activation evidence digest is invalid",
+            details={"cause_code": exc.code},
+        ) from exc
+    required_fields = {
+        "schema_version",
+        "kind",
+        "task_id",
+        "adoption_revision",
+        "adoption_spec_sha256",
+        "activation_spec_sha256",
+        "idempotency_key",
+        "publication_pr",
+        "publication_merge_commit",
+        "target_main_commit",
+        "target_sha256",
+        "observation_sha256",
+        "observation",
+        "evidence_sha256",
+    }
+    if (
+        set(value) != required_fields
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND
+        or value.get("task_id") != approval_task_id
+        or value.get("adoption_revision") != adoption_revision
+        or value.get("adoption_spec_sha256") != adoption_spec_sha256
+        or value.get("activation_spec_sha256") != activation_spec_sha256
+        or value.get("idempotency_key") != idempotency_key
+        or value.get("publication_pr") != publication_pr
+        or value.get("publication_merge_commit") != publication_merge_commit
+        or not isinstance(value.get("target_main_commit"), str)
+        or len(value["target_main_commit"]) != 40
+        or any(c not in "0123456789abcdef" for c in value["target_main_commit"])
+        or not _is_sha256(value.get("target_sha256"))
+        or not _is_sha256(value.get("observation_sha256"))
+        or not isinstance(value.get("observation"), dict)
+        or value["observation"].get("observation_sha256")
+        != value.get("observation_sha256")
+        or value["observation"].get("main_commit")
+        != value.get("target_main_commit")
+        or value["observation"].get("target_sha256") != value.get("target_sha256")
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-evidence-invalid",
+            "protected-publication activation evidence does not match the exact CAS",
+        )
+    return _validated_protected_publication_activation_observation(
+        value["observation"],
+        activation_created_at=activation_created_at,
+        target_main_commit=target_main_commit,
+        expected_target_sha256=(
+            target_sha256 if target_sha256 is not None else value["target_sha256"]
+        ),
+    )
+
+
 def _historical_protected_publication_bootstrap(
     *, store: Any, approval_task_id: str
 ) -> tuple[dict[str, Any], dict[str, Any] | None] | None:
@@ -3090,7 +3232,6 @@ def _expected_protected_publication_activation_spec(
     historical_spec: dict[str, Any],
     publication: dict[str, Any],
     approval_task_id: str,
-    activation_observation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     metadata, authority, state = _validate_runtime_refresh_authority_contract(
         spec=historical_spec,
@@ -3140,10 +3281,6 @@ def _expected_protected_publication_activation_spec(
     candidate_metadata["protected_publication_adoption"] = json.loads(
         json.dumps(publication)
     )
-    if activation_observation is not None:
-        candidate_metadata[RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD] = json.loads(
-            json.dumps(activation_observation)
-        )
     candidate["acceptance"].append(
         _protected_publication_activation_acceptance(approval_task_id)
     )
@@ -3168,15 +3305,19 @@ def _validate_protected_publication_activation_receipt(
     approval_task_id: str,
     target_main_commit: str,
     target_sha256: str | None = None,
-) -> None:
+) -> dict[str, Any] | None:
     adoption_revision = adoption_proof.get("adoption_revision")
     adoption_spec_sha256 = adoption_proof.get("task_spec_sha256")
+    publication_pr = publication.get("publication_pr")
     publication_merge_commit = publication.get("publication_merge_commit")
     if (
         not isinstance(adoption_revision, int)
         or isinstance(adoption_revision, bool)
         or adoption_revision < 1
         or not _is_sha256(adoption_spec_sha256)
+        or not isinstance(publication_pr, int)
+        or isinstance(publication_pr, bool)
+        or publication_pr < 1
         or not isinstance(publication_merge_commit, str)
         or len(publication_merge_commit) != 40
         or any(
@@ -3250,27 +3391,10 @@ def _validate_protected_publication_activation_receipt(
             "authority-preflight-publication-activation-receipt-unproven",
             "protected-publication activation revision cannot be reconstructed exactly",
         )
-    activation_metadata = activation_record_spec.get("metadata")
-    activation_observation_value = (
-        activation_metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
-        if isinstance(activation_metadata, dict)
-        else None
-    )
-    activation_observation = (
-        _validated_protected_publication_activation_observation(
-            activation_observation_value,
-            activation_created_at=activation_created_at,
-            target_main_commit=target_main_commit,
-            expected_target_sha256=target_sha256,
-        )
-        if activation_observation_value is not None
-        else None
-    )
     expected_activation_spec = _expected_protected_publication_activation_spec(
         historical_spec=historical_spec,
         publication=publication,
         approval_task_id=approval_task_id,
-        activation_observation=activation_observation,
     )
     if (
         not isinstance(receipt, dict)
@@ -3288,12 +3412,49 @@ def _validate_protected_publication_activation_receipt(
         or resulting_spec.get("id") != approval_task_id
         or resulting_spec.get("state") != "ready"
         or resulting_spec != expected_activation_spec
+        or activation_record_spec != expected_activation_spec
     ):
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-receipt-unproven",
             "StateStore does not contain the exact protected-publication activation CAS receipt",
         )
 
+    activation_evidence = (
+        receipt.get("activation_evidence") if isinstance(receipt, dict) else None
+    )
+    if activation_evidence is None:
+        try:
+            activation_time = parse_time(activation_created_at)
+        except (TypeError, ValueError) as exc:
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-evidence-invalid",
+                "legacy activation timestamp is invalid",
+            ) from exc
+        if activation_time >= RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF:
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-observation-unproven",
+                "post-cutoff protected-publication activation lacks immutable observation evidence",
+                details={
+                    "activation_created_at": activation_created_at,
+                    "cutoff": isoformat(
+                        RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF
+                    ),
+                },
+            )
+        return None
+    return _validated_protected_publication_activation_evidence(
+        activation_evidence,
+        approval_task_id=approval_task_id,
+        adoption_revision=adoption_revision,
+        adoption_spec_sha256=adoption_spec_sha256,
+        activation_spec_sha256=activation_spec_sha256,
+        idempotency_key=idempotency_key,
+        publication_pr=publication_pr,
+        publication_merge_commit=publication_merge_commit,
+        target_main_commit=target_main_commit,
+        target_sha256=target_sha256,
+        activation_created_at=activation_created_at,
+    )
 
 def _validate_pre_effect_protected_publication_activation(
     *,
@@ -4110,7 +4271,7 @@ def activate_runtime_refresh_authority(
             target_main_commit=expected_main_commit,
             task_file_sha256=expected_task_file_sha256,
         )
-        _validate_protected_publication_activation_receipt(
+        observation = _validate_protected_publication_activation_receipt(
             store=store,
             current=current,
             authority=authority,
@@ -4123,35 +4284,11 @@ def activate_runtime_refresh_authority(
             approval_task_id=approval_task_id,
             target_main_commit=expected_main_commit,
         )
-        activation_revision = adoption_proof["adoption_revision"] + 1
-        activation_record = _read_authority_task_revision(
-            store, approval_task_id, activation_revision
-        )
-        activation_spec = activation_record.get("spec")
-        activation_created_at = activation_record.get("created_at")
-        activation_metadata = (
-            activation_spec.get("metadata")
-            if isinstance(activation_spec, dict)
-            else None
-        )
-        observation_value = (
-            activation_metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
-            if isinstance(activation_metadata, dict)
-            else None
-        )
-        if not isinstance(activation_created_at, str):
+        if observation is None:
             raise RuntimeRefreshError(
-                "authority-activation-replay-history-invalid",
-                "ready authority activation revision has no timestamp",
+                "authority-activation-replay-legacy-evidence-unavailable",
+                "legacy ready authority has no replayable activation observation witness",
             )
-        observation = _validated_protected_publication_activation_observation(
-            observation_value,
-            activation_created_at=activation_created_at,
-            target_main_commit=expected_main_commit,
-            expected_target_sha256=observation_value.get("target_sha256")
-            if isinstance(observation_value, dict)
-            else None,
-        )
         return {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
             "kind": "bureau_runtime_refresh_authority_activation",
@@ -4256,11 +4393,24 @@ def activate_runtime_refresh_authority(
         historical_spec=spec,
         publication=publication_contract,
         approval_task_id=approval_task_id,
-        activation_observation=observation,
     )
     idempotency_key = (
         f"{activation['required_activation_source']}:{approval_task_id}:"
         f"{publication_merge_commit}:{current['spec_sha256']}"
+    )
+    from . import task_specs
+
+    activation_spec_sha256 = task_specs.task_spec_digest(ready)
+    activation_evidence = _protected_publication_activation_evidence(
+        approval_task_id=approval_task_id,
+        adoption_revision=current["revision"],
+        adoption_spec_sha256=current["spec_sha256"],
+        activation_spec_sha256=activation_spec_sha256,
+        idempotency_key=idempotency_key,
+        publication_pr=publication_pr,
+        publication_merge_commit=publication_merge_commit,
+        target_main_commit=expected_main_commit,
+        observation=observation,
     )
     changed = _put_authority_task(
         store,
@@ -4268,6 +4418,8 @@ def activate_runtime_refresh_authority(
         idempotency_key=idempotency_key,
         expected_revision=current["revision"],
         source=activation["required_activation_source"],
+        activation_observation=observation,
+        activation_evidence=activation_evidence,
     )
     readback = _read_authority_task(store, approval_task_id)
     if (
@@ -4279,7 +4431,7 @@ def activate_runtime_refresh_authority(
             "authority-activation-readback-failed",
             "activated TaskSpec readback differs from the exact CAS result",
         )
-    _validate_protected_publication_activation_receipt(
+    validated_observation = _validate_protected_publication_activation_receipt(
         store=store,
         current=readback,
         authority=readback["spec"]["metadata"]["runtime_refresh_authority"],
@@ -4291,6 +4443,11 @@ def activate_runtime_refresh_authority(
         target_main_commit=expected_main_commit,
         target_sha256=observation["target_sha256"],
     )
+    if validated_observation != observation:
+        raise RuntimeRefreshError(
+            "authority-activation-evidence-readback-failed",
+            "activation observation witness readback differs from the CAS input",
+        )
     return {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "kind": "bureau_runtime_refresh_authority_activation",
@@ -4301,6 +4458,7 @@ def activate_runtime_refresh_authority(
         "target_main_commit": expected_main_commit,
         "target_sha256": observation["target_sha256"],
         "observation_sha256": observation["observation_sha256"],
+        "activation_evidence_sha256": activation_evidence["evidence_sha256"],
         "state_store": state_store_binding,
         "publication": publication_contract,
         "idempotent_replay": False,

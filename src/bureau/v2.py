@@ -3796,6 +3796,8 @@ class StateStore:
         *,
         idempotency_key: str,
         expected_revision: int | None,
+        activation_observation: dict[str, Any] | None,
+        activation_evidence: dict[str, Any] | None,
     ) -> dict[str, Any]:
         with self.immediate() as connection:
             try:
@@ -3804,6 +3806,8 @@ class StateStore:
                     spec,
                     idempotency_key=idempotency_key,
                     expected_revision=expected_revision,
+                    activation_observation=activation_observation,
+                    activation_evidence=activation_evidence,
                 )
             except task_specs.TaskSpecError as exc:
                 raise legacy.StateError(str(exc)) from exc

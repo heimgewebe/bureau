@@ -13,7 +13,7 @@
   },
   "completion": [
     "Declared facts, runtime facts and hardware acceptance are implemented as separate source-bound evidence surfaces and the archived physical Gate A/B evidence is consumed without being mistaken for current live truth.",
-    "Managed Nix/NixOS implementation outputs and the independently implemented storage-rehearsal component patch are integrated through ancestry-preserving local Git merges, handed between pre-publication stages through content-addressed immutable artifacts, and finally published through one separately leased protected Heim-PC pull request whose Captain merge-commit path preserves T001/T002/T005/T006/T007 as ancestors of canonical main. T008 then independently reads back the actual merged main tree and creates the immutable published-source artifact that T003 alone consumes for reconstruction.",
+    "Managed Nix/NixOS implementation outputs and the independently implemented storage-rehearsal component patch are integrated through ancestry-preserving local Git merges, handed between pre-publication stages through content-addressed immutable artifacts, then prepared as one separately leased protected Heim-PC pull request by T008, exclusively merged by T009 through a Captain merge-commit path preserving T001/T002/T005/T006/T007 ancestry, and finally sealed by T010 from the exact terminal T009 merge-commit tree into the immutable published-source artifact that T003 alone consumes for reconstruction.",
     "Automated Nix/NixOS builds and activations use a managed, receipt-bound path that binds the exact source artifact, system closure and effect class and fails closed before unauthorized host mutation.",
     "The exact production storage target topology GPT + EFI + recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is reconstructed from a blank virtual disk, booted, unlocked and restore-tested before production storage mutation.",
     "All migration-relevant non-reproducible data are classified and covered by an independently restorable off-host backup; current green scoped backups are not treated as full-cutover recovery evidence.",
@@ -34,9 +34,11 @@
       "initial_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T001", "HEIM-PC-NIXOS-MIGRATION-V1-T002"],
       "post_initial_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T005", "HEIM-PC-NIXOS-MIGRATION-V1-T006"],
       "post_source_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T004", "HEIM-PC-NIXOS-MIGRATION-V1-T007"],
-      "final_source_publication": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
+      "final_source_pr_preparation": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
+      "final_source_merge": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
+      "final_source_seal": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
       "final_cutover_readiness_proof": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
-      "scheduling_note": "These entries describe dependency and conflict boundaries, not artificial barriers: T004 may start as soon as T006 is terminal; T007 requires T005 and T006; T004 and T007 may execute concurrently; T008 requires both T004 and T007 before protected source publication; T003 waits for all declared prerequisites including T008 post-merge published-source readback."
+      "scheduling_note": "These entries describe dependency and conflict boundaries, not artificial barriers: T004 may start as soon as T006 is terminal; T007 requires T005 and T006; T004 and T007 may execute concurrently; T008 requires T004 and T007 and terminates at an exact reviewed protected PR; T009 exclusively merges that PR; T010 seals the exact T009 merge-commit tree; T003 waits for all declared prerequisites including T010 published-source readback."
     },
     "source_artifacts": {
       "activation_proof": "artifact.heim-pc.nixos-activation-source",
@@ -54,7 +56,7 @@
       "head": "7fd5eed229fae95e839e6b9556cd7f4782506d2a",
       "purpose": "Preserve physical NixOS Gate A/B evidence and verified live-media implementation before worktree cleanup"
     },
-    "migration_boundary": "This initiative does not itself authorize partitioning, mkfs, LUKS mutation, EFI/Secure-Boot key changes, firmware writes, reboot or NixOS switch on the production host. T008 may change only protected repository source truth and create the post-merge published-source artifact; destructive/runtime effects remain separately reviewed and recovery-gated.",
+    "migration_boundary": "This initiative does not itself authorize partitioning, mkfs, LUKS mutation, EFI/Secure-Boot key changes, firmware writes, reboot or NixOS switch on the production host. T008 may prepare only the final protected source PR, T009 may change only protected repository source truth through the exact Captain merge, and T010 may create only the immutable post-merge published-source artifact; destructive/runtime effects remain separately reviewed and recovery-gated.",
     "does_not_establish": [
       "migration_readiness",
       "backup_restore_completeness",

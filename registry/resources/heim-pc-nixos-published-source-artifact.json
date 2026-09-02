@@ -6,8 +6,8 @@
   "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/published-source",
   "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/published-source",
   "metadata": {
-    "boundary": "Create-only content-addressed whole-source artifact produced by T008 only after the exact reviewed final NixOS publication PR is protected-merged into heimgewebe/heim-pc main and the resulting main tree is independently read back. Its manifest binds the pre-merge protected-main identity, reviewed publication head/tree, actual merge commit/tree, final source archive/content digest, Control Release Set and lock/input identity. T003 consumes this artifact read-only as the sole declarative/reconstruction source so cutover-readiness rehearsal is bound to repository-authoritative main, not a temporary integration workspace or pre-publication artifact.",
-    "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
+    "boundary": "Create-only content-addressed whole-source artifact produced by T010 only after T009 is terminal with an exact Captain merge receipt. T010 independently reads the exact T009 merge commit/tree, proves protected main still contains that merge commit and exact T007/T006/T005/T001/T002 ancestry, and archives exactly that merge-commit tree rather than a later moving main tip. The immutable manifest binds T009 terminal/Captain receipt digests, publication PR, pre-merge base, reviewed head/tree/diff, actual merge commit/tree, source archive/content digest, Control Release Set and lock/input identity. T003 consumes this artifact read-only as its sole declarative/reconstruction source.",
+    "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
     "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
     "lifecycle": "immutable-until-initiative-closeout",
     "does_not_establish": [
@@ -17,6 +17,7 @@
       "mutable checkout authority",
       "future-main freshness",
       "cutover approval"
-    ]
+    ],
+    "source_merge_task": "HEIM-PC-NIXOS-MIGRATION-V1-T009"
   }
 }

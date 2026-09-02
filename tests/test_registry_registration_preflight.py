@@ -163,6 +163,39 @@ def test_semantic_duplicate_is_hint_only():
     assert result["semantic_hints"][0]["task_id"] == "EXAMPLE-V1-T002"
 
 
+def test_bare_local_ordinal_registration_fails_closed_and_names_candidates() -> None:
+    with pytest.raises(RegistrationPreflightError) as exc_info:
+        evaluate(
+            proposed_task=task("T191"),
+            proposed_path="registry/tasks/T191.json",
+            canonical_tasks=[
+                task("GRABOWSKI-OPERATOR-SURFACE-V1-T191"),
+                task("REPOGROUND-UNUSED-AUTHORITY-CLOSEOUT-V1-T191"),
+            ],
+        )
+
+    message = str(exc_info.value)
+    assert "canonical full task id or explicit namespace required" in message
+    assert "GRABOWSKI-OPERATOR-SURFACE-V1-T191" in message
+    assert "REPOGROUND-UNUSED-AUTHORITY-CLOSEOUT-V1-T191" in message
+
+
+def test_namespaced_task_ids_may_reuse_local_ordinal_without_collision() -> None:
+    proposed = task("EXAMPLE-V1-T191")
+    result = evaluate(
+        proposed_task=proposed,
+        proposed_path="registry/tasks/EXAMPLE-V1-T191.json",
+        canonical_tasks=[task("OTHER-LANE-V1-T191")],
+    )
+
+    assert result["decision"] == "allow"
+    assert result["task_identity"]["local_ordinal"] == "T191"
+    assert result["task_identity"]["local_ordinal_scope"] == "namespace_local"
+    assert result["task_identity"]["same_local_ordinal_task_ids"] == [
+        "OTHER-LANE-V1-T191"
+    ]
+
+
 def test_broad_bureau_scope_blocks_registration_preflight() -> None:
     proposed = {
         **task("EXAMPLE-V1-T001"),
@@ -222,6 +255,8 @@ def test_invalid_task_path_and_traversal_are_rejected():
         validate_task_path("EXAMPLE-V1-T001", "registry/tasks/../EXAMPLE-V1-T001.json")
     with pytest.raises(RegistrationPreflightError):
         task_path_for_id("../EXAMPLE-V1-T001")
+    with pytest.raises(RegistrationPreflightError, match="bare local task ordinal"):
+        task_path_for_id("T191")
 
 
 def test_concurrency_regression_second_attempt_blocks_after_reservation():
@@ -532,6 +567,46 @@ def test_repository_preflight_reads_canonical_tasks_from_checked_revision(tmp_pa
         base_sha_provider=lambda _root, _ref: base,
     )
     assert result["decision"] == "allow"
+
+
+def test_repository_preflight_bare_ordinal_names_canonical_candidates(tmp_path: Path):
+    repo = tmp_path / "repo"
+    (repo / "registry/tasks").mkdir(parents=True)
+    shutil.copytree(Path(__file__).parents[1] / "schemas", repo / "schemas")
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@invalid.local"],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+    canonical_ids = [
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T191",
+        "REPOGROUND-UNUSED-AUTHORITY-CLOSEOUT-V1-T191",
+    ]
+    for task_id in canonical_ids:
+        (repo / f"registry/tasks/{task_id}.json").write_text(
+            json.dumps(task(task_id)), encoding="utf-8"
+        )
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True)
+    base = _git(repo, "rev-parse", "HEAD")
+    proposed_path = repo / "registry/tasks/T191.json"
+    proposed_path.write_text(json.dumps(task("T191")), encoding="utf-8")
+
+    with pytest.raises(RegistrationPreflightError) as exc_info:
+        repository_registration_preflight(
+            repo,
+            repository="heimgewebe/bureau",
+            task_json_path=proposed_path,
+            checked_base_sha=base,
+            open_pr_provider=lambda _repo, _number: [],
+            base_sha_provider=lambda _root, _ref: base,
+        )
+
+    message = str(exc_info.value)
+    assert "canonical full task id or explicit namespace required" in message
+    for task_id in canonical_ids:
+        assert task_id in message
 
 
 def test_cli_json_and_exit_codes(monkeypatch, tmp_path: Path, capsys):

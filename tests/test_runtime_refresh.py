@@ -465,20 +465,43 @@ def test_load_manifest_hashes_the_exact_bytes_it_parses_during_atomic_replace(
     )
     manifest_path.write_bytes(first_bytes)
     replacement_path.write_bytes(second_bytes)
+    original_read_bytes = Path.read_bytes
     original_read_text = Path.read_text
+    read_bytes_calls = 0
+    read_text_calls = 0
+    replacement_done = False
 
-    def replace_after_parse(self: Path, *args: Any, **kwargs: Any) -> str:
+    def replace_after_text(self: Path, *args: Any, **kwargs: Any) -> str:
+        nonlocal read_text_calls, replacement_done
         text = original_read_text(self, *args, **kwargs)
         if self == manifest_path:
-            replacement_path.replace(manifest_path)
+            read_text_calls += 1
+            if not replacement_done:
+                replacement_path.replace(manifest_path)
+                replacement_done = True
         return text
 
-    monkeypatch.setattr(Path, "read_text", replace_after_parse)
+    def replace_after_bytes(self: Path) -> bytes:
+        nonlocal read_bytes_calls, replacement_done
+        payload = original_read_bytes(self)
+        if self == manifest_path:
+            read_bytes_calls += 1
+            if not replacement_done:
+                replacement_path.replace(manifest_path)
+                replacement_done = True
+        return payload
+
+    monkeypatch.setattr(Path, "read_text", replace_after_text)
+    monkeypatch.setattr(Path, "read_bytes", replace_after_bytes)
 
     manifest, manifest_sha256 = refresh.load_manifest(manifest_path)
 
     assert manifest["release_id"] == "release-a"
     assert manifest_sha256 == refresh.sha256_bytes(first_bytes)
+    assert manifest_sha256 != refresh.sha256_bytes(second_bytes)
+    assert original_read_bytes(manifest_path) == second_bytes
+    assert read_bytes_calls == 1
+    assert read_text_calls == 0
 
 
 def test_installed_activation_candidate_validator_rejects_noncanonical_manifest(

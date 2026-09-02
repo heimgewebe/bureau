@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Prepare and execute the Heim-PC NixOS vNext migration",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Turn the canonical Heim-PC NixOS 26.05 executor architecture into a reversible production migration without weakening truth, recovery, hardware acceptance or closure-bound activation contracts.",
+  "current_plan": {
+    "repository": "heim-pc",
+    "path": "architecture/nixos-executor-2026.md"
+  },
+  "completion": [
+    "Declared facts, runtime facts and hardware acceptance are implemented as separate source-bound evidence surfaces and the archived physical Gate A/B evidence is consumed without being mistaken for current live truth.",
+    "Automated Nix/NixOS builds and activations use a managed, receipt-bound path that binds the exact system closure and effect class and fails closed before unauthorized host mutation.",
+    "The exact production storage target topology GPT + EFI + recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is reconstructed from a blank virtual disk, booted, unlocked and restore-tested before production storage mutation.",
+    "All migration-relevant non-reproducible data are classified and covered by an independently restorable off-host backup; current green scoped backups are not treated as full-cutover recovery evidence.",
+    "An independent bootable recovery path plus offline host/control reconstruction material is verified without Grabowski, Bureau, network or the production system SSD.",
+    "Only after the preceding gates pass may a separately reviewed one-disk cutover plan bind the exact production device and authorize destructive storage effects; post-boot readback must prove the running closure equals the approved closure."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_from": "ChatGPT/Grabowski Heim-PC NixOS architecture and physical-evidence evaluation on 2026-09-02",
+    "canonical_architecture": {
+      "repository": "heimgewebe/heim-pc",
+      "merge_commit": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9",
+      "executor_profile": "architecture/nixos-executor-2026.md"
+    },
+    "candidate_events": {
+      "declared_runtime_facts_and_hardware_acceptance": 13344,
+      "managed_nix_build_and_activation": 13345,
+      "one_disk_migration_readiness": 13254
+    },
+    "physical_evidence_archive": {
+      "archive_id": "20260902T112439Z-5eabac896f53",
+      "head": "7fd5eed229fae95e839e6b9556cd7f4782506d2a",
+      "purpose": "Preserve physical NixOS Gate A/B evidence and verified live-media implementation before worktree cleanup"
+    },
+    "migration_boundary": "This initiative does not itself authorize partitioning, mkfs, LUKS mutation, EFI/Secure-Boot key changes, firmware writes, reboot or NixOS switch on the production host. Destructive effects remain separately reviewed and recovery-gated.",
+    "does_not_establish": [
+      "migration_readiness",
+      "backup_restore_completeness",
+      "hardware_acceptance_currentness",
+      "destructive_action_authority",
+      "deployment_or_runtime_convergence"
+    ]
+  }
+}

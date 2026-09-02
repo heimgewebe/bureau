@@ -6,17 +6,18 @@
   "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-source",
   "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-source",
   "metadata": {
-    "boundary": "Create-only content-addressed whole-source artifact path produced by T007 from exactly two immutable reviewed inputs: T006's activation-source artifact containing the integrated T001/T002 source and T005's rehearsal-patch artifact containing the standalone harness delta. T007 materializes and combines those artifacts only inside its Bureau run-scoped workspace and publishes no remote Git ref. The final manifest binds both input artifact identities, final local Git commit/tree, archive/content digest, Control Release Set and lock/input identity. T003 consumes only this leased immutable artifact plus its disposable storage sandbox and read-only host evidence; it does not read the Heim-PC Git object store, mutable checkout or moving branch.",
+    "boundary": "Create-only content-addressed whole-source artifact path produced by T007 after artifact-verified ancestry-preserving integration of exact T006 and T005 terminal commits. The final manifest binds both immutable input artifact identities, exact T007/T006/T005 commits, transitive T001/T002 ancestry, final tree, archive/content digest, Control Release Set and lock/input identity. T008 reads this artifact and bound commit lineage to prepare and protected-merge the final Heim-PC publication. After merge, T008 creates a separate published-source artifact from the actual repository-authoritative main tree; T003 consumes only that post-merge artifact. No moving Git ref is source-byte authority at any stage.",
     "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T007",
-    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
+    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
     "input_artifacts": ["artifact.heim-pc.nixos-activation-source", "artifact.heim-pc.nixos-rehearsal-patch"],
     "lifecycle": "immutable-until-initiative-closeout",
     "does_not_establish": [
       "remote branch publication authority",
+      "main-branch merge authority without T008 Captain gates",
+      "post-merge main tree identity",
       "production block-device identity",
       "production storage mutation authority",
       "mutable checkout authority",
-      "main-branch merge authority",
       "cutover approval"
     ]
   }

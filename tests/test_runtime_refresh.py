@@ -668,7 +668,7 @@ def test_protected_publication_activation_requires_planned_unactivated_bootstrap
     )
 
 
-def test_protected_publication_activation_requires_runtime_observation_after_cutoff(
+def test_protected_publication_activation_specialized_cas_requires_runtime_observation(
     tmp_path: Path,
 ) -> None:
     task_id = "BUREAU-RUNTIME-PUBLICATION-ACTIVATION-OBSERVATION-MISSING"
@@ -682,6 +682,52 @@ def test_protected_publication_activation_requires_runtime_observation_after_cut
         "protected-publication activation mutation contract is invalid"
         in str(raised.value)
     )
+
+
+def test_protected_publication_activation_accepts_exact_legacy_receipt_without_observation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-ACTIVATION-LEGACY-NO-OBSERVATION"
+    state_root = (tmp_path / "legacy-no-observation").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(
+        task_id, state="ready", include_activation_observation=False
+    )
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    from bureau import task_specs
+
+    with store.immediate() as connection:
+        task_specs._put_validated_material(
+            connection,
+            task_specs._canonical_spec(ready),
+            idempotency_key=key,
+            expected_revision=adopted["revision"],
+            source="runtime-refresh-protected-publication-activation",
+        )
+    monkeypatch.setattr(
+        refresh,
+        "_prove_protected_publication_adoption",
+        lambda **_: protected_publication_proof(store, task_id),
+    )
+
+    result = refresh.validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=task_id,
+        target_sha256="a" * 64,
+        target_main_commit=MAIN,
+    )
+    assert result["task_id"] == task_id
+    assert result["revision"] == 2
 
 
 def test_protected_publication_activation_rejects_already_current_observation(

@@ -117,9 +117,6 @@ RUNTIME_AUTHORITY_PROTECTED_PUBLICATION_ACCEPTANCE_ID = (
 RUNTIME_AUTHORITY_POST_PUBLICATION_ACTIVATION_LEGACY_CUTOFF = datetime(
     2026, 9, 1, 6, 19, 42, tzinfo=timezone.utc
 )
-RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_LEGACY_CUTOFF = datetime(
-    2026, 9, 2, 13, 40, 0, tzinfo=timezone.utc
-)
 RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD = (
     "protected_publication_activation_observation"
 )
@@ -3242,27 +3239,12 @@ def _validate_protected_publication_activation_receipt(
             "authority-preflight-publication-activation-receipt-unproven",
             "protected-publication activation revision cannot be reconstructed exactly",
         )
-    try:
-        activation_time = parse_time(activation_created_at)
-    except (TypeError, ValueError) as exc:
-        raise RuntimeRefreshError(
-            "authority-preflight-publication-activation-receipt-unproven",
-            "protected-publication activation revision timestamp is invalid",
-        ) from exc
     activation_metadata = activation_record_spec.get("metadata")
     activation_observation_value = (
         activation_metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
         if isinstance(activation_metadata, dict)
         else None
     )
-    observation_required = (
-        activation_time >= RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_LEGACY_CUTOFF
-    )
-    if observation_required and activation_observation_value is None:
-        raise RuntimeRefreshError(
-            "authority-preflight-publication-activation-observation-unproven",
-            "post-cutoff protected-publication activation has no typed runtime observation",
-        )
     activation_observation = (
         _validated_protected_publication_activation_observation(
             activation_observation_value,

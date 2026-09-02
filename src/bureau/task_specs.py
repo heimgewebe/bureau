@@ -66,6 +66,8 @@ def ensure_schema(connection: sqlite3.Connection) -> None:
             requested_sha256 TEXT NOT NULL,
             resulting_revision INTEGER NOT NULL,
             created_at TEXT NOT NULL,
+            activation_evidence_json TEXT,
+            activation_evidence_sha256 TEXT,
             FOREIGN KEY(task_id, resulting_revision)
                 REFERENCES task_spec_revisions(task_id, revision)
         );
@@ -73,6 +75,15 @@ def ensure_schema(connection: sqlite3.Connection) -> None:
             ON task_spec_revisions(spec_sha256);
         """
     )
+    mutation_columns = {
+        str(row["name"])
+        for row in connection.execute("PRAGMA table_info(task_spec_mutations)")
+    }
+    for column in ("activation_evidence_json", "activation_evidence_sha256"):
+        if column not in mutation_columns:
+            connection.execute(
+                f"ALTER TABLE task_spec_mutations ADD COLUMN {column} TEXT"
+            )
 
 
 def validate_schema(connection: sqlite3.Connection) -> None:
@@ -180,9 +191,23 @@ def get_mutation_receipt(
     validate_schema(connection)
     if not isinstance(idempotency_key, str) or not idempotency_key:
         raise TaskSpecError("TaskSpec idempotency key must be non-empty")
+    mutation_columns = {
+        str(item["name"])
+        for item in connection.execute("PRAGMA table_info(task_spec_mutations)")
+    }
+    evidence_columns_present = {
+        "activation_evidence_json",
+        "activation_evidence_sha256",
+    }.issubset(mutation_columns)
+    evidence_select = (
+        ",activation_evidence_json,activation_evidence_sha256"
+        if evidence_columns_present
+        else ""
+    )
     row = connection.execute(
         "SELECT idempotency_key,task_id,expected_revision,requested_sha256,"
-        "resulting_revision,created_at FROM task_spec_mutations WHERE idempotency_key=?",
+        f"resulting_revision,created_at{evidence_select} "
+        "FROM task_spec_mutations WHERE idempotency_key=?",
         (idempotency_key,),
     ).fetchone()
     if row is None:
@@ -218,7 +243,7 @@ def get_mutation_receipt(
     )
     if resulting_task_spec["spec_sha256"] != requested_sha256:
         raise TaskSpecError("TaskSpec mutation receipt digest mismatch")
-    return {
+    receipt = {
         "idempotency_key": idempotency_key,
         "task_id": task_id,
         "expected_revision": expected_revision,
@@ -227,7 +252,32 @@ def get_mutation_receipt(
         "created_at": created_at,
         "resulting_task_spec": resulting_task_spec,
     }
-
+    if evidence_columns_present:
+        raw_evidence = row["activation_evidence_json"]
+        evidence_sha256 = row["activation_evidence_sha256"]
+        if (raw_evidence is None) != (evidence_sha256 is None):
+            raise TaskSpecError("TaskSpec mutation activation evidence is incomplete")
+        if raw_evidence is not None:
+            if not isinstance(raw_evidence, str) or not isinstance(evidence_sha256, str):
+                raise TaskSpecError("TaskSpec mutation activation evidence is invalid")
+            try:
+                evidence = json.loads(raw_evidence)
+            except json.JSONDecodeError as exc:
+                raise TaskSpecError(
+                    "TaskSpec mutation activation evidence JSON is invalid"
+                ) from exc
+            if not isinstance(evidence, dict):
+                raise TaskSpecError("TaskSpec mutation activation evidence must be an object")
+            payload = dict(evidence)
+            observed = payload.pop("evidence_sha256", None)
+            expected = hashlib.sha256(
+                (legacy.canonical_json(payload) + "\n").encode()
+            ).hexdigest()
+            if observed != evidence_sha256 or expected != evidence_sha256:
+                raise TaskSpecError("TaskSpec mutation activation evidence digest mismatch")
+            receipt["activation_evidence"] = evidence
+            receipt["activation_evidence_sha256"] = evidence_sha256
+    return receipt
 
 def _validate_runtime_refresh_no_run_closeout_mutation(
     spec: Mapping[str, Any], idempotency_key: str
@@ -293,7 +343,8 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
     *,
     idempotency_key: str,
     expected_revision: int | None,
-    activation_observation: Mapping[str, Any] | None = None,
+    activation_observation: Mapping[str, Any] | None,
+    activation_evidence: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     canonical = _canonical_spec(spec)
     metadata = canonical.get("metadata")
@@ -307,9 +358,32 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         if isinstance(metadata, Mapping)
         else None
     )
+    embedded_observation = (
+        metadata.get("protected_publication_activation_observation")
+        if isinstance(metadata, Mapping)
+        else None
+    )
     observation = activation_observation
-    if observation is None and isinstance(metadata, Mapping):
-        observation = metadata.get("protected_publication_activation_observation")
+    evidence = activation_evidence
+    evidence_payload = dict(evidence) if isinstance(evidence, Mapping) else {}
+    evidence_digest = evidence_payload.pop("evidence_sha256", None)
+    expected_evidence_digest = hashlib.sha256(
+        (legacy.canonical_json(evidence_payload) + "\n").encode()
+    ).hexdigest()
+    installed_validation = (
+        evidence.get("installed_runtime_validation")
+        if isinstance(evidence, Mapping)
+        else None
+    )
+    installed_validation_payload = (
+        dict(installed_validation) if isinstance(installed_validation, Mapping) else {}
+    )
+    installed_validation_digest = installed_validation_payload.pop(
+        "validation_sha256", None
+    )
+    expected_installed_validation_digest = hashlib.sha256(
+        (legacy.canonical_json(installed_validation_payload) + "\n").encode()
+    ).hexdigest()
     observation_payload = dict(observation) if isinstance(observation, Mapping) else {}
     observation_digest = observation_payload.pop("observation_sha256", None)
     expected_observation_digest = hashlib.sha256(
@@ -348,6 +422,10 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         if isinstance(publication, Mapping)
         else None
     )
+    publication_pr = (
+        publication.get("publication_pr") if isinstance(publication, Mapping) else None
+    )
+    activation_spec_sha256 = task_spec_digest(canonical)
     if (
         canonical.get("state") != "ready"
         or not isinstance(activation, Mapping)
@@ -355,6 +433,44 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         or activation.get("activation_state") != "ready"
         or activation.get("required_activation_source")
         != "runtime-refresh-protected-publication-activation"
+        or embedded_observation is not None
+        or not isinstance(publication, Mapping)
+        or not isinstance(publication_pr, int)
+        or isinstance(publication_pr, bool)
+        or publication_pr < 1
+        or not isinstance(evidence, Mapping)
+        or evidence.get("schema_version") != 1
+        or evidence.get("kind")
+        != "bureau_runtime_refresh_protected_publication_activation_evidence"
+        or evidence.get("task_id") != canonical.get("id")
+        or evidence.get("adoption_revision") != expected_revision
+        or evidence.get("activation_spec_sha256") != activation_spec_sha256
+        or evidence.get("idempotency_key") != idempotency_key
+        or evidence.get("publication_pr") != publication_pr
+        or evidence.get("publication_merge_commit") != merge_commit
+        or evidence.get("target_main_commit")
+        != (observation.get("main_commit") if isinstance(observation, Mapping) else None)
+        or evidence.get("target_sha256")
+        != (observation.get("target_sha256") if isinstance(observation, Mapping) else None)
+        or evidence.get("observation_sha256")
+        != (observation.get("observation_sha256") if isinstance(observation, Mapping) else None)
+        or evidence.get("observation") != observation
+        or evidence_digest != expected_evidence_digest
+        or not isinstance(installed_validation, Mapping)
+        or installed_validation.get("kind")
+        != "bureau_runtime_refresh_installed_activation_candidate_validation"
+        or installed_validation.get("task_id") != canonical.get("id")
+        or installed_validation.get("candidate_spec_sha256")
+        != activation_spec_sha256
+        or installed_validation.get("installed_source_commit")
+        != (
+            observation.get("deployed_source_commit")
+            if isinstance(observation, Mapping)
+            else None
+        )
+        or evidence.get("installed_runtime_validation_sha256")
+        != installed_validation_digest
+        or installed_validation_digest != expected_installed_validation_digest
         or not isinstance(publication, Mapping)
         or not isinstance(merge_commit, str)
         or len(merge_commit) != 40
@@ -425,6 +541,7 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
             or replay["task_id"] != canonical["id"]
             or replay["expected_revision"] != expected_revision
             or replay["requested_sha256"] != digest
+            or evidence.get("adoption_spec_sha256") != baseline.get("spec_sha256")
             or resulting_revision != expected_revision + 1
             or not isinstance(result, dict)
             or result.get("spec_sha256") != digest
@@ -437,6 +554,18 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
             )
         return canonical
 
+    try:
+        observed_at = legacy.parse_time(str(observation.get("observed_at")))
+        cas_at = legacy.parse_time(legacy.utc_now())
+    except (TypeError, ValueError) as exc:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation timestamp is invalid"
+        ) from exc
+    age_seconds = int((cas_at - observed_at).total_seconds())
+    if age_seconds < -30 or age_seconds > 300:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation is not fresh at CAS"
+        )
     current = get_current(connection, canonical["id"])
     if (
         current is None
@@ -455,21 +584,9 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         raise TaskSpecError(
             "runtime-refresh protected-publication activation idempotency binding is invalid"
         )
-    try:
-        observed_at = legacy.parse_time(str(observation["observed_at"]))
-        current_time = legacy.parse_time(legacy.utc_now())
-    except (KeyError, TypeError, ValueError) as exc:
+    if evidence.get("adoption_spec_sha256") != current.get("spec_sha256"):
         raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation timestamp is invalid"
-        ) from exc
-    if observed_at.tzinfo is None or current_time.tzinfo is None:
-        raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation timestamp is invalid"
-        )
-    age_seconds = (current_time - observed_at).total_seconds()
-    if age_seconds < -30 or age_seconds > 300:
-        raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation is not fresh"
+            "runtime-refresh protected-publication activation evidence baseline is invalid"
         )
     return canonical
 
@@ -480,7 +597,8 @@ def put_runtime_refresh_protected_publication_activation(
     *,
     idempotency_key: str,
     expected_revision: int | None,
-    activation_observation: Mapping[str, Any] | None = None,
+    activation_observation: Mapping[str, Any] | None,
+    activation_evidence: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     canonical = _validate_runtime_refresh_protected_publication_activation_mutation(
         connection,
@@ -488,13 +606,26 @@ def put_runtime_refresh_protected_publication_activation(
         idempotency_key=idempotency_key,
         expected_revision=expected_revision,
         activation_observation=activation_observation,
+        activation_evidence=activation_evidence,
     )
     try:
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
     except (DocumentSchemaError, AcceptanceContractError) as exc:
         raise TaskSpecError(str(exc)) from exc
+    if not isinstance(activation_evidence, Mapping):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation evidence is required"
+        )
+    evidence = dict(activation_evidence)
+    evidence_sha256 = evidence.get("evidence_sha256")
+    if not isinstance(evidence_sha256, str) or len(evidence_sha256) != 64:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation evidence digest is invalid"
+        )
+    evidence_json = legacy.canonical_json(evidence)
     reserved_receipt = connection.execute(
-        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        "SELECT activation_evidence_json,activation_evidence_sha256 "
+        "FROM task_spec_mutations WHERE idempotency_key=?",
         (idempotency_key,),
     ).fetchone()
     if reserved_receipt is None:
@@ -504,14 +635,46 @@ def put_runtime_refresh_protected_publication_activation(
                 "runtime-refresh protected-publication activation must create its "
                 "authenticated TaskSpec revision"
             )
-    return _put_validated_material(
+    else:
+        if (
+            reserved_receipt["activation_evidence_json"] != evidence_json
+            or reserved_receipt["activation_evidence_sha256"] != evidence_sha256
+        ):
+            raise TaskSpecError(
+                "runtime-refresh protected-publication activation replay evidence differs"
+            )
+    result = _put_validated_material(
         connection,
         canonical,
         idempotency_key=idempotency_key,
         expected_revision=expected_revision,
         source="runtime-refresh-protected-publication-activation",
     )
-
+    if reserved_receipt is None:
+        updated = connection.execute(
+            "UPDATE task_spec_mutations SET "
+            "activation_evidence_json=?,activation_evidence_sha256=? "
+            "WHERE idempotency_key=? AND activation_evidence_json IS NULL "
+            "AND activation_evidence_sha256 IS NULL",
+            (evidence_json, evidence_sha256, idempotency_key),
+        )
+        if updated.rowcount != 1:
+            raise TaskSpecError(
+                "runtime-refresh protected-publication activation evidence was not "
+                "stored atomically"
+            )
+    receipt = get_mutation_receipt(connection, idempotency_key)
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("activation_evidence") != evidence
+        or receipt.get("activation_evidence_sha256") != evidence_sha256
+        or receipt.get("resulting_revision") != result.get("revision")
+        or receipt.get("requested_sha256") != result.get("spec_sha256")
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation evidence readback failed"
+        )
+    return result
 
 def current_projection(connection: sqlite3.Connection) -> dict[str, Any]:
     validate_schema(connection)

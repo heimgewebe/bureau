@@ -121,7 +121,10 @@ RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD = (
     "protected_publication_activation_observation"
 )
 RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND = (
-    "bureau_runtime_refresh_authority_activation_evidence"
+    "bureau_runtime_refresh_protected_publication_activation_evidence"
+)
+RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF = datetime(
+    2026, 9, 2, 0, 0, 0, tzinfo=timezone.utc
 )
 RUNTIME_AUTHORITY_CONSUMPTION_KIND = "bureau_runtime_refresh_authority_consumption"
 RUNTIME_AUTHORITY_CLOSEOUT_KIND = "bureau_runtime_refresh_no_run_closeout"
@@ -605,6 +608,158 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
                 details={"expected": expected, "observed": manifest_payload_sha256},
             )
     return value, sha256_bytes(path.read_bytes())
+
+
+def _validate_installed_runtime_activation_candidate(
+    *,
+    manifest_path: Path,
+    expected_deployed_source_commit: str,
+    approval_task_id: str,
+    candidate: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate one Ready candidate with the authenticated installed runtime code."""
+    resolved_manifest_path = manifest_path.expanduser().resolve()
+    expected_manifest_path = (
+        Path("~/.local/share/bureau/deployment-manifest.json").expanduser().resolve()
+    )
+    if resolved_manifest_path != expected_manifest_path:
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-manifest-noncanonical",
+            "installed runtime validation requires the canonical deployment manifest",
+            details={
+                "observed_manifest_path": str(resolved_manifest_path),
+                "expected_manifest_path": str(expected_manifest_path),
+            },
+        )
+    manifest_path = resolved_manifest_path
+    manifest, manifest_sha256 = load_manifest(manifest_path)
+    source_commit = manifest.get("source_commit")
+    release_id = manifest.get("release_id")
+    if (
+        source_commit != expected_deployed_source_commit
+        or not isinstance(release_id, str)
+        or not release_id
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-identity-drift",
+            "installed runtime identity differs from the fresh activation observation",
+            details={
+                "expected_source_commit": expected_deployed_source_commit,
+                "observed_source_commit": source_commit,
+            },
+        )
+    release = _historical_nonsymlink_path(
+        Path(str(manifest.get("immutable_release_path", ""))),
+        label="installed immutable release",
+    )
+    expected_release = _historical_nonsymlink_path(
+        manifest_path.expanduser().resolve().parent / "releases" / release_id,
+        label="expected installed immutable release",
+    )
+    if release != expected_release or not release.is_dir():
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-release-invalid",
+            "installed runtime release path is not the manifest-bound immutable release",
+        )
+    observed_package_tree_sha256 = _historical_package_tree_sha256(release)
+    if observed_package_tree_sha256 != manifest.get("package_tree_sha256"):
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-package-mismatch",
+            "installed runtime package tree digest differs from the deployment manifest",
+            details={
+                "expected": manifest.get("package_tree_sha256"),
+                "observed": observed_package_tree_sha256,
+            },
+        )
+    module = _historical_nonsymlink_path(
+        Path(str(manifest.get("module_path", ""))),
+        label="installed runtime module",
+    )
+    try:
+        module.relative_to(release)
+    except ValueError as exc:
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-module-invalid",
+            "installed runtime module escaped the immutable release",
+        ) from exc
+    observed_module_sha256 = _historical_artifact_sha256(
+        module, label="installed runtime module"
+    )
+    if observed_module_sha256 != manifest.get("module_sha256"):
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-module-mismatch",
+            "installed runtime module digest differs from the deployment manifest",
+        )
+    release_src = release / "src"
+    script = (
+        "import json,sys; "
+        "sys.path.insert(0,sys.argv[1]); "
+        "from bureau import runtime_refresh as rr; "
+        "payload=json.load(sys.stdin); spec=payload['spec']; tid=payload['task_id']; "
+        "metadata,authority,state=rr._validate_runtime_refresh_authority_contract("
+        "spec=spec,approval_task_id=tid,allow_planned=False); "
+        "publication=rr._validated_protected_publication_adoption_contract(spec); "
+        "activation=rr._validated_post_publication_activation_contract(metadata); "
+        "no_run=rr._validated_no_run_acceptance_contract(spec=spec,authority=authority); "
+        "assert state=='ready' and publication is not None and activation is not None; "
+        "print(json.dumps({'state':state,'publication_pr':publication.get('publication_pr'),"
+        "'criterion_ids':sorted(no_run['criteria'])},sort_keys=True))"
+    )
+    payload = legacy.canonical_json(
+        {"task_id": approval_task_id, "spec": json.loads(json.dumps(candidate))}
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", script, str(release_src)],
+            cwd=release,
+            input=payload,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-validator-unavailable",
+            "installed runtime candidate validator could not run",
+            details={"error": str(exc)},
+        ) from exc
+    if result.returncode != 0:
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-candidate-rejected",
+            "installed runtime rejected the activated candidate before CAS",
+            details={"stderr": result.stderr[-2000:]},
+        )
+    try:
+        observed = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-validator-invalid",
+            "installed runtime validator returned invalid JSON",
+        ) from exc
+    if (
+        not isinstance(observed, dict)
+        or observed.get("state") != "ready"
+        or not isinstance(observed.get("criterion_ids"), list)
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-validator-invalid",
+            "installed runtime validator result is incomplete",
+        )
+    from . import task_specs
+
+    receipt = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": "bureau_runtime_refresh_installed_activation_candidate_validation",
+        "task_id": approval_task_id,
+        "candidate_spec_sha256": task_specs.task_spec_digest(candidate),
+        "installed_source_commit": source_commit,
+        "deployment_manifest_sha256": manifest_sha256,
+        "package_tree_sha256": observed_package_tree_sha256,
+        "runtime_module_sha256": observed_module_sha256,
+        "criterion_ids": list(observed["criterion_ids"]),
+    }
+    return bind_digest(receipt, "validation_sha256")
 
 
 def _check_state(item: dict[str, Any]) -> str:
@@ -2518,6 +2673,7 @@ def _put_authority_task(
     expected_revision: int,
     source: str,
     activation_observation: dict[str, Any] | None = None,
+    activation_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     try:
         if source == "runtime-refresh-no-run-closeout":
@@ -2532,6 +2688,7 @@ def _put_authority_task(
                 idempotency_key=idempotency_key,
                 expected_revision=expected_revision,
                 activation_observation=activation_observation,
+                activation_evidence=activation_evidence,
             )
         return store.put_task_spec(
             spec,
@@ -2979,6 +3136,172 @@ def _validated_protected_publication_activation_observation(
     return json.loads(json.dumps(value))
 
 
+def _protected_publication_activation_evidence(
+    *,
+    approval_task_id: str,
+    adoption_revision: int,
+    adoption_spec_sha256: str,
+    activation_spec_sha256: str,
+    idempotency_key: str,
+    publication_pr: int,
+    publication_merge_commit: str,
+    target_main_commit: str,
+    observation: dict[str, Any],
+    installed_runtime_validation: dict[str, Any],
+) -> dict[str, Any]:
+    verify_digest(observation, "observation_sha256")
+    verify_digest(installed_runtime_validation, "validation_sha256")
+    if (
+        not isinstance(adoption_revision, int)
+        or isinstance(adoption_revision, bool)
+        or adoption_revision < 1
+        or not _is_sha256(adoption_spec_sha256)
+        or not _is_sha256(activation_spec_sha256)
+        or not isinstance(publication_pr, int)
+        or isinstance(publication_pr, bool)
+        or publication_pr < 1
+        or not isinstance(publication_merge_commit, str)
+        or len(publication_merge_commit) != 40
+        or any(c not in "0123456789abcdef" for c in publication_merge_commit)
+        or not isinstance(target_main_commit, str)
+        or len(target_main_commit) != 40
+        or any(c not in "0123456789abcdef" for c in target_main_commit)
+        or not _is_sha256(observation.get("target_sha256"))
+        or installed_runtime_validation.get("kind")
+        != "bureau_runtime_refresh_installed_activation_candidate_validation"
+        or installed_runtime_validation.get("task_id") != approval_task_id
+        or installed_runtime_validation.get("candidate_spec_sha256")
+        != activation_spec_sha256
+        or installed_runtime_validation.get("installed_source_commit")
+        != observation.get("deployed_source_commit")
+        or not _is_sha256(installed_runtime_validation.get("validation_sha256"))
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-evidence-invalid",
+            "protected-publication activation evidence bindings are invalid",
+        )
+    material = {
+        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+        "kind": RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND,
+        "task_id": approval_task_id,
+        "adoption_revision": adoption_revision,
+        "adoption_spec_sha256": adoption_spec_sha256,
+        "activation_spec_sha256": activation_spec_sha256,
+        "idempotency_key": idempotency_key,
+        "publication_pr": publication_pr,
+        "publication_merge_commit": publication_merge_commit,
+        "target_main_commit": target_main_commit,
+        "target_sha256": observation["target_sha256"],
+        "observation_sha256": observation["observation_sha256"],
+        "observation": json.loads(json.dumps(observation)),
+        "installed_runtime_validation_sha256": installed_runtime_validation[
+            "validation_sha256"
+        ],
+        "installed_runtime_validation": json.loads(
+            json.dumps(installed_runtime_validation)
+        ),
+    }
+    return bind_digest(material, "evidence_sha256")
+
+
+def _validated_protected_publication_activation_evidence(
+    value: Any,
+    *,
+    approval_task_id: str,
+    adoption_revision: int,
+    adoption_spec_sha256: str,
+    activation_spec_sha256: str,
+    idempotency_key: str,
+    publication_pr: int,
+    publication_merge_commit: str,
+    target_main_commit: str,
+    target_sha256: str | None,
+    activation_created_at: str,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation lacks atomic observation evidence",
+        )
+    try:
+        verify_digest(value, "evidence_sha256")
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-evidence-invalid",
+            "protected-publication activation evidence digest is invalid",
+            details={"cause_code": exc.code},
+        ) from exc
+    required_fields = {
+        "schema_version",
+        "kind",
+        "task_id",
+        "adoption_revision",
+        "adoption_spec_sha256",
+        "activation_spec_sha256",
+        "idempotency_key",
+        "publication_pr",
+        "publication_merge_commit",
+        "target_main_commit",
+        "target_sha256",
+        "observation_sha256",
+        "observation",
+        "installed_runtime_validation_sha256",
+        "installed_runtime_validation",
+        "evidence_sha256",
+    }
+    if (
+        set(value) != required_fields
+        or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
+        or value.get("kind") != RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND
+        or value.get("task_id") != approval_task_id
+        or value.get("adoption_revision") != adoption_revision
+        or value.get("adoption_spec_sha256") != adoption_spec_sha256
+        or value.get("activation_spec_sha256") != activation_spec_sha256
+        or value.get("idempotency_key") != idempotency_key
+        or value.get("publication_pr") != publication_pr
+        or value.get("publication_merge_commit") != publication_merge_commit
+        or not isinstance(value.get("target_main_commit"), str)
+        or len(value["target_main_commit"]) != 40
+        or any(c not in "0123456789abcdef" for c in value["target_main_commit"])
+        or not _is_sha256(value.get("target_sha256"))
+        or not _is_sha256(value.get("observation_sha256"))
+        or not isinstance(value.get("observation"), dict)
+        or value["observation"].get("observation_sha256")
+        != value.get("observation_sha256")
+        or value["observation"].get("main_commit")
+        != value.get("target_main_commit")
+        or value["observation"].get("target_sha256") != value.get("target_sha256")
+        or not isinstance(value.get("installed_runtime_validation"), dict)
+        or value.get("installed_runtime_validation_sha256")
+        != value["installed_runtime_validation"].get("validation_sha256")
+        or value["installed_runtime_validation"].get("task_id") != approval_task_id
+        or value["installed_runtime_validation"].get("candidate_spec_sha256")
+        != activation_spec_sha256
+        or value["installed_runtime_validation"].get("installed_source_commit")
+        != value["observation"].get("deployed_source_commit")
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-evidence-invalid",
+            "protected-publication activation evidence does not match the exact CAS",
+        )
+    try:
+        verify_digest(value["installed_runtime_validation"], "validation_sha256")
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-evidence-invalid",
+            "installed runtime validation receipt digest is invalid",
+            details={"cause_code": exc.code},
+        ) from exc
+    return _validated_protected_publication_activation_observation(
+        value["observation"],
+        activation_created_at=activation_created_at,
+        target_main_commit=target_main_commit,
+        expected_target_sha256=(
+            target_sha256 if target_sha256 is not None else value["target_sha256"]
+        ),
+    )
+
+
 def _historical_protected_publication_bootstrap(
     *, store: Any, approval_task_id: str
 ) -> tuple[dict[str, Any], dict[str, Any] | None] | None:
@@ -3095,7 +3418,6 @@ def _expected_protected_publication_activation_spec(
     historical_spec: dict[str, Any],
     publication: dict[str, Any],
     approval_task_id: str,
-    activation_observation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     metadata, authority, state = _validate_runtime_refresh_authority_contract(
         spec=historical_spec,
@@ -3145,10 +3467,6 @@ def _expected_protected_publication_activation_spec(
     candidate_metadata["protected_publication_adoption"] = json.loads(
         json.dumps(publication)
     )
-    if activation_observation is not None:
-        candidate_metadata[RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD] = json.loads(
-            json.dumps(activation_observation)
-        )
     candidate["acceptance"].append(
         _protected_publication_activation_acceptance(approval_task_id)
     )
@@ -3159,169 +3477,6 @@ def _expected_protected_publication_activation_spec(
         "required_evidence": ["protected-publication-adoption"],
     }
     return candidate
-
-
-def _activation_evidence_path(store: Any, idempotency_key: str) -> Path:
-    binding = _authority_store_binding(store)
-    state_root = binding.get("state_root")
-    if not isinstance(state_root, str) or not state_root:
-        raise RuntimeRefreshError(
-            "authority-activation-evidence-state-root-invalid",
-            "cannot resolve the authoritative StateStore root for activation evidence",
-        )
-    key_sha256 = sha256_bytes(idempotency_key.encode("utf-8"))
-    return (
-        Path(state_root).expanduser().resolve()
-        / "runtime-refresh"
-        / "activation-evidence"
-        / f"{key_sha256}.json"
-    )
-
-
-def _activation_evidence_record(
-    *,
-    approval_task_id: str,
-    idempotency_key: str,
-    adoption_proof: dict[str, Any],
-    publication: dict[str, Any],
-    target_main_commit: str,
-    ready_spec_sha256: str,
-    observation: dict[str, Any],
-    validated_at: datetime,
-) -> dict[str, Any]:
-    record = {
-        "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
-        "kind": RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND,
-        "task_id": approval_task_id,
-        "idempotency_key": idempotency_key,
-        "adoption_revision": adoption_proof.get("adoption_revision"),
-        "adoption_spec_sha256": adoption_proof.get("task_spec_sha256"),
-        "adoption_evidence_sha256": adoption_proof.get("evidence_sha256"),
-        "ready_spec_sha256": ready_spec_sha256,
-        "publication": json.loads(json.dumps(publication)),
-        "target_main_commit": target_main_commit,
-        "target_sha256": observation.get("target_sha256"),
-        "observation_sha256": observation.get("observation_sha256"),
-        "validated_at": isoformat(validated_at),
-        "observation": json.loads(json.dumps(observation)),
-    }
-    return bind_digest(record, "evidence_sha256")
-
-
-def _validated_activation_evidence(
-    value: Any,
-    *,
-    approval_task_id: str,
-    idempotency_key: str,
-    adoption_proof: dict[str, Any],
-    publication: dict[str, Any],
-    target_main_commit: str,
-    ready_spec_sha256: str,
-    require_fresh_now: bool,
-) -> dict[str, Any]:
-    fields = {
-        "schema_version",
-        "kind",
-        "task_id",
-        "idempotency_key",
-        "adoption_revision",
-        "adoption_spec_sha256",
-        "adoption_evidence_sha256",
-        "ready_spec_sha256",
-        "publication",
-        "target_main_commit",
-        "target_sha256",
-        "observation_sha256",
-        "validated_at",
-        "observation",
-        "evidence_sha256",
-    }
-    if not isinstance(value, dict) or set(value) != fields:
-        raise RuntimeRefreshError(
-            "authority-activation-evidence-unproven",
-            "activation evidence receipt shape is invalid",
-        )
-    try:
-        verify_digest(value, "evidence_sha256")
-    except RuntimeRefreshError as exc:
-        raise RuntimeRefreshError(
-            "authority-activation-evidence-unproven",
-            "activation evidence receipt digest is invalid",
-            details={"cause_code": exc.code},
-        ) from exc
-    if (
-        value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
-        or value.get("kind") != RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND
-        or value.get("task_id") != approval_task_id
-        or value.get("idempotency_key") != idempotency_key
-        or value.get("adoption_revision") != adoption_proof.get("adoption_revision")
-        or value.get("adoption_spec_sha256") != adoption_proof.get("task_spec_sha256")
-        or value.get("adoption_evidence_sha256") != adoption_proof.get("evidence_sha256")
-        or value.get("ready_spec_sha256") != ready_spec_sha256
-        or value.get("publication") != publication
-        or value.get("target_main_commit") != target_main_commit
-        or not _is_sha256(value.get("target_sha256"))
-        or value.get("observation_sha256")
-        != (value.get("observation") or {}).get("observation_sha256")
-        or not isinstance(value.get("validated_at"), str)
-    ):
-        raise RuntimeRefreshError(
-            "authority-activation-evidence-unproven",
-            "activation evidence receipt binding is invalid",
-        )
-    observation = _validated_protected_publication_activation_observation(
-        value["observation"],
-        activation_created_at=value["validated_at"],
-        target_main_commit=target_main_commit,
-        expected_target_sha256=value["target_sha256"],
-    )
-    if require_fresh_now:
-        observation = _validated_protected_publication_activation_observation(
-            observation,
-            activation_created_at=isoformat(utc_now()),
-            target_main_commit=target_main_commit,
-            expected_target_sha256=value["target_sha256"],
-        )
-    return {**value, "observation": observation}
-
-
-def _read_activation_evidence(
-    store: Any,
-    *,
-    idempotency_key: str,
-) -> dict[str, Any] | None:
-    path = _activation_evidence_path(store, idempotency_key)
-    if not path.exists():
-        return None
-    try:
-        return read_json(path)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeRefreshError(
-            "authority-activation-evidence-unproven",
-            "cannot read the immutable activation evidence receipt",
-            details={"path": str(path), "error": str(exc)},
-        ) from exc
-
-
-def _persist_activation_evidence(
-    store: Any,
-    *,
-    evidence: dict[str, Any],
-    idempotency_key: str,
-) -> Path:
-    path = _activation_evidence_path(store, idempotency_key)
-    payload = canonical_bytes(evidence) + b"\n"
-    try:
-        create_only(path, payload)
-    except FileExistsError as exc:
-        existing = _read_activation_evidence(store, idempotency_key=idempotency_key)
-        if existing != evidence:
-            raise RuntimeRefreshError(
-                "authority-activation-evidence-conflict",
-                "an immutable activation evidence receipt already exists with another payload",
-                details={"path": str(path)},
-            ) from exc
-    return path
 
 
 def _validate_protected_publication_activation_receipt(
@@ -3336,15 +3491,19 @@ def _validate_protected_publication_activation_receipt(
     approval_task_id: str,
     target_main_commit: str,
     target_sha256: str | None = None,
-) -> None:
+) -> dict[str, Any] | None:
     adoption_revision = adoption_proof.get("adoption_revision")
     adoption_spec_sha256 = adoption_proof.get("task_spec_sha256")
+    publication_pr = publication.get("publication_pr")
     publication_merge_commit = publication.get("publication_merge_commit")
     if (
         not isinstance(adoption_revision, int)
         or isinstance(adoption_revision, bool)
         or adoption_revision < 1
         or not _is_sha256(adoption_spec_sha256)
+        or not isinstance(publication_pr, int)
+        or isinstance(publication_pr, bool)
+        or publication_pr < 1
         or not isinstance(publication_merge_commit, str)
         or len(publication_merge_commit) != 40
         or any(
@@ -3418,27 +3577,10 @@ def _validate_protected_publication_activation_receipt(
             "authority-preflight-publication-activation-receipt-unproven",
             "protected-publication activation revision cannot be reconstructed exactly",
         )
-    activation_metadata = activation_record_spec.get("metadata")
-    activation_observation_value = (
-        activation_metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
-        if isinstance(activation_metadata, dict)
-        else None
-    )
-    activation_observation = (
-        _validated_protected_publication_activation_observation(
-            activation_observation_value,
-            activation_created_at=activation_created_at,
-            target_main_commit=target_main_commit,
-            expected_target_sha256=target_sha256,
-        )
-        if activation_observation_value is not None
-        else None
-    )
     expected_activation_spec = _expected_protected_publication_activation_spec(
         historical_spec=historical_spec,
         publication=publication,
         approval_task_id=approval_task_id,
-        activation_observation=activation_observation,
     )
     if (
         not isinstance(receipt, dict)
@@ -3456,12 +3598,49 @@ def _validate_protected_publication_activation_receipt(
         or resulting_spec.get("id") != approval_task_id
         or resulting_spec.get("state") != "ready"
         or resulting_spec != expected_activation_spec
+        or activation_record_spec != expected_activation_spec
     ):
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-receipt-unproven",
             "StateStore does not contain the exact protected-publication activation CAS receipt",
         )
 
+    activation_evidence = (
+        receipt.get("activation_evidence") if isinstance(receipt, dict) else None
+    )
+    if activation_evidence is None:
+        try:
+            activation_time = parse_time(activation_created_at)
+        except (TypeError, ValueError) as exc:
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-evidence-invalid",
+                "legacy activation timestamp is invalid",
+            ) from exc
+        if activation_time >= RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF:
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-observation-unproven",
+                "post-cutoff protected-publication activation lacks immutable observation evidence",
+                details={
+                    "activation_created_at": activation_created_at,
+                    "cutoff": isoformat(
+                        RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF
+                    ),
+                },
+            )
+        return None
+    return _validated_protected_publication_activation_evidence(
+        activation_evidence,
+        approval_task_id=approval_task_id,
+        adoption_revision=adoption_revision,
+        adoption_spec_sha256=adoption_spec_sha256,
+        activation_spec_sha256=activation_spec_sha256,
+        idempotency_key=idempotency_key,
+        publication_pr=publication_pr,
+        publication_merge_commit=publication_merge_commit,
+        target_main_commit=target_main_commit,
+        target_sha256=target_sha256,
+        activation_created_at=activation_created_at,
+    )
 
 def _validate_pre_effect_protected_publication_activation(
     *,
@@ -4209,6 +4388,7 @@ def activate_runtime_refresh_authority(
     registry: Any | None = None,
     observer: Callable[..., dict[str, Any]] = observe_runtime_refresh,
     now: datetime | None = None,
+    installed_candidate_validator: Callable[..., dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if repository != DEFAULT_REPOSITORY:
         raise RuntimeRefreshError(
@@ -4278,37 +4458,7 @@ def activate_runtime_refresh_authority(
             target_main_commit=expected_main_commit,
             task_file_sha256=expected_task_file_sha256,
         )
-        ready_spec = _expected_protected_publication_activation_spec(
-            historical_spec=historical_spec,
-            publication=publication_contract,
-            approval_task_id=approval_task_id,
-        )
-        from . import task_specs
-
-        ready_spec_sha256 = task_specs.task_spec_digest(ready_spec)
-        idempotency_key = (
-            f"{activation['required_activation_source']}:{approval_task_id}:"
-            f"{publication_merge_commit}:{adoption_proof['task_spec_sha256']}"
-        )
-        evidence_value = _read_activation_evidence(
-            store, idempotency_key=idempotency_key
-        )
-        if evidence_value is None:
-            raise RuntimeRefreshError(
-                "authority-activation-evidence-unproven",
-                "ready authority is missing its immutable activation evidence receipt",
-            )
-        evidence = _validated_activation_evidence(
-            evidence_value,
-            approval_task_id=approval_task_id,
-            idempotency_key=idempotency_key,
-            adoption_proof=adoption_proof,
-            publication=publication_contract,
-            target_main_commit=expected_main_commit,
-            ready_spec_sha256=ready_spec_sha256,
-            require_fresh_now=False,
-        )
-        _validate_protected_publication_activation_receipt(
+        observation = _validate_protected_publication_activation_receipt(
             store=store,
             current=current,
             authority=authority,
@@ -4321,7 +4471,11 @@ def activate_runtime_refresh_authority(
             approval_task_id=approval_task_id,
             target_main_commit=expected_main_commit,
         )
-        observation = evidence["observation"]
+        if observation is None:
+            raise RuntimeRefreshError(
+                "authority-activation-replay-legacy-evidence-unavailable",
+                "legacy ready authority has no replayable activation observation witness",
+            )
         return {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
             "kind": "bureau_runtime_refresh_authority_activation",
@@ -4332,7 +4486,6 @@ def activate_runtime_refresh_authority(
             "target_main_commit": expected_main_commit,
             "target_sha256": observation["target_sha256"],
             "observation_sha256": observation["observation_sha256"],
-            "activation_evidence_sha256": evidence["evidence_sha256"],
             "state_store": state_store_binding,
             "idempotent_replay": True,
         }
@@ -4374,77 +4527,39 @@ def activate_runtime_refresh_authority(
         target_main_commit=expected_main_commit,
         task_file_sha256=expected_task_file_sha256,
     )
-    ready = _expected_protected_publication_activation_spec(
-        historical_spec=spec,
-        publication=publication_contract,
-        approval_task_id=approval_task_id,
+    observation_started_at = now or utc_now()
+    observation = observer(
+        repository=repository,
+        manifest_path=manifest_path.expanduser().resolve(),
+        required_checks=required_checks,
+        now=observation_started_at,
     )
-    from . import task_specs
-
-    ready_spec_sha256 = task_specs.task_spec_digest(ready)
-    idempotency_key = (
-        f"{activation['required_activation_source']}:{approval_task_id}:"
-        f"{publication_merge_commit}:{current['spec_sha256']}"
+    verify_digest(observation, "observation_sha256")
+    if observation.get("status") not in {"candidate", "alert"}:
+        raise RuntimeRefreshError(
+            "authority-activation-observation-not-deployable",
+            "fresh runtime observation does not justify planned-to-ready activation",
+            details={
+                "status": observation.get("status"),
+                "reason_codes": observation.get("reason_codes"),
+            },
+        )
+    if observation.get("main_commit") != expected_main_commit:
+        raise RuntimeRefreshError(
+            "authority-activation-main-drift",
+            "fresh runtime observation differs from the reviewed activation target",
+            details={
+                "expected_main_commit": expected_main_commit,
+                "observed_main_commit": observation.get("main_commit"),
+            },
+        )
+    observation_validated_at = utc_now()
+    observation = _validated_protected_publication_activation_observation(
+        observation,
+        activation_created_at=isoformat(observation_validated_at),
+        target_main_commit=expected_main_commit,
+        expected_target_sha256=observation["target_sha256"],
     )
-    existing_evidence = _read_activation_evidence(
-        store, idempotency_key=idempotency_key
-    )
-    if existing_evidence is not None:
-        evidence = _validated_activation_evidence(
-            existing_evidence,
-            approval_task_id=approval_task_id,
-            idempotency_key=idempotency_key,
-            adoption_proof=adoption_proof,
-            publication=publication_contract,
-            target_main_commit=expected_main_commit,
-            ready_spec_sha256=ready_spec_sha256,
-            require_fresh_now=True,
-        )
-        observation = evidence["observation"]
-    else:
-        observation_started_at = now or utc_now()
-        observation = observer(
-            repository=repository,
-            manifest_path=manifest_path.expanduser().resolve(),
-            required_checks=required_checks,
-            now=observation_started_at,
-        )
-        verify_digest(observation, "observation_sha256")
-        if observation.get("status") not in {"candidate", "alert"}:
-            raise RuntimeRefreshError(
-                "authority-activation-observation-not-deployable",
-                "fresh runtime observation does not justify planned-to-ready activation",
-                details={
-                    "status": observation.get("status"),
-                    "reason_codes": observation.get("reason_codes"),
-                },
-            )
-        if observation.get("main_commit") != expected_main_commit:
-            raise RuntimeRefreshError(
-                "authority-activation-main-drift",
-                "fresh runtime observation differs from the reviewed activation target",
-                details={
-                    "expected_main_commit": expected_main_commit,
-                    "observed_main_commit": observation.get("main_commit"),
-                },
-            )
-        observation_validated_at = utc_now()
-        observation = _validated_protected_publication_activation_observation(
-            observation,
-            activation_created_at=isoformat(observation_validated_at),
-            target_main_commit=expected_main_commit,
-            expected_target_sha256=observation["target_sha256"],
-        )
-        evidence = _activation_evidence_record(
-            approval_task_id=approval_task_id,
-            idempotency_key=idempotency_key,
-            adoption_proof=adoption_proof,
-            publication=publication_contract,
-            target_main_commit=expected_main_commit,
-            ready_spec_sha256=ready_spec_sha256,
-            observation=observation,
-            validated_at=observation_validated_at,
-        )
     _validate_candidate_runtime_source_identity(observation)
     source_precondition = _validated_runtime_source_precondition(
         authority.get("source_precondition")
@@ -4461,10 +4576,58 @@ def activate_runtime_refresh_authority(
             "authority-activation-task-drift",
             "planned authority changed during activation preflight",
         )
-    if existing_evidence is None:
-        _persist_activation_evidence(
-            store, evidence=evidence, idempotency_key=idempotency_key
+    ready = _expected_protected_publication_activation_spec(
+        historical_spec=spec,
+        publication=publication_contract,
+        approval_task_id=approval_task_id,
+    )
+    validator = installed_candidate_validator or _validate_installed_runtime_activation_candidate
+    installed_validation = validator(
+        manifest_path=manifest_path.expanduser().resolve(),
+        expected_deployed_source_commit=str(observation["deployed_source_commit"]),
+        approval_task_id=approval_task_id,
+        candidate=ready,
+    )
+    from . import task_specs
+
+    try:
+        verify_digest(installed_validation, "validation_sha256")
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-validation-unproven",
+            "installed runtime pre-CAS validation receipt digest is invalid",
+            details={"cause_code": exc.code},
+        ) from exc
+    if (
+        not isinstance(installed_validation, dict)
+        or installed_validation.get("kind")
+        != "bureau_runtime_refresh_installed_activation_candidate_validation"
+        or installed_validation.get("candidate_spec_sha256")
+        != task_specs.task_spec_digest(ready)
+        or installed_validation.get("installed_source_commit")
+        != observation.get("deployed_source_commit")
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-installed-runtime-validation-unproven",
+            "installed runtime pre-CAS candidate validation is not bound to this activation",
         )
+    idempotency_key = (
+        f"{activation['required_activation_source']}:{approval_task_id}:"
+        f"{publication_merge_commit}:{current['spec_sha256']}"
+    )
+    activation_spec_sha256 = task_specs.task_spec_digest(ready)
+    activation_evidence = _protected_publication_activation_evidence(
+        approval_task_id=approval_task_id,
+        adoption_revision=current["revision"],
+        adoption_spec_sha256=current["spec_sha256"],
+        activation_spec_sha256=activation_spec_sha256,
+        idempotency_key=idempotency_key,
+        publication_pr=publication_pr,
+        publication_merge_commit=publication_merge_commit,
+        target_main_commit=expected_main_commit,
+        observation=observation,
+        installed_runtime_validation=installed_validation,
+    )
     changed = _put_authority_task(
         store,
         ready,
@@ -4472,6 +4635,7 @@ def activate_runtime_refresh_authority(
         expected_revision=current["revision"],
         source=activation["required_activation_source"],
         activation_observation=observation,
+        activation_evidence=activation_evidence,
     )
     readback = _read_authority_task(store, approval_task_id)
     if (
@@ -4483,7 +4647,7 @@ def activate_runtime_refresh_authority(
             "authority-activation-readback-failed",
             "activated TaskSpec readback differs from the exact CAS result",
         )
-    _validate_protected_publication_activation_receipt(
+    validated_observation = _validate_protected_publication_activation_receipt(
         store=store,
         current=readback,
         authority=readback["spec"]["metadata"]["runtime_refresh_authority"],
@@ -4495,6 +4659,11 @@ def activate_runtime_refresh_authority(
         target_main_commit=expected_main_commit,
         target_sha256=observation["target_sha256"],
     )
+    if validated_observation != observation:
+        raise RuntimeRefreshError(
+            "authority-activation-evidence-readback-failed",
+            "activation observation witness readback differs from the CAS input",
+        )
     return {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "kind": "bureau_runtime_refresh_authority_activation",
@@ -4505,7 +4674,7 @@ def activate_runtime_refresh_authority(
         "target_main_commit": expected_main_commit,
         "target_sha256": observation["target_sha256"],
         "observation_sha256": observation["observation_sha256"],
-        "activation_evidence_sha256": evidence["evidence_sha256"],
+        "activation_evidence_sha256": activation_evidence["evidence_sha256"],
         "state_store": state_store_binding,
         "publication": publication_contract,
         "idempotent_replay": False,

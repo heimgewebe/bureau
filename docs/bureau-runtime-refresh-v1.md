@@ -321,6 +321,56 @@ manipulierte Evidenz blockiert. Terminalität wird nie aus
 Notizen, Goal- oder Acceptance-Prosa abgeleitet, und es gibt weder Direct-SQL auf Bureau
 StateStore noch Queue-/Claim-/Dispatch-Wirkung.
 
+## Unverbrauchte Authority nach äquivalentem Erfolg superseden
+
+Eine andere Klasse ist eine Single-Use-Authority, die zwar einen oder mehrere abgelaufene
+Intents erzeugt hat, aber **nie** gebunden oder konsumiert wurde und keinen eigenen
+Attempt-Start, kein eigenes Terminal-Result und keinen No-Effect-Result besitzt. Wenn eine
+andere, revisionsgebundene Authority exakt denselben `target_sha256` und denselben
+`main_commit` erfolgreich deployt und konsumiert hat, darf die ungenutzte Authority nicht
+als „erfolgreich benutzt“ verifiziert werden. Dafür existiert der getrennte typisierte
+Python-Pfad `closeout_unused_runtime_refresh_authority()`.
+
+Vor dem einzigen StateStore-CAS werden fail-closed geprüft:
+
+- exakte aktuelle Revision und Digest der noch `ready`en, ungebundenen und unconsumed
+  Authority;
+- die vollständige bounded Intent-Historie dieser Task: alle Intents sind abgelaufen und
+  besitzen weder einen eigenen Attempt-Start noch ein eigenes Result; shared Target-Ledger
+  anderer Intents werden nur über deren `intent_sha256` zugerechnet; mehrere nie gestartete
+  Zielgenerationen sind zulässig, aber die jüngste Intent-Generation ist der alleinige
+  Closeout-Target und jede ältere `main_commit`-Generation muss als Git-Vorfahr dieser
+  jüngsten Generation bewiesen sein; Divergenz blockiert;
+- Abwesenheit aktiver Grabowski-Leases auf allen Runtime-Ressourcen der ungenutzten
+  Authority und Abwesenheit eines fremden aktiven Bureau-Runs mit
+  `component.bureau.runtime`-Reservation;
+- die Ersatz-Authority ist eine **andere** Task, `verified`, historisch über Revision und
+  TaskSpec-Digest auflösbar, exakt an denselben Target-/Main-Zustand gebunden und besitzt
+  ein passendes `consumption`-Receipt für das angegebene erfolgreiche `deployed`-Result;
+- Install-Receipt und Result-Readback der Ersatz-Authority werden erneut über den
+  unveränderlichen historischen Release, Paketbaum, Launcher und kanonischen
+  Registry-Snapshot authentifiziert;
+- die aktuelle Runtime und kanonische Registry sind identity-valid. Sie dürfen bereits auf
+  einem späteren legitimen Stand liegen, aber nur wenn der ursprüngliche erfüllte
+  `main_commit` als Git-Vorfahr des aktuellen Runtime-Source-Commits bewiesen ist. Ein
+  Rollback, eine Divergenz oder fehlende Ancestry-Evidenz blockiert;
+- `StateStore.integrity()` und vollständiger Projection-Replay stimmen vor und nach dem
+  CAS mit der aktuellen Projektion überein.
+
+Der reservierte Idempotency-Namensraum lautet
+`runtime-refresh-unused-authority-closeout:<unused-task>:<equivalent-result>`. Der CAS setzt
+ausschließlich die ungenutzte Task auf `superseded` und persistiert
+`metadata.runtime_unused_authority_closeout` mit ursprünglicher Authority-Revision/-Digest,
+kompletter Intent-Historie, exakter Ersatz-Authority-/Consumption-/Result-/Historical-Readback-
+Provenienz und dem beim Closeout beobachteten Runtime-/Registry-Stand.
+`runtime_refresh_authority.target_binding_receipt` und `consumption` der ungenutzten
+Authority bleiben `null`: Es wird kein Erfolg erfunden. Es entstehen kein Runtime-Effekt,
+kein neuer Intent, kein synthetisches Result, kein Claim/Run und keine Lease-Freigabe.
+
+Ein späterer idempotenter Replay authentifiziert erneut die unveränderte Intent-Historie und
+die historische Ersatz-Provenienz. Der aktuelle Runtime-Stand darf weiter voranschreiten,
+muss aber weiterhin als Nachfolger des erfüllten Zielstands beweisbar sein.
+
 Der normale `closeout-authority` bleibt bei historischer Mehrfachnutzung bewusst
 fail-closed. Ein einzelner erfolgreicher Effekt darf eine deklarierte Single-Use-Authority
 niemals als `verified` erscheinen lassen, wenn weitere `effect_started=true`-Effekte zur

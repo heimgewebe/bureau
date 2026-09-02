@@ -6186,6 +6186,615 @@ def test_apply_already_current_deduplicates_without_installer(tmp_path: Path) ->
     assert refresh.read_json(no_effect)["execution_context_preflight"] == execution_context
 
 
+
+def unused_authority_equivalent_success_case(
+    tmp_path: Path,
+    *,
+    older_unused_main_commit: str | None = None,
+) -> tuple[
+    str,
+    dict[str, Any],
+    str,
+    dict[str, Any],
+    StateStore,
+    dict[str, Any],
+    Path,
+]:
+    unused_task_id = "BUREAU-RUNTIME-UNUSED-AUTHORITY"
+    equivalent_task_id = "BUREAU-RUNTIME-EQUIVALENT-SUCCESS"
+    state_root = (tmp_path / "state").resolve()
+    bureau_state_root = (tmp_path / "bureau-state").resolve()
+    store = StateStore(bureau_state_root / "bureau.sqlite3", bureau_state_root)
+    for task_id in (unused_task_id, equivalent_task_id):
+        store.put_task_spec(
+            runtime_authority_spec(task_id),
+            idempotency_key=f"seed-unused-case:{task_id}",
+            expected_revision=None,
+            source="test",
+        )
+    selected_now = (
+        NOW if older_unused_main_commit is None else NOW + timedelta(minutes=2)
+    )
+    if older_unused_main_commit is not None:
+        older_observed, _older_manifest = candidate(
+            tmp_path / "older-unused", main_commit=older_unused_main_commit
+        )
+        older_common = {
+            "candidate": older_observed,
+            "state_root": state_root,
+            "prefix": (tmp_path / "older-unused/prefix").resolve(),
+            "bin_dir": (tmp_path / "older-unused/bin").resolve(),
+            "user_unit_dir": (tmp_path / "older-unused/systemd/user").resolve(),
+            "libexec_dir": (tmp_path / "older-unused/libexec").resolve(),
+            "remote_url": "file:///tmp/bureau.git",
+            "authorized_by": "chatgpt",
+            "authorization": "Hermetic older unused-authority intent.",
+            "break_glass": True,
+            "approval_reference": older_observed["target_sha256"],
+            "now": NOW,
+            "authority_store": store,
+        }
+        refresh.prepare_intent(
+            **older_common, approval_task_id=unused_task_id
+        )
+    observed, _manifest_path = candidate(tmp_path)
+    common = {
+        "candidate": observed,
+        "state_root": state_root,
+        "prefix": (tmp_path / "prefix").resolve(),
+        "bin_dir": (tmp_path / "bin").resolve(),
+        "user_unit_dir": (tmp_path / "systemd/user").resolve(),
+        "libexec_dir": (tmp_path / "libexec").resolve(),
+        "remote_url": "file:///tmp/bureau.git",
+        "authorized_by": "chatgpt",
+        "authorization": "Hermetic unused-authority closeout fixture.",
+        "break_glass": True,
+        "approval_reference": observed["target_sha256"],
+        "now": selected_now,
+        "authority_store": store,
+    }
+    unused_intent, _unused_path = refresh.prepare_intent(
+        **common, approval_task_id=unused_task_id
+    )
+    equivalent_intent, _equivalent_path = refresh.prepare_intent(
+        **common, approval_task_id=equivalent_task_id
+    )
+    bound = refresh.bind_runtime_refresh_authority(
+        store=store, intent=equivalent_intent, now=selected_now + timedelta(minutes=1)
+    )
+    install_receipt, historical_readback, _artifacts = historical_runtime_artifacts(
+        tmp_path, equivalent_intent
+    )
+    attempt_dir = state_root / "attempts" / equivalent_intent["target_sha256"]
+    result = refresh._write_attempt_result(
+        attempt_dir / "result.json",
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_result",
+            "status": "deployed",
+            "intent_sha256": equivalent_intent["intent_sha256"],
+            "target_sha256": equivalent_intent["target_sha256"],
+            "main_commit": equivalent_intent["main_commit"],
+            "source_identity": {"head": equivalent_intent["main_commit"]},
+            "install_receipt": install_receipt,
+            "readback": historical_readback,
+            "authority_task_spec": bound,
+            "lease_binding": {"lease_binding_sha256": "a" * 64},
+            "finished_at": refresh.isoformat(selected_now + timedelta(minutes=2)),
+            "effect_started": True,
+            "does_not_establish": ["future_runtime_health"],
+        },
+    )
+    refresh.consume_runtime_refresh_authority(
+        store=store,
+        intent=equivalent_intent,
+        result=result,
+        now=selected_now + timedelta(minutes=2),
+    )
+    revise_authority(
+        store,
+        equivalent_task_id,
+        lambda spec: spec.__setitem__("state", "verified"),
+        key="equivalent-success-terminal",
+    )
+    _binding, resource_db = lease_for(tmp_path / "unused-closeout-leases", unused_intent)
+    release_test_leases(resource_db)
+    unused_current = store.task_spec(unused_task_id)
+    assert unused_current is not None
+    return (
+        unused_task_id,
+        unused_intent,
+        equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    )
+
+
+def test_unused_authority_closeout_supersedes_without_runtime_effect(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+    assert before["spec"]["state"] == "ready"
+    assert before["spec"]["metadata"]["runtime_refresh_authority"].get("consumption") is None
+    assert before["spec"]["metadata"]["runtime_refresh_authority"].get(
+        "target_binding_receipt"
+    ) is None
+
+    closeout = refresh.closeout_unused_runtime_refresh_authority(
+        state_root=Path(unused_intent["state_root"]),
+        approval_task_id=unused_task_id,
+        expected_revision=before["revision"],
+        expected_spec_sha256=before["spec_sha256"],
+        equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+        equivalent_result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(hours=1),
+        authority_store=store,
+        source_ancestry=lambda ancestor, descendant: ancestor == MAIN and descendant == "9" * 40,
+    )
+
+    assert closeout["idempotent_replay"] is False
+    assert closeout["closeout"]["status"] == "superseded"
+    assert closeout["closeout"]["fulfilled_by_task_id"] == equivalent_task_id
+    assert closeout["closeout"]["target_sha256"] == unused_intent["target_sha256"]
+    assert closeout["closeout"]["current_runtime_source_commit"] == "9" * 40
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    assert current["spec"]["state"] == "superseded"
+    authority = current["spec"]["metadata"]["runtime_refresh_authority"]
+    assert authority.get("consumption") is None
+    assert authority.get("target_binding_receipt") is None
+    replay = store.replay_projection()
+    assert replay["matches_current"] is True
+
+    repeated = refresh.closeout_unused_runtime_refresh_authority(
+        state_root=Path(unused_intent["state_root"]),
+        approval_task_id=unused_task_id,
+        expected_revision=before["revision"],
+        expected_spec_sha256=before["spec_sha256"],
+        equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+        equivalent_result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(hours=2),
+        authority_store=store,
+        source_ancestry=lambda ancestor, descendant: ancestor == MAIN and descendant == "9" * 40,
+    )
+    assert repeated["idempotent_replay"] is True
+    assert repeated["revision"] == current["revision"]
+
+
+
+
+def test_unused_authority_closeout_accepts_linear_target_ratchet(tmp_path: Path) -> None:
+    older_main = "8" * 40
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(
+        tmp_path, older_unused_main_commit=older_main
+    )
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+
+    def ancestry(ancestor: str, descendant: str) -> bool:
+        return (ancestor, descendant) in {
+            (older_main, MAIN),
+            (MAIN, "9" * 40),
+        }
+
+    closeout = refresh.closeout_unused_runtime_refresh_authority(
+        state_root=Path(unused_intent["state_root"]),
+        approval_task_id=unused_task_id,
+        expected_revision=before["revision"],
+        expected_spec_sha256=before["spec_sha256"],
+        equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+        equivalent_result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(hours=1),
+        authority_store=store,
+        source_ancestry=ancestry,
+    )
+
+    assert closeout["closeout"]["selected_unused_intent_sha256"] == unused_intent[
+        "intent_sha256"
+    ]
+    assert closeout["closeout"]["target_sha256"] == unused_intent["target_sha256"]
+    assert closeout["closeout"]["intended_main_commit"] == MAIN
+    assert len(closeout["closeout"]["unused_intent_sha256s"]) == 2
+
+
+def test_unused_authority_closeout_rejects_divergent_target_ratchet(
+    tmp_path: Path,
+) -> None:
+    older_main = "8" * 40
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(
+        tmp_path, older_unused_main_commit=older_main
+    )
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=before["revision"],
+            expected_spec_sha256=before["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda ancestor, descendant: (
+                ancestor == MAIN and descendant == "9" * 40
+            ),
+        )
+    assert caught.value.code == "authority-unused-closeout-history-diverged"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+def test_unused_authority_closeout_uses_intent_bound_state_store(tmp_path: Path) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+
+    closeout = refresh.closeout_unused_runtime_refresh_authority(
+        state_root=Path(unused_intent["state_root"]),
+        approval_task_id=unused_task_id,
+        expected_revision=before["revision"],
+        expected_spec_sha256=before["spec_sha256"],
+        equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+        equivalent_result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(hours=1),
+        source_ancestry=lambda *_: True,
+    )
+
+    assert closeout["closeout"]["status"] == "superseded"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "superseded"
+    assert not (Path(unused_intent["state_root"]) / "bureau.sqlite3").exists()
+
+
+def test_unused_authority_closeout_rejects_unverified_equivalent_authority(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    revise_authority(
+        store,
+        equivalent_task_id,
+        lambda spec: spec.__setitem__("state", "superseded"),
+        key="equivalent-authority-not-verified",
+    )
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+    assert caught.value.code == "authority-unused-closeout-equivalent-authority-not-verified"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
+def test_unused_authority_closeout_rejects_live_runtime_reservation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    monkeypatch.setattr(
+        store,
+        "reservations",
+        lambda _connection: [
+            legacy.Reservation(
+                "BUR-RUN-TEST-LIVE-RUNTIME",
+                "component.bureau.runtime",
+                "write",
+                1,
+            )
+        ],
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+    assert caught.value.code == "authority-unused-closeout-runtime-reservations-live"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
+def test_unused_authority_closeout_rejects_own_attempt_or_result(tmp_path: Path) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    attempt_dir = Path(unused_intent["state_root"]) / "attempts" / unused_intent["target_sha256"]
+    result_path = attempt_dir / "result.json"
+    result_path.unlink()
+    own_result = dict(result)
+    own_result.pop("result_sha256", None)
+    own_result["intent_sha256"] = unused_intent["intent_sha256"]
+    refresh._write_attempt_result(result_path, own_result)
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+    assert caught.value.code == "authority-unused-closeout-own-result"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
+def test_unused_authority_closeout_rejects_missing_equivalent_consumption(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    revise_authority(
+        store,
+        equivalent_task_id,
+        lambda spec: spec["metadata"]["runtime_refresh_authority"].__setitem__(
+            "consumption", None
+        ),
+        key="remove-equivalent-consumption",
+    )
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+    assert caught.value.code == "authority-consumption-invalid"
+
+
+def test_unused_authority_closeout_rejects_live_foreign_lease(tmp_path: Path) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    connection = sqlite3.connect(resource_db)
+    metadata_json = json.dumps(
+        {"executor_unit": TEST_EXECUTOR_UNIT},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    metadata_sha256 = hashlib.sha256(metadata_json.encode("utf-8")).hexdigest()
+    acquired = int((NOW + timedelta(minutes=45)).timestamp())
+    expires = int((NOW + timedelta(hours=2)).timestamp())
+    connection.execute(
+        "INSERT INTO leases VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+        (
+            unused_intent["required_resource_keys"][0],
+            "foreign-runtime-owner",
+            "test foreign lease",
+            acquired,
+            acquired,
+            expires,
+            metadata_sha256,
+            metadata_json,
+        ),
+    )
+    connection.commit()
+    connection.close()
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+    assert caught.value.code == "authority-unused-closeout-live-leases"
+
+
+def test_unused_authority_closeout_rejects_task_spec_drift(tmp_path: Path) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    revise_authority(
+        store,
+        unused_task_id,
+        lambda spec: spec.__setitem__("title", "Concurrent drift"),
+        key="unused-authority-drift",
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+    assert caught.value.code == "authority-unused-closeout-task-spec-drift"
+
+
+def test_unused_authority_closeout_rejects_current_runtime_divergence(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: False,
+        )
+    assert caught.value.code == "authority-unused-closeout-current-runtime-ancestry-unproven"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
+def test_unused_authority_closeout_rejects_projection_replay_divergence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    original = store.replay_projection
+    monkeypatch.setattr(
+        store,
+        "replay_projection",
+        lambda: {**original(), "matches_current": False},
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+    assert caught.value.code == "authority-closeout-state-store-invalid"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
 def test_already_current_no_effect_authority_can_closeout(tmp_path: Path) -> None:
     observed, manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
     write_manifest(manifest_path, MAIN)

@@ -3790,6 +3790,24 @@ class StateStore:
             except task_specs.TaskSpecError as exc:
                 raise legacy.StateError(str(exc)) from exc
 
+    def put_runtime_refresh_unused_authority_closeout_task_spec(
+        self,
+        spec: dict[str, Any],
+        *,
+        idempotency_key: str,
+        expected_revision: int | None,
+    ) -> dict[str, Any]:
+        with self.immediate() as connection:
+            try:
+                return task_specs.put_runtime_refresh_unused_authority_closeout(
+                    connection,
+                    spec,
+                    idempotency_key=idempotency_key,
+                    expected_revision=expected_revision,
+                )
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+
     def task_spec_by_digest(
         self, task_id: str, spec_sha256: str
     ) -> dict[str, Any] | None:

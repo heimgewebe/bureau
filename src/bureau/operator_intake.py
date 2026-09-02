@@ -2000,29 +2000,31 @@ def _task_revision_text_is_continuous(
     continuity, subject_overlap, shorter_subject_count, exact = (
         _task_revision_text_evidence(before, after)
     )
-    minimum_overlap = (
-        _TASK_REVISION_SUBJECT_OVERLAP_MIN
-        if resource_continuity
-        else _TASK_REVISION_SUBJECT_OVERLAP_MIN + 1
-    )
-    continuous = exact or (
-        continuity >= _TASK_REVISION_TEXT_CONTINUITY_MIN
-        and (
-            subject_overlap >= minimum_overlap
-            or (
-                resource_continuity
-                and subject_overlap == 1
-                and shorter_subject_count == 1
-            )
+    if exact:
+        continuous = True
+    elif continuity < _TASK_REVISION_TEXT_CONTINUITY_MIN:
+        continuous = False
+    elif resource_continuity:
+        continuous = subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN or (
+            subject_overlap == 1 and shorter_subject_count == 1
         )
-    )
+    else:
+        # Moving to an entirely different claimed resource is a stronger identity
+        # discontinuity signal. In that case the complete shorter subject must be
+        # preserved, with at least two subject-bearing tokens, unless the full
+        # field already matched exactly above.
+        continuous = (
+            continuity == 1.0
+            and subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        )
     return continuous, {
         "continuity": round(continuity, 6),
         "subject_token_overlap": subject_overlap,
         "shorter_subject_token_count": shorter_subject_count,
         "exact_nonempty_text": exact,
         "resource_continuity": resource_continuity,
-        "minimum_subject_token_overlap": minimum_overlap,
+        "requires_complete_shorter_subject": not resource_continuity,
+        "minimum_subject_token_overlap": _TASK_REVISION_SUBJECT_OVERLAP_MIN,
     }
 
 

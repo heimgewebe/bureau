@@ -3982,6 +3982,18 @@ def test_task_revision_identity_guard_allows_single_complete_subject_token() -> 
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
 
 
+def test_task_revision_identity_guard_rejects_single_subject_across_resources() -> None:
+    before = _identity_revision_task(
+        title="Create backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Migrate backup", resource="repo.archive"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
 def test_task_revision_identity_guard_allows_exact_one_token_title() -> None:
     before = _identity_revision_task(title="contracts", resource="repo.heimlern")
     after = _identity_revision_task(title="contracts", resource="repo.heimlern")

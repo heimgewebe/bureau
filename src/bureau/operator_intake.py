@@ -1979,20 +1979,25 @@ def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
 
 
 def _task_revision_text_evidence(
-    before: Any, after: Any
+    before: Any,
+    after: Any,
+    *,
+    ignore_leading_action: bool = True,
 ) -> tuple[float, int, int, bool]:
     before_text = str(before or "").strip().casefold()
     after_text = str(after or "").strip().casefold()
     exact = bool(before_text) and before_text == after_text
     before_raw_tokens = _TASK_REVISION_TOKEN_RE.findall(before_text)
     after_raw_tokens = _TASK_REVISION_TOKEN_RE.findall(after_text)
-    # Task prose normally starts with an action verb. Ignore that positional slot for
-    # multi-token text so unseen variants such as "Upgrade" cannot become identity
-    # evidence merely because a static stop-word list did not enumerate them.
-    if len(before_raw_tokens) > 1:
-        before_raw_tokens = before_raw_tokens[1:]
-    if len(after_raw_tokens) > 1:
-        after_raw_tokens = after_raw_tokens[1:]
+    # Task prose often starts with an action verb. The action-stripped view prevents
+    # unseen verbs such as "Upgrade" from becoming identity evidence merely because
+    # a static weak-token set did not enumerate them. A second full-token view is
+    # required when resources change so noun phrases do not lose their real subject.
+    if ignore_leading_action:
+        if len(before_raw_tokens) > 1:
+            before_raw_tokens = before_raw_tokens[1:]
+        if len(after_raw_tokens) > 1:
+            after_raw_tokens = after_raw_tokens[1:]
     before_tokens = {
         token for token in before_raw_tokens if token not in _TASK_REVISION_GENERIC_TOKENS
     }
@@ -2012,13 +2017,20 @@ def _task_revision_text_is_continuous(
     continuity, subject_overlap, shorter_subject_count, exact = (
         _task_revision_text_evidence(before, after)
     )
+    full_continuity, full_overlap, full_shorter_count, _ = (
+        _task_revision_text_evidence(
+            before,
+            after,
+            ignore_leading_action=False,
+        )
+    )
     if exact:
-        # Exact generic prose is not a subject anchor. A one-token subject is enough
-        # only when the revision retains a claimed resource; across a resource change
-        # exact text still needs the normal two-token subject minimum.
-        continuous = shorter_subject_count > 0 and (
+        # Exact generic prose is not a subject anchor. Across a resource change, use
+        # the full-token view because the first word may be a noun rather than an
+        # action verb.
+        continuous = full_shorter_count > 0 and (
             resource_continuity
-            or shorter_subject_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+            or full_shorter_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
         )
     elif continuity < _TASK_REVISION_TEXT_CONTINUITY_MIN:
         continuous = False
@@ -2027,18 +2039,23 @@ def _task_revision_text_is_continuous(
             subject_overlap == 1 and shorter_subject_count == 1
         )
     else:
-        # Moving to an entirely different claimed resource is a stronger identity
-        # discontinuity signal. In that case the complete shorter subject must be
-        # preserved, with at least two subject-bearing tokens, unless the full
-        # field already matched exactly above.
+        # A resource change must survive both interpretations of the first word:
+        # possible action verb and possible noun/adjective subject. This prevents
+        # `Backup retention policy` -> `Dashboard retention policy` from looking
+        # identical merely because the leading token was stripped.
         continuous = (
             continuity == 1.0
             and subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+            and full_continuity == 1.0
+            and full_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
         )
     return continuous, {
         "continuity": round(continuity, 6),
         "subject_token_overlap": subject_overlap,
         "shorter_subject_token_count": shorter_subject_count,
+        "full_token_continuity": round(full_continuity, 6),
+        "full_subject_token_overlap": full_overlap,
+        "full_shorter_subject_token_count": full_shorter_count,
         "exact_nonempty_text": exact,
         "resource_continuity": resource_continuity,
         "requires_complete_shorter_subject": not resource_continuity,

@@ -4036,6 +4036,18 @@ def test_task_revision_identity_guard_rejects_unlisted_leading_process_word() ->
     assert raised.value.code == "task-revision-identity-discontinuity"
 
 
+def test_task_revision_identity_guard_preserves_leading_noun_on_resource_change() -> None:
+    before = _identity_revision_task(
+        title="Backup retention policy", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Dashboard retention policy", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
 def test_task_revision_identity_guard_rejects_exact_generic_text() -> None:
     before = _identity_revision_task(
         title="Update",

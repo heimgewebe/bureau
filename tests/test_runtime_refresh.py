@@ -443,6 +443,57 @@ def protected_publication_activation_observation(
     return refresh.bind_digest(observation, "observation_sha256")
 
 
+def test_installed_activation_candidate_validator_rejects_noncanonical_manifest(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh._validate_installed_runtime_activation_candidate(
+            manifest_path=tmp_path / "deployment-manifest.json",
+            expected_deployed_source_commit="a" * 40,
+            approval_task_id="BUREAU-RUNTIME-NONCANONICAL-MANIFEST",
+            candidate={},
+        )
+    assert (
+        raised.value.code
+        == "authority-activation-installed-runtime-manifest-noncanonical"
+    )
+
+
+def installed_activation_candidate_validation_for_test(
+    *,
+    manifest_path: Path,
+    expected_deployed_source_commit: str,
+    approval_task_id: str,
+    candidate: dict[str, Any],
+) -> dict[str, Any]:
+    del manifest_path
+    from bureau import task_specs
+
+    receipt = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_installed_activation_candidate_validation",
+        "task_id": approval_task_id,
+        "candidate_spec_sha256": task_specs.task_spec_digest(candidate),
+        "installed_source_commit": expected_deployed_source_commit,
+        "deployment_manifest_sha256": "a" * 64,
+        "package_tree_sha256": "b" * 64,
+        "runtime_module_sha256": "c" * 64,
+        "criterion_ids": sorted(
+            candidate["metadata"]["runtime_refresh_authority"]
+            ["no_run_closeout_acceptance"]["criteria"]
+        ),
+    }
+    return refresh.bind_digest(receipt, "validation_sha256")
+
+
+def activate_runtime_refresh_authority_for_test(**kwargs: Any) -> dict[str, Any]:
+    kwargs.setdefault(
+        "installed_candidate_validator",
+        installed_activation_candidate_validation_for_test,
+    )
+    return refresh.activate_runtime_refresh_authority(**kwargs)
+
+
 def protected_publication_activation_spec(
     task_id: str,
     *,
@@ -527,6 +578,12 @@ def seed_protected_publication_activation_store(
     ):
         from bureau import task_specs
 
+        installed_validation = installed_activation_candidate_validation_for_test(
+            manifest_path=Path("/test/deployment-manifest.json"),
+            expected_deployed_source_commit=str(observation["deployed_source_commit"]),
+            approval_task_id=task_id,
+            candidate=ready,
+        )
         activation_evidence = (
             refresh._protected_publication_activation_evidence(
                 approval_task_id=task_id,
@@ -538,6 +595,7 @@ def seed_protected_publication_activation_store(
                 publication_merge_commit="4" * 40,
                 target_main_commit=MAIN,
                 observation=observation,
+                installed_runtime_validation=installed_validation,
             )
             if persist_activation_evidence
             else None
@@ -607,6 +665,12 @@ def protected_publication_activation_evidence_for(
 ) -> dict[str, Any]:
     from bureau import task_specs
 
+    installed_validation = installed_activation_candidate_validation_for_test(
+        manifest_path=Path("/test/deployment-manifest.json"),
+        expected_deployed_source_commit=str(observation["deployed_source_commit"]),
+        approval_task_id=task_id,
+        candidate=ready,
+    )
     return refresh._protected_publication_activation_evidence(
         approval_task_id=task_id,
         adoption_revision=adopted["revision"],
@@ -617,6 +681,7 @@ def protected_publication_activation_evidence_for(
         publication_merge_commit="4" * 40,
         target_main_commit=MAIN,
         observation=observation,
+        installed_runtime_validation=installed_validation,
     )
 
 
@@ -1467,6 +1532,12 @@ def test_protected_publication_activation_rejects_weakened_contract_delta(
     )
     from bureau import task_specs
 
+    installed_validation = installed_activation_candidate_validation_for_test(
+        manifest_path=Path("/test/deployment-manifest.json"),
+        expected_deployed_source_commit=str(observation["deployed_source_commit"]),
+        approval_task_id=task_id,
+        candidate=weakened,
+    )
     evidence = refresh._protected_publication_activation_evidence(
         approval_task_id=task_id,
         adoption_revision=adopted["revision"],
@@ -1477,6 +1548,7 @@ def test_protected_publication_activation_rejects_weakened_contract_delta(
         publication_merge_commit="4" * 40,
         target_main_commit=MAIN,
         observation=observation,
+        installed_runtime_validation=installed_validation,
     )
     store.put_runtime_refresh_protected_publication_activation_task_spec(
         weakened,
@@ -1709,7 +1781,7 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     def observer(**_: Any) -> dict[str, Any]:
         return observation
 
-    first = refresh.activate_runtime_refresh_authority(
+    first = activate_runtime_refresh_authority_for_test(
         registry_root=tmp_path / "registry",
         manifest_path=tmp_path / "deployment-manifest.json",
         repository=refresh.DEFAULT_REPOSITORY,
@@ -1758,7 +1830,7 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     assert receipt["activation_evidence_sha256"] == evidence["evidence_sha256"]
     assert receipt["resulting_revision"] == 2
 
-    second = refresh.activate_runtime_refresh_authority(
+    second = activate_runtime_refresh_authority_for_test(
         registry_root=tmp_path / "registry",
         manifest_path=tmp_path / "deployment-manifest.json",
         repository=refresh.DEFAULT_REPOSITORY,
@@ -1816,7 +1888,7 @@ def test_activate_runtime_refresh_authority_replays_after_late_target_binding(
     observation = protected_publication_activation_observation(
         observed_at=activation_time
     )
-    first = refresh.activate_runtime_refresh_authority(
+    first = activate_runtime_refresh_authority_for_test(
         registry_root=tmp_path / "registry",
         manifest_path=tmp_path / "deployment-manifest.json",
         repository=refresh.DEFAULT_REPOSITORY,
@@ -1854,7 +1926,7 @@ def test_activate_runtime_refresh_authority_replays_after_late_target_binding(
     )
     assert bound_result["revision"] == 3
 
-    replay = refresh.activate_runtime_refresh_authority(
+    replay = activate_runtime_refresh_authority_for_test(
         registry_root=tmp_path / "registry",
         manifest_path=tmp_path / "deployment-manifest.json",
         repository=refresh.DEFAULT_REPOSITORY,
@@ -1923,6 +1995,188 @@ def test_protected_publication_activation_specialized_cas_replays_exact_response
     assert current["spec"] == ready
 
 
+def test_activation_cas_delayed_replay_checks_receipt_before_freshness(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATION-CAS-DELAYED-REPLAY"
+    state_root = (tmp_path / "activation-cas-delayed-replay").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    from bureau import task_specs
+
+    clock = {"value": datetime(2026, 9, 2, 15, 0, tzinfo=timezone.utc)}
+    monkeypatch.setattr(
+        task_specs.legacy, "utc_now", lambda: refresh.isoformat(clock["value"])
+    )
+    observation = protected_publication_activation_observation(
+        observed_at=clock["value"]
+    )
+    evidence = protected_publication_activation_evidence_for(
+        task_id=task_id,
+        adopted=adopted,
+        ready=ready,
+        key=key,
+        observation=observation,
+    )
+    first = store.put_runtime_refresh_protected_publication_activation_task_spec(
+        ready,
+        idempotency_key=key,
+        expected_revision=adopted["revision"],
+        activation_observation=observation,
+        activation_evidence=evidence,
+    )
+    clock["value"] += timedelta(minutes=10)
+    second = store.put_runtime_refresh_protected_publication_activation_task_spec(
+        ready,
+        idempotency_key=key,
+        expected_revision=adopted["revision"],
+        activation_observation=observation,
+        activation_evidence=evidence,
+    )
+    assert first["revision"] == 2
+    assert second["revision"] == 2
+    assert second["idempotent_replay"] is True
+
+
+def test_protected_publication_activation_specialized_cas_keeps_immediate_transaction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATION-CAS-LOCK"
+    state_root = (tmp_path / "activation-cas-lock").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    observation = protected_publication_activation_observation()
+    evidence = protected_publication_activation_evidence_for(
+        task_id=task_id,
+        adopted=adopted,
+        ready=ready,
+        key=key,
+        observation=observation,
+    )
+    from bureau import task_specs
+
+    original_put = task_specs._put_validated_material
+    transaction_states: list[bool] = []
+
+    def put_with_transaction_probe(connection: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        transaction_states.append(bool(connection.in_transaction))
+        return original_put(connection, *args, **kwargs)
+
+    monkeypatch.setattr(task_specs, "_put_validated_material", put_with_transaction_probe)
+    result = store.put_runtime_refresh_protected_publication_activation_task_spec(
+        ready,
+        idempotency_key=key,
+        expected_revision=adopted["revision"],
+        activation_observation=observation,
+        activation_evidence=evidence,
+    )
+    assert result["revision"] == 2
+    assert transaction_states == [True]
+
+
+def test_activate_runtime_refresh_authority_validates_installed_candidate_before_cas(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATE-INSTALLED-PRE-CAS"
+    state_root = (tmp_path / "activate-installed-pre-cas").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    from bureau import task_specs
+
+    planned_sha = task_specs.task_spec_digest(planned)
+    store.put_task_spec(
+        planned,
+        idempotency_key=f"legacy-seed-exact:{task_id}:{planned_sha}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    registry = SimpleNamespace(tasks={task_id: SimpleNamespace(raw=planned)})
+    publication = {
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "main_commit": MAIN,
+        "publication_pr": 2222,
+        "publication_merge_commit": "4" * 40,
+        "task_path": f"registry/tasks/{task_id}.json",
+        "task_file_sha256": "c" * 64,
+        "check_summary": {},
+        "task_state": "planned",
+    }
+    monkeypatch.setattr(
+        refresh,
+        "verify_runtime_refresh_authority_publication",
+        lambda **_: (registry, publication),
+    )
+    observation = protected_publication_activation_observation()
+    events: list[str] = []
+    installed_receipt: dict[str, Any] = {}
+
+    def installed_validator(**kwargs: Any) -> dict[str, Any]:
+        events.append("installed-validator")
+        receipt = installed_activation_candidate_validation_for_test(**kwargs)
+        installed_receipt.update(receipt)
+        return receipt
+
+    original_put = refresh._put_authority_task
+
+    def put_after_installed_validation(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        assert events == ["installed-validator"]
+        events.append("cas")
+        return original_put(*args, **kwargs)
+
+    monkeypatch.setattr(refresh, "_put_authority_task", put_after_installed_validation)
+    result = refresh.activate_runtime_refresh_authority(
+        registry_root=tmp_path / "registry",
+        manifest_path=tmp_path / "deployment-manifest.json",
+        repository=refresh.DEFAULT_REPOSITORY,
+        approval_task_id=task_id,
+        publication_pr=2222,
+        publication_merge_commit="4" * 40,
+        expected_main_commit=MAIN,
+        expected_task_file_sha256="c" * 64,
+        authority_store=store,
+        registry=registry,
+        observer=lambda **_: observation,
+        installed_candidate_validator=installed_validator,
+    )
+    assert events == ["installed-validator", "cas"]
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{planned_sha}"
+    )
+    receipt = store.task_spec_mutation_receipt(key)
+    assert isinstance(receipt, dict)
+    evidence = receipt.get("activation_evidence")
+    assert isinstance(evidence, dict)
+    assert evidence["installed_runtime_validation"] == installed_receipt
+    assert evidence["installed_runtime_validation_sha256"] == installed_receipt[
+        "validation_sha256"
+    ]
+    assert result["status"] == "ready"
+
+
 def test_activate_runtime_refresh_authority_observes_after_publication_preflight(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1968,7 +2222,7 @@ def test_activate_runtime_refresh_authority_observes_after_publication_preflight
 
     monkeypatch.setattr(refresh, "verify_runtime_refresh_authority_publication", verify)
     monkeypatch.setattr(refresh, "utc_now", fresh_now)
-    result = refresh.activate_runtime_refresh_authority(
+    result = activate_runtime_refresh_authority_for_test(
         registry_root=tmp_path / "registry",
         manifest_path=tmp_path / "deployment-manifest.json",
         repository=refresh.DEFAULT_REPOSITORY,
@@ -2026,7 +2280,7 @@ def test_activate_runtime_refresh_authority_rejects_observation_stale_after_slow
         return protected_publication_activation_observation(observed_at=started_at)
 
     with pytest.raises(refresh.RuntimeRefreshError) as raised:
-        refresh.activate_runtime_refresh_authority(
+        activate_runtime_refresh_authority_for_test(
             registry_root=tmp_path / "registry",
             manifest_path=tmp_path / "deployment-manifest.json",
             repository=refresh.DEFAULT_REPOSITORY,
@@ -2089,7 +2343,7 @@ def test_activate_runtime_refresh_authority_rejects_stale_observation_before_cas
     monkeypatch.setattr(refresh, "utc_now", lambda: after)
 
     with pytest.raises(refresh.RuntimeRefreshError) as raised:
-        refresh.activate_runtime_refresh_authority(
+        activate_runtime_refresh_authority_for_test(
             registry_root=tmp_path / "registry",
             manifest_path=tmp_path / "deployment-manifest.json",
             repository=refresh.DEFAULT_REPOSITORY,
@@ -2136,7 +2390,7 @@ def test_activate_runtime_refresh_authority_abstains_when_runtime_is_current(
     )
     observation = protected_publication_activation_observation(status="already_current")
     with pytest.raises(refresh.RuntimeRefreshError) as raised:
-        refresh.activate_runtime_refresh_authority(
+        activate_runtime_refresh_authority_for_test(
             registry_root=tmp_path / "registry",
             manifest_path=tmp_path / "deployment-manifest.json",
             repository=refresh.DEFAULT_REPOSITORY,
@@ -2180,7 +2434,7 @@ def test_activate_runtime_refresh_authority_rejects_fresh_main_drift_before_cas(
     )
     drifted = protected_publication_activation_observation(main_commit="5" * 40)
     with pytest.raises(refresh.RuntimeRefreshError) as raised:
-        refresh.activate_runtime_refresh_authority(
+        activate_runtime_refresh_authority_for_test(
             registry_root=tmp_path / "registry",
             manifest_path=tmp_path / "deployment-manifest.json",
             repository=refresh.DEFAULT_REPOSITORY,

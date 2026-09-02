@@ -370,6 +370,20 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
     expected_evidence_digest = hashlib.sha256(
         (legacy.canonical_json(evidence_payload) + "\n").encode()
     ).hexdigest()
+    installed_validation = (
+        evidence.get("installed_runtime_validation")
+        if isinstance(evidence, Mapping)
+        else None
+    )
+    installed_validation_payload = (
+        dict(installed_validation) if isinstance(installed_validation, Mapping) else {}
+    )
+    installed_validation_digest = installed_validation_payload.pop(
+        "validation_sha256", None
+    )
+    expected_installed_validation_digest = hashlib.sha256(
+        (legacy.canonical_json(installed_validation_payload) + "\n").encode()
+    ).hexdigest()
     observation_payload = dict(observation) if isinstance(observation, Mapping) else {}
     observation_digest = observation_payload.pop("observation_sha256", None)
     expected_observation_digest = hashlib.sha256(
@@ -442,6 +456,21 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         != (observation.get("observation_sha256") if isinstance(observation, Mapping) else None)
         or evidence.get("observation") != observation
         or evidence_digest != expected_evidence_digest
+        or not isinstance(installed_validation, Mapping)
+        or installed_validation.get("kind")
+        != "bureau_runtime_refresh_installed_activation_candidate_validation"
+        or installed_validation.get("task_id") != canonical.get("id")
+        or installed_validation.get("candidate_spec_sha256")
+        != activation_spec_sha256
+        or installed_validation.get("installed_source_commit")
+        != (
+            observation.get("deployed_source_commit")
+            if isinstance(observation, Mapping)
+            else None
+        )
+        or evidence.get("installed_runtime_validation_sha256")
+        != installed_validation_digest
+        or installed_validation_digest != expected_installed_validation_digest
         or not isinstance(publication, Mapping)
         or not isinstance(merge_commit, str)
         or len(merge_commit) != 40
@@ -477,18 +506,6 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
     ):
         raise TaskSpecError(
             "runtime-refresh protected-publication activation mutation contract is invalid"
-        )
-    try:
-        observed_at = legacy.parse_time(str(observation.get("observed_at")))
-        cas_at = legacy.parse_time(legacy.utc_now())
-    except (TypeError, ValueError) as exc:
-        raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation timestamp is invalid"
-        ) from exc
-    age_seconds = int((cas_at - observed_at).total_seconds())
-    if age_seconds < -30 or age_seconds > 300:
-        raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation is not fresh at CAS"
         )
     validate_schema(connection)
     if (
@@ -537,6 +554,18 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
             )
         return canonical
 
+    try:
+        observed_at = legacy.parse_time(str(observation.get("observed_at")))
+        cas_at = legacy.parse_time(legacy.utc_now())
+    except (TypeError, ValueError) as exc:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation timestamp is invalid"
+        ) from exc
+    age_seconds = int((cas_at - observed_at).total_seconds())
+    if age_seconds < -30 or age_seconds > 300:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation is not fresh at CAS"
+        )
     current = get_current(connection, canonical["id"])
     if (
         current is None
@@ -571,7 +600,6 @@ def put_runtime_refresh_protected_publication_activation(
     activation_observation: Mapping[str, Any] | None,
     activation_evidence: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    ensure_schema(connection)
     canonical = _validate_runtime_refresh_protected_publication_activation_mutation(
         connection,
         spec,

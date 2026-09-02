@@ -3840,3 +3840,193 @@ def test_operator_publication_commands_are_coordination_state_mutations():
         classify_command_effect_scope("operator-task-ready", mutates=True)
         == "coordination_state_mutation"
     )
+
+
+def _identity_revision_task(
+    *,
+    title: str,
+    resource: str,
+    initiative: str = "INIT-V1",
+    goal: str = "",
+    mode: str = "write",
+) -> dict:
+    return {
+        "id": "INIT-V1-T001",
+        "initiative": initiative,
+        "title": title,
+        "goal": goal,
+        "claims": [{"resource": resource, "mode": mode, "isolation": "worktree"}],
+    }
+
+
+def test_task_revision_identity_guard_rejects_disjoint_scope_and_subject() -> None:
+    before = _identity_revision_task(
+        title="Reposkop runtime interpreter cutover", resource="component.grabowski.runtime"
+    )
+    after = _identity_revision_task(
+        title="Metarepo compatibility surfaces cleanup", resource="repo.metarepo"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_disjoint_scope_with_title_continuity() -> None:
+    before = _identity_revision_task(
+        title="Define Chronik high-value operator events", resource="repo.chronik"
+    )
+    after = _identity_revision_task(
+        title="Filter Chronik operator events to high-value signals", resource="repo.grabowski"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_same_scope_unrelated_subject() -> None:
+    before = _identity_revision_task(
+        title="Repair Avira updater", resource="repo.infra", goal="Restore updater health"
+    )
+    after = _identity_revision_task(
+        title="Tune laptop thermal firmware",
+        resource="repo.infra",
+        goal="Restore thermal headroom and firmware baseline",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_goal_continuity_after_title_rewrite() -> None:
+    before = _identity_revision_task(
+        title="Old implementation wording",
+        resource="repo.alpha",
+        goal="Preserve exact runtime identity",
+    )
+    after = _identity_revision_task(
+        title="Completely renamed delivery slice",
+        resource="repo.beta",
+        goal="Preserve exact runtime identity while revising delivery",
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_allows_write_to_read_revalidation() -> None:
+    before = _identity_revision_task(
+        title="Build persistent recall store",
+        resource="repo.grabowski",
+        goal="Implement recall persistence",
+    )
+    after = _identity_revision_task(
+        title="Revalidate recall store against current truth architecture",
+        resource="repo.grabowski",
+        goal="Decide whether any separate recall store is still needed",
+        mode="read",
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_initiative_rebind() -> None:
+    before = _identity_revision_task(title="Keep the same task", resource="repo.alpha")
+    after = _identity_revision_task(
+        title="Keep the same task", resource="repo.alpha", initiative="OTHER-V1"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-initiative-mismatch"
+
+
+def test_reviewed_pre_hardening_revision_cannot_bypass_publication_guard(
+    registry_factory, tmp_path, monkeypatch
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    current = store.task_spec(task_id)
+    assert current is not None
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:pre-hardening-semantic-reuse",
+        title="Attempt pre-hardening unrelated reuse",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:pre-hardening-semantic-reuse",
+        source_sha256="7" * 64,
+        desired_outcome="Reuse an existing id for unrelated write work",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["title"] = "Completely unrelated replacement subject"
+    revised["goal"] = "Perform unrelated write work under the existing identifier."
+    with monkeypatch.context() as proposal_context:
+        proposal_context.setattr(
+            operator_intake_module,
+            "_validate_task_revision_identity_continuity",
+            lambda *_: None,
+        )
+        plan_path = tmp_path / "pre-hardening-semantic-reuse.proposal.json"
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=plan_path,
+        )
+    pending = json.loads(plan_path.read_text())
+    review_task_proposal(
+        plan_path=plan_path,
+        reviewer="post-hardening-reviewer",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+    before = store.task_spec(task_id)
+    with pytest.raises(OperatorIntakeError) as raised:
+        publication_preview(registry, store, plan_path=plan_path)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+    assert store.task_spec(task_id) == before
+
+
+def test_task_propose_rejects_reuse_of_existing_id_for_unrelated_write_scope(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    current = store.task_spec(task_id)
+    assert current is not None
+    current_resources = {claim["resource"] for claim in current["spec"]["claims"]}
+    replacement = next(
+        resource for resource in registry.resources if resource not in current_resources
+    )
+    recorded = candidate_record(
+        registry, store, idempotency_key="source:semantic-reuse",
+        title="Attempt unrelated reuse", source_kind="runtime-diagnostic",
+        source_locator="bureau:semantic-reuse", source_sha256="8" * 64,
+        desired_outcome="Reuse an existing id for unrelated work",
+        repo="repo.alpha", task_id=task_id,
+    )
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["title"] = "Unrelated replacement work with another subject"
+    revised["goal"] = "Perform a materially different task under the old identifier."
+    revised["claims"] = [{"resource": replacement, "mode": "write", "isolation": "worktree"}]
+    plan_path = tmp_path / "semantic-reuse.proposal.json"
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry, store, candidate_id=recorded["candidate_id"], task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001", path=plan_path,
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
+    assert not plan_path.exists()

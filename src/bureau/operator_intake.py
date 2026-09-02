@@ -1912,6 +1912,73 @@ def _task_projection_file_sha256(registry: Registry, task_id: str) -> str | None
     return hashlib.sha256(payload).hexdigest()
 
 
+_TASK_REVISION_TEXT_CONTINUITY_MIN = 0.5
+
+
+def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
+    scope: set[str] = set()
+    for claim in task_json.get("claims", []):
+        if not isinstance(claim, dict) or claim.get("mode") not in {"write", "exclusive"}:
+            continue
+        resource = claim.get("resource")
+        if isinstance(resource, str) and resource:
+            scope.add(resource)
+    return scope
+
+
+def _task_revision_text_continuity(before: Any, after: Any) -> float:
+    before_tokens = set(_TOKEN_RE.findall(str(before or "").casefold()))
+    after_tokens = set(_TOKEN_RE.findall(str(after or "").casefold()))
+    shorter = min(len(before_tokens), len(after_tokens))
+    if shorter == 0:
+        return 0.0
+    return len(before_tokens & after_tokens) / shorter
+
+
+def _validate_task_revision_identity_continuity(
+    before: dict[str, Any], after: dict[str, Any]
+) -> None:
+    if before.get("initiative") != after.get("initiative"):
+        raise OperatorIntakeError(
+            "task-revision-initiative-mismatch",
+            "TaskSpec revision cannot move an existing task id to another initiative",
+            details={
+                "task_id": after.get("id"),
+                "before_initiative": before.get("initiative"),
+                "after_initiative": after.get("initiative"),
+            },
+        )
+    before_scope = _task_revision_write_scope(before)
+    after_scope = _task_revision_write_scope(after)
+    # Read-only revalidation/closeout may legitimately replace an earlier write plan.
+    # A revision that remains write-capable, however, must retain recognizable task
+    # subject continuity instead of turning one permanent id into unrelated work.
+    if not before_scope or not after_scope:
+        return
+    title_continuity = _task_revision_text_continuity(
+        before.get("title"), after.get("title")
+    )
+    goal_continuity = _task_revision_text_continuity(
+        before.get("goal"), after.get("goal")
+    )
+    if max(title_continuity, goal_continuity) >= _TASK_REVISION_TEXT_CONTINUITY_MIN:
+        return
+    raise OperatorIntakeError(
+        "task-revision-identity-discontinuity",
+        "write-capable TaskSpec revision changes both task title and goal "
+        "without continuity; create a new task id instead",
+        details={
+            "task_id": after.get("id"),
+            "before_write_scope": sorted(before_scope),
+            "after_write_scope": sorted(after_scope),
+            "write_scope_overlap": sorted(before_scope & after_scope),
+            "title_continuity": round(title_continuity, 6),
+            "goal_continuity": round(goal_continuity, 6),
+            "minimum_text_continuity": _TASK_REVISION_TEXT_CONTINUITY_MIN,
+        },
+    )
+
+
 def _task_spec_proposal_binding(
     registry: Registry,
     store: StateStore,
@@ -1938,6 +2005,7 @@ def _task_spec_proposal_binding(
             "TaskSpec revision candidate must explicitly bind the exact existing task_id",
             details={"candidate_task_id": explicit_task_id, "task_id": task_id},
         )
+    _validate_task_revision_identity_continuity(current["spec"], task_json)
     return {
         "operation": "revise",
         "expected_revision": int(current["revision"]),
@@ -2046,6 +2114,9 @@ def _validate_task_spec_proposal_binding(
                     "current_revision": None if current is None else current["revision"],
                 },
             )
+        if baseline_state:
+            assert current is not None
+            _validate_task_revision_identity_continuity(current["spec"], task_json)
         if event["record"].get("task_id") != task_id:
             raise OperatorIntakeError(
                 "candidate-task-identity-mismatch",

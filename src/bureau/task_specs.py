@@ -594,6 +594,12 @@ def put(
         raise TaskSpecError(
             "runtime-refresh no-run closeout idempotency namespace is reserved"
         )
+    if idempotency_key.startswith(
+        RUNTIME_REFRESH_UNUSED_AUTHORITY_CLOSEOUT_IDEMPOTENCY_PREFIX
+    ):
+        raise TaskSpecError(
+            "runtime-refresh unused-authority closeout idempotency namespace is reserved"
+        )
     try:
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
     except (DocumentSchemaError, AcceptanceContractError) as exc:

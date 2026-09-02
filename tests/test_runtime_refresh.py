@@ -6312,6 +6312,27 @@ def unused_authority_equivalent_success_case(
     )
 
 
+
+def test_unused_authority_closeout_idempotency_namespace_is_reserved(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-UNUSED-NAMESPACE"
+    state_root = (tmp_path / "bureau-state").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    spec = runtime_authority_spec(task_id)
+
+    with pytest.raises(legacy.StateError, match="closeout idempotency namespace is reserved"):
+        store.put_task_spec(
+            spec,
+            idempotency_key=(
+                f"runtime-refresh-unused-authority-closeout:{task_id}:{'b' * 64}"
+            ),
+            expected_revision=None,
+            source="generic-writer-must-not-own-closeout-namespace",
+        )
+
+    assert store.task_spec(task_id) is None
+
 def test_unused_authority_closeout_supersedes_without_runtime_effect(
     tmp_path: Path,
 ) -> None:

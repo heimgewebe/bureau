@@ -1978,6 +1978,19 @@ def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
     }
 
 
+def _task_revision_acceptance_ids(task_json: dict[str, Any]) -> set[str]:
+    acceptance = task_json.get("acceptance")
+    if not isinstance(acceptance, list):
+        return set()
+    return {
+        str(item["id"])
+        for item in acceptance
+        if isinstance(item, dict)
+        and isinstance(item.get("id"), str)
+        and item.get("id")
+    }
+
+
 def _task_revision_text_evidence(
     before: Any,
     after: Any,
@@ -2094,7 +2107,31 @@ def _validate_task_revision_identity_continuity(
         after.get("goal"),
         resource_continuity=bool(resource_overlap),
     )
-    if title_continuous or goal_continuous:
+    acceptance_overlap = _task_revision_acceptance_ids(before) & (
+        _task_revision_acceptance_ids(after)
+    )
+    continuous_evidence = [
+        evidence
+        for continuous, evidence in (
+            (title_continuous, title_evidence),
+            (goal_continuous, goal_evidence),
+        )
+        if continuous
+    ]
+    if any(
+        max(
+            int(evidence["shorter_subject_token_count"]),
+            int(evidence["full_shorter_subject_token_count"]),
+        )
+        >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        for evidence in continuous_evidence
+    ):
+        return
+    # A single subject token is intentionally a weak continuity signal. It is
+    # accepted only when at least one typed acceptance criterion id is also retained,
+    # so an unseen one-word process label such as "Upgrade" cannot carry identity by
+    # itself while compact real subjects such as "contracts" remain revisable.
+    if continuous_evidence and acceptance_overlap:
         return
     raise OperatorIntakeError(
         "task-revision-identity-discontinuity",
@@ -2106,6 +2143,7 @@ def _validate_task_revision_identity_continuity(
             "after_write_scope": sorted(after_scope),
             "write_scope_overlap": sorted(before_scope & after_scope),
             "resource_overlap": sorted(resource_overlap),
+            "acceptance_overlap": sorted(acceptance_overlap),
             "title_evidence": title_evidence,
             "goal_evidence": goal_evidence,
             "minimum_text_continuity": _TASK_REVISION_TEXT_CONTINUITY_MIN,

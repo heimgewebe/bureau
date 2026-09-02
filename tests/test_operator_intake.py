@@ -3849,6 +3849,7 @@ def _identity_revision_task(
     initiative: str = "INIT-V1",
     goal: str = "",
     mode: str = "write",
+    acceptance_ids: tuple[str, ...] = (),
 ) -> dict:
     return {
         "id": "INIT-V1-T001",
@@ -3856,6 +3857,7 @@ def _identity_revision_task(
         "title": title,
         "goal": goal,
         "claims": [{"resource": resource, "mode": mode, "isolation": "worktree"}],
+        "acceptance": [{"id": item_id} for item_id in acceptance_ids],
     }
 
 
@@ -3974,10 +3976,14 @@ def test_task_revision_identity_guard_rejects_two_weak_tokens_across_resources()
 
 def test_task_revision_identity_guard_allows_single_complete_subject_token() -> None:
     before = _identity_revision_task(
-        title="Create backup", resource="repo.backup"
+        title="Create backup",
+        resource="repo.backup",
+        acceptance_ids=("backup-contract",),
     )
     after = _identity_revision_task(
-        title="Migrate backup", resource="repo.backup"
+        title="Migrate backup",
+        resource="repo.backup",
+        acceptance_ids=("backup-contract",),
     )
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
 
@@ -3995,9 +4001,35 @@ def test_task_revision_identity_guard_rejects_single_subject_across_resources() 
 
 
 def test_task_revision_identity_guard_allows_exact_one_token_title() -> None:
-    before = _identity_revision_task(title="contracts", resource="repo.heimlern")
-    after = _identity_revision_task(title="contracts", resource="repo.heimlern")
+    before = _identity_revision_task(
+        title="contracts",
+        resource="repo.heimlern",
+        acceptance_ids=("contracts",),
+    )
+    after = _identity_revision_task(
+        title="contracts",
+        resource="repo.heimlern",
+        acceptance_ids=("contracts",),
+    )
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_unanchored_exact_one_token_title() -> None:
+    before = _identity_revision_task(
+        title="Upgrade",
+        resource="repo.shared",
+        goal="Preserve backup retention",
+        acceptance_ids=("backup-contract",),
+    )
+    after = _identity_revision_task(
+        title="Upgrade",
+        resource="repo.shared",
+        goal="Render customer dashboard",
+        acceptance_ids=("dashboard-contract",),
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
 
 
 def test_task_revision_identity_guard_treats_unicode_words_as_single_tokens() -> None:

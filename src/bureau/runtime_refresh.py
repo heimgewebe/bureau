@@ -4095,15 +4095,6 @@ def activate_runtime_refresh_authority(
                 "authority-activation-replay-publication-mismatch",
                 "ready authority publication binding differs from the activation request",
             )
-        observation_value = metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
-        observation = _validated_protected_publication_activation_observation(
-            observation_value,
-            activation_created_at=current["created_at"],
-            target_main_commit=expected_main_commit,
-            expected_target_sha256=observation_value.get("target_sha256")
-            if isinstance(observation_value, dict)
-            else None,
-        )
         historical = _read_authority_task_revision(store, approval_task_id, 1)
         historical_spec = historical.get("spec")
         if not isinstance(historical_spec, dict):
@@ -4131,7 +4122,35 @@ def activate_runtime_refresh_authority(
             historical_spec=historical_spec,
             approval_task_id=approval_task_id,
             target_main_commit=expected_main_commit,
-            target_sha256=observation["target_sha256"],
+        )
+        activation_revision = adoption_proof["adoption_revision"] + 1
+        activation_record = _read_authority_task_revision(
+            store, approval_task_id, activation_revision
+        )
+        activation_spec = activation_record.get("spec")
+        activation_created_at = activation_record.get("created_at")
+        activation_metadata = (
+            activation_spec.get("metadata")
+            if isinstance(activation_spec, dict)
+            else None
+        )
+        observation_value = (
+            activation_metadata.get(RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD)
+            if isinstance(activation_metadata, dict)
+            else None
+        )
+        if not isinstance(activation_created_at, str):
+            raise RuntimeRefreshError(
+                "authority-activation-replay-history-invalid",
+                "ready authority activation revision has no timestamp",
+            )
+        observation = _validated_protected_publication_activation_observation(
+            observation_value,
+            activation_created_at=activation_created_at,
+            target_main_commit=expected_main_commit,
+            expected_target_sha256=observation_value.get("target_sha256")
+            if isinstance(observation_value, dict)
+            else None,
         )
         return {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
@@ -4184,12 +4203,12 @@ def activate_runtime_refresh_authority(
         target_main_commit=expected_main_commit,
         task_file_sha256=expected_task_file_sha256,
     )
-    observation_time = now or utc_now()
+    observation_started_at = now or utc_now()
     observation = observer(
         repository=repository,
         manifest_path=manifest_path.expanduser().resolve(),
         required_checks=required_checks,
-        now=observation_time,
+        now=observation_started_at,
     )
     verify_digest(observation, "observation_sha256")
     if observation.get("status") not in {"candidate", "alert"}:
@@ -4210,9 +4229,10 @@ def activate_runtime_refresh_authority(
                 "observed_main_commit": observation.get("main_commit"),
             },
         )
+    observation_validated_at = utc_now()
     observation = _validated_protected_publication_activation_observation(
         observation,
-        activation_created_at=isoformat(observation_time),
+        activation_created_at=isoformat(observation_validated_at),
         target_main_commit=expected_main_commit,
         expected_target_sha256=observation["target_sha256"],
     )

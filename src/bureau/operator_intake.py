@@ -1913,8 +1913,40 @@ def _task_projection_file_sha256(registry: Registry, task_id: str) -> str | None
 
 
 _TASK_REVISION_TEXT_CONTINUITY_MIN = 0.5
-_TASK_REVISION_TEXT_OVERLAP_MIN = 2
+_TASK_REVISION_SUBJECT_OVERLAP_MIN = 2
 _TASK_REVISION_TOKEN_RE = re.compile(r"[^\W_]+")
+# Process verbs, qualifiers, and function words are weak identity evidence. Keep
+# domain nouns/acronyms available so short subjects such as API/SSH still count.
+_TASK_REVISION_GENERIC_TOKENS = frozenset(
+    {
+        "a", "aber", "add", "adopt", "after", "align", "als", "an", "and", "apply",
+        "archive", "assess", "audit", "auf", "aus", "automatisieren", "autorisieren",
+        "bauen", "before", "beheben", "bei", "bestehend", "bestehende",
+        "bestehenden", "bind", "binden", "bounded", "build", "change", "check",
+        "classify", "clean", "close", "complete", "configure", "consolidate",
+        "converge", "create", "current", "das", "decide", "define", "definieren",
+        "delete", "deliver", "dem", "den", "der", "des", "diagnose", "die",
+        "disable", "document", "dokumentieren", "ein", "eine", "einem", "einen",
+        "einer", "einfuehren", "einführen", "enable", "enforce", "ensure",
+        "entfernen", "erstellen", "establish", "evaluate", "exact", "exakt",
+        "existing", "expose", "extend", "filter", "final", "finale", "finalen",
+        "fix", "for", "fresh", "frisch", "frische", "frischen", "from", "fuer",
+        "für", "gegen", "genau", "generalize", "generate", "haerten", "harden",
+        "härten", "im", "implement", "implementieren", "improve", "in", "inspect",
+        "into", "introduce", "make", "measure", "merge", "migrate", "migrieren",
+        "mit", "move", "nach", "neu", "neue", "neuen", "neuer", "neues", "new",
+        "next", "normalize", "oder", "of", "ohne", "old", "on", "one", "optimieren",
+        "optimize", "or", "perform", "prepare", "prevent", "prove", "pruefen",
+        "prüfen", "publish", "reconcile", "reduce", "refactor", "registrieren",
+        "remaining", "remove", "repair", "reparieren", "replace", "resolve",
+        "restore", "return", "review", "run", "same", "schliessen", "schließen",
+        "scout", "separate", "separately", "set", "single", "switch", "test",
+        "testen", "the", "to", "tune", "umsetzen", "und", "unify", "update", "use",
+        "validate", "validieren", "verbleibende", "verifizieren", "verify", "von",
+        "vor", "vorbereiten", "wiederherstellen", "with", "without", "zu", "zum",
+        "zur",
+    }
+)
 
 
 def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
@@ -1928,14 +1960,46 @@ def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
     return scope
 
 
-def _task_revision_text_evidence(before: Any, after: Any) -> tuple[float, int]:
-    before_tokens = set(_TASK_REVISION_TOKEN_RE.findall(str(before or "").casefold()))
-    after_tokens = set(_TASK_REVISION_TOKEN_RE.findall(str(after or "").casefold()))
+def _task_revision_text_evidence(
+    before: Any, after: Any
+) -> tuple[float, int, int, bool]:
+    before_text = str(before or "").strip().casefold()
+    after_text = str(after or "").strip().casefold()
+    exact = bool(before_text) and before_text == after_text
+    before_tokens = {
+        token
+        for token in _TASK_REVISION_TOKEN_RE.findall(before_text)
+        if token not in _TASK_REVISION_GENERIC_TOKENS
+    }
+    after_tokens = {
+        token
+        for token in _TASK_REVISION_TOKEN_RE.findall(after_text)
+        if token not in _TASK_REVISION_GENERIC_TOKENS
+    }
     shorter = min(len(before_tokens), len(after_tokens))
     if shorter == 0:
-        return 0.0, 0
+        return 0.0, 0, 0, exact
     overlap = len(before_tokens & after_tokens)
-    return overlap / shorter, overlap
+    return overlap / shorter, overlap, shorter, exact
+
+
+def _task_revision_text_is_continuous(before: Any, after: Any) -> tuple[bool, dict[str, Any]]:
+    continuity, subject_overlap, shorter_subject_count, exact = (
+        _task_revision_text_evidence(before, after)
+    )
+    continuous = exact or (
+        continuity >= _TASK_REVISION_TEXT_CONTINUITY_MIN
+        and (
+            subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+            or (subject_overlap == 1 and shorter_subject_count == 1)
+        )
+    )
+    return continuous, {
+        "continuity": round(continuity, 6),
+        "subject_token_overlap": subject_overlap,
+        "shorter_subject_token_count": shorter_subject_count,
+        "exact_nonempty_text": exact,
+    }
 
 
 def _validate_task_revision_identity_continuity(
@@ -1958,19 +2022,13 @@ def _validate_task_revision_identity_continuity(
     # subject continuity instead of turning one permanent id into unrelated work.
     if not after_scope:
         return
-    title_continuity, title_overlap = _task_revision_text_evidence(
+    title_continuous, title_evidence = _task_revision_text_is_continuous(
         before.get("title"), after.get("title")
     )
-    goal_continuity, goal_overlap = _task_revision_text_evidence(
+    goal_continuous, goal_evidence = _task_revision_text_is_continuous(
         before.get("goal"), after.get("goal")
     )
-    if (
-        title_continuity >= _TASK_REVISION_TEXT_CONTINUITY_MIN
-        and title_overlap >= _TASK_REVISION_TEXT_OVERLAP_MIN
-    ) or (
-        goal_continuity >= _TASK_REVISION_TEXT_CONTINUITY_MIN
-        and goal_overlap >= _TASK_REVISION_TEXT_OVERLAP_MIN
-    ):
+    if title_continuous or goal_continuous:
         return
     raise OperatorIntakeError(
         "task-revision-identity-discontinuity",
@@ -1981,12 +2039,10 @@ def _validate_task_revision_identity_continuity(
             "before_write_scope": sorted(before_scope),
             "after_write_scope": sorted(after_scope),
             "write_scope_overlap": sorted(before_scope & after_scope),
-            "title_continuity": round(title_continuity, 6),
-            "title_token_overlap": title_overlap,
-            "goal_continuity": round(goal_continuity, 6),
-            "goal_token_overlap": goal_overlap,
+            "title_evidence": title_evidence,
+            "goal_evidence": goal_evidence,
             "minimum_text_continuity": _TASK_REVISION_TEXT_CONTINUITY_MIN,
-            "minimum_token_overlap": _TASK_REVISION_TEXT_OVERLAP_MIN,
+            "minimum_subject_token_overlap": _TASK_REVISION_SUBJECT_OVERLAP_MIN,
         },
     )
 

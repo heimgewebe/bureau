@@ -3936,6 +3936,46 @@ def test_task_revision_identity_guard_rejects_generic_action_token_only() -> Non
     assert raised.value.code == "task-revision-identity-discontinuity"
 
 
+def test_task_revision_identity_guard_rejects_two_generic_tokens() -> None:
+    before = _identity_revision_task(
+        title="Create new backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Create new dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_one_weak_shared_subject_token() -> None:
+    before = _identity_revision_task(
+        title="Create useful backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Create useful dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_single_complete_subject_token() -> None:
+    before = _identity_revision_task(
+        title="Create backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Migrate backup", resource="repo.backup"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_allows_exact_one_token_title() -> None:
+    before = _identity_revision_task(title="contracts", resource="repo.heimlern")
+    after = _identity_revision_task(title="contracts", resource="repo.heimlern")
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
 def test_task_revision_identity_guard_treats_unicode_words_as_single_tokens() -> None:
     before = _identity_revision_task(
         title="Prüfe Avira Updater", resource="repo.infra"

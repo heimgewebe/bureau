@@ -1,0 +1,226 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, GitHub main is freshly observed; the exact target contains this protected authority merge, registered main ccc741e4ffe2b966783033071f8c9d3c9ace83b2, and all then-current legitimate main merges, and required validate (3.10), validate (3.12), registry-registration-preflight/freshness checks for that exact main revision are successful.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-unused-successor-20260902:fresh-main"
+      }
+    },
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, a typed precondition readback proves that active deployment-manifest source_commit and canonical Registry source identity are equal, and that this active source is exactly the registered deployed source fd9570bbc99719f601879482def202b23bddbf01 or a verified Git ancestor of the freshly selected target main commit. Any deployment/Registry identity mismatch, unrelated or diverged source history, unavailable ancestry proof, or target drift blocks the runtime effect fail-closed.",
+      "evidence_type": "object",
+      "id": "source-ancestry-precondition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-unused-successor-20260902:source-ancestry-precondition"
+      }
+    },
+    {
+      "assertion": "This authority starts at most one runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are read back from intent, attempt/result, manifest, launcher, package, snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "id": "single-runtime-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-unused-successor-20260902:single-effect"
+      }
+    },
+    {
+      "assertion": "After a successful refresh, deployment manifest, immutable release, package tree, launcher pair and canonical Registry snapshot bind the same freshly observed source commit, and Bureau runtime identity is integrity-valid at that exact target.",
+      "evidence_type": "object",
+      "id": "immutable-runtime-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-unused-successor-20260902:immutable-readback"
+      }
+    },
+    {
+      "assertion": "The authority is consumed exactly once after successful immutable readback and grants no queue, claim, dispatch, task-supply, product-code, foreign-work or general repository mutation authority. After terminal consumption, a fresh unused successor must be supplied through the then-current canonical reviewed path if main advances again before another normal Bureau pickup.",
+      "evidence_type": "object",
+      "id": "runtime-only-scope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-unused-successor-20260902:scope-only"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-use target-bound bootstrap only. The current direct user request to take and execute the next Bureau task authorizes only the Bureau runtime convergence required to make normal reviewed pickup possible. No runtime effect may start until fresh GitHub main/CI observation, exact target binding, authoritative TaskSpec preflight, typed source-ancestry precondition, live intent-bound Grabowski leases and immutable runtime readback gates all pass. Repeat source ancestry immediately before apply; no blind retry after any effect-started ambiguity.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Provide and consume exactly one new target-bound Bureau runtime refresh from deployed source fd9570bbc99719f601879482def202b23bddbf01 to a freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The sole purpose is to restore Bureau runtime/main and canonical Registry identity so the current direct user request can resume normal reviewed Bureau pickup and execute the selected next task. This authority grants no queue, claim, dispatch, task-supply, product-code, foreign-work or general repository authority.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260902",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "deployed_manifest_sha256_at_registration": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+    "deployed_source_at_registration": "fd9570bbc99719f601879482def202b23bddbf01",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse any consumed or previously target-bound runtime authority",
+      "permission to substitute any purpose-specific runtime authority",
+      "permission to bypass stale-runtime, bootstrap, review, source-ancestry, lease or CI gates",
+      "queue, claim, dispatch or task-supply publication authority",
+      "general repository, merge, deployment-other-components or foreign-work mutation authority"
+    ],
+    "main_at_registration": "ccc741e4ffe2b966783033071f8c9d3c9ace83b2",
+    "observation_sha256_at_registration": "e34da22127c8edfdad3ee64539a050645fc215caf0e146f6593c7e51a39f1b08",
+    "post_refresh_live_target": "Read back exact Bureau runtime convergence, terminalize this no-run authority through its evidence-bound closeout, then resume normal typed Bureau pickup and execute the selected next task through its own reviewed contract without touching foreign work.",
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ],
+      "kind": "normal-protected-pull-request",
+      "reason": "The installed Bureau runtime and canonical Registry are integrity-bound to protected source fd9570bbc99719f601879482def202b23bddbf01 while current protected main is ccc741e4ffe2b966783033071f8c9d3c9ace83b2. The latest generic single-use authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829 is already verified and consumed and its contract requires a fresh successor. No currently unbound authority is generic: all remaining authorities are purpose-bound. Therefore exactly one create-only TaskSpec enters through protected Git and is adopted missing-only after merge.",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260902.json",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound-source-precondition-v1",
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "source_precondition": {
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ],
+        "fail_closed": true,
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+        "registered_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+        "registered_registry_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "schema_version": 1
+      },
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256",
+      "no_run_closeout_acceptance": {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "criteria": {
+          "fresh-current-main": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ]
+          },
+          "source-ancestry-precondition": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ]
+          },
+          "single-runtime-effect": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ]
+          },
+          "immutable-runtime-readback": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ]
+          },
+          "runtime-only-scope": {
+            "verifier": "runtime-refresh-no-run-evidence-v1",
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ]
+          }
+        }
+      }
+    },
+    "source": "The latest generic StateStore authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829 is verified and was consumed once with result 91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c; its contract requires successor_task_required_after_terminal=true. Fresh live observation e34da22127c8edfdad3ee64539a050645fc215caf0e146f6593c7e51a39f1b08 on 2026-09-02T14:04:18.074810Z proves deployment and canonical Registry still match at fd9570bbc99719f601879482def202b23bddbf01, that fd9570bbc99719f601879482def202b23bddbf01 is a verified Git ancestor of protected main ccc741e4ffe2b966783033071f8c9d3c9ace83b2, and that the merge/check evidence for that main is valid. Current StateStore inspection found no unconsumed generic successor; the only unbound single-use authorities are purpose-specific and forbid foreign substitution. A new generic successor is therefore required before normal typed pickup can mutate.",
+    "registration_observation": {
+      "schema_version": 1,
+      "observed_at": "2026-09-02T14:04:18.074810Z",
+      "repository": "heimgewebe/bureau",
+      "github_main": "ccc741e4ffe2b966783033071f8c9d3c9ace83b2",
+      "ratchet_merge_commit": "ccc741e4ffe2b966783033071f8c9d3c9ace83b2",
+      "deployed_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+      "canonical_registry_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+      "deployment_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+      "source_ancestry_to_main": true,
+      "required_checks": {
+        "validate (3.10)": "success",
+        "validate (3.12)": "success",
+        "registry-registration-preflight/freshness": "success"
+      },
+      "preceding_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829",
+      "preceding_authority_result_sha256": "91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c",
+      "preceding_authority_target_sha256": "3360be330b3a9310169fc567f3aafccd783d7642d30f73e740812ebf92d94342",
+      "preceding_authority_status": "verified"
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "The currently integrity-valid deployed Bureau runtime at fd9570bbc99719f601879482def202b23bddbf01 remains authoritative until a new immutable result is fully read back. If source ancestry, target freshness, CI, deployment/Registry identity or the new effect becomes unclear, preserve all precondition, attempt, intent, workspace, backup, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Single-Use Bureau-Runtime-Refresh successor for normal pickup on 2026-09-02"
+}

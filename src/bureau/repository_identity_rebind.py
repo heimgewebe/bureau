@@ -456,6 +456,16 @@ def build_plan(
         for task_id in sorted(candidates):
             current = candidates[task_id]
             if task_id in excluded_requested:
+                try:
+                    task_specs.preview_repository_identity_rebind(
+                        current["spec"],
+                        old_resource_id=old_resource_id,
+                        new_resource_id=new_resource_id,
+                        old_repository_path=str(old_resource["path"]),
+                        new_repository_path=str(new_resource["path"]),
+                    )
+                except task_specs.TaskSpecError as exc:
+                    raise legacy.StateError(str(exc)) from exc
                 run = active[task_id]
                 excluded.append(
                     {
@@ -622,6 +632,16 @@ def apply_plan(
                 raise legacy.StateError(
                     f"repository identity rebind excluded task {task_id} revision changed"
                 )
+            try:
+                task_specs.preview_repository_identity_rebind(
+                    current["spec"],
+                    old_resource_id=str(old_resource["id"]),
+                    new_resource_id=str(new_resource["id"]),
+                    old_repository_path=str(old_resource["path"]),
+                    new_repository_path=str(new_resource["path"]),
+                )
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
         if existing_count == len(items):
             if current_ids != set(excluded_by_id):
                 raise legacy.StateError(

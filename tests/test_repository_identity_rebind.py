@@ -343,6 +343,84 @@ def test_plan_requires_exact_live_active_task_exclusion(tmp_path: Path) -> None:
     )
 
 
+
+@pytest.mark.parametrize("residual_kind", ("path", "resource"))
+def test_active_exclusion_rejects_unapproved_old_binding_residue_at_plan(
+    tmp_path: Path, residual_kind: str
+) -> None:
+    root, old_path, _ = _registry_root(tmp_path, legacy=True)
+    task_path = root / "registry/tasks/TASK-B.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["metadata"]["unapproved_old_binding"] = (
+        str(old_path) if residual_kind == "path" else OLD_RESOURCE
+    )
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    _insert_active_run(store, "TASK-B", "RUN-B")
+
+    with pytest.raises(StateError, match="left old technical bindings"):
+        build_plan(
+            registry,
+            store,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            excluded_active_task_ids=("TASK-B",),
+        )
+
+    assert store.task_spec("TASK-A")["revision"] == 1
+    assert store.task_spec("TASK-B")["revision"] == 1
+
+
+@pytest.mark.parametrize("residual_kind", ("path", "resource"))
+def test_apply_revalidates_legacy_plan_exclusion_preview_before_any_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, residual_kind: str
+) -> None:
+    root, old_path, _ = _registry_root(tmp_path, legacy=True)
+    task_path = root / "registry/tasks/TASK-B.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["metadata"]["unapproved_old_binding"] = (
+        str(old_path) if residual_kind == "path" else OLD_RESOURCE
+    )
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    _insert_active_run(store, "TASK-B", "RUN-B")
+    original_preview = task_specs.preview_repository_identity_rebind
+
+    def legacy_preview(spec, **kwargs):
+        if spec.get("id") == "TASK-B":
+            sanitized = json.loads(canonical_json(spec))
+            sanitized["metadata"].pop("unapproved_old_binding", None)
+            return original_preview(sanitized, **kwargs)
+        return original_preview(spec, **kwargs)
+
+    monkeypatch.setattr(task_specs, "preview_repository_identity_rebind", legacy_preview)
+    plan = build_plan(
+        registry,
+        store,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+        excluded_active_task_ids=("TASK-B",),
+    )
+    monkeypatch.setattr(task_specs, "preview_repository_identity_rebind", original_preview)
+
+    with pytest.raises(StateError, match="left old technical bindings"):
+        apply_plan(
+            registry,
+            store,
+            plan,
+            expected_plan_sha256=plan["plan_sha256"],
+        )
+
+    assert store.task_spec("TASK-A")["revision"] == 1
+    assert store.task_spec("TASK-B")["revision"] == 1
+    for item in plan["items"]:
+        assert store.task_spec_mutation_receipt(item["idempotency_key"]) is None
+
+
 def test_single_task_revision_drift_rolls_back_entire_batch(tmp_path: Path) -> None:
     root, _, _ = _registry_root(tmp_path, legacy=False)
     registry = Registry.load(root)

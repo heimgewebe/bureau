@@ -56,6 +56,19 @@ def test_bare_local_ordinal_is_rejected_even_if_malformed_registry_contains_it()
 
     assert result["status"] == "rejected"
     assert result["reason"] == "bare_local_ordinal_not_global_identity"
+    assert result["candidate_task_ids"] == []
+
+
+def test_malformed_bare_known_id_is_never_reported_as_canonical_candidate() -> None:
+    result = assess_task_reference("T191", ["T191", "GOOD-V1-T191"])
+
+    assert result["status"] == "rejected"
+    assert result["candidate_task_ids"] == ["GOOD-V1-T191"]
+
+    contract = canonical_task_reference_contract(
+        "GOOD-V1-T191", ["T191", "GOOD-V1-T191", "OTHER-V1-T191"]
+    )
+    assert contract["same_local_ordinal_task_ids"] == ["OTHER-V1-T191"]
 
 
 def test_explicit_namespace_plus_local_ordinal_resolves_exactly_one_task() -> None:

@@ -38,6 +38,19 @@ def is_bare_local_task_ordinal(reference: str) -> bool:
     )
 
 
+def _canonical_known_task_ids(known_task_ids: Iterable[str]) -> list[str]:
+    """Return candidate ids that can actually serve as canonical task identity."""
+    return sorted(
+        {
+            value
+            for value in known_task_ids
+            if isinstance(value, str)
+            and value
+            and not is_bare_local_task_ordinal(value)
+        }
+    )
+
+
 def canonical_task_reference_contract(
     task_id: str,
     known_task_ids: Iterable[str],
@@ -47,7 +60,7 @@ def canonical_task_reference_contract(
     Local ordinals are intentionally reusable inside namespaces. They are never
     global identities, even when only one current task happens to use them.
     """
-    known = sorted({value for value in known_task_ids if isinstance(value, str) and value})
+    known = _canonical_known_task_ids(known_task_ids)
     local_ordinal = local_task_ordinal(task_id)
     same_local_ordinal_task_ids = (
         sorted(
@@ -83,7 +96,7 @@ def assess_task_reference(
     """
     normalized = reference.strip() if isinstance(reference, str) else ""
     normalized_namespace = namespace.strip() if isinstance(namespace, str) else None
-    known = sorted({value for value in known_task_ids if isinstance(value, str) and value})
+    known = _canonical_known_task_ids(known_task_ids)
 
     if is_bare_local_task_ordinal(normalized):
         ordinal = normalized.upper()

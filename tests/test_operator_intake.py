@@ -4012,6 +4012,58 @@ def test_task_revision_identity_guard_treats_unicode_words_as_single_tokens() ->
     assert raised.value.code == "task-revision-identity-discontinuity"
 
 
+def test_task_revision_identity_guard_rejects_unrelated_write_to_read_closeout() -> None:
+    before = _identity_revision_task(
+        title="Build backup retention", resource="repo.shared"
+    )
+    after = _identity_revision_task(
+        title="Inspect dashboard metrics", resource="repo.shared", mode="read"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_unlisted_leading_process_word() -> None:
+    before = _identity_revision_task(
+        title="Upgrade legacy backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Upgrade legacy dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_exact_generic_text() -> None:
+    before = _identity_revision_task(
+        title="Update",
+        resource="repo.backup",
+        goal="Preserve backup retention",
+    )
+    after = _identity_revision_task(
+        title="Update",
+        resource="repo.dashboard",
+        goal="Render customer dashboard",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_preserves_identifier_punctuation() -> None:
+    before = _identity_revision_task(
+        title="Improve C++ compiler", resource="repo.cpp"
+    )
+    after = _identity_revision_task(
+        title="Repair C# compiler", resource="repo.csharp"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
 def test_task_revision_identity_guard_rejects_unrelated_read_to_write() -> None:
     before = _identity_revision_task(
         title="Inspect backup reports", resource="repo.backup", mode="read"
@@ -4100,6 +4152,49 @@ def test_reviewed_pre_hardening_revision_cannot_bypass_publication_guard(
         publication_preview(registry, store, plan_path=plan_path)
     assert raised.value.code == "task-revision-identity-discontinuity"
     assert store.task_spec(task_id) == before
+
+
+def test_task_propose_rejects_malformed_revision_claims_as_schema_error(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    current = store.task_spec(task_id)
+    assert current is not None
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:malformed-revision-claims",
+        title="Malformed revision claims",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:malformed-revision-claims",
+        source_sha256="6" * 64,
+        desired_outcome="Reject malformed revision claims without a traceback",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["claims"] = None
+    plan_path = tmp_path / "malformed-revision-claims.proposal.json"
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=plan_path,
+        )
+    assert raised.value.code == "task-schema-invalid"
+    assert not plan_path.exists()
 
 
 def test_task_propose_rejects_reuse_of_existing_id_for_unrelated_write_scope(

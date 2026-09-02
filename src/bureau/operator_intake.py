@@ -1832,13 +1832,7 @@ def _write_create_only(path: Path, content: bytes) -> None:
         ) from exc
 
 
-def _validate_task_semantics(
-    registry: Registry,
-    store: StateStore,
-    task_json: dict[str, Any],
-    *,
-    allow_existing_task_id: bool = False,
-) -> None:
+def _validate_task_schema(registry: Registry, task_json: dict[str, Any]) -> None:
     raw_task_id = task_json.get("id")
     task_id = raw_task_id if isinstance(raw_task_id, str) and raw_task_id else "<missing-task-id>"
     source = f"operator-intake-task:{task_id}"
@@ -1864,6 +1858,16 @@ def _validate_task_semantics(
                 "schema_errors": str(exc).splitlines(),
             },
         ) from exc
+
+
+def _validate_task_semantics(
+    registry: Registry,
+    store: StateStore,
+    task_json: dict[str, Any],
+    *,
+    allow_existing_task_id: bool = False,
+) -> None:
+    _validate_task_schema(registry, task_json)
     from .lease_contract import assess_task_broad_bureau_scope
 
     scope_assessment = assess_task_broad_bureau_scope(task_json, registry.resources)
@@ -1914,7 +1918,7 @@ def _task_projection_file_sha256(registry: Registry, task_id: str) -> str | None
 
 _TASK_REVISION_TEXT_CONTINUITY_MIN = 0.5
 _TASK_REVISION_SUBJECT_OVERLAP_MIN = 2
-_TASK_REVISION_TOKEN_RE = re.compile(r"[^\W_]+")
+_TASK_REVISION_TOKEN_RE = re.compile(r"[^\W_]+(?:[+#]+)?")
 # Process verbs, qualifiers, and function words are weak identity evidence. Keep
 # domain nouns/acronyms available so short subjects such as API/SSH still count.
 _TASK_REVISION_GENERIC_TOKENS = frozenset(
@@ -1949,23 +1953,26 @@ _TASK_REVISION_GENERIC_TOKENS = frozenset(
 )
 
 
+def _task_revision_claims(task_json: dict[str, Any]) -> list[dict[str, Any]]:
+    claims = task_json.get("claims")
+    if not isinstance(claims, list):
+        return []
+    return [claim for claim in claims if isinstance(claim, dict)]
+
+
 def _task_revision_resource_scope(task_json: dict[str, Any]) -> set[str]:
-    scope: set[str] = set()
-    for claim in task_json.get("claims", []):
-        if not isinstance(claim, dict):
-            continue
-        resource = claim.get("resource")
-        if isinstance(resource, str) and resource:
-            scope.add(resource)
-    return scope
+    return {
+        str(claim["resource"])
+        for claim in _task_revision_claims(task_json)
+        if isinstance(claim.get("resource"), str) and claim.get("resource")
+    }
 
 
 def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
     return {
         str(claim["resource"])
-        for claim in task_json.get("claims", [])
-        if isinstance(claim, dict)
-        and claim.get("mode") in {"write", "exclusive"}
+        for claim in _task_revision_claims(task_json)
+        if claim.get("mode") in {"write", "exclusive"}
         and isinstance(claim.get("resource"), str)
         and claim.get("resource")
     }
@@ -1977,15 +1984,20 @@ def _task_revision_text_evidence(
     before_text = str(before or "").strip().casefold()
     after_text = str(after or "").strip().casefold()
     exact = bool(before_text) and before_text == after_text
+    before_raw_tokens = _TASK_REVISION_TOKEN_RE.findall(before_text)
+    after_raw_tokens = _TASK_REVISION_TOKEN_RE.findall(after_text)
+    # Task prose normally starts with an action verb. Ignore that positional slot for
+    # multi-token text so unseen variants such as "Upgrade" cannot become identity
+    # evidence merely because a static stop-word list did not enumerate them.
+    if len(before_raw_tokens) > 1:
+        before_raw_tokens = before_raw_tokens[1:]
+    if len(after_raw_tokens) > 1:
+        after_raw_tokens = after_raw_tokens[1:]
     before_tokens = {
-        token
-        for token in _TASK_REVISION_TOKEN_RE.findall(before_text)
-        if token not in _TASK_REVISION_GENERIC_TOKENS
+        token for token in before_raw_tokens if token not in _TASK_REVISION_GENERIC_TOKENS
     }
     after_tokens = {
-        token
-        for token in _TASK_REVISION_TOKEN_RE.findall(after_text)
-        if token not in _TASK_REVISION_GENERIC_TOKENS
+        token for token in after_raw_tokens if token not in _TASK_REVISION_GENERIC_TOKENS
     }
     shorter = min(len(before_tokens), len(after_tokens))
     if shorter == 0:
@@ -2001,7 +2013,13 @@ def _task_revision_text_is_continuous(
         _task_revision_text_evidence(before, after)
     )
     if exact:
-        continuous = True
+        # Exact generic prose is not a subject anchor. A one-token subject is enough
+        # only when the revision retains a claimed resource; across a resource change
+        # exact text still needs the normal two-token subject minimum.
+        continuous = shorter_subject_count > 0 and (
+            resource_continuity
+            or shorter_subject_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        )
     elif continuity < _TASK_REVISION_TEXT_CONTINUITY_MIN:
         continuous = False
     elif resource_continuity:
@@ -2046,11 +2064,9 @@ def _validate_task_revision_identity_continuity(
     resource_overlap = _task_revision_resource_scope(before) & _task_revision_resource_scope(
         after
     )
-    # A write -> read revision may legitimately be a revalidation/closeout. Any
-    # revision that becomes or remains write-capable must retain recognizable task
-    # subject continuity instead of turning one permanent id into unrelated work.
-    if not after_scope:
-        return
+    # Capability changes do not change permanent task identity. Read-only closeouts
+    # must therefore retain the same subject too; otherwise write A -> read B -> write B
+    # could launder an unrelated task through a capability-only intermediate revision.
     title_continuous, title_evidence = _task_revision_text_is_continuous(
         before.get("title"),
         after.get("title"),
@@ -2065,8 +2081,8 @@ def _validate_task_revision_identity_continuity(
         return
     raise OperatorIntakeError(
         "task-revision-identity-discontinuity",
-        "write-capable TaskSpec revision changes both task title and goal "
-        "without continuity; create a new task id instead",
+        "TaskSpec revision changes both task title and goal without identity "
+        "continuity; create a new task id instead",
         details={
             "task_id": after.get("id"),
             "before_write_scope": sorted(before_scope),
@@ -2323,6 +2339,7 @@ def task_propose(
             f"publishing task {publishing_task_id} is not in the authoritative StateStore",
         )
     bound_task = _inject_candidate_binding(task_json, event)
+    _validate_task_schema(registry, bound_task)
     task_spec_binding = _task_spec_proposal_binding(
         registry, store, task_json=bound_task, event=event
     )
@@ -2865,6 +2882,7 @@ def _validated_proposal(
     task_json = plan.get("task_json")
     if not isinstance(task_json, dict):
         raise OperatorIntakeError("task-json-invalid", "proposal task_json is missing")
+    _validate_task_schema(registry, task_json)
     task_spec_binding = _validate_task_spec_proposal_binding(
         registry, store, plan=plan, task_json=task_json, event=current
     )

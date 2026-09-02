@@ -569,6 +569,46 @@ def test_repository_preflight_reads_canonical_tasks_from_checked_revision(tmp_pa
     assert result["decision"] == "allow"
 
 
+def test_repository_preflight_bare_ordinal_names_canonical_candidates(tmp_path: Path):
+    repo = tmp_path / "repo"
+    (repo / "registry/tasks").mkdir(parents=True)
+    shutil.copytree(Path(__file__).parents[1] / "schemas", repo / "schemas")
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@invalid.local"],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+    canonical_ids = [
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T191",
+        "REPOGROUND-UNUSED-AUTHORITY-CLOSEOUT-V1-T191",
+    ]
+    for task_id in canonical_ids:
+        (repo / f"registry/tasks/{task_id}.json").write_text(
+            json.dumps(task(task_id)), encoding="utf-8"
+        )
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "base"], check=True)
+    base = _git(repo, "rev-parse", "HEAD")
+    proposed_path = repo / "registry/tasks/T191.json"
+    proposed_path.write_text(json.dumps(task("T191")), encoding="utf-8")
+
+    with pytest.raises(RegistrationPreflightError) as exc_info:
+        repository_registration_preflight(
+            repo,
+            repository="heimgewebe/bureau",
+            task_json_path=proposed_path,
+            checked_base_sha=base,
+            open_pr_provider=lambda _repo, _number: [],
+            base_sha_provider=lambda _root, _ref: base,
+        )
+
+    message = str(exc_info.value)
+    assert "canonical full task id or explicit namespace required" in message
+    for task_id in canonical_ids:
+        assert task_id in message
+
+
 def test_cli_json_and_exit_codes(monkeypatch, tmp_path: Path, capsys):
     receipt = evaluate()
     monkeypatch.setattr(

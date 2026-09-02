@@ -753,8 +753,10 @@ def repository_registration_preflight(
         raise RegistrationPreflightError(f"cannot read proposed task JSON: {exc}") from exc
     if not isinstance(proposed_task, dict):
         raise RegistrationPreflightError("proposed task JSON must be an object")
-    task_id = validate_task_id(str(proposed_task.get("id", "")))
-    validate_task_path(task_id, relative)
+    raw_task_id = str(proposed_task.get("id", ""))
+    if not is_bare_local_task_ordinal(raw_task_id):
+        task_id = validate_task_id(raw_task_id)
+        validate_task_path(task_id, relative)
     checked_base_sha = validate_sha(checked_base_sha, field="checked_base_sha")
     base_provider = base_sha_provider or remote_base_sha
     open_provider = open_pr_provider or github_open_prs

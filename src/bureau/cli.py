@@ -314,6 +314,7 @@ def parser() -> argparse.ArgumentParser:
     repo_fetch.add_argument("--branch", default="main")
     repo_fetch.add_argument("--remote", default="origin")
     repo_fetch.add_argument("--task-id")
+    repo_fetch.add_argument("--run-id")
     repo_fetch.add_argument("--discovery-registry", type=Path)
     repo_fetch.add_argument("--apply-plan")
     repo_fetch.add_argument("--approve", action="store_true")
@@ -1382,6 +1383,7 @@ def main(argv: list[str] | None = None) -> int:
                     branch=args.branch,
                     remote=args.remote,
                     task_id=args.task_id,
+                    run_id=args.run_id,
                     discovery_registry_path=discovery_registry,
                     state_db=state_path,
                     state_root=state_root,

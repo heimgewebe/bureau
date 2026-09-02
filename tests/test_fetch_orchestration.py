@@ -8,9 +8,11 @@ import pytest
 from bureau import cli as bureau_cli
 from bureau import fetch_orchestration
 from bureau.approval import ApprovalRequired, explicit_operator_approval
-from bureau.legacy import Registry, Resource, StateError
+from bureau.legacy import Registry, Resource, StateError, utc_now
+from bureau.v2 import StateStore
 
 TASK_ID = "BUR-TEST-001-T006"
+RUN_ID = "BUR-RUN-TEST-T006"
 _CLEAR_RUNTIME = {
     "execution_blocked": False,
     "reason_code": "runtime-clear",
@@ -76,6 +78,45 @@ def _repository_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Registry, Pat
     return remote, seed, target, registry, discovery
 
 
+def _active_repo_run_state(tmp_path: Path, target: Path, *, reserve: bool = True) -> Path:
+    state_root = tmp_path / "bureau-state"
+    store = StateStore(state_root=state_root)
+    store.register_worker("worker", "interactive-agent", ("repository",))
+    now = utc_now()
+    branch = _git(target, "symbolic-ref", "--short", "HEAD")
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO runs("
+            "run_id,task_id,worker_id,attempt,state,task_sha256,plan_sha256,"
+            "envelope_json,envelope_sha256,workspace_path,workspace_branch,"
+            "created_at,updated_at,heartbeat_at"
+            ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                RUN_ID,
+                TASK_ID,
+                "worker",
+                1,
+                "assigned",
+                "a" * 64,
+                "b" * 64,
+                "{}",
+                "c" * 64,
+                str(target.resolve()),
+                branch,
+                now,
+                now,
+                now,
+            ),
+        )
+        if reserve:
+            connection.execute(
+                "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+                "VALUES(?,?,?,?,?)",
+                (RUN_ID, "repo.test", "write", 1, now),
+            )
+    return state_root
+
+
 def _plan(
     root: Path,
     registry: Registry,
@@ -114,12 +155,13 @@ def test_fetch_plan_is_read_only_stable_and_provenance_rich(tmp_path, monkeypatc
 
 
 def test_runtime_blocker_is_structured_and_prevents_plan_apply(tmp_path, monkeypatch) -> None:
-    _remote, _seed, _target, registry, discovery = _repository_fixture(tmp_path)
+    _remote, _seed, target, registry, discovery = _repository_fixture(tmp_path)
     monkeypatch.setattr(
         fetch_orchestration, "_runtime_gate", lambda *args, **kwargs: _BLOCKED_RUNTIME
     )
 
     plan = _plan(tmp_path, registry, discovery)
+    state_root = _active_repo_run_state(tmp_path, target)
 
     assert plan["allowed"] is False
     conflict = plan["conflicts"][0]
@@ -136,6 +178,8 @@ def test_runtime_blocker_is_structured_and_prevents_plan_apply(tmp_path, monkeyp
             expected_plan_sha256=plan["plan_sha256"],
             approval=None,
             task_id=TASK_ID,
+            run_id=RUN_ID,
+            state_root=state_root,
             discovery_registry_path=discovery,
         )
 
@@ -146,6 +190,7 @@ def test_fetch_requires_plan_bound_operator_approval_before_mutation(tmp_path, m
         fetch_orchestration, "_runtime_gate", lambda *args, **kwargs: _CLEAR_RUNTIME
     )
     plan = _plan(tmp_path, registry, discovery)
+    state_root = _active_repo_run_state(tmp_path, target)
     before_tracking = _git(target, "rev-parse", "refs/remotes/origin/main")
 
     with pytest.raises(ApprovalRequired):
@@ -156,6 +201,8 @@ def test_fetch_requires_plan_bound_operator_approval_before_mutation(tmp_path, m
             expected_plan_sha256=plan["plan_sha256"],
             approval=None,
             task_id=TASK_ID,
+            run_id=RUN_ID,
+            state_root=state_root,
             discovery_registry_path=discovery,
         )
     assert _git(target, "rev-parse", "refs/remotes/origin/main") == before_tracking
@@ -168,6 +215,7 @@ def test_fetch_apply_updates_only_remote_tracking_ref(tmp_path, monkeypatch) -> 
         fetch_orchestration, "_runtime_gate", lambda *args, **kwargs: _CLEAR_RUNTIME
     )
     plan = _plan(tmp_path, registry, discovery)
+    state_root = _active_repo_run_state(tmp_path, target)
     before_head = _git(target, "rev-parse", "HEAD")
     before_branch = _git(target, "symbolic-ref", "--short", "HEAD")
     before_status = _git(target, "status", "--porcelain=v1")
@@ -186,6 +234,8 @@ def test_fetch_apply_updates_only_remote_tracking_ref(tmp_path, monkeypatch) -> 
         expected_plan_sha256=plan["plan_sha256"],
         approval=approval,
         task_id=TASK_ID,
+        run_id=RUN_ID,
+        state_root=state_root,
         discovery_registry_path=discovery,
     )
 
@@ -199,6 +249,76 @@ def test_fetch_apply_updates_only_remote_tracking_ref(tmp_path, monkeypatch) -> 
     assert _git(target, "rev-parse", "HEAD") == before_head
     assert _git(target, "symbolic-ref", "--short", "HEAD") == before_branch
     assert _git(target, "status", "--porcelain=v1") == before_status
+    assert _git(target, "for-each-ref", "--format=%(refname)", "refs/bureau/fetch") == ""
+
+
+def test_fetch_apply_requires_active_write_reservation_before_git_mutation(
+    tmp_path, monkeypatch
+) -> None:
+    _remote, _seed, target, registry, discovery = _repository_fixture(tmp_path)
+    monkeypatch.setattr(
+        fetch_orchestration, "_runtime_gate", lambda *args, **kwargs: _CLEAR_RUNTIME
+    )
+    plan = _plan(tmp_path, registry, discovery)
+    state_root = _active_repo_run_state(tmp_path, target, reserve=False)
+    before_tracking = _git(target, "rev-parse", "refs/remotes/origin/main")
+    approval = explicit_operator_approval(
+        source="test",
+        approved=True,
+        reviewer="operator",
+        reference=plan["plan_sha256"],
+        task_id=TASK_ID,
+    )
+
+    with pytest.raises(StateError, match="active write reservation"):
+        fetch_orchestration.apply_repo_fetch_plan(
+            tmp_path,
+            registry,
+            "repo.test",
+            expected_plan_sha256=plan["plan_sha256"],
+            approval=approval,
+            task_id=TASK_ID,
+            run_id=RUN_ID,
+            state_root=state_root,
+            discovery_registry_path=discovery,
+        )
+
+    assert _git(target, "rev-parse", "refs/remotes/origin/main") == before_tracking
+    assert _git(target, "for-each-ref", "--format=%(refname)", "refs/bureau/fetch") == ""
+
+
+def test_fetch_apply_rejects_reserved_run_workspace_from_another_repository(
+    tmp_path, monkeypatch
+) -> None:
+    _remote, seed, target, registry, discovery = _repository_fixture(tmp_path)
+    monkeypatch.setattr(
+        fetch_orchestration, "_runtime_gate", lambda *args, **kwargs: _CLEAR_RUNTIME
+    )
+    plan = _plan(tmp_path, registry, discovery)
+    state_root = _active_repo_run_state(tmp_path, seed)
+    before_tracking = _git(target, "rev-parse", "refs/remotes/origin/main")
+    approval = explicit_operator_approval(
+        source="test",
+        approved=True,
+        reviewer="operator",
+        reference=plan["plan_sha256"],
+        task_id=TASK_ID,
+    )
+
+    with pytest.raises(StateError, match="not bound to the reserved repository"):
+        fetch_orchestration.apply_repo_fetch_plan(
+            tmp_path,
+            registry,
+            "repo.test",
+            expected_plan_sha256=plan["plan_sha256"],
+            approval=approval,
+            task_id=TASK_ID,
+            run_id=RUN_ID,
+            state_root=state_root,
+            discovery_registry_path=discovery,
+        )
+
+    assert _git(target, "rev-parse", "refs/remotes/origin/main") == before_tracking
     assert _git(target, "for-each-ref", "--format=%(refname)", "refs/bureau/fetch") == ""
 
 
@@ -218,6 +338,7 @@ def test_fetch_refuses_non_fast_forward_and_cleans_temp_ref(tmp_path, monkeypatc
     assert _git(remote, "rev-parse", "refs/heads/main") == rewritten
 
     plan = _plan(tmp_path, registry, discovery)
+    state_root = _active_repo_run_state(tmp_path, target)
     approval = explicit_operator_approval(
         source="test",
         approved=True,
@@ -231,6 +352,8 @@ def test_fetch_refuses_non_fast_forward_and_cleans_temp_ref(tmp_path, monkeypatc
         expected_plan_sha256=plan["plan_sha256"],
         approval=approval,
         task_id=TASK_ID,
+        run_id=RUN_ID,
+        state_root=state_root,
         discovery_registry_path=discovery,
     )
 
@@ -247,6 +370,7 @@ def test_fetch_rejects_drifted_plan_before_mutation(tmp_path, monkeypatch) -> No
         fetch_orchestration, "_runtime_gate", lambda *args, **kwargs: _CLEAR_RUNTIME
     )
     plan = _plan(tmp_path, registry, discovery)
+    state_root = _active_repo_run_state(tmp_path, target)
     before_tracking = _git(target, "rev-parse", "refs/remotes/origin/main")
     _commit(seed, "third.txt", "three\n")
     _git(seed, "push", "origin", "HEAD:main")
@@ -265,10 +389,11 @@ def test_fetch_rejects_drifted_plan_before_mutation(tmp_path, monkeypatch) -> No
             expected_plan_sha256=plan["plan_sha256"],
             approval=approval,
             task_id=TASK_ID,
+            run_id=RUN_ID,
+            state_root=state_root,
             discovery_registry_path=discovery,
         )
     assert _git(target, "rev-parse", "refs/remotes/origin/main") == before_tracking
-
 
 
 def test_repo_fetch_cli_is_read_only_until_exact_plan_is_applied() -> None:
@@ -282,6 +407,8 @@ def test_repo_fetch_cli_is_read_only_until_exact_plan_is_applied() -> None:
             "repo.test",
             "--task-id",
             TASK_ID,
+            "--run-id",
+            RUN_ID,
             "--apply-plan",
             "a" * 64,
             "--approve",

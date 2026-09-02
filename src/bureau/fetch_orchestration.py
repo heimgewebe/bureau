@@ -17,11 +17,12 @@ from typing import Any
 from .approval import ApprovalEvidence, require_approval
 from .legacy import Registry, StateError, ValidationError, sha256_json
 from .repo_scan import _git_env, _git_read, _normalized_github_slug, scan_repository_registry
-from .v2 import _runtime_execution_truth, runtime_drift_check
+from .v2 import StateStore, _runtime_execution_truth, runtime_drift_check
 from .weltgewebe_source import source_sync
 
 _REMOTE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _HEX_RE = re.compile(r"^[0-9a-f]+$")
+_ACTIVE_RUN_STATES = frozenset({"assigned", "running", "verifying"})
 
 
 def _runtime_gate(
@@ -144,6 +145,76 @@ def _read_ref(repository: Path, ref: str, *, oid_length: int) -> str | None:
     if result.returncode:
         return None
     return _validate_oid(result.stdout, length=oid_length, label=ref)
+
+
+def _git_common_dir(repository: Path) -> Path:
+    result = _git_read(repository, "rev-parse", "--git-common-dir")
+    if result.returncode:
+        raise StateError(f"cannot resolve Git common directory for {repository}")
+    value = Path(result.stdout.strip())
+    if not value.is_absolute():
+        value = repository / value
+    return value.resolve()
+
+
+def _reserved_run_repository(
+    *,
+    canonical_repository: Path,
+    resource_id: str,
+    run_id: str | None,
+    task_id: str | None,
+    state_db: Path | None,
+    state_root: Path | None,
+) -> tuple[Path, dict[str, Any]]:
+    if not run_id or not task_id:
+        raise StateError("repo fetch apply requires both run_id and task_id")
+    if state_db is None and state_root is None:
+        raise StateError("repo fetch apply requires an authoritative Bureau StateStore binding")
+    store = StateStore(path=state_db, state_root=state_root)
+    run = store.run(run_id)
+    if run.get("state") not in _ACTIVE_RUN_STATES:
+        raise StateError(f"repo fetch run is not active: {run_id}")
+    if run.get("task_id") != task_id:
+        raise StateError("repo fetch run is bound to another task")
+    workspace_raw = run.get("workspace_path")
+    branch = run.get("workspace_branch")
+    if (
+        not isinstance(workspace_raw, str)
+        or not workspace_raw
+        or not isinstance(branch, str)
+        or not branch
+    ):
+        raise StateError("repo fetch run has no recorded run-specific worktree")
+    workspace = Path(workspace_raw).expanduser().resolve()
+    if not workspace.is_dir():
+        raise StateError("repo fetch run-specific worktree is unavailable")
+    with store.connect() as connection:
+        reservations = [
+            item
+            for item in store.reservations(connection)
+            if item.run_id == run_id
+            and item.resource == resource_id
+            and item.mode in {"write", "exclusive"}
+            and item.amount >= 1
+        ]
+    if len(reservations) != 1:
+        raise StateError(
+            f"repo fetch run lacks exactly one active write reservation for {resource_id}"
+        )
+    if _git_common_dir(workspace) != _git_common_dir(canonical_repository):
+        raise StateError("repo fetch run worktree is not bound to the reserved repository")
+    current_branch = _git_read(workspace, "symbolic-ref", "--quiet", "--short", "HEAD")
+    if current_branch.returncode or current_branch.stdout.strip() != branch:
+        raise StateError("repo fetch run worktree branch differs from its recorded binding")
+    binding = {
+        "run_id": run_id,
+        "task_id": task_id,
+        "resource_id": resource_id,
+        "workspace_path": str(workspace),
+        "workspace_branch": branch,
+        "reservation_mode": reservations[0].mode,
+    }
+    return workspace, binding
 
 
 def _canonical_repo(
@@ -335,6 +406,7 @@ def apply_repo_fetch_plan(
     branch: str = "main",
     remote: str = "origin",
     task_id: str | None = None,
+    run_id: str | None = None,
     discovery_registry_path: Path | None = None,
     state_db: Path | None = None,
     state_root: Path | None = None,
@@ -357,6 +429,15 @@ def apply_repo_fetch_plan(
         raise StateError("fetch plan drifted; generate and review a fresh dry-run plan")
     if not plan["allowed"]:
         raise StateError("fetch plan is blocked by precondition conflicts")
+    canonical_repository = Path(plan["repo"]["path"])
+    repository, run_binding = _reserved_run_repository(
+        canonical_repository=canonical_repository,
+        resource_id=resource_id,
+        run_id=run_id,
+        task_id=task_id,
+        state_db=state_db,
+        state_root=state_root,
+    )
     approval_decision = require_approval(
         "repository_mutation",
         approval,
@@ -364,7 +445,6 @@ def apply_repo_fetch_plan(
         task_id=task_id,
     )
 
-    repository = Path(plan["repo"]["path"])
     _, oid_length = _object_format(repository)
     source_commit = str(plan["source"]["commit_sha"])
     destination_ref = str(plan["destination"]["ref"])
@@ -384,6 +464,7 @@ def apply_repo_fetch_plan(
                 "after_commit": before,
             },
             "approval": approval_decision,
+            "run_binding": run_binding,
             "changed": False,
         }
         return {**receipt, "receipt_sha256": sha256_json(receipt)}
@@ -508,6 +589,7 @@ def apply_repo_fetch_plan(
         "source": plan["source"],
         "destination": {"ref": destination_ref, "before_commit": before, "after_commit": after},
         "approval": approval_decision,
+        "run_binding": run_binding,
         "changed": True,
         "worktree_mutated": False,
     }
@@ -563,6 +645,7 @@ def source_import_plan(
         "branch": ref,
         "source": source,
         "target": preview["target"],
+        "target_preimage": preview["target_preimage"],
         "document_sha256": preview["document_sha256"],
         "changed": preview["changed"],
         "changes": preview["changes"],
@@ -620,6 +703,7 @@ def apply_source_import_plan(
         ref,
         apply=True,
         expected_commit_sha=str(plan["source"]["commit_sha"]),
+        expected_target_preimage=plan["target_preimage"],
     )
     if applied["document_sha256"] != plan["document_sha256"]:
         raise StateError("source import write readback does not match the reviewed document digest")
@@ -630,6 +714,7 @@ def apply_source_import_plan(
         "plan_sha256": expected_plan_sha256,
         "source": plan["source"],
         "target": plan["target"],
+        "target_preimage": plan["target_preimage"],
         "document_sha256": applied["document_sha256"],
         "approval": approval_decision,
         "changed": applied["changed"],

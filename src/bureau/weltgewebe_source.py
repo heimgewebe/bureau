@@ -5,6 +5,7 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -13,7 +14,7 @@ from typing import Any
 from jsonschema import Draft7Validator, FormatChecker
 from jsonschema.exceptions import SchemaError
 
-from .legacy import ValidationError, atomic_write, canonical_json, read_json, sha256_json
+from .legacy import ValidationError, canonical_json, read_json, sha256_json
 from .schema_validation import DocumentSchemaError, SchemaSet
 
 SOURCE_NAME = "weltgewebe"
@@ -504,6 +505,57 @@ def _source_content(value: dict[str, Any] | None) -> dict[str, Any] | None:
     return {key: item for key, item in value.items() if key not in _PROVENANCE_ONLY_FIELDS}
 
 
+def _target_preimage(target: Path) -> dict[str, Any]:
+    if not target.exists():
+        return {"exists": False, "sha256": None}
+    if not target.is_file():
+        raise ValidationError(f"source target is not one regular file: {target}")
+    return {
+        "exists": True,
+        "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+    }
+
+
+def _validate_target_preimage(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict) or set(value) != {"exists", "sha256"}:
+        raise ValidationError("source target preimage is malformed")
+    exists = value.get("exists")
+    digest = value.get("sha256")
+    if not isinstance(exists, bool):
+        raise ValidationError("source target preimage exists flag is invalid")
+    if exists:
+        if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+            raise ValidationError("source target preimage digest is invalid")
+    elif digest is not None:
+        raise ValidationError("absent source target preimage must not carry a digest")
+    return {"exists": exists, "sha256": digest}
+
+
+def _atomic_write_if_preimage(
+    target: Path, content: str, expected_preimage: dict[str, Any]
+) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    descriptor, name = tempfile.mkstemp(prefix=f".{target.name}.", dir=target.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o600)
+        if _target_preimage(target) != expected_preimage:
+            raise ValidationError("source target changed after preview")
+        os.replace(temporary, target)
+        directory = os.open(target.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
 def source_sync(
     root: Path,
     repository: str | Path,
@@ -511,6 +563,7 @@ def source_sync(
     *,
     apply: bool = False,
     expected_commit_sha: str | None = None,
+    expected_target_preimage: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     snapshot = load_snapshot(repository, ref)
     if expected_commit_sha is not None and snapshot.commit_sha != expected_commit_sha:
@@ -521,7 +574,12 @@ def source_sync(
     candidate = build_source_document(snapshot)
     validate_source_document(candidate)
     target = root.resolve() / "registry" / "sources" / "weltgewebe.json"
-    existing = read_json(target) if target.exists() else None
+    target_preimage = _target_preimage(target)
+    if expected_target_preimage is not None:
+        expected_preimage = _validate_target_preimage(expected_target_preimage)
+        if target_preimage != expected_preimage:
+            raise ValidationError("source target changed after preview")
+    existing = read_json(target) if target_preimage["exists"] else None
     changes = _change_summary(existing, candidate)
     rendered = json.dumps(candidate, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     changed = _source_content(existing) != _source_content(candidate)
@@ -531,12 +589,15 @@ def source_sync(
             SchemaSet(root.resolve() / "schemas").validate("source", candidate, target)
         except DocumentSchemaError as exc:
             raise ValidationError(str(exc)) from exc
-        atomic_write(target, rendered)
+        if expected_target_preimage is None:
+            expected_preimage = target_preimage
+        _atomic_write_if_preimage(target, rendered, expected_preimage)
         applied = True
     report = _public_report(candidate, changes)
     report.update(
         {
             "target": str(target),
+            "target_preimage": target_preimage,
             "changed": changed,
             "applied": applied,
             "document_sha256": hashlib.sha256(

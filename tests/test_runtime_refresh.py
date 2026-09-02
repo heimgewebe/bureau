@@ -1769,6 +1769,53 @@ def test_protected_publication_activation_specialized_cas_replays_exact_response
     assert current["spec"] == ready
 
 
+
+def test_protected_publication_activation_specialized_cas_replays_after_freshness_window(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATION-CAS-DELAYED-REPLAY"
+    state_root = (tmp_path / "activation-cas-delayed-replay").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    clock = {"value": datetime(2026, 9, 2, 16, 0, tzinfo=timezone.utc)}
+    monkeypatch.setattr(
+        legacy, "utc_now", lambda: refresh.isoformat(clock["value"])
+    )
+    observation = protected_publication_activation_observation(
+        observed_at=clock["value"]
+    )
+    ready = protected_publication_activation_spec(
+        task_id, state="ready", activation_observation=observation
+    )
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+
+    first = store.put_runtime_refresh_protected_publication_activation_task_spec(
+        ready, idempotency_key=key, expected_revision=adopted["revision"]
+    )
+    clock["value"] += timedelta(minutes=10)
+    second = store.put_runtime_refresh_protected_publication_activation_task_spec(
+        ready, idempotency_key=key, expected_revision=adopted["revision"]
+    )
+
+    assert first["revision"] == 2
+    assert first["idempotent_replay"] is False
+    assert second["revision"] == 2
+    assert second["idempotent_replay"] is True
+    assert second["changed"] is False
+    current = store.task_spec(task_id)
+    assert isinstance(current, dict)
+    assert current["revision"] == 2
+    assert current["spec"] == ready
+
 def test_activate_runtime_refresh_authority_observes_after_publication_preflight(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

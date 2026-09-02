@@ -392,22 +392,6 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         raise TaskSpecError(
             "runtime-refresh protected-publication activation mutation contract is invalid"
         )
-    try:
-        observed_at = legacy.parse_time(str(observation["observed_at"]))
-        current_time = legacy.parse_time(legacy.utc_now())
-    except (TypeError, ValueError) as exc:
-        raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation timestamp is invalid"
-        ) from exc
-    if observed_at.tzinfo is None or current_time.tzinfo is None:
-        raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation timestamp is invalid"
-        )
-    age_seconds = (current_time - observed_at).total_seconds()
-    if age_seconds < -30 or age_seconds > 300:
-        raise TaskSpecError(
-            "runtime-refresh protected-publication activation observation is not fresh"
-        )
     validate_schema(connection)
     if (
         not isinstance(expected_revision, int)
@@ -454,6 +438,22 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
             )
         return canonical
 
+    try:
+        observed_at = legacy.parse_time(str(observation["observed_at"]))
+        current_time = legacy.parse_time(legacy.utc_now())
+    except (TypeError, ValueError) as exc:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation timestamp is invalid"
+        ) from exc
+    if observed_at.tzinfo is None or current_time.tzinfo is None:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation timestamp is invalid"
+        )
+    age_seconds = (current_time - observed_at).total_seconds()
+    if age_seconds < -30 or age_seconds > 300:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation is not fresh"
+        )
     current = get_current(connection, canonical["id"])
     if (
         current is None

@@ -7,7 +7,14 @@ from pathlib import Path
 import pytest
 
 from bureau import task_specs
-from bureau.core import Registry, StateStore
+from bureau.core import (
+    Registry,
+    StateStore,
+    task_revision_sha256,
+)
+from bureau.core import (
+    plan_sha256 as initiative_plan_sha256,
+)
 from bureau.legacy import StateError, canonical_json, sha256_json, utc_now
 from bureau.repository_identity_rebind import apply_plan, build_plan, plan_sha256
 
@@ -239,6 +246,56 @@ def test_legacy_acceptance_rebind_is_atomic_replayable_and_idempotent(tmp_path: 
     assert {store.task_spec(task_id)["revision"] for task_id in registry.tasks} == {2}
 
 
+@pytest.mark.parametrize("stale_field", ("task_sha256", "plan_sha256"))
+def test_stale_terminal_overlay_does_not_hide_old_binding(
+    tmp_path: Path, stale_field: str
+) -> None:
+    root, _, _ = _registry_root(tmp_path, legacy=True)
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    current = store.task_spec("TASK-A")
+    assert current is not None
+    bindings = {
+        "task_sha256": task_revision_sha256(current["spec"]),
+        "plan_sha256": initiative_plan_sha256(registry, "TEST-REBIND-V1"),
+    }
+    bindings[stale_field] = "0" * 64
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO task_status("
+            "task_id,task_sha256,plan_sha256,state,updated_at"
+            ") VALUES(?,?,?,?,?)",
+            (
+                "TASK-A",
+                bindings["task_sha256"],
+                bindings["plan_sha256"],
+                "verified",
+                utc_now(),
+            ),
+        )
+
+    plan = build_plan(
+        registry,
+        store,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+    )
+
+    items = {item["task_id"]: item for item in plan["items"]}
+    assert set(items) == {"TASK-A", "TASK-B"}
+    assert items["TASK-A"]["effective_state"] == "stale"
+
+    result = apply_plan(
+        registry,
+        store,
+        plan,
+        expected_plan_sha256=plan["plan_sha256"],
+    )
+    assert result["status"] == "applied"
+    assert result["migration_items"] == 2
+    assert store.task_spec("TASK-A")["spec"]["claims"][0]["resource"] == NEW_RESOURCE
+
+
 def test_plan_requires_exact_live_active_task_exclusion(tmp_path: Path) -> None:
     root, old_path, _ = _registry_root(tmp_path, legacy=True)
     registry = Registry.load(root)
@@ -321,6 +378,46 @@ def test_single_task_revision_drift_rolls_back_entire_batch(tmp_path: Path) -> N
     assert store.task_spec("TASK-B")["spec"]["metadata"]["drift"] == "after-plan"
     for item in plan["items"]:
         assert store.task_spec_mutation_receipt(item["idempotency_key"]) is None
+
+
+def test_failure_after_first_internal_write_rolls_back_entire_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, _ = _registry_root(tmp_path, legacy=True)
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    plan = build_plan(
+        registry,
+        store,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+    )
+    original = task_specs._put_validated_material
+    calls = 0
+
+    def fail_on_second(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise task_specs.TaskSpecError("synthetic second-write failure")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(task_specs, "_put_validated_material", fail_on_second)
+
+    with pytest.raises(StateError, match="synthetic second-write failure"):
+        apply_plan(
+            registry,
+            store,
+            plan,
+            expected_plan_sha256=plan["plan_sha256"],
+        )
+
+    assert calls == 2
+    assert store.task_spec("TASK-A")["revision"] == 1
+    assert store.task_spec("TASK-B")["revision"] == 1
+    for item in plan["items"]:
+        assert store.task_spec_mutation_receipt(item["idempotency_key"]) is None
+    assert store.replay_projection()["task_specs"]["matches_current"] is True
 
 
 def test_active_run_created_after_plan_blocks_without_any_revision(tmp_path: Path) -> None:

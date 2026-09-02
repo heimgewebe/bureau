@@ -8,7 +8,14 @@ from pathlib import Path
 from typing import Any
 
 from . import legacy, task_specs
-from .core import Registry, StateStore
+from .core import (
+    Registry,
+    StateStore,
+    task_revision_sha256,
+)
+from .core import (
+    plan_sha256 as initiative_plan_sha256,
+)
 
 PLAN_SCHEMA_VERSION = 1
 PLAN_KIND = "bureau.repository_identity_rebind_plan"
@@ -98,11 +105,22 @@ def _resource_pair(
     return old, new, binding_sha256
 
 
-def _task_rows(connection) -> list[dict[str, Any]]:
+def _task_rows(connection, registry: Registry) -> list[dict[str, Any]]:
+    status_columns = {
+        str(row["name"]) for row in connection.execute("PRAGMA table_info(task_status)")
+    }
+    has_revision_bindings = {"task_sha256", "plan_sha256"} <= status_columns
+    binding_fields = (
+        ",st.task_sha256 AS overlay_task_sha256,"
+        "st.plan_sha256 AS overlay_plan_sha256 "
+        if has_revision_bindings
+        else ",'' AS overlay_task_sha256,'' AS overlay_plan_sha256 "
+    )
     rows = connection.execute(
         "SELECT s.task_id,s.current_revision,r.spec_sha256,r.spec_json,"
-        "COALESCE(st.state,'') AS overlay_state "
-        "FROM task_specs s "
+        "COALESCE(st.state,'') AS overlay_state"
+        + binding_fields
+        + "FROM task_specs s "
         "JOIN task_spec_revisions r ON r.task_id=s.task_id "
         "AND r.revision=s.current_revision "
         "LEFT JOIN task_status st ON st.task_id=s.task_id "
@@ -118,7 +136,21 @@ def _task_rows(connection) -> list[dict[str, Any]]:
             ) from exc
         if not isinstance(spec, dict):
             raise legacy.StateError(f"TaskSpec is not an object for {row['task_id']}")
-        state = str(row["overlay_state"] or spec.get("state") or "")
+        spec_state = str(spec.get("state") or "")
+        overlay_state = str(row["overlay_state"] or "")
+        if spec_state in _TERMINAL_TASK_STATES or not overlay_state:
+            state = spec_state
+        elif overlay_state not in _TERMINAL_TASK_STATES:
+            state = overlay_state
+        else:
+            initiative_id = str(spec.get("initiative") or "")
+            overlay_is_current = (
+                has_revision_bindings
+                and row["overlay_task_sha256"] == task_revision_sha256(spec)
+                and row["overlay_plan_sha256"]
+                == initiative_plan_sha256(registry, initiative_id)
+            )
+            state = overlay_state if overlay_is_current else "stale"
         result.append(
             {
                 "task_id": str(row["task_id"]),
@@ -170,12 +202,13 @@ def _has_old_binding(spec: Mapping[str, Any], *, old_resource_id: str, old_path:
 
 def _candidates(
     connection,
+    registry: Registry,
     *,
     old_resource_id: str,
     old_path: str,
 ) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
-    for item in _task_rows(connection):
+    for item in _task_rows(connection, registry):
         if item["effective_state"] in _TERMINAL_TASK_STATES:
             continue
         if _has_old_binding(
@@ -389,6 +422,7 @@ def build_plan(
     with store.connect() as connection:
         candidates = _candidates(
             connection,
+            registry,
             old_resource_id=old_resource_id,
             old_path=str(old_resource["path"]),
         )
@@ -545,6 +579,7 @@ def apply_plan(
 
         candidates = _candidates(
             connection,
+            registry,
             old_resource_id=str(old_resource["id"]),
             old_path=str(old_resource["path"]),
         )
@@ -637,16 +672,12 @@ def apply_plan(
                     f"repository identity rebind preview drifted for task {task_id}"
                 )
             try:
-                result = task_specs.put_repository_identity_rebind(
+                result = task_specs._put_validated_material(
                     connection,
-                    task_id=task_id,
-                    expected_revision=int(item["expected_revision"]),
-                    expected_spec_sha256=str(item["expected_spec_sha256"]),
-                    old_resource_id=str(old_resource["id"]),
-                    new_resource_id=str(new_resource["id"]),
-                    old_repository_path=str(old_resource["path"]),
-                    new_repository_path=str(new_resource["path"]),
+                    preview["spec"],
                     idempotency_key=str(item["idempotency_key"]),
+                    expected_revision=int(item["expected_revision"]),
+                    source="repository-identity-rebind",
                 )
             except task_specs.TaskSpecError as exc:
                 raise legacy.StateError(str(exc)) from exc
@@ -660,6 +691,7 @@ def apply_plan(
 
         remaining = _candidates(
             connection,
+            registry,
             old_resource_id=str(old_resource["id"]),
             old_path=str(old_resource["path"]),
         )

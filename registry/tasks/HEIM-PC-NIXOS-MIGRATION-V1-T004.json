@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Prove closure-bound activation in a disposable sandbox",
+  "state": "planned",
+  "goal": "After T002 is terminal and independently reviewed, consume its exact immutable implementation revision to prove the managed Nix/NixOS build-and-activation contract end to end inside an exclusively reserved disposable non-production sandbox: realize an exact closure, activate only that approved closure, read it back independently, prove denied paths are effect-free and prove rollback without touching the productive Heim-PC.",
+  "priority": {"lane": "next", "rank": 4},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "service:heim-pc-nixos-activation-sandbox"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Runtime mutation is authorized only inside the exclusively reserved disposable service.heim-pc-nixos-activation-sandbox and only after T002 is terminal and its exact implementation revision is independently reviewed. Productive Heim-PC activation, boot state, production storage, EFI, Secure-Boot, firmware and reboot remain outside this authority."
+    }
+  },
+  "claims": [
+    {"resource": "component.heim-pc.nixos-managed-activation", "mode": "read", "isolation": "none"},
+    {"resource": "service.heim-pc-nixos-activation-sandbox", "mode": "exclusive", "isolation": "none"}
+  ],
+  "required_capabilities": ["repository", "shell", "grabowski"],
+  "depends_on": ["HEIM-PC-NIXOS-MIGRATION-V1-T002"],
+  "acceptance": [
+    {"id": "reviewed-implementation-bound", "assertion": "Before any runtime effect, the run is bound to the exact terminal T002 source revision and reviewed implementation evidence; the checkout/input is read-only for this task and any revision drift, dirty source or missing review fails closed.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:reviewed-implementation-bound"}},
+    {"id": "exclusive-sandbox-authority", "assertion": "Before any runtime effect, the run holds the exclusive service.heim-pc-nixos-activation-sandbox claim and independently proves that the target is disposable and isolated from the productive Heim-PC runtime, production storage, EFI, firmware and persistent boot state.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:exclusive-sandbox-authority"}},
+    {"id": "managed-build-realization", "assertion": "Using only the reviewed T002 implementation and bound inputs, a managed sandbox build realizes an immutable NixOS system closure and emits a receipt binding exact source revision, Control Release Set, effect class and closure.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:managed-build-realization"}},
+    {"id": "activation-receipt-bound", "assertion": "Sandbox activation consumes only the reviewed managed-build receipt bound to the exact source revision, immutable closure, sandbox target and Activation effect class; mutable source, branch names or caller-supplied closure strings alone cannot authorize activation.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:activation-receipt-bound"}},
+    {"id": "pre-effect-fail-closed", "assertion": "Missing, stale, mismatched or unauthorized source/review/receipt/target authority is rejected before runtime mutation, and evidence proves the denied path leaves the sandbox activation state unchanged.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:pre-effect-fail-closed"}},
+    {"id": "live-closure-readback", "assertion": "Independent live readback after authorized sandbox activation proves the running/booted system closure exactly equals the approved closure from the bound receipt.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:live-closure-readback"}},
+    {"id": "no-activation-reeval", "assertion": "Observed activation performs no Git, branch, lock or remote-input reevaluation after the reviewed build receipt is fixed; runtime evidence demonstrates closure selection remains receipt-bound.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:no-activation-reeval"}},
+    {"id": "rollback-recovery-proven", "assertion": "Inside the same disposable sandbox, rollback consumes the receipt-bound prior closure/recovery path and independent readback proves the expected rollback closure without mutable-source reevaluation.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:rollback-recovery-proven"}},
+    {"id": "production-boundary", "assertion": "This task terminates without productive nixos-rebuild switch, productive boot activation, production storage/EFI/Secure-Boot/firmware mutation, Heim-PC reboot or any equivalent production cutover effect.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:production-boundary"}},
+    {"id": "evidence-reviewed", "assertion": "The exact sandbox build, activation, readback, denied-path and rollback evidence is independently reviewed before T004 is considered terminal.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:evidence-reviewed"}}
+  ],
+  "metadata": {"supporting_task_for": "HEIM-PC-NIXOS-MIGRATION-V1-T002", "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9"}
+}

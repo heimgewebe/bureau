@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T005",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Implement the disposable storage-rehearsal harness",
+  "state": "planned",
+  "goal": "After T001 and T002 are terminal, implement and review the effect-free Heim-PC storage/recovery rehearsal harness that encodes the exact canonical GPT + EFI + recovery + LUKS2 + Btrfs topology, disposable-target preflight, restore/reconstruction workflow and evidence readback contracts without executing partitioning, formatting, LUKS creation or boot mutation.",
+  "priority": {"lane": "next", "rank": 5},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "path:/home/alex/repos/heim-pc/nixos/rehearsal",
+      "path:/home/alex/repos/heim-pc/scripts/nixos_storage_rehearsal.py",
+      "path:/home/alex/repos/heim-pc/tests/test_nixos_storage_rehearsal.py"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "This task is implementation-only. It may change and test repository rehearsal code but may not execute sgdisk, wipefs, cryptsetup luksFormat, mkfs, boot mutation or equivalent block-device effects. The real disposable rehearsal is delegated to T003 after this implementation is terminal and reviewed."
+    }
+  },
+  "claims": [
+    {"resource": "component.heim-pc.nixos-cutover-rehearsal", "mode": "write", "isolation": "worktree"}
+  ],
+  "required_capabilities": ["repository", "shell", "grabowski"],
+  "depends_on": ["HEIM-PC-NIXOS-MIGRATION-V1-T001", "HEIM-PC-NIXOS-MIGRATION-V1-T002"],
+  "acceptance": [
+    {"id": "exact-topology-contract", "assertion": "The reviewed rehearsal harness declaratively encodes GPT + EFI System Partition + recovery/boot-recovery surface + LUKS2 + Btrfs with exactly @root, @nix, @persist, @home, @data and @containers, and tests reject topology drift.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:exact-topology-contract"}},
+    {"id": "blank-target-contract", "assertion": "The harness requires an explicitly supplied blank disposable target and cannot infer or default to a production block device; missing target identity fails closed before any destructive command could be constructed.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:blank-target-contract"}},
+    {"id": "production-exclusion-guard", "assertion": "Preflight logic requires fresh target/backing evidence and rejects any target matching the productive Heim-PC root backing, mounted production filesystems or current production device identity; historical nvme0n1/SN850X references are never accepted as current authority.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:production-exclusion-guard"}},
+    {"id": "destructive-command-boundary", "assertion": "Partitioning, wipe, LUKS, filesystem and boot commands are generated/executed only behind a runtime executor that requires separate exclusive sandbox authority; unit tests prove this repository task cannot cross that boundary.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:destructive-command-boundary"}},
+    {"id": "topology-readback-contract", "assertion": "The harness implements independent readback that verifies GPT partitions, LUKS2 unlock, Btrfs filesystem and all required subvolumes/mounts rather than trusting command exit status alone.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:topology-readback-contract"}},
+    {"id": "restore-reconstruction-contract", "assertion": "The harness defines staged restore and fresh-system reconstruction checks that consume independently sourced off-host backup material without requiring the production system SSD, Grabowski, Bureau or network during the offline-recovery proof.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:restore-reconstruction-contract"}},
+    {"id": "recovery-evidence-contract", "assertion": "Evidence schemas separately bind backup coverage, restore usability, bootable recovery media, offline source/lock/trust roots and LUKS/recovery material; a currently green scoped backup alone cannot satisfy full-cutover recovery readiness.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:recovery-evidence-contract"}},
+    {"id": "implementation-only-boundary", "assertion": "This task terminates without sgdisk, wipefs, cryptsetup luksFormat, mkfs, real EFI mutation, Secure-Boot key mutation, firmware write, productive nixos-install, productive switch, reboot into a new OS or equivalent block-device/runtime effect.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:implementation-only-boundary"}},
+    {"id": "tests-and-ci", "assertion": "Focused effect-free harness, target-guard, topology-readback and recovery-contract tests plus required repository CI are green on the exact reviewed head before merge.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t005:tests-and-ci"}}
+  ],
+  "metadata": {"supporting_task_for": "HEIM-PC-NIXOS-MIGRATION-V1-T003", "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9", "historical_device_reference_not_authority": "WD_BLACK SN850X 2TB / historical nvme0n1 orientation only; never a default or current target"}
+}

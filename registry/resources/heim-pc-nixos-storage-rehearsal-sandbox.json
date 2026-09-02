@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "service.heim-pc-nixos-storage-rehearsal-sandbox",
+  "type": "service",
+  "parent": "root",
+  "metadata": {
+    "boundary": "Exclusive disposable non-production runtime surface for T003 cutover-readiness rehearsal. It may expose a blank virtual block device and disposable restore scratch only after fresh evidence proves that the backing target is not the productive Heim-PC root/system disk, not any mounted production filesystem and not production EFI/firmware state. The sandbox may consume independent off-host backup material read-only for restore testing but grants no production-device write authority.",
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
+    "lifecycle": "ephemeral-test-only",
+    "does_not_establish": [
+      "production block-device identity",
+      "production storage mutation authority",
+      "production EFI or firmware mutation authority",
+      "production NixOS install or activation authority",
+      "off-host backup completeness",
+      "cutover approval"
+    ]
+  }
+}

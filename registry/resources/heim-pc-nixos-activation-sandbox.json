@@ -4,8 +4,8 @@
   "type": "service",
   "parent": "root",
   "metadata": {
-    "boundary": "Exclusive disposable non-production runtime surface for T002 NixOS activation and independent closure readback. The sandbox must be isolated from the productive Heim-PC system, production storage, EFI, firmware and persistent host activation state.",
-    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T002",
+    "boundary": "Exclusive disposable non-production runtime surface for T004 managed NixOS build/activation and independent closure readback. The sandbox is isolated from the productive Heim-PC system, production storage, EFI, firmware and persistent host activation state; it consumes only an exact reviewed T002 implementation revision and its receipt-bound inputs.",
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
     "lifecycle": "ephemeral-test-only",
     "does_not_establish": [
       "production host mutation authority",

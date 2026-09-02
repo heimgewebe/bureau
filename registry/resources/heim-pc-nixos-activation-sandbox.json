@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "service.heim-pc-nixos-activation-sandbox",
+  "type": "service",
+  "parent": "root",
+  "metadata": {
+    "boundary": "Exclusive disposable non-production runtime surface for T002 NixOS activation and independent closure readback. The sandbox must be isolated from the productive Heim-PC system, production storage, EFI, firmware and persistent host activation state.",
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T002",
+    "lifecycle": "ephemeral-test-only",
+    "does_not_establish": [
+      "production host mutation authority",
+      "production NixOS activation authority",
+      "production storage mutation authority",
+      "EFI or firmware mutation authority",
+      "shared runtime ownership"
+    ]
+  }
+}

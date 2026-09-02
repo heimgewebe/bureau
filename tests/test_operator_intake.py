@@ -3924,6 +3924,52 @@ def test_task_revision_identity_guard_allows_write_to_read_revalidation() -> Non
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
 
 
+def test_task_revision_identity_guard_rejects_generic_action_token_only() -> None:
+    before = _identity_revision_task(
+        title="Repair Avira updater", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Repair database", resource="repo.database"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_treats_unicode_words_as_single_tokens() -> None:
+    before = _identity_revision_task(
+        title="Prüfe Avira Updater", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Prüfe Datenbank", resource="repo.database"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_unrelated_read_to_write() -> None:
+    before = _identity_revision_task(
+        title="Inspect backup reports", resource="repo.backup", mode="read"
+    )
+    after = _identity_revision_task(
+        title="Repair database", resource="repo.database"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_related_read_to_write() -> None:
+    before = _identity_revision_task(
+        title="Inspect database corruption", resource="repo.database", mode="read"
+    )
+    after = _identity_revision_task(
+        title="Repair database corruption", resource="repo.database"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
 def test_task_revision_identity_guard_rejects_initiative_rebind() -> None:
     before = _identity_revision_task(title="Keep the same task", resource="repo.alpha")
     after = _identity_revision_task(

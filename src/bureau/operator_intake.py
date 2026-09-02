@@ -1913,6 +1913,8 @@ def _task_projection_file_sha256(registry: Registry, task_id: str) -> str | None
 
 
 _TASK_REVISION_TEXT_CONTINUITY_MIN = 0.5
+_TASK_REVISION_TEXT_OVERLAP_MIN = 2
+_TASK_REVISION_TOKEN_RE = re.compile(r"[^\W_]+")
 
 
 def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
@@ -1926,13 +1928,14 @@ def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
     return scope
 
 
-def _task_revision_text_continuity(before: Any, after: Any) -> float:
-    before_tokens = set(_TOKEN_RE.findall(str(before or "").casefold()))
-    after_tokens = set(_TOKEN_RE.findall(str(after or "").casefold()))
+def _task_revision_text_evidence(before: Any, after: Any) -> tuple[float, int]:
+    before_tokens = set(_TASK_REVISION_TOKEN_RE.findall(str(before or "").casefold()))
+    after_tokens = set(_TASK_REVISION_TOKEN_RE.findall(str(after or "").casefold()))
     shorter = min(len(before_tokens), len(after_tokens))
     if shorter == 0:
-        return 0.0
-    return len(before_tokens & after_tokens) / shorter
+        return 0.0, 0
+    overlap = len(before_tokens & after_tokens)
+    return overlap / shorter, overlap
 
 
 def _validate_task_revision_identity_continuity(
@@ -1950,18 +1953,24 @@ def _validate_task_revision_identity_continuity(
         )
     before_scope = _task_revision_write_scope(before)
     after_scope = _task_revision_write_scope(after)
-    # Read-only revalidation/closeout may legitimately replace an earlier write plan.
-    # A revision that remains write-capable, however, must retain recognizable task
+    # A write -> read revision may legitimately be a revalidation/closeout. Any
+    # revision that becomes or remains write-capable must retain recognizable task
     # subject continuity instead of turning one permanent id into unrelated work.
-    if not before_scope or not after_scope:
+    if not after_scope:
         return
-    title_continuity = _task_revision_text_continuity(
+    title_continuity, title_overlap = _task_revision_text_evidence(
         before.get("title"), after.get("title")
     )
-    goal_continuity = _task_revision_text_continuity(
+    goal_continuity, goal_overlap = _task_revision_text_evidence(
         before.get("goal"), after.get("goal")
     )
-    if max(title_continuity, goal_continuity) >= _TASK_REVISION_TEXT_CONTINUITY_MIN:
+    if (
+        title_continuity >= _TASK_REVISION_TEXT_CONTINUITY_MIN
+        and title_overlap >= _TASK_REVISION_TEXT_OVERLAP_MIN
+    ) or (
+        goal_continuity >= _TASK_REVISION_TEXT_CONTINUITY_MIN
+        and goal_overlap >= _TASK_REVISION_TEXT_OVERLAP_MIN
+    ):
         return
     raise OperatorIntakeError(
         "task-revision-identity-discontinuity",
@@ -1973,8 +1982,11 @@ def _validate_task_revision_identity_continuity(
             "after_write_scope": sorted(after_scope),
             "write_scope_overlap": sorted(before_scope & after_scope),
             "title_continuity": round(title_continuity, 6),
+            "title_token_overlap": title_overlap,
             "goal_continuity": round(goal_continuity, 6),
+            "goal_token_overlap": goal_overlap,
             "minimum_text_continuity": _TASK_REVISION_TEXT_CONTINUITY_MIN,
+            "minimum_token_overlap": _TASK_REVISION_TEXT_OVERLAP_MIN,
         },
     )
 

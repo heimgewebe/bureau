@@ -94,7 +94,8 @@
       "kind": "normal-protected-pull-request",
       "reason": "The installed Bureau runtime and canonical Registry are integrity-bound to protected source fd9570bbc99719f601879482def202b23bddbf01 while current protected main is ccc741e4ffe2b966783033071f8c9d3c9ace83b2. The latest generic single-use authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829 is already verified and consumed and its contract requires a fresh successor. No currently unbound authority is generic: all remaining authorities are purpose-bound. Therefore exactly one create-only TaskSpec enters through protected Git and is adopted missing-only after merge.",
       "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260902.json",
-      "state_store_transition": "seed-missing-preserve-state-store"
+      "state_store_transition": "seed-missing-preserve-state-store",
+      "initial_state": "planned"
     },
     "runtime_refresh_authority": {
       "forbid_foreign_task_substitution": true,
@@ -202,6 +203,35 @@
       "preceding_authority_result_sha256": "91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c",
       "preceding_authority_target_sha256": "3360be330b3a9310169fc567f3aafccd783d7642d30f73e740812ebf92d94342",
       "preceding_authority_status": "verified"
+    },
+    "post_publication_activation": {
+      "schema_version": 1,
+      "initial_state": "planned",
+      "activation_state": "ready",
+      "required_state_store_transition": "compare-and-swap-current-revision",
+      "required_activation_source": "runtime-refresh-protected-publication-activation",
+      "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned to ready.",
+      "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "required_preconditions": [
+        "exact one-file protected publication PR is merged and its real merge commit is known",
+        "adopt-authority has seeded exactly the publication TaskSpec as planned using missing-only legacy-seed-exact semantics",
+        "current StateStore revision/digest still equal the adoption receipt",
+        "construct one activated candidate from that exact revision which adds metadata.protected_publication_adoption, adds protected-publication-and-missing-only-adoption to acceptance, adds the matching no-run protected-publication-adoption evidence requirement, and changes state planned to ready",
+        "validate the activated candidate with the installed runtime authority validator and no-run acceptance validator before CAS",
+        "prove protected publication/adoption against the real PR/merge and exact missing-only receipt before CAS",
+        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent"
+      ],
+      "does_not_establish": [
+        "runtime authority while current StateStore state remains planned",
+        "permission to invent or predict publication PR or merge commit",
+        "permission to activate from a StateStore revision other than the exact adoption receipt",
+        "permission to skip a second proof/readback after activation"
+      ]
     }
   },
   "priority": {
@@ -221,6 +251,6 @@
     "strategy": "The currently integrity-valid deployed Bureau runtime at fd9570bbc99719f601879482def202b23bddbf01 remains authoritative until a new immutable result is fully read back. If source ancestry, target freshness, CI, deployment/Registry identity or the new effect becomes unclear, preserve all precondition, attempt, intent, workspace, backup, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "planned",
   "title": "Single-Use Bureau-Runtime-Refresh successor for normal pickup on 2026-09-02"
 }

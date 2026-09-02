@@ -18,7 +18,7 @@
     ],
     "approval": {
       "action_class": "runtime_mutation",
-      "required_level": "operator",
+      "required_level": "break_glass",
       "note": "Runtime mutation is authorized only inside the exclusively reserved disposable service.heim-pc-nixos-activation-sandbox for the bounded activation/readback proof. Productive Heim-PC activation, boot state, production storage, EFI, Secure-Boot, firmware and reboot remain outside this authority."
     }
   },

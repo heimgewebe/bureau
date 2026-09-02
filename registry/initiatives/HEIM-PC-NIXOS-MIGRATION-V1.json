@@ -13,7 +13,7 @@
   },
   "completion": [
     "Declared facts, runtime facts and hardware acceptance are implemented as separate source-bound evidence surfaces and the archived physical Gate A/B evidence is consumed without being mistaken for current live truth.",
-    "Managed Nix/NixOS implementation outputs and the independently implemented storage-rehearsal component patch are combined only through explicit Bureau-recorded run-scoped non-main integration workspaces into exact reviewed Git revisions and content-addressed immutable source artifacts before runtime proofs consume them; successor runtime tasks do not reevaluate the live Heim-PC Git object store or mutable checkout.",
+    "Managed Nix/NixOS implementation outputs and the independently implemented storage-rehearsal component patch are handed between integration stages only through content-addressed immutable artifacts produced from Bureau-recorded run-scoped non-main workspaces; no successor runtime proof or integration stage depends on a moving or remote integration branch.",
     "Automated Nix/NixOS builds and activations use a managed, receipt-bound path that binds the exact source artifact, system closure and effect class and fails closed before unauthorized host mutation.",
     "The exact production storage target topology GPT + EFI + recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is reconstructed from a blank virtual disk, booted, unlocked and restore-tested before production storage mutation.",
     "All migration-relevant non-reproducible data are classified and covered by an independently restorable off-host backup; current green scoped backups are not treated as full-cutover recovery evidence.",
@@ -39,6 +39,7 @@
     },
     "source_artifacts": {
       "activation_proof": "artifact.heim-pc.nixos-activation-source",
+      "rehearsal_component_patch": "artifact.heim-pc.nixos-rehearsal-patch",
       "cutover_rehearsal": "artifact.heim-pc.nixos-rehearsal-source"
     },
     "candidate_events": {

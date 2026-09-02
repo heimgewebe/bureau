@@ -6,11 +6,12 @@
   "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/activation-source",
   "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/activation-source",
   "metadata": {
-    "boundary": "Create-only content-addressed whole-source artifact path produced by T006 from the exact reviewed T001+T002 integration commit and consumed by T004. Its manifest binds Git commit/tree identity, archive/content digest, Control Release Set and lock/input identity. T004 needs only this leased immutable artifact path and the disposable activation sandbox; it does not read the Heim-PC Git object store or mutable checkout.",
+    "boundary": "Create-only content-addressed whole-source artifact path produced by T006 from the exact reviewed T001+T002 integration tree and consumed read-only by T004 and T007. Its manifest binds Git commit/tree identity, archive/content digest, Control Release Set and lock/input identity. T004 uses it for the disposable activation proof; T007 materializes it as the immutable integrated source base before applying the independently reviewed T005 rehearsal-patch artifact. Neither consumer reads a moving T006 Git ref or requires a remote integration branch.",
     "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T006",
-    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+    "consumer_tasks": ["HEIM-PC-NIXOS-MIGRATION-V1-T004", "HEIM-PC-NIXOS-MIGRATION-V1-T007"],
     "lifecycle": "immutable-until-initiative-closeout",
     "does_not_establish": [
+      "remote branch publication authority",
       "production activation authority",
       "production host mutation authority",
       "mutable checkout authority",

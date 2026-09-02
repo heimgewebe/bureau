@@ -11,12 +11,15 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/heim-pc",
     "grabowski_resources": [
-      "service:heim-pc-nixos-activation-sandbox"
+      "service:heim-pc-nixos-activation-sandbox",
+      "path:/home/alex/repos/heim-pc/nixos/deployment",
+      "path:/home/alex/repos/heim-pc/scripts/managed_nix.py",
+      "path:/home/alex/repos/heim-pc/tests/test_managed_nix.py"
     ],
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Runtime mutation is authorized only inside the exclusively reserved disposable service.heim-pc-nixos-activation-sandbox and only after T002 is terminal and its exact implementation revision is independently reviewed. Productive Heim-PC activation, boot state, production storage, EFI, Secure-Boot, firmware and reboot remain outside this authority."
+      "note": "Runtime mutation is authorized only inside the exclusively reserved disposable service.heim-pc-nixos-activation-sandbox and only after T002 is terminal and its exact implementation revision is independently reviewed. The exact T002 implementation paths are externally reserved for the whole runtime proof so a concurrent writer cannot alter the tested source. Productive Heim-PC activation, boot state, production storage, EFI, Secure-Boot, firmware and reboot remain outside this authority."
     }
   },
   "claims": [
@@ -26,7 +29,7 @@
   "required_capabilities": ["repository", "shell", "grabowski"],
   "depends_on": ["HEIM-PC-NIXOS-MIGRATION-V1-T002"],
   "acceptance": [
-    {"id": "reviewed-implementation-bound", "assertion": "Before any runtime effect, the run is bound to the exact terminal T002 source revision and reviewed implementation evidence; the checkout/input is read-only for this task and any revision drift, dirty source or missing review fails closed.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:reviewed-implementation-bound"}},
+    {"id": "reviewed-implementation-bound", "assertion": "Before any runtime effect, the run is bound to the exact terminal T002 source revision and reviewed implementation evidence, and holds external reservations for nixos/deployment, scripts/managed_nix.py and tests/test_managed_nix.py for the whole proof; the checkout/input is read-only for this task and any revision drift, dirty source, lease loss or missing review fails closed.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:reviewed-implementation-bound"}},
     {"id": "exclusive-sandbox-authority", "assertion": "Before any runtime effect, the run holds the exclusive service.heim-pc-nixos-activation-sandbox claim and independently proves that the target is disposable and isolated from the productive Heim-PC runtime, production storage, EFI, firmware and persistent boot state.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:exclusive-sandbox-authority"}},
     {"id": "managed-build-realization", "assertion": "Using only the reviewed T002 implementation and bound inputs, a managed sandbox build realizes an immutable NixOS system closure and emits a receipt binding exact source revision, Control Release Set, effect class and closure.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:managed-build-realization"}},
     {"id": "activation-receipt-bound", "assertion": "Sandbox activation consumes only the reviewed managed-build receipt bound to the exact source revision, immutable closure, sandbox target and Activation effect class; mutable source, branch names or caller-supplied closure strings alone cannot authorize activation.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t004:activation-receipt-bound"}},

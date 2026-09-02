@@ -12,13 +12,16 @@
     "working_repository": "/home/alex/repos/heim-pc",
     "grabowski_resources": [
       "service:heim-pc-nixos-storage-rehearsal-sandbox",
+      "path:/home/alex/repos/heim-pc/nixos/rehearsal",
+      "path:/home/alex/repos/heim-pc/scripts/nixos_storage_rehearsal.py",
+      "path:/home/alex/repos/heim-pc/tests/test_nixos_storage_rehearsal.py",
       "host:heim-pc",
       "host:heimberry"
     ],
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Runtime/block-device mutation is authorized only inside the exclusively reserved disposable service.heim-pc-nixos-storage-rehearsal-sandbox and only with the exact terminal reviewed T005 harness. The productive Heim-PC block devices, EFI, Secure-Boot, firmware, boot state and OS remain outside this authority."
+      "note": "Runtime/block-device mutation is authorized only inside the exclusively reserved disposable service.heim-pc-nixos-storage-rehearsal-sandbox and only with the exact terminal reviewed T005 harness. The exact T005 harness paths are externally reserved for the whole rehearsal so a concurrent writer cannot alter the executing source. The productive Heim-PC block devices, EFI, Secure-Boot, firmware, boot state and OS remain outside this authority."
     }
   },
   "claims": [
@@ -30,7 +33,7 @@
   "required_capabilities": ["repository", "shell", "grabowski"],
   "depends_on": ["HEIM-PC-NIXOS-MIGRATION-V1-T001", "HEIM-PC-NIXOS-MIGRATION-V1-T002", "HEIM-PC-NIXOS-MIGRATION-V1-T004", "HEIM-PC-NIXOS-MIGRATION-V1-T005"],
   "acceptance": [
-    {"id": "reviewed-harness-bound", "assertion": "Before any block-device/runtime effect, the run is bound to the exact terminal T005 source revision and independent review evidence; the rehearsal implementation is read-only for T003 and any dirty state, revision drift or missing review fails closed.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t003:reviewed-harness-bound"}},
+    {"id": "reviewed-harness-bound", "assertion": "Before any block-device/runtime effect, the run is bound to the exact terminal T005 source revision and independent review evidence, and holds external reservations for nixos/rehearsal, scripts/nixos_storage_rehearsal.py and tests/test_nixos_storage_rehearsal.py for the whole rehearsal; the harness source is read-only for T003 and any dirty state, revision drift, lease loss or missing review fails closed.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t003:reviewed-harness-bound"}},
     {"id": "exclusive-disposable-target-gate", "assertion": "Before sgdisk, wipefs, cryptsetup luksFormat, mkfs or boot mutation, the run holds the exclusive service.heim-pc-nixos-storage-rehearsal-sandbox claim and fresh independent evidence proves the target is a blank disposable virtual disk whose backing is not the productive Heim-PC root/system disk, not any mounted production filesystem and not production EFI/firmware state; ambiguity fails closed before effect.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t003:exclusive-disposable-target-gate"}},
     {"id": "exact-storage-rehearsal", "assertion": "Starting from the independently proven blank disposable virtual disk, the exact production-target topology GPT + EFI System Partition + recovery/boot-recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is created, LUKS unlock is proven, every Btrfs subvolume is mounted correctly, the resulting disposable system actually boots, and independent readback proves the expected topology; the earlier LUKS+ext4 VM proof is not substituted for this gate.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t003:exact-storage-rehearsal"}},
     {"id": "data-classification", "assertion": "Fresh read-only inventory classifies every migration-relevant non-reproducible data class separately from caches and rebuildable state; current scoped backup success is not treated as proof of complete cutover coverage.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t003:data-classification"}},

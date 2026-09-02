@@ -1918,7 +1918,7 @@ def _task_projection_file_sha256(registry: Registry, task_id: str) -> str | None
 
 _TASK_REVISION_TEXT_CONTINUITY_MIN = 0.5
 _TASK_REVISION_SUBJECT_OVERLAP_MIN = 2
-_TASK_REVISION_TOKEN_RE = re.compile(r"[^\W_]+(?:[+#]+)?")
+_TASK_REVISION_TOKEN_RE = re.compile(r"@?\w+(?:(?:[-./]|::)\w+)*(?:[+#]+)?")
 # Process verbs, qualifiers, and function words are weak identity evidence. Keep
 # domain nouns/acronyms available so short subjects such as API/SSH still count.
 _TASK_REVISION_GENERIC_TOKENS = frozenset(
@@ -2048,8 +2048,12 @@ def _task_revision_text_is_continuous(
     elif continuity < _TASK_REVISION_TEXT_CONTINUITY_MIN:
         continuous = False
     elif resource_continuity:
-        continuous = subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN or (
-            subject_overlap == 1 and shorter_subject_count == 1
+        continuous = (
+            (
+                subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+                or (subject_overlap == 1 and shorter_subject_count == 1)
+            )
+            and full_continuity >= continuity
         )
     else:
         # A resource change must survive both interpretations of the first word:
@@ -2091,25 +2095,35 @@ def _validate_task_revision_identity_continuity(
         )
     before_scope = _task_revision_write_scope(before)
     after_scope = _task_revision_write_scope(after)
+    write_scope_overlap = before_scope & after_scope
     resource_overlap = _task_revision_resource_scope(before) & _task_revision_resource_scope(
         after
     )
-    # Capability changes do not change permanent task identity. Read-only closeouts
-    # must therefore retain the same subject too; otherwise write A -> read B -> write B
-    # could launder an unrelated task through a capability-only intermediate revision.
+    # Read-only revisions do not gain mutation authority. A later transition back to
+    # write scope is validated against the last write-capable TaskSpec by the binding
+    # layer, so a read-only closeout cannot launder an unrelated writable identity.
+    if not after_scope:
+        return
     title_continuous, title_evidence = _task_revision_text_is_continuous(
         before.get("title"),
         after.get("title"),
-        resource_continuity=bool(resource_overlap),
+        resource_continuity=bool(write_scope_overlap),
     )
     goal_continuous, goal_evidence = _task_revision_text_is_continuous(
         before.get("goal"),
         after.get("goal"),
-        resource_continuity=bool(resource_overlap),
+        resource_continuity=bool(write_scope_overlap),
     )
-    acceptance_overlap = _task_revision_acceptance_ids(before) & (
-        _task_revision_acceptance_ids(after)
+    before_acceptance = _task_revision_acceptance_ids(before)
+    after_acceptance = _task_revision_acceptance_ids(after)
+    acceptance_overlap = before_acceptance & after_acceptance
+    acceptance_continuity = (
+        bool(write_scope_overlap)
+        and len(acceptance_overlap) >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        and len(acceptance_overlap) == min(len(before_acceptance), len(after_acceptance))
     )
+    if acceptance_continuity:
+        return
     continuous_evidence = [
         evidence
         for continuous, evidence in (
@@ -2141,15 +2155,42 @@ def _validate_task_revision_identity_continuity(
             "task_id": after.get("id"),
             "before_write_scope": sorted(before_scope),
             "after_write_scope": sorted(after_scope),
-            "write_scope_overlap": sorted(before_scope & after_scope),
+            "write_scope_overlap": sorted(write_scope_overlap),
             "resource_overlap": sorted(resource_overlap),
             "acceptance_overlap": sorted(acceptance_overlap),
+            "acceptance_continuity": acceptance_continuity,
             "title_evidence": title_evidence,
             "goal_evidence": goal_evidence,
             "minimum_text_continuity": _TASK_REVISION_TEXT_CONTINUITY_MIN,
             "minimum_subject_token_overlap": _TASK_REVISION_SUBJECT_OVERLAP_MIN,
         },
     )
+
+
+def _task_revision_identity_baseline(
+    store: StateStore, current: dict[str, Any]
+) -> dict[str, Any]:
+    current_spec = current["spec"]
+    if _task_revision_write_scope(current_spec):
+        return current
+    task_id = str(current["task_id"])
+    current_revision = int(current["revision"])
+    from . import task_specs as task_specs_module
+
+    try:
+        with store.connect() as connection:
+            for revision in range(current_revision - 1, 0, -1):
+                candidate = task_specs_module.get_revision(connection, task_id, revision)
+                if _task_revision_write_scope(candidate["spec"]):
+                    return candidate
+    except (sqlite3.Error, task_specs_module.TaskSpecError) as exc:
+        raise OperatorIntakeError(
+            "task-revision-identity-baseline-read-failed",
+            "cannot reconstruct the last write-capable TaskSpec identity baseline",
+            retryable=True,
+            details={"task_id": task_id, "current_revision": current_revision},
+        ) from exc
+    return current
 
 
 def _task_spec_proposal_binding(
@@ -2178,7 +2219,12 @@ def _task_spec_proposal_binding(
             "TaskSpec revision candidate must explicitly bind the exact existing task_id",
             details={"candidate_task_id": explicit_task_id, "task_id": task_id},
         )
-    _validate_task_revision_identity_continuity(current["spec"], task_json)
+    identity_baseline = (
+        _task_revision_identity_baseline(store, current)
+        if _task_revision_write_scope(task_json)
+        else current
+    )
+    _validate_task_revision_identity_continuity(identity_baseline["spec"], task_json)
     return {
         "operation": "revise",
         "expected_revision": int(current["revision"]),
@@ -2289,7 +2335,14 @@ def _validate_task_spec_proposal_binding(
             )
         if baseline_state:
             assert current is not None
-            _validate_task_revision_identity_continuity(current["spec"], task_json)
+            identity_baseline = (
+                _task_revision_identity_baseline(store, current)
+                if _task_revision_write_scope(task_json)
+                else current
+            )
+            _validate_task_revision_identity_continuity(
+                identity_baseline["spec"], task_json
+            )
         if event["record"].get("task_id") != task_id:
             raise OperatorIntakeError(
                 "candidate-task-identity-mismatch",

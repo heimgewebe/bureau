@@ -15,6 +15,7 @@ import pytest
 from bureau import cli as bureau_cli
 from bureau import operator_intake as operator_intake_module
 from bureau import runtime_identity as runtime_identity_module
+from bureau import task_specs as task_specs_module
 from bureau.core import Registry, StateStore
 from bureau.live_register import live_register_record
 from bureau.operator_intake import (
@@ -4014,6 +4015,22 @@ def test_task_revision_identity_guard_allows_exact_one_token_title() -> None:
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
 
 
+def test_task_revision_identity_guard_allows_retained_typed_acceptance_anchor() -> None:
+    before = _identity_revision_task(
+        title="Signed one call replay filter",
+        resource="repo.grabowski",
+        goal="Decouple read only replay handling",
+        acceptance_ids=("replay-proof", "transport-proof"),
+    )
+    after = _identity_revision_task(
+        title="READ_ONLY transport proof",
+        resource="repo.grabowski",
+        goal="Prove the transport contract before cutover",
+        acceptance_ids=("replay-proof", "transport-proof"),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
 def test_task_revision_identity_guard_rejects_unanchored_exact_one_token_title() -> None:
     before = _identity_revision_task(
         title="Upgrade",
@@ -4044,16 +4061,14 @@ def test_task_revision_identity_guard_treats_unicode_words_as_single_tokens() ->
     assert raised.value.code == "task-revision-identity-discontinuity"
 
 
-def test_task_revision_identity_guard_rejects_unrelated_write_to_read_closeout() -> None:
+def test_task_revision_identity_guard_allows_unrelated_write_to_read_closeout() -> None:
     before = _identity_revision_task(
         title="Build backup retention", resource="repo.shared"
     )
     after = _identity_revision_task(
         title="Inspect dashboard metrics", resource="repo.shared", mode="read"
     )
-    with pytest.raises(OperatorIntakeError) as raised:
-        operator_intake_module._validate_task_revision_identity_continuity(before, after)
-    assert raised.value.code == "task-revision-identity-discontinuity"
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
 
 
 def test_task_revision_identity_guard_rejects_unlisted_leading_process_word() -> None:
@@ -4074,6 +4089,44 @@ def test_task_revision_identity_guard_preserves_leading_noun_on_resource_change(
     )
     after = _identity_revision_task(
         title="Dashboard retention policy", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_checks_full_tokens_on_retained_write_scope() -> None:
+    before = _identity_revision_task(
+        title="Avira updater service", resource="repo.shared"
+    )
+    after = _identity_revision_task(
+        title="Database updater service", resource="repo.shared"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_ignores_incidental_read_claim_overlap() -> None:
+    before = _identity_revision_task(title="Repair tests", resource="repo.alpha")
+    before["claims"].append(
+        {"resource": "repo.shared", "mode": "read", "isolation": "worktree"}
+    )
+    after = _identity_revision_task(title="Build tests", resource="repo.beta")
+    after["claims"].append(
+        {"resource": "repo.shared", "mode": "read", "isolation": "worktree"}
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_preserves_scoped_and_hyphenated_identifiers() -> None:
+    before = _identity_revision_task(
+        title="Repair @scope/pkg release", resource="repo.package"
+    )
+    after = _identity_revision_task(
+        title="Repair scope-pkg release", resource="repo.other"
     )
     with pytest.raises(OperatorIntakeError) as raised:
         operator_intake_module._validate_task_revision_identity_continuity(before, after)
@@ -4138,6 +4191,69 @@ def test_task_revision_identity_guard_rejects_initiative_rebind() -> None:
     with pytest.raises(OperatorIntakeError) as raised:
         operator_intake_module._validate_task_revision_identity_continuity(before, after)
     assert raised.value.code == "task-revision-initiative-mismatch"
+
+
+def test_task_propose_reactivation_uses_last_write_capable_identity(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    original = store.task_spec(task_id)
+    assert original is not None
+
+    closeout = json.loads(json.dumps(original["spec"]))
+    closeout["title"] = "Inspect unrelated dashboard metrics"
+    closeout["goal"] = "Read a different dashboard subject"
+    closeout["claims"][0]["mode"] = "read"
+    closeout["acceptance"][0]["id"] = "dashboard-proof"
+    with store.connect() as connection:
+        task_specs_module.put(
+            connection,
+            closeout,
+            idempotency_key="test:read-closeout",
+            expected_revision=int(original["revision"]),
+            source="test",
+        )
+    read_current = store.task_spec(task_id)
+    assert read_current is not None
+    assert int(read_current["revision"]) == int(original["revision"]) + 1
+    identity_baseline = operator_intake_module._task_revision_identity_baseline(
+        store, read_current
+    )
+    assert identity_baseline["revision"] == original["revision"]
+
+    reactivation = json.loads(json.dumps(closeout))
+    reactivation["claims"][0]["mode"] = "write"
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:laundered-read-reactivation",
+        title="Attempt laundered read reactivation",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:laundered-read-reactivation",
+        source_sha256="8" * 64,
+        desired_outcome="Reject an unrelated write reactivation",
+        repo="repo.beta",
+        task_id=task_id,
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=reactivation,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "laundered-read-reactivation.proposal.json",
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
 
 
 def test_reviewed_pre_hardening_revision_cannot_bypass_publication_guard(

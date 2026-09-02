@@ -2199,6 +2199,7 @@ def test_github_redirect_slug_does_not_create_a_second_pr_reservation(
     reservation = pr_reservations[0]
     assert reservation.repository == "heimgewebe/repoground"
     assert reservation.resource == "repo.repoground"
+    assert reservation.scope_resources == ("repo.repoground", "repo.lenskit")
 
     rendered = json.dumps([item.__dict__ for item in reservations], default=str)
     assert "heimgewebe/lenskit" not in rendered
@@ -2206,6 +2207,59 @@ def test_github_redirect_slug_does_not_create_a_second_pr_reservation(
         isinstance(item, bureau_v2.OpenPullRequestReservation) and item.observation_failed
         for item in reservations
     )
+
+
+def test_github_redirect_missing_task_binding_still_blocks_absorbed_alias_claim(
+    registry_factory, monkeypatch
+):
+    root = _redirect_registry(
+        registry_factory,
+        monkeypatch,
+        lambda slug: "heimgewebe/repoground",
+    )
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["claims"][0] = {
+        "resource": "repo.lenskit",
+        "mode": "write",
+        "isolation": "worktree",
+    }
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    def missing_binding(repository):
+        if repository not in {"heimgewebe/lenskit", "heimgewebe/repoground"}:
+            return []
+        return [
+            {
+                "number": 1130,
+                "title": "repoground change without Bureau binding",
+                "headRefName": "feat/repoground",
+                "body": "",
+                "url": "https://github.com/heimgewebe/repoground/pull/1130",
+            }
+        ]
+
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", missing_binding)
+
+    registry = Registry.load(root)
+    reservations = bureau_v2.open_pull_request_reservations(registry)
+    reservation = next(
+        item
+        for item in reservations
+        if isinstance(item, bureau_v2.OpenPullRequestReservation) and item.number == 1130
+    )
+
+    assert reservation.resource == "repo.repoground"
+    assert reservation.task_binding_status == "missing"
+    assert reservation.scope_resources == ("repo.repoground", "repo.lenskit")
+
+    assessment = bureau_v2._task_open_pr_scope_assessment(
+        registry.tasks["BUR-TEST-001-T001"], reservations, registry
+    )
+    item = assessment["reservations"][0]
+    assert item["classification"] == "repository-blocked"
+    assert item["conflicting_scope_resources"] == ["repo.lenskit"]
+    assert "additional repository resources" in item["diagnostic"]
 
 
 def test_github_redirect_provider_failure_blocks_instead_of_guessing(

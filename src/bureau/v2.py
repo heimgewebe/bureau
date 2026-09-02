@@ -2033,6 +2033,13 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             result.append(_repo_write_guard_failure_reservation(resource, observation_error))
             continue
         pull_requests = observed.get(repository, [])
+        absorbed_scope_resources = tuple(
+            sorted(
+                alias_resource_id
+                for alias_resource_id, alias in classification.alias_by_resource.items()
+                if alias.get("canonical_resource_id") == resource.id
+            )
+        )
         contradictions = github_repository.contradictory_canonical_identities(
             repository,
             (str(pull_request.get("url") or "") for pull_request in pull_requests),
@@ -2056,8 +2063,15 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             task_ids, binding_status, binding_reason = _pull_request_task_binding(
                 pull_request, registry
             )
-            scope_resources = _open_pr_scope_resources_for_binding(
-                registry, resource.id, task_ids, binding_status
+            scope_resources = tuple(
+                dict.fromkeys(
+                    (
+                        *_open_pr_scope_resources_for_binding(
+                            registry, resource.id, task_ids, binding_status
+                        ),
+                        *absorbed_scope_resources,
+                    )
+                )
             )
             file_scope_complete, file_scope, file_scope_diagnostic = _file_scope_from_pull_request(
                 pull_request, repository, number

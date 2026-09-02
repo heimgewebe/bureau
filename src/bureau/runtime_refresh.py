@@ -2904,6 +2904,7 @@ def _validated_protected_publication_activation_observation(
     *,
     activation_created_at: str,
     target_main_commit: str,
+    expected_target_sha256: str | None = None,
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise RuntimeRefreshError(
@@ -2926,6 +2927,13 @@ def _validated_protected_publication_activation_observation(
         or not _is_sha256(value.get("target_sha256"))
         or value.get("target_sha256")
         != sha256_bytes(canonical_bytes(_target_payload(value)))
+        or (
+            expected_target_sha256 is not None
+            and (
+                not _is_sha256(expected_target_sha256)
+                or value.get("target_sha256") != expected_target_sha256
+            )
+        )
     ):
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-observation-unproven",
@@ -2935,6 +2943,8 @@ def _validated_protected_publication_activation_observation(
                 "status": value.get("status"),
                 "observed_main_commit": value.get("main_commit"),
                 "target_main_commit": target_main_commit,
+                "observed_target_sha256": value.get("target_sha256"),
+                "expected_target_sha256": expected_target_sha256,
             },
         )
     try:
@@ -3157,6 +3167,7 @@ def _validate_protected_publication_activation_receipt(
     historical_spec: dict[str, Any],
     approval_task_id: str,
     target_main_commit: str,
+    target_sha256: str | None = None,
 ) -> None:
     adoption_revision = adoption_proof.get("adoption_revision")
     adoption_spec_sha256 = adoption_proof.get("task_spec_sha256")
@@ -3250,6 +3261,7 @@ def _validate_protected_publication_activation_receipt(
             activation_observation_value,
             activation_created_at=activation_created_at,
             target_main_commit=target_main_commit,
+            expected_target_sha256=target_sha256,
         )
         if activation_observation_value is not None
         else None
@@ -3292,6 +3304,7 @@ def _validate_pre_effect_protected_publication_activation(
     authority: dict[str, Any],
     approval_task_id: str,
     target_main_commit: str | None,
+    target_sha256: str,
     require_remote_adoption_proof: bool,
 ) -> None:
     historical_bootstrap = _historical_protected_publication_bootstrap(
@@ -3401,6 +3414,7 @@ def _validate_pre_effect_protected_publication_activation(
         historical_spec=historical["spec"],
         approval_task_id=approval_task_id,
         target_main_commit=target_main_commit,
+        target_sha256=target_sha256,
     )
 
 
@@ -3477,6 +3491,7 @@ def _validate_authoritative_runtime_refresh_task(
         authority=authority,
         approval_task_id=approval_task_id,
         target_main_commit=target_main_commit,
+        target_sha256=target_sha256,
         require_remote_adoption_proof=require_remote_adoption_proof,
     )
     consumption_value = authority.get("consumption")
@@ -4039,7 +4054,6 @@ def activate_runtime_refresh_authority(
             "protected runtime authority activation requires the canonical publication checks",
             details={"observed_required_checks": list(required_checks)},
         )
-    current_time = now or utc_now()
     store = authority_store or _default_authority_store()
     state_store_binding = _authority_store_binding(store)
     current = _read_authority_task(store, approval_task_id)
@@ -4086,6 +4100,9 @@ def activate_runtime_refresh_authority(
             observation_value,
             activation_created_at=current["created_at"],
             target_main_commit=expected_main_commit,
+            expected_target_sha256=observation_value.get("target_sha256")
+            if isinstance(observation_value, dict)
+            else None,
         )
         historical = _read_authority_task_revision(store, approval_task_id, 1)
         historical_spec = historical.get("spec")
@@ -4114,6 +4131,7 @@ def activate_runtime_refresh_authority(
             historical_spec=historical_spec,
             approval_task_id=approval_task_id,
             target_main_commit=expected_main_commit,
+            target_sha256=observation["target_sha256"],
         )
         return {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
@@ -4166,11 +4184,12 @@ def activate_runtime_refresh_authority(
         target_main_commit=expected_main_commit,
         task_file_sha256=expected_task_file_sha256,
     )
+    observation_time = now or utc_now()
     observation = observer(
         repository=repository,
         manifest_path=manifest_path.expanduser().resolve(),
         required_checks=required_checks,
-        now=current_time,
+        now=observation_time,
     )
     verify_digest(observation, "observation_sha256")
     if observation.get("status") not in {"candidate", "alert"}:
@@ -4191,6 +4210,12 @@ def activate_runtime_refresh_authority(
                 "observed_main_commit": observation.get("main_commit"),
             },
         )
+    observation = _validated_protected_publication_activation_observation(
+        observation,
+        activation_created_at=isoformat(observation_time),
+        target_main_commit=expected_main_commit,
+        expected_target_sha256=observation["target_sha256"],
+    )
     _validate_candidate_runtime_source_identity(observation)
     source_precondition = _validated_runtime_source_precondition(
         authority.get("source_precondition")
@@ -4244,6 +4269,7 @@ def activate_runtime_refresh_authority(
         historical_spec=spec,
         approval_task_id=approval_task_id,
         target_main_commit=expected_main_commit,
+        target_sha256=observation["target_sha256"],
     )
     return {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,

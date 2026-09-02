@@ -393,10 +393,54 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
             "runtime-refresh protected-publication activation mutation contract is invalid"
         )
     validate_schema(connection)
+    if (
+        not isinstance(expected_revision, int)
+        or isinstance(expected_revision, bool)
+        or expected_revision < 1
+    ):
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation requires exact planned CAS baseline"
+        )
+    replay = connection.execute(
+        "SELECT task_id,expected_revision,requested_sha256,resulting_revision "
+        "FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if replay is not None:
+        baseline = get_revision(connection, canonical["id"], expected_revision)
+        expected_key = (
+            f"{RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX}"
+            f"{canonical['id']}:{merge_commit}:{baseline['spec_sha256']}"
+        )
+        digest = task_spec_digest(canonical)
+        resulting_revision = replay["resulting_revision"]
+        result = (
+            get_revision(connection, canonical["id"], int(resulting_revision))
+            if isinstance(resulting_revision, int)
+            else None
+        )
+        if (
+            idempotency_key != expected_key
+            or not isinstance(baseline.get("spec"), Mapping)
+            or baseline["spec"].get("state") != "planned"
+            or replay["task_id"] != canonical["id"]
+            or replay["expected_revision"] != expected_revision
+            or replay["requested_sha256"] != digest
+            or resulting_revision != expected_revision + 1
+            or not isinstance(result, dict)
+            or result.get("spec_sha256") != digest
+            or result.get("source")
+            != "runtime-refresh-protected-publication-activation"
+            or result.get("spec") != canonical
+        ):
+            raise TaskSpecError(
+                "runtime-refresh protected-publication activation replay binding is invalid"
+            )
+        return canonical
+
     current = get_current(connection, canonical["id"])
     if (
         current is None
-        or expected_revision is None
         or current.get("revision") != expected_revision
         or not isinstance(current.get("spec"), Mapping)
         or current["spec"].get("state") != "planned"

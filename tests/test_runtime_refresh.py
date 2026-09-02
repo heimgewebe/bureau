@@ -815,6 +815,44 @@ def test_protected_publication_activation_rejects_requested_target_mismatch(
     assert raised.value.details["expected_target_sha256"] == requested_target
 
 
+def test_protected_publication_activation_specialized_cas_rejects_stale_observation_before_write(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-ACTIVATION-STALE-CAS"
+    state_root = (tmp_path / "stale-cas").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(
+        task_id, state="ready", include_activation_observation=False
+    )
+    stale = protected_publication_activation_observation(
+        observed_at=datetime(2000, 1, 1, tzinfo=timezone.utc)
+    )
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+
+    with pytest.raises(legacy.StateError) as raised:
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            ready,
+            idempotency_key=key,
+            expected_revision=adopted["revision"],
+            activation_observation=stale,
+        )
+    assert "observation is not fresh" in str(raised.value)
+    current = store.task_spec(task_id)
+    assert isinstance(current, dict)
+    assert current["revision"] == 1
+    assert current["spec"]["state"] == "planned"
+
+
 def test_protected_publication_activation_rejects_stale_runtime_observation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -822,11 +860,32 @@ def test_protected_publication_activation_rejects_stale_runtime_observation(
     observation = protected_publication_activation_observation(
         observed_at=datetime(2026, 9, 2, 12, 0, tzinfo=timezone.utc)
     )
-    store = seed_protected_publication_activation_store(
-        tmp_path / "stale-observation",
-        task_id,
-        activation_observation=observation,
+    state_root = (tmp_path / "stale-observation").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
     )
+    ready = protected_publication_activation_spec(
+        task_id, state="ready", activation_observation=observation
+    )
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    from bureau import task_specs
+
+    with store.immediate() as connection:
+        task_specs._put_validated_material(
+            connection,
+            task_specs._canonical_spec(ready),
+            idempotency_key=key,
+            expected_revision=adopted["revision"],
+            source="runtime-refresh-protected-publication-activation",
+        )
     monkeypatch.setattr(
         refresh,
         "_prove_protected_publication_adoption",
@@ -1548,10 +1607,8 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     assert isinstance(current, dict)
     assert current["spec"]["state"] == "ready"
     assert (
-        current["spec"]["metadata"][
-            refresh.RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD
-        ]
-        == observation
+        refresh.RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD
+        not in current["spec"]["metadata"]
     )
     activation_key = (
         f"runtime-refresh-protected-publication-activation:{task_id}:"
@@ -1560,6 +1617,19 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     receipt = store.task_spec_mutation_receipt(activation_key)
     assert isinstance(receipt, dict)
     assert receipt["resulting_revision"] == 2
+    evidence_path = refresh._activation_evidence_path(store, activation_key)
+    evidence = refresh.read_json(evidence_path)
+    refresh.verify_digest(evidence, "evidence_sha256")
+    assert evidence["observation"] == observation
+    assert first["activation_evidence_sha256"] == evidence["evidence_sha256"]
+    conflicting_evidence = json.loads(json.dumps(evidence))
+    conflicting_evidence["validated_at"] = "2026-09-02T00:00:00Z"
+    with pytest.raises(refresh.RuntimeRefreshError) as conflict:
+        refresh._persist_activation_evidence(
+            store, evidence=conflicting_evidence, idempotency_key=activation_key
+        )
+    assert conflict.value.code == "authority-activation-evidence-conflict"
+    assert refresh.read_json(evidence_path) == evidence
 
     second = refresh.activate_runtime_refresh_authority(
         registry_root=tmp_path / "registry",
@@ -1576,7 +1646,194 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     )
     assert second["status"] == "already_ready"
     assert second["revision"] == 2
+    assert second["activation_evidence_sha256"] == evidence["evidence_sha256"]
     assert second["idempotent_replay"] is True
+
+
+def test_activate_runtime_refresh_authority_resumes_fresh_pre_cas_evidence_without_reobserve(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATE-PRE-CAS-RESUME"
+    state_root = (tmp_path / "pre-cas-resume-state").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    from bureau import task_specs
+
+    planned_sha = task_specs.task_spec_digest(planned)
+    store.put_task_spec(
+        planned,
+        idempotency_key=f"legacy-seed-exact:{task_id}:{planned_sha}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    registry = SimpleNamespace(tasks={task_id: SimpleNamespace(raw=planned)})
+    publication = {
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "main_commit": MAIN,
+        "publication_pr": 2222,
+        "publication_merge_commit": "4" * 40,
+        "task_path": f"registry/tasks/{task_id}.json",
+        "task_file_sha256": "c" * 64,
+        "check_summary": {},
+        "task_state": "planned",
+    }
+    monkeypatch.setattr(
+        refresh,
+        "verify_runtime_refresh_authority_publication",
+        lambda **_: (registry, publication),
+    )
+    clock = {"value": datetime(2026, 9, 2, 15, 0, tzinfo=timezone.utc)}
+    monkeypatch.setattr(refresh, "utc_now", lambda: clock["value"])
+    monkeypatch.setattr(
+        task_specs.legacy,
+        "utc_now",
+        lambda: refresh.isoformat(clock["value"]),
+    )
+    observation = protected_publication_activation_observation(
+        observed_at=clock["value"]
+    )
+    original_put = refresh._put_authority_task
+
+    def lose_before_cas(*_: Any, **__: Any) -> dict[str, Any]:
+        raise refresh.RuntimeRefreshError(
+            "simulated-pre-cas-response-loss", "simulated pre-CAS interruption"
+        )
+
+    monkeypatch.setattr(refresh, "_put_authority_task", lose_before_cas)
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.activate_runtime_refresh_authority(
+            registry_root=tmp_path / "registry",
+            manifest_path=tmp_path / "deployment-manifest.json",
+            repository=refresh.DEFAULT_REPOSITORY,
+            approval_task_id=task_id,
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            expected_main_commit=MAIN,
+            expected_task_file_sha256="c" * 64,
+            authority_store=store,
+            registry=registry,
+            observer=lambda **_: observation,
+        )
+    assert raised.value.code == "simulated-pre-cas-response-loss"
+    current = store.task_spec(task_id)
+    assert isinstance(current, dict)
+    assert current["revision"] == 1
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{planned_sha}"
+    )
+    evidence_before = refresh.read_json(refresh._activation_evidence_path(store, key))
+
+    clock["value"] += timedelta(seconds=60)
+    monkeypatch.setattr(refresh, "_put_authority_task", original_put)
+    resumed = refresh.activate_runtime_refresh_authority(
+        registry_root=tmp_path / "registry",
+        manifest_path=tmp_path / "deployment-manifest.json",
+        repository=refresh.DEFAULT_REPOSITORY,
+        approval_task_id=task_id,
+        publication_pr=2222,
+        publication_merge_commit="4" * 40,
+        expected_main_commit=MAIN,
+        expected_task_file_sha256="c" * 64,
+        authority_store=store,
+        registry=registry,
+        observer=lambda **_: pytest.fail("fresh pre-CAS evidence must avoid re-observation"),
+    )
+    assert resumed["status"] == "ready"
+    assert resumed["revision"] == 2
+    assert resumed["activation_evidence_sha256"] == evidence_before["evidence_sha256"]
+    assert refresh.read_json(refresh._activation_evidence_path(store, key)) == evidence_before
+
+
+def test_activate_runtime_refresh_authority_rejects_stale_orphan_evidence_without_overwrite(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATE-STALE-ORPHAN-EVIDENCE"
+    state_root = (tmp_path / "stale-orphan-state").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    from bureau import task_specs
+
+    planned_sha = task_specs.task_spec_digest(planned)
+    store.put_task_spec(
+        planned,
+        idempotency_key=f"legacy-seed-exact:{task_id}:{planned_sha}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    registry = SimpleNamespace(tasks={task_id: SimpleNamespace(raw=planned)})
+    publication = {
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "main_commit": MAIN,
+        "publication_pr": 2222,
+        "publication_merge_commit": "4" * 40,
+        "task_path": f"registry/tasks/{task_id}.json",
+        "task_file_sha256": "c" * 64,
+        "check_summary": {},
+        "task_state": "planned",
+    }
+    monkeypatch.setattr(
+        refresh,
+        "verify_runtime_refresh_authority_publication",
+        lambda **_: (registry, publication),
+    )
+    clock = {"value": datetime(2026, 9, 2, 15, 0, tzinfo=timezone.utc)}
+    monkeypatch.setattr(refresh, "utc_now", lambda: clock["value"])
+    observation = protected_publication_activation_observation(
+        observed_at=clock["value"]
+    )
+
+    monkeypatch.setattr(
+        refresh,
+        "_put_authority_task",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            refresh.RuntimeRefreshError(
+                "simulated-pre-cas-response-loss", "simulated pre-CAS interruption"
+            )
+        ),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError):
+        refresh.activate_runtime_refresh_authority(
+            registry_root=tmp_path / "registry",
+            manifest_path=tmp_path / "deployment-manifest.json",
+            repository=refresh.DEFAULT_REPOSITORY,
+            approval_task_id=task_id,
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            expected_main_commit=MAIN,
+            expected_task_file_sha256="c" * 64,
+            authority_store=store,
+            registry=registry,
+            observer=lambda **_: observation,
+        )
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{planned_sha}"
+    )
+    evidence_path = refresh._activation_evidence_path(store, key)
+    evidence_before = refresh.read_json(evidence_path)
+    clock["value"] += timedelta(minutes=10)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as stale:
+        refresh.activate_runtime_refresh_authority(
+            registry_root=tmp_path / "registry",
+            manifest_path=tmp_path / "deployment-manifest.json",
+            repository=refresh.DEFAULT_REPOSITORY,
+            approval_task_id=task_id,
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            expected_main_commit=MAIN,
+            expected_task_file_sha256="c" * 64,
+            authority_store=store,
+            registry=registry,
+            observer=lambda **_: pytest.fail("stale orphan evidence must not be replaced"),
+        )
+    assert stale.value.code == "authority-preflight-publication-activation-observation-unproven"
+    current = store.task_spec(task_id)
+    assert isinstance(current, dict)
+    assert current["revision"] == 1
+    assert current["spec"]["state"] == "planned"
+    assert refresh.read_json(evidence_path) == evidence_before
 
 
 def test_activate_runtime_refresh_authority_replays_after_late_target_binding(

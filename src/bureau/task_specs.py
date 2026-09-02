@@ -293,6 +293,7 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
     *,
     idempotency_key: str,
     expected_revision: int | None,
+    activation_observation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     canonical = _canonical_spec(spec)
     metadata = canonical.get("metadata")
@@ -306,11 +307,9 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         if isinstance(metadata, Mapping)
         else None
     )
-    observation = (
-        metadata.get("protected_publication_activation_observation")
-        if isinstance(metadata, Mapping)
-        else None
-    )
+    observation = activation_observation
+    if observation is None and isinstance(metadata, Mapping):
+        observation = metadata.get("protected_publication_activation_observation")
     observation_payload = dict(observation) if isinstance(observation, Mapping) else {}
     observation_digest = observation_payload.pop("observation_sha256", None)
     expected_observation_digest = hashlib.sha256(
@@ -456,6 +455,22 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         raise TaskSpecError(
             "runtime-refresh protected-publication activation idempotency binding is invalid"
         )
+    try:
+        observed_at = legacy.parse_time(str(observation["observed_at"]))
+        current_time = legacy.parse_time(legacy.utc_now())
+    except (KeyError, TypeError, ValueError) as exc:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation timestamp is invalid"
+        ) from exc
+    if observed_at.tzinfo is None or current_time.tzinfo is None:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation timestamp is invalid"
+        )
+    age_seconds = (current_time - observed_at).total_seconds()
+    if age_seconds < -30 or age_seconds > 300:
+        raise TaskSpecError(
+            "runtime-refresh protected-publication activation observation is not fresh"
+        )
     return canonical
 
 
@@ -465,12 +480,14 @@ def put_runtime_refresh_protected_publication_activation(
     *,
     idempotency_key: str,
     expected_revision: int | None,
+    activation_observation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     canonical = _validate_runtime_refresh_protected_publication_activation_mutation(
         connection,
         spec,
         idempotency_key=idempotency_key,
         expected_revision=expected_revision,
+        activation_observation=activation_observation,
     )
     try:
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")

@@ -4,26 +4,41 @@
   "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
   "title": "Implement managed Nix build and closure-bound activation",
   "state": "planned",
-  "goal": "Implement the fail-closed managed Nix/NixOS build and activation path required by the canonical executor profile: repository/revision/control-release bound builds, exact system-closure receipts, effect classification, and activation that consumes only the already approved closure without reevaluating mutable source.",
+  "goal": "Implement the fail-closed managed Nix/NixOS build and activation path required by the canonical executor profile: repository/revision/control-release bound builds, exact system-closure receipts, separate build and activation effect classes, and receipt-bound activation that consumes only the already approved closure without reevaluating mutable source.",
   "priority": {"lane": "now", "rank": 2},
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/heim-pc",
-    "grabowski_resources": ["repo:/home/alex/repos/heim-pc", "host:heim-pc"],
-    "approval": {"action_class": "repository_mutation", "required_level": "operator"}
+    "grabowski_resources": [
+      "path:/home/alex/repos/heim-pc/nixos/deployment",
+      "path:/home/alex/repos/heim-pc/scripts/managed_nix.py",
+      "path:/home/alex/repos/heim-pc/tests/test_managed_nix.py"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "This task implements and validates the managed build/activation contract. Any activation proof must use a disposable/non-production target; productive Heim-PC activation or switch requires a later separately revised and authorized task."
+    }
   },
   "claims": [
-    {"resource": "repo.heim-pc", "mode": "write", "isolation": "worktree"}
+    {"resource": "component.heim-pc.nixos-managed-activation", "mode": "write", "isolation": "worktree"}
   ],
   "required_capabilities": ["repository", "shell", "grabowski"],
   "depends_on": [],
   "acceptance": [
-    {"id": "managed-build-bound", "assertion": "Automated Nix/NixOS builds run only through a managed path that binds repository, revision, Control Release Set, Nix inputs, resource budgets, leases and bounded receipts."},
-    {"id": "exact-closure-receipt", "assertion": "A successful build receipt exposes and binds the exact immutable NixOS system closure plus the Control Release Set digest used to produce it."},
+    {"id": "build-activation-effect-separation", "assertion": "Build and Activation are distinct effect classes: building may realize an immutable closure but cannot change the active system, while activation requires its own explicit authority and receipt."},
+    {"id": "managed-build-bound", "assertion": "Automated Nix/NixOS builds run only through a managed path that binds repository, exact source revision, Control Release Set, Nix inputs, resource budgets, leases, effect class and bounded receipts."},
+    {"id": "exact-closure-receipt", "assertion": "A successful build receipt exposes and binds the exact immutable NixOS system closure, exact source revision and Control Release Set digest used to produce it."},
+    {"id": "activation-receipt-bound", "assertion": "Activation consumes a reviewed build/activation receipt bound to the exact source revision, system closure, target and Activation effect class; a caller-supplied closure string or branch name alone is insufficient authority."},
     {"id": "no-activation-reeval", "assertion": "Next-boot and persistent activation interfaces accept only the prebuilt approved closure and cannot silently reevaluate Git, branches, locks or remote inputs between review and activation."},
+    {"id": "pre-effect-fail-closed", "assertion": "Missing, stale, mismatched or unauthorized activation authority is rejected before any host mutation; tests prove the denied path produces no activation effect."},
+    {"id": "live-closure-readback", "assertion": "After an authorized activation on a disposable/non-production target, independent live readback proves the running/booted system closure equals the exact approved closure; this evidence does not authorize a productive Heim-PC switch."},
+    {"id": "entrypoints-are-adapters", "assertion": "Entrypoints and scripts remain adapters to the canonical managed-build/activation contract and cannot maintain a hidden second source of desired state, closure selection or activation authority."},
     {"id": "effect-classifier", "assertion": "Normal, boot-critical and destructive effects are classified by possible effect rather than filename or stated intent; ambiguous cases escalate fail-closed and destructive storage/firmware effects cannot use the normal rebuild path."},
+    {"id": "rollback-recovery-explicit", "assertion": "Every activation receipt identifies the prior/rollback closure and an explicit recovery path; rollback semantics are tested without relying on mutable source reevaluation."},
     {"id": "authority-boundary", "assertion": "If a required activation or privilege primitive belongs to another canonical authority, the implementation uses that typed authority or creates an explicit dependency instead of duplicating a second truth or broad sudo/root shell path."},
+    {"id": "no-production-switch", "assertion": "This task ends without productive nixos-rebuild switch, productive boot activation, reboot into a new production system, storage/EFI/Secure-Boot/firmware mutation, or any equivalent Heim-PC cutover effect unless the TaskSpec is later separately revised, reviewed and authorized."},
     {"id": "tests-and-ci", "assertion": "Focused build/activation/effect-classification tests plus required repository CI are green on the exact reviewed head before merge."}
   ],
   "metadata": {"source_candidate_event": 13345, "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9"}

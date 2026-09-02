@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "component.heim-pc.nixos-cutover-rehearsal",
+  "type": "component",
+  "parent": "repo.heim-pc",
+  "metadata": {
+    "purpose": "Logical Bureau coordination scope for blank-disk NixOS storage rehearsal, recovery evidence and cutover-plan readiness. Physical write authority remains path-scoped through task execution.grabowski_resources.",
+    "canonical_paths": [
+      "nixos/rehearsal/",
+      "scripts/nixos_storage_rehearsal.py",
+      "tests/test_nixos_storage_rehearsal.py"
+    ],
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
+    "does_not_establish": [
+      "production device identity",
+      "production storage mutation authority",
+      "EFI or firmware mutation authority",
+      "production NixOS activation authority",
+      "cutover approval"
+    ]
+  }
+}

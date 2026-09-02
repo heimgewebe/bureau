@@ -3146,6 +3146,7 @@ def _protected_publication_activation_evidence(
     publication_pr: int,
     publication_merge_commit: str,
     target_main_commit: str,
+    task_file_sha256: str,
     observation: dict[str, Any],
     installed_runtime_validation: dict[str, Any],
 ) -> dict[str, Any]:
@@ -3166,6 +3167,7 @@ def _protected_publication_activation_evidence(
         or not isinstance(target_main_commit, str)
         or len(target_main_commit) != 40
         or any(c not in "0123456789abcdef" for c in target_main_commit)
+        or not _is_sha256(task_file_sha256)
         or not _is_sha256(observation.get("target_sha256"))
         or installed_runtime_validation.get("kind")
         != "bureau_runtime_refresh_installed_activation_candidate_validation"
@@ -3174,6 +3176,8 @@ def _protected_publication_activation_evidence(
         != activation_spec_sha256
         or installed_runtime_validation.get("installed_source_commit")
         != observation.get("deployed_source_commit")
+        or installed_runtime_validation.get("deployment_manifest_sha256")
+        != observation.get("deployed_manifest_sha256")
         or not _is_sha256(installed_runtime_validation.get("validation_sha256"))
     ):
         raise RuntimeRefreshError(
@@ -3191,6 +3195,7 @@ def _protected_publication_activation_evidence(
         "publication_pr": publication_pr,
         "publication_merge_commit": publication_merge_commit,
         "target_main_commit": target_main_commit,
+        "task_file_sha256": task_file_sha256,
         "target_sha256": observation["target_sha256"],
         "observation_sha256": observation["observation_sha256"],
         "observation": json.loads(json.dumps(observation)),
@@ -3216,6 +3221,7 @@ def _validated_protected_publication_activation_evidence(
     publication_merge_commit: str,
     target_main_commit: str,
     target_sha256: str | None,
+    expected_task_file_sha256: str | None,
     activation_created_at: str,
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
@@ -3242,6 +3248,7 @@ def _validated_protected_publication_activation_evidence(
         "publication_pr",
         "publication_merge_commit",
         "target_main_commit",
+        "task_file_sha256",
         "target_sha256",
         "observation_sha256",
         "observation",
@@ -3263,6 +3270,14 @@ def _validated_protected_publication_activation_evidence(
         or not isinstance(value.get("target_main_commit"), str)
         or len(value["target_main_commit"]) != 40
         or any(c not in "0123456789abcdef" for c in value["target_main_commit"])
+        or not _is_sha256(value.get("task_file_sha256"))
+        or (
+            expected_task_file_sha256 is not None
+            and (
+                not _is_sha256(expected_task_file_sha256)
+                or value.get("task_file_sha256") != expected_task_file_sha256
+            )
+        )
         or not _is_sha256(value.get("target_sha256"))
         or not _is_sha256(value.get("observation_sha256"))
         or not isinstance(value.get("observation"), dict)
@@ -3279,6 +3294,8 @@ def _validated_protected_publication_activation_evidence(
         != activation_spec_sha256
         or value["installed_runtime_validation"].get("installed_source_commit")
         != value["observation"].get("deployed_source_commit")
+        or value["installed_runtime_validation"].get("deployment_manifest_sha256")
+        != value["observation"].get("deployed_manifest_sha256")
     ):
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-evidence-invalid",
@@ -3494,6 +3511,7 @@ def _validate_protected_publication_activation_receipt(
 ) -> dict[str, Any] | None:
     adoption_revision = adoption_proof.get("adoption_revision")
     adoption_spec_sha256 = adoption_proof.get("task_spec_sha256")
+    adoption_task_file_sha256 = adoption_proof.get("task_file_sha256")
     publication_pr = publication.get("publication_pr")
     publication_merge_commit = publication.get("publication_merge_commit")
     if (
@@ -3501,6 +3519,10 @@ def _validate_protected_publication_activation_receipt(
         or isinstance(adoption_revision, bool)
         or adoption_revision < 1
         or not _is_sha256(adoption_spec_sha256)
+        or (
+            adoption_task_file_sha256 is not None
+            and not _is_sha256(adoption_task_file_sha256)
+        )
         or not isinstance(publication_pr, int)
         or isinstance(publication_pr, bool)
         or publication_pr < 1
@@ -3639,6 +3661,7 @@ def _validate_protected_publication_activation_receipt(
         publication_merge_commit=publication_merge_commit,
         target_main_commit=target_main_commit,
         target_sha256=target_sha256,
+        expected_task_file_sha256=adoption_task_file_sha256,
         activation_created_at=activation_created_at,
     )
 
@@ -4606,6 +4629,8 @@ def activate_runtime_refresh_authority(
         != task_specs.task_spec_digest(ready)
         or installed_validation.get("installed_source_commit")
         != observation.get("deployed_source_commit")
+        or installed_validation.get("deployment_manifest_sha256")
+        != observation.get("deployed_manifest_sha256")
     ):
         raise RuntimeRefreshError(
             "authority-activation-installed-runtime-validation-unproven",
@@ -4625,6 +4650,7 @@ def activate_runtime_refresh_authority(
         publication_pr=publication_pr,
         publication_merge_commit=publication_merge_commit,
         target_main_commit=expected_main_commit,
+        task_file_sha256=adoption_proof["task_file_sha256"],
         observation=observation,
         installed_runtime_validation=installed_validation,
     )

@@ -450,6 +450,12 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         or evidence.get("publication_merge_commit") != merge_commit
         or evidence.get("target_main_commit")
         != (observation.get("main_commit") if isinstance(observation, Mapping) else None)
+        or not isinstance(evidence.get("task_file_sha256"), str)
+        or len(str(evidence.get("task_file_sha256"))) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in str(evidence.get("task_file_sha256"))
+        )
         or evidence.get("target_sha256")
         != (observation.get("target_sha256") if isinstance(observation, Mapping) else None)
         or evidence.get("observation_sha256")
@@ -465,6 +471,12 @@ def _validate_runtime_refresh_protected_publication_activation_mutation(
         or installed_validation.get("installed_source_commit")
         != (
             observation.get("deployed_source_commit")
+            if isinstance(observation, Mapping)
+            else None
+        )
+        or installed_validation.get("deployment_manifest_sha256")
+        != (
+            observation.get("deployed_manifest_sha256")
             if isinstance(observation, Mapping)
             else None
         )

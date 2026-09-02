@@ -594,6 +594,7 @@ def seed_protected_publication_activation_store(
                 publication_pr=2222,
                 publication_merge_commit="4" * 40,
                 target_main_commit=MAIN,
+                task_file_sha256="c" * 64,
                 observation=observation,
                 installed_runtime_validation=installed_validation,
             )
@@ -662,6 +663,7 @@ def protected_publication_activation_evidence_for(
     key: str,
     observation: dict[str, Any],
     publication_pr: int = 2222,
+    task_file_sha256: str = "c" * 64,
 ) -> dict[str, Any]:
     from bureau import task_specs
 
@@ -680,6 +682,7 @@ def protected_publication_activation_evidence_for(
         publication_pr=publication_pr,
         publication_merge_commit="4" * 40,
         target_main_commit=MAIN,
+        task_file_sha256=task_file_sha256,
         observation=observation,
         installed_runtime_validation=installed_validation,
     )
@@ -1547,6 +1550,7 @@ def test_protected_publication_activation_rejects_weakened_contract_delta(
         publication_pr=2222,
         publication_merge_commit="4" * 40,
         target_main_commit=MAIN,
+        task_file_sha256="c" * 64,
         observation=observation,
         installed_runtime_validation=installed_validation,
     )
@@ -1743,6 +1747,165 @@ def test_runtime_authority_adoption_is_exact_idempotent_and_not_execution_author
     assert blocked.value.code == "authority-task-state-invalid"
 
 
+def test_activation_evidence_rejects_installed_manifest_mismatch() -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATION-MANIFEST-MISMATCH"
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    observation = protected_publication_activation_observation()
+    installed_validation = installed_activation_candidate_validation_for_test(
+        manifest_path=Path("/test/deployment-manifest.json"),
+        expected_deployed_source_commit=str(observation["deployed_source_commit"]),
+        approval_task_id=task_id,
+        candidate=ready,
+    )
+    payload = dict(installed_validation)
+    payload.pop("validation_sha256")
+    payload["deployment_manifest_sha256"] = "d" * 64
+    mismatched_validation = refresh.bind_digest(payload, "validation_sha256")
+    from bureau import task_specs
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh._protected_publication_activation_evidence(
+            approval_task_id=task_id,
+            adoption_revision=1,
+            adoption_spec_sha256="e" * 64,
+            activation_spec_sha256=task_specs.task_spec_digest(ready),
+            idempotency_key=(
+                f"runtime-refresh-protected-publication-activation:{task_id}:"
+                f"{'4' * 40}:{'e' * 64}"
+            ),
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            target_main_commit=MAIN,
+            task_file_sha256="c" * 64,
+            observation=observation,
+            installed_runtime_validation=mismatched_validation,
+        )
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-evidence-invalid"
+    )
+
+
+def test_activation_cas_rejects_rebound_manifest_mismatch(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATION-MANIFEST-CAS-MISMATCH"
+    state_root = (tmp_path / "manifest-cas-mismatch").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    observation = protected_publication_activation_observation()
+    evidence = protected_publication_activation_evidence_for(
+        task_id=task_id,
+        adopted=adopted,
+        ready=ready,
+        key=key,
+        observation=observation,
+    )
+    tampered = json.loads(json.dumps(evidence))
+    validation_payload = dict(tampered["installed_runtime_validation"])
+    validation_payload.pop("validation_sha256")
+    validation_payload["deployment_manifest_sha256"] = "d" * 64
+    tampered["installed_runtime_validation"] = refresh.bind_digest(
+        validation_payload, "validation_sha256"
+    )
+    tampered["installed_runtime_validation_sha256"] = tampered[
+        "installed_runtime_validation"
+    ]["validation_sha256"]
+    tampered_payload = dict(tampered)
+    tampered_payload.pop("evidence_sha256")
+    tampered = refresh.bind_digest(tampered_payload, "evidence_sha256")
+
+    with pytest.raises(legacy.StateError) as raised:
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            ready,
+            idempotency_key=key,
+            expected_revision=adopted["revision"],
+            activation_observation=observation,
+            activation_evidence=tampered,
+        )
+    assert "activation mutation contract is invalid" in str(raised.value)
+    current = store.task_spec(task_id)
+    assert isinstance(current, dict)
+    assert current["revision"] == 1
+    assert current["spec"]["state"] == "planned"
+
+
+def test_activation_evidence_validation_rejects_rebound_manifest_mismatch() -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATION-MANIFEST-READBACK-MISMATCH"
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    observation = protected_publication_activation_observation()
+    installed_validation = installed_activation_candidate_validation_for_test(
+        manifest_path=Path("/test/deployment-manifest.json"),
+        expected_deployed_source_commit=str(observation["deployed_source_commit"]),
+        approval_task_id=task_id,
+        candidate=ready,
+    )
+    from bureau import task_specs
+
+    activation_spec_sha256 = task_specs.task_spec_digest(ready)
+    idempotency_key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{'e' * 64}"
+    )
+    evidence = refresh._protected_publication_activation_evidence(
+        approval_task_id=task_id,
+        adoption_revision=1,
+        adoption_spec_sha256="e" * 64,
+        activation_spec_sha256=activation_spec_sha256,
+        idempotency_key=idempotency_key,
+        publication_pr=2222,
+        publication_merge_commit="4" * 40,
+        target_main_commit=MAIN,
+        task_file_sha256="c" * 64,
+        observation=observation,
+        installed_runtime_validation=installed_validation,
+    )
+    tampered = json.loads(json.dumps(evidence))
+    validation_payload = dict(tampered["installed_runtime_validation"])
+    validation_payload.pop("validation_sha256")
+    validation_payload["deployment_manifest_sha256"] = "d" * 64
+    tampered["installed_runtime_validation"] = refresh.bind_digest(
+        validation_payload, "validation_sha256"
+    )
+    tampered["installed_runtime_validation_sha256"] = tampered[
+        "installed_runtime_validation"
+    ]["validation_sha256"]
+    tampered_payload = dict(tampered)
+    tampered_payload.pop("evidence_sha256")
+    tampered = refresh.bind_digest(tampered_payload, "evidence_sha256")
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh._validated_protected_publication_activation_evidence(
+            tampered,
+            approval_task_id=task_id,
+            adoption_revision=1,
+            adoption_spec_sha256="e" * 64,
+            activation_spec_sha256=activation_spec_sha256,
+            idempotency_key=idempotency_key,
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            target_main_commit=MAIN,
+            target_sha256=observation["target_sha256"],
+            expected_task_file_sha256="c" * 64,
+            activation_created_at=str(observation["observed_at"]),
+        )
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-evidence-invalid"
+    )
+
+
 def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1826,6 +1989,11 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     assert isinstance(evidence, dict)
     refresh.verify_digest(evidence, "evidence_sha256")
     assert evidence["observation"] == observation
+    assert evidence["task_file_sha256"] == "c" * 64
+    assert (
+        evidence["installed_runtime_validation"]["deployment_manifest_sha256"]
+        == observation["deployed_manifest_sha256"]
+    )
     assert first["activation_evidence_sha256"] == evidence["evidence_sha256"]
     assert receipt["activation_evidence_sha256"] == evidence["evidence_sha256"]
     assert receipt["resulting_revision"] == 2
@@ -1846,6 +2014,28 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     assert second["status"] == "already_ready"
     assert second["revision"] == 2
     assert second["idempotent_replay"] is True
+
+    with pytest.raises(refresh.RuntimeRefreshError) as wrong_digest:
+        activate_runtime_refresh_authority_for_test(
+            registry_root=tmp_path / "unusable-registry-on-replay",
+            manifest_path=tmp_path / "deployment-manifest.json",
+            repository=refresh.DEFAULT_REPOSITORY,
+            approval_task_id=task_id,
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            expected_main_commit=MAIN,
+            expected_task_file_sha256="d" * 64,
+            authority_store=store,
+            registry=None,
+            observer=lambda **_: pytest.fail("wrong-digest replay must not observe"),
+        )
+    assert (
+        wrong_digest.value.code
+        == "authority-preflight-publication-activation-evidence-invalid"
+    )
+    after_wrong_digest = store.task_spec(task_id)
+    assert isinstance(after_wrong_digest, dict)
+    assert after_wrong_digest["revision"] == 2
 
 
 def test_activate_runtime_refresh_authority_replays_after_late_target_binding(

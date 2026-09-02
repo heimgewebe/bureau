@@ -4,14 +4,16 @@
   "type": "service",
   "parent": "root",
   "metadata": {
-    "boundary": "Exclusive disposable non-production runtime surface for T004 managed NixOS build/activation and independent closure readback. Before any build or runtime effect, the sandbox materializes and verifies a content-addressed immutable whole-source snapshot from the exact reviewed T002 terminal Git commit, binding the Git commit/tree plus Control Release Set/lock identity. Nix evaluation and build consume only that sandbox-owned snapshot; after binding, no mutable /home/alex/repos/heim-pc checkout, branch, lock or unpinned remote source may participate. The sandbox remains isolated from the productive Heim-PC system, production storage, EFI, firmware and persistent host activation state.",
+    "boundary": "Exclusive disposable non-production runtime surface for T004 managed NixOS build/activation and independent closure readback. T004 consumes only the separately leased immutable artifact.heim-pc.nixos-activation-source produced by T006; it does not materialize source from, read, or require authority over /home/alex/repos/heim-pc/.git or the mutable Heim-PC checkout. Nix evaluation/build consumes the artifact manifest-bound Git commit/tree, content digest, Control Release Set and lock/input identity, and the sandbox remains isolated from productive Heim-PC runtime, storage, EFI, firmware and persistent boot state.",
     "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+    "source_artifact": "artifact.heim-pc.nixos-activation-source",
     "lifecycle": "ephemeral-test-only",
     "does_not_establish": [
       "production host mutation authority",
       "production NixOS activation authority",
       "production storage mutation authority",
       "EFI or firmware mutation authority",
+      "Git object-store read authority",
       "mutable worktree source authority",
       "shared runtime ownership"
     ]

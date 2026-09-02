@@ -13,7 +13,8 @@
   },
   "completion": [
     "Declared facts, runtime facts and hardware acceptance are implemented as separate source-bound evidence surfaces and the archived physical Gate A/B evidence is consumed without being mistaken for current live truth.",
-    "Automated Nix/NixOS builds and activations use a managed, receipt-bound path that binds the exact system closure and effect class and fails closed before unauthorized host mutation.",
+    "Managed Nix/NixOS implementation outputs are integrated through explicit non-main integration tasks into exact reviewed Git revisions and content-addressed immutable source artifacts before any runtime proof consumes them; successor runtime tasks do not reevaluate the live Heim-PC Git object store or mutable checkout.",
+    "Automated Nix/NixOS builds and activations use a managed, receipt-bound path that binds the exact source artifact, system closure and effect class and fails closed before unauthorized host mutation.",
     "The exact production storage target topology GPT + EFI + recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is reconstructed from a blank virtual disk, booted, unlocked and restore-tested before production storage mutation.",
     "All migration-relevant non-reproducible data are classified and covered by an independently restorable off-host backup; current green scoped backups are not treated as full-cutover recovery evidence.",
     "An independent bootable recovery path plus offline host/control reconstruction material is verified without Grabowski, Bureau, network or the production system SSD.",
@@ -28,6 +29,17 @@
       "repository": "heimgewebe/heim-pc",
       "merge_commit": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9",
       "executor_profile": "architecture/nixos-executor-2026.md"
+    },
+    "execution_graph": {
+      "initial_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T001", "HEIM-PC-NIXOS-MIGRATION-V1-T002"],
+      "initial_source_integration": "HEIM-PC-NIXOS-MIGRATION-V1-T006",
+      "second_parallel": ["HEIM-PC-NIXOS-MIGRATION-V1-T004", "HEIM-PC-NIXOS-MIGRATION-V1-T005"],
+      "final_source_integration": "HEIM-PC-NIXOS-MIGRATION-V1-T007",
+      "final_cutover_readiness_proof": "HEIM-PC-NIXOS-MIGRATION-V1-T003"
+    },
+    "source_artifacts": {
+      "activation_proof": "artifact.heim-pc.nixos-activation-source",
+      "cutover_rehearsal": "artifact.heim-pc.nixos-rehearsal-source"
     },
     "candidate_events": {
       "declared_runtime_facts_and_hardware_acceptance": 13344,

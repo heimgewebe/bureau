@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "artifact.heim-pc.nixos-activation-source",
+  "type": "path",
+  "parent": "root",
+  "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/activation-source",
+  "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/activation-source",
+  "metadata": {
+    "boundary": "Create-only content-addressed whole-source artifact path produced by T006 from the exact reviewed T001+T002 integration commit and consumed by T004. Its manifest binds Git commit/tree identity, archive/content digest, Control Release Set and lock/input identity. T004 needs only this leased immutable artifact path and the disposable activation sandbox; it does not read the Heim-PC Git object store or mutable checkout.",
+    "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T006",
+    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+    "lifecycle": "immutable-until-initiative-closeout",
+    "does_not_establish": [
+      "production activation authority",
+      "production host mutation authority",
+      "mutable checkout authority",
+      "main-branch merge authority"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "artifact.heim-pc.nixos-rehearsal-source",
+  "type": "path",
+  "parent": "root",
+  "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-source",
+  "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-source",
+  "metadata": {
+    "boundary": "Create-only content-addressed whole-source artifact path produced by T007 from the exact reviewed final source-integration revision containing T001, T002 and T005 changes and consumed by T003. Its manifest binds Git commit/tree identity, archive/content digest, Control Release Set and lock/input identity. T003 needs only this leased immutable artifact path plus its disposable storage sandbox and read-only host evidence; it does not read the Heim-PC Git object store or mutable checkout.",
+    "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T007",
+    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
+    "lifecycle": "immutable-until-initiative-closeout",
+    "does_not_establish": [
+      "production block-device identity",
+      "production storage mutation authority",
+      "mutable checkout authority",
+      "main-branch merge authority",
+      "cutover approval"
+    ]
+  }
+}

@@ -510,8 +510,15 @@ def source_sync(
     ref: str = "origin/main",
     *,
     apply: bool = False,
+    expected_commit_sha: str | None = None,
 ) -> dict[str, Any]:
-    candidate = build_source_document(load_snapshot(repository, ref))
+    snapshot = load_snapshot(repository, ref)
+    if expected_commit_sha is not None and snapshot.commit_sha != expected_commit_sha:
+        raise ValidationError(
+            "source ref moved after preview: "
+            f"expected {expected_commit_sha}, observed {snapshot.commit_sha}"
+        )
+    candidate = build_source_document(snapshot)
     validate_source_document(candidate)
     target = root.resolve() / "registry" / "sources" / "weltgewebe.json"
     existing = read_json(target) if target.exists() else None

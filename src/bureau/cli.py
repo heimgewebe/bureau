@@ -279,6 +279,14 @@ def parser() -> argparse.ArgumentParser:
     source_sync.add_argument("--repo", required=True)
     source_sync.add_argument("--ref", default="origin/main")
     source_sync.add_argument("--apply", action="store_true")
+    source_import = sub.add_parser("source-import")
+    source_import.add_argument("source", choices=["weltgewebe"])
+    source_import.add_argument("--repo", required=True)
+    source_import.add_argument("--ref", default="origin/main")
+    source_import.add_argument("--task-id")
+    source_import.add_argument("--apply-plan")
+    source_import.add_argument("--reviewed-receipt", action="store_true")
+    source_import.add_argument("--reviewer")
     promote = sub.add_parser("source-promote-plan")
     promote.add_argument("source", choices=["weltgewebe"])
     promote.add_argument("--task-id", required=True)
@@ -301,6 +309,16 @@ def parser() -> argparse.ArgumentParser:
     repo_scan.add_argument("--discovery-registry", type=Path)
     repo_scan.add_argument("--repo")
     repo_scan.add_argument("--dry-run", action="store_true")
+    repo_fetch = sub.add_parser("repo-fetch")
+    repo_fetch.add_argument("--repo", required=True)
+    repo_fetch.add_argument("--branch", default="main")
+    repo_fetch.add_argument("--remote", default="origin")
+    repo_fetch.add_argument("--task-id")
+    repo_fetch.add_argument("--discovery-registry", type=Path)
+    repo_fetch.add_argument("--apply-plan")
+    repo_fetch.add_argument("--approve", action="store_true")
+    repo_fetch.add_argument("--approval-source", default="bureau-cli")
+    repo_fetch.add_argument("--reviewer")
     live_register = sub.add_parser("live-register")
     live_register.add_argument(
         "--kind",
@@ -829,6 +847,8 @@ def _command_mutates(args: argparse.Namespace) -> bool:
         return bool(args.write_plan or args.apply_plan or args.rollback_receipt)
     if command == "source-sync":
         return bool(args.apply)
+    if command in {"repo-fetch", "source-import"}:
+        return bool(args.apply_plan)
     if command == "doctor":
         if getattr(args, "inventory", None) is not None:
             return False
@@ -1332,6 +1352,105 @@ def main(argv: list[str] | None = None) -> int:
                 state_root=state_root,
                 runtime_identity=_CLI_RUNTIME_IDENTITY,
             )
+            emit(value, args.json)
+            return 0
+        if args.command == "repo-fetch":
+            from .approval import explicit_operator_approval
+            from .fetch_orchestration import apply_repo_fetch_plan, repo_fetch_plan
+            from .repo_scan import DEFAULT_DISCOVERY_REGISTRY
+
+            fetch_registry = Registry.load(root)
+            discovery_registry = args.discovery_registry or DEFAULT_DISCOVERY_REGISTRY
+            if args.apply_plan:
+                approval = (
+                    explicit_operator_approval(
+                        source=args.approval_source,
+                        approved=True,
+                        reviewer=args.reviewer,
+                        reference=args.apply_plan,
+                        task_id=args.task_id,
+                    )
+                    if args.approve
+                    else None
+                )
+                value = apply_repo_fetch_plan(
+                    root,
+                    fetch_registry,
+                    args.repo,
+                    expected_plan_sha256=args.apply_plan,
+                    approval=approval,
+                    branch=args.branch,
+                    remote=args.remote,
+                    task_id=args.task_id,
+                    discovery_registry_path=discovery_registry,
+                    state_db=state_path,
+                    state_root=state_root,
+                    runtime_identity=_CLI_RUNTIME_IDENTITY,
+                )
+            else:
+                if args.approve:
+                    raise StateError("repo-fetch --approve requires --apply-plan")
+                value = repo_fetch_plan(
+                    root,
+                    fetch_registry,
+                    args.repo,
+                    branch=args.branch,
+                    remote=args.remote,
+                    task_id=args.task_id,
+                    discovery_registry_path=discovery_registry,
+                    state_db=state_path,
+                    state_root=state_root,
+                    runtime_identity=_CLI_RUNTIME_IDENTITY,
+                )
+            emit(value, args.json)
+            return 0
+        if args.command == "source-import":
+            from .approval import reviewed_receipt_approval
+            from .fetch_orchestration import (
+                apply_source_import_plan,
+                source_import_plan,
+            )
+
+            if args.apply_plan:
+                if args.reviewed_receipt and not args.reviewer:
+                    raise StateError(
+                        "source-import --reviewed-receipt requires --reviewer"
+                    )
+                approval = (
+                    reviewed_receipt_approval(
+                        reviewer=args.reviewer,
+                        reference=args.apply_plan,
+                        task_id=args.task_id,
+                    )
+                    if args.reviewed_receipt
+                    else None
+                )
+                value = apply_source_import_plan(
+                    root,
+                    args.repo,
+                    args.ref,
+                    expected_plan_sha256=args.apply_plan,
+                    approval=approval,
+                    task_id=args.task_id,
+                    state_db=state_path,
+                    state_root=state_root,
+                    runtime_identity=_CLI_RUNTIME_IDENTITY,
+                )
+                Registry.load(root)
+            else:
+                if args.reviewed_receipt or args.reviewer:
+                    raise StateError(
+                        "source-import review evidence requires --apply-plan"
+                    )
+                value = source_import_plan(
+                    root,
+                    args.repo,
+                    args.ref,
+                    task_id=args.task_id,
+                    state_db=state_path,
+                    state_root=state_root,
+                    runtime_identity=_CLI_RUNTIME_IDENTITY,
+                )
             emit(value, args.json)
             return 0
         if args.command == "state-root-artifacts":

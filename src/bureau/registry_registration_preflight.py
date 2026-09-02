@@ -16,6 +16,11 @@ from .core import StateError
 from .github_repository import validate_github_repository_slug
 from .lease_contract import assess_task_broad_bureau_scope
 from .schema_validation import DocumentSchemaError, SchemaSet, default_schema_set
+from .task_identity import (
+    assess_task_reference,
+    canonical_task_reference_contract,
+    is_bare_local_task_ordinal,
+)
 
 REGISTRATION_PREFLIGHT_SCHEMA_VERSION = 1
 REGISTRATION_PREFLIGHT_KIND = "bureau_registry_registration_preflight"
@@ -68,6 +73,11 @@ def decision_digest(value: Any) -> str:
 
 def validate_task_id(task_id: str) -> str:
     normalized = task_id.strip() if isinstance(task_id, str) else ""
+    if is_bare_local_task_ordinal(normalized):
+        raise RegistrationPreflightError(
+            "bare local task ordinal is not a canonical Registry task id; "
+            "canonical full task id required"
+        )
     if not _TASK_ID_RE.fullmatch(normalized):
         raise RegistrationPreflightError("invalid permanent Registry task id")
     return normalized
@@ -83,6 +93,25 @@ def validate_task_path(task_id: str, task_path: str) -> str:
     if task_path != expected or match is None or match.group(1) != task_id:
         raise RegistrationPreflightError(f"task_path must be exactly {expected}")
     return task_path
+
+
+def _known_task_ids(
+    canonical_tasks: list[dict[str, Any]], open_prs: list[dict[str, Any]]
+) -> list[str]:
+    result = {
+        str(task["id"])
+        for task in canonical_tasks
+        if isinstance(task, dict) and isinstance(task.get("id"), str) and task["id"]
+    }
+    for pr in open_prs:
+        for task in pr.get("tasks", []):
+            if isinstance(task, dict) and isinstance(task.get("id"), str) and task["id"]:
+                result.add(str(task["id"]))
+        for path in pr.get("task_paths", []):
+            match = _TASK_PATH_RE.fullmatch(path) if isinstance(path, str) else None
+            if match is not None:
+                result.add(match.group(1))
+    return sorted(result)
 
 
 def validate_sha(value: str, *, field: str) -> str:
@@ -172,7 +201,21 @@ def evaluate_registration_preflight(
     schemas: SchemaSet | None = None,
 ) -> dict[str, Any]:
     repository = validate_github_repository_slug(repository)
-    task_id = validate_task_id(str(proposed_task.get("id", "")))
+    known_task_ids = _known_task_ids(canonical_tasks, open_prs)
+    raw_task_id = str(proposed_task.get("id", ""))
+    if is_bare_local_task_ordinal(raw_task_id):
+        assessment = assess_task_reference(raw_task_id, known_task_ids)
+        candidates = assessment["candidate_task_ids"]
+        suffix = (
+            "; canonical candidates: " + ", ".join(candidates)
+            if candidates
+            else ""
+        )
+        raise RegistrationPreflightError(
+            f"bare local task ordinal {raw_task_id.strip()} is not global identity; "
+            f"canonical full task id or explicit namespace required{suffix}"
+        )
+    task_id = validate_task_id(raw_task_id)
     proposed_path = validate_task_path(task_id, proposed_path)
     checked_base_sha = validate_sha(checked_base_sha, field="checked_base_sha")
     current_base_sha_before = validate_sha(current_base_sha_before, field="current_base_sha_before")
@@ -269,6 +312,9 @@ def evaluate_registration_preflight(
             "title": proposed_task.get("title"),
             "goal": proposed_task.get("goal"),
         },
+        "task_identity": canonical_task_reference_contract(
+            task_id, [*known_task_ids, task_id]
+        ),
         "pr_identity": {"number": pr_number, "head_sha": head_sha},
         "collisions": collisions,
         "approval_contract_errors": approval_contract_errors,
@@ -707,8 +753,10 @@ def repository_registration_preflight(
         raise RegistrationPreflightError(f"cannot read proposed task JSON: {exc}") from exc
     if not isinstance(proposed_task, dict):
         raise RegistrationPreflightError("proposed task JSON must be an object")
-    task_id = validate_task_id(str(proposed_task.get("id", "")))
-    validate_task_path(task_id, relative)
+    raw_task_id = str(proposed_task.get("id", ""))
+    if not is_bare_local_task_ordinal(raw_task_id):
+        task_id = validate_task_id(raw_task_id)
+        validate_task_path(task_id, relative)
     checked_base_sha = validate_sha(checked_base_sha, field="checked_base_sha")
     base_provider = base_sha_provider or remote_base_sha
     open_provider = open_pr_provider or github_open_prs

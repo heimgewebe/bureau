@@ -31,6 +31,13 @@ from .legacy import (
     sha256_json,
     utc_now,
 )
+from .task_identity import (
+    assess_task_reference,
+    canonical_task_reference_contract,
+    is_bare_local_task_ordinal,
+    local_task_ordinal,
+    task_namespace,
+)
 from .v2 import (
     Registry,
     RunStateConflict,
@@ -67,8 +74,10 @@ __all__ = [
     "Task",
     "ValidationError",
     "ancestors",
+    "assess_task_reference",
     "atomic_write",
     "canonical_json",
+    "canonical_task_reference_contract",
     "claim_conflicts",
     "cleanup_workspace",
     "close_ready_initiatives",
@@ -77,7 +86,9 @@ __all__ = [
     "default_state_dir",
     "fail_run",
     "grabowski_handoff",
+    "is_bare_local_task_ordinal",
     "lifecycle_diagnostics",
+    "local_task_ordinal",
     "modes_conflict",
     "overlaps",
     "parse_time",
@@ -86,6 +97,7 @@ __all__ = [
     "read_json",
     "runtime_drift_check",
     "sha256_json",
+    "task_namespace",
     "task_revision_sha256",
     "utc_now",
     "verification_stamp",

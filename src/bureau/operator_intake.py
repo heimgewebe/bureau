@@ -2412,11 +2412,12 @@ def _validate_task_revision_identity_continuity(
     ):
         return
     # A single subject token is intentionally a weak continuity signal. It is
-    # accepted only when at least one typed acceptance criterion contract also
-    # remains continuous, so an unseen one-word process label such as "Upgrade"
-    # cannot carry identity by
-    # itself while compact real subjects such as "contracts" remain revisable.
-    if continuous_evidence and continuous_acceptance_ids:
+    # accepted only when at least one complete typed acceptance criterion remains
+    # exactly unchanged. Semantic assertion similarity is not enough here: an
+    # inverted predicate can retain nearly all tokens while reversing the contract.
+    # This keeps compact real subjects such as "contracts" revisable without
+    # allowing a weak text anchor plus acceptance-word overlap to reuse an identity.
+    if continuous_evidence and exact_acceptance_ids:
         return
     raise OperatorIntakeError(
         "task-revision-identity-discontinuity",

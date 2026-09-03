@@ -4908,3 +4908,38 @@ def test_task_revision_identity_guard_rejects_retained_broad_identifier_suffix_s
     with pytest.raises(OperatorIntakeError) as raised:
         operator_intake_module._validate_task_revision_identity_continuity(before, after)
     assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+
+def test_task_revision_identity_guard_rejects_predicate_inversion_as_weak_subject_support() -> None:
+    before = _identity_revision_task(
+        title="contracts",
+        resource="repo.shared",
+        goal="Restore archived snapshots",
+    )
+    after = _identity_revision_task(
+        title="contracts",
+        resource="repo.shared",
+        goal="Render billing balances",
+    )
+    shared_contract = {
+        "evidence_type": "object",
+        "verifier": "manual_observation",
+        "verifier_config": {"observation_scope": "shared-contract"},
+    }
+    before["acceptance"] = [
+        {
+            "id": "proof-a",
+            "assertion": "Verify backup policy prevents customer data deletion in production",
+            **shared_contract,
+        }
+    ]
+    after["acceptance"] = [
+        {
+            **before["acceptance"][0],
+            "assertion": "Verify backup policy permits customer data deletion in production",
+        }
+    ]
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"

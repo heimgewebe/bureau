@@ -4978,7 +4978,8 @@ def test_task_revision_identity_guard_rejects_reordered_replaced_technical_ident
     assert raised.value.code == "task-revision-identity-discontinuity"
 
 
-def test_task_revision_identity_guard_rejects_retained_identifier_behind_action_suffix_swap() -> None:
+def test_task_revision_identity_guard_rejects_retained_identifier_behind_action_suffix_swap(
+) -> None:
     before = _identity_revision_task(
         title="Repair API backup updater service",
         resource="repo.infra",

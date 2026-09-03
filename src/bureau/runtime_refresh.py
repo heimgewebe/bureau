@@ -2805,6 +2805,9 @@ def _put_authority_task(
                 expected_revision=expected_revision,
                 runtime_state_root=runtime_state_root,
                 closeout_guard=unused_authority_closeout_guard,
+                closeout_execution_capability=(
+                    _current_unused_authority_closeout_execution_capability()
+                ),
             )
         if source == "runtime-refresh-protected-publication-activation":
             return store.put_runtime_refresh_protected_publication_activation_task_spec(
@@ -5534,6 +5537,39 @@ def _serialize_runtime_authority_intent_closeout(function):
             return function(*args, **kwargs)
 
     return wrapped
+
+
+def _build_unused_authority_closeout_execution_boundary():
+    active: contextvars.ContextVar[object | None] = contextvars.ContextVar(
+        "unused_authority_closeout_execution_capability", default=None
+    )
+    marker = object()
+
+    def authorize(function):
+        @functools.wraps(function)
+        def wrapped(*args, **kwargs):
+            token = active.set(marker)
+            try:
+                return function(*args, **kwargs)
+            finally:
+                active.reset(token)
+
+        return wrapped
+
+    def current() -> object | None:
+        return marker if active.get() is marker else None
+
+    def is_active(value: Any) -> bool:
+        return value is marker and active.get() is marker
+
+    return authorize, current, is_active
+
+
+(
+    _authorize_unused_authority_closeout_execution,
+    _current_unused_authority_closeout_execution_capability,
+    _unused_authority_closeout_execution_capability_is_active,
+) = _build_unused_authority_closeout_execution_boundary()
 
 
 @_serialize_runtime_authority_intent_closeout
@@ -8914,6 +8950,30 @@ def _guard_unused_authority_foreign_activity(
         )
 
 
+def _authenticated_result_lease_store(
+    *, intent: dict[str, Any], result: dict[str, Any]
+) -> Path:
+    binding = result.get("lease_binding")
+    resource_db = binding.get("resource_db") if isinstance(binding, dict) else None
+    if not isinstance(resource_db, str) or not resource_db:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-equivalent-lease-binding-invalid",
+            "equivalent deployed result has no bound Grabowski resource database",
+        )
+    path = _validate_resource_database_path(Path(resource_db))
+    if str(path) != resource_db:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-equivalent-lease-binding-invalid",
+            "equivalent deployed result Grabowski lease store is not canonical",
+        )
+    validate_released_lease_binding(
+        intent=intent,
+        result=result,
+        resource_db=path,
+    )
+    return path
+
+
 def _equivalent_runtime_success_provenance(
     *,
     state_root: Path,
@@ -8956,6 +9016,9 @@ def _equivalent_runtime_success_provenance(
     validate_runtime_approval_intent(intent_path, now=parse_time(created_at))
     result_path = state_root / "attempts" / target_sha256 / "result.json"
     result = _validate_result_for_intent(read_json(result_path), intent)
+    authenticated_resource_db = _authenticated_result_lease_store(
+        intent=intent, result=result
+    )
     if (
         result.get("result_sha256") != equivalent_result_sha256
         or result.get("status") != "deployed"
@@ -9078,6 +9141,7 @@ def _equivalent_runtime_success_provenance(
         "readback_sha256": sha256_bytes(canonical_bytes(authenticated_readback)),
         "manifest_sha256": install_receipt.get("manifest_sha256"),
         "prefix": str(Path(intent["prefix"]).expanduser().resolve()),
+        "resource_db": str(authenticated_resource_db),
     }
 
 
@@ -9298,6 +9362,16 @@ def _validate_unused_authority_closeout_cas_contract(
             "unused-authority closeout CAS preimage is already used or terminal",
         )
     closed_at = parse_time(validated["closed_at"])
+    actual_cas_time = utc_now()
+    if closed_at > actual_cas_time:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-cas-time-invalid",
+            "unused-authority closeout closed_at may not be later than the actual CAS time",
+            details={
+                "closed_at": isoformat(closed_at),
+                "actual_cas_time": isoformat(actual_cas_time),
+            },
+        )
     root = state_root.expanduser().resolve()
     history = _unused_runtime_authority_history(
         root,
@@ -9398,6 +9472,7 @@ def _authenticated_runtime_conflicting_resource_ids(
 
 
 @_serialize_runtime_authority_intent_closeout
+@_authorize_unused_authority_closeout_execution
 def closeout_unused_runtime_refresh_authority(
     *,
     state_root: Path,
@@ -9414,7 +9489,8 @@ def closeout_unused_runtime_refresh_authority(
     historical_readback: Callable[..., dict[str, Any]] = readback_historical_install,
 ) -> dict[str, Any]:
     """Supersede one never-used single-use authority after exact equivalent success."""
-    current_time = now or utc_now()
+    actual_time = utc_now()
+    current_time = actual_time if now is None else min(now, actual_time)
     if (
         not isinstance(expected_revision, int)
         or isinstance(expected_revision, bool)
@@ -9598,6 +9674,16 @@ def closeout_unused_runtime_refresh_authority(
         equivalent_result_sha256=equivalent_result_sha256,
         historical_readback=historical_readback,
     )
+    resolved_resource_db = _validate_resource_database_path(resource_db)
+    if str(resolved_resource_db) != equivalent["resource_db"]:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-lease-store-mismatch",
+            "unused-authority closeout resource database differs from the fulfilled result binding",
+            details={
+                "expected_resource_db": equivalent["resource_db"],
+                "observed_resource_db": str(resolved_resource_db),
+            },
+        )
     current_runtime = _current_runtime_continuity(
         prefix=Path(equivalent["prefix"]),
         intended_main_commit=history["main_commit"],
@@ -9647,20 +9733,20 @@ def closeout_unused_runtime_refresh_authority(
         f"{equivalent_result_sha256}"
     )
     resource_barrier = _acquire_unused_authority_resource_barrier(
-        resource_db,
+        resolved_resource_db,
         history["required_resource_keys"],
         now=current_time,
     )
     closeout_guard = _unused_authority_closeout_cas_guard(
         state_root=resolved_state_root,
-        resource_db=resource_db,
+        resource_db=resolved_resource_db,
         required_resource_keys=history["required_resource_keys"],
         resource_barrier=resource_barrier,
     )
     try:
         _guard_unused_authority_foreign_activity(
             store=store,
-            resource_db=resource_db,
+            resource_db=resolved_resource_db,
             required_resource_keys=history["required_resource_keys"],
             now=current_time,
         )
@@ -9718,6 +9804,9 @@ def closeout_unused_runtime_refresh_authority(
         "closeout": observed,
         "idempotent_replay": False,
     }
+
+del _authorize_unused_authority_closeout_execution
+
 
 def _validated_terminal_authority_run(
     *, store: Any, approval_task_id: str, task_runs: list[dict[str, Any]]

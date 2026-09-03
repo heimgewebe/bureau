@@ -8014,6 +8014,19 @@ def unused_authority_equivalent_success_case(
     install_receipt, historical_readback, _artifacts = historical_runtime_artifacts(
         tmp_path, equivalent_intent
     )
+    lease_binding_seed, resource_db = lease_for(
+        tmp_path / "unused-closeout-leases",
+        equivalent_intent,
+        current=selected_now,
+    )
+    lease_binding = refresh.validate_live_lease_binding(
+        equivalent_intent,
+        lease_binding_seed,
+        resource_db=resource_db,
+        now=selected_now,
+    )
+    release_test_leases(resource_db)
+    assert lease_binding["resource_db"] == str(resource_db.resolve())
     attempt_dir = state_root / "attempts" / equivalent_intent["target_sha256"]
     result = refresh._write_attempt_result(
         attempt_dir / "result.json",
@@ -8028,12 +8041,15 @@ def unused_authority_equivalent_success_case(
             "install_receipt": install_receipt,
             "readback": historical_readback,
             "authority_task_spec": bound,
-            "lease_binding": {"lease_binding_sha256": "a" * 64},
+            "lease_binding": lease_binding,
             "finished_at": refresh.isoformat(selected_now + timedelta(minutes=2)),
             "effect_started": True,
             "does_not_establish": ["future_runtime_health"],
         },
     )
+    assert result["lease_binding"]["resource_db"] == str(resource_db.resolve())
+    persisted_result = refresh.read_json(attempt_dir / "result.json")
+    assert persisted_result["lease_binding"]["resource_db"] == str(resource_db.resolve())
     refresh.consume_runtime_refresh_authority(
         store=store,
         intent=equivalent_intent,
@@ -8046,8 +8062,6 @@ def unused_authority_equivalent_success_case(
         lambda spec: spec.__setitem__("state", "verified"),
         key="equivalent-success-terminal",
     )
-    _binding, resource_db = lease_for(tmp_path / "unused-closeout-leases", unused_intent)
-    release_test_leases(resource_db)
     unused_current = store.task_spec(unused_task_id)
     assert unused_current is not None
     return (
@@ -8406,74 +8420,7 @@ def captured_unused_authority_closeout_candidate(
     return unused_task_id, store, captured
 
 
-def put_captured_unused_authority_closeout_task_spec(
-    store: StateStore,
-    captured: dict[str, Any],
-    spec: dict[str, Any],
-    *,
-    idempotency_key: str,
-    expected_revision: int | None,
-    runtime_state_root: Path,
-) -> dict[str, Any]:
-    guard_snapshot = captured["unused_authority_closeout_guard"]
-    resource_db = Path(guard_snapshot["resource_db"])
-    required_resource_keys = list(guard_snapshot["required_resource_keys"])
-    closeout = spec["metadata"]["runtime_unused_authority_closeout"]
-    with refresh._runtime_authority_intent_closeout_lock(runtime_state_root):
-        barrier = refresh._acquire_unused_authority_resource_barrier(
-            resource_db,
-            required_resource_keys,
-            now=refresh.parse_time(closeout["closed_at"]),
-        )
-        try:
-            guard = refresh._unused_authority_closeout_cas_guard(
-                state_root=runtime_state_root,
-                resource_db=resource_db,
-                required_resource_keys=required_resource_keys,
-                resource_barrier=barrier,
-            )
-            return store.put_runtime_refresh_unused_authority_closeout_task_spec(
-                spec,
-                idempotency_key=idempotency_key,
-                expected_revision=expected_revision,
-                runtime_state_root=runtime_state_root,
-                closeout_guard=guard,
-            )
-        finally:
-            refresh._release_unused_authority_resource_barrier(barrier)
-
-
-def test_state_store_unused_authority_closeout_requires_intent_lock_and_resource_barrier(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
-        tmp_path, monkeypatch
-    )
-    with pytest.raises(legacy.StateError, match="protected CAS contract"):
-        store.put_runtime_refresh_unused_authority_closeout_task_spec(
-            captured["spec"],
-            idempotency_key=captured["idempotency_key"],
-            expected_revision=captured["expected_revision"],
-            runtime_state_root=captured["runtime_state_root"],
-        )
-    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-
-    stale_guard = captured["unused_authority_closeout_guard"]
-    with (
-        refresh._runtime_authority_intent_closeout_lock(captured["runtime_state_root"]),
-        pytest.raises(legacy.StateError, match="protected CAS contract"),
-    ):
-        store.put_runtime_refresh_unused_authority_closeout_task_spec(
-            captured["spec"],
-            idempotency_key=captured["idempotency_key"],
-            expected_revision=captured["expected_revision"],
-            runtime_state_root=captured["runtime_state_root"],
-            closeout_guard=stale_guard,
-        )
-    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-
-
-def test_state_store_unused_authority_closeout_rejects_tampered_active_barrier_scope(
+def test_state_store_unused_authority_closeout_has_no_independent_mutation_authority(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
@@ -8482,7 +8429,6 @@ def test_state_store_unused_authority_closeout_rejects_tampered_active_barrier_s
     guard_snapshot = captured["unused_authority_closeout_guard"]
     resource_db = Path(guard_snapshot["resource_db"])
     required_resource_keys = list(guard_snapshot["required_resource_keys"])
-    assert len(required_resource_keys) > 1
     runtime_state_root = captured["runtime_state_root"]
     closeout = captured["spec"]["metadata"]["runtime_unused_authority_closeout"]
 
@@ -8499,7 +8445,6 @@ def test_state_store_unused_authority_closeout_rejects_tampered_active_barrier_s
                 required_resource_keys=required_resource_keys,
                 resource_barrier=barrier,
             )
-            guard["required_resource_keys"] = tuple(required_resource_keys[1:])
             with pytest.raises(legacy.StateError, match="protected CAS contract"):
                 store.put_runtime_refresh_unused_authority_closeout_task_spec(
                     captured["spec"],
@@ -8510,11 +8455,51 @@ def test_state_store_unused_authority_closeout_rejects_tampered_active_barrier_s
                 )
         finally:
             refresh._release_unused_authority_resource_barrier(barrier)
+
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
 
 
+def test_unused_authority_closeout_rejects_other_resource_database(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+    _fake_binding, fake_resource_db = lease_for(
+        tmp_path / "other-unused-closeout-leases", equivalent_intent, current=NOW
+    )
+    release_test_leases(fake_resource_db)
+    assert fake_resource_db.resolve() != resource_db.resolve()
 
-def test_state_store_unused_authority_closeout_derives_parent_overlap_from_registry(
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=before["revision"],
+            expected_spec_sha256=before["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=fake_resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda ancestor, descendant: (
+                ancestor == MAIN and descendant == "9" * 40
+            ),
+        )
+
+    assert caught.value.code == "authority-unused-closeout-lease-store-mismatch"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
+def test_unused_authority_closeout_uses_actual_time_for_intent_expiry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     (
@@ -8528,20 +8513,9 @@ def test_state_store_unused_authority_closeout_derives_parent_overlap_from_regis
     ) = unused_authority_equivalent_success_case(tmp_path)
     before = store.task_spec(unused_task_id)
     assert before is not None
-    captured: dict[str, Any] = {}
+    monkeypatch.setattr(refresh, "utc_now", lambda: NOW + timedelta(minutes=5))
 
-    class CapturedCloseout(RuntimeError):
-        pass
-
-    def capture_put(
-        _store: Any, candidate_spec: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
-        captured["spec"] = json.loads(json.dumps(candidate_spec))
-        captured.update(kwargs)
-        raise CapturedCloseout
-
-    monkeypatch.setattr(refresh, "_put_authority_task", capture_put)
-    with pytest.raises(CapturedCloseout):
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
         refresh.closeout_unused_runtime_refresh_authority(
             state_root=Path(unused_intent["state_root"]),
             approval_task_id=unused_task_id,
@@ -8550,133 +8524,15 @@ def test_state_store_unused_authority_closeout_derives_parent_overlap_from_regis
             equivalent_intent_sha256=equivalent_intent["intent_sha256"],
             equivalent_result_sha256=result["result_sha256"],
             resource_db=resource_db,
-            now=NOW + timedelta(hours=1),
+            now=NOW + timedelta(hours=2),
             authority_store=store,
             source_ancestry=lambda ancestor, descendant: (
                 ancestor == MAIN and descendant == "9" * 40
             ),
         )
+
+    assert caught.value.code == "authority-unused-closeout-intent-live"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-    assert captured["runtime_state_root"] == Path(unused_intent["state_root"])
-
-    monkeypatch.setattr(
-        store,
-        "reservations",
-        lambda _connection: [
-            legacy.Reservation("BUR-RUN-DIRECT-PARENT", "repo.bureau", "exclusive", 1)
-        ],
-    )
-    with pytest.raises(legacy.StateError, match="unreserved runtime"):
-        put_captured_unused_authority_closeout_task_spec(
-            store,
-            captured,
-            captured["spec"],
-            idempotency_key=captured["idempotency_key"],
-            expected_revision=captured["expected_revision"],
-            runtime_state_root=captured["runtime_state_root"],
-        )
-    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-
-
-@pytest.mark.parametrize(
-    "field",
-    [
-        "fulfilled_by_consumption_sha256",
-        "fulfilled_by_readback_sha256",
-        "historical_manifest_sha256",
-    ],
-)
-def test_state_store_unused_authority_closeout_rejects_forged_equivalent_evidence(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
-) -> None:
-    unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
-        tmp_path, monkeypatch
-    )
-    forged = json.loads(json.dumps(captured["spec"]))
-    forged["metadata"]["runtime_unused_authority_closeout"][field] = "f" * 64
-
-    with pytest.raises(legacy.StateError, match="equivalent success evidence"):
-        put_captured_unused_authority_closeout_task_spec(
-            store,
-            captured,
-            forged,
-            idempotency_key=captured["idempotency_key"],
-            expected_revision=captured["expected_revision"],
-            runtime_state_root=captured["runtime_state_root"],
-        )
-    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-
-
-def test_state_store_unused_authority_closeout_rejects_forged_result_evidence(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
-        tmp_path, monkeypatch
-    )
-    forged = json.loads(json.dumps(captured["spec"]))
-    forged_result = "f" * 64
-    forged["metadata"]["runtime_unused_authority_closeout"][
-        "fulfilled_by_result_sha256"
-    ] = forged_result
-    forged_key = (
-        f"runtime-refresh-unused-authority-closeout:{unused_task_id}:{forged_result}"
-    )
-
-    with pytest.raises(legacy.StateError, match="exact successful deployed result"):
-        put_captured_unused_authority_closeout_task_spec(
-            store,
-            captured,
-            forged,
-            idempotency_key=forged_key,
-            expected_revision=captured["expected_revision"],
-            runtime_state_root=captured["runtime_state_root"],
-        )
-    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-
-
-def test_state_store_unused_authority_closeout_rejects_unbound_ready_preimage(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
-        tmp_path, monkeypatch
-    )
-    forged = json.loads(json.dumps(captured["spec"]))
-    forged["metadata"]["runtime_unused_authority_closeout"][
-        "authority_spec_sha256"
-    ] = "f" * 64
-
-    with pytest.raises(legacy.StateError, match="CAS preimage"):
-        put_captured_unused_authority_closeout_task_spec(
-            store,
-            captured,
-            forged,
-            idempotency_key=captured["idempotency_key"],
-            expected_revision=captured["expected_revision"],
-            runtime_state_root=captured["runtime_state_root"],
-        )
-    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-
-
-def test_state_store_unused_authority_closeout_rejects_extra_candidate_delta(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
-        tmp_path, monkeypatch
-    )
-    tampered = json.loads(json.dumps(captured["spec"]))
-    tampered["goal"] = tampered["goal"] + " Unrelated direct-CAS mutation."
-
-    with pytest.raises(legacy.StateError, match="terminal delta"):
-        put_captured_unused_authority_closeout_task_spec(
-            store,
-            captured,
-            tampered,
-            idempotency_key=captured["idempotency_key"],
-            expected_revision=captured["expected_revision"],
-            runtime_state_root=captured["runtime_state_root"],
-        )
-    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
-
 
 
 def test_unused_authority_closeout_rechecks_parent_runtime_reservation_inside_cas(

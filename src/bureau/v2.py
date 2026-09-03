@@ -3798,6 +3798,7 @@ class StateStore:
         expected_revision: int | None,
         runtime_state_root: Path | None,
         closeout_guard: Any | None = None,
+        closeout_execution_capability: Any | None = None,
     ) -> dict[str, Any]:
         metadata = spec.get("metadata") if isinstance(spec, dict) else None
         closeout_value = (
@@ -3810,12 +3811,22 @@ class StateStore:
                 "runtime-refresh unused-authority closeout protected CAS contract is invalid"
             )
         try:
+            if not runtime_refresh._unused_authority_closeout_execution_capability_is_active(
+                closeout_execution_capability
+            ):
+                raise runtime_refresh.RuntimeRefreshError(
+                    "authority-unused-closeout-direct-state-store-forbidden",
+                    "unused-authority closeout StateStore mutation requires the outer "
+                    "closeout boundary",
+                )
             closeout = runtime_refresh._validated_unused_runtime_authority_closeout(
                 closeout_value
             )
-            runtime_refresh._validate_unused_authority_closeout_cas_guard(
-                closeout_guard,
-                state_root=runtime_state_root,
+            validated_closeout_guard = (
+                runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                    closeout_guard,
+                    state_root=runtime_state_root,
+                )
             )
         except runtime_refresh.RuntimeRefreshError as exc:
             raise legacy.StateError(
@@ -3831,11 +3842,22 @@ class StateStore:
                     candidate=spec,
                     closeout=closeout,
                 )
-                runtime_refresh._validate_unused_authority_closeout_cas_guard(
-                    closeout_guard,
-                    state_root=runtime_state_root,
-                    required_resource_keys=cas_contract["history"]["required_resource_keys"],
+                validated_closeout_guard = (
+                    runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                        closeout_guard,
+                        state_root=runtime_state_root,
+                        required_resource_keys=cas_contract["history"]["required_resource_keys"],
+                    )
                 )
+                if (
+                    validated_closeout_guard.get("resource_db")
+                    != cas_contract["equivalent"]["resource_db"]
+                ):
+                    raise runtime_refresh.RuntimeRefreshError(
+                        "authority-unused-closeout-lease-store-mismatch",
+                        "unused-authority closeout guard is not bound to the fulfilled "
+                        "result lease store",
+                    )
                 conflicting_resources = set(
                     runtime_refresh._authenticated_runtime_conflicting_resource_ids(
                         state_root=runtime_state_root,

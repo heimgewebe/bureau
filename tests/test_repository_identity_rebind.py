@@ -315,9 +315,12 @@ def test_complete_receipt_replay_is_allowed_after_plan_expiry(tmp_path: Path) ->
     assert {store.task_spec(task_id)["revision"] for task_id in registry.tasks} == {2}
 
 
-def test_rebind_allows_new_repository_path_with_old_path_prefix(tmp_path: Path) -> None:
+@pytest.mark.parametrize("target_suffix", ("-new", "/archive"))
+def test_rebind_allows_new_repository_path_containing_old_path(
+    tmp_path: Path, target_suffix: str
+) -> None:
     root, old_path, _ = _registry_root(tmp_path, task_ids=("TASK-A",), legacy=True)
-    new_path = Path(str(old_path) + "-new")
+    new_path = Path(str(old_path) + target_suffix)
     new_path.mkdir()
     resource_path = root / "registry/resources/2.json"
     resource = json.loads(resource_path.read_text(encoding="utf-8"))
@@ -355,6 +358,7 @@ def test_rebind_allows_new_repository_path_with_old_path_prefix(tmp_path: Path) 
             registry,
             old_resource_id=OLD_RESOURCE,
             old_path=str(old_path),
+            new_path=str(new_path),
         ) == {}
 
 

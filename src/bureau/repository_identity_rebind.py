@@ -182,7 +182,13 @@ def _active_runs(connection) -> dict[str, dict[str, str]]:
     return result
 
 
-def _has_old_binding(spec: Mapping[str, Any], *, old_resource_id: str, old_path: str) -> bool:
+def _has_old_binding(
+    spec: Mapping[str, Any],
+    *,
+    old_resource_id: str,
+    old_path: str,
+    new_path: str,
+) -> bool:
     claims = spec.get("claims")
     if isinstance(claims, list) and any(
         isinstance(claim, Mapping) and claim.get("resource") == old_resource_id
@@ -197,7 +203,9 @@ def _has_old_binding(spec: Mapping[str, Any], *, old_resource_id: str, old_path:
     resources = execution.get("grabowski_resources")
     return isinstance(resources, list) and any(
         isinstance(item, str)
-        and task_specs._contains_repository_path_token(item, old_path)
+        and task_specs._contains_repository_path_token(
+            item, old_path, excluded_repository_path=new_path
+        )
         for item in resources
     )
 
@@ -208,6 +216,7 @@ def _candidates(
     *,
     old_resource_id: str,
     old_path: str,
+    new_path: str,
 ) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
     for item in _task_rows(connection, registry):
@@ -219,11 +228,15 @@ def _candidates(
                     item["spec"],
                     old_resource_id=old_resource_id,
                     old_repository_path=old_path,
+                    new_repository_path=new_path,
                 )
             )
         )
         has_supported_binding = _has_old_binding(
-            item["spec"], old_resource_id=old_resource_id, old_path=old_path
+            item["spec"],
+            old_resource_id=old_resource_id,
+            old_path=old_path,
+            new_path=new_path,
         )
         if residue and not has_supported_binding:
             raise legacy.StateError(
@@ -443,6 +456,7 @@ def build_plan(
             registry,
             old_resource_id=old_resource_id,
             old_path=str(old_resource["path"]),
+            new_path=str(new_resource["path"]),
         )
         active = _active_runs(connection)
         candidate_active = sorted(set(candidates) & set(active))
@@ -611,6 +625,7 @@ def apply_plan(
             registry,
             old_resource_id=str(old_resource["id"]),
             old_path=str(old_resource["path"]),
+            new_path=str(new_resource["path"]),
         )
         active = _active_runs(connection)
         current_ids = set(candidates)
@@ -733,6 +748,7 @@ def apply_plan(
             registry,
             old_resource_id=str(old_resource["id"]),
             old_path=str(old_resource["path"]),
+            new_path=str(new_resource["path"]),
         )
         if set(remaining) != set(excluded_by_id):
             raise legacy.StateError(

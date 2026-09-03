@@ -76,7 +76,12 @@ def _validate_repository_identity_rebind_parameters(
         raise TaskSpecError("repository identity rebind repository paths must differ")
 
 
-def _contains_repository_path_token(value: str, repository_path: str) -> bool:
+def _contains_repository_path_token(
+    value: str,
+    repository_path: str,
+    *,
+    excluded_repository_path: str | None = None,
+) -> bool:
     """Return whether one string contains the path as a technical token.
 
     Repository bindings may appear as plain paths or inside ``repo:``/``path:``
@@ -96,6 +101,17 @@ def _contains_repository_path_token(value: str, repository_path: str) -> bool:
         before_ok = index == 0 or value[index - 1] in before_boundaries
         after_ok = end == len(value) or value[end] in after_boundaries
         if before_ok and after_ok:
+            if excluded_repository_path is not None and value.startswith(
+                excluded_repository_path, index
+            ):
+                excluded_end = index + len(excluded_repository_path)
+                excluded_after_ok = (
+                    excluded_end == len(value)
+                    or value[excluded_end] in after_boundaries
+                )
+                if excluded_after_ok:
+                    start = index + 1
+                    continue
             return True
         start = index + 1
 
@@ -105,6 +121,7 @@ def _old_repository_binding_residue(
     *,
     old_resource_id: str,
     old_repository_path: str,
+    new_repository_path: str,
     path: str = "",
 ) -> list[str]:
     result: list[str] = []
@@ -115,6 +132,7 @@ def _old_repository_binding_residue(
                     item,
                     old_resource_id=old_resource_id,
                     old_repository_path=old_repository_path,
+                    new_repository_path=new_repository_path,
                     path=f"{path}/{key}",
                 )
             )
@@ -125,12 +143,17 @@ def _old_repository_binding_residue(
                     item,
                     old_resource_id=old_resource_id,
                     old_repository_path=old_repository_path,
+                    new_repository_path=new_repository_path,
                     path=f"{path}/{index}",
                 )
             )
     elif isinstance(value, str) and (
         value == old_resource_id
-        or _contains_repository_path_token(value, old_repository_path)
+        or _contains_repository_path_token(
+            value,
+            old_repository_path,
+            excluded_repository_path=new_repository_path,
+        )
     ):
         result.append(path or "/")
     return result
@@ -222,6 +245,7 @@ def preview_repository_identity_rebind(
         material,
         old_resource_id=old_resource_id,
         old_repository_path=old_repository_path,
+        new_repository_path=new_repository_path,
     )
     if residue:
         raise TaskSpecError(

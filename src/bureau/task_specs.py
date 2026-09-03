@@ -98,7 +98,10 @@ def _contains_repository_path_token(
         if index < 0:
             return False
         end = index + len(repository_path)
-        before_ok = index == 0 or value[index - 1] in before_boundaries
+        uri_prefix_ok = index >= 3 and value[index - 3 : index] == "://"
+        before_ok = (
+            index == 0 or value[index - 1] in before_boundaries or uri_prefix_ok
+        )
         after_ok = end == len(value) or value[end] in after_boundaries
         if before_ok and after_ok:
             if excluded_repository_path is not None and value.startswith(
@@ -228,16 +231,25 @@ def preview_repository_identity_rebind(
         old_path_key = f"path:{old_repository_path}"
         new_path_key = f"path:{new_repository_path}"
         for index, item in enumerate(resources):
-            if isinstance(item, str) and old_repository_path in item:
-                if item == old_repo_key or item.startswith(old_repo_key + ":"):
-                    item = new_repo_key + item[len(old_repo_key) :]
-                elif item == old_path_key or item.startswith(old_path_key + "/"):
-                    item = new_path_key + item[len(old_path_key) :]
-                else:
-                    raise TaskSpecError(
-                        "repository identity rebind refuses an unscoped old repository path"
-                    )
-                changed_paths.append(f"/execution/grabowski_resources/{index}")
+            if isinstance(item, str):
+                already_new_bound = (
+                    item in (new_repo_key, new_path_key)
+                    or item.startswith(new_repo_key + ":")
+                    or item.startswith(new_path_key + "/")
+                )
+                if already_new_bound:
+                    rewritten.append(item)
+                    continue
+                if old_repository_path in item:
+                    if item == old_repo_key or item.startswith(old_repo_key + ":"):
+                        item = new_repo_key + item[len(old_repo_key) :]
+                    elif item == old_path_key or item.startswith(old_path_key + "/"):
+                        item = new_path_key + item[len(old_path_key) :]
+                    else:
+                        raise TaskSpecError(
+                            "repository identity rebind refuses an unscoped old repository path"
+                        )
+                    changed_paths.append(f"/execution/grabowski_resources/{index}")
             rewritten.append(item)
         execution["grabowski_resources"] = rewritten
 

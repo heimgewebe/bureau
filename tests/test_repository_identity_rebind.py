@@ -362,6 +362,39 @@ def test_rebind_allows_new_repository_path_containing_old_path(
         ) == {}
 
 
+def test_preview_preserves_already_rebound_descendant_resource_path(
+    tmp_path: Path,
+) -> None:
+    _, old_path, _ = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    new_path = old_path / "archive"
+    new_path.mkdir()
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["execution"]["working_repository"] = str(new_path)
+    spec["execution"]["grabowski_resources"] = [
+        f"repo:{old_path}",
+        f"path:{new_path}/cache",
+        f"repo:{old_path}:operation:test-scope",
+    ]
+
+    preview = task_specs.preview_repository_identity_rebind(
+        spec,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )
+
+    assert preview["spec"]["execution"]["working_repository"] == str(new_path)
+    assert preview["spec"]["execution"]["grabowski_resources"] == [
+        f"repo:{new_path}",
+        f"path:{new_path}/cache",
+        f"repo:{new_path}:operation:test-scope",
+    ]
+    assert "/execution/grabowski_resources/1" not in preview["changed_paths"]
+
+
 @pytest.mark.parametrize("stale_field", ("task_sha256", "plan_sha256"))
 def test_stale_terminal_overlay_does_not_hide_old_binding(
     tmp_path: Path, stale_field: str
@@ -690,7 +723,7 @@ def test_regular_taskspec_put_still_rejects_legacy_acceptance(tmp_path: Path) ->
     assert store.task_spec("TASK-A")["revision"] == 1
 
 
-@pytest.mark.parametrize("residual_kind", ("path", "resource"))
+@pytest.mark.parametrize("residual_kind", ("path", "resource", "file-uri"))
 def test_plan_rejects_old_binding_only_in_unapproved_metadata(
     tmp_path: Path, residual_kind: str
 ) -> None:
@@ -705,7 +738,11 @@ def test_plan_rejects_old_binding_only_in_unapproved_metadata(
         f"repo:{new_path}:operation:test-scope",
     ]
     task["metadata"]["unapproved_old_binding"] = (
-        str(old_path) if residual_kind == "path" else OLD_RESOURCE
+        str(old_path)
+        if residual_kind == "path"
+        else f"file://{old_path}"
+        if residual_kind == "file-uri"
+        else OLD_RESOURCE
     )
     task_path.write_text(json.dumps(task), encoding="utf-8")
 

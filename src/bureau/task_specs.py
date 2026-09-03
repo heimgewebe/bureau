@@ -86,22 +86,27 @@ def _validate_repository_identity_rebind_parameters(
 
 
 def _contains_resource_id_token(value: str, resource_id: str) -> bool:
-    start = 0
-    while True:
-        index = value.find(resource_id, start)
-        if index < 0:
-            return False
-        end = index + len(resource_id)
-        before_ok = index == 0 or not (
-            value[index - 1].isalnum()
-            or value[index - 1] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
-        )
-        after_ok = end == len(value) or not (
-            value[end].isalnum() or value[end] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
-        )
-        if before_ok and after_ok:
-            return True
-        start = index + 1
+    decoded = unquote(value) if "%" in value else value
+    candidates = (value,) if decoded == value else (value, decoded)
+    for candidate in candidates:
+        start = 0
+        while True:
+            index = candidate.find(resource_id, start)
+            if index < 0:
+                break
+            end = index + len(resource_id)
+            before_ok = index == 0 or not (
+                candidate[index - 1].isalnum()
+                or candidate[index - 1] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+            )
+            after_ok = end == len(candidate) or not (
+                candidate[end].isalnum()
+                or candidate[end] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+            )
+            if before_ok and after_ok:
+                return True
+            start = index + 1
+    return False
 
 
 def _is_acceptance_evidence_path(path: str) -> bool:

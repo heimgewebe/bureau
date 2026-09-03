@@ -8366,6 +8366,68 @@ def test_unused_authority_closeout_rechecks_runtime_reservation_inside_cas(
 
 
 
+def test_state_store_unused_authority_closeout_derives_parent_overlap_from_registry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+    captured: dict[str, Any] = {}
+
+    class CapturedCloseout(RuntimeError):
+        pass
+
+    def capture_put(
+        _store: Any, candidate_spec: dict[str, Any], **kwargs: Any
+    ) -> dict[str, Any]:
+        captured["spec"] = json.loads(json.dumps(candidate_spec))
+        captured.update(kwargs)
+        raise CapturedCloseout
+
+    monkeypatch.setattr(refresh, "_put_authority_task", capture_put)
+    with pytest.raises(CapturedCloseout):
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=before["revision"],
+            expected_spec_sha256=before["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda ancestor, descendant: (
+                ancestor == MAIN and descendant == "9" * 40
+            ),
+        )
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+    assert captured["runtime_state_root"] == Path(unused_intent["state_root"])
+
+    monkeypatch.setattr(
+        store,
+        "reservations",
+        lambda _connection: [
+            legacy.Reservation("BUR-RUN-DIRECT-PARENT", "repo.bureau", "exclusive", 1)
+        ],
+    )
+    with pytest.raises(legacy.StateError, match="unreserved runtime"):
+        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+            captured["spec"],
+            idempotency_key=captured["idempotency_key"],
+            expected_revision=captured["expected_revision"],
+            runtime_state_root=captured["runtime_state_root"],
+        )
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
 def test_unused_authority_closeout_rechecks_parent_runtime_reservation_inside_cas(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -2754,7 +2754,7 @@ def _put_authority_task(
     source: str,
     activation_observation: dict[str, Any] | None = None,
     activation_evidence: dict[str, Any] | None = None,
-    runtime_conflicting_resource_ids: list[str] | None = None,
+    runtime_state_root: Path | None = None,
 ) -> dict[str, Any]:
     try:
         if source == "runtime-refresh-no-run-closeout":
@@ -2768,7 +2768,7 @@ def _put_authority_task(
                 spec,
                 idempotency_key=idempotency_key,
                 expected_revision=expected_revision,
-                runtime_conflicting_resource_ids=runtime_conflicting_resource_ids,
+                runtime_state_root=runtime_state_root,
             )
         if source == "runtime-refresh-protected-publication-activation":
             return store.put_runtime_refresh_protected_publication_activation_task_spec(
@@ -8924,6 +8924,51 @@ def _runtime_conflicting_resource_ids(registry_root: Path) -> list[str]:
     )
 
 
+def _authenticated_runtime_conflicting_resource_ids(
+    *, state_root: Path, closeout: dict[str, Any]
+) -> list[str]:
+    validated = _validated_unused_runtime_authority_closeout(closeout)
+    root = state_root.expanduser().resolve()
+    fulfilled_intent_sha256 = validated["fulfilled_by_intent_sha256"]
+    intent_path = root / "intents" / f"{fulfilled_intent_sha256}.json"
+    intent = read_json(intent_path)
+    verify_digest(intent, "intent_sha256")
+    intent_state_root = intent.get("state_root")
+    prefix = intent.get("prefix")
+    if (
+        intent.get("intent_sha256") != fulfilled_intent_sha256
+        or intent.get("approval_task_id") != validated["fulfilled_by_task_id"]
+        or intent.get("target_sha256") != validated["target_sha256"]
+        or intent.get("main_commit") != validated["intended_main_commit"]
+        or not isinstance(intent_state_root, str)
+        or Path(intent_state_root).expanduser().resolve() != root
+        or not isinstance(prefix, str)
+        or not prefix
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-runtime-conflict-evidence-invalid",
+            "unused-authority closeout runtime conflict evidence is not intent-bound",
+        )
+    manifest, manifest_sha256 = load_manifest(
+        Path(prefix).expanduser().resolve() / "deployment-manifest.json"
+    )
+    identity = registry_snapshot.canonical_registry_identity(manifest)
+    if (
+        manifest_sha256 != validated["current_runtime_manifest_sha256"]
+        or manifest.get("source_commit") != validated["current_runtime_source_commit"]
+        or identity.get("valid") is not True
+        or identity.get("tree_sha256") != validated["current_registry_tree_sha256"]
+        or not isinstance(identity.get("root"), str)
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-runtime-conflict-evidence-invalid",
+            "unused-authority closeout runtime conflict evidence differs from the "
+            "authenticated Registry snapshot",
+            details={"registry_reasons": identity.get("reasons", [])},
+        )
+    return _runtime_conflicting_resource_ids(Path(identity["root"]))
+
+
 @_serialize_runtime_authority_intent_closeout
 def closeout_unused_runtime_refresh_authority(
     *,
@@ -9131,9 +9176,6 @@ def closeout_unused_runtime_refresh_authority(
         source_repository=source_repository,
         source_ancestry=source_ancestry,
     )
-    runtime_conflicting_resource_ids = _runtime_conflicting_resource_ids(
-        Path(current_runtime["canonical_registry_root"])
-    )
     _validate_state_store_health(store)
     closeout = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
@@ -9215,7 +9257,7 @@ def closeout_unused_runtime_refresh_authority(
             idempotency_key=idempotency_key,
             expected_revision=expected_revision,
             source="runtime-refresh-unused-authority-closeout",
-            runtime_conflicting_resource_ids=runtime_conflicting_resource_ids,
+            runtime_state_root=resolved_state_root,
         )
     finally:
         _release_unused_authority_resource_barrier(resource_barrier)

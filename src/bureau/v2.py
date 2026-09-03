@@ -3796,22 +3796,48 @@ class StateStore:
         *,
         idempotency_key: str,
         expected_revision: int | None,
-        runtime_conflicting_resource_ids: list[str] | None,
+        runtime_state_root: Path | None,
     ) -> dict[str, Any]:
-        conflicts = runtime_conflicting_resource_ids
-        if (
-            not isinstance(conflicts, list)
-            or not conflicts
-            or conflicts != sorted(set(conflicts))
-            or "component.bureau.runtime" not in conflicts
-            or not all(isinstance(item, str) and item for item in conflicts)
-        ):
+        metadata = spec.get("metadata") if isinstance(spec, dict) else None
+        closeout_value = (
+            metadata.get("runtime_unused_authority_closeout")
+            if isinstance(metadata, dict)
+            else None
+        )
+        if not isinstance(runtime_state_root, Path) or not isinstance(closeout_value, dict):
             raise legacy.StateError(
                 "runtime-refresh unused-authority closeout resource overlap contract is invalid"
             )
-        conflicting_resources = set(conflicts)
+        try:
+            closeout = runtime_refresh._validated_unused_runtime_authority_closeout(
+                closeout_value
+            )
+        except runtime_refresh.RuntimeRefreshError as exc:
+            raise legacy.StateError(
+                "runtime-refresh unused-authority closeout resource overlap contract is invalid"
+            ) from exc
         with self.immediate() as connection:
             try:
+                fulfilled_revision = task_specs.get_revision(
+                    connection,
+                    closeout["fulfilled_by_task_id"],
+                    closeout["fulfilled_by_authority_revision"],
+                )
+                if (
+                    not isinstance(fulfilled_revision, dict)
+                    or fulfilled_revision.get("spec_sha256")
+                    != closeout["fulfilled_by_authority_spec_sha256"]
+                ):
+                    raise legacy.StateError(
+                        "runtime-refresh unused-authority closeout fulfilled authority "
+                        "history is invalid"
+                    )
+                conflicting_resources = set(
+                    runtime_refresh._authenticated_runtime_conflicting_resource_ids(
+                        state_root=runtime_state_root,
+                        closeout=closeout,
+                    )
+                )
                 active_runtime = [
                     reservation
                     for reservation in self.reservations(connection)

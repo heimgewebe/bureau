@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Seal merged Heim-PC source for cutover rehearsal",
+  "state": "planned",
+  "goal": "After T009 is terminal, bind its exact terminal Captain merge receipt and independently read the exact T009 merge commit/tree from heimgewebe/heim-pc. Prove protected main still contains that merge commit and its exact T007/T006/T005/T001/T002 ancestry, then create artifact.heim-pc.nixos-published-source from the exact T009 merge-commit tree—not from a later moving main tip. The immutable manifest first becomes T011’s sole final activation-reproof source and then T003’s sole declarative/reconstruction source. T010 performs no repository ref mutation, merge, source edit, NixOS activation or cutover effect.",
+  "priority": {
+    "lane": "next",
+    "rank": 9
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc",
+      "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/published-source"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "The only mutation is create-only publication of the immutable published-source artifact after exact T009 terminal merge-receipt validation. Git refs, PRs, main, code, runtime and production storage/boot state are read-only/outside authority."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "artifact.heim-pc.nixos-published-source",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "depends_on": [
+    "HEIM-PC-NIXOS-MIGRATION-V1-T009"
+  ],
+  "acceptance": [
+    {
+      "id": "t009-terminal-merge-receipt-bound",
+      "assertion": "T010 begins only after T009 is terminal and independently reviewed. It binds the exact terminal T009/Captain receipt including repository, PR, reviewed head/base/diff, actual merge commit/tree and ancestry proof; any missing, nonterminal, mismatched or ambiguous receipt fails closed before artifact creation.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:t009-terminal-merge-receipt-bound"
+      }
+    },
+    {
+      "id": "merge-commit-still-contained",
+      "assertion": "Fresh GitHub/Git readback proves protected heimgewebe/heim-pc main still contains the exact T009 merge commit as an ancestor. Later legitimate main commits may exist but are not silently incorporated into this source identity.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:merge-commit-still-contained"
+      }
+    },
+    {
+      "id": "exact-merge-tree-readback",
+      "assertion": "The exact T009 merge commit object/tree is independently read and rehashed; it contains exact T007/T006/T005/T001/T002 ancestry and the reviewed T008 publication tree plus the T009 protected merge parent relationship. A moving current-main tree is never substituted.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:exact-merge-tree-readback"
+      }
+    },
+    {
+      "id": "published-source-create-only",
+      "assertion": "While holding the exclusive artifact.heim-pc.nixos-published-source write claim, T010 creates a content-addressed whole-source artifact from exactly the T009 merge-commit tree. Its immutable manifest binds T009 terminal receipt/Captain digests, PR, pre-merge base, reviewed head/tree/diff, actual merge commit/tree, predecessor ancestry, archive/content digest, Control Release Set and lock/input identity; immediate independent re-hash proves byte/tree identity.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:published-source-create-only"
+      }
+    },
+    {
+      "id": "workspace-closeout-eligibility",
+      "assertion": "Only after exact T009 merge containment and published-source artifact readback may typed Bureau workspace cleanup preflights classify T001/T002/T005/T006/T007/T008 source branches as contained by protected main. Cleanup remains a separate effect and never force-removes dirty, foreign or ambiguous workspaces.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:workspace-closeout-eligibility"
+      }
+    },
+    {
+      "id": "t011-and-t003-published-source-handoff",
+      "assertion": "T010 terminal evidence designates artifact.heim-pc.nixos-published-source as T011’s sole final activation-reproof source and T003’s sole declarative/reconstruction source, binding the exact manifest/digest to the T009 merge commit/tree and predecessor ancestry. T011 must first prove the exact published-source closure; T003 must reject any alternate/moving source or activation proof not bound to this artifact.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:t011-and-t003-published-source-handoff"
+      }
+    },
+    {
+      "id": "no-repository-or-runtime-effect",
+      "assertion": "T010 creates no Git ref, PR, merge or source-code change and performs no NixOS activation, sgdisk, wipefs, cryptsetup luksFormat, mkfs, EFI/Secure-Boot/firmware mutation, productive nixos-install/switch or reboot.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t010:no-repository-or-runtime-effect"
+      }
+    }
+  ],
+  "metadata": {
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
+    "source_identity": "exact T009 merge commit/tree",
+    "published_source_artifact": "artifact.heim-pc.nixos-published-source",
+    "does_not_establish": [
+      "future-main freshness",
+      "main-branch merge authority",
+      "runtime activation authority",
+      "production storage mutation authority",
+      "production device identity",
+      "cutover approval"
+    ],
+    "consumer_tasks": [
+      "HEIM-PC-NIXOS-MIGRATION-V1-T011",
+      "HEIM-PC-NIXOS-MIGRATION-V1-T003"
+    ],
+    "final_activation_reproof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T011"
+  }
+}

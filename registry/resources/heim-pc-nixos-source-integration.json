@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "component.heim-pc.nixos-source-integration",
+  "type": "component",
+  "parent": "repo.heim-pc",
+  "grabowski_key": "path:/home/alex/repos/heim-pc/.git",
+  "metadata": {
+    "purpose": "Exclusive coordination authority for T006/T007 while reading Heim-PC Git objects and creating local run-scoped integration commits/refs inside Bureau-recorded workspaces. It covers the repository object/ref store, not remote Git publication, productive runtime state or broad source-file mutation authority.",
+    "canonical_git_object_store": "/home/alex/repos/heim-pc/.git",
+    "source_tasks": [
+      "HEIM-PC-NIXOS-MIGRATION-V1-T006",
+      "HEIM-PC-NIXOS-MIGRATION-V1-T007"
+    ],
+    "does_not_establish": [
+      "remote Git ref publication authority",
+      "main-branch merge authority",
+      "repository-wide source-file mutation authority",
+      "production runtime authority",
+      "production storage mutation authority",
+      "cutover approval"
+    ]
+  }
+}

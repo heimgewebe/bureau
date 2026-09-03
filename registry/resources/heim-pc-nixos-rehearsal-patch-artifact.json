@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "artifact.heim-pc.nixos-rehearsal-patch",
+  "type": "path",
+  "parent": "root",
+  "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-patch",
+  "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-patch",
+  "metadata": {
+    "boundary": "Create-only content-addressed handoff produced by T005 from its exact reviewed standalone rehearsal-harness component patch. The immutable manifest binds canonical baseline commit/tree, terminal T005 commit/tree, normalized patch/content digest, touched-path set and review evidence. T007 consumes this artifact read-only together with T006's activation-source artifact; no moving Git ref or live T005 workspace is an authority input.",
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T005",
+    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T007",
+    "lifecycle": "migration-proof-artifact",
+    "does_not_establish": [
+      "remote branch publication authority",
+      "main-branch merge authority",
+      "runtime mutation authority",
+      "production cutover authority"
+    ]
+  }
+}

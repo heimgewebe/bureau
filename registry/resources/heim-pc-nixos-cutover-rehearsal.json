@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "component.heim-pc.nixos-cutover-rehearsal",
+  "type": "component",
+  "parent": "repo.heim-pc",
+  "metadata": {
+    "purpose": "Logical Bureau coordination scope for the effect-free implementation of the blank-disk NixOS storage-rehearsal harness and its recovery/restore validation contracts. Runtime partitioning, formatting, LUKS creation and boot rehearsal are delegated to T003 on an independently reserved disposable sandbox.",
+    "canonical_paths": [
+      "nixos/rehearsal/",
+      "scripts/nixos_storage_rehearsal.py",
+      "tests/test_nixos_storage_rehearsal.py"
+    ],
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T005",
+    "does_not_establish": [
+      "runtime storage-rehearsal authority",
+      "production device identity",
+      "production storage mutation authority",
+      "EFI or firmware mutation authority",
+      "production NixOS activation authority",
+      "cutover approval"
+    ]
+  }
+}

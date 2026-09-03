@@ -2252,18 +2252,28 @@ def _task_revision_text_is_continuous(
         and _task_revision_trailing_inflection_is_continuous(before, after)
     )
     shorter_subject_sequence_count = min(len(before_subject), len(after_subject))
-    all_overlap_is_shared_suffix = shared_subject_suffix_count == subject_overlap
+    retained_strong_identity_overlap = int(
+        retained_strong_leading_identity
+        and before_strong_leading_identity in before_subject
+        and after_strong_leading_identity in after_subject
+    )
+    non_identity_subject_overlap = max(
+        0, subject_overlap - retained_strong_identity_overlap
+    )
+    all_non_identity_overlap_is_shared_suffix = (
+        shared_subject_suffix_count == non_identity_subject_overlap
+    )
     # Position zero is deliberately action-agnostic: an unseen process verb must
     # not become identity evidence just because a static weak-token list omitted
-    # it. If every surviving overlap is merely a trailing suffix and another
-    # subject token changed, require independent goal/acceptance evidence instead.
-    # Explicit identifiers/acronyms are the narrow exception because the tokenizer
-    # already treats them as atomic subject identities.
+    # it. A retained technical identifier is useful evidence, but it cannot by
+    # itself legitimize a changed subject when every *other* surviving token is
+    # merely a shared trailing suffix. This keeps exact API/package identity as
+    # corroboration without letting `API backup updater service` become
+    # `API database updater service` under the same permanent task id.
     shared_suffix_only_collision = (
-        not retained_strong_leading_identity
-        and shared_subject_suffix_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        shared_subject_suffix_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
         and shared_subject_suffix_count < shorter_subject_sequence_count
-        and all_overlap_is_shared_suffix
+        and all_non_identity_overlap_is_shared_suffix
     )
     if exact:
         # Exact generic prose is not a subject anchor. Across a resource change, use
@@ -2310,7 +2320,9 @@ def _task_revision_text_is_continuous(
         "before_subject_sequence": before_subject,
         "after_subject_sequence": after_subject,
         "shared_subject_suffix_count": shared_subject_suffix_count,
-        "all_overlap_is_shared_suffix": all_overlap_is_shared_suffix,
+        "retained_strong_identity_overlap": retained_strong_identity_overlap,
+        "non_identity_subject_overlap": non_identity_subject_overlap,
+        "all_non_identity_overlap_is_shared_suffix": all_non_identity_overlap_is_shared_suffix,
         "shared_suffix_only_collision": shared_suffix_only_collision,
         "trailing_inflection_continuity": trailing_inflection_continuity,
         "requires_complete_shorter_subject": not resource_continuity,

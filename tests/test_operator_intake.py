@@ -4891,3 +4891,20 @@ def test_task_revision_identity_guard_rejects_subject_prefix_before_relocated_id
     with pytest.raises(OperatorIntakeError) as raised:
         operator_intake_module._validate_task_revision_identity_continuity(before, after)
     assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+
+def test_task_revision_identity_guard_rejects_retained_broad_identifier_suffix_swap() -> None:
+    before = _identity_revision_task(
+        title="API backup updater service",
+        resource="repo.infra",
+        goal="Restore backup API health",
+    )
+    after = _identity_revision_task(
+        title="API database updater service",
+        resource="repo.infra",
+        goal="Repair database API state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"

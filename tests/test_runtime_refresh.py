@@ -8409,6 +8409,41 @@ def test_unused_authority_closeout_rechecks_parent_runtime_reservation_inside_ca
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
 
 
+def test_unused_authority_closeout_rejects_copied_history_state_root(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    current = store.task_spec(unused_task_id)
+    assert current is not None
+    copied_root = (tmp_path / "copied-unused-history").resolve()
+    shutil.copytree(Path(unused_intent["state_root"]), copied_root)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=copied_root,
+            approval_task_id=unused_task_id,
+            expected_revision=current["revision"],
+            expected_spec_sha256=current["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+
+    assert caught.value.code == "authority-unused-closeout-intent-state-root-mismatch"
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
 def test_unused_authority_closeout_rejects_intent_from_older_ready_revision(
     tmp_path: Path,
 ) -> None:

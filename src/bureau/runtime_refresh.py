@@ -8319,6 +8319,18 @@ def _unused_runtime_authority_history(
                 "authority-unused-closeout-intent-invalid",
                 "unused authority history contains an invalid intent kind",
             )
+        intent_state_root = intent.get("state_root")
+        if (
+            not isinstance(intent_state_root, str)
+            or not intent_state_root
+            or Path(intent_state_root).expanduser().resolve()
+            != state_root.expanduser().resolve()
+        ):
+            raise RuntimeRefreshError(
+                "authority-unused-closeout-intent-state-root-mismatch",
+                "unused authority intent is bound to another runtime-refresh state root",
+                details={"intent_sha256": intent_sha256},
+            )
         intent_authority = _intent_authority_record(intent)
         if (
             intent_authority.get("revision") != expected_revision

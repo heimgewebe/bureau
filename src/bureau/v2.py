@@ -3800,29 +3800,114 @@ class StateStore:
         activation_evidence: dict[str, Any] | None,
     ) -> dict[str, Any]:
         with self.immediate() as connection:
-            if (
-                not isinstance(activation_evidence, dict)
-                or set(activation_evidence)
-                != runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
-                or not runtime_refresh._activation_manifest_digest_binding_is_valid(
-                    activation_evidence.get("observation"),
-                    activation_evidence.get("installed_runtime_validation"),
+            try:
+                if (
+                    not isinstance(activation_evidence, dict)
+                    or set(activation_evidence)
+                    != runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
+                    or not runtime_refresh._activation_manifest_digest_binding_is_valid(
+                        activation_evidence.get("observation"),
+                        activation_evidence.get("installed_runtime_validation"),
+                    )
+                ):
+                    raise runtime_refresh.RuntimeRefreshError(
+                        "authority-activation-state-store-contract-invalid",
+                        "activation evidence contract is invalid",
+                    )
+                validated_observation = (
+                    runtime_refresh._validated_protected_publication_activation_observation_contract(
+                        activation_observation
+                    )
                 )
-            ):
+                if activation_evidence.get("observation") != validated_observation:
+                    raise runtime_refresh.RuntimeRefreshError(
+                        "authority-activation-state-store-contract-invalid",
+                        "activation observation differs from activation evidence",
+                    )
+
+                task_id = spec.get("id") if isinstance(spec, dict) else None
+                baseline = None
+                if (
+                    isinstance(task_id, str)
+                    and task_id
+                    and isinstance(expected_revision, int)
+                    and not isinstance(expected_revision, bool)
+                    and expected_revision >= 1
+                ):
+                    try:
+                        baseline = task_specs.get_revision(
+                            connection, task_id, expected_revision
+                        )
+                    except task_specs.TaskSpecError:
+                        baseline = None
+                if isinstance(baseline, dict):
+                    historical_spec = baseline.get("spec")
+                    publication_pr = activation_evidence.get("publication_pr")
+                    publication_merge_commit = activation_evidence.get(
+                        "publication_merge_commit"
+                    )
+                    if (
+                        not isinstance(historical_spec, dict)
+                        or not isinstance(publication_pr, int)
+                        or isinstance(publication_pr, bool)
+                        or publication_pr < 1
+                        or not isinstance(publication_merge_commit, str)
+                        or len(publication_merge_commit) != 40
+                        or any(
+                            character not in "0123456789abcdef"
+                            for character in publication_merge_commit
+                        )
+                    ):
+                        raise runtime_refresh.RuntimeRefreshError(
+                            "authority-activation-state-store-contract-invalid",
+                            "activation baseline or publication binding is invalid",
+                        )
+                    historical_metadata = historical_spec.get("metadata")
+                    activation = (
+                        runtime_refresh._validated_post_publication_activation_contract(
+                            historical_metadata
+                            if isinstance(historical_metadata, dict)
+                            else {}
+                        )
+                    )
+                    if activation is None or (
+                        activation.get("publication_pr") is not None
+                        and activation.get("publication_pr") != publication_pr
+                    ):
+                        raise runtime_refresh.RuntimeRefreshError(
+                            "authority-activation-state-store-contract-invalid",
+                            "activation publication differs from the planned baseline",
+                        )
+                    publication = {
+                        "schema_version": runtime_refresh.RUNTIME_AUTHORITY_SCHEMA_VERSION,
+                        "repository": runtime_refresh.DEFAULT_REPOSITORY,
+                        "publication_pr": publication_pr,
+                        "publication_merge_commit": publication_merge_commit,
+                        "required_checks": list(
+                            runtime_refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS
+                        ),
+                    }
+                    expected_spec = runtime_refresh._expected_protected_publication_activation_spec(
+                        historical_spec=historical_spec,
+                        publication=publication,
+                        approval_task_id=task_id,
+                    )
+                    if (
+                        spec != expected_spec
+                        or activation_evidence.get("adoption_spec_sha256")
+                        != baseline.get("spec_sha256")
+                        or activation_evidence.get("activation_spec_sha256")
+                        != task_specs.task_spec_digest(expected_spec)
+                    ):
+                        raise runtime_refresh.RuntimeRefreshError(
+                            "authority-activation-state-store-contract-invalid",
+                            "activation candidate is not the exact planned-to-ready delta",
+                        )
+            except runtime_refresh.RuntimeRefreshError as exc:
                 raise legacy.StateError(
                     "runtime-refresh protected-publication activation mutation "
                     "contract is invalid"
-                )
-            if isinstance(activation_observation, dict):
-                try:
-                    runtime_refresh._validate_candidate_runtime_source_identity(
-                        activation_observation
-                    )
-                except runtime_refresh.RuntimeRefreshError as exc:
-                    raise legacy.StateError(
-                        "runtime-refresh protected-publication activation mutation "
-                        "contract is invalid"
-                    ) from exc
+                ) from exc
             try:
                 return task_specs.put_runtime_refresh_protected_publication_activation(
                     connection,

@@ -3797,6 +3797,7 @@ class StateStore:
         idempotency_key: str,
         expected_revision: int | None,
         runtime_state_root: Path | None,
+        closeout_guard: Any | None = None,
     ) -> dict[str, Any]:
         metadata = spec.get("metadata") if isinstance(spec, dict) else None
         closeout_value = (
@@ -3806,25 +3807,34 @@ class StateStore:
         )
         if not isinstance(runtime_state_root, Path) or not isinstance(closeout_value, dict):
             raise legacy.StateError(
-                "runtime-refresh unused-authority closeout resource overlap contract is invalid"
+                "runtime-refresh unused-authority closeout protected CAS contract is invalid"
             )
         try:
             closeout = runtime_refresh._validated_unused_runtime_authority_closeout(
                 closeout_value
             )
+            runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                closeout_guard,
+                state_root=runtime_state_root,
+            )
         except runtime_refresh.RuntimeRefreshError as exc:
             raise legacy.StateError(
-                "runtime-refresh unused-authority closeout resource overlap contract is invalid"
+                "runtime-refresh unused-authority closeout protected CAS contract is invalid"
             ) from exc
         with self.immediate() as connection:
             try:
                 current = task_specs.get_current(connection, closeout["task_id"])
-                runtime_refresh._validate_unused_authority_closeout_cas_contract(
+                cas_contract = runtime_refresh._validate_unused_authority_closeout_cas_contract(
                     state_root=runtime_state_root,
                     store=self,
                     current=current,
                     candidate=spec,
                     closeout=closeout,
+                )
+                runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                    closeout_guard,
+                    state_root=runtime_state_root,
+                    required_resource_keys=cas_contract["history"]["required_resource_keys"],
                 )
                 conflicting_resources = set(
                     runtime_refresh._authenticated_runtime_conflicting_resource_ids(
@@ -3842,6 +3852,11 @@ class StateStore:
                     raise legacy.StateError(
                         "runtime-refresh unused-authority closeout requires an unreserved runtime"
                     )
+                runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                    closeout_guard,
+                    state_root=runtime_state_root,
+                    required_resource_keys=cas_contract["history"]["required_resource_keys"],
+                )
                 return task_specs.put_runtime_refresh_unused_authority_closeout(
                     connection,
                     spec,

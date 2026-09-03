@@ -13,6 +13,7 @@ import argparse
 import ast
 import base64
 import contextlib
+import contextvars
 import fcntl
 import functools
 import hashlib
@@ -2755,6 +2756,7 @@ def _put_authority_task(
     activation_observation: dict[str, Any] | None = None,
     activation_evidence: dict[str, Any] | None = None,
     runtime_state_root: Path | None = None,
+    unused_authority_closeout_guard: Any | None = None,
 ) -> dict[str, Any]:
     try:
         if source == "runtime-refresh-no-run-closeout":
@@ -2769,6 +2771,7 @@ def _put_authority_task(
                 idempotency_key=idempotency_key,
                 expected_revision=expected_revision,
                 runtime_state_root=runtime_state_root,
+                closeout_guard=unused_authority_closeout_guard,
             )
         if source == "runtime-refresh-protected-publication-activation":
             return store.put_runtime_refresh_protected_publication_activation_task_spec(
@@ -5277,6 +5280,13 @@ def consume_runtime_refresh_authority(
 
 
 _RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCK = ".runtime-authority-intent-closeout.lock"
+_RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCKED_ROOTS: contextvars.ContextVar[tuple[str, ...]] = (
+    contextvars.ContextVar("runtime_authority_intent_closeout_locked_roots", default=())
+)
+_UNUSED_AUTHORITY_RESOURCE_BARRIERS: contextvars.ContextVar[
+    tuple[tuple[int, str, tuple[str, ...]], ...]
+] = contextvars.ContextVar("unused_authority_resource_barriers", default=())
+_UNUSED_AUTHORITY_CLOSEOUT_GUARD_TOKEN = object()
 
 
 @contextlib.contextmanager
@@ -5314,7 +5324,15 @@ def _runtime_authority_intent_closeout_lock(state_root: Path):
                 "runtime authority intent/closeout lock identity is unsafe",
             )
         fcntl.flock(descriptor, fcntl.LOCK_EX)
-        yield
+        root_key = str(root)
+        locked_roots = _RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCKED_ROOTS.get()
+        lock_token = _RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCKED_ROOTS.set(
+            (*locked_roots, root_key)
+        )
+        try:
+            yield
+        finally:
+            _RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCKED_ROOTS.reset(lock_token)
     finally:
         with contextlib.suppress(OSError):
             fcntl.flock(descriptor, fcntl.LOCK_UN)
@@ -8495,6 +8513,7 @@ def _acquire_unused_authority_resource_barrier(
     """Freeze Grabowski lease mutations across the final closeout CAS window."""
     path = _validate_resource_database_path(resource_db)
     keys = sorted(set(required_resource_keys))
+    effective_now = min(now, utc_now())
     if not keys:
         raise RuntimeRefreshError(
             "authority-unused-closeout-resource-scope-invalid",
@@ -8509,7 +8528,7 @@ def _acquire_unused_authority_resource_barrier(
             f"SELECT resource_key,owner_id,expires_at_unix FROM leases "
             f"WHERE resource_key IN ({placeholders}) AND expires_at_unix>? "
             f"ORDER BY resource_key",
-            [*keys, int(now.timestamp())],
+            [*keys, int(effective_now.timestamp())],
         ).fetchall()
     except sqlite3.Error as exc:
         with contextlib.suppress(sqlite3.Error):
@@ -8529,14 +8548,146 @@ def _acquire_unused_authority_resource_barrier(
             "runtime authority resources still have live Grabowski leases",
             details={"leases": leases},
         )
+    active_barriers = _UNUSED_AUTHORITY_RESOURCE_BARRIERS.get()
+    barrier_binding = (id(connection), str(path), tuple(keys))
+    _UNUSED_AUTHORITY_RESOURCE_BARRIERS.set((*active_barriers, barrier_binding))
     return connection
 
 
 def _release_unused_authority_resource_barrier(connection: sqlite3.Connection) -> None:
+    active_barriers = _UNUSED_AUTHORITY_RESOURCE_BARRIERS.get()
+    _UNUSED_AUTHORITY_RESOURCE_BARRIERS.set(
+        tuple(item for item in active_barriers if item[0] != id(connection))
+    )
     try:
         connection.execute("ROLLBACK")
     finally:
         connection.close()
+
+
+def _unused_authority_closeout_cas_guard(
+    *,
+    state_root: Path,
+    resource_db: Path,
+    required_resource_keys: list[str],
+    resource_barrier: sqlite3.Connection,
+) -> dict[str, Any]:
+    root = state_root.expanduser().resolve()
+    path = _validate_resource_database_path(resource_db)
+    keys = tuple(sorted(set(required_resource_keys)))
+    if not keys:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS guard has no runtime resource scope",
+        )
+    if str(root) not in _RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCKED_ROOTS.get():
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS requires the state-root intent lock",
+        )
+    barrier_binding = (id(resource_barrier), str(path), keys)
+    if barrier_binding not in _UNUSED_AUTHORITY_RESOURCE_BARRIERS.get():
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS requires the exact Grabowski resource barrier",
+        )
+    try:
+        in_transaction = resource_barrier.in_transaction
+        databases = resource_barrier.execute("PRAGMA database_list").fetchall()
+    except sqlite3.Error as exc:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS resource barrier is unavailable",
+            details={"error": str(exc)},
+        ) from exc
+    main_paths = [
+        Path(str(row["file"])).expanduser().resolve()
+        for row in databases
+        if row["name"] == "main" and row["file"]
+    ]
+    if not in_transaction or main_paths != [path]:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS resource barrier is not bound to the required database",
+        )
+    return {
+        "token": _UNUSED_AUTHORITY_CLOSEOUT_GUARD_TOKEN,
+        "state_root": str(root),
+        "resource_db": str(path),
+        "required_resource_keys": keys,
+        "resource_barrier": resource_barrier,
+    }
+
+
+def _validate_unused_authority_closeout_cas_guard(
+    value: Any,
+    *,
+    state_root: Path,
+    required_resource_keys: list[str] | None = None,
+) -> dict[str, Any]:
+    root = state_root.expanduser().resolve()
+    if (
+        not isinstance(value, dict)
+        or value.get("token") is not _UNUSED_AUTHORITY_CLOSEOUT_GUARD_TOKEN
+        or value.get("state_root") != str(root)
+        or str(root) not in _RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCKED_ROOTS.get()
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS lacks the protected intent/lease guard",
+        )
+    barrier = value.get("resource_barrier")
+    resource_db_value = value.get("resource_db")
+    guard_keys = value.get("required_resource_keys")
+    if (
+        not isinstance(barrier, sqlite3.Connection)
+        or not isinstance(resource_db_value, str)
+        or not resource_db_value
+        or not isinstance(guard_keys, tuple)
+        or not guard_keys
+        or not all(isinstance(item, str) and item for item in guard_keys)
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS resource barrier binding is malformed",
+        )
+    resource_db = _validate_resource_database_path(Path(resource_db_value))
+    barrier_binding = (id(barrier), str(resource_db), guard_keys)
+    if barrier_binding not in _UNUSED_AUTHORITY_RESOURCE_BARRIERS.get():
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS resource barrier is not the active exact binding",
+        )
+    try:
+        in_transaction = barrier.in_transaction
+        databases = barrier.execute("PRAGMA database_list").fetchall()
+    except sqlite3.Error as exc:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS resource barrier is unavailable",
+            details={"error": str(exc)},
+        ) from exc
+    main_paths = [
+        Path(str(row["file"])).expanduser().resolve()
+        for row in databases
+        if row["name"] == "main" and row["file"]
+    ]
+    if not in_transaction or main_paths != [resource_db]:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS resource barrier is not active on the bound database",
+        )
+    expected_keys = (
+        tuple(sorted(set(required_resource_keys)))
+        if required_resource_keys is not None
+        else None
+    )
+    if expected_keys is not None and expected_keys != value.get("required_resource_keys"):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-guard-invalid",
+            "unused-authority closeout CAS resource scope differs from the authenticated history",
+        )
+    return value
 
 
 def _guard_unused_authority_foreign_activity(
@@ -9318,6 +9469,12 @@ def closeout_unused_runtime_refresh_authority(
         history["required_resource_keys"],
         now=current_time,
     )
+    closeout_guard = _unused_authority_closeout_cas_guard(
+        state_root=resolved_state_root,
+        resource_db=resource_db,
+        required_resource_keys=history["required_resource_keys"],
+        resource_barrier=resource_barrier,
+    )
     try:
         _guard_unused_authority_foreign_activity(
             store=store,
@@ -9353,6 +9510,7 @@ def closeout_unused_runtime_refresh_authority(
             expected_revision=expected_revision,
             source="runtime-refresh-unused-authority-closeout",
             runtime_state_root=resolved_state_root,
+            unused_authority_closeout_guard=closeout_guard,
         )
     finally:
         _release_unused_authority_resource_barrier(resource_barrier)

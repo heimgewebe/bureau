@@ -8412,6 +8412,113 @@ def captured_unused_authority_closeout_candidate(
     return unused_task_id, store, captured
 
 
+def put_captured_unused_authority_closeout_task_spec(
+    store: StateStore,
+    captured: dict[str, Any],
+    spec: dict[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+    runtime_state_root: Path,
+) -> dict[str, Any]:
+    guard_snapshot = captured["unused_authority_closeout_guard"]
+    resource_db = Path(guard_snapshot["resource_db"])
+    required_resource_keys = list(guard_snapshot["required_resource_keys"])
+    closeout = spec["metadata"]["runtime_unused_authority_closeout"]
+    with refresh._runtime_authority_intent_closeout_lock(runtime_state_root):
+        barrier = refresh._acquire_unused_authority_resource_barrier(
+            resource_db,
+            required_resource_keys,
+            now=refresh.parse_time(closeout["closed_at"]),
+        )
+        try:
+            guard = refresh._unused_authority_closeout_cas_guard(
+                state_root=runtime_state_root,
+                resource_db=resource_db,
+                required_resource_keys=required_resource_keys,
+                resource_barrier=barrier,
+            )
+            return store.put_runtime_refresh_unused_authority_closeout_task_spec(
+                spec,
+                idempotency_key=idempotency_key,
+                expected_revision=expected_revision,
+                runtime_state_root=runtime_state_root,
+                closeout_guard=guard,
+            )
+        finally:
+            refresh._release_unused_authority_resource_barrier(barrier)
+
+
+def test_state_store_unused_authority_closeout_requires_intent_lock_and_resource_barrier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
+        tmp_path, monkeypatch
+    )
+    with pytest.raises(legacy.StateError, match="protected CAS contract"):
+        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+            captured["spec"],
+            idempotency_key=captured["idempotency_key"],
+            expected_revision=captured["expected_revision"],
+            runtime_state_root=captured["runtime_state_root"],
+        )
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+    stale_guard = captured["unused_authority_closeout_guard"]
+    with (
+        refresh._runtime_authority_intent_closeout_lock(captured["runtime_state_root"]),
+        pytest.raises(legacy.StateError, match="protected CAS contract"),
+    ):
+        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+            captured["spec"],
+            idempotency_key=captured["idempotency_key"],
+            expected_revision=captured["expected_revision"],
+            runtime_state_root=captured["runtime_state_root"],
+            closeout_guard=stale_guard,
+        )
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
+def test_state_store_unused_authority_closeout_rejects_tampered_active_barrier_scope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    unused_task_id, store, captured = captured_unused_authority_closeout_candidate(
+        tmp_path, monkeypatch
+    )
+    guard_snapshot = captured["unused_authority_closeout_guard"]
+    resource_db = Path(guard_snapshot["resource_db"])
+    required_resource_keys = list(guard_snapshot["required_resource_keys"])
+    assert len(required_resource_keys) > 1
+    runtime_state_root = captured["runtime_state_root"]
+    closeout = captured["spec"]["metadata"]["runtime_unused_authority_closeout"]
+
+    with refresh._runtime_authority_intent_closeout_lock(runtime_state_root):
+        barrier = refresh._acquire_unused_authority_resource_barrier(
+            resource_db,
+            required_resource_keys,
+            now=refresh.parse_time(closeout["closed_at"]),
+        )
+        try:
+            guard = refresh._unused_authority_closeout_cas_guard(
+                state_root=runtime_state_root,
+                resource_db=resource_db,
+                required_resource_keys=required_resource_keys,
+                resource_barrier=barrier,
+            )
+            guard["required_resource_keys"] = tuple(required_resource_keys[1:])
+            with pytest.raises(legacy.StateError, match="protected CAS contract"):
+                store.put_runtime_refresh_unused_authority_closeout_task_spec(
+                    captured["spec"],
+                    idempotency_key=captured["idempotency_key"],
+                    expected_revision=captured["expected_revision"],
+                    runtime_state_root=runtime_state_root,
+                    closeout_guard=guard,
+                )
+        finally:
+            refresh._release_unused_authority_resource_barrier(barrier)
+    assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
 
 def test_state_store_unused_authority_closeout_derives_parent_overlap_from_registry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -8466,7 +8573,9 @@ def test_state_store_unused_authority_closeout_derives_parent_overlap_from_regis
         ],
     )
     with pytest.raises(legacy.StateError, match="unreserved runtime"):
-        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+        put_captured_unused_authority_closeout_task_spec(
+            store,
+            captured,
             captured["spec"],
             idempotency_key=captured["idempotency_key"],
             expected_revision=captured["expected_revision"],
@@ -8493,7 +8602,9 @@ def test_state_store_unused_authority_closeout_rejects_forged_equivalent_evidenc
     forged["metadata"]["runtime_unused_authority_closeout"][field] = "f" * 64
 
     with pytest.raises(legacy.StateError, match="equivalent success evidence"):
-        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+        put_captured_unused_authority_closeout_task_spec(
+            store,
+            captured,
             forged,
             idempotency_key=captured["idempotency_key"],
             expected_revision=captured["expected_revision"],
@@ -8518,7 +8629,9 @@ def test_state_store_unused_authority_closeout_rejects_forged_result_evidence(
     )
 
     with pytest.raises(legacy.StateError, match="exact successful deployed result"):
-        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+        put_captured_unused_authority_closeout_task_spec(
+            store,
+            captured,
             forged,
             idempotency_key=forged_key,
             expected_revision=captured["expected_revision"],
@@ -8539,7 +8652,9 @@ def test_state_store_unused_authority_closeout_rejects_unbound_ready_preimage(
     ] = "f" * 64
 
     with pytest.raises(legacy.StateError, match="CAS preimage"):
-        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+        put_captured_unused_authority_closeout_task_spec(
+            store,
+            captured,
             forged,
             idempotency_key=captured["idempotency_key"],
             expected_revision=captured["expected_revision"],
@@ -8558,7 +8673,9 @@ def test_state_store_unused_authority_closeout_rejects_extra_candidate_delta(
     tampered["goal"] = tampered["goal"] + " Unrelated direct-CAS mutation."
 
     with pytest.raises(legacy.StateError, match="terminal delta"):
-        store.put_runtime_refresh_unused_authority_closeout_task_spec(
+        put_captured_unused_authority_closeout_task_spec(
+            store,
+            captured,
             tampered,
             idempotency_key=captured["idempotency_key"],
             expected_revision=captured["expected_revision"],

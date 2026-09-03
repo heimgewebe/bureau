@@ -23,7 +23,7 @@ REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX = "repository-identity-rebind:"
 REPOSITORY_IDENTITY_REBIND_TERMINAL_STATES = frozenset({"verified", "cancelled", "superseded"})
 REPOSITORY_IDENTITY_REBIND_ACTIVE_RUN_STATES = ("assigned", "running", "verifying")
 _REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&;|<>")
-_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>:")
+_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>")
 _RESOURCE_ID_TOKEN_EXTRA_CHARS = frozenset("._-")
 _URI_SCHEME_EXTRA_CHARS = frozenset("+-.")
 

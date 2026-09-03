@@ -17,6 +17,10 @@ RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX = "runtime-refresh-no-run-clo
 REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX = "repository-identity-rebind:"
 REPOSITORY_IDENTITY_REBIND_TERMINAL_STATES = frozenset({"verified", "cancelled", "superseded"})
 REPOSITORY_IDENTITY_REBIND_ACTIVE_RUN_STATES = ("assigned", "running", "verifying")
+_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{")
+_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&")
+_RESOURCE_ID_TOKEN_EXTRA_CHARS = frozenset("._-")
+_URI_SCHEME_EXTRA_CHARS = frozenset("+-.")
 
 
 class TaskSpecError(ValueError):
@@ -76,6 +80,63 @@ def _validate_repository_identity_rebind_parameters(
         raise TaskSpecError("repository identity rebind repository paths must differ")
 
 
+def _contains_resource_id_token(value: str, resource_id: str) -> bool:
+    start = 0
+    while True:
+        index = value.find(resource_id, start)
+        if index < 0:
+            return False
+        end = index + len(resource_id)
+        before_ok = index == 0 or not (
+            value[index - 1].isalnum()
+            or value[index - 1] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+        )
+        after_ok = end == len(value) or not (
+            value[end].isalnum() or value[end] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+        )
+        if before_ok and after_ok:
+            return True
+        start = index + 1
+
+
+def _is_execution_binding_path(path: str) -> bool:
+    return path == "/execution" or path.startswith("/execution/")
+
+
+def _is_uri_authority_path_boundary(value: str, index: int) -> bool:
+    if index <= 0 or value[index] != "/":
+        return False
+    separator = value.rfind("://", 0, index)
+    if separator <= 0:
+        return False
+    authority = value[separator + 3 : index]
+    if not authority or any(
+        character.isspace() or character in "/?#'\"" for character in authority
+    ):
+        return False
+    scheme_start = separator
+    while scheme_start > 0:
+        character = value[scheme_start - 1]
+        if character.isalnum() or character in _URI_SCHEME_EXTRA_CHARS:
+            scheme_start -= 1
+            continue
+        break
+    scheme = value[scheme_start:separator]
+    if (
+        not scheme
+        or not scheme[0].isalpha()
+        or any(
+            not (character.isalnum() or character in _URI_SCHEME_EXTRA_CHARS)
+            for character in scheme
+        )
+    ):
+        return False
+    return (
+        scheme_start == 0
+        or value[scheme_start - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
+    )
+
+
 def _contains_repository_path_token(
     value: str,
     repository_path: str,
@@ -90,27 +151,23 @@ def _contains_repository_path_token(
     ``/repos/app-new`` does not make the new path look like old residue.
     """
 
-    before_boundaries = frozenset(" \t\r\n'\"=:(,[{")
-    after_boundaries = frozenset(" \t\r\n'\"/:),;]}?#&")
     start = 0
     while True:
         index = value.find(repository_path, start)
         if index < 0:
             return False
         end = index + len(repository_path)
-        uri_scheme_index = value.rfind("://", 0, index)
-        uri_component_ok = False
-        if repository_path.startswith("/") and uri_scheme_index >= 0:
-            uri_prefix = value[uri_scheme_index + 3 : index]
-            uri_component_ok = not any(
-                character in " \t\r\n'\"<>[]{}()" for character in uri_prefix
-            )
+        uri_prefix_ok = index >= 3 and value[index - 3 : index] == "://"
+        uri_authority_ok = _is_uri_authority_path_boundary(value, index)
         before_ok = (
             index == 0
-            or value[index - 1] in before_boundaries
-            or uri_component_ok
+            or value[index - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
+            or uri_prefix_ok
+            or uri_authority_ok
         )
-        after_ok = end == len(value) or value[end] in after_boundaries
+        after_ok = (
+            end == len(value) or value[end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
+        )
         if before_ok and after_ok:
             if excluded_repository_path is not None and value.startswith(
                 excluded_repository_path, index
@@ -118,36 +175,11 @@ def _contains_repository_path_token(
                 excluded_end = index + len(excluded_repository_path)
                 excluded_after_ok = (
                     excluded_end == len(value)
-                    or value[excluded_end] in after_boundaries
+                    or value[excluded_end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
                 )
                 if excluded_after_ok:
                     start = index + 1
                     continue
-            return True
-        start = index + 1
-
-
-_RESOURCE_ID_TOKEN_CHARACTERS = frozenset(
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._:-"
-)
-
-
-def _contains_resource_id_token(value: str, resource_id: str) -> bool:
-    """Return whether one string contains an exact resource-id token."""
-
-    start = 0
-    while True:
-        index = value.find(resource_id, start)
-        if index < 0:
-            return False
-        end = index + len(resource_id)
-        before_ok = (
-            index == 0 or value[index - 1] not in _RESOURCE_ID_TOKEN_CHARACTERS
-        )
-        after_ok = (
-            end == len(value) or value[end] not in _RESOURCE_ID_TOKEN_CHARACTERS
-        )
-        if before_ok and after_ok:
             return True
         start = index + 1
 
@@ -164,8 +196,13 @@ def _old_repository_binding_residue(
     if isinstance(value, Mapping):
         for key, item in value.items():
             item_path = f"{path}/{key}"
+            execution_binding = _is_execution_binding_path(path)
             if isinstance(key, str) and (
-                _contains_resource_id_token(key, old_resource_id)
+                key == old_resource_id
+                or (
+                    execution_binding
+                    and _contains_resource_id_token(key, old_resource_id)
+                )
                 or _contains_repository_path_token(
                     key,
                     old_repository_path,
@@ -194,7 +231,11 @@ def _old_repository_binding_residue(
                 )
             )
     elif isinstance(value, str) and (
-        _contains_resource_id_token(value, old_resource_id)
+        value == old_resource_id
+        or (
+            _is_execution_binding_path(path)
+            and _contains_resource_id_token(value, old_resource_id)
+        )
         or _contains_repository_path_token(
             value,
             old_repository_path,

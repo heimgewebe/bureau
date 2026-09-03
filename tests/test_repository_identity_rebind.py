@@ -932,6 +932,39 @@ def test_preview_rejects_old_repository_path_after_uri_delimiter(
 
 
 @pytest.mark.parametrize(
+    "encoded_value",
+    (
+        "file://{old}%2Fscript",
+        "file://%2F{old_without_slash}%2Fscript",
+    ),
+)
+def test_preview_rejects_percent_encoded_old_repository_path(
+    tmp_path: Path, encoded_value: str
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    old_text = str(old_path)
+    spec["execution"]["argv"] = [
+        "tool",
+        encoded_value.format(
+            old=old_text,
+            old_without_slash=old_text.lstrip("/"),
+        ),
+    ]
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=old_text,
+            new_repository_path=str(new_path),
+        )
+
+
+@pytest.mark.parametrize(
     ("prefix", "suffix"),
     ((";", "/script"), ("", "|next"), ("<", ">")),
 )
@@ -979,6 +1012,28 @@ def test_preview_rejects_old_repository_path_in_shell_parameter_expansion(
             old_repository_path=str(old_path),
             new_repository_path=str(new_path),
         )
+
+
+@pytest.mark.parametrize("field", ("title", "goal"))
+def test_preview_preserves_repository_path_mention_in_task_prose(
+    tmp_path: Path, field: str
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    prose = f"Migrate {old_path} to the new repository identity"
+    spec[field] = prose
+
+    preview = task_specs.preview_repository_identity_rebind(
+        spec,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )
+
+    assert preview["spec"][field] == prose
 
 
 def test_preview_preserves_resource_id_mention_in_acceptance_text(tmp_path: Path) -> None:

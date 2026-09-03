@@ -5,6 +5,7 @@ import json
 import sqlite3
 from collections.abc import Iterable, Mapping
 from typing import Any
+from urllib.parse import unquote
 
 from . import legacy, state_events
 from .acceptance import AcceptanceContractError, validate_acceptance_contract
@@ -111,6 +112,10 @@ def _is_acceptance_evidence_path(path: str) -> bool:
     return path == "/acceptance" or path.startswith("/acceptance/")
 
 
+def _is_nontechnical_task_prose_path(path: str) -> bool:
+    return path in {"/title", "/goal"}
+
+
 def _is_uri_authority_path_boundary(value: str, index: int) -> bool:
     if index <= 0 or value[index] != "/":
         return False
@@ -167,47 +172,52 @@ def _contains_repository_path_token(
     """Return whether one string contains the path as a technical token.
 
     Repository bindings may appear as plain paths or inside ``repo:``/``path:``
-    resource keys and metadata strings.  Token boundaries deliberately exclude
-    filename-style suffix characters, so rebinding ``/repos/app`` to
-    ``/repos/app-new`` does not make the new path look like old residue.
+    resource keys and metadata strings. Percent-encoded URI paths are decoded
+    once before the same boundary checks so encoded execution targets cannot
+    retain the old repository authority.
     """
 
-    start = 0
-    while True:
-        index = value.find(repository_path, start)
-        if index < 0:
-            return False
-        end = index + len(repository_path)
-        uri_prefix_ok = index >= 3 and value[index - 3 : index] == "://"
-        uri_authority_ok = _is_uri_authority_path_boundary(value, index)
-        before_ok = (
-            index == 0
-            or value[index - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
-            or uri_prefix_ok
-            or uri_authority_ok
-            or _is_shell_parameter_path_boundary(value, index)
-        )
-        after_ok = (
-            end == len(value) or value[end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
-        )
-        if before_ok and after_ok:
-            excluded_is_repository_descendant = (
-                excluded_repository_path is not None
-                and excluded_repository_path.startswith(repository_path + "/")
+    decoded = unquote(value) if "%" in value else value
+    candidates = (value,) if decoded == value else (value, decoded)
+    for candidate in candidates:
+        start = 0
+        while True:
+            index = candidate.find(repository_path, start)
+            if index < 0:
+                break
+            end = index + len(repository_path)
+            uri_prefix_ok = index >= 3 and candidate[index - 3 : index] == "://"
+            uri_authority_ok = _is_uri_authority_path_boundary(candidate, index)
+            before_ok = (
+                index == 0
+                or candidate[index - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
+                or uri_prefix_ok
+                or uri_authority_ok
+                or _is_shell_parameter_path_boundary(candidate, index)
             )
-            if excluded_is_repository_descendant and value.startswith(
-                excluded_repository_path, index
-            ):
-                excluded_end = index + len(excluded_repository_path)
-                excluded_after_ok = (
-                    excluded_end == len(value)
-                    or value[excluded_end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
+            after_ok = (
+                end == len(candidate)
+                or candidate[end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
+            )
+            if before_ok and after_ok:
+                excluded_is_repository_descendant = (
+                    excluded_repository_path is not None
+                    and excluded_repository_path.startswith(repository_path + "/")
                 )
-                if excluded_after_ok:
-                    start = index + 1
-                    continue
-            return True
-        start = index + 1
+                if excluded_is_repository_descendant and candidate.startswith(
+                    excluded_repository_path, index
+                ):
+                    excluded_end = index + len(excluded_repository_path)
+                    excluded_after_ok = (
+                        excluded_end == len(candidate)
+                        or candidate[excluded_end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
+                    )
+                    if excluded_after_ok:
+                        start = index + 1
+                        continue
+                return True
+            start = index + 1
+    return False
 
 
 def _old_repository_binding_residue(
@@ -218,7 +228,7 @@ def _old_repository_binding_residue(
     new_repository_path: str,
     path: str = "",
 ) -> list[str]:
-    if _is_acceptance_evidence_path(path):
+    if _is_acceptance_evidence_path(path) or _is_nontechnical_task_prose_path(path):
         return []
     result: list[str] = []
     if isinstance(value, Mapping):

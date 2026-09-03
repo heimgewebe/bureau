@@ -4837,3 +4837,40 @@ def test_task_revision_identity_guard_allows_regular_trailing_s_plural(
         acceptance_ids=("database-contract",),
     )
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+
+def test_task_revision_identity_guard_rejects_title_cased_identifier_as_plural() -> None:
+    before = _identity_revision_task(
+        title="Maintain Ruby Rails",
+        resource="repo.shared",
+        goal="Serve HTTP application framework",
+    )
+    after = _identity_revision_task(
+        title="Maintain Ruby Rail",
+        resource="repo.shared",
+        goal="Track locomotive infrastructure",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+@pytest.mark.parametrize(
+    ("plural", "singular"),
+    [("schemas", "schema"), ("logos", "logo")],
+)
+def test_task_revision_identity_guard_allows_lowercase_as_os_regular_plural(
+    plural: str, singular: str
+) -> None:
+    before = _identity_revision_task(
+        title=f"Improve database {plural}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    after = _identity_revision_task(
+        title=f"Improve database {singular}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)

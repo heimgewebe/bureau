@@ -2034,7 +2034,7 @@ def _task_revision_plural_base(token: str) -> str | None:
         return f"{token[:-3]}y"
     if token.endswith(("sses", "shes", "ches", "xes", "zes")):
         return token[:-2]
-    if token.endswith("s") and not token.endswith(("ss", "us", "is", "as", "os")):
+    if token.endswith("s") and not token.endswith(("ss", "us", "is")):
         return token[:-1]
     return None
 
@@ -2082,11 +2082,19 @@ def _task_revision_has_strong_leading_identity(value: Any) -> bool:
     return _task_revision_strong_leading_identity(value) is not None
 
 
-def _task_revision_subject_sequence(value: Any) -> list[str]:
-    tokens = _task_revision_tokens(value)
+def _task_revision_raw_subject_sequence(value: Any) -> list[str]:
+    tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
     if len(tokens) > 1 and _task_revision_strong_leading_identity(value) is None:
         tokens = tokens[1:]
-    return [token for token in tokens if token not in _TASK_REVISION_GENERIC_TOKENS]
+    return [
+        token
+        for token in tokens
+        if token.casefold() not in _TASK_REVISION_GENERIC_TOKENS
+    ]
+
+
+def _task_revision_subject_sequence(value: Any) -> list[str]:
+    return [token.casefold() for token in _task_revision_raw_subject_sequence(value)]
 
 
 def _task_revision_trailing_inflection_is_continuous(before: Any, after: Any) -> bool:
@@ -2100,12 +2108,20 @@ def _task_revision_trailing_inflection_is_continuous(before: Any, after: Any) ->
     )
     if not leading_compatible:
         return False
-    before_subject = _task_revision_subject_sequence(before)
-    after_subject = _task_revision_subject_sequence(after)
+    before_raw_subject = _task_revision_raw_subject_sequence(before)
+    after_raw_subject = _task_revision_raw_subject_sequence(after)
+    before_subject = [token.casefold() for token in before_raw_subject]
+    after_subject = [token.casefold() for token in after_raw_subject]
     return (
         len(before_subject) == len(after_subject)
         and len(before_subject) >= 1
         and before_subject[:-1] == after_subject[:-1]
+        # The broad regular-s lane is prose-only. Preserve original token case so
+        # title-cased technology/product identifiers such as `Rails`/`Rail` cannot
+        # collapse after the ordinary comparison view is case-folded. Lower-case
+        # nouns still use pairwise inflection, including schemas/schema and logos/logo.
+        and before_raw_subject[-1].islower()
+        and after_raw_subject[-1].islower()
         and _task_revision_plural_equivalent(before_subject[-1], after_subject[-1])
     )
 

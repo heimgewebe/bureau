@@ -144,6 +144,39 @@ RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS = frozenset(
         "evidence_sha256",
     }
 )
+RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_REQUIRED_FIELDS = frozenset(
+    {
+        "schema_version",
+        "kind",
+        "repository",
+        "main_commit",
+        "pull_request",
+        "merged_at",
+        "required_checks",
+        "check_summary",
+        "deployed_source_commit",
+        "deployed_manifest_sha256",
+        "source_ancestry",
+        "runtime_source_identity",
+        "lag_commits",
+        "scheduler_target_state",
+        "age_seconds",
+        "slo_seconds",
+        "status",
+        "reason_codes",
+        "recovery_action",
+        "observed_at",
+        "does_not_establish",
+        "target_sha256",
+        "observation_sha256",
+    }
+)
+RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_DOES_NOT_ESTABLISH = [
+    "deployment_authority",
+    "external_lease_liveness",
+    "future_main_stability",
+    "runtime_semantic_correctness",
+]
 RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF = datetime(
     2026, 9, 2, 0, 0, 0, tzinfo=timezone.utc
 )
@@ -3135,12 +3168,8 @@ def _validated_post_publication_activation_contract(
     return normalized
 
 
-def _validated_protected_publication_activation_observation(
+def _validated_protected_publication_activation_observation_contract(
     value: Any,
-    *,
-    activation_created_at: str,
-    target_main_commit: str,
-    expected_target_sha256: str | None = None,
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise RuntimeRefreshError(
@@ -3155,19 +3184,180 @@ def _validated_protected_publication_activation_observation(
             "protected-publication activation runtime observation digest is invalid",
             details={"cause_code": exc.code},
         ) from exc
+
+    required_checks = list(DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS)
+    main_commit = value.get("main_commit")
+    deployed_source_commit = value.get("deployed_source_commit")
+    pull_request = value.get("pull_request")
+    check_summary = value.get("check_summary")
+    source_ancestry = value.get("source_ancestry")
+    runtime_source_identity = value.get("runtime_source_identity")
+    recovery_action = value.get("recovery_action")
+    reason_codes = value.get("reason_codes")
     if (
-        value.get("schema_version") != SCHEMA_VERSION
+        set(value) != RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_REQUIRED_FIELDS
+        or value.get("schema_version") != SCHEMA_VERSION
         or value.get("kind") != "bureau_runtime_refresh_observation"
+        or value.get("repository") != DEFAULT_REPOSITORY
+        or value.get("required_checks") != required_checks
         or value.get("status") not in {"candidate", "alert"}
-        or value.get("main_commit") != target_main_commit
+        or not isinstance(main_commit, str)
+        or len(main_commit) != 40
+        or any(character not in "0123456789abcdef" for character in main_commit)
+        or not isinstance(deployed_source_commit, str)
+        or len(deployed_source_commit) != 40
+        or any(
+            character not in "0123456789abcdef"
+            for character in deployed_source_commit
+        )
+        or not _is_sha256(value.get("deployed_manifest_sha256"))
         or not _is_sha256(value.get("target_sha256"))
         or value.get("target_sha256")
         != sha256_bytes(canonical_bytes(_target_payload(value)))
+        or not isinstance(check_summary, dict)
+        or not isinstance(source_ancestry, dict)
+        or set(source_ancestry)
+        != {
+            "schema_version",
+            "status",
+            "method",
+            "deployed_source_commit",
+            "main_commit",
+            "compare_status",
+            "ahead_by",
+            "behind_by",
+            "merge_base_commit",
+        }
+        or not isinstance(runtime_source_identity, dict)
+        or set(runtime_source_identity)
+        != {
+            "schema_version",
+            "status",
+            "deployed_source_commit",
+            "registry_source_commit",
+            "registry_reasons",
+        }
+        or recovery_action
+        != {
+            "action": "prepare-intent",
+            "eligible": True,
+            "requires_authorization": True,
+        }
+        or not isinstance(reason_codes, list)
+        or not all(isinstance(item, str) and item for item in reason_codes)
+        or value.get("does_not_establish")
+        != RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_DOES_NOT_ESTABLISH
+        or not isinstance(value.get("observed_at"), str)
+        or not isinstance(value.get("slo_seconds"), int)
+        or isinstance(value.get("slo_seconds"), bool)
+        or value.get("slo_seconds") <= 0
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime observation is not canonical",
+        )
+    try:
+        parse_time(value["observed_at"])
+    except (TypeError, ValueError) as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime observation timestamp is invalid",
+        ) from exc
+
+    if deployed_source_commit != main_commit:
+        if (
+            not isinstance(pull_request, dict)
+            or set(pull_request) != {"number", "url", "head_commit", "merge_commit"}
+            or not isinstance(pull_request.get("number"), int)
+            or isinstance(pull_request.get("number"), bool)
+            or pull_request["number"] < 1
+            or not isinstance(pull_request.get("head_commit"), str)
+            or len(pull_request["head_commit"]) != 40
+            or any(
+                character not in "0123456789abcdef"
+                for character in pull_request["head_commit"]
+            )
+            or pull_request.get("merge_commit") != main_commit
+            or not (
+                pull_request.get("url") is None
+                or isinstance(pull_request.get("url"), str)
+            )
+            or not isinstance(value.get("merged_at"), str)
+            or set(check_summary) != set(required_checks)
+            or any(
+                not isinstance(check_summary.get(name), dict)
+                or set(check_summary[name]) != {"state", "observed_states"}
+                or check_summary[name].get("state") != "success"
+                or not isinstance(check_summary[name].get("observed_states"), list)
+                or not check_summary[name]["observed_states"]
+                or any(
+                    state != "success"
+                    for state in check_summary[name]["observed_states"]
+                )
+                for name in required_checks
+            )
+            or not isinstance(value.get("lag_commits"), int)
+            or isinstance(value.get("lag_commits"), bool)
+            or value["lag_commits"] <= 0
+            or value.get("scheduler_target_state") != "source-not-current"
+            or reason_codes != []
+        ):
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-observation-unproven",
+                "protected-publication activation runtime observation lacks canonical "
+                "publication evidence",
+            )
+        try:
+            parse_time(value["merged_at"])
+        except (TypeError, ValueError) as exc:
+            raise RuntimeRefreshError(
+                "authority-preflight-publication-activation-observation-unproven",
+                "protected-publication activation merge timestamp is invalid",
+            ) from exc
+    elif (
+        pull_request is not None
+        or value.get("merged_at") is not None
+        or check_summary != {}
+        or value.get("lag_commits") != 0
+        or value.get("status") != "alert"
+        or not isinstance(value.get("scheduler_target_state"), str)
+        or not (
+            value["scheduler_target_state"] == "missing-receipt"
+            or value["scheduler_target_state"].startswith("drift:")
+        )
+        or not reason_codes
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation same-source alert is not canonical",
+        )
+
+    try:
+        _validate_candidate_runtime_source_identity(value)
+    except RuntimeRefreshError as exc:
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "protected-publication activation runtime source identity is not proven",
+            details={"cause_code": exc.code},
+        ) from exc
+    return json.loads(json.dumps(value))
+
+
+def _validated_protected_publication_activation_observation(
+    value: Any,
+    *,
+    activation_created_at: str,
+    target_main_commit: str,
+    expected_target_sha256: str | None = None,
+) -> dict[str, Any]:
+    observation = _validated_protected_publication_activation_observation_contract(value)
+    if (
+        observation.get("main_commit") != target_main_commit
         or (
             expected_target_sha256 is not None
             and (
                 not _is_sha256(expected_target_sha256)
-                or value.get("target_sha256") != expected_target_sha256
+                or observation.get("target_sha256") != expected_target_sha256
             )
         )
     ):
@@ -3176,16 +3366,16 @@ def _validated_protected_publication_activation_observation(
             "protected-publication activation runtime observation is not deployable "
             "or target-bound",
             details={
-                "status": value.get("status"),
-                "observed_main_commit": value.get("main_commit"),
+                "status": observation.get("status"),
+                "observed_main_commit": observation.get("main_commit"),
                 "target_main_commit": target_main_commit,
-                "observed_target_sha256": value.get("target_sha256"),
+                "observed_target_sha256": observation.get("target_sha256"),
                 "expected_target_sha256": expected_target_sha256,
             },
         )
     try:
         activated_at = parse_time(activation_created_at)
-        observed_at = parse_time(value.get("observed_at"))
+        observed_at = parse_time(observation.get("observed_at"))
     except (TypeError, ValueError) as exc:
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-observation-unproven",
@@ -3199,15 +3389,7 @@ def _validated_protected_publication_activation_observation(
             "at the activation CAS",
             details={"age_seconds": age_seconds, "max_age_seconds": 300},
         )
-    try:
-        _validate_candidate_runtime_source_identity(value)
-    except RuntimeRefreshError as exc:
-        raise RuntimeRefreshError(
-            "authority-preflight-publication-activation-observation-unproven",
-            "protected-publication activation runtime source identity is not proven",
-            details={"cause_code": exc.code},
-        ) from exc
-    return json.loads(json.dumps(value))
+    return observation
 
 
 def _activation_manifest_digest_binding_is_valid(

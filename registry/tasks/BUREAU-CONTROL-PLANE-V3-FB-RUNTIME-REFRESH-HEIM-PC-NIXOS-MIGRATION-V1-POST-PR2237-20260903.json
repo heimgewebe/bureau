@@ -36,13 +36,13 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Single-use target-bound successor only for Bureau runtime/Registry convergence required by the direct user continuation of HEIM-PC-NIXOS-MIGRATION-V1. PR #2249 authority attempt c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d began an effect and then restored the exact scheduler preimage after bureau-task-supply.service was already failed because the installed fd9570 Registry cannot resolve the adopted HEIM-PC-NIXOS-MIGRATION-V1 initiative; its result 1302d25bb6a8c69e99e2cc2db6760c509a915f4b2081d6a8172bec34ff0b1179 is safe_to_retry=false. This new authority is independent and single-use. Before its one reserved executor start, the predecessor leases must be absent and the stale systemd failure state may be cleared only with a typed reset-failed on bureau-task-supply.service, without starting the service or timer, followed by immediate success-state readback. No NixOS production effect and no blind retry."
+      "note": "Single-use target-bound successor only for Bureau runtime/Registry convergence required by the direct user continuation of HEIM-PC-NIXOS-MIGRATION-V1. PR #2249 authority attempt c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d began an effect and then restored the exact scheduler preimage after bureau-task-supply.service was already failed because the installed fd9570 Registry cannot resolve the adopted HEIM-PC-NIXOS-MIGRATION-V1 initiative; its result 1302d25bb6a8c69e99e2cc2db6760c509a915f4b2081d6a8172bec34ff0b1179 is safe_to_retry=false. This new authority is independent and single-use and never reuses that predecessor authority or intent. Any scheduler-service state remediation needed before the reserved executor start is outside this authority and must be separately typed, receipt-bound, and read back; this authority neither authorizes nor attests that remediation. No NixOS production effect and no blind retry."
     }
   },
   "acceptance": [
     {
       "id": "fresh-current-main",
-      "assertion": "Immediately before prepare-intent and again before apply, heimgewebe/bureau main is freshly observed. The exact target contains the protected merge of HEIM-PC-NIXOS-MIGRATION-V1 PR #2237, the executor-compatible PR #2249 successor contract, this authority publication, and all legitimate intermediate protected-main merges; validate (3.10), validate (3.12), and registry-registration-preflight/freshness are successful for the exact target context. Any main, PR, check, target, predecessor-lease, or scheduler-bootstrap drift invalidates older observations and intents.",
+      "assertion": "Immediately before prepare-intent and again before apply, heimgewebe/bureau main is freshly observed. The exact target contains the protected merge of HEIM-PC-NIXOS-MIGRATION-V1 PR #2237, the executor-compatible PR #2249 successor contract, this authority publication, and all legitimate intermediate protected-main merges; validate (3.10), validate (3.12), and registry-registration-preflight/freshness are successful for the exact target context. Any main, PR, check, target, source/manifest, or authority drift invalidates older observations and intents.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -87,7 +87,7 @@
     },
     {
       "id": "runtime-only-scope",
-      "assertion": "The authority is consumed at most once and grants only the Bureau runtime/Registry convergence required to make the already merged and StateStore-adopted HEIM-PC-NIXOS-MIGRATION-V1 live-visible. As a narrowly scoped bootstrap precondition it permits clearing only the stale systemd failed-result latch of bureau-task-supply.service with reset-failed after the predecessor leases are absent, without starting that service or its timer. It grants no NixOS production mutation, storage/EFI/firmware/reboot effect, migration task claim or dispatch, queue/task-supply execution, unrelated repository mutation, or foreign-work authority.",
+      "assertion": "The authority is consumed at most once and grants only the Bureau runtime/Registry convergence required to make the already merged and StateStore-adopted HEIM-PC-NIXOS-MIGRATION-V1 live-visible. It does not authorize or attest scheduler-service state remediation; any such operator prerequisite must be separately authorized, receipt-bound, and read back before intent preparation. It grants no NixOS production mutation, storage/EFI/firmware/reboot effect, migration task claim or dispatch, queue/task-supply execution, unrelated repository mutation, or foreign-work authority.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -96,7 +96,7 @@
     }
   ],
   "rollback": {
-    "strategy": "The currently integrity-valid deployed Bureau runtime at fd9570bbc99719f601879482def202b23bddbf01 remains authoritative until a new immutable result is fully read back. PR #2249 attempt c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d already demonstrated exact rollback from an effect-started scheduler failure and is never retried. If this successor publication/adoption, source ancestry, target freshness, CI, StateStore binding, execution-context writability, predecessor-lease absence, stale-failure reset precondition, lease binding, or runtime effect becomes unclear, preserve all evidence and do not retry; reconciliation requires another separately authorized successor path."
+    "strategy": "The currently integrity-valid deployed Bureau runtime at fd9570bbc99719f601879482def202b23bddbf01 remains authoritative until a new immutable result is fully read back. PR #2249 attempt c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d already demonstrated exact rollback from an effect-started scheduler failure and is never retried. If this successor publication/adoption, source ancestry, target freshness, CI, StateStore binding, execution-context writability, lease binding, or runtime effect becomes unclear, preserve all evidence and do not retry; reconciliation requires another separately authorized successor path."
   },
   "metadata": {
     "source": "HEIM-PC-NIXOS-MIGRATION-V1 is merged in Bureau PR #2237 and adopted authoritatively into StateStore, while the installed Bureau runtime/canonical Registry remains at fd9570bbc99719f601879482def202b23bddbf01. Fresh observation 9353db51b87167d07810f5d0958f2bc6f6d92b5747c70a030e4aa19e81fca9dc proved fd9570 is an ancestor of protected main fbcd669ce06ceb0f70e3b449d65f020d120d5160 with required checks green. The generic executor-compatible PR #2249 authority was then target-bound and attempted once under intent c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d; it began an effect, failed only because the pre-existing bureau-task-supply.service result was failed from the stale Registry unknown-initiative condition, restored the exact scheduler preimage, and returned safe_to_retry=false. This TaskSpec is a new successor authority, not a retry.",
@@ -110,7 +110,7 @@
       "state_store_transition": "seed-missing-preserve-state-store",
       "initial_state": "planned",
       "post_adoption_activation": "exact proof-bearing StateStore CAS to ready after the real protected publication PR and merge commit are observed",
-      "reason": "Installed Bureau runtime/Registry predates the already merged/adopted HEIM-PC-NIXOS-MIGRATION-V1. PR #2249 supplied a valid executor-compatible generic authority, but its one effect-started attempt was exactly rolled back because the required bureau-task-supply.service carried a pre-existing failed result caused by that same stale Registry. The predecessor result is safe_to_retry=false, so a distinct purpose-bound successor authority is required after clearing only that stale systemd failure latch without executing task-supply.",
+      "reason": "Installed Bureau runtime/Registry predates the already merged/adopted HEIM-PC-NIXOS-MIGRATION-V1. PR #2249 supplied a valid executor-compatible generic authority, but its one effect-started attempt was exactly rolled back because the required bureau-task-supply.service carried a pre-existing failed result caused by that same stale Registry. The predecessor result is safe_to_retry=false, so a distinct purpose-bound successor authority is required. Any scheduler-service state remediation needed before execution is a separate typed operator prerequisite and is not authorized or attested by this TaskSpec.",
       "does_not_establish": [
         "ordinary task publication bypass",
         "queue, claim, dispatch or task-supply authority",
@@ -288,7 +288,8 @@
       "migration task claim/dispatch authority",
       "queue or task-supply authority",
       "permission to reuse historical or purpose-foreign runtime authorities",
-      "foreign-work mutation authority"
+      "foreign-work mutation authority",
+      "scheduler-service state remediation authority"
     ],
     "predecessor_runtime_refresh_incident": {
       "kind": "bureau_runtime_refresh_successor_predecessor_evidence",
@@ -303,25 +304,6 @@
       "rollback_preimage": "/home/alex/.local/share/bureau/backups/20260903T175426.566222Z/scheduler/preimage.json",
       "safe_to_retry": false,
       "forbid_reuse": true
-    },
-    "scheduler_bootstrap_precondition": {
-      "kind": "bureau_runtime_refresh_stale_service_result_bootstrap_v1",
-      "service": "bureau-task-supply.service",
-      "timer": "bureau-task-supply.timer",
-      "reason": "The installed fd9570 task-supply process sees authoritative HEIM-PC-NIXOS-MIGRATION-V1-T001 but its stale Registry cannot resolve initiative HEIM-PC-NIXOS-MIGRATION-V1, leaving the oneshot service in failed/exit-code state; runtime-refresh scheduler readback otherwise rejects that pre-existing Result before the new Registry can become authoritative.",
-      "required_before_reserved_executor_start": [
-        "predecessor runtime-refresh task is terminal and its runtime-refresh leases are absent/expired",
-        "fresh task-supply receipt still binds the failure to unknown HEIM-PC-NIXOS-MIGRATION-V1 under the stale installed Registry",
-        "use typed user-service reset-failed only on bureau-task-supply.service; do not start/restart the service and do not stop/start the timer",
-        "immediate readback proves service ActiveState is not failed and Result is success while bureau-task-supply.timer remains enabled, active and waiting",
-        "start the one reserved runtime-refresh executor without any observed intervening task-supply execution; if the service fails again, discard the intent and do not apply under this authority"
-      ],
-      "does_not_establish": [
-        "task-supply execution authority",
-        "permission to claim or dispatch any Bureau task",
-        "permission to suppress the timer beyond the single convergence window",
-        "permission to reuse the predecessor authority or intent"
-      ]
     }
   }
 }

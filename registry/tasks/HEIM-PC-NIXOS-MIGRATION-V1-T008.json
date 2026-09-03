@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Prepare final reviewed NixOS publication PR",
+  "state": "planned",
+  "goal": "After T004 and T007 are terminal and independently reviewed, prepare the exact ancestry-preserving final NixOS source lineage for protected publication to heimgewebe/heim-pc: integrate every legitimate fresh main advance with exact T007 without rewriting T007/T006/T005/T001/T002 ancestry, publish exactly one separately leased fixed remote branch, open or update exactly one protected pull request, and terminate only after exact-head CI, review and canonical-diff evidence are current. T008 performs no protected-main merge and creates no post-merge published-source artifact; T009 exclusively owns the merge and T010 exclusively seals its terminal merge receipt into the immutable source consumed by T003.",
+  "priority": {
+    "lane": "next",
+    "rank": 7
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "workspace_isolation": "worktree",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc",
+      "repo:/home/alex/repos/heim-pc:branch:nixos-migration-v1-final-publication",
+      "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-source"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "T008 may mutate only its Bureau run-scoped integration workspace, the separately leased fixed publication branch and protected pull-request metadata. It may not merge the PR, mutate main, create artifact.heim-pc.nixos-published-source, deploy/activate NixOS or perform storage/EFI/firmware/reboot/cutover effects. T009 is the sole merge successor and must revalidate the terminal T008 PR handoff before any Captain effect."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "exclusive",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "artifact.heim-pc.nixos-rehearsal-source",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github",
+    "testing",
+    "rollback"
+  ],
+  "depends_on": [
+    "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+    "HEIM-PC-NIXOS-MIGRATION-V1-T007"
+  ],
+  "acceptance": [
+    {
+      "id": "t004-t007-terminal-lineage-bound",
+      "assertion": "T008 begins only after T004 and T007 are terminal and independently reviewed. Evidence binds the exact T004 activation-proof result plus exact T007 final integration commit/tree and rehearsal-source artifact manifest/digest, exact T006 and T005 predecessor commits and proven transitive T001/T002 ancestry. Any failed activation proof, missing commit object, artifact mismatch or broken ancestry fails closed before publication mutation.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:t004-t007-terminal-lineage-bound"
+      }
+    },
+    {
+      "id": "exclusive-pr-preparation-authority",
+      "assertion": "Before publication mutation the run holds the exclusive repo.heim-pc claim, immutable rehearsal-source read lease and exact fixed-branch lease repo:/home/alex/repos/heim-pc:branch:nixos-migration-v1-final-publication. T008 alone may prepare this final publication branch/PR; it has no main-merge or published-source-artifact authority.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:exclusive-pr-preparation-authority"
+      }
+    },
+    {
+      "id": "run-scoped-publication-workspace",
+      "assertion": "Before Git/index/tree mutation, the execution envelope contains the exact Bureau run-scoped workspace identity with frozen baseline b0c1745b077dcdc0bea0381cbf2dc247994e5dc9. All fresh-main reconciliation occurs only there; reused/dirty/mismatched workspace identity fails closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:run-scoped-publication-workspace"
+      }
+    },
+    {
+      "id": "fresh-main-lineage-integration",
+      "assertion": "Immediately before final PR preparation, remote Heim-PC main is freshly observed and contains the canonical architecture commit. Exact T007 and exact fresh main are combined by ancestry-preserving Git merge operations so the publication head descends from both; legitimate main work is retained and rebase/squash/cherry-pick substitution that rewrites T007 ancestry is forbidden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:fresh-main-lineage-integration"
+      }
+    },
+    {
+      "id": "full-implementation-ancestry-proof",
+      "assertion": "Before push and again before T008 terminal handoff, Git ancestry proves the publication head contains exact T007, T007 contains exact T006 and T005, and T006 contains exact T001 and T002. Tree/diff review proves no unexplained source delta.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:full-implementation-ancestry-proof"
+      }
+    },
+    {
+      "id": "fixed-branch-leased-before-push",
+      "assertion": "Before the first git push, the run holds the exact live fixed-branch lease under the same task/run owner binding. Only the exact reviewed publication head may be pushed; lease loss, remote-head drift or alternate branch target fails closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:fixed-branch-leased-before-push"
+      }
+    },
+    {
+      "id": "protected-pr-exact-head-bound",
+      "assertion": "Exactly one open protected pull request targets heimgewebe/heim-pc main from the fixed publication branch. PR number, base/head, fresh base SHA, changed paths and canonical GitHub diff bind the exact reviewed publication head; drift invalidates earlier evidence.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:protected-pr-exact-head-bound"
+      }
+    },
+    {
+      "id": "ci-review-and-diff-current",
+      "assertion": "Required Heim-PC validation/security checks are green on the exact PR head, a revision-bound independent review has no unresolved material findings, all review threads are terminally triaged, and the complete canonical diff is bound to that same head/base.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:ci-review-and-diff-current"
+      }
+    },
+    {
+      "id": "t009-merge-handoff",
+      "assertion": "T008 terminal evidence exposes the exact repository, PR number, fixed branch, remote branch head, base SHA, reviewed head/tree, canonical diff SHA256, CI/review settlement and full T007/T006/T005/T001/T002 ancestry proof. T009 must reject any mismatch or drift and may not infer merge authority from T008 alone.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:t009-merge-handoff"
+      }
+    },
+    {
+      "id": "no-main-merge-or-postmerge-artifact",
+      "assertion": "T008 performs no Captain pr-merge, direct main mutation, branch deletion, force-push or artifact.heim-pc.nixos-published-source creation. Those effects are separated into T009 merge and T010 post-merge sealing.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:no-main-merge-or-postmerge-artifact"
+      }
+    },
+    {
+      "id": "no-runtime-or-cutover-effect",
+      "assertion": "T008 performs no productive NixOS build activation, sgdisk, wipefs, cryptsetup luksFormat, mkfs, EFI/Secure-Boot/firmware mutation, productive nixos-install/switch or reboot and grants no production-device/cutover authority.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t008:no-runtime-or-cutover-effect"
+      }
+    }
+  ],
+  "metadata": {
+    "supporting_publication_for": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T007",
+    "activation_proof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+    "source_artifact": "artifact.heim-pc.nixos-rehearsal-source",
+    "publication_branch": "nixos-migration-v1-final-publication",
+    "publication_branch_key": "repo:/home/alex/repos/heim-pc:branch:nixos-migration-v1-final-publication",
+    "merge_successor": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
+    "post_merge_seal_task": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
+    "successor_required_merge_method": "merge",
+    "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9",
+    "does_not_establish": [
+      "main-branch merge authority",
+      "post-merge source artifact",
+      "runtime activation authority",
+      "production storage mutation authority",
+      "production device identity",
+      "cutover approval"
+    ]
+  }
+}

@@ -119,6 +119,7 @@ def _contains_resource_id_token(
                         candidate[excluded_end].isalnum()
                         or candidate[excluded_end]
                         in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+                        or candidate[excluded_end] == ":"
                     )
                     if excluded_after_ok:
                         start = index + 1

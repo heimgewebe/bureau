@@ -725,7 +725,15 @@ def test_regular_taskspec_put_still_rejects_legacy_acceptance(tmp_path: Path) ->
 
 @pytest.mark.parametrize(
     "residual_kind",
-    ("path", "resource", "file-uri", "file-uri-query", "file-uri-fragment"),
+    (
+        "path",
+        "resource",
+        "file-uri",
+        "file-uri-query",
+        "file-uri-fragment",
+        "uri-query-pair",
+        "file-uri-host",
+    ),
 )
 def test_plan_rejects_old_binding_only_in_unapproved_metadata(
     tmp_path: Path, residual_kind: str
@@ -746,6 +754,8 @@ def test_plan_rejects_old_binding_only_in_unapproved_metadata(
         "file-uri": f"file://{old_path}",
         "file-uri-query": f"file://{old_path}?rev=main",
         "file-uri-fragment": f"file://{old_path}#checkout",
+        "uri-query-pair": f"tool://open?path={old_path}&rev=main",
+        "file-uri-host": f"file://localhost{old_path}",
     }
     task["metadata"]["unapproved_old_binding"] = residue_values[residual_kind]
     task_path.write_text(json.dumps(task), encoding="utf-8")
@@ -785,6 +795,58 @@ def test_preview_rejects_old_repository_path_in_mapping_key(tmp_path: Path) -> N
             old_repository_path=str(old_path),
             new_repository_path=str(new_path),
         )
+
+
+@pytest.mark.parametrize(
+    "placement", ("argv", "operation-parameter-key", "operation-parameter-value")
+)
+def test_preview_rejects_embedded_old_resource_id_in_execution(
+    tmp_path: Path, placement: str
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    if placement == "argv":
+        spec["execution"]["argv"] = ["tool", f"--resource={OLD_RESOURCE}"]
+    elif placement == "operation-parameter-key":
+        spec["execution"]["operation_parameters"] = {
+            f"--resource={OLD_RESOURCE}": "enabled"
+        }
+    else:
+        spec["execution"]["operation_parameters"] = {
+            "resource_arg": f"--resource={OLD_RESOURCE}"
+        }
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
+def test_preview_preserves_resource_id_mention_in_acceptance_text(tmp_path: Path) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["acceptance"][0]["assertion"] = (
+        f"Historical {OLD_RESOURCE} ancestry remains evidence, not execution authority"
+    )
+    acceptance_before = json.loads(canonical_json(spec["acceptance"]))
+
+    preview = task_specs.preview_repository_identity_rebind(
+        spec,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )
+
+    assert preview["spec"]["acceptance"] == acceptance_before
 
 
 def test_preview_rejects_old_repository_path_in_unapproved_metadata(tmp_path: Path) -> None:

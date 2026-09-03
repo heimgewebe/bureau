@@ -3908,6 +3908,18 @@ def test_task_revision_identity_guard_rejects_shared_suffix_after_unlisted_actio
     assert raised.value.code == "task-revision-identity-discontinuity"
 
 
+def test_task_revision_identity_guard_rejects_hyphenated_process_prefix_subject_swap() -> None:
+    before = _identity_revision_task(
+        title="Pre-check Avira updater service", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Pre-check database updater service", resource="repo.infra"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
 def test_task_revision_identity_guard_allows_identifier_leading_subject_rewrite() -> None:
     before = _identity_revision_task(
         title="Bureau-Run-Leases revisionsgebunden an Captain delegieren",
@@ -3928,6 +3940,16 @@ def test_task_revision_identity_guard_allows_regular_plural_inflection() -> None
     )
     after = _identity_revision_task(
         title="Improve database migration", resource="repo.database"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_allows_single_subject_plural_inflection() -> None:
+    before = _identity_revision_task(
+        title="Improve migrations", resource="repo.database"
+    )
+    after = _identity_revision_task(
+        title="Improve migration", resource="repo.database"
     )
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
 

@@ -2077,7 +2077,9 @@ def _task_revision_has_strong_leading_identity(value: Any) -> bool:
     # though the generic prose model normally treats position zero as an action
     # slot. Keep short all-caps domain acronyms (API/SSH/MCP/CI) for the same
     # reason, but never promote known process words merely because they are cased.
-    if any(char.isdigit() or char in "-./:@+#" for char in token):
+    if any(char.isdigit() or char in "./:@+#" for char in token):
+        return True
+    if token.count("-") >= 2:
         return True
     letters = "".join(char for char in token if char.isalpha())
     return (
@@ -2109,7 +2111,7 @@ def _task_revision_trailing_inflection_is_continuous(before: Any, after: Any) ->
     after_subject = _task_revision_subject_sequence(after)
     return (
         len(before_subject) == len(after_subject)
-        and len(before_subject) >= 2
+        and len(before_subject) >= 1
         and before_subject[:-1] == after_subject[:-1]
         and _task_revision_plural_equivalent(before_subject[-1], after_subject[-1])
     )
@@ -2335,6 +2337,8 @@ def _validate_task_revision_identity_continuity(
         )
         if continuous
     ]
+    if any(evidence["trailing_inflection_continuity"] for evidence in continuous_evidence):
+        return
     if any(
         max(
             int(evidence["shorter_subject_token_count"]),

@@ -8207,16 +8207,16 @@ def test_unused_authority_closeout_replay_requires_reserved_mutation_receipt(
 def _assert_runtime_authority_intent_closeout_lock_is_held(state_root: Path) -> None:
     lock_path = state_root / refresh._RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCK
     probe = (
-        "import fcntl,os,sys; "
-        "fd=os.open(sys.argv[1],os.O_RDWR); "
-        "blocked=False; "
-        "\ntry:
- fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)"
-        "\nexcept BlockingIOError:
- blocked=True"
-        "\nfinally:
- os.close(fd)"
-        "\nsys.exit(0 if blocked else 1)"
+        "import fcntl,os,sys\n"
+        "fd=os.open(sys.argv[1],os.O_RDWR)\n"
+        "blocked=False\n"
+        "try:\n"
+        "    fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)\n"
+        "except BlockingIOError:\n"
+        "    blocked=True\n"
+        "finally:\n"
+        "    os.close(fd)\n"
+        "sys.exit(0 if blocked else 1)\n"
     )
     result = subprocess.run(
         [sys.executable, "-c", probe, str(lock_path)],

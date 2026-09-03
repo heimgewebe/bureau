@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "artifact.heim-pc.nixos-rehearsal-source",
+  "type": "path",
+  "parent": "root",
+  "path": "/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-source",
+  "grabowski_key": "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/rehearsal-source",
+  "metadata": {
+    "boundary": "Create-only content-addressed whole-source artifact path produced by T007 after artifact-verified ancestry-preserving integration of exact T006 and T005 terminal commits. The final manifest binds both immutable input artifact identities, exact T007/T006/T005 commits, transitive T001/T002 ancestry, final tree, archive/content digest, Control Release Set and lock/input identity. T008 reads this artifact and bound commit lineage only to prepare the final Heim-PC publication branch/PR. T009 merges the exact terminal T008 PR as a separate exclusive task; T010 then binds T009's terminal merge receipt and creates the separate published-source artifact from the exact T009 merge-commit tree. T003 consumes only that T010 artifact. No moving Git ref is source-byte authority at any stage.",
+    "producer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T007",
+    "consumer_task": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
+    "input_artifacts": ["artifact.heim-pc.nixos-activation-source", "artifact.heim-pc.nixos-rehearsal-patch"],
+    "lifecycle": "immutable-until-initiative-closeout",
+    "does_not_establish": [
+      "remote branch publication authority",
+      "main-branch merge authority; T009 alone owns that effect",
+      "post-merge main tree identity",
+      "production block-device identity",
+      "production storage mutation authority",
+      "mutable checkout authority",
+      "cutover approval"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "service.heim-pc-nixos-activation-sandbox",
+  "type": "service",
+  "parent": "root",
+  "metadata": {
+    "boundary": "Exclusive disposable non-production runtime surface shared serially by T004 and T011. T004 proves the managed build/activation mechanism using only artifact.heim-pc.nixos-activation-source from T006; T011 later re-proves the final closure using only artifact.heim-pc.nixos-published-source from T010, bound to the exact terminal T009 merge-commit tree. Each task must hold the exclusive sandbox claim and its own exact immutable source-artifact lease; neither may read /home/alex/repos/heim-pc/.git, mutable checkouts, moving branches/main or unpinned remote inputs. The sandbox remains isolated from productive Heim-PC runtime, storage, EFI, firmware and persistent boot state.",
+    "lifecycle": "ephemeral-test-only",
+    "does_not_establish": [
+      "production host mutation authority",
+      "production NixOS activation authority",
+      "production storage mutation authority",
+      "EFI or firmware mutation authority",
+      "Git object-store read authority",
+      "mutable worktree source authority",
+      "shared runtime ownership"
+    ],
+    "source_tasks": [
+      "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+      "HEIM-PC-NIXOS-MIGRATION-V1-T011"
+    ],
+    "source_artifacts": {
+      "early_mechanism_proof": "artifact.heim-pc.nixos-activation-source",
+      "final_published_reproof": "artifact.heim-pc.nixos-published-source"
+    }
+  }
+}

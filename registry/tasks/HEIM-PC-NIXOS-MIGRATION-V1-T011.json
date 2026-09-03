@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T011",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Re-prove closure-bound activation for published source",
+  "state": "planned",
+  "goal": "After the early T004 activation-mechanism proof and T010 post-merge source seal are terminal and independently reviewed, repeat the managed Nix/NixOS build-and-activation proof inside the exclusively reserved disposable activation sandbox using only artifact.heim-pc.nixos-published-source. Realize a fresh immutable closure from the exact T009 merge-commit tree sealed by T010, activate only that receipt-bound closure, independently read back the live closure, prove denied paths are effect-free and prove rollback. This T011 closure—not the earlier T004/T006 closure—is the final activation identity that T003 must bind before storage/cutover rehearsal.",
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "service:heim-pc-nixos-activation-sandbox",
+      "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/published-source"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Runtime mutation is authorized only inside the exclusively reserved disposable activation sandbox and only after T004 and T010 are terminal. Source acquisition is restricted to the leased immutable artifact.heim-pc.nixos-published-source produced by T010 from the exact terminal T009 merge-commit tree. /home/alex/repos/heim-pc/.git, mutable worktrees, moving branches/main, mutable locks and unpinned remote sources are outside T011 authority. Productive Heim-PC activation, boot state, storage, EFI, Secure-Boot, firmware and reboot remain forbidden."
+    }
+  },
+  "claims": [
+    {
+      "resource": "component.heim-pc.nixos-managed-activation",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "artifact.heim-pc.nixos-published-source",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "service.heim-pc-nixos-activation-sandbox",
+      "mode": "exclusive",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+    "HEIM-PC-NIXOS-MIGRATION-V1-T010"
+  ],
+  "acceptance": [
+    {
+      "id": "t004-mechanism-proof-bound",
+      "assertion": "T004 is terminal and independently reviewed, proving the receipt-bound managed build/activation, fail-closed denial and rollback mechanism on the earlier T006 source. T011 treats T004 as mechanism evidence only; T004 closure identity is explicitly not accepted as final T003 activation identity.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:t004-mechanism-proof-bound"
+      }
+    },
+    {
+      "id": "t010-published-source-bound",
+      "assertion": "T010 is terminal and independently reviewed. T011 binds the exact immutable artifact.heim-pc.nixos-published-source manifest/digest to the exact T009 merge commit/tree, T009 Captain merge receipt, reviewed T008 PR identity, predecessor ancestry, Control Release Set and lock/input identity. Any artifact/tree/receipt drift fails closed before runtime effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:t010-published-source-bound"
+      }
+    },
+    {
+      "id": "leased-immutable-published-source",
+      "assertion": "Before source bytes are read, T011 holds the artifact.heim-pc.nixos-published-source read claim materialized as the exact artifact path lease and independently re-hashes its immutable manifest/content against T010 terminal evidence.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:leased-immutable-published-source"
+      }
+    },
+    {
+      "id": "no-live-repository-source-read",
+      "assertion": "Build and activation source acquisition read only the leased T010 published-source artifact. T011 has no /home/alex/repos/heim-pc/.git lease and no mutable source-path lease; any Git object-store, checkout, branch/main, mutable-lock or unpinned-remote reevaluation fails closed before runtime effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:no-live-repository-source-read"
+      }
+    },
+    {
+      "id": "exclusive-sandbox-authority",
+      "assertion": "Before any runtime effect, the run holds the exclusive service.heim-pc-nixos-activation-sandbox claim and independently proves the target is disposable and isolated from productive Heim-PC runtime, production storage, EFI, firmware and persistent boot state.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:exclusive-sandbox-authority"
+      }
+    },
+    {
+      "id": "published-source-managed-build-realization",
+      "assertion": "Using only the verified T010 published-source artifact and receipt-bound inputs, a fresh managed sandbox build realizes an immutable NixOS system closure and emits a receipt binding exact T009 merge commit/tree, T010 artifact digest, Control Release Set, effect class and closure.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:published-source-managed-build-realization"
+      }
+    },
+    {
+      "id": "published-source-activation-receipt-bound",
+      "assertion": "Sandbox activation consumes only the reviewed T011 managed-build receipt bound to the exact T010 artifact digest/source identity, immutable closure, sandbox target and Activation effect class; caller-supplied source or closure strings alone cannot authorize activation.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:published-source-activation-receipt-bound"
+      }
+    },
+    {
+      "id": "pre-effect-fail-closed",
+      "assertion": "Missing, stale, mismatched or unauthorized T004/T010/artifact/review/build-receipt/target authority is rejected before runtime mutation, and evidence proves each denied path leaves sandbox activation state unchanged.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:pre-effect-fail-closed"
+      }
+    },
+    {
+      "id": "live-published-closure-readback",
+      "assertion": "Independent live readback after authorized sandbox activation proves the running/booted system closure exactly equals the fresh T011 approved closure built from the exact T010 published-source artifact.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:live-published-closure-readback"
+      }
+    },
+    {
+      "id": "no-activation-reeval",
+      "assertion": "Observed T011 activation performs no Git, branch/main, lock or remote-input reevaluation after its reviewed build receipt is fixed; runtime evidence demonstrates closure selection remains receipt-bound to the T010 artifact.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:no-activation-reeval"
+      }
+    },
+    {
+      "id": "rollback-recovery-proven",
+      "assertion": "Inside the same disposable sandbox, rollback consumes the receipt-bound prior closure/recovery path and independent readback proves the expected rollback closure without mutable-source reevaluation.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:rollback-recovery-proven"
+      }
+    },
+    {
+      "id": "t003-final-closure-handoff",
+      "assertion": "T011 terminal evidence designates the fresh published-source-built closure and its source/build/activation receipts as T003’s only final activation identity. T003 must reject the earlier T004 closure or any T011 evidence not bound to the exact T010 artifact/T009 merge tree.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:t003-final-closure-handoff"
+      }
+    },
+    {
+      "id": "production-boundary",
+      "assertion": "T011 terminates without productive nixos-rebuild switch, productive boot activation, production storage/EFI/Secure-Boot/firmware mutation, Heim-PC reboot or any equivalent production cutover effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:production-boundary"
+      }
+    },
+    {
+      "id": "evidence-reviewed",
+      "assertion": "The exact T004 mechanism evidence, T010 source artifact, T011 sandbox build, activation, live closure readback, denied-path and rollback evidence are independently reviewed before T011 is terminal.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:evidence-reviewed"
+      }
+    }
+  ],
+  "metadata": {
+    "supporting_task_for": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
+    "early_activation_proof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
+    "source_seal_task": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
+    "source_artifact": "artifact.heim-pc.nixos-published-source",
+    "source_identity": "exact T009 merge commit/tree sealed by T010",
+    "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9",
+    "does_not_establish": [
+      "production NixOS activation authority",
+      "production storage mutation authority",
+      "production EFI or firmware mutation authority",
+      "production reboot authority",
+      "production device identity",
+      "cutover approval"
+    ]
+  }
+}

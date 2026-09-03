@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T009",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Merge final reviewed NixOS publication PR",
+  "state": "planned",
+  "goal": "After T008 is terminal, exclusively merge exactly the T008-published heimgewebe/heim-pc pull request and no other source change. Revalidate the exact repository, PR number, fixed branch, base/head, canonical diff, CI/review settlement and lineage immediately before effect; then dispatch exactly one Captain pr-merge with merge_method=merge so exact T007/T006/T005/T001/T002 commits remain ancestors of protected main. T009 changes only protected repository source truth and emits terminal merge/readback evidence for T010; it performs no new code integration, branch publication, artifact sealing, NixOS activation or cutover effect.",
+  "priority": {
+    "lane": "next",
+    "rank": 8
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc",
+      "repo:/home/alex/repos/heim-pc:branch:nixos-migration-v1-final-publication"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Exactly one high-impact merge of the exact T008 PR is authorized only through Captain after fresh target/head/base/diff/CI/review/branch-protection/lease revalidation. No code edit, rebase, force-push, alternate PR, branch deletion, artifact write, deployment or production NixOS/storage effect is authorized."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "exclusive",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github",
+    "testing",
+    "rollback"
+  ],
+  "depends_on": [
+    "HEIM-PC-NIXOS-MIGRATION-V1-T008"
+  ],
+  "acceptance": [
+    {
+      "id": "t008-terminal-pr-handoff-bound",
+      "assertion": "T009 begins only after T008 is terminal and independently reviewed. Evidence binds T008 terminal receipt and exact repository, PR number, fixed branch remote head, base SHA, reviewed head/tree, canonical diff, CI/review settlement and full predecessor ancestry; missing or divergent handoff fails closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:t008-terminal-pr-handoff-bound"
+      }
+    },
+    {
+      "id": "exclusive-merge-authority",
+      "assertion": "T009 holds the exclusive repo.heim-pc claim and exact fixed-branch lease before any Captain effect. It is the only migration task authorized to merge the T008 publication PR; no preparation/integration or post-merge artifact effect is bundled into this claim.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:exclusive-merge-authority"
+      }
+    },
+    {
+      "id": "fresh-pr-identity",
+      "assertion": "Immediately before Captain dispatch, GitHub is freshly read: the T008 PR is open, targets main, has exactly the handed-off head/base/canonical diff and is mergeable under current repository policy. Any head/base/diff/PR-number drift fails closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:fresh-pr-identity"
+      }
+    },
+    {
+      "id": "ci-review-diff-current",
+      "assertion": "All required Heim-PC checks are green on the exact head; independent review settlement is current with zero unresolved threads/material findings; self-review and canonical diff bind the same head/base.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:ci-review-diff-current"
+      }
+    },
+    {
+      "id": "fixed-branch-stable-before-merge",
+      "assertion": "The separately leased fixed publication branch still resolves to the exact reviewed T008 head immediately before merge; branch lease loss or remote ref drift blocks the effect.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:fixed-branch-stable-before-merge"
+      }
+    },
+    {
+      "id": "captain-exact-merge-commit",
+      "assertion": "Captain dispatches exactly one target-bound pr-merge for the exact heimgewebe/heim-pc PR/head/base/diff with merge_method=merge. Branch protection, merge policy, fresh status projection, execution intent and authority gates all pass. Squash, rebase, direct main push, force-push and branch deletion are forbidden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:captain-exact-merge-commit"
+      }
+    },
+    {
+      "id": "post-merge-lineage-readback",
+      "assertion": "After Captain reports success, GitHub/Git readback proves the PR merged from the exact reviewed head, records the exact merge commit/tree, protected main contains that merge commit, and exact T007/T006/T005/T001/T002 commits are ancestors of the merge commit. Ambiguous effect state blocks terminal success.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:post-merge-lineage-readback"
+      }
+    },
+    {
+      "id": "merge-receipt-terminal-handoff",
+      "assertion": "T009 terminal evidence retains the exact Captain receipt/action and execution-intent digests plus PR, pre-merge base, reviewed head/tree/diff, actual merge commit/tree and ancestry proof. T010 may seal source bytes only from this exact terminal merge receipt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:merge-receipt-terminal-handoff"
+      }
+    },
+    {
+      "id": "no-code-push-artifact-runtime-effect",
+      "assertion": "T009 performs no code edit, integration, new git push, remote branch creation/deletion, published-source artifact write, deployment, NixOS activation, block-device/EFI/firmware mutation or reboot.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t009:no-code-push-artifact-runtime-effect"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Before merge no source recovery is required. If the Captain outcome is ambiguous, perform exact PR/main/Captain-receipt readback before any retry. After a proven successful merge, any revert requires a separately reviewed exclusive rollback task; T009 never rewrites protected history."
+  },
+  "metadata": {
+    "source_task": "HEIM-PC-NIXOS-MIGRATION-V1-T008",
+    "publication_branch": "nixos-migration-v1-final-publication",
+    "publication_branch_key": "repo:/home/alex/repos/heim-pc:branch:nixos-migration-v1-final-publication",
+    "required_merge_method": "merge",
+    "post_merge_seal_task": "HEIM-PC-NIXOS-MIGRATION-V1-T010",
+    "does_not_establish": [
+      "post-merge source artifact",
+      "runtime activation authority",
+      "production storage mutation authority",
+      "production device identity",
+      "cutover approval"
+    ]
+  }
+}

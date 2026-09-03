@@ -57,7 +57,7 @@
   "execution": {
     "approval": {
       "action_class": "runtime_mutation",
-      "note": "Single-use recovery successor. User instruction fixen @grabowski authorizes exactly this stale Bureau runtime/Registry repair. Preconditions before prepare-intent: predecessor executor task is terminal failed, predecessor result is effect_started=true/status=unclear with scheduler-convergence-rolled-back and exact old deployment manifest readback, predecessor intent leases are absent/expired without forced release, and bureau-task-supply.service has had only its historical failed-state marker reset under an exact service lease while bureau-task-supply.timer remains enabled/active/waiting and deployment manifest/Registry remain old. Then require fresh protected-main/CI/source-ancestry observation, new intent and new exact leases. Never reuse intent c0ec155d... or target binding 93128f6e.... After deployed readback, run bureau-task-supply.service once and require Result=success before final closeout.",
+      "note": "Single-use recovery successor. User instruction fixen @grabowski authorizes exactly this stale Bureau runtime/Registry repair. Preconditions before prepare-intent: predecessor executor task is terminal failed, predecessor result is effect_started=true/status=unclear with scheduler-convergence-rolled-back and exact old deployment manifest readback, predecessor intent leases are absent/expired without forced release, and bureau-task-supply.service has had only its historical failed-state marker reset under an exact service lease while bureau-task-supply.timer remains enabled/active/waiting and deployment manifest/Registry remain old. Then require fresh protected-main/CI/source-ancestry observation, new intent and new exact leases. Never reuse intent c0ec155d... or target binding 93128f6e.... After deployed readback, run bureau-task-supply.service once and require Result=success before final closeout. The reset-failed recovery and prepare-intent must complete within 120 seconds, and an immediate <=30-second-old service/timer/manifest readback must still be clean immediately before reserved executor dispatch; any renewed task-supply failure blocks dispatch.",
       "required_level": "break_glass"
     },
     "grabowski_resources": [
@@ -130,6 +130,21 @@
         "reuse prior intent",
         "force-release prior unclear-attempt leases"
       ],
+      "immediate_pre_apply_readback": {
+        "deployed_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+        "deployment_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+        "on_mismatch": "do not start reserved executor; do not reuse intent after expiry or target drift",
+        "required": true,
+        "service": {
+          "ActiveState": "inactive",
+          "Result": "success"
+        },
+        "timer": {
+          "ActiveState": "active",
+          "SubState": "waiting",
+          "UnitFileState": "enabled"
+        }
+      },
       "kind": "bureau_runtime_refresh_pre_apply_failed_service_marker_recovery",
       "post_refresh_proof": "explicitly start bureau-task-supply.service once after deployed runtime/Registry readback and require terminal success",
       "required": true,
@@ -156,7 +171,13 @@
         "deployment_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b"
       },
       "schema_version": 1,
-      "service": "bureau-task-supply.service"
+      "service": "bureau-task-supply.service",
+      "timing_contract": {
+        "fail_closed_if_service_failed_again": true,
+        "immediate_pre_apply_readback_max_age_seconds": 30,
+        "reason": "bureau-task-supply.timer is periodic; a stale-runtime task-supply run can re-establish failed state after reset-failed, so the recovered marker must be fresh at executor dispatch",
+        "reset_failed_to_prepare_intent_max_seconds": 120
+      }
     },
     "publication_path": {
       "does_not_establish": [

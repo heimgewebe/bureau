@@ -1,0 +1,343 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, GitHub main is freshly observed and contains this protected successor merge plus all then-current legitimate merges; required validate (3.10), validate (3.12), registry-registration-preflight/freshness checks for the exact target are successful; deployed source is still fd9570bbc99719f601879482def202b23bddbf01; the prior unclear attempt is not reused.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-post-scheduler-rollback-20260903:fresh-main"
+      }
+    },
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, a typed precondition readback proves that active deployment-manifest source_commit and canonical Registry source identity are equal, and that this active source is exactly the registered deployed source fd9570bbc99719f601879482def202b23bddbf01 or a verified Git ancestor of the freshly selected target main commit. Any deployment/Registry identity mismatch, unrelated or diverged source history, unavailable ancestry proof, or target drift blocks the runtime effect fail-closed.",
+      "evidence_type": "object",
+      "id": "source-ancestry-precondition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-post-scheduler-rollback-20260903:source-ancestry-precondition"
+      }
+    },
+    {
+      "assertion": "This authority starts at most one runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are read back from intent, attempt/result, manifest, launcher, package, snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "id": "single-runtime-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-post-scheduler-rollback-20260903:single-effect"
+      }
+    },
+    {
+      "assertion": "A successful successor refresh is not terminal until immutable deployment and canonical Registry readback match the exact new main, the prior unclear attempt remains historical only, and bureau-task-supply.service is explicitly executed once against the new runtime/Registry with terminal Result=success.",
+      "evidence_type": "object",
+      "id": "immutable-runtime-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-post-scheduler-rollback-20260903:immutable-readback"
+      }
+    },
+    {
+      "assertion": "The authority is consumed exactly once after successful immutable readback and grants no queue, claim, dispatch, task-supply, product-code, foreign-work or general repository mutation authority. After terminal consumption, a fresh unused successor must be supplied through the then-current canonical reviewed path if main advances again before another normal Bureau pickup.",
+      "evidence_type": "object",
+      "id": "runtime-only-scope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-post-scheduler-rollback-20260903:scope-only"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-use recovery successor. User instruction fixen @grabowski authorizes exactly this stale Bureau runtime/Registry repair. Preconditions before prepare-intent: predecessor executor task is terminal failed, predecessor result is effect_started=true/status=unclear with scheduler-convergence-rolled-back and exact old deployment manifest readback, predecessor intent leases are absent/expired without forced release, and bureau-task-supply.service has had only its historical failed-state marker reset under an exact service lease while bureau-task-supply.timer remains enabled/active/waiting and deployment manifest/Registry remain old. Then require fresh protected-main/CI/source-ancestry observation, new intent and new exact leases. Never reuse intent c0ec155d... or target binding 93128f6e.... After deployed readback, run bureau-task-supply.service once and require Result=success before final closeout.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Continue only after the prior executor-bound refresh attempt 4cb443e004ba496782f96cbc terminally failed with result 1302d25bb6a8c69e99e2cc2db6760c509a915f4b2081d6a8172bec34ff0b1179: the candidate immutable release and Registry snapshot for fbcd669ce06ceb0f70e3b449d65f020d120d5160 were created, scheduler convergence detected the pre-existing failed bureau-task-supply.service, and the complete install/scheduler live preimage was restored. The authoritative deployment manifest and canonical Registry remain exactly fd9570bbc99719f601879482def202b23bddbf01/3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b. This successor authorizes one separately recovered attempt only after the previous runtime-refresh leases are authoritatively absent and the historical failed unit marker for bureau-task-supply.service is reset under an exact service-scoped recovery step; no old intent or target binding may be reused. After successful refresh, task-supply must be explicitly executed once and succeed before the stale-Registry incident is considered repaired.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-POST-SCHEDULER-ROLLBACK-20260903",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "deployed_manifest_sha256_at_registration": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+    "deployed_source_at_registration": "fd9570bbc99719f601879482def202b23bddbf01",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse any consumed or previously target-bound runtime authority",
+      "permission to substitute any purpose-specific runtime authority",
+      "permission to bypass stale-runtime, bootstrap, review, source-ancestry, lease or CI gates",
+      "queue, claim, dispatch or task-supply publication authority",
+      "general repository, merge, deployment-other-components or foreign-work mutation authority",
+      "permission to bypass the reserved Grabowski runtime-refresh execution-context gate"
+    ],
+    "main_at_registration": "fbcd669ce06ceb0f70e3b449d65f020d120d5160",
+    "observation_sha256_at_registration": "673f5119164fada1b4cc219d69a2129864fb2c43a96ef3803a168744cdb9ec74",
+    "post_publication_activation": {
+      "activation_state": "ready",
+      "does_not_establish": [
+        "runtime authority while current StateStore state remains planned",
+        "permission to invent or predict publication PR or merge commit",
+        "permission to activate from a StateStore revision other than the exact adoption receipt",
+        "permission to skip a second proof/readback after activation"
+      ],
+      "initial_state": "planned",
+      "required_activation_source": "runtime-refresh-protected-publication-activation",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "required_contract": "Activation candidate MUST add protected-publication adoption evidence and the required acceptance criterion in the same validated planned-to-ready CAS, preserve metadata.runtime_execution_context exactly, and preserve metadata.pre_apply_scheduler_failure_recovery exactly. It may not import predecessor target/intent binding or consumption evidence.",
+      "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",
+      "required_preconditions": [
+        "exact one-file protected publication PR is merged and its real merge commit is known",
+        "adopt-authority has seeded exactly the publication TaskSpec as planned using missing-only legacy-seed-exact semantics",
+        "current StateStore revision/digest still equal the adoption receipt",
+        "construct one activated candidate from that exact revision which adds metadata.protected_publication_adoption, adds protected-publication-and-missing-only-adoption to acceptance, adds the matching no-run protected-publication-adoption evidence requirement, and changes state planned to ready",
+        "validate the activated candidate with the installed runtime authority validator and no-run acceptance validator before CAS",
+        "prove protected publication/adoption against the real PR/merge and exact missing-only receipt before CAS",
+        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent",
+        "preserve metadata.runtime_execution_context byte-for-structure equal to the deployed Grabowski server-owned reserved executor contract during planned-to-ready CAS",
+        "preserve metadata.pre_apply_scheduler_failure_recovery byte-for-structure during planned-to-ready CAS and keep prior unclear attempt evidence historical only"
+      ],
+      "required_state_store_transition": "compare-and-swap-current-revision",
+      "schema_version": 1
+    },
+    "post_refresh_live_target": "Read back exact Bureau runtime convergence, terminalize this no-run authority through its evidence-bound closeout, then resume normal typed Bureau pickup and execute the selected next task through its own reviewed contract without touching foreign work.",
+    "pre_apply_scheduler_failure_recovery": {
+      "allowed_effect": [
+        "systemctl --user reset-failed bureau-task-supply.service"
+      ],
+      "forbidden_effects": [
+        "start old task-supply service",
+        "stop task-supply timer",
+        "disable task-supply timer",
+        "edit unit files",
+        "edit deployment manifest",
+        "edit canonical Registry",
+        "reuse prior intent",
+        "force-release prior unclear-attempt leases"
+      ],
+      "kind": "bureau_runtime_refresh_pre_apply_failed_service_marker_recovery",
+      "post_refresh_proof": "explicitly start bureau-task-supply.service once after deployed runtime/Registry readback and require terminal success",
+      "required": true,
+      "required_preconditions": {
+        "deployed_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+        "deployment_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+        "prior_error_code": "scheduler-convergence-rolled-back",
+        "prior_executor_task_state": "failed",
+        "prior_leases": "absent_or_expired",
+        "prior_result_sha256": "1302d25bb6a8c69e99e2cc2db6760c509a915f4b2081d6a8172bec34ff0b1179",
+        "prior_result_status": "unclear"
+      },
+      "required_readback": {
+        "bureau-task-supply.service": {
+          "ActiveState": "inactive",
+          "Result": "success"
+        },
+        "bureau-task-supply.timer": {
+          "ActiveState": "active",
+          "SubState": "waiting",
+          "UnitFileState": "enabled"
+        },
+        "deployed_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+        "deployment_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b"
+      },
+      "schema_version": 1,
+      "service": "bureau-task-supply.service"
+    },
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption"
+      ],
+      "initial_state": "planned",
+      "kind": "normal-protected-pull-request",
+      "reason": "The executor-compatible predecessor passed all intent/context/lease gates but effect-started attempt 4cb443e004ba496782f96cbc rolled back exactly because the pre-existing required task-supply service was already failed from the stale Registry. Result 1302d25bb6a8c69e99e2cc2db6760c509a915f4b2081d6a8172bec34ff0b1179 is explicitly unclear/safe_to_retry=false; deployment manifest readback remains 3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b at source fd9570bbc99719f601879482def202b23bddbf01. A new create-only successor is required; old intent/authority cannot be retried.",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-POST-SCHEDULER-ROLLBACK-20260903.json",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "registration_observation": {
+      "canonical_registry_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+      "deployed_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+      "deployment_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+      "github_main": "fbcd669ce06ceb0f70e3b449d65f020d120d5160",
+      "observed_at": "2026-09-03T18:00:22Z",
+      "prior_effect_started": true,
+      "prior_error_cause": "scheduler-required-service-invalid",
+      "prior_error_code": "scheduler-convergence-rolled-back",
+      "prior_executor_task_id": "4cb443e004ba496782f96cbc",
+      "prior_intent_sha256": "c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d",
+      "prior_leases_release_requires_authoritative_absence_or_expiry": true,
+      "prior_result_sha256": "1302d25bb6a8c69e99e2cc2db6760c509a915f4b2081d6a8172bec34ff0b1179",
+      "prior_result_status": "unclear",
+      "prior_safe_to_retry": false,
+      "prior_scheduler_preimage_restored": true,
+      "prior_workspace_preserved": true,
+      "repository": "heimgewebe/bureau",
+      "schema_version": 1,
+      "task_supply_failure_reason": "authoritative TaskSpec HEIM-PC-NIXOS-MIGRATION-V1-T001 references unknown initiative HEIM-PC-NIXOS-MIGRATION-V1",
+      "task_supply_failure_receipt_sha256": "baf845d7b786b3cd82f1da7c5943d61e81fe27c303ac33392284e8ed4e8e7abe"
+    },
+    "runtime_execution_context": {
+      "absence_tolerant_intent_roots": {
+        "runtime_user_unit_dir": {
+          "when_absent": "writable-searchable-rw-direct-parent",
+          "when_present": "writable-searchable-rw-directory"
+        }
+      },
+      "cwd": "/home/alex",
+      "directory_access": [
+        "W_OK",
+        "X_OK"
+      ],
+      "execution_backend": "systemd-user",
+      "executor_tool": "grabowski_task_start",
+      "forbid_generic_surfaces": [
+        "grabowski_terminal_run",
+        "grabowski_job_start",
+        "grabowski_fleet_run",
+        "grabowski_task_start:direct-apply"
+      ],
+      "host": "heim-pc",
+      "kind": "grabowski_bureau_runtime_refresh_execution_context",
+      "required_writable_intent_roots": [
+        "prefix",
+        "bin_dir",
+        "libexec_dir",
+        "user_unit_dir",
+        "state_root",
+        "authority_state_store.state_root"
+      ],
+      "reserved_command": "grabowski-bureau-runtime-refresh-apply",
+      "resume_policy": "never",
+      "schema_version": 1,
+      "task_identity_evidence": "server-injected-task-id-and-systemd-unit-v1",
+      "writability_evidence": [
+        "findmnt",
+        "statvfs",
+        "os.access"
+      ]
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound-source-precondition-v1",
+      "no_run_closeout_acceptance": {
+        "criteria": {
+          "fresh-current-main": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "immutable-runtime-readback": {
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "runtime-only-scope": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "single-runtime-effect": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "source-ancestry-precondition": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          }
+        },
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "schema_version": 1
+      },
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "break_glass",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "source_precondition": {
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ],
+        "fail_closed": true,
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+        "registered_manifest_sha256": "3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b",
+        "registered_registry_source_commit": "fd9570bbc99719f601879482def202b23bddbf01",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "schema_version": 1
+      },
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "source": "2026-09-03 recovery diagnosis: prior intent c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d, authority spec b4f31890f9bdfa874987d841d58134965018ed2f479ee9f28293b80c4e16f24a, executor task 4cb443e004ba496782f96cbc. Reserved execution-context preflight and 64-resource lease binding passed. Installer created immutable candidate release/Registry for fbcd669ce06ceb0f70e3b449d65f020d120d5160, scheduler readback found bureau-task-supply.service failed with the same unknown-initiative error caused by stale Registry, convergence restored the exact live preimage, and current deployment manifest/canonical Registry remain fd9570bbc99719f601879482def202b23bddbf01. Candidate immutable artifacts may remain unreferenced and are not deployment truth."
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Until a new successor result is fully deployed/read back, the authoritative runtime remains fd9570bbc99719f601879482def202b23bddbf01/3109de772131e8e60578e65bc1de3a814cc5ca59fdb17dbcac6062ad843a369b. The pre-apply reset-failed changes only the transient failed-state marker and must occur only after predecessor leases are absent. Any new effect ambiguity is not retriable; preserve candidate artifacts, attempt receipts and leases for a new separately authorized recovery."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Single-Use Bureau-Runtime-Refresh successor after exact scheduler rollback on 2026-09-03"
+}

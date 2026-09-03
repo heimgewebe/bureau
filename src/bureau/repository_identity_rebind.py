@@ -215,6 +215,7 @@ def _candidates(
     registry: Registry,
     *,
     old_resource_id: str,
+    new_resource_id: str,
     old_path: str,
     new_path: str,
 ) -> dict[str, dict[str, Any]]:
@@ -227,6 +228,7 @@ def _candidates(
                 task_specs._old_repository_binding_residue(
                     item["spec"],
                     old_resource_id=old_resource_id,
+                    new_resource_id=new_resource_id,
                     old_repository_path=old_path,
                     new_repository_path=new_path,
                 )
@@ -455,6 +457,7 @@ def build_plan(
             connection,
             registry,
             old_resource_id=old_resource_id,
+            new_resource_id=new_resource_id,
             old_path=str(old_resource["path"]),
             new_path=str(new_resource["path"]),
         )
@@ -624,6 +627,7 @@ def apply_plan(
             connection,
             registry,
             old_resource_id=str(old_resource["id"]),
+            new_resource_id=str(new_resource["id"]),
             old_path=str(old_resource["path"]),
             new_path=str(new_resource["path"]),
         )
@@ -747,6 +751,7 @@ def apply_plan(
             connection,
             registry,
             old_resource_id=str(old_resource["id"]),
+            new_resource_id=str(new_resource["id"]),
             old_path=str(old_resource["path"]),
             new_path=str(new_resource["path"]),
         )

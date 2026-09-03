@@ -357,6 +357,7 @@ def test_rebind_allows_new_repository_path_containing_old_path(
             connection,
             registry,
             old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
             old_path=str(old_path),
             new_path=str(new_path),
         ) == {}
@@ -942,6 +943,48 @@ def test_preview_rejects_percent_encoded_old_resource_id_in_execution(
         )
 
 
+def test_preview_allows_target_resource_id_extending_old_id_with_colon(
+    tmp_path: Path,
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    new_resource_id = f"{OLD_RESOURCE}:archive"
+    spec["metadata"]["target_resource"] = new_resource_id
+
+    result = task_specs.preview_repository_identity_rebind(
+        spec,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=new_resource_id,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )
+
+    assert result["spec"]["claims"][0]["resource"] == new_resource_id
+    assert result["spec"]["metadata"]["target_resource"] == new_resource_id
+
+
+def test_preview_rejects_non_target_scoped_old_resource_id_when_target_extends_old(
+    tmp_path: Path,
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    new_resource_id = f"{OLD_RESOURCE}:archive"
+    spec["metadata"]["other_resource"] = f"{OLD_RESOURCE}:other"
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=new_resource_id,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
 @pytest.mark.parametrize("delimiter", ("?", "#", "&"))
 def test_preview_rejects_old_repository_path_after_uri_delimiter(
     tmp_path: Path, delimiter: str
@@ -997,7 +1040,7 @@ def test_preview_rejects_percent_encoded_old_repository_path(
 
 @pytest.mark.parametrize(
     ("prefix", "suffix"),
-    ((";", "/script"), ("", "|next"), ("<", ">")),
+    ((";", "/script"), ("", "|next"), ("<", ">"), ("`", "`")),
 )
 def test_preview_rejects_shell_operator_adjacent_old_repository_path(
     tmp_path: Path, prefix: str, suffix: str

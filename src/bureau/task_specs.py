@@ -22,8 +22,8 @@ RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX = (
 REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX = "repository-identity-rebind:"
 REPOSITORY_IDENTITY_REBIND_TERMINAL_STATES = frozenset({"verified", "cancelled", "superseded"})
 REPOSITORY_IDENTITY_REBIND_ACTIVE_RUN_STATES = ("assigned", "running", "verifying")
-_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&;|<>")
-_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>")
+_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&;|<>`")
+_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>`")
 _RESOURCE_ID_TOKEN_EXTRA_CHARS = frozenset("._-")
 _URI_SCHEME_EXTRA_CHARS = frozenset("+-.")
 
@@ -85,7 +85,12 @@ def _validate_repository_identity_rebind_parameters(
         raise TaskSpecError("repository identity rebind repository paths must differ")
 
 
-def _contains_resource_id_token(value: str, resource_id: str) -> bool:
+def _contains_resource_id_token(
+    value: str,
+    resource_id: str,
+    *,
+    excluded_resource_id: str | None = None,
+) -> bool:
     decoded = unquote(value) if "%" in value else value
     candidates = (value,) if decoded == value else (value, decoded)
     for candidate in candidates:
@@ -104,6 +109,20 @@ def _contains_resource_id_token(value: str, resource_id: str) -> bool:
                 or candidate[end] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
             )
             if before_ok and after_ok:
+                if (
+                    excluded_resource_id is not None
+                    and excluded_resource_id.startswith(resource_id)
+                    and candidate.startswith(excluded_resource_id, index)
+                ):
+                    excluded_end = index + len(excluded_resource_id)
+                    excluded_after_ok = excluded_end == len(candidate) or not (
+                        candidate[excluded_end].isalnum()
+                        or candidate[excluded_end]
+                        in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+                    )
+                    if excluded_after_ok:
+                        start = index + 1
+                        continue
                 return True
             start = index + 1
     return False
@@ -225,6 +244,7 @@ def _old_repository_binding_residue(
     value: Any,
     *,
     old_resource_id: str,
+    new_resource_id: str,
     old_repository_path: str,
     new_repository_path: str,
     path: str = "",
@@ -236,7 +256,11 @@ def _old_repository_binding_residue(
         for key, item in value.items():
             item_path = f"{path}/{key}"
             if isinstance(key, str) and (
-                _contains_resource_id_token(key, old_resource_id)
+                _contains_resource_id_token(
+                    key,
+                    old_resource_id,
+                    excluded_resource_id=new_resource_id,
+                )
                 or _contains_repository_path_token(
                     key,
                     old_repository_path,
@@ -248,6 +272,7 @@ def _old_repository_binding_residue(
                 _old_repository_binding_residue(
                     item,
                     old_resource_id=old_resource_id,
+                    new_resource_id=new_resource_id,
                     old_repository_path=old_repository_path,
                     new_repository_path=new_repository_path,
                     path=item_path,
@@ -259,13 +284,18 @@ def _old_repository_binding_residue(
                 _old_repository_binding_residue(
                     item,
                     old_resource_id=old_resource_id,
+                    new_resource_id=new_resource_id,
                     old_repository_path=old_repository_path,
                     new_repository_path=new_repository_path,
                     path=f"{path}/{index}",
                 )
             )
     elif isinstance(value, str) and (
-        _contains_resource_id_token(value, old_resource_id)
+        _contains_resource_id_token(
+            value,
+            old_resource_id,
+            excluded_resource_id=new_resource_id,
+        )
         or _contains_repository_path_token(
             value,
             old_repository_path,
@@ -397,6 +427,7 @@ def preview_repository_identity_rebind(
     residue = _old_repository_binding_residue(
         material,
         old_resource_id=old_resource_id,
+        new_resource_id=new_resource_id,
         old_repository_path=old_repository_path,
         new_repository_path=new_repository_path,
     )

@@ -4874,3 +4874,20 @@ def test_task_revision_identity_guard_allows_lowercase_as_os_regular_plural(
         acceptance_ids=("database-contract",),
     )
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+
+def test_task_revision_identity_guard_rejects_subject_prefix_before_relocated_identifier() -> None:
+    before = _identity_revision_task(
+        title="API backup updater service",
+        resource="repo.infra",
+        goal="Restore backup API health",
+    )
+    after = _identity_revision_task(
+        title="Dashboard API updater service",
+        resource="repo.infra",
+        goal="Render customer dashboard data",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"

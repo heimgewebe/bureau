@@ -2179,6 +2179,7 @@ def _task_revision_text_evidence(
             before_strong_identity is not None
             and after_strong_identity is None
             and len(after_raw_tokens) > 1
+            and after_raw_tokens[0] in _TASK_REVISION_GENERIC_TOKENS
             and after_raw_tokens[1] == before_strong_identity
         ):
             after_raw_tokens = after_raw_tokens[1:]
@@ -2186,6 +2187,7 @@ def _task_revision_text_evidence(
             after_strong_identity is not None
             and before_strong_identity is None
             and len(before_raw_tokens) > 1
+            and before_raw_tokens[0] in _TASK_REVISION_GENERIC_TOKENS
             and before_raw_tokens[1] == after_strong_identity
         ):
             before_raw_tokens = before_raw_tokens[1:]

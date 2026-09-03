@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "HEIM-PC-NIXOS-MIGRATION-V1-T002",
+  "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
+  "title": "Implement managed Nix build and activation contract",
+  "state": "planned",
+  "goal": "Implement and review the fail-closed managed Nix/NixOS build and activation contract required by the canonical executor profile without performing runtime activation: bind repository/revision/control-release inputs, exact system-closure receipts, separate Build and Activation effect classes, receipt-bound activation inputs, rollback metadata and pre-effect denial semantics.",
+  "priority": {"lane": "now", "rank": 2},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "path:/home/alex/repos/heim-pc/nixos/deployment",
+      "path:/home/alex/repos/heim-pc/scripts/managed_nix.py",
+      "path:/home/alex/repos/heim-pc/tests/test_managed_nix.py"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "This task is implementation-only. It may change and test repository code but may not activate, boot, restart or otherwise mutate a NixOS runtime. Real disposable activation and closure readback are delegated to successor task HEIM-PC-NIXOS-MIGRATION-V1-T004 after this implementation is terminal and reviewed."
+    }
+  },
+  "claims": [
+    {"resource": "component.heim-pc.nixos-managed-activation", "mode": "write", "isolation": "worktree"}
+  ],
+  "required_capabilities": ["repository", "shell", "grabowski"],
+  "depends_on": [],
+  "acceptance": [
+    {"id": "build-activation-effect-separation", "assertion": "The implementation models Build and Activation as distinct effect classes: build-contract evaluation cannot change the active system, while activation requires a separately authorized receipt and runtime task.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:build-activation-effect-separation"}},
+    {"id": "managed-build-bound", "assertion": "The managed build contract binds repository, exact source revision, Control Release Set, Nix inputs, resource budgets, leases, effect class and bounded receipts; focused tests prove stale or incomplete bindings fail closed without live activation.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:managed-build-bound"}},
+    {"id": "exact-closure-receipt-contract", "assertion": "Receipt schemas and tests prove that a successful managed build result must expose and bind the exact immutable NixOS system closure, exact source revision and Control Release Set digest before it can become activation input.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:exact-closure-receipt-contract"}},
+    {"id": "activation-receipt-contract", "assertion": "Activation interfaces accept only a reviewed receipt bound to exact source revision, system closure, target and Activation effect class; caller-supplied closure strings, branch names or mutable source state alone are insufficient authority.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:activation-receipt-contract"}},
+    {"id": "no-activation-reeval", "assertion": "Next-boot and persistent activation interfaces are implemented to consume only the prebuilt approved closure and cannot silently reevaluate Git, branches, locks or remote inputs between review and activation.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:no-activation-reeval"}},
+    {"id": "pre-effect-fail-closed", "assertion": "Missing, stale, mismatched or unauthorized activation authority is rejected by the implementation before any runtime effect; effect-free tests prove the denied path cannot reach the activation executor.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:pre-effect-fail-closed"}},
+    {"id": "entrypoints-are-adapters", "assertion": "Entrypoints and scripts remain adapters to the canonical managed-build/activation contract and cannot maintain a hidden second source of desired state, closure selection or activation authority.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:entrypoints-are-adapters"}},
+    {"id": "effect-classifier", "assertion": "Normal, boot-critical and destructive effects are classified by possible effect rather than filename or stated intent; ambiguous cases escalate fail-closed and destructive storage/firmware effects cannot use the normal rebuild path.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:effect-classifier"}},
+    {"id": "rollback-recovery-contract", "assertion": "Activation receipt and executor contracts identify the prior/rollback closure and an explicit recovery path; effect-free tests prove rollback selection remains receipt-bound instead of reevaluating mutable source.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:rollback-recovery-contract"}},
+    {"id": "authority-boundary", "assertion": "If a required activation or privilege primitive belongs to another canonical authority, the implementation uses that typed authority or creates an explicit dependency instead of duplicating a second truth or broad sudo/root shell path.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:authority-boundary"}},
+    {"id": "implementation-only-boundary", "assertion": "This task terminates without live NixOS activation, boot-state mutation, service restart, runtime rollback, production storage/EFI/Secure-Boot/firmware mutation, reboot or equivalent runtime effect; those proofs require successor task HEIM-PC-NIXOS-MIGRATION-V1-T004 or a later separately authorized cutover task.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:implementation-only-boundary"}},
+    {"id": "tests-and-ci", "assertion": "Focused effect-free build/activation-contract/effect-classification tests plus required repository CI are green on the exact reviewed head before merge.", "evidence_type": "object", "verifier": "manual_observation", "verifier_config": {"observation_scope": "heim-pc:nixos-migration-v1:t002:tests-and-ci"}}
+  ],
+  "metadata": {"source_candidate_event": 13345, "canonical_architecture_merge": "b0c1745b077dcdc0bea0381cbf2dc247994e5dc9", "runtime_proof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004"}
+}

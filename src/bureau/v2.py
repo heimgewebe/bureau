@@ -3799,11 +3799,65 @@ class StateStore:
     ) -> dict[str, Any]:
         with self.immediate() as connection:
             try:
+                active_runtime = [
+                    reservation
+                    for reservation in self.reservations(connection)
+                    if reservation.resource == "component.bureau.runtime"
+                ]
+                if active_runtime:
+                    raise legacy.StateError(
+                        "runtime-refresh unused-authority closeout requires an unreserved runtime"
+                    )
                 return task_specs.put_runtime_refresh_unused_authority_closeout(
                     connection,
                     spec,
                     idempotency_key=idempotency_key,
                     expected_revision=expected_revision,
+                )
+            except task_specs.TaskSpecError as exc:
+                raise legacy.StateError(str(exc)) from exc
+
+    def put_runtime_refresh_protected_publication_activation_task_spec(
+        self,
+        spec: dict[str, Any],
+        *,
+        idempotency_key: str,
+        expected_revision: int | None,
+        activation_observation: dict[str, Any] | None,
+        activation_evidence: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        with self.immediate() as connection:
+            if (
+                not isinstance(activation_evidence, dict)
+                or set(activation_evidence)
+                != runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
+                or not runtime_refresh._activation_manifest_digest_binding_is_valid(
+                    activation_evidence.get("observation"),
+                    activation_evidence.get("installed_runtime_validation"),
+                )
+            ):
+                raise legacy.StateError(
+                    "runtime-refresh protected-publication activation mutation "
+                    "contract is invalid"
+                )
+            if isinstance(activation_observation, dict):
+                try:
+                    runtime_refresh._validate_candidate_runtime_source_identity(
+                        activation_observation
+                    )
+                except runtime_refresh.RuntimeRefreshError as exc:
+                    raise legacy.StateError(
+                        "runtime-refresh protected-publication activation mutation "
+                        "contract is invalid"
+                    ) from exc
+            try:
+                return task_specs.put_runtime_refresh_protected_publication_activation(
+                    connection,
+                    spec,
+                    idempotency_key=idempotency_key,
+                    expected_revision=expected_revision,
+                    activation_observation=activation_observation,
+                    activation_evidence=activation_evidence,
                 )
             except task_specs.TaskSpecError as exc:
                 raise legacy.StateError(str(exc)) from exc

@@ -91,16 +91,24 @@ def _contains_repository_path_token(
     """
 
     before_boundaries = frozenset(" \t\r\n'\"=:(,[{")
-    after_boundaries = frozenset(" \t\r\n'\"/:),;]}?#")
+    after_boundaries = frozenset(" \t\r\n'\"/:),;]}?#&")
     start = 0
     while True:
         index = value.find(repository_path, start)
         if index < 0:
             return False
         end = index + len(repository_path)
-        uri_prefix_ok = index >= 3 and value[index - 3 : index] == "://"
+        uri_scheme_index = value.rfind("://", 0, index)
+        uri_component_ok = False
+        if repository_path.startswith("/") and uri_scheme_index >= 0:
+            uri_prefix = value[uri_scheme_index + 3 : index]
+            uri_component_ok = not any(
+                character in " \t\r\n'\"<>[]{}()" for character in uri_prefix
+            )
         before_ok = (
-            index == 0 or value[index - 1] in before_boundaries or uri_prefix_ok
+            index == 0
+            or value[index - 1] in before_boundaries
+            or uri_component_ok
         )
         after_ok = end == len(value) or value[end] in after_boundaries
         if before_ok and after_ok:
@@ -119,6 +127,31 @@ def _contains_repository_path_token(
         start = index + 1
 
 
+_RESOURCE_ID_TOKEN_CHARACTERS = frozenset(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._:-"
+)
+
+
+def _contains_resource_id_token(value: str, resource_id: str) -> bool:
+    """Return whether one string contains an exact resource-id token."""
+
+    start = 0
+    while True:
+        index = value.find(resource_id, start)
+        if index < 0:
+            return False
+        end = index + len(resource_id)
+        before_ok = (
+            index == 0 or value[index - 1] not in _RESOURCE_ID_TOKEN_CHARACTERS
+        )
+        after_ok = (
+            end == len(value) or value[end] not in _RESOURCE_ID_TOKEN_CHARACTERS
+        )
+        if before_ok and after_ok:
+            return True
+        start = index + 1
+
+
 def _old_repository_binding_residue(
     value: Any,
     *,
@@ -132,7 +165,7 @@ def _old_repository_binding_residue(
         for key, item in value.items():
             item_path = f"{path}/{key}"
             if isinstance(key, str) and (
-                key == old_resource_id
+                _contains_resource_id_token(key, old_resource_id)
                 or _contains_repository_path_token(
                     key,
                     old_repository_path,
@@ -161,7 +194,7 @@ def _old_repository_binding_residue(
                 )
             )
     elif isinstance(value, str) and (
-        value == old_resource_id
+        _contains_resource_id_token(value, old_resource_id)
         or _contains_repository_path_token(
             value,
             old_repository_path,

@@ -725,7 +725,16 @@ def test_regular_taskspec_put_still_rejects_legacy_acceptance(tmp_path: Path) ->
 
 @pytest.mark.parametrize(
     "residual_kind",
-    ("path", "resource", "file-uri", "file-uri-query", "file-uri-fragment"),
+    (
+        "path",
+        "resource",
+        "resource-embedded",
+        "file-uri",
+        "file-uri-query",
+        "file-uri-query-pair",
+        "file-uri-fragment",
+        "file-uri-host",
+    ),
 )
 def test_plan_rejects_old_binding_only_in_unapproved_metadata(
     tmp_path: Path, residual_kind: str
@@ -743,9 +752,12 @@ def test_plan_rejects_old_binding_only_in_unapproved_metadata(
     residue_values = {
         "path": str(old_path),
         "resource": OLD_RESOURCE,
+        "resource-embedded": f"--resource={OLD_RESOURCE}",
         "file-uri": f"file://{old_path}",
         "file-uri-query": f"file://{old_path}?rev=main",
+        "file-uri-query-pair": f"tool://open?path={old_path}&rev=main",
         "file-uri-fragment": f"file://{old_path}#checkout",
+        "file-uri-host": f"file://localhost{old_path}",
     }
     task["metadata"]["unapproved_old_binding"] = residue_values[residual_kind]
     task_path.write_text(json.dumps(task), encoding="utf-8")
@@ -766,6 +778,34 @@ def test_plan_rejects_old_binding_only_in_unapproved_metadata(
 
     assert store.task_spec("TASK-A")["revision"] == 1
     assert store.task_spec("TASK-B")["revision"] == 1
+
+
+def test_preview_rejects_embedded_old_resource_id_in_mapping_key(
+    tmp_path: Path,
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["metadata"][f"--resource={OLD_RESOURCE}"] = "stale"
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
+def test_resource_id_token_detection_is_boundary_aware() -> None:
+    assert task_specs._contains_resource_id_token(
+        f"--resource={OLD_RESOURCE}", OLD_RESOURCE
+    )
+    assert not task_specs._contains_resource_id_token(
+        f"{OLD_RESOURCE}-successor", OLD_RESOURCE
+    )
 
 
 def test_preview_rejects_old_repository_path_in_mapping_key(tmp_path: Path) -> None:

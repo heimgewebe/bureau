@@ -17,7 +17,7 @@ RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX = "runtime-refresh-no-run-clo
 REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX = "repository-identity-rebind:"
 REPOSITORY_IDENTITY_REBIND_TERMINAL_STATES = frozenset({"verified", "cancelled", "superseded"})
 REPOSITORY_IDENTITY_REBIND_ACTIVE_RUN_STATES = ("assigned", "running", "verifying")
-_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{")
+_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&")
 _REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&")
 _RESOURCE_ID_TOKEN_EXTRA_CHARS = frozenset("._-")
 _URI_SCHEME_EXTRA_CHARS = frozenset("+-.")
@@ -101,6 +101,10 @@ def _contains_resource_id_token(value: str, resource_id: str) -> bool:
 
 def _is_execution_binding_path(path: str) -> bool:
     return path == "/execution" or path.startswith("/execution/")
+
+
+def _is_acceptance_evidence_path(path: str) -> bool:
+    return path == "/acceptance" or path.startswith("/acceptance/")
 
 
 def _is_uri_authority_path_boundary(value: str, index: int) -> bool:
@@ -192,6 +196,8 @@ def _old_repository_binding_residue(
     new_repository_path: str,
     path: str = "",
 ) -> list[str]:
+    if _is_acceptance_evidence_path(path):
+        return []
     result: list[str] = []
     if isinstance(value, Mapping):
         for key, item in value.items():

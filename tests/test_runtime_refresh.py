@@ -474,6 +474,8 @@ def test_load_manifest_hashes_the_exact_bytes_it_parses_during_atomic_replace(
         nonlocal open_calls, replacement_done
         descriptor = original_open(path, flags, *args, **kwargs)
         if Path(path) == manifest_path:
+            assert flags & os.O_NOFOLLOW
+            assert flags & os.O_NONBLOCK
             open_calls += 1
             if not replacement_done:
                 replacement_path.replace(manifest_path)
@@ -508,6 +510,33 @@ def test_load_manifest_rejects_oversized_file_before_reading_payload(
         refresh.load_manifest(manifest_path)
 
     assert raised.value.code == "json-too-large"
+
+
+def test_load_manifest_rejects_fifo_without_blocking(tmp_path: Path) -> None:
+    if not hasattr(os, "mkfifo"):
+        pytest.skip("FIFO regression requires POSIX mkfifo")
+    manifest_path = tmp_path / "deployment-manifest.json"
+    os.mkfifo(manifest_path)
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.load_manifest(manifest_path)
+
+    assert raised.value.code == "invalid-json-path"
+
+
+def test_load_manifest_fails_closed_without_secure_open_flags(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest_path = tmp_path / "deployment-manifest.json"
+    manifest_path.write_text(
+        '{"kind":"bureau_runtime_deployment","source_commit":"' + "a" * 40 + '"}'
+    )
+    monkeypatch.delattr(os, "O_NOFOLLOW")
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh.load_manifest(manifest_path)
+
+    assert raised.value.code == "invalid-json-path"
 
 
 def test_installed_activation_candidate_validator_rejects_noncanonical_manifest(
@@ -1843,6 +1872,29 @@ def test_runtime_authority_adoption_is_exact_idempotent_and_not_execution_author
             store=store, approval_task_id=task_id, target_sha256="a" * 64
         )
     assert blocked.value.code == "authority-task-state-invalid"
+
+
+def test_activation_evidence_validator_rejects_non_object_evidence() -> None:
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh._validated_protected_publication_activation_evidence(
+            None,
+            approval_task_id="BUREAU-RUNTIME-ACTIVATION-EVIDENCE-NONOBJECT",
+            adoption_revision=1,
+            adoption_spec_sha256="a" * 64,
+            activation_spec_sha256="b" * 64,
+            idempotency_key="runtime-refresh-protected-publication-activation:test",
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            target_main_commit=MAIN,
+            target_sha256="c" * 64,
+            expected_task_file_sha256="d" * 64,
+            activation_created_at="2026-09-03T00:00:00Z",
+        )
+
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-evidence-invalid"
+    )
 
 
 def test_activation_evidence_rejects_installed_manifest_mismatch() -> None:

@@ -3800,6 +3800,15 @@ class StateStore:
         activation_evidence: dict[str, Any] | None,
     ) -> dict[str, Any]:
         with self.immediate() as connection:
+            if (
+                not isinstance(activation_evidence, dict)
+                or set(activation_evidence)
+                != runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
+            ):
+                raise legacy.StateError(
+                    "runtime-refresh protected-publication activation mutation "
+                    "contract is invalid"
+                )
             if isinstance(activation_observation, dict):
                 try:
                     runtime_refresh._validate_candidate_runtime_source_identity(

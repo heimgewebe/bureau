@@ -123,6 +123,27 @@ RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_FIELD = (
 RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND = (
     "bureau_runtime_refresh_protected_publication_activation_evidence"
 )
+RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS = frozenset(
+    {
+        "schema_version",
+        "kind",
+        "task_id",
+        "adoption_revision",
+        "adoption_spec_sha256",
+        "activation_spec_sha256",
+        "idempotency_key",
+        "publication_pr",
+        "publication_merge_commit",
+        "target_main_commit",
+        "task_file_sha256",
+        "target_sha256",
+        "observation_sha256",
+        "observation",
+        "installed_runtime_validation_sha256",
+        "installed_runtime_validation",
+        "evidence_sha256",
+    }
+)
 RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF = datetime(
     2026, 9, 2, 0, 0, 0, tzinfo=timezone.utc
 )
@@ -585,13 +606,26 @@ def _first_parent_lag_commits(
 
 
 def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
-    if path.is_symlink():
-        raise RuntimeRefreshError("invalid-json-path", f"not a regular file: {path}")
+    no_follow = getattr(os, "O_NOFOLLOW", None)
+    nonblocking = getattr(os, "O_NONBLOCK", None)
+    if (
+        not isinstance(no_follow, int)
+        or no_follow == 0
+        or not isinstance(nonblocking, int)
+        or nonblocking == 0
+    ):
+        raise RuntimeRefreshError(
+            "invalid-json-path",
+            "secure non-following manifest open is unavailable on this platform",
+        )
     descriptor = -1
     try:
         descriptor = os.open(
             path,
-            os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            os.O_RDONLY
+            | getattr(os, "O_CLOEXEC", 0)
+            | no_follow
+            | nonblocking,
         )
     except OSError as exc:
         raise RuntimeRefreshError("invalid-json-path", f"not a regular file: {path}") from exc
@@ -3266,8 +3300,8 @@ def _validated_protected_publication_activation_evidence(
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise RuntimeRefreshError(
-            "authority-preflight-publication-activation-observation-unproven",
-            "protected-publication activation lacks atomic observation evidence",
+            "authority-preflight-publication-activation-evidence-invalid",
+            "protected-publication activation evidence is not an object",
         )
     try:
         verify_digest(value, "evidence_sha256")
@@ -3277,27 +3311,8 @@ def _validated_protected_publication_activation_evidence(
             "protected-publication activation evidence digest is invalid",
             details={"cause_code": exc.code},
         ) from exc
-    required_fields = {
-        "schema_version",
-        "kind",
-        "task_id",
-        "adoption_revision",
-        "adoption_spec_sha256",
-        "activation_spec_sha256",
-        "idempotency_key",
-        "publication_pr",
-        "publication_merge_commit",
-        "target_main_commit",
-        "task_file_sha256",
-        "target_sha256",
-        "observation_sha256",
-        "observation",
-        "installed_runtime_validation_sha256",
-        "installed_runtime_validation",
-        "evidence_sha256",
-    }
     if (
-        set(value) != required_fields
+        set(value) != RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
         or value.get("schema_version") != RUNTIME_AUTHORITY_SCHEMA_VERSION
         or value.get("kind") != RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_KIND
         or value.get("task_id") != approval_task_id
@@ -3349,7 +3364,7 @@ def _validated_protected_publication_activation_evidence(
             "installed runtime validation receipt digest is invalid",
             details={"cause_code": exc.code},
         ) from exc
-    return _validated_protected_publication_activation_observation(
+    validated_observation = _validated_protected_publication_activation_observation(
         value["observation"],
         activation_created_at=activation_created_at,
         target_main_commit=target_main_commit,
@@ -3357,6 +3372,9 @@ def _validated_protected_publication_activation_evidence(
             target_sha256 if target_sha256 is not None else value["target_sha256"]
         ),
     )
+    validated_evidence = json.loads(json.dumps(value))
+    validated_evidence["observation"] = validated_observation
+    return validated_evidence
 
 
 def _historical_protected_publication_bootstrap(
@@ -4521,7 +4539,7 @@ def activate_runtime_refresh_authority(
             target_main_commit=expected_main_commit,
             task_file_sha256=expected_task_file_sha256,
         )
-        observation = _validate_protected_publication_activation_receipt(
+        activation_evidence = _validate_protected_publication_activation_receipt(
             store=store,
             current=current,
             authority=authority,
@@ -4534,11 +4552,12 @@ def activate_runtime_refresh_authority(
             approval_task_id=approval_task_id,
             target_main_commit=expected_main_commit,
         )
-        if observation is None:
+        if activation_evidence is None:
             raise RuntimeRefreshError(
                 "authority-activation-replay-legacy-evidence-unavailable",
                 "legacy ready authority has no replayable activation observation witness",
             )
+        observation = activation_evidence["observation"]
         return {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
             "kind": "bureau_runtime_refresh_authority_activation",
@@ -4714,7 +4733,7 @@ def activate_runtime_refresh_authority(
             "authority-activation-readback-failed",
             "activated TaskSpec readback differs from the exact CAS result",
         )
-    validated_observation = _validate_protected_publication_activation_receipt(
+    validated_evidence = _validate_protected_publication_activation_receipt(
         store=store,
         current=readback,
         authority=readback["spec"]["metadata"]["runtime_refresh_authority"],
@@ -4726,10 +4745,10 @@ def activate_runtime_refresh_authority(
         target_main_commit=expected_main_commit,
         target_sha256=observation["target_sha256"],
     )
-    if validated_observation != observation:
+    if validated_evidence != activation_evidence:
         raise RuntimeRefreshError(
             "authority-activation-evidence-readback-failed",
-            "activation observation witness readback differs from the CAS input",
+            "activation evidence readback differs from the exact CAS input",
         )
     return {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,

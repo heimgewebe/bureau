@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from bureau import legacy, task_specs
+from bureau import legacy, runtime_refresh, task_specs
 from bureau.v2 import StateStore
 
 DEPLOYED = "a" * 40
@@ -39,6 +39,13 @@ def _activation_observation(
             "registry_source_commit": DEPLOYED,
             "registry_reasons": [],
         },
+    }
+
+
+def _activation_evidence() -> dict[str, Any]:
+    return {
+        field: None
+        for field in runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
     }
 
 
@@ -81,7 +88,40 @@ def test_state_store_activation_rejects_malformed_proven_source_ancestry_before_
             idempotency_key="test-malformed-ancestry",
             expected_revision=1,
             activation_observation=_activation_observation(ancestry_patch),
-            activation_evidence={},
+            activation_evidence=_activation_evidence(),
+        )
+
+    assert delegated is False
+
+
+def test_state_store_activation_rejects_noncanonical_evidence_before_delegate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    state_root = (tmp_path / "noncanonical-evidence").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    delegated = False
+
+    def unexpected_delegate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal delegated
+        del args, kwargs
+        delegated = True
+        return {"delegated": True}
+
+    monkeypatch.setattr(
+        task_specs,
+        "put_runtime_refresh_protected_publication_activation",
+        unexpected_delegate,
+    )
+    evidence = _activation_evidence()
+    evidence["unexpected"] = True
+
+    with pytest.raises(legacy.StateError, match="activation mutation contract is invalid"):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            {},
+            idempotency_key="test-noncanonical-evidence",
+            expected_revision=1,
+            activation_observation=_activation_observation(),
+            activation_evidence=evidence,
         )
 
     assert delegated is False
@@ -110,7 +150,7 @@ def test_state_store_activation_allows_valid_source_ancestry_to_atomic_delegate(
         idempotency_key="test-valid-ancestry",
         expected_revision=1,
         activation_observation=_activation_observation(),
-        activation_evidence={},
+        activation_evidence=_activation_evidence(),
     )
 
     assert result == expected

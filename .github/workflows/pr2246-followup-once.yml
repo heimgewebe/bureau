@@ -1,0 +1,393 @@
+name: PR 2246 exact-head follow-up once
+
+on:
+  push:
+    branches:
+      - fix/task-revision-identity-continuity-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/task-revision-identity-continuity-20260902
+          fetch-depth: 2
+      - name: Bind exact parent
+        run: test "$(git rev-parse HEAD^)" = "81c2d69bc9d6af2d2ef5205d1208e5bd7ea16af6"
+      - name: Apply exact review follow-up
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          source_path = Path("src/bureau/operator_intake.py")
+          source = source_path.read_text()
+
+          def replace_once(old: str, new: str) -> None:
+              global source
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f"expected exactly one source match, got {count}: {old[:80]!r}"
+                  )
+              source = source.replace(old, new)
+
+          replace_once(
+              '''_TASK_REVISION_INFLECTION_EXCEPTIONS = frozenset({"news", "series", "species"})
+          _TASK_REVISION_PLURAL_BASE_SUFFIXES = (
+              "tion",
+              "sion",
+              "ment",
+              "ance",
+              "ence",
+              "ship",
+              "ing",
+              "ity",
+              "ure",
+              "age",
+          )
+
+
+          def _task_revision_plural_base(token: str) -> str | None:
+              # Inflection equivalence is deliberately narrow and pairwise. Never stem the
+              # whole token stream: doing so can collapse distinct identifiers such as
+              # `Canva` and `canvas`. The caller uses this only for a trailing subject token
+              # after an independently stable leading subject.
+              if (
+                  not token.isalpha()
+                  or len(token) <= 4
+                  or token in _TASK_REVISION_INFLECTION_EXCEPTIONS
+              ):
+                  return None
+              if len(token) > 5 and token.endswith("ies"):
+                  return f"{token[:-3]}y"
+              if token.endswith(("sses", "shes", "ches", "xes", "zes")):
+                  return token[:-2]
+              if token.endswith("s") and not token.endswith(("ss", "us", "is")):
+                  singular = token[:-1]
+                  if singular.endswith(_TASK_REVISION_PLURAL_BASE_SUFFIXES):
+                      return singular
+              return None
+          ''',
+              '''_TASK_REVISION_INFLECTION_EXCEPTIONS = frozenset({"news", "series", "species"})
+
+
+          def _task_revision_plural_base(token: str) -> str | None:
+              # Inflection equivalence is deliberately pairwise. Normalize only the trailing
+              # subject token and retain conservative ambiguity exclusions so identifiers such
+              # as `Canva` and `canvas` do not collapse through a generic trailing-s rule.
+              if (
+                  not token.isalpha()
+                  or len(token) <= 4
+                  or token in _TASK_REVISION_INFLECTION_EXCEPTIONS
+              ):
+                  return None
+              if len(token) > 5 and token.endswith("ies"):
+                  return f"{token[:-3]}y"
+              if token.endswith(("sses", "shes", "ches", "xes", "zes")):
+                  return token[:-2]
+              if token.endswith("s") and not token.endswith(("ss", "us", "is", "as", "os")):
+                  return token[:-1]
+              return None
+          ''',
+          )
+
+          replace_once(
+              '''def _task_revision_has_strong_leading_identity(value: Any) -> bool:
+              raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
+              if len(raw_tokens) <= 1:
+                  return False
+              token = raw_tokens[0]
+              # A leading repository/package/path-like identifier is subject evidence even
+              # though the generic prose model normally treats position zero as an action
+              # slot. Keep short all-caps domain acronyms (API/SSH/MCP/CI) for the same
+              # reason, but never promote known process words merely because they are cased.
+              if any(char.isdigit() or char in "./:@+#" for char in token):
+                  return True
+              # A single hyphen is common in process terms such as `pre-check`; reserve
+              # hyphen-only promotion for multi-segment technical compounds.
+              if token.count("-") >= 2:
+                  return True
+              letters = "".join(char for char in token if char.isalpha())
+              return (
+                  2 <= len(letters) <= 4
+                  and letters.isupper()
+                  and token.casefold() not in _TASK_REVISION_GENERIC_TOKENS
+              )
+          ''',
+              '''def _task_revision_strong_leading_identity(value: Any) -> str | None:
+              raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
+              if len(raw_tokens) <= 1:
+                  return None
+              token = raw_tokens[0]
+              # A leading repository/package/path-like identifier is subject evidence even
+              # though the generic prose model normally treats position zero as an action
+              # slot. Keep short all-caps domain acronyms (API/SSH/MCP/CI) for the same
+              # reason, but never promote known process words merely because they are cased.
+              if any(char.isdigit() or char in "./:@+#" for char in token):
+                  return token.casefold()
+              # A single hyphen is common in process terms such as `pre-check`; reserve
+              # hyphen-only promotion for multi-segment technical compounds.
+              if token.count("-") >= 2:
+                  return token.casefold()
+              letters = "".join(char for char in token if char.isalpha())
+              if (
+                  2 <= len(letters) <= 4
+                  and letters.isupper()
+                  and token.casefold() not in _TASK_REVISION_GENERIC_TOKENS
+              ):
+                  return token.casefold()
+              return None
+
+
+          def _task_revision_has_strong_leading_identity(value: Any) -> bool:
+              return _task_revision_strong_leading_identity(value) is not None
+          ''',
+          )
+
+          replace_once(
+              '''def _task_revision_subject_sequence(value: Any) -> list[str]:
+              tokens = _task_revision_tokens(value)
+              if len(tokens) > 1:
+                  tokens = tokens[1:]
+              return [token for token in tokens if token not in _TASK_REVISION_GENERIC_TOKENS]
+          ''',
+              '''def _task_revision_subject_sequence(value: Any) -> list[str]:
+              tokens = _task_revision_tokens(value)
+              if len(tokens) > 1 and _task_revision_strong_leading_identity(value) is None:
+                  tokens = tokens[1:]
+              return [token for token in tokens if token not in _TASK_REVISION_GENERIC_TOKENS]
+          ''',
+          )
+
+          replace_once(
+              '''    if ignore_leading_action:
+                  if len(before_raw_tokens) > 1:
+                      before_raw_tokens = before_raw_tokens[1:]
+                  if len(after_raw_tokens) > 1:
+                      after_raw_tokens = after_raw_tokens[1:]
+          ''',
+              '''    if ignore_leading_action:
+                  if (
+                      len(before_raw_tokens) > 1
+                      and _task_revision_strong_leading_identity(before) is None
+                  ):
+                      before_raw_tokens = before_raw_tokens[1:]
+                  if (
+                      len(after_raw_tokens) > 1
+                      and _task_revision_strong_leading_identity(after) is None
+                  ):
+                      after_raw_tokens = after_raw_tokens[1:]
+          ''',
+          )
+
+          replace_once(
+              '''    before_strong_leading_identity = _task_revision_has_strong_leading_identity(before)
+              after_strong_leading_identity = _task_revision_has_strong_leading_identity(after)
+          ''',
+              '''    before_strong_leading_identity = _task_revision_strong_leading_identity(before)
+              after_strong_leading_identity = _task_revision_strong_leading_identity(after)
+              retained_strong_leading_identity = (
+                  before_strong_leading_identity is not None
+                  and before_strong_leading_identity == after_strong_leading_identity
+              )
+          ''',
+          )
+
+          replace_once(
+              '''    shared_suffix_only_collision = (
+                  not before_strong_leading_identity
+                  and not after_strong_leading_identity
+                  and shared_subject_suffix_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+                  and shared_subject_suffix_count < shorter_subject_sequence_count
+                  and all_overlap_is_shared_suffix
+              )
+          ''',
+              '''    shared_suffix_only_collision = (
+                  not retained_strong_leading_identity
+                  and shared_subject_suffix_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+                  and shared_subject_suffix_count < shorter_subject_sequence_count
+                  and all_overlap_is_shared_suffix
+              )
+          ''',
+          )
+
+          replace_once(
+              '''        "before_strong_leading_identity": before_strong_leading_identity,
+                  "after_strong_leading_identity": after_strong_leading_identity,
+          ''',
+              '''        "before_strong_leading_identity": before_strong_leading_identity is not None,
+                  "after_strong_leading_identity": after_strong_leading_identity is not None,
+                  "retained_strong_leading_identity": retained_strong_leading_identity,
+          ''',
+          )
+
+          replace_once(
+              '''    continuous_acceptance_ids = {
+                  item_id
+                  for item_id in acceptance_overlap
+                  if _task_revision_acceptance_item_is_continuous(
+                      before_acceptance_items[item_id], after_acceptance_items[item_id]
+                  )
+              }
+              acceptance_continuity = (
+                  bool(write_scope_overlap)
+                  and len(continuous_acceptance_ids) >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+                  and len(continuous_acceptance_ids)
+                  == min(len(before_acceptance), len(after_acceptance))
+              )
+          ''',
+              '''    continuous_acceptance_ids = {
+                  item_id
+                  for item_id in acceptance_overlap
+                  if _task_revision_acceptance_item_is_continuous(
+                      before_acceptance_items[item_id], after_acceptance_items[item_id]
+                  )
+              }
+              # Only byte-for-byte equivalent typed criteria may independently anchor a
+              # large prose rewrite. Semantically similar assertion text can still support
+              # already-continuous task prose, but cannot by itself preserve task identity.
+              exact_acceptance_ids = {
+                  item_id
+                  for item_id in acceptance_overlap
+                  if before_acceptance_items[item_id] == after_acceptance_items[item_id]
+              }
+              acceptance_continuity = (
+                  bool(write_scope_overlap)
+                  and len(exact_acceptance_ids) >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+                  and len(exact_acceptance_ids)
+                  == min(len(before_acceptance), len(after_acceptance))
+              )
+          ''',
+          )
+
+          replace_once(
+              '''            "continuous_acceptance_ids": sorted(continuous_acceptance_ids),
+                      "acceptance_continuity": acceptance_continuity,
+          ''',
+              '''            "continuous_acceptance_ids": sorted(continuous_acceptance_ids),
+                      "exact_acceptance_ids": sorted(exact_acceptance_ids),
+                      "acceptance_continuity": acceptance_continuity,
+          ''',
+          )
+
+          source_path.write_text(source)
+
+          test_path = Path("tests/test_operator_intake.py")
+          tests = test_path.read_text()
+          marker = "def test_task_revision_identity_guard_rejects_acceptance_predicate_inversion_anchor"
+          if marker in tests:
+              raise SystemExit("follow-up tests already present")
+          tests += '''
+
+
+          def test_task_revision_identity_guard_rejects_acceptance_predicate_inversion_anchor() -> None:
+              before = _identity_revision_task(
+                  title="Backup retention archive",
+                  resource="repo.shared",
+                  goal="Restore archived snapshots",
+              )
+              after = _identity_revision_task(
+                  title="Customer invoice dashboard",
+                  resource="repo.shared",
+                  goal="Render billing balances",
+              )
+              shared_contract = {
+                  "evidence_type": "object",
+                  "verifier": "manual_observation",
+                  "verifier_config": {"observation_scope": "shared-contract"},
+              }
+              before["acceptance"] = [
+                  {
+                      "id": "proof-a",
+                      "assertion": "Verify backup policy prevents customer data deletion in production",
+                      **shared_contract,
+                  },
+                  {
+                      "id": "proof-b",
+                      "assertion": "Verify archive policy prevents snapshot deletion in production",
+                      **shared_contract,
+                  },
+              ]
+              after["acceptance"] = [
+                  {
+                      **criterion,
+                      "assertion": criterion["assertion"].replace("prevents", "permits"),
+                  }
+                  for criterion in before["acceptance"]
+              ]
+              with pytest.raises(OperatorIntakeError) as raised:
+                  operator_intake_module._validate_task_revision_identity_continuity(before, after)
+              assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+          def test_task_revision_identity_guard_rejects_removed_strong_leading_identifier() -> None:
+              before = _identity_revision_task(
+                  title="API backup updater service", resource="repo.infra"
+              )
+              after = _identity_revision_task(
+                  title="Repair dashboard updater service", resource="repo.infra"
+              )
+              with pytest.raises(OperatorIntakeError) as raised:
+                  operator_intake_module._validate_task_revision_identity_continuity(before, after)
+              assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+          def test_task_revision_identity_guard_allows_identifier_moved_behind_action() -> None:
+              before = _identity_revision_task(
+                  title="API runtime cleanup",
+                  resource="repo.infra",
+                  acceptance_ids=("api-runtime",),
+              )
+              after = _identity_revision_task(
+                  title="Clean API runtime",
+                  resource="repo.infra",
+                  acceptance_ids=("api-runtime",),
+              )
+              operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+          @pytest.mark.parametrize(
+              ("plural", "singular"),
+              [
+                  ("backups", "backup"),
+                  ("contracts", "contract"),
+                  ("tasks", "task"),
+                  ("files", "file"),
+                  ("workers", "worker"),
+              ],
+          )
+          def test_task_revision_identity_guard_allows_regular_trailing_s_plural(
+              plural: str, singular: str
+          ) -> None:
+              before = _identity_revision_task(
+                  title=f"Improve database {plural}",
+                  resource="repo.database",
+                  acceptance_ids=("database-contract",),
+              )
+              after = _identity_revision_task(
+                  title=f"Improve database {singular}",
+                  resource="repo.database",
+                  acceptance_ids=("database-contract",),
+              )
+              operator_intake_module._validate_task_revision_identity_continuity(before, after)
+          '''
+          test_path.write_text(tests)
+          PY
+      - name: Verify patch shape
+        run: |
+          python3 -m compileall -q src/bureau/operator_intake.py tests/test_operator_intake.py
+          git diff --check
+          git diff --stat
+      - name: Commit follow-up
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/bureau/operator_intake.py tests/test_operator_intake.py
+          git commit -m "fix(intake): close exact-head identity review gaps"
+          git push origin HEAD:fix/task-revision-identity-continuity-20260902

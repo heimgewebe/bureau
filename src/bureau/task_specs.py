@@ -145,6 +145,19 @@ def _is_uri_authority_path_boundary(value: str, index: int) -> bool:
     )
 
 
+def _is_shell_parameter_path_boundary(value: str, index: int) -> bool:
+    if index <= 0:
+        return False
+    prefix = value[:index]
+    expansion_start = prefix.rfind("${")
+    if expansion_start < 0 or "}" in prefix[expansion_start + 2 :]:
+        return False
+    return any(
+        prefix.endswith(operator)
+        for operator in (":-", "-", ":=", "=", ":?", "?", ":+", "+")
+    )
+
+
 def _contains_repository_path_token(
     value: str,
     repository_path: str,
@@ -172,6 +185,7 @@ def _contains_repository_path_token(
             or value[index - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
             or uri_prefix_ok
             or uri_authority_ok
+            or _is_shell_parameter_path_boundary(value, index)
         )
         after_ok = (
             end == len(value) or value[end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
@@ -299,16 +313,26 @@ def preview_repository_identity_rebind(
     claims = material.get("claims")
     if not isinstance(claims, list):
         raise TaskSpecError("repository identity rebind TaskSpec claims must be a list")
-    claim_changes = 0
-    for index, claim in enumerate(claims):
-        if isinstance(claim, dict) and claim.get("resource") == old_resource_id:
-            claim["resource"] = new_resource_id
-            changed_paths.append(f"/claims/{index}/resource")
-            claim_changes += 1
-    if claim_changes != 1:
+    old_claim_indexes = [
+        index
+        for index, claim in enumerate(claims)
+        if isinstance(claim, dict) and claim.get("resource") == old_resource_id
+    ]
+    if len(old_claim_indexes) != 1:
         raise TaskSpecError(
             "repository identity rebind requires exactly one old repository claim"
         )
+    if any(
+        isinstance(claim, dict) and claim.get("resource") == new_resource_id
+        for claim in claims
+    ):
+        raise TaskSpecError(
+            "repository identity rebind refuses a pre-existing target repository claim"
+        )
+    claim_index = old_claim_indexes[0]
+    claims[claim_index]["resource"] = new_resource_id
+    changed_paths.append(f"/claims/{claim_index}/resource")
+    claim_changes = 1
 
     execution = material.get("execution")
     if not isinstance(execution, dict):

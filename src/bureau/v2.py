@@ -3796,13 +3796,27 @@ class StateStore:
         *,
         idempotency_key: str,
         expected_revision: int | None,
+        runtime_conflicting_resource_ids: list[str] | None,
     ) -> dict[str, Any]:
+        conflicts = runtime_conflicting_resource_ids
+        if (
+            not isinstance(conflicts, list)
+            or not conflicts
+            or conflicts != sorted(set(conflicts))
+            or "component.bureau.runtime" not in conflicts
+            or not all(isinstance(item, str) and item for item in conflicts)
+        ):
+            raise legacy.StateError(
+                "runtime-refresh unused-authority closeout resource overlap contract is invalid"
+            )
+        conflicting_resources = set(conflicts)
         with self.immediate() as connection:
             try:
                 active_runtime = [
                     reservation
                     for reservation in self.reservations(connection)
-                    if reservation.resource == "component.bureau.runtime"
+                    if reservation.resource in conflicting_resources
+                    and legacy.modes_conflict("write", reservation.mode)
                 ]
                 if active_runtime:
                     raise legacy.StateError(

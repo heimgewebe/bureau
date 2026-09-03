@@ -13,6 +13,8 @@ import argparse
 import ast
 import base64
 import contextlib
+import fcntl
+import functools
 import hashlib
 import json
 import os
@@ -2752,6 +2754,7 @@ def _put_authority_task(
     source: str,
     activation_observation: dict[str, Any] | None = None,
     activation_evidence: dict[str, Any] | None = None,
+    runtime_conflicting_resource_ids: list[str] | None = None,
 ) -> dict[str, Any]:
     try:
         if source == "runtime-refresh-no-run-closeout":
@@ -2765,6 +2768,7 @@ def _put_authority_task(
                 spec,
                 idempotency_key=idempotency_key,
                 expected_revision=expected_revision,
+                runtime_conflicting_resource_ids=runtime_conflicting_resource_ids,
             )
         if source == "runtime-refresh-protected-publication-activation":
             return store.put_runtime_refresh_protected_publication_activation_task_spec(
@@ -5272,6 +5276,67 @@ def consume_runtime_refresh_authority(
     }
 
 
+_RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCK = ".runtime-authority-intent-closeout.lock"
+
+
+@contextlib.contextmanager
+def _runtime_authority_intent_closeout_lock(state_root: Path):
+    root = state_root.expanduser().resolve()
+    root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise RuntimeRefreshError(
+            "authority-intent-closeout-lock-unavailable",
+            "runtime authority intent/closeout lock requires O_NOFOLLOW",
+        )
+    lock_path = root / _RUNTIME_AUTHORITY_INTENT_CLOSEOUT_LOCK
+    flags = os.O_RDWR | os.O_CREAT | os.O_CLOEXEC | os.O_NOFOLLOW
+    try:
+        descriptor = os.open(lock_path, flags, 0o600)
+    except OSError as exc:
+        raise RuntimeRefreshError(
+            "authority-intent-closeout-lock-unavailable",
+            "runtime authority intent/closeout lock could not be opened",
+            details={"error": str(exc)},
+        ) from exc
+    try:
+        opened = os.fstat(descriptor)
+        linked = os.stat(lock_path, follow_symlinks=False)
+        if (
+            not stat.S_ISREG(opened.st_mode)
+            or opened.st_dev != linked.st_dev
+            or opened.st_ino != linked.st_ino
+            or opened.st_uid != os.geteuid()
+            or opened.st_nlink < 1
+            or stat.S_IMODE(opened.st_mode) & 0o077
+        ):
+            raise RuntimeRefreshError(
+                "authority-intent-closeout-lock-invalid",
+                "runtime authority intent/closeout lock identity is unsafe",
+            )
+        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        yield
+    finally:
+        with contextlib.suppress(OSError):
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+        os.close(descriptor)
+
+
+def _serialize_runtime_authority_intent_closeout(function):
+    @functools.wraps(function)
+    def wrapped(*args, **kwargs):
+        state_root = kwargs.get("state_root")
+        if not isinstance(state_root, Path):
+            raise RuntimeRefreshError(
+                "authority-intent-closeout-lock-invalid",
+                "runtime authority intent/closeout serialization requires state_root",
+            )
+        with _runtime_authority_intent_closeout_lock(state_root):
+            return function(*args, **kwargs)
+
+    return wrapped
+
+
+@_serialize_runtime_authority_intent_closeout
 def prepare_intent(
     *,
     candidate: dict[str, Any],
@@ -8206,6 +8271,8 @@ def _unused_runtime_authority_history(
     state_root: Path,
     approval_task_id: str,
     *,
+    expected_revision: int,
+    expected_spec_sha256: str,
     now: datetime,
 ) -> dict[str, Any]:
     intents_root = state_root / "intents"
@@ -8251,6 +8318,22 @@ def _unused_runtime_authority_history(
             raise RuntimeRefreshError(
                 "authority-unused-closeout-intent-invalid",
                 "unused authority history contains an invalid intent kind",
+            )
+        intent_authority = _intent_authority_record(intent)
+        if (
+            intent_authority.get("revision") != expected_revision
+            or intent_authority.get("spec_sha256") != expected_spec_sha256
+        ):
+            raise RuntimeRefreshError(
+                "authority-unused-closeout-intent-authority-mismatch",
+                "unused authority intent is bound to another TaskSpec revision",
+                details={
+                    "intent_sha256": intent_sha256,
+                    "expected_revision": expected_revision,
+                    "observed_revision": intent_authority.get("revision"),
+                    "expected_spec_sha256": expected_spec_sha256,
+                    "observed_spec_sha256": intent_authority.get("spec_sha256"),
+                },
             )
         created_at = intent.get("created_at")
         expires_at = intent.get("expires_at")
@@ -8770,13 +8853,66 @@ def _current_runtime_continuity(
             "authority-unused-closeout-current-runtime-invalid",
             "current runtime manifest has no valid Registry tree digest",
         )
+    canonical_registry_root = Path(str(manifest.get("canonical_registry_root", ""))).resolve()
     return {
         "source_commit": current_source,
         "manifest_sha256": manifest_sha256,
         "registry_tree_sha256": registry_tree_sha256,
+        "canonical_registry_root": str(canonical_registry_root),
     }
 
 
+def _runtime_conflicting_resource_ids(registry_root: Path) -> list[str]:
+    resources_root = registry_root / "registry" / "resources"
+    if (
+        not resources_root.is_dir()
+        or resources_root.is_symlink()
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-runtime-resources-invalid",
+            "canonical Registry has no safe runtime resource catalog",
+        )
+    resources: dict[str, legacy.Resource] = {}
+    for path in sorted(resources_root.glob("*.json")):
+        raw = read_json(path)
+        resource_id = raw.get("id")
+        if not isinstance(resource_id, str) or not resource_id or resource_id in resources:
+            raise RuntimeRefreshError(
+                "authority-unused-closeout-runtime-resources-invalid",
+                "canonical Registry runtime resource catalog is ambiguous",
+            )
+        resources[resource_id] = legacy.Resource(
+            id=resource_id,
+            type=str(raw.get("type", "")),
+            parent=raw.get("parent") if isinstance(raw.get("parent"), str) else None,
+            capacity=raw.get("capacity") if isinstance(raw.get("capacity"), int) else None,
+            path=raw.get("path") if isinstance(raw.get("path"), str) else None,
+            github_slug=(
+                raw.get("github_slug") if isinstance(raw.get("github_slug"), str) else None
+            ),
+            grabowski_key=(
+                raw.get("grabowski_key")
+                if isinstance(raw.get("grabowski_key"), str)
+                else None
+            ),
+            criticality=(
+                raw.get("criticality") if isinstance(raw.get("criticality"), str) else None
+            ),
+        )
+    runtime_resource = "component.bureau.runtime"
+    if runtime_resource not in resources:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-runtime-resources-invalid",
+            "canonical Registry lacks component.bureau.runtime",
+        )
+    return sorted(
+        resource_id
+        for resource_id in resources
+        if legacy.overlaps(runtime_resource, resource_id, resources)
+    )
+
+
+@_serialize_runtime_authority_intent_closeout
 def closeout_unused_runtime_refresh_authority(
     *,
     state_root: Path,
@@ -8806,7 +8942,11 @@ def closeout_unused_runtime_refresh_authority(
         )
     resolved_state_root = state_root.expanduser().resolve()
     history = _unused_runtime_authority_history(
-        resolved_state_root, approval_task_id, now=current_time
+        resolved_state_root,
+        approval_task_id,
+        expected_revision=expected_revision,
+        expected_spec_sha256=expected_spec_sha256,
+        now=current_time,
     )
     binding_intent_path = (
         resolved_state_root
@@ -8979,6 +9119,9 @@ def closeout_unused_runtime_refresh_authority(
         source_repository=source_repository,
         source_ancestry=source_ancestry,
     )
+    runtime_conflicting_resource_ids = _runtime_conflicting_resource_ids(
+        Path(current_runtime["canonical_registry_root"])
+    )
     _validate_state_store_health(store)
     closeout = {
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
@@ -9060,6 +9203,7 @@ def closeout_unused_runtime_refresh_authority(
             idempotency_key=idempotency_key,
             expected_revision=expected_revision,
             source="runtime-refresh-unused-authority-closeout",
+            runtime_conflicting_resource_ids=runtime_conflicting_resource_ids,
         )
     finally:
         _release_unused_authority_resource_barrier(resource_barrier)

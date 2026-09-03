@@ -43,10 +43,15 @@ def _activation_observation(
 
 
 def _activation_evidence() -> dict[str, Any]:
-    return {
+    evidence = {
         field: None
         for field in runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
     }
+    evidence["observation"] = {"deployed_manifest_sha256": "d" * 64}
+    evidence["installed_runtime_validation"] = {
+        "deployment_manifest_sha256": "d" * 64
+    }
+    return evidence
 
 
 @pytest.mark.parametrize(
@@ -119,6 +124,40 @@ def test_state_store_activation_rejects_noncanonical_evidence_before_delegate(
         store.put_runtime_refresh_protected_publication_activation_task_spec(
             {},
             idempotency_key="test-noncanonical-evidence",
+            expected_revision=1,
+            activation_observation=_activation_observation(),
+            activation_evidence=evidence,
+        )
+
+    assert delegated is False
+
+
+def test_state_store_activation_rejects_missing_manifest_digest_binding_before_delegate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    state_root = (tmp_path / "missing-manifest-digest").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    delegated = False
+
+    def unexpected_delegate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal delegated
+        del args, kwargs
+        delegated = True
+        return {"delegated": True}
+
+    monkeypatch.setattr(
+        task_specs,
+        "put_runtime_refresh_protected_publication_activation",
+        unexpected_delegate,
+    )
+    evidence = _activation_evidence()
+    evidence["observation"].pop("deployed_manifest_sha256")
+    evidence["installed_runtime_validation"].pop("deployment_manifest_sha256")
+
+    with pytest.raises(legacy.StateError, match="activation mutation contract is invalid"):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            {},
+            idempotency_key="test-missing-manifest-digest",
             expected_revision=1,
             activation_observation=_activation_observation(),
             activation_evidence=evidence,

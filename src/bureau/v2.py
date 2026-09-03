@@ -3804,6 +3804,10 @@ class StateStore:
                 not isinstance(activation_evidence, dict)
                 or set(activation_evidence)
                 != runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
+                or not runtime_refresh._activation_manifest_digest_binding_is_valid(
+                    activation_evidence.get("observation"),
+                    activation_evidence.get("installed_runtime_validation"),
+                )
             ):
                 raise legacy.StateError(
                     "runtime-refresh protected-publication activation mutation "

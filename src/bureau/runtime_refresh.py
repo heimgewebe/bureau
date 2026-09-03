@@ -3210,6 +3210,25 @@ def _validated_protected_publication_activation_observation(
     return json.loads(json.dumps(value))
 
 
+def _activation_manifest_digest_binding_is_valid(
+    observation: Any,
+    installed_runtime_validation: Any,
+) -> bool:
+    if not isinstance(observation, dict) or not isinstance(
+        installed_runtime_validation, dict
+    ):
+        return False
+    observed_manifest_sha256 = observation.get("deployed_manifest_sha256")
+    installed_manifest_sha256 = installed_runtime_validation.get(
+        "deployment_manifest_sha256"
+    )
+    return (
+        _is_sha256(observed_manifest_sha256)
+        and _is_sha256(installed_manifest_sha256)
+        and installed_manifest_sha256 == observed_manifest_sha256
+    )
+
+
 def _protected_publication_activation_evidence(
     *,
     approval_task_id: str,
@@ -3250,8 +3269,9 @@ def _protected_publication_activation_evidence(
         != activation_spec_sha256
         or installed_runtime_validation.get("installed_source_commit")
         != observation.get("deployed_source_commit")
-        or installed_runtime_validation.get("deployment_manifest_sha256")
-        != observation.get("deployed_manifest_sha256")
+        or not _activation_manifest_digest_binding_is_valid(
+            observation, installed_runtime_validation
+        )
         or not _is_sha256(installed_runtime_validation.get("validation_sha256"))
     ):
         raise RuntimeRefreshError(
@@ -3349,8 +3369,9 @@ def _validated_protected_publication_activation_evidence(
         != activation_spec_sha256
         or value["installed_runtime_validation"].get("installed_source_commit")
         != value["observation"].get("deployed_source_commit")
-        or value["installed_runtime_validation"].get("deployment_manifest_sha256")
-        != value["observation"].get("deployed_manifest_sha256")
+        or not _activation_manifest_digest_binding_is_valid(
+            value["observation"], value["installed_runtime_validation"]
+        )
     ):
         raise RuntimeRefreshError(
             "authority-preflight-publication-activation-evidence-invalid",

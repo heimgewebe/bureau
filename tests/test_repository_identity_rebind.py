@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -16,7 +17,12 @@ from bureau.core import (
     plan_sha256 as initiative_plan_sha256,
 )
 from bureau.legacy import StateError, canonical_json, sha256_json, utc_now
-from bureau.repository_identity_rebind import apply_plan, build_plan, plan_sha256
+from bureau.repository_identity_rebind import (
+    _candidates,
+    apply_plan,
+    build_plan,
+    plan_sha256,
+)
 
 OLD_RESOURCE = "repo.old"
 NEW_RESOURCE = "repo.new"
@@ -244,6 +250,112 @@ def test_legacy_acceptance_rebind_is_atomic_replayable_and_idempotent(tmp_path: 
     assert second["status"] == "already-applied"
     assert second["changed"] is False
     assert {store.task_spec(task_id)["revision"] for task_id in registry.tasks} == {2}
+
+
+def test_stale_plan_without_receipts_is_rejected(tmp_path: Path) -> None:
+    root, _, _ = _registry_root(tmp_path, legacy=True)
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    plan = build_plan(
+        registry,
+        store,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+    )
+    plan["generated_at"] = "2000-01-01T00:00:00Z"
+    plan["plan_sha256"] = plan_sha256(plan)
+
+    with pytest.raises(StateError, match="plan is stale"):
+        apply_plan(
+            registry,
+            store,
+            plan,
+            expected_plan_sha256=plan["plan_sha256"],
+            max_age_seconds=1,
+        )
+
+    assert {store.task_spec(task_id)["revision"] for task_id in registry.tasks} == {1}
+
+
+def test_complete_receipt_replay_is_allowed_after_plan_expiry(tmp_path: Path) -> None:
+    root, _, _ = _registry_root(tmp_path, legacy=True)
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    plan = build_plan(
+        registry,
+        store,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+    )
+    plan["generated_at"] = (
+        datetime.now(timezone.utc) - timedelta(seconds=2)
+    ).isoformat().replace("+00:00", "Z")
+    plan["plan_sha256"] = plan_sha256(plan)
+    original_plan_sha256 = plan["plan_sha256"]
+    first = apply_plan(
+        registry,
+        store,
+        plan,
+        expected_plan_sha256=original_plan_sha256,
+        max_age_seconds=10,
+    )
+    assert first["status"] == "applied"
+
+    replay = apply_plan(
+        registry,
+        store,
+        plan,
+        expected_plan_sha256=original_plan_sha256,
+        max_age_seconds=1,
+    )
+
+    assert plan["plan_sha256"] == original_plan_sha256
+    assert replay["status"] == "already-applied"
+    assert replay["changed"] is False
+    assert {store.task_spec(task_id)["revision"] for task_id in registry.tasks} == {2}
+
+
+def test_rebind_allows_new_repository_path_with_old_path_prefix(tmp_path: Path) -> None:
+    root, old_path, _ = _registry_root(tmp_path, task_ids=("TASK-A",), legacy=True)
+    new_path = Path(str(old_path) + "-new")
+    new_path.mkdir()
+    resource_path = root / "registry/resources/2.json"
+    resource = json.loads(resource_path.read_text(encoding="utf-8"))
+    resource["path"] = str(new_path)
+    resource["grabowski_key"] = f"repo:{new_path}"
+    resource_path.write_text(json.dumps(resource), encoding="utf-8")
+
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    plan = build_plan(
+        registry,
+        store,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+    )
+    result = apply_plan(
+        registry,
+        store,
+        plan,
+        expected_plan_sha256=plan["plan_sha256"],
+    )
+
+    assert result["status"] == "applied"
+    current = store.task_spec("TASK-A")
+    assert current is not None
+    assert current["spec"]["execution"]["working_repository"] == str(new_path)
+    assert current["spec"]["execution"]["grabowski_resources"] == [
+        f"repo:{new_path}",
+        f"path:{new_path}/apps/web",
+        f"repo:{new_path}:operation:test-scope",
+    ]
+    with store.connect() as connection:
+        assert _candidates(
+            connection,
+            registry,
+            old_resource_id=OLD_RESOURCE,
+            old_path=str(old_path),
+        ) == {}
 
 
 @pytest.mark.parametrize("stale_field", ("task_sha256", "plan_sha256"))

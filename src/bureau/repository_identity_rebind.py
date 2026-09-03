@@ -196,7 +196,9 @@ def _has_old_binding(spec: Mapping[str, Any], *, old_resource_id: str, old_path:
         return True
     resources = execution.get("grabowski_resources")
     return isinstance(resources, list) and any(
-        isinstance(item, str) and old_path in item for item in resources
+        isinstance(item, str)
+        and task_specs._contains_repository_path_token(item, old_path)
+        for item in resources
     )
 
 
@@ -579,7 +581,6 @@ def apply_plan(
     checked = _validate_plan(plan)
     if expected_plan_sha256 != checked["plan_sha256"]:
         raise legacy.StateError("repository identity rebind expected plan digest mismatch")
-    _validate_freshness(checked, max_age_seconds)
     _require_resource_binding(registry, checked)
 
     old_resource = checked["old_resource"]
@@ -602,6 +603,8 @@ def apply_plan(
             raise legacy.StateError(
                 "repository identity rebind found a partial mutation receipt set"
             )
+        if existing_count != len(items):
+            _validate_freshness(checked, max_age_seconds)
 
         candidates = _candidates(
             connection,

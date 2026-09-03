@@ -76,6 +76,30 @@ def _validate_repository_identity_rebind_parameters(
         raise TaskSpecError("repository identity rebind repository paths must differ")
 
 
+def _contains_repository_path_token(value: str, repository_path: str) -> bool:
+    """Return whether one string contains the path as a technical token.
+
+    Repository bindings may appear as plain paths or inside ``repo:``/``path:``
+    resource keys and metadata strings.  Token boundaries deliberately exclude
+    filename-style suffix characters, so rebinding ``/repos/app`` to
+    ``/repos/app-new`` does not make the new path look like old residue.
+    """
+
+    before_boundaries = frozenset(" \t\r\n'\"=:(,[{")
+    after_boundaries = frozenset(" \t\r\n'\"/:),;]}")
+    start = 0
+    while True:
+        index = value.find(repository_path, start)
+        if index < 0:
+            return False
+        end = index + len(repository_path)
+        before_ok = index == 0 or value[index - 1] in before_boundaries
+        after_ok = end == len(value) or value[end] in after_boundaries
+        if before_ok and after_ok:
+            return True
+        start = index + 1
+
+
 def _old_repository_binding_residue(
     value: Any,
     *,
@@ -105,7 +129,8 @@ def _old_repository_binding_residue(
                 )
             )
     elif isinstance(value, str) and (
-        value == old_resource_id or old_repository_path in value
+        value == old_resource_id
+        or _contains_repository_path_token(value, old_repository_path)
     ):
         result.append(path or "/")
     return result

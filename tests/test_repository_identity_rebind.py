@@ -1078,6 +1078,42 @@ def test_preview_preserves_repository_path_mention_in_acceptance_text(tmp_path: 
     assert preview["spec"]["acceptance"] == acceptance_before
 
 
+def test_preview_rejects_colon_scoped_old_repository_path_in_metadata(
+    tmp_path: Path,
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["metadata"]["blocking_resource"] = f"repo:{old_path}:operation:cleanup"
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
+def test_preview_rejects_embedded_old_resource_id_in_metadata(tmp_path: Path) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["metadata"]["resource_binding"] = f"lease={OLD_RESOURCE}"
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
 def test_preview_rejects_old_repository_path_in_unapproved_metadata(tmp_path: Path) -> None:
     _, old_path, new_path = _registry_root(
         tmp_path, task_ids=("TASK-A",), legacy=True

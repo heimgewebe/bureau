@@ -23,7 +23,7 @@ REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX = "repository-identity-rebind:"
 REPOSITORY_IDENTITY_REBIND_TERMINAL_STATES = frozenset({"verified", "cancelled", "superseded"})
 REPOSITORY_IDENTITY_REBIND_ACTIVE_RUN_STATES = ("assigned", "running", "verifying")
 _REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&;|<>")
-_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>")
+_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>:")
 _RESOURCE_ID_TOKEN_EXTRA_CHARS = frozenset("._-")
 _URI_SCHEME_EXTRA_CHARS = frozenset("+-.")
 
@@ -102,10 +102,6 @@ def _contains_resource_id_token(value: str, resource_id: str) -> bool:
         if before_ok and after_ok:
             return True
         start = index + 1
-
-
-def _is_execution_binding_path(path: str) -> bool:
-    return path == "/execution" or path.startswith("/execution/")
 
 
 def _is_acceptance_evidence_path(path: str) -> bool:
@@ -234,13 +230,8 @@ def _old_repository_binding_residue(
     if isinstance(value, Mapping):
         for key, item in value.items():
             item_path = f"{path}/{key}"
-            execution_binding = _is_execution_binding_path(path)
             if isinstance(key, str) and (
-                key == old_resource_id
-                or (
-                    execution_binding
-                    and _contains_resource_id_token(key, old_resource_id)
-                )
+                _contains_resource_id_token(key, old_resource_id)
                 or _contains_repository_path_token(
                     key,
                     old_repository_path,
@@ -269,11 +260,7 @@ def _old_repository_binding_residue(
                 )
             )
     elif isinstance(value, str) and (
-        value == old_resource_id
-        or (
-            _is_execution_binding_path(path)
-            and _contains_resource_id_token(value, old_resource_id)
-        )
+        _contains_resource_id_token(value, old_resource_id)
         or _contains_repository_path_token(
             value,
             old_repository_path,

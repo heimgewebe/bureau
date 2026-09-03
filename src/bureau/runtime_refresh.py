@@ -8924,6 +8924,101 @@ def _runtime_conflicting_resource_ids(registry_root: Path) -> list[str]:
     )
 
 
+def _validate_unused_authority_closeout_cas_contract(
+    *,
+    state_root: Path,
+    store: Any,
+    current: dict[str, Any],
+    candidate: dict[str, Any],
+    closeout: dict[str, Any],
+) -> dict[str, Any]:
+    validated = _validated_unused_runtime_authority_closeout(closeout)
+    task_id = validated["task_id"]
+    expected_revision = validated["authority_revision"]
+    expected_spec_sha256 = validated["authority_spec_sha256"]
+    current_spec = current.get("spec") if isinstance(current, dict) else None
+    if (
+        not isinstance(current, dict)
+        or not isinstance(current_spec, dict)
+        or current.get("task_id") != task_id
+        or current.get("revision") != expected_revision
+        or current.get("spec_sha256") != expected_spec_sha256
+        or current_spec.get("state") != "ready"
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-cas-preimage-invalid",
+            "unused-authority closeout CAS preimage does not match the declared ready authority",
+        )
+    metadata, authority = _runtime_authority_metadata(current_spec)
+    _validate_runtime_refresh_authority_contract(
+        spec=current_spec, approval_task_id=task_id, allow_planned=False
+    )
+    if (
+        metadata.get("runtime_unused_authority_closeout") is not None
+        or authority.get("target_binding_receipt") is not None
+        or authority.get("consumption") is not None
+        or metadata.get("runtime_closeout") is not None
+        or metadata.get("runtime_incident_closeout") is not None
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-cas-preimage-invalid",
+            "unused-authority closeout CAS preimage is already used or terminal",
+        )
+    closed_at = parse_time(validated["closed_at"])
+    root = state_root.expanduser().resolve()
+    history = _unused_runtime_authority_history(
+        root,
+        task_id,
+        expected_revision=expected_revision,
+        expected_spec_sha256=expected_spec_sha256,
+        now=closed_at,
+    )
+    expected_history = {
+        "target_sha256": history["target_sha256"],
+        "intended_main_commit": history["main_commit"],
+        "unused_intent_history_sha256": history["history_sha256"],
+        "unused_intent_sha256s": history["intent_sha256s"],
+        "selected_unused_intent_sha256": history["selected_intent_sha256"],
+    }
+    if any(validated.get(key) != value for key, value in expected_history.items()):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-cas-history-invalid",
+            "unused-authority closeout CAS history differs from authenticated intent history",
+        )
+    equivalent = _equivalent_runtime_success_provenance(
+        state_root=root,
+        store=store,
+        unused_task_id=task_id,
+        target_sha256=history["target_sha256"],
+        main_commit=history["main_commit"],
+        equivalent_intent_sha256=validated["fulfilled_by_intent_sha256"],
+        equivalent_result_sha256=validated["fulfilled_by_result_sha256"],
+        historical_readback=readback_historical_install,
+    )
+    expected_equivalent = {
+        "fulfilled_by_task_id": equivalent["task_id"],
+        "fulfilled_by_authority_revision": equivalent["authority_revision"],
+        "fulfilled_by_authority_spec_sha256": equivalent["authority_spec_sha256"],
+        "fulfilled_by_consumption_sha256": equivalent["consumption_sha256"],
+        "fulfilled_by_readback_sha256": equivalent["readback_sha256"],
+        "historical_manifest_sha256": equivalent["manifest_sha256"],
+    }
+    if any(validated.get(key) != value for key, value in expected_equivalent.items()):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-cas-equivalent-evidence-invalid",
+            "unused-authority closeout CAS equivalent success evidence is not authentic",
+        )
+    expected_candidate = json.loads(json.dumps(current_spec))
+    expected_candidate["state"] = "superseded"
+    expected_candidate["metadata"]["runtime_unused_authority_closeout"] = validated
+    if candidate != expected_candidate:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-cas-delta-invalid",
+            "unused-authority closeout candidate differs from the declared terminal delta",
+        )
+    return {"history": history, "equivalent": equivalent}
+
+
 def _authenticated_runtime_conflicting_resource_ids(
     *, state_root: Path, closeout: dict[str, Any]
 ) -> list[str]:

@@ -3818,20 +3818,14 @@ class StateStore:
             ) from exc
         with self.immediate() as connection:
             try:
-                fulfilled_revision = task_specs.get_revision(
-                    connection,
-                    closeout["fulfilled_by_task_id"],
-                    closeout["fulfilled_by_authority_revision"],
+                current = task_specs.get_current(connection, closeout["task_id"])
+                runtime_refresh._validate_unused_authority_closeout_cas_contract(
+                    state_root=runtime_state_root,
+                    store=self,
+                    current=current,
+                    candidate=spec,
+                    closeout=closeout,
                 )
-                if (
-                    not isinstance(fulfilled_revision, dict)
-                    or fulfilled_revision.get("spec_sha256")
-                    != closeout["fulfilled_by_authority_spec_sha256"]
-                ):
-                    raise legacy.StateError(
-                        "runtime-refresh unused-authority closeout fulfilled authority "
-                        "history is invalid"
-                    )
                 conflicting_resources = set(
                     runtime_refresh._authenticated_runtime_conflicting_resource_ids(
                         state_root=runtime_state_root,
@@ -3854,7 +3848,10 @@ class StateStore:
                     idempotency_key=idempotency_key,
                     expected_revision=expected_revision,
                 )
-            except task_specs.TaskSpecError as exc:
+            except (
+                task_specs.TaskSpecError,
+                runtime_refresh.RuntimeRefreshError,
+            ) as exc:
                 raise legacy.StateError(str(exc)) from exc
 
     def put_runtime_refresh_protected_publication_activation_task_spec(

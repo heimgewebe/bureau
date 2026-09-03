@@ -1,0 +1,195 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from bureau import legacy, runtime_refresh, task_specs
+from bureau.v2 import StateStore
+
+DEPLOYED = "a" * 40
+MAIN = "b" * 40
+
+
+def _activation_observation(
+    ancestry_patch: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    ancestry: dict[str, Any] = {
+        "schema_version": 1,
+        "status": "proven",
+        "method": "github-compare",
+        "deployed_source_commit": DEPLOYED,
+        "main_commit": MAIN,
+        "compare_status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "merge_base_commit": DEPLOYED,
+    }
+    if ancestry_patch:
+        ancestry.update(ancestry_patch)
+    return {
+        "deployed_source_commit": DEPLOYED,
+        "main_commit": MAIN,
+        "source_ancestry": ancestry,
+        "runtime_source_identity": {
+            "schema_version": 1,
+            "status": "proven",
+            "deployed_source_commit": DEPLOYED,
+            "registry_source_commit": DEPLOYED,
+            "registry_reasons": [],
+        },
+    }
+
+
+def _activation_evidence() -> dict[str, Any]:
+    evidence = {
+        field: None
+        for field in runtime_refresh.RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_REQUIRED_FIELDS
+    }
+    evidence["observation"] = {"deployed_manifest_sha256": "d" * 64}
+    evidence["installed_runtime_validation"] = {
+        "deployment_manifest_sha256": "d" * 64
+    }
+    return evidence
+
+
+@pytest.mark.parametrize(
+    "ancestry_patch",
+    [
+        {"method": "unsupported"},
+        {"ahead_by": 0},
+        {"behind_by": 1},
+        {"merge_base_commit": "f" * 40},
+    ],
+)
+def test_state_store_activation_rejects_malformed_proven_source_ancestry_before_delegate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    ancestry_patch: dict[str, Any],
+) -> None:
+    state_root = (tmp_path / "state").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    delegated = False
+
+    def unexpected_delegate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal delegated
+        del args, kwargs
+        delegated = True
+        return {"delegated": True}
+
+    monkeypatch.setattr(
+        task_specs,
+        "put_runtime_refresh_protected_publication_activation",
+        unexpected_delegate,
+    )
+
+    with pytest.raises(
+        legacy.StateError,
+        match="runtime-refresh protected-publication activation mutation contract is invalid",
+    ):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            {},
+            idempotency_key="test-malformed-ancestry",
+            expected_revision=1,
+            activation_observation=_activation_observation(ancestry_patch),
+            activation_evidence=_activation_evidence(),
+        )
+
+    assert delegated is False
+
+
+def test_state_store_activation_rejects_noncanonical_evidence_before_delegate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    state_root = (tmp_path / "noncanonical-evidence").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    delegated = False
+
+    def unexpected_delegate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal delegated
+        del args, kwargs
+        delegated = True
+        return {"delegated": True}
+
+    monkeypatch.setattr(
+        task_specs,
+        "put_runtime_refresh_protected_publication_activation",
+        unexpected_delegate,
+    )
+    evidence = _activation_evidence()
+    evidence["unexpected"] = True
+
+    with pytest.raises(legacy.StateError, match="activation mutation contract is invalid"):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            {},
+            idempotency_key="test-noncanonical-evidence",
+            expected_revision=1,
+            activation_observation=_activation_observation(),
+            activation_evidence=evidence,
+        )
+
+    assert delegated is False
+
+
+def test_state_store_activation_rejects_missing_manifest_digest_binding_before_delegate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    state_root = (tmp_path / "missing-manifest-digest").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    delegated = False
+
+    def unexpected_delegate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal delegated
+        del args, kwargs
+        delegated = True
+        return {"delegated": True}
+
+    monkeypatch.setattr(
+        task_specs,
+        "put_runtime_refresh_protected_publication_activation",
+        unexpected_delegate,
+    )
+    evidence = _activation_evidence()
+    evidence["observation"].pop("deployed_manifest_sha256")
+    evidence["installed_runtime_validation"].pop("deployment_manifest_sha256")
+
+    with pytest.raises(legacy.StateError, match="activation mutation contract is invalid"):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            {},
+            idempotency_key="test-missing-manifest-digest",
+            expected_revision=1,
+            activation_observation=_activation_observation(),
+            activation_evidence=evidence,
+        )
+
+    assert delegated is False
+
+
+def test_state_store_activation_allows_valid_source_ancestry_to_atomic_delegate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state_root = (tmp_path / "state").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    expected = {"delegated": True}
+
+    def delegate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        del args, kwargs
+        return expected
+
+    monkeypatch.setattr(
+        task_specs,
+        "put_runtime_refresh_protected_publication_activation",
+        delegate,
+    )
+
+    result = store.put_runtime_refresh_protected_publication_activation_task_spec(
+        {},
+        idempotency_key="test-valid-ancestry",
+        expected_revision=1,
+        activation_observation=_activation_observation(),
+        activation_evidence=_activation_evidence(),
+    )
+
+    assert result == expected

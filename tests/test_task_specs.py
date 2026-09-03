@@ -50,7 +50,7 @@ def _store(tmp_path: Path) -> StateStore:
 def test_schema_upgrade_exposes_task_spec_tables(tmp_path: Path) -> None:
     store = _store(tmp_path)
     integrity = store.integrity()
-    assert integrity["schema_version"] == 5
+    assert integrity["schema_version"] == 6
     with store.connect() as connection:
         task_specs.validate_schema(connection)
 

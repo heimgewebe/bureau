@@ -17,6 +17,13 @@ from bureau import cli as bureau_cli
 from bureau import closure_observer, legacy, registry_snapshot
 from bureau import v2 as bureau_v2
 from bureau.adapters import AdapterRegistry, Observation
+from bureau.bound_activity import (
+    BOUND_ACTIVITY_KIND,
+    BOUND_ACTIVITY_OUTCOME,
+    BOUND_ACTIVITY_SOURCE,
+    BOUND_ACTIVITY_UNBOUND_EVIDENCE_SOURCE,
+    run_heartbeat_projection,
+)
 from bureau.core import (
     Dispatcher,
     NoEligibleTask,
@@ -335,12 +342,34 @@ def test_database_migrates_old_columns(tmp_path):
         );
         CREATE TABLE events(
             event_id INTEGER PRIMARY KEY AUTOINCREMENT,run_id TEXT,event_type TEXT,
-            payload_json TEXT,created_at TEXT
+            event_schema_version INTEGER NOT NULL DEFAULT 0,payload_json TEXT,created_at TEXT
+        );
+        INSERT INTO events(
+            event_id,run_id,event_type,event_schema_version,payload_json,created_at
+        ) VALUES(
+            0,
+            NULL,
+            'state-projection-v1',
+            1,
+            '{"mode":"baseline","projection":{"acceptances":{},"claims":{},"initiatives":{},"runs":{},"schema_version":1,"tasks":{}},"root_sha256":"f0c4d491a9e31211b25251bffcadf6037c7d537df6aa7f6120674b2f5bb9adaa","schema_version":1,"trigger":"schema-v4-migration"}',
+            '2026-08-01T00:00:00Z'
         );
         INSERT INTO events(run_id,event_type,payload_json,created_at)
-        VALUES(NULL,'run-heartbeat','{}','2026-08-01T00:00:00Z');
+        VALUES(NULL,'run-heartbeat','{}','2026-08-01T00:00:01Z');
+        INSERT INTO events(run_id,event_type,payload_json,created_at)
+        VALUES(
+            'BUR-RUN-MIGRATION',
+            'run-heartbeat',
+            '{"kind":"bureau.bound_activity_heartbeat","activity":{"activity_id":"migrated-activity"}}',
+            '2026-08-01T00:00:02Z'
+        );
+        PRAGMA user_version=5;
         """
     )
+    event_history_before = connection.execute(
+        "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+        "FROM events ORDER BY event_id"
+    ).fetchall()
     connection.commit()
     connection.close()
     store = StateStore(database)
@@ -355,13 +384,26 @@ def test_database_migrates_old_columns(tmp_path):
             "SELECT COUNT(*) FROM events WHERE event_type='state-projection-v1' "
             "AND event_schema_version=1"
         ).fetchone()[0]
+        migrated_activity_id = migrated.execute(
+            "SELECT activity_id FROM events WHERE run_id='BUR-RUN-MIGRATION'"
+        ).fetchone()[0]
+        event_history_after = migrated.execute(
+            "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+            "FROM events ORDER BY event_id"
+        ).fetchall()
+        indexes = {
+            row["name"] for row in migrated.execute("PRAGMA index_list(events)")
+        }
         version = migrated.execute("PRAGMA user_version").fetchone()[0]
     assert {"plan_sha256", "dispatch_request_id", "external_state"} <= run_columns
     assert {"task_sha256", "plan_sha256"} <= status_columns
-    assert "event_schema_version" in event_columns
+    assert {"event_schema_version", "activity_id"} <= event_columns
     assert legacy_event_version == 0
     assert baseline_count == 1
-    assert version == 5
+    assert migrated_activity_id is None
+    assert [tuple(row) for row in event_history_after] == event_history_before
+    assert {"unique_bound_activity_id", "events_by_run_activity"} <= indexes
+    assert version == 6
     assert store.replay_projection()["matches_current"] is True
 
 
@@ -5175,6 +5217,71 @@ def test_orphan_resume_preserves_run_identity_and_requires_live_original_lease(
         ]
     assert "run-orphan-resumed" in event_types
     assert intent["run_id"] == resumed["run_id"]
+
+
+def test_orphan_resume_supersedes_prior_bound_heartbeat(
+    registry_factory, tmp_path, monkeypatch
+):
+    store, dispatcher, _intent, database, orphaned = orphaned_coordinated_run(
+        registry_factory, tmp_path, monkeypatch
+    )
+    activity_id = "orphan-resume-bound-heartbeat"
+    payload = {
+        "kind": BOUND_ACTIVITY_KIND,
+        "source": BOUND_ACTIVITY_SOURCE,
+        "outcome": BOUND_ACTIVITY_OUTCOME,
+        "activity": {
+            "activity_id": activity_id,
+            "run_id": orphaned["run_id"],
+            "task_id": orphaned["task_id"],
+            "worker_id": orphaned["worker_id"],
+            "task_sha256": orphaned["task_sha256"],
+            "plan_sha256": orphaned["plan_sha256"],
+            "envelope_sha256": orphaned["envelope_sha256"],
+            "external_binding": {"status": "explicitly-unbound"},
+        },
+        "evidence": {
+            "source": BOUND_ACTIVITY_UNBOUND_EVIDENCE_SOURCE,
+            "binding_status": "explicitly-unbound",
+        },
+        "heartbeat_at": orphaned["heartbeat_at"],
+    }
+    with store.immediate() as connection:
+        store.event(
+            connection,
+            "run-heartbeat",
+            payload,
+            orphaned["run_id"],
+            activity_id=activity_id,
+        )
+
+    before = run_heartbeat_projection(store, orphaned["run_id"])
+    assert before["status"] == "valid-bound-activity"
+
+    result = dispatcher.resume_orphaned_run(
+        orphaned["run_id"],
+        worker_id=orphaned["worker_id"],
+        expected_updated_at=orphaned["updated_at"],
+        expected_task_sha256=orphaned["task_sha256"],
+        expected_plan_sha256=orphaned["plan_sha256"],
+        expected_envelope_sha256=orphaned["envelope_sha256"],
+        resource_db=database,
+    )
+
+    projection = run_heartbeat_projection(store, orphaned["run_id"])
+    assert result["status"] == "resumed"
+    assert projection["status"] == "normal"
+    assert projection["activity_id"] is None
+    assert projection["heartbeat_at"] == result["run"]["heartbeat_at"]
+    with store.connect() as connection:
+        latest = connection.execute(
+            "SELECT activity_id,payload_json FROM events "
+            "WHERE run_id=? AND event_type='run-heartbeat' "
+            "ORDER BY event_id DESC LIMIT 1",
+            (orphaned["run_id"],),
+        ).fetchone()
+    assert latest["activity_id"] is None
+    assert json.loads(latest["payload_json"])["source"] == "orphan-resume"
 
 
 def test_orphan_resume_fails_closed_without_live_original_lease(

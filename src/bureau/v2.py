@@ -53,7 +53,7 @@ from .state_root_artifacts import (
     reviewed_plan_directory_valid,
 )
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 TERMINAL_STATES = {"succeeded", "failed", "cancelled", "orphaned"}
 EVIDENCE_TYPES: dict[str, type | tuple[type, ...]] = {
     "object": dict,
@@ -3313,6 +3313,7 @@ class StateStore:
                     run_id TEXT,
                     event_type TEXT NOT NULL,
                     event_schema_version INTEGER NOT NULL DEFAULT 0,
+                    activity_id TEXT,
                     payload_json TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
@@ -3335,13 +3336,22 @@ class StateStore:
                 "events",
                 "event_schema_version INTEGER NOT NULL DEFAULT 0",
             )
+            self._add_column(connection, "events", "activity_id TEXT")
             task_specs.ensure_schema(connection)
             connection.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS unique_dispatch_request "
                 "ON runs(dispatch_request_id) WHERE dispatch_request_id IS NOT NULL"
             )
+            connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS unique_bound_activity_id "
+                "ON events(activity_id) WHERE activity_id IS NOT NULL"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS events_by_run_activity "
+                "ON events(run_id,activity_id,event_id) WHERE activity_id IS NOT NULL"
+            )
             self._ensure_projection_baseline(
-                connection, allow_create=current_version < SCHEMA_VERSION
+                connection, allow_create=current_version < 4
             )
             connection.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
             connection.commit()
@@ -3370,6 +3380,8 @@ class StateStore:
         event_type: str,
         payload: dict[str, Any],
         run_id: str | None = None,
+        *,
+        activity_id: str | None = None,
     ) -> None:
         try:
             state_events.validate_event(event_type, payload, run_id)
@@ -3377,12 +3389,13 @@ class StateStore:
             raise legacy.StateError(str(exc)) from exc
         connection.execute(
             "INSERT INTO events("
-            "run_id,event_type,event_schema_version,payload_json,created_at"
-            ") VALUES(?,?,?,?,?)",
+            "run_id,event_type,event_schema_version,activity_id,payload_json,created_at"
+            ") VALUES(?,?,?,?,?,?)",
             (
                 run_id,
                 event_type,
                 state_events.EVENT_SCHEMA_VERSION,
+                activity_id,
                 legacy.canonical_json(payload),
                 legacy.utc_now(),
             ),
@@ -3481,8 +3494,15 @@ class StateStore:
         run_id: str | None = None,
         *,
         initiative_id: str | None = None,
+        activity_id: str | None = None,
     ) -> None:
-        self._insert_event(connection, event_type, payload, run_id)
+        self._insert_event(
+            connection,
+            event_type,
+            payload,
+            run_id,
+            activity_id=activity_id,
+        )
         if event_type != state_events.PROJECTION_EVENT_TYPE and (
             run_id is not None or initiative_id is not None
         ):
@@ -6105,6 +6125,12 @@ class Dispatcher(legacy.Dispatcher):
                 },
                 run_id,
             )
+            self.store.event(
+                connection,
+                "run-heartbeat",
+                {"source": "orphan-resume", "observed_at": now},
+                run_id,
+            )
 
         resumed = self.store.run(run_id)
         return {
@@ -6124,8 +6150,10 @@ class Dispatcher(legacy.Dispatcher):
         verifying: list[str] = []
         terminal: list[str] = []
         unobserved: list[dict[str, str]] = []
+        inspected_run_ids: set[str] = set()
         with self.store.immediate() as connection:
             for row in self.store.active_runs(connection):
+                inspected_run_ids.add(row["run_id"])
                 path = self.store.envelope_path(row["run_id"])
                 if not path.exists():
                     legacy.atomic_write(
@@ -6218,6 +6246,16 @@ class Dispatcher(legacy.Dispatcher):
                         """,
                         (observed_at, observed_at, observed_at, row["run_id"]),
                     )
+                    self.store.event(
+                        connection,
+                        "run-heartbeat",
+                        {
+                            "source": "reconcile-external-observation",
+                            "external_state": "running",
+                            "observed_at": observed_at,
+                        },
+                        row["run_id"],
+                    )
                     refreshed.append(row["run_id"])
                 elif observation.state == "succeeded":
                     connection.execute(
@@ -6231,6 +6269,16 @@ class Dispatcher(legacy.Dispatcher):
                         connection,
                         "external-succeeded",
                         {"state": "succeeded"},
+                        row["run_id"],
+                    )
+                    self.store.event(
+                        connection,
+                        "run-heartbeat",
+                        {
+                            "source": "reconcile-external-observation",
+                            "external_state": "succeeded",
+                            "observed_at": observed_at,
+                        },
                         row["run_id"],
                     )
                     verifying.append(row["run_id"])
@@ -6266,7 +6314,7 @@ class Dispatcher(legacy.Dispatcher):
                             "reason": "external state unknown",
                         }
                     )
-        return {
+        result = {
             "orphaned": orphaned,
             "reconstructed_envelopes": reconstructed,
             "recovered": recovered,
@@ -6275,6 +6323,12 @@ class Dispatcher(legacy.Dispatcher):
             "terminal": terminal,
             "unobserved": unobserved,
         }
+        from .bound_activity import run_heartbeat_projections
+
+        result["run_heartbeat_projections"] = run_heartbeat_projections(
+            self.store, inspected_run_ids
+        )
+        return result
 
     def explain_next(
         self, capabilities: set[str], resource: str | None = None
@@ -6651,8 +6705,10 @@ class Dispatcher(legacy.Dispatcher):
         stale_tasks: list[str] = []
         workspace_findings: list[dict[str, Any]] = []
         queue_findings: list[dict[str, str]] = []
+        active_run_ids: list[str] = []
         with self.store.connect() as connection:
             for row in self.store.active_runs(connection):
+                active_run_ids.append(row["run_id"])
                 path = self.store.envelope_path(row["run_id"])
                 if not path.exists():
                     missing_envelopes.append(row["run_id"])
@@ -6724,6 +6780,12 @@ class Dispatcher(legacy.Dispatcher):
         if repair:
             missing_envelopes = []
             missing_receipts = []
+        from .bound_activity import run_heartbeat_projections
+
+        heartbeat_projections = run_heartbeat_projections(self.store, active_run_ids)
+        heartbeat_projection_findings = [
+            projection for projection in heartbeat_projections if projection.get("fail_closed")
+        ]
         healthy = (
             integrity["integrity"] == "ok"
             and not integrity["foreign_key_errors"]
@@ -6736,7 +6798,9 @@ class Dispatcher(legacy.Dispatcher):
             and state_root_report["healthy"]
             and registry_truth["healthy"]
             and not lease_scope_blockers
+            and not heartbeat_projection_findings
         )
+
         return {
             "healthy": healthy,
             "database": integrity,
@@ -6752,6 +6816,8 @@ class Dispatcher(legacy.Dispatcher):
             "registry_truth": registry_truth,
             "lease_scope_findings": lease_scope_findings,
             "lease_scope_blockers": lease_scope_blockers,
+            "run_heartbeat_projections": heartbeat_projections,
+            "heartbeat_projection_findings": heartbeat_projection_findings,
             "repaired": repair,
         }
 
@@ -6910,6 +6976,9 @@ def coordinated_claim_status(
     resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
 ) -> dict[str, Any]:
     run = store.run(run_id)
+    from .bound_activity import run_heartbeat_projection
+
+    run["heartbeat_projection"] = run_heartbeat_projection(store, run_id)
     envelope = _claim_bound_envelope(store, run_id, run["envelope_sha256"])
     intent = envelope.get("claim_intent")
     binding = envelope.get("lease_binding")

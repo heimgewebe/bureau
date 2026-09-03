@@ -2079,6 +2079,8 @@ def _task_revision_has_strong_leading_identity(value: Any) -> bool:
     # reason, but never promote known process words merely because they are cased.
     if any(char.isdigit() or char in "./:@+#" for char in token):
         return True
+    # A single hyphen is common in process terms such as `pre-check`; reserve
+    # hyphen-only promotion for multi-segment technical compounds.
     if token.count("-") >= 2:
         return True
     letters = "".join(char for char in token if char.isalpha())

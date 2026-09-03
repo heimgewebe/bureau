@@ -91,7 +91,7 @@ def _contains_repository_path_token(
     """
 
     before_boundaries = frozenset(" \t\r\n'\"=:(,[{")
-    after_boundaries = frozenset(" \t\r\n'\"/:),;]}")
+    after_boundaries = frozenset(" \t\r\n'\"/:),;]}?#")
     start = 0
     while True:
         index = value.find(repository_path, start)
@@ -130,13 +130,23 @@ def _old_repository_binding_residue(
     result: list[str] = []
     if isinstance(value, Mapping):
         for key, item in value.items():
+            item_path = f"{path}/{key}"
+            if isinstance(key, str) and (
+                key == old_resource_id
+                or _contains_repository_path_token(
+                    key,
+                    old_repository_path,
+                    excluded_repository_path=new_repository_path,
+                )
+            ):
+                result.append(f"{item_path}#key")
             result.extend(
                 _old_repository_binding_residue(
                     item,
                     old_resource_id=old_resource_id,
                     old_repository_path=old_repository_path,
                     new_repository_path=new_repository_path,
-                    path=f"{path}/{key}",
+                    path=item_path,
                 )
             )
     elif isinstance(value, list):

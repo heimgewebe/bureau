@@ -723,7 +723,10 @@ def test_regular_taskspec_put_still_rejects_legacy_acceptance(tmp_path: Path) ->
     assert store.task_spec("TASK-A")["revision"] == 1
 
 
-@pytest.mark.parametrize("residual_kind", ("path", "resource", "file-uri"))
+@pytest.mark.parametrize(
+    "residual_kind",
+    ("path", "resource", "file-uri", "file-uri-query", "file-uri-fragment"),
+)
 def test_plan_rejects_old_binding_only_in_unapproved_metadata(
     tmp_path: Path, residual_kind: str
 ) -> None:
@@ -737,13 +740,14 @@ def test_plan_rejects_old_binding_only_in_unapproved_metadata(
         f"path:{new_path}/apps/web",
         f"repo:{new_path}:operation:test-scope",
     ]
-    task["metadata"]["unapproved_old_binding"] = (
-        str(old_path)
-        if residual_kind == "path"
-        else f"file://{old_path}"
-        if residual_kind == "file-uri"
-        else OLD_RESOURCE
-    )
+    residue_values = {
+        "path": str(old_path),
+        "resource": OLD_RESOURCE,
+        "file-uri": f"file://{old_path}",
+        "file-uri-query": f"file://{old_path}?rev=main",
+        "file-uri-fragment": f"file://{old_path}#checkout",
+    }
+    task["metadata"]["unapproved_old_binding"] = residue_values[residual_kind]
     task_path.write_text(json.dumps(task), encoding="utf-8")
 
     registry = Registry.load(root)
@@ -762,6 +766,25 @@ def test_plan_rejects_old_binding_only_in_unapproved_metadata(
 
     assert store.task_spec("TASK-A")["revision"] == 1
     assert store.task_spec("TASK-B")["revision"] == 1
+
+
+def test_preview_rejects_old_repository_path_in_mapping_key(tmp_path: Path) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["execution"]["operation_parameters"] = {
+        "mounts": {str(old_path): "/work"}
+    }
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
 
 
 def test_preview_rejects_old_repository_path_in_unapproved_metadata(tmp_path: Path) -> None:

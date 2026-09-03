@@ -386,13 +386,19 @@ def protected_publication_activation_observation(
     status: str = "candidate",
     observed_at: datetime | None = None,
 ) -> dict[str, Any]:
+    observed_time = observed_at or refresh.utc_now()
     observation = {
         "schema_version": 1,
         "kind": "bureau_runtime_refresh_observation",
         "repository": refresh.DEFAULT_REPOSITORY,
         "main_commit": main_commit,
-        "pull_request": 2222,
-        "merged_at": "2026-09-02T13:30:00Z",
+        "pull_request": {
+            "number": 2222,
+            "url": None,
+            "head_commit": "3" * 40,
+            "merge_commit": main_commit,
+        },
+        "merged_at": refresh.isoformat(observed_time),
         "required_checks": list(refresh.DEFAULT_AUTHORITY_ADOPTION_REQUIRED_CHECKS),
         "check_summary": {
             name: {"state": "success", "observed_states": ["success"]}
@@ -419,7 +425,7 @@ def protected_publication_activation_observation(
             "registry_reasons": [],
         },
         "lag_commits": 1,
-        "scheduler_target_state": None,
+        "scheduler_target_state": "source-not-current",
         "age_seconds": 0,
         "slo_seconds": refresh.DEFAULT_SLO_SECONDS,
         "status": status,
@@ -429,7 +435,7 @@ def protected_publication_activation_observation(
             "eligible": status in {"candidate", "alert"},
             "requires_authorization": status in {"candidate", "alert"},
         },
-        "observed_at": refresh.isoformat(observed_at or refresh.utc_now()),
+        "observed_at": refresh.isoformat(observed_time),
         "does_not_establish": [
             "deployment_authority",
             "external_lease_liveness",
@@ -1190,7 +1196,7 @@ def test_protected_publication_activation_rejects_stale_runtime_observation(
     assert "activation observation is not fresh at CAS" in str(raised.value)
 
 def test_protected_publication_activation_preserves_full_activation_contract(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
     task_id = "BUREAU-RUNTIME-PUBLICATION-ACTIVATION-FULL-CONTRACT"
     state_root = (tmp_path / "full-contract").resolve()
@@ -1212,33 +1218,29 @@ def test_protected_publication_activation_preserves_full_activation_contract(
     )
     observation = protected_publication_activation_observation()
     evidence = protected_publication_activation_evidence_for(
-        task_id=task_id, adopted=adopted, ready=weakened, key=key,
+        task_id=task_id,
+        adopted=adopted,
+        ready=weakened,
+        key=key,
         observation=observation,
     )
-    store.put_runtime_refresh_protected_publication_activation_task_spec(
-        weakened,
-        idempotency_key=key,
-        expected_revision=adopted["revision"],
-        activation_observation=observation,
-        activation_evidence=evidence,
-    )
-    monkeypatch.setattr(
-        refresh,
-        "_prove_protected_publication_adoption",
-        lambda **_: protected_publication_proof(store, task_id),
-    )
+    before = store.task_spec(task_id)
 
-    with pytest.raises(refresh.RuntimeRefreshError) as raised:
-        refresh.validate_authoritative_runtime_refresh_task(
-            store=store,
-            approval_task_id=task_id,
-            target_sha256="a" * 64,
-            target_main_commit=MAIN,
+    with pytest.raises(
+        legacy.StateError,
+        match="runtime-refresh protected-publication activation mutation contract is invalid",
+    ):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            weakened,
+            idempotency_key=key,
+            expected_revision=adopted["revision"],
+            activation_observation=observation,
+            activation_evidence=evidence,
         )
-    assert (
-        raised.value.code
-        == "authority-preflight-protected-publication-activation-invalid"
-    )
+
+    assert store.task_spec(task_id) == before
+    assert before is not None
+    assert before["spec"]["state"] == "planned"
 
 
 def test_protected_publication_activation_requires_exact_target_main(
@@ -1400,7 +1402,7 @@ def test_protected_publication_activation_receipt_survives_target_binding(
 
 
 def test_protected_publication_activation_requires_marker_in_historical_bootstrap(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
     task_id = "BUREAU-RUNTIME-PUBLICATION-HISTORICAL-MARKER"
     state_root = (tmp_path / "historical-marker").resolve()
@@ -1420,29 +1422,29 @@ def test_protected_publication_activation_requires_marker_in_historical_bootstra
     )
     observation = protected_publication_activation_observation()
     evidence = protected_publication_activation_evidence_for(
-        task_id=task_id, adopted=adopted, ready=ready, key=key,
+        task_id=task_id,
+        adopted=adopted,
+        ready=ready,
+        key=key,
         observation=observation,
     )
-    store.put_runtime_refresh_protected_publication_activation_task_spec(
-        ready,
-        idempotency_key=key,
-        expected_revision=adopted["revision"],
-        activation_observation=observation,
-        activation_evidence=evidence,
-    )
-    monkeypatch.setattr(
-        refresh,
-        "_prove_protected_publication_adoption",
-        lambda **_: pytest.fail("historical marker failure must precede remote proof"),
-    )
-    with pytest.raises(refresh.RuntimeRefreshError) as raised:
-        refresh.validate_authoritative_runtime_refresh_task(
-            store=store,
-            approval_task_id=task_id,
-            target_sha256="a" * 64,
-            target_main_commit=MAIN,
+    before = store.task_spec(task_id)
+
+    with pytest.raises(
+        legacy.StateError,
+        match="runtime-refresh protected-publication activation mutation contract is invalid",
+    ):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            ready,
+            idempotency_key=key,
+            expected_revision=adopted["revision"],
+            activation_observation=observation,
+            activation_evidence=evidence,
         )
-    assert raised.value.code == "authority-preflight-protected-publication-activation-invalid"
+
+    assert store.task_spec(task_id) == before
+    assert before is not None
+    assert before["spec"]["state"] == "planned"
 
 
 def test_legacy_protected_publication_authority_without_activation_marker_stays_valid(
@@ -1635,7 +1637,7 @@ def test_protected_publication_consumption_uses_local_history_after_effect(
 
 
 def test_protected_publication_activation_rejects_weakened_contract_delta(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
     task_id = "BUREAU-RUNTIME-PUBLICATION-WEAKENED-DELTA"
     state_root = (tmp_path / "weakened-delta").resolve()
@@ -1681,31 +1683,23 @@ def test_protected_publication_activation_rejects_weakened_contract_delta(
         observation=observation,
         installed_runtime_validation=installed_validation,
     )
-    store.put_runtime_refresh_protected_publication_activation_task_spec(
-        weakened,
-        idempotency_key=key,
-        expected_revision=adopted["revision"],
-        activation_observation=observation,
-        activation_evidence=evidence,
-    )
-    monkeypatch.setattr(
-        refresh,
-        "_prove_protected_publication_adoption",
-        lambda **_: protected_publication_proof(store, task_id),
-    )
+    before = store.task_spec(task_id)
 
-    with pytest.raises(refresh.RuntimeRefreshError) as raised:
-        refresh.validate_authoritative_runtime_refresh_task(
-            store=store,
-            approval_task_id=task_id,
-            target_sha256=observation["target_sha256"],
-            target_main_commit=MAIN,
+    with pytest.raises(
+        legacy.StateError,
+        match="runtime-refresh protected-publication activation mutation contract is invalid",
+    ):
+        store.put_runtime_refresh_protected_publication_activation_task_spec(
+            weakened,
+            idempotency_key=key,
+            expected_revision=adopted["revision"],
+            activation_observation=observation,
+            activation_evidence=evidence,
         )
-    assert (
-        raised.value.code
-        == "authority-preflight-publication-activation-receipt-unproven"
-    )
 
+    assert store.task_spec(task_id) == before
+    assert before is not None
+    assert before["spec"]["state"] == "planned"
 
 
 def test_protected_publication_activation_requires_pre_effect_proof(

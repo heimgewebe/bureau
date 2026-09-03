@@ -1832,10 +1832,31 @@ def _write_create_only(path: Path, content: bytes) -> None:
         ) from exc
 
 
-def _validate_task_schema(registry: Registry, task_json: dict[str, Any]) -> None:
+def _task_schema_identity(task_json: dict[str, Any]) -> tuple[str, str]:
     raw_task_id = task_json.get("id")
     task_id = raw_task_id if isinstance(raw_task_id, str) and raw_task_id else "<missing-task-id>"
-    source = f"operator-intake-task:{task_id}"
+    return task_id, f"operator-intake-task:{task_id}"
+
+
+def _validate_task_structure(registry: Registry, task_json: dict[str, Any]) -> None:
+    task_id, source = _task_schema_identity(task_json)
+    try:
+        registry.schemas.validate("task", task_json, source)
+    except DocumentSchemaError as exc:
+        raise OperatorIntakeError(
+            "task-schema-invalid",
+            f"task {task_id} JSON does not satisfy the task schema: {exc}",
+            details={
+                "task_id": task_id,
+                "source": source,
+                "schema_errors": str(exc).splitlines(),
+            },
+        ) from exc
+
+
+def _validate_task_schema(registry: Registry, task_json: dict[str, Any]) -> None:
+    task_id, source = _task_schema_identity(task_json)
+    _validate_task_structure(registry, task_json)
     try:
         registry.schemas.validate_task_write(task_json, source)
     except AcceptanceContractError as exc:
@@ -1849,6 +1870,9 @@ def _validate_task_schema(registry: Registry, task_json: dict[str, Any]) -> None
             },
         ) from exc
     except DocumentSchemaError as exc:
+        # The structural pass above already normalizes schema failures into the
+        # operator-intake error contract. Keep this defensive branch for callers
+        # whose SchemaSet implementation changes between the two checks.
         raise OperatorIntakeError(
             "task-schema-invalid",
             f"task {task_id} JSON does not satisfy the task schema: {exc}",
@@ -1978,17 +2002,132 @@ def _task_revision_write_scope(task_json: dict[str, Any]) -> set[str]:
     }
 
 
-def _task_revision_acceptance_ids(task_json: dict[str, Any]) -> set[str]:
+def _task_revision_acceptance_items(
+    task_json: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
     acceptance = task_json.get("acceptance")
     if not isinstance(acceptance, list):
-        return set()
+        return {}
     return {
-        str(item["id"])
+        str(item["id"]): item
         for item in acceptance
         if isinstance(item, dict)
         and isinstance(item.get("id"), str)
         and item.get("id")
     }
+
+
+_TASK_REVISION_INFLECTION_EXCEPTIONS = frozenset({"news", "series", "species"})
+_TASK_REVISION_PLURAL_BASE_SUFFIXES = (
+    "tion",
+    "sion",
+    "ment",
+    "ance",
+    "ence",
+    "ship",
+    "ing",
+    "ity",
+    "ure",
+    "age",
+)
+
+
+def _task_revision_plural_base(token: str) -> str | None:
+    # Inflection equivalence is deliberately narrow and pairwise. Never stem the
+    # whole token stream: doing so can collapse distinct identifiers such as
+    # `Canva` and `canvas`. The caller uses this only for a trailing subject token
+    # after an independently stable leading subject.
+    if (
+        not token.isalpha()
+        or len(token) <= 4
+        or token in _TASK_REVISION_INFLECTION_EXCEPTIONS
+    ):
+        return None
+    if len(token) > 5 and token.endswith("ies"):
+        return f"{token[:-3]}y"
+    if token.endswith(("sses", "shes", "ches", "xes", "zes")):
+        return token[:-2]
+    if token.endswith("s") and not token.endswith(("ss", "us", "is")):
+        singular = token[:-1]
+        if singular.endswith(_TASK_REVISION_PLURAL_BASE_SUFFIXES):
+            return singular
+    return None
+
+
+def _task_revision_plural_equivalent(before_token: str, after_token: str) -> bool:
+    if before_token == after_token:
+        return False
+    return (
+        _task_revision_plural_base(before_token) == after_token
+        or _task_revision_plural_base(after_token) == before_token
+    )
+
+
+def _task_revision_tokens(value: Any) -> list[str]:
+    text = str(value or "").strip().casefold()
+    return _TASK_REVISION_TOKEN_RE.findall(text)
+
+
+def _task_revision_has_strong_leading_identity(value: Any) -> bool:
+    raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
+    if len(raw_tokens) <= 1:
+        return False
+    token = raw_tokens[0]
+    # A leading repository/package/path-like identifier is subject evidence even
+    # though the generic prose model normally treats position zero as an action
+    # slot. Keep short all-caps domain acronyms (API/SSH/MCP/CI) for the same
+    # reason, but never promote known process words merely because they are cased.
+    if any(char.isdigit() or char in "-./:@+#" for char in token):
+        return True
+    letters = "".join(char for char in token if char.isalpha())
+    return (
+        2 <= len(letters) <= 4
+        and letters.isupper()
+        and token.casefold() not in _TASK_REVISION_GENERIC_TOKENS
+    )
+
+
+def _task_revision_subject_sequence(value: Any) -> list[str]:
+    tokens = _task_revision_tokens(value)
+    if len(tokens) > 1:
+        tokens = tokens[1:]
+    return [token for token in tokens if token not in _TASK_REVISION_GENERIC_TOKENS]
+
+
+def _task_revision_trailing_inflection_is_continuous(before: Any, after: Any) -> bool:
+    before_raw = _task_revision_tokens(before)
+    after_raw = _task_revision_tokens(after)
+    if not before_raw or not after_raw:
+        return False
+    leading_compatible = before_raw[0] == after_raw[0] or (
+        before_raw[0] in _TASK_REVISION_GENERIC_TOKENS
+        and after_raw[0] in _TASK_REVISION_GENERIC_TOKENS
+    )
+    if not leading_compatible:
+        return False
+    before_subject = _task_revision_subject_sequence(before)
+    after_subject = _task_revision_subject_sequence(after)
+    return (
+        len(before_subject) == len(after_subject)
+        and len(before_subject) >= 2
+        and before_subject[:-1] == after_subject[:-1]
+        and _task_revision_plural_equivalent(before_subject[-1], after_subject[-1])
+    )
+
+
+def _task_revision_shared_subject_suffix(
+    before: Any, after: Any
+) -> tuple[int, list[str], list[str]]:
+    before_subject = _task_revision_subject_sequence(before)
+    after_subject = _task_revision_subject_sequence(after)
+    shared = 0
+    for before_token, after_token in zip(
+        reversed(before_subject), reversed(after_subject), strict=False
+    ):
+        if before_token != after_token:
+            break
+        shared += 1
+    return shared, before_subject, after_subject
 
 
 def _task_revision_text_evidence(
@@ -2000,8 +2139,8 @@ def _task_revision_text_evidence(
     before_text = str(before or "").strip().casefold()
     after_text = str(after or "").strip().casefold()
     exact = bool(before_text) and before_text == after_text
-    before_raw_tokens = _TASK_REVISION_TOKEN_RE.findall(before_text)
-    after_raw_tokens = _TASK_REVISION_TOKEN_RE.findall(after_text)
+    before_raw_tokens = _task_revision_tokens(before_text)
+    after_raw_tokens = _task_revision_tokens(after_text)
     # Task prose often starts with an action verb. The action-stripped view prevents
     # unseen verbs such as "Upgrade" from becoming identity evidence merely because
     # a static weak-token set did not enumerate them. A second full-token view is
@@ -2024,6 +2163,27 @@ def _task_revision_text_evidence(
     return overlap / shorter, overlap, shorter, exact
 
 
+def _task_revision_acceptance_item_is_continuous(
+    before: dict[str, Any], after: dict[str, Any]
+) -> bool:
+    if before == after:
+        return True
+    # Acceptance criteria are a strong identity escape hatch for large task prose
+    # rewrites. Keep the verifier side of the complete typed criterion contract
+    # exact; a retained id cannot mask verifier/config drift. Assertion wording may
+    # evolve only when it independently survives the hardened text-identity rule
+    # with substantial subject evidence.
+    for field in ("evidence_type", "verifier", "verifier_config"):
+        if before.get(field) != after.get(field):
+            return False
+    continuous, evidence = _task_revision_text_is_continuous(
+        before.get("assertion"),
+        after.get("assertion"),
+        resource_continuity=True,
+    )
+    return continuous and evidence["subject_token_overlap"] >= 4
+
+
 def _task_revision_text_is_continuous(
     before: Any, after: Any, *, resource_continuity: bool
 ) -> tuple[bool, dict[str, Any]]:
@@ -2037,6 +2197,30 @@ def _task_revision_text_is_continuous(
             ignore_leading_action=False,
         )
     )
+    before_strong_leading_identity = _task_revision_has_strong_leading_identity(before)
+    after_strong_leading_identity = _task_revision_has_strong_leading_identity(after)
+    shared_subject_suffix_count, before_subject, after_subject = (
+        _task_revision_shared_subject_suffix(before, after)
+    )
+    trailing_inflection_continuity = (
+        resource_continuity
+        and _task_revision_trailing_inflection_is_continuous(before, after)
+    )
+    shorter_subject_sequence_count = min(len(before_subject), len(after_subject))
+    all_overlap_is_shared_suffix = shared_subject_suffix_count == subject_overlap
+    # Position zero is deliberately action-agnostic: an unseen process verb must
+    # not become identity evidence just because a static weak-token list omitted
+    # it. If every surviving overlap is merely a trailing suffix and another
+    # subject token changed, require independent goal/acceptance evidence instead.
+    # Explicit identifiers/acronyms are the narrow exception because the tokenizer
+    # already treats them as atomic subject identities.
+    shared_suffix_only_collision = (
+        not before_strong_leading_identity
+        and not after_strong_leading_identity
+        and shared_subject_suffix_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        and shared_subject_suffix_count < shorter_subject_sequence_count
+        and all_overlap_is_shared_suffix
+    )
     if exact:
         # Exact generic prose is not a subject anchor. Across a resource change, use
         # the full-token view because the first word may be a noun rather than an
@@ -2046,14 +2230,15 @@ def _task_revision_text_is_continuous(
             or full_shorter_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
         )
     elif continuity < _TASK_REVISION_TEXT_CONTINUITY_MIN:
-        continuous = False
+        continuous = trailing_inflection_continuity
     elif resource_continuity:
-        continuous = (
+        continuous = trailing_inflection_continuity or (
             (
                 subject_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
                 or (subject_overlap == 1 and shorter_subject_count == 1)
             )
             and full_continuity >= continuity
+            and not shared_suffix_only_collision
         )
     else:
         # A resource change must survive both interpretations of the first word:
@@ -2075,6 +2260,14 @@ def _task_revision_text_is_continuous(
         "full_shorter_subject_token_count": full_shorter_count,
         "exact_nonempty_text": exact,
         "resource_continuity": resource_continuity,
+        "before_strong_leading_identity": before_strong_leading_identity,
+        "after_strong_leading_identity": after_strong_leading_identity,
+        "before_subject_sequence": before_subject,
+        "after_subject_sequence": after_subject,
+        "shared_subject_suffix_count": shared_subject_suffix_count,
+        "all_overlap_is_shared_suffix": all_overlap_is_shared_suffix,
+        "shared_suffix_only_collision": shared_suffix_only_collision,
+        "trailing_inflection_continuity": trailing_inflection_continuity,
         "requires_complete_shorter_subject": not resource_continuity,
         "minimum_subject_token_overlap": _TASK_REVISION_SUBJECT_OVERLAP_MIN,
     }
@@ -2114,13 +2307,23 @@ def _validate_task_revision_identity_continuity(
         after.get("goal"),
         resource_continuity=bool(write_scope_overlap),
     )
-    before_acceptance = _task_revision_acceptance_ids(before)
-    after_acceptance = _task_revision_acceptance_ids(after)
+    before_acceptance_items = _task_revision_acceptance_items(before)
+    after_acceptance_items = _task_revision_acceptance_items(after)
+    before_acceptance = set(before_acceptance_items)
+    after_acceptance = set(after_acceptance_items)
     acceptance_overlap = before_acceptance & after_acceptance
+    continuous_acceptance_ids = {
+        item_id
+        for item_id in acceptance_overlap
+        if _task_revision_acceptance_item_is_continuous(
+            before_acceptance_items[item_id], after_acceptance_items[item_id]
+        )
+    }
     acceptance_continuity = (
         bool(write_scope_overlap)
-        and len(acceptance_overlap) >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
-        and len(acceptance_overlap) == min(len(before_acceptance), len(after_acceptance))
+        and len(continuous_acceptance_ids) >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        and len(continuous_acceptance_ids)
+        == min(len(before_acceptance), len(after_acceptance))
     )
     if acceptance_continuity:
         return
@@ -2142,10 +2345,11 @@ def _validate_task_revision_identity_continuity(
     ):
         return
     # A single subject token is intentionally a weak continuity signal. It is
-    # accepted only when at least one typed acceptance criterion id is also retained,
-    # so an unseen one-word process label such as "Upgrade" cannot carry identity by
+    # accepted only when at least one typed acceptance criterion contract also
+    # remains continuous, so an unseen one-word process label such as "Upgrade"
+    # cannot carry identity by
     # itself while compact real subjects such as "contracts" remain revisable.
-    if continuous_evidence and acceptance_overlap:
+    if continuous_evidence and continuous_acceptance_ids:
         return
     raise OperatorIntakeError(
         "task-revision-identity-discontinuity",
@@ -2158,6 +2362,7 @@ def _validate_task_revision_identity_continuity(
             "write_scope_overlap": sorted(write_scope_overlap),
             "resource_overlap": sorted(resource_overlap),
             "acceptance_overlap": sorted(acceptance_overlap),
+            "continuous_acceptance_ids": sorted(continuous_acceptance_ids),
             "acceptance_continuity": acceptance_continuity,
             "title_evidence": title_evidence,
             "goal_evidence": goal_evidence,
@@ -2445,10 +2650,10 @@ def task_propose(
             f"publishing task {publishing_task_id} is not in the authoritative StateStore",
         )
     bound_task = _inject_candidate_binding(task_json, event)
-    _validate_task_schema(registry, bound_task)
-    task_spec_binding = _task_spec_proposal_binding(
-        registry, store, task_json=bound_task, event=event
-    )
+    # Structural shape must be safe before we inspect acceptance data, but the
+    # specific generic-placeholder policy intentionally has precedence over the
+    # newer executable-acceptance contract diagnostics.
+    _validate_task_structure(registry, bound_task)
     generic_ids = {
         criterion.get("id")
         for criterion in bound_task.get("acceptance", [])
@@ -2465,6 +2670,10 @@ def task_propose(
             "generic promotion acceptance requires explicit justification",
             details={"acceptance_ids": sorted(generic_ids)},
         )
+    _validate_task_schema(registry, bound_task)
+    task_spec_binding = _task_spec_proposal_binding(
+        registry, store, task_json=bound_task, event=event
+    )
     _validate_task_semantics(
         registry,
         store,

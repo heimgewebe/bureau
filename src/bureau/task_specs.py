@@ -17,8 +17,8 @@ RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX = "runtime-refresh-no-run-clo
 REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX = "repository-identity-rebind:"
 REPOSITORY_IDENTITY_REBIND_TERMINAL_STATES = frozenset({"verified", "cancelled", "superseded"})
 REPOSITORY_IDENTITY_REBIND_ACTIVE_RUN_STATES = ("assigned", "running", "verifying")
-_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&")
-_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&")
+_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&;|<>")
+_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>")
 _RESOURCE_ID_TOKEN_EXTRA_CHARS = frozenset("._-")
 _URI_SCHEME_EXTRA_CHARS = frozenset("+-.")
 
@@ -322,18 +322,32 @@ def preview_repository_identity_rebind(
         new_path_key = f"path:{new_repository_path}"
         for index, item in enumerate(resources):
             if isinstance(item, str):
+                old_repo_bound = item == old_repo_key or item.startswith(
+                    old_repo_key + ":"
+                )
+                old_path_bound = item == old_path_key or (
+                    item.startswith(old_path_key + "/")
+                    and not (
+                        new_repository_path.startswith(old_repository_path + "/")
+                        and item.startswith(new_path_key + "/")
+                    )
+                )
                 already_new_bound = (
                     item in (new_repo_key, new_path_key)
                     or item.startswith(new_repo_key + ":")
                     or item.startswith(new_path_key + "/")
                 )
-                if already_new_bound:
+                if old_repo_bound:
+                    item = new_repo_key + item[len(old_repo_key) :]
+                    changed_paths.append(f"/execution/grabowski_resources/{index}")
+                elif old_path_bound:
+                    item = new_path_key + item[len(old_path_key) :]
+                    changed_paths.append(f"/execution/grabowski_resources/{index}")
+                elif already_new_bound:
                     rewritten.append(item)
                     continue
-                if old_repository_path in item:
-                    if item == old_repo_key or item.startswith(old_repo_key + ":"):
-                        item = new_repo_key + item[len(old_repo_key) :]
-                    elif item == old_path_key or item.startswith(old_path_key + "/"):
+                elif old_repository_path in item:
+                    if item.startswith(old_path_key + "/"):
                         item = new_path_key + item[len(old_path_key) :]
                     else:
                         raise TaskSpecError(

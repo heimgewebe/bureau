@@ -395,6 +395,41 @@ def test_preview_preserves_already_rebound_descendant_resource_path(
     assert "/execution/grabowski_resources/1" not in preview["changed_paths"]
 
 
+def test_preview_rewrites_exact_old_path_key_when_new_path_is_ancestor(
+    tmp_path: Path,
+) -> None:
+    new_path = tmp_path / "repos" / "app"
+    old_path = new_path / "archive"
+    old_path.mkdir(parents=True)
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["execution"]["grabowski_resources"] = [
+        f"repo:{old_path}",
+        f"path:{old_path}",
+        f"path:{old_path}/cache",
+        f"path:{new_path}/already-rebound",
+        f"repo:{old_path}:operation:test-scope",
+    ]
+
+    preview = task_specs.preview_repository_identity_rebind(
+        spec,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )
+
+    assert preview["spec"]["execution"]["grabowski_resources"] == [
+        f"repo:{new_path}",
+        f"path:{new_path}",
+        f"path:{new_path}/cache",
+        f"path:{new_path}/already-rebound",
+        f"repo:{new_path}:operation:test-scope",
+    ]
+    assert "/execution/grabowski_resources/1" in preview["changed_paths"]
+    assert "/execution/grabowski_resources/2" in preview["changed_paths"]
+    assert "/execution/grabowski_resources/3" not in preview["changed_paths"]
+
+
 @pytest.mark.parametrize("stale_field", ("task_sha256", "plan_sha256"))
 def test_stale_terminal_overlay_does_not_hide_old_binding(
     tmp_path: Path, stale_field: str
@@ -837,6 +872,29 @@ def test_preview_rejects_old_repository_path_after_uri_delimiter(
     )
     spec = _task("TASK-A", str(old_path), legacy=True)
     spec["execution"]["argv"] = ["tool", f"tool://open{delimiter}{old_path}"]
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
+@pytest.mark.parametrize(
+    ("prefix", "suffix"),
+    ((";", "/script"), ("", "|next"), ("<", ">")),
+)
+def test_preview_rejects_shell_operator_adjacent_old_repository_path(
+    tmp_path: Path, prefix: str, suffix: str
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["execution"]["argv"] = ["sh", "-c", f"{prefix}{old_path}{suffix}"]
 
     with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
         task_specs.preview_repository_identity_rebind(

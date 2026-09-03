@@ -30,6 +30,35 @@ HEAD = "3" * 40
 TEST_EXECUTOR_UNIT = "grabowski-task-test-a1.service"
 
 
+def mock_git_source_ancestry(
+    monkeypatch: pytest.MonkeyPatch,
+    source_repository: Path,
+    *,
+    allowed: set[tuple[str, str]],
+) -> list[tuple[str, str]]:
+    original_run = refresh._run
+    calls: list[tuple[str, str]] = []
+
+    def run(argv: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        if (
+            argv[:2] == ["git", "-C"]
+            and Path(argv[2]).resolve() == source_repository.resolve()
+            and argv[3:5] == ["merge-base", "--is-ancestor"]
+        ):
+            pair = (argv[5], argv[6])
+            calls.append(pair)
+            return subprocess.CompletedProcess(
+                argv,
+                0 if pair in allowed else 1,
+                stdout="",
+                stderr="",
+            )
+        return original_run(argv, **kwargs)
+
+    monkeypatch.setattr(refresh, "_run", run)
+    return calls
+
+
 @pytest.fixture(autouse=True)
 def test_runtime_refresh_executor_contract(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
@@ -41,6 +70,13 @@ def test_runtime_refresh_executor_contract(
         refresh,
         "_current_systemd_execution_identity",
         lambda: (TEST_EXECUTOR_UNIT, "0" * 32),
+    )
+    source_repository = tmp_path / "source-repository"
+    source_repository.mkdir()
+    mock_git_source_ancestry(
+        monkeypatch,
+        source_repository,
+        allowed={(MAIN, "9" * 40)},
     )
 
 
@@ -8096,6 +8132,98 @@ def test_unused_authority_closeout_idempotency_namespace_is_reserved(
 
     assert store.task_spec(task_id) is None
 
+
+def test_serialized_runtime_authority_entrypoints_do_not_expose_lock_bypass() -> None:
+    assert refresh.prepare_intent.__name__ == "prepare_intent"
+    assert refresh.prepare_intent.__doc__ is None
+    assert refresh.closeout_unused_runtime_refresh_authority.__name__ == (
+        "closeout_unused_runtime_refresh_authority"
+    )
+    assert refresh.closeout_unused_runtime_refresh_authority.__doc__ == (
+        "Supersede one never-used single-use authority after exact equivalent success."
+    )
+    with pytest.raises(AttributeError):
+        _ = refresh.prepare_intent.__wrapped__
+    with pytest.raises(AttributeError):
+        _ = refresh.closeout_unused_runtime_refresh_authority.__wrapped__
+
+
+def test_unused_authority_closeout_rejects_caller_controlled_ancestry_oracle(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(tmp_path)
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+
+    with pytest.raises(TypeError, match="source_ancestry"):
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=before["revision"],
+            expected_spec_sha256=before["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            source_repository=tmp_path / "source-repository",
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_ancestry=lambda *_: True,
+        )
+
+    assert store.task_spec(unused_task_id) == before
+
+
+def test_source_ancestry_proof_uses_source_repository_git(tmp_path: Path) -> None:
+    source_repository = tmp_path / "git-source-repository"
+    source_repository.mkdir()
+
+    def git(*arguments: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(source_repository), *arguments],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    git("init", "--quiet")
+    git("config", "user.name", "Runtime Refresh Test")
+    git("config", "user.email", "runtime-refresh@example.invalid")
+    tracked = source_repository / "tracked"
+    tracked.write_text("first\n", encoding="utf-8")
+    git("add", "tracked")
+    git("commit", "--quiet", "-m", "first")
+    ancestor = git("rev-parse", "HEAD")
+    tracked.write_text("second\n", encoding="utf-8")
+    git("commit", "--quiet", "-am", "second")
+    descendant = git("rev-parse", "HEAD")
+
+    refresh._prove_source_ancestry(
+        ancestor=ancestor,
+        descendant=descendant,
+        source_repository=source_repository,
+        error_code="test-source-ancestry-unproven",
+        message="source ancestry is not proven",
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh._prove_source_ancestry(
+            ancestor=descendant,
+            descendant=ancestor,
+            source_repository=source_repository,
+            error_code="test-source-ancestry-unproven",
+            message="source ancestry is not proven",
+        )
+    assert caught.value.code == "test-source-ancestry-unproven"
+
+
 def test_unused_authority_closeout_supersedes_without_runtime_effect(
     tmp_path: Path,
 ) -> None:
@@ -8126,7 +8254,7 @@ def test_unused_authority_closeout_supersedes_without_runtime_effect(
         resource_db=resource_db,
         now=NOW + timedelta(hours=1),
         authority_store=store,
-        source_ancestry=lambda ancestor, descendant: ancestor == MAIN and descendant == "9" * 40,
+        source_repository=tmp_path / "source-repository",
     )
 
     assert closeout["idempotent_replay"] is False
@@ -8153,7 +8281,7 @@ def test_unused_authority_closeout_supersedes_without_runtime_effect(
         resource_db=resource_db,
         now=NOW + timedelta(hours=2),
         authority_store=store,
-        source_ancestry=lambda ancestor, descendant: ancestor == MAIN and descendant == "9" * 40,
+        source_repository=tmp_path / "source-repository",
     )
     assert repeated["idempotent_replay"] is True
     assert repeated["revision"] == current["revision"]
@@ -8183,7 +8311,7 @@ def test_unused_authority_closeout_replay_requires_reserved_mutation_receipt(
         resource_db=resource_db,
         now=NOW + timedelta(hours=1),
         authority_store=store,
-        source_ancestry=lambda ancestor, descendant: ancestor == MAIN and descendant == "9" * 40,
+        source_repository=tmp_path / "source-repository",
     )
     key = (
         f"runtime-refresh-unused-authority-closeout:{unused_task_id}:"
@@ -8205,9 +8333,7 @@ def test_unused_authority_closeout_replay_requires_reserved_mutation_receipt(
             resource_db=resource_db,
             now=NOW + timedelta(hours=2),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-replay-unproven"
 
@@ -8319,7 +8445,7 @@ def test_unused_authority_closeout_holds_resource_db_barrier_through_cas(
         resource_db=resource_db,
         now=NOW + timedelta(hours=1),
         authority_store=store,
-        source_ancestry=lambda ancestor, descendant: ancestor == MAIN and descendant == "9" * 40,
+        source_repository=tmp_path / "source-repository",
     )
     assert observed["blocked"] is True
     assert observed["intent_lock_held"] is True
@@ -8365,9 +8491,7 @@ def test_unused_authority_closeout_rechecks_runtime_reservation_inside_cas(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-task-cas-failed"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -8412,9 +8536,7 @@ def captured_unused_authority_closeout_candidate(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
     return unused_task_id, store, captured
@@ -8621,9 +8743,7 @@ def test_unused_authority_closeout_rejects_other_resource_database(
             resource_db=fake_resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
 
     assert caught.value.code == "authority-unused-closeout-lease-store-mismatch"
@@ -8657,9 +8777,7 @@ def test_unused_authority_closeout_uses_actual_time_for_intent_expiry(
             resource_db=resource_db,
             now=NOW + timedelta(hours=2),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
 
     assert caught.value.code == "authority-unused-closeout-intent-live"
@@ -8701,9 +8819,7 @@ def test_unused_authority_closeout_rechecks_parent_runtime_reservation_inside_ca
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-task-cas-failed"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -8737,7 +8853,7 @@ def test_unused_authority_closeout_rejects_copied_history_state_root(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
 
     assert caught.value.code == "authority-unused-closeout-intent-state-root-mismatch"
@@ -8775,15 +8891,15 @@ def test_unused_authority_closeout_rejects_intent_from_older_ready_revision(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-intent-authority-mismatch"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
 
 
-def test_unused_authority_closeout_accepts_linear_target_ratchet(tmp_path: Path) -> None:
+def test_unused_authority_closeout_accepts_linear_target_ratchet(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     older_main = "8" * 40
     (
         unused_task_id,
@@ -8799,11 +8915,14 @@ def test_unused_authority_closeout_accepts_linear_target_ratchet(tmp_path: Path)
     before = store.task_spec(unused_task_id)
     assert before is not None
 
-    def ancestry(ancestor: str, descendant: str) -> bool:
-        return (ancestor, descendant) in {
+    ancestry_calls = mock_git_source_ancestry(
+        monkeypatch,
+        tmp_path / "source-repository",
+        allowed={
             (older_main, MAIN),
             (MAIN, "9" * 40),
-        }
+        },
+    )
 
     closeout = refresh.closeout_unused_runtime_refresh_authority(
         state_root=Path(unused_intent["state_root"]),
@@ -8815,7 +8934,7 @@ def test_unused_authority_closeout_accepts_linear_target_ratchet(tmp_path: Path)
         resource_db=resource_db,
         now=NOW + timedelta(hours=1),
         authority_store=store,
-        source_ancestry=ancestry,
+        source_repository=tmp_path / "source-repository",
     )
 
     assert closeout["closeout"]["selected_unused_intent_sha256"] == unused_intent[
@@ -8824,6 +8943,7 @@ def test_unused_authority_closeout_accepts_linear_target_ratchet(tmp_path: Path)
     assert closeout["closeout"]["target_sha256"] == unused_intent["target_sha256"]
     assert closeout["closeout"]["intended_main_commit"] == MAIN
     assert len(closeout["closeout"]["unused_intent_sha256s"]) == 2
+    assert set(ancestry_calls) == {(older_main, MAIN), (MAIN, "9" * 40)}
 
 
 def test_unused_authority_closeout_rejects_divergent_target_ratchet(
@@ -8855,9 +8975,7 @@ def test_unused_authority_closeout_rejects_divergent_target_ratchet(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda ancestor, descendant: (
-                ancestor == MAIN and descendant == "9" * 40
-            ),
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-history-diverged"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -8884,7 +9002,7 @@ def test_unused_authority_closeout_uses_intent_bound_state_store(tmp_path: Path)
         equivalent_result_sha256=result["result_sha256"],
         resource_db=resource_db,
         now=NOW + timedelta(hours=1),
-        source_ancestry=lambda *_: True,
+        source_repository=tmp_path / "source-repository",
     )
 
     assert closeout["closeout"]["status"] == "superseded"
@@ -8924,7 +9042,7 @@ def test_unused_authority_closeout_rejects_unverified_equivalent_authority(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-equivalent-authority-not-verified"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -8968,7 +9086,7 @@ def test_unused_authority_closeout_rejects_live_runtime_reservation(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-runtime-reservations-live"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -9013,7 +9131,7 @@ def test_unused_authority_closeout_rejects_overlapping_broad_runtime_reservation
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-task-cas-failed"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -9052,7 +9170,7 @@ def test_unused_authority_closeout_rejects_intent_from_older_authority_revision(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-intent-authority-mismatch"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -9126,7 +9244,7 @@ def test_prepare_intent_serializes_publication_with_unused_authority_closeout(
                 resource_db=resource_db,
                 now=NOW + timedelta(hours=1),
                 authority_store=store,
-                source_ancestry=lambda *_: True,
+                source_repository=tmp_path / "source-repository",
             )
         except BaseException as exc:
             closeout_error.append(exc)
@@ -9182,7 +9300,7 @@ def test_unused_authority_closeout_rejects_own_attempt_or_result(tmp_path: Path)
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-own-result"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -9221,7 +9339,7 @@ def test_unused_authority_closeout_rejects_missing_equivalent_consumption(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-consumption-invalid"
 
@@ -9273,7 +9391,7 @@ def test_unused_authority_closeout_rejects_live_foreign_lease(tmp_path: Path) ->
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-live-leases"
 
@@ -9307,13 +9425,13 @@ def test_unused_authority_closeout_rejects_task_spec_drift(tmp_path: Path) -> No
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-task-spec-drift"
 
 
 def test_unused_authority_closeout_rejects_current_runtime_divergence(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     (
         unused_task_id,
@@ -9324,6 +9442,11 @@ def test_unused_authority_closeout_rejects_current_runtime_divergence(
         result,
         resource_db,
     ) = unused_authority_equivalent_success_case(tmp_path)
+    mock_git_source_ancestry(
+        monkeypatch,
+        tmp_path / "source-repository",
+        allowed=set(),
+    )
     current = store.task_spec(unused_task_id)
     assert current is not None
     with pytest.raises(refresh.RuntimeRefreshError) as caught:
@@ -9337,7 +9460,7 @@ def test_unused_authority_closeout_rejects_current_runtime_divergence(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: False,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-unused-closeout-current-runtime-ancestry-unproven"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
@@ -9374,7 +9497,7 @@ def test_unused_authority_closeout_rejects_projection_replay_divergence(
             resource_db=resource_db,
             now=NOW + timedelta(hours=1),
             authority_store=store,
-            source_ancestry=lambda *_: True,
+            source_repository=tmp_path / "source-repository",
         )
     assert caught.value.code == "authority-closeout-state-store-invalid"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"

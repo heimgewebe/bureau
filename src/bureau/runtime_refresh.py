@@ -5525,7 +5525,6 @@ def _runtime_authority_intent_closeout_lock(state_root: Path):
 
 
 def _serialize_runtime_authority_intent_closeout(function):
-    @functools.wraps(function)
     def wrapped(*args, **kwargs):
         state_root = kwargs.get("state_root")
         if not isinstance(state_root, Path):
@@ -5536,6 +5535,8 @@ def _serialize_runtime_authority_intent_closeout(function):
         with _runtime_authority_intent_closeout_lock(state_root):
             return function(*args, **kwargs)
 
+    wrapped.__name__ = function.__name__
+    wrapped.__doc__ = function.__doc__
     return wrapped
 
 
@@ -9151,51 +9152,40 @@ def _prove_source_ancestry(
     ancestor: str,
     descendant: str,
     source_repository: Path | None,
-    source_ancestry: Callable[[str, str], bool] | None,
     error_code: str,
     message: str,
 ) -> None:
     if ancestor == descendant:
         return
-    if source_ancestry is not None:
-        try:
-            ancestry_ok = source_ancestry(ancestor, descendant) is True
-        except Exception as exc:
-            raise RuntimeRefreshError(
-                error_code,
-                f"{message}: ancestry callback failed closed",
-                details={"error": str(exc)},
-            ) from exc
-    else:
-        if source_repository is None:
-            raise RuntimeRefreshError(
-                error_code,
-                f"{message}: a source repository is required",
-            )
-        repo = source_repository.expanduser()
-        if repo.is_symlink():
-            raise RuntimeRefreshError(
-                error_code,
-                f"{message}: source repository may not be a symlink",
-            )
-        repo = repo.resolve()
-        if not repo.is_dir():
-            raise RuntimeRefreshError(
-                error_code,
-                f"{message}: source repository is unavailable",
-            )
-        ancestry = _run(
-            [
-                "git",
-                "-C",
-                str(repo),
-                "merge-base",
-                "--is-ancestor",
-                ancestor,
-                descendant,
-            ]
+    if source_repository is None:
+        raise RuntimeRefreshError(
+            error_code,
+            f"{message}: a source repository is required",
         )
-        ancestry_ok = ancestry.returncode == 0
+    repo = source_repository.expanduser()
+    if repo.is_symlink():
+        raise RuntimeRefreshError(
+            error_code,
+            f"{message}: source repository may not be a symlink",
+        )
+    repo = repo.resolve()
+    if not repo.is_dir():
+        raise RuntimeRefreshError(
+            error_code,
+            f"{message}: source repository is unavailable",
+        )
+    ancestry = _run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "merge-base",
+            "--is-ancestor",
+            ancestor,
+            descendant,
+        ]
+    )
+    ancestry_ok = ancestry.returncode == 0
     if not ancestry_ok:
         raise RuntimeRefreshError(
             error_code,
@@ -9208,7 +9198,6 @@ def _validate_unused_authority_intent_ratchet(
     history: dict[str, Any],
     *,
     source_repository: Path | None,
-    source_ancestry: Callable[[str, str], bool] | None,
 ) -> None:
     selected_main_commit = history["main_commit"]
     historical_main_commits = sorted(
@@ -9223,7 +9212,6 @@ def _validate_unused_authority_intent_ratchet(
             ancestor=historical_main_commit,
             descendant=selected_main_commit,
             source_repository=source_repository,
-            source_ancestry=source_ancestry,
             error_code="authority-unused-closeout-history-diverged",
             message="older unused authority target is not a proven ancestor of the latest target",
         )
@@ -9233,7 +9221,6 @@ def _current_runtime_continuity(
     prefix: Path,
     intended_main_commit: str,
     source_repository: Path | None,
-    source_ancestry: Callable[[str, str], bool] | None,
 ) -> dict[str, Any]:
     manifest_path = prefix / "deployment-manifest.json"
     manifest, manifest_sha256 = load_manifest(manifest_path)
@@ -9252,7 +9239,6 @@ def _current_runtime_continuity(
         ancestor=intended_main_commit,
         descendant=current_source,
         source_repository=source_repository,
-        source_ancestry=source_ancestry,
         error_code="authority-unused-closeout-current-runtime-ancestry-unproven",
         message="current runtime is not a proven descendant of the fulfilled target",
     )
@@ -9481,11 +9467,10 @@ def closeout_unused_runtime_refresh_authority(
     expected_spec_sha256: str,
     equivalent_intent_sha256: str,
     equivalent_result_sha256: str,
+    source_repository: Path,
     resource_db: Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
     now: datetime | None = None,
     authority_store: Any | None = None,
-    source_repository: Path | None = None,
-    source_ancestry: Callable[[str, str], bool] | None = None,
     historical_readback: Callable[..., dict[str, Any]] = readback_historical_install,
 ) -> dict[str, Any]:
     """Supersede one never-used single-use authority after exact equivalent success."""
@@ -9581,7 +9566,6 @@ def closeout_unused_runtime_refresh_authority(
         _validate_unused_authority_intent_ratchet(
             history,
             source_repository=source_repository,
-            source_ancestry=source_ancestry,
         )
         equivalent = _equivalent_runtime_success_provenance(
             state_root=resolved_state_root,
@@ -9610,7 +9594,6 @@ def closeout_unused_runtime_refresh_authority(
             prefix=Path(equivalent["prefix"]),
             intended_main_commit=history["main_commit"],
             source_repository=source_repository,
-            source_ancestry=source_ancestry,
         )
         _validate_state_store_health(store)
         return {
@@ -9662,7 +9645,6 @@ def closeout_unused_runtime_refresh_authority(
     _validate_unused_authority_intent_ratchet(
         history,
         source_repository=source_repository,
-        source_ancestry=source_ancestry,
     )
     equivalent = _equivalent_runtime_success_provenance(
         state_root=resolved_state_root,
@@ -9688,7 +9670,6 @@ def closeout_unused_runtime_refresh_authority(
         prefix=Path(equivalent["prefix"]),
         intended_main_commit=history["main_commit"],
         source_repository=source_repository,
-        source_ancestry=source_ancestry,
     )
     _validate_state_store_health(store)
     closeout = {
@@ -9764,7 +9745,6 @@ def closeout_unused_runtime_refresh_authority(
             prefix=Path(final_equivalent["prefix"]),
             intended_main_commit=history["main_commit"],
             source_repository=source_repository,
-            source_ancestry=source_ancestry,
         )
         if final_equivalent != equivalent or final_runtime != current_runtime:
             raise RuntimeRefreshError(

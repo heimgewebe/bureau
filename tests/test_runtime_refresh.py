@@ -526,6 +526,37 @@ def test_installed_activation_candidate_validator_rejects_noncanonical_manifest(
     )
 
 
+def test_installed_activation_candidate_validator_rejects_canonical_manifest_symlink(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    home = tmp_path / "home"
+    manifest_dir = home / ".local/share/bureau"
+    manifest_dir.mkdir(parents=True)
+    real_manifest = manifest_dir / "deployment-manifest.real.json"
+    real_manifest.write_bytes(
+        refresh.canonical_bytes(
+            {
+                "kind": "bureau_runtime_deployment",
+                "source_commit": "a" * 40,
+                "release_id": "release-a",
+            }
+        )
+    )
+    manifest_path = manifest_dir / "deployment-manifest.json"
+    manifest_path.symlink_to(real_manifest.name)
+    monkeypatch.setenv("HOME", str(home))
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh._validate_installed_runtime_activation_candidate(
+            manifest_path=manifest_path,
+            expected_deployed_source_commit="a" * 40,
+            approval_task_id="BUREAU-RUNTIME-CANONICAL-MANIFEST-SYMLINK",
+            candidate={},
+        )
+
+    assert raised.value.code == "invalid-json-path"
+
+
 def installed_activation_candidate_validation_for_test(
     *,
     manifest_path: Path,
@@ -2008,7 +2039,11 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
     )
     observation = protected_publication_activation_observation()
 
-    def observer(**_: Any) -> dict[str, Any]:
+    def selected_github(_: list[str]) -> Any:
+        raise AssertionError("publication verifier is stubbed in this test")
+
+    def observer(**kwargs: Any) -> dict[str, Any]:
+        assert kwargs["github"] is selected_github
         return observation
 
     first = activate_runtime_refresh_authority_for_test(
@@ -2023,6 +2058,7 @@ def test_activate_runtime_refresh_authority_binds_fresh_observation_and_replays(
         authority_store=store,
         registry=registry,
         observer=observer,
+        github=selected_github,
     )
     assert first["status"] == "ready"
     assert first["revision"] == 2

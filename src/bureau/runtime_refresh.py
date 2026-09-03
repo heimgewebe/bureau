@@ -645,6 +645,11 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
     return value, sha256_bytes(manifest_bytes)
 
 
+def _resolve_manifest_parent_preserving_leaf(path: Path) -> Path:
+    expanded = path.expanduser()
+    return expanded.parent.resolve() / expanded.name
+
+
 def _validate_installed_runtime_activation_candidate(
     *,
     manifest_path: Path,
@@ -653,9 +658,9 @@ def _validate_installed_runtime_activation_candidate(
     candidate: dict[str, Any],
 ) -> dict[str, Any]:
     """Validate one Ready candidate with the authenticated installed runtime code."""
-    resolved_manifest_path = manifest_path.expanduser().resolve()
-    expected_manifest_path = (
-        Path("~/.local/share/bureau/deployment-manifest.json").expanduser().resolve()
+    resolved_manifest_path = _resolve_manifest_parent_preserving_leaf(manifest_path)
+    expected_manifest_path = _resolve_manifest_parent_preserving_leaf(
+        Path("~/.local/share/bureau/deployment-manifest.json")
     )
     if resolved_manifest_path != expected_manifest_path:
         raise RuntimeRefreshError(
@@ -688,7 +693,7 @@ def _validate_installed_runtime_activation_candidate(
         label="installed immutable release",
     )
     expected_release = _historical_nonsymlink_path(
-        manifest_path.expanduser().resolve().parent / "releases" / release_id,
+        manifest_path.parent / "releases" / release_id,
         label="expected installed immutable release",
     )
     if release != expected_release or not release.is_dir():
@@ -4588,9 +4593,10 @@ def activate_runtime_refresh_authority(
     observation_started_at = now or utc_now()
     observation = observer(
         repository=repository,
-        manifest_path=manifest_path.expanduser().resolve(),
+        manifest_path=_resolve_manifest_parent_preserving_leaf(manifest_path),
         required_checks=required_checks,
         now=observation_started_at,
+        github=github,
     )
     verify_digest(observation, "observation_sha256")
     if observation.get("status") not in {"candidate", "alert"}:
@@ -4641,7 +4647,7 @@ def activate_runtime_refresh_authority(
     )
     validator = installed_candidate_validator or _validate_installed_runtime_activation_candidate
     installed_validation = validator(
-        manifest_path=manifest_path.expanduser().resolve(),
+        manifest_path=_resolve_manifest_parent_preserving_leaf(manifest_path),
         expected_deployed_source_commit=str(observation["deployed_source_commit"]),
         approval_task_id=approval_task_id,
         candidate=ready,

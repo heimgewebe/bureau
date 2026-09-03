@@ -374,6 +374,7 @@ def test_preview_preserves_already_rebound_descendant_resource_path(
     spec["execution"]["working_repository"] = str(new_path)
     spec["execution"]["grabowski_resources"] = [
         f"repo:{old_path}",
+        f"path:{new_path}",
         f"path:{new_path}/cache",
         f"repo:{old_path}:operation:test-scope",
     ]
@@ -389,10 +390,31 @@ def test_preview_preserves_already_rebound_descendant_resource_path(
     assert preview["spec"]["execution"]["working_repository"] == str(new_path)
     assert preview["spec"]["execution"]["grabowski_resources"] == [
         f"repo:{new_path}",
+        f"path:{new_path}",
         f"path:{new_path}/cache",
         f"repo:{new_path}:operation:test-scope",
     ]
     assert "/execution/grabowski_resources/1" not in preview["changed_paths"]
+    assert "/execution/grabowski_resources/2" not in preview["changed_paths"]
+
+
+def test_preview_rejects_execution_old_path_when_new_path_is_ancestor(
+    tmp_path: Path,
+) -> None:
+    new_path = tmp_path / "repos" / "app"
+    old_path = new_path / "archive"
+    old_path.mkdir(parents=True)
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["execution"]["argv"] = ["tool", f"--repo={old_path}"]
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
 
 
 def test_preview_rewrites_exact_old_path_key_when_new_path_is_ancestor(

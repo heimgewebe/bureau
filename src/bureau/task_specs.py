@@ -173,7 +173,11 @@ def _contains_repository_path_token(
             end == len(value) or value[end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
         )
         if before_ok and after_ok:
-            if excluded_repository_path is not None and value.startswith(
+            excluded_is_repository_descendant = (
+                excluded_repository_path is not None
+                and excluded_repository_path.startswith(repository_path + "/")
+            )
+            if excluded_is_repository_descendant and value.startswith(
                 excluded_repository_path, index
             ):
                 excluded_end = index + len(excluded_repository_path)
@@ -325,17 +329,20 @@ def preview_repository_identity_rebind(
                 old_repo_bound = item == old_repo_key or item.startswith(
                     old_repo_key + ":"
                 )
+                new_path_bound = item == new_path_key or item.startswith(
+                    new_path_key + "/"
+                )
                 old_path_bound = item == old_path_key or (
                     item.startswith(old_path_key + "/")
                     and not (
                         new_repository_path.startswith(old_repository_path + "/")
-                        and item.startswith(new_path_key + "/")
+                        and new_path_bound
                     )
                 )
                 already_new_bound = (
-                    item in (new_repo_key, new_path_key)
+                    item == new_repo_key
                     or item.startswith(new_repo_key + ":")
-                    or item.startswith(new_path_key + "/")
+                    or new_path_bound
                 )
                 if old_repo_bound:
                     item = new_repo_key + item[len(old_repo_key) :]

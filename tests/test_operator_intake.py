@@ -4943,3 +4943,77 @@ def test_task_revision_identity_guard_rejects_predicate_inversion_as_weak_subjec
     with pytest.raises(OperatorIntakeError) as raised:
         operator_intake_module._validate_task_revision_identity_continuity(before, after)
     assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+
+def test_task_revision_identity_guard_rejects_action_only_semantic_inversion() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Disable customer data deletion",
+    )
+    after = _identity_revision_task(
+        title="Billing dashboard export",
+        resource="repo.shared",
+        goal="Enable customer data deletion",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_reordered_replaced_technical_identifier() -> None:
+    before = _identity_revision_task(
+        title="API runtime cleanup",
+        resource="repo.shared",
+        goal="Repair API runtime state",
+    )
+    after = _identity_revision_task(
+        title="SSH cleanup runtime",
+        resource="repo.shared",
+        goal="Replace remote shell state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_retained_identifier_behind_action_suffix_swap() -> None:
+    before = _identity_revision_task(
+        title="Repair API backup updater service",
+        resource="repo.infra",
+        goal="Restore backup API health",
+    )
+    after = _identity_revision_task(
+        title="Repair API database updater service",
+        resource="repo.infra",
+        goal="Repair database API state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+@pytest.mark.parametrize(
+    ("plural", "singular"),
+    [
+        ("buses", "bus"),
+        ("statuses", "status"),
+        ("heroes", "hero"),
+        ("tomatoes", "tomato"),
+    ],
+)
+def test_task_revision_identity_guard_allows_pairwise_es_plural(
+    plural: str, singular: str
+) -> None:
+    before = _identity_revision_task(
+        title=f"Improve game {plural}",
+        resource="repo.shared",
+        acceptance_ids=("subject-contract",),
+    )
+    after = _identity_revision_task(
+        title=f"Improve game {singular}",
+        resource="repo.shared",
+        acceptance_ids=("subject-contract",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)

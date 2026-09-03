@@ -2042,6 +2042,15 @@ def _task_revision_plural_base(token: str) -> str | None:
 def _task_revision_plural_equivalent(before_token: str, after_token: str) -> bool:
     if before_token == after_token:
         return False
+    # The singular candidate is already known, so pairwise +es recognition is
+    # safer than broad suffix stemming. This covers bus/buses, status/statuses,
+    # hero/heroes and tomato/tomatoes without inventing a generic -ses/-oes stem.
+    for plural, singular in (
+        (before_token, after_token),
+        (after_token, before_token),
+    ):
+        if singular.endswith(("s", "o")) and plural == f"{singular}es":
+            return True
     return (
         _task_revision_plural_base(before_token) == after_token
         or _task_revision_plural_base(after_token) == before_token
@@ -2053,19 +2062,9 @@ def _task_revision_tokens(value: Any) -> list[str]:
     return _TASK_REVISION_TOKEN_RE.findall(text)
 
 
-def _task_revision_strong_leading_identity(value: Any) -> str | None:
-    raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
-    if len(raw_tokens) <= 1:
-        return None
-    token = raw_tokens[0]
-    # A leading repository/package/path-like identifier is subject evidence even
-    # though the generic prose model normally treats position zero as an action
-    # slot. Keep short all-caps domain acronyms (API/SSH/MCP/CI) for the same
-    # reason, but never promote known process words merely because they are cased.
+def _task_revision_strong_token_identity(token: str) -> str | None:
     if any(char.isdigit() or char in "./:@+#" for char in token):
         return token.casefold()
-    # A single hyphen is common in process terms such as `pre-check`; reserve
-    # hyphen-only promotion for multi-segment technical compounds.
     if token.count("-") >= 2:
         return token.casefold()
     letters = "".join(char for char in token if char.isalpha())
@@ -2076,6 +2075,23 @@ def _task_revision_strong_leading_identity(value: Any) -> str | None:
     ):
         return token.casefold()
     return None
+
+
+def _task_revision_strong_leading_identity(value: Any) -> str | None:
+    raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
+    if len(raw_tokens) <= 1:
+        return None
+    return _task_revision_strong_token_identity(raw_tokens[0])
+
+
+def _task_revision_subject_leading_identity(value: Any) -> str | None:
+    raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
+    if not raw_tokens:
+        return None
+    index = 0
+    if len(raw_tokens) > 1 and raw_tokens[0].casefold() in _TASK_REVISION_GENERIC_TOKENS:
+        index = 1
+    return _task_revision_strong_token_identity(raw_tokens[index])
 
 
 def _task_revision_has_strong_leading_identity(value: Any) -> bool:
@@ -2238,11 +2254,18 @@ def _task_revision_text_is_continuous(
             ignore_leading_action=False,
         )
     )
-    before_strong_leading_identity = _task_revision_strong_leading_identity(before)
-    after_strong_leading_identity = _task_revision_strong_leading_identity(after)
+    before_strong_leading_identity = _task_revision_subject_leading_identity(before)
+    after_strong_leading_identity = _task_revision_subject_leading_identity(after)
     retained_strong_leading_identity = (
         before_strong_leading_identity is not None
         and before_strong_leading_identity == after_strong_leading_identity
+    )
+    technical_identity_mismatch = (
+        before_strong_leading_identity != after_strong_leading_identity
+        and (
+            before_strong_leading_identity is not None
+            or after_strong_leading_identity is not None
+        )
     )
     shared_subject_suffix_count, before_subject, after_subject = (
         _task_revision_shared_subject_suffix(before, after)
@@ -2250,6 +2273,14 @@ def _task_revision_text_is_continuous(
     trailing_inflection_continuity = (
         resource_continuity
         and _task_revision_trailing_inflection_is_continuous(before, after)
+    )
+    before_all_tokens = _task_revision_tokens(before)
+    after_all_tokens = _task_revision_tokens(after)
+    action_only_rewrite = (
+        bool(before_all_tokens)
+        and bool(after_all_tokens)
+        and before_all_tokens[0] != after_all_tokens[0]
+        and before_subject == after_subject
     )
     shorter_subject_sequence_count = min(len(before_subject), len(after_subject))
     retained_strong_identity_overlap = int(
@@ -2305,6 +2336,8 @@ def _task_revision_text_is_continuous(
             and full_continuity == 1.0
             and full_overlap >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
         )
+    if technical_identity_mismatch:
+        continuous = False
     return continuous, {
         "continuity": round(continuity, 6),
         "subject_token_overlap": subject_overlap,
@@ -2317,6 +2350,8 @@ def _task_revision_text_is_continuous(
         "before_strong_leading_identity": before_strong_leading_identity is not None,
         "after_strong_leading_identity": after_strong_leading_identity is not None,
         "retained_strong_leading_identity": retained_strong_leading_identity,
+        "technical_identity_mismatch": technical_identity_mismatch,
+        "action_only_rewrite": action_only_rewrite,
         "before_subject_sequence": before_subject,
         "after_subject_sequence": after_subject,
         "shared_subject_suffix_count": shared_subject_suffix_count,
@@ -2400,7 +2435,11 @@ def _validate_task_revision_identity_continuity(
         )
         if continuous
     ]
-    if any(evidence["trailing_inflection_continuity"] for evidence in continuous_evidence):
+    if any(
+        evidence["trailing_inflection_continuity"]
+        and (not evidence["action_only_rewrite"] or bool(exact_acceptance_ids))
+        for evidence in continuous_evidence
+    ):
         return
     if any(
         max(
@@ -2408,6 +2447,7 @@ def _validate_task_revision_identity_continuity(
             int(evidence["full_shorter_subject_token_count"]),
         )
         >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        and (not evidence["action_only_rewrite"] or bool(exact_acceptance_ids))
         for evidence in continuous_evidence
     ):
         return

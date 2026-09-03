@@ -2018,25 +2018,12 @@ def _task_revision_acceptance_items(
 
 
 _TASK_REVISION_INFLECTION_EXCEPTIONS = frozenset({"news", "series", "species"})
-_TASK_REVISION_PLURAL_BASE_SUFFIXES = (
-    "tion",
-    "sion",
-    "ment",
-    "ance",
-    "ence",
-    "ship",
-    "ing",
-    "ity",
-    "ure",
-    "age",
-)
 
 
 def _task_revision_plural_base(token: str) -> str | None:
-    # Inflection equivalence is deliberately narrow and pairwise. Never stem the
-    # whole token stream: doing so can collapse distinct identifiers such as
-    # `Canva` and `canvas`. The caller uses this only for a trailing subject token
-    # after an independently stable leading subject.
+    # Inflection equivalence is deliberately pairwise. Normalize only the trailing
+    # subject token and retain conservative ambiguity exclusions so identifiers such
+    # as `Canva` and `canvas` do not collapse through a generic trailing-s rule.
     if (
         not token.isalpha()
         or len(token) <= 4
@@ -2047,10 +2034,8 @@ def _task_revision_plural_base(token: str) -> str | None:
         return f"{token[:-3]}y"
     if token.endswith(("sses", "shes", "ches", "xes", "zes")):
         return token[:-2]
-    if token.endswith("s") and not token.endswith(("ss", "us", "is")):
-        singular = token[:-1]
-        if singular.endswith(_TASK_REVISION_PLURAL_BASE_SUFFIXES):
-            return singular
+    if token.endswith("s") and not token.endswith(("ss", "us", "is", "as", "os")):
+        return token[:-1]
     return None
 
 
@@ -2068,32 +2053,38 @@ def _task_revision_tokens(value: Any) -> list[str]:
     return _TASK_REVISION_TOKEN_RE.findall(text)
 
 
-def _task_revision_has_strong_leading_identity(value: Any) -> bool:
+def _task_revision_strong_leading_identity(value: Any) -> str | None:
     raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
     if len(raw_tokens) <= 1:
-        return False
+        return None
     token = raw_tokens[0]
     # A leading repository/package/path-like identifier is subject evidence even
     # though the generic prose model normally treats position zero as an action
     # slot. Keep short all-caps domain acronyms (API/SSH/MCP/CI) for the same
     # reason, but never promote known process words merely because they are cased.
     if any(char.isdigit() or char in "./:@+#" for char in token):
-        return True
+        return token.casefold()
     # A single hyphen is common in process terms such as `pre-check`; reserve
     # hyphen-only promotion for multi-segment technical compounds.
     if token.count("-") >= 2:
-        return True
+        return token.casefold()
     letters = "".join(char for char in token if char.isalpha())
-    return (
+    if (
         2 <= len(letters) <= 4
         and letters.isupper()
         and token.casefold() not in _TASK_REVISION_GENERIC_TOKENS
-    )
+    ):
+        return token.casefold()
+    return None
+
+
+def _task_revision_has_strong_leading_identity(value: Any) -> bool:
+    return _task_revision_strong_leading_identity(value) is not None
 
 
 def _task_revision_subject_sequence(value: Any) -> list[str]:
     tokens = _task_revision_tokens(value)
-    if len(tokens) > 1:
+    if len(tokens) > 1 and _task_revision_strong_leading_identity(value) is None:
         tokens = tokens[1:]
     return [token for token in tokens if token not in _TASK_REVISION_GENERIC_TOKENS]
 
@@ -2150,9 +2141,15 @@ def _task_revision_text_evidence(
     # a static weak-token set did not enumerate them. A second full-token view is
     # required when resources change so noun phrases do not lose their real subject.
     if ignore_leading_action:
-        if len(before_raw_tokens) > 1:
+        if (
+            len(before_raw_tokens) > 1
+            and _task_revision_strong_leading_identity(before) is None
+        ):
             before_raw_tokens = before_raw_tokens[1:]
-        if len(after_raw_tokens) > 1:
+        if (
+            len(after_raw_tokens) > 1
+            and _task_revision_strong_leading_identity(after) is None
+        ):
             after_raw_tokens = after_raw_tokens[1:]
     before_tokens = {
         token for token in before_raw_tokens if token not in _TASK_REVISION_GENERIC_TOKENS
@@ -2201,8 +2198,12 @@ def _task_revision_text_is_continuous(
             ignore_leading_action=False,
         )
     )
-    before_strong_leading_identity = _task_revision_has_strong_leading_identity(before)
-    after_strong_leading_identity = _task_revision_has_strong_leading_identity(after)
+    before_strong_leading_identity = _task_revision_strong_leading_identity(before)
+    after_strong_leading_identity = _task_revision_strong_leading_identity(after)
+    retained_strong_leading_identity = (
+        before_strong_leading_identity is not None
+        and before_strong_leading_identity == after_strong_leading_identity
+    )
     shared_subject_suffix_count, before_subject, after_subject = (
         _task_revision_shared_subject_suffix(before, after)
     )
@@ -2219,8 +2220,7 @@ def _task_revision_text_is_continuous(
     # Explicit identifiers/acronyms are the narrow exception because the tokenizer
     # already treats them as atomic subject identities.
     shared_suffix_only_collision = (
-        not before_strong_leading_identity
-        and not after_strong_leading_identity
+        not retained_strong_leading_identity
         and shared_subject_suffix_count >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
         and shared_subject_suffix_count < shorter_subject_sequence_count
         and all_overlap_is_shared_suffix
@@ -2264,8 +2264,9 @@ def _task_revision_text_is_continuous(
         "full_shorter_subject_token_count": full_shorter_count,
         "exact_nonempty_text": exact,
         "resource_continuity": resource_continuity,
-        "before_strong_leading_identity": before_strong_leading_identity,
-        "after_strong_leading_identity": after_strong_leading_identity,
+        "before_strong_leading_identity": before_strong_leading_identity is not None,
+        "after_strong_leading_identity": after_strong_leading_identity is not None,
+        "retained_strong_leading_identity": retained_strong_leading_identity,
         "before_subject_sequence": before_subject,
         "after_subject_sequence": after_subject,
         "shared_subject_suffix_count": shared_subject_suffix_count,
@@ -2323,10 +2324,18 @@ def _validate_task_revision_identity_continuity(
             before_acceptance_items[item_id], after_acceptance_items[item_id]
         )
     }
+    # Only byte-for-byte equivalent typed criteria may independently anchor a
+    # large prose rewrite. Semantically similar assertion text can still support
+    # already-continuous task prose, but cannot by itself preserve task identity.
+    exact_acceptance_ids = {
+        item_id
+        for item_id in acceptance_overlap
+        if before_acceptance_items[item_id] == after_acceptance_items[item_id]
+    }
     acceptance_continuity = (
         bool(write_scope_overlap)
-        and len(continuous_acceptance_ids) >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
-        and len(continuous_acceptance_ids)
+        and len(exact_acceptance_ids) >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
+        and len(exact_acceptance_ids)
         == min(len(before_acceptance), len(after_acceptance))
     )
     if acceptance_continuity:
@@ -2369,6 +2378,7 @@ def _validate_task_revision_identity_continuity(
             "resource_overlap": sorted(resource_overlap),
             "acceptance_overlap": sorted(acceptance_overlap),
             "continuous_acceptance_ids": sorted(continuous_acceptance_ids),
+            "exact_acceptance_ids": sorted(exact_acceptance_ids),
             "acceptance_continuity": acceptance_continuity,
             "title_evidence": title_evidence,
             "goal_evidence": goal_evidence,

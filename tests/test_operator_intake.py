@@ -4744,3 +4744,96 @@ def test_task_propose_rejects_reuse_of_existing_id_for_unrelated_write_scope(
         )
     assert raised.value.code == "task-revision-identity-discontinuity"
     assert not plan_path.exists()
+
+
+
+def test_task_revision_identity_guard_rejects_acceptance_predicate_inversion_anchor() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Restore archived snapshots",
+    )
+    after = _identity_revision_task(
+        title="Customer invoice dashboard",
+        resource="repo.shared",
+        goal="Render billing balances",
+    )
+    shared_contract = {
+        "evidence_type": "object",
+        "verifier": "manual_observation",
+        "verifier_config": {"observation_scope": "shared-contract"},
+    }
+    before["acceptance"] = [
+        {
+            "id": "proof-a",
+            "assertion": "Verify backup policy prevents customer data deletion in production",
+            **shared_contract,
+        },
+        {
+            "id": "proof-b",
+            "assertion": "Verify archive policy prevents snapshot deletion in production",
+            **shared_contract,
+        },
+    ]
+    after["acceptance"] = [
+        {
+            **criterion,
+            "assertion": criterion["assertion"].replace("prevents", "permits"),
+        }
+        for criterion in before["acceptance"]
+    ]
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_removed_strong_leading_identifier() -> None:
+    before = _identity_revision_task(
+        title="API backup updater service", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Repair dashboard updater service", resource="repo.infra"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_identifier_moved_behind_action() -> None:
+    before = _identity_revision_task(
+        title="API runtime cleanup",
+        resource="repo.infra",
+        acceptance_ids=("api-runtime",),
+    )
+    after = _identity_revision_task(
+        title="Clean API runtime",
+        resource="repo.infra",
+        acceptance_ids=("api-runtime",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+@pytest.mark.parametrize(
+    ("plural", "singular"),
+    [
+        ("backups", "backup"),
+        ("contracts", "contract"),
+        ("tasks", "task"),
+        ("files", "file"),
+        ("workers", "worker"),
+    ],
+)
+def test_task_revision_identity_guard_allows_regular_trailing_s_plural(
+    plural: str, singular: str
+) -> None:
+    before = _identity_revision_task(
+        title=f"Improve database {plural}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    after = _identity_revision_task(
+        title=f"Improve database {singular}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)

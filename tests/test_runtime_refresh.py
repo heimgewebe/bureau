@@ -7976,6 +7976,7 @@ def unused_authority_equivalent_success_case(
     tmp_path: Path,
     *,
     older_unused_main_commit: str | None = None,
+    equivalent_scope_root: Path | None = None,
 ) -> tuple[
     str,
     dict[str, Any],
@@ -8041,8 +8042,19 @@ def unused_authority_equivalent_success_case(
     unused_intent, _unused_path = refresh.prepare_intent(
         **common, approval_task_id=unused_task_id
     )
+    equivalent_common = common
+    if equivalent_scope_root is not None:
+        scope_root = equivalent_scope_root.resolve()
+        equivalent_common = {
+            **common,
+            "prefix": scope_root / "prefix",
+            "bin_dir": scope_root / "bin",
+            "user_unit_dir": scope_root / "systemd/user",
+            "libexec_dir": scope_root / "libexec",
+            "runtime_user_unit_dir": scope_root / "runtime-systemd/user",
+        }
     equivalent_intent, _equivalent_path = refresh.prepare_intent(
-        **common, approval_task_id=equivalent_task_id
+        **equivalent_common, approval_task_id=equivalent_task_id
     )
     bound = refresh.bind_runtime_refresh_authority(
         store=store, intent=equivalent_intent, now=selected_now + timedelta(minutes=1)
@@ -8285,6 +8297,53 @@ def test_unused_authority_closeout_supersedes_without_runtime_effect(
     )
     assert repeated["idempotent_replay"] is True
     assert repeated["revision"] == current["revision"]
+
+
+def test_unused_authority_closeout_rejects_other_deployment_scope(
+    tmp_path: Path,
+) -> None:
+    (
+        unused_task_id,
+        unused_intent,
+        _equivalent_task_id,
+        equivalent_intent,
+        store,
+        result,
+        resource_db,
+    ) = unused_authority_equivalent_success_case(
+        tmp_path,
+        equivalent_scope_root=tmp_path / "other-runtime-instance",
+    )
+    before = store.task_spec(unused_task_id)
+    assert before is not None
+    assert unused_intent["target_sha256"] == equivalent_intent["target_sha256"]
+    assert unused_intent["main_commit"] == equivalent_intent["main_commit"]
+
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_unused_runtime_refresh_authority(
+            state_root=Path(unused_intent["state_root"]),
+            approval_task_id=unused_task_id,
+            expected_revision=before["revision"],
+            expected_spec_sha256=before["spec_sha256"],
+            equivalent_intent_sha256=equivalent_intent["intent_sha256"],
+            equivalent_result_sha256=result["result_sha256"],
+            resource_db=resource_db,
+            now=NOW + timedelta(hours=1),
+            authority_store=store,
+            source_repository=tmp_path / "source-repository",
+        )
+
+    assert caught.value.code == "authority-unused-closeout-deployment-scope-mismatch"
+    assert set(caught.value.details["differing_fields"]) == {
+        "prefix",
+        "bin_dir",
+        "user_unit_dir",
+        "libexec_dir",
+        "runtime_user_unit_dir",
+        "required_resource_keys",
+    }
+    assert store.task_spec(unused_task_id) == before
+    assert before["spec"]["state"] == "ready"
 
 
 def test_unused_authority_closeout_replay_requires_reserved_mutation_receipt(
@@ -8895,6 +8954,65 @@ def test_unused_authority_closeout_rejects_intent_from_older_ready_revision(
         )
     assert caught.value.code == "authority-unused-closeout-intent-authority-mismatch"
     assert store.task_spec(unused_task_id)["spec"]["state"] == "ready"
+
+
+def test_unused_authority_history_selects_chronologically_later_fractional_intent(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-UNUSED-HISTORY-ORDER"
+    state_root = (tmp_path / "state").resolve()
+    bureau_state_root = (tmp_path / "bureau-state").resolve()
+    store = StateStore(bureau_state_root / "bureau.sqlite3", bureau_state_root)
+    store.put_task_spec(
+        runtime_authority_spec(task_id),
+        idempotency_key=f"seed-unused-history-order:{task_id}",
+        expected_revision=None,
+        source="test",
+    )
+    observed, _manifest_path = candidate(tmp_path)
+    common = {
+        "candidate": observed,
+        "state_root": state_root,
+        "prefix": (tmp_path / "prefix").resolve(),
+        "bin_dir": (tmp_path / "bin").resolve(),
+        "user_unit_dir": (tmp_path / "systemd/user").resolve(),
+        "libexec_dir": (tmp_path / "libexec").resolve(),
+        "remote_url": "file:///tmp/bureau.git",
+        "authorized_by": "chatgpt",
+        "authorization": "Hermetic unused-authority history ordering fixture.",
+        "break_glass": True,
+        "approval_reference": observed["target_sha256"],
+        "approval_task_id": task_id,
+        "authority_store": store,
+    }
+    earlier, _earlier_path = refresh.prepare_intent(**common, now=NOW)
+    later, _later_path = refresh.prepare_intent(
+        **common, now=NOW + timedelta(microseconds=500_000)
+    )
+    assert earlier["created_at"] > later["created_at"]
+    current = store.task_spec(task_id)
+    assert current is not None
+
+    history = refresh._unused_runtime_authority_history(
+        state_root,
+        task_id,
+        expected_revision=current["revision"],
+        expected_spec_sha256=current["spec_sha256"],
+        now=NOW + timedelta(hours=1),
+    )
+
+    assert [item["intent_sha256"] for item in history["intents"]] == [
+        earlier["intent_sha256"],
+        later["intent_sha256"],
+    ]
+    assert history["selected_intent_sha256"] == later["intent_sha256"]
+    assert history == refresh._unused_runtime_authority_history(
+        state_root,
+        task_id,
+        expected_revision=current["revision"],
+        expected_spec_sha256=current["spec_sha256"],
+        now=NOW + timedelta(hours=1),
+    )
 
 
 def test_unused_authority_closeout_accepts_linear_target_ratchet(

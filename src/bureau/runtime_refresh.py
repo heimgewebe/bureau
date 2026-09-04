@@ -8675,7 +8675,8 @@ def _unused_runtime_authority_history(
             "unused runtime authority has no persisted approval intent history",
         )
     ordered = sorted(
-        history, key=lambda item: (item["created_at"], item["intent_sha256"])
+        history,
+        key=lambda item: (parse_time(item["created_at"]), item["intent_sha256"]),
     )
     selected = ordered[-1]
     return {
@@ -8975,22 +8976,77 @@ def _authenticated_result_lease_store(
     return path
 
 
+def _runtime_deployment_scope_identity(intent: dict[str, Any]) -> dict[str, Any]:
+    path_fields = (
+        "state_root",
+        "prefix",
+        "bin_dir",
+        "user_unit_dir",
+        "libexec_dir",
+        "runtime_user_unit_dir",
+        "workspace",
+    )
+    required_resource_keys = intent.get("required_resource_keys")
+    if (
+        any(
+            not isinstance(intent.get(field), str) or not intent[field]
+            for field in path_fields
+        )
+        or not isinstance(required_resource_keys, list)
+        or not required_resource_keys
+        or not all(isinstance(item, str) and item for item in required_resource_keys)
+        or required_resource_keys != sorted(set(required_resource_keys))
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-deployment-scope-invalid",
+            "runtime-refresh intent deployment scope is malformed",
+        )
+    return {
+        **{field: intent[field] for field in path_fields},
+        "required_resource_keys": required_resource_keys,
+    }
+
+
 def _equivalent_runtime_success_provenance(
     *,
     state_root: Path,
     store: Any,
     unused_task_id: str,
+    unused_intent_sha256: str,
     target_sha256: str,
     main_commit: str,
     equivalent_intent_sha256: str,
     equivalent_result_sha256: str,
     historical_readback: Callable[..., dict[str, Any]],
 ) -> dict[str, Any]:
-    if not _is_sha256(equivalent_intent_sha256) or not _is_sha256(equivalent_result_sha256):
+    if not all(
+        _is_sha256(value)
+        for value in (
+            unused_intent_sha256,
+            equivalent_intent_sha256,
+            equivalent_result_sha256,
+        )
+    ):
         raise RuntimeRefreshError(
             "authority-unused-closeout-equivalent-binding-invalid",
-            "equivalent success requires exact intent and result digests",
+            "equivalent success requires exact unused intent, replacement intent, "
+            "and result digests",
         )
+    unused_intent_path = state_root / "intents" / f"{unused_intent_sha256}.json"
+    unused_intent = read_json(unused_intent_path)
+    verify_digest(unused_intent, "intent_sha256")
+    if (
+        unused_intent.get("intent_sha256") != unused_intent_sha256
+        or unused_intent.get("kind") != "bureau_runtime_refresh_intent"
+        or unused_intent.get("approval_task_id") != unused_task_id
+        or unused_intent.get("target_sha256") != target_sha256
+        or unused_intent.get("main_commit") != main_commit
+    ):
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-unused-intent-mismatch",
+            "selected unused authority intent does not match its authenticated history",
+        )
+    unused_scope = _runtime_deployment_scope_identity(unused_intent)
     intent_path = state_root / "intents" / f"{equivalent_intent_sha256}.json"
     intent = read_json(intent_path)
     verify_digest(intent, "intent_sha256")
@@ -9007,6 +9063,19 @@ def _equivalent_runtime_success_provenance(
         raise RuntimeRefreshError(
             "authority-unused-closeout-equivalent-intent-mismatch",
             "equivalent success intent does not match the unused authority target",
+        )
+    equivalent_scope = _runtime_deployment_scope_identity(intent)
+    if equivalent_scope != unused_scope:
+        raise RuntimeRefreshError(
+            "authority-unused-closeout-deployment-scope-mismatch",
+            "equivalent success intent is bound to another runtime deployment scope",
+            details={
+                "differing_fields": sorted(
+                    field
+                    for field in unused_scope
+                    if unused_scope[field] != equivalent_scope[field]
+                )
+            },
         )
     created_at = intent.get("created_at")
     if not isinstance(created_at, str):
@@ -9382,6 +9451,7 @@ def _validate_unused_authority_closeout_cas_contract(
         state_root=root,
         store=store,
         unused_task_id=task_id,
+        unused_intent_sha256=history["selected_intent_sha256"],
         target_sha256=history["target_sha256"],
         main_commit=history["main_commit"],
         equivalent_intent_sha256=validated["fulfilled_by_intent_sha256"],
@@ -9571,6 +9641,7 @@ def closeout_unused_runtime_refresh_authority(
             state_root=resolved_state_root,
             store=store,
             unused_task_id=approval_task_id,
+            unused_intent_sha256=history["selected_intent_sha256"],
             target_sha256=history["target_sha256"],
             main_commit=history["main_commit"],
             equivalent_intent_sha256=equivalent_intent_sha256,
@@ -9650,6 +9721,7 @@ def closeout_unused_runtime_refresh_authority(
         state_root=resolved_state_root,
         store=store,
         unused_task_id=approval_task_id,
+        unused_intent_sha256=history["selected_intent_sha256"],
         target_sha256=history["target_sha256"],
         main_commit=history["main_commit"],
         equivalent_intent_sha256=equivalent_intent_sha256,
@@ -9735,6 +9807,7 @@ def closeout_unused_runtime_refresh_authority(
             state_root=resolved_state_root,
             store=store,
             unused_task_id=approval_task_id,
+            unused_intent_sha256=history["selected_intent_sha256"],
             target_sha256=history["target_sha256"],
             main_commit=history["main_commit"],
             equivalent_intent_sha256=equivalent_intent_sha256,

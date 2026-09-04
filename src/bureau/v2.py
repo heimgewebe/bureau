@@ -3790,6 +3790,107 @@ class StateStore:
             except task_specs.TaskSpecError as exc:
                 raise legacy.StateError(str(exc)) from exc
 
+    def put_runtime_refresh_unused_authority_closeout_task_spec(
+        self,
+        spec: dict[str, Any],
+        *,
+        idempotency_key: str,
+        expected_revision: int | None,
+        runtime_state_root: Path | None,
+        closeout_guard: Any | None = None,
+        closeout_execution_capability: Any | None = None,
+    ) -> dict[str, Any]:
+        metadata = spec.get("metadata") if isinstance(spec, dict) else None
+        closeout_value = (
+            metadata.get("runtime_unused_authority_closeout")
+            if isinstance(metadata, dict)
+            else None
+        )
+        if not isinstance(runtime_state_root, Path) or not isinstance(closeout_value, dict):
+            raise legacy.StateError(
+                "runtime-refresh unused-authority closeout protected CAS contract is invalid"
+            )
+        try:
+            if not runtime_refresh._unused_authority_closeout_execution_capability_is_active(
+                closeout_execution_capability
+            ):
+                raise runtime_refresh.RuntimeRefreshError(
+                    "authority-unused-closeout-direct-state-store-forbidden",
+                    "unused-authority closeout StateStore mutation requires the outer "
+                    "closeout boundary",
+                )
+            closeout = runtime_refresh._validated_unused_runtime_authority_closeout(
+                closeout_value
+            )
+            validated_closeout_guard = (
+                runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                    closeout_guard,
+                    state_root=runtime_state_root,
+                )
+            )
+        except runtime_refresh.RuntimeRefreshError as exc:
+            raise legacy.StateError(
+                "runtime-refresh unused-authority closeout protected CAS contract is invalid"
+            ) from exc
+        with self.immediate() as connection:
+            try:
+                current = task_specs.get_current(connection, closeout["task_id"])
+                cas_contract = runtime_refresh._validate_unused_authority_closeout_cas_contract(
+                    state_root=runtime_state_root,
+                    store=self,
+                    current=current,
+                    candidate=spec,
+                    closeout=closeout,
+                )
+                validated_closeout_guard = (
+                    runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                        closeout_guard,
+                        state_root=runtime_state_root,
+                        required_resource_keys=cas_contract["history"]["required_resource_keys"],
+                    )
+                )
+                if (
+                    validated_closeout_guard.get("resource_db")
+                    != cas_contract["equivalent"]["resource_db"]
+                ):
+                    raise runtime_refresh.RuntimeRefreshError(
+                        "authority-unused-closeout-lease-store-mismatch",
+                        "unused-authority closeout guard is not bound to the fulfilled "
+                        "result lease store",
+                    )
+                conflicting_resources = set(
+                    runtime_refresh._authenticated_runtime_conflicting_resource_ids(
+                        state_root=runtime_state_root,
+                        closeout=closeout,
+                    )
+                )
+                active_runtime = [
+                    reservation
+                    for reservation in self.reservations(connection)
+                    if reservation.resource in conflicting_resources
+                    and legacy.modes_conflict("write", reservation.mode)
+                ]
+                if active_runtime:
+                    raise legacy.StateError(
+                        "runtime-refresh unused-authority closeout requires an unreserved runtime"
+                    )
+                runtime_refresh._validate_unused_authority_closeout_cas_guard(
+                    closeout_guard,
+                    state_root=runtime_state_root,
+                    required_resource_keys=cas_contract["history"]["required_resource_keys"],
+                )
+                return task_specs.put_runtime_refresh_unused_authority_closeout(
+                    connection,
+                    spec,
+                    idempotency_key=idempotency_key,
+                    expected_revision=expected_revision,
+                )
+            except (
+                task_specs.TaskSpecError,
+                runtime_refresh.RuntimeRefreshError,
+            ) as exc:
+                raise legacy.StateError(str(exc)) from exc
+
     def put_runtime_refresh_protected_publication_activation_task_spec(
         self,
         spec: dict[str, Any],

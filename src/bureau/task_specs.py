@@ -15,6 +15,9 @@ TASK_SPEC_EVENT_TYPE = "task-spec-revision-set"
 TASK_SPEC_EVENT_SCHEMA_VERSION = state_events.EVENT_SCHEMA_VERSION
 TASK_SPEC_PROJECTION_SCHEMA_VERSION = 1
 RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX = "runtime-refresh-no-run-closeout:"
+RUNTIME_REFRESH_UNUSED_AUTHORITY_CLOSEOUT_IDEMPOTENCY_PREFIX = (
+    "runtime-refresh-unused-authority-closeout:"
+)
 RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX = (
     "runtime-refresh-protected-publication-activation:"
 )
@@ -303,6 +306,81 @@ def _validate_runtime_refresh_no_run_closeout_mutation(
     if idempotency_key != expected_key:
         raise TaskSpecError("runtime-refresh no-run closeout idempotency binding is invalid")
     return canonical
+
+
+def _validate_runtime_refresh_unused_authority_closeout_mutation(
+    spec: Mapping[str, Any], idempotency_key: str
+) -> dict[str, Any]:
+    canonical = _canonical_spec(spec)
+    metadata = canonical.get("metadata")
+    closeout = (
+        metadata.get("runtime_unused_authority_closeout")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    result_sha256 = (
+        closeout.get("fulfilled_by_result_sha256")
+        if isinstance(closeout, Mapping)
+        else None
+    )
+    if (
+        canonical.get("state") != "superseded"
+        or not isinstance(closeout, Mapping)
+        or closeout.get("kind")
+        != "bureau_runtime_refresh_unused_authority_closeout"
+        or closeout.get("status") != "superseded"
+        or closeout.get("task_id") != canonical["id"]
+        or not isinstance(result_sha256, str)
+        or len(result_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in result_sha256)
+    ):
+        raise TaskSpecError(
+            "runtime-refresh unused-authority closeout mutation contract is invalid"
+        )
+    expected_key = (
+        f"{RUNTIME_REFRESH_UNUSED_AUTHORITY_CLOSEOUT_IDEMPOTENCY_PREFIX}"
+        f"{canonical['id']}:{result_sha256}"
+    )
+    if idempotency_key != expected_key:
+        raise TaskSpecError(
+            "runtime-refresh unused-authority closeout idempotency binding is invalid"
+        )
+    return canonical
+
+
+def put_runtime_refresh_unused_authority_closeout(
+    connection: sqlite3.Connection,
+    spec: Mapping[str, Any],
+    *,
+    idempotency_key: str,
+    expected_revision: int | None,
+) -> dict[str, Any]:
+    canonical = _validate_runtime_refresh_unused_authority_closeout_mutation(
+        spec, idempotency_key
+    )
+    try:
+        validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
+    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        raise TaskSpecError(str(exc)) from exc
+    validate_schema(connection)
+    reserved_receipt = connection.execute(
+        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if reserved_receipt is None:
+        current = get_current(connection, canonical["id"])
+        if current is not None and current["spec_sha256"] == task_spec_digest(canonical):
+            raise TaskSpecError(
+                "runtime-refresh unused-authority closeout must create its authenticated "
+                "TaskSpec revision"
+            )
+    return _put_validated_material(
+        connection,
+        canonical,
+        idempotency_key=idempotency_key,
+        expected_revision=expected_revision,
+        source="runtime-refresh-unused-authority-closeout",
+    )
 
 
 def put_runtime_refresh_no_run_closeout(
@@ -920,6 +998,12 @@ def put(
     if idempotency_key.startswith(RUNTIME_REFRESH_NO_RUN_CLOSEOUT_IDEMPOTENCY_PREFIX):
         raise TaskSpecError(
             "runtime-refresh no-run closeout idempotency namespace is reserved"
+        )
+    if idempotency_key.startswith(
+        RUNTIME_REFRESH_UNUSED_AUTHORITY_CLOSEOUT_IDEMPOTENCY_PREFIX
+    ):
+        raise TaskSpecError(
+            "runtime-refresh unused-authority closeout idempotency namespace is reserved"
         )
     if idempotency_key.startswith(
         RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX

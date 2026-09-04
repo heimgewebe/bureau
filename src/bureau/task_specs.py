@@ -92,7 +92,7 @@ def _contains_resource_id_token(
     excluded_resource_id: str | None = None,
 ) -> bool:
     decoded = unquote(value) if "%" in value else value
-    candidates = (value,) if decoded == value else (value, decoded)
+    candidates = (decoded,)
     for candidate in candidates:
         start = 0
         while True:
@@ -199,7 +199,7 @@ def _contains_repository_path_token(
     """
 
     decoded = unquote(value) if "%" in value else value
-    candidates = (value,) if decoded == value else (value, decoded)
+    candidates = (decoded,)
     for candidate in candidates:
         start = 0
         while True:

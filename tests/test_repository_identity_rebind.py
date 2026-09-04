@@ -965,6 +965,50 @@ def test_preview_allows_target_resource_id_extending_old_id_with_colon(
     assert result["spec"]["metadata"]["target_resource"] == new_resource_id
 
 
+def test_preview_allows_percent_encoded_exact_target_resource_id(
+    tmp_path: Path,
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    new_resource_id = f"{OLD_RESOURCE}:archive"
+    encoded_target = new_resource_id.replace(":", "%3A")
+    spec["metadata"]["target_resource"] = encoded_target
+
+    result = task_specs.preview_repository_identity_rebind(
+        spec,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=new_resource_id,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )
+
+    assert result["spec"]["claims"][0]["resource"] == new_resource_id
+    assert result["spec"]["metadata"]["target_resource"] == encoded_target
+
+
+def test_preview_rejects_percent_encoded_continuation_of_target_resource_id(
+    tmp_path: Path,
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    new_resource_id = f"{OLD_RESOURCE}:archive"
+    encoded_other = f"{new_resource_id}:other".replace(":", "%3A")
+    spec["metadata"]["other_resource"] = encoded_other
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=new_resource_id,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
 def test_preview_rejects_non_target_scoped_old_resource_id_when_target_extends_old(
     tmp_path: Path,
 ) -> None:
@@ -1003,6 +1047,33 @@ def test_preview_rejects_colon_continuation_of_target_resource_id(
             old_repository_path=str(old_path),
             new_repository_path=str(new_path),
         )
+
+
+def test_preview_allows_percent_encoded_descendant_target_repository_path(
+    tmp_path: Path,
+) -> None:
+    _, old_path, _ = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    new_path = old_path / "archive"
+    new_path.mkdir()
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    encoded_target_descendant = f"file://{new_path}%2Fcache"
+    spec["execution"]["argv"] = ["tool", encoded_target_descendant]
+
+    result = task_specs.preview_repository_identity_rebind(
+        spec,
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )
+
+    assert result["spec"]["execution"]["working_repository"] == str(new_path)
+    assert result["spec"]["execution"]["argv"] == [
+        "tool",
+        encoded_target_descendant,
+    ]
 
 
 @pytest.mark.parametrize("delimiter", ("?", "#", "&"))

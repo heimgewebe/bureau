@@ -14,6 +14,7 @@ import sqlite3
 import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from .registry_snapshot import canonical_registry_identity
 
@@ -25,6 +26,11 @@ def _sha256(path: Path) -> str | None:
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError:
         return None
+
+
+def _sqlite_readonly_uri(path: Path) -> str:
+    """Return a read-only SQLite URI with path metacharacters escaped."""
+    return f"file:{quote(path.as_posix(), safe='/')}?mode=ro"
 
 
 MANAGED_PACKAGES = ("bureau", "bureau_cycle")
@@ -203,7 +209,7 @@ def _state_store_task_overlay_matches(
     state_path: Path | None,
     state_identity: dict[str, Any],
 ) -> bool:
-    """Prove every Git TaskSpec change matches current authoritative StateStore truth."""
+    """Prove every changed Git TaskSpec projection matches current StateStore truth."""
     if (
         state_path is None
         or state_identity.get("available") is not True
@@ -216,10 +222,11 @@ def _state_store_task_overlay_matches(
     resolved = configured.resolve()
     if not resolved.is_file():
         return False
-    try:
-        from . import task_specs
+    from . import task_specs
 
-        connection = sqlite3.connect(f"file:{resolved}?mode=ro", uri=True)
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(_sqlite_readonly_uri(resolved), uri=True)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA query_only=ON")
         connection.execute("BEGIN")
@@ -228,11 +235,11 @@ def _state_store_task_overlay_matches(
             task_id = _task_projection_id(path)
             if status not in {"A", "M"} or task_id is None:
                 return False
-            tree_entry = _git(registry_root, "ls-tree", head, "--", path)
+            tree_entry = _git(registry_root, "ls-tree", "-z", head, "--", path)
             if (
                 tree_entry is None
                 or not tree_entry.startswith("100644 blob ")
-                or not tree_entry.endswith(f"\t{path}")
+                or not tree_entry.endswith(f"\t{path}\0")
             ):
                 return False
             encoded = _git(registry_root, "show", f"{head}:{path}")
@@ -249,10 +256,10 @@ def _state_store_task_overlay_matches(
             if current is None or current.get("spec_sha256") != digest:
                 return False
         return True
-    except (OSError, sqlite3.Error, TypeError, ValueError):
+    except (task_specs.TaskSpecError, OSError, sqlite3.Error, TypeError, ValueError):
         return False
     finally:
-        if "connection" in locals():
+        if connection is not None:
             connection.close()
 
 
@@ -286,6 +293,7 @@ def _release_registry_drift_classification(
         registry_root,
         "diff",
         "--name-status",
+        "-z",
         "--no-renames",
         deployed_commit,
         head,
@@ -293,14 +301,12 @@ def _release_registry_drift_classification(
     )
     if changed is None:
         return "blocked"
-    entries: list[tuple[str, str]] = []
-    for line in changed.splitlines():
-        if not line:
-            continue
-        fields = line.split("\t")
-        if len(fields) != 2:
-            return "blocked"
-        entries.append((fields[0], fields[1]))
+    fields = changed.split("\0")
+    if fields and fields[-1] == "":
+        fields.pop()
+    if len(fields) % 2 != 0:
+        return "blocked"
+    entries = list(zip(fields[0::2], fields[1::2], strict=True))
     if (
         len(entries) == 1
         and entries[0][0] in {"A", "M"}
@@ -352,7 +358,7 @@ def _state_identity(state_path: Path | None) -> dict[str, Any]:
     if not resolved.is_file():
         return {"available": False, "path": str(resolved), "schema_version": None}
     try:
-        connection = sqlite3.connect(f"file:{resolved}?mode=ro", uri=True)
+        connection = sqlite3.connect(_sqlite_readonly_uri(resolved), uri=True)
         version = connection.execute("PRAGMA user_version").fetchone()[0]
         integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
     except sqlite3.Error as exc:

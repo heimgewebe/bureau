@@ -255,13 +255,73 @@ def test_state_store_authenticated_added_task_drift_preserves_release_compatibil
     assert identity["claim_root"]["reason_codes"] == ["external-github-main-not-observed"]
 
 
+def test_state_store_authenticated_modified_task_drift_preserves_release_compatibility(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, deployed_commit, _queue, task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    spec = runtime_identity_task_spec(
+        task_id="BUR-TEST-T001", title="modified state-store-bound", marker="m"
+    )
+    task.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+    head = commit_current_main(root, task, message="modify state-store-bound task projection")
+    assert head != deployed_commit
+    store, state_path = runtime_identity_state_store(tmp_path)
+    store.put_task_spec(
+        spec,
+        idempotency_key="runtime-identity:test:task-overlay:modify",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"] == {
+        "status": "compatible",
+        "mutation_allowed": True,
+        "reason_codes": [],
+    }
+    assert identity["claim_root"]["status"] == "local-preflight-clear"
+
+
+def test_state_store_authenticated_task_drift_handles_uri_reserved_state_path(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, _task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    task = root / "registry/tasks/BUR-TEST-T002.json"
+    spec = runtime_identity_task_spec()
+    task.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+    commit_current_main(root, task, message="publish task for reserved-uri state path")
+    state_root = tmp_path / "state?root#proof"
+    state_path = state_root / "bureau?current#proof.sqlite3"
+    store = StateStore(state_path, state_root)
+    store.put_task_spec(
+        spec,
+        idempotency_key="runtime-identity:test:task-overlay:uri-path",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["state"]["available"] is True
+    assert identity["state"]["integrity"] == "ok"
+    assert identity["compatibility"]["status"] == "compatible"
+    assert identity["compatibility"]["mutation_allowed"] is True
+
+
 def test_state_store_authenticated_symlink_task_projection_remains_fail_closed(
     tmp_path: Path, monkeypatch
 ) -> None:
     root, module, _deployed_commit, _queue, _task = release_drift_case(tmp_path, monkeypatch)
     task = root / "registry/tasks/BUR-TEST-T002.json"
     spec = runtime_identity_task_spec()
-    task.symlink_to(json.dumps(spec, separators=(",", ":")))
+    symlink_target = tmp_path / "same-task-content.json"
+    symlink_target.write_text(json.dumps(spec, separators=(",", ":")), encoding="utf-8")
+    task.symlink_to(symlink_target)
     commit_current_main(root, task, message="publish symlink task projection")
     assert git(root, "ls-tree", "HEAD", "--", task.relative_to(root).as_posix()).startswith(
         "120000 blob "

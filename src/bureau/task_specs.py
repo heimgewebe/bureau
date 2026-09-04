@@ -5,10 +5,11 @@ import json
 import sqlite3
 from collections.abc import Iterable, Mapping
 from typing import Any
+from urllib.parse import unquote
 
 from . import legacy, state_events
-from .acceptance import AcceptanceContractError
-from .schema_validation import DocumentSchemaError, validate_task_write
+from .acceptance import AcceptanceContractError, validate_acceptance_contract
+from .schema_validation import DocumentSchemaError, default_schema_set, validate_task_write
 
 TASK_SPEC_SCHEMA_VERSION = 1
 TASK_SPEC_EVENT_TYPE = "task-spec-revision-set"
@@ -21,6 +22,13 @@ RUNTIME_REFRESH_UNUSED_AUTHORITY_CLOSEOUT_IDEMPOTENCY_PREFIX = (
 RUNTIME_REFRESH_PROTECTED_PUBLICATION_ACTIVATION_IDEMPOTENCY_PREFIX = (
     "runtime-refresh-protected-publication-activation:"
 )
+REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX = "repository-identity-rebind:"
+REPOSITORY_IDENTITY_REBIND_TERMINAL_STATES = frozenset({"verified", "cancelled", "superseded"})
+REPOSITORY_IDENTITY_REBIND_ACTIVE_RUN_STATES = ("assigned", "running", "verifying")
+_REPOSITORY_TOKEN_BEFORE_BOUNDARIES = frozenset(" \t\r\n'\"=:(,[{?#&;|<>`")
+_REPOSITORY_TOKEN_AFTER_BOUNDARIES = frozenset(" \t\r\n'\"/:),;]}?#&|<>`")
+_RESOURCE_ID_TOKEN_EXTRA_CHARS = frozenset("._-")
+_URI_SCHEME_EXTRA_CHARS = frozenset("+-.")
 
 
 class TaskSpecError(ValueError):
@@ -39,6 +47,464 @@ def _canonical_spec(spec: Mapping[str, Any]) -> dict[str, Any]:
 
 def task_spec_digest(spec: Mapping[str, Any]) -> str:
     return legacy.sha256_json(_canonical_spec(spec))
+
+
+def _acceptance_diagnostics(spec: Mapping[str, Any]) -> list[dict[str, Any]]:
+    try:
+        validate_acceptance_contract(spec)
+    except AcceptanceContractError as exc:
+        return json.loads(legacy.canonical_json(exc.diagnostics))
+    return []
+
+
+def _validate_repository_identity_rebind_parameters(
+    *,
+    old_resource_id: str,
+    new_resource_id: str,
+    old_repository_path: str,
+    new_repository_path: str,
+) -> None:
+    for label, value in (
+        ("old_resource_id", old_resource_id),
+        ("new_resource_id", new_resource_id),
+    ):
+        if not isinstance(value, str) or not value.startswith("repo.") or len(value) > 240:
+            raise TaskSpecError(f"repository identity rebind {label} is invalid")
+    for label, value in (
+        ("old_repository_path", old_repository_path),
+        ("new_repository_path", new_repository_path),
+    ):
+        if (
+            not isinstance(value, str)
+            or not value.startswith("/")
+            or value == "/"
+            or value.endswith("/")
+            or len(value) > 4096
+        ):
+            raise TaskSpecError(f"repository identity rebind {label} is invalid")
+    if old_resource_id == new_resource_id:
+        raise TaskSpecError("repository identity rebind resource ids must differ")
+    if old_repository_path == new_repository_path:
+        raise TaskSpecError("repository identity rebind repository paths must differ")
+
+
+def _contains_resource_id_token(
+    value: str,
+    resource_id: str,
+    *,
+    excluded_resource_id: str | None = None,
+) -> bool:
+    decoded = unquote(value) if "%" in value else value
+    candidates = (decoded,)
+    for candidate in candidates:
+        start = 0
+        while True:
+            index = candidate.find(resource_id, start)
+            if index < 0:
+                break
+            end = index + len(resource_id)
+            before_ok = (
+                index == 0
+                or not (
+                    candidate[index - 1].isalnum()
+                    or candidate[index - 1] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+                )
+                or _is_shell_parameter_token_boundary(candidate, index)
+            )
+            after_ok = end == len(candidate) or not (
+                candidate[end].isalnum()
+                or candidate[end] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+            )
+            if before_ok and after_ok:
+                if (
+                    excluded_resource_id is not None
+                    and excluded_resource_id.startswith(resource_id)
+                    and candidate.startswith(excluded_resource_id, index)
+                ):
+                    excluded_end = index + len(excluded_resource_id)
+                    excluded_after_ok = excluded_end == len(candidate) or not (
+                        candidate[excluded_end].isalnum()
+                        or candidate[excluded_end]
+                        in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+                        or candidate[excluded_end] == ":"
+                    )
+                    if excluded_after_ok:
+                        start = index + 1
+                        continue
+                return True
+            start = index + 1
+    return False
+
+
+def _is_acceptance_evidence_path(path: str) -> bool:
+    return path == "/acceptance" or path.startswith("/acceptance/")
+
+
+def _is_nontechnical_task_prose_path(path: str) -> bool:
+    return path in {"/title", "/goal"}
+
+
+def _is_uri_authority_path_boundary(value: str, index: int) -> bool:
+    if index <= 0 or value[index] != "/":
+        return False
+    separator = value.rfind("://", 0, index)
+    if separator <= 0:
+        return False
+    authority = value[separator + 3 : index]
+    if not authority or any(
+        character.isspace() or character in "/?#'\"" for character in authority
+    ):
+        return False
+    scheme_start = separator
+    while scheme_start > 0:
+        character = value[scheme_start - 1]
+        if character.isalnum() or character in _URI_SCHEME_EXTRA_CHARS:
+            scheme_start -= 1
+            continue
+        break
+    scheme = value[scheme_start:separator]
+    if (
+        not scheme
+        or not scheme[0].isalpha()
+        or any(
+            not (character.isalnum() or character in _URI_SCHEME_EXTRA_CHARS)
+            for character in scheme
+        )
+    ):
+        return False
+    return (
+        scheme_start == 0
+        or value[scheme_start - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
+    )
+
+
+def _is_shell_parameter_token_boundary(value: str, index: int) -> bool:
+    if index <= 0:
+        return False
+    prefix = value[:index]
+    expansion_start = prefix.rfind("${")
+    if expansion_start < 0:
+        return False
+    expansion_body = prefix[expansion_start + 2 :]
+    if prefix.endswith("}") and "}" not in expansion_body[:-1]:
+        return True
+    if "}" in expansion_body:
+        return False
+    return any(
+        prefix.endswith(operator)
+        for operator in (":-", "-", ":=", "=", ":?", "?", ":+", "+")
+    )
+
+
+def _contains_repository_path_token(
+    value: str,
+    repository_path: str,
+    *,
+    excluded_repository_path: str | None = None,
+) -> bool:
+    """Return whether one string contains the path as a technical token.
+
+    Repository bindings may appear as plain paths or inside ``repo:``/``path:``
+    resource keys and metadata strings. Percent-encoded URI paths are decoded
+    once before the same boundary checks so encoded execution targets cannot
+    retain the old repository authority.
+    """
+
+    decoded = unquote(value) if "%" in value else value
+    candidates = (decoded,)
+    for candidate in candidates:
+        start = 0
+        while True:
+            index = candidate.find(repository_path, start)
+            if index < 0:
+                break
+            end = index + len(repository_path)
+            uri_prefix_ok = index >= 3 and candidate[index - 3 : index] == "://"
+            uri_authority_ok = _is_uri_authority_path_boundary(candidate, index)
+            before_ok = (
+                index == 0
+                or candidate[index - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
+                or uri_prefix_ok
+                or uri_authority_ok
+                or _is_shell_parameter_token_boundary(candidate, index)
+            )
+            after_ok = (
+                end == len(candidate)
+                or candidate[end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
+            )
+            if before_ok and after_ok:
+                excluded_is_repository_descendant = (
+                    excluded_repository_path is not None
+                    and excluded_repository_path.startswith(repository_path + "/")
+                )
+                if excluded_is_repository_descendant and candidate.startswith(
+                    excluded_repository_path, index
+                ):
+                    excluded_end = index + len(excluded_repository_path)
+                    excluded_after_ok = (
+                        excluded_end == len(candidate)
+                        or candidate[excluded_end] in _REPOSITORY_TOKEN_AFTER_BOUNDARIES
+                    )
+                    if excluded_after_ok:
+                        start = index + 1
+                        continue
+                return True
+            start = index + 1
+    return False
+
+
+def _old_repository_binding_residue(
+    value: Any,
+    *,
+    old_resource_id: str,
+    new_resource_id: str,
+    old_repository_path: str,
+    new_repository_path: str,
+    path: str = "",
+) -> list[str]:
+    if _is_acceptance_evidence_path(path) or _is_nontechnical_task_prose_path(path):
+        return []
+    result: list[str] = []
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            item_path = f"{path}/{key}"
+            if isinstance(key, str) and (
+                _contains_resource_id_token(
+                    key,
+                    old_resource_id,
+                    excluded_resource_id=new_resource_id,
+                )
+                or _contains_repository_path_token(
+                    key,
+                    old_repository_path,
+                    excluded_repository_path=new_repository_path,
+                )
+            ):
+                result.append(f"{item_path}#key")
+            result.extend(
+                _old_repository_binding_residue(
+                    item,
+                    old_resource_id=old_resource_id,
+                    new_resource_id=new_resource_id,
+                    old_repository_path=old_repository_path,
+                    new_repository_path=new_repository_path,
+                    path=item_path,
+                )
+            )
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            result.extend(
+                _old_repository_binding_residue(
+                    item,
+                    old_resource_id=old_resource_id,
+                    new_resource_id=new_resource_id,
+                    old_repository_path=old_repository_path,
+                    new_repository_path=new_repository_path,
+                    path=f"{path}/{index}",
+                )
+            )
+    elif isinstance(value, str) and (
+        _contains_resource_id_token(
+            value,
+            old_resource_id,
+            excluded_resource_id=new_resource_id,
+        )
+        or _contains_repository_path_token(
+            value,
+            old_repository_path,
+            excluded_repository_path=new_repository_path,
+        )
+    ):
+        result.append(path or "/")
+    return result
+
+
+def preview_repository_identity_rebind(
+    spec: Mapping[str, Any],
+    *,
+    old_resource_id: str,
+    new_resource_id: str,
+    old_repository_path: str,
+    new_repository_path: str,
+) -> dict[str, Any]:
+    """Return one invariant-checked repository-only TaskSpec transformation.
+
+    This is deliberately *not* a compatibility write bypass.  It validates the
+    Task document schema before and after the transformation, preserves the
+    acceptance material and its diagnostics exactly, and only rewrites the
+    canonical repository claim/path surfaces.
+    """
+
+    _validate_repository_identity_rebind_parameters(
+        old_resource_id=old_resource_id,
+        new_resource_id=new_resource_id,
+        old_repository_path=old_repository_path,
+        new_repository_path=new_repository_path,
+    )
+    canonical = _canonical_spec(spec)
+    source = f"TaskSpec:{canonical['id']}"
+    try:
+        default_schema_set().validate("task", canonical, source)
+    except DocumentSchemaError as exc:
+        raise TaskSpecError(str(exc)) from exc
+
+    acceptance_before = json.loads(
+        legacy.canonical_json(canonical.get("acceptance", []))
+    )
+    diagnostics_before = _acceptance_diagnostics(canonical)
+    material = json.loads(legacy.canonical_json(canonical))
+    changed_paths: list[str] = []
+
+    claims = material.get("claims")
+    if not isinstance(claims, list):
+        raise TaskSpecError("repository identity rebind TaskSpec claims must be a list")
+    old_claim_indexes = [
+        index
+        for index, claim in enumerate(claims)
+        if isinstance(claim, dict) and claim.get("resource") == old_resource_id
+    ]
+    if len(old_claim_indexes) != 1:
+        raise TaskSpecError(
+            "repository identity rebind requires exactly one old repository claim"
+        )
+    if any(
+        isinstance(claim, dict) and claim.get("resource") == new_resource_id
+        for claim in claims
+    ):
+        raise TaskSpecError(
+            "repository identity rebind refuses a pre-existing target repository claim"
+        )
+    claim_index = old_claim_indexes[0]
+    claims[claim_index]["resource"] = new_resource_id
+    changed_paths.append(f"/claims/{claim_index}/resource")
+    claim_changes = 1
+
+    execution = material.get("execution")
+    if not isinstance(execution, dict):
+        raise TaskSpecError("repository identity rebind TaskSpec execution must be an object")
+    if execution.get("working_repository") == old_repository_path:
+        execution["working_repository"] = new_repository_path
+        changed_paths.append("/execution/working_repository")
+
+    resources = execution.get("grabowski_resources")
+    if resources is not None:
+        if not isinstance(resources, list):
+            raise TaskSpecError(
+                "repository identity rebind grabowski_resources must be a list"
+            )
+        rewritten: list[Any] = []
+        old_repo_key = f"repo:{old_repository_path}"
+        new_repo_key = f"repo:{new_repository_path}"
+        old_path_key = f"path:{old_repository_path}"
+        new_path_key = f"path:{new_repository_path}"
+        for index, item in enumerate(resources):
+            if isinstance(item, str):
+                old_repo_bound = item == old_repo_key or item.startswith(
+                    old_repo_key + ":"
+                )
+                new_path_bound = item == new_path_key or item.startswith(
+                    new_path_key + "/"
+                )
+                old_path_bound = item == old_path_key or (
+                    item.startswith(old_path_key + "/")
+                    and not (
+                        new_repository_path.startswith(old_repository_path + "/")
+                        and new_path_bound
+                    )
+                )
+                already_new_bound = (
+                    item == new_repo_key
+                    or item.startswith(new_repo_key + ":")
+                    or new_path_bound
+                )
+                if old_repo_bound:
+                    item = new_repo_key + item[len(old_repo_key) :]
+                    changed_paths.append(f"/execution/grabowski_resources/{index}")
+                elif old_path_bound:
+                    item = new_path_key + item[len(old_path_key) :]
+                    changed_paths.append(f"/execution/grabowski_resources/{index}")
+                elif already_new_bound:
+                    rewritten.append(item)
+                    continue
+                elif old_repository_path in item:
+                    if item.startswith(old_path_key + "/"):
+                        item = new_path_key + item[len(old_path_key) :]
+                    else:
+                        raise TaskSpecError(
+                            "repository identity rebind refuses an unscoped old repository path"
+                        )
+                    changed_paths.append(f"/execution/grabowski_resources/{index}")
+            rewritten.append(item)
+        execution["grabowski_resources"] = rewritten
+
+    residue = _old_repository_binding_residue(
+        material,
+        old_resource_id=old_resource_id,
+        new_resource_id=new_resource_id,
+        old_repository_path=old_repository_path,
+        new_repository_path=new_repository_path,
+    )
+    if residue:
+        raise TaskSpecError(
+            "repository identity rebind left old technical bindings at: "
+            + ", ".join(sorted(residue))
+        )
+
+    try:
+        default_schema_set().validate("task", material, source)
+    except DocumentSchemaError as exc:
+        raise TaskSpecError(str(exc)) from exc
+    acceptance_after = json.loads(legacy.canonical_json(material.get("acceptance", [])))
+    diagnostics_after = _acceptance_diagnostics(material)
+    if acceptance_after != acceptance_before:
+        raise TaskSpecError("repository identity rebind changed acceptance material")
+    if diagnostics_after != diagnostics_before:
+        raise TaskSpecError("repository identity rebind changed acceptance diagnostics")
+
+    return {
+        "spec": material,
+        "spec_sha256": task_spec_digest(material),
+        "changed_paths": changed_paths,
+        "claim_changes": claim_changes,
+        "working_repository_changes": int(
+            "/execution/working_repository" in changed_paths
+        ),
+        "grabowski_resource_changes": sum(
+            path.startswith("/execution/grabowski_resources/")
+            for path in changed_paths
+        ),
+        "acceptance_sha256": legacy.sha256_json(acceptance_before),
+        "acceptance_diagnostics_sha256": legacy.sha256_json(diagnostics_before),
+    }
+
+
+def repository_identity_rebind_idempotency_key(
+    *,
+    task_id: str,
+    expected_revision: int,
+    expected_spec_sha256: str,
+    resulting_spec_sha256: str,
+    old_resource_id: str,
+    new_resource_id: str,
+    old_repository_path: str,
+    new_repository_path: str,
+) -> str:
+    binding = {
+        "task_id": task_id,
+        "expected_revision": expected_revision,
+        "expected_spec_sha256": expected_spec_sha256,
+        "resulting_spec_sha256": resulting_spec_sha256,
+        "old_resource_id": old_resource_id,
+        "new_resource_id": new_resource_id,
+        "old_repository_path": old_repository_path,
+        "new_repository_path": new_repository_path,
+    }
+    return (
+        REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX
+        + task_id
+        + ":"
+        + legacy.sha256_json(binding)
+    )
 
 
 def ensure_schema(connection: sqlite3.Connection) -> None:
@@ -1011,6 +1477,8 @@ def put(
         raise TaskSpecError(
             "runtime-refresh protected-publication activation idempotency namespace is reserved"
         )
+    if idempotency_key.startswith(REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX):
+        raise TaskSpecError("TaskSpec idempotency namespace is reserved")
     try:
         validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
     except (DocumentSchemaError, AcceptanceContractError) as exc:

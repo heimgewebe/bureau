@@ -15,6 +15,7 @@ import pytest
 from bureau import cli as bureau_cli
 from bureau import operator_intake as operator_intake_module
 from bureau import runtime_identity as runtime_identity_module
+from bureau import task_specs as task_specs_module
 from bureau.core import Registry, StateStore
 from bureau.live_register import live_register_record
 from bureau.operator_intake import (
@@ -3840,3 +3841,1244 @@ def test_operator_publication_commands_are_coordination_state_mutations():
         classify_command_effect_scope("operator-task-ready", mutates=True)
         == "coordination_state_mutation"
     )
+
+
+def _identity_revision_task(
+    *,
+    title: str,
+    resource: str,
+    initiative: str = "INIT-V1",
+    goal: str = "",
+    mode: str = "write",
+    acceptance_ids: tuple[str, ...] = (),
+) -> dict:
+    return {
+        "id": "INIT-V1-T001",
+        "initiative": initiative,
+        "title": title,
+        "goal": goal,
+        "claims": [{"resource": resource, "mode": mode, "isolation": "worktree"}],
+        "acceptance": [{"id": item_id} for item_id in acceptance_ids],
+    }
+
+
+def test_task_revision_identity_guard_rejects_disjoint_scope_and_subject() -> None:
+    before = _identity_revision_task(
+        title="Reposkop runtime interpreter cutover", resource="component.grabowski.runtime"
+    )
+    after = _identity_revision_task(
+        title="Metarepo compatibility surfaces cleanup", resource="repo.metarepo"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_disjoint_scope_with_title_continuity() -> None:
+    before = _identity_revision_task(
+        title="Define Chronik high-value operator events", resource="repo.chronik"
+    )
+    after = _identity_revision_task(
+        title="Filter Chronik operator events to high-value signals", resource="repo.grabowski"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_shared_suffix_after_action() -> None:
+    before = _identity_revision_task(
+        title="Repair Avira updater service", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Repair database updater service", resource="repo.infra"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_shared_suffix_after_unlisted_action() -> None:
+    before = _identity_revision_task(
+        title="Upgrade Avira updater service", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Upgrade database updater service", resource="repo.infra"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_hyphenated_process_prefix_subject_swap() -> None:
+    before = _identity_revision_task(
+        title="Pre-check Avira updater service", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Pre-check database updater service", resource="repo.infra"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_identifier_leading_subject_rewrite() -> None:
+    before = _identity_revision_task(
+        title="Bureau-Run-Leases revisionsgebunden an Captain delegieren",
+        resource="repo.grabowski",
+        goal="Bind lease delegation to the current revision",
+    )
+    after = _identity_revision_task(
+        title="Bureau-Run-Leases sicher an Captain delegieren",
+        resource="repo.grabowski",
+        goal="Keep delegation safe across revision changes",
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_allows_regular_plural_inflection() -> None:
+    before = _identity_revision_task(
+        title="Improve database migrations", resource="repo.database"
+    )
+    after = _identity_revision_task(
+        title="Improve database migration", resource="repo.database"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_allows_single_subject_plural_inflection() -> None:
+    before = _identity_revision_task(
+        title="Improve migrations", resource="repo.database"
+    )
+    after = _identity_revision_task(
+        title="Improve migration", resource="repo.database"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_does_not_stem_distinct_identifier() -> None:
+    before = _identity_revision_task(
+        title="Improve Canva exports", resource="repo.design"
+    )
+    after = _identity_revision_task(
+        title="Improve canvas exports", resource="repo.design"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_does_not_conflate_news_with_new() -> None:
+    before = _identity_revision_task(
+        title="Improve news pipeline", resource="repo.media", goal="Refresh editorial feeds"
+    )
+    after = _identity_revision_task(
+        title="Improve new pipeline", resource="repo.media", goal="Replace deployment flow"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_same_scope_unrelated_subject() -> None:
+    before = _identity_revision_task(
+        title="Repair Avira updater", resource="repo.infra", goal="Restore updater health"
+    )
+    after = _identity_revision_task(
+        title="Tune laptop thermal firmware",
+        resource="repo.infra",
+        goal="Restore thermal headroom and firmware baseline",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_goal_continuity_after_title_rewrite() -> None:
+    before = _identity_revision_task(
+        title="Old implementation wording",
+        resource="repo.alpha",
+        goal="Preserve exact runtime identity",
+    )
+    after = _identity_revision_task(
+        title="Completely renamed delivery slice",
+        resource="repo.beta",
+        goal="Preserve exact runtime identity while revising delivery",
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_allows_write_to_read_revalidation() -> None:
+    before = _identity_revision_task(
+        title="Build persistent recall store",
+        resource="repo.grabowski",
+        goal="Implement recall persistence",
+    )
+    after = _identity_revision_task(
+        title="Revalidate recall store against current truth architecture",
+        resource="repo.grabowski",
+        goal="Decide whether any separate recall store is still needed",
+        mode="read",
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_generic_action_token_only() -> None:
+    before = _identity_revision_task(
+        title="Repair Avira updater", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Repair database", resource="repo.database"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_two_generic_tokens() -> None:
+    before = _identity_revision_task(
+        title="Create new backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Create new dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_one_weak_shared_subject_token() -> None:
+    before = _identity_revision_task(
+        title="Create useful backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Create useful dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_two_weak_tokens_across_resources() -> None:
+    before = _identity_revision_task(
+        title="Create secure reliable backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Create secure reliable dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_single_complete_subject_token() -> None:
+    before = _identity_revision_task(
+        title="Create backup",
+        resource="repo.backup",
+        acceptance_ids=("backup-contract",),
+    )
+    after = _identity_revision_task(
+        title="Migrate backup",
+        resource="repo.backup",
+        acceptance_ids=("backup-contract",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_single_subject_across_resources() -> None:
+    before = _identity_revision_task(
+        title="Create backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Migrate backup", resource="repo.archive"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_exact_one_token_title() -> None:
+    before = _identity_revision_task(
+        title="contracts",
+        resource="repo.heimlern",
+        acceptance_ids=("contracts",),
+    )
+    after = _identity_revision_task(
+        title="contracts",
+        resource="repo.heimlern",
+        acceptance_ids=("contracts",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_allows_retained_typed_acceptance_anchor() -> None:
+    before = _identity_revision_task(
+        title="Signed one call replay filter",
+        resource="repo.grabowski",
+        goal="Decouple read only replay handling",
+        acceptance_ids=("replay-proof", "transport-proof"),
+    )
+    after = _identity_revision_task(
+        title="READ_ONLY transport proof",
+        resource="repo.grabowski",
+        goal="Prove the transport contract before cutover",
+        acceptance_ids=("replay-proof", "transport-proof"),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_reused_acceptance_ids_with_new_contract() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Restore archived snapshots",
+    )
+    after = _identity_revision_task(
+        title="Customer invoice dashboard",
+        resource="repo.shared",
+        goal="Render billing balances",
+    )
+    shared_contract = {
+        "evidence_type": "object",
+        "verifier": "manual_observation",
+        "verifier_config": {"observation_scope": "shared-contract"},
+    }
+    before["acceptance"] = [
+        {
+            "id": "proof-a",
+            "assertion": "Backup restore completes from an archived snapshot",
+            **shared_contract,
+        },
+        {
+            "id": "proof-b",
+            "assertion": "Retention policy keeps backup copies for seven days",
+            **shared_contract,
+        },
+    ]
+    after["acceptance"] = [
+        {
+            "id": "proof-a",
+            "assertion": "Customer dashboard renders current billing balances",
+            **shared_contract,
+        },
+        {
+            "id": "proof-b",
+            "assertion": "Invoice export lists settled customer payments",
+            **shared_contract,
+        },
+    ]
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_reused_acceptance_ids_with_suffix_only_assertions(
+) -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Restore archived snapshots",
+    )
+    after = _identity_revision_task(
+        title="Customer invoice dashboard",
+        resource="repo.shared",
+        goal="Render billing balances",
+    )
+    shared_contract = {
+        "evidence_type": "object",
+        "verifier": "manual_observation",
+        "verifier_config": {"observation_scope": "shared-contract"},
+    }
+    before["acceptance"] = [
+        {
+            "id": item_id,
+            "assertion": assertion,
+            **shared_contract,
+        }
+        for item_id, assertion in (
+            ("proof-a", "Verify backup retention policy state"),
+            ("proof-b", "Verify backup retention archive state"),
+        )
+    ]
+    after["acceptance"] = [
+        {
+            **criterion,
+            "assertion": criterion["assertion"].replace("backup", "billing"),
+        }
+        for criterion in before["acceptance"]
+    ]
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_reused_acceptance_ids_with_changed_verifier_contract(
+) -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Restore archived snapshots",
+    )
+    after = _identity_revision_task(
+        title="Customer invoice dashboard",
+        resource="repo.shared",
+        goal="Render billing balances",
+    )
+    before["acceptance"] = [
+        {
+            "id": item_id,
+            "assertion": assertion,
+            "evidence_type": "object",
+            "verifier": "manual_observation",
+            "verifier_config": {"observation_scope": "backup"},
+        }
+        for item_id, assertion in (
+            ("proof-a", "Backup restore completes from an archived snapshot"),
+            ("proof-b", "Retention policy keeps backup copies for seven days"),
+        )
+    ]
+    after["acceptance"] = [
+        {
+            **criterion,
+            "verifier_config": {"observation_scope": "billing"},
+        }
+        for criterion in before["acceptance"]
+    ]
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_unanchored_exact_one_token_title() -> None:
+    before = _identity_revision_task(
+        title="Upgrade",
+        resource="repo.shared",
+        goal="Preserve backup retention",
+        acceptance_ids=("backup-contract",),
+    )
+    after = _identity_revision_task(
+        title="Upgrade",
+        resource="repo.shared",
+        goal="Render customer dashboard",
+        acceptance_ids=("dashboard-contract",),
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_treats_unicode_words_as_single_tokens() -> None:
+    before = _identity_revision_task(
+        title="Prüfe Avira Updater", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Prüfe Datenbank", resource="repo.database"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_unrelated_write_to_read_closeout() -> None:
+    before = _identity_revision_task(
+        title="Build backup retention", resource="repo.shared"
+    )
+    after = _identity_revision_task(
+        title="Inspect dashboard metrics", resource="repo.shared", mode="read"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_unlisted_leading_process_word() -> None:
+    before = _identity_revision_task(
+        title="Upgrade legacy backup", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Upgrade legacy dashboard", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_preserves_leading_noun_on_resource_change() -> None:
+    before = _identity_revision_task(
+        title="Backup retention policy", resource="repo.backup"
+    )
+    after = _identity_revision_task(
+        title="Dashboard retention policy", resource="repo.dashboard"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_checks_full_tokens_on_retained_write_scope() -> None:
+    before = _identity_revision_task(
+        title="Avira updater service", resource="repo.shared"
+    )
+    after = _identity_revision_task(
+        title="Database updater service", resource="repo.shared"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_ignores_incidental_read_claim_overlap() -> None:
+    before = _identity_revision_task(title="Repair tests", resource="repo.alpha")
+    before["claims"].append(
+        {"resource": "repo.shared", "mode": "read", "isolation": "worktree"}
+    )
+    after = _identity_revision_task(title="Build tests", resource="repo.beta")
+    after["claims"].append(
+        {"resource": "repo.shared", "mode": "read", "isolation": "worktree"}
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_preserves_scoped_and_hyphenated_identifiers() -> None:
+    before = _identity_revision_task(
+        title="Repair @scope/pkg release", resource="repo.package"
+    )
+    after = _identity_revision_task(
+        title="Repair scope-pkg release", resource="repo.other"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_exact_generic_text() -> None:
+    before = _identity_revision_task(
+        title="Update",
+        resource="repo.backup",
+        goal="Preserve backup retention",
+    )
+    after = _identity_revision_task(
+        title="Update",
+        resource="repo.dashboard",
+        goal="Render customer dashboard",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_preserves_identifier_punctuation() -> None:
+    before = _identity_revision_task(
+        title="Improve C++ compiler", resource="repo.cpp"
+    )
+    after = _identity_revision_task(
+        title="Repair C# compiler", resource="repo.csharp"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_unrelated_read_to_write() -> None:
+    before = _identity_revision_task(
+        title="Inspect backup reports", resource="repo.backup", mode="read"
+    )
+    after = _identity_revision_task(
+        title="Repair database", resource="repo.database"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_related_read_to_write() -> None:
+    before = _identity_revision_task(
+        title="Inspect database corruption", resource="repo.database", mode="read"
+    )
+    after = _identity_revision_task(
+        title="Repair database corruption", resource="repo.database"
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_initiative_rebind() -> None:
+    before = _identity_revision_task(title="Keep the same task", resource="repo.alpha")
+    after = _identity_revision_task(
+        title="Keep the same task", resource="repo.alpha", initiative="OTHER-V1"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-initiative-mismatch"
+
+
+def test_task_propose_reactivation_uses_initial_identity(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    original = store.task_spec(task_id)
+    assert original is not None
+
+    closeout = json.loads(json.dumps(original["spec"]))
+    closeout["title"] = "Inspect unrelated dashboard metrics"
+    closeout["goal"] = "Read a different dashboard subject"
+    closeout["claims"][0]["mode"] = "read"
+    closeout["acceptance"][0]["id"] = "dashboard-proof"
+    with store.connect() as connection:
+        task_specs_module.put(
+            connection,
+            closeout,
+            idempotency_key="test:read-closeout",
+            expected_revision=int(original["revision"]),
+            source="test",
+        )
+    read_current = store.task_spec(task_id)
+    assert read_current is not None
+    assert int(read_current["revision"]) == int(original["revision"]) + 1
+    identity_baseline = operator_intake_module._task_revision_identity_baseline(
+        store, read_current
+    )
+    assert identity_baseline["revision"] == original["revision"]
+
+    reactivation = json.loads(json.dumps(closeout))
+    reactivation["claims"][0]["mode"] = "write"
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:laundered-read-reactivation",
+        title="Attempt laundered read reactivation",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:laundered-read-reactivation",
+        source_sha256="8" * 64,
+        desired_outcome="Reject an unrelated write reactivation",
+        repo="repo.beta",
+        task_id=task_id,
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=reactivation,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "laundered-read-reactivation.proposal.json",
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_propose_first_write_after_read_drift_uses_initial_identity(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="read")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    original = store.task_spec(task_id)
+    assert original is not None
+
+    drifted_read = json.loads(json.dumps(original["spec"]))
+    drifted_read["title"] = "Inspect unrelated dashboard metrics"
+    drifted_read["acceptance"][0]["id"] = "dashboard-proof"
+    with store.connect() as connection:
+        task_specs_module.put(
+            connection,
+            drifted_read,
+            idempotency_key="test:read-only-identity-drift",
+            expected_revision=int(original["revision"]),
+            source="test",
+        )
+    current = store.task_spec(task_id)
+    assert current is not None
+    proposed = json.loads(json.dumps(current["spec"]))
+    proposed["claims"][0]["mode"] = "write"
+    operator_intake_module._validate_task_revision_identity_continuity(
+        current["spec"], proposed
+    )
+    identity_baseline = operator_intake_module._task_revision_identity_baseline(
+        store, current
+    )
+    assert identity_baseline["revision"] == original["revision"]
+
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:first-write-after-read-drift",
+        title="Attempt first write after read drift",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:first-write-after-read-drift",
+        source_sha256="a" * 64,
+        desired_outcome="Reject write activation after unrelated read-only identity drift",
+        repo="repo.beta",
+        task_id=task_id,
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=proposed,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "first-write-after-read-drift.proposal.json",
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_propose_write_chain_uses_first_write_identity(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    task_path = root / "registry/tasks/BUR-TEST-001-T002.json"
+    task = json.loads(task_path.read_text())
+    task["title"] = "Repair Avira updater service"
+    task_path.write_text(json.dumps(task))
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    original = store.task_spec(task_id)
+    assert original is not None
+
+    intermediate = json.loads(json.dumps(original["spec"]))
+    intermediate["title"] = "Repair updater service database"
+    with store.connect() as connection:
+        task_specs_module.put(
+            connection,
+            intermediate,
+            idempotency_key="test:gradual-write-drift-intermediate",
+            expected_revision=int(original["revision"]),
+            source="test",
+        )
+    current = store.task_spec(task_id)
+    assert current is not None
+    assert int(current["revision"]) == int(original["revision"]) + 1
+
+    proposed = json.loads(json.dumps(current["spec"]))
+    proposed["title"] = "Repair service database dashboard"
+    # The immediate predecessor still looks locally continuous. The stable baseline
+    # must be what prevents gradual laundering of the permanent task identity.
+    operator_intake_module._validate_task_revision_identity_continuity(
+        current["spec"], proposed
+    )
+    identity_baseline = operator_intake_module._task_revision_identity_baseline(
+        store, current
+    )
+    assert identity_baseline["revision"] == original["revision"]
+
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:gradual-write-drift",
+        title="Attempt gradual write identity drift",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:gradual-write-drift",
+        source_sha256="9" * 64,
+        desired_outcome="Reject gradual semantic drift under one permanent task id",
+        repo="repo.beta",
+        task_id=task_id,
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=proposed,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "gradual-write-drift.proposal.json",
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_reviewed_pre_hardening_revision_cannot_bypass_publication_guard(
+    registry_factory, tmp_path, monkeypatch
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    current = store.task_spec(task_id)
+    assert current is not None
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:pre-hardening-semantic-reuse",
+        title="Attempt pre-hardening unrelated reuse",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:pre-hardening-semantic-reuse",
+        source_sha256="7" * 64,
+        desired_outcome="Reuse an existing id for unrelated write work",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["title"] = "Completely unrelated replacement subject"
+    revised["goal"] = "Perform unrelated write work under the existing identifier."
+    with monkeypatch.context() as proposal_context:
+        proposal_context.setattr(
+            operator_intake_module,
+            "_validate_task_revision_identity_continuity",
+            lambda *_: None,
+        )
+        plan_path = tmp_path / "pre-hardening-semantic-reuse.proposal.json"
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=plan_path,
+        )
+    pending = json.loads(plan_path.read_text())
+    review_task_proposal(
+        plan_path=plan_path,
+        reviewer="post-hardening-reviewer",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+    before = store.task_spec(task_id)
+    with pytest.raises(OperatorIntakeError) as raised:
+        publication_preview(registry, store, plan_path=plan_path)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+    assert store.task_spec(task_id) == before
+
+
+def test_task_propose_rejects_malformed_revision_claims_as_schema_error(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    current = store.task_spec(task_id)
+    assert current is not None
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:malformed-revision-claims",
+        title="Malformed revision claims",
+        source_kind="runtime-diagnostic",
+        source_locator="bureau:malformed-revision-claims",
+        source_sha256="6" * 64,
+        desired_outcome="Reject malformed revision claims without a traceback",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["claims"] = None
+    plan_path = tmp_path / "malformed-revision-claims.proposal.json"
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=plan_path,
+        )
+    assert raised.value.code == "task-schema-invalid"
+    assert not plan_path.exists()
+
+
+def test_task_propose_rejects_reuse_of_existing_id_for_unrelated_write_scope(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(task_count=2, mode="write")
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T002"
+    current = store.task_spec(task_id)
+    assert current is not None
+    current_resources = {claim["resource"] for claim in current["spec"]["claims"]}
+    replacement = next(
+        resource for resource in registry.resources if resource not in current_resources
+    )
+    recorded = candidate_record(
+        registry, store, idempotency_key="source:semantic-reuse",
+        title="Attempt unrelated reuse", source_kind="runtime-diagnostic",
+        source_locator="bureau:semantic-reuse", source_sha256="8" * 64,
+        desired_outcome="Reuse an existing id for unrelated work",
+        repo="repo.alpha", task_id=task_id,
+    )
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["title"] = "Unrelated replacement work with another subject"
+    revised["goal"] = "Perform a materially different task under the old identifier."
+    revised["claims"] = [{"resource": replacement, "mode": "write", "isolation": "worktree"}]
+    plan_path = tmp_path / "semantic-reuse.proposal.json"
+    with pytest.raises(OperatorIntakeError) as raised:
+        task_propose(
+            registry, store, candidate_id=recorded["candidate_id"], task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001", path=plan_path,
+        )
+    assert raised.value.code == "task-revision-identity-discontinuity"
+    assert not plan_path.exists()
+
+
+
+def test_task_revision_identity_guard_rejects_acceptance_predicate_inversion_anchor() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Restore archived snapshots",
+    )
+    after = _identity_revision_task(
+        title="Customer invoice dashboard",
+        resource="repo.shared",
+        goal="Render billing balances",
+    )
+    shared_contract = {
+        "evidence_type": "object",
+        "verifier": "manual_observation",
+        "verifier_config": {"observation_scope": "shared-contract"},
+    }
+    before["acceptance"] = [
+        {
+            "id": "proof-a",
+            "assertion": "Verify backup policy prevents customer data deletion in production",
+            **shared_contract,
+        },
+        {
+            "id": "proof-b",
+            "assertion": "Verify archive policy prevents snapshot deletion in production",
+            **shared_contract,
+        },
+    ]
+    after["acceptance"] = [
+        {
+            **criterion,
+            "assertion": criterion["assertion"].replace("prevents", "permits"),
+        }
+        for criterion in before["acceptance"]
+    ]
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_removed_strong_leading_identifier() -> None:
+    before = _identity_revision_task(
+        title="API backup updater service", resource="repo.infra"
+    )
+    after = _identity_revision_task(
+        title="Repair dashboard updater service", resource="repo.infra"
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_allows_identifier_moved_behind_action() -> None:
+    before = _identity_revision_task(
+        title="API runtime cleanup",
+        resource="repo.infra",
+        acceptance_ids=("api-runtime",),
+    )
+    after = _identity_revision_task(
+        title="Clean API runtime",
+        resource="repo.infra",
+        acceptance_ids=("api-runtime",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+@pytest.mark.parametrize(
+    ("plural", "singular"),
+    [
+        ("backups", "backup"),
+        ("contracts", "contract"),
+        ("tasks", "task"),
+        ("files", "file"),
+        ("workers", "worker"),
+    ],
+)
+def test_task_revision_identity_guard_allows_regular_trailing_s_plural(
+    plural: str, singular: str
+) -> None:
+    before = _identity_revision_task(
+        title=f"Improve database {plural}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    after = _identity_revision_task(
+        title=f"Improve database {singular}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+
+def test_task_revision_identity_guard_rejects_title_cased_identifier_as_plural() -> None:
+    before = _identity_revision_task(
+        title="Maintain Ruby Rails",
+        resource="repo.shared",
+        goal="Serve HTTP application framework",
+    )
+    after = _identity_revision_task(
+        title="Maintain Ruby Rail",
+        resource="repo.shared",
+        goal="Track locomotive infrastructure",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+@pytest.mark.parametrize(
+    ("plural", "singular"),
+    [("schemas", "schema"), ("logos", "logo")],
+)
+def test_task_revision_identity_guard_allows_lowercase_as_os_regular_plural(
+    plural: str, singular: str
+) -> None:
+    before = _identity_revision_task(
+        title=f"Improve database {plural}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    after = _identity_revision_task(
+        title=f"Improve database {singular}",
+        resource="repo.database",
+        acceptance_ids=("database-contract",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+
+def test_task_revision_identity_guard_rejects_subject_prefix_before_relocated_identifier() -> None:
+    before = _identity_revision_task(
+        title="API backup updater service",
+        resource="repo.infra",
+        goal="Restore backup API health",
+    )
+    after = _identity_revision_task(
+        title="Dashboard API updater service",
+        resource="repo.infra",
+        goal="Render customer dashboard data",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+
+def test_task_revision_identity_guard_rejects_retained_broad_identifier_suffix_swap() -> None:
+    before = _identity_revision_task(
+        title="API backup updater service",
+        resource="repo.infra",
+        goal="Restore backup API health",
+    )
+    after = _identity_revision_task(
+        title="API database updater service",
+        resource="repo.infra",
+        goal="Repair database API state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+
+def test_task_revision_identity_guard_rejects_predicate_inversion_as_weak_subject_support() -> None:
+    before = _identity_revision_task(
+        title="contracts",
+        resource="repo.shared",
+        goal="Restore archived snapshots",
+    )
+    after = _identity_revision_task(
+        title="contracts",
+        resource="repo.shared",
+        goal="Render billing balances",
+    )
+    shared_contract = {
+        "evidence_type": "object",
+        "verifier": "manual_observation",
+        "verifier_config": {"observation_scope": "shared-contract"},
+    }
+    before["acceptance"] = [
+        {
+            "id": "proof-a",
+            "assertion": "Verify backup policy prevents customer data deletion in production",
+            **shared_contract,
+        }
+    ]
+    after["acceptance"] = [
+        {
+            **before["acceptance"][0],
+            "assertion": "Verify backup policy permits customer data deletion in production",
+        }
+    ]
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+
+def test_task_revision_identity_guard_rejects_action_only_semantic_inversion() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Disable customer data deletion",
+    )
+    after = _identity_revision_task(
+        title="Billing dashboard export",
+        resource="repo.shared",
+        goal="Enable customer data deletion",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_reordered_replaced_technical_identifier() -> None:
+    before = _identity_revision_task(
+        title="API runtime cleanup",
+        resource="repo.shared",
+        goal="Repair API runtime state",
+    )
+    after = _identity_revision_task(
+        title="SSH cleanup runtime",
+        resource="repo.shared",
+        goal="Replace remote shell state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_retained_identifier_behind_action_suffix_swap(
+) -> None:
+    before = _identity_revision_task(
+        title="Repair API backup updater service",
+        resource="repo.infra",
+        goal="Restore backup API health",
+    )
+    after = _identity_revision_task(
+        title="Repair API database updater service",
+        resource="repo.infra",
+        goal="Repair database API state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+@pytest.mark.parametrize(
+    ("plural", "singular"),
+    [
+        ("buses", "bus"),
+        ("statuses", "status"),
+        ("heroes", "hero"),
+        ("tomatoes", "tomato"),
+    ],
+)
+def test_task_revision_identity_guard_allows_pairwise_es_plural(
+    plural: str, singular: str
+) -> None:
+    before = _identity_revision_task(
+        title=f"Improve game {plural}",
+        resource="repo.shared",
+        acceptance_ids=("subject-contract",),
+    )
+    after = _identity_revision_task(
+        title=f"Improve game {singular}",
+        resource="repo.shared",
+        acceptance_ids=("subject-contract",),
+    )
+    operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_unlisted_action_technical_identifier_swap() -> None:
+    before = _identity_revision_task(
+        title="Upgrade API runtime cleanup",
+        resource="repo.shared",
+        goal="Repair API runtime state",
+    )
+    after = _identity_revision_task(
+        title="Upgrade SSH cleanup runtime",
+        resource="repo.shared",
+        goal="Replace remote shell state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_predicate_inversion_behind_wrapper() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Ensure disable customer data deletion",
+    )
+    after = _identity_revision_task(
+        title="Billing dashboard export",
+        resource="repo.shared",
+        goal="Ensure enable customer data deletion",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_inflected_subject_predicate_inversion() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Disable game heroes",
+    )
+    after = _identity_revision_task(
+        title="Billing dashboard export",
+        resource="repo.shared",
+        goal="Enable game hero",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_single_hyphen_package_identifier_swap() -> None:
+    before = _identity_revision_task(
+        title="Repair foo-bar runtime cleanup",
+        resource="repo.shared",
+        goal="Restore package runtime state",
+    )
+    after = _identity_revision_task(
+        title="Repair baz-qux cleanup runtime",
+        resource="repo.shared",
+        goal="Render billing dashboard balances",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"

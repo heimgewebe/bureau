@@ -1179,6 +1179,49 @@ def test_preview_rejects_old_repository_path_in_shell_parameter_expansion(
         )
 
 
+@pytest.mark.parametrize("operator", (":-", "-"))
+def test_preview_rejects_old_resource_id_in_shell_parameter_fallback(
+    tmp_path: Path, operator: str
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["execution"]["argv"] = [
+        "sh",
+        "-c",
+        f'use "${{RESOURCE{operator}{OLD_RESOURCE}}}"',
+    ]
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
+def test_preview_rejects_old_repository_path_after_closed_shell_expansion(
+    tmp_path: Path,
+) -> None:
+    _, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=True
+    )
+    spec = _task("TASK-A", str(old_path), legacy=True)
+    spec["execution"]["argv"] = ["sh", "-c", f'cd "${{ROOT}}{old_path}"']
+
+    with pytest.raises(task_specs.TaskSpecError, match="left old technical bindings"):
+        task_specs.preview_repository_identity_rebind(
+            spec,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_repository_path=str(old_path),
+            new_repository_path=str(new_path),
+        )
+
+
 @pytest.mark.parametrize("field", ("title", "goal"))
 def test_preview_preserves_repository_path_mention_in_task_prose(
     tmp_path: Path, field: str

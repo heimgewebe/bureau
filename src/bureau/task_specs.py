@@ -100,9 +100,13 @@ def _contains_resource_id_token(
             if index < 0:
                 break
             end = index + len(resource_id)
-            before_ok = index == 0 or not (
-                candidate[index - 1].isalnum()
-                or candidate[index - 1] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+            before_ok = (
+                index == 0
+                or not (
+                    candidate[index - 1].isalnum()
+                    or candidate[index - 1] in _RESOURCE_ID_TOKEN_EXTRA_CHARS
+                )
+                or _is_shell_parameter_token_boundary(candidate, index)
             )
             after_ok = end == len(candidate) or not (
                 candidate[end].isalnum()
@@ -171,12 +175,17 @@ def _is_uri_authority_path_boundary(value: str, index: int) -> bool:
     )
 
 
-def _is_shell_parameter_path_boundary(value: str, index: int) -> bool:
+def _is_shell_parameter_token_boundary(value: str, index: int) -> bool:
     if index <= 0:
         return False
     prefix = value[:index]
     expansion_start = prefix.rfind("${")
-    if expansion_start < 0 or "}" in prefix[expansion_start + 2 :]:
+    if expansion_start < 0:
+        return False
+    expansion_body = prefix[expansion_start + 2 :]
+    if prefix.endswith("}") and "}" not in expansion_body[:-1]:
+        return True
+    if "}" in expansion_body:
         return False
     return any(
         prefix.endswith(operator)
@@ -214,7 +223,7 @@ def _contains_repository_path_token(
                 or candidate[index - 1] in _REPOSITORY_TOKEN_BEFORE_BOUNDARIES
                 or uri_prefix_ok
                 or uri_authority_ok
-                or _is_shell_parameter_path_boundary(candidate, index)
+                or _is_shell_parameter_token_boundary(candidate, index)
             )
             after_ok = (
                 end == len(candidate)

@@ -5018,3 +5018,67 @@ def test_task_revision_identity_guard_allows_pairwise_es_plural(
         acceptance_ids=("subject-contract",),
     )
     operator_intake_module._validate_task_revision_identity_continuity(before, after)
+
+
+def test_task_revision_identity_guard_rejects_unlisted_action_technical_identifier_swap() -> None:
+    before = _identity_revision_task(
+        title="Upgrade API runtime cleanup",
+        resource="repo.shared",
+        goal="Repair API runtime state",
+    )
+    after = _identity_revision_task(
+        title="Upgrade SSH cleanup runtime",
+        resource="repo.shared",
+        goal="Replace remote shell state",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_predicate_inversion_behind_wrapper() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Ensure disable customer data deletion",
+    )
+    after = _identity_revision_task(
+        title="Billing dashboard export",
+        resource="repo.shared",
+        goal="Ensure enable customer data deletion",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_inflected_subject_predicate_inversion() -> None:
+    before = _identity_revision_task(
+        title="Backup retention archive",
+        resource="repo.shared",
+        goal="Disable game heroes",
+    )
+    after = _identity_revision_task(
+        title="Billing dashboard export",
+        resource="repo.shared",
+        goal="Enable game hero",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_task_revision_identity_guard_rejects_single_hyphen_package_identifier_swap() -> None:
+    before = _identity_revision_task(
+        title="Repair foo-bar runtime cleanup",
+        resource="repo.shared",
+        goal="Restore package runtime state",
+    )
+    after = _identity_revision_task(
+        title="Repair baz-qux cleanup runtime",
+        resource="repo.shared",
+        goal="Render billing dashboard balances",
+    )
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module._validate_task_revision_identity_continuity(before, after)
+    assert raised.value.code == "task-revision-identity-discontinuity"

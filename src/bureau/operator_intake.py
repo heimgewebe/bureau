@@ -2018,6 +2018,21 @@ def _task_revision_acceptance_items(
 
 
 _TASK_REVISION_INFLECTION_EXCEPTIONS = frozenset({"news", "series", "species"})
+_TASK_REVISION_RESTRICTIVE_PREDICATES = frozenset(
+    {
+        "block", "blocked", "blocks", "deny", "denied", "denies",
+        "disable", "disabled", "disables", "disallow", "disallowed", "disallows",
+        "forbid", "forbids", "forbidden", "prevent", "prevented", "prevents",
+        "reject", "rejected", "rejects",
+    }
+)
+_TASK_REVISION_PERMISSIVE_PREDICATES = frozenset(
+    {
+        "accept", "accepted", "accepts", "admit", "admits", "admitted",
+        "allow", "allowed", "allows", "enable", "enabled", "enables",
+        "permit", "permits", "permitted",
+    }
+)
 
 
 def _task_revision_plural_base(token: str) -> str | None:
@@ -2084,14 +2099,46 @@ def _task_revision_strong_leading_identity(value: Any) -> str | None:
     return _task_revision_strong_token_identity(raw_tokens[0])
 
 
+def _task_revision_subject_token_identity(token: str) -> str | None:
+    identity = _task_revision_strong_token_identity(token)
+    if identity is not None:
+        return identity
+    # A single-hyphen subject token is commonly a package/service identifier. Keep
+    # this narrower than the leading-token rule so process prefixes such as
+    # `pre-check` do not become permanent technical identities by accident.
+    if token.count("-") == 1:
+        left, right = token.split("-", 1)
+        if (
+            len(left) >= 2
+            and len(right) >= 2
+            and left.isalpha()
+            and right.isalpha()
+        ):
+            return token.casefold()
+    return None
+
+
 def _task_revision_subject_leading_identity(value: Any) -> str | None:
     raw_tokens = _TASK_REVISION_TOKEN_RE.findall(str(value or "").strip())
     if not raw_tokens:
         return None
-    index = 0
-    if len(raw_tokens) > 1 and raw_tokens[0].casefold() in _TASK_REVISION_GENERIC_TOKENS:
-        index = 1
-    return _task_revision_strong_token_identity(raw_tokens[index])
+    leading_identity = _task_revision_strong_token_identity(raw_tokens[0])
+    if leading_identity is not None:
+        return leading_identity
+    # Match the scorer's action-agnostic subject position even when the first token
+    # was not pre-enumerated (for example `Upgrade API ...`).
+    if len(raw_tokens) > 1:
+        return _task_revision_subject_token_identity(raw_tokens[1])
+    return None
+
+
+def _task_revision_predicate_polarity(value: Any) -> int | None:
+    tokens = set(_task_revision_tokens(value))
+    restrictive = bool(tokens & _TASK_REVISION_RESTRICTIVE_PREDICATES)
+    permissive = bool(tokens & _TASK_REVISION_PERMISSIVE_PREDICATES)
+    if restrictive == permissive:
+        return None
+    return -1 if restrictive else 1
 
 
 def _task_revision_has_strong_leading_identity(value: Any) -> bool:
@@ -2238,7 +2285,11 @@ def _task_revision_acceptance_item_is_continuous(
         after.get("assertion"),
         resource_continuity=True,
     )
-    return continuous and evidence["subject_token_overlap"] >= 4
+    return (
+        continuous
+        and evidence["subject_token_overlap"] >= 4
+        and not evidence["predicate_inversion"]
+    )
 
 
 def _task_revision_text_is_continuous(
@@ -2281,6 +2332,13 @@ def _task_revision_text_is_continuous(
         and bool(after_all_tokens)
         and before_all_tokens[0] != after_all_tokens[0]
         and before_subject == after_subject
+    )
+    before_predicate_polarity = _task_revision_predicate_polarity(before)
+    after_predicate_polarity = _task_revision_predicate_polarity(after)
+    predicate_inversion = (
+        before_predicate_polarity is not None
+        and after_predicate_polarity is not None
+        and before_predicate_polarity != after_predicate_polarity
     )
     shorter_subject_sequence_count = min(len(before_subject), len(after_subject))
     retained_strong_identity_overlap = int(
@@ -2352,6 +2410,9 @@ def _task_revision_text_is_continuous(
         "retained_strong_leading_identity": retained_strong_leading_identity,
         "technical_identity_mismatch": technical_identity_mismatch,
         "action_only_rewrite": action_only_rewrite,
+        "before_predicate_polarity": before_predicate_polarity,
+        "after_predicate_polarity": after_predicate_polarity,
+        "predicate_inversion": predicate_inversion,
         "before_subject_sequence": before_subject,
         "after_subject_sequence": after_subject,
         "shared_subject_suffix_count": shared_subject_suffix_count,
@@ -2437,7 +2498,7 @@ def _validate_task_revision_identity_continuity(
     ]
     if any(
         evidence["trailing_inflection_continuity"]
-        and (not evidence["action_only_rewrite"] or bool(exact_acceptance_ids))
+        and (not evidence["predicate_inversion"] or bool(exact_acceptance_ids))
         for evidence in continuous_evidence
     ):
         return
@@ -2447,7 +2508,7 @@ def _validate_task_revision_identity_continuity(
             int(evidence["full_shorter_subject_token_count"]),
         )
         >= _TASK_REVISION_SUBJECT_OVERLAP_MIN
-        and (not evidence["action_only_rewrite"] or bool(exact_acceptance_ids))
+        and (not evidence["predicate_inversion"] or bool(exact_acceptance_ids))
         for evidence in continuous_evidence
     ):
         return

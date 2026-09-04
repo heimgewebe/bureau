@@ -432,6 +432,7 @@ def parser() -> argparse.ArgumentParser:
     claim_commit.add_argument("--workspace", action="store_true")
     claim_status = sub.add_parser("claim-coordination-status")
     claim_status.add_argument("run_id")
+    claim_status.add_argument("--activity-id")
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
@@ -454,6 +455,22 @@ def parser() -> argparse.ArgumentParser:
     heartbeat = sub.add_parser("heartbeat")
     heartbeat.add_argument("run_id")
     heartbeat.add_argument("--worker")
+    heartbeat.add_argument("--bound-activity", action="store_true")
+    heartbeat.add_argument("--activity-id")
+    heartbeat.add_argument("--task-id")
+    heartbeat.add_argument("--task-sha256")
+    heartbeat.add_argument("--plan-sha256")
+    heartbeat.add_argument("--envelope-sha256")
+    heartbeat.add_argument(
+        "--external-unbound",
+        "--external-absent",
+        dest="external_unbound",
+        action="store_true",
+    )
+    heartbeat.add_argument("--external-system")
+    heartbeat.add_argument("--external-id")
+    heartbeat.add_argument("--external-state")
+    heartbeat.add_argument("--external-observed-at")
     orphan_resume = sub.add_parser("orphan-resume")
     orphan_resume.add_argument("run_id")
     orphan_resume.add_argument("--worker", required=True)
@@ -581,6 +598,23 @@ def adapters(args: argparse.Namespace) -> AdapterRegistry:
         except Exception as exc:
             registry.mark_unavailable("grabowski-task", exc)
     return registry
+
+
+def _runs_with_heartbeat_projections(
+    store: StateStore, runs: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    from .bound_activity import run_heartbeat_projections
+
+    projections = {
+        item["run_id"]: item
+        for item in run_heartbeat_projections(
+            store, [run["run_id"] for run in runs]
+        )
+    }
+    return [
+        {**run, "heartbeat_projection": projections[run["run_id"]]}
+        for run in runs
+    ]
 
 
 def read_only_state_integrity(args: argparse.Namespace) -> dict[str, Any]:
@@ -1734,7 +1768,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "status":
             value = {
                 **registry.summary(),
-                "runs": store.list_runs(),
+                "runs": _runs_with_heartbeat_projections(store, store.list_runs()),
                 "lifecycle": lifecycle_diagnostics(registry, store),
                 "adapters": adapter_registry.status(),
             }
@@ -1973,6 +2007,14 @@ def main(argv: list[str] | None = None) -> int:
                 args.run_id,
                 resource_db=DEFAULT_GRABOWSKI_RESOURCE_DB,
             )
+            if args.activity_id is not None:
+                from .bound_activity import bound_activity_status
+
+                value["bound_activity"] = bound_activity_status(
+                    store,
+                    args.run_id,
+                    args.activity_id,
+                )
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(
@@ -2019,13 +2061,61 @@ def main(argv: list[str] | None = None) -> int:
                 emit(value, args.json)
                 return 1
         elif args.command == "runs":
-            value = store.list_runs()
+            value = _runs_with_heartbeat_projections(store, store.list_runs())
         elif args.command == "run":
-            value = store.run(args.run_id)
+            value = _runs_with_heartbeat_projections(store, [store.run(args.run_id)])[0]
         elif args.command == "bind":
             value = store.bind(args.run_id, args.system, args.external_id)
         elif args.command == "heartbeat":
-            value = store.heartbeat(args.run_id, args.worker)
+            bound_value_arguments = (
+                args.activity_id,
+                args.task_id,
+                args.task_sha256,
+                args.plan_sha256,
+                args.envelope_sha256,
+                args.external_system,
+                args.external_id,
+                args.external_state,
+                args.external_observed_at,
+            )
+            bound_arguments_provided = args.external_unbound or any(
+                item is not None for item in bound_value_arguments
+            )
+            if not args.bound_activity and bound_arguments_provided:
+                raise StateError("bound activity arguments require --bound-activity")
+            if args.bound_activity:
+                from .bound_activity import bound_activity_heartbeat
+
+                required = {
+                    "activity-id": args.activity_id,
+                    "task-id": args.task_id,
+                    "worker": args.worker,
+                    "task-sha256": args.task_sha256,
+                    "plan-sha256": args.plan_sha256,
+                    "envelope-sha256": args.envelope_sha256,
+                }
+                missing = [name for name, item in required.items() if not item]
+                if missing:
+                    raise StateError("bound activity heartbeat requires " + ", ".join(missing))
+                value = bound_activity_heartbeat(
+                    store,
+                    root,
+                    args.run_id,
+                    activity_id=args.activity_id,
+                    task_id=args.task_id,
+                    worker_id=args.worker,
+                    task_sha256=args.task_sha256,
+                    plan_sha256=args.plan_sha256,
+                    envelope_sha256=args.envelope_sha256,
+                    external_unbound=args.external_unbound,
+                    external_system=args.external_system,
+                    external_id=args.external_id,
+                    external_state=args.external_state,
+                    external_observed_at=args.external_observed_at,
+                    adapter_registry=adapter_registry,
+                )
+            else:
+                value = store.heartbeat(args.run_id, args.worker)
         elif args.command == "orphan-resume":
             value = dispatcher.resume_orphaned_run(
                 args.run_id,

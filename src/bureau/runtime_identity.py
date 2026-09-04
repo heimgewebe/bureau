@@ -14,6 +14,7 @@ import sqlite3
 import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from .registry_snapshot import canonical_registry_identity
 
@@ -25,6 +26,11 @@ def _sha256(path: Path) -> str | None:
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError:
         return None
+
+
+def _sqlite_readonly_uri(path: Path) -> str:
+    """Return a read-only SQLite URI with path metacharacters escaped."""
+    return f"file:{quote(path.as_posix(), safe='/')}?mode=ro"
 
 
 MANAGED_PACKAGES = ("bureau", "bureau_cycle")
@@ -40,6 +46,7 @@ SCHEDULER_NAMES = (
 
 CANONICAL_GITHUB_REPOSITORY = "heimgewebe/bureau"
 LEGACY_QUEUE_PROJECTION_PATH = "registry/queue.json"
+TASK_PROJECTION_PREFIX = "registry/tasks/"
 
 
 def github_repository_from_remote(value: str | None) -> str | None:
@@ -122,10 +129,18 @@ def _git(root: Path, *arguments: str) -> str | None:
             text=True,
             timeout=5,
             env={
-                **os.environ,
+                "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                "HOME": os.environ.get("HOME", str(Path.home())),
+                "LANG": "C.UTF-8",
+                "LC_ALL": "C.UTF-8",
+                "GIT_CONFIG_NOSYSTEM": "1",
                 "GIT_CONFIG_GLOBAL": os.devnull,
                 "GIT_CONFIG_SYSTEM": os.devnull,
+                "GIT_TERMINAL_PROMPT": "0",
                 "GIT_OPTIONAL_LOCKS": "0",
+                "GIT_NO_REPLACE_OBJECTS": "1",
+                "GIT_PAGER": "cat",
+                "PAGER": "cat",
             },
         )
     except (OSError, subprocess.SubprocessError):
@@ -176,10 +191,87 @@ def _git_identity(root: Path) -> dict[str, Any]:
     }
 
 
+def _task_projection_id(path: str) -> str | None:
+    if not path.startswith(TASK_PROJECTION_PREFIX):
+        return None
+    relative = path.removeprefix(TASK_PROJECTION_PREFIX)
+    if not relative.endswith(".json") or "/" in relative:
+        return None
+    task_id = relative.removesuffix(".json")
+    return task_id or None
+
+
+def _state_store_task_overlay_matches(
+    registry_root: Path,
+    head: str,
+    entries: list[tuple[str, str]],
+    *,
+    state_path: Path | None,
+    state_identity: dict[str, Any],
+) -> bool:
+    """Prove every changed Git TaskSpec projection matches current StateStore truth."""
+    if (
+        state_path is None
+        or state_identity.get("available") is not True
+        or state_identity.get("integrity") != "ok"
+    ):
+        return False
+    configured = state_path.expanduser()
+    if configured.is_symlink():
+        return False
+    resolved = configured.resolve()
+    if not resolved.is_file():
+        return False
+    from . import task_specs
+
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(_sqlite_readonly_uri(resolved), uri=True)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA query_only=ON")
+        connection.execute("BEGIN")
+        task_specs.validate_schema(connection)
+        for status, path in entries:
+            task_id = _task_projection_id(path)
+            if status not in {"A", "M"} or task_id is None:
+                return False
+            tree_entry = _git(registry_root, "ls-tree", "-z", head, "--", path)
+            if (
+                tree_entry is None
+                or not tree_entry.startswith("100644 blob ")
+                or not tree_entry.endswith(f"\t{path}\0")
+            ):
+                return False
+            encoded = _git(registry_root, "show", f"{head}:{path}")
+            if encoded is None:
+                return False
+            try:
+                spec = json.loads(encoded)
+            except json.JSONDecodeError:
+                return False
+            if not isinstance(spec, dict) or spec.get("id") != task_id:
+                return False
+            digest = task_specs.task_spec_digest(spec)
+            current = task_specs.get_current(connection, task_id)
+            if current is None or current.get("spec_sha256") != digest:
+                return False
+        return True
+    except (task_specs.TaskSpecError, OSError, sqlite3.Error, TypeError, ValueError):
+        return False
+    finally:
+        if connection is not None:
+            connection.close()
+
+
 def _release_registry_drift_classification(
-    registry_root: Path, deployed_commit: Any, registry: dict[str, Any]
+    registry_root: Path,
+    deployed_commit: Any,
+    registry: dict[str, Any],
+    *,
+    state_path: Path | None = None,
+    state_identity: dict[str, Any] | None = None,
 ) -> str:
-    """Classify only the one legacy queue drift that may preserve compatibility."""
+    """Classify the narrow release/Registry drifts that preserve runtime compatibility."""
     head = registry.get("head")
     if not isinstance(deployed_commit, str) or not deployed_commit:
         return "blocked"
@@ -195,15 +287,13 @@ def _release_registry_drift_classification(
         != CANONICAL_GITHUB_REPOSITORY
     ):
         return "blocked"
-    queue_path = registry_root / LEGACY_QUEUE_PROJECTION_PATH
-    if queue_path.is_symlink() or not queue_path.is_file():
-        return "blocked"
     if _git(registry_root, "merge-base", deployed_commit, head) != deployed_commit:
         return "blocked"
     changed = _git(
         registry_root,
         "diff",
-        "--name-only",
+        "--name-status",
+        "-z",
         "--no-renames",
         deployed_commit,
         head,
@@ -211,9 +301,42 @@ def _release_registry_drift_classification(
     )
     if changed is None:
         return "blocked"
-    changed_paths = sorted({line for line in changed.splitlines() if line})
-    if changed_paths == [LEGACY_QUEUE_PROJECTION_PATH]:
+    fields = changed.split("\0")
+    if fields and fields[-1] == "":
+        fields.pop()
+    if len(fields) % 2 != 0:
+        return "blocked"
+    entries = list(zip(fields[0::2], fields[1::2], strict=True))
+    if (
+        len(entries) == 1
+        and entries[0][0] in {"A", "M"}
+        and entries[0][1] == LEGACY_QUEUE_PROJECTION_PATH
+    ):
+        queue_path = registry_root / LEGACY_QUEUE_PROJECTION_PATH
+        if queue_path.is_symlink() or not queue_path.is_file():
+            return "blocked"
         return "legacy-queue-only"
+    if (
+        entries
+        and all(
+            status in {"A", "M"} and _task_projection_id(path) is not None
+            for status, path in entries
+        )
+        and _state_store_task_overlay_matches(
+            registry_root,
+            head,
+            entries,
+            state_path=state_path,
+            state_identity=state_identity or {},
+        )
+        and _git(registry_root, "rev-parse", "HEAD") == head
+        and _git(registry_root, "rev-parse", "origin/main") == head
+        and _git(
+            registry_root, "status", "--porcelain=v1", "--untracked-files=normal"
+        )
+        == ""
+    ):
+        return "state-store-task-overlay"
     return "blocked"
 
 
@@ -235,7 +358,7 @@ def _state_identity(state_path: Path | None) -> dict[str, Any]:
     if not resolved.is_file():
         return {"available": False, "path": str(resolved), "schema_version": None}
     try:
-        connection = sqlite3.connect(f"file:{resolved}?mode=ro", uri=True)
+        connection = sqlite3.connect(_sqlite_readonly_uri(resolved), uri=True)
         version = connection.execute("PRAGMA user_version").fetchone()[0]
         integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
     except sqlite3.Error as exc:
@@ -389,8 +512,13 @@ def bureau_runtime_identity(
             }
         )
 
+    state = _state_identity(state_path)
     release_registry_drift = _release_registry_drift_classification(
-        resolved_registry_root, manifest.get("source_commit"), registry
+        resolved_registry_root,
+        manifest.get("source_commit"),
+        registry,
+        state_path=state_path,
+        state_identity=state,
     )
 
     if canonical_selected:
@@ -420,7 +548,7 @@ def bureau_runtime_identity(
     elif manifest.get("valid") is True:
         source_kind = "immutable-release"
         if (
-            release_registry_drift in {"exact", "legacy-queue-only"}
+            release_registry_drift in {"exact", "legacy-queue-only", "state-store-task-overlay"}
             and registry.get("dirty") is False
         ):
             status = "compatible"
@@ -450,7 +578,7 @@ def bureau_runtime_identity(
             claim_root_reasons.append("registry-checkout-dirty")
         if (
             registry.get("head") != manifest.get("source_commit")
-            and release_registry_drift != "legacy-queue-only"
+            and release_registry_drift not in {"legacy-queue-only", "state-store-task-overlay"}
         ):
             claim_root_reasons.append("registry-head-differs-deployed-source")
         if registry.get("origin_main") != registry.get("head"):
@@ -506,7 +634,7 @@ def bureau_runtime_identity(
             "does_not_establish": ["github_main_commit", "remote_freshness"],
         },
         "claim_root": claim_root,
-        "state": _state_identity(state_path),
+        "state": state,
         "manifest": manifest,
         "compatibility": {
             "status": status,

@@ -17,10 +17,12 @@ from bureau import runtime_identity as runtime_identity_module
 from bureau.registry_snapshot import snapshot_tree_sha256
 from bureau.runtime_identity import (
     SCHEDULER_NAMES,
+    _git,
     _package_tree_sha256,
     bureau_runtime_identity,
     require_mutation_compatible,
 )
+from bureau.v2 import StateStore
 
 
 def git(root: Path, *args: str) -> str:
@@ -64,6 +66,37 @@ def init_repo(root: Path) -> None:
     git(root, "fetch", "origin", "main:refs/remotes/origin/main")
 
 
+def test_runtime_identity_git_reads_ignore_replace_refs(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    init_repo(root)
+    proof = root / "replace-proof.txt"
+    proof.write_text("baseline\n", encoding="utf-8")
+    baseline = commit_current_main(root, proof, message="add replace proof baseline")
+    proof.write_text("replacement\n", encoding="utf-8")
+    replacement = commit_current_main(root, proof, message="add replacement object")
+    git(root, "replace", baseline, replacement)
+
+    assert git(root, "show", f"{baseline}:replace-proof.txt") == "replacement"
+    assert _git(root, "show", f"{baseline}:replace-proof.txt") == "baseline"
+
+
+def test_runtime_identity_git_reads_ignore_ambient_git_dir(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root = tmp_path / "repo"
+    other = tmp_path / "other"
+    init_repo(root)
+    init_repo(other)
+    root_head = git(root, "rev-parse", "HEAD")
+    other_head = git(other, "rev-parse", "HEAD")
+    assert root_head != "" and other_head != ""
+
+    monkeypatch.setenv("GIT_DIR", str(other / ".git"))
+    monkeypatch.setenv("GIT_INDEX_FILE", str(other / ".git/index"))
+
+    assert _git(root, "rev-parse", "HEAD") == root_head
+
+
 def release_drift_case(tmp_path: Path, monkeypatch):
     root = tmp_path / "repo"
     init_repo(root)
@@ -91,6 +124,39 @@ def release_drift_case(tmp_path: Path, monkeypatch):
         },
     )
     return root, module, deployed_commit, queue, task
+
+
+def runtime_identity_task_spec(
+    task_id: str = "BUR-TEST-T002", *, title: str = "state-store-bound", marker: str = "a"
+) -> dict:
+    return {
+        "schema_version": 1,
+        "id": task_id,
+        "initiative": "BUR-TEST-V1",
+        "title": title,
+        "state": "planned",
+        "priority": {"lane": "later", "rank": 1},
+        "depends_on": [],
+        "execution": {"mode": "manual", "policy": "review-before-effect"},
+        "claims": [],
+        "required_capabilities": [],
+        "acceptance": [
+            {
+                "id": "proof",
+                "assertion": "bound proof exists",
+                "evidence_type": "object",
+                "verifier": "manual_observation",
+                "verifier_config": {"observation_scope": f"test:{task_id}:proof"},
+            }
+        ],
+        "metadata": {"marker": marker},
+    }
+
+
+def runtime_identity_state_store(tmp_path: Path) -> tuple[StateStore, Path]:
+    state_root = tmp_path / "state"
+    state_path = state_root / "bureau.sqlite3"
+    return StateStore(state_path, state_root), state_path
 
 
 def commit_current_main(root: Path, *paths: Path, message: str) -> str:
@@ -127,6 +193,247 @@ def test_queue_only_forward_drift_preserves_release_compatibility(
     assert identity["claim_root"]["reason_codes"] == [
         "external-github-main-not-observed"
     ]
+
+
+def test_added_queue_projection_preserves_legacy_release_compatibility(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root = tmp_path / "repo-queue-add"
+    init_repo(root)
+    deployed_commit = git(root, "rev-parse", "HEAD")
+    git(root, "update-ref", "refs/remotes/origin/main", deployed_commit)
+    git(root, "remote", "set-url", "origin", "git@github.com:heimgewebe/bureau.git")
+    module = tmp_path / "release-queue-add/src/bureau/runtime_identity.py"
+    module.parent.mkdir(parents=True)
+    module.write_text("# immutable release\n", encoding="utf-8")
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "_manifest_identity",
+        lambda _module: {
+            "available": True,
+            "valid": True,
+            "source_commit": deployed_commit,
+            "canonical_registry": {},
+        },
+    )
+    queue = root / "registry/queue.json"
+    queue.parent.mkdir(parents=True)
+    queue.write_text('{"schema_version":1,"lanes":{"now":[]}}\n', encoding="utf-8")
+    commit_current_main(root, queue, message="add legacy queue projection")
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"]["status"] == "compatible"
+    assert identity["compatibility"]["mutation_allowed"] is True
+
+
+def test_state_store_authenticated_added_task_drift_preserves_release_compatibility(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, deployed_commit, _queue, _task = release_drift_case(tmp_path, monkeypatch)
+    task = root / "registry/tasks/BUR-TEST-T002.json"
+    spec = runtime_identity_task_spec()
+    task.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+    head = commit_current_main(root, task, message="publish state-store-bound task projection")
+    assert head != deployed_commit
+    store, state_path = runtime_identity_state_store(tmp_path)
+    store.put_task_spec(
+        spec,
+        idempotency_key="runtime-identity:test:task-overlay",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"] == {
+        "status": "compatible",
+        "mutation_allowed": True,
+        "reason_codes": [],
+    }
+    assert identity["claim_root"]["status"] == "local-preflight-clear"
+    assert identity["claim_root"]["reason_codes"] == ["external-github-main-not-observed"]
+
+
+def test_state_store_authenticated_modified_task_drift_preserves_release_compatibility(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, deployed_commit, _queue, task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    spec = runtime_identity_task_spec(
+        task_id="BUR-TEST-T001", title="modified state-store-bound", marker="m"
+    )
+    task.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+    head = commit_current_main(root, task, message="modify state-store-bound task projection")
+    assert head != deployed_commit
+    store, state_path = runtime_identity_state_store(tmp_path)
+    store.put_task_spec(
+        spec,
+        idempotency_key="runtime-identity:test:task-overlay:modify",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"] == {
+        "status": "compatible",
+        "mutation_allowed": True,
+        "reason_codes": [],
+    }
+    assert identity["claim_root"]["status"] == "local-preflight-clear"
+
+
+def test_state_store_authenticated_task_drift_handles_uri_reserved_state_path(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, _task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    task = root / "registry/tasks/BUR-TEST-T002.json"
+    spec = runtime_identity_task_spec()
+    task.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+    commit_current_main(root, task, message="publish task for reserved-uri state path")
+    state_root = tmp_path / "state?root#proof"
+    state_path = state_root / "bureau?current#proof.sqlite3"
+    store = StateStore(state_path, state_root)
+    store.put_task_spec(
+        spec,
+        idempotency_key="runtime-identity:test:task-overlay:uri-path",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["state"]["available"] is True
+    assert identity["state"]["integrity"] == "ok"
+    assert identity["compatibility"]["status"] == "compatible"
+    assert identity["compatibility"]["mutation_allowed"] is True
+
+
+def test_state_store_authenticated_symlink_task_projection_remains_fail_closed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, _task = release_drift_case(tmp_path, monkeypatch)
+    task = root / "registry/tasks/BUR-TEST-T002.json"
+    spec = runtime_identity_task_spec()
+    symlink_target = tmp_path / "same-task-content.json"
+    symlink_target.write_text(json.dumps(spec, separators=(",", ":")), encoding="utf-8")
+    task.symlink_to(symlink_target)
+    commit_current_main(root, task, message="publish symlink task projection")
+    assert git(root, "ls-tree", "HEAD", "--", task.relative_to(root).as_posix()).startswith(
+        "120000 blob "
+    )
+    store, state_path = runtime_identity_state_store(tmp_path)
+    store.put_task_spec(
+        spec,
+        idempotency_key="runtime-identity:test:task-overlay:symlink",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert "release-registry-identity-mismatch" in identity["compatibility"]["reason_codes"]
+
+
+def test_state_store_later_revision_blocks_authenticated_git_task_overlay(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, _task = release_drift_case(tmp_path, monkeypatch)
+    task = root / "registry/tasks/BUR-TEST-T002.json"
+    published = runtime_identity_task_spec()
+    task.write_text(json.dumps(published, indent=2) + "\n", encoding="utf-8")
+    commit_current_main(root, task, message="publish task projection before state revision")
+    store, state_path = runtime_identity_state_store(tmp_path)
+    store.put_task_spec(
+        published,
+        idempotency_key="runtime-identity:test:task-overlay:r1",
+        expected_revision=None,
+        source="test",
+    )
+    later = runtime_identity_task_spec(title="later authoritative revision", marker="b")
+    store.put_task_spec(
+        later,
+        idempotency_key="runtime-identity:test:task-overlay:r2",
+        expected_revision=1,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert "release-registry-identity-mismatch" in identity["compatibility"]["reason_codes"]
+
+
+def test_task_overlay_with_unbound_state_store_digest_remains_fail_closed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, _task = release_drift_case(tmp_path, monkeypatch)
+    task = root / "registry/tasks/BUR-TEST-T002.json"
+    published = runtime_identity_task_spec(title="git projection")
+    task.write_text(json.dumps(published, indent=2) + "\n", encoding="utf-8")
+    commit_current_main(root, task, message="publish unbound task projection")
+    store, state_path = runtime_identity_state_store(tmp_path)
+    different = runtime_identity_task_spec(title="different state-store spec")
+    store.put_task_spec(
+        different,
+        idempotency_key="runtime-identity:test:task-overlay:mismatch",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert "release-registry-identity-mismatch" in identity["compatibility"]["reason_codes"]
+
+
+def test_task_overlay_mixed_with_structural_registry_change_remains_fail_closed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, _task = release_drift_case(tmp_path, monkeypatch)
+    task = root / "registry/tasks/BUR-TEST-T002.json"
+    spec = runtime_identity_task_spec()
+    task.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+    resource = root / "registry/resources/repo.test.json"
+    resource.parent.mkdir(parents=True, exist_ok=True)
+    resource.write_text("{}\n", encoding="utf-8")
+    commit_current_main(root, task, resource, message="mix task and structural registry drift")
+    store, state_path = runtime_identity_state_store(tmp_path)
+    store.put_task_spec(
+        spec,
+        idempotency_key="runtime-identity:test:task-overlay:mixed",
+        expected_revision=None,
+        source="test",
+    )
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
+
+
+def test_deleted_task_projection_remains_fail_closed_with_state_store(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, task = release_drift_case(tmp_path, monkeypatch)
+    _store, state_path = runtime_identity_state_store(tmp_path)
+    git(root, "rm", task.relative_to(root).as_posix())
+    git(root, "commit", "-m", "delete task projection")
+    head = git(root, "rev-parse", "HEAD")
+    git(root, "update-ref", "refs/remotes/origin/main", head)
+
+    identity = bureau_runtime_identity(root, module_path=module, state_path=state_path)
+
+    assert identity["compatibility"]["status"] == "stale"
+    assert identity["compatibility"]["mutation_allowed"] is False
 
 
 def test_taskspec_drift_remains_fail_closed(tmp_path: Path, monkeypatch) -> None:

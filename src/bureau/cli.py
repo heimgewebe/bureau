@@ -1708,7 +1708,15 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0 if value["healthy"] and value.get("binding_healthy", True) else 1
         if args.command == "status-projection":
-            from .github_observer import observe_pull_requests
+            from .github_observer import (
+                _blocked_observation,
+                _utc_now,
+                observe_pull_requests,
+            )
+            from .github_repository import (
+                RepositoryIdentifierError,
+                resolve_github_repository,
+            )
             from .status_projection import status_projection
 
             if args.skip_github:
@@ -1718,13 +1726,26 @@ def main(argv: list[str] | None = None) -> int:
                     Path(args.github_observations).expanduser().read_text(encoding="utf-8")
                 )
             else:
-                github = observe_pull_requests(
-                    root,
-                    repository=args.repo,
-                    registry=registry,
-                    state_db=state_path,
-                    state_root=state_root,
-                )
+                try:
+                    selection = resolve_github_repository(
+                        registry,
+                        repo_resource="repo.bureau" if args.repo is None else None,
+                        legacy_repo=args.repo,
+                    )
+                except RepositoryIdentifierError as exc:
+                    github = _blocked_observation(
+                        None,
+                        f"{exc.code}: {exc.message}",
+                        _utc_now(),
+                    )
+                else:
+                    github = observe_pull_requests(
+                        root,
+                        repository=selection.repository,
+                        registry=registry,
+                        state_db=state_path,
+                        state_root=state_root,
+                    )
             value = status_projection(
                 root,
                 registry=registry,

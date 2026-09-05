@@ -9286,6 +9286,252 @@ def _current_verification_stamps(
     }
 
 
+def _legacy_verified_disposition_record(row: sqlite3.Row) -> dict[str, Any]:
+    if row["event_type"] != state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE:
+        raise legacy.StateError("legacy verified disposition event type is invalid")
+    if row["event_schema_version"] != state_events.EVENT_SCHEMA_VERSION:
+        raise legacy.StateError("legacy verified disposition event schema version is invalid")
+    try:
+        payload = json.loads(str(row["payload_json"]))
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise legacy.StateError("legacy verified disposition payload JSON is invalid") from exc
+    try:
+        state_events.validate_event(
+            state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE, payload, row["run_id"]
+        )
+    except state_events.StateEventError as exc:
+        raise legacy.StateError(str(exc)) from exc
+    return {
+        "event_id": int(row["event_id"]),
+        "created_at": str(row["created_at"]),
+        **payload,
+    }
+
+
+def _legacy_verified_disposition_records(
+    connection: sqlite3.Connection,
+) -> list[dict[str, Any]]:
+    rows = connection.execute(
+        "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+        "FROM events WHERE run_id IS NULL AND event_type=? ORDER BY event_id",
+        (state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,),
+    ).fetchall()
+    return [_legacy_verified_disposition_record(row) for row in rows]
+
+
+def _current_legacy_verified_dispositions(
+    registry: Registry,
+    connection: sqlite3.Connection,
+    verification_stamps: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    active: dict[str, dict[str, Any]] = {}
+    conflicts: set[str] = set()
+    historical: list[dict[str, Any]] = []
+    for record in _legacy_verified_disposition_records(connection):
+        task_id = record["task_id"]
+        task = registry.tasks.get(task_id)
+        status = "active"
+        if task is None:
+            status = "unknown_task"
+        elif record["task_sha256"] != task.sha256:
+            status = "stale_task_sha256"
+        elif task.state != "verified":
+            status = "task_not_verified"
+        elif task_id in verification_stamps:
+            status = "superseded_by_current_verification"
+        elif task_id in conflicts:
+            status = "conflicting_current_disposition"
+        elif task_id in active:
+            status = "conflicting_current_disposition"
+            conflicts.add(task_id)
+            active.pop(task_id, None)
+        else:
+            active[task_id] = record
+        historical.append({**record, "status": status})
+    return {
+        "active": active,
+        "conflicting_task_ids": sorted(conflicts),
+        "historical": historical,
+    }
+
+
+def _legacy_verified_disposition_payload(
+    *, task_id: str, task_sha256: str, reason: str, evidence_ref: str
+) -> dict[str, Any]:
+    payload = {
+        "schema_version": state_events.EVENT_SCHEMA_VERSION,
+        "kind": state_events.LEGACY_VERIFIED_DISPOSITION_KIND,
+        "disposition": state_events.LEGACY_VERIFIED_DISPOSITION_VALUE,
+        "task_id": task_id,
+        "task_sha256": task_sha256,
+        "reason": reason.strip(),
+        "evidence_ref": evidence_ref.strip(),
+    }
+    try:
+        state_events.validate_event(
+            state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE, payload, None
+        )
+    except state_events.StateEventError as exc:
+        raise legacy.StateError(str(exc)) from exc
+    return payload
+
+
+def _legacy_verified_disposition_preview_from_connection(
+    registry: Registry,
+    connection: sqlite3.Connection,
+    *,
+    task_id: str,
+    expected_task_sha256: str,
+    reason: str,
+    evidence_ref: str,
+) -> dict[str, Any]:
+    operational_registry, authority, _ = _authoritative_task_registry_from_connection(
+        registry, connection
+    )
+    task = operational_registry.tasks.get(task_id)
+    if task is None:
+        raise legacy.StateError(f"unknown task {task_id}")
+    if task.state != "verified":
+        raise legacy.StateError(
+            f"task {task_id} must be verified before legacy disposition"
+        )
+    if task.sha256 != expected_task_sha256:
+        raise legacy.StateError(
+            f"task {task_id} revision changed before legacy disposition"
+        )
+    verification_stamps = _current_verification_stamps(operational_registry, connection)
+    if task_id in verification_stamps:
+        raise legacy.StateError(
+            f"task {task_id} has current verification and cannot be legacy-dispositioned"
+        )
+    payload = _legacy_verified_disposition_payload(
+        task_id=task_id,
+        task_sha256=task.sha256,
+        reason=reason,
+        evidence_ref=evidence_ref,
+    )
+    matching_binding: list[dict[str, Any]] = []
+    identical: list[dict[str, Any]] = []
+    for record in _legacy_verified_disposition_records(connection):
+        if record["task_id"] != task_id or record["task_sha256"] != task.sha256:
+            continue
+        matching_binding.append(record)
+        if all(record.get(key) == value for key, value in payload.items()):
+            identical.append(record)
+    if len(matching_binding) > 1 or len(identical) > 1:
+        raise legacy.StateError(
+            f"task {task_id} legacy disposition journal has duplicate current bindings"
+        )
+    if matching_binding and not identical:
+        raise legacy.StateError(
+            f"task {task_id} legacy disposition conflicts with existing current binding"
+        )
+    existing = identical[0] if identical else None
+    preview = {
+        "schema_version": 1,
+        "kind": "bureau.legacy_verified_disposition_preview",
+        "status": "already-dispositioned" if existing else "ready-to-apply",
+        "task_id": task_id,
+        "task_sha256": task.sha256,
+        "task_state": task.state,
+        "disposition": state_events.LEGACY_VERIFIED_DISPOSITION_VALUE,
+        "reason": payload["reason"],
+        "evidence_ref": payload["evidence_ref"],
+        "idempotent": existing is not None,
+        "existing_event_id": existing["event_id"] if existing else None,
+        "authority_kind": authority["kind"],
+        "does_not_establish": [
+            "current_verification",
+            "dependency_satisfaction",
+            "task_readiness",
+            "claim_authority",
+            "dispatch_authority",
+            "initiative_completion",
+        ],
+    }
+    preview["preview_sha256"] = legacy.sha256_json(preview)
+    return preview
+
+
+def legacy_verified_disposition(
+    registry: Registry,
+    store: StateStore,
+    *,
+    task_id: str,
+    expected_task_sha256: str,
+    reason: str,
+    evidence_ref: str,
+    apply: bool = False,
+    expected_preview_sha256: str | None = None,
+) -> dict[str, Any]:
+    if not apply:
+        with store.connect() as connection:
+            return _legacy_verified_disposition_preview_from_connection(
+                registry,
+                connection,
+                task_id=task_id,
+                expected_task_sha256=expected_task_sha256,
+                reason=reason,
+                evidence_ref=evidence_ref,
+            )
+    if not expected_preview_sha256:
+        raise legacy.StateError(
+            "legacy verified disposition apply requires expected preview SHA-256"
+        )
+    with store.immediate() as connection:
+        preview = _legacy_verified_disposition_preview_from_connection(
+            registry,
+            connection,
+            task_id=task_id,
+            expected_task_sha256=expected_task_sha256,
+            reason=reason,
+            evidence_ref=evidence_ref,
+        )
+        if preview["preview_sha256"] != expected_preview_sha256:
+            raise legacy.StateError(
+                "legacy verified disposition preview changed before apply"
+            )
+        if preview["idempotent"]:
+            return {
+                **preview,
+                "kind": "bureau.legacy_verified_disposition_receipt",
+                "status": "already-dispositioned",
+                "effect_started": False,
+            }
+        payload = _legacy_verified_disposition_payload(
+            task_id=task_id,
+            task_sha256=expected_task_sha256,
+            reason=reason,
+            evidence_ref=evidence_ref,
+        )
+        store.event(
+            connection,
+            state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,
+            payload,
+        )
+        canonical_payload = legacy.canonical_json(payload)
+        rows = connection.execute(
+            "SELECT event_id,run_id,event_type,event_schema_version,payload_json,created_at "
+            "FROM events WHERE event_type=? AND run_id IS NULL AND payload_json=? "
+            "ORDER BY event_id",
+            (state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE, canonical_payload),
+        ).fetchall()
+        if len(rows) != 1:
+            raise legacy.StateError(
+                "legacy verified disposition write did not read back uniquely"
+            )
+        record = _legacy_verified_disposition_record(rows[0])
+    return {
+        **preview,
+        "kind": "bureau.legacy_verified_disposition_receipt",
+        "status": "applied",
+        "effect_started": True,
+        "event_id": record["event_id"],
+        "created_at": record["created_at"],
+    }
+
+
+
 def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> dict[str, Any]:
     task = registry.tasks.get(task_id)
     if task is None:
@@ -9312,13 +9558,17 @@ def _lifecycle_recommendation(
     states: dict[str, str],
     *,
     verification_stamps: dict[str, dict[str, Any]] | None = None,
+    legacy_dispositioned_task_ids: set[str] | None = None,
 ) -> str:
     task_states = tuple(states.values())
+    dispositioned = legacy_dispositioned_task_ids or set()
     unverified_verified_task_ids = (
         {
             task_id
             for task_id, state in states.items()
-            if state == "verified" and task_id not in verification_stamps
+            if state == "verified"
+            and task_id not in verification_stamps
+            and task_id not in dispositioned
         }
         if verification_stamps is not None
         else set()
@@ -9331,6 +9581,7 @@ def _lifecycle_recommendation(
     all_verified = (
         bool(task_states)
         and not unverified_verified_task_ids
+        and not dispositioned
         and all(state == "verified" for state in task_states)
     )
 
@@ -9350,6 +9601,7 @@ def _lifecycle_diagnostics_from_overlays(
     source_registry: Registry,
     overlays: dict[str, str],
     verification_stamps: dict[str, dict[str, Any]],
+    legacy_dispositions: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     bridge_task_ids = closure_bridge_task_ids()
@@ -9360,8 +9612,34 @@ def _lifecycle_diagnostics_from_overlays(
             if task.initiative == initiative.id
         ]
         states = {task.id: overlays.get(task.id, task.state) for task in tasks}
+        active_dispositions = (legacy_dispositions or {}).get("active", {})
+        legacy_dispositioned_verified_task_ids = sorted(
+            task_id
+            for task_id, state in states.items()
+            if state == "verified"
+            and task_id not in verification_stamps
+            and task_id in active_dispositions
+        )
+        historical_statuses: dict[str, set[str]] = {}
+        for record in (legacy_dispositions or {}).get("historical", []):
+            task_id = record.get("task_id")
+            status = record.get("status")
+            if (
+                task_id in states
+                and isinstance(status, str)
+                and status
+                and status != "active"
+            ):
+                historical_statuses.setdefault(task_id, set()).add(status)
+        legacy_disposition_historical_statuses = {
+            task_id: sorted(statuses)
+            for task_id, statuses in sorted(historical_statuses.items())
+        }
         recommendation = _lifecycle_recommendation(
-            initiative.state, states, verification_stamps=verification_stamps
+            initiative.state,
+            states,
+            verification_stamps=verification_stamps,
+            legacy_dispositioned_task_ids=set(legacy_dispositioned_verified_task_ids),
         )
         source = source_registry.initiatives[initiative.id]
         if (
@@ -9390,7 +9668,9 @@ def _lifecycle_diagnostics_from_overlays(
         unverified_verified_task_ids = sorted(
             task_id
             for task_id, state in states.items()
-            if state == "verified" and task_id not in verification_stamps
+            if state == "verified"
+            and task_id not in verification_stamps
+            and task_id not in active_dispositions
         )
         result.append(
             {
@@ -9400,6 +9680,19 @@ def _lifecycle_diagnostics_from_overlays(
                 "recommended_state": recommendation,
                 "task_states": states,
                 "unverified_verified_task_ids": unverified_verified_task_ids,
+                "legacy_dispositioned_verified_task_ids": (
+                    legacy_dispositioned_verified_task_ids
+                ),
+                "legacy_disposition_conflict_task_ids": sorted(
+                    task_id
+                    for task_id in (legacy_dispositions or {}).get(
+                        "conflicting_task_ids", []
+                    )
+                    if task_id in states
+                ),
+                "legacy_disposition_historical_statuses": (
+                    legacy_disposition_historical_statuses
+                ),
                 "consistent": initiative.state == recommendation,
             }
         )
@@ -9413,8 +9706,15 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
         verification_stamps = _current_verification_stamps(
             operational_registry, connection
         )
+        legacy_dispositions = _current_legacy_verified_dispositions(
+            operational_registry, connection, verification_stamps
+        )
     return _lifecycle_diagnostics_from_overlays(
-        operational_registry, registry, overlays, verification_stamps
+        operational_registry,
+        registry,
+        overlays,
+        verification_stamps,
+        legacy_dispositions=legacy_dispositions,
     )
 
 

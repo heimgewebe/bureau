@@ -64,6 +64,66 @@ def test_unknown_event_type_rolls_back_without_event_effect(tmp_path):
         ).fetchone()[0] == 0
 
 
+def test_legacy_verified_disposition_event_is_strict_and_nonprojecting(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    payload = {
+        "schema_version": 1,
+        "kind": state_events.LEGACY_VERIFIED_DISPOSITION_KIND,
+        "disposition": state_events.LEGACY_VERIFIED_DISPOSITION_VALUE,
+        "task_id": "BUR-LEGACY-T001",
+        "task_sha256": "a" * 64,
+        "reason": "historical verification predates the current stamp contract",
+        "evidence_ref": "receipt:legacy-bur-t001",
+    }
+    with store.immediate() as connection:
+        store.event(
+            connection,
+            state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,
+            payload,
+        )
+
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,),
+        ).fetchone()[0] == 1
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (state_events.PROJECTION_EVENT_TYPE,),
+        ).fetchone()[0] == 1
+
+    with (
+        pytest.raises(StateError, match="must not bind a run"),
+        store.immediate() as connection,
+    ):
+        store.event(
+            connection,
+            state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,
+            payload,
+            "RUN-1",
+        )
+
+    with pytest.raises(
+        state_events.StateEventError, match="task_sha256 is invalid"
+    ):
+        state_events.validate_legacy_verified_disposition_payload(
+            {**payload, "task_sha256": "bad"}, None
+        )
+
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE events SET event_schema_version=2 WHERE event_type=?",
+            (state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,),
+        )
+    from bureau import v2 as bureau_v2
+
+    with (
+        store.connect() as connection,
+        pytest.raises(StateError, match="event schema version is invalid"),
+    ):
+        bureau_v2._legacy_verified_disposition_records(connection)
+
+
 def test_projection_failure_rolls_back_projection_and_event(tmp_path, monkeypatch):
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
 

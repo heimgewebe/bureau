@@ -264,12 +264,21 @@ def parser() -> argparse.ArgumentParser:
     lifecycle_reconcile_selectors = lifecycle_reconcile.add_mutually_exclusive_group()
     lifecycle_reconcile_selectors.add_argument("--task-id")
     lifecycle_reconcile_selectors.add_argument("--initiative-id")
+    lifecycle_reconcile_selectors.add_argument("--legacy-verified-task-id")
+    lifecycle_reconcile.add_argument("--expected-task-sha256")
+    lifecycle_reconcile.add_argument("--reason")
+    lifecycle_reconcile.add_argument("--evidence-ref")
     lifecycle_reconcile_apply = sub.add_parser("lifecycle-reconcile-apply")
     lifecycle_reconcile_apply_selectors = (
         lifecycle_reconcile_apply.add_mutually_exclusive_group()
     )
     lifecycle_reconcile_apply_selectors.add_argument("--task-id")
     lifecycle_reconcile_apply_selectors.add_argument("--initiative-id")
+    lifecycle_reconcile_apply_selectors.add_argument("--legacy-verified-task-id")
+    lifecycle_reconcile_apply.add_argument("--expected-task-sha256")
+    lifecycle_reconcile_apply.add_argument("--reason")
+    lifecycle_reconcile_apply.add_argument("--evidence-ref")
+    lifecycle_reconcile_apply.add_argument("--expected-preview-sha256")
     source_check = sub.add_parser("source-check")
     source_check.add_argument("source", choices=["weltgewebe"])
     source_check.add_argument("--repo", required=True)
@@ -1779,16 +1788,44 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "lifecycle":
             value = lifecycle_diagnostics(registry, store)
         elif args.command in {"lifecycle-reconcile", "lifecycle-reconcile-apply"}:
-            from .v2 import reconcile_initiative_lifecycle
+            from .v2 import legacy_verified_disposition, reconcile_initiative_lifecycle
 
             apply_lifecycle = args.command == "lifecycle-reconcile-apply"
-            value = reconcile_initiative_lifecycle(
-                registry,
-                store,
-                apply=apply_lifecycle,
-                task_id=args.task_id,
-                initiative_id=args.initiative_id,
-            )
+            if args.legacy_verified_task_id:
+                required = {
+                    "--expected-task-sha256": args.expected_task_sha256,
+                    "--reason": args.reason,
+                    "--evidence-ref": args.evidence_ref,
+                }
+                missing = [name for name, value in required.items() if not value]
+                if missing:
+                    raise StateError(
+                        "legacy verified disposition requires " + ", ".join(missing)
+                    )
+                if apply_lifecycle and not args.expected_preview_sha256:
+                    raise StateError(
+                        "legacy verified disposition apply requires --expected-preview-sha256"
+                    )
+                value = legacy_verified_disposition(
+                    registry,
+                    store,
+                    task_id=args.legacy_verified_task_id,
+                    expected_task_sha256=args.expected_task_sha256,
+                    reason=args.reason,
+                    evidence_ref=args.evidence_ref,
+                    apply=apply_lifecycle,
+                    expected_preview_sha256=args.expected_preview_sha256
+                    if apply_lifecycle
+                    else None,
+                )
+            else:
+                value = reconcile_initiative_lifecycle(
+                    registry,
+                    store,
+                    apply=apply_lifecycle,
+                    task_id=args.task_id,
+                    initiative_id=args.initiative_id,
+                )
         elif args.command == "task-no-run-closeout":
             evidence_path = Path(args.evidence).expanduser()
             if args.apply:

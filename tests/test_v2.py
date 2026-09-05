@@ -1793,6 +1793,129 @@ def test_legacy_verified_disposition_is_append_only_idempotent_and_diagnostic_on
         ).fetchone()[0] == 1
 
 
+def test_legacy_verified_disposition_tracks_embedded_evidence_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    spec = json.loads(json.dumps(current["spec"]))
+    spec["state"] = "verified"
+    old_evidence = {"legacy_receipt": "old"}
+    spec.setdefault("metadata", {})["verification"] = old_evidence
+    store.put_task_spec(
+        spec,
+        idempotency_key="legacy-disposition-evidence-old",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    task = operational.tasks[task_id]
+    old_ref = "taskspec-verification-sha256:" + legacy.sha256_json(old_evidence)
+    preview = bureau_v2.legacy_verified_disposition(
+        registry, store, task_id=task.id, expected_task_sha256=task.sha256,
+        reason="historical embedded verification only", evidence_ref=old_ref,
+    )
+    bureau_v2.legacy_verified_disposition(
+        registry, store, task_id=task.id, expected_task_sha256=task.sha256,
+        reason="historical embedded verification only", evidence_ref=old_ref,
+        apply=True, expected_preview_sha256=preview["preview_sha256"],
+    )
+    current = store.task_spec(task.id)
+    assert current is not None
+    revised = json.loads(json.dumps(current["spec"]))
+    new_evidence = {"legacy_receipt": "new"}
+    revised["metadata"]["verification"] = new_evidence
+    store.put_task_spec(
+        revised,
+        idempotency_key="legacy-disposition-evidence-new",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    drifted = operational.tasks[task.id]
+    assert drifted.sha256 == task.sha256
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["legacy_dispositioned_verified_task_ids"] == []
+    assert lifecycle["unverified_verified_task_ids"] == [task.id]
+    assert lifecycle["legacy_disposition_historical_statuses"] == {
+        task.id: ["stale_evidence_ref"]
+    }
+    with pytest.raises(StateError, match="evidence_ref does not match"):
+        bureau_v2.legacy_verified_disposition(
+            registry, store, task_id=task.id, expected_task_sha256=task.sha256,
+            reason="historical embedded verification only", evidence_ref=old_ref,
+        )
+    new_ref = "taskspec-verification-sha256:" + legacy.sha256_json(new_evidence)
+    replacement = bureau_v2.legacy_verified_disposition(
+        registry, store, task_id=task.id, expected_task_sha256=task.sha256,
+        reason="historical embedded verification only", evidence_ref=new_ref,
+    )
+    bureau_v2.legacy_verified_disposition(
+        registry, store, task_id=task.id, expected_task_sha256=task.sha256,
+        reason="historical embedded verification only", evidence_ref=new_ref,
+        apply=True, expected_preview_sha256=replacement["preview_sha256"],
+    )
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["legacy_dispositioned_verified_task_ids"] == [task.id]
+    assert lifecycle["legacy_disposition_conflict_task_ids"] == []
+    current = store.task_spec(task.id)
+    assert current is not None
+    without_evidence = json.loads(json.dumps(current["spec"]))
+    without_evidence["metadata"].pop("verification")
+    store.put_task_spec(
+        without_evidence,
+        idempotency_key="legacy-disposition-evidence-removed",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["legacy_dispositioned_verified_task_ids"] == []
+    assert lifecycle["unverified_verified_task_ids"] == [task.id]
+    assert lifecycle["legacy_disposition_historical_statuses"] == {
+        task.id: ["stale_evidence_ref"]
+    }
+    with pytest.raises(StateError, match="evidence_ref does not match"):
+        bureau_v2.legacy_verified_disposition(
+            registry, store, task_id=task.id, expected_task_sha256=task.sha256,
+            reason="historical embedded verification only", evidence_ref=new_ref,
+        )
+
+
+def test_legacy_verified_disposition_keeps_external_evidence_ref_compatible(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    spec = json.loads(json.dumps(current["spec"]))
+    spec["state"] = "verified"
+    spec.setdefault("metadata", {})["verification"] = {"legacy_receipt": "embedded"}
+    store.put_task_spec(
+        spec,
+        idempotency_key="legacy-disposition-external-evidence",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    task = operational.tasks[task_id]
+    preview = bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=task.id,
+        expected_task_sha256=task.sha256,
+        reason="historical external receipt only",
+        evidence_ref="receipt:legacy-external",
+    )
+    assert preview["status"] == "ready-to-apply"
+
+
 def test_legacy_verified_disposition_goes_stale_and_real_stamp_wins(
     registry_factory, tmp_path, monkeypatch
 ):

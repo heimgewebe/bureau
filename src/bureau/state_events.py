@@ -18,6 +18,9 @@ MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE = (
 MANUAL_ACCEPTANCE_AUTHENTICATION_KIND = (
     "bureau.acceptance_source_authentication"
 )
+LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE = "legacy-verified-disposition"
+LEGACY_VERIFIED_DISPOSITION_KIND = "bureau.legacy_verified_disposition"
+LEGACY_VERIFIED_DISPOSITION_VALUE = "historical_unverifiable"
 
 # Version-1 writers are deliberately closed over this vocabulary. Historical
 # rows migrated from schema 3 remain event_schema_version=0 and are replayed
@@ -33,6 +36,7 @@ OPERATIONAL_EVENT_TYPES = frozenset(
         "external-terminal",
         "initiative-state-set",
         MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE,
+        LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,
         "run-claimed",
         "run-claimed-coordinated",
         "run-completed",
@@ -561,6 +565,39 @@ def validate_manual_acceptance_authentication_payload(
             )
 
 
+def validate_legacy_verified_disposition_payload(
+    payload: Mapping[str, Any], run_id: str | None
+) -> None:
+    expected_fields = {
+        "schema_version",
+        "kind",
+        "disposition",
+        "task_id",
+        "task_sha256",
+        "reason",
+        "evidence_ref",
+    }
+    if set(payload) != expected_fields:
+        raise StateEventError("legacy verified disposition event fields are not exact")
+    if payload.get("schema_version") != EVENT_SCHEMA_VERSION:
+        raise StateEventError("legacy verified disposition schema version is unsupported")
+    if payload.get("kind") != LEGACY_VERIFIED_DISPOSITION_KIND:
+        raise StateEventError("legacy verified disposition kind is invalid")
+    if payload.get("disposition") != LEGACY_VERIFIED_DISPOSITION_VALUE:
+        raise StateEventError("legacy verified disposition value is invalid")
+    if run_id is not None:
+        raise StateEventError("legacy verified disposition must not bind a run")
+    task_id = payload.get("task_id")
+    if not isinstance(task_id, str) or not task_id.strip() or len(task_id) > 240:
+        raise StateEventError("legacy verified disposition task_id is invalid")
+    if not _valid_digest(payload.get("task_sha256")):
+        raise StateEventError("legacy verified disposition task_sha256 is invalid")
+    for field in ("reason", "evidence_ref"):
+        value = payload.get(field)
+        if not isinstance(value, str) or not value.strip() or len(value) > 2000:
+            raise StateEventError(f"legacy verified disposition {field} is invalid")
+
+
 def validate_event(event_type: str, payload: Mapping[str, Any], run_id: str | None) -> None:
     if event_type not in EVENT_TYPES:
         raise StateEventError(f"unknown Bureau state event type: {event_type}")
@@ -574,6 +611,8 @@ def validate_event(event_type: str, payload: Mapping[str, Any], run_id: str | No
         validate_projection_repair_event_payload(payload, run_id)
     elif event_type == MANUAL_ACCEPTANCE_AUTHENTICATION_EVENT_TYPE:
         validate_manual_acceptance_authentication_payload(payload, run_id)
+    elif event_type == LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE:
+        validate_legacy_verified_disposition_payload(payload, run_id)
 
 
 def _empty_projection() -> dict[str, Any]:

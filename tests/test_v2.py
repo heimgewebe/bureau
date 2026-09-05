@@ -1671,6 +1671,276 @@ def test_lifecycle_reconcile_cli_accepts_task_selector():
         assert args.task_id == "BUR-TEST-001-T001"
 
 
+def test_lifecycle_reconcile_cli_accepts_legacy_verified_disposition_selector():
+    preview = bureau_cli.parser().parse_args(
+        [
+            "lifecycle-reconcile",
+            "--legacy-verified-task-id",
+            "BUR-TEST-001-T001",
+            "--expected-task-sha256",
+            "a" * 64,
+            "--reason",
+            "legacy evidence cannot be authenticated under the current contract",
+            "--evidence-ref",
+            "receipt:legacy",
+        ]
+    )
+    assert preview.legacy_verified_task_id == "BUR-TEST-001-T001"
+    assert preview.task_id is None
+    applied = bureau_cli.parser().parse_args(
+        [
+            "lifecycle-reconcile-apply",
+            "--legacy-verified-task-id",
+            "BUR-TEST-001-T001",
+            "--expected-task-sha256",
+            "a" * 64,
+            "--reason",
+            "legacy evidence cannot be authenticated under the current contract",
+            "--evidence-ref",
+            "receipt:legacy",
+            "--expected-preview-sha256",
+            "b" * 64,
+        ]
+    )
+    assert applied.expected_preview_sha256 == "b" * 64
+
+
+def test_legacy_verified_disposition_is_append_only_idempotent_and_diagnostic_only(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    current = store.task_spec(task_id)
+    assert current is not None
+    task_spec = json.loads(json.dumps(current["spec"]))
+    task_spec["state"] = "verified"
+    store.put_task_spec(
+        task_spec,
+        idempotency_key="legacy-disposition-verified",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    task = operational.tasks[task_id]
+
+    preview = bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=task.id,
+        expected_task_sha256=task.sha256,
+        reason="legacy evidence cannot be authenticated under the current contract",
+        evidence_ref="receipt:legacy-task",
+    )
+    assert preview["status"] == "ready-to-apply"
+    applied = bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=task.id,
+        expected_task_sha256=task.sha256,
+        reason="legacy evidence cannot be authenticated under the current contract",
+        evidence_ref="receipt:legacy-task",
+        apply=True,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+    assert applied["status"] == "applied"
+    assert applied["effect_started"] is True
+
+    replay_preview = bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=task.id,
+        expected_task_sha256=task.sha256,
+        reason="legacy evidence cannot be authenticated under the current contract",
+        evidence_ref="receipt:legacy-task",
+    )
+    assert replay_preview["idempotent"] is True
+    replay = bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=task.id,
+        expected_task_sha256=task.sha256,
+        reason="legacy evidence cannot be authenticated under the current contract",
+        evidence_ref="receipt:legacy-task",
+        apply=True,
+        expected_preview_sha256=replay_preview["preview_sha256"],
+    )
+    assert replay["status"] == "already-dispositioned"
+    assert replay["effect_started"] is False
+
+    with pytest.raises(StateError, match="conflicts with existing current binding"):
+        bureau_v2.legacy_verified_disposition(
+            registry,
+            store,
+            task_id=task.id,
+            expected_task_sha256=task.sha256,
+            reason="different reason",
+            evidence_ref="receipt:legacy-task",
+        )
+
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["legacy_dispositioned_verified_task_ids"] == [task.id]
+    assert lifecycle["unverified_verified_task_ids"] == []
+    assert lifecycle["recommended_state"] == "active"
+    assert lifecycle["consistent"] is True
+    with pytest.raises(StateError, match="has no current verification"):
+        verification_stamp(operational, store, task.id)
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (bureau_v2.state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,),
+        ).fetchone()[0] == 1
+
+
+def test_legacy_verified_disposition_goes_stale_and_real_stamp_wins(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    task_id = next(iter(registry.tasks))
+    initial = store.task_spec(task_id)
+    assert initial is not None
+    initial_spec = json.loads(json.dumps(initial["spec"]))
+    initial_spec["state"] = "verified"
+    store.put_task_spec(
+        initial_spec,
+        idempotency_key="legacy-disposition-stale-verified",
+        expected_revision=initial["revision"],
+        source="test",
+    )
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    task = operational.tasks[task_id]
+    preview = bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=task.id,
+        expected_task_sha256=task.sha256,
+        reason="legacy evidence only",
+        evidence_ref="receipt:old",
+    )
+    bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=task.id,
+        expected_task_sha256=task.sha256,
+        reason="legacy evidence only",
+        evidence_ref="receipt:old",
+        apply=True,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+
+    current = store.task_spec(task.id)
+    assert current is not None
+    revised = json.loads(json.dumps(current["spec"]))
+    revised["title"] += " revised"
+    store.put_task_spec(
+        revised,
+        idempotency_key="legacy-disposition-hash-drift",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    drifted_operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    drifted_task = drifted_operational.tasks[task.id]
+    assert drifted_task.sha256 != task.sha256
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["legacy_dispositioned_verified_task_ids"] == []
+    assert lifecycle["unverified_verified_task_ids"] == [task.id]
+    assert lifecycle["legacy_disposition_historical_statuses"] == {
+        task.id: ["stale_task_sha256"]
+    }
+
+    current = store.task_spec(task.id)
+    assert current is not None
+    stamped = json.loads(json.dumps(current["spec"]))
+    stamped.setdefault("metadata", {})["verification"] = {
+        "task_sha256": drifted_task.sha256,
+        "plan_sha256": plan_sha256(drifted_operational, drifted_task.initiative),
+        "receipt_sha256": "c" * 64,
+    }
+    store.put_task_spec(
+        stamped,
+        idempotency_key="legacy-disposition-real-stamp",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    stamped_operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    stamp = verification_stamp(stamped_operational, store, task.id)
+    assert stamp["receipt_sha256"] == "c" * 64
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert lifecycle["legacy_dispositioned_verified_task_ids"] == []
+    assert lifecycle["unverified_verified_task_ids"] == []
+    assert lifecycle["recommended_state"] == "completion-ready"
+    assert lifecycle["legacy_disposition_historical_statuses"] == {
+        task.id: ["stale_task_sha256"]
+    }
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (bureau_v2.state_events.LEGACY_VERIFIED_DISPOSITION_EVENT_TYPE,),
+        ).fetchone()[0] == 1
+
+
+def test_legacy_verified_disposition_does_not_satisfy_dependency_readiness(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    store.import_registry_task_specs(registry)
+    dependency_id, child_id = sorted(registry.tasks)
+
+    dependency = store.task_spec(dependency_id)
+    child = store.task_spec(child_id)
+    assert dependency is not None and child is not None
+    dependency_spec = json.loads(json.dumps(dependency["spec"]))
+    dependency_spec["state"] = "verified"
+    store.put_task_spec(
+        dependency_spec,
+        idempotency_key="legacy-dependency-verified",
+        expected_revision=dependency["revision"],
+        source="test",
+    )
+    child_spec = json.loads(json.dumps(child["spec"]))
+    child_spec["state"] = "planned"
+    child_spec["depends_on"] = [dependency_id]
+    store.put_task_spec(
+        child_spec,
+        idempotency_key="legacy-child-planned",
+        expected_revision=child["revision"],
+        source="test",
+    )
+    operational, _, _ = bureau_v2.authoritative_task_registry(registry, store)
+    dependency_task = operational.tasks[dependency_id]
+    preview = bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=dependency_id,
+        expected_task_sha256=dependency_task.sha256,
+        reason="legacy dependency evidence only",
+        evidence_ref="receipt:legacy-dependency",
+    )
+    bureau_v2.legacy_verified_disposition(
+        registry,
+        store,
+        task_id=dependency_id,
+        expected_task_sha256=dependency_task.sha256,
+        reason="legacy dependency evidence only",
+        evidence_ref="receipt:legacy-dependency",
+        apply=True,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+
+    with pytest.raises(
+        StateError, match="has no deterministic lifecycle reconcile candidate"
+    ):
+        bureau_v2.reconcile_initiative_lifecycle(
+            registry, store, task_id=child_id
+        )
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+    assert dependency_id in lifecycle["legacy_dispositioned_verified_task_ids"]
+
+
 def test_lifecycle_reconcile_cli_accepts_initiative_selector_and_rejects_combination():
     for command in ("lifecycle-reconcile", "lifecycle-reconcile-apply"):
         args = bureau_cli.parser().parse_args(

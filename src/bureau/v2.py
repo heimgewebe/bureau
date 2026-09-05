@@ -9319,6 +9319,33 @@ def _legacy_verified_disposition_records(
     return [_legacy_verified_disposition_record(row) for row in rows]
 
 
+def _legacy_verified_disposition_evidence_refs(task: legacy.Task) -> set[str]:
+    metadata = task.raw.get("metadata")
+    if not isinstance(metadata, dict):
+        return set()
+    refs: set[str] = set()
+    runtime_closeout = metadata.get("runtime_closeout")
+    if isinstance(runtime_closeout, dict):
+        refs.add(
+            f"taskspec-runtime-closeout-sha256:{legacy.sha256_json(runtime_closeout)}"
+        )
+    verification = metadata.get("verification")
+    if isinstance(verification, dict):
+        refs.add(f"taskspec-verification-sha256:{legacy.sha256_json(verification)}")
+    return refs
+
+
+def _legacy_verified_disposition_evidence_ref_is_taskspec_bound(
+    evidence_ref: str,
+) -> bool:
+    return evidence_ref.startswith(
+        (
+            "taskspec-runtime-closeout-sha256:",
+            "taskspec-verification-sha256:",
+        )
+    )
+
+
 def _current_legacy_verified_dispositions(
     registry: Registry,
     connection: sqlite3.Connection,
@@ -9339,6 +9366,14 @@ def _current_legacy_verified_dispositions(
             status = "task_not_verified"
         elif task_id in verification_stamps:
             status = "superseded_by_current_verification"
+        elif (
+            _legacy_verified_disposition_evidence_ref_is_taskspec_bound(
+                record["evidence_ref"]
+            )
+            and record["evidence_ref"]
+            not in _legacy_verified_disposition_evidence_refs(task)
+        ):
+            status = "stale_evidence_ref"
         elif task_id in conflicts:
             status = "conflicting_current_disposition"
         elif task_id in active:
@@ -9404,6 +9439,17 @@ def _legacy_verified_disposition_preview_from_connection(
         raise legacy.StateError(
             f"task {task_id} has current verification and cannot be legacy-dispositioned"
         )
+    current_evidence_refs = _legacy_verified_disposition_evidence_refs(task)
+    normalized_evidence_ref = evidence_ref.strip()
+    if (
+        _legacy_verified_disposition_evidence_ref_is_taskspec_bound(
+            normalized_evidence_ref
+        )
+        and normalized_evidence_ref not in current_evidence_refs
+    ):
+        raise legacy.StateError(
+            f"task {task_id} evidence_ref does not match current embedded historical evidence"
+        )
     payload = _legacy_verified_disposition_payload(
         task_id=task_id,
         task_sha256=task.sha256,
@@ -9414,6 +9460,13 @@ def _legacy_verified_disposition_preview_from_connection(
     identical: list[dict[str, Any]] = []
     for record in _legacy_verified_disposition_records(connection):
         if record["task_id"] != task_id or record["task_sha256"] != task.sha256:
+            continue
+        if (
+            _legacy_verified_disposition_evidence_ref_is_taskspec_bound(
+                record["evidence_ref"]
+            )
+            and record["evidence_ref"] not in current_evidence_refs
+        ):
             continue
         matching_binding.append(record)
         if all(record.get(key) == value for key, value in payload.items()):

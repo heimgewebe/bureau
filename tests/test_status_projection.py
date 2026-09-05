@@ -612,6 +612,88 @@ def test_cli_status_projection_with_observation_file(
     assert entry["github"]["number"] == 7
 
 
+def test_cli_status_projection_default_uses_bureau_registry_mapping(
+    registry_factory, capsys, monkeypatch
+) -> None:
+    root = registry_factory()
+    (root / "registry/resources/bureau.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "id": "repo.bureau",
+                "type": "git-repository",
+                "parent": "root",
+                "path": str(root / "not-a-git-checkout"),
+                "github_slug": "heimgewebe/bureau",
+            }
+        ),
+        encoding="utf-8",
+    )
+    observed: dict[str, object] = {}
+
+    def fake_observe(
+        observation_root: Path,
+        *,
+        repository: str | None,
+        registry,
+        state_db: Path,
+        state_root: Path,
+    ) -> dict[str, object]:
+        del registry, state_db, state_root
+        observed["root"] = observation_root
+        observed["repository"] = repository
+        return github_observation(None)
+
+    monkeypatch.setattr("bureau.github_observer.observe_pull_requests", fake_observe)
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--github-max-age",
+            "999999999",
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert observed == {"root": root, "repository": "heimgewebe/bureau"}
+    assert value["github_observation"]["healthy"] is True
+
+
+def test_cli_status_projection_missing_default_mapping_blocks_without_git_inference(
+    registry_factory, capsys, monkeypatch
+) -> None:
+    root = registry_factory()
+
+    def fail_git_inference(_root: Path) -> str:
+        raise AssertionError("status-projection must not infer GitHub identity from root")
+
+    monkeypatch.setattr(
+        "bureau.github_observer._github_repository_for_path", fail_git_inference
+    )
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["github_observation"]["healthy"] is False
+    assert "missing-repository-resource" in value["github_observation"]["blocked_reason"]
+
+
 def test_cli_github_observe_blocked_exits_nonzero(
     registry_factory, tmp_path: Path, capsys, monkeypatch
 ) -> None:

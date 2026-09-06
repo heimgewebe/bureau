@@ -45,7 +45,10 @@ def validate_first_task_onboarding(
 
     The caller must separately bind this result to the exact candidate,
     Registry snapshot, proposal digest, reviewed-plan approval, and live
-    StateStore-path lease before any publication effect is allowed.
+    StateStore-path lease before any publication effect is allowed. The result
+    is evidence for this validation call only: Registry and StateStore facts
+    must be re-derived at the publication boundary after any intervening state
+    change.
     """
 
     resource_id = _require_nonempty_string(
@@ -160,5 +163,7 @@ def validate_first_task_onboarding(
             "TaskSpec revision authority",
             "authority for a second task in the repository",
             "StateStore mutation without an exact live lease",
+            "Registry or StateStore freshness beyond this validation call",
+            "reusable publication authority after an intervening state change",
         ],
     }

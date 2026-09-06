@@ -52,8 +52,23 @@ def test_first_task_onboarding_binds_create_only_repository_authority() -> None:
             "TaskSpec revision authority",
             "authority for a second task in the repository",
             "StateStore mutation without an exact live lease",
+            "Registry or StateStore freshness beyond this validation call",
+            "reusable publication authority after an intervening state change",
         ],
     }
+
+
+def test_first_task_onboarding_authority_is_not_reusable_freshness_evidence() -> None:
+    authority = _validate()
+
+    assert (
+        "Registry or StateStore freshness beyond this validation call"
+        in authority["does_not_establish"]
+    )
+    assert (
+        "reusable publication authority after an intervening state change"
+        in authority["does_not_establish"]
+    )
 
 
 @pytest.mark.parametrize("resource_type", ["path", "service", "repository", ""])

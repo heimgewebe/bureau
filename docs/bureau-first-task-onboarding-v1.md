@@ -24,8 +24,17 @@ First-task onboarding may be derived only when all of the following are freshly 
 6. publication holds the exact live StateStore-path lease whose metadata is bound to the
    onboarding proposal and authority.
 
-The pure policy validator in `bureau.first_task_onboarding` establishes only conditions 1-4.
-The operator-intake integration must establish 5-6 immediately before the write.
+The pure policy validator in `bureau.first_task_onboarding` establishes only conditions 1-4
+from the observations supplied to that validation call. Those observations are snapshot-sensitive:
+the operator-intake integration must re-derive the current Registry resource and the complete
+current StateStore TaskSpec/claim view at the publication boundary, then establish 5-6
+immediately before the write. A returned onboarding authority is not a durable freshness token
+or reusable publication authorization and must not be carried across an intervening state
+change.
+
+In plain terms: the validator is a photograph showing that the bootstrap was safe when checked.
+If Registry or StateStore changes afterwards, the old photograph is not proof that the light is
+still green; publication must check the live state again.
 
 ## Lease identity
 
@@ -51,6 +60,8 @@ The contract does **not** establish:
 - authority to publish a second task for the same repository;
 - approval without a `reviewed_plan`;
 - StateStore mutation without an exact live lease;
+- Registry or StateStore freshness beyond the validation call;
+- reusable publication authority after an intervening state change;
 - permission to reuse an unrelated TaskSpec as publisher.
 
 ## Intended commonthing bootstrap

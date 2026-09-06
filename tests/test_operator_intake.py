@@ -2209,6 +2209,150 @@ def test_task_revision_publication_advances_and_replays_without_receipt(registry
     )
 
 
+def test_task_revision_recovers_exact_commit_after_pre_receipt_failure(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "revision-receipt.json"
+    original_replay_projection = store.replay_projection
+    failures_remaining = 2
+
+    def replay_projection_with_two_failures():
+        nonlocal failures_remaining
+        if failures_remaining:
+            failures_remaining -= 1
+            raise RuntimeError("injected revision projection failure before publication receipt")
+        return original_replay_projection()
+
+    monkeypatch.setattr(store, "replay_projection", replay_projection_with_two_failures)
+    plan = json.loads(plan_path.read_text())
+    expected_revision = plan["task_spec"]["expected_revision"]
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "unused-first",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "task-spec-projection-postcommit-failed"
+    assert caught.value.effect_started is True
+    committed = store.task_spec(plan["task_id"])
+    assert committed is not None
+    assert committed["revision"] == expected_revision + 1
+    assert committed["spec_sha256"] == plan["task_json_sha256"]
+    assert not receipt.exists()
+
+    retry_preview = publication_preview(registry, store, plan_path=plan_path)
+    retry_resource_db = _lease_db(retry_preview, tmp_path)
+    with pytest.raises(OperatorIntakeError) as replay_caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=retry_resource_db,
+            workspace_root=tmp_path / "unused-second",
+            receipt_path=receipt,
+        )
+
+    assert replay_caught.value.code == "task-spec-projection-postcommit-failed"
+    assert replay_caught.value.effect_started is True
+    assert replay_caught.value.details["task_spec_revision"]["idempotent_replay"] is True
+    assert store.task_spec(plan["task_id"])["revision"] == expected_revision + 1
+    assert not receipt.exists()
+
+    recovered = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=retry_resource_db,
+        workspace_root=tmp_path / "unused-recovered",
+        receipt_path=receipt,
+    )
+
+    assert recovered["status"] == "published"
+    assert recovered["effect_started"] is True
+    assert recovered["task_spec_revision"]["revision"] == expected_revision + 1
+    assert recovered["task_spec_revision"]["parent_revision"] == expected_revision
+    assert recovered["task_spec_revision"]["idempotent_replay"] is True
+    assert store.task_spec(plan["task_id"])["revision"] == expected_revision + 1
+    assert receipt.is_file()
+    verified_receipt = operator_intake_module._read_task_publication_receipt(receipt)
+    assert verified_receipt["receipt_sha256"] == recovered["receipt_sha256"]
+    assert verified_receipt["proposal_sha256"] == recovered["proposal_sha256"]
+    assert verified_receipt["task_spec_revision"]["revision"] == expected_revision + 1
+    assert (
+        verified_receipt["task_spec_revision"]["spec_sha256"]
+        == plan["task_json_sha256"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("mutation_column", "bad_value"),
+    [
+        ("idempotency_key", "operator-intake:foreign-proposal"),
+        ("expected_revision", 99),
+        ("requested_sha256", "f" * 64),
+        ("resulting_revision", 1),
+    ],
+)
+def test_task_revision_partial_publication_replay_rejects_mutation_drift(
+    registry_factory, tmp_path, monkeypatch, mutation_column, bad_value
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    original_replay_projection = store.replay_projection
+    fail_once = True
+
+    def replay_projection_once():
+        nonlocal fail_once
+        if fail_once:
+            fail_once = False
+            raise RuntimeError("injected revision projection failure")
+        return original_replay_projection()
+
+    monkeypatch.setattr(store, "replay_projection", replay_projection_once)
+    plan = json.loads(plan_path.read_text())
+    with pytest.raises(OperatorIntakeError):
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "unused",
+            receipt_path=tmp_path / "missing-receipt.json",
+        )
+
+    committed = store.task_spec(plan["task_id"])
+    assert committed is not None
+    committed_revision = committed["revision"]
+    with store.connect() as connection:
+        connection.execute(
+            f"UPDATE task_spec_mutations SET {mutation_column}=? WHERE idempotency_key=?",
+            (bad_value, f"operator-intake:{plan['proposal_sha256']}"),
+        )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publication_preview(registry, store, plan_path=plan_path)
+
+    assert caught.value.code == "task-spec-revision-replay-mutation-mismatch"
+    assert store.task_spec(plan["task_id"])["revision"] == committed_revision
+
+
 def test_state_store_only_revision_publication_advances_and_replays_idempotently(
     registry_factory, tmp_path
 ):
@@ -3179,6 +3323,109 @@ def test_publication_receipt_write_failure_reports_state_store_readback(
     assert stored is not None
 
 
+def test_task_revision_verifies_receipt_after_unclear_postwrite(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "revision-unclear-receipt.json"
+    original_write = operator_intake_module._write_create_only
+    write_calls = 0
+
+    def write_then_raise(path, data):
+        nonlocal write_calls
+        if Path(path) == receipt:
+            write_calls += 1
+            original_write(path, data)
+            raise OSError("injected post-write uncertainty")
+        return original_write(path, data)
+
+    monkeypatch.setattr(operator_intake_module, "_write_create_only", write_then_raise)
+    result = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "unused",
+        receipt_path=receipt,
+    )
+
+    plan = json.loads(plan_path.read_text())
+    expected_revision = plan["task_spec"]["expected_revision"] + 1
+    assert result["status"] == "published"
+    assert result["effect_started"] is True
+    assert result["idempotent_replay"] is True
+    assert result["task_spec_revision"]["revision"] == expected_revision
+    assert store.task_spec(plan["task_id"])["revision"] == expected_revision
+    assert write_calls == 1
+    verified = operator_intake_module._read_task_publication_receipt(receipt)
+    assert verified["receipt_sha256"] == result["receipt_sha256"]
+    assert verified["task_spec_revision"]["revision"] == expected_revision
+
+
+def test_task_revision_replay_rejects_semantically_mismatched_receipt_without_write(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "revision-conflict-receipt.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "first",
+        receipt_path=receipt,
+    )
+    plan = json.loads(plan_path.read_text())
+    expected_revision = first["task_spec_revision"]["revision"]
+
+    tampered = json.loads(receipt.read_text())
+    tampered["task_spec_revision"]["revision"] = expected_revision + 1
+    tampered["publication"]["revision"] = expected_revision + 1
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+    operator_intake_module._read_task_publication_receipt(receipt)
+
+    def unexpected_put(*args, **kwargs):
+        raise AssertionError("put_task_spec must not run for a receipt replay conflict")
+
+    def unexpected_write(*args, **kwargs):
+        raise AssertionError("receipt replay conflict must not attempt a second write")
+
+    monkeypatch.setattr(store, "put_task_spec", unexpected_put)
+    monkeypatch.setattr(operator_intake_module, "_write_create_only", unexpected_write)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert caught.value.effect_started is True
+    assert caught.value.publication_phase == "committed_locally"
+    assert caught.value.details["mismatched"]["revision"] == {
+        "expected": expected_revision,
+        "observed": expected_revision + 1,
+    }
+    assert store.task_spec(plan["task_id"])["revision"] == expected_revision
+
+
 def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -3239,7 +3486,7 @@ def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
         )
 
     assert replay_caught.value.code == "task-spec-projection-postcommit-failed"
-    assert replay_caught.value.effect_started is False
+    assert replay_caught.value.effect_started is True
     assert replay_caught.value.ambiguity is True
     assert replay_caught.value.retryable is False
     assert replay_caught.value.publication_phase == "committed_locally"
@@ -3258,6 +3505,7 @@ def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
     )
 
     assert recovered["status"] == "published"
+    assert recovered["effect_started"] is True
     assert recovered["task_spec_revision"]["revision"] == 1
     assert recovered["task_spec_revision"]["idempotent_replay"] is True
     assert store.task_spec(plan["task_id"])["revision"] == 1

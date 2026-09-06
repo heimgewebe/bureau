@@ -2729,12 +2729,15 @@ def _validate_task_spec_proposal_binding(
     return binding
 
 
-def _validate_register_replay_mutation(
+def _validate_publication_replay_mutation(
     store: StateStore,
     *,
     task_id: str,
     proposal_sha256: str,
     proposed_spec_sha256: str,
+    expected_revision: int | None,
+    resulting_revision: int,
+    error_scope: str,
 ) -> None:
     idempotency_key = f"operator-intake:{proposal_sha256}"
     try:
@@ -2746,24 +2749,66 @@ def _validate_register_replay_mutation(
             ).fetchone()
     except sqlite3.Error as exc:
         raise OperatorIntakeError(
-            "task-spec-register-replay-mutation-read-failed",
-            "cannot verify the TaskSpec mutation for register publication replay",
+            f"task-spec-{error_scope}-replay-mutation-read-failed",
+            f"cannot verify the TaskSpec mutation for {error_scope} publication replay",
             retryable=True,
             details={"task_id": task_id},
         ) from exc
     if (
         mutation is None
         or mutation["task_id"] != task_id
-        or mutation["expected_revision"] is not None
+        or mutation["expected_revision"] != expected_revision
         or mutation["requested_sha256"] != proposed_spec_sha256
         or type(mutation["resulting_revision"]) is not int
-        or mutation["resulting_revision"] != 1
+        or mutation["resulting_revision"] != resulting_revision
     ):
         raise OperatorIntakeError(
-            "task-spec-register-replay-mutation-mismatch",
-            "existing register TaskSpec is not bound to this reviewed proposal mutation",
-            details={"task_id": task_id, "mutation_present": mutation is not None},
+            f"task-spec-{error_scope}-replay-mutation-mismatch",
+            f"existing {error_scope} TaskSpec is not bound to this reviewed proposal mutation",
+            details={
+                "task_id": task_id,
+                "mutation_present": mutation is not None,
+                "expected_revision": expected_revision,
+                "resulting_revision": resulting_revision,
+            },
         )
+
+
+def _validate_register_replay_mutation(
+    store: StateStore,
+    *,
+    task_id: str,
+    proposal_sha256: str,
+    proposed_spec_sha256: str,
+) -> None:
+    _validate_publication_replay_mutation(
+        store,
+        task_id=task_id,
+        proposal_sha256=proposal_sha256,
+        proposed_spec_sha256=proposed_spec_sha256,
+        expected_revision=None,
+        resulting_revision=1,
+        error_scope="register",
+    )
+
+
+def _validate_revision_replay_mutation(
+    store: StateStore,
+    *,
+    task_id: str,
+    proposal_sha256: str,
+    proposed_spec_sha256: str,
+    expected_revision: int,
+) -> None:
+    _validate_publication_replay_mutation(
+        store,
+        task_id=task_id,
+        proposal_sha256=proposal_sha256,
+        proposed_spec_sha256=proposed_spec_sha256,
+        expected_revision=expected_revision,
+        resulting_revision=expected_revision + 1,
+        error_scope="revision",
+    )
 
 
 def _inject_candidate_binding(task_json: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
@@ -3381,6 +3426,21 @@ def _validated_proposal(
             proposed_spec_sha256=task_spec_binding["proposed_spec_sha256"],
         )
         allow_existing_task_id = True
+    elif (
+        task_spec_binding["operation"] == "revise"
+        and current_task_spec is not None
+        and current_task_spec.get("revision")
+        == task_spec_binding["expected_revision"] + 1
+        and current_task_spec.get("spec_sha256")
+        == task_spec_binding["proposed_spec_sha256"]
+    ):
+        _validate_revision_replay_mutation(
+            store,
+            task_id=str(task_json.get("id", "")),
+            proposal_sha256=str(plan.get("proposal_sha256", "")),
+            proposed_spec_sha256=task_spec_binding["proposed_spec_sha256"],
+            expected_revision=task_spec_binding["expected_revision"],
+        )
     _validate_task_semantics(
         registry,
         store,
@@ -3583,44 +3643,15 @@ def publish_task_proposal(
 
     state_root = store.state_root.expanduser().resolve()
     if os.path.lexists(receipt):
-        receipt_bytes, _ = _read_bounded_regular_file(receipt, field="receipt")
-        try:
-            existing = json.loads(receipt_bytes)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise OperatorIntakeError(
-                "receipt-invalid", f"cannot parse publication receipt: {exc}"
-            ) from exc
-        if not isinstance(existing, dict):
-            raise OperatorIntakeError(
-                "receipt-invalid", "publication receipt JSON must be an object"
-            )
-        unsigned_receipt = {
-            key: value for key, value in existing.items() if key != "receipt_sha256"
-        }
-        publication = existing.get("publication")
-        receipt_valid = (
-            existing.get("kind") == "bureau_task_publication_receipt"
-            and existing.get("status") == "published"
-            and existing.get("publication_mode") == "state_store"
-            and existing.get("coordination_state_root") == str(state_root)
-            and existing.get("receipt_sha256") == legacy.sha256_json(unsigned_receipt)
-            and isinstance(publication, dict)
-            and publication.get("mode") == "state_store"
-            and publication.get("readback_complete") is True
+        existing = _read_task_publication_receipt(receipt)
+        _validate_publication_receipt_replay(
+            store,
+            existing,
+            plan=plan,
+            plan_file_sha=plan_file_sha,
+            state_root=state_root,
         )
-        if not receipt_valid:
-            raise OperatorIntakeError(
-                "receipt-integrity-invalid",
-                "existing publication receipt is not a valid completed StateStore receipt",
-            )
-        if (
-            existing.get("proposal_sha256") == plan.get("proposal_sha256")
-            and existing.get("plan_file_sha256") == plan_file_sha
-        ):
-            return {**existing, "idempotent_replay": True, "receipt_path": str(receipt)}
-        raise OperatorIntakeError(
-            "receipt-conflict", "existing publication receipt belongs to a different plan"
-        )
+        return {**existing, "idempotent_replay": True, "receipt_path": str(receipt)}
 
     preview = publication_preview(registry, store, plan_path=path)
     if lease_binding.get("task_id") != plan["publishing_task_id"]:
@@ -3716,7 +3747,7 @@ def publish_task_proposal(
             "task-spec-projection-postcommit-failed",
             "StateStore TaskSpec publication committed but projection replay failed",
             retryable=False,
-            effect_started=bool(task_spec_revision.get("changed", True)),
+            effect_started=True,
             ambiguity=True,
             required_readback=[
                 f"StateStore TaskSpec {plan['task_id']}",
@@ -3756,7 +3787,7 @@ def publish_task_proposal(
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "kind": "bureau_task_publication_receipt",
         "status": "published",
-        "effect_started": bool(task_spec_revision.get("changed", True)),
+        "effect_started": True,
         "retryable": False,
         "ambiguity": False,
         "required_readback": [],
@@ -3796,6 +3827,28 @@ def publish_task_proposal(
     try:
         _write_create_only(receipt, receipt_bytes)
     except (OSError, OperatorIntakeError) as exc:
+        if os.path.lexists(receipt):
+            try:
+                existing = _read_task_publication_receipt(receipt)
+                _validate_publication_receipt_replay(
+                    store,
+                    existing,
+                    plan=plan,
+                    plan_file_sha=plan_file_sha,
+                    state_root=state_root,
+                )
+            except OperatorIntakeError as receipt_exc:
+                if receipt_exc.code == "receipt-conflict":
+                    raise
+                receipt_readback_error = receipt_exc.code
+            else:
+                return {
+                    **existing,
+                    "idempotent_replay": True,
+                    "receipt_path": str(receipt),
+                }
+        else:
+            receipt_readback_error = "receipt-absent"
         raise OperatorIntakeError(
             "receipt-write-unclear",
             f"StateStore publication succeeded but receipt write failed: {exc}",
@@ -3810,25 +3863,47 @@ def publish_task_proposal(
                 "proposal_sha256": preview["proposal_sha256"],
                 "publication": publication,
                 "ambiguity_scope": "receipt",
+                "receipt_readback_error": receipt_readback_error,
             },
             publication_phase="committed_locally",
         ) from exc
     return {**value, "idempotent_replay": False, "receipt_path": str(receipt)}
 
-def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]:
+def _read_task_publication_receipt(
+    path: str | Path, *, for_promotion: bool = False
+) -> dict[str, Any]:
     receipt_path = Path(path).expanduser().absolute()
-    raw, _ = _read_bounded_regular_file(receipt_path, field="publication_receipt")
+    if for_promotion:
+        codes = {
+            "invalid": "promotion-publication-receipt-invalid",
+            "integrity": "promotion-publication-receipt-integrity-invalid",
+            "shape": "promotion-publication-receipt-shape-invalid",
+            "mode": "promotion-publication-mode-invalid",
+            "spec": "promotion-publication-spec-invalid",
+            "spec_digest": "promotion-publication-spec-digest-mismatch",
+        }
+    else:
+        codes = {
+            "invalid": "receipt-invalid",
+            "integrity": "receipt-integrity-invalid",
+            "shape": "receipt-shape-invalid",
+            "mode": "receipt-mode-invalid",
+            "spec": "receipt-spec-invalid",
+            "spec_digest": "receipt-spec-digest-mismatch",
+        }
+    receipt_field = "publication_receipt" if for_promotion else "receipt"
+    raw, _ = _read_bounded_regular_file(receipt_path, field=receipt_field)
     try:
         value = json.loads(raw)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise OperatorIntakeError(
-            "promotion-publication-receipt-invalid",
+            codes["invalid"],
             f"cannot parse publication receipt: {exc}",
             details={"path": str(receipt_path)},
         ) from exc
     if not isinstance(value, dict):
         raise OperatorIntakeError(
-            "promotion-publication-receipt-invalid",
+            codes["invalid"],
             "publication receipt JSON must be an object",
             details={"path": str(receipt_path)},
         )
@@ -3839,7 +3914,7 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
         or value.get("receipt_sha256") != legacy.sha256_json(unsigned)
     ):
         raise OperatorIntakeError(
-            "promotion-publication-receipt-integrity-invalid",
+            codes["integrity"],
             "publication receipt identity or digest is invalid",
             details={"path": str(receipt_path)},
         )
@@ -3864,7 +3939,7 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
         or not isinstance(revision.get("spec"), dict)
     ):
         raise OperatorIntakeError(
-            "promotion-publication-receipt-shape-invalid",
+            codes["shape"],
             "publication receipt is missing exact task or revision bindings",
         )
     mode = value.get("publication_mode", "git_pr")
@@ -3881,7 +3956,7 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
             or publication.get("spec_sha256") != revision["spec_sha256"]
         ):
             raise OperatorIntakeError(
-                "promotion-publication-receipt-shape-invalid",
+                codes["shape"],
                 "StateStore publication receipt lacks exact authority bindings",
             )
     elif mode == "git_pr":
@@ -3896,32 +3971,168 @@ def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]
             or pull_request["number"] < 1
         ):
             raise OperatorIntakeError(
-                "promotion-publication-receipt-shape-invalid",
+                codes["shape"],
                 "legacy Git publication receipt lacks exact PR bindings",
             )
     else:
         raise OperatorIntakeError(
-            "promotion-publication-mode-invalid",
+            codes["mode"],
             f"unsupported publication mode: {mode}",
         )
-    if revision["spec"].get("id") != task_id or revision["spec"].get("state") != "planned":
+    if revision["spec"].get("id") != task_id or (
+        for_promotion and revision["spec"].get("state") != "planned"
+    ):
+        required = "the exact planned TaskSpec" if for_promotion else "its exact TaskSpec"
         raise OperatorIntakeError(
-            "promotion-publication-spec-invalid",
-            "publication receipt must bind the exact planned TaskSpec",
+            codes["spec"],
+            f"publication receipt must bind {required}",
         )
     try:
         receipt_spec_sha256 = task_specs.task_spec_digest(revision["spec"])
     except task_specs.TaskSpecError as exc:
         raise OperatorIntakeError(
-            "promotion-publication-spec-invalid",
+            codes["spec"],
             f"publication receipt TaskSpec is invalid: {exc}",
         ) from exc
     if receipt_spec_sha256 != revision["spec_sha256"]:
         raise OperatorIntakeError(
-            "promotion-publication-spec-digest-mismatch",
+            codes["spec_digest"],
             "publication receipt TaskSpec bytes do not match its bound digest",
         )
     return value
+
+
+def _validate_plan_publication_mutation(store: StateStore, plan: dict[str, Any]) -> None:
+    task_spec_binding = plan.get("task_spec")
+    if not isinstance(task_spec_binding, dict):
+        raise OperatorIntakeError(
+            "receipt-conflict",
+            "publication plan lacks a TaskSpec mutation binding",
+        )
+    operation = task_spec_binding.get("operation")
+    if operation == "register":
+        _validate_register_replay_mutation(
+            store,
+            task_id=str(plan.get("task_id", "")),
+            proposal_sha256=str(plan.get("proposal_sha256", "")),
+            proposed_spec_sha256=str(task_spec_binding.get("proposed_spec_sha256", "")),
+        )
+        return
+    expected_revision = task_spec_binding.get("expected_revision")
+    if operation == "revise" and type(expected_revision) is int and expected_revision >= 1:
+        _validate_revision_replay_mutation(
+            store,
+            task_id=str(plan.get("task_id", "")),
+            proposal_sha256=str(plan.get("proposal_sha256", "")),
+            proposed_spec_sha256=str(task_spec_binding.get("proposed_spec_sha256", "")),
+            expected_revision=expected_revision,
+        )
+        return
+    raise OperatorIntakeError(
+        "receipt-conflict",
+        "publication plan TaskSpec operation cannot identify an exact replay mutation",
+        details={"operation": operation, "expected_revision": expected_revision},
+    )
+
+
+def _validate_publication_receipt_replay(
+    store: StateStore,
+    receipt: dict[str, Any],
+    *,
+    plan: dict[str, Any],
+    plan_file_sha: str,
+    state_root: Path,
+) -> None:
+    task_spec_binding = plan.get("task_spec")
+    expected_revision = (
+        task_spec_binding.get("expected_revision")
+        if isinstance(task_spec_binding, dict)
+        else None
+    )
+    operation = task_spec_binding.get("operation") if isinstance(task_spec_binding, dict) else None
+    if operation == "register" and expected_revision is None:
+        resulting_revision = 1
+    elif operation == "revise" and type(expected_revision) is int and expected_revision >= 1:
+        resulting_revision = expected_revision + 1
+    else:
+        raise OperatorIntakeError(
+            "receipt-conflict",
+            "publication plan cannot bind an exact resulting TaskSpec revision",
+            details={"operation": operation, "expected_revision": expected_revision},
+        )
+    revision = receipt.get("task_spec_revision")
+    publication = receipt.get("publication")
+    expected = {
+        "proposal_sha256": plan.get("proposal_sha256"),
+        "plan_file_sha256": plan_file_sha,
+        "task_id": plan.get("task_id"),
+        "target_path": plan.get("target_path"),
+        "publication_mode": "state_store",
+        "coordination_state_root": str(state_root),
+        "publishing_task_id": plan.get("publishing_task_id"),
+        "publishing_task_sha256": plan.get("publishing_task_sha256"),
+        "revision": resulting_revision,
+        "parent_revision": expected_revision,
+        "spec_sha256": plan.get("task_json_sha256"),
+        "spec": plan.get("task_json"),
+    }
+    observed = {
+        "proposal_sha256": receipt.get("proposal_sha256"),
+        "plan_file_sha256": receipt.get("plan_file_sha256"),
+        "task_id": receipt.get("task_id"),
+        "target_path": receipt.get("target_path"),
+        "publication_mode": receipt.get("publication_mode"),
+        "coordination_state_root": receipt.get("coordination_state_root"),
+        "publishing_task_id": receipt.get("publishing_task_id"),
+        "publishing_task_sha256": receipt.get("publishing_task_sha256"),
+        "revision": revision.get("revision") if isinstance(revision, dict) else None,
+        "parent_revision": (
+            revision.get("parent_revision") if isinstance(revision, dict) else None
+        ),
+        "spec_sha256": revision.get("spec_sha256") if isinstance(revision, dict) else None,
+        "spec": revision.get("spec") if isinstance(revision, dict) else None,
+    }
+    mismatched = {
+        key: {"expected": expected[key], "observed": observed[key]}
+        for key in expected
+        if observed[key] != expected[key]
+    }
+    if isinstance(publication, dict):
+        publication_expected = {
+            "mode": "state_store",
+            "coordination_state_root": str(state_root),
+            "task_id": plan.get("task_id"),
+            "revision": resulting_revision,
+            "spec_sha256": plan.get("task_json_sha256"),
+        }
+        for key, expected_value in publication_expected.items():
+            observed_value = publication.get(key)
+            if observed_value != expected_value:
+                mismatched[f"publication.{key}"] = {
+                    "expected": expected_value,
+                    "observed": observed_value,
+                }
+    if mismatched:
+        effect_started = False
+        try:
+            _validate_plan_publication_mutation(store, plan)
+        except OperatorIntakeError as mutation_exc:
+            if mutation_exc.code.endswith("replay-mutation-read-failed"):
+                raise
+        else:
+            effect_started = True
+        raise OperatorIntakeError(
+            "receipt-conflict",
+            "existing publication receipt is not bound to the exact reviewed StateStore mutation",
+            effect_started=effect_started,
+            details={"mismatched": mismatched},
+            publication_phase="committed_locally" if effect_started else None,
+        )
+    _validate_plan_publication_mutation(store, plan)
+
+
+def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]:
+    return _read_task_publication_receipt(path, for_promotion=True)
 
 def _promotion_pull_request_readback(repository: str, number: int) -> dict[str, Any]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")

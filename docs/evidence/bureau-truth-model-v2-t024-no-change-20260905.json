@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "kind": "bureau_truth_model_v2_t024_closeout_evidence",
+  "task_id": "BUREAU-TRUTH-MODEL-V2-T024",
+  "run_id": "BUR-RUN-20260905T214251Z-8f1b65dc72",
+  "decision": "no-change",
+  "baseline_commit": "63bb17122812e86689b55298d860bbb5f1d1938f",
+  "observed_architecture": {
+    "task_authority": "bureau-state-store-task-specs",
+    "task_close_atomicity": "TaskSpec revision and run close are read and written through the same SQLite transaction when StateStore TaskSpec authority is present.",
+    "remaining_cross_domain_input": "registry/initiatives/<initiative>.json current_plan",
+    "existing_guards": [
+      "BEGIN IMMEDIATE serializes StateStore writers",
+      "the close derives the plan digest from the authoritative initiative document before SQLite effects",
+      "the same initiative document is read again after SQLite effects and run-row readback but before commit",
+      "detected plan drift raises close-revision-drift and rolls back the SQLite transaction",
+      "replay of a committed receipt recomputes current against authoritative Registry truth"
+    ]
+  },
+  "residual_race_reproduction": {
+    "status": "reproduced",
+    "method": "A transient hermetic pytest wrapper around StateStore.immediate changed initiative.current_plan after the close body returned from its final Registry guard but before the underlying SQLite context manager committed.",
+    "transient_test_path": "tests/test_t024_residual_race_reproducer.py",
+    "transient_test_retained": false,
+    "passing_grabowski_task_id": "d7630933ca2e439cb9670675",
+    "passing_task_outcome_receipt_sha256": "e83ab2fc45696657ce5fc63b89c3a777a9cb881456cf20086b43667700552f3b",
+    "passing_output_directory_sha256": "dd2f5a933df958263e252aeefc01da9849eef59105dd0154145e98f4f147f792",
+    "observed": [
+      "the final in-transaction Registry guard saw the claimed plan revision",
+      "initiative.current_plan changed after that guard and before SQLite COMMIT",
+      "the first close committed the run as succeeded and returned current=true",
+      "an immediate authoritative receipt replay returned idempotent=true and current=false"
+    ],
+    "classification": "formally real and deterministically reproducible residual cross-domain race"
+  },
+  "coordination_decision": {
+    "shared_registry_writer_lock": {
+      "decision": "reject",
+      "benefit": "Would serialize the close with writers that voluntarily acquire the same lock.",
+      "complexity": "high",
+      "crash_safety": "requires a new lock lifetime and recovery contract across filesystem and SQLite boundaries",
+      "deadlock_risk": "non-zero because writer ordering would span independent Registry and StateStore effects",
+      "fatal_limit": "Advisory locking cannot exclude the task's explicit non-cooperating Registry writer case."
+    },
+    "narrow_write_gate": {
+      "decision": "reject",
+      "benefit": "Could become effective only if every Registry mutation is forced through the gate.",
+      "complexity": "very high if made enforceable",
+      "crash_safety": "would require broker/permission ownership, recovery and availability semantics beyond this close path",
+      "deadlock_risk": "moves coordination into a new authority domain instead of removing one",
+      "fatal_limit": "The current repository and Git filesystem remain writable outside an advisory application gate."
+    },
+    "retain_explicit_residual_risk": {
+      "decision": "accept",
+      "benefit": "Preserves one SQLite truth domain and does not claim atomicity the filesystem cannot enforce.",
+      "complexity": "none",
+      "crash_safety": "unchanged; SQLite close remains transactional and idempotent",
+      "deadlock_risk": "unchanged",
+      "cost": "A plan write landing in the final post-guard/pre-commit interval can make the just-committed receipt stale until authoritative readback exposes current=false."
+    }
+  },
+  "single_effect_contract": {
+    "applicable": false,
+    "reason": "no-change introduces no new coordination or mutation effect"
+  },
+  "crash_recovery_contract": {
+    "applicable": false,
+    "reason": "no-change introduces no new coordination or recovery path"
+  },
+  "truth_boundary": {
+    "new_truth_domain": false,
+    "new_lock_authority": false,
+    "approval_bypass": false,
+    "review_bypass": false,
+    "lease_bypass": false,
+    "merge_bypass": false,
+    "deployment_bypass": false
+  },
+  "risk_classification": {
+    "probability": "low and scheduler-dependent in production; deterministic under instrumentation",
+    "semantic_impact": "medium-high because the first return can transiently describe a receipt as current even though authoritative replay is already false",
+    "scope": "initiative current_plan only when StateStore TaskSpec authority is active",
+    "accepted_reason": "Eliminating the interval against non-cooperating filesystem writers requires an enforceable filesystem mutation authority, not an additional advisory lock inside complete_run."
+  },
+  "required_final_verification": [
+    "make validate on the exact final head",
+    "exact diff review proves no new runtime mutation logic",
+    "authoritative Bureau closeout readback binds the no-change evidence"
+  ]
+}

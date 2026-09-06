@@ -2,25 +2,25 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Gate Vibe-Lab experiments by consumers",
+  "title": "Gate Labor experiments by consumers",
   "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 320
   },
-  "goal": "Require every new Vibe-Lab experiment to name an external consumer, a concrete decision target, a measurable success or falsification criterion, an expiry and a deterministic promotion or closure outcome.",
+  "goal": "Require every new Labor experiment to name an external consumer, a concrete decision target, a measurable success or falsification criterion, an expiry and a deterministic promotion or closure outcome.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/vibe-lab",
+    "working_repository": "/home/alex/repos/labor",
     "grabowski_resources": [
-      "repo:/home/alex/repos/vibe-lab",
+      "repo:/home/alex/repos/labor",
       "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.vibe-lab",
+      "resource": "repo.labor",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -39,7 +39,7 @@
   "acceptance": [
     {
       "id": "consumer-required",
-      "assertion": "New Vibe-Lab experiment registrations fail closed without a named current external consumer."
+      "assertion": "New Labor experiment registrations fail closed without a named current external consumer."
     },
     {
       "id": "decision-and-metric",
@@ -55,13 +55,13 @@
     },
     {
       "id": "no-auto-authority",
-      "assertion": "Vibe-Lab cannot auto-apply routing, policy, queue, merge or runtime changes."
+      "assertion": "Labor cannot auto-apply routing, policy, queue, merge or runtime changes."
     }
   ],
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
     "transferred_at": "2026-07-13",
-    "transfer_decision": "Heimlern-specific proposal gating is retired; the surviving governance function belongs to Vibe-Lab experiments.",
+    "transfer_decision": "Heimlern-specific proposal gating is retired; the surviving governance function belongs to Labor experiments.",
     "source_audit": "heimgewebe/cabinet#103",
     "vibe_lab_existing_boundary": "docs/roadmap.md#neue-arbeit-gate",
     "does_not_establish": [

@@ -11,7 +11,7 @@
   },
   "completion": [
     "Grabowski exposes an evidence-bound shadow capture that reuses canonical route_evidence and distinguishes process lifecycle from independently reviewed semantic outcome.",
-    "The Vibe-Lab routing-readiness experiment reaches an explicit reviewed readiness decision from a prospective cohort or closes as rejected/deferred.",
+    "The Labor routing-readiness experiment reaches an explicit reviewed readiness decision from a prospective cohort or closes as rejected/deferred.",
     "Any ML baseline is evaluated offline against a deterministic heuristic baseline and remains advisory with no automatic routing, queue, merge, policy or runtime authority."
   ],
   "parallelism": {
@@ -19,7 +19,7 @@
   },
   "metadata": {
     "primary_repo": "heimgewebe/grabowski",
-    "experiment_repo": "heimgewebe/vibe-lab",
+    "experiment_repo": "heimgewebe/labor",
     "vibe_lab_experiment": "2026-07-23_operator-routing-ml-readiness-shadow",
     "replaces_no_system": true,
     "heimlern_role": "archived historical reference only",

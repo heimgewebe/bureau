@@ -4,7 +4,7 @@
   "title": "Close the operator integration loop",
   "state": "active",
   "commitment": "next",
-  "goal": "Connect cost-aware fallback patch generation, shared verification, high-value event capture, fresh RepoBrief provenance, collision-safe Bureau claims, a read-only nightly diagnosis cycle and Vibe-Lab measurement without granting model backends independent mutation authority.",
+  "goal": "Connect cost-aware fallback patch generation, shared verification, high-value event capture, fresh RepoBrief provenance, collision-safe Bureau claims, a read-only nightly diagnosis cycle and Labor measurement without granting model backends independent mutation authority.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/operator-integration-loop-v1.md"
@@ -16,7 +16,7 @@
     "RepoBrief bundles carry source commit and dirty-state provenance and can be refreshed after merge or by a bounded catch-up cycle.",
     "Bureau ready selection, live focus, claims, resource leases, PR/worktree conflicts and durable closeout receipts form one collision-safe chain.",
     "A nightly observe-and-diagnose cycle produces a source-bound morning digest without repository mutation or automatic task creation.",
-    "Vibe-Lab records comparable cost, latency, patch quality, verification fit, review findings and rework evidence before any executor route is promoted."
+    "Labor records comparable cost, latency, patch quality, verification fit, review findings and rework evidence before any executor route is promoted."
   ],
   "parallelism": {
     "max_active_tasks": 2

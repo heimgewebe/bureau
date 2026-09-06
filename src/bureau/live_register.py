@@ -98,7 +98,12 @@ def _validate_worker_id(worker_id: str | None) -> str | None:
     return normalized
 
 
-def _validate_repo(registry: Registry | None, repo: str | None) -> str | None:
+def _validate_repo(
+    registry: Registry | None,
+    repo: str | None,
+    *,
+    allow_retired: bool = False,
+) -> str | None:
     if repo is None:
         return None
     if not isinstance(repo, str):
@@ -108,8 +113,20 @@ def _validate_repo(registry: Registry | None, repo: str | None) -> str | None:
         raise StateError("live register repo must be at most 200 characters")
     if not normalized.startswith("repo."):
         raise StateError("live register repo must be a repo.* resource")
-    if registry is not None and registry.resources.get(normalized) is None:
-        raise StateError(f"unknown live register repo resource {normalized}")
+    if registry is not None:
+        resource = registry.resources.get(normalized)
+        if resource is None:
+            raise StateError(f"unknown live register repo resource {normalized}")
+        metadata = resource.metadata
+        if (
+            not allow_retired
+            and isinstance(metadata, dict)
+            and metadata.get("lifecycle") == "retired"
+        ):
+            raise StateError(
+                f"retired live register repo resource {normalized} cannot be used "
+                "for new candidate work"
+            )
     return normalized
 
 
@@ -600,7 +617,13 @@ def live_register_record(
             created_at = idempotent_existing["created_at"]
             event_id = int(idempotent_existing["event_id"])
         else:
-            checked_repo = _validate_repo(validation_registry, checked_repo)
+            checked_repo = _validate_repo(
+                validation_registry,
+                checked_repo,
+                allow_retired=(
+                    checked_kind != "candidate_task" or supersedes_event_id is not None
+                ),
+            )
             checked_task_id = _validate_task(validation_registry, checked_task_id)
             checked_status = checked_status or _validate_status(checked_kind, None)
             candidate_event = _validated_candidate_event(

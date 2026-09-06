@@ -14,7 +14,7 @@
   },
   "claims": [
     {
-      "resource": "repo.vibe-lab",
+      "resource": "repo.labor",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -27,15 +27,15 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "preferred_host": "heim-pc",
-    "working_repository": "/home/alex/repos/vibe-lab",
+    "working_repository": "/home/alex/repos/labor",
     "grabowski_resources": [
-      "repo:/home/alex/repos/vibe-lab"
+      "repo:/home/alex/repos/labor"
     ]
   },
   "acceptance": [
     {
       "id": "readiness-gate",
-      "assertion": "No model training starts unless the Vibe-Lab shadow-readiness experiment has a reviewed result meeting its preregistered completeness, privacy and no-effect gates."
+      "assertion": "No model training starts unless the Labor shadow-readiness experiment has a reviewed result meeting its preregistered completeness, privacy and no-effect gates."
     },
     {
       "id": "external-tooling-thin-layer",

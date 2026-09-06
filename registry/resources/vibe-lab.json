@@ -7,6 +7,15 @@
   "github_slug": "heimgewebe/vibe-lab",
   "grabowski_key": "repo:/home/alex/repos/vibe-lab",
   "metadata": {
-    "queue_readiness_repair": "2026-07-08: explicit GitHub slug for open PR task binding; local remote uses org-specific SSH user."
+    "queue_readiness_repair": "2026-07-08: explicit GitHub slug for open PR task binding; local remote uses org-specific SSH user.",
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "purpose": "Preserve historical Vibe-Lab references and coordinate legacy checkout closeout after the active repository identity moved to Labor.",
+    "does_not_establish": [
+      "active_repository_identity",
+      "new_experiment_target",
+      "new_task_execution_authority",
+      "labor_checkout_identity"
+    ]
   }
 }

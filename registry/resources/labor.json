@@ -1,0 +1,9 @@
+{
+  "grabowski_key": "repo:/home/alex/repos/labor",
+  "id": "repo.labor",
+  "parent": "repo",
+  "path": "/home/alex/repos/labor",
+  "github_slug": "heimgewebe/labor",
+  "schema_version": 1,
+  "type": "git-repository"
+}

@@ -1821,6 +1821,8 @@ def _open_pr_adoption_reservation(
     base_oid=_ADOPTION_BASE,
     head_oid=_ADOPTION_HEAD,
     task_ids=("BUR-TEST-001-T001",),
+    task_binding_status="valid",
+    task_binding_reason="open PR binds exactly one open Bureau task",
     observation_failed=False,
     scope_resources=("repo",),
 ):
@@ -1832,11 +1834,11 @@ def _open_pr_adoption_reservation(
         repository=_ADOPTION_REPOSITORY,
         number=number,
         task_ids=task_ids,
-        task_binding_status="valid" if not observation_failed else "unknown",
+        task_binding_status=(
+            "unknown" if observation_failed else task_binding_status
+        ),
         task_binding_reason=(
-            "open PR binds exactly one open Bureau task"
-            if not observation_failed
-            else "open PR observation failed"
+            "open PR observation failed" if observation_failed else task_binding_reason
         ),
         scope_resources=scope_resources,
         base_oid=base_oid,
@@ -1933,7 +1935,18 @@ def _configure_open_pr_adoption_registry(root, *, variant="exact"):
 def test_exact_open_pr_merge_adoption_is_claimable(registry_factory, tmp_path):
     root = registry_factory(2, mode="write")
     registry = _configure_open_pr_adoption_registry(root)
-    reservation = _open_pr_adoption_reservation()
+    task_ids, task_binding_status, task_binding_reason = (
+        bureau_v2._pull_request_task_binding(
+            {"body": "Bureau-Task: BUR-TEST-001-T001"}, registry
+        )
+    )
+    assert task_ids == ("BUR-TEST-001-T001",)
+    assert task_binding_status == "terminal"
+    reservation = _open_pr_adoption_reservation(
+        task_ids=task_ids,
+        task_binding_status=task_binding_status,
+        task_binding_reason=task_binding_reason,
+    )
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
     dispatcher = Dispatcher(
         registry,
@@ -1952,6 +1965,36 @@ def test_exact_open_pr_merge_adoption_is_claimable(registry_factory, tmp_path):
     assert assessment["reservations"][0]["classification"] == "merge-adopted"
     claimed = dispatcher.claim_next("worker-adoption", ("repository",))["run"]
     assert claimed["task_id"] == "BUR-TEST-001-T002"
+
+
+@pytest.mark.parametrize("terminal_state", ["cancelled", "superseded"])
+def test_open_pr_merge_adoption_rejects_nonverified_terminal_predecessor(
+    registry_factory, terminal_state
+):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(root)
+    task_ids, task_binding_status, task_binding_reason = (
+        bureau_v2._pull_request_task_binding(
+            {"body": "Bureau-Task: BUR-TEST-001-T001"}, registry
+        )
+    )
+    assert task_binding_status == "terminal"
+    reservation = _open_pr_adoption_reservation(
+        task_ids=task_ids,
+        task_binding_status=task_binding_status,
+        task_binding_reason=task_binding_reason,
+    )
+    merge = registry.tasks["BUR-TEST-001-T002"]
+
+    assert (
+        bureau_v2._open_pr_merge_adoption_allows(
+            merge,
+            reservation,
+            registry,
+            {"BUR-TEST-001-T001": terminal_state},
+        )
+        is False
+    )
 
 
 @pytest.mark.parametrize(

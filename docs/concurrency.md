@@ -108,17 +108,34 @@ their task and plan digests. A close proceeds only when those fresh digests equa
 baseline. The in-memory snapshot is not another gate: once the fresh documents match the frozen run
 baseline, an older snapshot adds no safety and could only reject a valid close.
 
-After all SQLite writes and the authoritative run-row readback, the same two documents are resolved
-and read again as the final guard before commit. A stale revision already present before close is
-therefore detected by the first read; a semantic revision change between the two in-transaction reads
-is detected by the second and rolls the complete SQLite effect back. Byte-only rewrites with the same
-semantic revision remain valid. `state` and `metadata.verification` stay outside the frozen task
-revision, so a closure stamp does not invalidate its own binding.
+When the StateStore contains authoritative TaskSpecs, the operational close no longer reads the task
+revision from the Git task file: the current TaskSpec revision is read from the same SQLite
+transaction as the run. In that normal mode the remaining cross-domain baseline input is the
+initiative document's `current_plan`. The Git task-document path remains only for the empty-TaskSpec
+legacy/bootstrap case. This distinction matters because the residual filesystem race is therefore
+narrower than the historical two-document description, but it is not zero.
 
-This is not cross-domain atomicity. There is no cooperative registry writer lock, and a
-non-cooperating writer that lands after the second document read but before the SQLite commit is not
-detected by this path. The two in-transaction reads narrow the remaining unordered interval to
-exactly that residual window; they do not eliminate it or exclude registry writers.
+After all SQLite writes and the authoritative run-row readback, the same authoritative inputs are
+resolved and read again as the final guard before commit. A stale revision already present before
+close is therefore detected by the first read; a semantic revision change between the two
+in-transaction reads is detected by the second and rolls the complete SQLite effect back. Byte-only
+rewrites with the same semantic revision remain valid. `state` and `metadata.verification` stay
+outside the frozen task revision, so a closure stamp does not invalidate its own binding.
+
+This is not cross-domain atomicity. There is no enforceable registry writer lock, and a
+non-cooperating writer that changes `initiative.current_plan` after the final document read but
+before the SQLite commit is not detected by that first close. The two in-transaction reads narrow
+the remaining unordered interval to exactly that residual window; they do not eliminate it or
+exclude filesystem writers.
+
+`BUREAU-TRUTH-MODEL-V2-T024` revalidated this residual window on commit
+`63bb17122812e86689b55298d860bbb5f1d1938f` and chose **no change** to mutation logic. An advisory
+shared lock or narrow application write gate would serialize only cooperating writers and therefore
+would not satisfy the explicit non-cooperating-writer case. Making such a gate enforceable would
+require a new filesystem mutation authority (for example brokered permissions) with its own crash,
+recovery, availability and ordering contract. That would add a truth/coordination domain to remove a
+small residual interval. The revisions-bound decision and hermetic reproducer evidence live in
+`docs/evidence/bureau-truth-model-v2-t024-no-change-20260905.json`.
 
 A lost close raises a typed `RunStateConflict` with a stable machine-readable `code`
 (`unknown-run`, `run-not-active`, `stale-baseline`, `registry-revision-unavailable`,
@@ -134,5 +151,8 @@ database readback; after that transaction has ended, Bureau rewrites the receipt
 registry-backed `current` flag. A crash between the committed effect and the materialised receipt
 therefore replays to the identical digest rather than producing a second effect without holding the
 SQLite writer reservation across filesystem work. A revision that disagrees with the stored receipt,
-or that cannot be read at all, reports `current: false`. Concurrent closes of one run produce exactly
-one receipt, one `run-completed` event and explicit idempotent losers.
+or that cannot be read at all, reports `current: false`. A first close returns `current: true` for the
+revision that survived its final pre-commit guard; the T024 residual window means that value is not a
+post-commit filesystem snapshot. An authoritative replay recomputes `current` and exposes a plan
+write that landed in that interval as `false`. Concurrent closes of one run produce exactly one
+receipt, one `run-completed` event and explicit idempotent losers.

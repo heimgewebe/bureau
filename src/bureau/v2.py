@@ -1311,7 +1311,10 @@ def _open_pr_merge_adoption_allows(
         return False
     if base_sha != reservation.base_oid or head_sha != reservation.head_oid:
         return False
-    if reservation.task_binding_status != "valid":
+    # A real PR bound to a verified implementation task is classified as
+    # terminal by _pull_request_task_binding. Only that terminal case can pass:
+    # predecessor_state below still requires the exact predecessor to be verified.
+    if reservation.task_binding_status not in {"valid", "terminal"}:
         return False
     if reservation.task_ids != (implementation_task,):
         return False

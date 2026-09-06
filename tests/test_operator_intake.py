@@ -3224,6 +3224,47 @@ def test_publication_receipt_replay_survives_later_registry_drift(registry_facto
     assert replay["idempotent_replay"] is True
 
 
+
+def test_publication_receipt_replay_rejects_internally_inconsistent_plan(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "receipt.json"
+    publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+
+    plan = json.loads(plan_path.read_text())
+    plan["task_json_sha256"] = "0" * 64
+    plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(plan)
+    )
+    plan["review"]["reviewed_proposal_sha256"] = plan["proposal_sha256"]
+    plan_path.write_text(json.dumps(plan, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "task-json-drift"
+
 def test_publication_rejects_tampered_existing_receipt(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -3323,6 +3364,52 @@ def test_publication_receipt_write_failure_reports_state_store_readback(
     assert stored is not None
 
 
+
+def test_publication_receipt_write_recovery_handles_unreadable_receipt(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "unreadable-receipt.json"
+    original_write = operator_intake_module._write_create_only
+    original_reader = operator_intake_module._read_task_publication_receipt
+
+    def write_then_raise(path, data):
+        if Path(path) == receipt:
+            original_write(path, data)
+            raise OSError("injected post-write uncertainty")
+        return original_write(path, data)
+
+    def unreadable_reader(path, *, for_promotion=False):
+        if Path(path) == receipt:
+            raise PermissionError("injected unreadable receipt")
+        return original_reader(path, for_promotion=for_promotion)
+
+    monkeypatch.setattr(operator_intake_module, "_write_create_only", write_then_raise)
+    monkeypatch.setattr(
+        operator_intake_module, "_read_task_publication_receipt", unreadable_reader
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-write-unclear"
+    assert caught.value.effect_started is True
+    assert caught.value.ambiguity is True
+    assert caught.value.details["receipt_readback_error"] == "receipt-read-failed"
+    assert caught.value.details["receipt_readback_cause_type"] == "PermissionError"
+
 def test_task_revision_verifies_receipt_after_unclear_postwrite(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -3366,6 +3453,51 @@ def test_task_revision_verifies_receipt_after_unclear_postwrite(
     assert verified["receipt_sha256"] == result["receipt_sha256"]
     assert verified["task_spec_revision"]["revision"] == expected_revision
 
+
+
+def test_task_revision_write_recovery_preserves_retryable_mutation_read_failure(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "revision-mutation-read-failure.json"
+    original_write = operator_intake_module._write_create_only
+    original_connect = store.connect
+    fail_store_reads = False
+
+    def connect_with_postwrite_failure():
+        if fail_store_reads:
+            raise sqlite3.OperationalError("injected mutation read failure")
+        return original_connect()
+
+    def write_then_raise(path, data):
+        nonlocal fail_store_reads
+        if Path(path) == receipt:
+            original_write(path, data)
+            fail_store_reads = True
+            raise OSError("injected post-write uncertainty")
+        return original_write(path, data)
+
+    monkeypatch.setattr(store, "connect", connect_with_postwrite_failure)
+    monkeypatch.setattr(operator_intake_module, "_write_create_only", write_then_raise)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "task-spec-revision-replay-mutation-read-failed"
+    assert caught.value.retryable is True
+    assert receipt.is_file()
 
 def test_task_revision_replay_rejects_semantically_mismatched_receipt_without_write(
     registry_factory, tmp_path, monkeypatch
@@ -3425,6 +3557,62 @@ def test_task_revision_replay_rejects_semantically_mismatched_receipt_without_wr
     }
     assert store.task_spec(plan["task_id"])["revision"] == expected_revision
 
+
+
+def test_task_revision_receipt_conflict_marks_effect_present_without_mutation_row(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "revision-conflict-no-mutation-row.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "first",
+        receipt_path=receipt,
+    )
+    plan = json.loads(plan_path.read_text())
+    expected_revision = first["task_spec_revision"]["revision"]
+    with store.connect() as connection:
+        connection.execute(
+            "DELETE FROM task_spec_mutations WHERE idempotency_key=?",
+            (f"operator-intake:{plan['proposal_sha256']}",),
+        )
+        connection.commit()
+
+    tampered = json.loads(receipt.read_text())
+    tampered["task_spec_revision"]["revision"] = expected_revision + 1
+    tampered["publication"]["revision"] = expected_revision + 1
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    def unexpected_put(*args, **kwargs):
+        raise AssertionError("put_task_spec must not run for a receipt replay conflict")
+
+    monkeypatch.setattr(store, "put_task_spec", unexpected_put)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert caught.value.effect_started is True
+    assert caught.value.publication_phase == "committed_locally"
+    assert store.task_spec(plan["task_id"])["revision"] == expected_revision
 
 def test_publication_recovers_exact_register_commit_after_pre_receipt_failure(
     registry_factory, tmp_path, monkeypatch

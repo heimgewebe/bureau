@@ -114,6 +114,7 @@ class Resource:
     github_slug: str | None
     grabowski_key: str | None
     criticality: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -286,6 +287,9 @@ class Registry:
     def _load(self) -> None:
         for path in self._files(self.root / "registry/resources"):
             raw = read_json(path)
+            metadata = raw.get("metadata")
+            if metadata is not None and not isinstance(metadata, dict):
+                raise ValidationError(f"resource metadata in {path} must be an object")
             item = Resource(
                 id=str(raw.get("id", "")),
                 type=str(raw.get("type", "")),
@@ -295,6 +299,7 @@ class Registry:
                 github_slug=raw.get("github_slug"),
                 grabowski_key=raw.get("grabowski_key"),
                 criticality=raw.get("criticality"),
+                metadata=dict(metadata) if isinstance(metadata, dict) else None,
             )
             self._unique(self.resources, item.id, item, path)
         for path in self._files(self.root / "registry/initiatives"):

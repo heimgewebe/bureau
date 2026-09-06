@@ -12,7 +12,7 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/vibe-lab",
+    "working_repository": "/home/alex/repos/labor",
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
@@ -24,7 +24,7 @@
   },
   "claims": [
     {
-      "resource": "repo.vibe-lab",
+      "resource": "repo.labor",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -53,7 +53,7 @@
     "git",
     "github",
     "grabowski",
-    "vibe-lab",
+    "labor",
     "evaluation",
     "statistics",
     "python"

@@ -14,7 +14,7 @@
   },
   "claims": [
     {
-      "resource": "repo.vibe-lab",
+      "resource": "repo.labor",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -27,9 +27,9 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "preferred_host": "heim-pc",
-    "working_repository": "/home/alex/repos/vibe-lab",
+    "working_repository": "/home/alex/repos/labor",
     "grabowski_resources": [
-      "repo:/home/alex/repos/vibe-lab"
+      "repo:/home/alex/repos/labor"
     ]
   },
   "acceptance": [

@@ -17,7 +17,7 @@
   },
   "claims": [
     {
-      "resource": "repo.vibe-lab",
+      "resource": "repo.labor",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -30,9 +30,9 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/vibe-lab",
+    "working_repository": "/home/alex/repos/labor",
     "grabowski_resources": [
-      "repo:/home/alex/repos/vibe-lab",
+      "repo:/home/alex/repos/labor",
       "path:/home/alex/repos/bureau/.bureau-scopes/registry",
       "path:/home/alex/repos/bureau/registry/tasks/CCM-V1-T005.json",
       "path:/home/alex/repos/bureau/registry/initiatives/CHRONIK-CODING-MEMORY-V1.json"
@@ -98,7 +98,7 @@
       "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
       "source_broad_resource_key": "repo:/home/alex/repos/bureau",
       "source_claim_resource": "repo.bureau",
-      "rationale": "The pilot executes in Vibe-Lab; Bureau participation is limited to evidence-bound task and decision records.",
+      "rationale": "The pilot executes in Labor; Bureau participation is limited to evidence-bound task and decision records.",
       "effect_boundaries": [
         "Bureau experiment task records"
       ],

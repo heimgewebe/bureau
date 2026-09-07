@@ -13,7 +13,7 @@
     "Konvergenzregelkreis requires lifecycle, degraded-mode, recovery and split-brain evidence according to risk and target criticality.",
     "Slow deterioration is observed through source-bound snapshots without a synthetic global health score or automatic task authority.",
     "Declarative failover uses only predeclared, verified paths with bounded degradation, return conditions and no authority transfer.",
-    "Schauwerk renders the resilience model without becoming a truth owner, and Vibe-Lab evaluates measured benefit against operational cost."
+    "Schauwerk renders the resilience model without becoming a truth owner, and Labor evaluates measured benefit against operational cost."
   ],
   "parallelism": {
     "max_active_tasks": 4

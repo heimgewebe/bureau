@@ -147,6 +147,77 @@ def test_strict_catalog_accepts_acs_candidate_and_rejects_unknown_repo(tmp_path)
         )
 
 
+def test_strict_catalog_rejects_retired_repo_for_new_candidate_but_allows_coordination(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "retired-state.sqlite3")
+
+    for repo in ("repo.heimserver", "repo.vibe-lab"):
+        with pytest.raises(
+            StateError,
+            match="retired live register repo resource",
+        ):
+            live_register_record(
+                registry,
+                store,
+                kind="candidate_task",
+                candidate_id=f"candidate-retired-{repo.split('.', 1)[1]}",
+                repo=repo,
+                title="Must not create new work on a retired repository",
+                promotion_required=True,
+            )
+
+    accepted = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        candidate_id="candidate-active-labor",
+        repo="repo.labor",
+        title="Labor remains an active candidate target",
+        promotion_required=True,
+    )
+    assert accepted["record"]["repo"] == "repo.labor"
+
+    focus = live_register_record(
+        registry,
+        store,
+        kind="thread_focus",
+        thread_id="retired-vibe-lab-closeout",
+        repo="repo.vibe-lab",
+        title="Coordinate historical Vibe-Lab closeout",
+    )
+    assert focus["record"]["repo"] == "repo.vibe-lab"
+
+
+def test_strict_catalog_allows_existing_retired_candidate_lifecycle_update(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "retired-update.sqlite3")
+    first = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        candidate_id="candidate-retired-lifecycle",
+        repo="repo.vibe-lab",
+        title="Historical candidate",
+        promotion_required=True,
+        catalog_validation="deferred",
+    )
+    updated = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        candidate_id="candidate-retired-lifecycle",
+        supersedes_event_id=first["event_id"],
+        repo="repo.vibe-lab",
+        title="Historical candidate closeout evidence",
+        promotion_required=True,
+        catalog_validation="strict",
+    )
+    assert updated["record"]["repo"] == "repo.vibe-lab"
+    assert updated["record"]["supersedes_event_id"] == first["event_id"]
+
+
 def test_live_register_cli_writes_and_lists_state_events(registry_factory, tmp_path, capsys):
     root, _registry, _store = setup_live(registry_factory, tmp_path)
     state_root = tmp_path / "cli-state"

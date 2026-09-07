@@ -2,19 +2,19 @@
   "schema_version": 1,
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T007",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
-  "title": "Measure fallback routes and nightly diagnosis in Vibe-Lab",
+  "title": "Measure fallback routes and nightly diagnosis in Labor",
   "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 430
   },
-  "goal": "Run comparable Vibe-Lab experiments over deterministic Grabowski work, local AI, Gemini Flash via AGY and quality-escalation backends, and evaluate whether the nightly diagnosis loop improves decisions without excessive cost, noise or false confidence.",
+  "goal": "Run comparable Labor experiments over deterministic Grabowski work, local AI, Gemini Flash via AGY and quality-escalation backends, and evaluate whether the nightly diagnosis loop improves decisions without excessive cost, noise or false confidence.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/vibe-lab",
+    "working_repository": "/home/alex/repos/labor",
     "grabowski_resources": [
-      "repo:/home/alex/repos/vibe-lab",
+      "repo:/home/alex/repos/labor",
       "repo:/home/alex/repos/grabowski",
       "host:heim-pc",
       "path:/home/alex/repos/bureau/.bureau-scopes/registry",
@@ -24,7 +24,7 @@
   },
   "claims": [
     {
-      "resource": "repo.vibe-lab",
+      "resource": "repo.labor",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -84,7 +84,7 @@
     },
     {
       "id": "no-auto-promotion",
-      "assertion": "No executor order, schedule or mutation authority changes automatically from Vibe-Lab output; promotion requires a reviewed registry or policy change."
+      "assertion": "No executor order, schedule or mutation authority changes automatically from Labor output; promotion requires a reviewed registry or policy change."
     }
   ],
   "metadata": {
@@ -111,7 +111,7 @@
       "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
       "source_broad_resource_key": "repo:/home/alex/repos/bureau",
       "source_claim_resource": "repo.bureau",
-      "rationale": "Measurement runs in Vibe-Lab and Grabowski; Bureau is a read-only source of task and outcome evidence.",
+      "rationale": "Measurement runs in Labor and Grabowski; Bureau is a read-only source of task and outcome evidence.",
       "effect_boundaries": [
         "Read-only task truth",
         "Read-only outcome evidence"

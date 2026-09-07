@@ -81,7 +81,7 @@
       "general repository or non-Bureau deployment authority"
     ],
     "main_at_registration": "5fc0075fbde810bd988ca55f24c38a94e7a772f6",
-    "observation_sha256_at_registration": "ea410e02b6e5f491558b33c78e13f84f90f113479ce7189af87cddd8ca6bd82d",
+    "observation_sha256_at_registration": "d5f658e2ae7a4f608a441c671ed63dfdd5c24ef7bbe477c57d38c594517a7a4b",
     "post_publication_activation": {
       "activation_state": "ready",
       "does_not_establish": [
@@ -132,10 +132,11 @@
       "deployment_manifest_sha256": "dd7b184690872bcc8445e6b936ed7981db04ab326f81d9dd804953b3c1d1eae9",
       "github_main": "5fc0075fbde810bd988ca55f24c38a94e7a772f6",
       "grabowski_deployed_head": "00bab22669ca46219e480d2187f7e1da6c9b0f05",
-      "observed_at": "2026-09-07T10:45:00Z",
+      "observed_at": "2026-09-07T11:08:47.967713Z",
       "preceding_authority_attempt_present": false,
       "preceding_authority_effect_started": false,
       "preceding_authority_executor_task_present": false,
+      "preceding_authority_intent_file_sha256": "74144ab8dcb4361aceb726b8f2935cec31171e03e2808970770de62850555857",
       "preceding_authority_intent_sha256": "ad445a02b91fee9c059bcb2427d313ff2af5d8e321f378d269b034e9f4ffff58",
       "preceding_authority_runtime_lease_present": false,
       "preceding_authority_spec_sha256": "c27ef68a54ea9a2a2d09a97269441ab3c65595d7f5ac5aacd9b3cff17860daad",

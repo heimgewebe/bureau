@@ -102,10 +102,10 @@ def validate_first_task_onboarding(
             continue
         matching_claims.append(dict(claim))
 
-    if len(matching_claims) != 1:
+    if len(proposed_claims) != 1 or len(matching_claims) != 1:
         raise FirstTaskOnboardingError(
             "first-task-onboarding-claim-invalid",
-            "the proposed TaskSpec must contain exactly one claim for the target repository",
+            "the proposed TaskSpec must contain only one claim, for the target repository",
         )
 
     target_claim = matching_claims[0]

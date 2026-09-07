@@ -4044,6 +4044,467 @@ def test_publication_preview_rejects_identical_register_from_foreign_mutation(
     assert caught.value.code == "task-spec-register-replay-mutation-mismatch"
 
 
+def _first_task_context(registry_factory, tmp_path):
+    root, _ = _committed_registry(registry_factory)
+    for resource in [
+        {"id": "repo.fresh", "type": "git-repository", "parent": "root",
+         "path": str(tmp_path / "fresh-repository")},
+        {"id": "repo.fresh.component", "type": "component", "parent": "repo.fresh"},
+    ]:
+        (root / "registry/resources" / f"{resource['id']}.json").write_text(
+            json.dumps({"schema_version": 1, **resource})
+        )
+    _git(root, "add", "registry/resources")
+    _git(root, "commit", "-m", "Catalog an unclaimed repository")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = candidate_record(
+        registry, store, idempotency_key="fresh:first-task", title="First repository task",
+        source_kind="conversation", desired_outcome="Publish the first reviewed TaskSpec",
+        repo="repo.fresh",
+    )
+    task = _task(root)
+    task["claims"][0]["resource"] = "repo.fresh"
+    task["execution"]["working_repository"] = str(tmp_path / "fresh-repository")
+    task["depends_on"] = []
+    return registry, store, recorded, task
+
+
+def _first_task_proposal(registry_factory, tmp_path):
+    registry, store, recorded, task = _first_task_context(registry_factory, tmp_path)
+    path = tmp_path / "first-task.json"
+    task_propose(
+        registry, store, candidate_id=recorded["candidate_id"], task_json=task,
+        publishing_task_id=task["id"], path=path,
+    )
+    return registry, store, path
+
+
+def _first_task_publish(registry, store, path, resource_db, tmp_path):
+    return publish_task_proposal(
+        registry, store, plan_path=path, resource_db=resource_db,
+        lease_binding=_lease_binding(task_id="BUR-TEST-001-T099"),
+        workspace_root=tmp_path / "unused-workspace", receipt_path=tmp_path / "first-receipt.json",
+    )
+
+
+def _review_first_task(registry, store, path, tmp_path):
+    plan = json.loads(path.read_text())
+    review_task_proposal(
+        plan_path=path, reviewer="onboarding-reviewer",
+        expected_proposal_sha256=plan["proposal_sha256"],
+    )
+    preview = publication_preview(registry, store, plan_path=path)
+    db = _lease_db(preview, tmp_path, metadata_overrides=preview["required_lease_metadata"])
+    return preview, db
+
+
+def test_first_task_publication_creates_once_and_supplies_ordinary_publisher(
+    registry_factory, tmp_path,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    plan = json.loads(path.read_text())
+    assert plan["publishing_task_sha256"] is None
+    assert plan["publishing_task_id"] == plan["task_id"]
+    assert plan["task_spec"]["operation"] == "register"
+    assert store.task_spec(plan["task_id"]) is None
+    before_registry = _git(registry.root, "rev-parse", "HEAD:registry")
+    preview, db = _review_first_task(registry, store, path, tmp_path)
+    assert preview["required_resource_keys"] == [f"path:{store.state_root}"]
+    assert preview["lease_task_id"] == plan["task_id"]
+    published = _first_task_publish(registry, store, path, db, tmp_path)
+    assert published["task_spec_revision"]["revision"] == 1
+    assert published["task_spec_revision"]["idempotent_replay"] is False
+    assert store.task_spec(plan["task_id"])["spec"] == plan["task_json"]
+    assert store.replay_projection()["task_specs"]["matches_current"] is True
+    assert not (registry.root / plan["target_path"]).exists()
+    assert not (tmp_path / "unused-workspace").exists()
+    assert _git(registry.root, "status", "--porcelain") == ""
+    assert _git(registry.root, "rev-parse", "HEAD:registry") == before_registry
+    with sqlite3.connect(db) as connection:
+        assert connection.execute("SELECT count(*) FROM leases").fetchone()[0] == 0
+
+    recorded = candidate_record(
+        registry, store, idempotency_key="fresh:second-task", title="Second repository task",
+        source_kind="conversation", desired_outcome="Publish a subsequent TaskSpec",
+        repo="repo.fresh",
+    )
+    second_task = json.loads(json.dumps(plan["task_json"]))
+    second_task["id"] = "BUR-TEST-001-T100"
+    second_path = tmp_path / "second-task.json"
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry, store, candidate_id=recorded["candidate_id"], task_json=second_task,
+            publishing_task_id=second_task["id"], path=second_path,
+        )
+    assert caught.value.code == "first-task-onboarding-repository-not-first"
+    assert not second_path.exists()
+    result = task_propose(
+        registry, store, candidate_id=recorded["candidate_id"], task_json=second_task,
+        publishing_task_id=plan["task_id"], path=second_path,
+    )
+    assert "first_task_onboarding" not in result["proposal"]
+    assert result["proposal"]["publishing_task_sha256"] == plan["task_json_sha256"]
+    _review(second_path)
+    second_preview = publication_preview(registry, store, plan_path=second_path)
+    assert "required_lease_metadata" not in second_preview
+    second = publish_task_proposal(
+        registry, store, plan_path=second_path,
+        resource_db=_lease_db(second_preview, tmp_path,
+                              metadata_overrides={"task_id": plan["task_id"]}),
+        lease_binding=_lease_binding(task_id=plan["task_id"]),
+        workspace_root=tmp_path / "unused-workspace", receipt_path=tmp_path / "second-receipt.json",
+    )
+    assert second["status"] == "published"
+    assert store.task_spec(second_task["id"])["revision"] == 1
+
+
+@pytest.mark.parametrize("claim_resource", ["root", "repo.fresh", "repo.fresh.component"])
+@pytest.mark.parametrize("mode,state", [("read", "verified"), ("write", "planned")])
+def test_first_task_rejects_every_authoritative_overlap(
+    registry_factory, tmp_path, claim_resource, mode, state,
+):
+    registry, store, recorded, task = _first_task_context(registry_factory, tmp_path)
+    conflict = _task(registry.root, "BUR-TEST-001-T098")
+    conflict["claims"] = [{"resource": claim_resource, "mode": mode, "isolation": "worktree"}]
+    conflict["state"] = state
+    store.put_task_spec(conflict, idempotency_key="existing", expected_revision=None, source="test")
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry, store, candidate_id=recorded["candidate_id"], task_json=task,
+            publishing_task_id=task["id"], path=tmp_path / "blocked.json",
+        )
+    assert caught.value.code == "first-task-onboarding-repository-not-first"
+    assert not (tmp_path / "blocked.json").exists()
+
+
+@pytest.mark.parametrize("fault,code", [
+    ("unrelated-publisher", "publishing-task-unknown"),
+    ("non-repository", "first-task-onboarding-resource-invalid"),
+    ("missing-claim", "first-task-onboarding-claim-invalid"),
+    ("duplicate-claim", "task-schema-invalid"),
+    ("extra-claim", "first-task-onboarding-claim-invalid"),
+    ("read-claim", "first-task-onboarding-claim-invalid"),
+    ("shared-claim", "task-schema-invalid"),
+])
+def test_first_task_proposal_rejects_invalid_authority(registry_factory, tmp_path, fault, code):
+    registry, store, recorded, task = _first_task_context(registry_factory, tmp_path)
+    if fault == "non-repository":
+        resource_path = registry.root / "registry/resources/repo.fresh.json"
+        resource = json.loads(resource_path.read_text())
+        resource["type"] = "component"
+        resource_path.write_text(json.dumps(resource))
+        _git(registry.root, "add", "registry/resources")
+        _git(registry.root, "commit", "-m", "Change repository type")
+    elif fault == "missing-claim":
+        task["claims"][0]["resource"] = "repo.alpha"
+    elif fault == "duplicate-claim":
+        task["claims"].append(dict(task["claims"][0]))
+    elif fault == "extra-claim":
+        task["claims"].append({"resource": "repo.alpha", "mode": "write", "isolation": "worktree"})
+    elif fault == "read-claim":
+        task["claims"][0]["mode"] = "read"
+    elif fault == "shared-claim":
+        task["claims"][0]["isolation"] = "shared"
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry, store, candidate_id=recorded["candidate_id"], task_json=task,
+            publishing_task_id="unknown-task" if fault == "unrelated-publisher" else task["id"],
+            path=tmp_path / "blocked.json",
+        )
+    assert caught.value.code == code
+    assert not (tmp_path / "blocked.json").exists()
+
+
+@pytest.mark.parametrize("stage", ["before-review", "after-preview", "after-lease-check"])
+@pytest.mark.parametrize("drift,code", [
+    ("conflict", "first-task-onboarding-repository-not-first"),
+    ("target", "task-spec-baseline-drift"),
+    ("identical-target", "task-spec-register-replay-mutation-mismatch"),
+    ("candidate", "candidate-drift"),
+    ("registry", "registry-snapshot-drift"),
+])
+def test_first_task_revalidates_live_facts_before_create(
+    registry_factory, tmp_path, monkeypatch, stage, drift, code,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    plan = json.loads(path.read_text())
+
+    def change_state():
+        if drift in {"conflict", "target", "identical-target"}:
+            spec = json.loads(json.dumps(plan["task_json"]))
+            if drift == "conflict":
+                spec["id"] = "BUR-TEST-001-T098"
+            if drift != "identical-target":
+                spec["title"] = "Foreign authoritative task"
+            store.put_task_spec(
+                spec, idempotency_key="foreign", expected_revision=None, source="test",
+            )
+        elif drift == "candidate":
+            # Even same-event content drift must fail; event id alone is insufficient.
+            with store.immediate() as connection:
+                row = connection.execute("SELECT payload_json FROM events WHERE event_id=?",
+                                         (plan["candidate"]["event_id"],)).fetchone()
+                payload = json.loads(row[0])
+                payload["note"] = "candidate changed after proposal"
+                connection.execute("UPDATE events SET payload_json=? WHERE event_id=?",
+                                   (json.dumps(payload), plan["candidate"]["event_id"]))
+        else:
+            _git(registry.root, "commit", "--allow-empty", "-m", "Registry identity advanced")
+
+    if stage == "before-review":
+        change_state()
+        review_task_proposal(plan_path=path, reviewer="reviewer",
+                             expected_proposal_sha256=plan["proposal_sha256"])
+        with pytest.raises(OperatorIntakeError) as caught:
+            publication_preview(registry, store, plan_path=path)
+    else:
+        _, db = _review_first_task(registry, store, path, tmp_path)
+        if stage == "after-preview":
+            change_state()
+        else:
+            original = operator_intake_module.validate_live_lease_binding
+            changed = False
+
+            def validate_then_change(*args, **kwargs):
+                nonlocal changed
+                result = original(*args, **kwargs)
+                if not changed:
+                    changed = True
+                    change_state()
+                return result
+
+            monkeypatch.setattr(operator_intake_module, "validate_live_lease_binding",
+                                validate_then_change)
+        with pytest.raises(OperatorIntakeError) as caught:
+            _first_task_publish(registry, store, path, db, tmp_path)
+    assert caught.value.code == code
+    assert caught.value.effect_started is False
+    assert not (tmp_path / "first-receipt.json").exists()
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT count(*) FROM task_spec_mutations WHERE idempotency_key=?",
+            (f"operator-intake:{plan['proposal_sha256']}",),
+        ).fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("field", [
+    "task_id", "operation", "proposal_sha256", "authority_kind", "first_task_onboarding_sha256",
+])
+@pytest.mark.parametrize("missing", [False, True])
+def test_first_task_requires_exact_live_lease_metadata(
+    registry_factory, tmp_path, field, missing,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    with sqlite3.connect(db) as connection:
+        metadata = json.loads(connection.execute("SELECT metadata_json FROM leases").fetchone()[0])
+        if missing:
+            del metadata[field]
+        else:
+            metadata[field] = "wrong"
+        connection.execute(
+            "UPDATE leases SET metadata_json=?,metadata_sha256=?",
+            (json.dumps(metadata), operator_intake_module.legacy.sha256_json(metadata)),
+        )
+    with pytest.raises(OperatorIntakeError) as caught:
+        _first_task_publish(registry, store, path, db, tmp_path)
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert caught.value.effect_started is False
+    assert store.task_spec("BUR-TEST-001-T099") is None
+    assert not (tmp_path / "first-receipt.json").exists()
+
+
+@pytest.mark.parametrize("fault,code", [
+    ("missing", "lease-resources-missing"),
+    ("path", "lease-resources-missing"),
+    ("owner", "lease-owner-mismatch"),
+    ("expired", "lease-expired"),
+    ("metadata", "lease-metadata-binding-mismatch"),
+])
+def test_first_task_rechecks_lease_after_initial_validation(
+    registry_factory, tmp_path, monkeypatch, fault, code,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    original = operator_intake_module.validate_live_lease_binding
+    reads = 0
+
+    def validate_then_change(*args, **kwargs):
+        nonlocal reads
+        result = original(*args, **kwargs)
+        reads += 1
+        if reads == 1:
+            with sqlite3.connect(db) as connection:
+                if fault == "missing":
+                    connection.execute("DELETE FROM leases")
+                elif fault == "path":
+                    connection.execute("UPDATE leases SET resource_key=?", (f"path:{tmp_path}",))
+                elif fault == "owner":
+                    connection.execute("UPDATE leases SET owner_id='foreign'")
+                elif fault == "expired":
+                    connection.execute("UPDATE leases SET expires_at_unix=updated_at_unix+1")
+                else:
+                    raw = {"task_id": result["task_id"]}
+                    connection.execute(
+                        "UPDATE leases SET metadata_json=?,metadata_sha256=?",
+                        (json.dumps(raw), operator_intake_module.legacy.sha256_json(raw)),
+                    )
+        return result
+
+    monkeypatch.setattr(operator_intake_module, "validate_live_lease_binding", validate_then_change)
+    with pytest.raises(OperatorIntakeError) as caught:
+        _first_task_publish(registry, store, path, db, tmp_path)
+    assert caught.value.code == code
+    assert store.task_spec("BUR-TEST-001-T099") is None
+    assert not (tmp_path / "first-receipt.json").exists()
+
+
+def test_first_task_rechecks_lease_lifetime_immediately_before_create(
+    registry_factory, tmp_path, monkeypatch,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    with sqlite3.connect(db) as connection:
+        expires_at = connection.execute("SELECT min(expires_at_unix) FROM leases").fetchone()[0]
+    monkeypatch.setattr(operator_intake_module, "_current_unix", lambda: expires_at - 60)
+    with pytest.raises(OperatorIntakeError) as caught:
+        _first_task_publish(registry, store, path, db, tmp_path)
+    assert caught.value.code == "lease-expired"
+    assert caught.value.effect_started is False
+    assert caught.value.retryable is True
+    assert store.task_spec("BUR-TEST-001-T099") is None
+    assert not (tmp_path / "first-receipt.json").exists()
+
+
+@pytest.mark.parametrize("drift", ["review", "proposal", "registry"])
+def test_first_task_checks_external_files_after_final_lease_read(
+    registry_factory, tmp_path, monkeypatch, drift,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    original = operator_intake_module.validate_live_lease_binding
+    reads = 0
+
+    def validate_then_change(*args, **kwargs):
+        nonlocal reads
+        result = original(*args, **kwargs)
+        reads += 1
+        if reads == 2:
+            if drift == "registry":
+                _git(registry.root, "commit", "--allow-empty", "-m", "Late Registry drift")
+            else:
+                plan = json.loads(path.read_text())
+                if drift == "review":
+                    plan["review"]["reviewer"] = "different-reviewer"
+                else:
+                    plan["task_json"]["title"] = "Different task"
+                path.write_text(json.dumps(plan))
+        return result
+
+    monkeypatch.setattr(operator_intake_module, "validate_live_lease_binding", validate_then_change)
+    with pytest.raises(OperatorIntakeError) as caught:
+        _first_task_publish(registry, store, path, db, tmp_path)
+    assert caught.value.code == (
+        "registry-snapshot-drift" if drift == "registry" else "plan-file-drift"
+    )
+    assert reads == 2
+    assert store.task_spec("BUR-TEST-001-T099") is None
+    assert not (tmp_path / "first-receipt.json").exists()
+
+
+def test_first_task_holds_state_and_lease_writer_locks_through_mutation(
+    registry_factory, tmp_path, monkeypatch,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    original = task_specs_module.put
+    checked = []
+
+    def put_with_competing_writers(connection, *args, **kwargs):
+        assert connection.in_transaction
+        for database in (store.path, db):
+            contender = sqlite3.connect(database, timeout=0.01, isolation_level=None)
+            try:
+                with pytest.raises(sqlite3.OperationalError, match="locked"):
+                    contender.execute("BEGIN IMMEDIATE")
+                checked.append(database)
+            finally:
+                contender.close()
+        return original(connection, *args, **kwargs)
+
+    monkeypatch.setattr(task_specs_module, "put", put_with_competing_writers)
+    result = _first_task_publish(registry, store, path, db, tmp_path)
+    assert result["status"] == "published"
+    assert checked == [store.path, db]
+
+
+@pytest.mark.parametrize("drift", ["registry", "candidate", "conflicting-task"])
+def test_first_task_receipt_replay_remains_independent_of_create_authority(
+    registry_factory, tmp_path, monkeypatch, drift,
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    first = _first_task_publish(registry, store, path, db, tmp_path)
+    if drift == "registry":
+        (registry.root / "registry/resources/repo.fresh.json").write_text("{}")
+    elif drift == "candidate":
+        with store.immediate() as connection:
+            connection.execute("DELETE FROM events WHERE event_type='live-register'")
+    else:
+        spec = _task(registry.root, "BUR-TEST-001-T098")
+        spec["claims"][0]["resource"] = "repo.fresh"
+        store.put_task_spec(
+            spec, idempotency_key="later-task", expected_revision=None, source="test",
+        )
+
+    def unexpected_validation(*args, **kwargs):
+        pytest.fail("completed receipt replay must not derive new publication authority")
+
+    monkeypatch.setattr(operator_intake_module, "_validated_proposal", unexpected_validation)
+    monkeypatch.setattr(
+        operator_intake_module, "validate_live_lease_binding", unexpected_validation,
+    )
+    replay = publish_task_proposal(
+        registry, store, plan_path=path, resource_db=tmp_path / "missing.sqlite3",
+        lease_binding={"owner_id": "expired", "task_id": "wrong"},
+        workspace_root=tmp_path / "unused", receipt_path=tmp_path / "first-receipt.json",
+    )
+    assert replay["idempotent_replay"] is True
+    assert replay["receipt_sha256"] == first["receipt_sha256"]
+
+
+def test_first_task_recovers_only_exact_pre_receipt_commit(registry_factory, tmp_path, monkeypatch):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    original = store.replay_projection
+    failures = 2
+
+    def projection():
+        nonlocal failures
+        if failures:
+            failures -= 1
+            raise RuntimeError("postcommit projection failure")
+        return original()
+
+    monkeypatch.setattr(store, "replay_projection", projection)
+    for attempt in range(2):
+        with pytest.raises(OperatorIntakeError) as caught:
+            _first_task_publish(registry, store, path, db, tmp_path)
+        assert caught.value.code == "task-spec-projection-postcommit-failed"
+        assert caught.value.effect_started is True
+        assert caught.value.ambiguity is True
+        assert caught.value.publication_phase == "committed_locally"
+        assert caught.value.details["task_spec_revision"]["idempotent_replay"] is bool(attempt)
+        assert store.task_spec("BUR-TEST-001-T099")["revision"] == 1
+        assert not (tmp_path / "first-receipt.json").exists()
+        _git(registry.root, "commit", "--allow-empty", "-m", "Registry advanced after commit")
+    recovered = _first_task_publish(registry, store, path, db, tmp_path)
+    assert recovered["task_spec_revision"]["idempotent_replay"] is True
+    assert recovered["task_spec_revision"]["revision"] == 1
+
+
 def _cli_result(capsys):
     payload = json.loads(capsys.readouterr().out)
     return payload.get("result", payload)

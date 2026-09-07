@@ -109,6 +109,15 @@ def test_first_task_onboarding_rejects_duplicate_target_claim() -> None:
     assert exc_info.value.code == "first-task-onboarding-claim-invalid"
 
 
+def test_first_task_onboarding_cannot_authorize_additional_resources() -> None:
+    with pytest.raises(FirstTaskOnboardingError) as exc_info:
+        _validate(proposed_claims=[
+            {"resource": "repo.commonthing", "mode": "write", "isolation": "worktree"},
+            {"resource": "repo.other", "mode": "write", "isolation": "worktree"},
+        ])
+    assert exc_info.value.code == "first-task-onboarding-claim-invalid"
+
+
 def test_first_task_onboarding_rejects_existing_repository_task_claim() -> None:
     with pytest.raises(FirstTaskOnboardingError) as exc_info:
         _validate(conflicting_task_ids=["COMMONTHING-OLDER-V1-T001"])

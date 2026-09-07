@@ -12,6 +12,7 @@ import sqlite3
 import stat
 import subprocess
 import tempfile
+import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,11 @@ from .approval import (
     task_approval_contract,
 )
 from .core import Registry, StateError, StateStore
+from .first_task_onboarding import (
+    FIRST_TASK_ONBOARDING_KIND,
+    FirstTaskOnboardingError,
+    validate_first_task_onboarding,
+)
 from .live_register import (
     ACTIVE_LIVE_STATUSES,
     CANDIDATE_EVENT_SCHEMA_VERSION,
@@ -2862,6 +2868,62 @@ def _inject_candidate_binding(task_json: dict[str, Any], event: dict[str, Any]) 
     return result
 
 
+def _first_task_onboarding_authority(
+    registry: Registry,
+    store: StateStore,
+    *,
+    task_json: dict[str, Any],
+    event: dict[str, Any],
+    committed_replay: bool = False,
+) -> dict[str, Any]:
+    """Observe first-task facts; exact mutation recovery derives no new authority."""
+    resource_id = event["record"].get("repo")
+    resource = registry.resources.get(resource_id)
+    current_tasks: dict[str, Any] = {}
+    if not committed_replay:
+        try:
+            with contextlib.closing(store.connect()) as connection:
+                connection.execute("BEGIN")
+                current_tasks = task_specs.current_projection(connection)["tasks"]
+        except (sqlite3.Error, task_specs.TaskSpecError) as exc:
+            raise OperatorIntakeError(
+                "first-task-onboarding-state-invalid",
+                f"cannot observe the complete authoritative TaskSpec claim view: {exc}",
+            ) from exc
+    overlapping_resources = {
+        existing_id for existing_id in registry.resources
+        if legacy.overlaps(resource_id, existing_id, registry.resources)
+    }
+    conflicts = []
+    for task_id, current in current_tasks.items():
+        claims = current["spec"].get("claims")
+        if not isinstance(claims, list) or any(
+            not isinstance(claim, dict)
+            or not isinstance(claim.get("resource"), str)
+            or claim["resource"] not in registry.resources
+            for claim in claims
+        ):
+            raise OperatorIntakeError(
+                "first-task-onboarding-state-invalid",
+                f"cannot resolve authoritative claims for TaskSpec {task_id}",
+            )
+        if any(claim["resource"] in overlapping_resources for claim in claims):
+            conflicts.append(task_id)
+    try:
+        return validate_first_task_onboarding(
+            target_resource_id=resource_id,
+            target_resource_type=(
+                "git-repository" if committed_replay else resource.type if resource else ""
+            ),
+            proposed_task_id=task_json.get("id"),
+            proposed_claims=task_json.get("claims"),
+            target_task_exists=task_json.get("id") in current_tasks,
+            conflicting_task_ids=conflicts,
+        )
+    except FirstTaskOnboardingError as exc:
+        raise OperatorIntakeError(exc.code, str(exc)) from exc
+
+
 def task_propose(
     registry: Registry,
     store: StateStore,
@@ -2882,7 +2944,7 @@ def task_propose(
             "candidate-not-open", "only a current open candidate can be proposed"
         )
     publishing_task = store.task_spec(publishing_task_id)
-    if publishing_task is None:
+    if publishing_task is None and publishing_task_id != task_json.get("id"):
         raise OperatorIntakeError(
             "publishing-task-unknown",
             f"publishing task {publishing_task_id} is not in the authoritative StateStore",
@@ -2909,6 +2971,11 @@ def task_propose(
             details={"acceptance_ids": sorted(generic_ids)},
         )
     _validate_task_schema(registry, bound_task)
+    onboarding = (
+        _first_task_onboarding_authority(registry, store, task_json=bound_task, event=event)
+        if publishing_task is None
+        else None
+    )
     task_spec_binding = _task_spec_proposal_binding(
         registry, store, task_json=bound_task, event=event
     )
@@ -2956,7 +3023,9 @@ def task_propose(
         },
         "registry": identity,
         "publishing_task_id": publishing_task_id,
-        "publishing_task_sha256": publishing_task["spec_sha256"],
+        "publishing_task_sha256": (
+            publishing_task["spec_sha256"] if publishing_task is not None else None
+        ),
         "task_id": task_id,
         "target_path": target_path,
         "task_json": bound_task,
@@ -2995,6 +3064,8 @@ def task_propose(
             *candidate_authority_nonclaims(),
         ],
     }
+    if onboarding is not None:
+        proposal["first_task_onboarding"] = onboarding
     unsigned = {
         key: value for key, value in proposal.items() if key not in {"proposal_sha256", "review"}
     }
@@ -3404,24 +3475,26 @@ def _validated_proposal(
         expected_reference=expected_proposal_sha,
         task_id=str(plan.get("task_id")),
     )
-    registry, _identity = _canonical_registry_snapshot(registry)
+    registry, identity = _canonical_registry_snapshot(registry)
     publishing_task_id = str(plan.get("publishing_task_id", ""))
-    publishing_task = store.task_spec(publishing_task_id)
-    if publishing_task is None:
-        raise OperatorIntakeError(
-            "publishing-task-unknown",
-            f"publishing task {publishing_task_id} is not in the authoritative StateStore",
-        )
-    planned_publishing_sha = plan.get("publishing_task_sha256")
-    legacy_projection = registry.tasks.get(publishing_task_id)
-    accepted_publishing_digests = {str(publishing_task["spec_sha256"])}
-    if legacy_projection is not None:
-        accepted_publishing_digests.add(legacy_projection.sha256)
-    if planned_publishing_sha not in accepted_publishing_digests:
-        raise OperatorIntakeError(
-            "publishing-task-drift",
-            "publishing task binding does not match the authoritative StateStore revision",
-        )
+    onboarding = "first_task_onboarding" in plan
+    if not onboarding:
+        publishing_task = store.task_spec(publishing_task_id)
+        if publishing_task is None:
+            raise OperatorIntakeError(
+                "publishing-task-unknown",
+                f"publishing task {publishing_task_id} is not in the authoritative StateStore",
+            )
+        planned_publishing_sha = plan.get("publishing_task_sha256")
+        legacy_projection = registry.tasks.get(publishing_task_id)
+        accepted_publishing_digests = {str(publishing_task["spec_sha256"])}
+        if legacy_projection is not None:
+            accepted_publishing_digests.add(legacy_projection.sha256)
+        if planned_publishing_sha not in accepted_publishing_digests:
+            raise OperatorIntakeError(
+                "publishing-task-drift",
+                "publishing task binding does not match the authoritative StateStore revision",
+            )
     candidate = plan.get("candidate")
     if not isinstance(candidate, dict):
         raise OperatorIntakeError("candidate-binding-invalid", "proposal candidate is invalid")
@@ -3435,6 +3508,33 @@ def _validated_proposal(
     task_json = plan.get("task_json")
     if not isinstance(task_json, dict):
         raise OperatorIntakeError("task-json-invalid", "proposal task_json is missing")
+    if onboarding:
+        if (
+            publishing_task_id != task_json.get("id")
+            or plan.get("task_id") != task_json.get("id")
+            or plan.get("publishing_task_sha256") is not None
+            or not isinstance(plan.get("task_spec"), dict)
+            or plan["task_spec"].get("operation") != "register"
+            or plan.get("publication") != {
+                "action_class": "registry_mutation",
+                "publication_mode": "state_store",
+                "required_level": "reviewed_plan",
+                "queue_mutated": False,
+            }
+        ):
+            raise OperatorIntakeError(
+                "first-task-onboarding-binding-invalid",
+                "onboarding must bind only a create-only StateStore task and its lease label",
+            )
+        if (
+            candidate.get("event_sha256") != legacy.sha256_json(current)
+            or candidate.get("event_created_at") != current["created_at"]
+            or current["record"].get("status") not in ACTIVE_LIVE_STATUSES
+            or _inject_candidate_binding(task_json, current) != task_json
+        ):
+            raise OperatorIntakeError(
+                "candidate-drift", "onboarding candidate content or task binding changed"
+            )
     _validate_task_schema(registry, task_json)
     task_spec_binding = _validate_task_spec_proposal_binding(
         registry, store, plan=plan, task_json=task_json, event=current
@@ -3464,6 +3564,25 @@ def _validated_proposal(
             proposed_spec_sha256=task_spec_binding["proposed_spec_sha256"],
             expected_revision=task_spec_binding["expected_revision"],
         )
+    if onboarding:
+        # An exact register mutation above permits recovery only. It must never
+        # turn an existing task into fresh create authority or publisher authority.
+        committed_replay = current_task_spec is not None
+        if not committed_replay and plan.get("registry") != identity:
+            raise OperatorIntakeError(
+                "registry-snapshot-drift", "onboarding Registry identity changed after proposal"
+            )
+        authority = _first_task_onboarding_authority(
+            registry, store, task_json=task_json, event=current,
+            committed_replay=committed_replay,
+        )
+        if legacy.canonical_json(plan.get("first_task_onboarding")) != legacy.canonical_json(
+            authority
+        ):
+            raise OperatorIntakeError(
+                "first-task-onboarding-binding-invalid",
+                "proposal does not bind the exact first-task onboarding authority",
+            )
     _validate_task_semantics(
         registry,
         store,
@@ -3515,7 +3634,7 @@ def publication_preview(
     plan, plan_bytes, approval_result = _validated_proposal(registry, store, plan_path=path)
     state_root = store.state_root.expanduser().resolve()
     task_id = str(plan["task_id"])
-    return {
+    result = {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "kind": "bureau_task_publication_preview",
         "status": "ready",
@@ -3551,6 +3670,151 @@ def publication_preview(
             *candidate_authority_nonclaims(),
         ],
     }
+    if "first_task_onboarding" in plan:
+        result.update({
+            "first_task_onboarding": plan["first_task_onboarding"],
+            "lease_task_id": plan["publishing_task_id"],
+            "required_lease_metadata": _publication_lease_metadata(plan),
+        })
+    return result
+
+
+def _publication_lease_metadata(plan: dict[str, Any]) -> dict[str, Any]:
+    metadata = {
+        "task_id": plan["publishing_task_id"],
+        "operation": "state-task-publication",
+        "proposal_sha256": plan["proposal_sha256"],
+    }
+    if "first_task_onboarding" in plan:
+        metadata.update({
+            "authority_kind": FIRST_TASK_ONBOARDING_KIND,
+            "first_task_onboarding_sha256": legacy.sha256_json(plan["first_task_onboarding"]),
+        })
+    return metadata
+
+
+def _validate_publication_leases(
+    plan: dict[str, Any],
+    required_resource_keys: list[str],
+    lease_binding: dict[str, Any],
+    resource_db: Path,
+) -> dict[str, Any]:
+    if lease_binding.get("task_id") != plan["publishing_task_id"]:
+        raise OperatorIntakeError(
+            "lease-task-mismatch",
+            "lease binding task_id must match the proposal's exact publication identity",
+            details={
+                "expected": plan["publishing_task_id"],
+                "observed": lease_binding.get("task_id"),
+            },
+        )
+    try:
+        return validate_live_lease_binding(
+            {"required_resource_keys": required_resource_keys},
+            lease_binding,
+            resource_db=resource_db,
+            min_remaining_seconds=60,
+            required_metadata=_publication_lease_metadata(plan),
+        )
+    except RuntimeRefreshError as exc:
+        raise OperatorIntakeError(
+            exc.code,
+            str(exc),
+            retryable=exc.code in {
+                "lease-database-read-failed", "lease-expired", "lease-resources-missing",
+            },
+            details=exc.details,
+        ) from exc
+
+
+def _current_unix() -> int:
+    return int(time.time())
+
+
+def _require_current_publication_lease_lifetime(binding: dict[str, Any]) -> None:
+    try:
+        expires_at = int(binding["min_expires_at_unix"])
+        minimum_remaining = int(binding["minimum_remaining_seconds"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise OperatorIntakeError(
+            "lease-binding-invalid", "validated lease lifetime binding is invalid"
+        ) from exc
+    current_unix = _current_unix()
+    required_after = current_unix + minimum_remaining
+    if expires_at <= required_after:
+        raise OperatorIntakeError(
+            "lease-expired",
+            "publication lease expires too soon for the StateStore mutation",
+            retryable=True,
+            details={
+                "expires_at_unix": expires_at,
+                "required_after_unix": required_after,
+                "minimum_remaining_seconds": minimum_remaining,
+            },
+        )
+
+
+def _publish_first_task_onboarding(
+    registry: Registry,
+    store: StateStore,
+    *,
+    plan_path: Path,
+    plan_bytes: bytes,
+    state_root: Path,
+    normalized_leases: dict[str, Any],
+    lease_binding: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Validate and create on one locked StateStore view, with lease rows pinned.
+
+    StateStore's public readers use separate connections. BEGIN IMMEDIATE keeps
+    their committed view stable until task_specs.put uses the held connection.
+    No derived onboarding authority is accepted as an input to this boundary.
+    """
+    resource_db = Path(normalized_leases["resource_db"])
+    try:
+        with contextlib.closing(sqlite3.connect(
+            resource_db.as_uri() + "?mode=rw", uri=True, timeout=5, isolation_level=None,
+        )) as leases:
+            leases.execute("BEGIN IMMEDIATE")
+            with store.immediate() as connection:
+                plan, validated_bytes, _ = _validated_proposal(registry, store, plan_path=plan_path)
+                if validated_bytes != plan_bytes or "first_task_onboarding" not in plan:
+                    raise OperatorIntakeError(
+                        "plan-file-drift", "onboarding plan changed before publication"
+                    )
+                if store.state_root.expanduser().resolve() != state_root:
+                    raise OperatorIntakeError(
+                        "first-task-onboarding-state-invalid", "publication StateStore path changed"
+                    )
+                normalized_leases = _validate_publication_leases(
+                    plan, [f"path:{state_root}"], lease_binding, resource_db,
+                )
+                # Registry and proposal files are outside SQLite. Check them
+                # again after lease validation, immediately before the CAS.
+                _, identity = _canonical_registry_snapshot(registry)
+                if (
+                    task_specs.get_current(connection, plan["task_id"]) is None
+                    and identity != plan["registry"]
+                ):
+                    raise OperatorIntakeError(
+                        "registry-snapshot-drift", "onboarding Registry changed before mutation"
+                    )
+                current_bytes, _ = _read_bounded_regular_file(plan_path, field="plan")
+                if current_bytes != plan_bytes:
+                    raise OperatorIntakeError(
+                        "plan-file-drift", "onboarding plan changed before mutation"
+                    )
+                _require_current_publication_lease_lifetime(normalized_leases)
+                revision = task_specs.put(
+                    connection,
+                    plan["task_json"],
+                    idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+                    expected_revision=None,
+                    source="operator-intake-reviewed-proposal",
+                )
+            return revision, normalized_leases
+    except (sqlite3.Error, task_specs.TaskSpecError) as exc:
+        raise StateError(str(exc)) from exc
 
 
 
@@ -3677,39 +3941,9 @@ def publish_task_proposal(
         return {**existing, "idempotent_replay": True, "receipt_path": str(receipt)}
 
     preview = publication_preview(registry, store, plan_path=path)
-    if lease_binding.get("task_id") != plan["publishing_task_id"]:
-        raise OperatorIntakeError(
-            "lease-task-mismatch",
-            "lease binding task_id must match the registered publishing task",
-            details={
-                "expected": plan["publishing_task_id"],
-                "observed": lease_binding.get("task_id"),
-            },
-        )
-    try:
-        normalized_leases = validate_live_lease_binding(
-            {"required_resource_keys": preview["required_resource_keys"]},
-            lease_binding,
-            resource_db=Path(resource_db),
-            min_remaining_seconds=60,
-            required_metadata={
-                "task_id": plan["publishing_task_id"],
-                "operation": "state-task-publication",
-                "proposal_sha256": plan["proposal_sha256"],
-            },
-        )
-    except RuntimeRefreshError as exc:
-        raise OperatorIntakeError(
-            exc.code,
-            str(exc),
-            retryable=exc.code
-            in {
-                "lease-database-read-failed",
-                "lease-expired",
-                "lease-resources-missing",
-            },
-            details=exc.details,
-        ) from exc
+    normalized_leases = _validate_publication_leases(
+        plan, preview["required_resource_keys"], lease_binding, Path(resource_db),
+    )
 
     current_plan_bytes, _ = _read_bounded_regular_file(path, field="plan")
     if hashlib.sha256(current_plan_bytes).hexdigest() != plan_file_sha:
@@ -3722,12 +3956,21 @@ def publish_task_proposal(
     task_spec_binding = plan["task_spec"]
     expected_revision = task_spec_binding["expected_revision"]
     try:
-        task_spec_revision = store.put_task_spec(
-            plan["task_json"],
-            idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
-            expected_revision=expected_revision,
-            source="operator-intake-reviewed-proposal",
-        )
+        if "first_task_onboarding" in plan:
+            task_spec_revision, normalized_leases = _publish_first_task_onboarding(
+                registry, store, plan_path=path, plan_bytes=plan_bytes,
+                state_root=state_root, normalized_leases=normalized_leases,
+                lease_binding=lease_binding,
+            )
+        else:
+            task_spec_revision = store.put_task_spec(
+                plan["task_json"],
+                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+                expected_revision=expected_revision,
+                source="operator-intake-reviewed-proposal",
+            )
+    except OperatorIntakeError:
+        raise
     except StateError as exc:
         raise OperatorIntakeError(
             "task-spec-state-mutation-failed",

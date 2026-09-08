@@ -1,7 +1,7 @@
 {
   "acceptance": [
     {
-      "assertion": "Immediately before prepare-intent and again before apply, protected heimgewebe/bureau main is freshly observed; the exact target contains this authority's protected publication merge, registered main c2acfd85969374b5a81c8be3a23ecbf738bf85e4 and all then-current legitimate protected-main merges, and validate (3.10), validate (3.12), registry-registration-preflight/freshness, and main-push-revalidation are successful for the exact target.",
+      "assertion": "Immediately before prepare-intent and again before apply, protected heimgewebe/bureau main is freshly observed; the exact target contains this authority's protected publication merge, registered main c2acfd85969374b5a81c8be3a23ecbf738bf85e4 and all then-current legitimate protected-main merges, and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are successful for the exact target.",
       "evidence_type": "object",
       "id": "fresh-current-main",
       "verifier": "manual_observation",

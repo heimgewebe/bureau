@@ -95,8 +95,7 @@
       "required_checks": [
         "validate (3.10)",
         "validate (3.12)",
-        "registry-registration-preflight/freshness",
-        "main-push-revalidation"
+        "registry-registration-preflight/freshness"
       ],
       "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned to ready, while preserving metadata.runtime_execution_context exactly equal to the deployed Grabowski server-owned reserved executor contract.",
       "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",

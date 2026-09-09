@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -134,6 +135,36 @@ def test_grabowski_handoff_rejects_missing_claim_bound_resource(
     registry.resources.pop(missing_resource)
 
     with pytest.raises(StateError, match=f"unknown resources: {missing_resource}"):
+        grabowski_handoff(registry, store, run["run_id"])
+
+
+def test_grabowski_handoff_rejects_claim_bound_resource_without_grabowski_key(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task_raw = json.loads(task_path.read_text())
+    task_raw["execution"]["mode"] = "grabowski-task"
+    task_raw["execution"]["argv"] = ["true"]
+    task_raw["execution"]["grabowski_resources"] = []
+    task_path.write_text(json.dumps(task_raw))
+    for resource_path in (root / "registry/resources").glob("*.json"):
+        resource_raw = json.loads(resource_path.read_text())
+        if resource_raw.get("id") == "repo.alpha":
+            resource_raw["grabowski_key"] = "component:repo-alpha"
+            resource_path.write_text(json.dumps(resource_raw))
+            break
+    else:
+        raise AssertionError("repo.alpha fixture resource missing")
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("a", ("repository",))["run"]
+    task = registry.tasks[run["task_id"]]
+    resource_id = task.claims[0].resource
+    registry.resources[resource_id] = replace(
+        registry.resources[resource_id], grabowski_key=None
+    )
+
+    with pytest.raises(StateError, match="has no Grabowski resource keys"):
         grabowski_handoff(registry, store, run["run_id"])
 
 

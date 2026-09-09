@@ -8633,6 +8633,10 @@ def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dic
             + ", ".join(missing_claim_resources)
         )
     keys = grabowski_resource_keys_for_task(registry.resources, task)
+    if task.mode == "grabowski-task" and not keys:
+        raise legacy.StateError(
+            f"run {run_id} claim-bound grabowski-task has no Grabowski resource keys"
+        )
     result: dict[str, Any] = {
         "origin_ref": f"bureau:{run_id}",
         "request_id": run["dispatch_request_id"] or f"{run_id}:dispatch-1",

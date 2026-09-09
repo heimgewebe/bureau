@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
+from bureau import v2 as bureau_v2
 from bureau.core import (
     Claim,
     ConflictError,
@@ -105,6 +106,52 @@ def test_grabowski_handoff_has_idempotency(registry_factory, tmp_path, monkeypat
     handoff = grabowski_handoff(registry, store, run["run_id"])
     assert handoff["origin_ref"] == f"bureau:{run['run_id']}"
     assert handoff["request_id"].endswith(":dispatch-1")
+
+
+def test_grabowski_handoff_uses_claim_bound_task_when_git_projection_drops_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    registry, store, dispatcher = setup(registry_factory(1), tmp_path, monkeypatch)
+    run = dispatcher.claim_next("a", ("repository",))["run"]
+    expected_task = registry.tasks.pop(run["task_id"])
+
+    handoff = grabowski_handoff(registry, store, run["run_id"])
+
+    assert handoff["task_id"] == expected_task.id
+    assert handoff["task_sha256"] == run["task_sha256"]
+    assert handoff["mode"] == expected_task.mode
+    assert handoff["policy"] == expected_task.policy
+    assert handoff["acceptance"] == list(expected_task.acceptance)
+
+
+def test_grabowski_handoff_rejects_missing_claim_bound_resource(
+    registry_factory, tmp_path, monkeypatch
+):
+    registry, store, dispatcher = setup(registry_factory(1), tmp_path, monkeypatch)
+    run = dispatcher.claim_next("a", ("repository",))["run"]
+    task = registry.tasks[run["task_id"]]
+    missing_resource = task.claims[0].resource
+    registry.resources.pop(missing_resource)
+
+    with pytest.raises(StateError, match=f"unknown resources: {missing_resource}"):
+        grabowski_handoff(registry, store, run["run_id"])
+
+
+def test_grabowski_handoff_rejects_claim_bound_task_revision_mismatch(
+    registry_factory, tmp_path, monkeypatch
+):
+    registry, store, dispatcher = setup(registry_factory(1), tmp_path, monkeypatch)
+    run = dispatcher.claim_next("a", ("repository",))["run"]
+    original = bureau_v2._claim_bound_envelope
+
+    def tampered_envelope(store_arg, run_id_arg, expected_sha256):
+        envelope = json.loads(json.dumps(original(store_arg, run_id_arg, expected_sha256)))
+        envelope["task"]["title"] += " tampered"
+        return envelope
+
+    monkeypatch.setattr(bureau_v2, "_claim_bound_envelope", tampered_envelope)
+    with pytest.raises(StateError, match="claim-bound task revision mismatch"):
+        grabowski_handoff(registry, store, run["run_id"])
 
 
 def test_concurrent_claim_stress(registry_factory, tmp_path, monkeypatch):

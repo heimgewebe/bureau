@@ -8616,7 +8616,14 @@ def runtime_closeout(
 def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dict[str, Any]:
     run = store.run(run_id)
     envelope = _claim_bound_envelope(store, run_id, run["envelope_sha256"])
-    task = registry.tasks[run["task_id"]]
+    task_raw = envelope.get("task")
+    if not isinstance(task_raw, dict):
+        raise legacy.StateError(f"run {run_id} has no claim-bound task snapshot")
+    task = _task_from_authoritative_spec(task_raw, run["task_sha256"])
+    if task.id != run["task_id"]:
+        raise legacy.StateError(f"run {run_id} claim-bound task id mismatch")
+    if task.sha256 != run["task_sha256"]:
+        raise legacy.StateError(f"run {run_id} claim-bound task revision mismatch")
     keys = grabowski_resource_keys_for_task(registry.resources, task)
     result: dict[str, Any] = {
         "origin_ref": f"bureau:{run_id}",

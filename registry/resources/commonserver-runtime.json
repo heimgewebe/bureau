@@ -1,5 +1,6 @@
 {
   "id": "runtime.commonserver",
+  "grabowski_key": "host:commonserver",
   "metadata": {
     "role": "canonical production VPS runtime surface for commonserver",
     "boundary": "Production VPS runtime surface for commonserver; secrets must not be recorded in Bureau",

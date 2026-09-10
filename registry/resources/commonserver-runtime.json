@@ -1,0 +1,12 @@
+{
+  "id": "runtime.commonserver",
+  "metadata": {
+    "role": "canonical production VPS runtime surface for commonserver",
+    "boundary": "Production VPS runtime surface for commonserver; secrets must not be recorded in Bureau",
+    "canonical_since": "2026-09-10",
+    "supersedes_as_canonical": "runtime.wg-prod-1"
+  },
+  "parent": "root",
+  "schema_version": 1,
+  "type": "service"
+}

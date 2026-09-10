@@ -1,7 +1,15 @@
 {
   "id": "runtime.wg-prod-1",
   "metadata": {
-    "boundary": "Production VPS runtime surface for wg-prod-1; secrets must not be recorded in Bureau"
+    "boundary": "Legacy production VPS runtime identity retained for historical task references and the existing public Tailscale/Funnel compatibility name; secrets must not be recorded in Bureau",
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "purpose": "Preserve historical Bureau references and compatibility evidence after the canonical runtime identity moved to runtime.commonserver.",
+    "does_not_establish": [
+      "active_runtime_identity",
+      "new_task_execution_authority",
+      "canonical_server_name"
+    ]
   },
   "parent": "root",
   "schema_version": 1,

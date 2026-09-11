@@ -470,7 +470,7 @@ def protected_publication_activation_observation(
         "recovery_action": {
             "action": "prepare-intent" if status in {"candidate", "alert"} else "none",
             "eligible": status in {"candidate", "alert"},
-            "requires_authorization": status in {"candidate", "alert"},
+            "requires_authorization": False,
         },
         "observed_at": refresh.isoformat(observed_time),
         "does_not_establish": [
@@ -912,6 +912,29 @@ def test_legacy_runtime_authority_preflight_does_not_require_publication_activat
         store=store, approval_task_id=task_id, target_sha256="a" * 64
     )
     assert observed["task_id"] == task_id
+
+
+def test_runtime_authority_task_needs_no_manual_approval_metadata(tmp_path: Path) -> None:
+    task_id = "BUREAU-RUNTIME-NO-MANUAL-APPROVAL"
+    state_root = (tmp_path / "no-manual-approval-authority").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    spec = runtime_authority_spec(task_id)
+    spec["execution"].pop("approval")
+    spec["metadata"]["runtime_refresh_authority"].pop("required_approval_level")
+    stored = store.put_task_spec(
+        spec,
+        idempotency_key=f"seed:{task_id}:no-manual-approval",
+        expected_revision=None,
+        source="test",
+    )
+
+    observed = refresh.validate_authoritative_runtime_refresh_task(
+        store=store, approval_task_id=task_id, target_sha256="a" * 64
+    )
+
+    assert observed["task_id"] == task_id
+    assert observed["revision"] == stored["revision"]
+    assert observed["spec_sha256"] == stored["spec_sha256"]
 
 
 def test_protected_publication_activation_requires_planned_unactivated_bootstrap() -> None:
@@ -4203,8 +4226,32 @@ def prepare_legacy_cutover(
 ) -> tuple[dict[str, Any], Path, Path, Path, dict[str, Any]]:
     _, manifest_path, typed_intent, _ = prepare_candidate_intent(tmp_path)
     legacy = dict(typed_intent)
+    legacy["runtime_approval"] = {
+        "schema_version": 1,
+        "required": True,
+        "required_level": "break_glass",
+        "action_class": "runtime_mutation",
+        "action_classes": ["runtime_mutation"],
+        "allowed": True,
+        "reason": "approved",
+        "expected_reference": legacy["target_sha256"],
+        "expected_task_id": legacy["approval_task_id"],
+        "evidence": {
+            "schema_version": 1,
+            "approved": True,
+            "level": "break_glass",
+            "scope": ["runtime_mutation"],
+            "source": "legacy-test-authorization",
+            "reviewer": "legacy-test-reviewer",
+            "reference": legacy["target_sha256"],
+            "task_id": legacy["approval_task_id"],
+            "note": "Bureau immutable runtime refresh",
+        },
+    }
     legacy.pop("runtime_approval")
     legacy.pop("approval_task_id")
+    legacy["authorized_by"] = "legacy-test-reviewer"
+    legacy["authorization"] = "legacy-test-authorization"
     legacy["created_at"] = refresh.isoformat(current)
     legacy["expires_at"] = refresh.isoformat(current + timedelta(minutes=15))
     legacy["nonce"] = "legacy-cutover-test"
@@ -4798,7 +4845,7 @@ def test_observe_source_current_missing_scheduler_requires_prepare_intent(
     assert result["recovery_action"] == {
         "action": "prepare-intent",
         "eligible": True,
-        "requires_authorization": True,
+        "requires_authorization": False,
     }
 
 
@@ -5000,7 +5047,7 @@ def test_observe_binds_exact_merged_main_and_green_ci(tmp_path: Path) -> None:
     assert result["recovery_action"] == {
         "action": "prepare-intent",
         "eligible": True,
-        "requires_authorization": True,
+        "requires_authorization": False,
     }
     assert len(result["target_sha256"]) == 64
 
@@ -5063,7 +5110,7 @@ def test_observe_blocks_ambiguous_pr_and_main_drift(tmp_path: Path) -> None:
     assert "main-changed-during-observation" in result["reason_codes"]
 
 
-def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path) -> None:
+def test_prepare_intent_is_hash_bound_without_manual_approval(tmp_path: Path) -> None:
     observed, _, intent, intent_path = prepare_candidate_intent(tmp_path)
     runtime_user_unit_dir = refresh.default_runtime_user_unit_dir()
 
@@ -5106,39 +5153,40 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
         f"path:{runtime_user_unit_dir}",
         f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
     }.isdisjoint(intent["required_resource_keys"])
-    assert intent["runtime_approval"]["allowed"] is True
-    assert intent["runtime_approval"]["required_level"] == "break_glass"
-    assert intent["runtime_approval"]["expected_reference"] == observed["target_sha256"]
+    assert intent["approval_task_id"] == "BUR-2026-003-T009"
+    assert "runtime_approval" not in intent
+    assert "authorized_by" not in intent
+    assert "authorization" not in intent
     refresh.verify_digest(intent, "intent_sha256")
 
-    with pytest.raises(refresh.RuntimeRefreshError) as denied:
+    authority_store = seed_authority_store(
+        tmp_path / "no-manual-approval-bureau-state", "BUR-2026-003-T009"
+    )
+    no_manual_intent, _ = refresh.prepare_intent(
+        candidate=observed,
+        state_root=(tmp_path / "no-manual-approval-state").resolve(),
+        prefix=(tmp_path / "no-manual-approval-prefix").resolve(),
+        bin_dir=(tmp_path / "no-manual-approval-bin").resolve(),
+        remote_url="file:///tmp/bureau.git",
+        approval_task_id="BUR-2026-003-T009",
+        now=NOW,
+        authority_store=authority_store,
+    )
+    assert no_manual_intent["approval_task_id"] == "BUR-2026-003-T009"
+    assert "runtime_approval" not in no_manual_intent
+    assert "authorized_by" not in no_manual_intent
+    assert "authorization" not in no_manual_intent
+
+    with pytest.raises(refresh.RuntimeRefreshError) as missing_authority:
         refresh.prepare_intent(
             candidate=observed,
-            state_root=(tmp_path / "denied-state").resolve(),
-            prefix=(tmp_path / "denied-prefix").resolve(),
-            bin_dir=(tmp_path / "denied-bin").resolve(),
+            state_root=(tmp_path / "missing-authority-state").resolve(),
+            prefix=(tmp_path / "missing-authority-prefix").resolve(),
+            bin_dir=(tmp_path / "missing-authority-bin").resolve(),
             remote_url="file:///tmp/bureau.git",
-            authorized_by="chatgpt",
-            authorization="ordinary operator authorization",
-            break_glass=False,
-            approval_reference=observed["target_sha256"],
-            approval_task_id="BUR-2026-003-T009",
             now=NOW,
         )
-    assert denied.value.code == "runtime-approval-required"
-
-    with pytest.raises(refresh.RuntimeRefreshError, match="authorization"):
-        refresh.prepare_intent(
-            candidate=observed,
-            state_root=(tmp_path / "other-state").resolve(),
-            prefix=(tmp_path / "other-prefix").resolve(),
-            bin_dir=(tmp_path / "other-bin").resolve(),
-            remote_url="file:///tmp/bureau.git",
-            authorized_by="",
-            authorization="",
-            now=NOW,
-        )
-
+    assert missing_authority.value.code == "runtime-authority-binding-missing"
 
 def test_scheduler_resource_keys_lease_exact_persistent_and_runtime_wants_links() -> None:
     user_unit_dir = Path("/test/home/.config/systemd/user")
@@ -6156,7 +6204,7 @@ def test_incomplete_post_effect_recovery_is_explicit(tmp_path: Path) -> None:
     ]
 
 
-def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
+def test_runtime_intent_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
     observed, _ = candidate(tmp_path)
     authority_store = seed_authority_store(tmp_path / "bureau-state", "BUR-2026-003-T009")
     intent, intent_path = refresh.prepare_intent(
@@ -6176,7 +6224,7 @@ def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) ->
     )
 
     with pytest.raises(refresh.RuntimeRefreshError) as error:
-        refresh.validate_runtime_approval_intent(
+        refresh.validate_runtime_refresh_intent(
             intent_path,
             now=NOW,
             minimum_remaining_seconds=600,

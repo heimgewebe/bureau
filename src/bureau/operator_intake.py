@@ -174,7 +174,7 @@ def candidate_record_request_contract() -> dict[str, Any]:
         "allowed_fields": allowed_fields,
         "required_fields": required_fields,
         "optional_fields": optional_fields,
-        "defaults": {"catalog_validation": "strict"},
+        "defaults": {"catalog_validation": "deferred"},
         "operations": {
             "record": {
                 "operation": "omitted-or-record",
@@ -858,6 +858,7 @@ def candidate_record_request(
             details={"missing_fields": missing},
         )
     payload = {key: value for key, value in legacy_request.items() if key != "schema_version"}
+    payload.setdefault("catalog_validation", contract["defaults"]["catalog_validation"])
     return candidate_record(registry, store, **payload)
 
 
@@ -1577,10 +1578,17 @@ def _candidate_assess(
         decision = "drop"
     elif deduped_exact:
         decision = "merge"
-    elif deferred:
-        decision = "defer"
     elif missing:
         decision = "refine"
+    elif deferred:
+        try:
+            _validate_candidate_catalog_binding(registry, store, event)
+        except OperatorIntakeError as exc:
+            if exc.code != "candidate-catalog-binding-invalid":
+                raise
+            decision = "defer"
+        else:
+            decision = "promote"
     else:
         decision = "promote"
     repo = record.get("repo")
@@ -2924,6 +2932,36 @@ def _first_task_onboarding_authority(
         raise OperatorIntakeError(exc.code, str(exc)) from exc
 
 
+def _validate_candidate_catalog_binding(
+    registry: Registry | None, store: StateStore, candidate: dict[str, Any]
+) -> None:
+    if registry is None:
+        return
+    record = candidate["record"]
+    repo = record.get("repo")
+    task_id = record.get("task_id")
+    if not repo and not task_id:
+        return
+    if repo:
+        resource = registry.resources.get(repo)
+        if not resource:
+            raise OperatorIntakeError(
+                "candidate-catalog-binding-invalid",
+                f"Repository '{repo}' not found in registry resources",
+            )
+        metadata = resource.metadata if isinstance(resource.metadata, dict) else {}
+        if metadata.get("lifecycle") == "retired":
+            raise OperatorIntakeError(
+                "candidate-catalog-binding-invalid",
+                f"Repository '{repo}' is retired",
+            )
+    if task_id:
+        catalog = _authoritative_candidate_catalog(registry, store, task_id)
+        if task_id not in catalog.tasks:
+            raise OperatorIntakeError(
+                "candidate-catalog-binding-invalid",
+                f"Task '{task_id}' not found in registry or authoritative catalog",
+            )
 def task_propose(
     registry: Registry,
     store: StateStore,
@@ -2943,6 +2981,7 @@ def task_propose(
         raise OperatorIntakeError(
             "candidate-not-open", "only a current open candidate can be proposed"
         )
+    _validate_candidate_catalog_binding(registry, store, event)
     publishing_task = store.task_spec(publishing_task_id)
     if publishing_task is None and publishing_task_id != task_json.get("id"):
         raise OperatorIntakeError(
@@ -3505,6 +3544,7 @@ def _validated_proposal(
             "candidate was superseded after proposal creation",
             retryable=True,
         )
+    _validate_candidate_catalog_binding(registry, store, current)
     task_json = plan.get("task_json")
     if not isinstance(task_json, dict):
         raise OperatorIntakeError("task-json-invalid", "proposal task_json is missing")

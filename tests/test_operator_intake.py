@@ -139,6 +139,7 @@ def _record(registry: Registry, store: StateStore, *, key: str = "source:alpha")
         source_sha256="a" * 64,
         desired_outcome="Create a typed and reviewed Bureau task publication path",
         repo="repo.alpha",
+        catalog_validation="strict",
     )
 
 
@@ -633,6 +634,7 @@ def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
         source_sha256="a" * 64,
         desired_outcome="Bind an ACS task to its exact repository resource",
         repo="repo.agent-control-surface",
+        catalog_validation="strict",
     )
 
     assert recorded["record"]["repo"] == "repo.agent-control-surface"
@@ -646,6 +648,7 @@ def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
             source_kind="registry-live-audit",
             desired_outcome="Reject a missing repository binding",
             repo="repo.unknown-acs",
+            catalog_validation="strict",
         )
     assert caught.value.code == "candidate-record-invalid"
     assert len(operator_intake_module.candidate_records(store)) == 1
@@ -703,7 +706,7 @@ def test_candidate_record_request_contract_is_machine_readable() -> None:
     assert contract["allowed_fields"] == sorted(
         operator_intake_module._CANDIDATE_RECORD_REQUEST_FIELDS
     )
-    assert contract["defaults"] == {"catalog_validation": "strict"}
+    assert contract["defaults"] == {"catalog_validation": "deferred"}
     close = contract["operations"]["close"]
     assert close["operation"] == "close"
     assert close["outcome"] == "completed"
@@ -1319,6 +1322,7 @@ def test_candidate_request_strictly_revalidates_inherited_deferred_bindings(
                 "source_kind": "conversation",
                 "desired_outcome": "Revalidate inherited bindings",
                 "supersedes_event_id": first["event_id"],
+                "catalog_validation": "strict",
             },
         )
 
@@ -6300,3 +6304,109 @@ def test_task_revision_identity_guard_rejects_single_hyphen_package_identifier_s
     with pytest.raises(OperatorIntakeError) as raised:
         operator_intake_module._validate_task_revision_identity_continuity(before, after)
     assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+def test_operator_intake_deferred_catalog_binding_regressions(
+    registry_factory, tmp_path
+):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+
+    # 1. Omitted default accepts unknown repo/task as deferred + assessment defer
+    candidate = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:unknown-deferred",
+        title="Unknown deferred",
+        source_kind="test",
+        source_locator="test:unknown-deferred",
+        desired_outcome="Defer",
+        repo="repo.missing",
+        catalog_validation="deferred",
+    )
+    assert candidate["record"]["catalog_validation"]["status"] == "deferred"
+
+    assessment = operator_intake_module.candidate_assess(
+        registry, store, candidate_id=candidate["candidate_id"]
+    )
+    assert assessment["decision"] == "defer"
+
+    # 2. task_propose blocks unknown deferred repo/task
+    task_json = _task(root, "BUR-TEST-999-T999")
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module.task_propose(
+            registry,
+            store,
+            task_json=task_json,
+            publishing_task_id="BUR-TEST-001-T099",
+            path=tmp_path / "plan.json",
+            candidate_id=candidate["candidate_id"],
+        )
+    assert raised.value.code == "candidate-catalog-binding-invalid"
+
+    # 3. Valid deferred repo permits proposal
+    source = Path(__file__).resolve().parents[1]
+    shutil.copy2(
+        source / "registry/resources/agent-control-surface.json",
+        root / "registry/resources/agent-control-surface.json",
+    )
+    _git(root, "add", "registry/resources/agent-control-surface.json")
+    _git(root, "commit", "-m", "catalogue ACS fixture")
+    registry = Registry.load(root)
+    store.import_registry_task_specs(registry)
+
+    valid_candidate = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:valid-deferred",
+        title="Valid deferred",
+        source_kind="test",
+        source_locator="test:valid-deferred",
+        desired_outcome="Defer",
+        repo="repo.agent-control-surface",
+        catalog_validation="deferred",
+    )
+    assert valid_candidate["record"]["catalog_validation"]["status"] == "deferred"
+
+    valid_task = _task(root, "BUR-TEST-001-T099")
+    valid_task["claims"] = [
+        {"resource": "repo.agent-control-surface", "mode": "write", "isolation": "worktree"}
+    ]
+
+    plan = operator_intake_module.task_propose(
+        registry,
+        store,
+        task_json=valid_task,
+        publishing_task_id="BUR-TEST-001-T099",
+        path=tmp_path / "valid-plan.json",
+        candidate_id=valid_candidate["candidate_id"],
+    )
+    assert plan["status"] == "written"
+
+    # 4. publication_preview blocks after repo becomes retired and committed after proposal/review
+    plan_path = tmp_path / "valid-plan.json"
+
+    # Review the plan
+    operator_intake_module.review_task_proposal(
+        plan_path=plan_path,
+        reviewer="test-reviewer",
+        expected_proposal_sha256=plan["proposal_sha256"],
+    )
+
+    # Retire the repo
+    resource_path = root / "registry/resources/agent-control-surface.json"
+    resource_data = json.loads(resource_path.read_text())
+    resource_data["metadata"]["lifecycle"] = "retired"
+    resource_path.write_text(json.dumps(resource_data))
+    _git(root, "add", str(resource_path))
+    _git(root, "commit", "-m", "retire ACS")
+
+    retired_registry = Registry.load(root)
+    with pytest.raises(OperatorIntakeError) as raised:
+        operator_intake_module.publication_preview(
+            retired_registry,
+            store,
+            plan_path=plan_path,
+        )
+    assert raised.value.code == "candidate-catalog-binding-invalid"

@@ -1232,7 +1232,7 @@ def main(argv: list[str] | None = None) -> int:
             request: dict[str, Any] | None = None
             if args.command == "operator-candidate-record":
                 request = read_json_object_file(args.request, field="request")
-                if request.get("catalog_validation", "strict") == "strict":
+                if request.get("catalog_validation", "deferred") == "strict":
                     append_registry = Registry.load(root)
             store = StateStore(state_path, state_root)
             if args.command == "live-register":

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import sqlite3
 import stat
@@ -11,7 +10,10 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from runtime_approval import write_runtime_approval_intent
+from runtime_approval import (
+    run_runtime_installer_for_non_authority_test,
+    write_runtime_approval_intent,
+)
 
 from bureau import cli as bureau_cli
 from bureau.core import Registry
@@ -55,7 +57,7 @@ def install_runtime(tmp_path: Path, source: Path) -> tuple[Path, Path, dict]:
     prefix = tmp_path / "runtime"
     bin_dir = tmp_path / "bin"
     approval = write_runtime_approval_intent(source, tmp_path, label="canonical")
-    completed = subprocess.run(
+    completed = run_runtime_installer_for_non_authority_test(
         [
             sys.executable,
             str(project_root / "ops/install-bureau-runtime.py"),
@@ -69,9 +71,6 @@ def install_runtime(tmp_path: Path, source: Path) -> tuple[Path, Path, dict]:
             str(approval),
         ],
         check=True,
-        capture_output=True,
-        text=True,
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
     return bin_dir / "bureau", prefix, json.loads(completed.stdout)
 
@@ -522,7 +521,7 @@ def test_installer_rejects_existing_release_with_unmanaged_entry(tmp_path: Path)
 
     project_root = Path(__file__).resolve().parents[1]
     approval = write_runtime_approval_intent(source, tmp_path, label="unmanaged")
-    completed = subprocess.run(
+    completed = run_runtime_installer_for_non_authority_test(
         [
             sys.executable,
             str(project_root / "ops/install-bureau-runtime.py"),
@@ -536,8 +535,6 @@ def test_installer_rejects_existing_release_with_unmanaged_entry(tmp_path: Path)
             str(approval),
         ],
         check=False,
-        capture_output=True,
-        text=True,
     )
 
     assert completed.returncode != 0

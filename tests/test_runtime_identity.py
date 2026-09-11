@@ -10,7 +10,10 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-from runtime_approval import write_runtime_approval_intent
+from runtime_approval import (
+    run_runtime_installer_for_non_authority_test,
+    write_runtime_approval_intent,
+)
 
 from bureau import cli as bureau_cli
 from bureau import runtime_identity as runtime_identity_module
@@ -824,13 +827,7 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     ]
     approval = write_runtime_approval_intent(source, tmp_path, label="identity")
     command.extend(["--approval-intent", str(approval)])
-    first = subprocess.run(
-        command,
-        check=True,
-        capture_output=True,
-        text=True,
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-    )
+    first = run_runtime_installer_for_non_authority_test(command, check=True)
     first_receipt = json.loads(first.stdout)
     assert Path(first_receipt["receipt_path"]).is_file()
     status_capsule_launcher = Path(first_receipt["status_capsule_launcher_path"])
@@ -883,13 +880,7 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
         assert (release_systemd / f"{name}.service").stat().st_mode & 0o777 == 0o444
         assert (release_systemd / f"{name}.timer").stat().st_mode & 0o777 == 0o444
         assert (release_systemd / "libexec" / name).stat().st_mode & 0o777 == 0o555
-    second = subprocess.run(
-        command,
-        check=True,
-        capture_output=True,
-        text=True,
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-    )
+    second = run_runtime_installer_for_non_authority_test(command, check=True)
     second_receipt = json.loads(second.stdout)
     rollback = second_receipt["rollback"]
     assert Path(rollback["manifest"]).is_file()
@@ -1014,13 +1005,7 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     ]
     approval = write_runtime_approval_intent(source, tmp_path, label="symlink")
     command.extend(["--approval-intent", str(approval)])
-    blocked = subprocess.run(
-        command,
-        check=False,
-        capture_output=True,
-        text=True,
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-    )
+    blocked = run_runtime_installer_for_non_authority_test(command, check=False)
     assert blocked.returncode != 0
     assert "launcher is a symlink" in blocked.stderr
     assert launcher.is_symlink()
@@ -1028,12 +1013,8 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
     assert status_launcher.is_symlink()
     assert status_launcher.readlink().as_posix() == raw_status_target
 
-    migrated = subprocess.run(
-        [*command, "--replace-existing"],
-        check=True,
-        capture_output=True,
-        text=True,
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+    migrated = run_runtime_installer_for_non_authority_test(
+        [*command, "--replace-existing"], check=True
     )
     receipt = json.loads(migrated.stdout)
     assert launcher.is_file()

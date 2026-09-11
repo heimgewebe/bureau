@@ -61,9 +61,9 @@ An ambient, dirty, stale or unbound explicit checkout returns `stale-runtime-blo
 
 ## Canonical installation
 
-Routine installation is performed through the deployed `bureau-runtime-refresh` launcher. The operator first prepares a short-lived, target-bound `runtime_mutation` break-glass intent, acquires the exact listed Grabowski leases and then applies that reviewed intent. The installer is not a standalone mutation shortcut.
+Routine installation is performed through the deployed `bureau-runtime-refresh` launcher. The operator first prepares a short-lived, target-bound runtime-refresh intent backed by the exact authority TaskSpec, source/target precondition, concrete Grabowski executor and live leases, then applies that intent. Human break-glass approval is not part of this authority. The installer is not a standalone mutation shortcut: it revalidates the controller-bound TaskSpec, attempt-start receipt, executor, mutation paths and lease lineage before any runtime write.
 
-A direct invocation from a clean checkout whose `HEAD` equals `origin/main` must carry the exact persisted approval intent:
+A direct invocation from a clean checkout whose `HEAD` equals `origin/main` must carry the exact persisted runtime-refresh intent. The CLI option keeps its historical `--approval-intent` spelling only for rollout compatibility:
 
 ```bash
 python3 ops/install-bureau-runtime.py \

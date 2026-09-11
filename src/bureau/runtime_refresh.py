@@ -5788,6 +5788,220 @@ def validate_runtime_approval_intent(
         minimum_remaining_seconds=minimum_remaining_seconds,
     )
 
+def validate_runtime_install_authority(
+    intent_path: Path,
+    *,
+    expected_source_commit: str,
+    prefix: Path,
+    bin_dir: Path,
+    user_unit_dir: Path,
+    libexec_dir: Path,
+    runtime_user_unit_dir: Path | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Revalidate the exact controller authority at the installer boundary."""
+    current = now or utc_now()
+    intent = validate_runtime_refresh_intent(
+        intent_path,
+        expected_source_commit=expected_source_commit,
+        now=current,
+        minimum_remaining_seconds=0,
+    )
+    raw_state_root = intent.get("state_root")
+    if not isinstance(raw_state_root, str) or not raw_state_root:
+        raise RuntimeRefreshError(
+            "runtime-install-intent-path-binding-invalid",
+            "runtime-refresh intent has no state-root binding",
+        )
+    resolved_state_root = Path(raw_state_root).expanduser().resolve()
+    resolved_prefix = prefix.expanduser().resolve()
+    resolved_bin_dir = bin_dir.expanduser().resolve()
+    resolved_user_unit_dir = user_unit_dir.expanduser().resolve()
+    resolved_libexec_dir = libexec_dir.expanduser().resolve()
+    intent_runtime_user_unit = intent.get("runtime_user_unit_dir")
+    if not isinstance(intent_runtime_user_unit, str) or not intent_runtime_user_unit:
+        raise RuntimeRefreshError(
+            "runtime-install-intent-path-binding-invalid",
+            "runtime-refresh intent has no runtime user-unit path binding",
+        )
+    resolved_runtime_user_unit_dir = (
+        Path(intent_runtime_user_unit).expanduser().resolve()
+        if runtime_user_unit_dir is None
+        else runtime_user_unit_dir.expanduser().resolve()
+    )
+    expected_paths = {
+        "prefix": resolved_prefix,
+        "bin_dir": resolved_bin_dir,
+        "user_unit_dir": resolved_user_unit_dir,
+        "libexec_dir": resolved_libexec_dir,
+        "runtime_user_unit_dir": resolved_runtime_user_unit_dir,
+    }
+    mismatches: dict[str, dict[str, str | None]] = {}
+    for field, expected in expected_paths.items():
+        raw = intent.get(field)
+        observed = str(Path(raw).expanduser().resolve()) if isinstance(raw, str) and raw else None
+        if observed != str(expected):
+            mismatches[field] = {"expected": str(expected), "observed": observed}
+    if mismatches:
+        raise RuntimeRefreshError(
+            "runtime-install-intent-path-binding-mismatch",
+            "installer mutation paths differ from the runtime-refresh intent",
+            details={"mismatches": mismatches},
+        )
+
+    expected_authority = _intent_authority_record(intent)
+    store = _bound_authority_store(intent, None)
+    started_path = resolved_state_root / "attempts" / intent["target_sha256"] / "started.json"
+    if started_path.is_symlink() or not started_path.is_file():
+        raise RuntimeRefreshError(
+            "runtime-install-attempt-start-missing",
+            "installer requires the exact attempt-start record before effects",
+            details={"path": str(started_path)},
+        )
+    started = read_json(started_path)
+    verify_digest(started, "start_sha256")
+    if (
+        started.get("kind") != "bureau_runtime_refresh_attempt_start"
+        or started.get("intent_sha256") != intent["intent_sha256"]
+        or started.get("target_sha256") != intent["target_sha256"]
+        or started.get("main_commit") != intent["main_commit"]
+        or started.get("effect_started") is not False
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-attempt-start-invalid",
+            "installer attempt-start record is not bound to the exact intent",
+        )
+
+    bound_authority = started.get("authority_task_spec")
+    if not isinstance(bound_authority, dict):
+        raise RuntimeRefreshError(
+            "runtime-install-authority-binding-missing",
+            "installer attempt has no target-bound TaskSpec authority",
+        )
+    if (
+        bound_authority.get("task_id") != expected_authority["task_id"]
+        or bound_authority.get("authority_revision") != expected_authority["revision"]
+        or bound_authority.get("authority_spec_sha256") != expected_authority["spec_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-authority-baseline-mismatch",
+            "installer attempt authority differs from the immutable intent baseline",
+        )
+    live_authority = validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=expected_authority["task_id"],
+        target_sha256=expected_authority["target_sha256"],
+        expected_intent_sha256=intent["intent_sha256"],
+        allow_bound_intent=True,
+        target_main_commit=intent["main_commit"],
+    )
+    for field in ("revision", "spec_sha256", "target_binding_receipt"):
+        if bound_authority.get(field) != live_authority.get(field):
+            raise RuntimeRefreshError(
+                "runtime-install-authority-drift",
+                "installer TaskSpec authority changed after controller binding",
+                details={"field": field},
+            )
+
+    execution_preflight = started.get("execution_context_preflight")
+    executor_unit = (
+        execution_preflight.get("systemd_unit")
+        if isinstance(execution_preflight, dict)
+        else None
+    )
+    if not isinstance(executor_unit, str) or not executor_unit:
+        raise RuntimeRefreshError(
+            "runtime-install-executor-binding-missing",
+            "installer attempt has no concrete Grabowski executor binding",
+        )
+    runtime_prefix_execution_context_preflight(
+        prefix=resolved_prefix,
+        now=current,
+        require_grabowski_task_executor=True,
+        expected_grabowski_task_unit=executor_unit,
+        mutation_roots={
+            "bin_dir": resolved_bin_dir,
+            "user_unit_dir": resolved_user_unit_dir,
+            "libexec_dir": resolved_libexec_dir,
+            "runtime_user_unit_dir": resolved_runtime_user_unit_dir,
+        },
+    )
+
+    stored_binding = started.get("lease_binding")
+    if not isinstance(stored_binding, dict):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-missing",
+            "installer attempt has no live-lease binding",
+        )
+    owner_id = stored_binding.get("owner_id")
+    task_id = stored_binding.get("task_id")
+    stored_resource_db = stored_binding.get("resource_db")
+    if (
+        not isinstance(owner_id, str)
+        or not isinstance(task_id, str)
+        or not isinstance(stored_resource_db, str)
+        or not stored_resource_db
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-invalid",
+            "installer attempt lease identity is invalid",
+        )
+    live_binding = validate_live_lease_binding(
+        intent,
+        {"owner_id": owner_id, "task_id": task_id},
+        resource_db=Path(stored_resource_db),
+        now=current,
+        min_remaining_seconds=30,
+        required_metadata={"executor_unit": executor_unit},
+    )
+    if (
+        stored_binding.get("owner_id") != live_binding["owner_id"]
+        or stored_binding.get("task_id") != live_binding["task_id"]
+        or stored_binding.get("resource_db") != live_binding["resource_db"]
+        or stored_binding.get("resource_keys") != live_binding["resource_keys"]
+        or stored_binding.get("required_metadata_sha256")
+        != live_binding["required_metadata_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-drift",
+            "installer live leases differ from the attempt binding",
+        )
+    stored_snapshots = stored_binding.get("lease_snapshots")
+    live_snapshots = live_binding.get("lease_snapshots")
+    if (
+        not isinstance(stored_snapshots, list)
+        or not isinstance(live_snapshots, list)
+        or not all(isinstance(item, dict) for item in stored_snapshots)
+        or not all(isinstance(item, dict) for item in live_snapshots)
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-invalid",
+            "installer lease snapshots are invalid",
+        )
+    stored_by_key = {item.get("resource_key"): item for item in stored_snapshots}
+    live_by_key = {item.get("resource_key"): item for item in live_snapshots}
+    if set(stored_by_key) != set(live_by_key):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-drift",
+            "installer live lease set differs from the attempt",
+        )
+    same_lineage = all(
+        stored_by_key[key].get("owner_id") == live_by_key[key].get("owner_id")
+        and stored_by_key[key].get("acquired_at_unix") == live_by_key[key].get("acquired_at_unix")
+        and stored_by_key[key].get("metadata_sha256") == live_by_key[key].get("metadata_sha256")
+        and isinstance(stored_by_key[key].get("expires_at_unix"), int)
+        and isinstance(live_by_key[key].get("expires_at_unix"), int)
+        and live_by_key[key]["expires_at_unix"] >= stored_by_key[key]["expires_at_unix"]
+        for key in stored_by_key
+    )
+    if not same_lineage:
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-drift",
+            "installer live lease lineage differs from the attempt",
+        )
+    return intent
+
+
 def _validate_binding_identity(binding: dict[str, Any]) -> tuple[str, str]:
     owner = binding.get("owner_id")
     task_id = binding.get("task_id")

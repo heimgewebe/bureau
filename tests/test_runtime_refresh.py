@@ -11428,6 +11428,86 @@ def scheduler_installer_approval(
     return path
 
 
+def allow_synthetic_installer_authority(monkeypatch: pytest.MonkeyPatch) -> None:
+    def validate(
+        intent_path: Path,
+        *,
+        expected_source_commit: str,
+        **_kwargs: Any,
+    ) -> dict[str, Any]:
+        return refresh.validate_runtime_refresh_intent(
+            intent_path,
+            expected_source_commit=expected_source_commit,
+            minimum_remaining_seconds=0,
+        )
+
+    monkeypatch.setattr(refresh, "validate_runtime_install_authority", validate)
+
+
+def test_validate_runtime_install_authority_rechecks_bound_live_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _observed, _manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    store = authority_store_for_intent(intent)
+    binding_identity, resource_db = lease_for(tmp_path / "installer-leases", intent)
+    live_binding = refresh.validate_live_lease_binding(
+        intent,
+        binding_identity,
+        resource_db=resource_db,
+        now=NOW,
+        required_metadata={"executor_unit": TEST_EXECUTOR_UNIT},
+    )
+    bound_authority = refresh.bind_runtime_refresh_authority(
+        store=store, intent=intent, now=NOW
+    )
+    started = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound_authority,
+            "lease_binding": live_binding,
+            "execution_context_preflight": {"systemd_unit": TEST_EXECUTOR_UNIT},
+            "started_at": refresh.isoformat(NOW),
+            "effect_started": False,
+        },
+        "start_sha256",
+    )
+    started_path = (
+        Path(intent["state_root"])
+        / "attempts"
+        / intent["target_sha256"]
+        / "started.json"
+    )
+    started_path.parent.mkdir(parents=True, exist_ok=True)
+    started_path.write_bytes(refresh.canonical_bytes(started))
+    observed_executor_units: list[str | None] = []
+
+    def execution_preflight(**kwargs: Any) -> dict[str, Any]:
+        observed_executor_units.append(kwargs.get("expected_grabowski_task_unit"))
+        return {"systemd_unit": TEST_EXECUTOR_UNIT}
+
+    monkeypatch.setattr(
+        refresh, "runtime_prefix_execution_context_preflight", execution_preflight
+    )
+
+    validated = refresh.validate_runtime_install_authority(
+        intent_path,
+        expected_source_commit=intent["main_commit"],
+        prefix=Path(intent["prefix"]),
+        bin_dir=Path(intent["bin_dir"]),
+        user_unit_dir=Path(intent["user_unit_dir"]),
+        libexec_dir=Path(intent["libexec_dir"]),
+        runtime_user_unit_dir=Path(intent["runtime_user_unit_dir"]),
+        now=NOW + timedelta(seconds=1),
+    )
+
+    assert validated == intent
+    assert observed_executor_units == [TEST_EXECUTOR_UNIT]
+
+
 @pytest.mark.parametrize("noncanonical", ["prefix", "bin_dir"])
 def test_run_installer_rejects_noncanonical_scheduler_runtime_layout_before_run(
     tmp_path: Path,
@@ -11722,6 +11802,7 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
 
     monkeypatch.setattr(refresh, "_run", fake_run)
     monkeypatch.setattr(installer, "atomic_write", fail_receipt_write)
+    allow_synthetic_installer_authority(monkeypatch)
 
     result = installer.main(
         [
@@ -11847,6 +11928,7 @@ def test_launcher_directory_fsync_failure_after_replace_restores_exact_preimage(
     monkeypatch.setattr(installer.os, "replace", observe_launcher_replace)
     monkeypatch.setattr(installer, "fsync_directory", fail_first_launcher_directory_fsync)
     monkeypatch.setattr(refresh, "_run", fake_run)
+    allow_synthetic_installer_authority(monkeypatch)
 
     result = installer.main(
         [
@@ -11964,6 +12046,7 @@ def test_scheduler_rollback_does_not_restore_unmutated_unleased_launchers(
         "atomic_write",
         fail_receipt_after_concurrent_launcher_change,
     )
+    allow_synthetic_installer_authority(monkeypatch)
 
     result = installer.main(
         [
@@ -12177,6 +12260,57 @@ def test_real_non_systemd_installer_supports_custom_layout(tmp_path: Path) -> No
         tmp_path,
         label="real-installer",
     )
+    weak_approval = subprocess.run(
+        [*command, "--approval-intent", str(approval_path)],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert weak_approval.returncode != 0
+    assert "runtime-install-intent-path-binding-invalid" in weak_approval.stderr
+    assert not prefix.exists()
+
+    harness = tmp_path / "installer-mechanics-harness.py"
+    harness.write_text(
+        """from __future__ import annotations
+import importlib.util
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(source / "src"))
+from bureau import runtime_refresh as refresh
+
+def allow_synthetic(intent_path, *, expected_source_commit, **_kwargs):
+    return refresh.validate_runtime_refresh_intent(
+        intent_path,
+        expected_source_commit=expected_source_commit,
+        minimum_remaining_seconds=0,
+    )
+
+refresh.validate_runtime_install_authority = allow_synthetic
+spec = importlib.util.spec_from_file_location(
+    "install_bureau_runtime_test_harness", source / "ops/install-bureau-runtime.py"
+)
+assert spec is not None and spec.loader is not None
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+raise SystemExit(module.main(sys.argv[2:]))
+""",
+        encoding="utf-8",
+    )
+    command = [
+        sys.executable,
+        str(harness),
+        str(clean),
+        "--source",
+        str(clean),
+        "--prefix",
+        str(prefix),
+        "--bin-dir",
+        str(bin_dir),
+    ]
 
     install = subprocess.run(
         [*command, "--approval-intent", str(approval_path)],

@@ -5,6 +5,7 @@ import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from bureau import approval
 from bureau import runtime_refresh as refresh
 
 TASK_ID = "BUR-2026-003-T009"
@@ -24,7 +25,7 @@ def write_runtime_approval_intent(
         text=True,
     ).stdout.strip()
     reference = hashlib.sha256(f"{source_head}:{label}".encode()).hexdigest()
-    evidence = refresh.approval.break_glass_approval(
+    evidence = approval.break_glass_approval(
         source=f"test:{label}",
         approved=True,
         reviewer="pytest",
@@ -32,7 +33,7 @@ def write_runtime_approval_intent(
         task_id=TASK_ID,
         scope="runtime_mutation",
     )
-    decision = refresh.approval.require_approval(
+    decision = approval.require_approval(
         "runtime_mutation",
         evidence,
         expected_reference=reference,

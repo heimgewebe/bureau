@@ -31,7 +31,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from . import approval, legacy, registry_snapshot
+from . import legacy, registry_snapshot
 
 SCHEMA_VERSION = 1
 DEFAULT_REPOSITORY = "heimgewebe/bureau"

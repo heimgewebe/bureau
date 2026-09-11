@@ -67,7 +67,7 @@ def _activation_observation(
         "recovery_action": {
             "action": "prepare-intent",
             "eligible": True,
-            "requires_authorization": True,
+            "requires_authorization": False,
         },
         "observed_at": observed_at,
         "does_not_establish": list(

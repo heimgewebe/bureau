@@ -57,31 +57,66 @@
   "acceptance": [
     {
       "id": "verified-main-trigger",
-      "assertion": "A versioned trigger considers only an exact merged origin/main commit with successful required CI and an explicit deployment intent; arbitrary branches, dirty sources, unverified heads and ambiguous GitHub state fail closed."
+      "assertion": "A versioned trigger considers only an exact merged origin/main commit with successful required CI and an explicit deployment intent; arbitrary branches, dirty sources, unverified heads and ambiguous GitHub state fail closed.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "task:OPERATOR-MACHINE-READABILITY-V1-T016:verified-main-trigger"
+      }
     },
     {
       "id": "isolated-source",
-      "assertion": "Refresh uses a clean detached or task-specific checkout at the exact expected origin/main commit and never pulls, resets, stashes, cleans or otherwise mutates the conventional Bureau main checkout or any foreign worktree."
+      "assertion": "Refresh uses a clean detached or task-specific checkout at the exact expected origin/main commit and never pulls, resets, stashes, cleans or otherwise mutates the conventional Bureau main checkout or any foreign worktree.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "task:OPERATOR-MACHINE-READABILITY-V1-T016:isolated-source"
+      }
     },
     {
       "id": "serialized-idempotent-deploy",
-      "assertion": "Launcher, Bureau prefix and source checkout are lease-bound; identical in-flight or already-current refreshes are deduplicated, while a conflicting deployment or lease blocks before mutation."
+      "assertion": "Launcher, Bureau prefix and source checkout are lease-bound; identical in-flight or already-current refreshes are deduplicated, while a conflicting deployment or lease blocks before mutation.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "task:OPERATOR-MACHINE-READABILITY-V1-T016:serialized-idempotent-deploy"
+      }
     },
     {
       "id": "immutable-install-and-readback",
-      "assertion": "The existing immutable installer runs with an exact-head precondition, preserves rollback evidence, and success requires post-install readback of manifest, package tree, snapshot inventory/tree, launcher digest and canonical bureau --json check."
+      "assertion": "The existing immutable installer runs with an exact-head precondition, preserves rollback evidence, and success requires post-install readback of manifest, package tree, snapshot inventory/tree, launcher digest and canonical bureau --json check.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "task:OPERATOR-MACHINE-READABILITY-V1-T016:immutable-install-and-readback"
+      }
     },
     {
       "id": "visible-failure-no-loop",
-      "assertion": "A failed or unclear refresh remains visible with a durable receipt and does not retry, self-heal, or claim current runtime state until an operator-authorized reconciliation proves the outcome."
+      "assertion": "A failed or unclear refresh remains visible with a durable receipt and does not retry, self-heal, or claim current runtime state until an operator-authorized reconciliation proves the outcome.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "task:OPERATOR-MACHINE-READABILITY-V1-T016:visible-failure-no-loop"
+      }
     },
     {
       "id": "freshness-slo",
-      "assertion": "A read-only receipt reports origin/main, deployed source_commit, lag in commits and elapsed time; verified Registry changes become visible through the canonical snapshot within a documented bounded interval or produce an explicit alert."
+      "assertion": "A read-only receipt reports origin/main, deployed source_commit, lag in commits and elapsed time; verified Registry changes become visible through the canonical snapshot within a documented bounded interval or produce an explicit alert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "task:OPERATOR-MACHINE-READABILITY-V1-T016:freshness-slo"
+      }
     },
     {
       "id": "tests",
-      "assertion": "Tests cover already-current dedupe, foreign lease, origin drift, dirty source, failed CI, installer failure, unclear outcome, rollback evidence, successful readback and preservation of a stale dirty conventional checkout."
+      "assertion": "Tests cover already-current dedupe, foreign lease, origin drift, dirty source, failed CI, installer failure, unclear outcome, rollback evidence, successful readback and preservation of a stale dirty conventional checkout.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "task:OPERATOR-MACHINE-READABILITY-V1-T016:tests"
+      }
     }
   ],
   "metadata": {

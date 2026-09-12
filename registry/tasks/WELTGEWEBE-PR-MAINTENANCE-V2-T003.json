@@ -20,13 +20,13 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe",
+    "working_repository": "/home/alex/repos/commonthing",
     "grabowski_resources": [
-      "path:/home/alex/repos/weltgewebe/docs/reports/post-jsonl-graph-mutation-architecture.md",
-      "path:/home/alex/repos/weltgewebe/docs/reports/post-jsonl-graph-mutation-measurements.json",
-      "path:/home/alex/repos/weltgewebe/scripts/docmeta/measure_graph_mutation_architecture.py",
-      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_measure_graph_mutation_architecture.py",
-      "path:/home/alex/repos/weltgewebe/apps/api/tests/ordered_cache_scaling.rs"
+      "path:/home/alex/repos/commonthing/docs/reports/post-jsonl-graph-mutation-architecture.md",
+      "path:/home/alex/repos/commonthing/docs/reports/post-jsonl-graph-mutation-measurements.json",
+      "path:/home/alex/repos/commonthing/scripts/docmeta/measure_graph_mutation_architecture.py",
+      "path:/home/alex/repos/commonthing/scripts/docmeta/tests/test_measure_graph_mutation_architecture.py",
+      "path:/home/alex/repos/commonthing/apps/api/tests/ordered_cache_scaling.rs"
     ]
   },
   "required_capabilities": [
@@ -96,6 +96,19 @@
         "future_pr_scope_stability",
         "production_data_availability",
         "acceptance_completion"
+      ]
+    },
+    "repository_identity_reconciliation": {
+      "schema_version": 1,
+      "observed_at": "2026-09-12T13:30:00Z",
+      "execution_repository": "/home/alex/repos/commonthing",
+      "github_slug": "heimgewebe/commonthing",
+      "retained_claim_resource": "repo.weltgewebe",
+      "reason": "commonthing is the canonical technical repository identity; Bureau keeps repo.weltgewebe as the compatibility claim until the explicit StateStore/task-spec cutover permits registry tasks to claim repo.commonthing.",
+      "does_not_establish": [
+        "StateStore cutover completion",
+        "permission to mass-migrate legacy task claims",
+        "completion of WELTGEWEBE-PR-MAINTENANCE-V2-T003"
       ]
     }
   }

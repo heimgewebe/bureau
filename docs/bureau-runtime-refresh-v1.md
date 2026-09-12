@@ -100,7 +100,7 @@ Nur `candidate` und `alert` können einen Intent erzeugen. Der Intent bindet:
 - Pflichtchecks und Zielhash;
 - derzeit installierten Commit und Manifest-Hash;
 - Prefix, Bin-Verzeichnis, isolierten Workspace und State-Root;
-- typisierte `break_glass`-Freigabe mit exaktem Zielhash, Bureau-Task, Autor, Quelle und Scope `runtime_mutation`;
+- die autoritative Bureau-TaskSpec mit exakter Task-ID, Revision und Digest sowie dem Single-Use-Vertrag für `runtime_mutation`;
 - Nonce, Erzeugungs- und Ablaufzeit;
 - alle erforderlichen Grabowski-Ressourcen.
 
@@ -109,17 +109,14 @@ Standardgültigkeit: 900 Sekunden; maximal 3.600 Sekunden.
 ```bash
 bureau-runtime-refresh prepare-intent \
   --candidate ~/.local/state/bureau/runtime-refresh/latest-observation.json \
-  --authorized-by chatgpt \
-  --authorization 'Exact target authorized by the Bureau runtime-refresh watch.' \
-  --break-glass \
-  --approval-reference '<candidate.target_sha256>' \
   --approval-task-id '<exact Bureau task id>'
 ```
 
-`prepare-intent` verweigert bereits die Erzeugung, wenn `break_glass`, Zielhash oder
-Taskbindung fehlen oder nicht exakt zusammenpassen. Der Intent ist trotzdem keine alleinige
-Wirkungserlaubnis: `apply` revalidiert die typisierte Freigabe und verlangt zusätzlich die
-live Grabowski-Leases.
+`prepare-intent` verweigert bereits die Erzeugung, wenn Zielhash oder autoritative
+Taskbindung fehlen oder nicht exakt zusammenpassen. Humanes Break-Glass ist dabei bewusst
+kein Autoritätseingang. Der Intent ist trotzdem keine alleinige Wirkungserlaubnis: `apply`
+revalidiert die autoritative TaskSpec, bindet sie per CAS an Target und Intent und verlangt
+zusätzlich den konkreten Grabowski-Executor sowie die live Grabowski-Leases.
 
 Unmittelbar vor dem create-only Intent liest `prepare-intent` außerdem
 `approval_task_id` über die typisierte `StateStore.task_spec()`-API. Die aktuelle
@@ -173,9 +170,8 @@ Ergebnisreceipt aufgenommen.
 
 ### 4. `apply`
 
-`apply` prüft zuerst den Intent-Digest und revalidiert die gespeicherte
-`runtime_mutation`-Entscheidung gegen die aktuelle Approval-Policy. Danach liest es erneut
-die aktuelle autoritative TaskSpec und verlangt exakt die im Intent gespeicherte Revision
+`apply` prüft zuerst den Intent-Digest und liest erneut die aktuelle autoritative
+TaskSpec. Es verlangt exakt die im Intent gespeicherte Revision
 und denselben Digest. Bereits verbrauchte Autorität, terminaler/supersedeter Zustand,
 Target-Bindung eines anderen Intents oder jede TaskSpec-Revision dazwischen blockiert vor
 Observation, Attempt-Receipt und Runtime-Wirkung. Zusätzlich muss der im Intent gebundene
@@ -205,7 +201,7 @@ Der Runner:
 4. klont ausschließlich `main` in den intentgebundenen Workspace;
 5. verlangt `origin/main == intent.main_commit`;
 6. checkt exakt diesen Commit detached aus und verlangt einen sauberen Status;
-7. startet den bestehenden immutable Installer mit exakt gebundenem Prefix, Bin-Pfad und Approval-Intent;
+7. startet den bestehenden immutable Installer mit exakt gebundenem Prefix, Bin-Pfad und Runtime-Refresh-Intent; der historische CLI-Name `--approval-intent` bleibt nur als Kompatibilitätsschreibweise bestehen;
 8. liest Manifest, alle Launcher, Paketbaum, Registry-Snapshot,
    `bureau --json check` und `bureau --json runtime-identity` zurück;
 9. schreibt ein create-only Ergebnisreceipt;

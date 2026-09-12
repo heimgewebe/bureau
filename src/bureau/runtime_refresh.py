@@ -31,7 +31,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from . import approval, legacy, registry_snapshot
+from . import legacy, registry_snapshot
 
 SCHEMA_VERSION = 1
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
@@ -1203,7 +1203,7 @@ def observe_runtime_refresh(
         recovery_action = {
             "action": "prepare-intent",
             "eligible": True,
-            "requires_authorization": True,
+            "requires_authorization": False,
         }
     elif status == "blocked":
         recovery_action = {
@@ -3065,7 +3065,6 @@ def _validate_runtime_refresh_authority_contract(
         "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
         "single_use": True,
         "required_action_class": "runtime_mutation",
-        "required_approval_level": "break_glass",
         "required_claim_resource": "component.bureau.runtime",
         "target_binding": RUNTIME_AUTHORITY_TARGET_BINDING,
         "forbid_foreign_task_substitution": True,
@@ -3126,16 +3125,6 @@ def _validate_runtime_refresh_authority_contract(
             "authority-task-state-invalid",
             "TaskSpec is not in an allowed runtime-authority state",
             details={"task_id": approval_task_id, "state": state},
-        )
-    declared = spec.get("execution")
-    declared = declared.get("approval") if isinstance(declared, dict) else None
-    if not isinstance(declared, dict) or (
-        declared.get("action_class") != "runtime_mutation"
-        or declared.get("required_level") != "break_glass"
-    ):
-        raise RuntimeRefreshError(
-            "authority-approval-contract-invalid",
-            "TaskSpec approval contract is not runtime_mutation/break_glass",
         )
     claims = spec.get("claims")
     if not isinstance(claims, list) or not any(
@@ -3261,7 +3250,7 @@ def _validated_protected_publication_activation_observation_contract(
         != {
             "action": "prepare-intent",
             "eligible": True,
-            "requires_authorization": True,
+            "requires_authorization": False,
         }
         or not isinstance(reason_codes, list)
         or not all(isinstance(item, str) and item for item in reason_codes)
@@ -5584,8 +5573,8 @@ def prepare_intent(
     libexec_dir: Path = DEFAULT_RUNTIME_LIBEXEC_ROOT,
     runtime_user_unit_dir: Path | None = None,
     remote_url: str,
-    authorized_by: str,
-    authorization: str,
+    authorized_by: str = "",
+    authorization: str = "",
     break_glass: bool = False,
     approval_reference: str = "",
     approval_task_id: str = "",
@@ -5600,34 +5589,16 @@ def prepare_intent(
         raise RuntimeRefreshError(
             "candidate-not-deployable", f"candidate status is {candidate.get('status')!r}"
         )
-    if not authorized_by.strip() or len(authorization.strip()) < 8:
-        raise RuntimeRefreshError("authorization-missing", "explicit authorization is required")
-    if not approval_reference.strip() or not approval_task_id.strip():
+    # Human break-glass approval is intentionally not an authority input here.
+    # The runtime-refresh task identity, immutable target digest, TaskSpec revision,
+    # expiry, source precondition, executor identity and live leases provide the
+    # execution authority and concurrency boundary. The legacy approval arguments
+    # remain accepted by the Python/CLI surface only for rollout compatibility.
+    if not approval_task_id.strip():
         raise RuntimeRefreshError(
-            "runtime-approval-binding-missing",
-            "runtime approval requires exact reference and task bindings",
+            "runtime-authority-binding-missing",
+            "runtime refresh requires an exact authority task binding",
         )
-    evidence = approval.break_glass_approval(
-        source=authorization.strip(),
-        approved=break_glass,
-        reviewer=authorized_by.strip(),
-        reference=approval_reference.strip(),
-        task_id=approval_task_id.strip(),
-        scope=("runtime_mutation",),
-        note="Bureau immutable runtime refresh",
-    )
-    try:
-        runtime_approval = approval.require_approval(
-            "runtime_mutation",
-            evidence,
-            expected_reference=candidate["target_sha256"],
-            task_id=approval_task_id.strip(),
-        )
-    except legacy.StateError as exc:
-        raise RuntimeRefreshError(
-            "runtime-approval-required",
-            str(exc),
-        ) from exc
     if ttl_seconds <= 0 or ttl_seconds > 3600:
         raise RuntimeRefreshError(
             "intent-ttl-invalid", "intent TTL must be between 1 and 3600 seconds"
@@ -5720,10 +5691,7 @@ def prepare_intent(
             libexec_dir=resolved_libexec_dir,
             runtime_user_unit_dir=resolved_runtime_user_unit_dir,
         ),
-        "authorized_by": authorized_by.strip(),
-        "authorization": authorization.strip(),
         "approval_task_id": approval_task_id.strip(),
-        "runtime_approval": runtime_approval,
         "authority_state_store": authority_state_store,
         "authority_task_spec": authority_task_spec,
         "created_at": isoformat(current),
@@ -5750,14 +5718,14 @@ def prepare_intent(
     return intent, path
 
 
-def validate_runtime_approval_intent(
+def validate_runtime_refresh_intent(
     intent_path: Path,
     *,
     expected_source_commit: str | None = None,
     now: datetime | None = None,
     minimum_remaining_seconds: int = 0,
 ) -> dict[str, Any]:
-    """Re-evaluate persisted, time-bounded break-glass evidence before effects."""
+    """Re-evaluate the immutable, time-bounded runtime-refresh intent before effects."""
     current = now or utc_now()
     intent = read_json(intent_path)
     verify_digest(intent, "intent_sha256")
@@ -5785,13 +5753,13 @@ def validate_runtime_approval_intent(
     ):
         raise RuntimeRefreshError(
             "runtime-approval-minimum-invalid",
-            "minimum runtime approval lifetime must be a non-negative integer",
+            "minimum runtime intent lifetime must be a non-negative integer",
         )
     remaining_seconds = int((expires - current).total_seconds())
     if remaining_seconds < minimum_remaining_seconds:
         raise RuntimeRefreshError(
             "runtime-approval-validity-too-short",
-            "runtime approval expires too soon to start a deployment attempt",
+            "runtime intent expires too soon to start a deployment attempt",
             details={
                 "remaining_seconds": remaining_seconds,
                 "minimum_remaining_seconds": minimum_remaining_seconds,
@@ -5800,46 +5768,238 @@ def validate_runtime_approval_intent(
     if expected_source_commit is not None and intent.get("main_commit") != expected_source_commit:
         raise RuntimeRefreshError(
             "approval-source-commit-mismatch",
-            "runtime approval intent is bound to another source commit",
+            "runtime intent is bound to another source commit",
         )
-    stored = intent.get("runtime_approval")
-    raw = stored.get("evidence") if isinstance(stored, dict) else None
-    if not isinstance(raw, dict):
-        raise RuntimeRefreshError(
-            "runtime-approval-missing",
-            "runtime-refresh intent has no typed approval evidence",
-        )
-    scope = raw.get("scope", ())
-    if not isinstance(scope, list) or not all(isinstance(item, str) for item in scope):
-        raise RuntimeRefreshError("runtime-approval-invalid", "approval scope is invalid")
-    required = {"source", "level", "approved", "reviewer", "reference", "task_id"}
-    if not required <= raw.keys():
-        raise RuntimeRefreshError("runtime-approval-invalid", "approval evidence is incomplete")
-    evidence = approval.ApprovalEvidence(
-        source=str(raw["source"]),
-        level=str(raw["level"]),
-        approved=raw["approved"] is True,
-        reviewer=str(raw["reviewer"]),
-        reference=str(raw["reference"]),
-        task_id=str(raw["task_id"]),
-        scope=tuple(scope),
-        note=str(raw["note"]) if isinstance(raw.get("note"), str) else None,
+    return intent
+
+
+def validate_runtime_approval_intent(
+    intent_path: Path,
+    *,
+    expected_source_commit: str | None = None,
+    now: datetime | None = None,
+    minimum_remaining_seconds: int = 0,
+) -> dict[str, Any]:
+    """Compatibility alias; human approval is no longer part of runtime-refresh authority."""
+    return validate_runtime_refresh_intent(
+        intent_path,
+        expected_source_commit=expected_source_commit,
+        now=now,
+        minimum_remaining_seconds=minimum_remaining_seconds,
     )
-    try:
-        decision = approval.require_approval(
-            "runtime_mutation",
-            evidence,
-            expected_reference=str(intent.get("target_sha256", "")),
-            task_id=str(intent.get("approval_task_id", "")),
-        )
-    except legacy.StateError as exc:
-        raise RuntimeRefreshError("runtime-approval-required", str(exc)) from exc
-    if decision != stored:
+
+def validate_runtime_install_authority(
+    intent_path: Path,
+    *,
+    expected_source_commit: str,
+    prefix: Path,
+    bin_dir: Path,
+    user_unit_dir: Path,
+    libexec_dir: Path,
+    runtime_user_unit_dir: Path | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Revalidate the exact controller authority at the installer boundary."""
+    current = now or utc_now()
+    intent = validate_runtime_refresh_intent(
+        intent_path,
+        expected_source_commit=expected_source_commit,
+        now=current,
+        minimum_remaining_seconds=0,
+    )
+    raw_state_root = intent.get("state_root")
+    if not isinstance(raw_state_root, str) or not raw_state_root:
         raise RuntimeRefreshError(
-            "runtime-approval-drift",
-            "stored runtime approval decision differs from current policy",
+            "runtime-install-intent-path-binding-invalid",
+            "runtime-refresh intent has no state-root binding",
         )
-    return decision
+    resolved_state_root = Path(raw_state_root).expanduser().resolve()
+    resolved_prefix = prefix.expanduser().resolve()
+    resolved_bin_dir = bin_dir.expanduser().resolve()
+    resolved_user_unit_dir = user_unit_dir.expanduser().resolve()
+    resolved_libexec_dir = libexec_dir.expanduser().resolve()
+    intent_runtime_user_unit = intent.get("runtime_user_unit_dir")
+    if not isinstance(intent_runtime_user_unit, str) or not intent_runtime_user_unit:
+        raise RuntimeRefreshError(
+            "runtime-install-intent-path-binding-invalid",
+            "runtime-refresh intent has no runtime user-unit path binding",
+        )
+    resolved_runtime_user_unit_dir = (
+        Path(intent_runtime_user_unit).expanduser().resolve()
+        if runtime_user_unit_dir is None
+        else runtime_user_unit_dir.expanduser().resolve()
+    )
+    expected_paths = {
+        "prefix": resolved_prefix,
+        "bin_dir": resolved_bin_dir,
+        "user_unit_dir": resolved_user_unit_dir,
+        "libexec_dir": resolved_libexec_dir,
+        "runtime_user_unit_dir": resolved_runtime_user_unit_dir,
+    }
+    mismatches: dict[str, dict[str, str | None]] = {}
+    for field, expected in expected_paths.items():
+        raw = intent.get(field)
+        observed = str(Path(raw).expanduser().resolve()) if isinstance(raw, str) and raw else None
+        if observed != str(expected):
+            mismatches[field] = {"expected": str(expected), "observed": observed}
+    if mismatches:
+        raise RuntimeRefreshError(
+            "runtime-install-intent-path-binding-mismatch",
+            "installer mutation paths differ from the runtime-refresh intent",
+            details={"mismatches": mismatches},
+        )
+
+    expected_authority = _intent_authority_record(intent)
+    store = _bound_authority_store(intent, None)
+    started_path = resolved_state_root / "attempts" / intent["target_sha256"] / "started.json"
+    if started_path.is_symlink() or not started_path.is_file():
+        raise RuntimeRefreshError(
+            "runtime-install-attempt-start-missing",
+            "installer requires the exact attempt-start record before effects",
+            details={"path": str(started_path)},
+        )
+    started = read_json(started_path)
+    verify_digest(started, "start_sha256")
+    if (
+        started.get("kind") != "bureau_runtime_refresh_attempt_start"
+        or started.get("intent_sha256") != intent["intent_sha256"]
+        or started.get("target_sha256") != intent["target_sha256"]
+        or started.get("main_commit") != intent["main_commit"]
+        or started.get("effect_started") is not False
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-attempt-start-invalid",
+            "installer attempt-start record is not bound to the exact intent",
+        )
+
+    bound_authority = started.get("authority_task_spec")
+    if not isinstance(bound_authority, dict):
+        raise RuntimeRefreshError(
+            "runtime-install-authority-binding-missing",
+            "installer attempt has no target-bound TaskSpec authority",
+        )
+    if (
+        bound_authority.get("task_id") != expected_authority["task_id"]
+        or bound_authority.get("authority_revision") != expected_authority["revision"]
+        or bound_authority.get("authority_spec_sha256") != expected_authority["spec_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-authority-baseline-mismatch",
+            "installer attempt authority differs from the immutable intent baseline",
+        )
+    live_authority = validate_authoritative_runtime_refresh_task(
+        store=store,
+        approval_task_id=expected_authority["task_id"],
+        target_sha256=expected_authority["target_sha256"],
+        expected_intent_sha256=intent["intent_sha256"],
+        allow_bound_intent=True,
+        target_main_commit=intent["main_commit"],
+    )
+    for field in ("revision", "spec_sha256", "target_binding_receipt"):
+        if bound_authority.get(field) != live_authority.get(field):
+            raise RuntimeRefreshError(
+                "runtime-install-authority-drift",
+                "installer TaskSpec authority changed after controller binding",
+                details={"field": field},
+            )
+
+    execution_preflight = started.get("execution_context_preflight")
+    executor_unit = (
+        execution_preflight.get("systemd_unit")
+        if isinstance(execution_preflight, dict)
+        else None
+    )
+    if not isinstance(executor_unit, str) or not executor_unit:
+        raise RuntimeRefreshError(
+            "runtime-install-executor-binding-missing",
+            "installer attempt has no concrete Grabowski executor binding",
+        )
+    runtime_prefix_execution_context_preflight(
+        prefix=resolved_prefix,
+        now=current,
+        require_grabowski_task_executor=True,
+        expected_grabowski_task_unit=executor_unit,
+        mutation_roots={
+            "bin_dir": resolved_bin_dir,
+            "user_unit_dir": resolved_user_unit_dir,
+            "libexec_dir": resolved_libexec_dir,
+            "runtime_user_unit_dir": resolved_runtime_user_unit_dir,
+        },
+    )
+
+    stored_binding = started.get("lease_binding")
+    if not isinstance(stored_binding, dict):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-missing",
+            "installer attempt has no live-lease binding",
+        )
+    owner_id = stored_binding.get("owner_id")
+    task_id = stored_binding.get("task_id")
+    stored_resource_db = stored_binding.get("resource_db")
+    if (
+        not isinstance(owner_id, str)
+        or not isinstance(task_id, str)
+        or not isinstance(stored_resource_db, str)
+        or not stored_resource_db
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-invalid",
+            "installer attempt lease identity is invalid",
+        )
+    live_binding = validate_live_lease_binding(
+        intent,
+        {"owner_id": owner_id, "task_id": task_id},
+        resource_db=Path(stored_resource_db),
+        now=current,
+        min_remaining_seconds=30,
+        required_metadata={"executor_unit": executor_unit},
+    )
+    if (
+        stored_binding.get("owner_id") != live_binding["owner_id"]
+        or stored_binding.get("task_id") != live_binding["task_id"]
+        or stored_binding.get("resource_db") != live_binding["resource_db"]
+        or stored_binding.get("resource_keys") != live_binding["resource_keys"]
+        or stored_binding.get("required_metadata_sha256")
+        != live_binding["required_metadata_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-drift",
+            "installer live leases differ from the attempt binding",
+        )
+    stored_snapshots = stored_binding.get("lease_snapshots")
+    live_snapshots = live_binding.get("lease_snapshots")
+    if (
+        not isinstance(stored_snapshots, list)
+        or not isinstance(live_snapshots, list)
+        or not all(isinstance(item, dict) for item in stored_snapshots)
+        or not all(isinstance(item, dict) for item in live_snapshots)
+    ):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-invalid",
+            "installer lease snapshots are invalid",
+        )
+    stored_by_key = {item.get("resource_key"): item for item in stored_snapshots}
+    live_by_key = {item.get("resource_key"): item for item in live_snapshots}
+    if set(stored_by_key) != set(live_by_key):
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-drift",
+            "installer live lease set differs from the attempt",
+        )
+    same_lineage = all(
+        stored_by_key[key].get("owner_id") == live_by_key[key].get("owner_id")
+        and stored_by_key[key].get("acquired_at_unix") == live_by_key[key].get("acquired_at_unix")
+        and stored_by_key[key].get("metadata_sha256") == live_by_key[key].get("metadata_sha256")
+        and isinstance(stored_by_key[key].get("expires_at_unix"), int)
+        and isinstance(live_by_key[key].get("expires_at_unix"), int)
+        and live_by_key[key]["expires_at_unix"] >= stored_by_key[key]["expires_at_unix"]
+        for key in stored_by_key
+    )
+    if not same_lineage:
+        raise RuntimeRefreshError(
+            "runtime-install-lease-binding-drift",
+            "installer live lease lineage differs from the attempt",
+        )
+    return intent
 
 
 def _validate_binding_identity(binding: dict[str, Any]) -> tuple[str, str]:
@@ -8607,7 +8767,7 @@ def _unused_runtime_authority_history(
             )
         created = parse_time(created_at)
         expires = parse_time(expires_at)
-        validate_runtime_approval_intent(path, now=created)
+        validate_runtime_refresh_intent(path, now=created)
         if expires > now:
             raise RuntimeRefreshError(
                 "authority-unused-closeout-intent-live",
@@ -9083,7 +9243,7 @@ def _equivalent_runtime_success_provenance(
             "authority-unused-closeout-equivalent-intent-invalid",
             "equivalent success intent creation time is invalid",
         )
-    validate_runtime_approval_intent(intent_path, now=parse_time(created_at))
+    validate_runtime_refresh_intent(intent_path, now=parse_time(created_at))
     result_path = state_root / "attempts" / target_sha256 / "result.json"
     result = _validate_result_for_intent(read_json(result_path), intent)
     authenticated_resource_db = _authenticated_result_lease_store(
@@ -10084,9 +10244,9 @@ def _closeout_runtime_refresh_authority(
         raise RuntimeRefreshError(
             "authority-closeout-intent-invalid", "persisted intent creation time is invalid"
         )
-    # Re-evaluate the typed evidence at the time it was issued. Closeout may
+    # Re-evaluate the immutable intent at its issuance time. Closeout may
     # legitimately happen after the short deployment intent has expired.
-    validate_runtime_approval_intent(intent_path, now=parse_time(created_at))
+    validate_runtime_refresh_intent(intent_path, now=parse_time(created_at))
     result = _validate_result_for_intent(read_json(result_path), intent)
     if result.get("result_sha256") != result_sha256:
         raise RuntimeRefreshError(
@@ -10813,7 +10973,7 @@ def apply_runtime_refresh(
     verify_digest(intent, "intent_sha256")
     if intent.get("kind") != "bureau_runtime_refresh_intent":
         raise RuntimeRefreshError("intent-kind-invalid", "runtime-refresh intent kind is invalid")
-    validate_runtime_approval_intent(
+    validate_runtime_refresh_intent(
         intent_path,
         now=current,
         minimum_remaining_seconds=DEFAULT_MIN_RUNTIME_APPROVAL_REMAINING_SECONDS,
@@ -11341,10 +11501,10 @@ def parser() -> argparse.ArgumentParser:
     intent.add_argument("--libexec-dir", default=DEFAULT_RUNTIME_LIBEXEC_ROOT, type=Path)
     intent.add_argument("--runtime-user-unit-dir", type=Path)
     intent.add_argument("--remote-url", default=DEFAULT_REMOTE_URL)
-    intent.add_argument("--authorized-by", required=True)
-    intent.add_argument("--authorization", required=True)
+    intent.add_argument("--authorized-by", default="")
+    intent.add_argument("--authorization", default="")
     intent.add_argument("--break-glass", action="store_true")
-    intent.add_argument("--approval-reference", required=True)
+    intent.add_argument("--approval-reference", default="")
     intent.add_argument("--approval-task-id", required=True)
     intent.add_argument("--ttl-seconds", type=int, default=DEFAULT_INTENT_TTL_SECONDS)
 

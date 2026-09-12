@@ -637,7 +637,7 @@ def main(argv: list[str] | None = None) -> int:
         scheduler_resource_keys,
         stable_launcher_bytes,
         validate_legacy_runtime_refresh_bootstrap,
-        validate_runtime_approval_intent,
+        validate_runtime_install_authority,
         validate_runtime_user_unit_dir,
         validate_scheduler_runtime_layout,
     )
@@ -666,9 +666,14 @@ def main(argv: list[str] | None = None) -> int:
     manifest_path = prefix / "deployment-manifest.json"
     try:
         if args.approval_intent:
-            runtime_approval = validate_runtime_approval_intent(
+            runtime_approval = validate_runtime_install_authority(
                 Path(args.approval_intent).expanduser().resolve(),
                 expected_source_commit=head,
+                prefix=prefix,
+                bin_dir=bin_dir,
+                user_unit_dir=user_unit_dir,
+                libexec_dir=libexec_dir,
+                runtime_user_unit_dir=runtime_user_unit_dir,
             )
         else:
             runtime_approval = validate_legacy_runtime_refresh_bootstrap(

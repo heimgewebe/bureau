@@ -470,7 +470,7 @@ def protected_publication_activation_observation(
         "recovery_action": {
             "action": "prepare-intent" if status in {"candidate", "alert"} else "none",
             "eligible": status in {"candidate", "alert"},
-            "requires_authorization": status in {"candidate", "alert"},
+            "requires_authorization": False,
         },
         "observed_at": refresh.isoformat(observed_time),
         "does_not_establish": [
@@ -912,6 +912,29 @@ def test_legacy_runtime_authority_preflight_does_not_require_publication_activat
         store=store, approval_task_id=task_id, target_sha256="a" * 64
     )
     assert observed["task_id"] == task_id
+
+
+def test_runtime_authority_task_needs_no_manual_approval_metadata(tmp_path: Path) -> None:
+    task_id = "BUREAU-RUNTIME-NO-MANUAL-APPROVAL"
+    state_root = (tmp_path / "no-manual-approval-authority").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    spec = runtime_authority_spec(task_id)
+    spec["execution"].pop("approval")
+    spec["metadata"]["runtime_refresh_authority"].pop("required_approval_level")
+    stored = store.put_task_spec(
+        spec,
+        idempotency_key=f"seed:{task_id}:no-manual-approval",
+        expected_revision=None,
+        source="test",
+    )
+
+    observed = refresh.validate_authoritative_runtime_refresh_task(
+        store=store, approval_task_id=task_id, target_sha256="a" * 64
+    )
+
+    assert observed["task_id"] == task_id
+    assert observed["revision"] == stored["revision"]
+    assert observed["spec_sha256"] == stored["spec_sha256"]
 
 
 def test_protected_publication_activation_requires_planned_unactivated_bootstrap() -> None:
@@ -4203,8 +4226,32 @@ def prepare_legacy_cutover(
 ) -> tuple[dict[str, Any], Path, Path, Path, dict[str, Any]]:
     _, manifest_path, typed_intent, _ = prepare_candidate_intent(tmp_path)
     legacy = dict(typed_intent)
+    legacy["runtime_approval"] = {
+        "schema_version": 1,
+        "required": True,
+        "required_level": "break_glass",
+        "action_class": "runtime_mutation",
+        "action_classes": ["runtime_mutation"],
+        "allowed": True,
+        "reason": "approved",
+        "expected_reference": legacy["target_sha256"],
+        "expected_task_id": legacy["approval_task_id"],
+        "evidence": {
+            "schema_version": 1,
+            "approved": True,
+            "level": "break_glass",
+            "scope": ["runtime_mutation"],
+            "source": "legacy-test-authorization",
+            "reviewer": "legacy-test-reviewer",
+            "reference": legacy["target_sha256"],
+            "task_id": legacy["approval_task_id"],
+            "note": "Bureau immutable runtime refresh",
+        },
+    }
     legacy.pop("runtime_approval")
     legacy.pop("approval_task_id")
+    legacy["authorized_by"] = "legacy-test-reviewer"
+    legacy["authorization"] = "legacy-test-authorization"
     legacy["created_at"] = refresh.isoformat(current)
     legacy["expires_at"] = refresh.isoformat(current + timedelta(minutes=15))
     legacy["nonce"] = "legacy-cutover-test"
@@ -4798,7 +4845,7 @@ def test_observe_source_current_missing_scheduler_requires_prepare_intent(
     assert result["recovery_action"] == {
         "action": "prepare-intent",
         "eligible": True,
-        "requires_authorization": True,
+        "requires_authorization": False,
     }
 
 
@@ -5000,7 +5047,7 @@ def test_observe_binds_exact_merged_main_and_green_ci(tmp_path: Path) -> None:
     assert result["recovery_action"] == {
         "action": "prepare-intent",
         "eligible": True,
-        "requires_authorization": True,
+        "requires_authorization": False,
     }
     assert len(result["target_sha256"]) == 64
 
@@ -5063,7 +5110,7 @@ def test_observe_blocks_ambiguous_pr_and_main_drift(tmp_path: Path) -> None:
     assert "main-changed-during-observation" in result["reason_codes"]
 
 
-def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path) -> None:
+def test_prepare_intent_is_hash_bound_without_manual_approval(tmp_path: Path) -> None:
     observed, _, intent, intent_path = prepare_candidate_intent(tmp_path)
     runtime_user_unit_dir = refresh.default_runtime_user_unit_dir()
 
@@ -5106,39 +5153,40 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
         f"path:{runtime_user_unit_dir}",
         f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
     }.isdisjoint(intent["required_resource_keys"])
-    assert intent["runtime_approval"]["allowed"] is True
-    assert intent["runtime_approval"]["required_level"] == "break_glass"
-    assert intent["runtime_approval"]["expected_reference"] == observed["target_sha256"]
+    assert intent["approval_task_id"] == "BUR-2026-003-T009"
+    assert "runtime_approval" not in intent
+    assert "authorized_by" not in intent
+    assert "authorization" not in intent
     refresh.verify_digest(intent, "intent_sha256")
 
-    with pytest.raises(refresh.RuntimeRefreshError) as denied:
+    authority_store = seed_authority_store(
+        tmp_path / "no-manual-approval-bureau-state", "BUR-2026-003-T009"
+    )
+    no_manual_intent, _ = refresh.prepare_intent(
+        candidate=observed,
+        state_root=(tmp_path / "no-manual-approval-state").resolve(),
+        prefix=(tmp_path / "no-manual-approval-prefix").resolve(),
+        bin_dir=(tmp_path / "no-manual-approval-bin").resolve(),
+        remote_url="file:///tmp/bureau.git",
+        approval_task_id="BUR-2026-003-T009",
+        now=NOW,
+        authority_store=authority_store,
+    )
+    assert no_manual_intent["approval_task_id"] == "BUR-2026-003-T009"
+    assert "runtime_approval" not in no_manual_intent
+    assert "authorized_by" not in no_manual_intent
+    assert "authorization" not in no_manual_intent
+
+    with pytest.raises(refresh.RuntimeRefreshError) as missing_authority:
         refresh.prepare_intent(
             candidate=observed,
-            state_root=(tmp_path / "denied-state").resolve(),
-            prefix=(tmp_path / "denied-prefix").resolve(),
-            bin_dir=(tmp_path / "denied-bin").resolve(),
+            state_root=(tmp_path / "missing-authority-state").resolve(),
+            prefix=(tmp_path / "missing-authority-prefix").resolve(),
+            bin_dir=(tmp_path / "missing-authority-bin").resolve(),
             remote_url="file:///tmp/bureau.git",
-            authorized_by="chatgpt",
-            authorization="ordinary operator authorization",
-            break_glass=False,
-            approval_reference=observed["target_sha256"],
-            approval_task_id="BUR-2026-003-T009",
             now=NOW,
         )
-    assert denied.value.code == "runtime-approval-required"
-
-    with pytest.raises(refresh.RuntimeRefreshError, match="authorization"):
-        refresh.prepare_intent(
-            candidate=observed,
-            state_root=(tmp_path / "other-state").resolve(),
-            prefix=(tmp_path / "other-prefix").resolve(),
-            bin_dir=(tmp_path / "other-bin").resolve(),
-            remote_url="file:///tmp/bureau.git",
-            authorized_by="",
-            authorization="",
-            now=NOW,
-        )
-
+    assert missing_authority.value.code == "runtime-authority-binding-missing"
 
 def test_scheduler_resource_keys_lease_exact_persistent_and_runtime_wants_links() -> None:
     user_unit_dir = Path("/test/home/.config/systemd/user")
@@ -6156,7 +6204,7 @@ def test_incomplete_post_effect_recovery_is_explicit(tmp_path: Path) -> None:
     ]
 
 
-def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
+def test_runtime_intent_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
     observed, _ = candidate(tmp_path)
     authority_store = seed_authority_store(tmp_path / "bureau-state", "BUR-2026-003-T009")
     intent, intent_path = refresh.prepare_intent(
@@ -6176,7 +6224,7 @@ def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) ->
     )
 
     with pytest.raises(refresh.RuntimeRefreshError) as error:
-        refresh.validate_runtime_approval_intent(
+        refresh.validate_runtime_refresh_intent(
             intent_path,
             now=NOW,
             minimum_remaining_seconds=600,
@@ -11380,6 +11428,86 @@ def scheduler_installer_approval(
     return path
 
 
+def allow_synthetic_installer_authority(monkeypatch: pytest.MonkeyPatch) -> None:
+    def validate(
+        intent_path: Path,
+        *,
+        expected_source_commit: str,
+        **_kwargs: Any,
+    ) -> dict[str, Any]:
+        return refresh.validate_runtime_refresh_intent(
+            intent_path,
+            expected_source_commit=expected_source_commit,
+            minimum_remaining_seconds=0,
+        )
+
+    monkeypatch.setattr(refresh, "validate_runtime_install_authority", validate)
+
+
+def test_validate_runtime_install_authority_rechecks_bound_live_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _observed, _manifest_path, intent, intent_path = prepare_candidate_intent(tmp_path)
+    store = authority_store_for_intent(intent)
+    binding_identity, resource_db = lease_for(tmp_path / "installer-leases", intent)
+    live_binding = refresh.validate_live_lease_binding(
+        intent,
+        binding_identity,
+        resource_db=resource_db,
+        now=NOW,
+        required_metadata={"executor_unit": TEST_EXECUTOR_UNIT},
+    )
+    bound_authority = refresh.bind_runtime_refresh_authority(
+        store=store, intent=intent, now=NOW
+    )
+    started = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "intent_sha256": intent["intent_sha256"],
+            "target_sha256": intent["target_sha256"],
+            "main_commit": intent["main_commit"],
+            "authority_task_spec": bound_authority,
+            "lease_binding": live_binding,
+            "execution_context_preflight": {"systemd_unit": TEST_EXECUTOR_UNIT},
+            "started_at": refresh.isoformat(NOW),
+            "effect_started": False,
+        },
+        "start_sha256",
+    )
+    started_path = (
+        Path(intent["state_root"])
+        / "attempts"
+        / intent["target_sha256"]
+        / "started.json"
+    )
+    started_path.parent.mkdir(parents=True, exist_ok=True)
+    started_path.write_bytes(refresh.canonical_bytes(started))
+    observed_executor_units: list[str | None] = []
+
+    def execution_preflight(**kwargs: Any) -> dict[str, Any]:
+        observed_executor_units.append(kwargs.get("expected_grabowski_task_unit"))
+        return {"systemd_unit": TEST_EXECUTOR_UNIT}
+
+    monkeypatch.setattr(
+        refresh, "runtime_prefix_execution_context_preflight", execution_preflight
+    )
+
+    validated = refresh.validate_runtime_install_authority(
+        intent_path,
+        expected_source_commit=intent["main_commit"],
+        prefix=Path(intent["prefix"]),
+        bin_dir=Path(intent["bin_dir"]),
+        user_unit_dir=Path(intent["user_unit_dir"]),
+        libexec_dir=Path(intent["libexec_dir"]),
+        runtime_user_unit_dir=Path(intent["runtime_user_unit_dir"]),
+        now=NOW + timedelta(seconds=1),
+    )
+
+    assert validated == intent
+    assert observed_executor_units == [TEST_EXECUTOR_UNIT]
+
+
 @pytest.mark.parametrize("noncanonical", ["prefix", "bin_dir"])
 def test_run_installer_rejects_noncanonical_scheduler_runtime_layout_before_run(
     tmp_path: Path,
@@ -11674,6 +11802,7 @@ def test_real_installer_receipt_write_failure_rolls_back_activated_scheduler(
 
     monkeypatch.setattr(refresh, "_run", fake_run)
     monkeypatch.setattr(installer, "atomic_write", fail_receipt_write)
+    allow_synthetic_installer_authority(monkeypatch)
 
     result = installer.main(
         [
@@ -11799,6 +11928,7 @@ def test_launcher_directory_fsync_failure_after_replace_restores_exact_preimage(
     monkeypatch.setattr(installer.os, "replace", observe_launcher_replace)
     monkeypatch.setattr(installer, "fsync_directory", fail_first_launcher_directory_fsync)
     monkeypatch.setattr(refresh, "_run", fake_run)
+    allow_synthetic_installer_authority(monkeypatch)
 
     result = installer.main(
         [
@@ -11916,6 +12046,7 @@ def test_scheduler_rollback_does_not_restore_unmutated_unleased_launchers(
         "atomic_write",
         fail_receipt_after_concurrent_launcher_change,
     )
+    allow_synthetic_installer_authority(monkeypatch)
 
     result = installer.main(
         [
@@ -12129,6 +12260,57 @@ def test_real_non_systemd_installer_supports_custom_layout(tmp_path: Path) -> No
         tmp_path,
         label="real-installer",
     )
+    weak_approval = subprocess.run(
+        [*command, "--approval-intent", str(approval_path)],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert weak_approval.returncode != 0
+    assert "runtime-install-intent-path-binding-invalid" in weak_approval.stderr
+    assert not prefix.exists()
+
+    harness = tmp_path / "installer-mechanics-harness.py"
+    harness.write_text(
+        """from __future__ import annotations
+import importlib.util
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(source / "src"))
+from bureau import runtime_refresh as refresh
+
+def allow_synthetic(intent_path, *, expected_source_commit, **_kwargs):
+    return refresh.validate_runtime_refresh_intent(
+        intent_path,
+        expected_source_commit=expected_source_commit,
+        minimum_remaining_seconds=0,
+    )
+
+refresh.validate_runtime_install_authority = allow_synthetic
+spec = importlib.util.spec_from_file_location(
+    "install_bureau_runtime_test_harness", source / "ops/install-bureau-runtime.py"
+)
+assert spec is not None and spec.loader is not None
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+raise SystemExit(module.main(sys.argv[2:]))
+""",
+        encoding="utf-8",
+    )
+    command = [
+        sys.executable,
+        str(harness),
+        str(clean),
+        "--source",
+        str(clean),
+        "--prefix",
+        str(prefix),
+        "--bin-dir",
+        str(bin_dir),
+    ]
 
     install = subprocess.run(
         [*command, "--approval-intent", str(approval_path)],

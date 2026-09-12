@@ -39,23 +39,48 @@
   "acceptance": [
     {
       "id": "consumer-required",
-      "assertion": "New Labor experiment registrations fail closed without a named current external consumer."
+      "assertion": "New Labor experiment registrations fail closed without a named current external consumer.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:consumer-required"
+      }
     },
     {
       "id": "decision-and-metric",
-      "assertion": "Each experiment states the concrete decision it informs and a measurable success, harm or falsification criterion."
+      "assertion": "Each experiment states the concrete decision it informs and a measurable success, harm or falsification criterion.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:decision-and-metric"
+      }
     },
     {
       "id": "expiry",
-      "assertion": "Each experiment has a review or expiry date and a deterministic promote, pilot, defer, reject or archive path."
+      "assertion": "Each experiment has a review or expiry date and a deterministic promote, pilot, defer, reject or archive path.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:expiry"
+      }
     },
     {
       "id": "surface-budget",
-      "assertion": "New experiments remove, replace or retire at least as much durable surface as they add, unless a reviewed exception explains the net cost."
+      "assertion": "New experiments remove, replace or retire at least as much durable surface as they add, unless a reviewed exception explains the net cost.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:surface-budget"
+      }
     },
     {
       "id": "no-auto-authority",
-      "assertion": "Labor cannot auto-apply routing, policy, queue, merge or runtime changes."
+      "assertion": "Labor cannot auto-apply routing, policy, queue, merge or runtime changes.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:no-auto-authority"
+      }
     }
   ],
   "metadata": {
@@ -69,7 +94,100 @@
       "runtime_correctness",
       "cleanup_permission",
       "automatic_shutdown_permission"
-    ]
+    ],
+    "verified_at": "2026-09-12",
+    "outcome": "verified",
+    "verification_note": "T005 is complete in Labor: PR #324 introduced the external-consumer, decision-target, metric, expiry, surface-budget and no-authority registration contract; PR #325 enforced the same contract in capture/evaluation. Both merge commits remain ancestors of current Labor main.",
+    "validated_acceptance": {
+      "consumer-required": "PASS: Labor PR #324 requires a named current external consumer for prospective experiment registration.",
+      "decision-and-metric": "PASS: Labor PR #324 requires a concrete decision target and measurable success/harm/falsification thresholds; PR #325 enforces the registered thresholds during effect evaluation.",
+      "expiry": "PASS: Labor PR #324 requires review/expiry and deterministic closure outcomes; PR #325 preserves post-expiry deterministic evaluation while blocking new capture after expiry.",
+      "surface-budget": "PASS: Labor PR #324 requires a bounded surface budget or a reviewed exception.",
+      "no-auto-authority": "PASS: Labor PR #324 and remediation PR #325 preserve explicit no-authority boundaries for routing, policy, queue, merge and runtime effects."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+          "source_ref": "heimgewebe/labor#324",
+          "number": 324,
+          "head_sha": "580c31150679f647eec26e661e4e1b14fc3a5d4e",
+          "merge_commit_sha": "5ec0e2c93bdccea529e854ffcc5bc3fd6c0b4cc4",
+          "acceptance_id": "consumer-required"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+          "source_ref": "heimgewebe/labor#325",
+          "number": 325,
+          "head_sha": "eeba625b459cefa3af240c9f52bf513b265ec2dd",
+          "merge_commit_sha": "e0ac90dafc4bc1fcb417f5e524adf9ab9828a807",
+          "acceptance_id": "decision-and-metric"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+          "source_ref": "heimgewebe/labor#325",
+          "number": 325,
+          "head_sha": "eeba625b459cefa3af240c9f52bf513b265ec2dd",
+          "merge_commit_sha": "e0ac90dafc4bc1fcb417f5e524adf9ab9828a807",
+          "acceptance_id": "expiry"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+          "source_ref": "heimgewebe/labor#324",
+          "number": 324,
+          "head_sha": "580c31150679f647eec26e661e4e1b14fc3a5d4e",
+          "merge_commit_sha": "5ec0e2c93bdccea529e854ffcc5bc3fd6c0b4cc4",
+          "acceptance_id": "surface-budget"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+          "source_ref": "heimgewebe/labor#325",
+          "number": 325,
+          "head_sha": "eeba625b459cefa3af240c9f52bf513b265ec2dd",
+          "merge_commit_sha": "e0ac90dafc4bc1fcb417f5e524adf9ab9828a807",
+          "acceptance_id": "no-auto-authority"
+        },
+        {
+          "kind": "repository_state",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+          "acceptance_ids": [
+            "consumer-required",
+            "decision-and-metric",
+            "expiry",
+            "surface-budget",
+            "no-auto-authority"
+          ],
+          "source_ref": "heimgewebe/labor@3fb3a6252fad110cb0513d772257e60bce647fa5",
+          "commit_sha": "3fb3a6252fad110cb0513d772257e60bce647fa5",
+          "contains_merge_commits": [
+            "5ec0e2c93bdccea529e854ffcc5bc3fd6c0b4cc4",
+            "e0ac90dafc4bc1fcb417f5e524adf9ab9828a807"
+          ],
+          "observed_at": "2026-09-12"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "6eb97ded401482aae1701e5915e8ace7a10939f51318e9fa92e268ff514f7198",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "source": "github_pull_requests_and_current_labor_main_ancestry",
+      "source_ref": "heimgewebe/labor#324,#325; heimgewebe/labor@3fb3a6252fad110cb0513d772257e60bce647fa5",
+      "evidence_sha256": "e09c233b56a88cacf50af8e92af086570d14c4246bde606e067270f791808c01",
+      "verified_at": "2026-09-12"
+    }
   },
   "depends_on": []
 }

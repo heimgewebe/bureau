@@ -422,6 +422,7 @@ def protected_publication_activation_observation(
     deployed_source_commit: str = DEPLOYED,
     status: str = "candidate",
     observed_at: datetime | None = None,
+    requires_authorization: bool = False,
 ) -> dict[str, Any]:
     observed_time = observed_at or refresh.utc_now()
     observation = {
@@ -470,7 +471,7 @@ def protected_publication_activation_observation(
         "recovery_action": {
             "action": "prepare-intent" if status in {"candidate", "alert"} else "none",
             "eligible": status in {"candidate", "alert"},
-            "requires_authorization": False,
+            "requires_authorization": requires_authorization,
         },
         "observed_at": refresh.isoformat(observed_time),
         "does_not_establish": [
@@ -980,6 +981,47 @@ def test_protected_publication_activation_requires_planned_unactivated_bootstrap
         pr_error.value.code
         == "authority-closeout-protected-publication-adoption-unproven"
     )
+
+
+def test_protected_publication_activation_replays_pre_policy_authorization_observation(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-ACTIVATION-LEGACY-AUTHORIZATION-FLAG"
+    state_root = (tmp_path / "legacy-authorization-observation").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    observation = protected_publication_activation_observation(
+        requires_authorization=True
+    )
+    evidence = protected_publication_activation_evidence_for(
+        task_id=task_id,
+        adopted=adopted,
+        ready=ready,
+        key=key,
+        observation=observation,
+    )
+
+    changed = store.put_runtime_refresh_protected_publication_activation_task_spec(
+        ready,
+        idempotency_key=key,
+        expected_revision=adopted["revision"],
+        activation_observation=observation,
+        activation_evidence=evidence,
+    )
+
+    assert changed["revision"] == adopted["revision"] + 1
+    assert store.task_spec(task_id)["spec"]["state"] == "ready"
 
 
 def test_protected_publication_activation_specialized_cas_requires_runtime_observation(

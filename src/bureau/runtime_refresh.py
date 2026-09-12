@@ -3246,12 +3246,15 @@ def _validated_protected_publication_activation_observation_contract(
             "registry_source_commit",
             "registry_reasons",
         }
-        or recovery_action
-        != {
-            "action": "prepare-intent",
-            "eligible": True,
-            "requires_authorization": False,
+        or not isinstance(recovery_action, dict)
+        or set(recovery_action) != {
+            "action",
+            "eligible",
+            "requires_authorization",
         }
+        or recovery_action.get("action") != "prepare-intent"
+        or recovery_action.get("eligible") is not True
+        or not isinstance(recovery_action.get("requires_authorization"), bool)
         or not isinstance(reason_codes, list)
         or not all(isinstance(item, str) and item for item in reason_codes)
         or value.get("does_not_establish")

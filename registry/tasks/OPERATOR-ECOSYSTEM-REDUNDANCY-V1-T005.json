@@ -39,23 +39,48 @@
   "acceptance": [
     {
       "id": "consumer-required",
-      "assertion": "New Labor experiment registrations fail closed without a named current external consumer."
+      "assertion": "New Labor experiment registrations fail closed without a named current external consumer.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:consumer-required"
+      }
     },
     {
       "id": "decision-and-metric",
-      "assertion": "Each experiment states the concrete decision it informs and a measurable success, harm or falsification criterion."
+      "assertion": "Each experiment states the concrete decision it informs and a measurable success, harm or falsification criterion.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:decision-and-metric"
+      }
     },
     {
       "id": "expiry",
-      "assertion": "Each experiment has a review or expiry date and a deterministic promote, pilot, defer, reject or archive path."
+      "assertion": "Each experiment has a review or expiry date and a deterministic promote, pilot, defer, reject or archive path.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:expiry"
+      }
     },
     {
       "id": "surface-budget",
-      "assertion": "New experiments remove, replace or retire at least as much durable surface as they add, unless a reviewed exception explains the net cost."
+      "assertion": "New experiments remove, replace or retire at least as much durable surface as they add, unless a reviewed exception explains the net cost.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:surface-budget"
+      }
     },
     {
       "id": "no-auto-authority",
-      "assertion": "Labor cannot auto-apply routing, policy, queue, merge or runtime changes."
+      "assertion": "Labor cannot auto-apply routing, policy, queue, merge or runtime changes.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:operator-ecosystem-redundancy-v1:t005:no-auto-authority"
+      }
     }
   ],
   "metadata": {

@@ -422,6 +422,7 @@ def protected_publication_activation_observation(
     deployed_source_commit: str = DEPLOYED,
     status: str = "candidate",
     observed_at: datetime | None = None,
+    requires_authorization: bool = False,
 ) -> dict[str, Any]:
     observed_time = observed_at or refresh.utc_now()
     observation = {
@@ -470,7 +471,7 @@ def protected_publication_activation_observation(
         "recovery_action": {
             "action": "prepare-intent" if status in {"candidate", "alert"} else "none",
             "eligible": status in {"candidate", "alert"},
-            "requires_authorization": False,
+            "requires_authorization": requires_authorization,
         },
         "observed_at": refresh.isoformat(observed_time),
         "does_not_establish": [
@@ -834,6 +835,7 @@ def protected_publication_activation_evidence_for(
     observation: dict[str, Any],
     publication_pr: int = 2222,
     task_file_sha256: str = "c" * 64,
+    installed_package_tree_sha256: str = "b" * 64,
 ) -> dict[str, Any]:
     from bureau import task_specs
 
@@ -843,6 +845,8 @@ def protected_publication_activation_evidence_for(
         approval_task_id=task_id,
         candidate=ready,
     )
+    installed_validation["package_tree_sha256"] = installed_package_tree_sha256
+    installed_validation = refresh.bind_digest(installed_validation, "validation_sha256")
     return refresh._protected_publication_activation_evidence(
         approval_task_id=task_id,
         adoption_revision=adopted["revision"],
@@ -979,6 +983,124 @@ def test_protected_publication_activation_requires_planned_unactivated_bootstrap
     assert (
         pr_error.value.code
         == "authority-closeout-protected-publication-adoption-unproven"
+    )
+
+
+def test_protected_publication_activation_observation_rejects_legacy_flag_by_default() -> None:
+    observation = protected_publication_activation_observation(
+        requires_authorization=True
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh._validated_protected_publication_activation_observation_contract(
+            observation
+        )
+
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-observation-unproven"
+    )
+
+
+def test_protected_publication_activation_replays_pre_policy_authorization_observation(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-ACTIVATION-LEGACY-AUTHORIZATION-FLAG"
+    state_root = (tmp_path / "legacy-authorization-observation").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    observation = protected_publication_activation_observation(
+        requires_authorization=True
+    )
+    legacy_package = sorted(
+        refresh.RUNTIME_AUTHORITY_LEGACY_AUTHORIZATION_PACKAGE_TREE_SHA256S
+    )[0]
+    evidence = protected_publication_activation_evidence_for(
+        task_id=task_id,
+        adopted=adopted,
+        ready=ready,
+        key=key,
+        observation=observation,
+        installed_package_tree_sha256=legacy_package,
+    )
+
+    validated = refresh._validated_protected_publication_activation_evidence(
+        evidence,
+        approval_task_id=task_id,
+        adoption_revision=adopted["revision"],
+        adoption_spec_sha256=adopted["spec_sha256"],
+        activation_spec_sha256=evidence["activation_spec_sha256"],
+        idempotency_key=key,
+        publication_pr=2222,
+        publication_merge_commit="4" * 40,
+        target_main_commit=MAIN,
+        target_sha256=observation["target_sha256"],
+        expected_task_file_sha256="c" * 64,
+        activation_created_at=observation["observed_at"],
+    )
+
+    assert validated["observation_sha256"] == observation["observation_sha256"]
+
+
+def test_protected_publication_activation_rejects_new_legacy_flag_evidence(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-RUNTIME-PUBLICATION-ACTIVATION-NEW-AUTHORIZATION-FLAG"
+    state_root = (tmp_path / "new-authorization-observation").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    adopted = store.put_task_spec(
+        planned,
+        idempotency_key=f"seed-protected:{task_id}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    ready = protected_publication_activation_spec(task_id, state="ready")
+    key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{adopted['spec_sha256']}"
+    )
+    observation = protected_publication_activation_observation(
+        requires_authorization=True
+    )
+    evidence = protected_publication_activation_evidence_for(
+        task_id=task_id,
+        adopted=adopted,
+        ready=ready,
+        key=key,
+        observation=observation,
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as raised:
+        refresh._validated_protected_publication_activation_evidence(
+            evidence,
+            approval_task_id=task_id,
+            adoption_revision=adopted["revision"],
+            adoption_spec_sha256=adopted["spec_sha256"],
+            activation_spec_sha256=evidence["activation_spec_sha256"],
+            idempotency_key=key,
+            publication_pr=2222,
+            publication_merge_commit="4" * 40,
+            target_main_commit=MAIN,
+            target_sha256=observation["target_sha256"],
+            expected_task_file_sha256="c" * 64,
+            activation_created_at=observation["observed_at"],
+        )
+
+    assert (
+        raised.value.code
+        == "authority-preflight-publication-activation-observation-unproven"
     )
 
 

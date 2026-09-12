@@ -184,6 +184,24 @@ RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_DOES_NOT_ESTABLISH = [
 RUNTIME_AUTHORITY_ACTIVATION_EVIDENCE_LEGACY_CUTOFF = datetime(
     2026, 9, 2, 0, 0, 0, tzinfo=timezone.utc
 )
+# Immutable package-tree identities from protected activation receipts produced by
+# runtimes whose observation contract still reported manual authorization.  This
+# allowlist grants replay compatibility only; it is not runtime-mutation authority.
+RUNTIME_AUTHORITY_LEGACY_AUTHORIZATION_PACKAGE_TREE_SHA256S = frozenset(
+    {
+        "0d2a1acb029dda2fa4c419a8cb7e9de885ddf9e60cd03a271e6c3232507e8f0c",
+        "19119c74435954fecfc3a06d6b1388ee58b97f410e9c176003ec8080c9741a3f",
+        "3f0a3c8b82c2357ebea988f799ee8dd27747e732df64786d5cd0181f1f7d7b10",
+        "591718b031383c305a56dcfe88d58a7673b04ee1af5d0c8cd9b07fa8616e1b45",
+        "5ebaf6efdf75f7daec24b4d9655833053fa0807e2043757ba64769ebb6d702e6",
+        "6f6bcd599a4f5fee6cae9b5e808be017730f5eb6548c74f9e78429964a8028af",
+        "82bcd95f54957191fb40b3ec1d99782ba5a2a9119afb15de96db9f5737bec8d6",
+        "a7bc6a89280ac3dfa35444d191cd6fb2dc745fa59529378ab5533669ccb09b9d",
+        "df7a31d0688902c2d639023d1abcfdb2942195f3428103751ea9a502fd6035c4",
+        "e2deb06512948f16d5d6293ed6759dddeab27e856d6df4552e3e573609bf0a95",
+        "fc225dcd69097e448d62303e35d559b113e76368d0a9ccee8dc9d87467767992",
+    }
+)
 RUNTIME_AUTHORITY_CONSUMPTION_KIND = "bureau_runtime_refresh_authority_consumption"
 RUNTIME_AUTHORITY_CLOSEOUT_KIND = "bureau_runtime_refresh_no_run_closeout"
 RUNTIME_AUTHORITY_UNUSED_CLOSEOUT_KIND = (
@@ -3179,6 +3197,8 @@ def _validated_post_publication_activation_contract(
 
 def _validated_protected_publication_activation_observation_contract(
     value: Any,
+    *,
+    allow_legacy_requires_authorization: bool = False,
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise RuntimeRefreshError(
@@ -3246,12 +3266,16 @@ def _validated_protected_publication_activation_observation_contract(
             "registry_source_commit",
             "registry_reasons",
         }
-        or recovery_action
-        != {
-            "action": "prepare-intent",
-            "eligible": True,
-            "requires_authorization": False,
+        or not isinstance(recovery_action, dict)
+        or set(recovery_action) != {
+            "action",
+            "eligible",
+            "requires_authorization",
         }
+        or recovery_action.get("action") != "prepare-intent"
+        or recovery_action.get("eligible") is not True
+        or recovery_action.get("requires_authorization")
+        is not bool(allow_legacy_requires_authorization)
         or not isinstance(reason_codes, list)
         or not all(isinstance(item, str) and item for item in reason_codes)
         or value.get("does_not_establish")
@@ -3358,8 +3382,12 @@ def _validated_protected_publication_activation_observation(
     activation_created_at: str,
     target_main_commit: str,
     expected_target_sha256: str | None = None,
+    allow_legacy_requires_authorization: bool = False,
 ) -> dict[str, Any]:
-    observation = _validated_protected_publication_activation_observation_contract(value)
+    observation = _validated_protected_publication_activation_observation_contract(
+        value,
+        allow_legacy_requires_authorization=allow_legacy_requires_authorization,
+    )
     if (
         observation.get("main_commit") != target_main_commit
         or (
@@ -3576,6 +3604,18 @@ def _validated_protected_publication_activation_evidence(
             "installed runtime validation receipt digest is invalid",
             details={"cause_code": exc.code},
         ) from exc
+    legacy_requires_authorization = (
+        value["observation"].get("recovery_action", {}).get("requires_authorization")
+        is True
+    )
+    if legacy_requires_authorization and (
+        value["installed_runtime_validation"].get("package_tree_sha256")
+        not in RUNTIME_AUTHORITY_LEGACY_AUTHORIZATION_PACKAGE_TREE_SHA256S
+    ):
+        raise RuntimeRefreshError(
+            "authority-preflight-publication-activation-observation-unproven",
+            "legacy authorization observation is not bound to a known pre-policy runtime",
+        )
     validated_observation = _validated_protected_publication_activation_observation(
         value["observation"],
         activation_created_at=activation_created_at,
@@ -3583,6 +3623,7 @@ def _validated_protected_publication_activation_evidence(
         expected_target_sha256=(
             target_sha256 if target_sha256 is not None else value["target_sha256"]
         ),
+        allow_legacy_requires_authorization=legacy_requires_authorization,
     )
     validated_evidence = json.loads(json.dumps(value))
     validated_evidence["observation"] = validated_observation

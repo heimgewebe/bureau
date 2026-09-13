@@ -223,6 +223,25 @@ def test_read_only_action_does_not_need_approval() -> None:
     assert decision["required"] is False
 
 
+def test_task_approval_contract_preserves_declared_required_level() -> None:
+    task = {
+        "id": "BUR-TEST-001-T000",
+        "execution": {
+            "mode": "grabowski-task",
+            "policy": "autonomous",
+            "approval": {
+                "action_class": "runtime_mutation",
+                "required_level": "break_glass",
+            },
+        },
+    }
+    contract = approval.task_approval_contract(task)
+    assert contract["action_class"] == "runtime_mutation"
+    assert contract["declared"]["required_level"] == "break_glass"
+    assert contract["decision"]["required_level"] == "break_glass"
+    assert contract["decision"]["allowed"] is False
+
+
 def test_task_approval_contract_infers_write_claim_as_repository_mutation() -> None:
     task = {
         "id": "BUR-TEST-001-T001",

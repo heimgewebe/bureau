@@ -526,6 +526,9 @@ def task_approval_contract(task: dict[str, Any]) -> dict[str, Any]:
     """
     execution = task.get("execution") if isinstance(task.get("execution"), dict) else {}
     declared = execution.get("approval") if isinstance(execution.get("approval"), dict) else {}
+    declared_required_level = declared.get("required_level")
+    if not isinstance(declared_required_level, str) or not declared_required_level:
+        declared_required_level = None
     action_class = declared.get("action_class")
     if not action_class:
         mode = str(execution.get("mode", ""))
@@ -547,6 +550,10 @@ def task_approval_contract(task: dict[str, Any]) -> dict[str, Any]:
         "schema_version": APPROVAL_SCHEMA_VERSION,
         "task_id": task.get("id"),
         "action_class": action_class,
-        "decision": approval_decision(str(action_class), None),
+        "decision": approval_decision(
+            str(action_class),
+            None,
+            required_level_override=declared_required_level,
+        ),
         "declared": declared,
     }

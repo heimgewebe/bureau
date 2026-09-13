@@ -339,19 +339,29 @@ def approval_decision_for_effects(
             if rule
         )
     )
+    override_conflict_reason = ""
     if required_level_override is not None:
         canonical_required_level = required_level
-        required_levels = {required_level_override}
-        required_level = required_level_override
         if required_level_override == canonical_required_level:
-            pass
+            required_levels = {required_level_override}
         elif required_level_override == "break_glass":
+            required_levels = {required_level_override}
+            required_level = required_level_override
             allowed_levels.intersection_update({"break_glass"})
         else:
             # Historical declarations that do not match the canonical rule and
             # are not the strictly stronger break-glass gate have no safe
-            # ordering. Fail closed rather than silently weakening them.
+            # ordering. Preserve the declaration separately, but project the
+            # executable decision as unresolvable instead of advertising an
+            # approval level that no evidence can satisfy.
+            declared_required_level = required_level_override
+            required_level = "unknown"
             allowed_levels.clear()
+            override_conflict_reason = (
+                f"declared required_level {declared_required_level} conflicts with "
+                f"canonical required_level {canonical_required_level}; "
+                "no approval evidence can satisfy this declaration"
+            )
     action_set = set(effectful_actions)
     level_ok = bool(approval is not None and approval.level in allowed_levels)
     reference_ok = True
@@ -381,7 +391,9 @@ def approval_decision_for_effects(
         and scope_ok
     )
     reason = "approved"
-    if not allowed:
+    if override_conflict_reason:
+        reason = override_conflict_reason
+    elif not allowed:
         reason = "; ".join(
             reason
             for reason in (

@@ -242,6 +242,39 @@ def test_task_approval_contract_preserves_declared_required_level() -> None:
     assert contract["decision"]["allowed"] is False
 
 
+def test_task_approval_contract_projects_noncanonical_level_as_unresolvable() -> None:
+    task = {
+        "id": "BUR-TEST-001-T000",
+        "execution": {
+            "mode": "grabowski-task",
+            "policy": "autonomous",
+            "approval": {
+                "action_class": "repository_mutation",
+                "required_level": "reviewed_plan",
+            },
+        },
+    }
+
+    contract = approval.task_approval_contract(task)
+
+    assert contract["declared"]["required_level"] == "reviewed_plan"
+    assert contract["decision"]["required_level"] == "unknown"
+    assert contract["decision"]["allowed"] is False
+    assert contract["decision"]["reason"] == (
+        "declared required_level reviewed_plan conflicts with canonical required_level "
+        "operator; no approval evidence can satisfy this declaration"
+    )
+
+    decision = approval.approval_decision(
+        "repository_mutation",
+        approval.reviewed_plan_approval(reviewer="reviewer", reference="plan.json"),
+        required_level_override="reviewed_plan",
+    )
+    assert decision["required_level"] == "unknown"
+    assert decision["allowed"] is False
+    assert "no approval evidence can satisfy this declaration" in decision["reason"]
+
+
 def test_task_approval_contract_infers_write_claim_as_repository_mutation() -> None:
     task = {
         "id": "BUR-TEST-001-T001",

@@ -123,7 +123,7 @@ def test_mixed_read_only_and_effectful_actions_ignore_read_only_for_gate() -> No
     assert decision["required_level"] == "operator"
 
 
-def test_multi_effect_runtime_reports_break_glass_required_level() -> None:
+def test_multi_effect_runtime_accepts_operator_approval() -> None:
     decision = approval.approval_decision_for_effects(
         ["repository_mutation", "runtime_mutation"],
         approval.explicit_operator_approval(
@@ -133,9 +133,8 @@ def test_multi_effect_runtime_reports_break_glass_required_level() -> None:
         ),
     )
 
-    assert decision["allowed"] is False
-    assert decision["required_level"] == "break_glass"
-    assert "not accepted for required break_glass, operator" in decision["reason"]
+    assert decision["allowed"] is True
+    assert decision["required_level"] == "operator"
 
 
 def test_reviewed_plan_does_not_satisfy_source_import() -> None:
@@ -164,18 +163,116 @@ def test_break_glass_satisfies_explicitly_allowed_lower_gates() -> None:
     assert approval.require_approval("queue_mutation", evidence)["allowed"] is True
 
 
-def test_runtime_mutation_rejects_lower_approval_level() -> None:
+def test_runtime_mutation_accepts_operator_approval() -> None:
+    decision = approval.require_approval(
+        "runtime_mutation",
+        approval.explicit_operator_approval(source="cli --approve", approved=True),
+    )
+    assert decision["allowed"] is True
+    assert decision["required_level"] == "operator"
+
+
+def test_runtime_mutation_rejects_missing_or_lower_approval() -> None:
+    missing = approval.approval_decision("runtime_mutation", None)
+    assert missing["allowed"] is False
+    assert missing["required_level"] == "operator"
+    assert "explicit approval missing" in missing["reason"]
+
+    with pytest.raises(StateError, match="not accepted for required operator"):
+        approval.require_approval(
+            "runtime_mutation",
+            approval.reviewed_plan_approval(
+                reviewer="reviewer", reference="plan.json"
+            ),
+        )
+
+    with pytest.raises(StateError, match="approval record is not approved"):
+        approval.require_approval(
+            "runtime_mutation",
+            approval.explicit_operator_approval(
+                source="cli --approve", approved=False
+            ),
+        )
+
+
+def test_runtime_mutation_honors_stricter_declared_break_glass_requirement() -> None:
+    operator = approval.explicit_operator_approval(
+        source="cli --approve", approved=True
+    )
     with pytest.raises(StateError, match="not accepted for required break_glass"):
         approval.require_approval(
             "runtime_mutation",
-            approval.explicit_operator_approval(source="cli --approve", approved=True),
+            operator,
+            required_level_override="break_glass",
         )
+
+    decision = approval.require_approval(
+        "runtime_mutation",
+        approval.ApprovalEvidence(
+            source="compatibility break glass", level="break_glass", approved=True
+        ),
+        required_level_override="break_glass",
+    )
+    assert decision["allowed"] is True
+    assert decision["required_level"] == "break_glass"
 
 
 def test_read_only_action_does_not_need_approval() -> None:
     decision = approval.approval_decision("dry_run", None)
     assert decision["allowed"] is True
     assert decision["required"] is False
+
+
+def test_task_approval_contract_preserves_declared_required_level() -> None:
+    task = {
+        "id": "BUR-TEST-001-T000",
+        "execution": {
+            "mode": "grabowski-task",
+            "policy": "autonomous",
+            "approval": {
+                "action_class": "runtime_mutation",
+                "required_level": "break_glass",
+            },
+        },
+    }
+    contract = approval.task_approval_contract(task)
+    assert contract["action_class"] == "runtime_mutation"
+    assert contract["declared"]["required_level"] == "break_glass"
+    assert contract["decision"]["required_level"] == "break_glass"
+    assert contract["decision"]["allowed"] is False
+
+
+def test_task_approval_contract_projects_noncanonical_level_as_unresolvable() -> None:
+    task = {
+        "id": "BUR-TEST-001-T000",
+        "execution": {
+            "mode": "grabowski-task",
+            "policy": "autonomous",
+            "approval": {
+                "action_class": "repository_mutation",
+                "required_level": "reviewed_plan",
+            },
+        },
+    }
+
+    contract = approval.task_approval_contract(task)
+
+    assert contract["declared"]["required_level"] == "reviewed_plan"
+    assert contract["decision"]["required_level"] == "unknown"
+    assert contract["decision"]["allowed"] is False
+    assert contract["decision"]["reason"] == (
+        "declared required_level reviewed_plan conflicts with canonical required_level "
+        "operator; no approval evidence can satisfy this declaration"
+    )
+
+    decision = approval.approval_decision(
+        "repository_mutation",
+        approval.reviewed_plan_approval(reviewer="reviewer", reference="plan.json"),
+        required_level_override="reviewed_plan",
+    )
+    assert decision["required_level"] == "unknown"
+    assert decision["allowed"] is False
+    assert "no approval evidence can satisfy this declaration" in decision["reason"]
 
 
 def test_task_approval_contract_infers_write_claim_as_repository_mutation() -> None:
@@ -254,7 +351,7 @@ def test_declared_task_approval_validation_matches_runtime_rules() -> None:
         "execution": {
             "approval": {
                 "action_class": "runtime_mutation",
-                "required_level": "break_glass",
+                "required_level": "operator",
             }
         }
     }

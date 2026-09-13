@@ -781,6 +781,6 @@ def test_invalid_declared_approval_contract_blocks_registration() -> None:
     assert result["decision"] == "block"
     assert "approval_contract_invalid" in result["reasons"]
     assert result["approval_contract_errors"] == [
-        "approval action_class runtime_mutation requires required_level break_glass, "
+        "approval action_class runtime_mutation requires required_level operator, "
         "got reviewed_plan"
     ]

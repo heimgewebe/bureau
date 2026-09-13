@@ -24,10 +24,12 @@ das im Manifest gebundene immutable Release.
 | aktuell installierter Commit, Paket- und Snapshot-Hashes | Bureau-Deployment-Manifest und Runtime-Identity |
 | aktuelle Runtime-Autoritäts-Task, Revision, Zustand und Verbrauch | autoritative Bureau-StateStore-TaskSpec; ein installierter Registry-Snapshot ist dafür niemals hinreichend |
 | expliziter Ziel- und Zeitrahmen | create-only Runtime-Refresh-Intent |
-| Wirkungserlaubnis für Runtime-Mutationen | typisierte `break_glass`-Freigabe, exakt an Zielhash und Bureau-Task gebunden |
+| Wirkungserlaubnis für Runtime-Mutationen | autoritative Single-Use-TaskSpec plus exakter Intent, reservierter Grabowski-Executor und live Leases; neue bzw. kanonisch migrierte Verträge nutzen `operator`, bereits publizierte TaskSpecs mit explizitem `required_level: break_glass` bleiben bis zu ihrer Migration `break_glass`-pflichtig |
 | Konfliktfreiheit der Effektpfade | live gelesene Grabowski-Leases |
 | eigentliche Installation | bestehender immutable Bureau-Installer |
 | Erfolg | Receipt plus Manifest-, Launcher-, Paket-, Snapshot- und CLI-Readback |
+
+Für neue oder kanonisch auf `operator` migrierte Runtime-Refresh-TaskSpecs genügt die typisierte Operator-Freigabe. Bereits publizierte TaskSpecs, die in `execution.approval.required_level` ausdrücklich `break_glass` verlangen, behalten dagegen dieses strengere Gate: Ein Operator-Claim wird für sie absichtlich fail-closed abgelehnt, bis die Autorität über den kanonischen Migrationspfad aktualisiert ist. Es gibt keine implizite Abschwächung historischer Autoritäten.
 
 Nicht behauptet werden:
 
@@ -48,7 +50,7 @@ Generation nicht kennt, lehnt sie vor Intent- oder Runtime-Wirkung ab; ein neues
 sicherheitskritisches Feld kann damit nicht mehr still unter einer alten
 Vertragsgeneration ignoriert werden.
 
-Unabhängig von der Generation muss der Vertrag `runtime_mutation`, `break_glass`, den
+Unabhängig von der Generation muss der Vertrag `runtime_mutation`, den
 Write-Claim `component.bureau.runtime`, die erlaubten Zustände `ready` und `active`, die
 Bindung `candidate.target_sha256` sowie das Verbot fremder Task- und historischer
 Target-Substitution enthalten. Prosa, Acceptance-Text und ein alter Registry-Snapshot
@@ -266,7 +268,7 @@ Vor der einzigen TaskSpec-Wirkung werden konsistent geprüft:
 
 - aktuelle autoritative TaskSpec und strukturierter Single-Use-Vertrag;
 - exakte Task-, ursprüngliche Revision-/Digest-, Target-, Intent- und Consumption-Bindung;
-- persistierter digestgültiger Intent und dessen damals gültige typisierte Break-Glass-Freigabe;
+- persistierter digestgültiger Intent und dessen exakte Task-, Source- und Target-Bindung;
 - kanonisches `deployed`-Result mit `effect_started=true` und exaktem Result-Digest;
 - bounded, digestverifizierte Intent-/Result-Historie derselben `approval_task_id`: der
   angeforderte Effekt muss genau einmal vorkommen und **jede weitere** historische
@@ -436,7 +438,7 @@ Die regelmäßige Automation gehört zur Operator-Ebene, nicht zu einem Bureau-s
 
 Damit bleibt die eigentliche Mutationsautorität bei Grabowski. Ein Timer oder fremder
 lokaler Prozess kann keine Wirkung allein durch Aufruf des Bureau-Runners erlangen: Sowohl
-die exakte `break_glass`-Freigabe als auch die erforderlichen Live-Leases müssen vorliegen.
+die autoritative TaskSpec/Intent-Bindung als auch die erforderlichen Live-Leases müssen vorliegen.
 Auch der Installer selbst ist fail-closed: Direkte Aufrufe ohne Approval-Intent oder mit
 einem Intent für einen anderen Source-Commit enden vor der ersten Dateiwirkung.
 
@@ -473,7 +475,7 @@ Die fokussierten Tests decken unter anderem ab:
 - Browser-Control- und T029-artigen No-Run-Closeout, historische Mehrfachnutzung einer
   deklarierten Single-Use-Autorität, fehlende Lease-Freigabe, falsche Task/Target-Bindung,
   manipuliertes Result und widersprüchlichen terminalen Zustand;
-- echten synthetischen Installerlauf mit exakt source-gebundener `break_glass`-Freigabe in temporären Git-Repositories.
+- echten synthetischen Installerlauf mit exakt source-gebundener TaskSpec-/Intent-Autorität in temporären Git-Repositories.
 
 Der Livebeweis muss nach Merge auf einem exakten neuen Bureau-`main`-Commit erfolgen: ein
 Kandidat wird beobachtet, ein Intent erzeugt, reale Grabowski-Leases werden erworben und

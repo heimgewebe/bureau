@@ -6221,6 +6221,59 @@ def test_coordinated_runtime_claim_accepts_operator_approval(
 
 
 
+def test_coordinated_runtime_claim_preserves_declared_break_glass_requirement(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    task_path = root / "registry" / "tasks" / f"{task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["execution"]["approval"]["required_level"] = "break_glass"
+    task_path.write_text(json.dumps(task))
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    with pytest.raises(StateError, match="not accepted for required break_glass"):
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            task_id=task_id,
+            approved=True,
+            approval_source="test operator approval",
+        )
+
+    assert store.list_runs() == []
+
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        break_glass=True,
+        approval_source="test compatibility break glass",
+    )["intent"]
+    assert intent["operator_approval"]["level"] == "break_glass"
+    assert store.list_runs() == []
+
+
+def test_coordinated_runtime_claim_rejects_missing_approval(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    with pytest.raises(NoEligibleTask, match="review-before-effect"):
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            task_id=task_id,
+            approved=False,
+        )
+
+    assert store.list_runs() == []
+
+
 def test_claim_intent_hard_blocker_precedes_operator_approval(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -6294,6 +6347,61 @@ def test_claim_intent_cli_json_accepts_operator_runtime_approval(
     assert approval_record["scope"] == ["runtime_mutation"]
     assert approval_record["task_id"] == task_id
     assert StateStore(state_db).list_runs() == []
+
+def test_claim_intent_cli_json_envelopes_lower_level_approval_rejection(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    task_path = root / "registry" / "tasks" / f"{task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["execution"]["approval"] = {
+        "action_class": "queue_mutation",
+        "required_level": "reviewed_plan",
+        "note": "test-only lower-level approval refusal",
+    }
+    task_path.write_text(json.dumps(task))
+    init_clean_origin_main(root)
+    state_db = tmp_path / "claim-intent-rejection.sqlite3"
+
+    exit_code = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state_db),
+            "--json",
+            "--json-envelope",
+            "claim-intent",
+            "--worker",
+            "operator",
+            "--capability",
+            "repository",
+            "--task-id",
+            task_id,
+            "--approve",
+            "--approval-source",
+            "test operator approval",
+        ]
+    )
+
+    streams = capsys.readouterr()
+    envelope = json.loads(streams.out)
+    failure = envelope["result"]
+    assert exit_code == 2
+    assert streams.err == ""
+    assert failure["kind"] == "bureau_approval_required"
+    assert failure["status"] == "approval-required"
+    assert failure["code"] == "approval-required"
+    assert failure["effect_started"] is False
+    assert failure["ambiguity"] is False
+    assert failure["retryable"] is False
+    assert failure["required_readback"] == []
+    assert failure["approval"]["action_classes"] == ["queue_mutation"]
+    assert failure["approval"]["required_level"] == "reviewed_plan"
+    assert failure["approval"]["evidence"]["level"] == "operator"
+    assert StateStore(state_db).list_runs() == []
+
 
 def test_coordinated_runtime_claim_accepts_explicit_break_glass_compatibility(
     registry_factory, tmp_path, monkeypatch

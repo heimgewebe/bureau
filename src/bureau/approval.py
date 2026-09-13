@@ -263,6 +263,7 @@ def approval_decision(
     *,
     expected_reference: str | None = None,
     task_id: str | None = None,
+    required_level_override: str | None = None,
 ) -> dict[str, Any]:
     """Evaluate approval for one action class without mutating anything."""
     return approval_decision_for_effects(
@@ -270,6 +271,7 @@ def approval_decision(
         approval,
         expected_reference=expected_reference,
         task_id=task_id,
+        required_level_override=required_level_override,
     )
 
 
@@ -279,6 +281,7 @@ def approval_decision_for_effects(
     *,
     expected_reference: str | None = None,
     task_id: str | None = None,
+    required_level_override: str | None = None,
 ) -> dict[str, Any]:
     """Evaluate one approval against one or more action classes."""
     actions = list(dict.fromkeys(action_classes))
@@ -336,6 +339,19 @@ def approval_decision_for_effects(
             if rule
         )
     )
+    if required_level_override is not None:
+        canonical_required_level = required_level
+        required_levels = {required_level_override}
+        required_level = required_level_override
+        if required_level_override == canonical_required_level:
+            pass
+        elif required_level_override == "break_glass":
+            allowed_levels.intersection_update({"break_glass"})
+        else:
+            # Historical declarations that do not match the canonical rule and
+            # are not the strictly stronger break-glass gate have no safe
+            # ordering. Fail closed rather than silently weakening them.
+            allowed_levels.clear()
     action_set = set(effectful_actions)
     level_ok = bool(approval is not None and approval.level in allowed_levels)
     reference_ok = True
@@ -464,6 +480,7 @@ def require_approval(
     *,
     expected_reference: str | None = None,
     task_id: str | None = None,
+    required_level_override: str | None = None,
 ) -> dict[str, Any]:
     """Return an approval decision or raise StateError before any effect."""
     decision = approval_decision(
@@ -471,6 +488,7 @@ def require_approval(
         approval,
         expected_reference=expected_reference,
         task_id=task_id,
+        required_level_override=required_level_override,
     )
     if not decision["allowed"]:
         raise ApprovalRequired(decision)
@@ -483,6 +501,7 @@ def require_approval_for_effects(
     *,
     expected_reference: str | None = None,
     task_id: str | None = None,
+    required_level_override: str | None = None,
 ) -> dict[str, Any]:
     """Return a multi-effect approval decision or raise before any effect."""
     actions = list(action_classes)
@@ -491,6 +510,7 @@ def require_approval_for_effects(
         approval,
         expected_reference=expected_reference,
         task_id=task_id,
+        required_level_override=required_level_override,
     )
     if not decision["allowed"]:
         raise ApprovalRequired(decision)

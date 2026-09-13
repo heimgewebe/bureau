@@ -172,6 +172,51 @@ def test_runtime_mutation_accepts_operator_approval() -> None:
     assert decision["required_level"] == "operator"
 
 
+def test_runtime_mutation_rejects_missing_or_lower_approval() -> None:
+    missing = approval.approval_decision("runtime_mutation", None)
+    assert missing["allowed"] is False
+    assert missing["required_level"] == "operator"
+    assert "explicit approval missing" in missing["reason"]
+
+    with pytest.raises(StateError, match="not accepted for required operator"):
+        approval.require_approval(
+            "runtime_mutation",
+            approval.reviewed_plan_approval(
+                reviewer="reviewer", reference="plan.json"
+            ),
+        )
+
+    with pytest.raises(StateError, match="approval record is not approved"):
+        approval.require_approval(
+            "runtime_mutation",
+            approval.explicit_operator_approval(
+                source="cli --approve", approved=False
+            ),
+        )
+
+
+def test_runtime_mutation_honors_stricter_declared_break_glass_requirement() -> None:
+    operator = approval.explicit_operator_approval(
+        source="cli --approve", approved=True
+    )
+    with pytest.raises(StateError, match="not accepted for required break_glass"):
+        approval.require_approval(
+            "runtime_mutation",
+            operator,
+            required_level_override="break_glass",
+        )
+
+    decision = approval.require_approval(
+        "runtime_mutation",
+        approval.ApprovalEvidence(
+            source="compatibility break glass", level="break_glass", approved=True
+        ),
+        required_level_override="break_glass",
+    )
+    assert decision["allowed"] is True
+    assert decision["required_level"] == "break_glass"
+
+
 def test_read_only_action_does_not_need_approval() -> None:
     decision = approval.approval_decision("dry_run", None)
     assert decision["allowed"] is True

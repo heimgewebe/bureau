@@ -317,6 +317,17 @@ def _coordinated_task_action_class(task: legacy.Task) -> str:
     return action_class
 
 
+def _coordinated_task_declared_required_level(task: legacy.Task) -> str | None:
+    contract = task_approval_contract(task.raw)
+    declared = contract.get("declared")
+    if not isinstance(declared, dict):
+        return None
+    required_level = declared.get("required_level")
+    if isinstance(required_level, str) and required_level:
+        return required_level
+    return None
+
+
 def _coordinated_claim_approval(
     task: legacy.Task,
     *,
@@ -355,6 +366,7 @@ def _coordinated_claim_approval(
         approval,
         expected_reference=run_id,
         task_id=task.id,
+        required_level_override=_coordinated_task_declared_required_level(task),
     )
     return approval, decision
 
@@ -5372,6 +5384,7 @@ class Dispatcher(legacy.Dispatcher):
             approval,
             expected_reference=intent["run_id"],
             task_id=task.id,
+            required_level_override=_coordinated_task_declared_required_level(task),
         )
         fresh_open_pr_reservations = self._open_pr_reservations(strict=True)
         with self.store.connect() as state_connection:

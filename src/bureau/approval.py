@@ -72,9 +72,12 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
         ),
     },
     "runtime_mutation": {
-        "required_level": "break_glass",
-        "allowed_levels": frozenset({"break_glass"}),
-        "reason": "runtime mutation may restart, deploy or alter live services",
+        "required_level": "operator",
+        "allowed_levels": frozenset({"operator", "break_glass"}),
+        "reason": (
+            "routine runtime mutation is operator-authorized; target binding, "
+            "leases and readback still fail closed"
+        ),
     },
 }
 
@@ -247,9 +250,7 @@ def _required_level(action_classes: list[str]) -> str:
     }
     if not levels:
         return "unknown"
-    if levels == {"break_glass"}:
-        return "break_glass"
-    if len(action_classes) == 1:
+    if len(levels) == 1:
         return next(iter(levels))
     if "break_glass" in levels:
         return "break_glass"

@@ -17,9 +17,9 @@ Bureau separates observation from effect. A command may read, project, rank or d
 | `agent_dispatch` | starting an external Grabowski task from a Bureau run | `operator` | fail closed |
 | `task_creation_from_external_evidence` | turning Cabinet/Gemini/source candidates into Bureau task material | `operator` | fail closed |
 | `queue_mutation` | applying a queue-reconcile plan | `reviewed_plan` | fail closed |
-| `runtime_mutation` | deploy, restart, service repair, migration | `break_glass` | fail closed |
+| `runtime_mutation` | deploy, restart, service repair, migration | `operator` | fail closed |
 
-Approval levels are typed capabilities, not a pure numeric ladder. `reviewed_plan` and `reviewed_receipt` are intentionally not interchangeable. `break_glass` may satisfy lower gates only where the action rule explicitly allows it.
+Approval levels are typed capabilities, not a pure numeric ladder. `reviewed_plan` and `reviewed_receipt` are intentionally not interchangeable. `break_glass` remains an exceptional escalation capability and may satisfy lower gates only where the action rule explicitly allows it. Routine runtime work uses `operator`; a trusted-owner mandate may supply that operator authority without a separate human break-glass round-trip.
 
 ## Enforcement contract
 

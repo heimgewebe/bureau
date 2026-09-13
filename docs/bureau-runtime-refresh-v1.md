@@ -24,10 +24,12 @@ das im Manifest gebundene immutable Release.
 | aktuell installierter Commit, Paket- und Snapshot-Hashes | Bureau-Deployment-Manifest und Runtime-Identity |
 | aktuelle Runtime-Autoritäts-Task, Revision, Zustand und Verbrauch | autoritative Bureau-StateStore-TaskSpec; ein installierter Registry-Snapshot ist dafür niemals hinreichend |
 | expliziter Ziel- und Zeitrahmen | create-only Runtime-Refresh-Intent |
-| Wirkungserlaubnis für Runtime-Mutationen | autoritative Single-Use-TaskSpec plus exakter Intent, reservierter Grabowski-Executor und live Leases; Bureau-Claim nutzt `operator` |
+| Wirkungserlaubnis für Runtime-Mutationen | autoritative Single-Use-TaskSpec plus exakter Intent, reservierter Grabowski-Executor und live Leases; neue bzw. kanonisch migrierte Verträge nutzen `operator`, bereits publizierte TaskSpecs mit explizitem `required_level: break_glass` bleiben bis zu ihrer Migration `break_glass`-pflichtig |
 | Konfliktfreiheit der Effektpfade | live gelesene Grabowski-Leases |
 | eigentliche Installation | bestehender immutable Bureau-Installer |
 | Erfolg | Receipt plus Manifest-, Launcher-, Paket-, Snapshot- und CLI-Readback |
+
+Für neue oder kanonisch auf `operator` migrierte Runtime-Refresh-TaskSpecs genügt die typisierte Operator-Freigabe. Bereits publizierte TaskSpecs, die in `execution.approval.required_level` ausdrücklich `break_glass` verlangen, behalten dagegen dieses strengere Gate: Ein Operator-Claim wird für sie absichtlich fail-closed abgelehnt, bis die Autorität über den kanonischen Migrationspfad aktualisiert ist. Es gibt keine implizite Abschwächung historischer Autoritäten.
 
 Nicht behauptet werden:
 

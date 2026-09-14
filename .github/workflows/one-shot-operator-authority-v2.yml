@@ -42,6 +42,35 @@ jobs:
           scoped = '''publish_start = source.index('def publish_task_proposal(')\npublish_end = source.index('\\ndef _read_task_publication_receipt', publish_start)\npublish_body = source[publish_start:publish_end]\nreceipt_anchor = '    unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}'\nif publish_body.count(receipt_anchor) != 1:\n    raise SystemExit(f'publication receipt authority: expected one scoped anchor, found {publish_body.count(receipt_anchor)}')\npublish_body = publish_body.replace(\n    receipt_anchor,\n    '    if publication_authority is not None:\\n        value["publication_authority"] = publication_authority\\n' + receipt_anchor,\n    1,\n)\nsource = source[:publish_start] + publish_body + source[publish_end:]'''
           script = script[:block_start] + scoped + script[block_end:]
           exec(compile(script, 'guarded-operator-authority-patcher', 'exec'), {'__name__': '__main__'})
+
+          tests_path = Path('tests/test_operator_intake.py')
+          tests = tests_path.read_text(encoding='utf-8')
+          approval_anchor = '    assert approval["task_id"] == preview["task_id"]'
+          if tests.count(approval_anchor) != 1:
+              raise SystemExit(f'approval result test anchor count={tests.count(approval_anchor)}')
+          tests = tests.replace(
+              approval_anchor,
+              '    assert approval["expected_task_id"] == preview["task_id"]\n'
+              '    assert approval["evidence"]["task_id"] == preview["task_id"]',
+              1,
+          )
+          metadata_anchor = '    assert "required_lease_metadata" not in second_preview'
+          if tests.count(metadata_anchor) != 1:
+              raise SystemExit(f'second-preview metadata anchor count={tests.count(metadata_anchor)}')
+          tests = tests.replace(
+              metadata_anchor,
+              '''    assert second_preview["required_lease_metadata"] == {
+        "task_id": plan["task_id"],
+        "operation": "state-task-publication",
+        "proposal_sha256": second_preview["proposal_sha256"],
+        "kind": "grabowski.bureau_task_publication_authority",
+        "authority_action_class": "task_creation_from_external_evidence",
+        "authority_capability": "bureau_mutation",
+        "bureau_phase": "work",
+    }''',
+              1,
+          )
+          tests_path.write_text(tests, encoding='utf-8')
           PY
           git diff --check
       - name: Install validation dependencies

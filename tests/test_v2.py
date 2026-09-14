@@ -8358,6 +8358,36 @@ def test_runtime_closeout_rejects_ambiguous_baseline_before_repository_rebind(
     assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
+
+def test_runtime_closeout_historical_orphan_allows_no_pickup_resource_requirement(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _orphan_closeout_case(case)
+    _apply_repository_identity_rebind_lifecycle(case)
+    no_resource_intent = dict(case["intent"])
+    no_resource_intent["required_resource_keys"] = []
+    no_resource_status = bureau_v2._coordinated_live_lease_status(
+        "orphaned", no_resource_intent, resource_db=case["database"]
+    )
+    assert no_resource_status == {"status": "not-required"}
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_live_lease_status",
+        lambda *_args, **_kwargs: no_resource_status,
+    )
+
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+
+    assert result["status"] == "succeeded"
+    assert result["historical_pickup_lease_status"] == {"status": "not-required"}
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
 def test_runtime_closeout_accepts_canonical_runtime_refresh_authority_receipts(
     registry_factory, tmp_path, monkeypatch
 ):

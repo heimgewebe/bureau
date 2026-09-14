@@ -8923,7 +8923,10 @@ def runtime_closeout(
         historical_pickup_status = _coordinated_live_lease_status(
             str(run["state"]), intent, resource_db=resource_db
         )
-        if historical_pickup_status.get("status") != "terminal-released-or-expired":
+        if historical_pickup_status.get("status") not in {
+            "terminal-released-or-expired",
+            "not-required",
+        }:
             raise RunStateConflict(
                 "historical-orphaned-pickup-lease-still-live",
                 (
@@ -9021,7 +9024,10 @@ def runtime_closeout(
             historical_pickup_status = _coordinated_live_lease_status(
                 str(run["state"]), intent, resource_db=resource_db
             )
-            if historical_pickup_status.get("status") != "terminal-released-or-expired":
+            if historical_pickup_status.get("status") not in {
+                "terminal-released-or-expired",
+                "not-required",
+            }:
                 raise RunStateConflict(
                     "historical-orphaned-pickup-lease-still-live",
                     "historical execution pickup leases became live before completion",
@@ -9131,9 +9137,10 @@ def runtime_closeout(
                 historical_pickup_status = _coordinated_live_lease_status(
                     str(run["state"]), intent, resource_db=resource_db
                 )
-                if historical_pickup_status.get("status") != (
-                    "terminal-released-or-expired"
-                ):
+                if historical_pickup_status.get("status") not in {
+                    "terminal-released-or-expired",
+                    "not-required",
+                }:
                     raise RunStateConflict(
                         "historical-orphaned-pickup-lease-still-live",
                         (

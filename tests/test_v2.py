@@ -7603,6 +7603,47 @@ def test_runtime_closeout_historical_orphan_accepts_complete_repository_rebind_c
     assert closed["task_sha256"] == orphaned["task_sha256"]
     assert closed["plan_sha256"] == orphaned["plan_sha256"]
     assert closed["envelope_sha256"] == orphaned["envelope_sha256"]
+    stored_receipt = case["store"].receipt(case["run_id"])
+    assert stored_receipt is not None
+    assert stored_receipt["task_sha256"] == orphaned["task_sha256"]
+    current_task = case["store"].task_spec(case["task_id"])
+    assert current_task is not None
+    current_write_claims = [
+        claim
+        for claim in current_task["spec"]["claims"]
+        if claim.get("mode") == "write" and claim.get("isolation") == "worktree"
+    ]
+    assert len(current_write_claims) == 1
+    current_resource_id = current_write_claims[0]["resource"]
+    (case["root"] / "registry/resources/current-rebound.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "id": current_resource_id,
+                "type": "component",
+                "parent": "repo",
+            }
+        ),
+        encoding="utf-8",
+    )
+    dispatcher = Dispatcher(Registry.load(case["root"]), case["store"])
+    with case["store"].connect() as connection:
+        overlays = case["store"].overlays(connection, dispatcher.registry)
+        status = connection.execute(
+            "SELECT state,task_sha256,plan_sha256 FROM task_status WHERE task_id=?",
+            (case["task_id"],),
+        ).fetchone()
+    assert status is not None
+    assert status["state"] == "verified"
+    assert status["task_sha256"] == dispatcher.registry.tasks[case["task_id"]].sha256
+    assert status["plan_sha256"] == orphaned["plan_sha256"]
+    assert overlays[case["task_id"]] == "verified"
+    assert (
+        dispatcher._task_reverification_candidate(
+            dispatcher.registry.tasks[case["task_id"]], overlays[case["task_id"]]
+        )
+        is False
+    )
     assert "run-orphan-resumed" not in _closeout_event_types(case)
 
 
@@ -7788,6 +7829,127 @@ def test_runtime_closeout_historical_orphan_rejects_short_lived_execution_lease(
 
     assert exc.value.code == "historical-orphaned-pickup-lease-still-live"
     assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+
+def test_historical_orphan_pickup_status_rejects_partially_released_execution_leases(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    intent = dict(case["intent"])
+    original_key = intent["required_resource_keys"][0]
+    second_key = f"{original_key}-second"
+    intent["required_resource_keys"] = sorted([original_key, second_key])
+    _binding, database = coordinated_lease_database(
+        tmp_path / "partial-release-leases", intent
+    )
+    connection = sqlite3.connect(database)
+    cursor = connection.execute(
+        "DELETE FROM leases WHERE resource_key=? AND owner_id=?",
+        (original_key, intent["lease_owner_id"]),
+    )
+    assert cursor.rowcount == 1
+    connection.commit()
+    connection.close()
+    status = bureau_v2._coordinated_live_lease_status(
+        "orphaned", intent, resource_db=database
+    )
+    assert status["status"] == "terminal-release-pending"
+    assert status["resource_key"] == second_key
+
+
+def test_runtime_closeout_historical_orphan_rejects_live_execution_lease_metadata_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _orphan_closeout_case(case, release_pickup_leases=False)
+    _apply_repository_identity_rebind_lifecycle(case)
+    resource_key = case["intent"]["required_resource_keys"][0]
+    connection = sqlite3.connect(case["database"])
+    row = connection.execute(
+        "SELECT metadata_json FROM leases WHERE resource_key=? AND owner_id=?",
+        (resource_key, case["intent"]["lease_owner_id"]),
+    ).fetchone()
+    assert row is not None
+    metadata = json.loads(row[0])
+    metadata["run_id"] = "different-still-live-run"
+    metadata_json = json.dumps(
+        metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+    metadata_sha256 = hashlib.sha256(metadata_json.encode("utf-8")).hexdigest()
+    cursor = connection.execute(
+        "UPDATE leases SET metadata_sha256=?,metadata_json=? "
+        "WHERE resource_key=? AND owner_id=?",
+        (
+            metadata_sha256,
+            metadata_json,
+            resource_key,
+            case["intent"]["lease_owner_id"],
+        ),
+    )
+    assert cursor.rowcount == 1
+    connection.commit()
+    connection.close()
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "historical-orphaned-pickup-lease-still-live"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+def test_runtime_closeout_historical_orphan_rejects_newer_active_run_for_same_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _orphan_closeout_case(case)
+    _apply_repository_identity_rebind_lifecycle(case)
+    newer_run_id = f"{case['run_id']}-newer"
+    with case["store"].immediate() as connection:
+        row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (case["run_id"],)
+        ).fetchone()
+        assert row is not None
+        newer = dict(row)
+        now = legacy.utc_now()
+        connection.execute(
+            "INSERT INTO workers(worker_id,kind,capabilities_json,heartbeat_at) "
+            "VALUES(?,?,?,?)",
+            ("newer-same-task-worker", "agent", '["repository"]', now),
+        )
+        newer.update(
+            {
+                "run_id": newer_run_id,
+                "worker_id": "newer-same-task-worker",
+                "state": "running",
+                "error": None,
+                "dispatch_request_id": None,
+                "external_system": None,
+                "external_id": None,
+                "external_state": None,
+                "external_observed_at": None,
+                "created_at": now,
+                "updated_at": now,
+                "heartbeat_at": now,
+            }
+        )
+        columns = list(newer)
+        placeholders = ",".join("?" for _ in columns)
+        connection.execute(
+            f"INSERT INTO runs({','.join(columns)}) VALUES({placeholders})",
+            tuple(newer[column] for column in columns),
+        )
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "historical-orphaned-closeout-ineligible"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+    assert case["store"].run(newer_run_id)["state"] == "running"
 
 
 def test_runtime_closeout_historical_orphan_rejects_active_reservation(

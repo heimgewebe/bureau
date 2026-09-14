@@ -7007,52 +7007,99 @@ def _coordinated_live_lease_status(
     *,
     resource_db: Path,
 ) -> dict[str, Any]:
-    if not intent["required_resource_keys"]:
+    required_resource_keys = intent["required_resource_keys"]
+    if not required_resource_keys:
         return {"status": "not-required"}
     minimum_remaining_seconds = 30
-    try:
-        live = runtime_refresh.validate_live_lease_binding(
-            intent,
-            {
-                "owner_id": intent["lease_owner_id"],
-                "task_id": intent["task_id"],
-            },
+    observed_at = datetime.now(timezone.utc)
+    binding_identity = {
+        "owner_id": intent["lease_owner_id"],
+        "task_id": intent["task_id"],
+    }
+    required_metadata = {
+        "task_id": intent["task_id"],
+        "run_id": intent["run_id"],
+        "claim_intent_sha256": intent["intent_sha256"],
+    }
+
+    def validate(candidate_intent: dict[str, Any]) -> dict[str, Any]:
+        return runtime_refresh.validate_live_lease_binding(
+            candidate_intent,
+            binding_identity,
             resource_db=resource_db,
+            now=observed_at,
             min_remaining_seconds=minimum_remaining_seconds,
-            required_metadata={
-                "task_id": intent["task_id"],
-                "run_id": intent["run_id"],
-                "claim_intent_sha256": intent["intent_sha256"],
-            },
+            required_metadata=required_metadata,
         )
+
+    try:
+        live = validate(intent)
+    except runtime_refresh.RuntimeRefreshError as exc:
+        if run_state in legacy.ACTIVE_STATES:
+            return {"status": "active-binding-drift", "error": exc.as_dict()}
+        if exc.code not in {
+            "lease-resources-missing",
+            "lease-owner-mismatch",
+            "lease-expired",
+        }:
+            return {"status": "terminal-binding-drift", "error": exc.as_dict()}
+    else:
         return {
             "status": (
-                "active-bound" if run_state in legacy.ACTIVE_STATES else "terminal-release-pending"
+                "active-bound"
+                if run_state in legacy.ACTIVE_STATES
+                else "terminal-release-pending"
             ),
             "binding": live,
         }
-    except runtime_refresh.RuntimeRefreshError as exc:
-        status = (
-            "active-binding-drift"
-            if run_state in legacy.ACTIVE_STATES
-            else "terminal-released-or-expired"
-        )
-        if status == "terminal-released-or-expired" and exc.code == "lease-expired":
-            expires_at_unix = exc.details.get("expires_at_unix")
-            required_after_unix = exc.details.get("required_after_unix")
-            observed_at_unix = (
-                required_after_unix - minimum_remaining_seconds
-                if type(required_after_unix) is int
-                else None
-            )
-            if (
-                type(expires_at_unix) is not int
-                or observed_at_unix is None
-                or expires_at_unix > observed_at_unix
-            ):
-                status = "terminal-release-pending"
-        return {"status": status, "error": exc.as_dict()}
 
+    observed_at_unix = int(observed_at.timestamp())
+    released_resources: list[dict[str, Any]] = []
+    for resource_key in required_resource_keys:
+        scoped_intent = dict(intent)
+        scoped_intent["required_resource_keys"] = [resource_key]
+        try:
+            live = validate(scoped_intent)
+        except runtime_refresh.RuntimeRefreshError as exc:
+            if exc.code in {"lease-resources-missing", "lease-owner-mismatch"}:
+                released_resources.append(
+                    {
+                        "resource_key": resource_key,
+                        "status": "released-or-reassigned",
+                        "error": exc.as_dict(),
+                    }
+                )
+                continue
+            if exc.code == "lease-expired":
+                expires_at_unix = exc.details.get("expires_at_unix")
+                if type(expires_at_unix) is int and expires_at_unix <= observed_at_unix:
+                    released_resources.append(
+                        {
+                            "resource_key": resource_key,
+                            "status": "expired",
+                            "error": exc.as_dict(),
+                        }
+                    )
+                    continue
+                return {
+                    "status": "terminal-release-pending",
+                    "resource_key": resource_key,
+                    "error": exc.as_dict(),
+                }
+            return {
+                "status": "terminal-binding-drift",
+                "resource_key": resource_key,
+                "error": exc.as_dict(),
+            }
+        return {
+            "status": "terminal-release-pending",
+            "resource_key": resource_key,
+            "binding": live,
+        }
+    return {
+        "status": "terminal-released-or-expired",
+        "resources": released_resources,
+    }
 
 def _existing_coordinated_claim_result(
     row: sqlite3.Row,
@@ -7865,6 +7912,13 @@ def _historical_orphaned_closeout_precondition_reason(
     ).fetchone()
     if active_owner is not None:
         return "historical worker identity currently owns an active run"
+    active_task = connection.execute(
+        f"SELECT run_id FROM runs WHERE task_id=? AND run_id<>? "
+        f"AND state IN ({placeholders}) LIMIT 1",
+        (run_row["task_id"], run_row["run_id"], *active_states),
+    ).fetchone()
+    if active_task is not None:
+        return "historical task currently has an active run"
     return None
 
 
@@ -8092,6 +8146,11 @@ def _complete_run_after_typed_evaluation(
                 ),
                 (run_id, legacy.canonical_json(receipt), receipt_sha, now),
             )
+            verified_task_sha256 = (
+                revision.task_sha256
+                if historical_orphaned_repository_rebind
+                else run["task_sha256"]
+            )
             connection.execute(
                 """
                 INSERT INTO task_status(
@@ -8105,7 +8164,13 @@ def _complete_run_after_typed_evaluation(
                     receipt_sha256=excluded.receipt_sha256,
                     updated_at=excluded.updated_at
                 """,
-                (run["task_id"], run["task_sha256"], run["plan_sha256"], receipt_sha, now),
+                (
+                    run["task_id"],
+                    verified_task_sha256,
+                    run["plan_sha256"],
+                    receipt_sha,
+                    now,
+                ),
             )
             if historical_orphaned_repository_rebind:
                 historical_update = connection.execute(

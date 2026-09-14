@@ -7626,6 +7626,47 @@ def test_runtime_closeout_historical_orphan_rejects_rebind_that_predates_orphani
     assert "run-orphan-resumed" not in _closeout_event_types(case)
 
 
+def test_runtime_closeout_historical_orphan_rejects_post_orphan_duplicate_of_pre_orphan_rebind(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    lifecycle = _apply_repository_identity_rebind_lifecycle(case)
+    with case["store"].connect() as connection:
+        original_event = connection.execute(
+            "SELECT event_schema_version,payload_json,created_at FROM events "
+            "WHERE event_type=? ORDER BY event_id DESC LIMIT 1",
+            (task_specs.TASK_SPEC_EVENT_TYPE,),
+        ).fetchone()
+    assert original_event is not None
+    original_payload = task_specs.validate_event_payload(
+        json.loads(str(original_event["payload_json"]))
+    )
+    assert original_payload["revision"] == lifecycle["rebound"]["revision"]
+
+    _orphan_closeout_case(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "INSERT INTO events("
+            "run_id,event_type,event_schema_version,activity_id,payload_json,created_at"
+            ") VALUES(NULL,?,?,NULL,?,?)",
+            (
+                task_specs.TASK_SPEC_EVENT_TYPE,
+                int(original_event["event_schema_version"]),
+                str(original_event["payload_json"]),
+                str(original_event["created_at"]),
+            ),
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+    assert "run-orphan-resumed" not in _closeout_event_types(case)
+
+
 def test_runtime_closeout_historical_orphan_rejects_wrong_error(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -7715,6 +7756,30 @@ def test_runtime_closeout_historical_orphan_rejects_live_execution_lease(
     case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
     _orphan_closeout_case(case, release_pickup_leases=False)
     _apply_repository_identity_rebind_lifecycle(case)
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "historical-orphaned-pickup-lease-still-live"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+def test_runtime_closeout_historical_orphan_rejects_short_lived_execution_lease(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _orphan_closeout_case(case, release_pickup_leases=False)
+    _apply_repository_identity_rebind_lifecycle(case)
+    connection = sqlite3.connect(case["database"])
+    cursor = connection.execute(
+        "UPDATE leases SET expires_at_unix=? WHERE owner_id=?",
+        (int(time.time()) + 20, case["intent"]["lease_owner_id"]),
+    )
+    assert cursor.rowcount > 0
+    connection.commit()
+    connection.close()
 
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(

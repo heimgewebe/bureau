@@ -7009,6 +7009,7 @@ def _coordinated_live_lease_status(
 ) -> dict[str, Any]:
     if not intent["required_resource_keys"]:
         return {"status": "not-required"}
+    minimum_remaining_seconds = 30
     try:
         live = runtime_refresh.validate_live_lease_binding(
             intent,
@@ -7017,7 +7018,7 @@ def _coordinated_live_lease_status(
                 "task_id": intent["task_id"],
             },
             resource_db=resource_db,
-            min_remaining_seconds=30,
+            min_remaining_seconds=minimum_remaining_seconds,
             required_metadata={
                 "task_id": intent["task_id"],
                 "run_id": intent["run_id"],
@@ -7031,14 +7032,26 @@ def _coordinated_live_lease_status(
             "binding": live,
         }
     except runtime_refresh.RuntimeRefreshError as exc:
-        return {
-            "status": (
-                "active-binding-drift"
-                if run_state in legacy.ACTIVE_STATES
-                else "terminal-released-or-expired"
-            ),
-            "error": exc.as_dict(),
-        }
+        status = (
+            "active-binding-drift"
+            if run_state in legacy.ACTIVE_STATES
+            else "terminal-released-or-expired"
+        )
+        if status == "terminal-released-or-expired" and exc.code == "lease-expired":
+            expires_at_unix = exc.details.get("expires_at_unix")
+            required_after_unix = exc.details.get("required_after_unix")
+            observed_at_unix = (
+                required_after_unix - minimum_remaining_seconds
+                if type(required_after_unix) is int
+                else None
+            )
+            if (
+                type(expires_at_unix) is not int
+                or observed_at_unix is None
+                or expires_at_unix > observed_at_unix
+            ):
+                status = "terminal-release-pending"
+        return {"status": status, "error": exc.as_dict()}
 
 
 def _existing_coordinated_claim_result(
@@ -7667,23 +7680,36 @@ def _repository_identity_rebind_closeout_evolution_matches(
         return False
 
     task_spec_event_rows = connection.execute(
-        "SELECT event_id,payload_json FROM events WHERE event_type=? AND event_id>? "
-        "ORDER BY event_id",
-        (task_specs.TASK_SPEC_EVENT_TYPE, rebind_after_event_id),
+        "SELECT event_id,run_id,event_schema_version,payload_json FROM events "
+        "WHERE event_type=? ORDER BY event_id",
+        (task_specs.TASK_SPEC_EVENT_TYPE,),
     ).fetchall()
     task_spec_events_by_revision: dict[int, tuple[int, dict[str, Any]]] = {}
     for row in task_spec_event_rows:
         try:
-            payload = task_specs.validate_event_payload(json.loads(str(row["payload_json"])))
-            event_id = int(row["event_id"])
-            event_revision = int(payload["revision"])
-        except (json.JSONDecodeError, task_specs.TaskSpecError, TypeError, ValueError):
+            raw_payload = json.loads(str(row["payload_json"]))
+        except json.JSONDecodeError:
             return False
-        if payload["task_id"] != task_id:
+        if not isinstance(raw_payload, dict):
+            return False
+        if raw_payload.get("task_id") != task_id:
             continue
+        event_revision = raw_payload.get("revision")
+        if type(event_revision) is not int:
+            return False
         if not baseline_revision < event_revision <= observed_revision:
             continue
-        if event_revision in task_spec_events_by_revision:
+        try:
+            payload = task_specs.validate_event_payload(raw_payload)
+            event_id = int(row["event_id"])
+            event_schema_version = int(row["event_schema_version"])
+        except (task_specs.TaskSpecError, TypeError, ValueError):
+            return False
+        if (
+            row["run_id"] is not None
+            or event_schema_version != task_specs.TASK_SPEC_EVENT_SCHEMA_VERSION
+            or event_revision in task_spec_events_by_revision
+        ):
             return False
         task_spec_events_by_revision[event_revision] = (event_id, payload)
     if len(task_spec_events_by_revision) != observed_revision - baseline_revision:
@@ -7746,6 +7772,7 @@ def _repository_identity_rebind_closeout_evolution_matches(
             or task_spec_event_payload["parent_revision"] != before_revision["revision"]
             or task_spec_event_payload["revision"] != after_revision["revision"]
             or task_spec_event_payload["spec_sha256"] != after_revision["spec_sha256"]
+            or task_spec_event_payload["spec"] != after_revision["spec"]
             or type(mutation["expected_revision"]) is not int
             or type(mutation["resulting_revision"]) is not int
             or str(mutation["idempotency_key"]) != expected_key

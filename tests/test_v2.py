@@ -7791,6 +7791,97 @@ def test_runtime_closeout_historical_orphan_rejects_other_terminal_states(
     assert case["store"].run(case["run_id"])["state"] == state
 
 
+def test_runtime_closeout_historical_orphan_rechecks_pickup_lease_after_evidence_authentication(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _orphan_closeout_case(case)
+    _apply_repository_identity_rebind_lifecycle(case)
+    original_authenticate = closure_observer.authenticate_state_evidence
+
+    def authenticate_and_reacquire(*args, **kwargs):
+        authenticated = original_authenticate(*args, **kwargs)
+        metadata = {
+            "task_id": case["intent"]["task_id"],
+            "run_id": case["intent"]["run_id"],
+            "claim_intent_sha256": case["intent"]["intent_sha256"],
+        }
+        metadata_json = json.dumps(
+            metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
+        metadata_sha256 = hashlib.sha256(metadata_json.encode("utf-8")).hexdigest()
+        now = int(time.time())
+        connection = sqlite3.connect(case["database"])
+        connection.execute(
+            "INSERT INTO leases VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+            (
+                case["intent"]["required_resource_keys"][0],
+                case["intent"]["lease_owner_id"],
+                "reacquired during evidence authentication",
+                now,
+                now,
+                now + 3600,
+                metadata_sha256,
+                metadata_json,
+            ),
+        )
+        connection.commit()
+        connection.close()
+        return authenticated
+
+    monkeypatch.setattr(
+        closure_observer, "authenticate_state_evidence", authenticate_and_reacquire
+    )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "historical-orphaned-pickup-lease-still-live"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+def test_runtime_closeout_historical_orphan_holds_pickup_write_barrier_through_terminalization(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _orphan_closeout_case(case)
+    _apply_repository_identity_rebind_lifecycle(case)
+    original_complete = bureau_v2._complete_run_after_typed_evaluation
+    barrier_observed = []
+
+    def complete_while_probing_barrier(*args, **kwargs):
+        contender = sqlite3.connect(case["database"], timeout=0, isolation_level=None)
+        try:
+            with pytest.raises(sqlite3.OperationalError, match="database is locked"):
+                contender.execute("BEGIN IMMEDIATE")
+            barrier_observed.append(True)
+        finally:
+            contender.close()
+        return original_complete(*args, **kwargs)
+
+    monkeypatch.setattr(
+        bureau_v2,
+        "_complete_run_after_typed_evaluation",
+        complete_while_probing_barrier,
+    )
+
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+
+    assert barrier_observed == [True]
+    assert result["status"] == "succeeded"
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
 def test_runtime_closeout_historical_orphan_rejects_live_execution_lease(
     registry_factory, tmp_path, monkeypatch
 ):

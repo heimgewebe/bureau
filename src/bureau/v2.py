@@ -8496,6 +8496,43 @@ def _runtime_closeout_validate_lease(
         ) from exc
 
 
+@contextmanager
+def _runtime_closeout_resource_write_barrier(
+    resource_db: Path, *, run_id: str
+) -> Iterator[None]:
+    """Serialize lease writers across the final historical closeout CAS."""
+    try:
+        database = runtime_refresh._validate_resource_database_path(resource_db)
+    except runtime_refresh.RuntimeRefreshError as exc:
+        raise RunStateConflict(
+            "historical-orphaned-pickup-lease-barrier-invalid",
+            "historical closeout could not validate the pickup lease database",
+            run_id=run_id,
+            details={"lease_error": exc.as_dict()},
+        ) from exc
+
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(database, timeout=5, isolation_level=None)
+        connection.execute("BEGIN IMMEDIATE")
+    except sqlite3.Error as exc:
+        if connection is not None:
+            connection.close()
+        raise RunStateConflict(
+            "historical-orphaned-pickup-lease-barrier-unavailable",
+            "historical closeout could not serialize pickup lease writers",
+            run_id=run_id,
+            details={"error": str(exc)},
+        ) from exc
+
+    try:
+        yield
+    finally:
+        with suppress(sqlite3.Error):
+            connection.rollback()
+        connection.close()
+
+
 def _runtime_closeout_release_bindings(
     bindings: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -9086,13 +9123,31 @@ def runtime_closeout(
                     completion_evidence[str(criterion_id)] = copied
                 else:
                     completion_evidence[str(criterion_id)] = item
-            completed = _complete_run_after_typed_evaluation(
-                exact_registry,
-                store,
-                run_id,
-                completion_evidence,
-                historical_orphaned_repository_rebind=True,
-            )
+            with _runtime_closeout_resource_write_barrier(
+                resource_db, run_id=run_id
+            ):
+                historical_pickup_status = _coordinated_live_lease_status(
+                    str(run["state"]), intent, resource_db=resource_db
+                )
+                if historical_pickup_status.get("status") != (
+                    "terminal-released-or-expired"
+                ):
+                    raise RunStateConflict(
+                        "historical-orphaned-pickup-lease-still-live",
+                        (
+                            "historical execution pickup leases became live at "
+                            "the terminal mutation boundary"
+                        ),
+                        run_id=run_id,
+                        details={"pickup_lease": historical_pickup_status},
+                    )
+                completed = _complete_run_after_typed_evaluation(
+                    exact_registry,
+                    store,
+                    run_id,
+                    completion_evidence,
+                    historical_orphaned_repository_rebind=True,
+                )
             observation = {
                 "state": "terminalized",
                 "evaluation": evaluation,

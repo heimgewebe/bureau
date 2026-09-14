@@ -101,8 +101,8 @@ def is_legacy_terminal_only_revision(
     else:
         return False
     current_state = current.get("state")
-    if current_state in legacy.TERMINAL_TASK_STATES and current_state != proposed_state:
-        raise TaskSpecError("legacy terminal TaskSpec cannot change terminal state")
+    if current_state in legacy.TERMINAL_TASK_STATES:
+        raise TaskSpecError("legacy terminal TaskSpec is already terminal")
     current_metadata = current.get("metadata")
     proposed_metadata = proposed.get("metadata")
     current_cleanup = (
@@ -1546,6 +1546,18 @@ def put(
         )
     if idempotency_key.startswith(REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX):
         raise TaskSpecError("TaskSpec idempotency namespace is reserved")
+    replay = connection.execute(
+        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if replay is not None:
+        return _put_validated_material(
+            connection,
+            canonical,
+            idempotency_key=idempotency_key,
+            expected_revision=expected_revision,
+            source=source,
+        )
     source_label = f"TaskSpec:{canonical['id']}"
     try:
         validate_task_write(canonical, source_label)

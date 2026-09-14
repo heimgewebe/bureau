@@ -578,3 +578,71 @@ def test_legacy_terminalization_does_not_exempt_verified(tmp_path: Path) -> None
             expected_revision=1,
             source="operator-intake-reviewed-proposal",
         )
+
+def test_legacy_terminal_replay_survives_later_typed_revision(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    legacy_spec = _legacy_spec("LEGACY-REPLAY")
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={"LEGACY-REPLAY": SimpleNamespace(raw=legacy_spec)})
+    )
+    terminal = json.loads(json.dumps(legacy_spec))
+    terminal["state"] = "superseded"
+    terminal.setdefault("metadata", {})["bureau_cleanup"] = {
+        "schema_version": 1, "reason": "duplicate"
+    }
+    first = store.put_task_spec(
+        terminal,
+        idempotency_key="legacy-terminal:replay",
+        expected_revision=1,
+        source="operator-intake-reviewed-proposal",
+    )
+    assert first["revision"] == 2
+
+    later = _spec("LEGACY-REPLAY", title="typed later", marker="typed")
+    store.put_task_spec(
+        later,
+        idempotency_key="typed-later",
+        expected_revision=2,
+        source="test",
+    )
+
+    replay = store.put_task_spec(
+        terminal,
+        idempotency_key="legacy-terminal:replay",
+        expected_revision=1,
+        source="operator-intake-reviewed-proposal",
+    )
+    assert replay["revision"] == 2
+    assert replay["idempotent_replay"] is True
+    assert replay["changed"] is False
+    assert store.task_spec("LEGACY-REPLAY")["revision"] == 3
+
+
+def test_already_terminal_legacy_task_rejects_fresh_terminal_revision(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    legacy_spec = _legacy_spec("LEGACY-TERM-ONCE")
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={"LEGACY-TERM-ONCE": SimpleNamespace(raw=legacy_spec)})
+    )
+    terminal = json.loads(json.dumps(legacy_spec))
+    terminal["state"] = "superseded"
+    terminal.setdefault("metadata", {})["bureau_cleanup"] = {
+        "schema_version": 1, "reason": "duplicate"
+    }
+    store.put_task_spec(
+        terminal,
+        idempotency_key="legacy-terminal:first",
+        expected_revision=1,
+        source="operator-intake-reviewed-proposal",
+    )
+
+    fresh = json.loads(json.dumps(terminal))
+    fresh.setdefault("metadata", {})["operator_intake"] = {"review": "fresh mutation"}
+    with pytest.raises(StateError, match="already terminal"):
+        store.put_task_spec(
+            fresh,
+            idempotency_key="legacy-terminal:fresh",
+            expected_revision=2,
+            source="operator-intake-reviewed-proposal",
+        )
+    assert store.task_spec("LEGACY-TERM-ONCE")["revision"] == 2

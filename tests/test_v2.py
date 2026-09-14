@@ -7271,6 +7271,7 @@ def _prepare_runtime_closeout_case(
     return {
         "root": root,
         "store": store,
+        "dispatcher": dispatcher,
         "intent": intent,
         "claimed": claimed,
         "database": database,
@@ -7284,6 +7285,40 @@ def _prepare_runtime_closeout_case(
         "runtime_identity_module": runtime_identity_module,
         "initial_state": claimed["run"]["state"],
     }
+
+
+def _orphan_closeout_case(case, *, release_pickup_leases: bool = True):
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET heartbeat_at='2000-01-01T00:00:00Z' WHERE run_id=?",
+            (case["run_id"],),
+        )
+    reconciled = case["dispatcher"].reconcile(stale_after=1)
+    assert reconciled["orphaned"] == [case["run_id"]]
+    orphaned = case["store"].run(case["run_id"])
+    assert orphaned["state"] == "orphaned"
+    assert orphaned["error"] == bureau_v2.ORPHANED_STALE_WORKER_ERROR
+    assert orphaned["reservations"] == []
+    if release_pickup_leases:
+        connection = sqlite3.connect(case["database"])
+        connection.execute(
+            "DELETE FROM leases WHERE owner_id=?",
+            (case["intent"]["lease_owner_id"],),
+        )
+        connection.commit()
+        connection.close()
+    return orphaned
+
+
+def _closeout_event_types(case) -> list[str]:
+    with case["store"].connect() as connection:
+        return [
+            str(row["event_type"])
+            for row in connection.execute(
+                "SELECT event_type FROM events WHERE run_id=? ORDER BY event_id",
+                (case["run_id"],),
+            ).fetchall()
+        ]
 
 
 def _apply_runtime_refresh_authority_lifecycle(
@@ -7522,32 +7557,33 @@ def _apply_repository_identity_rebind_lifecycle(
     return {"baseline": baseline, "rebound": rebound, "idempotency_key": idempotency_key}
 
 
-def test_runtime_closeout_accepts_canonical_repository_identity_rebind_receipt(
+def test_runtime_closeout_rejects_repository_rebind_for_active_run(
     registry_factory, tmp_path, monkeypatch
 ):
     case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
     lifecycle = _apply_repository_identity_rebind_lifecycle(case)
     assert lifecycle["rebound"]["revision"] == lifecycle["baseline"]["revision"] + 1
-    assert (
-        task_revision_sha256(lifecycle["rebound"]["spec"]) != case["claimed"]["run"]["task_sha256"]
-    )
-    result = bureau_v2.runtime_closeout(
-        case["store"],
-        case["run_id"],
-        case["evidence_path"],
-        resource_db=case["database"],
-    )
-    assert result["status"] == "succeeded"
-    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
 
 
-def test_runtime_closeout_accepts_complete_repository_identity_rebind_chain(
+def test_runtime_closeout_historical_orphan_accepts_complete_repository_rebind_chain(
     registry_factory, tmp_path, monkeypatch
 ):
     case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
     first = _apply_repository_identity_rebind_lifecycle(case)
     second = _apply_repository_identity_rebind_lifecycle(case, import_registry=False)
     assert second["rebound"]["revision"] == first["baseline"]["revision"] + 2
+    orphaned = _orphan_closeout_case(case)
 
     result = bureau_v2.runtime_closeout(
         case["store"],
@@ -7556,8 +7592,182 @@ def test_runtime_closeout_accepts_complete_repository_identity_rebind_chain(
         resource_db=case["database"],
     )
 
+    closed = case["store"].run(case["run_id"])
     assert result["status"] == "succeeded"
-    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+    assert result["historical_orphaned_repository_rebind"] is True
+    assert result["historical_pickup_lease_status"]["status"] == (
+        "terminal-released-or-expired"
+    )
+    assert closed["run_id"] == orphaned["run_id"]
+    assert closed["state"] == "succeeded"
+    assert closed["task_sha256"] == orphaned["task_sha256"]
+    assert closed["plan_sha256"] == orphaned["plan_sha256"]
+    assert closed["envelope_sha256"] == orphaned["envelope_sha256"]
+    assert "run-orphan-resumed" not in _closeout_event_types(case)
+
+
+def test_runtime_closeout_historical_orphan_rejects_wrong_error(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET error=? WHERE run_id=?",
+            ("manually orphaned for another reason", case["run_id"]),
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "runtime-closeout-run-not-active"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+def test_runtime_closeout_historical_orphan_rejects_missing_orphan_event(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "DELETE FROM events WHERE run_id=? AND event_type='run-orphaned'",
+            (case["run_id"],),
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "historical-orphaned-closeout-ineligible"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+def test_runtime_closeout_historical_orphan_rejects_resumed_lifecycle(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case)
+    with case["store"].immediate() as connection:
+        case["store"].event(
+            connection, "run-orphan-resumed", {"reason": "test"}, case["run_id"]
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "historical-orphaned-closeout-ineligible"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+@pytest.mark.parametrize("state", ["failed", "cancelled", "succeeded"])
+def test_runtime_closeout_historical_orphan_rejects_other_terminal_states(
+    registry_factory, tmp_path, monkeypatch, state
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET state=? WHERE run_id=?", (state, case["run_id"])
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "runtime-closeout-run-not-active"
+    assert case["store"].run(case["run_id"])["state"] == state
+
+
+def test_runtime_closeout_historical_orphan_rejects_live_execution_lease(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case, release_pickup_leases=False)
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "historical-orphaned-pickup-lease-still-live"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+def test_runtime_closeout_historical_orphan_rejects_active_reservation(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+            "VALUES (?,?,?,?,?)",
+            (case["run_id"], "repo.synthetic", "write", 1, legacy.utc_now()),
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "historical-orphaned-closeout-ineligible"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+def test_runtime_closeout_historical_orphan_rejects_external_executor_binding(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET external_system=?,external_id=? WHERE run_id=?",
+            ("test-executor", "still-active", case["run_id"]),
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "historical-orphaned-closeout-ineligible"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
+
+
+def test_runtime_closeout_historical_orphan_rejects_plan_sha_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    _orphan_closeout_case(case)
+    initiative_id = case["claimed"]["envelope"]["task"]["initiative"]
+    initiative_path = case["snapshot_root"] / "registry" / "initiatives" / "main.json"
+    initiative = json.loads(initiative_path.read_text(encoding="utf-8"))
+    assert initiative["id"] == initiative_id
+    initiative["current_plan"] = {"repository": "test-drift", "path": "docs/drift.md"}
+    initiative_path.write_text(json.dumps(initiative), encoding="utf-8")
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"], case["run_id"], case["evidence_path"], resource_db=case["database"]
+        )
+
+    assert exc.value.code == "plan-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 @pytest.mark.parametrize(
@@ -7581,6 +7791,7 @@ def test_runtime_closeout_rejects_repository_rebind_source_without_semantic_equi
 ):
     case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
     _apply_repository_identity_rebind_lifecycle(case, semantic_mutator=semantic_mutator)
+    _orphan_closeout_case(case)
 
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(
@@ -7591,7 +7802,7 @@ def test_runtime_closeout_rejects_repository_rebind_source_without_semantic_equi
         )
 
     assert exc.value.code == "task-revision-changed"
-    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 def test_runtime_closeout_rejects_repository_rebind_with_wrong_source(
@@ -7601,6 +7812,7 @@ def test_runtime_closeout_rejects_repository_rebind_with_wrong_source(
     _apply_repository_identity_rebind_lifecycle(
         case, source="test-forged-repository-identity-rebind"
     )
+    _orphan_closeout_case(case)
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(
             case["store"],
@@ -7609,7 +7821,7 @@ def test_runtime_closeout_rejects_repository_rebind_with_wrong_source(
             resource_db=case["database"],
         )
     assert exc.value.code == "task-revision-changed"
-    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 def test_runtime_closeout_rejects_repository_rebind_without_mutation_receipt(
@@ -7622,6 +7834,7 @@ def test_runtime_closeout_rejects_repository_rebind_without_mutation_receipt(
             "DELETE FROM task_spec_mutations WHERE idempotency_key=?",
             (lifecycle["idempotency_key"],),
         )
+    _orphan_closeout_case(case)
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(
             case["store"],
@@ -7630,7 +7843,7 @@ def test_runtime_closeout_rejects_repository_rebind_without_mutation_receipt(
             resource_db=case["database"],
         )
     assert exc.value.code == "task-revision-changed"
-    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 def test_runtime_closeout_rejects_repository_rebind_with_partial_mutation_receipt(
@@ -7643,6 +7856,7 @@ def test_runtime_closeout_rejects_repository_rebind_with_partial_mutation_receip
             "UPDATE task_spec_mutations SET expected_revision=NULL WHERE idempotency_key=?",
             (lifecycle["idempotency_key"],),
         )
+    _orphan_closeout_case(case)
 
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(
@@ -7653,7 +7867,7 @@ def test_runtime_closeout_rejects_repository_rebind_with_partial_mutation_receip
         )
 
     assert exc.value.code == "task-revision-changed"
-    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 def test_runtime_closeout_rejects_repository_rebind_with_mismatched_mutation_receipt(
@@ -7666,6 +7880,7 @@ def test_runtime_closeout_rejects_repository_rebind_with_mismatched_mutation_rec
             "UPDATE task_spec_mutations SET requested_sha256=? WHERE idempotency_key=?",
             ("0" * 64, lifecycle["idempotency_key"]),
         )
+    _orphan_closeout_case(case)
 
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(
@@ -7676,7 +7891,7 @@ def test_runtime_closeout_rejects_repository_rebind_with_mismatched_mutation_rec
         )
 
     assert exc.value.code == "task-revision-changed"
-    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 def test_runtime_closeout_rejects_semantic_drift_after_repository_rebind(
@@ -7696,6 +7911,7 @@ def test_runtime_closeout_rejects_semantic_drift_after_repository_rebind(
             expected_revision=current["revision"],
             source="test-post-rebind-semantic-drift",
         )
+    _orphan_closeout_case(case)
 
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(
@@ -7706,7 +7922,7 @@ def test_runtime_closeout_rejects_semantic_drift_after_repository_rebind(
         )
 
     assert exc.value.code == "task-revision-changed"
-    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 def test_runtime_closeout_rejects_ambiguous_baseline_before_repository_rebind(
@@ -7739,6 +7955,7 @@ def test_runtime_closeout_rejects_ambiguous_baseline_before_repository_rebind(
     assert restored["revision"] > baseline["revision"]
 
     _apply_repository_identity_rebind_lifecycle(case, import_registry=False)
+    _orphan_closeout_case(case)
 
     with pytest.raises(bureau_v2.RunStateConflict) as exc:
         bureau_v2.runtime_closeout(
@@ -7749,7 +7966,7 @@ def test_runtime_closeout_rejects_ambiguous_baseline_before_repository_rebind(
         )
 
     assert exc.value.code == "task-revision-changed"
-    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+    assert case["store"].run(case["run_id"])["state"] == "orphaned"
 
 
 def test_runtime_closeout_accepts_canonical_runtime_refresh_authority_receipts(

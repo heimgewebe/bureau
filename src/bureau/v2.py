@@ -7746,16 +7746,89 @@ def _close_revision_task_matches_claim_baseline(
         claimed_task,
         observed_revision=task_spec_revision,
         observed_spec_sha256=task_spec_sha256,
-    ) or _repository_identity_rebind_closeout_evolution_matches(
+    )
+    if not evolution_matches:
+        return False
+    return task_revision_sha256(claimed_task) == expected_task_sha256
+
+
+def _historical_orphaned_closeout_precondition_reason(
+    connection: sqlite3.Connection, run_row: sqlite3.Row
+) -> str | None:
+    """Return why an automatically orphaned historical run is unsafe to close."""
+    if run_row["state"] != "orphaned":
+        return "run is not orphaned"
+    if run_row["error"] != ORPHANED_STALE_WORKER_ERROR:
+        return "orphan reason is not the canonical stale-worker condition"
+    if any(
+        run_row[field] is not None
+        for field in (
+            "external_system",
+            "external_id",
+            "external_state",
+            "external_observed_at",
+        )
+    ):
+        return "historical run still has an external executor binding"
+    if connection.execute(
+        "SELECT 1 FROM reservations WHERE run_id=? LIMIT 1",
+        (run_row["run_id"],),
+    ).fetchone() is not None:
+        return "historical run still owns reservations"
+    lifecycle = [
+        str(row["event_type"])
+        for row in connection.execute(
+            "SELECT event_type FROM events WHERE run_id=? "
+            "AND event_type IN ('run-orphaned','run-orphan-resumed','run-completed') "
+            "ORDER BY event_id",
+            (run_row["run_id"],),
+        ).fetchall()
+    ]
+    if lifecycle != ["run-orphaned"]:
+        return "historical orphan lifecycle is missing, duplicated, resumed, or completed"
+    worker_id = run_row["worker_id"]
+    if not isinstance(worker_id, str) or not worker_id:
+        return "historical orphan has no worker identity"
+    active_states = tuple(sorted(legacy.ACTIVE_STATES))
+    placeholders = ",".join("?" for _ in active_states)
+    active_owner = connection.execute(
+        f"SELECT run_id FROM runs WHERE worker_id=? AND run_id<>? "
+        f"AND state IN ({placeholders}) LIMIT 1",
+        (worker_id, run_row["run_id"], *active_states),
+    ).fetchone()
+    if active_owner is not None:
+        return "historical worker identity currently owns an active run"
+    return None
+
+
+def _historical_orphaned_repository_rebind_matches(
+    connection: sqlite3.Connection,
+    revision: _CloseRevision,
+    claimed_task: dict[str, Any] | None,
+    run_row: sqlite3.Row,
+) -> bool:
+    """Match only a receipt-bound repository rebind for one safe historical orphan."""
+    if _historical_orphaned_closeout_precondition_reason(connection, run_row) is not None:
+        return False
+    if not isinstance(claimed_task, dict):
+        return False
+    if claimed_task.get("id") != run_row["task_id"]:
+        return False
+    if task_revision_sha256(claimed_task) != run_row["task_sha256"]:
+        return False
+    if revision.task_id != run_row["task_id"]:
+        return False
+    task_spec_revision = revision.task_spec_revision
+    task_spec_sha256 = revision.task_spec_sha256
+    if not isinstance(task_spec_revision, int) or not isinstance(task_spec_sha256, str):
+        return False
+    return _repository_identity_rebind_closeout_evolution_matches(
         connection,
         revision.task_id,
         claimed_task,
         observed_revision=task_spec_revision,
         observed_spec_sha256=task_spec_sha256,
     )
-    if not evolution_matches:
-        return False
-    return task_revision_sha256(claimed_task) == expected_task_sha256
 
 
 def _receipt_binds_current_revision(registry: Registry, receipt: dict[str, Any]) -> bool:
@@ -7781,6 +7854,8 @@ def _complete_run_after_typed_evaluation(
     store: StateStore,
     run_id: str,
     evidence: dict[str, Any],
+    *,
+    historical_orphaned_repository_rebind: bool = False,
 ) -> dict[str, Any]:
     """Write a typed-evaluation-authorized close under one authoritative CAS.
 
@@ -7823,7 +7898,21 @@ def _complete_run_after_typed_evaluation(
                     f"unknown run {run_id}",
                     run_id=run_id,
                 )
-            if run_row["state"] not in legacy.ACTIVE_STATES:
+            if historical_orphaned_repository_rebind:
+                historical_reason = _historical_orphaned_closeout_precondition_reason(
+                    connection, run_row
+                )
+                if historical_reason is not None:
+                    raise RunStateConflict(
+                        "historical-orphaned-closeout-ineligible",
+                        historical_reason,
+                        run_id=run_id,
+                        details={
+                            "observed_state": run_row["state"],
+                            "observed_error": run_row["error"],
+                        },
+                    )
+            elif run_row["state"] not in legacy.ACTIVE_STATES:
                 raise RunStateConflict(
                     "run-not-active",
                     f"run {run_id} is not active",
@@ -7877,12 +7966,20 @@ def _complete_run_after_typed_evaluation(
                 if observed_task_spec_sha256 is not None and isinstance(claimed_task, dict)
                 else None
             )
-            task_revision_matches = _close_revision_task_matches_claim_baseline(
-                connection,
-                revision,
-                claimed_task if isinstance(claimed_task, dict) else None,
-                expected_task_sha256=run["task_sha256"],
-            )
+            if historical_orphaned_repository_rebind:
+                task_revision_matches = _historical_orphaned_repository_rebind_matches(
+                    connection,
+                    revision,
+                    claimed_task if isinstance(claimed_task, dict) else None,
+                    run_row,
+                )
+            else:
+                task_revision_matches = _close_revision_task_matches_claim_baseline(
+                    connection,
+                    revision,
+                    claimed_task if isinstance(claimed_task, dict) else None,
+                    expected_task_sha256=run["task_sha256"],
+                )
             if not task_revision_matches or revision.plan_sha256 != run["plan_sha256"]:
                 raise RunStateConflict(
                     "stale-baseline",
@@ -7931,13 +8028,40 @@ def _complete_run_after_typed_evaluation(
                 """,
                 (run["task_id"], run["task_sha256"], run["plan_sha256"], receipt_sha, now),
             )
-            active_placeholders = ",".join("?" for _ in legacy.ACTIVE_STATES)
-            connection.execute(
-                f"UPDATE runs SET state='succeeded',updated_at=? "
-                f"WHERE run_id=? AND state IN ({active_placeholders})",
-                (now, run_id, *legacy.ACTIVE_STATES),
-            )
-            connection.execute("DELETE FROM reservations WHERE run_id=?", (run_id,))
+            if historical_orphaned_repository_rebind:
+                historical_update = connection.execute(
+                    "UPDATE runs SET state='succeeded',error=NULL,updated_at=? "
+                    "WHERE run_id=? AND state='orphaned' AND error=? "
+                    "AND updated_at=? AND worker_id=? AND task_sha256=? "
+                    "AND plan_sha256=? AND envelope_sha256=? "
+                    "AND external_system IS NULL AND external_id IS NULL "
+                    "AND external_state IS NULL AND external_observed_at IS NULL",
+                    (
+                        now,
+                        run_id,
+                        ORPHANED_STALE_WORKER_ERROR,
+                        run_row["updated_at"],
+                        run_row["worker_id"],
+                        run_row["task_sha256"],
+                        run_row["plan_sha256"],
+                        run_row["envelope_sha256"],
+                    ),
+                )
+                if historical_update.rowcount != 1:
+                    raise RunStateConflict(
+                        "historical-orphaned-closeout-cas-failed",
+                        "historical orphan changed before terminalization",
+                        run_id=run_id,
+                    )
+            else:
+                active_states = tuple(sorted(legacy.ACTIVE_STATES))
+                active_placeholders = ",".join("?" for _ in active_states)
+                connection.execute(
+                    f"UPDATE runs SET state='succeeded',updated_at=? "
+                    f"WHERE run_id=? AND state IN ({active_placeholders})",
+                    (now, run_id, *active_states),
+                )
+                connection.execute("DELETE FROM reservations WHERE run_id=?", (run_id,))
             store.event(connection, "run-completed", {"receipt_sha256": receipt_sha}, run_id)
             readback = connection.execute(
                 "SELECT state FROM runs WHERE run_id=?", (run_id,)
@@ -8397,16 +8521,24 @@ def runtime_closeout(
     revision-bound StateStore bundle for this run. This path never deploys Bureau,
     rewrites Git refs, invents source authentication, or force-releases leases.
     """
+    from . import acceptance as acceptance_module
     from . import closure_observer
     from . import runtime_identity as runtime_identity_module
 
     run = store.run(run_id)
-    if run.get("state") not in legacy.ACTIVE_STATES:
+    historical_orphaned_repository_rebind = (
+        run.get("state") == "orphaned"
+        and run.get("error") == ORPHANED_STALE_WORKER_ERROR
+    )
+    if (
+        run.get("state") not in legacy.ACTIVE_STATES
+        and not historical_orphaned_repository_rebind
+    ):
         raise RunStateConflict(
             "runtime-closeout-run-not-active",
-            f"run {run_id} is not active for exact-runtime closeout",
+            f"run {run_id} is not active or an eligible historical orphan",
             run_id=run_id,
-            details={"state": run.get("state")},
+            details={"state": run.get("state"), "error": run.get("error")},
         )
 
     envelope = _claim_bound_envelope(
@@ -8536,12 +8668,36 @@ def runtime_closeout(
                 run_id=run_id,
             )
             claimed_task = envelope.get("task")
-            task_revision_matches = _close_revision_task_matches_claim_baseline(
-                connection,
-                revision,
-                claimed_task if isinstance(claimed_task, dict) else None,
-                expected_task_sha256=str(run.get("task_sha256") or ""),
-            )
+            if historical_orphaned_repository_rebind:
+                run_row = connection.execute(
+                    "SELECT * FROM runs WHERE run_id=?", (run_id,)
+                ).fetchone()
+                if run_row is None:
+                    raise RunStateConflict(
+                        "unknown-run", f"unknown run {run_id}", run_id=run_id
+                    )
+                historical_reason = _historical_orphaned_closeout_precondition_reason(
+                    connection, run_row
+                )
+                if historical_reason is not None:
+                    raise RunStateConflict(
+                        "historical-orphaned-closeout-ineligible",
+                        historical_reason,
+                        run_id=run_id,
+                    )
+                task_revision_matches = _historical_orphaned_repository_rebind_matches(
+                    connection,
+                    revision,
+                    claimed_task if isinstance(claimed_task, dict) else None,
+                    run_row,
+                )
+            else:
+                task_revision_matches = _close_revision_task_matches_claim_baseline(
+                    connection,
+                    revision,
+                    claimed_task if isinstance(claimed_task, dict) else None,
+                    expected_task_sha256=str(run.get("task_sha256") or ""),
+                )
         revision_details = {
             "task_authority": revision.task_authority,
             "task_spec_revision": revision.task_spec_revision,
@@ -8578,17 +8734,34 @@ def runtime_closeout(
         "run_id": intent["run_id"],
         "claim_intent_sha256": intent["intent_sha256"],
     }
-    pickup_binding = _runtime_closeout_validate_lease(
-        intent,
-        owner_id=intent["lease_owner_id"],
-        task_id=intent["task_id"],
-        run_id=run_id,
-        resource_db=resource_db,
-        min_remaining_seconds=180,
-        required_metadata=pickup_metadata,
-        failure_code="runtime-closeout-pickup-lease-invalid",
-        failure_message="required coordinated pickup leases are missing or drifted",
-    )
+    pickup_binding: dict[str, Any] | None = None
+    historical_pickup_status: dict[str, Any] | None = None
+    if historical_orphaned_repository_rebind:
+        historical_pickup_status = _coordinated_live_lease_status(
+            str(run["state"]), intent, resource_db=resource_db
+        )
+        if historical_pickup_status.get("status") != "terminal-released-or-expired":
+            raise RunStateConflict(
+                "historical-orphaned-pickup-lease-still-live",
+                (
+                    "historical closeout requires all execution pickup leases "
+                    "to be released or expired"
+                ),
+                run_id=run_id,
+                details={"pickup_lease": historical_pickup_status},
+            )
+    else:
+        pickup_binding = _runtime_closeout_validate_lease(
+            intent,
+            owner_id=intent["lease_owner_id"],
+            task_id=intent["task_id"],
+            run_id=run_id,
+            resource_db=resource_db,
+            min_remaining_seconds=180,
+            required_metadata=pickup_metadata,
+            failure_code="runtime-closeout-pickup-lease-invalid",
+            failure_message="required coordinated pickup leases are missing or drifted",
+        )
 
     state_root = store.state_root.resolve()
     closeout_parent = state_root / "runtime-closeout"
@@ -8661,17 +8834,29 @@ def runtime_closeout(
     success_payload: dict[str, Any] | None = None
     try:
         exact_identity, exact_registry = exact_registry_binding()
-        pickup_binding = _runtime_closeout_validate_lease(
-            intent,
-            owner_id=intent["lease_owner_id"],
-            task_id=intent["task_id"],
-            run_id=run_id,
-            resource_db=resource_db,
-            min_remaining_seconds=120,
-            required_metadata=pickup_metadata,
-            failure_code="runtime-closeout-pickup-lease-invalid",
-            failure_message="required coordinated pickup leases changed before completion",
-        )
+        if historical_orphaned_repository_rebind:
+            historical_pickup_status = _coordinated_live_lease_status(
+                str(run["state"]), intent, resource_db=resource_db
+            )
+            if historical_pickup_status.get("status") != "terminal-released-or-expired":
+                raise RunStateConflict(
+                    "historical-orphaned-pickup-lease-still-live",
+                    "historical execution pickup leases became live before completion",
+                    run_id=run_id,
+                    details={"pickup_lease": historical_pickup_status},
+                )
+        else:
+            pickup_binding = _runtime_closeout_validate_lease(
+                intent,
+                owner_id=intent["lease_owner_id"],
+                task_id=intent["task_id"],
+                run_id=run_id,
+                resource_db=resource_db,
+                min_remaining_seconds=120,
+                required_metadata=pickup_metadata,
+                failure_code="runtime-closeout-pickup-lease-invalid",
+                failure_message="required coordinated pickup leases changed before completion",
+            )
         closeout_binding = _runtime_closeout_validate_lease(
             closeout_intent,
             owner_id=closeout_owner,
@@ -8708,21 +8893,83 @@ def runtime_closeout(
                 details={"unavailable": unavailable},
             )
 
-        observation = closure_observer.reconcile_run(
-            exact_registry,
-            store,
-            run_id,
-            evidence,
-            authenticated_criterion_ids=frozenset(authentication_records),
-            authentication_records=authentication_records,
-        )
-        if observation.get("state") != "terminalized":
-            raise RunStateConflict(
-                "runtime-closeout-evidence-not-terminalizing",
-                "typed acceptance did not authorize terminalization",
+        if historical_orphaned_repository_rebind:
+            claimed_task = envelope.get("task")
+            if not isinstance(claimed_task, dict):
+                raise RunStateConflict(
+                    "historical-orphaned-envelope-invalid",
+                    "historical run has no claim-bound task snapshot",
+                    run_id=run_id,
+                )
+            try:
+                validate_acceptance_contract(claimed_task)
+            except AcceptanceContractError as exc:
+                raise RunStateConflict(
+                    "runtime-closeout-evidence-not-terminalizing",
+                    "historical run acceptance contract is invalid",
+                    run_id=run_id,
+                    details={"error": str(exc)},
+                ) from exc
+            criteria = claimed_task.get("acceptance")
+            if not isinstance(criteria, list):
+                criteria = []
+            evaluation = acceptance_module.evaluate_acceptance(
+                criteria,
+                evidence,
+                task_id=str(run["task_id"]),
                 run_id=run_id,
-                details={"observation": observation},
+                task_sha256=str(run["task_sha256"]),
+                plan_sha256=run.get("plan_sha256"),
+                authenticated_criterion_ids=frozenset(authentication_records),
             )
+            if (
+                evaluation.get("state") != acceptance_module.PASSED
+                or evaluation.get("automatic_terminalization") is not True
+            ):
+                raise RunStateConflict(
+                    "runtime-closeout-evidence-not-terminalizing",
+                    "typed acceptance did not authorize historical terminalization",
+                    run_id=run_id,
+                    details={"evaluation": evaluation},
+                )
+            completion_evidence: dict[str, Any] = {}
+            for criterion_id, item in evidence.items():
+                if isinstance(item, dict):
+                    copied = dict(item)
+                    authentication = authentication_records.get(str(criterion_id))
+                    if isinstance(authentication, dict):
+                        copied["_source_authentication"] = dict(authentication)
+                    completion_evidence[str(criterion_id)] = copied
+                else:
+                    completion_evidence[str(criterion_id)] = item
+            completed = _complete_run_after_typed_evaluation(
+                exact_registry,
+                store,
+                run_id,
+                completion_evidence,
+                historical_orphaned_repository_rebind=True,
+            )
+            observation = {
+                "state": "terminalized",
+                "evaluation": evaluation,
+                "completion": completed,
+            }
+        else:
+            observation = closure_observer.reconcile_run(
+                exact_registry,
+                store,
+                run_id,
+                evidence,
+                authenticated_criterion_ids=frozenset(authentication_records),
+                authentication_records=authentication_records,
+            )
+            if observation.get("state") != "terminalized":
+                raise RunStateConflict(
+                    "runtime-closeout-evidence-not-terminalizing",
+                    "typed acceptance did not authorize terminalization",
+                    run_id=run_id,
+                    details={"observation": observation},
+                )
 
         readback = store.run(run_id)
         if readback.get("state") != "succeeded":
@@ -8763,9 +9010,10 @@ def runtime_closeout(
             raise legacy.StateError(
                 "runtime closeout succeeded but temporary resources remain"
             )
-        lease_release = _runtime_closeout_release_bindings(
-            [pickup_binding, closeout_binding]
-        )
+        release_bindings = [closeout_binding]
+        if pickup_binding is not None:
+            release_bindings.insert(0, pickup_binding)
+        lease_release = _runtime_closeout_release_bindings(release_bindings)
         success_payload = {
             "schema_version": 1,
             "kind": "bureau_runtime_closeout_receipt",
@@ -8784,6 +9032,8 @@ def runtime_closeout(
             "authenticated_criterion_ids": sorted(authentication_records),
             "completion_receipt_sha256": receipt["receipt_sha256"],
             "authoritative_run_state": readback["state"],
+            "historical_orphaned_repository_rebind": historical_orphaned_repository_rebind,
+            "historical_pickup_lease_status": historical_pickup_status,
             "lease_release": lease_release,
             "temporary_resources_removed": True,
             "does_not_establish": [

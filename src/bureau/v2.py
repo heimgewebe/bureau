@@ -7611,9 +7611,15 @@ def _repository_identity_rebind_closeout_evolution_matches(
     *,
     observed_revision: int,
     observed_spec_sha256: str,
+    rebind_after_event_id: int,
 ) -> bool:
-    """Accept only a complete receipt-bound chain of repository-only rebinds."""
-    if not isinstance(claimed_task, dict) or claimed_task.get("id") != task_id:
+    """Accept only a complete receipt-bound post-orphan repository rebind chain."""
+    if (
+        not isinstance(claimed_task, dict)
+        or claimed_task.get("id") != task_id
+        or type(rebind_after_event_id) is not int
+        or rebind_after_event_id < 1
+    ):
         return False
     baseline_sha256 = task_specs.task_spec_digest(claimed_task)
     baseline_rows = connection.execute(
@@ -7660,6 +7666,29 @@ def _repository_identity_rebind_closeout_evolution_matches(
     if len(mutation_by_revision) != len(mutation_rows):
         return False
 
+    task_spec_event_rows = connection.execute(
+        "SELECT event_id,payload_json FROM events WHERE event_type=? AND event_id>? "
+        "ORDER BY event_id",
+        (task_specs.TASK_SPEC_EVENT_TYPE, rebind_after_event_id),
+    ).fetchall()
+    task_spec_events_by_revision: dict[int, tuple[int, dict[str, Any]]] = {}
+    for row in task_spec_event_rows:
+        try:
+            payload = task_specs.validate_event_payload(json.loads(str(row["payload_json"])))
+            event_id = int(row["event_id"])
+            event_revision = int(payload["revision"])
+        except (json.JSONDecodeError, task_specs.TaskSpecError, TypeError, ValueError):
+            return False
+        if payload["task_id"] != task_id:
+            continue
+        if not baseline_revision < event_revision <= observed_revision:
+            continue
+        if event_revision in task_spec_events_by_revision:
+            return False
+        task_spec_events_by_revision[event_revision] = (event_id, payload)
+    if len(task_spec_events_by_revision) != observed_revision - baseline_revision:
+        return False
+
     for before_revision, after_revision in pairwise(revisions):
         if (
             int(after_revision["revision"]) != int(before_revision["revision"]) + 1
@@ -7703,9 +7732,20 @@ def _repository_identity_rebind_closeout_evolution_matches(
             old_repository_path=old_repository_path,
             new_repository_path=new_repository_path,
         )
-        mutation = mutation_by_revision.get(int(after_revision["revision"]))
+        after_revision_number = int(after_revision["revision"])
+        mutation = mutation_by_revision.get(after_revision_number)
+        task_spec_event = task_spec_events_by_revision.get(after_revision_number)
+        if task_spec_event is None:
+            return False
+        task_spec_event_id, task_spec_event_payload = task_spec_event
         if (
             mutation is None
+            or task_spec_event_id <= rebind_after_event_id
+            or task_spec_event_payload["source"] != "repository-identity-rebind"
+            or task_spec_event_payload["idempotency_key"] != expected_key
+            or task_spec_event_payload["parent_revision"] != before_revision["revision"]
+            or task_spec_event_payload["revision"] != after_revision["revision"]
+            or task_spec_event_payload["spec_sha256"] != after_revision["spec_sha256"]
             or type(mutation["expected_revision"]) is not int
             or type(mutation["resulting_revision"]) is not int
             or str(mutation["idempotency_key"]) != expected_key
@@ -7822,12 +7862,24 @@ def _historical_orphaned_repository_rebind_matches(
     task_spec_sha256 = revision.task_spec_sha256
     if not isinstance(task_spec_revision, int) or not isinstance(task_spec_sha256, str):
         return False
+    orphan_event_rows = connection.execute(
+        "SELECT event_id FROM events WHERE run_id=? AND event_type='run-orphaned' "
+        "ORDER BY event_id",
+        (run_row["run_id"],),
+    ).fetchall()
+    if len(orphan_event_rows) != 1:
+        return False
+    try:
+        orphan_event_id = int(orphan_event_rows[0]["event_id"])
+    except (TypeError, ValueError):
+        return False
     return _repository_identity_rebind_closeout_evolution_matches(
         connection,
         revision.task_id,
         claimed_task,
         observed_revision=task_spec_revision,
         observed_spec_sha256=task_spec_sha256,
+        rebind_after_event_id=orphan_event_id,
     )
 
 

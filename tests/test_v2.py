@@ -7708,6 +7708,58 @@ def test_runtime_closeout_historical_orphan_rejects_post_orphan_duplicate_of_pre
     assert "run-orphan-resumed" not in _closeout_event_types(case)
 
 
+def test_runtime_closeout_historical_orphan_scopes_task_spec_event_scan_to_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _orphan_closeout_case(case)
+    _apply_repository_identity_rebind_lifecycle(case)
+
+    unrelated_payload = json.dumps(
+        {
+            "schema_version": task_specs.TASK_SPEC_EVENT_SCHEMA_VERSION,
+            "task_id": "unrelated-task",
+            "revision": 1,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with case["store"].immediate() as connection:
+        for _ in range(256):
+            connection.execute(
+                "INSERT INTO events("
+                "run_id,event_type,event_schema_version,activity_id,payload_json,created_at"
+                ") VALUES(NULL,?,?,NULL,?,?)",
+                (
+                    task_specs.TASK_SPEC_EVENT_TYPE,
+                    task_specs.TASK_SPEC_EVENT_SCHEMA_VERSION,
+                    unrelated_payload,
+                    legacy.utc_now(),
+                ),
+            )
+        connection.execute(
+            "INSERT INTO events("
+            "run_id,event_type,event_schema_version,activity_id,payload_json,created_at"
+            ") VALUES(NULL,?,?,NULL,?,?)",
+            (
+                task_specs.TASK_SPEC_EVENT_TYPE,
+                task_specs.TASK_SPEC_EVENT_SCHEMA_VERSION,
+                "not-json",
+                legacy.utc_now(),
+            ),
+        )
+
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+
+    assert result["status"] == "succeeded"
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
 def test_runtime_closeout_historical_orphan_rejects_wrong_error(
     registry_factory, tmp_path, monkeypatch
 ):

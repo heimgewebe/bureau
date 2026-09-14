@@ -7728,8 +7728,10 @@ def _repository_identity_rebind_closeout_evolution_matches(
 
     task_spec_event_rows = connection.execute(
         "SELECT event_id,run_id,event_schema_version,payload_json FROM events "
-        "WHERE event_type=? ORDER BY event_id",
-        (task_specs.TASK_SPEC_EVENT_TYPE,),
+        "WHERE event_type=? AND CASE WHEN json_valid(payload_json) "
+        "THEN json_extract(payload_json, '$.task_id')=? ELSE 0 END "
+        "ORDER BY event_id",
+        (task_specs.TASK_SPEC_EVENT_TYPE, task_id),
     ).fetchall()
     task_spec_events_by_revision: dict[int, tuple[int, dict[str, Any]]] = {}
     for row in task_spec_event_rows:

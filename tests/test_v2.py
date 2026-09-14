@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
-from bureau import closure_observer, legacy, registry_snapshot
+from bureau import closure_observer, legacy, registry_snapshot, task_specs
 from bureau import v2 as bureau_v2
 from bureau.adapters import AdapterRegistry, Observation
 from bureau.bound_activity import (
@@ -7466,6 +7466,290 @@ def test_runtime_closeout_prefers_state_store_task_over_older_runtime_registry(
 
     assert result["status"] == "succeeded"
     assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
+def _apply_repository_identity_rebind_lifecycle(
+    case,
+    *,
+    source: str = "repository-identity-rebind",
+    semantic_mutator=None,
+    import_registry: bool = True,
+):
+    if import_registry:
+        case["store"].import_registry_task_specs(Registry.load(case["root"]))
+    baseline = case["store"].task_spec(case["task_id"])
+    assert baseline is not None
+    baseline_spec = json.loads(json.dumps(baseline["spec"]))
+    repository_claims = [
+        claim
+        for claim in baseline_spec["claims"]
+        if claim.get("mode") == "write" and claim.get("isolation") == "worktree"
+    ]
+    assert len(repository_claims) == 1
+    old_resource_id = repository_claims[0]["resource"]
+    new_resource_id = f"{old_resource_id}.rebound"
+    old_repository_path = baseline_spec["execution"]["working_repository"]
+    new_repository_path = f"{old_repository_path}-rebound"
+    preview = task_specs.preview_repository_identity_rebind(
+        baseline_spec,
+        old_resource_id=old_resource_id,
+        new_resource_id=new_resource_id,
+        old_repository_path=old_repository_path,
+        new_repository_path=new_repository_path,
+    )
+    resulting_spec = json.loads(json.dumps(preview["spec"]))
+    if semantic_mutator is not None:
+        semantic_mutator(resulting_spec)
+    resulting_sha256 = task_specs.task_spec_digest(resulting_spec)
+    idempotency_key = task_specs.repository_identity_rebind_idempotency_key(
+        task_id=case["task_id"],
+        expected_revision=baseline["revision"],
+        expected_spec_sha256=baseline["spec_sha256"],
+        resulting_spec_sha256=resulting_sha256,
+        old_resource_id=old_resource_id,
+        new_resource_id=new_resource_id,
+        old_repository_path=old_repository_path,
+        new_repository_path=new_repository_path,
+    )
+    with case["store"].immediate() as connection:
+        rebound = task_specs._put_validated_material(
+            connection,
+            resulting_spec,
+            idempotency_key=idempotency_key,
+            expected_revision=baseline["revision"],
+            source=source,
+        )
+    return {"baseline": baseline, "rebound": rebound, "idempotency_key": idempotency_key}
+
+
+def test_runtime_closeout_accepts_canonical_repository_identity_rebind_receipt(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    lifecycle = _apply_repository_identity_rebind_lifecycle(case)
+    assert lifecycle["rebound"]["revision"] == lifecycle["baseline"]["revision"] + 1
+    assert (
+        task_revision_sha256(lifecycle["rebound"]["spec"]) != case["claimed"]["run"]["task_sha256"]
+    )
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+    assert result["status"] == "succeeded"
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
+def test_runtime_closeout_accepts_complete_repository_identity_rebind_chain(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    first = _apply_repository_identity_rebind_lifecycle(case)
+    second = _apply_repository_identity_rebind_lifecycle(case, import_registry=False)
+    assert second["rebound"]["revision"] == first["baseline"]["revision"] + 2
+
+    result = bureau_v2.runtime_closeout(
+        case["store"],
+        case["run_id"],
+        case["evidence_path"],
+        resource_db=case["database"],
+    )
+
+    assert result["status"] == "succeeded"
+    assert case["store"].run(case["run_id"])["state"] == "succeeded"
+
+
+@pytest.mark.parametrize(
+    "semantic_mutator",
+    [
+        lambda spec: spec.__setitem__("title", "semantic drift"),
+        lambda spec: spec["depends_on"].append("BUR-TEST-001-T999"),
+        lambda spec: spec["acceptance"][0].__setitem__("assertion", "changed proof"),
+        lambda spec: spec["claims"][1].__setitem__("amount", 2),
+        lambda spec: spec["execution"].__setitem__(
+            "policy",
+            "autonomous"
+            if spec["execution"].get("policy") != "autonomous"
+            else "review-before-effect",
+        ),
+    ],
+    ids=["title", "dependency", "acceptance", "claim", "execution"],
+)
+def test_runtime_closeout_rejects_repository_rebind_source_without_semantic_equivalence(
+    registry_factory, tmp_path, monkeypatch, semantic_mutator
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case, semantic_mutator=semantic_mutator)
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_repository_rebind_with_wrong_source(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(
+        case, source="test-forged-repository-identity-rebind"
+    )
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_repository_rebind_without_mutation_receipt(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    lifecycle = _apply_repository_identity_rebind_lifecycle(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "DELETE FROM task_spec_mutations WHERE idempotency_key=?",
+            (lifecycle["idempotency_key"],),
+        )
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_repository_rebind_with_partial_mutation_receipt(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    lifecycle = _apply_repository_identity_rebind_lifecycle(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "UPDATE task_spec_mutations SET expected_revision=NULL WHERE idempotency_key=?",
+            (lifecycle["idempotency_key"],),
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_repository_rebind_with_mismatched_mutation_receipt(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    lifecycle = _apply_repository_identity_rebind_lifecycle(case)
+    with case["store"].immediate() as connection:
+        connection.execute(
+            "UPDATE task_spec_mutations SET requested_sha256=? WHERE idempotency_key=?",
+            ("0" * 64, lifecycle["idempotency_key"]),
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_semantic_drift_after_repository_rebind(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    _apply_repository_identity_rebind_lifecycle(case)
+    current = case["store"].task_spec(case["task_id"])
+    assert current is not None
+    drifted_spec = json.loads(json.dumps(current["spec"]))
+    drifted_spec["title"] = "post-rebind semantic drift"
+    with case["store"].immediate() as connection:
+        task_specs._put_validated_material(
+            connection,
+            drifted_spec,
+            idempotency_key=f"test-post-rebind-drift:{case['task_id']}",
+            expected_revision=current["revision"],
+            source="test-post-rebind-semantic-drift",
+        )
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
+
+
+def test_runtime_closeout_rejects_ambiguous_baseline_before_repository_rebind(
+    registry_factory, tmp_path, monkeypatch
+):
+    case = _prepare_runtime_closeout_case(registry_factory, tmp_path, monkeypatch)
+    case["store"].import_registry_task_specs(Registry.load(case["root"]))
+    baseline = case["store"].task_spec(case["task_id"])
+    assert baseline is not None
+    baseline_spec = json.loads(json.dumps(baseline["spec"]))
+    drifted_spec = json.loads(json.dumps(baseline_spec))
+    drifted_spec["title"] = "temporary semantic drift"
+
+    with case["store"].immediate() as connection:
+        drifted = task_specs._put_validated_material(
+            connection,
+            drifted_spec,
+            idempotency_key=f"test-ambiguous-baseline-drift:{case['task_id']}",
+            expected_revision=baseline["revision"],
+            source="test-semantic-drift",
+        )
+        restored = task_specs._put_validated_material(
+            connection,
+            baseline_spec,
+            idempotency_key=f"test-ambiguous-baseline-restore:{case['task_id']}",
+            expected_revision=drifted["revision"],
+            source="test-semantic-return",
+        )
+    assert restored["spec_sha256"] == baseline["spec_sha256"]
+    assert restored["revision"] > baseline["revision"]
+
+    _apply_repository_identity_rebind_lifecycle(case, import_registry=False)
+
+    with pytest.raises(bureau_v2.RunStateConflict) as exc:
+        bureau_v2.runtime_closeout(
+            case["store"],
+            case["run_id"],
+            case["evidence_path"],
+            resource_db=case["database"],
+        )
+
+    assert exc.value.code == "task-revision-changed"
+    assert case["store"].run(case["run_id"])["state"] == case["initial_state"]
 
 
 def test_runtime_closeout_accepts_canonical_runtime_refresh_authority_receipts(

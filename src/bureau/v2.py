@@ -15,6 +15,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from functools import lru_cache
+from itertools import pairwise
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -7547,6 +7548,176 @@ def _runtime_refresh_closeout_evolution_matches(
     return observed_mutations == expected_mutations
 
 
+def _repository_identity_rebind_transition_parameters(
+    before: dict[str, Any], after: dict[str, Any]
+) -> tuple[str, str, str, str] | None:
+    """Infer one fully observable canonical repository identity rebind."""
+    before_claims = before.get("claims")
+    after_claims = after.get("claims")
+    if (
+        not isinstance(before_claims, list)
+        or not isinstance(after_claims, list)
+        or len(before_claims) != len(after_claims)
+    ):
+        return None
+    changed_claims: list[tuple[str, str]] = []
+    for before_claim, after_claim in zip(before_claims, after_claims, strict=True):
+        if before_claim == after_claim:
+            continue
+        if not isinstance(before_claim, dict) or not isinstance(after_claim, dict):
+            return None
+        keys = set(before_claim) | set(after_claim)
+        changed_fields = {
+            key for key in keys if before_claim.get(key) != after_claim.get(key)
+        }
+        if changed_fields != {"resource"}:
+            return None
+        old_resource_id = before_claim.get("resource")
+        new_resource_id = after_claim.get("resource")
+        if (
+            not isinstance(old_resource_id, str)
+            or not old_resource_id
+            or not isinstance(new_resource_id, str)
+            or not new_resource_id
+            or old_resource_id == new_resource_id
+        ):
+            return None
+        changed_claims.append((old_resource_id, new_resource_id))
+    if len(changed_claims) != 1:
+        return None
+
+    before_execution = before.get("execution")
+    after_execution = after.get("execution")
+    if not isinstance(before_execution, dict) or not isinstance(after_execution, dict):
+        return None
+    old_repository_path = before_execution.get("working_repository")
+    new_repository_path = after_execution.get("working_repository")
+    if (
+        not isinstance(old_repository_path, str)
+        or not old_repository_path
+        or not isinstance(new_repository_path, str)
+        or not new_repository_path
+        or old_repository_path == new_repository_path
+    ):
+        return None
+    old_resource_id, new_resource_id = changed_claims[0]
+    return old_resource_id, new_resource_id, old_repository_path, new_repository_path
+
+
+def _repository_identity_rebind_closeout_evolution_matches(
+    connection: sqlite3.Connection,
+    task_id: str,
+    claimed_task: dict[str, Any],
+    *,
+    observed_revision: int,
+    observed_spec_sha256: str,
+) -> bool:
+    """Accept only a complete receipt-bound chain of repository-only rebinds."""
+    if not isinstance(claimed_task, dict) or claimed_task.get("id") != task_id:
+        return False
+    baseline_sha256 = task_specs.task_spec_digest(claimed_task)
+    baseline_rows = connection.execute(
+        "SELECT revision FROM task_spec_revisions "
+        "WHERE task_id=? AND spec_sha256=? AND revision<? ORDER BY revision",
+        (task_id, baseline_sha256, observed_revision),
+    ).fetchall()
+    if len(baseline_rows) != 1:
+        return False
+    baseline_revision = int(baseline_rows[0]["revision"])
+    try:
+        baseline = task_specs.get_revision(connection, task_id, baseline_revision)
+        current = task_specs.get_current(connection, task_id)
+        revisions = [
+            task_specs.get_revision(connection, task_id, revision)
+            for revision in range(baseline_revision, observed_revision + 1)
+        ]
+    except task_specs.TaskSpecError:
+        return False
+    if (
+        current is None
+        or baseline["spec"] != claimed_task
+        or baseline["spec_sha256"] != baseline_sha256
+        or int(current["revision"]) != observed_revision
+        or str(current["spec_sha256"]) != observed_spec_sha256
+        or revisions[-1]["spec"] != current.get("spec")
+    ):
+        return False
+
+    mutation_rows = connection.execute(
+        "SELECT idempotency_key,expected_revision,requested_sha256,resulting_revision "
+        "FROM task_spec_mutations WHERE task_id=? AND resulting_revision>? "
+        "AND resulting_revision<=? ORDER BY resulting_revision,idempotency_key",
+        (task_id, baseline_revision, observed_revision),
+    ).fetchall()
+    if len(mutation_rows) != observed_revision - baseline_revision:
+        return False
+    try:
+        mutation_by_revision = {
+            int(row["resulting_revision"]): row for row in mutation_rows
+        }
+    except (TypeError, ValueError):
+        return False
+    if len(mutation_by_revision) != len(mutation_rows):
+        return False
+
+    for before_revision, after_revision in pairwise(revisions):
+        if (
+            int(after_revision["revision"]) != int(before_revision["revision"]) + 1
+            or after_revision["parent_revision"] != before_revision["revision"]
+            or after_revision["source"] != "repository-identity-rebind"
+        ):
+            return False
+        parameters = _repository_identity_rebind_transition_parameters(
+            before_revision["spec"], after_revision["spec"]
+        )
+        if parameters is None:
+            return False
+        (
+            old_resource_id,
+            new_resource_id,
+            old_repository_path,
+            new_repository_path,
+        ) = parameters
+        try:
+            preview = task_specs.preview_repository_identity_rebind(
+                before_revision["spec"],
+                old_resource_id=old_resource_id,
+                new_resource_id=new_resource_id,
+                old_repository_path=old_repository_path,
+                new_repository_path=new_repository_path,
+            )
+        except task_specs.TaskSpecError:
+            return False
+        if (
+            preview["spec"] != after_revision["spec"]
+            or preview["spec_sha256"] != after_revision["spec_sha256"]
+        ):
+            return False
+        expected_key = task_specs.repository_identity_rebind_idempotency_key(
+            task_id=task_id,
+            expected_revision=int(before_revision["revision"]),
+            expected_spec_sha256=str(before_revision["spec_sha256"]),
+            resulting_spec_sha256=str(after_revision["spec_sha256"]),
+            old_resource_id=old_resource_id,
+            new_resource_id=new_resource_id,
+            old_repository_path=old_repository_path,
+            new_repository_path=new_repository_path,
+        )
+        mutation = mutation_by_revision.get(int(after_revision["revision"]))
+        if (
+            mutation is None
+            or type(mutation["expected_revision"]) is not int
+            or type(mutation["resulting_revision"]) is not int
+            or str(mutation["idempotency_key"]) != expected_key
+            or mutation["expected_revision"] != before_revision["revision"]
+            or str(mutation["requested_sha256"])
+            != str(after_revision["spec_sha256"])
+            or mutation["resulting_revision"] != after_revision["revision"]
+        ):
+            return False
+    return True
+
+
 def _close_revision_task_matches_claim_baseline(
     connection: sqlite3.Connection,
     revision: _CloseRevision,
@@ -7569,13 +7740,20 @@ def _close_revision_task_matches_claim_baseline(
     task_spec_sha256 = revision.task_spec_sha256
     if not isinstance(task_spec_revision, int) or not isinstance(task_spec_sha256, str):
         return False
-    if not _runtime_refresh_closeout_evolution_matches(
+    evolution_matches = _runtime_refresh_closeout_evolution_matches(
         connection,
         revision.task_id,
         claimed_task,
         observed_revision=task_spec_revision,
         observed_spec_sha256=task_spec_sha256,
-    ):
+    ) or _repository_identity_rebind_closeout_evolution_matches(
+        connection,
+        revision.task_id,
+        claimed_task,
+        observed_revision=task_spec_revision,
+        observed_spec_sha256=task_spec_sha256,
+    )
+    if not evolution_matches:
         return False
     return task_revision_sha256(claimed_task) == expected_task_sha256
 

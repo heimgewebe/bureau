@@ -57,19 +57,18 @@ jobs:
           metadata_anchor = '    assert "required_lease_metadata" not in second_preview'
           if tests.count(metadata_anchor) != 1:
               raise SystemExit(f'second-preview metadata anchor count={tests.count(metadata_anchor)}')
-          tests = tests.replace(
-              metadata_anchor,
-              '''    assert second_preview["required_lease_metadata"] == {
-        "task_id": plan["task_id"],
-        "operation": "state-task-publication",
-        "proposal_sha256": second_preview["proposal_sha256"],
-        "kind": "grabowski.bureau_task_publication_authority",
-        "authority_action_class": "task_creation_from_external_evidence",
-        "authority_capability": "bureau_mutation",
-        "bureau_phase": "work",
-    }''',
-              1,
+          metadata_replacement = (
+              '    assert second_preview["required_lease_metadata"] == {\n'
+              '        "task_id": plan["task_id"],\n'
+              '        "operation": "state-task-publication",\n'
+              '        "proposal_sha256": second_preview["proposal_sha256"],\n'
+              '        "kind": "grabowski.bureau_task_publication_authority",\n'
+              '        "authority_action_class": "task_creation_from_external_evidence",\n'
+              '        "authority_capability": "bureau_mutation",\n'
+              '        "bureau_phase": "work",\n'
+              '    }'
           )
+          tests = tests.replace(metadata_anchor, metadata_replacement, 1)
           tests_path.write_text(tests, encoding='utf-8')
           PY
           git diff --check

@@ -9,6 +9,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -6300,3 +6301,154 @@ def test_task_revision_identity_guard_rejects_single_hyphen_package_identifier_s
     with pytest.raises(OperatorIntakeError) as raised:
         operator_intake_module._validate_task_revision_identity_continuity(before, after)
     assert raised.value.code == "task-revision-identity-discontinuity"
+
+
+@pytest.mark.parametrize("target_state", ["superseded", "cancelled"])
+def test_legacy_untyped_task_can_terminalize_without_retrofitted_acceptance(
+    registry_factory, tmp_path, target_state
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T099"
+    legacy_task = _task(registry.root, task_id)
+    legacy_task["acceptance"] = [
+        {"id": "legacy-result", "assertion": "Legacy acceptance predates typed verifiers."}
+    ]
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={task_id: SimpleNamespace(raw=legacy_task)})
+    )
+    seeded = store.task_spec(task_id)
+    assert seeded is not None
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key=f"source:legacy-terminal:{target_state}",
+        title=f"Terminalize {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:legacy-terminal:{task_id}:{target_state}",
+        source_sha256="7" * 64,
+        desired_outcome=(
+            f"Move the exact legacy TaskSpec to {target_state} without "
+            "retrofitting acceptance."
+        ),
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(legacy_task))
+    revised["state"] = target_state
+    revised.setdefault("metadata", {})["bureau_cleanup"] = {
+        "schema_version": 1,
+        "reason": "exact-semantic-duplicate",
+    }
+    plan_path = tmp_path / f"legacy-{target_state}.proposal.json"
+    task_propose(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        task_json=revised,
+        publishing_task_id="BUR-TEST-001-T001",
+        path=plan_path,
+    )
+    pending = json.loads(plan_path.read_text())
+    review_task_proposal(
+        plan_path=plan_path,
+        reviewer="operator-legacy-terminal-review",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    assert preview["status"] == "ready"
+    published = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / f"legacy-{target_state}-workspace",
+        receipt_path=tmp_path / f"legacy-{target_state}-receipt.json",
+    )
+    committed = store.task_spec(task_id)
+    assert committed is not None
+    assert published["task_spec_revision"]["revision"] == seeded["revision"] + 1
+    assert committed["spec"]["state"] == target_state
+    assert committed["spec"]["acceptance"] == legacy_task["acceptance"]
+    assert committed["spec"]["metadata"]["bureau_cleanup"]["reason"] == "exact-semantic-duplicate"
+
+
+def test_legacy_terminalization_rejects_operational_scope_change(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T099"
+    legacy_task = _task(registry.root, task_id)
+    legacy_task["acceptance"] = [
+        {"id": "legacy-result", "assertion": "Legacy acceptance predates typed verifiers."}
+    ]
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={task_id: SimpleNamespace(raw=legacy_task)})
+    )
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:legacy-terminal-scope",
+        title=f"Terminalize {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:legacy-terminal-scope:{task_id}",
+        source_sha256="8" * 64,
+        desired_outcome="Terminalize the exact legacy TaskSpec without changing its work contract.",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(legacy_task))
+    revised["state"] = "superseded"
+    revised["goal"] = "Smuggle a different operational goal through terminalization."
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "legacy-scope-change.proposal.json",
+        )
+    assert caught.value.code == "legacy-terminal-revision-invalid"
+
+
+def test_legacy_untyped_task_cannot_claim_verified_via_terminal_exception(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    task_id = "BUR-TEST-001-T099"
+    legacy_task = _task(registry.root, task_id)
+    legacy_task["acceptance"] = [
+        {"id": "legacy-result", "assertion": "Legacy acceptance predates typed verifiers."}
+    ]
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={task_id: SimpleNamespace(raw=legacy_task)})
+    )
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:legacy-verified",
+        title=f"Verify {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:legacy-verified:{task_id}",
+        source_sha256="6" * 64,
+        desired_outcome="Attempt verified state without executable acceptance evidence.",
+        repo="repo.alpha",
+        task_id=task_id,
+    )
+    revised = json.loads(json.dumps(legacy_task))
+    revised["state"] = "verified"
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=revised,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=tmp_path / "legacy-verified.proposal.json",
+        )
+    assert caught.value.code == "task-acceptance-contract-invalid"

@@ -520,3 +520,61 @@ def test_reserved_runtime_closeout_cannot_bless_preexisting_identical_revision(
         )
 
     assert store.task_spec_mutation_receipt(key) is None
+
+
+@pytest.mark.parametrize("target_state", ["superseded", "cancelled"])
+def test_legacy_import_can_terminalize_state_only(tmp_path: Path, target_state: str) -> None:
+    store = _store(tmp_path)
+    legacy_spec = _legacy_spec("LEGACY-TERM")
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={"LEGACY-TERM": SimpleNamespace(raw=legacy_spec)})
+    )
+    revised = json.loads(json.dumps(legacy_spec))
+    revised["state"] = target_state
+    revised.setdefault("metadata", {})["bureau_cleanup"] = {
+        "schema_version": 1, "reason": "duplicate"
+    }
+    written = store.put_task_spec(
+        revised,
+        idempotency_key=f"legacy-terminal:{target_state}",
+        expected_revision=1,
+        source="operator-intake-reviewed-proposal",
+    )
+    assert written["revision"] == 2
+    assert store.task_spec("LEGACY-TERM")["spec"]["state"] == target_state
+    assert store.task_spec("LEGACY-TERM")["spec"]["acceptance"] == legacy_spec["acceptance"]
+
+
+def test_legacy_terminalization_rejects_operational_change(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    legacy_spec = _legacy_spec("LEGACY-TERM")
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={"LEGACY-TERM": SimpleNamespace(raw=legacy_spec)})
+    )
+    revised = json.loads(json.dumps(legacy_spec))
+    revised["state"] = "superseded"
+    revised["title"] = "different work"
+    with pytest.raises(StateError, match="may change only state and audit metadata"):
+        store.put_task_spec(
+            revised,
+            idempotency_key="legacy-terminal:scope-change",
+            expected_revision=1,
+            source="operator-intake-reviewed-proposal",
+        )
+
+
+def test_legacy_terminalization_does_not_exempt_verified(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    legacy_spec = _legacy_spec("LEGACY-TERM")
+    store.import_registry_task_specs(
+        SimpleNamespace(tasks={"LEGACY-TERM": SimpleNamespace(raw=legacy_spec)})
+    )
+    revised = json.loads(json.dumps(legacy_spec))
+    revised["state"] = "verified"
+    with pytest.raises(StateError, match="evidence_type"):
+        store.put_task_spec(
+            revised,
+            idempotency_key="legacy-terminal:verified",
+            expected_revision=1,
+            source="operator-intake-reviewed-proposal",
+        )

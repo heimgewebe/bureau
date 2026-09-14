@@ -1913,13 +1913,40 @@ def _validate_task_schema(registry: Registry, task_json: dict[str, Any]) -> None
         ) from exc
 
 
+def _legacy_terminal_only_revision(
+    store: StateStore, task_json: dict[str, Any]
+) -> bool:
+    current = store.task_spec(str(task_json.get("id", "")))
+    if current is None:
+        return False
+    from . import task_specs as task_specs_module
+
+    try:
+        return task_specs_module.is_legacy_terminal_only_revision(current["spec"], task_json)
+    except task_specs_module.TaskSpecError as exc:
+        raise OperatorIntakeError(
+            "legacy-terminal-revision-invalid",
+            str(exc),
+            details={"task_id": str(task_json.get("id", ""))},
+        ) from exc
+
+
 def _validate_task_semantics(
     registry: Registry,
     store: StateStore,
     task_json: dict[str, Any],
     *,
     allow_existing_task_id: bool = False,
+    legacy_terminal_only_revision: bool = False,
 ) -> None:
+    if legacy_terminal_only_revision:
+        _validate_task_structure(registry, task_json)
+        if not allow_existing_task_id or store.task_spec(str(task_json.get("id", ""))) is None:
+            raise OperatorIntakeError(
+                "legacy-terminal-revision-preimage-missing",
+                "legacy terminalization requires an exact existing TaskSpec preimage",
+            )
+        return
     _validate_task_schema(registry, task_json)
     from .lease_contract import assess_task_broad_bureau_scope
 
@@ -2954,23 +2981,29 @@ def task_propose(
     # specific generic-placeholder policy intentionally has precedence over the
     # newer executable-acceptance contract diagnostics.
     _validate_task_structure(registry, bound_task)
+    legacy_terminal_only_revision = _legacy_terminal_only_revision(store, bound_task)
     generic_ids = {
         criterion.get("id")
         for criterion in bound_task.get("acceptance", [])
         if isinstance(criterion, dict)
     } & _GENERIC_ACCEPTANCE_IDS
-    if generic_ids and not _checked_text(
-        placeholder_justification,
-        field="placeholder_justification",
-        maximum=2000,
-        required=False,
+    if (
+        not legacy_terminal_only_revision
+        and generic_ids
+        and not _checked_text(
+            placeholder_justification,
+            field="placeholder_justification",
+            maximum=2000,
+            required=False,
+        )
     ):
         raise OperatorIntakeError(
             "generic-placeholder-rejected",
             "generic promotion acceptance requires explicit justification",
             details={"acceptance_ids": sorted(generic_ids)},
         )
-    _validate_task_schema(registry, bound_task)
+    if not legacy_terminal_only_revision:
+        _validate_task_schema(registry, bound_task)
     onboarding = (
         _first_task_onboarding_authority(registry, store, task_json=bound_task, event=event)
         if publishing_task is None
@@ -2984,6 +3017,7 @@ def task_propose(
         store,
         bound_task,
         allow_existing_task_id=task_spec_binding["operation"] == "revise",
+        legacy_terminal_only_revision=legacy_terminal_only_revision,
     )
     assessment = _candidate_assess(
         registry,
@@ -3535,7 +3569,9 @@ def _validated_proposal(
             raise OperatorIntakeError(
                 "candidate-drift", "onboarding candidate content or task binding changed"
             )
-    _validate_task_schema(registry, task_json)
+    legacy_terminal_only_revision = _legacy_terminal_only_revision(store, task_json)
+    if not legacy_terminal_only_revision:
+        _validate_task_schema(registry, task_json)
     task_spec_binding = _validate_task_spec_proposal_binding(
         registry, store, plan=plan, task_json=task_json, event=current
     )
@@ -3588,6 +3624,7 @@ def _validated_proposal(
         store,
         task_json,
         allow_existing_task_id=allow_existing_task_id,
+        legacy_terminal_only_revision=legacy_terminal_only_revision,
     )
     content = _render_task(task_json)
     target_path = str(plan.get("target_path"))

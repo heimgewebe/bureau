@@ -1,0 +1,243 @@
+name: one-shot-operator-authority
+on:
+  push:
+    branches: [fix/operator-task-external-authority-20260914]
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: fix/operator-task-external-authority-20260914
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Patch canonical operator authority path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('src/bureau/operator_intake.py')
+          tests_path = Path('tests/test_operator_intake.py')
+          source = source_path.read_text(encoding='utf-8')
+          tests = tests_path.read_text(encoding='utf-8')
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          def replace_between(text: str, function_marker: str, start_marker: str, end_marker: str, replacement: str, label: str) -> str:
+              base = text.index(function_marker)
+              start = text.index(start_marker, base)
+              end = text.index(end_marker, start)
+              if end <= start:
+                  raise SystemExit(f'{label}: invalid anchor order')
+              return text[:start] + replacement + text[end:]
+
+          source = replace_once(
+              source,
+              '''from .approval import (\n    approval_decision,\n    require_approval,\n    reviewed_plan_approval,\n    task_approval_contract,\n)''',
+              '''from .approval import (\n    approval_decision,\n    explicit_operator_approval,\n    require_approval,\n    reviewed_plan_approval,\n    task_approval_contract,\n)''',
+              'approval import',
+          )
+          source = replace_once(
+              source,
+              'MAX_CANDIDATE_CLOSE_EVIDENCE = 16\n',
+              '''MAX_CANDIDATE_CLOSE_EVIDENCE = 16\n_EXTERNAL_TASK_CREATION_ACTION = "task_creation_from_external_evidence"\n_EXTERNAL_TASK_CREATION_AUTHORITY_KIND = "grabowski.bureau_task_publication_authority"\n_EXTERNAL_TASK_CREATION_CAPABILITY = "bureau_mutation"\n_EXTERNAL_TASK_CREATION_PHASE = "work"\n''',
+              'authority constants',
+          )
+          source = replace_once(
+              source,
+              '            "publication_approval": approval_decision("registry_mutation", None),',
+              '''            "publication_approval": approval_decision(\n                "registry_mutation"\n                if requested_task_id and store.task_spec(str(requested_task_id)) is not None\n                else _EXTERNAL_TASK_CREATION_ACTION,\n                None,\n            ),''',
+              'candidate assessment approval',
+          )
+
+          helper_anchor = '''    return {\n        "operation": "revise",\n        "expected_revision": int(current["revision"]),\n        "expected_spec_sha256": str(current["spec_sha256"]),\n        "expected_task_file_sha256": projected_file_sha256,\n        "proposed_spec_sha256": proposed_sha256,\n    }\n\n\ndef _validate_task_spec_proposal_binding('''
+          helper_replacement = '''    return {\n        "operation": "revise",\n        "expected_revision": int(current["revision"]),\n        "expected_spec_sha256": str(current["spec_sha256"]),\n        "expected_task_file_sha256": projected_file_sha256,\n        "proposed_spec_sha256": proposed_sha256,\n    }\n\n\ndef _publication_contract_for_binding(\n    task_spec_binding: dict[str, Any], *, onboarding: bool\n) -> dict[str, Any]:\n    if not onboarding and task_spec_binding.get("operation") == "register":\n        return {\n            "action_class": _EXTERNAL_TASK_CREATION_ACTION,\n            "publication_mode": "state_store",\n            "required_level": "operator",\n            "queue_mutated": False,\n        }\n    return {\n        "action_class": "registry_mutation",\n        "publication_mode": "state_store",\n        "required_level": "reviewed_plan",\n        "queue_mutated": False,\n    }\n\n\ndef _validated_publication_contract(plan: dict[str, Any]) -> dict[str, Any]:\n    binding = plan.get("task_spec")\n    if not isinstance(binding, dict):\n        raise OperatorIntakeError(\n            "publication-contract-invalid",\n            "proposal publication contract requires a TaskSpec binding",\n        )\n    expected = _publication_contract_for_binding(\n        binding, onboarding="first_task_onboarding" in plan\n    )\n    if plan.get("publication") != expected:\n        raise OperatorIntakeError(\n            "publication-contract-invalid",\n            "proposal publication authority does not match the TaskSpec operation",\n            details={"expected": expected, "observed": plan.get("publication")},\n        )\n    return expected\n\n\ndef _proposal_review_approval(\n    publication_contract: dict[str, Any],\n    *,\n    reviewer: str | None,\n    proposal_sha256: str,\n    task_id: str,\n) -> dict[str, Any]:\n    action_class = str(publication_contract["action_class"])\n    if action_class == _EXTERNAL_TASK_CREATION_ACTION:\n        return approval_decision(\n            action_class,\n            None,\n            expected_reference=proposal_sha256,\n            task_id=task_id,\n        )\n    if not reviewer:\n        return approval_decision(\n            action_class,\n            None,\n            expected_reference=proposal_sha256,\n            task_id=task_id,\n        )\n    return require_approval(\n        "registry_mutation",\n        reviewed_plan_approval(\n            reviewer=reviewer,\n            reference=proposal_sha256,\n            task_id=task_id,\n            scope="registry_mutation",\n        ),\n        expected_reference=proposal_sha256,\n        task_id=task_id,\n    )\n\n\ndef _validate_task_spec_proposal_binding('''
+          source = replace_once(source, helper_anchor, helper_replacement, 'publication helpers')
+
+          source = replace_once(
+              source,
+              '''    task_spec_binding = _task_spec_proposal_binding(\n        registry, store, task_json=bound_task, event=event\n    )\n    _validate_task_semantics(''',
+              '''    task_spec_binding = _task_spec_proposal_binding(\n        registry, store, task_json=bound_task, event=event\n    )\n    publication_contract = _publication_contract_for_binding(\n        task_spec_binding, onboarding=onboarding is not None\n    )\n    _validate_task_semantics(''',
+              'proposal publication contract binding',
+          )
+          source = replace_once(
+              source,
+              '''        "publication": {\n            "action_class": "registry_mutation",\n            "publication_mode": "state_store",\n            "required_level": "reviewed_plan",\n            "queue_mutated": False,\n        },\n        "review": {\n            "required": True,''',
+              '''        "publication": publication_contract,\n        "review": {\n            "required": publication_contract["required_level"] == "reviewed_plan",''',
+              'proposal authority block',
+          )
+
+          source = replace_once(
+              source,
+              '''    task_id = _checked_text(plan.get("task_id"), field="task_id", maximum=240)\n    assert task_id is not None\n    review = plan.get("review")''',
+              '''    task_id = _checked_text(plan.get("task_id"), field="task_id", maximum=240)\n    assert task_id is not None\n    publication_contract = _validated_publication_contract(plan)\n    review_required = publication_contract["required_level"] == "reviewed_plan"\n    review = plan.get("review")''',
+              'review publication contract',
+          )
+          old_existing_approval = '''        approval = require_approval(\n            "registry_mutation",\n            reviewed_plan_approval(\n                reviewer=checked_reviewer,\n                reference=proposal_sha256,\n                task_id=task_id,\n                scope="registry_mutation",\n            ),\n            expected_reference=proposal_sha256,\n            task_id=task_id,\n        )'''
+          source = replace_once(
+              source,
+              old_existing_approval,
+              '''        approval = _proposal_review_approval(\n            publication_contract,\n            reviewer=checked_reviewer,\n            proposal_sha256=proposal_sha256,\n            task_id=task_id,\n        )''',
+              'existing review approval',
+          )
+          source = replace_once(
+              source,
+              '''    if review.get("required") is not True or review.get("status") != "pending":\n        raise OperatorIntakeError(\n            "review-state-invalid",\n            "proposal review must be required and pending before review",\n            details={"review": review},\n        )''',
+              '''    if review.get("status") != "pending" or (\n        review_required and review.get("required") is not True\n    ) or (\n        not review_required and review.get("required") is not False\n    ):\n        raise OperatorIntakeError(\n            "review-state-invalid",\n            "proposal review state does not match its publication contract",\n            details={"review": review, "publication": publication_contract},\n        )''',
+              'pending review state',
+          )
+          source = replace_once(
+              source,
+              '''    plan["review"] = {\n        "required": True,''',
+              '''    plan["review"] = {\n        "required": review_required,''',
+              'review required flag',
+          )
+          old_new_approval = '''    approval = require_approval(\n        "registry_mutation",\n        reviewed_plan_approval(\n            reviewer=checked_reviewer,\n            reference=proposal_sha256,\n            task_id=task_id,\n            scope="registry_mutation",\n        ),\n        expected_reference=proposal_sha256,\n        task_id=task_id,\n    )'''
+          source = replace_once(
+              source,
+              old_new_approval,
+              '''    approval = _proposal_review_approval(\n        publication_contract,\n        reviewer=checked_reviewer,\n        proposal_sha256=proposal_sha256,\n        task_id=task_id,\n    )''',
+              'new review approval',
+          )
+
+          validated_review = '''    publication_contract = _validated_publication_contract(plan)\n    review_required = publication_contract["required_level"] == "reviewed_plan"\n    review = plan.get("review")\n    if not isinstance(review, dict):\n        raise OperatorIntakeError("review-invalid", "proposal review must be an object")\n    review_status = review.get("status")\n    reviewer: str | None = None\n    if review_status == "reviewed":\n        if review_required and review.get("required") is not True:\n            raise OperatorIntakeError(\n                "review-binding-invalid",\n                "required reviewed-plan publication lost its review requirement",\n            )\n        if not review_required and review.get("required") not in {False, True}:\n            raise OperatorIntakeError(\n                "review-binding-invalid",\n                "optional external-evidence review has an invalid required flag",\n            )\n        reviewer = _checked_text(review.get("reviewer"), field="reviewer", maximum=200)\n        _checked_text(review.get("reviewed_at"), field="reviewed_at", maximum=80)\n        if review.get("reviewed_proposal_sha256") != expected_proposal_sha:\n            raise OperatorIntakeError(\n                "review-binding-invalid",\n                "reviewed_proposal_sha256 does not match proposal_sha256",\n            )\n    elif review_status == "pending" and not review_required:\n        if review.get("required") is not False:\n            raise OperatorIntakeError(\n                "review-binding-invalid",\n                "unreviewed external-evidence publication must keep review optional",\n            )\n    elif review_required:\n        raise OperatorIntakeError("review-missing", "proposal review.status must be reviewed")\n    else:\n        raise OperatorIntakeError(\n            "review-state-invalid",\n            "optional external-evidence review must be pending or reviewed",\n        )\n    approval_result = _proposal_review_approval(\n        publication_contract,\n        reviewer=reviewer,\n        proposal_sha256=expected_proposal_sha,\n        task_id=str(plan.get("task_id")),\n    )\n'''
+          source = replace_between(
+              source,
+              'def _validated_proposal(',
+              '    review = plan.get("review")\n',
+              '    registry, identity = _canonical_registry_snapshot(registry)\n',
+              validated_review,
+              'validated proposal review gate',
+          )
+
+          source = replace_once(
+              source,
+              '''    if "first_task_onboarding" in plan:\n        result.update({\n            "first_task_onboarding": plan["first_task_onboarding"],\n            "lease_task_id": plan["publishing_task_id"],\n            "required_lease_metadata": _publication_lease_metadata(plan),\n        })\n    return result''',
+              '''    if "first_task_onboarding" in plan:\n        result.update({\n            "first_task_onboarding": plan["first_task_onboarding"],\n            "lease_task_id": plan["publishing_task_id"],\n            "required_lease_metadata": _publication_lease_metadata(plan),\n        })\n    elif plan["publication"]["action_class"] == _EXTERNAL_TASK_CREATION_ACTION:\n        result["required_lease_metadata"] = _publication_lease_metadata(plan)\n    return result''',
+              'preview authority metadata',
+          )
+
+          source = replace_between(
+              source,
+              'def _publication_lease_metadata(',
+              'def _publication_lease_metadata(plan: dict[str, Any]) -> dict[str, Any]:\n',
+              '\n\ndef _validate_publication_leases(',
+              '''def _publication_lease_metadata(plan: dict[str, Any]) -> dict[str, Any]:\n    metadata = {\n        "task_id": plan["publishing_task_id"],\n        "operation": "state-task-publication",\n        "proposal_sha256": plan["proposal_sha256"],\n    }\n    publication_contract = _validated_publication_contract(plan)\n    if publication_contract["action_class"] == _EXTERNAL_TASK_CREATION_ACTION:\n        metadata.update({\n            "kind": _EXTERNAL_TASK_CREATION_AUTHORITY_KIND,\n            "authority_action_class": _EXTERNAL_TASK_CREATION_ACTION,\n            "authority_capability": _EXTERNAL_TASK_CREATION_CAPABILITY,\n            "bureau_phase": _EXTERNAL_TASK_CREATION_PHASE,\n        })\n    if "first_task_onboarding" in plan:\n        metadata.update({\n            "authority_kind": FIRST_TASK_ONBOARDING_KIND,\n            "first_task_onboarding_sha256": legacy.sha256_json(plan["first_task_onboarding"]),\n        })\n    return metadata\n''',
+              'publication lease metadata',
+          )
+
+          publish_authority_marker = '''    task_spec_binding = plan["task_spec"]\n    expected_revision = task_spec_binding["expected_revision"]'''
+          publish_authority_code = '''    publication_contract = _validated_publication_contract(plan)\n    publication_approval = preview["approval"]\n    publication_authority: dict[str, Any] | None = None\n    if publication_contract["action_class"] == _EXTERNAL_TASK_CREATION_ACTION:\n        _require_current_publication_lease_lifetime(normalized_leases)\n        publication_approval = require_approval(\n            _EXTERNAL_TASK_CREATION_ACTION,\n            explicit_operator_approval(\n                source=_EXTERNAL_TASK_CREATION_AUTHORITY_KIND,\n                approved=True,\n                reference=plan["proposal_sha256"],\n                task_id=plan["task_id"],\n                scope=_EXTERNAL_TASK_CREATION_ACTION,\n                note=(\n                    "server-owned publication lease "\n                    f"{normalized_leases['lease_binding_sha256']}"\n                ),\n            ),\n            expected_reference=plan["proposal_sha256"],\n            task_id=plan["task_id"],\n        )\n        publication_authority = {\n            "kind": _EXTERNAL_TASK_CREATION_AUTHORITY_KIND,\n            "lease_binding_sha256": normalized_leases["lease_binding_sha256"],\n            "required_metadata": _publication_lease_metadata(plan),\n        }\n\n    task_spec_binding = plan["task_spec"]\n    expected_revision = task_spec_binding["expected_revision"]'''
+          source = replace_once(
+              source,
+              publish_authority_marker,
+              publish_authority_code,
+              'effect approval materialization',
+          )
+          source = replace_once(
+              source,
+              '''        else:\n            task_spec_revision = store.put_task_spec(\n                plan["task_json"],\n                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",\n                expected_revision=expected_revision,\n                source="operator-intake-reviewed-proposal",\n            )''',
+              '''        else:\n            task_spec_revision = store.put_task_spec(\n                plan["task_json"],\n                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",\n                expected_revision=expected_revision,\n                source=(\n                    "operator-intake-external-evidence"\n                    if publication_contract["action_class"] == _EXTERNAL_TASK_CREATION_ACTION\n                    else "operator-intake-reviewed-proposal"\n                ),\n            )''',
+              'StateStore publication source',
+          )
+          source = replace_once(
+              source,
+              '''        "publishing_task_id": plan["publishing_task_id"],\n        "publishing_task_sha256": plan["publishing_task_sha256"],\n        "lease_binding": normalized_leases,''',
+              '''        "publishing_task_id": plan["publishing_task_id"],\n        "publishing_task_sha256": plan["publishing_task_sha256"],\n        "publication_approval": publication_approval,\n        "lease_binding": normalized_leases,''',
+              'publication receipt approval',
+          )
+          source = replace_once(
+              source,
+              '''    unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}''',
+              '''    if publication_authority is not None:\n        value["publication_authority"] = publication_authority\n    unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}''',
+              'publication receipt authority',
+          )
+
+          replay_review = '''    publication_contract = _validated_publication_contract(plan)\n    review_required = publication_contract["required_level"] == "reviewed_plan"\n    review = plan.get("review")\n    if not isinstance(review, dict):\n        raise OperatorIntakeError(\n            "review-binding-invalid",\n            "publication replay requires a proposal review object",\n        )\n    if review_required:\n        if (\n            review.get("required") is not True\n            or review.get("status") != "reviewed"\n            or review.get("reviewed_proposal_sha256") != expected_proposal_sha\n        ):\n            raise OperatorIntakeError(\n                "review-binding-invalid",\n                "publication replay requires the exact reviewed proposal binding",\n            )\n    else:\n        status = review.get("status")\n        if status == "pending":\n            valid = review.get("required") is False\n        elif status == "reviewed":\n            valid = (\n                review.get("required") in {False, True}\n                and review.get("reviewed_proposal_sha256") == expected_proposal_sha\n            )\n        else:\n            valid = False\n        if not valid:\n            raise OperatorIntakeError(\n                "review-binding-invalid",\n                "external-evidence replay has an invalid optional review binding",\n            )\n'''
+          source = replace_between(
+              source,
+              'def _publication_replay_plan_binding(',
+              '    review = plan.get("review")\n',
+              '    task_json = plan.get("task_json")\n',
+              replay_review,
+              'receipt replay review gate',
+          )
+          source = replace_once(
+              source,
+              '''        "mutation_changed": mutation_changed,\n    }\n\n\ndef _validate_publication_binding_mutation(''',
+              '''        "mutation_changed": mutation_changed,\n        "publication_contract": publication_contract,\n    }\n\n\ndef _validate_publication_binding_mutation(''',
+              'replay publication contract binding',
+          )
+
+          tests = replace_once(
+              tests,
+              '''    lease_metadata: dict[str, object] = {\n        "task_id": "BUR-TEST-001-T001",\n        "operation": "state-task-publication",\n        "proposal_sha256": preview["proposal_sha256"],\n    }''',
+              '''    lease_metadata: dict[str, object] = {\n        "task_id": "BUR-TEST-001-T001",\n        "operation": "state-task-publication",\n        "proposal_sha256": preview["proposal_sha256"],\n        "kind": "grabowski.bureau_task_publication_authority",\n        "authority_action_class": "task_creation_from_external_evidence",\n        "authority_capability": "bureau_mutation",\n        "bureau_phase": "work",\n    }''',
+              'test lease authority metadata',
+          )
+          tests = replace_once(
+              tests,
+              '''    assert plan["review"]["status"] == "pending"\n    assert plan["publication"] == {\n        "action_class": "registry_mutation",\n        "publication_mode": "state_store",\n        "required_level": "reviewed_plan",\n        "queue_mutated": False,\n    }''',
+              '''    assert plan["review"] == {\n        "required": False,\n        "status": "pending",\n        "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],\n    }\n    assert plan["publication"] == {\n        "action_class": "task_creation_from_external_evidence",\n        "publication_mode": "state_store",\n        "required_level": "operator",\n        "queue_mutated": False,\n    }''',
+              'proposal test contract',
+          )
+          tests = replace_once(
+              tests,
+              '    assert result["approval"]["allowed"] is True\n    assert result["plan_file_sha256_before"] != result["plan_file_sha256_after"]',
+              '    assert result["approval"]["allowed"] is False\n    assert result["approval"]["required_level"] == "operator"\n    assert result["plan_file_sha256_before"] != result["plan_file_sha256_after"]',
+              'review test approval',
+          )
+          tests = replace_between(
+              tests,
+              'def test_publication_preview_requires_review_and_returns_exact_leases(',
+              'def test_publication_preview_requires_review_and_returns_exact_leases(',
+              '\n\ndef test_publication_preview_rejects_unresolved_fields(',
+              '''def test_publication_preview_allows_unreviewed_external_task_creation_and_returns_exact_leases(\n    registry_factory, tmp_path\n):\n    _, registry = _committed_registry(registry_factory)\n    store = StateStore(tmp_path / "state.sqlite3")\n    plan_path = _proposal(registry, store, tmp_path)\n    result = publication_preview(registry, store, plan_path=plan_path)\n    assert result["status"] == "ready"\n    assert result["approval"]["allowed"] is False\n    assert result["approval"]["required_level"] == "operator"\n    assert result["publication_mode"] == "state_store"\n    assert result["coordination_state_root"] == str(store.state_root.resolve())\n    assert result["required_resource_keys"] == [f"path:{store.state_root.resolve()}"]\n    assert result["required_lease_metadata"] == {\n        "task_id": "BUR-TEST-001-T001",\n        "operation": "state-task-publication",\n        "proposal_sha256": result["proposal_sha256"],\n        "kind": "grabowski.bureau_task_publication_authority",\n        "authority_action_class": "task_creation_from_external_evidence",\n        "authority_capability": "bureau_mutation",\n        "bureau_phase": "work",\n    }\n    assert result["branch"] is None\n    assert result["open_pr_identity_revalidation"]["status"] == "not_required"\n''',
+              'preview test',
+          )
+          tests = replace_once(
+              tests,
+              '''    assert reviewed["status"] == "reviewed"\n    assert reviewed["approval"]["allowed"] is True''',
+              '''    assert reviewed["status"] == "reviewed"\n    assert reviewed["approval"]["allowed"] is False\n    assert reviewed["approval"]["required_level"] == "operator"''',
+              'CLI review approval',
+          )
+
+          insertion_anchor = '\n\ndef test_publication_rejects_missing_lease_before_publisher(registry_factory, tmp_path):\n'
+          extra_tests = '''\n\ndef test_external_task_creation_requires_server_owned_publication_authority(\n    registry_factory, tmp_path\n):\n    _, registry = _committed_registry(registry_factory)\n    store = StateStore(tmp_path / "state.sqlite3")\n    plan_path = _proposal(registry, store, tmp_path)\n    preview = publication_preview(registry, store, plan_path=plan_path)\n    with pytest.raises(OperatorIntakeError) as caught:\n        publish_task_proposal(\n            registry,\n            store,\n            plan_path=plan_path,\n            lease_binding=_lease_binding(),\n            resource_db=_lease_db(\n                preview,\n                tmp_path,\n                metadata_overrides={"authority_action_class": "registry_mutation"},\n            ),\n            workspace_root=tmp_path / "unused",\n            receipt_path=tmp_path / "receipt.json",\n        )\n    assert caught.value.code == "lease-metadata-binding-mismatch"\n    assert caught.value.effect_started is False\n    assert store.task_spec(preview["task_id"]) is None\n\n\ndef test_external_task_creation_receipt_binds_operator_authority(\n    registry_factory, tmp_path\n):\n    _, registry = _committed_registry(registry_factory)\n    store = StateStore(tmp_path / "state.sqlite3")\n    plan_path = _proposal(registry, store, tmp_path)\n    preview = publication_preview(registry, store, plan_path=plan_path)\n    result = publish_task_proposal(\n        registry,\n        store,\n        plan_path=plan_path,\n        lease_binding=_lease_binding(),\n        resource_db=_lease_db(preview, tmp_path),\n        workspace_root=tmp_path / "unused",\n        receipt_path=tmp_path / "receipt.json",\n    )\n    approval = result["publication_approval"]\n    assert approval["action_class"] == "task_creation_from_external_evidence"\n    assert approval["required_level"] == "operator"\n    assert approval["allowed"] is True\n    assert approval["expected_reference"] == preview["proposal_sha256"]\n    assert approval["task_id"] == preview["task_id"]\n    assert approval["evidence"]["source"] == "grabowski.bureau_task_publication_authority"\n    authority = result["publication_authority"]\n    assert authority["kind"] == "grabowski.bureau_task_publication_authority"\n    assert authority["required_metadata"] == preview["required_lease_metadata"]\n    assert authority["lease_binding_sha256"] == result["lease_binding"]["lease_binding_sha256"]\n\n\ndef test_task_revision_still_requires_reviewed_plan(registry_factory, tmp_path):\n    _, registry = _committed_registry(registry_factory)\n    store = StateStore(tmp_path / "state.sqlite3")\n    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)\n    plan = json.loads(plan_path.read_text())\n    assert plan["publication"]["action_class"] == "registry_mutation"\n    assert plan["publication"]["required_level"] == "reviewed_plan"\n    assert plan["review"]["required"] is True\n    with pytest.raises(OperatorIntakeError) as caught:\n        publication_preview(registry, store, plan_path=plan_path)\n    assert caught.value.code == "review-missing"\n'''
+          tests = replace_once(tests, insertion_anchor, extra_tests + insertion_anchor, 'external authority tests')
+
+          source_path.write_text(source, encoding='utf-8')
+          tests_path.write_text(tests, encoding='utf-8')
+          PY
+          git diff --check
+      - name: Install validation dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Run operator intake regression suite
+        run: python -m pytest tests/test_operator_intake.py -q
+      - name: Validate repository
+        run: make validate
+      - name: Commit exact validated diff and remove one-shot writer
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/one-shot-operator-authority.yml
+          git diff --check
+          git status --short
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/bureau/operator_intake.py tests/test_operator_intake.py .github/workflows/one-shot-operator-authority.yml
+          git diff --cached --check
+          git commit -m 'fix(operator): consume external task publication authority'
+          git push origin HEAD:fix/operator-task-external-authority-20260914

@@ -49,6 +49,7 @@ class _FakeStore:
         state_root: Path,
         *,
         state: str = "assigned",
+        error: str | None = None,
         run_id: str = RUN_ID,
         coordinated: bool = True,
         claim_intent: dict[str, Any] | None = None,
@@ -65,6 +66,7 @@ class _FakeStore:
             "run_id": run_id,
             "task_id": TASK_ID,
             "state": state,
+            "error": error,
             "task_sha256": TASK_SHA256,
             "plan_sha256": PLAN_SHA256,
             "envelope_sha256": envelope_sha256,
@@ -134,6 +136,34 @@ def test_runtime_closeout_prepare_emits_one_exact_grabowski_lease_request(tmp_pa
     assert receipt_sha256 == sha256_json(unsigned)
     assert "lease_acquisition" in result["does_not_establish"]
     assert "deployment_authority" in result["does_not_establish"]
+
+
+def test_runtime_closeout_prepare_allows_historical_stale_worker_orphan(tmp_path: Path) -> None:
+    store = _FakeStore(
+        tmp_path,
+        state="orphaned",
+        error=bureau_v2.ORPHANED_STALE_WORKER_ERROR,
+    )
+
+    result = bureau_cli.runtime_closeout_prepare(store, RUN_ID)
+
+    assert result["status"] == "ready"
+    assert result["effect_started"] is False
+    assert result["run_id"] == RUN_ID
+    assert result["closeout_owner_id"] == f"bureau-runtime-closeout:{RUN_ID}"
+
+
+def test_runtime_closeout_prepare_rejects_other_orphan(tmp_path: Path) -> None:
+    store = _FakeStore(tmp_path, state="orphaned", error="different orphan reason")
+
+    with pytest.raises(RunStateConflict) as exc_info:
+        bureau_cli.runtime_closeout_prepare(store, RUN_ID)
+
+    assert exc_info.value.code == "runtime-closeout-run-not-active"
+    assert exc_info.value.details == {
+        "state": "orphaned",
+        "error": "different orphan reason",
+    }
 
 
 def test_runtime_closeout_prepare_rejects_uncoordinated_claim_next_run(tmp_path: Path) -> None:

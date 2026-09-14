@@ -1,0 +1,66 @@
+name: one-shot-operator-authority-v2
+on:
+  push:
+    branches: [fix/operator-task-external-authority-20260914]
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: fix/operator-task-external-authority-20260914
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Run guarded patcher with receipt scope repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          workflow = Path('.github/workflows/one-shot-operator-authority.yml').read_text(encoding='utf-8')
+          start_token = "          python - <<'PY'\n"
+          end_token = "\n          PY\n"
+          if workflow.count(start_token) != 1 or workflow.count(end_token) != 1:
+              raise SystemExit('embedded patcher markers are not unique')
+          embedded = workflow.split(start_token, 1)[1].split(end_token, 1)[0]
+          script = textwrap.dedent(embedded)
+
+          label = "'publication receipt authority'"
+          label_pos = script.index(label)
+          block_start = script.rfind('source = replace_once(', 0, label_pos)
+          block_end = script.index('\n)', label_pos) + 2
+          if block_start < 0:
+              raise SystemExit('receipt authority patch block start not found')
+          scoped = '''publish_start = source.index('def publish_task_proposal(')\npublish_end = source.index('\\ndef _read_task_publication_receipt', publish_start)\npublish_body = source[publish_start:publish_end]\nreceipt_anchor = '    unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}'\nif publish_body.count(receipt_anchor) != 1:\n    raise SystemExit(f'publication receipt authority: expected one scoped anchor, found {publish_body.count(receipt_anchor)}')\npublish_body = publish_body.replace(\n    receipt_anchor,\n    '    if publication_authority is not None:\\n        value["publication_authority"] = publication_authority\\n' + receipt_anchor,\n    1,\n)\nsource = source[:publish_start] + publish_body + source[publish_end:]'''
+          script = script[:block_start] + scoped + script[block_end:]
+          exec(compile(script, 'guarded-operator-authority-patcher', 'exec'), {'__name__': '__main__'})
+          PY
+          git diff --check
+      - name: Install validation dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Run operator intake regression suite
+        run: python -m pytest tests/test_operator_intake.py -q
+      - name: Validate repository
+        run: make validate
+      - name: Commit exact validated diff and remove one-shot writers
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/one-shot-operator-authority.yml
+          rm .github/workflows/one-shot-operator-authority-v2.yml
+          git diff --check
+          git status --short
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/bureau/operator_intake.py tests/test_operator_intake.py .github/workflows/one-shot-operator-authority.yml .github/workflows/one-shot-operator-authority-v2.yml
+          git diff --cached --check
+          git commit -m 'fix(operator): consume external task publication authority'
+          git push origin HEAD:fix/operator-task-external-authority-20260914

@@ -331,6 +331,10 @@ def _lease_db(
         "task_id": "BUR-TEST-001-T001",
         "operation": "state-task-publication",
         "proposal_sha256": preview["proposal_sha256"],
+        "kind": "grabowski.bureau_task_publication_authority",
+        "authority_action_class": "task_creation_from_external_evidence",
+        "authority_capability": "bureau_mutation",
+        "bureau_phase": "work",
     }
     if metadata_overrides:
         lease_metadata.update(metadata_overrides)
@@ -2554,7 +2558,8 @@ def test_task_review_binds_exact_pending_proposal_and_enables_preview(registry_f
     assert result["effect_started"] is True
     assert result["ambiguity"] is False
     assert result["review"]["reviewed_proposal_sha256"] == pending["proposal_sha256"]
-    assert result["approval"]["allowed"] is True
+    assert result["approval"]["allowed"] is False
+    assert result["approval"]["required_level"] == "operator"
     assert result["plan_file_sha256_before"] != result["plan_file_sha256_after"]
     preview = publication_preview(registry, store, plan_path=plan_path)
     assert preview["status"] == "ready"
@@ -2916,11 +2921,15 @@ def test_task_proposal_binds_candidate_registry_and_review(registry_factory, tmp
         plan["task_json"]["metadata"]["operator_intake"]["event_id"]
         == plan["candidate"]["event_id"]
     )
-    assert plan["review"]["status"] == "pending"
+    assert plan["review"] == {
+        "required": False,
+        "status": "pending",
+        "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
+    }
     assert plan["publication"] == {
-        "action_class": "registry_mutation",
+        "action_class": "task_creation_from_external_evidence",
         "publication_mode": "state_store",
-        "required_level": "reviewed_plan",
+        "required_level": "operator",
         "queue_mutated": False,
     }
 
@@ -3142,20 +3151,28 @@ def test_publication_preview_rejects_dirty_registry_worktree(registry_factory, t
     assert caught.value.code == "registry-working-tree-dirty"
 
 
-def test_publication_preview_requires_review_and_returns_exact_leases(registry_factory, tmp_path):
+def test_publication_preview_allows_unreviewed_external_task_creation_and_returns_exact_leases(
+    registry_factory, tmp_path
+):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
-    with pytest.raises(OperatorIntakeError) as caught:
-        publication_preview(registry, store, plan_path=plan_path)
-    assert caught.value.code == "review-missing"
-    _review(plan_path)
     result = publication_preview(registry, store, plan_path=plan_path)
     assert result["status"] == "ready"
-    assert result["approval"]["allowed"] is True
+    assert result["approval"]["allowed"] is False
+    assert result["approval"]["required_level"] == "operator"
     assert result["publication_mode"] == "state_store"
     assert result["coordination_state_root"] == str(store.state_root.resolve())
     assert result["required_resource_keys"] == [f"path:{store.state_root.resolve()}"]
+    assert result["required_lease_metadata"] == {
+        "task_id": "BUR-TEST-001-T001",
+        "operation": "state-task-publication",
+        "proposal_sha256": result["proposal_sha256"],
+        "kind": "grabowski.bureau_task_publication_authority",
+        "authority_action_class": "task_creation_from_external_evidence",
+        "authority_capability": "bureau_mutation",
+        "bureau_phase": "work",
+    }
     assert result["branch"] is None
     assert result["open_pr_identity_revalidation"]["status"] == "not_required"
 
@@ -3168,6 +3185,75 @@ def test_publication_preview_rejects_unresolved_fields(registry_factory, tmp_pat
     with pytest.raises(OperatorIntakeError) as caught:
         publication_preview(registry, store, plan_path=plan_path)
     assert caught.value.code == "proposal-unresolved"
+
+
+def test_external_task_creation_requires_server_owned_publication_authority(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(
+                preview,
+                tmp_path,
+                metadata_overrides={"authority_action_class": "registry_mutation"},
+            ),
+            workspace_root=tmp_path / "unused",
+            receipt_path=tmp_path / "receipt.json",
+        )
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert caught.value.effect_started is False
+    assert store.task_spec(preview["task_id"]) is None
+
+
+def test_external_task_creation_receipt_binds_operator_authority(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    result = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "unused",
+        receipt_path=tmp_path / "receipt.json",
+    )
+    approval = result["publication_approval"]
+    assert approval["action_class"] == "task_creation_from_external_evidence"
+    assert approval["required_level"] == "operator"
+    assert approval["allowed"] is True
+    assert approval["expected_reference"] == preview["proposal_sha256"]
+    assert approval["expected_task_id"] == preview["task_id"]
+    assert approval["evidence"]["task_id"] == preview["task_id"]
+    assert approval["evidence"]["source"] == "grabowski.bureau_task_publication_authority"
+    authority = result["publication_authority"]
+    assert authority["kind"] == "grabowski.bureau_task_publication_authority"
+    assert authority["required_metadata"] == preview["required_lease_metadata"]
+    assert authority["lease_binding_sha256"] == result["lease_binding"]["lease_binding_sha256"]
+
+
+def test_task_revision_still_requires_reviewed_plan(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    assert plan["publication"]["action_class"] == "registry_mutation"
+    assert plan["publication"]["required_level"] == "reviewed_plan"
+    assert plan["review"]["required"] is True
+    with pytest.raises(OperatorIntakeError) as caught:
+        publication_preview(registry, store, plan_path=plan_path)
+    assert caught.value.code == "review-missing"
 
 
 def test_publication_rejects_missing_lease_before_publisher(registry_factory, tmp_path):
@@ -4148,7 +4234,15 @@ def test_first_task_publication_creates_once_and_supplies_ordinary_publisher(
     assert result["proposal"]["publishing_task_sha256"] == plan["task_json_sha256"]
     _review(second_path)
     second_preview = publication_preview(registry, store, plan_path=second_path)
-    assert "required_lease_metadata" not in second_preview
+    assert second_preview["required_lease_metadata"] == {
+        "task_id": plan["task_id"],
+        "operation": "state-task-publication",
+        "proposal_sha256": second_preview["proposal_sha256"],
+        "kind": "grabowski.bureau_task_publication_authority",
+        "authority_action_class": "task_creation_from_external_evidence",
+        "authority_capability": "bureau_mutation",
+        "bureau_phase": "work",
+    }
     second = publish_task_proposal(
         registry, store, plan_path=second_path,
         resource_db=_lease_db(second_preview, tmp_path,
@@ -4654,7 +4748,8 @@ def test_cli_adapters_preserve_domain_results_without_extra_authority(
     reviewed = _cli_result(capsys)
     assert reviewed["kind"] == "bureau_task_review_result"
     assert reviewed["status"] == "reviewed"
-    assert reviewed["approval"]["allowed"] is True
+    assert reviewed["approval"]["allowed"] is False
+    assert reviewed["approval"]["required_level"] == "operator"
 
     assert (
         bureau_cli.main([*common, "operator-task-publish", "--plan", str(plan_path), "--preview"])

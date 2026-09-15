@@ -6597,6 +6597,15 @@ def test_coordinated_claim_commit_binds_live_lease_and_terminal_release(
     assert store.run(intent["run_id"])["reservations"] == []
     assert registry.tasks[task_id].state == "ready"
 
+    connection = sqlite3.connect(database)
+    connection.execute("DELETE FROM leases")
+    connection.commit()
+    connection.close()
+    released = coordinated_claim_status(store, intent["run_id"], resource_db=database)
+    assert released["lease"]["status"] == "terminal-released-or-expired"
+    assert released["lease"]["error"]["code"] == "lease-resources-missing"
+    assert "resources" not in released["lease"]
+
 
 def test_coordinated_claim_missing_lease_never_creates_run(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1, mode="write")
@@ -7606,6 +7615,17 @@ def test_runtime_closeout_historical_orphan_accepts_complete_repository_rebind_c
     stored_receipt = case["store"].receipt(case["run_id"])
     assert stored_receipt is not None
     assert stored_receipt["task_sha256"] == orphaned["task_sha256"]
+    rebind_verification = stored_receipt["historical_repository_rebind"]
+    assert rebind_verification["schema_version"] == 1
+    assert rebind_verification["kind"] == "bureau_historical_repository_rebind_verification"
+    assert rebind_verification["source_task_sha256"] == orphaned["task_sha256"]
+    assert rebind_verification["verified_task_sha256"] != orphaned["task_sha256"]
+    assert rebind_verification["baseline_revision"] < rebind_verification["verified_revision"]
+    assert rebind_verification["orphan_event_id"] > 0
+    assert len(rebind_verification["rebind_chain_sha256"]) == 64
+    assert rebind_verification["transition_count"] == (
+        rebind_verification["verified_revision"] - rebind_verification["baseline_revision"]
+    )
     current_task = case["store"].task_spec(case["task_id"])
     assert current_task is not None
     current_write_claims = [
@@ -7637,6 +7657,53 @@ def test_runtime_closeout_historical_orphan_accepts_complete_repository_rebind_c
     assert status["state"] == "verified"
     assert status["task_sha256"] == dispatcher.registry.tasks[case["task_id"]].sha256
     assert status["plan_sha256"] == orphaned["plan_sha256"]
+    with case["store"].connect() as verification_connection:
+        stamp = bureau_v2._current_verification_stamp(
+            dispatcher.registry,
+            case["task_id"],
+            verification_connection.execute(
+                "SELECT * FROM task_status WHERE task_id=?", (case["task_id"],)
+            ).fetchone(),
+            verification_connection,
+            None,
+        )
+    assert stamp is not None
+    assert stamp["receipt_sha256"] == stored_receipt["receipt_sha256"]
+
+    legacy_receipt = dict(stored_receipt)
+    legacy_receipt.pop("historical_repository_rebind")
+    legacy_receipt.pop("receipt_sha256")
+    legacy_receipt_sha256 = legacy.sha256_json(legacy_receipt)
+    legacy_receipt["receipt_sha256"] = legacy_receipt_sha256
+    with case["store"].immediate() as verification_connection:
+        verification_connection.execute(
+            "UPDATE receipts SET receipt_json=?,receipt_sha256=? WHERE run_id=?",
+            (
+                legacy.canonical_json(legacy_receipt),
+                legacy_receipt_sha256,
+                case["run_id"],
+            ),
+        )
+        verification_connection.execute(
+            "UPDATE task_status SET receipt_sha256=? WHERE task_id=?",
+            (legacy_receipt_sha256, case["task_id"]),
+        )
+    with case["store"].connect() as verification_connection:
+        unbacked_row = verification_connection.execute(
+            "SELECT * FROM task_status WHERE task_id=?", (case["task_id"],)
+        ).fetchone()
+        unbacked_stamp = bureau_v2._current_verification_stamp(
+            dispatcher.registry,
+            case["task_id"],
+            unbacked_row,
+            verification_connection,
+            None,
+        )
+        unbacked_overlays = case["store"].overlays(
+            verification_connection, dispatcher.registry
+        )
+    assert unbacked_stamp is None
+    assert unbacked_overlays[case["task_id"]] == "stale"
     assert overlays[case["task_id"]] == "verified"
     assert (
         dispatcher._task_reverification_candidate(
@@ -7994,8 +8061,8 @@ def test_historical_orphan_pickup_status_rejects_partially_released_execution_le
     assert cursor.rowcount == 1
     connection.commit()
     connection.close()
-    status = bureau_v2._coordinated_live_lease_status(
-        "orphaned", intent, resource_db=database
+    status = bureau_v2._historical_pickup_lease_status(
+        intent, resource_db=database
     )
     assert status["status"] == "terminal-release-pending"
     assert status["resource_key"] == second_key
@@ -8367,13 +8434,13 @@ def test_runtime_closeout_historical_orphan_allows_no_pickup_resource_requiremen
     _apply_repository_identity_rebind_lifecycle(case)
     no_resource_intent = dict(case["intent"])
     no_resource_intent["required_resource_keys"] = []
-    no_resource_status = bureau_v2._coordinated_live_lease_status(
-        "orphaned", no_resource_intent, resource_db=case["database"]
+    no_resource_status = bureau_v2._historical_pickup_lease_status(
+        no_resource_intent, resource_db=case["database"]
     )
     assert no_resource_status == {"status": "not-required"}
     monkeypatch.setattr(
         bureau_v2,
-        "_coordinated_live_lease_status",
+        "_historical_pickup_lease_status",
         lambda *_args, **_kwargs: no_resource_status,
     )
 

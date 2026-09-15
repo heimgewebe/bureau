@@ -4319,6 +4319,12 @@ class StateStore:
                 has_revision_bindings
                 and row["task_sha256"] == task.sha256
                 and row["plan_sha256"] == current_plan
+                and (
+                    state != "verified"
+                    or _task_status_receipt_binds_current_revision(
+                        registry, task, current_plan, row, connection
+                    )
+                )
             ):
                 result[task.id] = state
             else:
@@ -7007,6 +7013,49 @@ def _coordinated_live_lease_status(
     *,
     resource_db: Path,
 ) -> dict[str, Any]:
+    """Preserve the public coordinated-claim lease-status contract."""
+    if not intent["required_resource_keys"]:
+        return {"status": "not-required"}
+    try:
+        live = runtime_refresh.validate_live_lease_binding(
+            intent,
+            {
+                "owner_id": intent["lease_owner_id"],
+                "task_id": intent["task_id"],
+            },
+            resource_db=resource_db,
+            min_remaining_seconds=30,
+            required_metadata={
+                "task_id": intent["task_id"],
+                "run_id": intent["run_id"],
+                "claim_intent_sha256": intent["intent_sha256"],
+            },
+        )
+        return {
+            "status": (
+                "active-bound"
+                if run_state in legacy.ACTIVE_STATES
+                else "terminal-release-pending"
+            ),
+            "binding": live,
+        }
+    except runtime_refresh.RuntimeRefreshError as exc:
+        return {
+            "status": (
+                "active-binding-drift"
+                if run_state in legacy.ACTIVE_STATES
+                else "terminal-released-or-expired"
+            ),
+            "error": exc.as_dict(),
+        }
+
+
+def _historical_pickup_lease_status(
+    intent: dict[str, Any],
+    *,
+    resource_db: Path,
+) -> dict[str, Any]:
+    """Classify every historical pickup key without changing the public status API."""
     required_resource_keys = intent["required_resource_keys"]
     if not required_resource_keys:
         return {"status": "not-required"}
@@ -7035,8 +7084,6 @@ def _coordinated_live_lease_status(
     try:
         live = validate(intent)
     except runtime_refresh.RuntimeRefreshError as exc:
-        if run_state in legacy.ACTIVE_STATES:
-            return {"status": "active-binding-drift", "error": exc.as_dict()}
         if exc.code not in {
             "lease-resources-missing",
             "lease-owner-mismatch",
@@ -7044,14 +7091,7 @@ def _coordinated_live_lease_status(
         }:
             return {"status": "terminal-binding-drift", "error": exc.as_dict()}
     else:
-        return {
-            "status": (
-                "active-bound"
-                if run_state in legacy.ACTIVE_STATES
-                else "terminal-release-pending"
-            ),
-            "binding": live,
-        }
+        return {"status": "terminal-release-pending", "binding": live}
 
     observed_at_unix = int(observed_at.timestamp())
     released_resources: list[dict[str, Any]] = []
@@ -7100,6 +7140,7 @@ def _coordinated_live_lease_status(
         "status": "terminal-released-or-expired",
         "resources": released_resources,
     }
+
 
 def _existing_coordinated_claim_result(
     row: sqlite3.Row,
@@ -7672,6 +7713,7 @@ def _repository_identity_rebind_closeout_evolution_matches(
     observed_revision: int,
     observed_spec_sha256: str,
     rebind_after_event_id: int,
+    evidence_out: dict[str, Any] | None = None,
 ) -> bool:
     """Accept only a complete receipt-bound post-orphan repository rebind chain."""
     if (
@@ -7764,6 +7806,7 @@ def _repository_identity_rebind_closeout_evolution_matches(
     if len(task_spec_events_by_revision) != observed_revision - baseline_revision:
         return False
 
+    rebind_steps: list[dict[str, Any]] = []
     for before_revision, after_revision in pairwise(revisions):
         if (
             int(after_revision["revision"]) != int(before_revision["revision"]) + 1
@@ -7831,6 +7874,38 @@ def _repository_identity_rebind_closeout_evolution_matches(
             or mutation["resulting_revision"] != after_revision["revision"]
         ):
             return False
+        rebind_steps.append(
+            {
+                "from_revision": int(before_revision["revision"]),
+                "to_revision": int(after_revision["revision"]),
+                "from_spec_sha256": str(before_revision["spec_sha256"]),
+                "to_spec_sha256": str(after_revision["spec_sha256"]),
+                "event_id": task_spec_event_id,
+                "idempotency_key": expected_key,
+                "old_resource_id": old_resource_id,
+                "new_resource_id": new_resource_id,
+                "old_repository_path": old_repository_path,
+                "new_repository_path": new_repository_path,
+            }
+        )
+    if evidence_out is not None:
+        evidence_out.update(
+            {
+                "schema_version": 1,
+                "kind": "bureau_historical_repository_rebind_verification",
+                "task_id": task_id,
+                "source_task_sha256": task_revision_sha256(claimed_task),
+                "source_task_spec_sha256": baseline_sha256,
+                "baseline_revision": baseline_revision,
+                "verified_task_sha256": task_revision_sha256(current["spec"]),
+                "verified_task_spec_sha256": observed_spec_sha256,
+                "verified_revision": observed_revision,
+                "orphan_event_id": rebind_after_event_id,
+                "transition_count": len(rebind_steps),
+                "rebind_steps": rebind_steps,
+                "rebind_chain_sha256": legacy.sha256_json(rebind_steps),
+            }
+        )
     return True
 
 
@@ -7929,6 +8004,8 @@ def _historical_orphaned_repository_rebind_matches(
     revision: _CloseRevision,
     claimed_task: dict[str, Any] | None,
     run_row: sqlite3.Row,
+    *,
+    evidence_out: dict[str, Any] | None = None,
 ) -> bool:
     """Match only a receipt-bound repository rebind for one safe historical orphan."""
     if _historical_orphaned_closeout_precondition_reason(connection, run_row) is not None:
@@ -7963,6 +8040,7 @@ def _historical_orphaned_repository_rebind_matches(
         observed_revision=task_spec_revision,
         observed_spec_sha256=task_spec_sha256,
         rebind_after_event_id=orphan_event_id,
+        evidence_out=evidence_out,
     )
 
 
@@ -8086,8 +8164,8 @@ def _complete_run_after_typed_evaluation(
                 receipt["rlens_context_ref"] = envelope["rlens_context_ref"]
             if isinstance(envelope.get("rlens_context_policy"), dict):
                 receipt["rlens_context_policy"] = envelope["rlens_context_policy"]
-            receipt_sha = legacy.sha256_json(receipt)
-            receipt["receipt_sha256"] = receipt_sha
+            preliminary_receipt_sha = legacy.sha256_json(receipt)
+            receipt["receipt_sha256"] = preliminary_receipt_sha
             registry.schemas.validate("receipt", receipt, f"receipt:{run_id}")
 
             # This is the last precondition read before the first SQLite effect.
@@ -8101,12 +8179,15 @@ def _complete_run_after_typed_evaluation(
                 if observed_task_spec_sha256 is not None and isinstance(claimed_task, dict)
                 else None
             )
+            historical_repository_rebind: dict[str, Any] | None = None
             if historical_orphaned_repository_rebind:
+                historical_repository_rebind = {}
                 task_revision_matches = _historical_orphaned_repository_rebind_matches(
                     connection,
                     revision,
                     claimed_task if isinstance(claimed_task, dict) else None,
                     run_row,
+                    evidence_out=historical_repository_rebind,
                 )
             else:
                 task_revision_matches = _close_revision_task_matches_claim_baseline(
@@ -8139,6 +8220,29 @@ def _complete_run_after_typed_evaluation(
                         ),
                     },
                 )
+            if historical_orphaned_repository_rebind:
+                if (
+                    not historical_repository_rebind
+                    or historical_repository_rebind.get("verified_task_sha256")
+                    != revision.task_sha256
+                ):
+                    raise RunStateConflict(
+                        "historical-orphaned-rebind-verification-invalid",
+                        "historical repository rebind proof does not bind "
+                        "the verified task revision",
+                        run_id=run_id,
+                    )
+                historical_repository_rebind.update(
+                    {
+                        "run_id": run_id,
+                        "plan_sha256": run["plan_sha256"],
+                    }
+                )
+                receipt["historical_repository_rebind"] = historical_repository_rebind
+            receipt.pop("receipt_sha256", None)
+            receipt_sha = legacy.sha256_json(receipt)
+            receipt["receipt_sha256"] = receipt_sha
+            registry.schemas.validate("receipt", receipt, f"receipt:{run_id}")
 
             connection.execute(
                 (
@@ -8920,8 +9024,8 @@ def runtime_closeout(
     pickup_binding: dict[str, Any] | None = None
     historical_pickup_status: dict[str, Any] | None = None
     if historical_orphaned_repository_rebind:
-        historical_pickup_status = _coordinated_live_lease_status(
-            str(run["state"]), intent, resource_db=resource_db
+        historical_pickup_status = _historical_pickup_lease_status(
+            intent, resource_db=resource_db
         )
         if historical_pickup_status.get("status") not in {
             "terminal-released-or-expired",
@@ -9021,8 +9125,8 @@ def runtime_closeout(
     try:
         exact_identity, exact_registry = exact_registry_binding()
         if historical_orphaned_repository_rebind:
-            historical_pickup_status = _coordinated_live_lease_status(
-                str(run["state"]), intent, resource_db=resource_db
+            historical_pickup_status = _historical_pickup_lease_status(
+                intent, resource_db=resource_db
             )
             if historical_pickup_status.get("status") not in {
                 "terminal-released-or-expired",
@@ -9134,8 +9238,8 @@ def runtime_closeout(
             with _runtime_closeout_resource_write_barrier(
                 resource_db, run_id=run_id
             ):
-                historical_pickup_status = _coordinated_live_lease_status(
-                    str(run["state"]), intent, resource_db=resource_db
+                historical_pickup_status = _historical_pickup_lease_status(
+                    intent, resource_db=resource_db
                 )
                 if historical_pickup_status.get("status") not in {
                     "terminal-released-or-expired",
@@ -9876,6 +9980,129 @@ def _runtime_closeout_matches_receipt_bound_task(
     return True
 
 
+def _validated_historical_repository_rebind_verification(
+    value: Any,
+) -> dict[str, Any] | None:
+    """Validate one receipt-bound repository-rebind verification transfer."""
+    if not isinstance(value, dict):
+        return None
+    required = {
+        "schema_version",
+        "kind",
+        "run_id",
+        "task_id",
+        "plan_sha256",
+        "source_task_sha256",
+        "source_task_spec_sha256",
+        "baseline_revision",
+        "verified_task_sha256",
+        "verified_task_spec_sha256",
+        "verified_revision",
+        "orphan_event_id",
+        "transition_count",
+        "rebind_steps",
+        "rebind_chain_sha256",
+    }
+    if set(value) != required:
+        return None
+    if (
+        value.get("schema_version") != 1
+        or value.get("kind") != "bureau_historical_repository_rebind_verification"
+        or type(value.get("baseline_revision")) is not int
+        or type(value.get("verified_revision")) is not int
+        or type(value.get("orphan_event_id")) is not int
+        or type(value.get("transition_count")) is not int
+    ):
+        return None
+    baseline_revision = int(value["baseline_revision"])
+    verified_revision = int(value["verified_revision"])
+    orphan_event_id = int(value["orphan_event_id"])
+    transition_count = int(value["transition_count"])
+    steps = value.get("rebind_steps")
+    if (
+        baseline_revision < 1
+        or verified_revision <= baseline_revision
+        or orphan_event_id < 1
+        or not isinstance(steps, list)
+        or not steps
+        or transition_count != len(steps)
+        or transition_count != verified_revision - baseline_revision
+        or value.get("rebind_chain_sha256") != legacy.sha256_json(steps)
+    ):
+        return None
+    previous_spec_sha256 = value.get("source_task_spec_sha256")
+    previous_event_id = orphan_event_id
+    for offset, step in enumerate(steps):
+        if not isinstance(step, dict):
+            return None
+        from_revision = baseline_revision + offset
+        to_revision = from_revision + 1
+        event_id = step.get("event_id")
+        if (
+            step.get("from_revision") != from_revision
+            or step.get("to_revision") != to_revision
+            or step.get("from_spec_sha256") != previous_spec_sha256
+            or type(event_id) is not int
+            or event_id <= previous_event_id
+        ):
+            return None
+        previous_spec_sha256 = step.get("to_spec_sha256")
+        previous_event_id = event_id
+    if previous_spec_sha256 != value.get("verified_task_spec_sha256"):
+        return None
+    return dict(value)
+
+
+def _task_status_receipt_binds_current_revision(
+    registry: Registry,
+    task: legacy.Task,
+    current_plan: str,
+    row: sqlite3.Row,
+    connection: sqlite3.Connection,
+) -> bool:
+    """Require canonical receipt support when a verified row cites one."""
+    receipt_sha256 = row["receipt_sha256"]
+    if receipt_sha256 is None:
+        return True
+    if not isinstance(receipt_sha256, str) or re.fullmatch(r"[0-9a-f]{64}", receipt_sha256) is None:
+        # Preserve legacy pre-digest overlays; new canonical receipts are strict.
+        return True
+    receipt_rows = connection.execute(
+        "SELECT run_id,receipt_json,receipt_sha256 FROM receipts WHERE receipt_sha256=?",
+        (receipt_sha256,),
+    ).fetchall()
+    if not receipt_rows:
+        # Preserve legacy status rows that predate durable receipt persistence.
+        return True
+    if len(receipt_rows) != 1:
+        return False
+    receipt_row = receipt_rows[0]
+    run_id = str(receipt_row["run_id"])
+    try:
+        receipt = _load_validated_stored_receipt(registry, run_id, receipt_row)
+    except legacy.StateError:
+        return False
+    if (
+        receipt.get("task_id") != task.id
+        or receipt.get("plan_sha256") != current_plan
+        or receipt.get("receipt_sha256") != receipt_sha256
+    ):
+        return False
+    if receipt.get("task_sha256") == task.sha256:
+        return True
+    transfer = _validated_historical_repository_rebind_verification(
+        receipt.get("historical_repository_rebind")
+    )
+    return bool(
+        transfer
+        and transfer.get("run_id") == run_id
+        and transfer.get("task_id") == task.id
+        and transfer.get("plan_sha256") == current_plan
+        and transfer.get("source_task_sha256") == receipt.get("task_sha256")
+        and transfer.get("verified_task_sha256") == task.sha256
+    )
+
+
 def _current_verification_stamp(
     registry: Registry,
     task_id: str,
@@ -9891,6 +10118,9 @@ def _current_verification_stamp(
         row["state"] == "verified"
         and row["task_sha256"] == task.sha256
         and row["plan_sha256"] == current_plan
+        and _task_status_receipt_binds_current_revision(
+            registry, task, current_plan, row, connection
+        )
     ):
         return {
             "task_sha256": task.sha256,

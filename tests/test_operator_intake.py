@@ -787,7 +787,6 @@ def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
         "evidence",
         "expected_event_id",
         "idempotency_key",
-        "outcome",
     ]
 
 
@@ -1066,6 +1065,7 @@ def test_candidate_request_closes_exact_current_candidate_with_bound_evidence(
     store = StateStore(tmp_path / "state.sqlite3")
     first = _record(registry, store)
     request = _candidate_close_request(first)
+    request.pop("outcome")
 
     closed = candidate_record_request(registry, store, request)
     assessed = candidate_assess(registry, store, candidate_id=first["candidate_id"])
@@ -1094,6 +1094,25 @@ def test_candidate_request_closes_exact_current_candidate_with_bound_evidence(
     )
     assert assessed["candidate_status"] == "closed"
     assert assessed["decision"] == "drop"
+
+
+def test_candidate_request_rejects_explicit_non_completed_outcome(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    request = _candidate_close_request(first)
+    request["outcome"] = "failed"
+
+    with pytest.raises(OperatorIntakeError) as failure:
+        candidate_record_request(registry, store, request)
+
+    assert failure.value.code == "candidate-close-outcome-invalid"
+    current = operator_intake_module.current_candidate_record(
+        store, candidate_id=first["candidate_id"]
+    )
+    assert current["event_id"] == first["event_id"]
 
 
 def test_candidate_close_request_is_idempotent(registry_factory, tmp_path):

@@ -12759,6 +12759,46 @@ def test_no_run_closeout_allows_one_authenticated_succeeded_run(tmp_path: Path) 
     assert store.receipt(run_id) == receipt_before
 
 
+def test_no_run_closeout_allows_one_succeeded_run_among_failed_attempts(
+    tmp_path: Path,
+) -> None:
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-BROWSER-CONTROL-RESOURCE-20260811"
+    intent, store, result, resource_db = historical_no_run_success(tmp_path, task_id=task_id)
+    succeeded_run_id, _ = add_authority_run_receipt(store, task_id, run_suffix="succeeded")
+    failed_run_id, _ = add_authority_run_receipt(
+        store, task_id, run_suffix="failed", state="failed"
+    )
+    orphaned_run_id, _ = add_authority_run_receipt(
+        store, task_id, run_suffix="orphaned", state="orphaned"
+    )
+    release_test_leases(resource_db)
+    run_before = store.run(succeeded_run_id)
+    receipt_before = store.receipt(succeeded_run_id)
+    store.replay_projection = lambda: {
+        "matches_current": True,
+        "authoritative_root_sha256": "c" * 64,
+    }
+
+    closeout = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id=task_id,
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+    )
+
+    assert closeout["closeout"]["status"] == "verified"
+    assert store.task_spec(task_id)["spec"]["state"] == "verified"
+    assert store.run(succeeded_run_id) == run_before
+    assert store.receipt(succeeded_run_id) == receipt_before
+    assert store.run(failed_run_id)["state"] == "failed"
+    assert store.run(orphaned_run_id)["state"] == "orphaned"
+
+
 @pytest.mark.parametrize(
     "state", ["assigned", "running", "verifying", "orphaned", "failed", "cancelled"]
 )

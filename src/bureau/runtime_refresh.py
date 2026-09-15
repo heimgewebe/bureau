@@ -10065,17 +10065,22 @@ del _authorize_unused_authority_closeout_execution
 def _validated_terminal_authority_run(
     *, store: Any, approval_task_id: str, task_runs: list[dict[str, Any]]
 ) -> dict[str, Any] | None:
-    """Allow only one fully authenticated succeeded run to coexist with authority closeout."""
+    """Authenticate the sole succeeded run while preserving failed-attempt fail-closed behavior."""
     if not task_runs:
         return None
     run_ids = [run.get("run_id") for run in task_runs]
-    if len(task_runs) != 1:
+    succeeded_runs = [run for run in task_runs if run.get("state") == "succeeded"]
+    if len(succeeded_runs) > 1 or (not succeeded_runs and len(task_runs) != 1):
         raise RuntimeRefreshError(
             "authority-closeout-run-count-invalid",
             "historical runtime authority closeout requires zero or exactly one succeeded run",
-            details={"run_ids": run_ids},
+            details={
+                "run_ids": run_ids,
+                "succeeded_run_ids": [run.get("run_id") for run in succeeded_runs],
+            },
         )
-    run_id = task_runs[0].get("run_id")
+    selected_run = succeeded_runs[0] if succeeded_runs else task_runs[0]
+    run_id = selected_run.get("run_id")
     if not isinstance(run_id, str) or not run_id:
         raise RuntimeRefreshError(
             "authority-closeout-run-invalid", "Bureau run identity is invalid"

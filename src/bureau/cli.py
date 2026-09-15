@@ -80,6 +80,7 @@ from .task_closeout import (
     preview_task_no_run_closeout,
 )
 from .v2 import (
+    ORPHANED_STALE_WORKER_ERROR,
     coordinated_claim_intent_readback,
     coordinated_claim_status,
     runtime_closeout,
@@ -692,17 +693,29 @@ _RUNTIME_CLOSEOUT_PREPARE_MIN_REMAINING_SECONDS = 180
 def runtime_closeout_prepare(store: StateStore, run_id: str) -> dict[str, Any]:
     """Build the exact narrow Grabowski lease request for one runtime closeout.
 
-    This is deliberately read-only. Grabowski remains the lease writer, while
+    Active runs and the same narrowly eligible historical stale-worker orphan
+    corridor accepted by :func:`runtime_closeout` may prepare this temporary
+    lease. This is deliberately read-only. Grabowski remains the lease writer, while
     :func:`runtime_closeout` remains the authority that revalidates the live
     lease, runtime/Registry identity, task/plan revisions and terminal result.
     """
     run = store.run(run_id)
-    if run.get("state") not in ACTIVE_STATES:
+    historical_orphaned_repository_rebind = (
+        run.get("state") == "orphaned"
+        and run.get("error") == ORPHANED_STALE_WORKER_ERROR
+    )
+    if (
+        run.get("state") not in ACTIVE_STATES
+        and not historical_orphaned_repository_rebind
+    ):
         raise RunStateConflict(
             "runtime-closeout-run-not-active",
-            f"run {run_id} is not active for exact-runtime closeout preparation",
+            (
+                f"run {run_id} is not active or an eligible historical orphan "
+                "for exact-runtime closeout preparation"
+            ),
             run_id=run_id,
-            details={"state": run.get("state")},
+            details={"state": run.get("state"), "error": run.get("error")},
         )
     if run.get("run_id") != run_id:
         raise RunStateConflict(

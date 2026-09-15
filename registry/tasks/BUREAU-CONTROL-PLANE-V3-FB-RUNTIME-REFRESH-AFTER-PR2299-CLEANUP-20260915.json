@@ -211,7 +211,7 @@
       "activation_state": "ready",
       "required_state_store_transition": "compare-and-swap-current-revision",
       "required_activation_source": "runtime-refresh-protected-publication-activation",
-      "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned to ready.",
+      "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned to ready, while preserving metadata.runtime_execution_context exactly equal to the deployed Grabowski server-owned reserved executor contract.",
       "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",
       "required_checks": [
         "validate (3.10)",
@@ -225,13 +225,54 @@
         "construct one activated candidate from that exact revision which adds metadata.protected_publication_adoption, adds protected-publication-and-missing-only-adoption to acceptance, adds the matching no-run protected-publication-adoption evidence requirement, and changes state planned to ready",
         "validate the activated candidate with the installed runtime authority validator and no-run acceptance validator before CAS",
         "prove protected publication/adoption against the real PR/merge and exact missing-only receipt before CAS",
-        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent"
+        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent",
+        "preserve metadata.runtime_execution_context byte-for-structure equal to the deployed Grabowski server-owned reserved executor contract during planned-to-ready CAS"
       ],
       "does_not_establish": [
         "runtime authority while current StateStore state remains planned",
         "permission to invent or predict publication PR or merge commit",
         "permission to activate from a StateStore revision other than the exact adoption receipt",
         "permission to skip a second proof/readback after activation"
+      ]
+    },
+    "runtime_execution_context": {
+      "absence_tolerant_intent_roots": {
+        "runtime_user_unit_dir": {
+          "when_absent": "writable-searchable-rw-direct-parent",
+          "when_present": "writable-searchable-rw-directory"
+        }
+      },
+      "cwd": "/home/alex",
+      "directory_access": [
+        "W_OK",
+        "X_OK"
+      ],
+      "execution_backend": "systemd-user",
+      "executor_tool": "grabowski_task_start",
+      "forbid_generic_surfaces": [
+        "grabowski_terminal_run",
+        "grabowski_job_start",
+        "grabowski_fleet_run",
+        "grabowski_task_start:direct-apply"
+      ],
+      "host": "heim-pc",
+      "kind": "grabowski_bureau_runtime_refresh_execution_context",
+      "required_writable_intent_roots": [
+        "prefix",
+        "bin_dir",
+        "libexec_dir",
+        "user_unit_dir",
+        "state_root",
+        "authority_state_store.state_root"
+      ],
+      "reserved_command": "grabowski-bureau-runtime-refresh-apply",
+      "resume_policy": "never",
+      "schema_version": 1,
+      "task_identity_evidence": "server-injected-task-id-and-systemd-unit-v1",
+      "writability_evidence": [
+        "findmnt",
+        "statvfs",
+        "os.access"
       ]
     }
   },
@@ -249,7 +290,7 @@
     "rollback"
   ],
   "rollback": {
-    "strategy": "The currently integrity-valid deployed Bureau runtime at 8da2115b296cbe5c0e3aec53de694c3d33492e4a remains authoritative until a separately break-glass-authorized new immutable result is fully read back. If publication/adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, leases or any later runtime effect becomes unclear, preserve all evidence and do not retry; reconciliation requires a separately authorized successor path."
+    "strategy": "The currently integrity-valid deployed Bureau runtime at 49b2f50e91c8fdc1ca8abb65868928750fd03717 remains authoritative until one operator-authorized, source-precondition-bound immutable result is fully read back. If protected publication, adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability, leases or any later runtime result becomes unclear, preserve evidence and do not blindly retry; reconcile through a separately bound successor path. Historical runtime authorities, intents and targets are never reused."
   },
   "schema_version": 1,
   "state": "planned",

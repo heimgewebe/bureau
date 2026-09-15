@@ -21,6 +21,7 @@ from . import legacy, task_specs
 from .acceptance import AcceptanceContractError
 from .approval import (
     approval_decision,
+    explicit_operator_approval,
     require_approval,
     reviewed_plan_approval,
     task_approval_contract,
@@ -54,6 +55,10 @@ from .schema_validation import DocumentSchemaError
 from .v2 import _task_from_authoritative_spec
 
 OPERATOR_INTAKE_SCHEMA_VERSION = 1
+TASK_PUBLICATION_ACTION_CLASS = "task_creation_from_external_evidence"
+TASK_PUBLICATION_AUTHORITY_KIND = "grabowski.bureau_task_publication_authority"
+TASK_PUBLICATION_AUTHORITY_CAPABILITY = "bureau_mutation"
+TASK_PUBLICATION_BUREAU_PHASE = "work"
 MAX_SIMILARITY_RESULTS = 5
 MAX_SOURCE_RELATIONSHIPS = 20
 _SOURCE_SHA_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -62,6 +67,34 @@ _BRANCH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$")
 _GITHUB_SLUG_COMPONENT_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 _GENERIC_ACCEPTANCE_IDS = {"source-event-bound", "reviewed-before-effect"}
+
+
+def _task_publication_contract() -> dict[str, Any]:
+    return {
+        "action_class": TASK_PUBLICATION_ACTION_CLASS,
+        "publication_mode": "state_store",
+        "required_level": "operator",
+        "queue_mutated": False,
+    }
+
+
+def _task_publication_review_contract() -> dict[str, Any]:
+    return {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
+
+
+def _legacy_registry_publication_contract() -> dict[str, Any]:
+    return {
+        "action_class": "registry_mutation",
+        "publication_mode": "state_store",
+        "required_level": "reviewed_plan",
+        "queue_mutated": False,
+    }
+
+
 PUBLICATION_PHASES = (
     "before_workspace",
     "local_workspace",
@@ -1621,7 +1654,7 @@ def _candidate_assess(
                 if requested_task_id
                 else None
             ),
-            "publication_approval": approval_decision("registry_mutation", None),
+            "publication_approval": approval_decision(TASK_PUBLICATION_ACTION_CLASS, None),
         },
         "exact_duplicates": deduped_exact,
         "source_relationships": deduped_source_relationships[:MAX_SOURCE_RELATIONSHIPS],
@@ -3074,21 +3107,8 @@ def task_propose(
         "assessment": assessment,
         "unresolved_fields": unresolved,
         "placeholder_justification": placeholder_justification,
-        "publication": {
-            "action_class": "registry_mutation",
-            "publication_mode": "state_store",
-            "required_level": "reviewed_plan",
-            "queue_mutated": False,
-        },
-        "review": {
-            "required": True,
-            "status": "pending",
-            "required_fields": [
-                "reviewer",
-                "reviewed_at",
-                "reviewed_proposal_sha256",
-            ],
-        },
+        "publication": _task_publication_contract(),
+        "review": _task_publication_review_contract(),
         "does_not_establish": [
             "git_registry_mutation",
             "queue_mutation",
@@ -3187,6 +3207,49 @@ def review_task_proposal(
     review = plan.get("review")
     if not isinstance(review, dict):
         raise OperatorIntakeError("review-invalid", "proposal review must be an object")
+    publication = plan.get("publication")
+    if publication == _task_publication_contract():
+        if review != _task_publication_review_contract():
+            raise OperatorIntakeError(
+                "review-state-invalid",
+                "typed task publication must not carry operator-task-review authority",
+                details={"review": review},
+            )
+        plan_file_sha256 = hashlib.sha256(plan_bytes).hexdigest()
+        return {
+            "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+            "kind": "bureau_task_review_result",
+            "status": "not_required",
+            "effect_started": False,
+            "retryable": False,
+            "ambiguity": False,
+            "required_readback": [],
+            "idempotent_replay": True,
+            "path": str(path),
+            "proposal_sha256": proposal_sha256,
+            "plan_file_sha256_before": plan_file_sha256,
+            "plan_file_sha256_after": plan_file_sha256,
+            "review": review,
+            "approval": approval_decision(
+                TASK_PUBLICATION_ACTION_CLASS,
+                None,
+                expected_reference=proposal_sha256,
+                task_id=task_id,
+            ),
+            "does_not_establish": [
+                "task_creation_authority",
+                "registry_mutation",
+                "queue_mutation",
+                "publication_effect",
+                *candidate_authority_nonclaims(),
+            ],
+        }
+    if publication != _legacy_registry_publication_contract():
+        raise OperatorIntakeError(
+            "publication-contract-invalid",
+            "unsupported task publication approval contract",
+            details={"publication": publication},
+        )
     if review.get("status") == "reviewed":
         same_review = (
             review.get("reviewer") == checked_reviewer
@@ -3485,30 +3548,51 @@ def _validated_proposal(
         raise OperatorIntakeError(
             "proposal-integrity-invalid", "task proposal hash does not match its content"
         )
+    publication = plan.get("publication")
     review = plan.get("review")
     if not isinstance(review, dict):
         raise OperatorIntakeError("review-invalid", "proposal review must be an object")
-    if review.get("status") != "reviewed":
-        raise OperatorIntakeError("review-missing", "proposal review.status must be reviewed")
-    reviewer = _checked_text(review.get("reviewer"), field="reviewer", maximum=200)
-    _checked_text(review.get("reviewed_at"), field="reviewed_at", maximum=80)
-    if review.get("reviewed_proposal_sha256") != expected_proposal_sha:
-        raise OperatorIntakeError(
-            "review-binding-invalid",
-            "reviewed_proposal_sha256 does not match proposal_sha256",
+    if publication == _task_publication_contract():
+        if review != _task_publication_review_contract():
+            raise OperatorIntakeError(
+                "review-state-invalid",
+                "typed task publication must remain review-free until publish authority is checked",
+                details={"review": review},
+            )
+        approval_result = approval_decision(
+            TASK_PUBLICATION_ACTION_CLASS,
+            None,
+            expected_reference=expected_proposal_sha,
+            task_id=str(plan.get("task_id")),
         )
-    approval = reviewed_plan_approval(
-        reviewer=str(reviewer),
-        reference=expected_proposal_sha,
-        task_id=str(plan.get("task_id")),
-        scope="registry_mutation",
-    )
-    approval_result = require_approval(
-        "registry_mutation",
-        approval,
-        expected_reference=expected_proposal_sha,
-        task_id=str(plan.get("task_id")),
-    )
+    elif publication == _legacy_registry_publication_contract():
+        if review.get("status") != "reviewed":
+            raise OperatorIntakeError("review-missing", "proposal review.status must be reviewed")
+        reviewer = _checked_text(review.get("reviewer"), field="reviewer", maximum=200)
+        _checked_text(review.get("reviewed_at"), field="reviewed_at", maximum=80)
+        if review.get("reviewed_proposal_sha256") != expected_proposal_sha:
+            raise OperatorIntakeError(
+                "review-binding-invalid",
+                "reviewed_proposal_sha256 does not match proposal_sha256",
+            )
+        approval = reviewed_plan_approval(
+            reviewer=str(reviewer),
+            reference=expected_proposal_sha,
+            task_id=str(plan.get("task_id")),
+            scope="registry_mutation",
+        )
+        approval_result = require_approval(
+            "registry_mutation",
+            approval,
+            expected_reference=expected_proposal_sha,
+            task_id=str(plan.get("task_id")),
+        )
+    else:
+        raise OperatorIntakeError(
+            "publication-contract-invalid",
+            "unsupported task publication approval contract",
+            details={"publication": publication},
+        )
     registry, identity = _canonical_registry_snapshot(registry)
     publishing_task_id = str(plan.get("publishing_task_id", ""))
     onboarding = "first_task_onboarding" in plan
@@ -3549,12 +3633,8 @@ def _validated_proposal(
             or plan.get("publishing_task_sha256") is not None
             or not isinstance(plan.get("task_spec"), dict)
             or plan["task_spec"].get("operation") != "register"
-            or plan.get("publication") != {
-                "action_class": "registry_mutation",
-                "publication_mode": "state_store",
-                "required_level": "reviewed_plan",
-                "queue_mutated": False,
-            }
+            or plan.get("publication")
+            not in (_task_publication_contract(), _legacy_registry_publication_contract())
         ):
             raise OperatorIntakeError(
                 "first-task-onboarding-binding-invalid",
@@ -3649,7 +3729,7 @@ def _validated_proposal(
     if not isinstance(unresolved, list) or unresolved:
         raise OperatorIntakeError(
             "proposal-unresolved",
-            "reviewed proposal still contains unresolved fields",
+            "proposal still contains unresolved fields",
             details={"unresolved_fields": unresolved},
         )
     return plan, plan_bytes, approval_result
@@ -3665,7 +3745,7 @@ def publication_preview(
     github_repository: str | None = None,
     open_pr_runner: Callable[[list[str]], str] | None = None,
 ) -> dict[str, Any]:
-    """Preview the StateStore-only reviewed TaskSpec publication contract."""
+    """Preview TaskSpec publication without claiming publish-time authority."""
     del github_repository, open_pr_runner
     path = Path(plan_path).expanduser().absolute()
     plan, plan_bytes, approval_result = _validated_proposal(registry, store, plan_path=path)
@@ -3689,6 +3769,8 @@ def publication_preview(
         "target_path": plan["target_path"],
         "branch": None,
         "required_resource_keys": [f"path:{state_root}"],
+        "lease_task_id": plan["publishing_task_id"],
+        "required_lease_metadata": _publication_lease_metadata(plan),
         "open_pr_identity_revalidation": {
             "status": "not_required",
             "reason": "state_store_is_operational_task_authority",
@@ -3708,11 +3790,7 @@ def publication_preview(
         ],
     }
     if "first_task_onboarding" in plan:
-        result.update({
-            "first_task_onboarding": plan["first_task_onboarding"],
-            "lease_task_id": plan["publishing_task_id"],
-            "required_lease_metadata": _publication_lease_metadata(plan),
-        })
+        result["first_task_onboarding"] = plan["first_task_onboarding"]
     return result
 
 
@@ -3722,6 +3800,15 @@ def _publication_lease_metadata(plan: dict[str, Any]) -> dict[str, Any]:
         "operation": "state-task-publication",
         "proposal_sha256": plan["proposal_sha256"],
     }
+    if plan.get("publication") == _task_publication_contract():
+        metadata.update(
+            {
+                "kind": TASK_PUBLICATION_AUTHORITY_KIND,
+                "authority_action_class": TASK_PUBLICATION_ACTION_CLASS,
+                "authority_capability": TASK_PUBLICATION_AUTHORITY_CAPABILITY,
+                "bureau_phase": TASK_PUBLICATION_BUREAU_PHASE,
+            }
+        )
     if "first_task_onboarding" in plan:
         metadata.update({
             "authority_kind": FIRST_TASK_ONBOARDING_KIND,
@@ -3847,12 +3934,85 @@ def _publish_first_task_onboarding(
                     plan["task_json"],
                     idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
                     expected_revision=None,
-                    source="operator-intake-reviewed-proposal",
+                    source=(
+                        "operator-intake-authorized-proposal"
+                        if plan.get("publication") == _task_publication_contract()
+                        else "operator-intake-reviewed-proposal"
+                    ),
                 )
             return revision, normalized_leases
     except (sqlite3.Error, task_specs.TaskSpecError) as exc:
         raise StateError(str(exc)) from exc
 
+
+
+def _publish_task_spec_with_pinned_authority(
+    registry: Registry,
+    store: StateStore,
+    *,
+    plan_path: Path,
+    plan_bytes: bytes,
+    state_root: Path,
+    normalized_leases: dict[str, Any],
+    lease_binding: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Create one normal TaskSpec while pinning the publication authority rows.
+
+    The typed publication lease is both coordination and authorization evidence.
+    Revalidate it under a Resource-DB write lock and keep that lock until the
+    StateStore CAS commits so release/replacement cannot race the effect.
+    """
+    resource_db = Path(normalized_leases["resource_db"])
+    try:
+        with contextlib.closing(
+            sqlite3.connect(
+                resource_db.as_uri() + "?mode=rw",
+                uri=True,
+                timeout=5,
+                isolation_level=None,
+            )
+        ) as leases:
+            leases.execute("BEGIN IMMEDIATE")
+            with store.immediate() as connection:
+                plan, validated_bytes, _ = _validated_proposal(
+                    registry, store, plan_path=plan_path
+                )
+                if validated_bytes != plan_bytes or "first_task_onboarding" in plan:
+                    raise OperatorIntakeError(
+                        "plan-file-drift",
+                        "publication plan changed before the pinned authority effect",
+                    )
+                if store.state_root.expanduser().resolve() != state_root:
+                    raise OperatorIntakeError(
+                        "task-spec-state-invalid",
+                        "publication StateStore path changed before mutation",
+                    )
+                normalized_leases = _validate_publication_leases(
+                    plan, [f"path:{state_root}"], lease_binding, resource_db
+                )
+                current_bytes, _ = _read_bounded_regular_file(
+                    plan_path, field="plan"
+                )
+                if current_bytes != plan_bytes:
+                    raise OperatorIntakeError(
+                        "plan-file-drift",
+                        "publication plan changed before StateStore mutation",
+                    )
+                _require_current_publication_lease_lifetime(normalized_leases)
+                revision = task_specs.put(
+                    connection,
+                    plan["task_json"],
+                    idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+                    expected_revision=plan["task_spec"]["expected_revision"],
+                    source=(
+                        "operator-intake-authorized-proposal"
+                        if plan.get("publication") == _task_publication_contract()
+                        else "operator-intake-reviewed-proposal"
+                    ),
+                )
+            return revision, normalized_leases
+    except (sqlite3.Error, task_specs.TaskSpecError) as exc:
+        raise StateError(str(exc)) from exc
 
 
 def _release_unchanged_publication_leases(binding: dict[str, Any]) -> dict[str, Any]:
@@ -3981,6 +4141,22 @@ def publish_task_proposal(
     normalized_leases = _validate_publication_leases(
         plan, preview["required_resource_keys"], lease_binding, Path(resource_db),
     )
+    if plan.get("publication") == _task_publication_contract():
+        publication_approval = require_approval(
+            TASK_PUBLICATION_ACTION_CLASS,
+            explicit_operator_approval(
+                source=TASK_PUBLICATION_AUTHORITY_KIND,
+                approved=True,
+                reference=str(plan["proposal_sha256"]),
+                task_id=str(plan["publishing_task_id"]),
+                scope=TASK_PUBLICATION_ACTION_CLASS,
+                note="validated server-owned Grabowski publication authority lease",
+            ),
+            expected_reference=str(plan["proposal_sha256"]),
+            task_id=str(plan["publishing_task_id"]),
+        )
+    else:
+        publication_approval = preview["approval"]
 
     current_plan_bytes, _ = _read_bounded_regular_file(path, field="plan")
     if hashlib.sha256(current_plan_bytes).hexdigest() != plan_file_sha:
@@ -3990,8 +4166,6 @@ def publish_task_proposal(
             retryable=True,
         )
 
-    task_spec_binding = plan["task_spec"]
-    expected_revision = task_spec_binding["expected_revision"]
     try:
         if "first_task_onboarding" in plan:
             task_spec_revision, normalized_leases = _publish_first_task_onboarding(
@@ -4000,11 +4174,14 @@ def publish_task_proposal(
                 lease_binding=lease_binding,
             )
         else:
-            task_spec_revision = store.put_task_spec(
-                plan["task_json"],
-                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
-                expected_revision=expected_revision,
-                source="operator-intake-reviewed-proposal",
+            task_spec_revision, normalized_leases = _publish_task_spec_with_pinned_authority(
+                registry,
+                store,
+                plan_path=path,
+                plan_bytes=plan_bytes,
+                state_root=state_root,
+                normalized_leases=normalized_leases,
+                lease_binding=lease_binding,
             )
     except OperatorIntakeError:
         raise
@@ -4107,6 +4284,7 @@ def publish_task_proposal(
         "publishing_task_sha256": plan["publishing_task_sha256"],
         "lease_binding": normalized_leases,
         "lease_release": lease_release,
+        "approval": publication_approval,
         "task_spec_revision": task_spec_revision,
         "legacy_task_spec_import": {
             "status": "retired",
@@ -4355,15 +4533,29 @@ def _publication_replay_plan_binding(plan: dict[str, Any]) -> dict[str, Any]:
         raise OperatorIntakeError(
             "proposal-integrity-invalid", "task proposal hash does not match its content"
         )
+    publication = plan.get("publication")
     review = plan.get("review")
-    if (
-        not isinstance(review, dict)
-        or review.get("status") != "reviewed"
-        or review.get("reviewed_proposal_sha256") != expected_proposal_sha
-    ):
+    if publication == _task_publication_contract():
+        if review != _task_publication_review_contract():
+            raise OperatorIntakeError(
+                "review-binding-invalid",
+                "typed publication replay requires the exact review-free proposal binding",
+            )
+    elif publication == _legacy_registry_publication_contract():
+        if (
+            not isinstance(review, dict)
+            or review.get("status") != "reviewed"
+            or review.get("reviewed_proposal_sha256") != expected_proposal_sha
+        ):
+            raise OperatorIntakeError(
+                "review-binding-invalid",
+                "legacy publication replay requires the exact reviewed proposal binding",
+            )
+    else:
         raise OperatorIntakeError(
-            "review-binding-invalid",
-            "publication replay requires the exact reviewed proposal binding",
+            "publication-contract-invalid",
+            "unsupported task publication approval contract",
+            details={"publication": publication},
         )
     task_json = plan.get("task_json")
     task_id = plan.get("task_id")

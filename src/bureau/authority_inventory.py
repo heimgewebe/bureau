@@ -692,7 +692,11 @@ def _operational_registry_writer_projection(root: Path) -> dict[str, Any]:
             "src/bureau/operator_intake.py",
             "publish_task_proposal",
             "state_store",
-            ("store.put_task_spec(", '"publication_mode": "state_store"'),
+            (
+                "_publish_task_spec_with_pinned_authority(",
+                "task_specs.put(",
+                '"publication_mode": "state_store"',
+            ),
             ("SubprocessTaskPublisher", "gh pr create", "git push"),
         ),
         (
@@ -731,15 +735,25 @@ def _operational_registry_writer_projection(root: Path) -> dict[str, Any]:
     surfaces: list[dict[str, Any]] = []
     for name, relative, function_name, expected_status, required, forbidden in specifications:
         source = _function_source(root, relative, function_name)
+        observed_functions = [function_name]
+        if name == "operator-task-publication" and source is not None:
+            helper_name = "_publish_task_spec_with_pinned_authority"
+            helper_source = _function_source(root, relative, helper_name)
+            observed_functions.append(helper_name)
+            source = None if helper_source is None else f"{source}\n{helper_source}"
         if source is None:
             status = "unknown"
-            evidence = {"function_observed": False}
+            evidence = {
+                "function_observed": False,
+                "observed_functions": observed_functions,
+            }
         else:
             missing_required = [marker for marker in required if marker not in source]
             present_forbidden = [marker for marker in forbidden if marker in source]
             status = expected_status if not missing_required and not present_forbidden else "active"
             evidence = {
                 "function_observed": True,
+                "observed_functions": observed_functions,
                 "missing_required_markers": missing_required,
                 "present_forbidden_markers": present_forbidden,
             }

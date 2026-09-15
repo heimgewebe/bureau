@@ -57,6 +57,73 @@ def _acceptance_diagnostics(spec: Mapping[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
+LEGACY_TERMINAL_REVISION_STATES = frozenset({"cancelled", "superseded"})
+
+
+def _legacy_terminal_operational_view(spec: Mapping[str, Any]) -> dict[str, Any]:
+    material = _canonical_spec(spec)
+    material.pop("state", None)
+    metadata = material.get("metadata")
+    if isinstance(metadata, dict):
+        metadata.pop("operator_intake", None)
+        metadata.pop("bureau_cleanup", None)
+        if not metadata:
+            material.pop("metadata", None)
+    return material
+
+
+def is_legacy_terminal_only_revision(
+    current_spec: Mapping[str, Any], proposed_spec: Mapping[str, Any]
+) -> bool:
+    """Return true only for a state-only cancelled/superseded legacy revision.
+
+    The current TaskSpec must already predate the executable acceptance contract.
+    All operational material stays exact; only state plus additive audit metadata
+    owned by operator intake / Bureau cleanup may differ.
+    """
+    current = _canonical_spec(current_spec)
+    proposed = _canonical_spec(proposed_spec)
+    proposed_state = proposed.get("state")
+    if proposed_state not in LEGACY_TERMINAL_REVISION_STATES:
+        return False
+    source = f"TaskSpec:{current['id']}"
+    try:
+        default_schema_set().validate("task", current, source)
+        default_schema_set().validate("task", proposed, source)
+    except DocumentSchemaError as exc:
+        raise TaskSpecError(str(exc)) from exc
+    try:
+        validate_task_write(current, source)
+    except AcceptanceContractError:
+        pass
+    except DocumentSchemaError as exc:
+        raise TaskSpecError(str(exc)) from exc
+    else:
+        return False
+    current_state = current.get("state")
+    if current_state in legacy.TERMINAL_TASK_STATES:
+        raise TaskSpecError("legacy terminal TaskSpec is already terminal")
+    current_metadata = current.get("metadata")
+    proposed_metadata = proposed.get("metadata")
+    current_cleanup = (
+        current_metadata.get("bureau_cleanup")
+        if isinstance(current_metadata, dict)
+        else None
+    )
+    proposed_cleanup = (
+        proposed_metadata.get("bureau_cleanup")
+        if isinstance(proposed_metadata, dict)
+        else None
+    )
+    if proposed_cleanup is not None and not isinstance(proposed_cleanup, dict):
+        raise TaskSpecError("legacy terminal bureau_cleanup metadata must be an object")
+    if current_cleanup is not None and current_cleanup != proposed_cleanup:
+        raise TaskSpecError("legacy terminal bureau_cleanup metadata is immutable")
+    if _legacy_terminal_operational_view(current) != _legacy_terminal_operational_view(proposed):
+        raise TaskSpecError("legacy terminal revision may change only state and audit metadata")
+    return True
+
+
 def _validate_repository_identity_rebind_parameters(
     *,
     old_resource_id: str,
@@ -1479,9 +1546,26 @@ def put(
         )
     if idempotency_key.startswith(REPOSITORY_IDENTITY_REBIND_IDEMPOTENCY_PREFIX):
         raise TaskSpecError("TaskSpec idempotency namespace is reserved")
+    replay = connection.execute(
+        "SELECT 1 FROM task_spec_mutations WHERE idempotency_key=?",
+        (idempotency_key,),
+    ).fetchone()
+    if replay is not None:
+        return _put_validated_material(
+            connection,
+            canonical,
+            idempotency_key=idempotency_key,
+            expected_revision=expected_revision,
+            source=source,
+        )
+    source_label = f"TaskSpec:{canonical['id']}"
     try:
-        validate_task_write(canonical, f"TaskSpec:{canonical['id']}")
-    except (DocumentSchemaError, AcceptanceContractError) as exc:
+        validate_task_write(canonical, source_label)
+    except AcceptanceContractError as exc:
+        current = get_current(connection, canonical["id"])
+        if current is None or not is_legacy_terminal_only_revision(current["spec"], canonical):
+            raise TaskSpecError(str(exc)) from exc
+    except DocumentSchemaError as exc:
         raise TaskSpecError(str(exc)) from exc
     return _put_validated_material(
         connection,

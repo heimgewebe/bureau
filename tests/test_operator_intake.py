@@ -787,7 +787,6 @@ def test_candidate_record_request_contract_failures_are_actionable(tmp_path):
         "evidence",
         "expected_event_id",
         "idempotency_key",
-        "outcome",
     ]
 
 
@@ -1066,6 +1065,7 @@ def test_candidate_request_closes_exact_current_candidate_with_bound_evidence(
     store = StateStore(tmp_path / "state.sqlite3")
     first = _record(registry, store)
     request = _candidate_close_request(first)
+    request.pop("outcome")
 
     closed = candidate_record_request(registry, store, request)
     assessed = candidate_assess(registry, store, candidate_id=first["candidate_id"])

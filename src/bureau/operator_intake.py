@@ -150,7 +150,6 @@ _CANDIDATE_CLOSE_REQUEST_REQUIRED_FIELDS = frozenset(
         "idempotency_key",
         "candidate_id",
         "expected_event_id",
-        "outcome",
         "evidence",
     }
 )
@@ -832,6 +831,7 @@ def candidate_record_request(
             for key, value in request.items()
             if key not in {"schema_version", "operation"}
         }
+        payload.setdefault("outcome", "completed")
         return candidate_close(registry, store, **payload)
     if operation not in {None, "record"}:
         raise OperatorIntakeError(

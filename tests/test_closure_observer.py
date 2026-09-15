@@ -29,7 +29,12 @@ from bureau.core import (
     StateStore,
     task_revision_sha256,
 )
-from bureau.v2 import RunStateConflict, fail_run, state_root_hygiene
+from bureau.v2 import (
+    ORPHANED_STALE_WORKER_ERROR,
+    RunStateConflict,
+    fail_run,
+    state_root_hygiene,
+)
 
 TASK_SHA = "a" * 64
 PLAN_SHA = "b" * 64
@@ -1629,6 +1634,35 @@ def test_non_success_terminal_run_retires_bound_producer_bundle(
     assert result["evidence_retirement"]["before"]["retired_count"] == 1
     assert result["evidence_retirement"]["retired_count"] == 1
     assert not evidence_path.exists()
+
+
+def test_canonical_stale_worker_orphan_preserves_bound_producer_bundle_for_historical_closeout(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run = _github_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    evidence_path = store.state_root / "acceptance-evidence" / f"{run['run_id']}.json"
+
+    fail_run(
+        store,
+        run["run_id"],
+        ORPHANED_STALE_WORKER_ERROR,
+        "orphaned",
+    )
+    assert store.run(run["run_id"])["error"] == ORPHANED_STALE_WORKER_ERROR
+    assert evidence_path.exists()
+
+    result = reconcile_state_evidence(
+        registry, store, now=NOW, github=lambda argv: merged_pr_detail()
+    )
+
+    assert result["observed_run_count"] == 0
+    assert result["terminalized_count"] == 0
+    assert result["evidence_retirement"]["before"]["retired_count"] == 0
+    assert result["evidence_retirement"]["retired_count"] == 0
+    assert result["evidence_retirement"]["before"]["preserved_count"] == 1
+    assert evidence_path.exists()
 
 
 def test_unknown_run_json_residue_is_quarantined_once_with_digest_evidence(

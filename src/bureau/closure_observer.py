@@ -22,6 +22,7 @@ from bureau.acceptance import (
     validate_acceptance_contract,
 )
 from bureau.v2 import (
+    ORPHANED_STALE_WORKER_ERROR,
     TERMINAL_STATES,
     RunStateConflict,
     StateStore,
@@ -1243,10 +1244,12 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
     """Retire validated producer bundles once their run is terminal.
 
     Succeeded runs require a schema-, digest-, and run-bound durable receipt
-    before the producer bundle is removed. Failed, cancelled, and orphaned runs
-    are already terminal in the authoritative StateStore, so their producer
-    bundles may be retired after the claim-bound envelope and bundle bindings
-    validate. Safely classifiable JSON entries whose filename names no
+    before the producer bundle is removed. Failed, cancelled, and ordinary
+    orphaned runs are already terminal in the authoritative StateStore, so their
+    producer bundles may be retired after the claim-bound envelope and bundle
+    bindings validate. The canonical stale-worker orphan is preserved because
+    the narrow historical runtime-closeout corridor still consumes that exact
+    authenticated bundle. Safely classifiable JSON entries whose filename names no
     authoritative run are moved to a content-addressed quarantine. Malformed,
     unsafe, and nonterminal entries remain preserved in place.
     """
@@ -1318,6 +1321,12 @@ def retire_terminal_evidence_bundles(registry: Any, store: StateStore) -> dict[s
         try:
             envelope = _load_envelope(store, run_id, run.get("envelope_sha256"))
             load_state_evidence_bundle(store, run, envelope)
+            if (
+                state == "orphaned"
+                and run.get("error") == ORPHANED_STALE_WORKER_ERROR
+            ):
+                result["preserved_count"] += 1
+                continue
             if state == "succeeded":
                 with store.connect() as connection:
                     receipt_row = connection.execute(

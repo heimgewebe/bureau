@@ -1096,6 +1096,25 @@ def test_candidate_request_closes_exact_current_candidate_with_bound_evidence(
     assert assessed["decision"] == "drop"
 
 
+def test_candidate_request_rejects_explicit_non_completed_outcome(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    request = _candidate_close_request(first)
+    request["outcome"] = "failed"
+
+    with pytest.raises(OperatorIntakeError) as failure:
+        candidate_record_request(registry, store, request)
+
+    assert failure.value.code == "candidate-close-outcome-invalid"
+    current = operator_intake_module.current_candidate_record(
+        store, candidate_id=first["candidate_id"]
+    )
+    assert current["event_id"] == first["event_id"]
+
+
 def test_candidate_close_request_is_idempotent(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

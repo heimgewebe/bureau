@@ -58,7 +58,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "note": "Single-use target-bound runtime authority only. Under the current runtime, human break-glass arguments are not authority inputs; execution authority is the exact TaskSpec identity, immutable target digest, revision, expiry, source precondition, executor identity and live leases. Publication/adoption/activation remain separate from the runtime effect; no historical or foreign authority may be substituted and no blind retry is permitted after an effect-started ambiguity.",
-      "required_level": "break_glass"
+      "required_level": "operator"
     },
     "grabowski_resources": [
       "component:bureau-runtime-identity"
@@ -102,7 +102,7 @@
       "forbid_historical_target_reuse": true,
       "mode": "single-use-target-bound-source-precondition-v1",
       "required_action_class": "runtime_mutation",
-      "required_approval_level": "break_glass",
+      "required_approval_level": "operator",
       "required_claim_resource": "component.bureau.runtime",
       "required_task_state": [
         "ready",

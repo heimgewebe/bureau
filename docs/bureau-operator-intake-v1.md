@@ -1,6 +1,6 @@
 # Bureau operator-native intake v1
 
-Stand: 2026-08-23
+Stand: 2026-09-15
 
 ## Rolle und Zweck
 
@@ -65,38 +65,45 @@ Der Vorschlag bindet:
 - vollständiges Task-JSON und dessen Hash;
 - den gerenderten Task-Dateihash;
 - den kanonischen Ein-Datei-Änderungsdigest;
-- Assessment, ungelöste Felder und Reviewstatus.
+- Assessment und ungelöste Felder;
+- den Publikationsvertrag `task_creation_from_external_evidence`.
 
-Die Zieldatei muss neu sein. Initiative, Abhängigkeiten, Claims, Capabilities und Acceptance werden gegen die Registry geprüft. Generische Legacy-Acceptance wird ohne explizite Begründung abgelehnt. Die Plan-Datei wird create-only geschrieben.
+Für den normalen Candidate→TaskSpec-Pfad ist kein separates Operator-Review erforderlich. Neue Vorschläge tragen deshalb `review.required=false` und `review.status=not_required`. Das ist ausdrücklich **keine** Publikationsautorität: Proposal und Preview verändern weder Registry noch Queue noch StateStore-Task-Wahrheit. Die eigentliche Operator-Autorität muss erst am Effektpfad durch eine serverseitig erzeugte Grabowski-Publication-Authority belegt werden.
 
-Ein Vorschlag verändert weder Registry noch Queue.
+Die TaskSpec-Zielidentität muss neu sein. Initiative, Abhängigkeiten, Claims, Capabilities und Acceptance werden gegen Registry und autoritativen StateStore geprüft. Generische Legacy-Acceptance wird ohne explizite Begründung abgelehnt. Die Plan-Datei wird create-only geschrieben.
 
 ### 4. `operator-task-review`
 
-Das Review bindet einen expliziten Operatornamen an den exakten `proposal_sha256`. Es akzeptiert nur einen integren, noch ausstehenden Vorschlag ohne ungelöste Felder. Die Plan-Datei wird über einen atomaren Compare-and-Swap im selben Verzeichnis ersetzt; eine zwischenzeitliche Änderung wird erkannt und ohne Überschreiben fremder Bytes abgebrochen.
+Für neue `task_creation_from_external_evidence`-Vorschläge ist dieser Schritt nicht mehr Teil des normalen Pfads. Ein kompatibler Aufruf liefert `status=not_required`, mutiert den Vorschlag nicht und erzeugt insbesondere **keine** Operator- oder Publikationsautorität.
 
-Ein identischer Wiederholungsaufruf liefert den vorhandenen Reviewzustand ohne neuen Effekt. Ein anderer Reviewer, ein anderer Proposal-Hash, Symlinks oder unklare Readbacks scheitern mit stabilen Fehlercodes. Das Review erzeugt die hashgebundene `reviewed_plan`-Approval-Evidenz, verändert aber weder Registry noch Queue und veröffentlicht nichts.
+Der bisherige Reviewvertrag bleibt für explizite Legacy-/Kompatibilitätsvorschläge mit `publication.action_class=registry_mutation` erhalten. Dort bindet das Review weiterhin den Operator an den exakten `proposal_sha256`, ersetzt die Plan-Datei atomar per Compare-and-Swap und erzeugt hashgebundene `reviewed_plan`-Evidenz. Ein identischer Wiederholungsaufruf ist idempotent; abweichender Reviewer, falscher Proposal-Hash, Symlinks oder unklare Readbacks scheitern fail-closed.
+
+Damit unterhält der normale Effekt nicht zwei Autoritätsmodelle gleichzeitig: typisierte Candidate-Publikation verwendet serverseitige Operator-Autorität; allgemeine `registry_mutation` bleibt bei `reviewed_plan`.
 
 ### 5. `operator-task-publish`
 
-Ohne `--apply` ist der Aufruf eine wirkungsfreie Vorschau. Sie prüft Planintegrität, Reviewbindung, Approval, Registry- und Kandidatendrift, Task-Schema und ungelöste Felder. Sie liefert genau zwei benötigte Ressourcen:
+Ohne `--apply` ist der Aufruf eine wirkungsfreie Vorschau. Sie prüft Planintegrität, Registry- und Kandidatendrift, Task-Schema, Dedupe-/Proposal-Bindung und ungelöste Felder. Beim typisierten Candidate-Pfad bleibt `approval.allowed=false`: Preview behauptet ausdrücklich keine Publikationsautorität. Sie liefert den benötigten StateStore-Ressourcenschlüssel, die registrierte Publishing-Task-ID und die **exakt erwarteten** Lease-Metadaten für den späteren Effekt.
 
-- die neue Task-Datei;
-- das kurze Gate `path:/home/alex/repos/bureau/.bureau-scopes/registry-publication`.
-
-Der Effektpfad akzeptiert keine angelieferten Lease-Snapshots als Autorität. Bureau liest die private Grabowski-Resource-Datenbank selbst read-only und prüft:
+Der Effektpfad akzeptiert keine caller-gelieferten Lease-Snapshots oder Metadaten als Autorität. Bureau liest Grabowskis private Resource-Datenbank selbst read-only und prüft vor der StateStore-Mutation:
 
 - unterstütztes DB-Schema und private Datei;
-- denselben Owner für beide Ressourcen;
-- Bindung an den registrierten `publishing_task_id`;
-- vollständige exakte Ressourcenschlüssel;
-- gültige Zeit- und Metadatenfelder;
-- mindestens 60 Sekunden Restlaufzeit;
-- höchstens 300 Sekunden Gesamtlaufzeit des Publication-Gates.
+- exakten Owner und vollständige Ressourcenschlüssel;
+- gültige Lease-Zeit und Mindestrestlaufzeit;
+- `kind=grabowski.bureau_task_publication_authority`;
+- `authority_action_class=task_creation_from_external_evidence`;
+- `authority_capability=bureau_mutation`;
+- den registrierten `publishing_task_id`;
+- `operation=state-task-publication`;
+- den exakten `proposal_sha256`;
+- `bureau_phase=work`.
 
-Danach erstellt der Standardpublisher einen isolierten Checkout am exakten Registry-Basiscommit, schreibt nur die eine Task-Datei, validiert die gesamte Registry, committet, prüft Remote-Main erneut, publiziert einen neuen Branch und legt einen PR an. Erfolg erfordert GitHub-Readback von offenem PR, Branch, Base und exaktem Head.
+Erst **nach** erfolgreicher Prüfung dieser server-owned Authority erzeugt Bureau die Operator-Approval-Evidence für `task_creation_from_external_evidence`. Fehlende oder abweichende Authority-Felder scheitern vor dem StateStore-Effekt. Die öffentliche Grabowski-Resource-Acquire-Oberfläche lehnt den Authority-Kind als server-owned ab; ein Caller kann ihn daher nicht über die allgemeine Lease-Oberfläche prägen. Ein Caller-Feld wie `operator=true`, `read_only=true` oder eine selbst gebaute Metadatenstruktur besitzt keine Autoritätswirkung.
 
-Der Publisher merged nicht. Er queued, claimt, dispatcht, deployt und verifiziert den neuen Task nicht.
+Die TaskSpec-Publikation erfolgt im autoritativen StateStore mit Revision/CAS- und Readback-Prüfung. Ein erfolgreicher Receipt bindet Proposal, TaskSpec-Revision, Spec-Digest, Lease-Evidenz und die verwendete Approval-Entscheidung. Idempotenter Replay prüft denselben typisierten oder Legacy-Vertrag erneut und startet keinen zweiten Effekt. Queue und Registry-Dateien bleiben unverändert.
+
+**Vertrauensgrenze:** Die private Grabowski-Resource-Datenbank ist serverseitiger Operatorzustand. Wer diese Datenbank außerhalb des Vertrages beliebig direkt verändern kann, liegt außerhalb des Caller-Spoofing-Modells und hätte bereits eine stärkere lokale Systemkompromittierung.
+
+Der Publisher merged nicht, queued nicht, claimt nicht, dispatcht nicht und deployt nicht. Allgemeine `registry_mutation` bleibt weiterhin an `reviewed_plan` gebunden.
 
 ## Fehlervertrag
 
@@ -158,15 +165,6 @@ bureau --root /path/to/clean/bureau --json operator-task-propose \
   --write-plan proposal.json
 ```
 
-Hashgebundenes Operator-Review:
-
-```bash
-bureau --json operator-task-review \
-  --plan proposal.json \
-  --reviewer "ChatGPT through Grabowski" \
-  --proposal-sha256 <proposal_sha256>
-```
-
 Wirkungsfreie Veröffentlichungsvorschau:
 
 ```bash
@@ -174,7 +172,7 @@ bureau --root /path/to/clean/bureau --json operator-task-publish \
   --plan proposal.json --preview
 ```
 
-Effekt nach Review und Grabowski-Lease-Akquise:
+Effekt nach serverseitiger Grabowski-Authority-/Lease-Akquise:
 
 ```bash
 bureau --root /path/to/clean/bureau --json operator-task-publish \
@@ -184,7 +182,7 @@ bureau --root /path/to/clean/bureau --json operator-task-publish \
   --receipt /path/to/receipt.json
 ```
 
-`lease-binding.json` enthält nur Owner und registrierte Publishing-Task-ID. Die tatsächlichen Leases werden nicht daraus geglaubt, sondern live aus Grabowskis privater Resource-Datenbank gelesen.
+`lease-binding.json` enthält nur die Transportbindung an Owner und registrierte Publishing-Task-ID. Die tatsächliche Authority wird daraus nicht geglaubt, sondern live aus Grabowskis privater Resource-Datenbank gelesen und gegen Proposal, Task, Operation, Aktionsklasse, Capability und Phase geprüft. Für explizite Legacy-`registry_mutation`-Proposals bleibt `operator-task-review` vor dem Publish erforderlich.
 
 ### 6. `operator-task-ready`
 

@@ -191,13 +191,37 @@ def _review(plan_path: Path, *, unresolved: list[str] | None = None) -> dict:
         from bureau.legacy import sha256_json
 
         plan["proposal_sha256"] = sha256_json(unsigned)
+    if plan["publication"]["action_class"] == "registry_mutation":
+        plan["review"] = {
+            "required": True,
+            "status": "reviewed",
+            "reviewer": "operator-self-review",
+            "reviewed_at": "2026-07-18T08:00:00+02:00",
+            "reviewed_proposal_sha256": plan["proposal_sha256"],
+        }
+    plan_path.write_text(json.dumps(plan, indent=2) + "\n")
+    return plan
+
+
+def _legacy_registry_proposal(plan_path: Path) -> dict:
+    plan = json.loads(plan_path.read_text())
+    plan["publication"] = {
+        "action_class": "registry_mutation",
+        "publication_mode": "state_store",
+        "required_level": "reviewed_plan",
+        "queue_mutated": False,
+    }
     plan["review"] = {
         "required": True,
-        "status": "reviewed",
-        "reviewer": "operator-self-review",
-        "reviewed_at": "2026-07-18T08:00:00+02:00",
-        "reviewed_proposal_sha256": plan["proposal_sha256"],
+        "status": "pending",
+        "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
     }
+    unsigned = {
+        key: value for key, value in plan.items() if key not in {"proposal_sha256", "review"}
+    }
+    from bureau.legacy import sha256_json
+
+    plan["proposal_sha256"] = sha256_json(unsigned)
     plan_path.write_text(json.dumps(plan, indent=2) + "\n")
     return plan
 
@@ -309,6 +333,7 @@ def _lease_db(
     gate_ttl: int = 240,
     omit: set[str] | None = None,
     metadata_overrides: dict[str, object] | None = None,
+    metadata_omit: set[str] | None = None,
     metadata_digest: str | None = None,
 ) -> Path:
     path = tmp_path / "grabowski-resources.sqlite3"
@@ -328,13 +353,11 @@ def _lease_db(
     connection.execute(
         "INSERT INTO metadata(key, value) VALUES('resource_lease_contract_version', '1')"
     )
-    lease_metadata: dict[str, object] = {
-        "task_id": "BUR-TEST-001-T001",
-        "operation": "state-task-publication",
-        "proposal_sha256": preview["proposal_sha256"],
-    }
+    lease_metadata: dict[str, object] = dict(preview["required_lease_metadata"])
     if metadata_overrides:
         lease_metadata.update(metadata_overrides)
+    for key in metadata_omit or set():
+        lease_metadata.pop(key, None)
     metadata_json = json.dumps(
         lease_metadata,
         sort_keys=True,
@@ -2562,7 +2585,11 @@ def test_task_review_binds_exact_pending_proposal_and_enables_preview(registry_f
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     pending = json.loads(plan_path.read_text())
+    with pytest.raises(OperatorIntakeError) as blocked:
+        publication_preview(registry, store, plan_path=plan_path)
+    assert blocked.value.code == "review-missing"
 
     result = review_task_proposal(
         plan_path=plan_path,
@@ -2610,12 +2637,16 @@ def test_candidate_assessment_and_review_never_escalate_execution_authority(
     assert required_nonclaims <= set(pending["does_not_establish"])
     assert required_nonclaims <= set(reviewed["does_not_establish"])
     assert assessment["advisory_only"] is True
+    assert reviewed["status"] == "not_required"
+    assert reviewed["effect_started"] is False
+    assert reviewed["approval"]["allowed"] is False
 
 
 def test_task_review_exact_replay_is_idempotent(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     first = review_task_proposal(
         plan_path=plan_path,
@@ -2642,6 +2673,7 @@ def test_task_review_rejects_reference_unresolved_and_conflicting_reviewer(
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     pending = json.loads(plan_path.read_text())
     initial_bytes = plan_path.read_bytes()
 
@@ -2700,6 +2732,7 @@ def test_task_review_cas_restores_foreign_pre_exchange_bytes(
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     foreign = json.loads(plan_path.read_text())
     foreign["review"]["foreign_marker"] = True
@@ -2730,6 +2763,7 @@ def test_task_review_post_exchange_drift_is_ambiguous(registry_factory, tmp_path
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     foreign_bytes = b'{"foreign":true}\n'
 
@@ -2761,6 +2795,7 @@ def test_task_review_unexpected_post_exchange_failure_is_ambiguous(
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
 
     def fail_after_exchange(path: Path) -> None:
@@ -2793,6 +2828,7 @@ def test_task_review_parent_swap_before_exchange_is_fail_closed(
     plan_dir = tmp_path / "plans"
     plan_dir.mkdir()
     plan_path = _proposal(registry, store, plan_dir)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     original_bytes = plan_path.read_bytes()
     moved_dir = tmp_path / "plans-moved"
@@ -2829,6 +2865,7 @@ def test_task_review_parent_swap_after_exchange_is_ambiguous(
     plan_dir = tmp_path / "plans"
     plan_dir.mkdir()
     plan_path = _proposal(registry, store, plan_dir)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     moved_dir = tmp_path / "plans-moved"
     foreign_bytes = b'{"foreign":true}\n'
@@ -2862,6 +2899,7 @@ def test_task_review_rejects_symlink_plan(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     link = tmp_path / "proposal-link.json"
     link.symlink_to(plan_path)
@@ -2936,11 +2974,15 @@ def test_task_proposal_binds_candidate_registry_and_review(registry_factory, tmp
         plan["task_json"]["metadata"]["operator_intake"]["event_id"]
         == plan["candidate"]["event_id"]
     )
-    assert plan["review"]["status"] == "pending"
+    assert plan["review"] == {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
     assert plan["publication"] == {
-        "action_class": "registry_mutation",
+        "action_class": "task_creation_from_external_evidence",
         "publication_mode": "state_store",
-        "required_level": "reviewed_plan",
+        "required_level": "operator",
         "queue_mutated": False,
     }
 
@@ -3162,20 +3204,29 @@ def test_publication_preview_rejects_dirty_registry_worktree(registry_factory, t
     assert caught.value.code == "registry-working-tree-dirty"
 
 
-def test_publication_preview_requires_review_and_returns_exact_leases(registry_factory, tmp_path):
+def test_publication_preview_is_review_free_and_returns_exact_authority_lease(
+    registry_factory, tmp_path
+):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
-    with pytest.raises(OperatorIntakeError) as caught:
-        publication_preview(registry, store, plan_path=plan_path)
-    assert caught.value.code == "review-missing"
-    _review(plan_path)
     result = publication_preview(registry, store, plan_path=plan_path)
+    plan = json.loads(plan_path.read_text())
     assert result["status"] == "ready"
-    assert result["approval"]["allowed"] is True
+    assert result["approval"]["allowed"] is False
     assert result["publication_mode"] == "state_store"
     assert result["coordination_state_root"] == str(store.state_root.resolve())
     assert result["required_resource_keys"] == [f"path:{store.state_root.resolve()}"]
+    assert result["lease_task_id"] == plan["publishing_task_id"]
+    assert result["required_lease_metadata"] == {
+        "task_id": plan["publishing_task_id"],
+        "operation": "state-task-publication",
+        "proposal_sha256": plan["proposal_sha256"],
+        "kind": "grabowski.bureau_task_publication_authority",
+        "authority_action_class": "task_creation_from_external_evidence",
+        "authority_capability": "bureau_mutation",
+        "bureau_phase": "work",
+    }
     assert result["branch"] is None
     assert result["open_pr_identity_revalidation"]["status"] == "not_required"
 
@@ -3236,6 +3287,49 @@ def test_publication_rejects_lease_metadata_binding_mismatch(registry_factory, t
     }
 
 
+def test_publication_rejects_missing_server_owned_authority(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path, metadata_omit={"kind"}),
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+        )
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert caught.value.effect_started is False
+    assert store.task_spec(json.loads(plan_path.read_text())["task_id"]) is None
+
+
+def test_publication_rejects_spoofed_server_owned_authority(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(
+                preview,
+                tmp_path,
+                metadata_overrides={"kind": "caller.claimed_publication_authority"},
+            ),
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+        )
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert caught.value.effect_started is False
+    assert store.task_spec(json.loads(plan_path.read_text())["task_id"]) is None
+
 
 
 def test_publication_writes_receipt_and_is_idempotent(registry_factory, tmp_path):
@@ -3264,6 +3358,9 @@ def test_publication_writes_receipt_and_is_idempotent(registry_factory, tmp_path
         receipt_path=receipt,
     )
     assert first["status"] == "published"
+    assert first["approval"]["allowed"] is True
+    assert first["approval"]["action_class"] == "task_creation_from_external_evidence"
+    assert first["approval"]["required_level"] == "operator"
     assert first["queue_mutated"] is False
     assert first["task_spec_revision"]["revision"] == 1
     plan = json.loads(plan_path.read_text())
@@ -3333,7 +3430,6 @@ def test_publication_receipt_replay_rejects_internally_inconsistent_plan(
     plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
         operator_intake_module._proposal_unsigned(plan)
     )
-    plan["review"]["reviewed_proposal_sha256"] = plan["proposal_sha256"]
     plan_path.write_text(json.dumps(plan, indent=2) + "\n")
 
     with pytest.raises(OperatorIntakeError) as caught:
@@ -4168,7 +4264,10 @@ def test_first_task_publication_creates_once_and_supplies_ordinary_publisher(
     assert result["proposal"]["publishing_task_sha256"] == plan["task_json_sha256"]
     _review(second_path)
     second_preview = publication_preview(registry, store, plan_path=second_path)
-    assert "required_lease_metadata" not in second_preview
+    assert second_preview["required_lease_metadata"]["kind"] == (
+        "grabowski.bureau_task_publication_authority"
+    )
+    assert second_preview["required_lease_metadata"]["task_id"] == plan["task_id"]
     second = publish_task_proposal(
         registry, store, plan_path=second_path,
         resource_db=_lease_db(second_preview, tmp_path,
@@ -4673,8 +4772,8 @@ def test_cli_adapters_preserve_domain_results_without_extra_authority(
     )
     reviewed = _cli_result(capsys)
     assert reviewed["kind"] == "bureau_task_review_result"
-    assert reviewed["status"] == "reviewed"
-    assert reviewed["approval"]["allowed"] is True
+    assert reviewed["status"] == "not_required"
+    assert reviewed["approval"]["allowed"] is False
 
     assert (
         bureau_cli.main([*common, "operator-task-publish", "--plan", str(plan_path), "--preview"])
@@ -4981,13 +5080,6 @@ def _state_store_publication_fixture(registry_factory, tmp_path):
         if key not in {"proposal_sha256", "review"}
     }
     plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
-    plan["review"] = {
-        "required": True,
-        "status": "reviewed",
-        "reviewer": "operator-self-review",
-        "reviewed_at": "2026-08-18T17:00:00Z",
-        "reviewed_proposal_sha256": plan["proposal_sha256"],
-    }
     plan_path.write_text(json.dumps(plan, indent=2) + "\n")
     preview = publication_preview(registry, store, plan_path=plan_path)
     receipt_path = tmp_path / "state-publication-receipt.json"

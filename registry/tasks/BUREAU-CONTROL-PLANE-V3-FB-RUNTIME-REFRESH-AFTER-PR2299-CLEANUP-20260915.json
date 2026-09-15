@@ -199,10 +199,10 @@
         "validate (3.12)": "success",
         "registry-registration-preflight/freshness": "success"
       },
-      "preceding_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-20260906",
-      "preceding_authority_result_sha256": null,
-      "preceding_authority_target_sha256": "b5544ecd540aaf3a962cedcac06cd4db63f4ac6235fec89c441b19c499eed82e",
-      "preceding_authority_status": "ready-activation-target-stale",
+      "preceding_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2296-20260914",
+      "preceding_authority_result_sha256": "659b3fc5056c080d7c72ea8a999e8fd348db16695ff608fdf4ae1de684640b41",
+      "preceding_authority_target_sha256": "006be8e8204a871e6387d7b9fa60a564b680895650fad02c1458c39bc8a2c866",
+      "preceding_authority_status": "consumed-success",
       "observation_sha256": "45a2808b44046e700f544bc72c596cd4cb5193f0a75e50ffbb23b9e2d6f0ecd7"
     },
     "post_publication_activation": {

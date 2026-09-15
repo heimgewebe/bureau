@@ -3946,6 +3946,75 @@ def _publish_first_task_onboarding(
 
 
 
+def _publish_task_spec_with_pinned_authority(
+    registry: Registry,
+    store: StateStore,
+    *,
+    plan_path: Path,
+    plan_bytes: bytes,
+    state_root: Path,
+    normalized_leases: dict[str, Any],
+    lease_binding: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Create one normal TaskSpec while pinning the publication authority rows.
+
+    The typed publication lease is both coordination and authorization evidence.
+    Revalidate it under a Resource-DB write lock and keep that lock until the
+    StateStore CAS commits so release/replacement cannot race the effect.
+    """
+    resource_db = Path(normalized_leases["resource_db"])
+    try:
+        with contextlib.closing(
+            sqlite3.connect(
+                resource_db.as_uri() + "?mode=rw",
+                uri=True,
+                timeout=5,
+                isolation_level=None,
+            )
+        ) as leases:
+            leases.execute("BEGIN IMMEDIATE")
+            with store.immediate() as connection:
+                plan, validated_bytes, _ = _validated_proposal(
+                    registry, store, plan_path=plan_path
+                )
+                if validated_bytes != plan_bytes or "first_task_onboarding" in plan:
+                    raise OperatorIntakeError(
+                        "plan-file-drift",
+                        "publication plan changed before the pinned authority effect",
+                    )
+                if store.state_root.expanduser().resolve() != state_root:
+                    raise OperatorIntakeError(
+                        "task-spec-state-invalid",
+                        "publication StateStore path changed before mutation",
+                    )
+                normalized_leases = _validate_publication_leases(
+                    plan, [f"path:{state_root}"], lease_binding, resource_db
+                )
+                current_bytes, _ = _read_bounded_regular_file(
+                    plan_path, field="plan"
+                )
+                if current_bytes != plan_bytes:
+                    raise OperatorIntakeError(
+                        "plan-file-drift",
+                        "publication plan changed before StateStore mutation",
+                    )
+                _require_current_publication_lease_lifetime(normalized_leases)
+                revision = task_specs.put(
+                    connection,
+                    plan["task_json"],
+                    idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
+                    expected_revision=plan["task_spec"]["expected_revision"],
+                    source=(
+                        "operator-intake-authorized-proposal"
+                        if plan.get("publication") == _task_publication_contract()
+                        else "operator-intake-reviewed-proposal"
+                    ),
+                )
+            return revision, normalized_leases
+    except (sqlite3.Error, task_specs.TaskSpecError) as exc:
+        raise StateError(str(exc)) from exc
+
+
 def _release_unchanged_publication_leases(binding: dict[str, Any]) -> dict[str, Any]:
     """Release only the exact lease rows observed before a proven local outcome."""
     path = Path(str(binding["resource_db"]))
@@ -4097,8 +4166,6 @@ def publish_task_proposal(
             retryable=True,
         )
 
-    task_spec_binding = plan["task_spec"]
-    expected_revision = task_spec_binding["expected_revision"]
     try:
         if "first_task_onboarding" in plan:
             task_spec_revision, normalized_leases = _publish_first_task_onboarding(
@@ -4107,15 +4174,14 @@ def publish_task_proposal(
                 lease_binding=lease_binding,
             )
         else:
-            task_spec_revision = store.put_task_spec(
-                plan["task_json"],
-                idempotency_key=f"operator-intake:{plan['proposal_sha256']}",
-                expected_revision=expected_revision,
-                source=(
-                    "operator-intake-authorized-proposal"
-                    if plan.get("publication") == _task_publication_contract()
-                    else "operator-intake-reviewed-proposal"
-                ),
+            task_spec_revision, normalized_leases = _publish_task_spec_with_pinned_authority(
+                registry,
+                store,
+                plan_path=path,
+                plan_bytes=plan_bytes,
+                state_root=state_root,
+                normalized_leases=normalized_leases,
+                lease_binding=lease_binding,
             )
     except OperatorIntakeError:
         raise

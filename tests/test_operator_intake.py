@@ -3332,6 +3332,81 @@ def test_publication_rejects_spoofed_server_owned_authority(registry_factory, tm
 
 
 
+def test_publication_revalidates_authority_under_lock_before_effect(
+    registry_factory, tmp_path, monkeypatch,
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    db = _lease_db(preview, tmp_path)
+    original = operator_intake_module.validate_live_lease_binding
+    reads = 0
+
+    def validate_then_revoke(*args, **kwargs):
+        nonlocal reads
+        reads += 1
+        result = original(*args, **kwargs)
+        if reads == 1:
+            with sqlite3.connect(db) as connection:
+                connection.execute("DELETE FROM leases")
+        return result
+
+    monkeypatch.setattr(
+        operator_intake_module, "validate_live_lease_binding", validate_then_revoke
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=db,
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+        )
+    assert caught.value.code == "lease-resources-missing"
+    assert reads == 2
+    assert store.task_spec(json.loads(plan_path.read_text())["task_id"]) is None
+
+
+def test_publication_pins_authority_and_state_writers_through_mutation(
+    registry_factory, tmp_path, monkeypatch,
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    db = _lease_db(preview, tmp_path)
+    original = task_specs_module.put
+    checked = []
+
+    def put_with_competing_writers(connection, *args, **kwargs):
+        assert connection.in_transaction
+        for database in (store.path, db):
+            contender = sqlite3.connect(database, timeout=0.01, isolation_level=None)
+            try:
+                with pytest.raises(sqlite3.OperationalError, match="locked"):
+                    contender.execute("BEGIN IMMEDIATE")
+                checked.append(database)
+            finally:
+                contender.close()
+        return original(connection, *args, **kwargs)
+
+    monkeypatch.setattr(task_specs_module, "put", put_with_competing_writers)
+    result = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=db,
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=tmp_path / "receipt.json",
+    )
+    assert result["status"] == "published"
+    assert checked == [store.path, db]
+
+
 def test_publication_writes_receipt_and_is_idempotent(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

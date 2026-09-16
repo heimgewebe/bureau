@@ -3579,6 +3579,181 @@ def test_source_precondition_evidence_does_not_change_target_identity() -> None:
     assert "runtime_source_identity" not in refresh._target_payload(base)
 
 
+def test_source_precondition_registered_source_exact_match_is_proven(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    github, _calls = github_fixture()
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+        registered_source_commit=DEPLOYED,
+    )
+
+    assert value["status"] == "candidate"
+    assert value["registered_source_ancestry"] == {
+        "schema_version": 1,
+        "status": "proven",
+        "method": "same-commit",
+        "registered_source_commit": DEPLOYED,
+        "deployed_source_commit": DEPLOYED,
+        "compare_status": "identical",
+        "ahead_by": 0,
+        "behind_by": 0,
+        "merge_base_commit": DEPLOYED,
+    }
+    refresh._validate_candidate_source_precondition(
+        value, source_precondition_contract()
+    )
+
+
+def test_source_precondition_accepts_verified_descendant_of_registered_source(
+    tmp_path: Path,
+) -> None:
+    registered = "9" * 40
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    base_github, _calls = github_fixture()
+
+    def github(arguments: list[str]) -> Any:
+        if " ".join(arguments) == (
+            f"api repos/heimgewebe/bureau/compare/{registered}...{DEPLOYED}"
+        ):
+            return {
+                "status": "ahead",
+                "ahead_by": 2,
+                "behind_by": 0,
+                "merge_base_commit": {"sha": registered},
+            }
+        return base_github(arguments)
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+        registered_source_commit=registered,
+    )
+    contract = source_precondition_contract()
+    contract["registered_deployed_source_commit"] = registered
+    contract["registered_registry_source_commit"] = registered
+
+    assert value["status"] == "candidate"
+    assert value["registered_source_ancestry"]["status"] == "proven"
+    assert value["registered_source_ancestry"]["merge_base_commit"] == registered
+    refresh._validate_candidate_source_precondition(value, contract)
+
+
+@pytest.mark.parametrize("compare_status", ["behind", "diverged"])
+def test_source_precondition_rejects_runtime_below_or_outside_registered_source(
+    tmp_path: Path,
+    compare_status: str,
+) -> None:
+    registered = "9" * 40
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    base_github, _calls = github_fixture()
+
+    def github(arguments: list[str]) -> Any:
+        if " ".join(arguments) == (
+            f"api repos/heimgewebe/bureau/compare/{registered}...{DEPLOYED}"
+        ):
+            return {
+                "status": compare_status,
+                "ahead_by": 0,
+                "behind_by": 1,
+                "merge_base_commit": {"sha": DEPLOYED},
+            }
+        return base_github(arguments)
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+        registered_source_commit=registered,
+    )
+    contract = source_precondition_contract()
+    contract["registered_deployed_source_commit"] = registered
+    contract["registered_registry_source_commit"] = registered
+
+    assert value["status"] == "blocked"
+    assert "registered-source-lower-bound-unproven" in value["reason_codes"]
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh._validate_candidate_source_precondition(value, contract)
+    assert caught.value.code == "registered-source-lower-bound-unproven"
+
+
+def test_source_precondition_unproven_lower_bound_blocks_current_deployment(
+    tmp_path: Path,
+) -> None:
+    registered = "9" * 40
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path, source_commit=MAIN)
+    base_github, _calls = github_fixture(main_commit=MAIN)
+
+    def github(arguments: list[str]) -> Any:
+        if " ".join(arguments) == (
+            f"api repos/heimgewebe/bureau/compare/{registered}...{MAIN}"
+        ):
+            return {
+                "status": "behind",
+                "ahead_by": 0,
+                "behind_by": 1,
+                "merge_base_commit": {"sha": MAIN},
+            }
+        return base_github(arguments)
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+        registered_source_commit=registered,
+    )
+
+    assert value["status"] == "blocked"
+    assert "registered-source-lower-bound-unproven" in value["reason_codes"]
+    assert "scheduler-receipt-missing" in value["reason_codes"]
+    assert value["recovery_action"]["eligible"] is False
+
+
+def test_source_precondition_rejects_unproven_registered_source_ancestry(
+    tmp_path: Path,
+) -> None:
+    registered = "9" * 40
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path)
+    base_github, _calls = github_fixture()
+
+    def github(arguments: list[str]) -> Any:
+        if " ".join(arguments) == (
+            f"api repos/heimgewebe/bureau/compare/{registered}...{DEPLOYED}"
+        ):
+            raise _compare_command_error(status=404)
+        if arguments == ["api", f"repos/heimgewebe/bureau/commits/{DEPLOYED}"]:
+            return {"sha": DEPLOYED, "parents": [{"sha": "8" * 40}]}
+        if arguments == ["api", "repos/heimgewebe/bureau/commits/" + "8" * 40]:
+            return {"sha": "8" * 40, "parents": []}
+        return base_github(arguments)
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+        registered_source_commit=registered,
+    )
+
+    assert value["status"] == "blocked"
+    assert value["registered_source_ancestry"]["status"] == "unproven"
+    assert value["registered_source_ancestry"]["method"] == "first-parent-walk"
+    assert "registered-source-lower-bound-unproven" in value["reason_codes"]
+
 def test_observe_marks_registry_source_mismatch_invalid_without_affecting_legacy_authority(
     tmp_path: Path,
 ) -> None:
@@ -4177,6 +4352,17 @@ def test_apply_already_current_result_binds_source_precondition_proof(tmp_path: 
                 "ahead_by": 0,
                 "behind_by": 0,
                 "merge_base_commit": MAIN,
+            },
+            "registered_source_ancestry": {
+                "schema_version": 1,
+                "status": "proven",
+                "method": "github-compare",
+                "registered_source_commit": DEPLOYED,
+                "deployed_source_commit": MAIN,
+                "compare_status": "ahead",
+                "ahead_by": 1,
+                "behind_by": 0,
+                "merge_base_commit": DEPLOYED,
             },
             "runtime_source_identity": {
                 "schema_version": 1,

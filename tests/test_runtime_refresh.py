@@ -3688,6 +3688,40 @@ def test_source_precondition_rejects_runtime_below_or_outside_registered_source(
     assert caught.value.code == "registered-source-lower-bound-unproven"
 
 
+def test_source_precondition_unproven_lower_bound_blocks_current_deployment(
+    tmp_path: Path,
+) -> None:
+    registered = "9" * 40
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_registry_bound_manifest(manifest_path, source_commit=MAIN)
+    base_github, _calls = github_fixture(main_commit=MAIN)
+
+    def github(arguments: list[str]) -> Any:
+        if " ".join(arguments) == (
+            f"api repos/heimgewebe/bureau/compare/{registered}...{MAIN}"
+        ):
+            return {
+                "status": "behind",
+                "ahead_by": 0,
+                "behind_by": 1,
+                "merge_base_commit": {"sha": MAIN},
+            }
+        return base_github(arguments)
+
+    value = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau",
+        manifest_path=manifest_path,
+        now=NOW,
+        github=github,
+        registered_source_commit=registered,
+    )
+
+    assert value["status"] == "blocked"
+    assert "registered-source-lower-bound-unproven" in value["reason_codes"]
+    assert "scheduler-receipt-missing" in value["reason_codes"]
+    assert value["recovery_action"]["eligible"] is False
+
+
 def test_source_precondition_rejects_unproven_registered_source_ancestry(
     tmp_path: Path,
 ) -> None:

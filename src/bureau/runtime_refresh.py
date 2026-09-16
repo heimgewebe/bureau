@@ -1327,7 +1327,7 @@ def observe_runtime_refresh(
                         scheduler_blocked = True
 
     if deployed == main_commit:
-        if scheduler_blocked:
+        if "registered-source-lower-bound-unproven" in reasons or scheduler_blocked:
             status = "blocked"
         elif scheduler_actionable:
             status = "alert"

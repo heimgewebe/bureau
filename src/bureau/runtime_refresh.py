@@ -663,6 +663,108 @@ def _first_parent_lag_commits(
     return None
 
 
+def _registered_source_ancestry_proof(
+    *,
+    repository: str,
+    registered_source_commit: str,
+    deployed_source_commit: str,
+    github: Callable[[list[str]], Any],
+) -> dict[str, Any]:
+    proof: dict[str, Any] = {
+        "schema_version": 1,
+        "status": (
+            "proven"
+            if registered_source_commit == deployed_source_commit
+            else "unproven"
+        ),
+        "method": (
+            "same-commit"
+            if registered_source_commit == deployed_source_commit
+            else "pending"
+        ),
+        "registered_source_commit": registered_source_commit,
+        "deployed_source_commit": deployed_source_commit,
+        "compare_status": (
+            "identical" if registered_source_commit == deployed_source_commit else None
+        ),
+        "ahead_by": 0 if registered_source_commit == deployed_source_commit else None,
+        "behind_by": 0 if registered_source_commit == deployed_source_commit else None,
+        "merge_base_commit": (
+            registered_source_commit
+            if registered_source_commit == deployed_source_commit
+            else None
+        ),
+    }
+    if registered_source_commit == deployed_source_commit:
+        return proof
+
+    try:
+        compare = github(
+            [
+                "api",
+                f"repos/{repository}/compare/{registered_source_commit}...{deployed_source_commit}",
+            ]
+        )
+    except RuntimeRefreshError as exc:
+        if not _github_compare_not_found(exc):
+            raise
+        lag_commits = _first_parent_lag_commits(
+            repository=repository,
+            deployed=registered_source_commit,
+            main_commit=deployed_source_commit,
+            github=github,
+        )
+        if lag_commits is None or lag_commits <= 0:
+            return {**proof, "status": "unproven", "method": "first-parent-walk"}
+        return {
+            **proof,
+            "status": "proven",
+            "method": "first-parent-walk",
+            "ahead_by": lag_commits,
+            "behind_by": 0,
+            "merge_base_commit": registered_source_commit,
+        }
+
+    compare_status = compare.get("status") if isinstance(compare, dict) else None
+    ahead_by = compare.get("ahead_by") if isinstance(compare, dict) else None
+    behind_by = compare.get("behind_by") if isinstance(compare, dict) else None
+    merge_base = compare.get("merge_base_commit") if isinstance(compare, dict) else None
+    merge_base_commit = merge_base.get("sha") if isinstance(merge_base, dict) else None
+    compare_shape_valid = (
+        isinstance(compare_status, str)
+        and isinstance(ahead_by, int)
+        and not isinstance(ahead_by, bool)
+        and isinstance(behind_by, int)
+        and not isinstance(behind_by, bool)
+        and isinstance(merge_base_commit, str)
+    )
+    if (
+        compare_shape_valid
+        and compare_status == "ahead"
+        and ahead_by > 0
+        and behind_by == 0
+        and merge_base_commit == registered_source_commit
+    ):
+        return {
+            **proof,
+            "status": "proven",
+            "method": "github-compare",
+            "compare_status": compare_status,
+            "ahead_by": ahead_by,
+            "behind_by": behind_by,
+            "merge_base_commit": merge_base_commit,
+        }
+    return {
+        **proof,
+        "status": "rejected" if compare_shape_valid else "unproven",
+        "method": "github-compare",
+        "compare_status": compare_status,
+        "ahead_by": ahead_by,
+        "behind_by": behind_by,
+        "merge_base_commit": merge_base_commit,
+    }
+
+
 def load_manifest(path: Path) -> tuple[dict[str, Any], str]:
     no_follow = getattr(os, "O_NOFOLLOW", None)
     nonblocking = getattr(os, "O_NONBLOCK", None)
@@ -955,6 +1057,7 @@ def observe_runtime_refresh(
     now: datetime | None = None,
     github: Callable[[list[str]], Any] = gh_preflight_json,
     scheduler_reader: Callable[..., dict[str, Any]] | None = None,
+    registered_source_commit: str | None = None,
 ) -> dict[str, Any]:
     observed_at = now or utc_now()
     reasons: list[str] = []
@@ -1006,6 +1109,26 @@ def observe_runtime_refresh(
         "behind_by": 0 if deployed == main_commit else None,
         "merge_base_commit": deployed if deployed == main_commit else None,
     }
+
+    registered_source_ancestry: dict[str, Any] | None = None
+    if registered_source_commit is not None:
+        if (
+            not isinstance(registered_source_commit, str)
+            or len(registered_source_commit) != 40
+            or any(character not in "0123456789abcdef" for character in registered_source_commit)
+        ):
+            raise RuntimeRefreshError(
+                "registered-source-commit-invalid",
+                "registered runtime-refresh source commit is invalid",
+            )
+        registered_source_ancestry = _registered_source_ancestry_proof(
+            repository=repository,
+            registered_source_commit=registered_source_commit,
+            deployed_source_commit=deployed,
+            github=github,
+        )
+        if registered_source_ancestry.get("status") != "proven":
+            reasons.append("registered-source-lower-bound-unproven")
 
     if deployed != main_commit:
         associated = github(
@@ -1265,6 +1388,8 @@ def observe_runtime_refresh(
             "runtime_semantic_correctness",
         ],
     }
+    if registered_source_ancestry is not None:
+        observation["registered_source_ancestry"] = registered_source_ancestry
     if scheduler_readback_evidence is not None:
         observation["scheduler"] = scheduler_readback_evidence
     observation["target_sha256"] = sha256_bytes(canonical_bytes(_target_payload(observation)))
@@ -3051,12 +3176,89 @@ def _validate_candidate_runtime_source_identity(candidate: dict[str, Any]) -> No
         )
 
 
+def _registered_source_ancestry_is_proven(
+    proof: Any,
+    *,
+    registered_source_commit: str,
+    deployed_source_commit: str,
+) -> bool:
+    fields = {
+        "schema_version",
+        "status",
+        "method",
+        "registered_source_commit",
+        "deployed_source_commit",
+        "compare_status",
+        "ahead_by",
+        "behind_by",
+        "merge_base_commit",
+    }
+    if (
+        not isinstance(proof, dict)
+        or set(proof) != fields
+        or proof.get("schema_version") != 1
+        or proof.get("status") != "proven"
+        or proof.get("registered_source_commit") != registered_source_commit
+        or proof.get("deployed_source_commit") != deployed_source_commit
+    ):
+        return False
+    method = proof.get("method")
+    if method == "same-commit":
+        return (
+            registered_source_commit == deployed_source_commit
+            and proof.get("compare_status") == "identical"
+            and proof.get("ahead_by") == 0
+            and proof.get("behind_by") == 0
+            and proof.get("merge_base_commit") == registered_source_commit
+        )
+    if method == "github-compare":
+        return (
+            proof.get("compare_status") == "ahead"
+            and isinstance(proof.get("ahead_by"), int)
+            and not isinstance(proof.get("ahead_by"), bool)
+            and proof["ahead_by"] > 0
+            and proof.get("behind_by") == 0
+            and proof.get("merge_base_commit") == registered_source_commit
+        )
+    if method == "first-parent-walk":
+        return (
+            isinstance(proof.get("ahead_by"), int)
+            and not isinstance(proof.get("ahead_by"), bool)
+            and proof["ahead_by"] > 0
+            and proof.get("behind_by") == 0
+            and proof.get("merge_base_commit") == registered_source_commit
+        )
+    return False
+
+
 def _validate_candidate_source_precondition(
     candidate: dict[str, Any], source_precondition: dict[str, Any] | None
 ) -> None:
     if source_precondition is None:
         return
     _validate_candidate_runtime_source_identity(candidate)
+    registered_source_commit = source_precondition["registered_deployed_source_commit"]
+    deployed_source_commit = candidate.get("deployed_source_commit")
+    proof = candidate.get("registered_source_ancestry")
+    if deployed_source_commit == registered_source_commit and proof is None:
+        # Exact equality is itself the lower-bound witness. This keeps replay
+        # compatible with historical exact-source observations that predate the
+        # explicit registered_source_ancestry evidence field.
+        return
+    if not isinstance(deployed_source_commit, str) or not _registered_source_ancestry_is_proven(
+        proof,
+        registered_source_commit=registered_source_commit,
+        deployed_source_commit=deployed_source_commit,
+    ):
+        raise RuntimeRefreshError(
+            "registered-source-lower-bound-unproven",
+            "live runtime source is older than, divergent from, or not proven to "
+            "descend from the registered source",
+            details={
+                "registered_source_commit": registered_source_commit,
+                "deployed_source_commit": deployed_source_commit,
+            },
+        )
 
 
 def _validate_runtime_refresh_authority_contract(
@@ -3224,7 +3426,12 @@ def _validated_protected_publication_activation_observation_contract(
     recovery_action = value.get("recovery_action")
     reason_codes = value.get("reason_codes")
     if (
-        set(value) != RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_REQUIRED_FIELDS
+        frozenset(value)
+        not in (
+            RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_REQUIRED_FIELDS,
+            RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_REQUIRED_FIELDS
+            | {"registered_source_ancestry"},
+        )
         or value.get("schema_version") != SCHEMA_VERSION
         or value.get("kind") != "bureau_runtime_refresh_observation"
         or value.get("repository") != DEFAULT_REPOSITORY
@@ -3280,6 +3487,21 @@ def _validated_protected_publication_activation_observation_contract(
         or not all(isinstance(item, str) and item for item in reason_codes)
         or value.get("does_not_establish")
         != RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_DOES_NOT_ESTABLISH
+        or (
+            "registered_source_ancestry" in value
+            and (
+                not isinstance(value.get("registered_source_ancestry"), dict)
+                or not _registered_source_ancestry_is_proven(
+                    value["registered_source_ancestry"],
+                    registered_source_commit=str(
+                        value["registered_source_ancestry"].get(
+                            "registered_source_commit", ""
+                        )
+                    ),
+                    deployed_source_commit=str(deployed_source_commit),
+                )
+            )
+        )
         or not isinstance(value.get("observed_at"), str)
         or not isinstance(value.get("slo_seconds"), int)
         or isinstance(value.get("slo_seconds"), bool)
@@ -4862,14 +5084,22 @@ def activate_runtime_refresh_authority(
         target_main_commit=expected_main_commit,
         task_file_sha256=expected_task_file_sha256,
     )
-    observation_started_at = now or utc_now()
-    observation = observer(
-        repository=repository,
-        manifest_path=_resolve_manifest_parent_preserving_leaf(manifest_path),
-        required_checks=required_checks,
-        now=observation_started_at,
-        github=github,
+    source_precondition = _validated_runtime_source_precondition(
+        authority.get("source_precondition")
     )
+    observation_started_at = now or utc_now()
+    observer_arguments: dict[str, Any] = {
+        "repository": repository,
+        "manifest_path": _resolve_manifest_parent_preserving_leaf(manifest_path),
+        "required_checks": required_checks,
+        "now": observation_started_at,
+        "github": github,
+    }
+    if source_precondition is not None:
+        observer_arguments["registered_source_commit"] = source_precondition[
+            "registered_deployed_source_commit"
+        ]
+    observation = observer(**observer_arguments)
     verify_digest(observation, "observation_sha256")
     if observation.get("status") not in {"candidate", "alert"}:
         raise RuntimeRefreshError(
@@ -4897,9 +5127,6 @@ def activate_runtime_refresh_authority(
         expected_target_sha256=observation["target_sha256"],
     )
     _validate_candidate_runtime_source_identity(observation)
-    source_precondition = _validated_runtime_source_precondition(
-        authority.get("source_precondition")
-    )
     _validate_candidate_source_precondition(observation, source_precondition)
 
     reread = _read_authority_task(store, approval_task_id)
@@ -5665,16 +5892,20 @@ def prepare_intent(
         authority_contract.get("source_precondition")
     )
     if source_precondition is not None:
-        fresh_candidate = observer(
-            repository=candidate["repository"],
-            manifest_path=(
+        observer_arguments: dict[str, Any] = {
+            "repository": candidate["repository"],
+            "manifest_path": (
                 manifest_path.expanduser().resolve()
                 if manifest_path is not None
                 else prefix.expanduser().resolve() / "deployment-manifest.json"
             ),
-            required_checks=tuple(candidate["required_checks"]),
-            now=current,
-        )
+            "required_checks": tuple(candidate["required_checks"]),
+            "now": current,
+            "registered_source_commit": source_precondition[
+                "registered_deployed_source_commit"
+            ],
+        }
+        fresh_candidate = observer(**observer_arguments)
         verify_digest(fresh_candidate, "observation_sha256")
         if fresh_candidate.get("status") not in {"candidate", "alert"}:
             raise RuntimeRefreshError(
@@ -11235,12 +11466,17 @@ def apply_runtime_refresh(
     binding = validate_execution_bound_leases()
 
     required_checks = tuple(intent["required_checks"])
-    live = observer(
-        repository=intent["repository"],
-        manifest_path=manifest_path,
-        required_checks=required_checks,
-        now=current,
-    )
+    observer_arguments: dict[str, Any] = {
+        "repository": intent["repository"],
+        "manifest_path": manifest_path,
+        "required_checks": required_checks,
+        "now": current,
+    }
+    if source_precondition is not None:
+        observer_arguments["registered_source_commit"] = source_precondition[
+            "registered_deployed_source_commit"
+        ]
+    live = observer(**observer_arguments)
     verify_digest(live, "observation_sha256")
     if live.get("main_commit") != intent["main_commit"]:
         raise RuntimeRefreshError("main-drift", "GitHub main changed after intent creation")

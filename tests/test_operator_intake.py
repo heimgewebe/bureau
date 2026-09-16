@@ -6071,6 +6071,34 @@ def test_reviewed_pre_hardening_revision_cannot_bypass_publication_guard(
     with pytest.raises(OperatorIntakeError) as unreviewed:
         publication_preview(registry, store, plan_path=plan_path)
     assert unreviewed.value.code == "review-missing"
+
+    forged = json.loads(json.dumps(pending))
+    forged["publication"] = {
+        "action_class": "task_creation_from_external_evidence",
+        "publication_mode": "state_store",
+        "required_level": "operator",
+        "queue_mutated": False,
+    }
+    forged["review"] = {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
+    forged["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(forged)
+    )
+    plan_path.write_text(json.dumps(forged, indent=2) + "\n")
+    with monkeypatch.context() as forged_context:
+        forged_context.setattr(
+            operator_intake_module,
+            "_validate_task_revision_identity_continuity",
+            lambda *_: None,
+        )
+        with pytest.raises(OperatorIntakeError) as forged_preview:
+            publication_preview(registry, store, plan_path=plan_path)
+    assert forged_preview.value.code == "publication-contract-task-spec-mismatch"
+
+    plan_path.write_text(json.dumps(pending, indent=2) + "\n")
     review_task_proposal(
         plan_path=plan_path,
         reviewer="post-hardening-reviewer",

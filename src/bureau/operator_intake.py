@@ -3667,6 +3667,15 @@ def _validated_proposal(
     task_spec_binding = _validate_task_spec_proposal_binding(
         registry, store, plan=plan, task_json=task_json, event=current
     )
+    if (
+        plan.get("publication") == _task_publication_contract()
+        and task_spec_binding["operation"] != "register"
+    ):
+        raise OperatorIntakeError(
+            "publication-contract-task-spec-mismatch",
+            "typed candidate publication authority is valid only for TaskSpec registration",
+            details={"operation": task_spec_binding["operation"]},
+        )
     current_task_spec = store.task_spec(str(task_json.get("id", "")))
     allow_existing_task_id = task_spec_binding["operation"] == "revise"
     if task_spec_binding["operation"] == "register" and current_task_spec is not None:

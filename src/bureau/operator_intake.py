@@ -3107,8 +3107,20 @@ def task_propose(
         "assessment": assessment,
         "unresolved_fields": unresolved,
         "placeholder_justification": placeholder_justification,
-        "publication": _task_publication_contract(),
-        "review": _task_publication_review_contract(),
+        "publication": (
+            _legacy_registry_publication_contract()
+            if task_spec_binding["operation"] == "revise"
+            else _task_publication_contract()
+        ),
+        "review": (
+            {
+                "required": True,
+                "status": "pending",
+                "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
+            }
+            if task_spec_binding["operation"] == "revise"
+            else _task_publication_review_contract()
+        ),
         "does_not_establish": [
             "git_registry_mutation",
             "queue_mutation",

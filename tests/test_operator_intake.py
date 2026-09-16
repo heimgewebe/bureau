@@ -6056,6 +6056,21 @@ def test_reviewed_pre_hardening_revision_cannot_bypass_publication_guard(
             path=plan_path,
         )
     pending = json.loads(plan_path.read_text())
+    assert pending["task_spec"]["operation"] == "revise"
+    assert pending["publication"] == {
+        "action_class": "registry_mutation",
+        "publication_mode": "state_store",
+        "required_level": "reviewed_plan",
+        "queue_mutated": False,
+    }
+    assert pending["review"] == {
+        "required": True,
+        "status": "pending",
+        "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
+    }
+    with pytest.raises(OperatorIntakeError) as unreviewed:
+        publication_preview(registry, store, plan_path=plan_path)
+    assert unreviewed.value.code == "review-missing"
     review_task_proposal(
         plan_path=plan_path,
         reviewer="post-hardening-reviewer",

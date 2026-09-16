@@ -409,7 +409,6 @@ def parser() -> argparse.ArgumentParser:
     task_publish_mode.add_argument("--preview", action="store_true")
     task_publish_mode.add_argument("--apply", action="store_true")
     task_publish_parser.add_argument("--lease-binding")
-    task_publish_parser.add_argument("--resource-db")
     task_publish_parser.add_argument("--workspace-root")
     task_publish_parser.add_argument("--receipt")
     task_ready_parser = sub.add_parser("operator-task-ready")
@@ -2017,10 +2016,10 @@ def main(argv: list[str] | None = None) -> int:
                     lease_binding=lease_binding,
                     workspace_root=args.workspace_root,
                     receipt_path=args.receipt,
-                    resource_db=args.resource_db or DEFAULT_GRABOWSKI_RESOURCE_DB,
+                    resource_db=DEFAULT_GRABOWSKI_RESOURCE_DB,
                 )
             else:
-                if args.lease_binding or args.resource_db or args.workspace_root or args.receipt:
+                if args.lease_binding or args.workspace_root or args.receipt:
                     raise StateError("publication effect arguments require --apply")
                 value = publication_preview(registry, store, plan_path=args.plan)
         elif args.command == "operator-task-ready":

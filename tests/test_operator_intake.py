@@ -6638,3 +6638,20 @@ def test_legacy_untyped_task_cannot_claim_verified_via_terminal_exception(
             path=tmp_path / "legacy-verified.proposal.json",
         )
     assert caught.value.code == "task-acceptance-contract-invalid"
+
+
+def test_operator_task_publish_cli_rejects_resource_db_override(capsys):
+    with pytest.raises(SystemExit) as exc:
+        bureau_cli.parser().parse_args(
+            [
+                "operator-task-publish",
+                "--plan",
+                "proposal.json",
+                "--apply",
+                "--resource-db",
+                "/tmp/forged-resource.sqlite3",
+            ]
+        )
+
+    assert exc.value.code == 2
+    assert "unrecognized arguments: --resource-db" in capsys.readouterr().err

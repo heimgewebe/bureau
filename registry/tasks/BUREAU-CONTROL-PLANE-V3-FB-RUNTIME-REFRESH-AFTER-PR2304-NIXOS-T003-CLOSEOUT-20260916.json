@@ -71,6 +71,7 @@
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2304-NIXOS-T003-CLOSEOUT-20260916",
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
+    "dedicated_republication_reason": "PR #2305 could not satisfy this authority's exact-one-file protected-publication gate after runtime code and tests were added; this dedicated publication changes only this TaskSpec before missing-only adoption.",
     "deployed_manifest_sha256_at_registration": "868e5008dac5d11b405a796bf421b8a9c5ad99d44d9177b1e6948079a50998a4",
     "deployed_source_at_registration": "f487e6d8fc1dcb6654a7b06bda0bb30807d292c0",
     "does_not_establish": [

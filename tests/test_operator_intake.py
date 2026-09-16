@@ -3481,6 +3481,86 @@ def test_publication_receipt_replay_survives_later_registry_drift(registry_facto
 
 
 
+def test_publication_receipt_replay_accepts_pre_approval_legacy_receipt(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "legacy-receipt.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+    assert first["approval"]["action_class"] == "registry_mutation"
+
+    historical = json.loads(receipt.read_text())
+    historical.pop("approval")
+    unsigned = {key: value for key, value in historical.items() if key != "receipt_sha256"}
+    historical["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(historical, indent=2) + "\n")
+
+    replay = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+        resource_db=tmp_path / "must-not-be-read.sqlite3",
+        workspace_root=tmp_path / "unused",
+        receipt_path=receipt,
+    )
+
+    assert replay["idempotent_replay"] is True
+    assert "approval" not in replay
+    assert replay["receipt_sha256"] == historical["receipt_sha256"]
+
+
+def test_publication_receipt_replay_rejects_missing_typed_approval(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "typed-missing-approval-receipt.json"
+    publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+
+    tampered = json.loads(receipt.read_text())
+    tampered.pop("approval")
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert "approval" in caught.value.details["mismatched"]
+
+
 def test_publication_replay_rejects_typed_authority_for_revision(
     registry_factory, tmp_path
 ):
@@ -4720,7 +4800,7 @@ def test_first_task_holds_state_and_lease_writer_locks_through_mutation(
 def test_first_task_replay_rejects_typed_review_free_authority(
     registry_factory, tmp_path
 ):
-    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    _, _, path = _first_task_proposal(registry_factory, tmp_path)
     plan = json.loads(path.read_text())
     plan["publication"] = {
         "action_class": "task_creation_from_external_evidence",

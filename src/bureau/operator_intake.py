@@ -4741,7 +4741,8 @@ def _validate_publication_receipt_replay(
     resulting_revision = binding["resulting_revision"]
     revision = receipt.get("task_spec_revision")
     publication = receipt.get("publication")
-    if plan.get("publication") == _task_publication_contract():
+    typed_publication = plan.get("publication") == _task_publication_contract()
+    if typed_publication:
         expected_approval = require_approval(
             TASK_PUBLICATION_ACTION_CLASS,
             explicit_operator_approval(
@@ -4786,7 +4787,6 @@ def _validate_publication_receipt_replay(
         "revision": resulting_revision,
         "parent_revision": binding["parent_revision"],
         "spec_sha256": binding["proposed_spec_sha256"],
-        "approval": expected_approval,
     }
     observed = {
         "proposal_sha256": receipt.get("proposal_sha256"),
@@ -4802,8 +4802,14 @@ def _validate_publication_receipt_replay(
             revision.get("parent_revision") if isinstance(revision, dict) else None
         ),
         "spec_sha256": revision.get("spec_sha256") if isinstance(revision, dict) else None,
-        "approval": receipt.get("approval"),
     }
+    # Receipts created before approval evidence was added legitimately lack this
+    # field on the reviewed legacy registry-mutation path. Typed-authority
+    # receipts were introduced together with approval evidence and must always
+    # carry the exact reconstructed approval.
+    if typed_publication or "approval" in receipt:
+        expected["approval"] = expected_approval
+        observed["approval"] = receipt.get("approval")
     mismatched = {
         key: {"expected": expected[key], "observed": observed[key]}
         for key in expected

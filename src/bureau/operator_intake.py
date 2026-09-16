@@ -4620,6 +4620,12 @@ def _publication_replay_plan_binding(plan: dict[str, Any]) -> dict[str, Any]:
     expected_revision = task_spec_binding.get("expected_revision")
     expected_spec_sha256 = task_spec_binding.get("expected_spec_sha256")
     expected_task_file_sha256 = task_spec_binding.get("expected_task_file_sha256")
+    if publication == _task_publication_contract() and operation != "register":
+        raise OperatorIntakeError(
+            "publication-contract-task-spec-mismatch",
+            "typed candidate publication authority is valid only for TaskSpec registration",
+            details={"operation": operation},
+        )
     if operation == "register":
         if expected_revision is not None or expected_spec_sha256 is not None:
             raise OperatorIntakeError(
@@ -4734,6 +4740,39 @@ def _validate_publication_receipt_replay(
     resulting_revision = binding["resulting_revision"]
     revision = receipt.get("task_spec_revision")
     publication = receipt.get("publication")
+    if plan.get("publication") == _task_publication_contract():
+        expected_approval = require_approval(
+            TASK_PUBLICATION_ACTION_CLASS,
+            explicit_operator_approval(
+                source=TASK_PUBLICATION_AUTHORITY_KIND,
+                approved=True,
+                reference=binding["proposal_sha256"],
+                task_id=str(plan.get("publishing_task_id")),
+                scope=TASK_PUBLICATION_ACTION_CLASS,
+                note="validated server-owned Grabowski publication authority lease",
+            ),
+            expected_reference=binding["proposal_sha256"],
+            task_id=str(plan.get("publishing_task_id")),
+        )
+    else:
+        review = plan.get("review")
+        reviewer = _checked_text(
+            review.get("reviewer") if isinstance(review, dict) else None,
+            field="reviewer",
+            maximum=200,
+        )
+        assert reviewer is not None
+        expected_approval = require_approval(
+            "registry_mutation",
+            reviewed_plan_approval(
+                reviewer=reviewer,
+                reference=binding["proposal_sha256"],
+                task_id=binding["task_id"],
+                scope="registry_mutation",
+            ),
+            expected_reference=binding["proposal_sha256"],
+            task_id=binding["task_id"],
+        )
     expected = {
         "proposal_sha256": binding["proposal_sha256"],
         "plan_file_sha256": plan_file_sha,
@@ -4746,6 +4785,7 @@ def _validate_publication_receipt_replay(
         "revision": resulting_revision,
         "parent_revision": binding["parent_revision"],
         "spec_sha256": binding["proposed_spec_sha256"],
+        "approval": expected_approval,
     }
     observed = {
         "proposal_sha256": receipt.get("proposal_sha256"),
@@ -4761,6 +4801,7 @@ def _validate_publication_receipt_replay(
             revision.get("parent_revision") if isinstance(revision, dict) else None
         ),
         "spec_sha256": revision.get("spec_sha256") if isinstance(revision, dict) else None,
+        "approval": receipt.get("approval"),
     }
     mismatched = {
         key: {"expected": expected[key], "observed": observed[key]}

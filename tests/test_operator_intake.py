@@ -3481,6 +3481,34 @@ def test_publication_receipt_replay_survives_later_registry_drift(registry_facto
 
 
 
+def test_publication_replay_rejects_typed_authority_for_revision(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    plan["publication"] = {
+        "action_class": "task_creation_from_external_evidence",
+        "publication_mode": "state_store",
+        "required_level": "operator",
+        "queue_mutated": False,
+    }
+    plan["review"] = {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
+    plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(plan)
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module._publication_replay_plan_binding(plan)
+
+    assert caught.value.code == "publication-contract-task-spec-mismatch"
+
+
 def test_publication_receipt_replay_rejects_internally_inconsistent_plan(
     registry_factory, tmp_path
 ):
@@ -3552,6 +3580,45 @@ def test_publication_rejects_tampered_existing_receipt(registry_factory, tmp_pat
     assert caught.value.code == "receipt-integrity-invalid"
 
 
+
+
+def test_publication_receipt_replay_rejects_rehashed_approval_tamper(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "receipt-approval-tamper.json"
+    publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+
+    tampered = json.loads(receipt.read_text())
+    tampered["approval"]["evidence"]["source"] = "forged-publication-authority"
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert "approval" in caught.value.details["mismatched"]
 
 
 def test_publishing_task_git_projection_drift_does_not_block_state_store_publication(

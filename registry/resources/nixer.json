@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "repo.nixer",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/nixer",
+  "github_slug": "heimgewebe/nixer",
+  "grabowski_key": "repo:/home/alex/repos/nixer",
+  "metadata": {
+    "registered_at": "2026-09-16",
+    "purpose": "Local Nix/NixOS specialist MCP service and its repository"
+  }
+}

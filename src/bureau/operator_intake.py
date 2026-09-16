@@ -3109,7 +3109,7 @@ def task_propose(
         "placeholder_justification": placeholder_justification,
         "publication": (
             _legacy_registry_publication_contract()
-            if task_spec_binding["operation"] == "revise"
+            if onboarding is not None or task_spec_binding["operation"] == "revise"
             else _task_publication_contract()
         ),
         "review": (
@@ -3118,7 +3118,7 @@ def task_propose(
                 "status": "pending",
                 "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
             }
-            if task_spec_binding["operation"] == "revise"
+            if onboarding is not None or task_spec_binding["operation"] == "revise"
             else _task_publication_review_contract()
         ),
         "does_not_establish": [
@@ -3645,8 +3645,7 @@ def _validated_proposal(
             or plan.get("publishing_task_sha256") is not None
             or not isinstance(plan.get("task_spec"), dict)
             or plan["task_spec"].get("operation") != "register"
-            or plan.get("publication")
-            not in (_task_publication_contract(), _legacy_registry_publication_contract())
+            or plan.get("publication") != _legacy_registry_publication_contract()
         ):
             raise OperatorIntakeError(
                 "first-task-onboarding-binding-invalid",
@@ -3669,7 +3668,7 @@ def _validated_proposal(
     )
     if (
         plan.get("publication") == _task_publication_contract()
-        and task_spec_binding["operation"] != "register"
+        and (task_spec_binding["operation"] != "register" or onboarding)
     ):
         raise OperatorIntakeError(
             "publication-contract-task-spec-mismatch",
@@ -4620,7 +4619,9 @@ def _publication_replay_plan_binding(plan: dict[str, Any]) -> dict[str, Any]:
     expected_revision = task_spec_binding.get("expected_revision")
     expected_spec_sha256 = task_spec_binding.get("expected_spec_sha256")
     expected_task_file_sha256 = task_spec_binding.get("expected_task_file_sha256")
-    if publication == _task_publication_contract() and operation != "register":
+    if publication == _task_publication_contract() and (
+        operation != "register" or "first_task_onboarding" in plan
+    ):
         raise OperatorIntakeError(
             "publication-contract-task-spec-mismatch",
             "typed candidate publication authority is valid only for TaskSpec registration",

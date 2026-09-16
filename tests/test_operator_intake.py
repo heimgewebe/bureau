@@ -4366,11 +4366,27 @@ def test_first_task_publication_creates_once_and_supplies_ordinary_publisher(
     assert plan["publishing_task_sha256"] is None
     assert plan["publishing_task_id"] == plan["task_id"]
     assert plan["task_spec"]["operation"] == "register"
+    assert plan["publication"] == {
+        "action_class": "registry_mutation",
+        "publication_mode": "state_store",
+        "required_level": "reviewed_plan",
+        "queue_mutated": False,
+    }
+    assert plan["review"]["required"] is True
+    assert plan["review"]["status"] == "pending"
     assert store.task_spec(plan["task_id"]) is None
+    with pytest.raises(OperatorIntakeError) as unreviewed:
+        publication_preview(registry, store, plan_path=path)
+    assert unreviewed.value.code == "review-missing"
     before_registry = _git(registry.root, "rev-parse", "HEAD:registry")
     preview, db = _review_first_task(registry, store, path, tmp_path)
     assert preview["required_resource_keys"] == [f"path:{store.state_root}"]
     assert preview["lease_task_id"] == plan["task_id"]
+    assert "kind" not in preview["required_lease_metadata"]
+    assert "authority_action_class" not in preview["required_lease_metadata"]
+    assert preview["required_lease_metadata"]["authority_kind"] == (
+        "bureau_first_task_onboarding_authority"
+    )
     published = _first_task_publish(registry, store, path, db, tmp_path)
     assert published["task_spec_revision"]["revision"] == 1
     assert published["task_spec_revision"]["idempotent_replay"] is False
@@ -4699,6 +4715,32 @@ def test_first_task_holds_state_and_lease_writer_locks_through_mutation(
     result = _first_task_publish(registry, store, path, db, tmp_path)
     assert result["status"] == "published"
     assert checked == [store.path, db]
+
+
+def test_first_task_replay_rejects_typed_review_free_authority(
+    registry_factory, tmp_path
+):
+    registry, store, path = _first_task_proposal(registry_factory, tmp_path)
+    plan = json.loads(path.read_text())
+    plan["publication"] = {
+        "action_class": "task_creation_from_external_evidence",
+        "publication_mode": "state_store",
+        "required_level": "operator",
+        "queue_mutated": False,
+    }
+    plan["review"] = {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
+    plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(plan)
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module._publication_replay_plan_binding(plan)
+
+    assert caught.value.code == "publication-contract-task-spec-mismatch"
 
 
 @pytest.mark.parametrize("drift", ["registry", "candidate", "conflicting-task"])

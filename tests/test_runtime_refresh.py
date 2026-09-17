@@ -3754,6 +3754,154 @@ def test_source_precondition_rejects_unproven_registered_source_ancestry(
     assert value["registered_source_ancestry"]["method"] == "first-parent-walk"
     assert "registered-source-lower-bound-unproven" in value["reason_codes"]
 
+def test_activation_observation_projects_redundant_exact_source_ancestry_for_bootstrap() -> None:
+    observation = protected_publication_activation_observation()
+    payload = dict(observation)
+    payload.pop("observation_sha256")
+    payload["registered_source_ancestry"] = {
+        "schema_version": 1,
+        "status": "proven",
+        "method": "same-commit",
+        "registered_source_commit": DEPLOYED,
+        "deployed_source_commit": DEPLOYED,
+        "compare_status": "identical",
+        "ahead_by": 0,
+        "behind_by": 0,
+        "merge_base_commit": DEPLOYED,
+    }
+    observation = refresh.bind_digest(payload, "observation_sha256")
+
+    projected = refresh._bootstrap_compatible_activation_observation(
+        observation, source_precondition_contract()
+    )
+
+    assert "registered_source_ancestry" not in projected
+    assert frozenset(projected) == refresh.RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_REQUIRED_FIELDS
+    assert projected["target_sha256"] == observation["target_sha256"]
+    assert projected["observation_sha256"] != observation["observation_sha256"]
+    refresh.verify_digest(projected, "observation_sha256")
+    refresh._validate_candidate_source_precondition(projected, source_precondition_contract())
+
+
+def test_activation_observation_preserves_nonredundant_descendant_ancestry() -> None:
+    registered = "9" * 40
+    observation = protected_publication_activation_observation()
+    payload = dict(observation)
+    payload.pop("observation_sha256")
+    payload["registered_source_ancestry"] = {
+        "schema_version": 1,
+        "status": "proven",
+        "method": "github-compare",
+        "registered_source_commit": registered,
+        "deployed_source_commit": DEPLOYED,
+        "compare_status": "ahead",
+        "ahead_by": 2,
+        "behind_by": 0,
+        "merge_base_commit": registered,
+    }
+    observation = refresh.bind_digest(payload, "observation_sha256")
+    contract = source_precondition_contract()
+    contract["registered_deployed_source_commit"] = registered
+    contract["registered_registry_source_commit"] = registered
+
+    projected = refresh._bootstrap_compatible_activation_observation(observation, contract)
+
+    assert projected == observation
+    assert projected["registered_source_ancestry"]["method"] == "github-compare"
+
+
+def test_activate_runtime_refresh_authority_persists_bootstrap_compatible_exact_source_witness(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task_id = "BUREAU-RUNTIME-ACTIVATE-SOURCE-COMPAT"
+    state_root = (tmp_path / "activate-source-compat-state").resolve()
+    store = StateStore(state_root / "bureau.sqlite3", state_root)
+    planned = protected_publication_activation_spec(task_id, state="planned")
+    planned_authority = planned["metadata"]["runtime_refresh_authority"]
+    planned_authority["mode"] = refresh.RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
+    planned_authority["source_precondition"] = source_precondition_contract()
+    planned_authority["no_run_closeout_acceptance"]["criteria"][
+        "runtime-authority-proof"
+    ]["required_evidence"].append("source-precondition")
+    from bureau import task_specs
+
+    planned_sha = task_specs.task_spec_digest(planned)
+    store.put_task_spec(
+        planned,
+        idempotency_key=f"legacy-seed-exact:{task_id}:{planned_sha}",
+        expected_revision=None,
+        source="legacy-git-exact-seed",
+    )
+    registry = SimpleNamespace(tasks={task_id: SimpleNamespace(raw=planned)})
+    publication = {
+        "repository": refresh.DEFAULT_REPOSITORY,
+        "main_commit": MAIN,
+        "publication_pr": 2222,
+        "publication_merge_commit": "4" * 40,
+        "task_path": f"registry/tasks/{task_id}.json",
+        "task_file_sha256": "c" * 64,
+        "check_summary": {},
+        "task_state": "planned",
+    }
+    monkeypatch.setattr(
+        refresh,
+        "verify_runtime_refresh_authority_publication",
+        lambda **_: (registry, publication),
+    )
+    observation = protected_publication_activation_observation()
+    payload = dict(observation)
+    payload.pop("observation_sha256")
+    payload["registered_source_ancestry"] = {
+        "schema_version": 1,
+        "status": "proven",
+        "method": "same-commit",
+        "registered_source_commit": DEPLOYED,
+        "deployed_source_commit": DEPLOYED,
+        "compare_status": "identical",
+        "ahead_by": 0,
+        "behind_by": 0,
+        "merge_base_commit": DEPLOYED,
+    }
+    observation = refresh.bind_digest(payload, "observation_sha256")
+
+    def observer(**kwargs: Any) -> dict[str, Any]:
+        assert kwargs["registered_source_commit"] == DEPLOYED
+        return observation
+
+    result = activate_runtime_refresh_authority_for_test(
+        registry_root=tmp_path / "registry",
+        manifest_path=tmp_path / "deployment-manifest.json",
+        repository=refresh.DEFAULT_REPOSITORY,
+        approval_task_id=task_id,
+        publication_pr=2222,
+        publication_merge_commit="4" * 40,
+        expected_main_commit=MAIN,
+        expected_task_file_sha256="c" * 64,
+        authority_store=store,
+        registry=registry,
+        observer=observer,
+    )
+
+    assert result["status"] == "ready"
+    activation_key = (
+        f"runtime-refresh-protected-publication-activation:{task_id}:"
+        f"{'4' * 40}:{planned_sha}"
+    )
+    receipt = store.task_spec_mutation_receipt(activation_key)
+    assert isinstance(receipt, dict)
+    evidence = receipt["activation_evidence"]
+    assert isinstance(evidence, dict)
+    stored_observation = evidence["observation"]
+    assert "registered_source_ancestry" not in stored_observation
+    assert frozenset(stored_observation) == (
+        refresh.RUNTIME_AUTHORITY_ACTIVATION_OBSERVATION_REQUIRED_FIELDS
+    )
+    assert stored_observation["target_sha256"] == observation["target_sha256"]
+    assert result["observation_sha256"] == stored_observation["observation_sha256"]
+    refresh._validate_candidate_source_precondition(
+        stored_observation, source_precondition_contract()
+    )
+
 def test_observe_marks_registry_source_mismatch_invalid_without_affecting_legacy_authority(
     tmp_path: Path,
 ) -> None:

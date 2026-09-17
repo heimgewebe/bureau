@@ -3261,6 +3261,52 @@ def _validate_candidate_source_precondition(
         )
 
 
+def _bootstrap_compatible_activation_observation(
+    observation: dict[str, Any],
+    source_precondition: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Project only redundant exact-source ancestry for an older bootstrap consumer.
+
+    The full current observation is validated before this helper is called. When the
+    registered and deployed source commits are identical, exact equality is already the
+    source lower-bound witness accepted by historical contracts, so the explicit
+    registered_source_ancestry field is redundant. Genuine descendant proofs remain
+    explicit and therefore continue to fail closed on consumers that predate them.
+    """
+    if source_precondition is None or "registered_source_ancestry" not in observation:
+        return observation
+    registered_source_commit = source_precondition["registered_deployed_source_commit"]
+    deployed_source_commit = observation.get("deployed_source_commit")
+    if deployed_source_commit != registered_source_commit:
+        return observation
+    proof = observation.get("registered_source_ancestry")
+    if (
+        not isinstance(deployed_source_commit, str)
+        or not _registered_source_ancestry_is_proven(
+            proof,
+            registered_source_commit=registered_source_commit,
+            deployed_source_commit=deployed_source_commit,
+        )
+        or not isinstance(proof, dict)
+        or proof.get("method") != "same-commit"
+    ):
+        raise RuntimeRefreshError(
+            "authority-activation-source-precondition-witness-invalid",
+            "exact-source bootstrap compatibility requires a proven same-commit witness",
+        )
+    projected = json.loads(json.dumps(observation))
+    projected.pop("registered_source_ancestry", None)
+    projected.pop("observation_sha256", None)
+    projected = bind_digest(projected, "observation_sha256")
+    _validated_protected_publication_activation_observation_contract(projected)
+    _validate_candidate_source_precondition(projected, source_precondition)
+    if projected.get("target_sha256") != observation.get("target_sha256"):
+        raise RuntimeRefreshError(
+            "authority-activation-bootstrap-projection-target-drift",
+            "bootstrap-compatible activation witness changed target identity",
+        )
+    return projected
+
 def _validate_runtime_refresh_authority_contract(
     *,
     spec: dict[str, Any],
@@ -5128,6 +5174,9 @@ def activate_runtime_refresh_authority(
     )
     _validate_candidate_runtime_source_identity(observation)
     _validate_candidate_source_precondition(observation, source_precondition)
+    observation = _bootstrap_compatible_activation_observation(
+        observation, source_precondition
+    )
 
     reread = _read_authority_task(store, approval_task_id)
     if (

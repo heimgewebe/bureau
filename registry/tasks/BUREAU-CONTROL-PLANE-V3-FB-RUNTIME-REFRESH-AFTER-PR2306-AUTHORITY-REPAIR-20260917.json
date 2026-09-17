@@ -141,7 +141,7 @@
       "initial_state": "planned",
       "kind": "normal-protected-pull-request",
       "reason": "The installed Bureau runtime and canonical Registry are integrity-bound to source f487e6d8fc1dcb6654a7b06bda0bb30807d292c0 while protected main is 9a13aa7eaba97891cf5e2a354cc9cbeec45b5593 after merged PR #2306. Predecessor PR #2305 is non-adoptable because it changed files outside its exact authority TaskSpec. Exactly one fresh planned TaskSpec must therefore enter through a protected one-file PR, be adopted missing-only, and be activated only after fresh post-publication observation of the real merge target.",
-      "scope": "registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2306-AUTHORITY-REPAIR-20260917.json",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2306-AUTHORITY-REPAIR-20260917.json",
       "state_store_transition": "seed-missing-preserve-state-store"
     },
     "registration_observation": {

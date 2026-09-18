@@ -126,7 +126,7 @@
       ],
       "initial_state": "planned",
       "kind": "normal-protected-pull-request",
-      "reason": "The installed Bureau runtime and canonical Registry are integrity-bound to source b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d while protected main is dcac53feb27a0683bcb63deecefd4f1230cd94e6 after merged PR #2314. The immediately preceding PR #2312 authority is already consumed and verified, so it cannot be rebound. Exactly one fresh planned TaskSpec must enter through a protected one-file PR, be adopted missing-only, and be activated only after fresh post-publication observation of its real merge target.",
+      "reason": "The installed Bureau runtime and canonical Registry are integrity-bound to source b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d while protected main is dcac53feb27a0683bcb63deecefd4f1230cd94e6 after merged PR #2314. The immediately preceding runtime authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2311-BOOTSTRAP-COMPAT-20260918 was protected-published and merged via PR #2312, then consumed and verified, so that task cannot be rebound. Exactly one fresh planned TaskSpec must enter through a protected one-file PR, be adopted missing-only, and be activated only after fresh post-publication observation of its real merge target.",
       "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2314-STATUS-PROJECTION-20260918.json",
       "state_store_transition": "seed-missing-preserve-state-store"
     },
@@ -292,13 +292,13 @@
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256"
     },
-    "source": "Fresh cohesive registration observation 935db1453d5a9639193fa60cbeeb0ac6e50b867ead70754f418068885563a6fb proves deployment manifest and canonical Registry agree at b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d, this source is a verified ancestor of protected main dcac53feb27a0683bcb63deecefd4f1230cd94e6 by 12 commits, and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. PR #2314 is merged and the prior PR #2312 runtime authority is already consumed and verified. This successor remains planned until its own protected one-file merge, missing-only adoption and fresh activation.",
+    "source": "Fresh cohesive registration observation 935db1453d5a9639193fa60cbeeb0ac6e50b867ead70754f418068885563a6fb proves deployment manifest and canonical Registry agree at b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d, this source is a verified ancestor of protected main dcac53feb27a0683bcb63deecefd4f1230cd94e6 by 12 commits, and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. PR #2314 is merged and the prior runtime authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2311-BOOTSTRAP-COMPAT-20260918, whose protected publication/target merge was PR #2312, is already consumed and verified. This successor remains planned until its own protected one-file merge, missing-only adoption and fresh activation.",
     "historical_registration_observation": {
       "schema_version": 1,
       "repository": "heimgewebe/bureau",
       "observed_at": "2026-09-18T08:25:07.152200Z",
       "deployed_source_commit": "b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d",
-      "note": "Predecessor PR #2312 single-use authority completed the prior runtime refresh and is retained only as historical provenance."
+      "note": "Predecessor authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2311-BOOTSTRAP-COMPAT-20260918 completed the prior runtime refresh after protected publication/target merge PR #2312 and is retained only as historical provenance."
     },
     "predecessor_state_store_readback": {
       "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2311-BOOTSTRAP-COMPAT-20260918",

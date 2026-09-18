@@ -84,7 +84,7 @@
       "queue, claim, dispatch, task-supply or foreign-work authority"
     ],
     "main_at_registration": "dcac53feb27a0683bcb63deecefd4f1230cd94e6",
-    "observation_sha256_at_registration": "935db1453d5a9639193fa60cbeeb0ac6e50b867ead70754f418068885563a6fb",
+    "observation_sha256_at_registration": "4e283b4e43d2d56e3838b18b7a0d6661bdfd67775776ce3d755b0630d654f0a7",
     "post_publication_activation": {
       "activation_state": "ready",
       "does_not_establish": [
@@ -155,16 +155,40 @@
       "trigger_merged_at": "2026-09-18T16:26:21Z",
       "target_sha256": "237a4e08ab9f99ea8b06bbe9302e2420d823999e62e308bdfe5b26cb48d62028",
       "required_checks_on_current_main": {
-        "validate (3.10)": "success",
-        "validate (3.12)": "success",
-        "registry-registration-preflight/freshness": "success"
+        "validate (3.10)": {
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "dcac53feb27a0683bcb63deecefd4f1230cd94e6",
+          "check_run_id": 105671422810,
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35366892119/job/105671422810",
+          "started_at": "2026-09-18T16:10:39Z",
+          "completed_at": "2026-09-18T16:23:06Z"
+        },
+        "validate (3.12)": {
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "dcac53feb27a0683bcb63deecefd4f1230cd94e6",
+          "check_run_id": 105671423078,
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35366892119/job/105671423078",
+          "started_at": "2026-09-18T16:10:39Z",
+          "completed_at": "2026-09-18T16:26:05Z"
+        },
+        "registry-registration-preflight/freshness": {
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "dcac53feb27a0683bcb63deecefd4f1230cd94e6",
+          "check_run_id": 105671422826,
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35366892130/job/105671422826",
+          "started_at": "2026-09-18T16:10:39Z",
+          "completed_at": "2026-09-18T16:10:53Z"
+        }
       },
       "does_not_establish": [
         "runtime target after this authority's own protected publication merge",
         "permission to reuse the consumed predecessor authority",
         "permission to skip fresh checks before adoption, activation, prepare-intent or apply"
       ],
-      "observation_sha256": "935db1453d5a9639193fa60cbeeb0ac6e50b867ead70754f418068885563a6fb"
+      "observation_sha256": "4e283b4e43d2d56e3838b18b7a0d6661bdfd67775776ce3d755b0630d654f0a7"
     },
     "runtime_execution_context": {
       "absence_tolerant_intent_roots": {
@@ -292,7 +316,7 @@
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256"
     },
-    "source": "Fresh cohesive registration observation 935db1453d5a9639193fa60cbeeb0ac6e50b867ead70754f418068885563a6fb proves deployment manifest and canonical Registry agree at b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d, this source is a verified ancestor of protected main dcac53feb27a0683bcb63deecefd4f1230cd94e6 by 12 commits, and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. PR #2314 is merged and the prior runtime authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2311-BOOTSTRAP-COMPAT-20260918, whose protected publication/target merge was PR #2312, is already consumed and verified. This successor remains planned until its own protected one-file merge, missing-only adoption and fresh activation.",
+    "source": "Fresh cohesive registration observation 4e283b4e43d2d56e3838b18b7a0d6661bdfd67775776ce3d755b0630d654f0a7 proves deployment manifest and canonical Registry agree at b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d, this source is a verified ancestor of protected main dcac53feb27a0683bcb63deecefd4f1230cd94e6 by 12 commits, and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. PR #2314 is merged and the prior runtime authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2311-BOOTSTRAP-COMPAT-20260918, whose protected publication/target merge was PR #2312, is already consumed and verified. This successor remains planned until its own protected one-file merge, missing-only adoption and fresh activation.",
     "historical_registration_observation": {
       "schema_version": 1,
       "repository": "heimgewebe/bureau",

@@ -98,6 +98,40 @@ def _legacy_registry_publication_contract() -> dict[str, Any]:
     }
 
 
+def _validate_publication_contract_task_spec_mapping(
+    plan: dict[str, Any], *, operation: str | None = None
+) -> str:
+    binding = plan.get("task_spec")
+    selected_operation = operation
+    if selected_operation is None and isinstance(binding, dict):
+        selected_operation = binding.get("operation")
+    if selected_operation not in {"register", "revise"}:
+        raise OperatorIntakeError(
+            "task-spec-binding-invalid",
+            "proposal TaskSpec operation must be register or revise",
+        )
+    publication = plan.get("publication")
+    onboarding = "first_task_onboarding" in plan
+    typed = publication == _task_publication_contract()
+    legacy = publication == _legacy_registry_publication_contract()
+    valid_typed = selected_operation == "register" and not onboarding
+    valid_legacy = (
+        (selected_operation == "revise" and not onboarding)
+        or (selected_operation == "register" and onboarding)
+    )
+    if (typed and not valid_typed) or (legacy and not valid_legacy):
+        raise OperatorIntakeError(
+            "publication-contract-task-spec-mismatch",
+            "publication approval contract does not match the TaskSpec operation",
+            details={
+                "operation": selected_operation,
+                "first_task_onboarding": onboarding,
+                "publication": publication,
+            },
+        )
+    return selected_operation
+
+
 PUBLICATION_PHASES = (
     "before_workspace",
     "local_workspace",
@@ -3287,6 +3321,7 @@ def review_task_proposal(
     if not isinstance(review, dict):
         raise OperatorIntakeError("review-invalid", "proposal review must be an object")
     publication = plan.get("publication")
+    _validate_publication_contract_task_spec_mapping(plan)
     if publication == _task_publication_contract():
         if review != _task_publication_review_contract():
             raise OperatorIntakeError(
@@ -3733,15 +3768,9 @@ def _validated_proposal(
     task_spec_binding = _validate_task_spec_proposal_binding(
         registry, store, plan=plan, task_json=task_json, event=current
     )
-    if (
-        plan.get("publication") == _task_publication_contract()
-        and (task_spec_binding["operation"] != "register" or onboarding)
-    ):
-        raise OperatorIntakeError(
-            "publication-contract-task-spec-mismatch",
-            "typed candidate publication authority is valid only for TaskSpec registration",
-            details={"operation": task_spec_binding["operation"]},
-        )
+    _validate_publication_contract_task_spec_mapping(
+        plan, operation=str(task_spec_binding["operation"])
+    )
     current_task_spec = store.task_spec(str(task_json.get("id", "")))
     allow_existing_task_id = task_spec_binding["operation"] == "revise"
     if task_spec_binding["operation"] == "register" and current_task_spec is not None:
@@ -4256,6 +4285,7 @@ def _store_publication_mutation_evidence(
     spec_sha256: str,
     revision: int,
     evidence: dict[str, Any],
+    allow_schema_v2_upgrade: bool = False,
 ) -> None:
     idempotency_key = f"operator-intake:{proposal_sha256}"
     mutation = task_specs.get_mutation_receipt(connection, idempotency_key)
@@ -4289,16 +4319,34 @@ def _store_publication_mutation_evidence(
                 "TaskSpec mutation already carries incompatible publication evidence"
             )
         existing_commitments = _publication_evidence_commitments(existing)
-        if not existing_commitments or any(
-            not isinstance(item.get("receipt_sha256"), str)
-            for item in existing_commitments
-        ):
+        if not existing_commitments:
             raise task_specs.TaskSpecError(
-                "TaskSpec mutation already carries invalid or under-bound publication evidence"
+                "TaskSpec mutation already carries invalid publication evidence"
             )
-        merged = _publication_evidence_with_commitments(
-            proposal_sha256, [*existing_commitments, *candidate_commitments]
-        )
+        if existing.get("schema_version") == 2:
+            if not allow_schema_v2_upgrade or any(
+                isinstance(item.get("receipt_sha256"), str)
+                for item in existing_commitments
+            ):
+                raise task_specs.TaskSpecError(
+                    "TaskSpec mutation carries schema-v2 publication evidence "
+                    "that requires an explicit upgrade"
+                )
+            # Schema-v2 evidence is historically authority-bound only to the
+            # exact lease binding/release pair. A current v3 candidate may
+            # replace it only through an explicitly-authorized recovery path.
+            merged = evidence
+        else:
+            if any(
+                not isinstance(item.get("receipt_sha256"), str)
+                for item in existing_commitments
+            ):
+                raise task_specs.TaskSpecError(
+                    "TaskSpec mutation already carries invalid or under-bound publication evidence"
+                )
+            merged = _publication_evidence_with_commitments(
+                proposal_sha256, [*existing_commitments, *candidate_commitments]
+            )
 
     evidence_json = legacy.canonical_json(merged)
     evidence_sha256 = merged["evidence_sha256"]
@@ -4322,6 +4370,55 @@ def _store_publication_mutation_evidence(
         raise task_specs.TaskSpecError(
             "TaskSpec mutation publication evidence failed exact readback"
         )
+
+
+def _upgrade_schema_v2_publication_evidence_from_receipt(
+    store: StateStore,
+    *,
+    plan: dict[str, Any],
+    receipt: dict[str, Any],
+) -> None:
+    binding = _publication_replay_plan_binding(plan)
+    evidence = _publication_receipt_binding_evidence(receipt)
+    try:
+        with store.immediate() as connection:
+            _store_publication_mutation_evidence(
+                connection,
+                proposal_sha256=binding["proposal_sha256"],
+                task_id=binding["task_id"],
+                spec_sha256=binding["proposed_spec_sha256"],
+                revision=binding["resulting_revision"],
+                evidence=evidence,
+                allow_schema_v2_upgrade=True,
+            )
+    except (sqlite3.Error, StateError) as exc:
+        raise OperatorIntakeError(
+            "publication-receipt-evidence-upgrade-failed",
+            "cannot upgrade exact schema-v2 publication evidence after replay validation",
+            retryable=True,
+            effect_started=True,
+            ambiguity=True,
+            required_readback=["TaskSpec mutation publication receipt evidence"],
+            details={
+                "proposal_sha256": binding["proposal_sha256"],
+                "cause_type": type(exc).__name__,
+            },
+            publication_phase="committed_locally",
+        ) from exc
+    except task_specs.TaskSpecError as exc:
+        raise OperatorIntakeError(
+            "publication-receipt-evidence-upgrade-failed",
+            "schema-v2 publication evidence cannot be upgraded to the exact receipt binding",
+            retryable=False,
+            effect_started=True,
+            ambiguity=True,
+            required_readback=["TaskSpec mutation publication receipt evidence"],
+            details={
+                "proposal_sha256": binding["proposal_sha256"],
+                "cause_type": type(exc).__name__,
+            },
+            publication_phase="committed_locally",
+        ) from exc
 
 
 def _release_unchanged_publication_leases(binding: dict[str, Any]) -> dict[str, Any]:
@@ -4428,13 +4525,17 @@ def publish_task_proposal(
     state_root = store.state_root.expanduser().resolve()
     if os.path.lexists(receipt):
         existing = _read_task_publication_receipt(receipt)
-        _validate_publication_receipt_replay(
+        schema_v2_upgrade_required = _validate_publication_receipt_replay(
             store,
             existing,
             plan=plan,
             plan_file_sha=plan_file_sha,
             state_root=state_root,
         )
+        if schema_v2_upgrade_required:
+            _upgrade_schema_v2_publication_evidence_from_receipt(
+                store, plan=plan, receipt=existing
+            )
         return {**existing, "idempotent_replay": True, "receipt_path": str(receipt)}
 
     preview = publication_preview(registry, store, plan_path=path)
@@ -4617,6 +4718,7 @@ def publish_task_proposal(
                     spec_sha256=task_spec_revision["spec_sha256"],
                     revision=task_spec_revision["revision"],
                     evidence=evidence,
+                    allow_schema_v2_upgrade=True,
                 )
         except (sqlite3.Error, StateError) as exc:
             raise OperatorIntakeError(
@@ -4668,13 +4770,17 @@ def publish_task_proposal(
         if os.path.lexists(receipt):
             try:
                 existing = _read_task_publication_receipt(receipt)
-                _validate_publication_receipt_replay(
+                schema_v2_upgrade_required = _validate_publication_receipt_replay(
                     store,
                     existing,
                     plan=plan,
                     plan_file_sha=plan_file_sha,
                     state_root=state_root,
                 )
+                if schema_v2_upgrade_required:
+                    _upgrade_schema_v2_publication_evidence_from_receipt(
+                        store, plan=plan, receipt=existing
+                    )
             except OperatorIntakeError as receipt_exc:
                 if receipt_exc.code == "receipt-conflict":
                     raise
@@ -4977,14 +5083,9 @@ def _publication_replay_plan_binding(plan: dict[str, Any]) -> dict[str, Any]:
     expected_revision = task_spec_binding.get("expected_revision")
     expected_spec_sha256 = task_spec_binding.get("expected_spec_sha256")
     expected_task_file_sha256 = task_spec_binding.get("expected_task_file_sha256")
-    if publication == _task_publication_contract() and (
-        operation != "register" or "first_task_onboarding" in plan
-    ):
-        raise OperatorIntakeError(
-            "publication-contract-task-spec-mismatch",
-            "typed candidate publication authority is valid only for TaskSpec registration",
-            details={"operation": operation},
-        )
+    _validate_publication_contract_task_spec_mapping(
+        plan, operation=str(operation)
+    )
     if operation == "register":
         if expected_revision is not None or expected_spec_sha256 is not None:
             raise OperatorIntakeError(
@@ -5094,7 +5195,7 @@ def _validate_publication_receipt_replay(
     plan: dict[str, Any],
     plan_file_sha: str,
     state_root: Path,
-) -> None:
+) -> bool:
     binding = _publication_replay_plan_binding(plan)
     resulting_revision = binding["resulting_revision"]
     revision = receipt.get("task_spec_revision")
@@ -5168,6 +5269,44 @@ def _validate_publication_receipt_replay(
     if typed_publication or "approval" in receipt:
         expected["approval"] = expected_approval
         observed["approval"] = receipt.get("approval")
+    if typed_publication:
+        typed_expected = {
+            "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+            "kind": "bureau_task_publication_receipt",
+            "status": "published",
+            "effect_started": True,
+            "retryable": False,
+            "ambiguity": False,
+            "required_readback": [],
+            "publication_phase": "committed_locally",
+            "branch": None,
+            "registry": plan.get("registry"),
+            "queue_mutated": False,
+            "legacy_task_spec_import": {
+                "status": "retired",
+                "imported": 0,
+                "reason": "StateStore is the sole operational TaskSpec authority",
+            },
+            "does_not_establish": [
+                "git_task_projection",
+                "task_readiness",
+                "claim_or_dispatch_authority",
+                "merge_or_deployment_authority",
+                "task_verification",
+            ],
+            "task_spec": plan.get("task_json"),
+        }
+        for key, expected_value in typed_expected.items():
+            expected[key] = expected_value
+            if key == "task_spec":
+                observed[key] = revision.get("spec") if isinstance(revision, dict) else None
+            else:
+                observed[key] = receipt.get(key)
+        created_at = receipt.get("created_at")
+        if not isinstance(created_at, str) or not created_at:
+            expected["created_at"] = "non-empty publication timestamp"
+            observed["created_at"] = created_at
+    schema_v2_evidence_upgrade_required = False
     evidence_mismatched: dict[str, Any] = {}
     if typed_publication:
         trusted_evidence = _publication_receipt_mutation_evidence(
@@ -5175,16 +5314,48 @@ def _validate_publication_receipt_replay(
         )
         observed_commitment = _publication_receipt_lease_commitment(receipt)
         trusted_commitments = _publication_evidence_commitments(trusted_evidence)
+        trusted_schema = (
+            trusted_evidence.get("schema_version")
+            if isinstance(trusted_evidence, dict)
+            else None
+        )
         if (
             not isinstance(trusted_evidence, dict)
             or trusted_evidence.get("kind") != TASK_PUBLICATION_RECEIPT_EVIDENCE_KIND
             or trusted_evidence.get("proposal_sha256") != binding["proposal_sha256"]
+            or trusted_schema not in {2, 3}
             or not trusted_commitments
         ):
             evidence_mismatched["receipt_evidence"] = {
                 "expected": "trusted mutation-bound publication lease commitment",
                 "observed": trusted_evidence,
             }
+        elif trusted_schema == 2:
+            observed_v2_commitment = {
+                "lease_binding_sha256": observed_commitment["lease_binding_sha256"],
+                "lease_release_sha256": observed_commitment["lease_release_sha256"],
+            }
+            if observed_v2_commitment not in trusted_commitments:
+                for receipt_field, evidence_field in (
+                    ("lease_binding", "lease_binding_sha256"),
+                    ("lease_release", "lease_release_sha256"),
+                ):
+                    observed_value = observed_v2_commitment[evidence_field]
+                    trusted_values = sorted(
+                        item[evidence_field] for item in trusted_commitments
+                    )
+                    if observed_value not in trusted_values:
+                        evidence_mismatched[receipt_field] = {
+                            "expected_sha256": trusted_values,
+                            "observed_sha256": observed_value,
+                        }
+                if not evidence_mismatched:
+                    evidence_mismatched["receipt_evidence"] = {
+                        "expected": "one exact schema-v2 trusted lease commitment",
+                        "observed": observed_v2_commitment,
+                    }
+            else:
+                schema_v2_evidence_upgrade_required = True
         elif observed_commitment not in trusted_commitments:
             for receipt_field, evidence_field in (
                 ("receipt_sha256", "receipt_sha256"),
@@ -5193,11 +5364,7 @@ def _validate_publication_receipt_replay(
             ):
                 observed_value = observed_commitment[evidence_field]
                 trusted_values = sorted(
-                    {
-                        item[evidence_field]
-                        for item in trusted_commitments
-                        if isinstance(item.get(evidence_field), str)
-                    }
+                    item[evidence_field] for item in trusted_commitments
                 )
                 if observed_value not in trusted_values:
                     evidence_mismatched[receipt_field] = {
@@ -5206,7 +5373,7 @@ def _validate_publication_receipt_replay(
                     }
             if not evidence_mismatched:
                 evidence_mismatched["receipt_evidence"] = {
-                    "expected": "one exact trusted lease commitment",
+                    "expected": "one exact trusted receipt commitment",
                     "observed": observed_commitment,
                 }
     mismatched = {
@@ -5223,6 +5390,7 @@ def _validate_publication_receipt_replay(
     else:
         publication_expected = {
             "mode": "state_store",
+            "readback_complete": True,
             "coordination_state_root": str(state_root),
             "task_id": binding["task_id"],
             "revision": resulting_revision,
@@ -5274,6 +5442,7 @@ def _validate_publication_receipt_replay(
             },
             publication_phase="committed_locally" if effect_started else None,
         ) from mutation_exc
+    return schema_v2_evidence_upgrade_required
 
 
 def _read_task_promotion_publication_receipt(path: str | Path) -> dict[str, Any]:

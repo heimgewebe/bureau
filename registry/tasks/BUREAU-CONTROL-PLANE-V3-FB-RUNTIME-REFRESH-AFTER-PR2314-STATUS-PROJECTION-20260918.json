@@ -84,7 +84,7 @@
       "queue, claim, dispatch, task-supply or foreign-work authority"
     ],
     "main_at_registration": "dcac53feb27a0683bcb63deecefd4f1230cd94e6",
-    "observation_sha256_at_registration": "747255274250ee559c04b47d45aea3d12b7e72b03550fdec6395fdce94cc8f6d",
+    "observation_sha256_at_registration": "935db1453d5a9639193fa60cbeeb0ac6e50b867ead70754f418068885563a6fb",
     "post_publication_activation": {
       "activation_state": "ready",
       "does_not_establish": [
@@ -292,7 +292,7 @@
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256"
     },
-    "source": "Fresh typed observation 747255274250ee559c04b47d45aea3d12b7e72b03550fdec6395fdce94cc8f6d proves deployment manifest and canonical Registry agree at b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d, this source is a verified ancestor of protected main dcac53feb27a0683bcb63deecefd4f1230cd94e6 by 12 commits, and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. PR #2314 is merged and the prior PR #2312 runtime authority is already consumed and verified. This successor remains planned until its own protected one-file merge, missing-only adoption and fresh activation.",
+    "source": "Fresh cohesive registration observation 935db1453d5a9639193fa60cbeeb0ac6e50b867ead70754f418068885563a6fb proves deployment manifest and canonical Registry agree at b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d, this source is a verified ancestor of protected main dcac53feb27a0683bcb63deecefd4f1230cd94e6 by 12 commits, and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. PR #2314 is merged and the prior PR #2312 runtime authority is already consumed and verified. This successor remains planned until its own protected one-file merge, missing-only adoption and fresh activation.",
     "historical_registration_observation": {
       "schema_version": 1,
       "repository": "heimgewebe/bureau",

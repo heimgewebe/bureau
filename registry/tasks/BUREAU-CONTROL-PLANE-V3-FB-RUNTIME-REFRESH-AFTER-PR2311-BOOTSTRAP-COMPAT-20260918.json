@@ -85,7 +85,7 @@
     "deployed_manifest_sha256_at_registration": "868e5008dac5d11b405a796bf421b8a9c5ad99d44d9177b1e6948079a50998a4",
     "deployed_source_at_registration": "f487e6d8fc1dcb6654a7b06bda0bb30807d292c0",
     "does_not_establish": [
-      "runtime target before fresh post-PR2311 and post-publication observation",
+      "runtime target before fresh post-publication observation",
       "permission to reuse the predecessor authority or its activation witness",
       "permission to activate before PR #2311 and this TaskSpec are both merged",
       "permission to bypass protected publication, missing-only adoption, source-ancestry, lease or CI gates",
@@ -94,8 +94,8 @@
       "Heim-PC NixOS installation, storage, EFI, reboot or product cutover authority",
       "queue, claim, dispatch, task-supply or foreign-work authority"
     ],
-    "main_at_registration": "e0e4e53f35defbf254f46be8a2dd9c06d214eb1c",
-    "observation_sha256_at_registration": "843f6e8d56c03535a273f33786c059174c13c2e6046db6551c6e705144969ecb",
+    "main_at_registration": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
+    "observation_sha256_at_registration": "67cd0f181b4a1e18652a91b66b217df9a71606aa6e0424b96b1934902c2081c8",
     "post_publication_activation": {
       "activation_state": "ready",
       "does_not_establish": [
@@ -139,29 +139,73 @@
       ],
       "initial_state": "planned",
       "kind": "normal-protected-pull-request",
-      "reason": "The installed Bureau runtime and canonical Registry remain at f487e6d8fc1dcb6654a7b06bda0bb30807d292c0. The historical registration observation remains bound to pre-merge main e0e4e53f35defbf254f46be8a2dd9c06d214eb1c, while post_pr2311_revalidation separately binds protected main db3e429761b288e4d7be4cf521434aa94b8a3c8f containing merged PR #2311 and green exact-main required checks. The predecessor ready authority remains unusable because its stored activation witness contains a field rejected by installed f487. Runtime-refresh authority adoption requires an exact one-file TaskSpec publication, so this planned successor is published separately, then adopted missing-only and activated only from the real protected-publication merge with fresh ancestry, CI and StateStore evidence.",
+      "reason": "The installed Bureau runtime and canonical Registry remain identical at f487e6d8fc1dcb6654a7b06bda0bb30807d292c0. A fresh cohesive registration_observation at protected main db3e429761b288e4d7be4cf521434aa94b8a3c8f binds merged PR #2311, its successful post-merge push validation, the successful exact-main required checks, and verified f487-to-db3 ancestry with 16 commits of forward lag. The predecessor ready authority remains historical and unusable because its stored activation witness contains a field rejected by installed f487. This planned successor is therefore published separately as an exact one-file protected TaskSpec, then adopted missing-only and activated only from its real publication merge with fresh StateStore evidence.",
       "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2311-BOOTSTRAP-COMPAT-20260918.json",
       "state_store_transition": "seed-missing-preserve-state-store"
     },
     "registration_observation": {
       "schema_version": 1,
+      "kind": "bureau_runtime_refresh_registration_observation",
       "repository": "heimgewebe/bureau",
-      "observed_at": "2026-09-18T02:38:12.765393Z",
-      "observation_sha256": "843f6e8d56c03535a273f33786c059174c13c2e6046db6551c6e705144969ecb",
+      "observed_at": "2026-09-18T04:36:08Z",
+      "digest_contract": "sha256-canonical-json-newline-excluding-observation_sha256-v1",
+      "observation_sha256": "67cd0f181b4a1e18652a91b66b217df9a71606aa6e0424b96b1934902c2081c8",
       "deployment_manifest_sha256": "868e5008dac5d11b405a796bf421b8a9c5ad99d44d9177b1e6948079a50998a4",
       "deployed_source_commit": "f487e6d8fc1dcb6654a7b06bda0bb30807d292c0",
       "canonical_registry_source_commit": "f487e6d8fc1dcb6654a7b06bda0bb30807d292c0",
-      "github_main": "e0e4e53f35defbf254f46be8a2dd9c06d214eb1c",
-      "source_ancestry_to_main": true,
-      "lag_commits": 12,
+      "github_main": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
+      "source_ancestry": {
+        "status": "proven",
+        "method": "github-compare",
+        "compare_status": "ahead",
+        "ahead_by": 16,
+        "behind_by": 0,
+        "merge_base_commit": "f487e6d8fc1dcb6654a7b06bda0bb30807d292c0"
+      },
+      "lag_commits": 16,
       "canonical_fix_pull_request": 2311,
       "canonical_fix_head": "45665780c2ef0c5b13b8812fb9630c0b2de59e66",
-      "canonical_fix_state_at_registration": "open-pending-required-validate",
+      "canonical_fix_merge_commit": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
+      "canonical_fix_merged_at": "2026-09-18T03:45:38Z",
+      "canonical_fix_state_at_registration": "merged",
+      "post_merge_push_validation": {
+        "workflow_run": 35304410792,
+        "head_sha": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
+        "event": "push",
+        "conclusion": "success",
+        "checks": {
+          "validate (3.10)": "success",
+          "validate (3.12)": "success"
+        }
+      },
       "required_checks_on_current_main": {
-        "registry-registration-preflight/freshness": "success",
-        "validate (3.10)": "success",
-        "validate (3.12)": "success"
-      }
+        "validate (3.10)": {
+          "status": "success",
+          "workflow_run": 35303419784,
+          "job_id": 105470634492,
+          "head_sha": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
+          "event": "merge_group"
+        },
+        "validate (3.12)": {
+          "status": "success",
+          "workflow_run": 35303419784,
+          "job_id": 105470634686,
+          "head_sha": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
+          "event": "merge_group"
+        },
+        "registry-registration-preflight/freshness": {
+          "status": "success",
+          "workflow_run": 35303419733,
+          "job_id": 105470634138,
+          "head_sha": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
+          "event": "merge_group"
+        }
+      },
+      "does_not_establish": [
+        "runtime target after this authority's own protected publication merge",
+        "permission to reuse or mutate the predecessor authority",
+        "permission to skip fresh checks before adoption, activation, prepare-intent or apply"
+      ]
     },
     "runtime_execution_context": {
       "absence_tolerant_intent_roots": {
@@ -289,53 +333,34 @@
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256"
     },
-    "source": "Historical registration observation 843f6e8d56c03535a273f33786c059174c13c2e6046db6551c6e705144969ecb is intentionally preserved: at 2026-09-18T02:38:12.765393Z the deployed Bureau runtime and canonical Registry were identical at f487e6d8fc1dcb6654a7b06bda0bb30807d292c0 while protected main was e0e4e53f35defbf254f46be8a2dd9c06d214eb1c and PR #2311 was not yet merged. The separate post_pr2311_revalidation binds protected main db3e429761b288e4d7be4cf521434aa94b8a3c8f, merged PR #2311, successful exact-main required checks, source ancestry from f487 and predecessor StateStore ready revision 2 with spec SHA f7a30e83ab17c9273d05bcc40016627d2cd0133a891ce84927e647584efce388. The predecessor authority is not mutated or reused; this successor remains a distinct planned one-file protected publication, and its runtime target must still be freshly selected only after this authority's own merge.",
-    "post_pr2311_revalidation": {
+    "source": "Fresh cohesive registration observation 67cd0f181b4a1e18652a91b66b217df9a71606aa6e0424b96b1934902c2081c8 binds protected main db3e429761b288e4d7be4cf521434aa94b8a3c8f, merged PR #2311, successful push run 35304410792, successful exact-main required checks, deployed Bureau/Registry source f487e6d8fc1dcb6654a7b06bda0bb30807d292c0, deployment manifest 868e5008dac5d11b405a796bf421b8a9c5ad99d44d9177b1e6948079a50998a4, and proven GitHub ancestry with 16 commits of forward lag. The prior 843f6e8d56c03535a273f33786c059174c13c2e6046db6551c6e705144969ecb observation is retained only as historical_registration_observation. The predecessor authority remains untouched; this successor stays planned until its own protected merge, missing-only adoption and PR-#2311-compatible activation.",
+    "historical_registration_observation": {
       "schema_version": 1,
-      "kind": "bureau_runtime_refresh_successor_post_pr2311_revalidation",
       "repository": "heimgewebe/bureau",
-      "github_main": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
-      "canonical_fix_pull_request": 2311,
-      "canonical_fix_head": "45665780c2ef0c5b13b8812fb9630c0b2de59e66",
-      "canonical_fix_merge_commit": "db3e429761b288e4d7be4cf521434aa94b8a3c8f",
-      "canonical_fix_merged_at": "2026-09-18T03:45:38Z",
+      "observed_at": "2026-09-18T02:38:12.765393Z",
+      "observation_sha256": "843f6e8d56c03535a273f33786c059174c13c2e6046db6551c6e705144969ecb",
+      "deployment_manifest_sha256": "868e5008dac5d11b405a796bf421b8a9c5ad99d44d9177b1e6948079a50998a4",
       "deployed_source_commit": "f487e6d8fc1dcb6654a7b06bda0bb30807d292c0",
       "canonical_registry_source_commit": "f487e6d8fc1dcb6654a7b06bda0bb30807d292c0",
-      "deployment_manifest_sha256": "868e5008dac5d11b405a796bf421b8a9c5ad99d44d9177b1e6948079a50998a4",
+      "github_main": "e0e4e53f35defbf254f46be8a2dd9c06d214eb1c",
       "source_ancestry_to_main": true,
-      "predecessor_state_store": {
-        "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2306-AUTHORITY-REPAIR-20260917",
-        "revision": 2,
-        "spec_sha256": "f7a30e83ab17c9273d05bcc40016627d2cd0133a891ce84927e647584efce388",
-        "state": "ready",
-        "single_use": true,
-        "activation_source": "runtime-refresh-protected-publication-activation"
-      },
-      "exact_main_required_check_evidence": [
-        {
-          "name": "validate (3.10)",
-          "status": "success",
-          "workflow_run": 35303419784,
-          "job_id": 105470634492
-        },
-        {
-          "name": "validate (3.12)",
-          "status": "success",
-          "workflow_run": 35303419784,
-          "job_id": 105470634686
-        },
-        {
-          "name": "registry-registration-preflight/freshness",
-          "status": "success",
-          "workflow_run": 35303419733,
-          "job_id": 105470634138
-        }
-      ],
-      "does_not_establish": [
-        "runtime target after this authority's own protected publication merge",
-        "permission to reuse or mutate the predecessor authority",
-        "permission to skip fresh checks before adoption, activation, prepare-intent or apply"
-      ]
+      "lag_commits": 12,
+      "canonical_fix_pull_request": 2311,
+      "canonical_fix_head": "45665780c2ef0c5b13b8812fb9630c0b2de59e66",
+      "canonical_fix_state_at_registration": "open-pending-required-validate",
+      "required_checks_on_current_main": {
+        "registry-registration-preflight/freshness": "success",
+        "validate (3.10)": "success",
+        "validate (3.12)": "success"
+      }
+    },
+    "predecessor_state_store_readback": {
+      "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2306-AUTHORITY-REPAIR-20260917",
+      "revision": 2,
+      "spec_sha256": "f7a30e83ab17c9273d05bcc40016627d2cd0133a891ce84927e647584efce388",
+      "state": "ready",
+      "single_use": true,
+      "activation_source": "runtime-refresh-protected-publication-activation"
     }
   },
   "priority": {

@@ -207,8 +207,13 @@ def _is_acceptance_evidence_path(path: str) -> bool:
     return path == "/acceptance" or path.startswith("/acceptance/")
 
 
-def _is_nontechnical_task_prose_path(path: str) -> bool:
-    return path in {"/title", "/goal"}
+def _is_nontechnical_task_prose_path(path: str, value: Any) -> bool:
+    if path in {"/title", "/goal"}:
+        return True
+    # similarity_checked is provenance/deduplication prose, not repository
+    # authority. Keep the exemption leaf-string-only so structured metadata
+    # cannot hide executable resource bindings from the rebind guard.
+    return path == "/metadata/similarity_checked" and isinstance(value, str)
 
 
 def _is_uri_authority_path_boundary(value: str, index: int) -> bool:
@@ -329,7 +334,9 @@ def _old_repository_binding_residue(
     new_repository_path: str,
     path: str = "",
 ) -> list[str]:
-    if _is_acceptance_evidence_path(path) or _is_nontechnical_task_prose_path(path):
+    if _is_acceptance_evidence_path(path) or _is_nontechnical_task_prose_path(
+        path, value
+    ):
         return []
     result: list[str] = []
     if isinstance(value, Mapping):

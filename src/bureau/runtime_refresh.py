@@ -3281,13 +3281,11 @@ def _bootstrap_compatible_activation_observation(
         return observation
     proof = observation.get("registered_source_ancestry")
     if (
-        not isinstance(deployed_source_commit, str)
-        or not _registered_source_ancestry_is_proven(
+        not _registered_source_ancestry_is_proven(
             proof,
             registered_source_commit=registered_source_commit,
             deployed_source_commit=deployed_source_commit,
         )
-        or not isinstance(proof, dict)
         or proof.get("method") != "same-commit"
     ):
         raise RuntimeRefreshError(

@@ -19,7 +19,7 @@ SCHEMA_VERSION = 1
 TERMINAL_RUN_STATES = {"succeeded", "failed", "cancelled", "orphaned"}
 DEFAULT_STATE_ROOT = Path.home() / ".local/state/bureau"
 DEFAULT_BACKUP_ROOT = Path.home() / "artifacts/merges/bureau-state-backups"
-DEFAULT_RESTORE_RECEIPT_ROOT = Path.home() / ".local/state/bureau-backup-restore-tests"
+DEFAULT_RESTORE_RECEIPT_ROOT = DEFAULT_BACKUP_ROOT / "restore-tests"
 DEFAULT_RUNTIME_MANIFEST = Path.home() / ".local/share/bureau/deployment-manifest.json"
 
 

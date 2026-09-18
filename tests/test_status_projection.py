@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 
 from bureau.cli import main
+from bureau.state_backup import DEFAULT_BACKUP_ROOT, DEFAULT_RESTORE_RECEIPT_ROOT
 from bureau.status_projection import (
     AI_AUTHORITY_BOUNDARY,
     PROJECTION_DOES_NOT_ESTABLISH,
@@ -582,6 +583,66 @@ def test_cli_status_projection_with_skip_github(registry_factory, capsys) -> Non
     value = json.loads(capsys.readouterr().out)
     assert value["github_observation"]["observed"] is False
     assert value["schema_version"] == STATUS_PROJECTION_SCHEMA_VERSION
+
+
+def test_cli_status_projection_observes_backup_and_restore(
+    registry_factory, tmp_path: Path, capsys, monkeypatch
+) -> None:
+    root = registry_factory()
+    backup_root = tmp_path / "backups"
+    restore_root = tmp_path / "restore-tests"
+    observed: dict[str, Path] = {}
+
+    def fake_backup(path: Path) -> dict[str, object]:
+        observed["backup"] = path
+        return {
+            "observed": True,
+            "status": "verified",
+            "source": "state-backup-manifest",
+            "freshness": {"observed_at": NOW, "age_seconds": 1},
+            "authority": "verified-backup-bundle",
+            "bounds": "latest verified bundle only",
+        }
+
+    def fake_restore(path: Path) -> dict[str, object]:
+        observed["restore"] = path
+        return {
+            "observed": True,
+            "status": "verified",
+            "source": "restore-test-receipt",
+            "freshness": {"observed_at": NOW, "age_seconds": 1},
+            "authority": "hash-bound-restore-test-receipt",
+            "bounds": "latest receipt only",
+        }
+
+    monkeypatch.setattr("bureau.doctor.observe_backup", fake_backup)
+    monkeypatch.setattr("bureau.doctor.observe_restore", fake_restore)
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(backup_root),
+            "--restore-receipt-root",
+            str(restore_root),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert observed == {"backup": backup_root, "restore": restore_root}
+    assert value["control_plane"]["organs"]["backup"]["status"] == "verified"
+    assert value["control_plane"]["organs"]["restore"]["status"] == "verified"
+
+
+def test_runtime_restore_receipt_default_matches_declared_service_tree() -> None:
+    assert DEFAULT_RESTORE_RECEIPT_ROOT == DEFAULT_BACKUP_ROOT / "restore-tests"
 
 
 def test_cli_status_projection_with_observation_file(

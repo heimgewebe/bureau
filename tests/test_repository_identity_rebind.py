@@ -1286,6 +1286,56 @@ def test_preview_preserves_repository_path_mention_in_acceptance_text(tmp_path: 
     assert preview["spec"]["acceptance"] == acceptance_before
 
 
+def test_build_plan_ignores_historical_similarity_checked_repository_prose(
+    tmp_path: Path,
+) -> None:
+    root, old_path, new_path = _registry_root(
+        tmp_path, task_ids=("TASK-A",), legacy=False
+    )
+    registry = Registry.load(root)
+    store = _store(tmp_path, registry)
+    current = store.task_spec("TASK-A")
+    assert current is not None
+
+    migrated = task_specs.preview_repository_identity_rebind(
+        current["spec"],
+        old_resource_id=OLD_RESOURCE,
+        new_resource_id=NEW_RESOURCE,
+        old_repository_path=str(old_path),
+        new_repository_path=str(new_path),
+    )["spec"]
+    migrated["metadata"]["similarity_checked"] = (
+        f"Historical task in {OLD_RESOURCE} was checked for duplication; "
+        f"current authority is {NEW_RESOURCE}."
+    )
+    revised = store.put_task_spec(
+        migrated,
+        idempotency_key="test-post-rebind-similarity-prose",
+        expected_revision=current["revision"],
+        source="test",
+    )
+    assert revised["revision"] == 2
+
+    with store.connect() as connection:
+        candidates = _candidates(
+            connection,
+            registry,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+            old_path=str(old_path),
+            new_path=str(new_path),
+        )
+
+    assert candidates == {}
+    with pytest.raises(StateError, match="no migration items"):
+        build_plan(
+            registry,
+            store,
+            old_resource_id=OLD_RESOURCE,
+            new_resource_id=NEW_RESOURCE,
+        )
+
+
 def test_preview_rejects_colon_scoped_old_repository_path_in_metadata(
     tmp_path: Path,
 ) -> None:

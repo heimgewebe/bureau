@@ -76,7 +76,7 @@
     "does_not_establish": [
       "runtime target before fresh post-publication observation",
       "permission to reuse the predecessor authority or its activation witness",
-      "permission to activate before PR #2311 and this TaskSpec are both merged",
+      "permission to activate before merged PR #2314 and this TaskSpec's own protected one-file publication are both contained in the selected target",
       "permission to bypass protected publication, missing-only adoption, source-ancestry, lease or CI gates",
       "permission to mutate the existing predecessor TaskSpec or StateStore history",
       "permission to publish or implement unrelated follow-up work without its separate review and authority",
@@ -334,7 +334,7 @@
     "rollback"
   ],
   "rollback": {
-    "strategy": "The currently integrity-valid deployed Bureau runtime at f487e6d8fc1dcb6654a7b06bda0bb30807d292c0 remains authoritative until one operator-authorized, source-precondition-bound immutable result is fully read back. If protected publication, adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability, leases or any later runtime result becomes unclear, preserve evidence and do not blindly retry; reconcile through a separately bound successor path. Historical runtime authorities, intents and targets are never reused."
+    "strategy": "The currently integrity-valid deployed Bureau runtime at b4865b3c233c1691be4fd90251f5cbe4e3bf5c5d remains authoritative until one operator-authorized, source-precondition-bound immutable result is fully read back. If protected publication, adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability, leases or any later runtime result becomes unclear, preserve evidence and do not blindly retry; reconcile through a separately bound successor path. Historical runtime authorities, intents and targets are never reused."
   },
   "schema_version": 1,
   "state": "planned",

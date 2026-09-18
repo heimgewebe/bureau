@@ -74,7 +74,7 @@ def _load_json_file(path: Path, *, label: str) -> tuple[dict[str, Any], bytes]:
     data = regular.read_bytes()
     try:
         value = json.loads(data)
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise StateBackupError(f"{label} is invalid JSON: {regular}") from exc
     if not isinstance(value, dict):
         raise StateBackupError(f"{label} must contain a JSON object: {regular}")

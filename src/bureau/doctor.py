@@ -114,7 +114,7 @@ def observe_backup(
             "authority": "verified-backup-bundle",
             "bounds": "latest verified bundle only",
         }
-    except (StateBackupError, OSError, json.JSONDecodeError) as exc:
+    except (StateBackupError, OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         return {
             "observed": True,
             "status": "unavailable",
@@ -145,7 +145,7 @@ def observe_restore(
         }
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         return {
             "observed": True,
             "status": "invalid",

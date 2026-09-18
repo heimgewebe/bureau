@@ -645,6 +645,42 @@ def test_runtime_restore_receipt_default_matches_declared_service_tree() -> None
     assert DEFAULT_RESTORE_RECEIPT_ROOT == DEFAULT_BACKUP_ROOT / "restore-tests"
 
 
+def test_cli_status_projection_keeps_non_utf8_health_artifacts_fail_closed(
+    registry_factory, tmp_path: Path, capsys
+) -> None:
+    root = registry_factory()
+    backup_root = tmp_path / "backups"
+    corrupt_bundle = backup_root / "20260918T000000Z-corrupt"
+    corrupt_bundle.mkdir(parents=True)
+    (corrupt_bundle / "manifest.json").write_bytes(b"\xff")
+
+    restore_root = tmp_path / "restore-tests"
+    restore_root.mkdir(parents=True)
+    (restore_root / "latest.json").write_bytes(b"\xff")
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(backup_root),
+            "--restore-receipt-root",
+            str(restore_root),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["control_plane"]["organs"]["backup"]["status"] == "unavailable"
+    assert value["control_plane"]["organs"]["restore"]["status"] == "invalid"
+    assert value["control_plane"]["healthy"] is False
+
+
 def test_cli_status_projection_with_observation_file(
     registry_factory, tmp_path: Path, capsys
 ) -> None:

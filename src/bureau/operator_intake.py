@@ -2032,6 +2032,50 @@ def _validate_task_semantics(
             raise OperatorIntakeError(
                 "claim-resource-unknown", f"claim resource {resource} is unknown"
             )
+        if task_json.get("state") not in legacy.TERMINAL_TASK_STATES:
+            current_resource_id = resource
+            visited_resources: set[str] = set()
+            while current_resource_id not in visited_resources:
+                visited_resources.add(current_resource_id)
+                resource_record = registry.resources.get(current_resource_id)
+                if resource_record is None:
+                    break
+                resource_metadata = resource_record.metadata
+                canonical_successor = (
+                    resource_metadata.get("canonical_successor")
+                    if isinstance(resource_metadata, dict)
+                    else None
+                )
+                retired_at = (
+                    resource_metadata.get("retired_at")
+                    if isinstance(resource_metadata, dict)
+                    else None
+                )
+                if (
+                    resource_record.type == "external"
+                    and isinstance(canonical_successor, str)
+                    and canonical_successor
+                    and isinstance(retired_at, str)
+                    and retired_at
+                ):
+                    raise OperatorIntakeError(
+                        "claim-resource-retired-alias",
+                        (
+                            f"claim resource {resource} is within retired alias "
+                            f"{current_resource_id}; use canonical successor "
+                            f"{canonical_successor}"
+                        ),
+                        details={
+                            "resource": resource,
+                            "retired_alias": current_resource_id,
+                            "canonical_successor": canonical_successor,
+                            "retired_at": retired_at,
+                        },
+                    )
+                parent = resource_record.parent
+                if not isinstance(parent, str) or not parent:
+                    break
+                current_resource_id = parent
     if not task_json.get("claims"):
         raise OperatorIntakeError("claims-missing", "task proposal requires explicit claims")
     if not task_json.get("required_capabilities"):

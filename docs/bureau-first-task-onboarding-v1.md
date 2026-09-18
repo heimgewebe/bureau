@@ -124,9 +124,13 @@ The contract does **not** establish:
 - reusable publication authority after an intervening state change;
 - permission to reuse an unrelated TaskSpec as publisher.
 
-## Intended commonthing bootstrap
+## Commonthing bootstrap status
 
-For the current `repo.commonthing` case, the visible-cardinality follow-up should be published
-first through this onboarding path. Once that TaskSpec exists, the BBOX-freshness follow-up can
-use the newly authoritative commonthing TaskSpec as the normal publishing task. This keeps the
-exception one-shot rather than turning onboarding into a parallel task-publication system.
+The `repo.commonthing` bootstrap is complete. Authoritative StateStore TaskSpecs now bind current
+Commonthing work directly to `repo.commonthing`, so first-TaskSpec onboarding must not be used for
+additional Commonthing tasks. New work follows the normal reviewed publication path.
+
+The former `repo.weltgewebe` identity is retained only as a historical external alias whose
+`canonical_successor` is `repo.commonthing`. Historical task and component claims remain
+resolvable through that alias; new nonterminal TaskSpecs must claim the canonical successor
+instead of reopening a second repository coordination domain.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from pathlib import Path
@@ -678,6 +679,61 @@ def test_cli_status_projection_keeps_non_utf8_health_artifacts_fail_closed(
     value = json.loads(capsys.readouterr().out)
     assert value["control_plane"]["organs"]["backup"]["status"] == "unavailable"
     assert value["control_plane"]["organs"]["restore"]["status"] == "invalid"
+    assert value["control_plane"]["healthy"] is False
+
+
+def test_cli_status_projection_keeps_invalid_sqlite_backup_fail_closed(
+    registry_factory, tmp_path: Path, capsys
+) -> None:
+    root = registry_factory()
+    backup_root = tmp_path / "backups"
+    corrupt_bundle = backup_root / "20260918T000001Z-corrupt-sqlite"
+    corrupt_bundle.mkdir(parents=True)
+    database_bytes = b"not a sqlite database"
+    database_path = corrupt_bundle / "bureau.sqlite3"
+    database_path.write_bytes(database_bytes)
+
+    manifest = {
+        "schema_version": 1,
+        "kind": "bureau_state_backup_manifest",
+        "bundle_id": corrupt_bundle.name,
+        "database": {
+            "sha256": hashlib.sha256(database_bytes).hexdigest(),
+            "bytes": len(database_bytes),
+        },
+    }
+    manifest["manifest_sha256"] = hashlib.sha256(
+        json.dumps(
+            manifest,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    (corrupt_bundle / "manifest.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(backup_root),
+            "--restore-receipt-root",
+            str(tmp_path / "no-restores"),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["control_plane"]["organs"]["backup"]["status"] == "unavailable"
     assert value["control_plane"]["healthy"] is False
 
 

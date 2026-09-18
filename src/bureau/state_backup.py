@@ -426,7 +426,10 @@ def verify_backup(bundle: Path) -> dict[str, Any]:
     database = manifest.get("database")
     if not isinstance(database, dict) or _sha256_file(database_path) != database.get("sha256"):
         raise StateBackupError("backup database digest mismatch")
-    connection = _readonly_connection(database_path)
+    try:
+        connection = _readonly_connection(database_path)
+    except sqlite3.Error as exc:
+        raise StateBackupError("backup SQLite verification failed") from exc
     try:
         _database_integrity(connection)
         projection = _projection_evidence(connection)
@@ -455,6 +458,8 @@ def verify_backup(bundle: Path) -> dict[str, Any]:
             for row in connection.execute("SELECT run_id,state FROM runs ORDER BY run_id")
             if row["state"] not in TERMINAL_RUN_STATES
         ]
+    except sqlite3.Error as exc:
+        raise StateBackupError("backup SQLite verification failed") from exc
     finally:
         connection.close()
     return {

@@ -555,6 +555,8 @@ def parser() -> argparse.ArgumentParser:
     projection.add_argument("--github-observations")
     projection.add_argument("--skip-github", action="store_true")
     projection.add_argument("--github-max-age", type=int, default=3600)
+    projection.add_argument("--backup-root", type=Path)
+    projection.add_argument("--restore-receipt-root", type=Path)
 
     projection_repair = sub.add_parser("projection-repair")
     projection_repair_mode = projection_repair.add_mutually_exclusive_group(required=True)
@@ -1721,6 +1723,7 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0 if value["healthy"] and value.get("binding_healthy", True) else 1
         if args.command == "status-projection":
+            from .doctor import observe_backup, observe_restore
             from .github_observer import (
                 _blocked_observation,
                 _utc_now,
@@ -1730,7 +1733,8 @@ def main(argv: list[str] | None = None) -> int:
                 RepositoryIdentifierError,
                 resolve_github_repository,
             )
-            from .status_projection import status_projection
+            from .state_backup import DEFAULT_BACKUP_ROOT, DEFAULT_RESTORE_RECEIPT_ROOT
+            from .status_projection import control_plane_summary, status_projection
 
             if args.skip_github:
                 github = None
@@ -1766,6 +1770,21 @@ def main(argv: list[str] | None = None) -> int:
                 state_root=state_root,
                 github=github,
                 github_max_age_seconds=args.github_max_age,
+            )
+            backup_root = (
+                args.backup_root
+                if args.backup_root is not None
+                else DEFAULT_BACKUP_ROOT
+            )
+            restore_receipt_root = (
+                args.restore_receipt_root
+                if args.restore_receipt_root is not None
+                else DEFAULT_RESTORE_RECEIPT_ROOT
+            )
+            value["control_plane"] = control_plane_summary(
+                value,
+                backup=observe_backup(backup_root),
+                restore=observe_restore(restore_receipt_root),
             )
             emit(value, args.json)
             return 0

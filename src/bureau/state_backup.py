@@ -19,7 +19,7 @@ SCHEMA_VERSION = 1
 TERMINAL_RUN_STATES = {"succeeded", "failed", "cancelled", "orphaned"}
 DEFAULT_STATE_ROOT = Path.home() / ".local/state/bureau"
 DEFAULT_BACKUP_ROOT = Path.home() / "artifacts/merges/bureau-state-backups"
-DEFAULT_RESTORE_RECEIPT_ROOT = Path.home() / ".local/state/bureau-backup-restore-tests"
+DEFAULT_RESTORE_RECEIPT_ROOT = DEFAULT_BACKUP_ROOT / "restore-tests"
 DEFAULT_RUNTIME_MANIFEST = Path.home() / ".local/share/bureau/deployment-manifest.json"
 
 
@@ -74,7 +74,7 @@ def _load_json_file(path: Path, *, label: str) -> tuple[dict[str, Any], bytes]:
     data = regular.read_bytes()
     try:
         value = json.loads(data)
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise StateBackupError(f"{label} is invalid JSON: {regular}") from exc
     if not isinstance(value, dict):
         raise StateBackupError(f"{label} must contain a JSON object: {regular}")
@@ -408,7 +408,7 @@ def _verify_bound_files(
     }
 
 
-def verify_backup(bundle: Path) -> dict[str, Any]:
+def _verify_backup_impl(bundle: Path) -> dict[str, Any]:
     bundle = bundle.expanduser().resolve()
     if bundle.is_symlink() or not bundle.is_dir():
         raise StateBackupError(f"backup bundle must be a real directory: {bundle}")
@@ -469,6 +469,16 @@ def verify_backup(bundle: Path) -> dict[str, Any]:
         **bound_roots,
         "nonterminal_runs": active_runs,
     }
+
+
+def verify_backup(bundle: Path) -> dict[str, Any]:
+    """Verify one untrusted backup bundle through a single fail-closed boundary."""
+    try:
+        return _verify_backup_impl(bundle)
+    except StateBackupError:
+        raise
+    except Exception as exc:
+        raise StateBackupError("backup verification failed") from exc
 
 
 def latest_bundle(backup_root: Path = DEFAULT_BACKUP_ROOT) -> Path:

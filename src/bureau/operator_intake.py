@@ -1976,6 +1976,38 @@ def _validate_task_semantics(
             raise OperatorIntakeError(
                 "claim-resource-unknown", f"claim resource {resource} is unknown"
             )
+        resource_record = registry.resources[resource]
+        resource_metadata = resource_record.metadata
+        canonical_successor = (
+            resource_metadata.get("canonical_successor")
+            if isinstance(resource_metadata, dict)
+            else None
+        )
+        retired_at = (
+            resource_metadata.get("retired_at")
+            if isinstance(resource_metadata, dict)
+            else None
+        )
+        if (
+            task_json.get("state") not in legacy.TERMINAL_TASK_STATES
+            and resource_record.type == "external"
+            and isinstance(canonical_successor, str)
+            and canonical_successor
+            and isinstance(retired_at, str)
+            and retired_at
+        ):
+            raise OperatorIntakeError(
+                "claim-resource-retired-alias",
+                (
+                    f"claim resource {resource} is retired; use canonical successor "
+                    f"{canonical_successor}"
+                ),
+                details={
+                    "resource": resource,
+                    "canonical_successor": canonical_successor,
+                    "retired_at": retired_at,
+                },
+            )
     if not task_json.get("claims"):
         raise OperatorIntakeError("claims-missing", "task proposal requires explicit claims")
     if not task_json.get("required_capabilities"):

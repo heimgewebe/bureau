@@ -3072,6 +3072,59 @@ def test_candidate_assess_reloads_registry_after_stale_object(registry_factory, 
     assert _git(root, "status", "--porcelain=v1", "--", "registry") == ""
 
 
+def test_task_proposal_rejects_nonterminal_claim_on_retired_alias(
+    registry_factory,
+    tmp_path,
+):
+    root, _ = _committed_registry(registry_factory)
+    resource_path = root / "registry" / "resources" / "2.json"
+    resource = json.loads(resource_path.read_text())
+    assert resource["id"] == "repo.alpha"
+    resource["type"] = "external"
+    resource["metadata"] = {
+        "retired_at": "2026-09-18T11:21:42Z",
+        "canonical_successor": "repo.beta",
+        "historical_path": str(root / "legacy-alpha"),
+    }
+    resource_path.write_text(json.dumps(resource, indent=2) + "\n")
+    _git(root, "add", str(resource_path.relative_to(root)))
+    _git(root, "commit", "-m", "retire alpha resource")
+    registry = Registry.load(root)
+
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:retired-resource-alias",
+        title="Reject retired repository alias claim",
+        source_kind="conversation",
+        source_locator="chat:retired-resource-alias",
+        source_sha256="7" * 64,
+        desired_outcome="Keep new work on the canonical successor resource",
+        repo="repo.beta",
+    )
+    proposal_path = tmp_path / "retired-alias.proposal.json"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=_task(root),
+            publishing_task_id="BUR-TEST-001-T001",
+            path=proposal_path,
+        )
+
+    assert caught.value.code == "claim-resource-retired-alias"
+    assert caught.value.details == {
+        "resource": "repo.alpha",
+        "canonical_successor": "repo.beta",
+        "retired_at": "2026-09-18T11:21:42Z",
+    }
+    assert not proposal_path.exists()
+
+
 def test_task_proposal_rejects_generic_acceptance_without_justification(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")

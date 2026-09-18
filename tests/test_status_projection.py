@@ -682,6 +682,37 @@ def test_cli_status_projection_keeps_non_utf8_health_artifacts_fail_closed(
     assert value["control_plane"]["healthy"] is False
 
 
+def test_cli_status_projection_keeps_deeply_nested_restore_receipt_fail_closed(
+    registry_factory, tmp_path: Path, capsys
+) -> None:
+    root = registry_factory()
+    restore_root = tmp_path / "restore-tests"
+    restore_root.mkdir(parents=True)
+    nested_json = "[" * 2000 + "0" + "]" * 2000
+    (restore_root / "latest.json").write_text(nested_json, encoding="utf-8")
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(tmp_path / "no-backups"),
+            "--restore-receipt-root",
+            str(restore_root),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["control_plane"]["organs"]["restore"]["status"] == "invalid"
+    assert value["control_plane"]["healthy"] is False
+
+
 def test_cli_status_projection_keeps_invalid_sqlite_backup_fail_closed(
     registry_factory, tmp_path: Path, capsys
 ) -> None:

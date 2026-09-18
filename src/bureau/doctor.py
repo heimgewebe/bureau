@@ -126,13 +126,11 @@ def observe_backup(
         }
 
 
-def observe_restore(
-    receipt_root: Path = DEFAULT_RESTORE_RECEIPT_ROOT,
+def _observe_restore_impl(
+    receipt_root: Path,
     *,
-    now: datetime | None = None,
+    current: datetime,
 ) -> dict[str, Any]:
-    """Read the latest hash-bound restore-test receipt without running a restore."""
-    current = now or _utc_now()
     path = receipt_root.expanduser().resolve() / "latest.json"
     if path.is_symlink() or not path.is_file():
         return {
@@ -143,18 +141,7 @@ def observe_restore(
             "authority": "hash-bound-restore-test-receipt",
             "bounds": "latest receipt only",
         }
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
-        return {
-            "observed": True,
-            "status": "invalid",
-            "source": "restore-test-receipt",
-            "freshness": {"observed_at": _iso(current)},
-            "error": str(exc),
-            "authority": "hash-bound-restore-test-receipt",
-            "bounds": "latest receipt only",
-        }
+    raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         return {
             "observed": True,
@@ -193,6 +180,27 @@ def observe_restore(
         "authority": "hash-bound-restore-test-receipt",
         "bounds": "latest receipt only",
     }
+
+
+def observe_restore(
+    receipt_root: Path = DEFAULT_RESTORE_RECEIPT_ROOT,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Read untrusted restore-test evidence through one fail-closed boundary."""
+    current = now or _utc_now()
+    try:
+        return _observe_restore_impl(receipt_root, current=current)
+    except Exception as exc:
+        return {
+            "observed": True,
+            "status": "invalid",
+            "source": "restore-test-receipt",
+            "freshness": {"observed_at": _iso(current)},
+            "error": str(exc),
+            "authority": "hash-bound-restore-test-receipt",
+            "bounds": "latest receipt only",
+        }
 
 
 def _proposal(

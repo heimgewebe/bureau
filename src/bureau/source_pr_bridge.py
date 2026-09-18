@@ -158,7 +158,8 @@ def publish_state_snapshot(
         if observed["snapshot_sha256"] != snapshot_payload["snapshot_sha256"]:
             raise StateSnapshotTransportError("snapshot worktree digest changed")
         relative = state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()
-        if not _git(worktree, "status", "--porcelain", "--", relative):
+        target_status = _git(worktree, "status", "--porcelain", "--", relative)
+        if not target_status:
             return {
                 "status": "not-applied",
                 "reason": "snapshot-unchanged",
@@ -166,10 +167,7 @@ def publish_state_snapshot(
                 "base_sha": remote_head,
                 "snapshot_sha256": snapshot_payload["snapshot_sha256"],
             }
-        changed_paths = {
-            line[3:] for line in _git(worktree, "status", "--porcelain").splitlines()
-        }
-        if changed_paths != {relative}:
+        if _git(worktree, "status", "--porcelain") != target_status:
             raise StateSnapshotTransportError("state snapshot publication changed extra paths")
         _git(worktree, "add", "--", relative)
         _git(

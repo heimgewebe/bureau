@@ -408,7 +408,7 @@ def _verify_bound_files(
     }
 
 
-def verify_backup(bundle: Path) -> dict[str, Any]:
+def _verify_backup_impl(bundle: Path) -> dict[str, Any]:
     bundle = bundle.expanduser().resolve()
     if bundle.is_symlink() or not bundle.is_dir():
         raise StateBackupError(f"backup bundle must be a real directory: {bundle}")
@@ -426,10 +426,7 @@ def verify_backup(bundle: Path) -> dict[str, Any]:
     database = manifest.get("database")
     if not isinstance(database, dict) or _sha256_file(database_path) != database.get("sha256"):
         raise StateBackupError("backup database digest mismatch")
-    try:
-        connection = _readonly_connection(database_path)
-    except sqlite3.Error as exc:
-        raise StateBackupError("backup SQLite verification failed") from exc
+    connection = _readonly_connection(database_path)
     try:
         _database_integrity(connection)
         projection = _projection_evidence(connection)
@@ -458,8 +455,6 @@ def verify_backup(bundle: Path) -> dict[str, Any]:
             for row in connection.execute("SELECT run_id,state FROM runs ORDER BY run_id")
             if row["state"] not in TERMINAL_RUN_STATES
         ]
-    except sqlite3.Error as exc:
-        raise StateBackupError("backup SQLite verification failed") from exc
     finally:
         connection.close()
     return {
@@ -474,6 +469,16 @@ def verify_backup(bundle: Path) -> dict[str, Any]:
         **bound_roots,
         "nonterminal_runs": active_runs,
     }
+
+
+def verify_backup(bundle: Path) -> dict[str, Any]:
+    """Verify one untrusted backup bundle through a single fail-closed boundary."""
+    try:
+        return _verify_backup_impl(bundle)
+    except StateBackupError:
+        raise
+    except Exception as exc:
+        raise StateBackupError("backup verification failed") from exc
 
 
 def latest_bundle(backup_root: Path = DEFAULT_BACKUP_ROOT) -> Path:

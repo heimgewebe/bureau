@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import sqlite3
 from pathlib import Path
 
 import pytest
 
-from bureau import state_backup
+from bureau import doctor, state_backup
 from bureau.adapters import AdapterRegistry, Observation
 from bureau.core import Dispatcher, Registry, StateStore
 from bureau.v2 import _complete_run_after_typed_evaluation as complete_run
@@ -229,6 +231,47 @@ def test_latest_bundle_skips_invalid_newer_directory(registry_factory, tmp_path:
     (invalid / "manifest.json").write_text("{}\n", encoding="utf-8")
 
     assert state_backup.latest_bundle(backup_root) == Path(result["bundle"])
+
+
+def test_verify_backup_normalizes_semantically_malformed_database(
+    registry_factory, tmp_path: Path
+):
+    _root, state_root, _registry, _store, dispatcher = _setup(registry_factory, tmp_path)
+    run = _claim(dispatcher)
+    backup_root = tmp_path / "artifacts/merges/bureau-state-backups"
+    result = state_backup.create_backup(state_root=state_root, backup_root=backup_root)
+    bundle = Path(result["bundle"])
+    database_path = bundle / "bureau.sqlite3"
+
+    with sqlite3.connect(database_path) as connection:
+        connection.execute(
+            "UPDATE runs SET workspace_path=? WHERE run_id=?",
+            (sqlite3.Binary(b"\xff"), run["run_id"]),
+        )
+        connection.commit()
+
+    manifest_path = bundle / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    database_bytes = database_path.read_bytes()
+    manifest["database"]["sha256"] = hashlib.sha256(database_bytes).hexdigest()
+    manifest["database"]["bytes"] = len(database_bytes)
+    unsigned = {key: value for key, value in manifest.items() if key != "manifest_sha256"}
+    manifest["manifest_sha256"] = hashlib.sha256(
+        json.dumps(
+            unsigned,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+
+    with pytest.raises(state_backup.StateBackupError, match="backup verification failed") as exc:
+        state_backup.verify_backup(bundle)
+    assert isinstance(exc.value.__cause__, TypeError)
+
+    observation = doctor.observe_backup(backup_root)
+    assert observation["status"] == "unavailable"
 
 
 def test_manifest_marks_existing_restic_source_without_claiming_upload(

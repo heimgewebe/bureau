@@ -1551,6 +1551,28 @@ def test_candidate_assessment_is_advisory_and_promotes_complete_input(registry_f
     assert result["exact_duplicates"] == []
     publication_approval = result["target"]["publication_approval"]
     assert publication_approval["allowed"] is False
+    assert publication_approval["action_class"] == "registry_mutation"
+    assert publication_approval["required_level"] == "reviewed_plan"
+
+
+def test_candidate_assessment_reports_operator_publication_when_publisher_exists(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = _record(registry, store)
+
+    result = candidate_assess(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        initiative="BUR-TEST-001",
+        task_id="BUR-TEST-001-T099",
+    )
+
+    publication_approval = result["target"]["publication_approval"]
+    assert publication_approval["allowed"] is False
     assert publication_approval["action_class"] == "task_creation_from_external_evidence"
     assert publication_approval["required_level"] == "operator"
 
@@ -3877,6 +3899,47 @@ def test_publication_receipt_replay_rejects_tampered_lease_evidence(
     assert store.task_spec(first["task_id"])["revision"] == 1
 
 
+def test_publication_receipt_replay_rejects_tampered_complete_receipt_evidence(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "typed-complete-evidence-receipt.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+
+    tampered = json.loads(receipt.read_text())
+    tampered["queue_mutated"] = True
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert caught.value.effect_started is True
+    assert "receipt_sha256" in caught.value.details["mismatched"]
+    assert store.task_spec(first["task_id"])["revision"] == 1
+
+
 def test_publication_replay_rejects_mixed_trusted_lease_commitments(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -3950,7 +4013,7 @@ def test_publication_replay_rejects_mixed_trusted_lease_commitments(
 
     assert caught.value.code == "receipt-conflict"
     assert caught.value.effect_started is True
-    assert "receipt_evidence" in caught.value.details["mismatched"]
+    assert "receipt_sha256" in caught.value.details["mismatched"]
     assert store.task_spec(second["task_id"])["revision"] == 1
 
 

@@ -891,3 +891,144 @@ def test_retention_recovery_gate_requires_distinct_historical_point(
         match="historical restore point must differ",
     ):
         state_backup._retention_recovery_gate(plan, now_unix=fixture["now"])
+
+
+def test_local_retention_apply_blocks_reference_source_drift_before_delete(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fixture = _retention_fixture(tmp_path)
+    policy = _retention_test_policy(recent_max_count=10)
+    policy["stores"]["state_backups"]["recent_seconds"] = 10_000
+    policy["stores"]["registry_snapshots"]["recent_seconds"] = 10_000
+    policy["stores"]["review_receipts"]["recent_seconds"] = 0
+    policy["stores"]["review_receipts"]["recent_max_count"] = 1
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=policy,
+        now_unix=fixture["now"],
+    )
+    assert plan["stores"]["state_backups"]["candidate_count"] == 0
+    assert plan["stores"]["registry_snapshots"]["candidate_count"] == 0
+    assert plan["stores"]["review_receipts"]["candidate_count"] == 1
+
+    monkeypatch.setattr(
+        state_backup,
+        "_retention_recovery_gate",
+        lambda *_args, **_kwargs: {
+            "status": "not-required",
+            "reason": "no-state-backup-candidates",
+        },
+    )
+    original_identity_check = state_backup._candidate_identity_still_matches
+    changed = False
+
+    def identity_check_then_change_reference(store: str, candidate: dict) -> None:
+        nonlocal changed
+        original_identity_check(store, candidate)
+        if store == "review_receipts" and not changed:
+            lanes = fixture["closure_root"] / "lanes.json"
+            payload = json.loads(lanes.read_text(encoding="utf-8"))
+            payload["touch"] = "reference-source-drift"
+            lanes.write_text(
+                json.dumps(payload, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            changed = True
+
+    monkeypatch.setattr(
+        state_backup,
+        "_candidate_identity_still_matches",
+        identity_check_then_change_reference,
+    )
+
+    with pytest.raises(
+        state_backup.StateBackupError,
+        match="reference source changed after plan",
+    ):
+        state_backup.apply_local_retention_plan(
+            plan,
+            expected_plan_sha256=plan["plan_sha256"],
+            confirmation=f"APPLY:{plan['plan_sha256']}",
+            receipt_path=tmp_path / "drift-apply.json",
+            now_unix=fixture["now"],
+        )
+
+    assert changed is True
+    assert fixture["review_old"].exists()
+
+
+def test_review_retention_quarantine_residue_blocks_next_plan(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    residue = (
+        fixture["closure_root"]
+        / "review-receipts"
+        / f".retention-delete-{'a' * 64}"
+    )
+    residue.write_text("partial\n", encoding="utf-8")
+
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+
+    assert plan["safe_to_apply"] is False
+    assert any(
+        item.get("store") == "review_receipts"
+        and item.get("reason") == "unfinished-retention-delete"
+        for item in plan["errors"]
+    )
+
+
+def test_remove_file_candidate_leaves_quarantine_on_interruption(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    target = tmp_path / "receipt.json"
+    target.write_text("{}\n", encoding="utf-8")
+    candidate_id = "b" * 64
+    quarantine = tmp_path / f".retention-delete-{candidate_id}"
+    original_unlink = Path.unlink
+
+    def fail_quarantine_unlink(path: Path, *args, **kwargs):
+        if path == quarantine:
+            raise OSError("injected unlink failure")
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", fail_quarantine_unlink)
+
+    with pytest.raises(OSError, match="injected unlink failure"):
+        state_backup._remove_file_candidate(target, candidate_id=candidate_id)
+
+    assert not target.exists()
+    assert quarantine.is_file()
+
+
+def test_remove_directory_candidate_leaves_quarantine_on_interruption(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    target = tmp_path / "snapshot"
+    target.mkdir()
+    payload = target / "payload"
+    payload.write_text("immutable\n", encoding="utf-8")
+    payload.chmod(0o444)
+    target.chmod(0o555)
+    candidate_id = "c" * 64
+    quarantine = tmp_path / f".retention-delete-{candidate_id}"
+
+    monkeypatch.setattr(
+        state_backup.shutil,
+        "rmtree",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            OSError("injected rmtree failure")
+        ),
+    )
+
+    with pytest.raises(OSError, match="injected rmtree failure"):
+        state_backup._remove_directory_candidate(target, candidate_id=candidate_id)
+
+    assert not target.exists()
+    assert quarantine.is_dir()

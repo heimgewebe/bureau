@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import hashlib
 import json
 import os
@@ -883,6 +882,76 @@ def _filesystem_preimage(path: Path) -> dict[str, Any]:
     }
 
 
+
+def _reference_source_guard(paths: list[Path]) -> dict[str, Any]:
+    records: list[dict[str, Any]] = []
+    for raw_path in paths:
+        path = raw_path.expanduser()
+        if path.is_symlink():
+            raise StateBackupError(f"reference source is a symlink: {path}")
+        try:
+            metadata = path.lstat()
+        except FileNotFoundError:
+            records.append(
+                {
+                    "path": str(path.resolve(strict=False)),
+                    "exists": False,
+                }
+            )
+            continue
+        if not path.is_file():
+            raise StateBackupError(f"reference source is not a regular file: {path}")
+        records.append(
+            {
+                "path": str(path.resolve()),
+                "exists": True,
+                "device": int(metadata.st_dev),
+                "inode": int(metadata.st_ino),
+                "mode": int(metadata.st_mode),
+                "size": int(metadata.st_size),
+                "mtime_ns": int(metadata.st_mtime_ns),
+                "sha256": _sha256_file(path),
+            }
+        )
+    records.sort(key=lambda item: str(item["path"]))
+    return {
+        "sources": records,
+        "guard_sha256": _sha256_bytes(_canonical_bytes(records)),
+    }
+
+
+def _assert_reference_source_guard(guard: Any) -> None:
+    if not isinstance(guard, dict) or not isinstance(guard.get("sources"), list):
+        raise StateBackupError("reference source guard is invalid")
+    for record in guard["sources"]:
+        if not isinstance(record, dict) or not isinstance(record.get("path"), str):
+            raise StateBackupError("reference source guard record is invalid")
+        path = Path(record["path"])
+        expected_exists = record.get("exists")
+        if expected_exists is False:
+            if os.path.lexists(path):
+                raise StateBackupError(f"reference source appeared after plan: {path}")
+            continue
+        if expected_exists is not True:
+            raise StateBackupError("reference source guard existence is invalid")
+        if path.is_symlink():
+            raise StateBackupError(f"reference source became a symlink: {path}")
+        try:
+            metadata = path.lstat()
+        except FileNotFoundError as exc:
+            raise StateBackupError(f"reference source disappeared after plan: {path}") from exc
+        observed = {
+            "device": int(metadata.st_dev),
+            "inode": int(metadata.st_ino),
+            "mode": int(metadata.st_mode),
+            "size": int(metadata.st_size),
+            "mtime_ns": int(metadata.st_mtime_ns),
+        }
+        expected = {key: record.get(key) for key in observed}
+        if observed != expected:
+            raise StateBackupError(f"reference source changed after plan: {path}")
+
+
 def _keep_reasons(
     entries: list[dict[str, Any]],
     store_policy: dict[str, Any],
@@ -982,10 +1051,11 @@ def _state_backup_entries(
 
 def _backup_explicit_references(
     backup_root: Path,
-) -> tuple[dict[str, set[str]], list[dict[str, Any]]]:
+) -> tuple[dict[str, set[str]], list[dict[str, Any]], list[Path]]:
     references: dict[str, set[str]] = {}
     errors: list[dict[str, Any]] = []
     receipt = backup_root / "restore-tests/latest.json"
+    source_paths = [receipt]
     if receipt.exists() or receipt.is_symlink():
         try:
             payload, _raw = _load_json_file(receipt, label="latest restore test receipt")
@@ -997,7 +1067,7 @@ def _backup_explicit_references(
             references.setdefault(str(bundle), set()).add("latest-verified-restore-test")
         except StateBackupError as exc:
             errors.append({"path": str(receipt), "reason": str(exc)})
-    return references, errors
+    return references, errors, source_paths
 
 
 def _registry_snapshot_entries(
@@ -1059,10 +1129,11 @@ def _registry_explicit_references(
     snapshot_root: Path,
     *,
     rollback_depth: int,
-) -> tuple[dict[str, set[str]], list[dict[str, Any]]]:
+) -> tuple[dict[str, set[str]], list[dict[str, Any]], list[Path]]:
     references: dict[str, set[str]] = {}
     errors: list[dict[str, Any]] = []
     current_path = runtime_prefix / "deployment-manifest.json"
+    source_paths = [current_path]
     try:
         current, _raw = _load_json_file(current_path, label="runtime deployment manifest")
         current_registry = _registry_manifest_reference(
@@ -1079,6 +1150,7 @@ def _registry_explicit_references(
             backup_root = (runtime_prefix / "backups").resolve(strict=False)
             if not manifest_path.is_relative_to(backup_root):
                 raise StateBackupError("runtime rollback manifest escapes backup root")
+            source_paths.append(manifest_path)
             marker = str(manifest_path)
             if marker in seen_manifests:
                 raise StateBackupError("runtime rollback manifest chain contains a cycle")
@@ -1096,7 +1168,7 @@ def _registry_explicit_references(
             )
     except StateBackupError as exc:
         errors.append({"path": str(current_path), "reason": str(exc)})
-    return references, errors
+    return references, errors, source_paths
 
 
 def _review_receipt_entries(
@@ -1106,6 +1178,8 @@ def _review_receipt_entries(
     errors: list[dict[str, Any]] = []
     for path in sorted(review_root.iterdir()):
         if path.name.startswith("."):
+            if path.name.startswith(".retention-delete-"):
+                errors.append({"path": str(path), "reason": "unfinished-retention-delete"})
             continue
         if path.is_symlink() or not path.is_file():
             errors.append({"path": str(path), "reason": "unexpected-review-root-entry"})
@@ -1136,9 +1210,13 @@ def _review_receipt_entries(
 def _review_explicit_references(
     closure_root: Path,
     review_root: Path,
-) -> tuple[dict[str, set[str]], list[dict[str, Any]]]:
+) -> tuple[dict[str, set[str]], list[dict[str, Any]], list[Path]]:
     references: dict[str, set[str]] = {}
     errors: list[dict[str, Any]] = []
+    source_paths = [
+        closure_root / "review-latest.json",
+        closure_root / "lanes.json",
+    ]
 
     def protect(value: Any, reason: str) -> None:
         if value is None:
@@ -1165,7 +1243,7 @@ def _review_explicit_references(
                         protect(evidence.get("receipt_path"), "lane-review-binding")
         except StateBackupError as exc:
             errors.append({"path": str(path), "reason": str(exc)})
-    return references, errors
+    return references, errors, source_paths
 
 
 def _build_store_retention(
@@ -1176,6 +1254,7 @@ def _build_store_retention(
     now_unix: int,
     explicit: dict[str, set[str]],
     errors: list[dict[str, Any]],
+    reference_guard: dict[str, Any],
 ) -> dict[str, Any]:
     entry_paths = {str(item["path"]) for item in entries}
     for path, reasons in explicit.items():
@@ -1222,6 +1301,7 @@ def _build_store_retention(
         "candidates": candidates,
         "retained": retained,
         "errors": errors,
+        "reference_guard": reference_guard,
     }
 
 
@@ -1246,19 +1326,79 @@ def build_local_retention_plan(
     )
 
     backup_entries, backup_errors = _state_backup_entries(backup_root)
-    backup_refs, backup_ref_errors = _backup_explicit_references(backup_root)
-    registry_entries, registry_errors = _registry_snapshot_entries(snapshot_root)
-    registry_refs, registry_ref_errors = _registry_explicit_references(
-        runtime_prefix,
-        snapshot_root,
-        rollback_depth=selected_policy["stores"]["registry_snapshots"][
-            "rollback_manifest_depth"
-        ],
+    backup_refs, backup_ref_errors, backup_sources = _backup_explicit_references(
+        backup_root
     )
+    backup_guard_before = _reference_source_guard(backup_sources)
+    backup_refs, second_backup_errors, second_backup_sources = (
+        _backup_explicit_references(backup_root)
+    )
+    backup_guard = _reference_source_guard(second_backup_sources)
+    backup_ref_errors.extend(second_backup_errors)
+    if (
+        backup_sources != second_backup_sources
+        or backup_guard_before["guard_sha256"] != backup_guard["guard_sha256"]
+    ):
+        backup_ref_errors.append(
+            {
+                "path": str(backup_root),
+                "reason": "backup-reference-source-changed-during-plan",
+            }
+        )
+
+    registry_entries, registry_errors = _registry_snapshot_entries(snapshot_root)
+    registry_refs, registry_ref_errors, registry_sources = (
+        _registry_explicit_references(
+            runtime_prefix,
+            snapshot_root,
+            rollback_depth=selected_policy["stores"]["registry_snapshots"][
+                "rollback_manifest_depth"
+            ],
+        )
+    )
+    registry_guard_before = _reference_source_guard(registry_sources)
+    registry_refs, second_registry_errors, second_registry_sources = (
+        _registry_explicit_references(
+            runtime_prefix,
+            snapshot_root,
+            rollback_depth=selected_policy["stores"]["registry_snapshots"][
+                "rollback_manifest_depth"
+            ],
+        )
+    )
+    registry_guard = _reference_source_guard(second_registry_sources)
+    registry_ref_errors.extend(second_registry_errors)
+    if (
+        registry_sources != second_registry_sources
+        or registry_guard_before["guard_sha256"] != registry_guard["guard_sha256"]
+    ):
+        registry_ref_errors.append(
+            {
+                "path": str(runtime_prefix / "deployment-manifest.json"),
+                "reason": "registry-reference-source-changed-during-plan",
+            }
+        )
+
     review_entries, review_errors = _review_receipt_entries(review_root)
-    review_refs, review_ref_errors = _review_explicit_references(
+    review_refs, review_ref_errors, review_sources = _review_explicit_references(
         closure_root, review_root
     )
+    review_guard_before = _reference_source_guard(review_sources)
+    review_refs, second_review_errors, second_review_sources = (
+        _review_explicit_references(closure_root, review_root)
+    )
+    review_guard = _reference_source_guard(second_review_sources)
+    review_ref_errors.extend(second_review_errors)
+    if (
+        review_sources != second_review_sources
+        or review_guard_before["guard_sha256"] != review_guard["guard_sha256"]
+    ):
+        review_ref_errors.append(
+            {
+                "path": str(closure_root),
+                "reason": "review-reference-source-changed-during-plan",
+            }
+        )
 
     stores = {
         "state_backups": _build_store_retention(
@@ -1268,6 +1408,7 @@ def build_local_retention_plan(
             now_unix=generated,
             explicit=backup_refs,
             errors=[*backup_errors, *backup_ref_errors],
+            reference_guard=backup_guard,
         ),
         "registry_snapshots": _build_store_retention(
             "registry_snapshots",
@@ -1276,6 +1417,7 @@ def build_local_retention_plan(
             now_unix=generated,
             explicit=registry_refs,
             errors=[*registry_errors, *registry_ref_errors],
+            reference_guard=registry_guard,
         ),
         "review_receipts": _build_store_retention(
             "review_receipts",
@@ -1284,6 +1426,7 @@ def build_local_retention_plan(
             now_unix=generated,
             explicit=review_refs,
             errors=[*review_errors, *review_ref_errors],
+            reference_guard=review_guard,
         ),
     }
     errors = [
@@ -1453,10 +1596,23 @@ def _remove_directory_candidate(path: Path, *, candidate_id: str) -> None:
         shutil.rmtree(quarantine)
         _fsync_directory(parent)
     except Exception:
-        if quarantine.exists() and not path.exists():
-            with contextlib.suppress(Exception):
-                os.replace(quarantine, path)
-                _fsync_directory(parent)
+        # Leave a named quarantine residue rather than restoring a partially
+        # chmodded tree. The next plan detects the residue and fails closed.
+        raise
+
+
+def _remove_file_candidate(path: Path, *, candidate_id: str) -> None:
+    parent = path.parent
+    quarantine = parent / f".retention-delete-{candidate_id}"
+    if quarantine.exists() or quarantine.is_symlink():
+        raise StateBackupError(f"retention quarantine already exists: {quarantine}")
+    os.replace(path, quarantine)
+    _fsync_directory(parent)
+    try:
+        quarantine.unlink()
+        _fsync_directory(parent)
+    except Exception:
+        # The residue is deliberate recovery evidence and blocks the next plan.
         raise
 
 
@@ -1706,6 +1862,10 @@ def apply_local_retention_plan(
     try:
         for store, candidate in selected:
             _candidate_identity_still_matches(store, candidate)
+            current_store = fresh["stores"].get(store)
+            if not isinstance(current_store, dict):
+                raise StateBackupError(f"fresh retention store is unavailable: {store}")
+            _assert_reference_source_guard(current_store.get("reference_guard"))
             path = Path(str(candidate["path"]))
             receipt["state"] = "applying"
             receipt["current_candidate"] = {
@@ -1716,8 +1876,9 @@ def apply_local_retention_plan(
             receipt["receipt_sha256"] = _retention_digest(receipt, "receipt_sha256")
             _atomic_replace_json(receipt_path, receipt)
             if store == "review_receipts":
-                path.unlink()
-                _fsync_directory(path.parent)
+                _remove_file_candidate(
+                    path, candidate_id=str(candidate["candidate_id"])
+                )
             else:
                 _remove_directory_candidate(
                     path, candidate_id=str(candidate["candidate_id"])

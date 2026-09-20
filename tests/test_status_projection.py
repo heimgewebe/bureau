@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from pathlib import Path
 
 from bureau.cli import main
+from bureau.state_backup import DEFAULT_BACKUP_ROOT, DEFAULT_RESTORE_RECEIPT_ROOT
 from bureau.status_projection import (
     AI_AUTHORITY_BOUNDARY,
     PROJECTION_DOES_NOT_ESTABLISH,
@@ -582,6 +584,188 @@ def test_cli_status_projection_with_skip_github(registry_factory, capsys) -> Non
     value = json.loads(capsys.readouterr().out)
     assert value["github_observation"]["observed"] is False
     assert value["schema_version"] == STATUS_PROJECTION_SCHEMA_VERSION
+
+
+def test_cli_status_projection_observes_backup_and_restore(
+    registry_factory, tmp_path: Path, capsys, monkeypatch
+) -> None:
+    root = registry_factory()
+    backup_root = tmp_path / "backups"
+    restore_root = tmp_path / "restore-tests"
+    observed: dict[str, Path] = {}
+
+    def fake_backup(path: Path) -> dict[str, object]:
+        observed["backup"] = path
+        return {
+            "observed": True,
+            "status": "verified",
+            "source": "state-backup-manifest",
+            "freshness": {"observed_at": NOW, "age_seconds": 1},
+            "authority": "verified-backup-bundle",
+            "bounds": "latest verified bundle only",
+        }
+
+    def fake_restore(path: Path) -> dict[str, object]:
+        observed["restore"] = path
+        return {
+            "observed": True,
+            "status": "verified",
+            "source": "restore-test-receipt",
+            "freshness": {"observed_at": NOW, "age_seconds": 1},
+            "authority": "hash-bound-restore-test-receipt",
+            "bounds": "latest receipt only",
+        }
+
+    monkeypatch.setattr("bureau.doctor.observe_backup", fake_backup)
+    monkeypatch.setattr("bureau.doctor.observe_restore", fake_restore)
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(backup_root),
+            "--restore-receipt-root",
+            str(restore_root),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert observed == {"backup": backup_root, "restore": restore_root}
+    assert value["control_plane"]["organs"]["backup"]["status"] == "verified"
+    assert value["control_plane"]["organs"]["restore"]["status"] == "verified"
+
+
+def test_runtime_restore_receipt_default_matches_declared_service_tree() -> None:
+    assert DEFAULT_RESTORE_RECEIPT_ROOT == DEFAULT_BACKUP_ROOT / "restore-tests"
+
+
+def test_cli_status_projection_keeps_non_utf8_health_artifacts_fail_closed(
+    registry_factory, tmp_path: Path, capsys
+) -> None:
+    root = registry_factory()
+    backup_root = tmp_path / "backups"
+    corrupt_bundle = backup_root / "20260918T000000Z-corrupt"
+    corrupt_bundle.mkdir(parents=True)
+    (corrupt_bundle / "manifest.json").write_bytes(b"\xff")
+
+    restore_root = tmp_path / "restore-tests"
+    restore_root.mkdir(parents=True)
+    (restore_root / "latest.json").write_bytes(b"\xff")
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(backup_root),
+            "--restore-receipt-root",
+            str(restore_root),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["control_plane"]["organs"]["backup"]["status"] == "unavailable"
+    assert value["control_plane"]["organs"]["restore"]["status"] == "invalid"
+    assert value["control_plane"]["healthy"] is False
+
+
+def test_cli_status_projection_keeps_deeply_nested_restore_receipt_fail_closed(
+    registry_factory, tmp_path: Path, capsys
+) -> None:
+    root = registry_factory()
+    restore_root = tmp_path / "restore-tests"
+    restore_root.mkdir(parents=True)
+    nested_json = "[" * 2000 + "0" + "]" * 2000
+    (restore_root / "latest.json").write_text(nested_json, encoding="utf-8")
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(tmp_path / "no-backups"),
+            "--restore-receipt-root",
+            str(restore_root),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["control_plane"]["organs"]["restore"]["status"] == "invalid"
+    assert value["control_plane"]["healthy"] is False
+
+
+def test_cli_status_projection_keeps_invalid_sqlite_backup_fail_closed(
+    registry_factory, tmp_path: Path, capsys
+) -> None:
+    root = registry_factory()
+    backup_root = tmp_path / "backups"
+    corrupt_bundle = backup_root / "20260918T000001Z-corrupt-sqlite"
+    corrupt_bundle.mkdir(parents=True)
+    database_bytes = b"not a sqlite database"
+    database_path = corrupt_bundle / "bureau.sqlite3"
+    database_path.write_bytes(database_bytes)
+
+    manifest = {
+        "schema_version": 1,
+        "kind": "bureau_state_backup_manifest",
+        "bundle_id": corrupt_bundle.name,
+        "database": {
+            "sha256": hashlib.sha256(database_bytes).hexdigest(),
+            "bytes": len(database_bytes),
+        },
+    }
+    manifest["manifest_sha256"] = hashlib.sha256(
+        json.dumps(
+            manifest,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    (corrupt_bundle / "manifest.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "status-projection",
+            "--skip-github",
+            "--backup-root",
+            str(backup_root),
+            "--restore-receipt-root",
+            str(tmp_path / "no-restores"),
+        ]
+    )
+
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["control_plane"]["organs"]["backup"]["status"] == "unavailable"
+    assert value["control_plane"]["healthy"] is False
 
 
 def test_cli_status_projection_with_observation_file(

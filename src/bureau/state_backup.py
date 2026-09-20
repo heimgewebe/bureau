@@ -923,7 +923,14 @@ def _reference_source_guard(paths: list[Path]) -> dict[str, Any]:
 def _assert_reference_source_guard(guard: Any) -> None:
     if not isinstance(guard, dict) or not isinstance(guard.get("sources"), list):
         raise StateBackupError("reference source guard is invalid")
-    for record in guard["sources"]:
+    sources = guard["sources"]
+    expected_guard_sha256 = guard.get("guard_sha256")
+    if (
+        not isinstance(expected_guard_sha256, str)
+        or expected_guard_sha256 != _sha256_bytes(_canonical_bytes(sources))
+    ):
+        raise StateBackupError("reference source guard digest mismatch")
+    for record in sources:
         if not isinstance(record, dict) or not isinstance(record.get("path"), str):
             raise StateBackupError("reference source guard record is invalid")
         path = Path(record["path"])
@@ -940,12 +947,15 @@ def _assert_reference_source_guard(guard: Any) -> None:
             metadata = path.lstat()
         except FileNotFoundError as exc:
             raise StateBackupError(f"reference source disappeared after plan: {path}") from exc
+        if not path.is_file():
+            raise StateBackupError(f"reference source is no longer a regular file: {path}")
         observed = {
             "device": int(metadata.st_dev),
             "inode": int(metadata.st_ino),
             "mode": int(metadata.st_mode),
             "size": int(metadata.st_size),
             "mtime_ns": int(metadata.st_mtime_ns),
+            "sha256": _sha256_file(path),
         }
         expected = {key: record.get(key) for key in observed}
         if observed != expected:

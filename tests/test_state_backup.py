@@ -929,12 +929,20 @@ def test_local_retention_apply_blocks_reference_source_drift_before_delete(
         original_identity_check(store, candidate)
         if store == "review_receipts" and not changed:
             lanes = fixture["closure_root"] / "lanes.json"
-            payload = json.loads(lanes.read_text(encoding="utf-8"))
-            payload["touch"] = "reference-source-drift"
-            lanes.write_text(
-                json.dumps(payload, sort_keys=True) + "\n",
-                encoding="utf-8",
+            before = lanes.stat()
+            raw = lanes.read_bytes()
+            assert b"lane-1" in raw
+            tampered = raw.replace(b"lane-1", b"lane-2", 1)
+            assert len(tampered) == len(raw)
+            lanes.write_bytes(tampered)
+            os.utime(
+                lanes,
+                ns=(before.st_atime_ns, before.st_mtime_ns),
             )
+            after = lanes.stat()
+            assert after.st_ino == before.st_ino
+            assert after.st_size == before.st_size
+            assert after.st_mtime_ns == before.st_mtime_ns
             changed = True
 
     monkeypatch.setattr(

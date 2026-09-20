@@ -111,7 +111,7 @@ def test_live_register_rejects_unknown_repo_resource(registry_factory, tmp_path)
         )
 
 
-def test_strict_catalog_accepts_acs_candidate_and_rejects_unknown_repo(tmp_path):
+def test_strict_catalog_accepts_active_candidate_and_rejects_unknown_repo(tmp_path):
     root = Path(__file__).resolve().parents[1]
     registry = Registry.load(root)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -120,13 +120,13 @@ def test_strict_catalog_accepts_acs_candidate_and_rejects_unknown_repo(tmp_path)
         registry,
         store,
         kind="candidate_task",
-        candidate_id="candidate-acs-catalog-test",
-        repo="repo.agent-control-surface",
-        title="Bound ACS candidate",
+        candidate_id="candidate-labor-catalog-test",
+        repo="repo.labor",
+        title="Bound Labor candidate",
         promotion_required=True,
     )
 
-    assert accepted["record"]["repo"] == "repo.agent-control-surface"
+    assert accepted["record"]["repo"] == "repo.labor"
     assert accepted["record"]["catalog_validation"] == {
         "mode": "strict",
         "status": "validated",

@@ -609,17 +609,17 @@ def test_local_fallback_survives_offline_intake_and_later_idempotent_sync(
     assert len(operator_intake_module.candidate_records(store)) == 1
 
 
-def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
+def test_operator_intake_accepts_strict_active_repo_binding_and_rejects_unknown_repo(
     registry_factory, tmp_path
 ):
     root, _registry = _committed_registry(registry_factory)
     source = Path(__file__).resolve().parents[1]
     shutil.copy2(
-        source / "registry/resources/agent-control-surface.json",
-        root / "registry/resources/agent-control-surface.json",
+        source / "registry/resources/labor.json",
+        root / "registry/resources/labor.json",
     )
-    _git(root, "add", "registry/resources/agent-control-surface.json")
-    _git(root, "commit", "-m", "catalogue ACS fixture")
+    _git(root, "add", "registry/resources/labor.json")
+    _git(root, "commit", "-m", "catalogue active repository fixture")
     registry = Registry.load(root)
     store = StateStore(tmp_path / "state.sqlite3")
     store.import_registry_task_specs(registry)
@@ -627,26 +627,26 @@ def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
     recorded = candidate_record(
         registry,
         store,
-        idempotency_key="source:acs-resource-parity",
-        title="Implement ACS repository work",
+        idempotency_key="source:labor-resource-parity",
+        title="Implement Labor repository work",
         source_kind="registry-live-audit",
-        source_locator="systemkatalog:repo:agent-control-surface",
+        source_locator="systemkatalog:repo:labor",
         source_sha256="a" * 64,
-        desired_outcome="Bind an ACS task to its exact repository resource",
-        repo="repo.agent-control-surface",
+        desired_outcome="Bind a Labor task to its exact repository resource",
+        repo="repo.labor",
     )
 
-    assert recorded["record"]["repo"] == "repo.agent-control-surface"
+    assert recorded["record"]["repo"] == "repo.labor"
     assert recorded["record"]["catalog_validation"]["status"] == "validated"
     with pytest.raises(OperatorIntakeError, match="unknown live register repo") as caught:
         candidate_record(
             registry,
             store,
-            idempotency_key="source:unknown-acs-resource",
+            idempotency_key="source:unknown-labor-resource",
             title="Reject unknown repository work",
             source_kind="registry-live-audit",
             desired_outcome="Reject a missing repository binding",
-            repo="repo.unknown-acs",
+            repo="repo.unknown-labor",
         )
     assert caught.value.code == "candidate-record-invalid"
     assert len(operator_intake_module.candidate_records(store)) == 1
@@ -654,13 +654,13 @@ def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
     task = _task(root)
     task["claims"] = [
         {
-            "resource": "repo.agent-control-surface",
+            "resource": "repo.labor",
             "mode": "write",
             "isolation": "worktree",
         }
     ]
     task["required_capabilities"] = ["repository", "shell", "git", "github"]
-    plan_path = tmp_path / "acs-proposal.json"
+    plan_path = tmp_path / "labor-proposal.json"
     task_propose(
         registry,
         store,

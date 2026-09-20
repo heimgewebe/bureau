@@ -17,7 +17,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
-from . import legacy, task_specs
+from . import legacy, state_events, task_specs
 from .acceptance import AcceptanceContractError
 from .approval import (
     approval_decision,
@@ -4262,6 +4262,86 @@ def _publication_receipt_mutation_evidence(
     return evidence if isinstance(evidence, dict) else None
 
 
+def _publication_mutation_projection_roots(
+    store: StateStore, *, binding: dict[str, Any]
+) -> dict[str, str]:
+    """Reconstruct the authoritative projection at the exact publication mutation.
+
+    Schema-v2 publication evidence predates the complete receipt digest. Its
+    lease commitment therefore cannot authenticate receipt-only projection
+    roots. Reconstruct those roots from the StateStore event journal at the
+    proposal-bound TaskSpec mutation instead of trusting the receipt bytes.
+    """
+    idempotency_key = f"operator-intake:{binding['proposal_sha256']}"
+    try:
+        with store.connect() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT event_id,run_id,event_type,event_schema_version,payload_json "
+                    "FROM events ORDER BY event_id"
+                )
+            ]
+        mutation_event_id: int | None = None
+        for row in rows:
+            if row.get("event_type") != task_specs.TASK_SPEC_EVENT_TYPE:
+                continue
+            payload = json.loads(str(row["payload_json"]))
+            checked = task_specs.validate_event_payload(payload)
+            if checked["idempotency_key"] != idempotency_key:
+                continue
+            if mutation_event_id is not None:
+                raise task_specs.TaskSpecError(
+                    "publication mutation has duplicate TaskSpec journal events"
+                )
+            if (
+                checked["task_id"] != binding["task_id"]
+                or checked["revision"] != binding["resulting_revision"]
+                or checked["spec_sha256"] != binding["proposed_spec_sha256"]
+            ):
+                raise task_specs.TaskSpecError(
+                    "publication mutation journal event differs from the proposal binding"
+                )
+            mutation_event_id = int(row["event_id"])
+        if mutation_event_id is None:
+            raise task_specs.TaskSpecError(
+                "publication mutation TaskSpec journal event is missing"
+            )
+        prefix = [row for row in rows if int(row["event_id"]) <= mutation_event_id]
+        base_rows, task_spec_rows = task_specs.split_event_rows(prefix)
+        operational_replay = state_events.replay(base_rows)
+        task_spec_replay = task_specs.replay(task_spec_rows)
+    except (
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        sqlite3.Error,
+        StateError,
+        state_events.StateEventError,
+        task_specs.TaskSpecError,
+    ) as exc:
+        raise OperatorIntakeError(
+            "task-spec-register-replay-mutation-read-failed",
+            "cannot reconstruct the authoritative projection at the publication mutation",
+            retryable=True,
+            effect_started=True,
+            ambiguity=True,
+            required_readback=["StateStore publication mutation event projection"],
+            details={"proposal_sha256": binding["proposal_sha256"]},
+            publication_phase="committed_locally",
+        ) from exc
+    authoritative_projection = {
+        "schema_version": 1,
+        "operational": operational_replay["projection"],
+        "task_specs": task_spec_replay["projection"],
+    }
+    return {
+        "task_spec_root_sha256": task_spec_replay["root_sha256"],
+        "authoritative_root_sha256": legacy.sha256_json(authoritative_projection),
+    }
+
+
 def _expected_publication_lease_release(binding: dict[str, Any]) -> dict[str, Any]:
     snapshots = binding.get("lease_snapshots")
     if not isinstance(snapshots, list) or not snapshots:
@@ -5355,7 +5435,22 @@ def _validate_publication_receipt_replay(
                         "observed": observed_v2_commitment,
                     }
             else:
-                schema_v2_evidence_upgrade_required = True
+                trusted_roots = _publication_mutation_projection_roots(
+                    store, binding=binding
+                )
+                for root_field, expected_root in trusted_roots.items():
+                    observed_root = (
+                        publication.get(root_field)
+                        if isinstance(publication, dict)
+                        else None
+                    )
+                    if observed_root != expected_root:
+                        evidence_mismatched[f"publication.{root_field}"] = {
+                            "expected": expected_root,
+                            "observed": observed_root,
+                        }
+                if not evidence_mismatched:
+                    schema_v2_evidence_upgrade_required = True
         elif observed_commitment not in trusted_commitments:
             for receipt_field, evidence_field in (
                 ("receipt_sha256", "receipt_sha256"),

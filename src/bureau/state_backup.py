@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -21,6 +22,44 @@ DEFAULT_STATE_ROOT = Path.home() / ".local/state/bureau"
 DEFAULT_BACKUP_ROOT = Path.home() / "artifacts/merges/bureau-state-backups"
 DEFAULT_RESTORE_RECEIPT_ROOT = DEFAULT_BACKUP_ROOT / "restore-tests"
 DEFAULT_RUNTIME_MANIFEST = Path.home() / ".local/share/bureau/deployment-manifest.json"
+DEFAULT_RUNTIME_PREFIX = Path.home() / ".local/share/bureau"
+DEFAULT_REGISTRY_SNAPSHOT_ROOT = DEFAULT_RUNTIME_PREFIX / "registry-snapshots"
+DEFAULT_CLOSURE_ROOT = Path.home() / ".local/state/bureau-closure"
+LOCAL_RETENTION_POLICY = {
+    "schema_version": 1,
+    "kind": "bureau_local_retention_policy",
+    "policy_id": "bureau-local-retention-v1",
+    "stores": {
+        "state_backups": {
+            "recent_seconds": 2 * 24 * 60 * 60,
+            "recent_max_count": 192,
+            "restore_receipt_max_age_seconds": 36 * 60 * 60,
+            "tiers": [
+                {"seconds": 24 * 60 * 60, "count": 30},
+                {"seconds": 7 * 24 * 60 * 60, "count": 26},
+                {"seconds": 30 * 24 * 60 * 60, "count": 12},
+            ],
+        },
+        "registry_snapshots": {
+            "recent_seconds": 14 * 24 * 60 * 60,
+            "recent_max_count": 64,
+            "rollback_manifest_depth": 8,
+            "tiers": [
+                {"seconds": 7 * 24 * 60 * 60, "count": 26},
+                {"seconds": 30 * 24 * 60 * 60, "count": 12},
+            ],
+        },
+        "review_receipts": {
+            "recent_seconds": 14 * 24 * 60 * 60,
+            "recent_max_count": 336,
+            "tiers": [
+                {"seconds": 24 * 60 * 60, "count": 90},
+                {"seconds": 7 * 24 * 60 * 60, "count": 26},
+                {"seconds": 30 * 24 * 60 * 60, "count": 12},
+            ],
+        },
+    },
+}
 
 
 class StateBackupError(RuntimeError):
@@ -687,6 +726,1035 @@ def restore_test(
         shutil.rmtree(temporary, ignore_errors=True)
 
 
+
+def _retention_material(value: dict[str, Any], digest_field: str) -> dict[str, Any]:
+    return {key: item for key, item in value.items() if key != digest_field}
+
+
+def _retention_digest(value: dict[str, Any], digest_field: str) -> str:
+    return _sha256_bytes(_canonical_bytes(_retention_material(value, digest_field)))
+
+
+def _validate_retention_policy(policy: dict[str, Any]) -> dict[str, Any]:
+    if (
+        not isinstance(policy, dict)
+        or policy.get("schema_version") != 1
+        or policy.get("kind") != "bureau_local_retention_policy"
+        or not isinstance(policy.get("policy_id"), str)
+    ):
+        raise StateBackupError("local retention policy contract is invalid")
+    stores = policy.get("stores")
+    if not isinstance(stores, dict) or set(stores) != {
+        "state_backups",
+        "registry_snapshots",
+        "review_receipts",
+    }:
+        raise StateBackupError("local retention policy store set is invalid")
+    for store_name, store_policy in stores.items():
+        if not isinstance(store_policy, dict):
+            raise StateBackupError(f"retention policy is invalid for {store_name}")
+        recent_seconds = store_policy.get("recent_seconds")
+        recent_max_count = store_policy.get("recent_max_count")
+        if (
+            isinstance(recent_seconds, bool)
+            or not isinstance(recent_seconds, int)
+            or recent_seconds < 0
+            or isinstance(recent_max_count, bool)
+            or not isinstance(recent_max_count, int)
+            or recent_max_count < 1
+        ):
+            raise StateBackupError(f"retention recent window is invalid for {store_name}")
+        tiers = store_policy.get("tiers")
+        if not isinstance(tiers, list):
+            raise StateBackupError(f"retention tiers are invalid for {store_name}")
+        previous_seconds = 0
+        for tier in tiers:
+            if not isinstance(tier, dict) or set(tier) != {"seconds", "count"}:
+                raise StateBackupError(f"retention tier shape is invalid for {store_name}")
+            seconds = tier["seconds"]
+            count = tier["count"]
+            if (
+                isinstance(seconds, bool)
+                or not isinstance(seconds, int)
+                or seconds <= previous_seconds
+                or isinstance(count, bool)
+                or not isinstance(count, int)
+                or count < 1
+            ):
+                raise StateBackupError(f"retention tier value is invalid for {store_name}")
+            previous_seconds = seconds
+        if store_name == "state_backups":
+            max_age = store_policy.get("restore_receipt_max_age_seconds")
+            if (
+                isinstance(max_age, bool)
+                or not isinstance(max_age, int)
+                or max_age < 60 * 60
+                or max_age > 7 * 24 * 60 * 60
+            ):
+                raise StateBackupError("backup restore receipt max age is invalid")
+        if store_name == "registry_snapshots":
+            depth = store_policy.get("rollback_manifest_depth")
+            if isinstance(depth, bool) or not isinstance(depth, int) or not 1 <= depth <= 64:
+                raise StateBackupError("registry rollback manifest depth is invalid")
+    return json.loads(json.dumps(policy))
+
+
+def _parse_retention_time(value: Any, *, label: str) -> int:
+    if not isinstance(value, str) or not value:
+        raise StateBackupError(f"{label} timestamp is missing")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise StateBackupError(f"{label} timestamp is invalid") from exc
+    if parsed.tzinfo is None:
+        raise StateBackupError(f"{label} timestamp lacks timezone")
+    return int(parsed.timestamp())
+
+
+def _retention_root(path: Path, *, label: str) -> Path:
+    raw = path.expanduser()
+    if raw.is_symlink() or not raw.is_dir():
+        raise StateBackupError(f"{label} must be a real directory: {raw}")
+    return raw.resolve()
+
+
+def _retention_reference(
+    raw: Any,
+    *,
+    root: Path,
+    label: str,
+) -> Path:
+    if not isinstance(raw, str) or not raw:
+        raise StateBackupError(f"{label} reference is invalid")
+    path = Path(raw).expanduser()
+    if not path.is_absolute():
+        raise StateBackupError(f"{label} reference must be absolute")
+    resolved = path.resolve(strict=False)
+    if resolved.parent != root and not resolved.is_relative_to(root):
+        raise StateBackupError(f"{label} reference escapes its managed root")
+    return resolved
+
+
+def _filesystem_preimage(path: Path) -> dict[str, Any]:
+    if path.is_symlink():
+        raise StateBackupError(f"retention target is a symlink: {path}")
+    try:
+        path.lstat()
+    except FileNotFoundError as exc:
+        raise StateBackupError(f"retention target disappeared: {path}") from exc
+
+    records: list[dict[str, Any]] = []
+
+    def observe(candidate: Path, relative: str) -> int:
+        metadata = candidate.lstat()
+        if candidate.is_symlink():
+            raise StateBackupError(f"retention tree contains symlink: {candidate}")
+        records.append(
+            {
+                "path": relative,
+                "device": int(metadata.st_dev),
+                "inode": int(metadata.st_ino),
+                "mode": int(metadata.st_mode),
+                "size": int(metadata.st_size),
+                "mtime_ns": int(metadata.st_mtime_ns),
+                "blocks": int(metadata.st_blocks),
+            }
+        )
+        return int(metadata.st_blocks) * 512
+
+    total = observe(path, ".")
+    if path.is_file():
+        return {
+            "allocated_bytes": total,
+            "preimage_sha256": _sha256_bytes(_canonical_bytes(records)),
+        }
+    if not path.is_dir():
+        raise StateBackupError(f"retention target has unsupported type: {path}")
+    for parent, directories, files in os.walk(path, topdown=True, followlinks=False):
+        directories.sort()
+        files.sort()
+        parent_path = Path(parent)
+        for name in [*directories, *files]:
+            child = parent_path / name
+            total += observe(child, child.relative_to(path).as_posix())
+    return {
+        "allocated_bytes": total,
+        "preimage_sha256": _sha256_bytes(_canonical_bytes(records)),
+    }
+
+
+def _keep_reasons(
+    entries: list[dict[str, Any]],
+    store_policy: dict[str, Any],
+    *,
+    now_unix: int,
+    explicit: dict[str, set[str]],
+) -> dict[str, set[str]]:
+    kept: dict[str, set[str]] = {path: set(reasons) for path, reasons in explicit.items()}
+    ordered = sorted(
+        entries,
+        key=lambda item: (int(item["created_at_unix"]), str(item["path"])),
+        reverse=True,
+    )
+    if ordered:
+        kept.setdefault(str(ordered[0]["path"]), set()).add("newest")
+    recent = [
+        item
+        for item in ordered
+        if 0 <= now_unix - int(item["created_at_unix"]) <= store_policy["recent_seconds"]
+    ]
+    for item in recent[: store_policy["recent_max_count"]]:
+        kept.setdefault(str(item["path"]), set()).add("recent-window")
+    for tier in store_policy["tiers"]:
+        seconds = int(tier["seconds"])
+        count = int(tier["count"])
+        current_bucket = now_unix // seconds
+        selected: set[int] = set()
+        for item in ordered:
+            created = int(item["created_at_unix"])
+            if created > now_unix:
+                continue
+            bucket = created // seconds
+            distance = current_bucket - bucket
+            if distance < 0 or distance >= count or bucket in selected:
+                continue
+            selected.add(bucket)
+            kept.setdefault(str(item["path"]), set()).add(
+                f"tier:{seconds}:{distance}"
+            )
+    return kept
+
+
+def _candidate_id(store: str, path: str, identity: dict[str, Any]) -> str:
+    return _sha256_bytes(
+        _canonical_bytes({"store": store, "path": path, "identity": identity})
+    )
+
+
+def _state_backup_entries(
+    backup_root: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    entries: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    for path in sorted(backup_root.iterdir()):
+        if path.name == "restore-tests":
+            continue
+        if path.name.startswith("."):
+            if path.name.startswith(".retention-delete-"):
+                errors.append({"path": str(path), "reason": "unfinished-retention-delete"})
+            continue
+        if path.is_symlink() or not path.is_dir():
+            errors.append({"path": str(path), "reason": "unexpected-backup-root-entry"})
+            continue
+        try:
+            manifest, _raw = _load_json_file(path / "manifest.json", label="backup manifest")
+            if (
+                manifest.get("schema_version") != SCHEMA_VERSION
+                or manifest.get("kind") != "bureau_state_backup_manifest"
+            ):
+                raise StateBackupError("unsupported backup manifest")
+            manifest_sha = manifest.get("manifest_sha256")
+            if manifest_sha != _retention_digest(manifest, "manifest_sha256"):
+                raise StateBackupError("backup manifest digest mismatch")
+            created = _parse_retention_time(
+                manifest.get("created_at"), label="backup manifest created_at"
+            )
+            identity = {
+                "bundle_id": manifest.get("bundle_id"),
+                "manifest_sha256": manifest_sha,
+                "created_at": manifest.get("created_at"),
+            }
+            if not isinstance(identity["bundle_id"], str) or not isinstance(
+                manifest_sha, str
+            ):
+                raise StateBackupError("backup manifest identity is invalid")
+            entries.append(
+                {
+                    "path": str(path.resolve()),
+                    "created_at_unix": created,
+                    "identity": identity,
+                }
+            )
+        except StateBackupError as exc:
+            errors.append({"path": str(path), "reason": str(exc)})
+    return entries, errors
+
+
+def _backup_explicit_references(
+    backup_root: Path,
+) -> tuple[dict[str, set[str]], list[dict[str, Any]]]:
+    references: dict[str, set[str]] = {}
+    errors: list[dict[str, Any]] = []
+    receipt = backup_root / "restore-tests/latest.json"
+    if receipt.exists() or receipt.is_symlink():
+        try:
+            payload, _raw = _load_json_file(receipt, label="latest restore test receipt")
+            if payload.get("status") != "verified":
+                raise StateBackupError("latest restore test receipt is not verified")
+            bundle = _retention_reference(
+                payload.get("bundle"), root=backup_root, label="restore test bundle"
+            )
+            references.setdefault(str(bundle), set()).add("latest-verified-restore-test")
+        except StateBackupError as exc:
+            errors.append({"path": str(receipt), "reason": str(exc)})
+    return references, errors
+
+
+def _registry_snapshot_entries(
+    root: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    entries: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    for path in sorted(root.iterdir()):
+        if path.name.startswith("."):
+            if path.name.startswith(".retention-delete-"):
+                errors.append({"path": str(path), "reason": "unfinished-retention-delete"})
+            continue
+        if path.is_symlink() or not path.is_dir():
+            errors.append({"path": str(path), "reason": "unexpected-registry-root-entry"})
+            continue
+        try:
+            inventory, raw = _load_json_file(
+                path / ".bureau-runtime-snapshot.json",
+                label="registry snapshot inventory",
+            )
+            if (
+                inventory.get("schema_version") != 1
+                or inventory.get("kind") != "bureau_registry_snapshot"
+                or not isinstance(inventory.get("source_commit"), str)
+                or not isinstance(inventory.get("tree_sha256"), str)
+            ):
+                raise StateBackupError("registry snapshot inventory contract is invalid")
+            entries.append(
+                {
+                    "path": str(path.resolve()),
+                    "created_at_unix": int(path.lstat().st_mtime),
+                    "identity": {
+                        "source_commit": inventory["source_commit"],
+                        "tree_sha256": inventory["tree_sha256"],
+                        "inventory_sha256": _sha256_bytes(raw),
+                    },
+                }
+            )
+        except StateBackupError as exc:
+            errors.append({"path": str(path), "reason": str(exc)})
+    return entries, errors
+
+
+def _registry_manifest_reference(
+    manifest: dict[str, Any],
+    *,
+    snapshot_root: Path,
+    label: str,
+) -> Path:
+    return _retention_reference(
+        manifest.get("canonical_registry_root"),
+        root=snapshot_root,
+        label=label,
+    )
+
+
+def _registry_explicit_references(
+    runtime_prefix: Path,
+    snapshot_root: Path,
+    *,
+    rollback_depth: int,
+) -> tuple[dict[str, set[str]], list[dict[str, Any]]]:
+    references: dict[str, set[str]] = {}
+    errors: list[dict[str, Any]] = []
+    current_path = runtime_prefix / "deployment-manifest.json"
+    try:
+        current, _raw = _load_json_file(current_path, label="runtime deployment manifest")
+        current_registry = _registry_manifest_reference(
+            current, snapshot_root=snapshot_root, label="current runtime registry"
+        )
+        references.setdefault(str(current_registry), set()).add("current-runtime")
+        manifest = current
+        seen_manifests: set[str] = set()
+        for depth in range(rollback_depth):
+            rollback = manifest.get("rollback")
+            if not isinstance(rollback, dict) or not rollback.get("manifest"):
+                break
+            manifest_path = Path(str(rollback["manifest"])).expanduser().resolve(strict=False)
+            backup_root = (runtime_prefix / "backups").resolve(strict=False)
+            if not manifest_path.is_relative_to(backup_root):
+                raise StateBackupError("runtime rollback manifest escapes backup root")
+            marker = str(manifest_path)
+            if marker in seen_manifests:
+                raise StateBackupError("runtime rollback manifest chain contains a cycle")
+            seen_manifests.add(marker)
+            manifest, _raw = _load_json_file(
+                manifest_path, label=f"runtime rollback manifest depth {depth + 1}"
+            )
+            registry = _registry_manifest_reference(
+                manifest,
+                snapshot_root=snapshot_root,
+                label=f"rollback runtime registry depth {depth + 1}",
+            )
+            references.setdefault(str(registry), set()).add(
+                f"rollback-manifest-depth:{depth + 1}"
+            )
+    except StateBackupError as exc:
+        errors.append({"path": str(current_path), "reason": str(exc)})
+    return references, errors
+
+
+def _review_receipt_entries(
+    review_root: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    entries: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    for path in sorted(review_root.iterdir()):
+        if path.name.startswith("."):
+            continue
+        if path.is_symlink() or not path.is_file():
+            errors.append({"path": str(path), "reason": "unexpected-review-root-entry"})
+            continue
+        try:
+            payload, raw = _load_json_file(path, label="closure review receipt")
+            reviewed_at = _parse_retention_time(
+                payload.get("reviewed_at"), label="review receipt reviewed_at"
+            )
+            run_id = payload.get("run_id")
+            if not isinstance(run_id, str) or not run_id:
+                raise StateBackupError("review receipt lacks run_id")
+            entries.append(
+                {
+                    "path": str(path.resolve()),
+                    "created_at_unix": reviewed_at,
+                    "identity": {
+                        "run_id": run_id,
+                        "file_sha256": _sha256_bytes(raw),
+                    },
+                }
+            )
+        except StateBackupError as exc:
+            errors.append({"path": str(path), "reason": str(exc)})
+    return entries, errors
+
+
+def _review_explicit_references(
+    closure_root: Path,
+    review_root: Path,
+) -> tuple[dict[str, set[str]], list[dict[str, Any]]]:
+    references: dict[str, set[str]] = {}
+    errors: list[dict[str, Any]] = []
+
+    def protect(value: Any, reason: str) -> None:
+        if value is None:
+            return
+        path = _retention_reference(value, root=review_root, label=reason)
+        references.setdefault(str(path), set()).add(reason)
+
+    for name in ("review-latest.json", "lanes.json"):
+        path = closure_root / name
+        try:
+            payload, _raw = _load_json_file(path, label=f"closure {name}")
+            if name == "review-latest.json":
+                protect(payload.get("receipt_path"), "review-latest")
+            else:
+                protect(payload.get("latest_review_receipt"), "lanes-latest-review")
+                lanes = payload.get("lanes")
+                if not isinstance(lanes, list):
+                    raise StateBackupError("closure lanes array is invalid")
+                for lane in lanes:
+                    if not isinstance(lane, dict):
+                        continue
+                    evidence = lane.get("review_evidence")
+                    if isinstance(evidence, dict):
+                        protect(evidence.get("receipt_path"), "lane-review-binding")
+        except StateBackupError as exc:
+            errors.append({"path": str(path), "reason": str(exc)})
+    return references, errors
+
+
+def _build_store_retention(
+    store: str,
+    entries: list[dict[str, Any]],
+    *,
+    policy: dict[str, Any],
+    now_unix: int,
+    explicit: dict[str, set[str]],
+    errors: list[dict[str, Any]],
+) -> dict[str, Any]:
+    entry_paths = {str(item["path"]) for item in entries}
+    for path, reasons in explicit.items():
+        if path not in entry_paths:
+            errors.append(
+                {
+                    "path": path,
+                    "reason": "protected-reference-target-missing",
+                    "reference_reasons": sorted(reasons),
+                }
+            )
+    keep = _keep_reasons(entries, policy, now_unix=now_unix, explicit=explicit)
+    candidates: list[dict[str, Any]] = []
+    retained: list[dict[str, Any]] = []
+    for item in sorted(entries, key=lambda row: str(row["path"])):
+        path = str(item["path"])
+        reasons = sorted(keep.get(path, set()))
+        identity = dict(item["identity"])
+        record = {
+            "path": path,
+            "created_at_unix": int(item["created_at_unix"]),
+            "identity": identity,
+        }
+        if reasons:
+            retained.append({**record, "reasons": reasons})
+            continue
+        preimage = _filesystem_preimage(Path(path))
+        identity["filesystem_preimage_sha256"] = preimage["preimage_sha256"]
+        record["identity"] = identity
+        candidates.append(
+            {
+                **record,
+                "allocated_bytes": preimage["allocated_bytes"],
+                "candidate_id": _candidate_id(store, path, identity),
+                "reason": "outside-retention-and-unreferenced",
+            }
+        )
+    return {
+        "candidate_count": len(candidates),
+        "candidate_allocated_bytes": sum(
+            int(item["allocated_bytes"]) for item in candidates
+        ),
+        "retained_count": len(retained),
+        "candidates": candidates,
+        "retained": retained,
+        "errors": errors,
+    }
+
+
+def build_local_retention_plan(
+    *,
+    backup_root: Path = DEFAULT_BACKUP_ROOT,
+    runtime_prefix: Path = DEFAULT_RUNTIME_PREFIX,
+    closure_root: Path = DEFAULT_CLOSURE_ROOT,
+    policy: dict[str, Any] | None = None,
+    now_unix: int | None = None,
+) -> dict[str, Any]:
+    selected_policy = _validate_retention_policy(policy or LOCAL_RETENTION_POLICY)
+    generated = int(_utc_now().timestamp()) if now_unix is None else int(now_unix)
+    backup_root = _retention_root(backup_root, label="backup root")
+    runtime_prefix = _retention_root(runtime_prefix, label="runtime prefix")
+    snapshot_root = _retention_root(
+        runtime_prefix / "registry-snapshots", label="registry snapshot root"
+    )
+    closure_root = _retention_root(closure_root, label="closure root")
+    review_root = _retention_root(
+        closure_root / "review-receipts", label="review receipt root"
+    )
+
+    backup_entries, backup_errors = _state_backup_entries(backup_root)
+    backup_refs, backup_ref_errors = _backup_explicit_references(backup_root)
+    registry_entries, registry_errors = _registry_snapshot_entries(snapshot_root)
+    registry_refs, registry_ref_errors = _registry_explicit_references(
+        runtime_prefix,
+        snapshot_root,
+        rollback_depth=selected_policy["stores"]["registry_snapshots"][
+            "rollback_manifest_depth"
+        ],
+    )
+    review_entries, review_errors = _review_receipt_entries(review_root)
+    review_refs, review_ref_errors = _review_explicit_references(
+        closure_root, review_root
+    )
+
+    stores = {
+        "state_backups": _build_store_retention(
+            "state_backups",
+            backup_entries,
+            policy=selected_policy["stores"]["state_backups"],
+            now_unix=generated,
+            explicit=backup_refs,
+            errors=[*backup_errors, *backup_ref_errors],
+        ),
+        "registry_snapshots": _build_store_retention(
+            "registry_snapshots",
+            registry_entries,
+            policy=selected_policy["stores"]["registry_snapshots"],
+            now_unix=generated,
+            explicit=registry_refs,
+            errors=[*registry_errors, *registry_ref_errors],
+        ),
+        "review_receipts": _build_store_retention(
+            "review_receipts",
+            review_entries,
+            policy=selected_policy["stores"]["review_receipts"],
+            now_unix=generated,
+            explicit=review_refs,
+            errors=[*review_errors, *review_ref_errors],
+        ),
+    }
+    errors = [
+        {"store": store, **item}
+        for store, result in stores.items()
+        for item in result["errors"]
+    ]
+    plan = {
+        "schema_version": 1,
+        "kind": "bureau_local_retention_plan",
+        "generated_at_unix": generated,
+        "policy": selected_policy,
+        "policy_sha256": _sha256_bytes(_canonical_bytes(selected_policy)),
+        "roots": {
+            "backup_root": str(backup_root),
+            "runtime_prefix": str(runtime_prefix),
+            "closure_root": str(closure_root),
+        },
+        "stores": stores,
+        "summary": {
+            "candidate_count": sum(
+                int(result["candidate_count"]) for result in stores.values()
+            ),
+            "candidate_allocated_bytes": sum(
+                int(result["candidate_allocated_bytes"]) for result in stores.values()
+            ),
+            "retained_count": sum(
+                int(result["retained_count"]) for result in stores.values()
+            ),
+            "error_count": len(errors),
+        },
+        "errors": errors,
+        "safe_to_apply": not errors,
+        "automatic_cleanup_authorized": False,
+        "does_not_establish": [
+            "effect_authorization",
+            "offsite_backup_completion",
+            "permission_to_delete_runtime_backups",
+            "permission_to_delete_unlisted_paths",
+        ],
+    }
+    plan["plan_sha256"] = _retention_digest(plan, "plan_sha256")
+    return plan
+
+
+def _load_retention_plan(path: Path) -> dict[str, Any]:
+    plan, _raw = _load_json_file(path, label="local retention plan")
+    if (
+        plan.get("schema_version") != 1
+        or plan.get("kind") != "bureau_local_retention_plan"
+        or plan.get("plan_sha256") != _retention_digest(plan, "plan_sha256")
+    ):
+        raise StateBackupError("local retention plan integrity is invalid")
+    _validate_retention_policy(plan.get("policy"))
+    return plan
+
+
+def _registry_snapshot_tree_sha256(path: Path, identity: dict[str, Any]) -> str:
+    inventory, raw = _load_json_file(
+        path / ".bureau-runtime-snapshot.json", label="registry snapshot inventory"
+    )
+    if _sha256_bytes(raw) != identity.get("inventory_sha256"):
+        raise StateBackupError("registry snapshot inventory changed after plan")
+    if (
+        inventory.get("source_commit") != identity.get("source_commit")
+        or inventory.get("tree_sha256") != identity.get("tree_sha256")
+    ):
+        raise StateBackupError("registry snapshot identity changed after plan")
+    paths = inventory.get("paths")
+    if not isinstance(paths, list) or not paths:
+        raise StateBackupError("registry snapshot inventory paths are invalid")
+    digest = hashlib.sha256()
+    for item in paths:
+        if (
+            not isinstance(item, str)
+            or not item
+            or Path(item).is_absolute()
+            or ".." in Path(item).parts
+        ):
+            raise StateBackupError("registry snapshot inventory path is unsafe")
+        relative = Path(item)
+        source = path / relative
+        regular = _require_regular(source, label="registry snapshot tracked file")
+        if regular != source.resolve():
+            raise StateBackupError("registry snapshot tracked path escaped root")
+        encoded = relative.as_posix().encode()
+        content = source.read_bytes()
+        digest.update(len(encoded).to_bytes(4, "big"))
+        digest.update(encoded)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    observed = digest.hexdigest()
+    if observed != identity.get("tree_sha256"):
+        raise StateBackupError("registry snapshot tree changed after plan")
+    return observed
+
+
+def _candidate_identity_still_matches(store: str, candidate: dict[str, Any]) -> None:
+    path = Path(str(candidate["path"]))
+    identity = candidate.get("identity")
+    if not isinstance(identity, dict):
+        raise StateBackupError("retention candidate identity is invalid")
+    preimage = _filesystem_preimage(path)
+    if preimage["preimage_sha256"] != identity.get("filesystem_preimage_sha256"):
+        raise StateBackupError("retention candidate filesystem preimage changed after plan")
+    if store == "review_receipts":
+        regular = _require_regular(path, label="review receipt candidate")
+        if _sha256_file(regular) != identity.get("file_sha256"):
+            raise StateBackupError("review receipt changed after plan")
+        return
+    if path.is_symlink() or not path.is_dir():
+        raise StateBackupError(f"retention directory candidate is unavailable: {path}")
+    if store == "state_backups":
+        manifest, _raw = _load_json_file(path / "manifest.json", label="backup manifest")
+        if (
+            manifest.get("bundle_id") != identity.get("bundle_id")
+            or manifest.get("manifest_sha256") != identity.get("manifest_sha256")
+            or manifest.get("manifest_sha256")
+            != _retention_digest(manifest, "manifest_sha256")
+        ):
+            raise StateBackupError("backup candidate changed after plan")
+        return
+    if store == "registry_snapshots":
+        _registry_snapshot_tree_sha256(path, identity)
+        return
+    raise StateBackupError(f"unsupported retention store: {store}")
+
+
+def _fsync_directory(path: Path) -> None:
+    flags = os.O_RDONLY
+    if hasattr(os, "O_DIRECTORY"):
+        flags |= os.O_DIRECTORY
+    descriptor = os.open(path, flags)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _remove_directory_candidate(path: Path, *, candidate_id: str) -> None:
+    parent = path.parent
+    quarantine = parent / f".retention-delete-{candidate_id}"
+    if quarantine.exists() or quarantine.is_symlink():
+        raise StateBackupError(f"retention quarantine already exists: {quarantine}")
+    os.replace(path, quarantine)
+    _fsync_directory(parent)
+    try:
+        for walk_root, directories, files in os.walk(
+            quarantine, topdown=False, followlinks=False
+        ):
+            root = Path(walk_root)
+            for name in files:
+                child = root / name
+                if child.is_symlink():
+                    raise StateBackupError(
+                        f"retention candidate gained symlink during delete: {child}"
+                    )
+                os.chmod(child, 0o600)
+            for name in directories:
+                child = root / name
+                if child.is_symlink():
+                    raise StateBackupError(
+                        f"retention candidate gained symlink during delete: {child}"
+                    )
+                os.chmod(child, 0o700)
+        os.chmod(quarantine, 0o700)
+        shutil.rmtree(quarantine)
+        _fsync_directory(parent)
+    except Exception:
+        if quarantine.exists() and not path.exists():
+            with contextlib.suppress(Exception):
+                os.replace(quarantine, path)
+                _fsync_directory(parent)
+        raise
+
+
+def _atomic_replace_json(path: Path, payload: dict[str, Any]) -> None:
+    path = path.expanduser().resolve(strict=False)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+    data = json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    temporary.write_text(data, encoding="utf-8")
+    os.chmod(temporary, 0o600)
+    with temporary.open("rb") as handle:
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
+    _fsync_directory(path.parent)
+
+
+
+def _validated_historical_restore_evidence(
+    *,
+    backup_root: Path,
+    retained_paths: set[str],
+    newest_path: Path,
+    max_age_seconds: int,
+    now_unix: int,
+) -> dict[str, Any]:
+    receipt_path = backup_root / "restore-tests" / "latest.json"
+    receipt, _raw = _load_json_file(receipt_path, label="latest restore test receipt")
+    if (
+        receipt.get("schema_version") != 1
+        or receipt.get("kind") != "bureau_state_restore_test_receipt"
+        or receipt.get("status") != "verified"
+        or receipt.get("receipt_sha256")
+        != _retention_digest(receipt, "receipt_sha256")
+    ):
+        raise StateBackupError("historical restore receipt integrity is invalid")
+    tested_at_unix = _parse_retention_time(
+        receipt.get("tested_at"), label="historical restore tested_at"
+    )
+    age_seconds = now_unix - tested_at_unix
+    if age_seconds < 0 or age_seconds > max_age_seconds:
+        raise StateBackupError("historical restore receipt is stale")
+    historical_path = _retention_reference(
+        receipt.get("bundle"),
+        root=backup_root,
+        label="historical restore bundle",
+    )
+    if historical_path == newest_path:
+        raise StateBackupError("historical restore point must differ from newest retained backup")
+    if str(historical_path) not in retained_paths:
+        raise StateBackupError("historical restore point is no longer retained")
+    verification = verify_backup(historical_path)
+    for field in (
+        "manifest_sha256",
+        "authoritative_root_sha256",
+        "event_count",
+        "envelope_root_sha256",
+        "receipt_root_sha256",
+    ):
+        if verification.get(field) != receipt.get(field):
+            raise StateBackupError(
+                f"historical restore receipt differs from verified backup for {field}"
+            )
+    if (
+        receipt.get("empty_target_created") is not True
+        or receipt.get("external_leases_restored") is not False
+        or receipt.get("external_state_reused") is not False
+    ):
+        raise StateBackupError("historical restore isolation evidence is invalid")
+    reconcile = receipt.get("post_restore_reconcile")
+    if (
+        not isinstance(reconcile, dict)
+        or reconcile.get("status") != "reconciled"
+        or reconcile.get("mode") != "fresh-external-readback"
+        or reconcile.get("default") != "fail-closed"
+        or reconcile.get("lease_reactivation") is not False
+    ):
+        raise StateBackupError("historical restore reconciliation evidence is invalid")
+    return {
+        "status": "verified",
+        "bundle": str(historical_path),
+        "tested_at": receipt["tested_at"],
+        "tested_at_unix": tested_at_unix,
+        "age_seconds": age_seconds,
+        "receipt_sha256": receipt["receipt_sha256"],
+        "manifest_sha256": receipt["manifest_sha256"],
+        "authoritative_root_sha256": receipt["authoritative_root_sha256"],
+    }
+
+
+def _retention_recovery_gate(
+    plan: dict[str, Any],
+    *,
+    now_unix: int,
+) -> dict[str, Any]:
+    state_store = plan.get("stores", {}).get("state_backups")
+    if not isinstance(state_store, dict):
+        raise StateBackupError("retention plan lacks StateStore backup projection")
+    candidates = state_store.get("candidates")
+    retained = state_store.get("retained")
+    if not isinstance(candidates, list) or not isinstance(retained, list):
+        raise StateBackupError("retention StateStore projection is invalid")
+    if not candidates:
+        return {
+            "status": "not-required",
+            "reason": "no-state-backup-candidates",
+        }
+    if len(retained) < 2:
+        raise StateBackupError("backup pruning requires at least two retained recovery points")
+    roots = plan.get("roots")
+    policy = plan.get("policy")
+    if not isinstance(roots, dict) or not isinstance(policy, dict):
+        raise StateBackupError("retention recovery contract is incomplete")
+    backup_root = _retention_root(
+        Path(str(roots.get("backup_root"))), label="backup root"
+    )
+    state_policy = policy.get("stores", {}).get("state_backups")
+    if not isinstance(state_policy, dict):
+        raise StateBackupError("backup retention policy is unavailable")
+    max_age = state_policy.get("restore_receipt_max_age_seconds")
+    if isinstance(max_age, bool) or not isinstance(max_age, int):
+        raise StateBackupError("backup restore receipt max age is invalid")
+    newest = max(
+        retained,
+        key=lambda item: (int(item["created_at_unix"]), str(item["path"])),
+    )
+    newest_path = _retention_reference(
+        newest.get("path"),
+        root=backup_root,
+        label="newest retained backup",
+    )
+    retained_paths = {str(Path(str(item["path"])).resolve(strict=False)) for item in retained}
+    historical = _validated_historical_restore_evidence(
+        backup_root=backup_root,
+        retained_paths=retained_paths,
+        newest_path=newest_path,
+        max_age_seconds=max_age,
+        now_unix=now_unix,
+    )
+    registry_root = _runtime_registry_root()
+    newest_restore = restore_test(
+        bundle=newest_path,
+        backup_root=backup_root,
+        receipt_path=None,
+        registry_root=registry_root,
+    )
+    if newest_restore.get("status") != "verified":
+        raise StateBackupError("newest retained backup restore did not verify")
+    return {
+        "status": "verified",
+        "historical": historical,
+        "newest": {
+            "bundle": str(newest_path),
+            "tested_at": newest_restore.get("tested_at"),
+            "manifest_sha256": newest_restore.get("manifest_sha256"),
+            "authoritative_root_sha256": newest_restore.get(
+                "authoritative_root_sha256"
+            ),
+            "receipt_sha256": newest_restore.get("receipt_sha256"),
+        },
+        "registry_root": str(registry_root),
+        "distinct_recovery_points": historical["bundle"] != str(newest_path),
+    }
+
+
+def apply_local_retention_plan(
+    plan: dict[str, Any],
+    *,
+    expected_plan_sha256: str,
+    confirmation: str,
+    receipt_path: Path,
+    now_unix: int | None = None,
+) -> dict[str, Any]:
+    if (
+        plan.get("schema_version") != 1
+        or plan.get("kind") != "bureau_local_retention_plan"
+        or plan.get("plan_sha256") != expected_plan_sha256
+        or expected_plan_sha256 != _retention_digest(plan, "plan_sha256")
+    ):
+        raise StateBackupError("local retention plan hash mismatch")
+    if plan.get("safe_to_apply") is not True:
+        raise StateBackupError("local retention plan is blocked")
+    if confirmation != f"APPLY:{expected_plan_sha256}":
+        raise StateBackupError("local retention confirmation mismatch")
+    roots = plan.get("roots")
+    if not isinstance(roots, dict):
+        raise StateBackupError("local retention plan roots are invalid")
+    policy = _validate_retention_policy(plan.get("policy"))
+    if receipt_path.is_symlink():
+        raise StateBackupError("retention apply receipt must not be a symlink")
+    receipt_path = receipt_path.expanduser().resolve(strict=False)
+    if receipt_path.exists():
+        existing, _raw = _load_json_file(receipt_path, label="retention apply receipt")
+        if existing.get("receipt_sha256") != _retention_digest(
+            existing, "receipt_sha256"
+        ):
+            raise StateBackupError("retention apply receipt integrity mismatch")
+        if (
+            existing.get("plan_sha256") == expected_plan_sha256
+            and existing.get("state") == "complete"
+        ):
+            return {**existing, "replayed": True}
+        raise StateBackupError("existing retention receipt is not a completed replay")
+    fresh = build_local_retention_plan(
+        backup_root=Path(str(roots.get("backup_root"))),
+        runtime_prefix=Path(str(roots.get("runtime_prefix"))),
+        closure_root=Path(str(roots.get("closure_root"))),
+        policy=policy,
+        now_unix=now_unix,
+    )
+    if fresh.get("safe_to_apply") is not True:
+        raise StateBackupError("fresh local retention readback is blocked")
+    fresh_candidates = {
+        (store, str(candidate["candidate_id"])): candidate
+        for store, result in fresh["stores"].items()
+        for candidate in result["candidates"]
+    }
+    selected: list[tuple[str, dict[str, Any]]] = []
+    for store, result in plan["stores"].items():
+        for candidate in result["candidates"]:
+            key = (store, str(candidate.get("candidate_id")))
+            current = fresh_candidates.get(key)
+            if current is None or current.get("identity") != candidate.get("identity"):
+                raise StateBackupError(
+                    f"retention candidate is no longer eligible: {candidate.get('path')}"
+                )
+            selected.append((store, candidate))
+    recovery_gate = _retention_recovery_gate(
+        fresh,
+        now_unix=int(fresh["generated_at_unix"]),
+    )
+    receipt = {
+        "schema_version": 1,
+        "kind": "bureau_local_retention_apply_receipt",
+        "state": "intent",
+        "plan_sha256": expected_plan_sha256,
+        "policy_sha256": plan.get("policy_sha256"),
+        "fresh_plan_sha256": fresh.get("plan_sha256"),
+        "started_at": _iso(),
+        "candidate_count": len(selected),
+        "recovery_gate": recovery_gate,
+        "results": [],
+        "current_candidate": None,
+        "error": None,
+    }
+    receipt["receipt_sha256"] = _retention_digest(receipt, "receipt_sha256")
+    _atomic_replace_json(receipt_path, receipt)
+    try:
+        for store, candidate in selected:
+            _candidate_identity_still_matches(store, candidate)
+            path = Path(str(candidate["path"]))
+            receipt["state"] = "applying"
+            receipt["current_candidate"] = {
+                "store": store,
+                "candidate_id": candidate["candidate_id"],
+                "path": str(path),
+            }
+            receipt["receipt_sha256"] = _retention_digest(receipt, "receipt_sha256")
+            _atomic_replace_json(receipt_path, receipt)
+            if store == "review_receipts":
+                path.unlink()
+                _fsync_directory(path.parent)
+            else:
+                _remove_directory_candidate(
+                    path, candidate_id=str(candidate["candidate_id"])
+                )
+            receipt["results"].append(
+                {
+                    "store": store,
+                    "candidate_id": candidate["candidate_id"],
+                    "path": str(path),
+                    "allocated_bytes": candidate["allocated_bytes"],
+                    "removed": not path.exists(),
+                }
+            )
+            receipt["current_candidate"] = None
+            receipt["receipt_sha256"] = _retention_digest(receipt, "receipt_sha256")
+            _atomic_replace_json(receipt_path, receipt)
+        receipt["state"] = "complete"
+        receipt["completed_at"] = _iso()
+        receipt["freed_allocated_bytes_claim"] = sum(
+            int(item["allocated_bytes"]) for item in receipt["results"]
+        )
+        receipt["current_candidate"] = None
+        receipt["receipt_sha256"] = _retention_digest(receipt, "receipt_sha256")
+        _atomic_replace_json(receipt_path, receipt)
+        return {**receipt, "replayed": False}
+    except Exception as exc:
+        receipt["state"] = "partial"
+        receipt["error"] = {
+            "class": type(exc).__name__,
+            "message": str(exc)[:1000],
+        }
+        receipt["receipt_sha256"] = _retention_digest(receipt, "receipt_sha256")
+        _atomic_replace_json(receipt_path, receipt)
+        raise
+
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Bureau coherent StateStore backup and restore proof"
@@ -708,6 +1776,18 @@ def _parser() -> argparse.ArgumentParser:
     restore.add_argument(
         "--receipt", type=Path, default=DEFAULT_RESTORE_RECEIPT_ROOT / "latest.json"
     )
+
+    retention_plan = subparsers.add_parser("retention-plan")
+    retention_plan.add_argument("--backup-root", type=Path, default=DEFAULT_BACKUP_ROOT)
+    retention_plan.add_argument("--runtime-prefix", type=Path, default=DEFAULT_RUNTIME_PREFIX)
+    retention_plan.add_argument("--closure-root", type=Path, default=DEFAULT_CLOSURE_ROOT)
+    retention_plan.add_argument("--output", type=Path)
+
+    retention_apply = subparsers.add_parser("retention-apply")
+    retention_apply.add_argument("--plan", type=Path, required=True)
+    retention_apply.add_argument("--expected-plan-sha256", required=True)
+    retention_apply.add_argument("--confirmation", required=True)
+    retention_apply.add_argument("--receipt", type=Path, required=True)
     return parser
 
 
@@ -718,13 +1798,29 @@ def main(argv: list[str] | None = None) -> int:
             result = create_backup(state_root=args.state_root, backup_root=args.backup_root)
         elif args.command == "verify":
             result = verify_backup(args.bundle)
-        else:
+        elif args.command == "restore-test":
             result = restore_test(
                 bundle=args.bundle,
                 backup_root=args.backup_root,
                 scratch_root=args.scratch_root,
                 receipt_path=args.receipt,
                 registry_root=args.registry_root,
+            )
+        elif args.command == "retention-plan":
+            result = build_local_retention_plan(
+                backup_root=args.backup_root,
+                runtime_prefix=args.runtime_prefix,
+                closure_root=args.closure_root,
+            )
+            if args.output is not None:
+                _write_json_private(args.output.expanduser().resolve(strict=False), result)
+        else:
+            plan = _load_retention_plan(args.plan)
+            result = apply_local_retention_plan(
+                plan,
+                expected_plan_sha256=args.expected_plan_sha256,
+                confirmation=args.confirmation,
+                receipt_path=args.receipt,
             )
     except StateBackupError as exc:
         print(

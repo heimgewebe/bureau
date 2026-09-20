@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -288,3 +290,604 @@ def test_manifest_marks_existing_restic_source_without_claiming_upload(
     assert manifest["offsite"]["staging_contract"] == "existing-restic-source"
     assert manifest["offsite"]["encryption"] == "restic"
     assert "offsite_snapshot_completed" in manifest["offsite"]["does_not_establish"]
+
+
+def _retention_test_policy(*, recent_max_count: int = 1) -> dict:
+    return {
+        "schema_version": 1,
+        "kind": "bureau_local_retention_policy",
+        "policy_id": "test-retention-v1",
+        "stores": {
+            "state_backups": {
+                "recent_seconds": 0,
+                "recent_max_count": recent_max_count,
+                "restore_receipt_max_age_seconds": 36 * 60 * 60,
+                "tiers": [],
+            },
+            "registry_snapshots": {
+                "recent_seconds": 0,
+                "recent_max_count": recent_max_count,
+                "rollback_manifest_depth": 2,
+                "tiers": [],
+            },
+            "review_receipts": {
+                "recent_seconds": 0,
+                "recent_max_count": recent_max_count,
+                "tiers": [],
+            },
+        },
+    }
+
+
+def _iso_at(timestamp: int) -> str:
+    return datetime.fromtimestamp(timestamp, timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _write_retention_backup(root: Path, *, timestamp: int, suffix: str) -> Path:
+    bundle = root / f"20260101T000000.000000Z-{suffix}"
+    bundle.mkdir()
+    manifest = {
+        "schema_version": state_backup.SCHEMA_VERSION,
+        "kind": "bureau_state_backup_manifest",
+        "bundle_id": bundle.name,
+        "created_at": _iso_at(timestamp),
+    }
+    manifest["manifest_sha256"] = state_backup._retention_digest(
+        manifest, "manifest_sha256"
+    )
+    (bundle / "manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    (bundle / "payload").write_bytes(b"x" * 17)
+    return bundle
+
+
+def _snapshot_tree_digest(root: Path, paths: list[str]) -> str:
+    digest = hashlib.sha256()
+    for item in paths:
+        relative = Path(item)
+        content = (root / relative).read_bytes()
+        encoded = relative.as_posix().encode()
+        digest.update(len(encoded).to_bytes(4, "big"))
+        digest.update(encoded)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    return digest.hexdigest()
+
+
+def _write_retention_snapshot(
+    root: Path, *, timestamp: int, suffix: str, source_commit: str
+) -> Path:
+    snapshot = root / f"{suffix}-tree{suffix}"
+    snapshot.mkdir()
+    (snapshot / "payload.txt").write_text(f"{suffix}\n", encoding="utf-8")
+    inventory = {
+        "schema_version": 1,
+        "kind": "bureau_registry_snapshot",
+        "source_commit": source_commit,
+        "tree_sha256": _snapshot_tree_digest(snapshot, ["payload.txt"]),
+        "paths": ["payload.txt"],
+    }
+    (snapshot / ".bureau-runtime-snapshot.json").write_text(
+        json.dumps(inventory, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    os.utime(snapshot, (timestamp, timestamp))
+    return snapshot
+
+
+def _write_review_receipt(root: Path, *, timestamp: int, suffix: str) -> Path:
+    receipt = root / f"review-steward-{suffix}.json"
+    receipt.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "run_id": f"review-steward-{suffix}",
+                "reviewed_at": _iso_at(timestamp),
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return receipt
+
+
+def _retention_fixture(tmp_path: Path, *, now: int = 2_000_000_000) -> dict:
+    backup_root = tmp_path / "backups"
+    runtime_prefix = tmp_path / "runtime"
+    snapshot_root = runtime_prefix / "registry-snapshots"
+    runtime_backups = runtime_prefix / "backups" / "rollback-1"
+    closure_root = tmp_path / "closure"
+    review_root = closure_root / "review-receipts"
+    for root in (
+        backup_root,
+        snapshot_root,
+        runtime_backups,
+        review_root,
+    ):
+        root.mkdir(parents=True, exist_ok=True)
+
+    backup_old = _write_retention_backup(
+        backup_root, timestamp=now - 300, suffix="old"
+    )
+    backup_middle = _write_retention_backup(
+        backup_root, timestamp=now - 200, suffix="middle"
+    )
+    backup_new = _write_retention_backup(
+        backup_root, timestamp=now - 100, suffix="new"
+    )
+    restore_root = backup_root / "restore-tests"
+    restore_root.mkdir()
+    (restore_root / "latest.json").write_text(
+        json.dumps({"status": "verified", "bundle": str(backup_old)}) + "\n",
+        encoding="utf-8",
+    )
+
+    snapshot_old = _write_retention_snapshot(
+        snapshot_root,
+        timestamp=now - 300,
+        suffix="a" * 12,
+        source_commit="a" * 40,
+    )
+    snapshot_middle = _write_retention_snapshot(
+        snapshot_root,
+        timestamp=now - 200,
+        suffix="b" * 12,
+        source_commit="b" * 40,
+    )
+    snapshot_new = _write_retention_snapshot(
+        snapshot_root,
+        timestamp=now - 100,
+        suffix="c" * 12,
+        source_commit="c" * 40,
+    )
+    rollback_manifest = runtime_backups / "deployment-manifest.json"
+    rollback_manifest.write_text(
+        json.dumps(
+            {
+                "canonical_registry_root": str(snapshot_middle),
+                "rollback": {
+                    "directory": None,
+                    "manifest": None,
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (runtime_prefix / "deployment-manifest.json").write_text(
+        json.dumps(
+            {
+                "canonical_registry_root": str(snapshot_new),
+                "rollback": {
+                    "manifest": str(rollback_manifest),
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    review_old = _write_review_receipt(
+        review_root, timestamp=now - 300, suffix="old"
+    )
+    review_middle = _write_review_receipt(
+        review_root, timestamp=now - 200, suffix="middle"
+    )
+    review_new = _write_review_receipt(
+        review_root, timestamp=now - 100, suffix="new"
+    )
+    (closure_root / "review-latest.json").write_text(
+        json.dumps({"receipt_path": str(review_new)}) + "\n",
+        encoding="utf-8",
+    )
+    (closure_root / "lanes.json").write_text(
+        json.dumps(
+            {
+                "lanes": [
+                    {
+                        "lane_id": "lane-1",
+                        "state": "reviewing",
+                        "review_evidence": {"receipt_path": str(review_middle)},
+                    }
+                ]
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "now": now,
+        "backup_root": backup_root,
+        "runtime_prefix": runtime_prefix,
+        "closure_root": closure_root,
+        "backup_old": backup_old,
+        "backup_middle": backup_middle,
+        "backup_new": backup_new,
+        "snapshot_old": snapshot_old,
+        "snapshot_middle": snapshot_middle,
+        "snapshot_new": snapshot_new,
+        "review_old": review_old,
+        "review_middle": review_middle,
+        "review_new": review_new,
+    }
+
+
+def test_local_retention_plan_protects_restore_runtime_rollback_and_lane_references(
+    tmp_path: Path,
+):
+    fixture = _retention_fixture(tmp_path)
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+
+    assert plan["safe_to_apply"] is True
+    assert plan["summary"]["candidate_count"] == 3
+    candidates = {
+        (store, Path(item["path"]))
+        for store, result in plan["stores"].items()
+        for item in result["candidates"]
+    }
+    assert candidates == {
+        ("state_backups", fixture["backup_middle"]),
+        ("registry_snapshots", fixture["snapshot_old"]),
+        ("review_receipts", fixture["review_old"]),
+    }
+    retained = {
+        Path(item["path"]): set(item["reasons"])
+        for result in plan["stores"].values()
+        for item in result["retained"]
+    }
+    assert "latest-verified-restore-test" in retained[fixture["backup_old"]]
+    assert "current-runtime" in retained[fixture["snapshot_new"]]
+    assert "rollback-manifest-depth:1" in retained[fixture["snapshot_middle"]]
+    assert "review-latest" in retained[fixture["review_new"]]
+    assert "lane-review-binding" in retained[fixture["review_middle"]]
+    assert plan["plan_sha256"] == state_backup._retention_digest(
+        plan, "plan_sha256"
+    )
+    assert plan["automatic_cleanup_authorized"] is False
+
+
+def test_local_retention_recent_window_is_hard_count_bounded(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    policy = _retention_test_policy(recent_max_count=2)
+    policy["stores"]["review_receipts"]["recent_seconds"] = 10_000
+    for index in range(20):
+        _write_review_receipt(
+            fixture["closure_root"] / "review-receipts",
+            timestamp=fixture["now"] - index,
+            suffix=f"dense-{index:02d}",
+        )
+
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=policy,
+        now_unix=fixture["now"],
+    )
+
+    recent_kept = [
+        item
+        for item in plan["stores"]["review_receipts"]["retained"]
+        if "recent-window" in item["reasons"]
+    ]
+    assert len(recent_kept) == 2
+    assert plan["stores"]["review_receipts"]["candidate_count"] >= 19
+
+
+def test_local_retention_apply_removes_only_exact_planned_candidates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fixture = _retention_fixture(tmp_path)
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+    receipt_path = tmp_path / "receipts" / "apply.json"
+    monkeypatch.setattr(
+        state_backup,
+        "_retention_recovery_gate",
+        lambda *_args, **_kwargs: {"status": "verified", "test": True},
+    )
+
+    result = state_backup.apply_local_retention_plan(
+        plan,
+        expected_plan_sha256=plan["plan_sha256"],
+        confirmation=f"APPLY:{plan['plan_sha256']}",
+        receipt_path=receipt_path,
+        now_unix=fixture["now"],
+    )
+
+    assert result["state"] == "complete"
+    assert result["candidate_count"] == 3
+    assert result["recovery_gate"] == {"status": "verified", "test": True}
+    assert not fixture["backup_middle"].exists()
+    assert not fixture["snapshot_old"].exists()
+    assert not fixture["review_old"].exists()
+    for protected in (
+        fixture["backup_old"],
+        fixture["backup_new"],
+        fixture["snapshot_middle"],
+        fixture["snapshot_new"],
+        fixture["review_middle"],
+        fixture["review_new"],
+    ):
+        assert protected.exists()
+    stored = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert stored["receipt_sha256"] == state_backup._retention_digest(
+        stored, "receipt_sha256"
+    )
+
+    replayed = state_backup.apply_local_retention_plan(
+        plan,
+        expected_plan_sha256=plan["plan_sha256"],
+        confirmation=f"APPLY:{plan['plan_sha256']}",
+        receipt_path=receipt_path,
+        now_unix=fixture["now"],
+    )
+    assert replayed["replayed"] is True
+
+
+def test_local_retention_apply_fails_closed_after_candidate_tamper(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+    fixture["review_old"].write_text(
+        fixture["review_old"].read_text(encoding="utf-8") + " ",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        state_backup.StateBackupError,
+        match=r"fresh local retention readback is blocked|no longer eligible",
+    ):
+        state_backup.apply_local_retention_plan(
+            plan,
+            expected_plan_sha256=plan["plan_sha256"],
+            confirmation=f"APPLY:{plan['plan_sha256']}",
+            receipt_path=tmp_path / "tamper-receipt.json",
+            now_unix=fixture["now"],
+        )
+    assert fixture["backup_middle"].exists()
+    assert fixture["snapshot_old"].exists()
+
+
+def test_local_retention_plan_blocks_missing_protected_reference(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    (fixture["closure_root"] / "review-latest.json").write_text(
+        json.dumps(
+            {
+                "receipt_path": str(
+                    fixture["closure_root"] / "review-receipts" / "missing.json"
+                )
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+
+    assert plan["safe_to_apply"] is False
+    assert plan["summary"]["error_count"] >= 1
+    assert any(
+        item.get("reason") == "protected-reference-target-missing"
+        for item in plan["errors"]
+    )
+
+
+def test_local_retention_apply_requires_exact_hash_and_confirmation(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+
+    with pytest.raises(state_backup.StateBackupError, match="plan hash mismatch"):
+        state_backup.apply_local_retention_plan(
+            plan,
+            expected_plan_sha256="0" * 64,
+            confirmation="APPLY:" + "0" * 64,
+            receipt_path=tmp_path / "wrong-hash.json",
+            now_unix=fixture["now"],
+        )
+    with pytest.raises(state_backup.StateBackupError, match="confirmation mismatch"):
+        state_backup.apply_local_retention_plan(
+            plan,
+            expected_plan_sha256=plan["plan_sha256"],
+            confirmation="wrong",
+            receipt_path=tmp_path / "wrong-confirmation.json",
+            now_unix=fixture["now"],
+        )
+
+
+def test_local_retention_plan_blocks_unfinished_delete_quarantine(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    residue = fixture["backup_root"] / ".retention-delete-deadbeef"
+    residue.mkdir()
+    (residue / "marker").write_text("partial\n", encoding="utf-8")
+
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+
+    assert plan["safe_to_apply"] is False
+    assert any(
+        item.get("store") == "state_backups"
+        and item.get("reason") == "unfinished-retention-delete"
+        for item in plan["errors"]
+    )
+
+
+def _write_restore_gate_receipt(
+    fixture: dict,
+    *,
+    tested_at_unix: int | None = None,
+    bundle: Path | None = None,
+) -> dict:
+    historical = bundle or fixture["backup_old"]
+    manifest = json.loads(
+        (historical / "manifest.json").read_text(encoding="utf-8")
+    )
+    receipt = {
+        "schema_version": 1,
+        "kind": "bureau_state_restore_test_receipt",
+        "status": "verified",
+        "tested_at": _iso_at(
+            tested_at_unix if tested_at_unix is not None else fixture["now"] - 60
+        ),
+        "bundle": str(historical),
+        "manifest_sha256": manifest["manifest_sha256"],
+        "authoritative_root_sha256": "a" * 64,
+        "event_count": 17,
+        "envelope_root_sha256": "b" * 64,
+        "receipt_root_sha256": "c" * 64,
+        "empty_target_created": True,
+        "external_leases_restored": False,
+        "external_state_reused": False,
+        "post_restore_reconcile": {
+            "status": "reconciled",
+            "mode": "fresh-external-readback",
+            "default": "fail-closed",
+            "lease_reactivation": False,
+        },
+    }
+    receipt["receipt_sha256"] = state_backup._retention_digest(
+        receipt, "receipt_sha256"
+    )
+    path = fixture["backup_root"] / "restore-tests" / "latest.json"
+    path.write_text(json.dumps(receipt, sort_keys=True) + "\n", encoding="utf-8")
+    return receipt
+
+
+def test_retention_recovery_gate_revalidates_historical_and_restores_newest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fixture = _retention_fixture(tmp_path)
+    historical_receipt = _write_restore_gate_receipt(fixture)
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+    calls: dict[str, list[Path]] = {"verify": [], "restore": []}
+
+    def fake_verify(bundle: Path):
+        bundle = Path(bundle)
+        calls["verify"].append(bundle)
+        manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
+        return {
+            "status": "verified",
+            "bundle": str(bundle),
+            "manifest_sha256": manifest["manifest_sha256"],
+            "authoritative_root_sha256": "a" * 64,
+            "event_count": 17,
+            "envelope_root_sha256": "b" * 64,
+            "receipt_root_sha256": "c" * 64,
+        }
+
+    def fake_restore_test(*, bundle: Path, **_kwargs):
+        bundle = Path(bundle)
+        calls["restore"].append(bundle)
+        manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
+        return {
+            "status": "verified",
+            "tested_at": _iso_at(fixture["now"]),
+            "manifest_sha256": manifest["manifest_sha256"],
+            "authoritative_root_sha256": "d" * 64,
+            "receipt_sha256": "e" * 64,
+        }
+
+    monkeypatch.setattr(state_backup, "verify_backup", fake_verify)
+    monkeypatch.setattr(state_backup, "restore_test", fake_restore_test)
+    monkeypatch.setattr(
+        state_backup,
+        "_runtime_registry_root",
+        lambda: fixture["runtime_prefix"] / "registry-snapshots",
+    )
+
+    result = state_backup._retention_recovery_gate(
+        plan, now_unix=fixture["now"]
+    )
+
+    assert result["status"] == "verified"
+    assert result["historical"]["receipt_sha256"] == historical_receipt["receipt_sha256"]
+    assert calls["verify"] == [fixture["backup_old"]]
+    assert calls["restore"] == [fixture["backup_new"]]
+    assert result["distinct_recovery_points"] is True
+
+
+def test_retention_recovery_gate_rejects_stale_historical_restore(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fixture = _retention_fixture(tmp_path)
+    _write_restore_gate_receipt(
+        fixture,
+        tested_at_unix=fixture["now"] - 40 * 60 * 60,
+    )
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+    monkeypatch.setattr(
+        state_backup,
+        "verify_backup",
+        lambda *_args, **_kwargs: pytest.fail("stale receipt must fail first"),
+    )
+
+    with pytest.raises(state_backup.StateBackupError, match="receipt is stale"):
+        state_backup._retention_recovery_gate(plan, now_unix=fixture["now"])
+
+
+def test_retention_recovery_gate_requires_distinct_historical_point(
+    tmp_path: Path,
+):
+    fixture = _retention_fixture(tmp_path)
+    _write_restore_gate_receipt(fixture, bundle=fixture["backup_new"])
+    policy = _retention_test_policy(recent_max_count=2)
+    policy["stores"]["state_backups"]["recent_seconds"] = 10_000
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=policy,
+        now_unix=fixture["now"],
+    )
+
+    with pytest.raises(
+        state_backup.StateBackupError,
+        match="historical restore point must differ",
+    ):
+        state_backup._retention_recovery_gate(plan, now_unix=fixture["now"])

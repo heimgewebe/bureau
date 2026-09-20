@@ -9,13 +9,19 @@
   "metadata": {
     "lifecycle": "retired",
     "coordination_only": true,
-    "purpose": "Coordinate review, merge, archival and terminal closeout work for the retired Heimserver repository.",
+    "purpose": "Retain immutable local identity/provenance for coordination and closeout of a physically deleted repository.",
     "does_not_establish": [
       "active_host",
       "active_runtime_role",
       "fleet_membership",
       "service_exposure",
-      "execution_authority"
-    ]
+      "execution_authority",
+      "remote_repository_exists",
+      "active_checkout",
+      "task_supply_target",
+      "runtime_role"
+    ],
+    "historical_purpose": "Coordinate review, merge, archival and terminal closeout work for the retired Heimserver repository.",
+    "retired_on": "2026-09-18"
   }
 }

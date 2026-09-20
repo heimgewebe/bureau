@@ -698,9 +698,9 @@ def test_bound_jointly_feasible_frontier_publishes_only_compatible_refill(
         "scout-chronik",
         "scout-lenskit",
         "scout-systemkatalog",
-        "scout-heimlern",
         "scout-semantah",
         "scout-wgx",
+        "scout-labor",
     ]
     assert all(proposal["task"]["claims"][0]["mode"] == "read" for proposal in created)
     assert all("approval" not in proposal["task"]["execution"] for proposal in created)

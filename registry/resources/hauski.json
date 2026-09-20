@@ -1,1 +1,23 @@
-{"schema_version":1,"id":"repo.hauski","type":"git-repository","parent":"repo","path":"/home/alex/repos/hausKI","github_slug":"heimgewebe/hausKI","grabowski_key":"repo:/home/alex/repos/hausKI"}
+{
+  "schema_version": 1,
+  "id": "repo.hauski",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/hausKI",
+  "github_slug": "heimgewebe/hausKI",
+  "grabowski_key": "repo:/home/alex/repos/hausKI",
+  "metadata": {
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "retired_on": "2026-09-18",
+    "purpose": "Retain immutable local identity/provenance for coordination and closeout of a physically deleted repository.",
+    "does_not_establish": [
+      "remote_repository_exists",
+      "active_checkout",
+      "fleet_membership",
+      "task_supply_target",
+      "runtime_role",
+      "execution_authority"
+    ]
+  }
+}

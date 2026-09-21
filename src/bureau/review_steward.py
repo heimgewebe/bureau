@@ -22,6 +22,7 @@ from bureau.closure import (
     utc_now,
     validate_brief,
 )
+from bureau.retention_coordination import reference_mutation_lock
 
 SCHEMA_VERSION = 1
 REVIEW_STATES = {
@@ -612,7 +613,7 @@ def review_one_lane(
     }
 
 
-def review_closure_lanes(
+def _review_closure_lanes_unlocked(
     *,
     state_root: Path | None = None,
     max_lanes: int | None = None,
@@ -681,6 +682,22 @@ def review_closure_lanes(
     atomic_json(receipt_path, receipt)
     atomic_json(state / "review-latest.json", receipt)
     return receipt
+
+def review_closure_lanes(
+    *,
+    state_root: Path | None = None,
+    max_lanes: int | None = None,
+    pr_status_provider: PrStatusProvider = gh_pr_status,
+) -> dict[str, Any]:
+    state = state_root or default_state_root()
+    state.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with reference_mutation_lock(state):
+        return _review_closure_lanes_unlocked(
+            state_root=state,
+            max_lanes=max_lanes,
+            pr_status_provider=pr_status_provider,
+        )
+
 
 
 def receipt_summary(receipt: dict[str, Any]) -> dict[str, Any]:

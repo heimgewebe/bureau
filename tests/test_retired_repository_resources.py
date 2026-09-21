@@ -81,3 +81,44 @@ def test_mutation_forbidden_retired_repositories_have_no_nonterminal_mutation_cl
     ]
 
     assert offenders == []
+
+
+def test_nonterminal_tasks_do_not_keep_retired_repositories_in_active_candidate_metadata() -> None:
+    retired_repositories = {f"heimgewebe/{name}" for name in RETIRED}
+    offenders = []
+
+    for task_path in sorted((ROOT / "registry" / "tasks").glob("*.json")):
+        task = json.loads(task_path.read_text(encoding="utf-8"))
+        if task["state"] in legacy.TERMINAL_TASK_STATES:
+            continue
+        metadata = task.get("metadata", {})
+        for field in ("observed_repositories", "unregistered_resource_repositories"):
+            values = metadata.get(field, [])
+            if not isinstance(values, list):
+                continue
+            for repository in sorted(retired_repositories.intersection(values)):
+                offenders.append(
+                    {
+                        "task_id": task["id"],
+                        "field": field,
+                        "repository": repository,
+                    }
+                )
+
+    assert offenders == []
+
+
+def test_retired_mitschreiber_registration_task_is_terminal() -> None:
+    task = json.loads(
+        (
+            ROOT
+            / "registry"
+            / "tasks"
+            / "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T047.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert task["state"] in legacy.TERMINAL_TASK_STATES
+    cleanup = task["metadata"]["bureau_cleanup"]
+    assert cleanup["reason"] == "repository-retired-coordination-only"
+    assert cleanup["retired_resources"] == ["repo.mitschreiber"]

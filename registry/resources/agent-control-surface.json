@@ -30,6 +30,7 @@
     ],
     "historical_purpose": "local manual control surface for Jules sessions and guarded step-by-step Git workflows",
     "coordination_only": true,
+    "mutation_claims_allowed": false,
     "retired_on": "2026-09-18",
     "does_not_establish": [
       "remote_repository_exists",

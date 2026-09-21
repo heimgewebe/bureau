@@ -38,6 +38,7 @@ def test_deleted_repository_resources_are_coordination_only() -> None:
         metadata = data["metadata"]
         assert metadata["lifecycle"] == "retired"
         assert metadata["coordination_only"] is True
+        assert metadata["mutation_claims_allowed"] is False
         assert metadata["retired_on"] == "2026-09-18"
         claims = set(metadata["does_not_establish"])
         assert {
@@ -54,9 +55,18 @@ def test_deleted_repositories_are_not_scout_supply_targets() -> None:
     assert resources.isdisjoint({f"repo.{name}" for name in RETIRED})
 
 
-def test_retired_repositories_have_no_nonterminal_mutation_claims() -> None:
+def test_mutation_forbidden_retired_repositories_have_no_nonterminal_mutation_claims() -> None:
     registry = legacy.Registry.load(ROOT)
-    retired_resources = {f"repo.{name}" for name in RETIRED}
+    mutation_forbidden = {
+        resource.id
+        for resource in registry.resources.values()
+        if isinstance(resource.metadata, dict)
+        and resource.metadata.get("lifecycle") == "retired"
+        and resource.metadata.get("coordination_only") is True
+        and resource.metadata.get("mutation_claims_allowed") is False
+    }
+    assert mutation_forbidden == {f"repo.{name}" for name in RETIRED}
+
     offenders = [
         {
             "task_id": task.id,
@@ -67,7 +77,7 @@ def test_retired_repositories_have_no_nonterminal_mutation_claims() -> None:
         for task in registry.tasks.values()
         if task.state not in legacy.TERMINAL_TASK_STATES
         for claim in task.claims
-        if claim.resource in retired_resources and claim.mode != "read"
+        if claim.resource in mutation_forbidden and claim.mode != "read"
     ]
 
     assert offenders == []

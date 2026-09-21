@@ -15,6 +15,7 @@
     "historical_role": "Outdoor sensor repository with JSON-schema and generated-artifact validation",
     "lifecycle": "retired",
     "coordination_only": true,
+    "mutation_claims_allowed": false,
     "retired_on": "2026-09-18",
     "purpose": "Retain immutable local identity/provenance for coordination and closeout of a physically deleted repository.",
     "does_not_establish": [

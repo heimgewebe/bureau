@@ -169,7 +169,9 @@ def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_f
     assert run["task_id"] == "BUR-TEST-001-T001"
 
 
-def _mark_repo_coordination_only_retired(root):
+def _mark_repo_coordination_only_retired(
+    root, *, mutation_claims_allowed: bool | None = None
+):
     task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
     task = json.loads(task_path.read_text())
     resource_id = task["claims"][0]["resource"]
@@ -179,6 +181,8 @@ def _mark_repo_coordination_only_retired(root):
             continue
         metadata = dict(resource.get("metadata", {}))
         metadata.update({"lifecycle": "retired", "coordination_only": True})
+        if mutation_claims_allowed is not None:
+            metadata["mutation_claims_allowed"] = mutation_claims_allowed
         resource["metadata"] = metadata
         resource_path.write_text(json.dumps(resource))
         return resource_id
@@ -189,7 +193,9 @@ def test_retired_coordination_only_resource_blocks_write_claim(
     registry_factory, tmp_path
 ):
     root = registry_factory(1, mode="write")
-    resource_id = _mark_repo_coordination_only_retired(root)
+    resource_id = _mark_repo_coordination_only_retired(
+        root, mutation_claims_allowed=False
+    )
     registry = Registry.load(root)
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
     dispatcher = Dispatcher(
@@ -212,6 +218,25 @@ def test_retired_coordination_only_resource_allows_read_claim(
     registry_factory, tmp_path
 ):
     root = registry_factory(1, mode="read")
+    _mark_repo_coordination_only_retired(root, mutation_claims_allowed=False)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _: [],
+    )
+
+    item = dispatcher.frontier({"repository"})[0]
+    assert item["eligible"] is True
+    claimed = dispatcher.claim_next("worker", ("repository",))["run"]
+    assert claimed["task_id"] == item["task_id"]
+
+
+def test_retired_coordination_only_without_mutation_policy_allows_write_claim(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1, mode="write")
     _mark_repo_coordination_only_retired(root)
     registry = Registry.load(root)
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")

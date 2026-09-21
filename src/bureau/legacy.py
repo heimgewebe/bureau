@@ -240,6 +240,7 @@ def claim_resource_lifecycle_reasons(
     if (
         metadata.get("lifecycle") == "retired"
         and metadata.get("coordination_only") is True
+        and metadata.get("mutation_claims_allowed") is False
         and claim.mode != "read"
     ):
         return [

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from . import legacy, state_events, task_specs
+from .retention_coordination import ReferenceMutationLockError, reference_mutation_lock
 
 SCHEMA_VERSION = 1
 TERMINAL_RUN_STATES = {"succeeded", "failed", "cancelled", "orphaned"}
@@ -634,7 +635,7 @@ def _post_restore_reconcile(
     }
 
 
-def restore_test(
+def _restore_test_unlocked(
     *,
     bundle: Path | None = None,
     backup_root: Path = DEFAULT_BACKUP_ROOT,
@@ -723,6 +724,34 @@ def restore_test(
         return result
     finally:
         shutil.rmtree(temporary, ignore_errors=True)
+
+
+def restore_test(
+    *,
+    bundle: Path | None = None,
+    backup_root: Path = DEFAULT_BACKUP_ROOT,
+    scratch_root: Path | None = None,
+    receipt_path: Path | None = None,
+    registry_root: Path | None = None,
+    adapters: Any | None = None,
+) -> dict[str, Any]:
+    kwargs = {
+        "bundle": bundle,
+        "backup_root": backup_root,
+        "scratch_root": scratch_root,
+        "receipt_path": receipt_path,
+        "registry_root": registry_root,
+        "adapters": adapters,
+    }
+    if receipt_path is None:
+        return _restore_test_unlocked(**kwargs)
+    try:
+        with reference_mutation_lock(backup_root):
+            return _restore_test_unlocked(**kwargs)
+    except ReferenceMutationLockError as exc:
+        raise StateBackupError(
+            f"restore-test reference mutation boundary unavailable: {exc}"
+        ) from exc
 
 
 
@@ -1761,7 +1790,12 @@ def _retention_recovery_gate(
         max_age_seconds=max_age,
         now_unix=now_unix,
     )
-    registry_root = _runtime_registry_root()
+    runtime_prefix = _retention_root(
+        Path(str(roots.get("runtime_prefix"))), label="runtime prefix"
+    )
+    registry_root = _runtime_registry_root(
+        runtime_prefix / "deployment-manifest.json"
+    )
     newest_restore = restore_test(
         bundle=newest_path,
         backup_root=backup_root,
@@ -1787,7 +1821,7 @@ def _retention_recovery_gate(
     }
 
 
-def apply_local_retention_plan(
+def _apply_local_retention_plan_unlocked(
     plan: dict[str, Any],
     *,
     expected_plan_sha256: str,
@@ -1923,6 +1957,73 @@ def apply_local_retention_plan(
         receipt["receipt_sha256"] = _retention_digest(receipt, "receipt_sha256")
         _atomic_replace_json(receipt_path, receipt)
         raise
+
+
+def apply_local_retention_plan(
+    plan: dict[str, Any],
+    *,
+    expected_plan_sha256: str,
+    confirmation: str,
+    receipt_path: Path,
+    now_unix: int | None = None,
+) -> dict[str, Any]:
+    if (
+        plan.get("schema_version") != 1
+        or plan.get("kind") != "bureau_local_retention_plan"
+        or plan.get("plan_sha256") != expected_plan_sha256
+        or expected_plan_sha256 != _retention_digest(plan, "plan_sha256")
+    ):
+        return _apply_local_retention_plan_unlocked(
+            plan,
+            expected_plan_sha256=expected_plan_sha256,
+            confirmation=confirmation,
+            receipt_path=receipt_path,
+            now_unix=now_unix,
+        )
+    if plan.get("safe_to_apply") is not True or confirmation != f"APPLY:{expected_plan_sha256}":
+        return _apply_local_retention_plan_unlocked(
+            plan,
+            expected_plan_sha256=expected_plan_sha256,
+            confirmation=confirmation,
+            receipt_path=receipt_path,
+            now_unix=now_unix,
+        )
+    roots = plan.get("roots")
+    if not isinstance(roots, dict):
+        return _apply_local_retention_plan_unlocked(
+            plan,
+            expected_plan_sha256=expected_plan_sha256,
+            confirmation=confirmation,
+            receipt_path=receipt_path,
+            now_unix=now_unix,
+        )
+    backup_root = _retention_root(
+        Path(str(roots.get("backup_root"))), label="backup root"
+    )
+    runtime_prefix = _retention_root(
+        Path(str(roots.get("runtime_prefix"))), label="runtime prefix"
+    )
+    closure_root = _retention_root(
+        Path(str(roots.get("closure_root"))), label="closure root"
+    )
+    try:
+        with reference_mutation_lock(
+            backup_root,
+            runtime_prefix,
+            closure_root,
+            blocking=False,
+        ):
+            return _apply_local_retention_plan_unlocked(
+                plan,
+                expected_plan_sha256=expected_plan_sha256,
+                confirmation=confirmation,
+                receipt_path=receipt_path,
+                now_unix=now_unix,
+            )
+    except ReferenceMutationLockError as exc:
+        raise StateBackupError(
+            f"retention reference mutation boundary unavailable: {exc}"
+        ) from exc
 
 
 

@@ -799,7 +799,7 @@ def test_retention_recovery_gate_revalidates_historical_and_restores_newest(
         policy=_retention_test_policy(),
         now_unix=fixture["now"],
     )
-    calls: dict[str, list[Path]] = {"verify": [], "restore": []}
+    calls: dict[str, list[Path]] = {"verify": [], "restore": [], "manifest": []}
 
     def fake_verify(bundle: Path):
         bundle = Path(bundle)
@@ -829,10 +829,14 @@ def test_retention_recovery_gate_revalidates_historical_and_restores_newest(
 
     monkeypatch.setattr(state_backup, "verify_backup", fake_verify)
     monkeypatch.setattr(state_backup, "restore_test", fake_restore_test)
+    def fake_runtime_registry_root(manifest_path: Path):
+        calls["manifest"].append(Path(manifest_path))
+        return fixture["runtime_prefix"] / "registry-snapshots"
+
     monkeypatch.setattr(
         state_backup,
         "_runtime_registry_root",
-        lambda: fixture["runtime_prefix"] / "registry-snapshots",
+        fake_runtime_registry_root,
     )
 
     result = state_backup._retention_recovery_gate(
@@ -843,6 +847,9 @@ def test_retention_recovery_gate_revalidates_historical_and_restores_newest(
     assert result["historical"]["receipt_sha256"] == historical_receipt["receipt_sha256"]
     assert calls["verify"] == [fixture["backup_old"]]
     assert calls["restore"] == [fixture["backup_new"]]
+    assert calls["manifest"] == [
+        fixture["runtime_prefix"] / "deployment-manifest.json"
+    ]
     assert result["distinct_recovery_points"] is True
 
 
@@ -965,6 +972,74 @@ def test_local_retention_apply_blocks_reference_source_drift_before_delete(
 
     assert changed is True
     assert fixture["review_old"].exists()
+
+
+def test_local_retention_apply_excludes_reference_writer_after_last_guard(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fixture = _retention_fixture(tmp_path)
+    policy = _retention_test_policy(recent_max_count=10)
+    policy["stores"]["state_backups"]["recent_seconds"] = 10_000
+    policy["stores"]["registry_snapshots"]["recent_seconds"] = 10_000
+    policy["stores"]["review_receipts"]["recent_seconds"] = 0
+    policy["stores"]["review_receipts"]["recent_max_count"] = 1
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=policy,
+        now_unix=fixture["now"],
+    )
+    assert plan["stores"]["review_receipts"]["candidate_count"] == 1
+
+    monkeypatch.setattr(
+        state_backup,
+        "_retention_recovery_gate",
+        lambda *_args, **_kwargs: {
+            "status": "not-required",
+            "reason": "no-state-backup-candidates",
+        },
+    )
+    original_remove = state_backup._remove_file_candidate
+    writer_blocked = False
+
+    def remove_after_guard(path: Path, *, candidate_id: str) -> None:
+        nonlocal writer_blocked
+        lanes_path = fixture["closure_root"] / "lanes.json"
+        before = lanes_path.read_bytes()
+        try:
+            with state_backup.reference_mutation_lock(
+                fixture["closure_root"],
+                blocking=False,
+            ):
+                lanes = json.loads(before)
+                lanes["lanes"][0]["review_evidence"] = {
+                    "receipt_path": str(path),
+                }
+                lanes_path.write_text(
+                    json.dumps(lanes, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+        except state_backup.ReferenceMutationLockError:
+            writer_blocked = True
+        else:
+            pytest.fail("reference writer crossed the retention mutation boundary")
+        assert lanes_path.read_bytes() == before
+        original_remove(path, candidate_id=candidate_id)
+
+    monkeypatch.setattr(state_backup, "_remove_file_candidate", remove_after_guard)
+
+    result = state_backup.apply_local_retention_plan(
+        plan,
+        expected_plan_sha256=plan["plan_sha256"],
+        confirmation=f"APPLY:{plan['plan_sha256']}",
+        receipt_path=tmp_path / "race-apply.json",
+        now_unix=fixture["now"],
+    )
+
+    assert writer_blocked is True
+    assert result["state"] == "complete"
+    assert not fixture["review_old"].exists()
 
 
 def test_review_retention_quarantine_residue_blocks_next_plan(tmp_path: Path):

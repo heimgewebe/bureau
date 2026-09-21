@@ -627,6 +627,7 @@ def main(argv: list[str] | None = None) -> int:
     package_root = source / "src"
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))
+    from bureau.retention_coordination import reference_mutation_lock
     from bureau.runtime_refresh import (
         RUNTIME_MANIFEST_PAYLOAD_DIGEST_FIELD,
         RuntimeRefreshError,
@@ -795,15 +796,16 @@ def main(argv: list[str] | None = None) -> int:
         "bin-dir": (bin_dir, _path_lexists(bin_dir)),
         "receipts-dir": (receipts_dir, _path_lexists(receipts_dir)),
     }
-    backup = _backup_existing(
-        prefix,
-        manifest_path,
-        launcher,
-        runtime_refresh_launcher,
-        status_capsule_launcher,
-        force_generation=args.converge_user_systemd,
-    )
-    previous_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
+    with reference_mutation_lock(prefix):
+        backup = _backup_existing(
+            prefix,
+            manifest_path,
+            launcher,
+            runtime_refresh_launcher,
+            status_capsule_launcher,
+            force_generation=args.converge_user_systemd,
+        )
+        previous_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
     installed_at = datetime.now(timezone.utc).isoformat()
     launcher_bytes = expected_launchers[launcher]
     runtime_refresh_launcher_bytes = expected_launchers[runtime_refresh_launcher]
@@ -841,6 +843,18 @@ def main(argv: list[str] | None = None) -> int:
         ).hexdigest()
         return value, canonical(value)
 
+    def validate_registry_reference() -> None:
+        snapshot_root = Path(registry_snapshot["root"])
+        inventory_path = Path(registry_snapshot["inventory_path"])
+        if snapshot_root.is_symlink() or not snapshot_root.is_dir():
+            raise SystemExit("Bureau Registry snapshot disappeared before manifest commit")
+        if (
+            inventory_path.is_symlink()
+            or not inventory_path.is_file()
+            or sha256(inventory_path) != registry_snapshot["inventory_sha256"]
+        ):
+            raise SystemExit("Bureau Registry snapshot inventory drifted before manifest commit")
+
     def validate_launcher_effect() -> set[Path]:
         final_launcher_mutations = {
             path
@@ -872,8 +886,10 @@ def main(argv: list[str] | None = None) -> int:
 
     def write_candidate_install() -> None:
         final_launcher_mutations = validate_launcher_effect()
-        _candidate_manifest, candidate_bytes = build_manifest()
-        atomic_write(manifest_path, candidate_bytes)
+        with reference_mutation_lock(prefix):
+            validate_registry_reference()
+            _candidate_manifest, candidate_bytes = build_manifest()
+            atomic_write(manifest_path, candidate_bytes)
         for field, path, expected in (
             ("launcher_written", launcher, launcher_bytes),
             (
@@ -941,7 +957,9 @@ def main(argv: list[str] | None = None) -> int:
             "scheduler": scheduler,
         }
         transaction["receipt_path"] = receipt_path
-        atomic_write(manifest_path, final_manifest_bytes)
+        with reference_mutation_lock(prefix):
+            validate_registry_reference()
+            atomic_write(manifest_path, final_manifest_bytes)
         atomic_write(receipt_path, canonical(receipt))
         for path, expected in expected_launchers.items():
             if (
@@ -967,26 +985,27 @@ def main(argv: list[str] | None = None) -> int:
         transaction["reported"] = True
 
     def rollback_install() -> list[dict[str, Any]]:
-        return _restore_install_preimage(
-            backup=backup,
-            manifest_path=manifest_path,
-            launchers={
-                "bureau": launcher,
-                "runtime-refresh": runtime_refresh_launcher,
-                "status-capsule": status_capsule_launcher,
-            },
-            mutated_launchers={
-                label
-                for label, field in (
-                    ("bureau", "launcher_written"),
-                    ("runtime-refresh", "runtime_refresh_launcher_written"),
-                    ("status-capsule", "status_capsule_launcher_written"),
-                )
-                if transaction[field]
-            },
-            receipt_path=transaction["receipt_path"],
-            parent_preimage=transaction_parent_preimage,
-        )
+        with reference_mutation_lock(prefix):
+            return _restore_install_preimage(
+                backup=backup,
+                manifest_path=manifest_path,
+                launchers={
+                    "bureau": launcher,
+                    "runtime-refresh": runtime_refresh_launcher,
+                    "status-capsule": status_capsule_launcher,
+                },
+                mutated_launchers={
+                    label
+                    for label, field in (
+                        ("bureau", "launcher_written"),
+                        ("runtime-refresh", "runtime_refresh_launcher_written"),
+                        ("status-capsule", "status_capsule_launcher_written"),
+                    )
+                    if transaction[field]
+                },
+                receipt_path=transaction["receipt_path"],
+                parent_preimage=transaction_parent_preimage,
+            )
 
     if args.converge_user_systemd:
         rollback_directory = backup.get("directory")
@@ -1021,9 +1040,11 @@ def main(argv: list[str] | None = None) -> int:
             return 2
     else:
         write_candidate_install()
-        _manifest, manifest_bytes = build_manifest()
-        manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
-        atomic_write(manifest_path, manifest_bytes)
+        with reference_mutation_lock(prefix):
+            validate_registry_reference()
+            _manifest, manifest_bytes = build_manifest()
+            manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
+            atomic_write(manifest_path, manifest_bytes)
         receipt = {
             "schema_version": 1,
             "kind": "bureau_runtime_install_receipt",

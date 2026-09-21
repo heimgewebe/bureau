@@ -35,7 +35,7 @@
     ],
     "approval": {
       "action_class": "runtime_mutation",
-      "required_level": "break_glass",
+      "required_level": "operator",
       "note": "Single-use target-bound bootstrap only. The user explicitly instructed completing the current operator work; normal Bureau task publication is blocked by release-registry-identity-mismatch. No effect may start until fresh protected main/CI observation, exact target binding, authoritative TaskSpec adoption/activation, typed source-ancestry proof, live intent-bound Grabowski leases and runtime-refresh readback gates all pass. No blind retry after any effect-started ambiguity."
     }
   },

@@ -169,32 +169,35 @@
       "github_main": "0de2ee6529e4db3519ecb94df5db406699afb685",
       "kind": "bureau_runtime_refresh_registration_observation",
       "lag_commits": 2,
-      "observation_sha256": "30136fa6da8ace26f027ae269d3f63927e044eb00f51bc0b84e2c9e5e208c092",
+      "observation_sha256": "9b27970100b5599745c8035b3d3e4dabc974f7f221d59ef6074c626f583398e1",
       "observed_at": "2026-09-21T04:02:40.923895Z",
       "repository": "heimgewebe/bureau",
       "required_checks_on_current_main": {
         "registry-registration-preflight/freshness": {
-          "check_run_id": 106147596723,
-          "completed_at": "2026-09-20T20:53:27Z",
+          "check_run_id": 106203854524,
+          "completed_at": "2026-09-21T03:26:03Z",
           "conclusion": "success",
-          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35536960281/job/106147596723",
-          "started_at": "2026-09-20T20:53:16Z",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35557490749/job/106203854524",
+          "head_sha": "0de2ee6529e4db3519ecb94df5db406699afb685",
+          "started_at": "2026-09-21T03:25:50Z",
           "status": "completed"
         },
         "validate (3.10)": {
-          "check_run_id": 106147596295,
-          "completed_at": "2026-09-20T21:11:32Z",
+          "check_run_id": 106206919324,
+          "completed_at": "2026-09-21T03:57:34Z",
           "conclusion": "success",
-          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35536960220/job/106147596295",
-          "started_at": "2026-09-20T20:53:16Z",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35558578090/job/106206919324",
+          "head_sha": "0de2ee6529e4db3519ecb94df5db406699afb685",
+          "started_at": "2026-09-21T03:45:09Z",
           "status": "completed"
         },
         "validate (3.12)": {
-          "check_run_id": 106147596206,
-          "completed_at": "2026-09-20T21:05:19Z",
+          "check_run_id": 106206919201,
+          "completed_at": "2026-09-21T04:00:49Z",
           "conclusion": "success",
-          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35536960220/job/106147596206",
-          "started_at": "2026-09-20T20:53:16Z",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35558578090/job/106206919201",
+          "head_sha": "0de2ee6529e4db3519ecb94df5db406699afb685",
+          "started_at": "2026-09-21T03:45:09Z",
           "status": "completed"
         }
       },

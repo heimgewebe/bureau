@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T040",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Aktuelle HausKI-Abhängigkeitsbefunde einzeln prüfen",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Die nach Abschluss der historischen T038-Queue noch live gemeldeten Abhängigkeitsbefunde in HausKI werden einzeln inventarisiert, gegen den aktuellen Hauptzweig dedupliziert und evidenzgebunden behoben oder terminal eingeordnet.",
   "priority": {
     "lane": "later",
@@ -93,6 +93,15 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "bureau_cleanup": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "retired_resources": [
+        "repo.hauski"
       ]
     }
   }

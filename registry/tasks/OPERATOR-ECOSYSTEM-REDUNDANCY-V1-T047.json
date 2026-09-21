@@ -74,7 +74,17 @@
         "claim_or_dispatch_authority"
       ]
     },
-    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T046"
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T046",
+    "bureau_cleanup": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "retired_resources": [
+        "repo.mitschreiber"
+      ],
+      "note": "The repository resource already exists and is now retired; this registration task must not remain nonterminal."
+    }
   },
   "priority": {
     "lane": "now",
@@ -91,6 +101,6 @@
     "strategy": "Revert the single resource-registry entry. No consumer repository or external bot state is changed by this task."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Register Mitschreiber as a Bureau repository resource"
 }

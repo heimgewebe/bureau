@@ -302,7 +302,7 @@ def test_feasible_fallback_selection_is_bounded_and_pairwise_compatible(
         "scout-chronik",
         "scout-lenskit",
         "scout-systemkatalog",
-        "scout-heimlern",
+        "scout-grabowski",
         "scout-semantah",
         "scout-wgx",
     ]
@@ -344,7 +344,7 @@ def test_base_worker_profile_reaches_floor_through_bounded_read_only_scout_reser
         "scout-chronik",
         "scout-lenskit",
         "scout-systemkatalog",
-        "scout-heimlern",
+        "scout-grabowski",
         "scout-semantah",
         "scout-wgx",
     ]

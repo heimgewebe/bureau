@@ -80,7 +80,16 @@
         "claim_or_dispatch_authority"
       ]
     },
-    "source": "T040 separater Baselinebefund"
+    "source": "T040 separater Baselinebefund",
+    "bureau_cleanup": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "retired_resources": [
+        "repo.hauski"
+      ]
+    }
   },
   "priority": {
     "lane": "next",
@@ -97,6 +106,6 @@
     "strategy": "Revertiere ausschließlich die Toolchain-/libsqlite3-sys-Kompatibilitätsänderung. Bei unklarer Ursache bleibt der bestehende Testfehler sichtbar; keine Testdeaktivierung und kein Rückbau der T040-Sicherheitsupdates."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "HausKI-Rust-Volltest an libsqlite3-sys cfg_select entblocken"
 }

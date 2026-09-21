@@ -115,7 +115,10 @@
         "ci": "PASS",
         "renovate_disabled": true,
         "command_dispatch_removed": true,
-        "archive_preparation_pull_requests": [101, 102],
+        "archive_preparation_pull_requests": [
+          101,
+          102
+        ],
         "blocked_self_archive_cleanup_pull_request": 103,
         "blocked_self_archive_workflow_present": false,
         "github_archived": false
@@ -173,7 +176,16 @@
       "permission_to_delete_historical_heimgeist_events_or_contracts",
       "systemkatalog_archived_state_before_github_archive",
       "absence_of_external_private_readers"
-    ]
+    ],
+    "bureau_cleanup": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "retired_resources": [
+        "repo.heimgeist"
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -189,6 +201,6 @@
     "strategy": "Falls die GitHub-Archivierung nach belegtem Erfolg eine zwingende Recovery blockiert, Repository über eine autorisierte Adminfläche entarchivieren und Systemkatalog auf den vorherigen belegten Lifecycle zurücksetzen; historische Contracts und Events bleiben unangetastet."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Heimgeist GitHub-Archivierung und Projektions-Closeout"
 }

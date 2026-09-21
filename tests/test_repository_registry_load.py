@@ -45,27 +45,41 @@ def test_repository_inventory_catalogues_agent_control_surface():
         resource.grabowski_key
         == "repo:/home/alex/repos/agent-control-surface"
     )
-    assert raw["metadata"] == {
-        "purpose": (
-            "local manual control surface for Jules sessions and guarded step-by-step "
-            "Git workflows"
-        ),
-        "scope": "catalog-only",
-        "visibility": "public",
-        "capabilities": ["repository", "shell", "git", "github"],
-        "lifecycle": "transition",
-        "lifecycle_reviewed_at": "2026-07-26",
-        "lifecycle_evidence_refs": [
-            "docs/audits/repository-lifecycle-classification-2026-07-19.v1.json",
-            "bureau:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T034",
-        ],
-        "boundaries": [
-            "no_autonomous_task_dispatch",
-            "no_task_priority_authority",
-            "no_merge_authorization",
-            "no_remote_access_security",
-        ],
-    }
+    metadata = raw["metadata"]
+    assert metadata["purpose"] == (
+        "Retain immutable local identity/provenance for coordination and closeout "
+        "of a physically deleted repository."
+    )
+    assert metadata["historical_purpose"] == (
+        "local manual control surface for Jules sessions and guarded step-by-step "
+        "Git workflows"
+    )
+    assert metadata["scope"] == "catalog-only"
+    assert metadata["visibility"] == "public"
+    assert metadata["capabilities"] == ["repository", "shell", "git", "github"]
+    assert metadata["lifecycle"] == "retired"
+    assert metadata["coordination_only"] is True
+    assert metadata["retired_on"] == "2026-09-18"
+    assert metadata["lifecycle_reviewed_at"] == "2026-07-26"
+    assert metadata["lifecycle_evidence_refs"] == [
+        "docs/audits/repository-lifecycle-classification-2026-07-19.v1.json",
+        "bureau:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T034",
+    ]
+    assert metadata["boundaries"] == [
+        "no_autonomous_task_dispatch",
+        "no_task_priority_authority",
+        "no_merge_authorization",
+        "no_remote_access_security",
+    ]
+    assert {
+        "remote_repository_exists",
+        "active_checkout",
+        "fleet_membership",
+        "task_supply_target",
+        "runtime_role",
+        "execution_authority",
+    } <= set(metadata["does_not_establish"])
+
 
 
 def _write_resource(root: Path, name: str, value: dict) -> None:

@@ -189,9 +189,11 @@ bureau --root /clean/bureau --json operator-task-publish \
   --plan proposal.json --preview
 ```
 
-Apply additionally requires a reviewed proposal, a live owner/task lease binding for the exact
-StateRoot and a create-only receipt path. Bureau reads Grabowski's private resource database
-directly; supplied JSON is not treated as lease authority. `operator-task-publish` advertises
+For a normal Candidate→new-TaskSpec publication, Apply does not require a separate reviewed
+proposal. The effect path instead requires Grabowski's server-owned publication-authority lease, a
+live owner/task lease binding for the exact StateRoot and a create-only receipt path. Revisions of
+an existing TaskSpec and first-task onboarding remain reviewed-plan flows. Bureau reads Grabowski's
+private resource database directly; supplied JSON is not treated as lease authority. `operator-task-publish` advertises
 `publication_mode: state_store`, binds the absolute coordination StateRoot, performs one TaskSpec
 CAS mutation there and reads the exact revision back before releasing the lease. It does not create
 a branch, task-file commit or pull request and never mutates `registry/queue.json`. `operator-task-ready`

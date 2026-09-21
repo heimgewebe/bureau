@@ -1,0 +1,364 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, GitHub main is freshly observed; the exact target contains merged PR #2319, this authority's own protected one-file publication merge, and all then-current legitimate protected-main merges, and required validate (3.10), validate (3.12), and registry-registration-preflight/freshness checks for that exact target revision are successful.",
+      "evidence_type": "object",
+      "id": "fresh-current-main",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2319-state-snapshot-20260921:fresh-current-main"
+      }
+    },
+    {
+      "assertion": "Immediately before prepare-intent and again before apply, active deployment-manifest source_commit and canonical Registry source identity are equal, and the active source is exactly 85ddb3ec42698f80740866447c2572e929ec5746 or a later verified Git ancestor of the freshly selected target main commit. Any identity mismatch, divergence, unavailable ancestry proof or target drift blocks fail-closed.",
+      "evidence_type": "object",
+      "id": "source-ancestry-precondition",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2319-state-snapshot-20260921:source-ancestry-precondition"
+      }
+    },
+    {
+      "assertion": "This authority starts at most one runtime effect. Failed, unclear, timeout or transport-ambiguous outcomes are read back from intent, attempt/result, manifest, launcher, package, snapshot and authority-consumption evidence before any further action; no blind retry is permitted.",
+      "evidence_type": "object",
+      "id": "single-runtime-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2319-state-snapshot-20260921:single-runtime-effect"
+      }
+    },
+    {
+      "assertion": "After a successful refresh, deployment manifest, immutable release, package tree, launcher pair and canonical Registry snapshot bind the same freshly observed source commit, and Bureau runtime identity is integrity-valid at that exact target.",
+      "evidence_type": "object",
+      "id": "immutable-runtime-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2319-state-snapshot-20260921:immutable-runtime-readback"
+      }
+    },
+    {
+      "assertion": "The authority is consumed at most once after successful immutable readback and grants only Bureau runtime/Registry convergence. Any later follow-up must use its own separate normal reviewed TaskSpec path. This authority grants no Heim-PC NixOS installation or cutover effect, storage/EFI mutation, reboot, queue, claim, dispatch, task-supply, product-code, secret handling, follow-up implementation, foreign-work or general repository mutation authority.",
+      "evidence_type": "object",
+      "id": "runtime-only-scope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "bureau:runtime-refresh-after-pr2319-state-snapshot-20260921:runtime-only-scope"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.runtime"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Single-use target-bound runtime authority only. Under the current runtime, human break-glass arguments are not authority inputs; execution authority is the exact TaskSpec identity, immutable target digest, revision, expiry, source precondition, executor identity and live leases. Publication/adoption/activation remain separate from the runtime effect; no historical or foreign authority may be substituted and no blind retry is permitted after an effect-started ambiguity.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "component:bureau-runtime-identity"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Publish exactly one initially non-executable planned Bureau runtime-refresh authority through a protected one-file PR after merged PR #2319. The installed Bureau runtime and canonical Registry remain at 85ddb3ec42698f80740866447c2572e929ec5746 while protected main is 0de2ee6529e4db3519ecb94df5db406699afb685. After this authority's own protected publication merge, adopt it missing-only, activate it only from fresh protected-main/source-ancestry/CI evidence, and consume at most one target-bound Bureau runtime refresh whose sole purpose is to restore Bureau runtime/canonical-Registry identity so WELTGEWEBE-OS-V1-T084 can resume its already-authorized canonical pickup and staging closeout. This authority itself performs no T084 staging mutation and grants no queue, claim, dispatch, unrelated task completion, NixOS, storage, reboot, product cutover or foreign-work authority.",
+  "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2319-STATE-SNAPSHOT-20260921",
+  "initiative": "BUREAU-CONTROL-PLANE-V3",
+  "metadata": {
+    "consumed_predecessor": {
+      "deployed_source_commit": "85ddb3ec42698f80740866447c2572e929ec5746",
+      "reason": "The predecessor single-use authority was consumed successfully and terminally verified; it cannot authorize the later PR #2319 target.",
+      "runtime_effect_started": true,
+      "runtime_result_sha256": "e79eb179741405b5360a4c00f710879fd13c364d96b0ab341fcf6f0bb86215ea",
+      "runtime_target_sha256": "28a0fbb382254b9f3794a85efd86abf1aac0d76b7aa2531eb6e6d12d1b0911df",
+      "state": "verified",
+      "state_store_revision": 5,
+      "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2314-STATUS-PROJECTION-20260918"
+    },
+    "deployed_manifest_sha256_at_registration": "84ea6e9c7eb27f4390cd7a8942ba114bab4abcf1e2fe3a81fa5612e733cbe00c",
+    "deployed_source_at_registration": "85ddb3ec42698f80740866447c2572e929ec5746",
+    "does_not_establish": [
+      "runtime target before fresh post-publication observation",
+      "permission to reuse the predecessor authority or its activation witness",
+      "permission to activate before merged PR #2319 and this TaskSpec's own protected one-file publication are both contained in the selected target",
+      "permission to bypass protected publication, missing-only adoption, source-ancestry, lease or CI gates",
+      "permission to mutate the existing predecessor TaskSpec or StateStore history",
+      "permission to publish or implement unrelated follow-up work without its separate review and authority",
+      "Heim-PC NixOS installation, storage, EFI, reboot or product cutover authority",
+      "queue, claim, dispatch, task-supply or foreign-work authority"
+    ],
+    "historical_registration_observation": {
+      "deployed_source_commit": "85ddb3ec42698f80740866447c2572e929ec5746",
+      "note": "Predecessor authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2314-STATUS-PROJECTION-20260918 completed the prior runtime refresh after protected publication/target merge PR #2316 and is retained only as historical provenance.",
+      "observed_at": "2026-09-19T04:39:59.606793Z",
+      "repository": "heimgewebe/bureau",
+      "schema_version": 1
+    },
+    "main_at_registration": "0de2ee6529e4db3519ecb94df5db406699afb685",
+    "observation_sha256_at_registration": "c1af8c72c47e871f1f3759791b6e1b4b4231a9ca51194dda1d85f4aa1b10e5cd",
+    "post_publication_activation": {
+      "activation_state": "ready",
+      "does_not_establish": [
+        "runtime authority while current StateStore state remains planned",
+        "permission to invent or predict publication PR or merge commit",
+        "permission to activate from a StateStore revision other than the exact adoption receipt",
+        "permission to skip a second proof/readback after activation"
+      ],
+      "initial_state": "planned",
+      "required_activation_source": "runtime-refresh-protected-publication-activation",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "required_contract": "Activation candidate MUST add metadata.protected_publication_adoption and a matching protected-publication-and-missing-only-adoption acceptance criterion plus no-run required_evidence=[protected-publication-adoption] in the same validated CAS that changes planned to ready, while preserving metadata.runtime_execution_context exactly equal to the deployed Grabowski server-owned reserved executor contract.",
+      "required_no_run_evidence": "Activation candidate adds protected-publication-adoption together with its typed contract; the planned bootstrap declares neither half of that pair.",
+      "required_preconditions": [
+        "this exact one-file protected publication PR is merged and its real merge commit is known",
+        "adopt-authority has seeded exactly the publication TaskSpec as planned using missing-only legacy-seed-exact semantics",
+        "current StateStore revision/digest still equal the adoption receipt",
+        "construct one activated candidate from that exact revision which adds metadata.protected_publication_adoption, adds protected-publication-and-missing-only-adoption to acceptance, adds the matching no-run protected-publication-adoption evidence requirement, and changes state planned to ready",
+        "validate the activated candidate with the installed runtime authority validator and no-run acceptance validator before CAS",
+        "prove protected publication/adoption against the real PR/merge and exact missing-only receipt before CAS",
+        "CAS only from the exact adopted revision/digest; after CAS repeat authoritative StateStore readback and protected-publication/adoption proof before prepare-intent",
+        "preserve metadata.runtime_execution_context byte-for-structure equal to the deployed Grabowski server-owned reserved executor contract during planned-to-ready CAS"
+      ],
+      "required_state_store_transition": "compare-and-swap-current-revision",
+      "schema_version": 1
+    },
+    "post_refresh_live_target": "Read back exact Bureau runtime/Registry convergence, terminalize this single-use authority through its evidence-bound closeout, then retry WELTGEWEBE-OS-V1-T084 only through normal reviewed Bureau pickup. Do not perform T084 staging/runtime effects, unrelated repository work, NixOS, storage, reboot or product-cutover effects inside this authority.",
+    "predecessor_state_store_readback": {
+      "consumed": true,
+      "result_sha256": "e79eb179741405b5360a4c00f710879fd13c364d96b0ab341fcf6f0bb86215ea",
+      "revision": 5,
+      "single_use": true,
+      "spec_sha256": "cbd5a91663dba82e1f84d717385ae8ae645c809f8d17637222224284e86ed26b",
+      "state": "verified",
+      "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2314-STATUS-PROJECTION-20260918"
+    },
+    "publication_path": {
+      "does_not_establish": [
+        "generic StateStore setter",
+        "queue mutation",
+        "claim or dispatch authority",
+        "runtime effect before protected merge and missing-only adoption",
+        "NixOS cutover authority"
+      ],
+      "initial_state": "planned",
+      "kind": "normal-protected-pull-request",
+      "reason": "The installed Bureau runtime and canonical Registry are integrity-bound to source 85ddb3ec42698f80740866447c2572e929ec5746 while protected main is 0de2ee6529e4db3519ecb94df5db406699afb685 after merged PR #2319. The immediately preceding runtime authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2314-STATUS-PROJECTION-20260918 was protected-published and merged via PR #2316, then consumed and terminally verified, so that task cannot be rebound. Exactly one fresh planned TaskSpec must enter through a protected one-file PR, be adopted missing-only, and be activated only after fresh post-publication observation of its real merge target.",
+      "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2319-STATE-SNAPSHOT-20260921.json",
+      "state_store_transition": "seed-missing-preserve-state-store"
+    },
+    "registration_observation": {
+      "canonical_registry_source_commit": "85ddb3ec42698f80740866447c2572e929ec5746",
+      "deployed_source_commit": "85ddb3ec42698f80740866447c2572e929ec5746",
+      "deployment_manifest_sha256": "84ea6e9c7eb27f4390cd7a8942ba114bab4abcf1e2fe3a81fa5612e733cbe00c",
+      "digest_contract": "sha256-canonical-json-newline-excluding-observation_sha256-v1",
+      "does_not_establish": [
+        "runtime target after this authority's own protected publication merge",
+        "permission to reuse the consumed predecessor authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2314-STATUS-PROJECTION-20260918",
+        "permission to skip fresh checks before adoption, activation, prepare-intent or apply"
+      ],
+      "github_main": "0de2ee6529e4db3519ecb94df5db406699afb685",
+      "kind": "bureau_runtime_refresh_registration_observation",
+      "lag_commits": 2,
+      "observation_sha256": "30136fa6da8ace26f027ae269d3f63927e044eb00f51bc0b84e2c9e5e208c092",
+      "observed_at": "2026-09-21T04:02:40.923895Z",
+      "repository": "heimgewebe/bureau",
+      "required_checks_on_current_main": {
+        "registry-registration-preflight/freshness": {
+          "check_run_id": 106147596723,
+          "completed_at": "2026-09-20T20:53:27Z",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35536960281/job/106147596723",
+          "started_at": "2026-09-20T20:53:16Z",
+          "status": "completed"
+        },
+        "validate (3.10)": {
+          "check_run_id": 106147596295,
+          "completed_at": "2026-09-20T21:11:32Z",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35536960220/job/106147596295",
+          "started_at": "2026-09-20T20:53:16Z",
+          "status": "completed"
+        },
+        "validate (3.12)": {
+          "check_run_id": 106147596206,
+          "completed_at": "2026-09-20T21:05:19Z",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35536960220/job/106147596206",
+          "started_at": "2026-09-20T20:53:16Z",
+          "status": "completed"
+        }
+      },
+      "schema_version": 1,
+      "source_ancestry": {
+        "ahead_by": 2,
+        "behind_by": 0,
+        "compare_status": "ahead",
+        "merge_base_commit": "85ddb3ec42698f80740866447c2572e929ec5746",
+        "method": "github-compare",
+        "status": "proven"
+      },
+      "target_sha256": "6a8f397dd81a6e58f1205043b56d8d88c882b68a1cff413f3820f119630f8575",
+      "trigger_merge_commit": "0de2ee6529e4db3519ecb94df5db406699afb685",
+      "trigger_merged_at": "2026-09-21T03:45:05Z",
+      "trigger_pull_request": 2319,
+      "trigger_pull_request_head": "e06c57cb3a43d4e2cfdbc8e07f387bf761f972e3"
+    },
+    "runtime_execution_context": {
+      "absence_tolerant_intent_roots": {
+        "runtime_user_unit_dir": {
+          "when_absent": "writable-searchable-rw-direct-parent",
+          "when_present": "writable-searchable-rw-directory"
+        }
+      },
+      "cwd": "/home/alex",
+      "directory_access": [
+        "W_OK",
+        "X_OK"
+      ],
+      "execution_backend": "systemd-user",
+      "executor_tool": "grabowski_task_start",
+      "forbid_generic_surfaces": [
+        "grabowski_terminal_run",
+        "grabowski_job_start",
+        "grabowski_fleet_run",
+        "grabowski_task_start:direct-apply"
+      ],
+      "host": "heim-pc",
+      "kind": "grabowski_bureau_runtime_refresh_execution_context",
+      "required_writable_intent_roots": [
+        "prefix",
+        "bin_dir",
+        "libexec_dir",
+        "user_unit_dir",
+        "state_root",
+        "authority_state_store.state_root"
+      ],
+      "reserved_command": "grabowski-bureau-runtime-refresh-apply",
+      "resume_policy": "never",
+      "schema_version": 1,
+      "task_identity_evidence": "server-injected-task-id-and-systemd-unit-v1",
+      "writability_evidence": [
+        "findmnt",
+        "statvfs",
+        "os.access"
+      ]
+    },
+    "runtime_refresh_authority": {
+      "forbid_foreign_task_substitution": true,
+      "forbid_historical_target_reuse": true,
+      "mode": "single-use-target-bound-source-precondition-v1",
+      "no_run_closeout_acceptance": {
+        "criteria": {
+          "fresh-current-main": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "immutable-runtime-readback": {
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "runtime-only-scope": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "single-runtime-effect": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "source-ancestry-precondition": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          }
+        },
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "schema_version": 1
+      },
+      "required_action_class": "runtime_mutation",
+      "required_approval_level": "operator",
+      "required_claim_resource": "component.bureau.runtime",
+      "required_task_state": [
+        "ready",
+        "active"
+      ],
+      "schema_version": 1,
+      "single_use": true,
+      "source_precondition": {
+        "ancestry_verification": "git-merge-base-is-ancestor",
+        "does_not_establish": [
+          "ancestry without a fresh Git proof",
+          "permission to refresh from an unrelated or diverged deployed source",
+          "permission to continue after deployment/Registry identity drift"
+        ],
+        "fail_closed": true,
+        "identity_sources": [
+          "deployment-manifest.source_commit",
+          "canonical-registry.source_commit"
+        ],
+        "policy": "registered-source-or-verified-target-ancestor",
+        "registered_deployed_source_commit": "85ddb3ec42698f80740866447c2572e929ec5746",
+        "registered_manifest_sha256": "84ea6e9c7eb27f4390cd7a8942ba114bab4abcf1e2fe3a81fa5612e733cbe00c",
+        "registered_registry_source_commit": "85ddb3ec42698f80740866447c2572e929ec5746",
+        "require_deployment_registry_identity_match": true,
+        "require_target_freshness": true,
+        "required_before": [
+          "prepare-intent",
+          "apply"
+        ],
+        "schema_version": 1
+      },
+      "successor_task_required_after_terminal": true,
+      "target_binding": "candidate.target_sha256"
+    },
+    "source": "Fresh cohesive registration observation 30136fa6da8ace26f027ae269d3f63927e044eb00f51bc0b84e2c9e5e208c092 (derived from runtime observation c1af8c72c47e871f1f3759791b6e1b4b4231a9ca51194dda1d85f4aa1b10e5cd) proves deployment manifest and canonical Registry agree at 85ddb3ec42698f80740866447c2572e929ec5746; this source is a verified ancestor of protected main 0de2ee6529e4db3519ecb94df5db406699afb685 by 2 commits; and validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. PR #2319 is merged and the prior runtime authority task BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2314-STATUS-PROJECTION-20260918, whose protected publication/target merge was PR #2316, is already consumed and terminally verified. This successor remains planned until its own protected one-file merge, missing-only adoption and fresh activation."
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "repository",
+    "shell",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "The currently integrity-valid deployed Bureau runtime at 85ddb3ec42698f80740866447c2572e929ec5746 remains authoritative until one operator-authorized, source-precondition-bound immutable result is fully read back. If protected publication, adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability, leases or any later runtime result becomes unclear, preserve evidence and do not blindly retry; reconcile through a separately bound successor path. Historical runtime authorities, intents and targets are never reused."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Single-use Bureau runtime refresh after PR #2319 state-snapshot merge"
+}
+

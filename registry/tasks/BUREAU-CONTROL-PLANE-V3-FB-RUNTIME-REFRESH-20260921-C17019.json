@@ -116,7 +116,7 @@
       "mode": "single-use-target-bound-source-precondition-v1",
       "single_use": true,
       "required_action_class": "runtime_mutation",
-      "required_approval_level": "break_glass",
+      "required_approval_level": "operator",
       "required_claim_resource": "component.bureau.runtime",
       "required_task_state": [
         "ready",

@@ -16,6 +16,7 @@ Bureau separates observation from effect. A command may read, project, rank or d
 | `source_import` | reviewed Cabinet Frontier import into Bureau registry | `reviewed_receipt` | fail closed |
 | `agent_dispatch` | starting an external Grabowski task from a Bureau run | `operator` | fail closed |
 | `task_creation_from_external_evidence` | turning Cabinet/Gemini/source candidates into Bureau task material | `operator` | fail closed |
+| `registry_mutation` | generic or legacy Bureau Registry mutation not covered by a narrower typed action | `reviewed_plan` | fail closed |
 | `queue_mutation` | applying a queue-reconcile plan | `reviewed_plan` | fail closed |
 | `runtime_mutation` | deploy, restart, service repair, migration | `operator` | fail closed |
 
@@ -35,6 +36,8 @@ Unknown effectful action classes fail closed. This is intentional: a new effect 
 
 - Agent dispatch through `checkout-next --dispatch` records an `agent_dispatch` approval decision tied to the explicit CLI flag and current run id.
 - Cabinet bridge and Cabinet frontier previews record `task_creation_from_external_evidence` approval evidence when `--approve` is supplied and bind it to the proposed task id.
+- Operator-intake Candidate→TaskSpec preview remains effect-free and non-authorizing. Publish accepts `task_creation_from_external_evidence` only after Bureau has live-validated Grabowski's server-owned publication Authority against the exact proposal SHA, publishing task id, operation, action class, capability and Bureau phase. Public/caller-provided resource metadata cannot mint that Authority.
+- Generic `registry_mutation` remains bound to `reviewed_plan`; the narrower Candidate→TaskSpec authority does not satisfy that gate.
 - Reviewed Cabinet Frontier import uses the reviewed receipt as `source_import` approval when `--apply` writes a task file and binds approval to the receipt path.
 - Queue reconcile apply uses the reviewed plan as `queue_mutation` approval and binds approval to the reviewed plan path.
 
@@ -44,4 +47,4 @@ This path does not ask the user to become a shell executor. Approval is a record
 
 ## Does not establish
 
-This document does not grant automatic merge, automatic runtime repair, automatic task verification, automatic queue repair, broad source import, or dispatch authority from AI output. AI and external systems can supply advisory evidence only; Bureau still requires deterministic gates, reviewed artifacts and source-bound receipts.
+This document does not grant automatic merge, automatic runtime repair, automatic task verification, automatic queue repair, broad source import, or dispatch authority from AI output. AI and external systems can supply advisory evidence only; Bureau still requires deterministic gates and source-bound receipts. Where an action class requires `reviewed_plan` or `reviewed_receipt`, that reviewed artifact remains mandatory; the narrow Candidate→TaskSpec path instead uses its explicitly typed, server-owned operator authority.

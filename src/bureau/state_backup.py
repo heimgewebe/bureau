@@ -745,8 +745,17 @@ def restore_test(
     }
     if receipt_path is None:
         return _restore_test_unlocked(**kwargs)
+
+    resolved_backup_root = backup_root.expanduser().resolve()
+    resolved_receipt_path = receipt_path.expanduser().resolve()
+    canonical_receipt_path = (
+        resolved_backup_root / "restore-tests" / "latest.json"
+    ).resolve()
+    if resolved_receipt_path != canonical_receipt_path:
+        return _restore_test_unlocked(**kwargs)
+
     try:
-        with reference_mutation_lock(backup_root):
+        with reference_mutation_lock(resolved_backup_root):
             return _restore_test_unlocked(**kwargs)
     except ReferenceMutationLockError as exc:
         raise StateBackupError(

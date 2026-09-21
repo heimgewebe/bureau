@@ -108,13 +108,21 @@ def test_verify_backup_rejects_tampered_bound_receipt(registry_factory, tmp_path
 
 
 def test_restore_test_never_reactivates_leases_and_fail_closes_nonterminal_runs(
-    registry_factory, tmp_path: Path
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     root, state_root, _registry, _store, dispatcher = _setup(registry_factory, tmp_path)
     run = _claim(dispatcher)
     backup_root = tmp_path / "artifacts/merges/bureau-state-backups"
     result = state_backup.create_backup(state_root=state_root, backup_root=backup_root)
     receipt_path = tmp_path / "restore-receipts/latest.json"
+
+    monkeypatch.setattr(
+        state_backup,
+        "reference_mutation_lock",
+        lambda *_args, **_kwargs: pytest.fail(
+            "custom restore receipt must not acquire the retention reference lock"
+        ),
+    )
 
     restored = state_backup.restore_test(
         bundle=Path(result["bundle"]),
@@ -142,6 +150,39 @@ def test_restore_test_never_reactivates_leases_and_fail_closes_nonterminal_runs(
     assert reconcile["remaining_nonterminal_runs"] == []
     assert reconcile["remaining_reservation_count"] == 0
     assert receipt_path.is_file()
+
+
+def test_restore_test_serializes_canonical_retention_receipt(
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    root, state_root, _registry, _store, dispatcher = _setup(
+        registry_factory, tmp_path
+    )
+    _claim(dispatcher)
+    backup_root = tmp_path / "artifacts/merges/bureau-state-backups"
+    result = state_backup.create_backup(state_root=state_root, backup_root=backup_root)
+    receipt_path = backup_root / "restore-tests/latest.json"
+    observed_roots: list[Path] = []
+    original_lock = state_backup.reference_mutation_lock
+
+    def recording_lock(lock_root: Path, *args, **kwargs):
+        observed_roots.append(Path(lock_root).expanduser().resolve())
+        return original_lock(lock_root, *args, **kwargs)
+
+    monkeypatch.setattr(state_backup, "reference_mutation_lock", recording_lock)
+
+    restored = state_backup.restore_test(
+        bundle=Path(result["bundle"]),
+        backup_root=backup_root,
+        scratch_root=tmp_path / "scratch",
+        receipt_path=receipt_path,
+        registry_root=root,
+        adapters=AdapterRegistry(),
+    )
+
+    assert restored["status"] == "verified"
+    assert receipt_path.is_file()
+    assert observed_roots == [backup_root.resolve()]
 
 
 def test_restore_test_freshly_observes_external_run(registry_factory, tmp_path: Path):

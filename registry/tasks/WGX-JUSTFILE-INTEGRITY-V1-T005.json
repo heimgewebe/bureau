@@ -28,16 +28,6 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.hauski-audio",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.hauski",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
       "resource": "repo.semantah",
       "mode": "write",
       "isolation": "worktree"
@@ -79,7 +69,7 @@
     },
     {
       "id": "resource-registration",
-      "assertion": "Vor jeder Mutation eines beobachteten Repositories ohne bereits kanonisch registrierte Bureau-Resource wird diese Resource separat in Bureau registriert und erst danach mit einer aktuellen Lease bearbeitet."
+      "assertion": "Vor jeder Mutation eines aktiven beobachteten Repositories ohne bereits kanonisch registrierte Bureau-Resource wird diese Resource separat in Bureau registriert und erst danach mit einer aktuellen Lease bearbeitet."
     }
   ],
   "metadata": {
@@ -90,15 +80,9 @@
     "source_finding": "GitHub-Code-Suche nach METRICS_SCHEMA_URL auf Heimgewebe-Default-Branches zeigt nach dem WGX-T003-Fix zehn weitere Repositories mit alten Metrics-Schema-Referenzen. Die URLs `https://raw.githubusercontent.com/heimgewebe/metarepo/contracts-v1/contracts/wgx/metrics.json` und `https://raw.githubusercontent.com/heimgewebe/metarepo/main/contracts/wgx/metrics.json` liefern beim Live-Readback jeweils HTTP 404. Mindestens hausKI reicht die alte URL direkt an `ajv-cli@5 validate -s` weiter; andere Workflows laden die 404-Quelle per curl.",
     "observed_repositories": [
       "heimgewebe/chronik",
-      "heimgewebe/aussensensor",
-      "heimgewebe/hausKI-audio",
       "heimgewebe/contracts-mirror",
-      "heimgewebe/hausKI",
       "heimgewebe/semantAH",
-      "heimgewebe/sichter",
-      "heimgewebe/mitschreiber",
-      "heimgewebe/vault-gewebe",
-      "heimgewebe/vault-privat"
+      "heimgewebe/sichter"
     ],
     "already_reconciled_references": [
       "heimgewebe/wgx",
@@ -122,17 +106,26 @@
     ],
     "typed_resource_repositories": [
       "heimgewebe/chronik",
-      "heimgewebe/hausKI-audio",
-      "heimgewebe/hausKI",
       "heimgewebe/semantAH",
       "heimgewebe/sichter"
     ],
     "unregistered_resource_repositories": [
-      "heimgewebe/aussensensor",
-      "heimgewebe/contracts-mirror",
-      "heimgewebe/mitschreiber",
-      "heimgewebe/vault-gewebe",
-      "heimgewebe/vault-privat"
-    ]
+      "heimgewebe/contracts-mirror"
+    ],
+    "retirement_reconciliation": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "excluded_mutation_resources": [
+        "repo.aussensensor",
+        "repo.hauski",
+        "repo.hauski-audio",
+        "repo.mitschreiber",
+        "repo.vault-gewebe",
+        "repo.vault-privat"
+      ],
+      "note": "Retired repository identities remain available for coordination and historical evidence only; they are removed from active observed/unregistered migration scope and must not be mutated."
+    }
   }
 }

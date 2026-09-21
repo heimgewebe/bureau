@@ -7,7 +7,7 @@
   "github_slug": "heimgewebe/agent-control-surface",
   "grabowski_key": "repo:/home/alex/repos/agent-control-surface",
   "metadata": {
-    "purpose": "local manual control surface for Jules sessions and guarded step-by-step Git workflows",
+    "purpose": "Retain immutable local identity/provenance for coordination and closeout of a physically deleted repository.",
     "scope": "catalog-only",
     "visibility": "public",
     "capabilities": [
@@ -16,7 +16,7 @@
       "git",
       "github"
     ],
-    "lifecycle": "transition",
+    "lifecycle": "retired",
     "lifecycle_reviewed_at": "2026-07-26",
     "lifecycle_evidence_refs": [
       "docs/audits/repository-lifecycle-classification-2026-07-19.v1.json",
@@ -27,6 +27,18 @@
       "no_task_priority_authority",
       "no_merge_authorization",
       "no_remote_access_security"
+    ],
+    "historical_purpose": "local manual control surface for Jules sessions and guarded step-by-step Git workflows",
+    "coordination_only": true,
+    "mutation_claims_allowed": false,
+    "retired_on": "2026-09-18",
+    "does_not_establish": [
+      "remote_repository_exists",
+      "active_checkout",
+      "fleet_membership",
+      "task_supply_target",
+      "runtime_role",
+      "execution_authority"
     ]
   }
 }

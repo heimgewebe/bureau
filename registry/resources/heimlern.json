@@ -1,1 +1,24 @@
-{"schema_version":1,"id":"repo.heimlern","type":"git-repository","parent":"repo","path":"/home/alex/repos/heimlern","github_slug":"heimgewebe/heimlern","grabowski_key":"repo:/home/alex/repos/heimlern"}
+{
+  "schema_version": 1,
+  "id": "repo.heimlern",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/heimlern",
+  "github_slug": "heimgewebe/heimlern",
+  "grabowski_key": "repo:/home/alex/repos/heimlern",
+  "metadata": {
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "mutation_claims_allowed": false,
+    "retired_on": "2026-09-18",
+    "purpose": "Retain immutable local identity/provenance for coordination and closeout of a physically deleted repository.",
+    "does_not_establish": [
+      "remote_repository_exists",
+      "active_checkout",
+      "fleet_membership",
+      "task_supply_target",
+      "runtime_role",
+      "execution_authority"
+    ]
+  }
+}

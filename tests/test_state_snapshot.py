@@ -262,8 +262,9 @@ def _git_checkout(tmp_path: Path, registry: Path) -> tuple[Path, Path]:
     return origin, checkout
 
 
+@pytest.mark.parametrize("tracked_existing", [False, True])
 def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
-    tmp_path: Path, registry_factory, monkeypatch
+    tmp_path: Path, registry_factory, monkeypatch, tracked_existing: bool
 ) -> None:
     registry = registry_factory(task_count=2)
     state_root, _store = _state_store(tmp_path, registry)
@@ -277,6 +278,10 @@ def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
     expected_bytes = snapshot_path.read_bytes()
     before_db = _file_sha256(state_root / "bureau.sqlite3")
     before_queue = _file_sha256(registry / "registry/queue.json")
+    if tracked_existing:
+        tracked_snapshot = registry / state_snapshot.PUBLIC_SNAPSHOT_PATH
+        tracked_snapshot.parent.mkdir(parents=True, exist_ok=True)
+        tracked_snapshot.write_text("{}\n", encoding="utf-8")
     origin, checkout = _git_checkout(tmp_path, registry)
     push_origin = tmp_path / "snapshot-push-origin.git"
     subprocess.run(

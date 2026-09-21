@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .retention_coordination import reference_mutation_lock
+
 SCHEMA_VERSION = 1
 LANE_STATES = {
     "discovered",
@@ -1297,7 +1299,7 @@ def write_briefs(lanes: list[dict[str, Any]], brief_root: Path) -> list[dict[str
     return result
 
 
-def run_closure_cycle(
+def _run_closure_cycle_unlocked(
     *,
     state_root: Path | None = None,
     source_registry: Path | None = None,
@@ -1338,6 +1340,22 @@ def run_closure_cycle(
     atomic_json(state / "lanes.json", lanes)
     atomic_json(state / "plan.json", plan)
     return plan
+
+def run_closure_cycle(
+    *,
+    state_root: Path | None = None,
+    source_registry: Path | None = None,
+    max_repositories: int | None = None,
+) -> dict[str, Any]:
+    state = state_root or default_state_root()
+    state.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with reference_mutation_lock(state):
+        return _run_closure_cycle_unlocked(
+            state_root=state,
+            source_registry=source_registry,
+            max_repositories=max_repositories,
+        )
+
 
 
 def parser() -> argparse.ArgumentParser:

@@ -191,13 +191,37 @@ def _review(plan_path: Path, *, unresolved: list[str] | None = None) -> dict:
         from bureau.legacy import sha256_json
 
         plan["proposal_sha256"] = sha256_json(unsigned)
+    if plan["publication"]["action_class"] == "registry_mutation":
+        plan["review"] = {
+            "required": True,
+            "status": "reviewed",
+            "reviewer": "operator-self-review",
+            "reviewed_at": "2026-07-18T08:00:00+02:00",
+            "reviewed_proposal_sha256": plan["proposal_sha256"],
+        }
+    plan_path.write_text(json.dumps(plan, indent=2) + "\n")
+    return plan
+
+
+def _legacy_registry_proposal(plan_path: Path) -> dict:
+    plan = json.loads(plan_path.read_text())
+    plan["publication"] = {
+        "action_class": "registry_mutation",
+        "publication_mode": "state_store",
+        "required_level": "reviewed_plan",
+        "queue_mutated": False,
+    }
     plan["review"] = {
         "required": True,
-        "status": "reviewed",
-        "reviewer": "operator-self-review",
-        "reviewed_at": "2026-07-18T08:00:00+02:00",
-        "reviewed_proposal_sha256": plan["proposal_sha256"],
+        "status": "pending",
+        "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
     }
+    unsigned = {
+        key: value for key, value in plan.items() if key not in {"proposal_sha256", "review"}
+    }
+    from bureau.legacy import sha256_json
+
+    plan["proposal_sha256"] = sha256_json(unsigned)
     plan_path.write_text(json.dumps(plan, indent=2) + "\n")
     return plan
 
@@ -301,6 +325,42 @@ def _lease_binding(*, owner: str = "operator-test", task_id: str = "BUR-TEST-001
     return {"owner_id": owner, "task_id": task_id}
 
 
+def _downgrade_publication_evidence_to_v2(store: StateStore, proposal_sha256: str) -> dict:
+    key = f"operator-intake:{proposal_sha256}"
+    with store.immediate() as connection:
+        mutation = task_specs_module.get_mutation_receipt(connection, key)
+        assert mutation is not None
+        evidence = mutation["activation_evidence"]
+        commitments = [
+            {
+                "lease_binding_sha256": item["lease_binding_sha256"],
+                "lease_release_sha256": item["lease_release_sha256"],
+            }
+            for item in evidence["lease_commitments"]
+        ]
+        payload = {
+            "schema_version": 2,
+            "kind": operator_intake_module.TASK_PUBLICATION_RECEIPT_EVIDENCE_KIND,
+            "proposal_sha256": proposal_sha256,
+            "lease_commitments": commitments,
+        }
+        evidence_sha256 = hashlib.sha256(
+            (operator_intake_module.legacy.canonical_json(payload) + "\n").encode()
+        ).hexdigest()
+        legacy_evidence = {**payload, "evidence_sha256": evidence_sha256}
+        connection.execute(
+            "UPDATE task_spec_mutations SET "
+            "activation_evidence_json=?,activation_evidence_sha256=? "
+            "WHERE idempotency_key=?",
+            (
+                operator_intake_module.legacy.canonical_json(legacy_evidence),
+                evidence_sha256,
+                key,
+            ),
+        )
+    return legacy_evidence
+
+
 def _lease_db(
     preview: dict,
     tmp_path: Path,
@@ -309,6 +369,7 @@ def _lease_db(
     gate_ttl: int = 240,
     omit: set[str] | None = None,
     metadata_overrides: dict[str, object] | None = None,
+    metadata_omit: set[str] | None = None,
     metadata_digest: str | None = None,
 ) -> Path:
     path = tmp_path / "grabowski-resources.sqlite3"
@@ -328,13 +389,11 @@ def _lease_db(
     connection.execute(
         "INSERT INTO metadata(key, value) VALUES('resource_lease_contract_version', '1')"
     )
-    lease_metadata: dict[str, object] = {
-        "task_id": "BUR-TEST-001-T001",
-        "operation": "state-task-publication",
-        "proposal_sha256": preview["proposal_sha256"],
-    }
+    lease_metadata: dict[str, object] = dict(preview["required_lease_metadata"])
     if metadata_overrides:
         lease_metadata.update(metadata_overrides)
+    for key in metadata_omit or set():
+        lease_metadata.pop(key, None)
     metadata_json = json.dumps(
         lease_metadata,
         sort_keys=True,
@@ -1526,7 +1585,61 @@ def test_candidate_assessment_is_advisory_and_promotes_complete_input(registry_f
     assert result["decision"] == "promote"
     assert result["advisory_only"] is True
     assert result["exact_duplicates"] == []
-    assert result["target"]["publication_approval"]["allowed"] is False
+    publication_approval = result["target"]["publication_approval"]
+    assert publication_approval["allowed"] is False
+    assert publication_approval["action_class"] == "registry_mutation"
+    assert publication_approval["required_level"] == "reviewed_plan"
+
+
+def test_candidate_assessment_reports_operator_publication_when_publisher_exists(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = _record(registry, store)
+
+    result = candidate_assess(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        initiative="BUR-TEST-001",
+        task_id="BUR-TEST-001-T099",
+    )
+
+    publication_approval = result["target"]["publication_approval"]
+    assert publication_approval["allowed"] is False
+    assert publication_approval["action_class"] == "task_creation_from_external_evidence"
+    assert publication_approval["required_level"] == "operator"
+
+
+def test_candidate_assessment_reports_reviewed_plan_for_authoritative_revision(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="assessment:authoritative-revision",
+        title="Revise authoritative task",
+        source_kind="conversation",
+        source_locator="chat:authoritative-revision",
+        source_sha256="8" * 64,
+        desired_outcome="Revise the existing authoritative TaskSpec",
+        repo="repo.alpha",
+        task_id="BUR-TEST-001-T002",
+    )
+
+    result = candidate_assess(
+        registry, store, candidate_id=recorded["candidate_id"]
+    )
+
+    publication_approval = result["target"]["publication_approval"]
+    assert publication_approval["allowed"] is False
+    assert publication_approval["action_class"] == "registry_mutation"
+    assert publication_approval["required_level"] == "reviewed_plan"
 
 
 def test_candidate_assessment_reports_shared_source_as_advisory(registry_factory, tmp_path):
@@ -2561,8 +2674,11 @@ def test_state_store_only_revision_stale_expected_revision_fails_closed(registry
 def test_task_review_binds_exact_pending_proposal_and_enables_preview(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
-    plan_path = _proposal(registry, store, tmp_path)
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
     pending = json.loads(plan_path.read_text())
+    with pytest.raises(OperatorIntakeError) as blocked:
+        publication_preview(registry, store, plan_path=plan_path)
+    assert blocked.value.code == "review-missing"
 
     result = review_task_proposal(
         plan_path=plan_path,
@@ -2610,12 +2726,15 @@ def test_candidate_assessment_and_review_never_escalate_execution_authority(
     assert required_nonclaims <= set(pending["does_not_establish"])
     assert required_nonclaims <= set(reviewed["does_not_establish"])
     assert assessment["advisory_only"] is True
+    assert reviewed["status"] == "not_required"
+    assert reviewed["effect_started"] is False
+    assert reviewed["approval"]["allowed"] is False
 
 
 def test_task_review_exact_replay_is_idempotent(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
-    plan_path = _proposal(registry, store, tmp_path)
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     first = review_task_proposal(
         plan_path=plan_path,
@@ -2641,7 +2760,7 @@ def test_task_review_rejects_reference_unresolved_and_conflicting_reviewer(
 ):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
-    plan_path = _proposal(registry, store, tmp_path)
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
     pending = json.loads(plan_path.read_text())
     initial_bytes = plan_path.read_bytes()
 
@@ -2699,7 +2818,7 @@ def test_task_review_cas_restores_foreign_pre_exchange_bytes(
 ):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
-    plan_path = _proposal(registry, store, tmp_path)
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     foreign = json.loads(plan_path.read_text())
     foreign["review"]["foreign_marker"] = True
@@ -2729,7 +2848,7 @@ def test_task_review_cas_restores_foreign_pre_exchange_bytes(
 def test_task_review_post_exchange_drift_is_ambiguous(registry_factory, tmp_path, monkeypatch):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
-    plan_path = _proposal(registry, store, tmp_path)
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     foreign_bytes = b'{"foreign":true}\n'
 
@@ -2760,7 +2879,7 @@ def test_task_review_unexpected_post_exchange_failure_is_ambiguous(
 ):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
-    plan_path = _proposal(registry, store, tmp_path)
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
 
     def fail_after_exchange(path: Path) -> None:
@@ -2792,7 +2911,7 @@ def test_task_review_parent_swap_before_exchange_is_fail_closed(
     store = StateStore(tmp_path / "state.sqlite3")
     plan_dir = tmp_path / "plans"
     plan_dir.mkdir()
-    plan_path = _proposal(registry, store, plan_dir)
+    plan_path, _, _ = _revision_proposal(registry, store, plan_dir)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     original_bytes = plan_path.read_bytes()
     moved_dir = tmp_path / "plans-moved"
@@ -2828,7 +2947,7 @@ def test_task_review_parent_swap_after_exchange_is_ambiguous(
     store = StateStore(tmp_path / "state.sqlite3")
     plan_dir = tmp_path / "plans"
     plan_dir.mkdir()
-    plan_path = _proposal(registry, store, plan_dir)
+    plan_path, _, _ = _revision_proposal(registry, store, plan_dir)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     moved_dir = tmp_path / "plans-moved"
     foreign_bytes = b'{"foreign":true}\n'
@@ -2862,6 +2981,7 @@ def test_task_review_rejects_symlink_plan(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
+    _legacy_registry_proposal(plan_path)
     proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
     link = tmp_path / "proposal-link.json"
     link.symlink_to(plan_path)
@@ -2936,11 +3056,15 @@ def test_task_proposal_binds_candidate_registry_and_review(registry_factory, tmp
         plan["task_json"]["metadata"]["operator_intake"]["event_id"]
         == plan["candidate"]["event_id"]
     )
-    assert plan["review"]["status"] == "pending"
+    assert plan["review"] == {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
     assert plan["publication"] == {
-        "action_class": "registry_mutation",
+        "action_class": "task_creation_from_external_evidence",
         "publication_mode": "state_store",
-        "required_level": "reviewed_plan",
+        "required_level": "operator",
         "queue_mutated": False,
     }
 
@@ -3243,20 +3367,29 @@ def test_publication_preview_rejects_dirty_registry_worktree(registry_factory, t
     assert caught.value.code == "registry-working-tree-dirty"
 
 
-def test_publication_preview_requires_review_and_returns_exact_leases(registry_factory, tmp_path):
+def test_publication_preview_is_review_free_and_returns_exact_authority_lease(
+    registry_factory, tmp_path
+):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     plan_path = _proposal(registry, store, tmp_path)
-    with pytest.raises(OperatorIntakeError) as caught:
-        publication_preview(registry, store, plan_path=plan_path)
-    assert caught.value.code == "review-missing"
-    _review(plan_path)
     result = publication_preview(registry, store, plan_path=plan_path)
+    plan = json.loads(plan_path.read_text())
     assert result["status"] == "ready"
-    assert result["approval"]["allowed"] is True
+    assert result["approval"]["allowed"] is False
     assert result["publication_mode"] == "state_store"
     assert result["coordination_state_root"] == str(store.state_root.resolve())
     assert result["required_resource_keys"] == [f"path:{store.state_root.resolve()}"]
+    assert result["lease_task_id"] == plan["publishing_task_id"]
+    assert result["required_lease_metadata"] == {
+        "task_id": plan["publishing_task_id"],
+        "operation": "state-task-publication",
+        "proposal_sha256": plan["proposal_sha256"],
+        "kind": "grabowski.bureau_task_publication_authority",
+        "authority_action_class": "task_creation_from_external_evidence",
+        "authority_capability": "bureau_mutation",
+        "bureau_phase": "work",
+    }
     assert result["branch"] is None
     assert result["open_pr_identity_revalidation"]["status"] == "not_required"
 
@@ -3317,6 +3450,181 @@ def test_publication_rejects_lease_metadata_binding_mismatch(registry_factory, t
     }
 
 
+def test_publication_rejects_missing_server_owned_authority(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path, metadata_omit={"kind"}),
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+        )
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert caught.value.effect_started is False
+    assert store.task_spec(json.loads(plan_path.read_text())["task_id"]) is None
+
+
+def test_publication_rejects_spoofed_server_owned_authority(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(
+                preview,
+                tmp_path,
+                metadata_overrides={"kind": "caller.claimed_publication_authority"},
+            ),
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+        )
+    assert caught.value.code == "lease-metadata-binding-mismatch"
+    assert caught.value.effect_started is False
+    assert store.task_spec(json.loads(plan_path.read_text())["task_id"]) is None
+
+
+
+def test_publication_revalidates_authority_under_lock_before_effect(
+    registry_factory, tmp_path, monkeypatch,
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    db = _lease_db(preview, tmp_path)
+    original = operator_intake_module.validate_live_lease_binding
+    reads = 0
+
+    def validate_then_revoke(*args, **kwargs):
+        nonlocal reads
+        reads += 1
+        result = original(*args, **kwargs)
+        if reads == 1:
+            with sqlite3.connect(db) as connection:
+                connection.execute("DELETE FROM leases")
+        return result
+
+    monkeypatch.setattr(
+        operator_intake_module, "validate_live_lease_binding", validate_then_revoke
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=db,
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+        )
+    assert caught.value.code == "lease-resources-missing"
+    assert reads == 2
+    assert store.task_spec(json.loads(plan_path.read_text())["task_id"]) is None
+
+
+def test_publication_resource_database_contention_is_retryable_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    db = _lease_db(preview, tmp_path)
+    original_connect = sqlite3.connect
+
+    class LockedConnection:
+        def __init__(self, connection):
+            self._connection = connection
+
+        def execute(self, statement, *args, **kwargs):
+            if statement == "BEGIN IMMEDIATE":
+                raise sqlite3.OperationalError("database is locked")
+            return self._connection.execute(statement, *args, **kwargs)
+
+        def close(self):
+            self._connection.close()
+
+        def __getattr__(self, name):
+            return getattr(self._connection, name)
+
+    def connect_with_contended_writer(database, *args, **kwargs):
+        connection = original_connect(database, *args, **kwargs)
+        database_text = str(database)
+        if (
+            database_text.startswith(db.as_uri())
+            and "mode=rw" in database_text
+            and kwargs.get("isolation_level") is None
+        ):
+            return LockedConnection(connection)
+        return connection
+
+    monkeypatch.setattr(
+        operator_intake_module.sqlite3, "connect", connect_with_contended_writer
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=db,
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+        )
+
+    assert caught.value.code == "lease-database-lock-failed"
+    assert caught.value.retryable is True
+    assert caught.value.effect_started is False
+    assert store.task_spec(json.loads(plan_path.read_text())["task_id"]) is None
+
+
+def test_publication_pins_authority_and_state_writers_through_mutation(
+    registry_factory, tmp_path, monkeypatch,
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    db = _lease_db(preview, tmp_path)
+    original = task_specs_module.put
+    checked = []
+
+    def put_with_competing_writers(connection, *args, **kwargs):
+        assert connection.in_transaction
+        for database in (store.path, db):
+            contender = sqlite3.connect(database, timeout=0.01, isolation_level=None)
+            try:
+                with pytest.raises(sqlite3.OperationalError, match="locked"):
+                    contender.execute("BEGIN IMMEDIATE")
+                checked.append(database)
+            finally:
+                contender.close()
+        return original(connection, *args, **kwargs)
+
+    monkeypatch.setattr(task_specs_module, "put", put_with_competing_writers)
+    result = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=db,
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=tmp_path / "receipt.json",
+    )
+    assert result["status"] == "published"
+    assert checked == [store.path, db]
 
 
 def test_publication_writes_receipt_and_is_idempotent(registry_factory, tmp_path):
@@ -3345,6 +3653,9 @@ def test_publication_writes_receipt_and_is_idempotent(registry_factory, tmp_path
         receipt_path=receipt,
     )
     assert first["status"] == "published"
+    assert first["approval"]["allowed"] is True
+    assert first["approval"]["action_class"] == "task_creation_from_external_evidence"
+    assert first["approval"]["required_level"] == "operator"
     assert first["queue_mutated"] is False
     assert first["task_spec_revision"]["revision"] == 1
     plan = json.loads(plan_path.read_text())
@@ -3390,6 +3701,617 @@ def test_publication_receipt_replay_survives_later_registry_drift(registry_facto
 
 
 
+def test_publication_receipt_replay_accepts_pre_approval_legacy_receipt(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "legacy-receipt.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+    assert first["approval"]["action_class"] == "registry_mutation"
+
+    historical = json.loads(receipt.read_text())
+    historical.pop("approval")
+    unsigned = {key: value for key, value in historical.items() if key != "receipt_sha256"}
+    historical["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(historical, indent=2) + "\n")
+
+    replay = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+        resource_db=tmp_path / "must-not-be-read.sqlite3",
+        workspace_root=tmp_path / "unused",
+        receipt_path=receipt,
+    )
+
+    assert replay["idempotent_replay"] is True
+    assert "approval" not in replay
+    assert replay["receipt_sha256"] == historical["receipt_sha256"]
+
+
+def test_publication_receipt_replay_rejects_missing_typed_approval(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "typed-missing-approval-receipt.json"
+    publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+
+    tampered = json.loads(receipt.read_text())
+    tampered.pop("approval")
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert "approval" in caught.value.details["mismatched"]
+
+
+
+def test_publication_commits_trusted_lease_evidence_before_receipt_write(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    resource_db = _lease_db(preview, tmp_path)
+    receipt = tmp_path / "typed-evidence-before-receipt.json"
+    observed = []
+    expected = []
+
+    def fail_after_evidence_commit(path, data):
+        assert path == receipt
+        receipt_value = json.loads(data)
+        expected.append(
+            operator_intake_module._publication_receipt_binding_evidence(receipt_value)
+        )
+        with store.connect() as connection:
+            mutation = task_specs_module.get_mutation_receipt(
+                connection, f"operator-intake:{plan['proposal_sha256']}"
+            )
+        assert mutation is not None
+        observed.append(mutation.get("activation_evidence"))
+        with sqlite3.connect(resource_db) as connection:
+            assert connection.execute("SELECT COUNT(*) FROM leases").fetchone()[0] == 0
+        raise OSError("injected receipt write failure after StateStore commit")
+
+    monkeypatch.setattr(
+        operator_intake_module, "_write_create_only", fail_after_evidence_commit
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=resource_db,
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-write-unclear"
+    assert caught.value.effect_started is True
+    assert observed == expected
+    assert len(observed) == 1
+    assert not receipt.exists()
+    committed = store.task_spec(plan["task_id"])
+    assert committed is not None
+    assert committed["revision"] == 1
+
+
+def test_publication_release_failure_does_not_bind_release_evidence(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    resource_db = _lease_db(preview, tmp_path)
+    receipt = tmp_path / "release-failed.json"
+
+    def fail_release(_binding):
+        raise OperatorIntakeError(
+            "lease-release-failed", "injected exact release failure"
+        )
+
+    monkeypatch.setattr(
+        operator_intake_module, "_release_unchanged_publication_leases", fail_release
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=resource_db,
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "lease-release-failed"
+    assert not receipt.exists()
+    with store.connect() as connection:
+        mutation = task_specs_module.get_mutation_receipt(
+            connection, f"operator-intake:{plan['proposal_sha256']}"
+        )
+    assert mutation is not None
+    assert mutation.get("activation_evidence") is None
+    with sqlite3.connect(resource_db) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM leases").fetchone()[0] > 0
+
+
+def test_publication_recovers_after_post_release_evidence_bind_failure(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    resource_db = _lease_db(preview, tmp_path)
+    receipt = tmp_path / "bind-failed-before-receipt.json"
+    original_store = operator_intake_module._store_publication_mutation_evidence
+    failures_remaining = 1
+
+    def fail_once(*args, **kwargs):
+        nonlocal failures_remaining
+        if failures_remaining:
+            failures_remaining -= 1
+            raise sqlite3.OperationalError("injected evidence bind contention")
+        return original_store(*args, **kwargs)
+
+    monkeypatch.setattr(
+        operator_intake_module, "_store_publication_mutation_evidence", fail_once
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=resource_db,
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "publication-receipt-evidence-bind-failed"
+    assert caught.value.retryable is True
+    assert caught.value.effect_started is True
+    assert not receipt.exists()
+    with sqlite3.connect(resource_db) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM leases").fetchone()[0] == 0
+    with store.connect() as connection:
+        mutation = task_specs_module.get_mutation_receipt(
+            connection, f"operator-intake:{plan['proposal_sha256']}"
+        )
+    assert mutation is not None
+    assert mutation.get("activation_evidence") is None
+
+    retry_preview = publication_preview(registry, store, plan_path=plan_path)
+    retry_resource_db = _lease_db(retry_preview, tmp_path)
+    replay = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=retry_resource_db,
+        workspace_root=tmp_path / "workspaces-retry",
+        receipt_path=receipt,
+    )
+
+    assert replay["status"] == "published"
+    assert replay["task_spec_revision"]["revision"] == 1
+    assert receipt.exists()
+    with store.connect() as connection:
+        repaired = task_specs_module.get_mutation_receipt(
+            connection, f"operator-intake:{plan['proposal_sha256']}"
+        )
+    assert repaired is not None
+    evidence = repaired["activation_evidence"]
+    assert (
+        operator_intake_module._publication_receipt_lease_commitment(replay)
+        in evidence["lease_commitments"]
+    )
+
+
+@pytest.mark.parametrize("field", ["lease_binding", "lease_release"])
+def test_publication_receipt_replay_rejects_tampered_lease_evidence(
+    registry_factory, tmp_path, field
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "typed-lease-evidence-receipt.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+    plan = json.loads(plan_path.read_text())
+    with store.connect() as connection:
+        mutation = task_specs_module.get_mutation_receipt(
+            connection, f"operator-intake:{plan['proposal_sha256']}"
+        )
+    assert mutation is not None
+    evidence = mutation["activation_evidence"]
+    assert evidence["kind"] == operator_intake_module.TASK_PUBLICATION_RECEIPT_EVIDENCE_KIND
+    assert (
+        operator_intake_module._publication_receipt_lease_commitment(first)
+        in evidence["lease_commitments"]
+    )
+
+    tampered = json.loads(receipt.read_text())
+    tampered[field]["owner_id"] = "attacker-controlled-owner"
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert caught.value.effect_started is True
+    assert field in caught.value.details["mismatched"]
+    assert store.task_spec(first["task_id"])["revision"] == 1
+
+
+def test_publication_receipt_replay_rejects_tampered_complete_receipt_evidence(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "typed-complete-evidence-receipt.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+
+    tampered = json.loads(receipt.read_text())
+    tampered["queue_mutated"] = True
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert caught.value.effect_started is True
+    assert "receipt_sha256" in caught.value.details["mismatched"]
+    assert store.task_spec(first["task_id"])["revision"] == 1
+
+
+def test_schema_v2_typed_receipt_replay_upgrades_exact_evidence(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "schema-v2-replay.json"
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+    legacy_evidence = _downgrade_publication_evidence_to_v2(
+        store, plan["proposal_sha256"]
+    )
+    assert legacy_evidence["schema_version"] == 2
+
+    replay = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+        resource_db=tmp_path / "must-not-be-read.sqlite3",
+        workspace_root=tmp_path / "unused",
+        receipt_path=receipt,
+    )
+
+    assert replay["idempotent_replay"] is True
+    assert replay["receipt_sha256"] == first["receipt_sha256"]
+    with store.connect() as connection:
+        mutation = task_specs_module.get_mutation_receipt(
+            connection, f"operator-intake:{plan['proposal_sha256']}"
+        )
+    assert mutation is not None
+    upgraded = mutation["activation_evidence"]
+    assert upgraded["schema_version"] == 3
+    assert (
+        operator_intake_module._publication_receipt_lease_commitment(first)
+        in upgraded["lease_commitments"]
+    )
+
+
+def test_schema_v2_pre_receipt_recovery_uses_fresh_authority_and_upgrades(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "schema-v2-pre-receipt.json"
+    original_write = operator_intake_module._write_create_only
+
+    def lose_receipt(_path, _data):
+        raise OSError("injected loss after trusted evidence commit")
+
+    monkeypatch.setattr(operator_intake_module, "_write_create_only", lose_receipt)
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(owner="operator-v2-first"),
+            resource_db=_lease_db(preview, tmp_path, owner="operator-v2-first"),
+            workspace_root=tmp_path / "workspaces-first",
+            receipt_path=receipt,
+        )
+    assert caught.value.code == "receipt-write-unclear"
+    assert not receipt.exists()
+    _downgrade_publication_evidence_to_v2(store, plan["proposal_sha256"])
+
+    retry_preview = publication_preview(registry, store, plan_path=plan_path)
+    monkeypatch.setattr(operator_intake_module, "_write_create_only", original_write)
+    recovered = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(owner="operator-v2-retry"),
+        resource_db=_lease_db(retry_preview, tmp_path, owner="operator-v2-retry"),
+        workspace_root=tmp_path / "workspaces-retry",
+        receipt_path=receipt,
+    )
+
+    assert recovered["status"] == "published"
+    assert recovered["task_spec_revision"]["revision"] == 1
+    with store.connect() as connection:
+        mutation = task_specs_module.get_mutation_receipt(
+            connection, f"operator-intake:{plan['proposal_sha256']}"
+        )
+    assert mutation is not None
+    assert mutation["activation_evidence"]["schema_version"] == 3
+    assert (
+        operator_intake_module._publication_receipt_lease_commitment(recovered)
+        in mutation["activation_evidence"]["lease_commitments"]
+    )
+
+
+def test_publication_replay_rejects_mixed_trusted_lease_commitments(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "mixed-trusted-commitments.json"
+    first_value = {}
+    original_write = operator_intake_module._write_create_only
+
+    def fail_first_write(path, data):
+        assert path == receipt
+        first_value.update(json.loads(data))
+        raise OSError("injected receipt loss after first trusted release")
+
+    monkeypatch.setattr(
+        operator_intake_module, "_write_create_only", fail_first_write
+    )
+    with pytest.raises(OperatorIntakeError) as first_caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(owner="operator-first"),
+            resource_db=_lease_db(preview, tmp_path, owner="operator-first"),
+            workspace_root=tmp_path / "workspaces-first",
+            receipt_path=receipt,
+        )
+    assert first_caught.value.code == "receipt-write-unclear"
+    assert not receipt.exists()
+
+    retry_preview = publication_preview(registry, store, plan_path=plan_path)
+    monkeypatch.setattr(operator_intake_module, "_write_create_only", original_write)
+    second = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(owner="operator-second"),
+        resource_db=_lease_db(retry_preview, tmp_path, owner="operator-second"),
+        workspace_root=tmp_path / "workspaces-second",
+        receipt_path=receipt,
+    )
+
+    plan = json.loads(plan_path.read_text())
+    with store.connect() as connection:
+        mutation = task_specs_module.get_mutation_receipt(
+            connection, f"operator-intake:{plan['proposal_sha256']}"
+        )
+    assert mutation is not None
+    commitments = mutation["activation_evidence"]["lease_commitments"]
+    assert len(commitments) == 2
+
+    mixed = json.loads(receipt.read_text())
+    mixed["lease_binding"] = first_value["lease_binding"]
+    assert mixed["lease_release"] == second["lease_release"]
+    unsigned = {key: value for key, value in mixed.items() if key != "receipt_sha256"}
+    mixed["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(mixed, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert caught.value.effect_started is True
+    assert "receipt_sha256" in caught.value.details["mismatched"]
+    assert store.task_spec(second["task_id"])["revision"] == 1
+
+
+def test_review_rejects_legacy_contract_for_normal_registration(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    assert plan["task_spec"]["operation"] == "register"
+    plan["publication"] = operator_intake_module._legacy_registry_publication_contract()
+    plan["review"] = {
+        "required": True,
+        "status": "pending",
+        "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
+    }
+    plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(plan)
+    )
+    plan_path.write_text(json.dumps(plan, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="forged-reviewer",
+            expected_proposal_sha256=plan["proposal_sha256"],
+        )
+
+    assert caught.value.code == "publication-contract-task-spec-mismatch"
+    assert json.loads(plan_path.read_text())["review"]["status"] == "pending"
+
+
+def test_replay_binding_rejects_legacy_contract_for_normal_registration(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    plan["publication"] = operator_intake_module._legacy_registry_publication_contract()
+    plan["review"] = {
+        "required": True,
+        "status": "reviewed",
+        "reviewer": "forged-reviewer",
+        "reviewed_at": "2026-09-18T00:00:00Z",
+    }
+    plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(plan)
+    )
+    plan["review"]["reviewed_proposal_sha256"] = plan["proposal_sha256"]
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module._publication_replay_plan_binding(plan)
+
+    assert caught.value.code == "publication-contract-task-spec-mismatch"
+
+
+def test_publication_replay_rejects_typed_authority_for_revision(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, _, _ = _revision_proposal(registry, store, tmp_path)
+    plan = json.loads(plan_path.read_text())
+    plan["publication"] = {
+        "action_class": "task_creation_from_external_evidence",
+        "publication_mode": "state_store",
+        "required_level": "operator",
+        "queue_mutated": False,
+    }
+    plan["review"] = {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
+    plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(plan)
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module._publication_replay_plan_binding(plan)
+
+    assert caught.value.code == "publication-contract-task-spec-mismatch"
+
+
 def test_publication_receipt_replay_rejects_internally_inconsistent_plan(
     registry_factory, tmp_path
 ):
@@ -3414,7 +4336,6 @@ def test_publication_receipt_replay_rejects_internally_inconsistent_plan(
     plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
         operator_intake_module._proposal_unsigned(plan)
     )
-    plan["review"]["reviewed_proposal_sha256"] = plan["proposal_sha256"]
     plan_path.write_text(json.dumps(plan, indent=2) + "\n")
 
     with pytest.raises(OperatorIntakeError) as caught:
@@ -3462,6 +4383,45 @@ def test_publication_rejects_tampered_existing_receipt(registry_factory, tmp_pat
     assert caught.value.code == "receipt-integrity-invalid"
 
 
+
+
+def test_publication_receipt_replay_rejects_rehashed_approval_tamper(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    receipt = tmp_path / "receipt-approval-tamper.json"
+    publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=receipt,
+    )
+
+    tampered = json.loads(receipt.read_text())
+    tampered["approval"]["evidence"]["source"] = "forged-publication-authority"
+    unsigned = {key: value for key, value in tampered.items() if key != "receipt_sha256"}
+    tampered["receipt_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
+    receipt.write_text(json.dumps(tampered, indent=2) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={"owner_id": "must-not-be-read", "task_id": "wrong"},
+            resource_db=tmp_path / "must-not-be-read.sqlite3",
+            workspace_root=tmp_path / "unused",
+            receipt_path=receipt,
+        )
+
+    assert caught.value.code == "receipt-conflict"
+    assert "approval" in caught.value.details["mismatched"]
 
 
 def test_publishing_task_git_projection_drift_does_not_block_state_store_publication(
@@ -3855,7 +4815,10 @@ def test_publication_receipt_without_mutation_row_is_conflict(
     assert caught.value.code == "receipt-conflict"
     assert caught.value.effect_started is True
     assert caught.value.publication_phase == "committed_locally"
-    assert caught.value.details["mismatched"] == {}
+    if operation == "register":
+        assert set(caught.value.details["mismatched"]) == {"receipt_evidence"}
+    else:
+        assert caught.value.details["mismatched"] == {}
     assert caught.value.details["mutation_error"] == (
         f"task-spec-{scope}-replay-mutation-mismatch"
     )
@@ -4209,11 +5172,27 @@ def test_first_task_publication_creates_once_and_supplies_ordinary_publisher(
     assert plan["publishing_task_sha256"] is None
     assert plan["publishing_task_id"] == plan["task_id"]
     assert plan["task_spec"]["operation"] == "register"
+    assert plan["publication"] == {
+        "action_class": "registry_mutation",
+        "publication_mode": "state_store",
+        "required_level": "reviewed_plan",
+        "queue_mutated": False,
+    }
+    assert plan["review"]["required"] is True
+    assert plan["review"]["status"] == "pending"
     assert store.task_spec(plan["task_id"]) is None
+    with pytest.raises(OperatorIntakeError) as unreviewed:
+        publication_preview(registry, store, plan_path=path)
+    assert unreviewed.value.code == "review-missing"
     before_registry = _git(registry.root, "rev-parse", "HEAD:registry")
     preview, db = _review_first_task(registry, store, path, tmp_path)
     assert preview["required_resource_keys"] == [f"path:{store.state_root}"]
     assert preview["lease_task_id"] == plan["task_id"]
+    assert "kind" not in preview["required_lease_metadata"]
+    assert "authority_action_class" not in preview["required_lease_metadata"]
+    assert preview["required_lease_metadata"]["authority_kind"] == (
+        "bureau_first_task_onboarding_authority"
+    )
     published = _first_task_publish(registry, store, path, db, tmp_path)
     assert published["task_spec_revision"]["revision"] == 1
     assert published["task_spec_revision"]["idempotent_replay"] is False
@@ -4249,7 +5228,10 @@ def test_first_task_publication_creates_once_and_supplies_ordinary_publisher(
     assert result["proposal"]["publishing_task_sha256"] == plan["task_json_sha256"]
     _review(second_path)
     second_preview = publication_preview(registry, store, plan_path=second_path)
-    assert "required_lease_metadata" not in second_preview
+    assert second_preview["required_lease_metadata"]["kind"] == (
+        "grabowski.bureau_task_publication_authority"
+    )
+    assert second_preview["required_lease_metadata"]["task_id"] == plan["task_id"]
     second = publish_task_proposal(
         registry, store, plan_path=second_path,
         resource_db=_lease_db(second_preview, tmp_path,
@@ -4541,6 +5523,32 @@ def test_first_task_holds_state_and_lease_writer_locks_through_mutation(
     assert checked == [store.path, db]
 
 
+def test_first_task_replay_rejects_typed_review_free_authority(
+    registry_factory, tmp_path
+):
+    _, _, path = _first_task_proposal(registry_factory, tmp_path)
+    plan = json.loads(path.read_text())
+    plan["publication"] = {
+        "action_class": "task_creation_from_external_evidence",
+        "publication_mode": "state_store",
+        "required_level": "operator",
+        "queue_mutated": False,
+    }
+    plan["review"] = {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
+    plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(plan)
+    )
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module._publication_replay_plan_binding(plan)
+
+    assert caught.value.code == "publication-contract-task-spec-mismatch"
+
+
 @pytest.mark.parametrize("drift", ["registry", "candidate", "conflicting-task"])
 def test_first_task_receipt_replay_remains_independent_of_create_authority(
     registry_factory, tmp_path, monkeypatch, drift,
@@ -4754,8 +5762,8 @@ def test_cli_adapters_preserve_domain_results_without_extra_authority(
     )
     reviewed = _cli_result(capsys)
     assert reviewed["kind"] == "bureau_task_review_result"
-    assert reviewed["status"] == "reviewed"
-    assert reviewed["approval"]["allowed"] is True
+    assert reviewed["status"] == "not_required"
+    assert reviewed["approval"]["allowed"] is False
 
     assert (
         bureau_cli.main([*common, "operator-task-publish", "--plan", str(plan_path), "--preview"])
@@ -5062,13 +6070,6 @@ def _state_store_publication_fixture(registry_factory, tmp_path):
         if key not in {"proposal_sha256", "review"}
     }
     plan["proposal_sha256"] = operator_intake_module.legacy.sha256_json(unsigned)
-    plan["review"] = {
-        "required": True,
-        "status": "reviewed",
-        "reviewer": "operator-self-review",
-        "reviewed_at": "2026-08-18T17:00:00Z",
-        "reviewed_proposal_sha256": plan["proposal_sha256"],
-    }
     plan_path.write_text(json.dumps(plan, indent=2) + "\n")
     preview = publication_preview(registry, store, plan_path=plan_path)
     receipt_path = tmp_path / "state-publication-receipt.json"
@@ -5970,6 +6971,49 @@ def test_reviewed_pre_hardening_revision_cannot_bypass_publication_guard(
             path=plan_path,
         )
     pending = json.loads(plan_path.read_text())
+    assert pending["task_spec"]["operation"] == "revise"
+    assert pending["publication"] == {
+        "action_class": "registry_mutation",
+        "publication_mode": "state_store",
+        "required_level": "reviewed_plan",
+        "queue_mutated": False,
+    }
+    assert pending["review"] == {
+        "required": True,
+        "status": "pending",
+        "required_fields": ["reviewer", "reviewed_at", "reviewed_proposal_sha256"],
+    }
+    with pytest.raises(OperatorIntakeError) as unreviewed:
+        publication_preview(registry, store, plan_path=plan_path)
+    assert unreviewed.value.code == "review-missing"
+
+    forged = json.loads(json.dumps(pending))
+    forged["publication"] = {
+        "action_class": "task_creation_from_external_evidence",
+        "publication_mode": "state_store",
+        "required_level": "operator",
+        "queue_mutated": False,
+    }
+    forged["review"] = {
+        "required": False,
+        "status": "not_required",
+        "reason": "server_owned_publication_authority_required_at_publish",
+    }
+    forged["proposal_sha256"] = operator_intake_module.legacy.sha256_json(
+        operator_intake_module._proposal_unsigned(forged)
+    )
+    plan_path.write_text(json.dumps(forged, indent=2) + "\n")
+    with monkeypatch.context() as forged_context:
+        forged_context.setattr(
+            operator_intake_module,
+            "_validate_task_revision_identity_continuity",
+            lambda *_: None,
+        )
+        with pytest.raises(OperatorIntakeError) as forged_preview:
+            publication_preview(registry, store, plan_path=plan_path)
+    assert forged_preview.value.code == "publication-contract-task-spec-mismatch"
+
+    plan_path.write_text(json.dumps(pending, indent=2) + "\n")
     review_task_proposal(
         plan_path=plan_path,
         reviewer="post-hardening-reviewer",
@@ -6552,3 +7596,20 @@ def test_legacy_untyped_task_cannot_claim_verified_via_terminal_exception(
             path=tmp_path / "legacy-verified.proposal.json",
         )
     assert caught.value.code == "task-acceptance-contract-invalid"
+
+
+def test_operator_task_publish_cli_rejects_resource_db_override(capsys):
+    with pytest.raises(SystemExit) as exc:
+        bureau_cli.parser().parse_args(
+            [
+                "operator-task-publish",
+                "--plan",
+                "proposal.json",
+                "--apply",
+                "--resource-db",
+                "/tmp/forged-resource.sqlite3",
+            ]
+        )
+
+    assert exc.value.code == 2
+    assert "unrecognized arguments: --resource-db" in capsys.readouterr().err

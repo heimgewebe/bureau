@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T014",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "hausKI-audio Altworktrees kontrolliert bereinigen",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Nach belegter Repositoryarchivierung ausschließlich entbehrliche lokale verknüpfte hausKI-audio-Worktrees über den typisierten Cleanupvertrag entfernen.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T013"
@@ -93,6 +93,15 @@
       "Erlaubnis zur Entfernung des Main-Worktrees",
       "Force-Autorität",
       "Medien- oder Assetlöschung"
-    ]
+    ],
+    "bureau_cleanup": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "retired_resources": [
+        "repo.hauski-audio"
+      ]
+    }
   }
 }

@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Mitschreiber-pyo3-Sicherheitsupdate und Metarepo-Digest frisch reparieren",
   "goal": "Erzeuge einen frischen Mitschreiber-Ersatzpfad für pyo3 0.29.0 aus PR #85 und den Metarepo-Digest aus PR #86. Das Sicherheitsupdate wird zuerst umgesetzt und validiert; der Digest folgt erst auf dessen grünem Vertragsstand.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 5
@@ -88,6 +88,15 @@
       "execution_order": [
         "pyo3-0.29.0",
         "metarepo-digest"
+      ]
+    },
+    "bureau_cleanup": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "retired_resources": [
+        "repo.mitschreiber"
       ]
     }
   },

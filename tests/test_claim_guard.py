@@ -169,6 +169,64 @@ def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_f
     assert run["task_id"] == "BUR-TEST-001-T001"
 
 
+def _mark_repo_coordination_only_retired(root):
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text())
+    resource_id = task["claims"][0]["resource"]
+    for resource_path in (root / "registry/resources").glob("*.json"):
+        resource = json.loads(resource_path.read_text())
+        if resource["id"] != resource_id:
+            continue
+        metadata = dict(resource.get("metadata", {}))
+        metadata.update({"lifecycle": "retired", "coordination_only": True})
+        resource["metadata"] = metadata
+        resource_path.write_text(json.dumps(resource))
+        return resource_id
+    raise AssertionError(f"claim resource {resource_id} is missing")
+
+
+def test_retired_coordination_only_resource_blocks_write_claim(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1, mode="write")
+    resource_id = _mark_repo_coordination_only_retired(root)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _: [],
+    )
+
+    item = dispatcher.frontier({"repository"})[0]
+    assert item["eligible"] is False
+    assert (
+        f"{resource_id} is retired coordination-only; write claim is forbidden"
+        in item["reasons"]
+    )
+    with pytest.raises(NoEligibleTask, match="retired coordination-only"):
+        dispatcher.claim_next("worker", ("repository",))
+
+
+def test_retired_coordination_only_resource_allows_read_claim(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1, mode="read")
+    _mark_repo_coordination_only_retired(root)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _: [],
+    )
+
+    item = dispatcher.frontier({"repository"})[0]
+    assert item["eligible"] is True
+    claimed = dispatcher.claim_next("worker", ("repository",))["run"]
+    assert claimed["task_id"] == item["task_id"]
+
+
 def test_open_pull_request_observation_failure_is_resource_scoped(
     registry_factory, tmp_path, monkeypatch
 ):

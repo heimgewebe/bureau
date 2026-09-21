@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T013",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "hausKI-audio Repository recovery-first archivieren",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Nach geschlossenem Alt-Runtimepfad das hausKI-audio-Repository und seine GitHub-/CI-Oberflächen archivieren, aber noch keine lokalen Worktrees entfernen.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T012"
@@ -94,6 +94,15 @@
       "Worktree-Cleanup",
       "Medienlöschung",
       "zukünftige Remote-Unveränderlichkeit"
-    ]
+    ],
+    "bureau_cleanup": {
+      "schema_version": 1,
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-09-18",
+      "source_pull_request": "heimgewebe/bureau#2318",
+      "retired_resources": [
+        "repo.hauski-audio"
+      ]
+    }
   }
 }

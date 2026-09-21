@@ -229,12 +229,32 @@ def modes_conflict(left: str, right: str) -> bool:
     return "write" in {left, right} or left != right
 
 
+def claim_resource_lifecycle_reasons(
+    claim: Claim,
+    resources: dict[str, Resource],
+) -> list[str]:
+    resource = resources.get(claim.resource)
+    if resource is None:
+        return []
+    metadata = resource.metadata if isinstance(resource.metadata, dict) else {}
+    if (
+        metadata.get("lifecycle") == "retired"
+        and metadata.get("coordination_only") is True
+        and claim.mode != "read"
+    ):
+        return [
+            f"{claim.resource} is retired coordination-only; "
+            f"{claim.mode} claim is forbidden"
+        ]
+    return []
+
+
 def claim_conflicts(
     claim: Claim,
     active: list[Reservation],
     resources: dict[str, Resource],
 ) -> list[str]:
-    reasons: list[str] = []
+    reasons = claim_resource_lifecycle_reasons(claim, resources)
     for held in active:
         if overlaps(claim.resource, held.resource, resources) and modes_conflict(
             claim.mode, held.mode

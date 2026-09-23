@@ -1,35 +1,35 @@
 {
   "counts": {
     "tasks_by_state": {
-      "blocked": 13,
-      "cancelled": 18,
+      "blocked": 18,
+      "cancelled": 20,
       "inbox": 5,
-      "planned": 195,
-      "ready": 227,
-      "superseded": 21,
-      "verified": 666
+      "planned": 262,
+      "ready": 448,
+      "superseded": 44,
+      "verified": 774
     },
-    "tasks_total": 1145
+    "tasks_total": 1571
   },
   "event_checkpoint": {
-    "id": 7833
+    "id": 17324
   },
   "frontier": {
-    "blocked": 1145,
-    "eligible": 0,
+    "blocked": 1556,
+    "eligible": 15,
     "tasks_by_effective_state": {
-      "blocked": 13,
-      "cancelled": 18,
+      "blocked": 18,
+      "cancelled": 20,
       "inbox": 5,
-      "planned": 195,
-      "ready": 143,
+      "planned": 262,
+      "ready": 215,
       "stale": 0,
-      "superseded": 21,
-      "verified": 750
+      "superseded": 44,
+      "verified": 1007
     },
-    "tasks_total": 1145
+    "tasks_total": 1571
   },
-  "generated_at": "2026-08-17T05:47:20.099193Z",
+  "generated_at": "2026-09-23T19:40:33.506983Z",
   "kind": "bureau_public_state_snapshot",
   "redaction": {
     "fail_closed": true,
@@ -45,20 +45,20 @@
     "schema_version": 1
   },
   "release": {
-    "commit": "ae275fc895e6ab460172f479fa7ba30c62dfff91",
+    "commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
     "schema_version": 1
   },
   "repository": "heimgewebe/bureau",
   "roots": {
     "public_receipt_identities": {
-      "count": 149,
-      "merkle_sha256": "b3fdb0e213acd2cbcfdefbf49589453f88af33e3588c6a1d16ce61cafdd8ad0d"
+      "count": 312,
+      "merkle_sha256": "d247de91c298f3d9a2ed1134c947e92e193f0c2a748f2972f28a9b9117641a47"
     },
     "public_task_identities": {
-      "count": 1145,
-      "merkle_sha256": "d7fa47b1458a02478a049c9330054308f545c37b40575694e95cd97ca0a3f04e"
+      "count": 1571,
+      "merkle_sha256": "0eee4f15d0643c01a1abdb068e72d3746bd17906c9f13029ebb09ba4bd7d2702"
     }
   },
   "schema_version": 1,
-  "snapshot_sha256": "550c29d42474844c5b297e3508a97ca4719bea1f59a9a3bd244f44aa313cc3be"
+  "snapshot_sha256": "7b35ebad7ef972d2db78b6747d4371115f7a0a77d9a010fd4b8a3491d0e4c297"
 }

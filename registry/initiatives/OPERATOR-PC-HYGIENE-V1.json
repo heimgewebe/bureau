@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1",
   "title": "Heim-PC operator hygiene follow-ups",
   "state": "active",
-  "commitment": "later",
+  "commitment": "next",
   "goal": "Close the remaining Heim-PC service hygiene gaps found in the 2026-07-08 live audit without weakening Operator Relay boundaries or making blind runtime claims.",
   "current_plan": {
     "repository": "bureau",

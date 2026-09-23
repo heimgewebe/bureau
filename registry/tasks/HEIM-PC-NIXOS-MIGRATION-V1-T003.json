@@ -4,7 +4,7 @@
   "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
   "title": "Prove one-disk cutover readiness",
   "state": "planned",
-  "goal": "After T001/T002, ancestry-preserving source integration, disposable activation proof, storage-harness implementation, final source integration and protected final source publication and the final T011 published-source activation reproof are terminal and reviewed, prove one-disk NixOS cutover readiness on an exclusively reserved disposable non-production target using only the leased immutable published-source artifact produced by T010 from the exact terminal T009 merge-commit tree: rehearse the exact canonical LUKS2+Btrfs topology from a blank virtual disk, restore independently sourced off-host backup material, reconstruct and boot a fresh system, prove offline recovery, and finish with a reviewed evidence-complete cutover plan whose actual production device remains deliberately unbound for a later separately authorized destructive order.",
+  "goal": "After T001/T002, ancestry-preserving source integration, the T004 activation-mechanism proof, storage-harness implementation, final source integration/publication/seal and the final T011 published-source closure build proof are terminal and reviewed, prove one-disk NixOS cutover readiness on an exclusively reserved disposable non-production target using only the leased immutable T010 published-source artifact and the exact T011 final closure/build receipt: first create and independently read back the canonical GPT+EFI+recovery+LUKS2+Btrfs topology, then boot a distinct receipt-bound prior/recovery runtime derived only from T010 on that topology, then activate exactly the T011 closure without source reevaluation, independently read back the live closure and prove rollback to that prior/recovery runtime, restore independently sourced off-host backup material, prove offline recovery, and finish with a reviewed evidence-complete cutover plan whose actual production device remains deliberately unbound for a later separately authorized destructive order.",
   "priority": {
     "lane": "next",
     "rank": 11
@@ -22,7 +22,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "Runtime/block-device mutation is authorized only inside the exclusively reserved disposable storage-rehearsal sandbox and only after T004, T007, T008, T009, T010 and T011 are terminal. Declarative/reconstruction source acquisition is restricted to the separately leased immutable artifact.heim-pc.nixos-published-source produced by T010 from the exact terminal T009 merge-commit tree; /home/alex/repos/heim-pc/.git, mutable worktrees, moving branches, main itself, mutable locks and unpinned remote sources are outside T003 authority and must not be read for reconstruction or boot. The productive Heim-PC block devices, EFI, Secure-Boot, firmware, boot state and OS remain outside this authority. T004 proves the mechanism only; T003 final activation authority is the fresh T011 closure built and live-read back from the exact T010 published-source artifact."
+      "note": "Runtime/block-device mutation is authorized only inside the exclusively reserved disposable storage-rehearsal sandbox and only after T004, T007, T008, T009, T010 and the final T011 closure build/identity proof are terminal. Declarative/reconstruction source acquisition is restricted to the separately leased immutable artifact.heim-pc.nixos-published-source produced by T010 from the exact terminal T009 merge-commit tree; /home/alex/repos/heim-pc/.git, mutable worktrees, moving branches, main itself, mutable locks and unpinned remote sources are outside T003 authority and must not be read for reconstruction or boot. The productive Heim-PC block devices, EFI, Secure-Boot, firmware, boot state and OS remain outside this authority. T004 proves the mechanism only. After the disposable GPT/LUKS/Btrfs topology is created and independently read back, T003 must boot a distinct receipt-bound prior/recovery runtime derived only from T010 on that target; only then may it activate the exact final closure named by the reviewed T011 managed-build receipt, independently read it back and roll back to the bound prior/recovery runtime."
     }
   },
   "claims": [
@@ -115,12 +115,12 @@
       }
     },
     {
-      "id": "final-published-source-activation-proof-bound",
-      "assertion": "T011 is terminal and independently reviewed. T003 binds the exact T011 managed-build receipt, closure identity, activation receipt, independent live closure readback and rollback evidence to the exact T010 published-source artifact/T009 merge commit tree. A failed, stale, source-mismatched or T004-only activation proof blocks T003 before any block-device effect.",
+      "id": "final-published-source-closure-build-bound",
+      "assertion": "T011 is terminal and independently reviewed. Before any T003 block-device/runtime effect, T003 binds the exact T011 managed-build receipt and final closure identity to the exact T010 published-source artifact/T009 merge commit tree. T011 activation/live-readback/rollback evidence is neither required nor accepted because those final-source runtime proofs belong to T003. A failed, stale, source-mismatched or T004-only closure proof blocks T003 before any block-device effect.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "heim-pc:nixos-migration-v1:t003:final-published-source-activation-proof-bound"
+        "observation_scope": "heim-pc:nixos-migration-v1:t003:final-published-source-closure-build-bound"
       }
     },
     {
@@ -152,11 +152,29 @@
     },
     {
       "id": "exact-storage-rehearsal",
-      "assertion": "Starting from the independently proven blank disposable virtual disk and only the verified T010 published-source artifact, the exact production-target topology GPT + EFI System Partition + recovery/boot-recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers is created, LUKS unlock is proven, every Btrfs subvolume is mounted correctly, the resulting disposable system actually boots, and independent readback proves the expected topology; the earlier LUKS+ext4 VM proof is not substituted for this gate.",
+      "assertion": "Starting from the independently proven blank disposable virtual disk and only the verified T010 published-source artifact, T003 creates the exact production-target topology GPT + EFI System Partition + recovery/boot-recovery surface + LUKS2 + Btrfs with @root, @nix, @persist, @home, @data and @containers, proves LUKS unlock and independently reads back every required partition, filesystem and subvolume mount. Before the final T011 closure is activated, T003 must additionally boot on that exact topology a distinct receipt-bound prior/recovery runtime derived only from T010/locked inputs, prove that it exposes executable switch-to-configuration and independently read back its live identity. That prior/recovery runtime is mechanism/recovery state only and is explicitly not accepted as the final T011 closure identity.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "heim-pc:nixos-migration-v1:t003:exact-storage-rehearsal"
+      }
+    },
+    {
+      "id": "final-published-source-activation-readback",
+      "assertion": "Only after exact-storage-rehearsal has independently proven both the disposable target topology and a distinct live receipt-bound prior/recovery runtime on it, T003 consumes the reviewed T011 managed-build receipt and activates exactly its immutable final closure through the receipt-bound managed activation contract. The activation performs no Git, branch/main, lock or remote-input reevaluation. Independent live readback proves /run/current-system or the equivalent running-system identity equals the exact T011 closure.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t003:final-published-source-activation-readback"
+      }
+    },
+    {
+      "id": "final-published-source-rollback-proven",
+      "assertion": "Inside the same disposable storage-rehearsal target and same boot/recovery context, after successful exact T011 closure activation and live readback, rollback consumes the exact receipt-bound prior/recovery runtime already proven by exact-storage-rehearsal. Independent readback proves return to that expected prior/recovery identity without mutable-source reevaluation; the prior/recovery runtime is explicitly not promoted to final activation identity.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t003:final-published-source-rollback-proven"
       }
     },
     {
@@ -179,7 +197,7 @@
     },
     {
       "id": "fresh-system-reconstruction",
-      "assertion": "A fresh disposable system is reconstructed exclusively from the verified T010 content-addressed published-source artifact plus independently restored non-reproducible data, demonstrating that neither Git object-store access, mutable checkout state, hidden production-host state nor the original system disk is required for recovery. Boot/readback evidence binds the reconstructed system to the exact protected-main artifact manifest, source commit/tree and approved closure identity.",
+      "assertion": "A fresh disposable system is reconstructed exclusively from the verified T010 content-addressed published-source artifact plus independently restored non-reproducible data, demonstrating that neither Git object-store access, mutable checkout state, hidden production-host state nor the original system disk is required for recovery. After topology proof and receipt-bound activation, boot/live readback binds the reconstructed running system to the exact T011 final closure and its T010/T009 source identity.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -206,7 +224,7 @@
     },
     {
       "id": "reviewed-evidence-complete-plan",
-      "assertion": "The terminal artifact is a reviewed evidence object/plan binding the T004 mechanism proof plus final T011 published-source activation proof, exact T007 lineage evidence, exact T008 protected-PR handoff, exact T009 Captain merge receipt, and T010 published-source artifact digest/source merge commit-tree, exact target topology, point of no return, rollback/reconstruction procedure, mandatory post-boot readback and all prerequisite backup/recovery evidence, while containing no current authorization or production block-device binding for the real cutover.",
+      "assertion": "The terminal artifact is a reviewed evidence object/plan binding the T004 mechanism proof, final T011 published-source closure/build proof, T003 exact topology proof plus final-source activation/live-readback/rollback evidence, exact T007 lineage evidence, exact T008 protected-PR handoff, exact T009 Captain merge receipt and T010 published-source artifact digest/source merge commit-tree, exact target topology, point of no return, rollback/reconstruction procedure, mandatory post-boot readback and all prerequisite backup/recovery evidence, while containing no current authorization or production block-device binding for the real cutover.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -224,7 +242,7 @@
     },
     {
       "id": "runtime-evidence-reviewed",
-      "assertion": "Exact T004 mechanism proof, T011 final published-source activation proof, T007 source-artifact/lineage, T008 protected-PR handoff, T009 protected merge, T010 published-source artifact, target-preflight, VM/storage topology, boot/readback, backup restore, fresh reconstruction, offline recovery and final-plan evidence are independently reviewed before T003 is considered terminal.",
+      "assertion": "Exact T004 mechanism proof, T011 final published-source closure/build proof, T003 final-source activation/live-readback/rollback proof, T007 source-artifact/lineage, T008 protected-PR handoff, T009 protected merge, T010 published-source artifact, target-preflight, storage topology, boot/readback, backup restore, fresh reconstruction, offline recovery and final-plan evidence are independently reviewed before T003 is considered terminal.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -246,6 +264,8 @@
     "source_artifact": "artifact.heim-pc.nixos-published-source",
     "historical_device_reference_not_authority": "WD_BLACK SN850X 2TB / historical nvme0n1 orientation only; actual production device identity is intentionally unbound in this task",
     "early_activation_proof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T004",
-    "final_activation_proof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T011"
+    "final_activation_proof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
+    "final_closure_build_task": "HEIM-PC-NIXOS-MIGRATION-V1-T011",
+    "final_runtime_order": "T003 proves disposable storage topology, boots and reads back a distinct T010-bound prior/recovery runtime on it, then activates/read-backs/rolls back the exact T011 receipt-bound final closure"
   }
 }

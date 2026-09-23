@@ -342,6 +342,30 @@ def test_ready_lower_rank_sibling_is_gated_by_target_dependency(
     claimed = dispatcher.claim_next("worker", ("repository",))["run"]
     assert claimed["task_id"] == t012_id
 
+    initiative["commitment"] = "later"
+    initiative_path.write_text(json.dumps(initiative))
+    post_registry = Registry.load(root)
+    post_store = StateStore(tmp_path / "post-state" / "bureau.sqlite3")
+    post_store.import_registry_task_specs(post_registry)
+    current_t012 = post_store.task_spec(t012_id)
+    assert current_t012 is not None
+    verified_t012 = json.loads(json.dumps(current_t012["spec"]))
+    verified_t012["state"] = "verified"
+    post_store.put_task_spec(
+        verified_t012,
+        idempotency_key="t012-verified-after-scheduling-rollback",
+        expected_revision=current_t012["revision"],
+        source="test",
+    )
+    post_dispatcher = Dispatcher(post_registry, post_store)
+    post_frontier = {
+        item["task_id"]: item for item in post_dispatcher.frontier({"repository"})
+    }
+    post_t003_reasons = " ".join(post_frontier[t003_id]["reasons"])
+    assert post_frontier[t003_id]["eligible"] is False
+    assert "initiative commitment is later" in post_t003_reasons
+    assert f"dependency {t012_id} is verified" not in post_t003_reasons
+
 
 def test_github_open_pull_requests_requests_label_metadata_and_configured_limit(
     monkeypatch,

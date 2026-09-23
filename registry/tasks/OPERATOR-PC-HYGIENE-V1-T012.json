@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T012",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Classify and retire stale Docker development residues",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 212
@@ -39,24 +39,58 @@
   "depends_on": [],
   "acceptance": [
     {
+      "assertion": "Each remaining candidate container and attached volume is re-read live and classified as active-source, restartable-development-state, retained-proof, terminal-container-only, terminal-volume or unknown-owner using Compose labels, mounts, current repo activity, leases and receipts.",
+      "evidence_type": "object",
       "id": "live-classification",
-      "assertion": "Each remaining candidate container and attached volume is re-read live and classified as active-source, restartable-development-state, retained-proof, terminal-container-only, terminal-volume or unknown-owner using Compose labels, mounts, current repo activity, leases and receipts."
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t012:live-classification"
+      }
     },
     {
+      "assertion": "No running container, active Compose project, current worktree bind mount, unresolved proof database, leased resource or volume without a verified owner/disposition is removed.",
+      "evidence_type": "object",
       "id": "no-active-loss",
-      "assertion": "No running container, active Compose project, current worktree bind mount, unresolved proof database, leased resource or volume without a verified owner/disposition is removed."
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t012:no-active-loss"
+      }
     },
     {
+      "assertion": "Every approved cleanup names exact container and volume IDs; container-only cleanup never implies volume deletion, and persistent volume removal requires separate export or explicit dispensability evidence.",
+      "evidence_type": "object",
       "id": "bounded-cleanup",
-      "assertion": "Every approved cleanup names exact container and volume IDs; container-only cleanup never implies volume deletion, and persistent volume removal requires separate export or explicit dispensability evidence."
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t012:bounded-cleanup"
+      }
     },
     {
+      "assertion": "After effects, Docker container, volume and network state plus the active Heim utility and Weltgewebe-related containers are re-read; no intended service is degraded.",
+      "evidence_type": "object",
       "id": "post-proof",
-      "assertion": "After effects, Docker container, volume and network state plus the active Heim utility and Weltgewebe-related containers are re-read; no intended service is degraded."
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t012:post-proof"
+      }
     },
     {
+      "assertion": "Retained candidates record a concrete owner and next disposition; removed candidates record before/after IDs and whether any volume was intentionally preserved.",
+      "evidence_type": "object",
       "id": "durable-receipt",
-      "assertion": "Retained candidates record a concrete owner and next disposition; removed candidates record before/after IDs and whether any volume was intentionally preserved."
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t012:durable-receipt"
+      }
+    },
+    {
+      "assertion": "Before T012 may be terminalized, protected heimgewebe/bureau main and the installed Bureau runtime/canonical Registry both show OPERATOR-PC-HYGIENE-V1 commitment restored to 'later'; the rollback is completed while the T012 run still occupies the initiative's single active slot so the temporary scheduling window cannot make T003 claimable after T012 verification.",
+      "evidence_type": "object",
+      "id": "scheduling-rollback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t012:scheduling-rollback"
+      }
     }
   ],
   "metadata": {
@@ -119,6 +153,48 @@
       "proof database obsolescence",
       "current Weltgewebe development stack retirement",
       "permission to prune Docker images or networks"
-    ]
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4a623797febaf0aad9449980",
+      "event_id": 17297,
+      "event_created_at": "2026-09-23T14:51:23.068760Z",
+      "request_sha256": "d9b45893472a2fffb61db7d95bcca26becbae1edb561c5246239690215e35d23",
+      "candidate_event_id": "candidate-event-f84cd4a51ce24ea0cca39da8",
+      "source_fingerprint": "ec083346c9e76d9ad8a18e15f55028911d1bdcae067c5e38dac3126bc056af57",
+      "content_fingerprint": "4a623797febaf0aad9449980988b297877b8f63fd7cd62864fa683147193425b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "ec083346c9e76d9ad8a18e15f55028911d1bdcae067c5e38dac3126bc056af57",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "github:heimgewebe/bureau#2324:current-head-review-P2-post-T012-gate",
+        "observed_at": "2026-09-23T16:50:00+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "ec083346c9e76d9ad8a18e15f55028911d1bdcae067c5e38dac3126bc056af57",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "github:heimgewebe/bureau#2324:current-head-review-P2-post-T012-gate",
+          "observed_at": "2026-09-23T16:50:00+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    }
   }
 }

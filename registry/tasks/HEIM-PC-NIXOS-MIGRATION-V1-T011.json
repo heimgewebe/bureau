@@ -14,8 +14,14 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/heim-pc",
     "grabowski_resources": [
+      "service:heim-pc-nixos-activation-sandbox",
       "path:/home/alex/.local/state/bureau/artifacts/heim-pc-nixos-migration-v1/published-source"
-    ]
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "operator",
+      "note": "This approval gates only the managed Nix Build effect that realizes the final closure in the exclusively reserved disposable service.heim-pc-nixos-activation-sandbox. The managed-build receipt must use the Build effect class and bind the exact T010 published-source identity, locked inputs and resulting closure. This approval does not authorize the Activation effect class, switch-to-configuration, /run/current-system or boot-state mutation, rollback, storage/partition/LUKS/mkfs effects, EFI/Secure-Boot/firmware mutation or reboot; those final-source runtime proofs belong only to T003."
+    }
   },
   "claims": [
     {
@@ -26,6 +32,11 @@
     {
       "resource": "artifact.heim-pc.nixos-published-source",
       "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "service.heim-pc-nixos-activation-sandbox",
+      "mode": "exclusive",
       "isolation": "none"
     }
   ],
@@ -49,7 +60,7 @@
     },
     {
       "id": "t010-published-source-bound",
-      "assertion": "T010 is terminal and independently reviewed. T011 binds the exact immutable artifact.heim-pc.nixos-published-source manifest/digest to the exact T009 merge commit/tree, T009 Captain merge receipt, reviewed T008 PR identity, predecessor ancestry, Control Release Set and lock/input identity. Any artifact/tree/receipt drift fails closed before the final build.",
+      "assertion": "T010 is terminal and independently reviewed. T011 binds the exact immutable artifact.heim-pc.nixos-published-source manifest/digest to the exact T009 merge commit/tree, T009 Captain merge receipt, reviewed T008 PR identity, predecessor ancestry, Control Release Set and lock/input identity. Any artifact/tree/receipt drift fails closed before the final build. T010's historical wording that called T011 the final activation-reproof consumer is retained only as immutable source-seal provenance from the pre-repair contract; it is not accepted as effect authority and does not override the repaired T011-build/T003-activation boundary.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -75,8 +86,17 @@
       }
     },
     {
+      "id": "exclusive-build-sandbox-authority",
+      "assertion": "Before the managed Build effect, T011 holds the exclusive service.heim-pc-nixos-activation-sandbox claim solely as disposable build isolation and executor serialization. That reservation authorizes no Activation effect: no activation receipt may be consumed or minted by T011, and switch-to-configuration, /run/current-system/boot-state mutation and rollback remain forbidden.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:nixos-migration-v1:t011:exclusive-build-sandbox-authority"
+      }
+    },
+    {
       "id": "published-source-managed-build-realization",
-      "assertion": "Using only the verified T010 published-source artifact and receipt-bound inputs, a fresh managed build realizes the immutable NixOS storage-target system closure and emits a receipt binding the exact T009 merge commit/tree, T010 artifact digest, Control Release Set, locked inputs, effect class and closure. The build receipt does not authorize activation.",
+      "assertion": "Using only the verified T010 published-source artifact and receipt-bound inputs while holding the exclusive build-isolation reservation, a fresh managed Build effect realizes the immutable NixOS storage-target system closure and emits a receipt binding the exact T009 merge commit/tree, T010 artifact digest, Control Release Set, locked inputs, Build effect class and closure. The managed-build receipt is not an Activation receipt and cannot authorize activation.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -94,7 +114,7 @@
     },
     {
       "id": "build-receipt-fail-closed",
-      "assertion": "Missing, stale, mismatched or unauthorized T004/T010/artifact/review/build-receipt/closure evidence is rejected before T011 terminalization. No denied path performs switch-to-configuration, mutates /run/current-system or boot state, or creates/mutates partitions, filesystems or LUKS state.",
+      "assertion": "Missing, stale, mismatched or unauthorized T004/T010/artifact/review/build-sandbox/Build-approval/build-receipt/closure evidence is rejected before T011 terminalization. No denied path performs an Activation effect, switch-to-configuration, mutates /run/current-system or boot state, or creates/mutates partitions, filesystems or LUKS state.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -147,6 +167,9 @@
       "cutover approval"
     ],
     "final_runtime_proof_task": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
-    "final_closure_role": "T011 builds and seals the final T010-derived closure; T003 is the first task allowed to activate it"
+    "final_closure_role": "T011 builds and seals the final T010-derived closure; T003 is the first task allowed to activate it",
+    "build_effect_class": "Build",
+    "build_isolation_resource": "service.heim-pc-nixos-activation-sandbox",
+    "historical_t010_activation_label_disposition": "T010 remains immutable source-seal authority; its pre-repair T011 activation-reproof wording is provenance only and grants T011 no Activation effect authority."
   }
 }

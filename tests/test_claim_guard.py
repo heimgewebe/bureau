@@ -306,6 +306,67 @@ def test_open_pull_request_observation_failure_is_resource_scoped(
     assert claimed["task_id"] == "BUR-TEST-001-T002"
 
 
+def test_ready_lower_rank_sibling_is_gated_by_target_dependency(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2, mode="read", max_active=1)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["commitment"] = "next"
+    initiative_path.write_text(json.dumps(initiative))
+
+    t003_id = "BUR-TEST-001-T001"
+    t012_id = "BUR-TEST-001-T002"
+    t003_path = root / f"registry/tasks/{t003_id}.json"
+    t012_path = root / f"registry/tasks/{t012_id}.json"
+
+    t003 = json.loads(t003_path.read_text())
+    t003["priority"] = {"lane": "later", "rank": 203}
+    t003["depends_on"] = [t012_id]
+    t003_path.write_text(json.dumps(t003))
+
+    t012 = json.loads(t012_path.read_text())
+    t012["priority"] = {"lane": "later", "rank": 212}
+    t012_path.write_text(json.dumps(t012))
+
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    store.import_registry_task_specs(registry)
+    dispatcher = Dispatcher(registry, store)
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    assert frontier[t003_id]["eligible"] is False
+    assert f"dependency {t012_id} is ready" in " ".join(frontier[t003_id]["reasons"])
+    assert frontier[t012_id]["eligible"] is True
+
+    claimed = dispatcher.claim_next("worker", ("repository",))["run"]
+    assert claimed["task_id"] == t012_id
+
+    initiative["commitment"] = "later"
+    initiative_path.write_text(json.dumps(initiative))
+    post_registry = Registry.load(root)
+    post_store = StateStore(tmp_path / "post-state" / "bureau.sqlite3")
+    post_store.import_registry_task_specs(post_registry)
+    current_t012 = post_store.task_spec(t012_id)
+    assert current_t012 is not None
+    verified_t012 = json.loads(json.dumps(current_t012["spec"]))
+    verified_t012["state"] = "verified"
+    post_store.put_task_spec(
+        verified_t012,
+        idempotency_key="t012-verified-after-scheduling-rollback",
+        expected_revision=current_t012["revision"],
+        source="test",
+    )
+    post_dispatcher = Dispatcher(post_registry, post_store)
+    post_frontier = {
+        item["task_id"]: item for item in post_dispatcher.frontier({"repository"})
+    }
+    post_t003_reasons = " ".join(post_frontier[t003_id]["reasons"])
+    assert post_frontier[t003_id]["eligible"] is False
+    assert "initiative commitment is later" in post_t003_reasons
+    assert f"dependency {t012_id} is verified" not in post_t003_reasons
+
+
 def test_github_open_pull_requests_requests_label_metadata_and_configured_limit(
     monkeypatch,
 ):

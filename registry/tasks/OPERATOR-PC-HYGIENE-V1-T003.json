@@ -33,15 +33,30 @@
   "acceptance": [
     {
       "id": "operator-pc-hygiene-v1-t003-1",
-      "assertion": "The privileged path cannot restart, stop, enable, disable or edit arbitrary services."
+      "assertion": "The privileged path cannot restart, stop, enable, disable or edit arbitrary services.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t003:operator-pc-hygiene-v1-t003-1"
+      }
     },
     {
       "id": "operator-pc-hygiene-v1-t003-2",
-      "assertion": "It can only clear failed state for an explicitly allowed target or class after read-only status checks."
+      "assertion": "It can only clear failed state for an explicitly allowed target or class after read-only status checks.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t003:operator-pc-hygiene-v1-t003-2"
+      }
     },
     {
       "id": "operator-pc-hygiene-v1-t003-3",
-      "assertion": "The Heim-PC audit can clear stale user@111.service without granting general sudo, or the runbook records the exact manual command."
+      "assertion": "The Heim-PC audit can clear stale user@111.service without granting general sudo, or the runbook records the exact manual command.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "heim-pc:operator-pc-hygiene-v1:t003:operator-pc-hygiene-v1-t003-3"
+      }
     }
   ],
   "metadata": {
@@ -182,7 +197,51 @@
         "permission to clear unrelated failed units",
         "that broad operator_power_argv satisfies the narrow least-privilege acceptance"
       ]
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5310b2f7833e8449c2e38f7b",
+      "event_id": 17248,
+      "event_created_at": "2026-09-23T10:22:32.073943Z",
+      "request_sha256": "90d60c1b46ed74595e7e94188583628ece3f1d8ec98c2c8bac2d4c99db70a171",
+      "candidate_event_id": "candidate-event-537bcaee952c73295c1bfd41",
+      "source_fingerprint": "5ed475b8e72630c23af42bfb0a43506b523bc7359464152c9c433f42e42a9418",
+      "content_fingerprint": "5310b2f7833e8449c2e38f7b6fbd03e2318a0550c060be1cd245a59014367b6a",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "5ed475b8e72630c23af42bfb0a43506b523bc7359464152c9c433f42e42a9418",
+        "freshness": "fingerprint-bound",
+        "kind": "conversation",
+        "locator": "github:heimgewebe/bureau#2324:review-P2-T003-preemption",
+        "observed_at": "2026-09-23T12:07:00+02:00",
+        "sha256": null
+      },
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "5ed475b8e72630c23af42bfb0a43506b523bc7359464152c9c433f42e42a9418",
+          "freshness": "fingerprint-bound",
+          "kind": "conversation",
+          "locator": "github:heimgewebe/bureau#2324:review-P2-T003-preemption",
+          "observed_at": "2026-09-23T12:07:00+02:00",
+          "sha256": null
+        }
+      ],
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
     }
   },
-  "depends_on": []
+  "depends_on": [
+    "OPERATOR-PC-HYGIENE-V1-T012"
+  ]
 }

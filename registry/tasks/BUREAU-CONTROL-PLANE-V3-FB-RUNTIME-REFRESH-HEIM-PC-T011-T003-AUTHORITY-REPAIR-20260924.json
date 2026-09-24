@@ -84,7 +84,7 @@
       "general repository, merge, deployment-other-components or foreign-work mutation authority"
     ],
     "main_at_registration": "cb213349d610afe97045fc8453c13c7b56ee93ed",
-    "observation_sha256_at_registration": "a249fc91cf4df0658bc31b5b5cc435afc574dae72149c746f099b99db065943b",
+    "observation_sha256_at_registration": "a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56",
     "post_publication_activation": {
       "activation_state": "ready",
       "does_not_establish": [
@@ -133,13 +133,13 @@
     "registration_observation": {
       "schema_version": 1,
       "repository": "heimgewebe/bureau",
-      "observed_at": "2026-09-24T03:59:38.546937Z",
+      "observed_at": "2026-09-24T08:35:19.747455Z",
       "deployment_manifest_sha256": "b2866ed36c02d19317d474cd28cd3d09574e58b051e5f93d1b825e6309e69182",
       "deployed_source_commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
       "canonical_registry_source_commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
       "github_main": "cb213349d610afe97045fc8453c13c7b56ee93ed",
       "ratchet_merge_commit": "cb213349d610afe97045fc8453c13c7b56ee93ed",
-      "observation_sha256": "a249fc91cf4df0658bc31b5b5cc435afc574dae72149c746f099b99db065943b",
+      "observation_sha256": "a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56",
       "source_ancestry_to_main": true,
       "required_checks": {
         "validate (3.10)": "success",
@@ -273,7 +273,7 @@
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256"
     },
-    "source": "Fresh typed runtime-refresh observation a249fc91cf4df0658bc31b5b5cc435afc574dae72149c746f099b99db065943b on 2026-09-24T03:59:38.546937Z proves deployment manifest and canonical Registry match at c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6, that this source is a verified Git ancestor of protected main cb213349d610afe97045fc8453c13c7b56ee93ed by 9 commits, and that validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. The merged PR #2325 T011/T003 repair cannot be published into operational StateStore while the deployed Bureau contract remains stale. Historical authority AFTER-PR2306 was freshly rejected before intent creation because its activation observation is bound to an older main, so a fresh one-file successor is required.",
+    "source": "Fresh typed runtime-refresh observation a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56 on 2026-09-24T08:35:19.747455Z proves deployment manifest and canonical Registry match at c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6, that this source is a verified Git ancestor of protected main cb213349d610afe97045fc8453c13c7b56ee93ed by 9 commits, and that validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. The merged PR #2325 T011/T003 repair cannot be published into operational StateStore while the deployed Bureau contract remains stale. Historical authority AFTER-PR2306 was freshly rejected before intent creation because its activation observation is bound to an older main, so a fresh one-file successor is required.",
     "blocked_historical_authority": {
       "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2306-AUTHORITY-REPAIR-20260917",
       "observed_at": "2026-09-24T03:59:38.546937Z",

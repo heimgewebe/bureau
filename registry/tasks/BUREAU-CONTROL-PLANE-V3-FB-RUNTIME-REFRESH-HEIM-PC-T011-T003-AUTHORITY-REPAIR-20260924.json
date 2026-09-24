@@ -84,7 +84,7 @@
       "general repository, merge, deployment-other-components or foreign-work mutation authority"
     ],
     "main_at_registration": "cb213349d610afe97045fc8453c13c7b56ee93ed",
-    "observation_sha256_at_registration": "a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56",
+    "observation_sha256_at_registration": "d29d2f3d46c80d8435a937691799a0b6a1fe7b9825e769a7ebf9622817a1ded1",
     "post_publication_activation": {
       "activation_state": "ready",
       "does_not_establish": [
@@ -131,21 +131,65 @@
       "state_store_transition": "seed-missing-preserve-state-store"
     },
     "registration_observation": {
-      "schema_version": 1,
-      "repository": "heimgewebe/bureau",
-      "observed_at": "2026-09-24T08:35:19.747455Z",
-      "deployment_manifest_sha256": "b2866ed36c02d19317d474cd28cd3d09574e58b051e5f93d1b825e6309e69182",
-      "deployed_source_commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
       "canonical_registry_source_commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
+      "deployed_source_commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
+      "deployment_manifest_sha256": "b2866ed36c02d19317d474cd28cd3d09574e58b051e5f93d1b825e6309e69182",
+      "digest_contract": "sha256-canonical-json-newline-excluding-observation_sha256-v1",
+      "does_not_establish": [
+        "runtime target after this authority's own protected publication merge",
+        "permission to reuse or mutate historical runtime authorities",
+        "permission to skip fresh checks before adoption, activation, prepare-intent or apply"
+      ],
       "github_main": "cb213349d610afe97045fc8453c13c7b56ee93ed",
-      "ratchet_merge_commit": "cb213349d610afe97045fc8453c13c7b56ee93ed",
-      "observation_sha256": "a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56",
-      "source_ancestry_to_main": true,
-      "required_checks": {
-        "validate (3.10)": "success",
-        "validate (3.12)": "success",
-        "registry-registration-preflight/freshness": "success"
-      }
+      "kind": "bureau_runtime_refresh_registration_observation",
+      "lag_commits": 9,
+      "observation_sha256": "d29d2f3d46c80d8435a937691799a0b6a1fe7b9825e769a7ebf9622817a1ded1",
+      "observed_at": "2026-09-24T08:35:19.747455Z",
+      "repository": "heimgewebe/bureau",
+      "required_checks_on_current_main": {
+        "registry-registration-preflight/freshness": {
+          "check_run_id": 107362261304,
+          "completed_at": "2026-09-23T20:13:18Z",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35914450748/job/107362261304",
+          "head_sha": "cb213349d610afe97045fc8453c13c7b56ee93ed",
+          "started_at": "2026-09-23T20:13:05Z",
+          "status": "completed"
+        },
+        "validate (3.10)": {
+          "check_run_id": 107374332173,
+          "completed_at": "2026-09-23T21:03:47Z",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35916497547/job/107374332173",
+          "head_sha": "cb213349d610afe97045fc8453c13c7b56ee93ed",
+          "started_at": "2026-09-23T20:44:33Z",
+          "status": "completed"
+        },
+        "validate (3.12)": {
+          "check_run_id": 107374331795,
+          "completed_at": "2026-09-23T20:56:47Z",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/35916497547/job/107374331795",
+          "head_sha": "cb213349d610afe97045fc8453c13c7b56ee93ed",
+          "started_at": "2026-09-23T20:44:32Z",
+          "status": "completed"
+        }
+      },
+      "runtime_refresh_observation_sha256": "a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56",
+      "schema_version": 1,
+      "source_ancestry": {
+        "ahead_by": 9,
+        "behind_by": 0,
+        "compare_status": "ahead",
+        "merge_base_commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
+        "method": "github-compare",
+        "status": "proven"
+      },
+      "target_sha256": "8f05cac1080b7b35ce350158caa7b06f935e81d08860a8faddcf8445cc94efd1",
+      "trigger_merge_commit": "cb213349d610afe97045fc8453c13c7b56ee93ed",
+      "trigger_merged_at": "2026-09-23T20:31:12Z",
+      "trigger_pull_request": 2325,
+      "trigger_pull_request_head": "0746242bc96deefc1d65908096f7a156ea125e2a"
     },
     "runtime_execution_context": {
       "absence_tolerant_intent_roots": {
@@ -273,16 +317,26 @@
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256"
     },
-    "source": "Fresh typed runtime-refresh observation a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56 on 2026-09-24T08:35:19.747455Z proves deployment manifest and canonical Registry match at c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6, that this source is a verified Git ancestor of protected main cb213349d610afe97045fc8453c13c7b56ee93ed by 9 commits, and that validate (3.10), validate (3.12), and registry-registration-preflight/freshness are green. The merged PR #2325 T011/T003 repair cannot be published into operational StateStore while the deployed Bureau contract remains stale. Historical authority AFTER-PR2306 was freshly rejected before intent creation because its activation observation is bound to an older main, so a fresh one-file successor is required.",
+    "source": "Typed registration observation d29d2f3d46c80d8435a937691799a0b6a1fe7b9825e769a7ebf9622817a1ded1 at 2026-09-24T08:35:19.747455Z binds raw runtime-refresh observation a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56, deployment manifest and canonical Registry at c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6, verified github-compare ancestry to protected main cb213349d610afe97045fc8453c13c7b56ee93ed with 9 commits of forward lag, exact-main successful validate (3.10), validate (3.12), and registry-registration-preflight/freshness check runs, and runtime target 8f05cac1080b7b35ce350158caa7b06f935e81d08860a8faddcf8445cc94efd1. The merged PR #2325 T011/T003 repair cannot be published into operational StateStore while the deployed Bureau contract remains stale. The AFTER-PR2306 rejection recorded at 2026-09-24T03:59:38.546937Z is historical non-reuse evidence only and is not presented as fresh evidence for this registration epoch.",
     "blocked_historical_authority": {
+      "schema_version": 1,
+      "kind": "bureau_runtime_refresh_historical_authority_rejection",
+      "evidence_role": "historical-nonreuse-only",
       "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2306-AUTHORITY-REPAIR-20260917",
       "observed_at": "2026-09-24T03:59:38.546937Z",
+      "fresh_for_registration": false,
       "error_code": "authority-preflight-publication-activation-observation-unproven",
       "historical_activation_main": "e0e4e53f35defbf254f46be8a2dd9c06d214eb1c",
       "current_target_main": "cb213349d610afe97045fc8453c13c7b56ee93ed",
       "runtime_effect_started": false,
-      "disposition": "historical authority is target-bound to its old activation observation and is not reusable"
-    }
+      "disposition": "historical authority is target-bound to its old activation observation and is not reusable",
+      "does_not_establish": [
+        "fresh rejection at the 2026-09-24T08:35:19.747455Z registration-observation epoch",
+        "permission to reuse or mutate the historical authority",
+        "current runtime effect authority"
+      ]
+    },
+    "runtime_refresh_observation_sha256_at_registration": "a18fd7f7f0ab19eba83715d35f436672ade9507a6b63303c09857c6ca03e6b56"
   },
   "priority": {
     "lane": "now",

@@ -12,7 +12,7 @@
     "tasks_total": 1571
   },
   "event_checkpoint": {
-    "id": 17324
+    "id": 17348
   },
   "frontier": {
     "blocked": 1556,
@@ -29,7 +29,7 @@
     },
     "tasks_total": 1571
   },
-  "generated_at": "2026-09-23T19:40:33.506983Z",
+  "generated_at": "2026-09-24T08:31:14.235770Z",
   "kind": "bureau_public_state_snapshot",
   "redaction": {
     "fail_closed": true,
@@ -60,5 +60,5 @@
     }
   },
   "schema_version": 1,
-  "snapshot_sha256": "7b35ebad7ef972d2db78b6747d4371115f7a0a77d9a010fd4b8a3491d0e4c297"
+  "snapshot_sha256": "9a10d9590e52bd92df64a6a66503911d47e0e798456b952eee9cb8c3852da09f"
 }

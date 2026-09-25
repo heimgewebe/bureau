@@ -12,7 +12,7 @@
     "WELTGEWEBE-OS-009",
     "WELTGEWEBE-OS-010"
   ],
-  "commit_sha": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+  "commit_sha": "de0f0521a3d34ef2ff77f549733012c4a072af71",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -2661,7 +2661,7 @@
         "area": "governance",
         "effort": "M",
         "evidence": [
-          "architecture/weltgewebe-os.md",
+          "architecture/commonthing-os.md",
           "docs/adr/ADR-0010__kubernetes-kanonische-plattform.md",
           "docs/adr/ADR-0011__foederierte-gewebezellen.md",
           "docs/adr/ADR-0012__ereignisrueckgrat-transactional-outbox.md",
@@ -2672,7 +2672,7 @@
         "id": "WELTGEWEBE-OS-001",
         "links": {
           "docs": [
-            "architecture/weltgewebe-os.md",
+            "architecture/commonthing-os.md",
             "docs/blueprints/weltgewebe-os-masterplan.md",
             "docs/reports/weltgewebe-os-foundation-status.md"
           ],
@@ -2690,7 +2690,7 @@
         "title": "Weltgewebe-OS-Verfassung und Architekturentscheidungen verankern",
         "updated_at": "2026-07-15"
       },
-      "source_task_sha256": "57ac573de6172e82708c279d2bfa432968840bb4f5d0ad2b46a748c56e97cd6d",
+      "source_task_sha256": "597a722ec5514824ecd15070758003df56884487438208386806c954f50d1ddb",
       "status": "partial",
       "title": "Weltgewebe-OS-Verfassung und Architekturentscheidungen verankern",
       "updated_at": "2026-07-15"
@@ -2986,13 +2986,13 @@
         "area": "infra",
         "effort": "L",
         "evidence": [
-          "architecture/weltgewebe-os.md",
+          "architecture/commonthing-os.md",
           "docs/blueprints/weltgewebe-os-masterplan.md"
         ],
         "id": "WELTGEWEBE-OS-007",
         "links": {
           "docs": [
-            "architecture/weltgewebe-os.md",
+            "architecture/commonthing-os.md",
             "docs/blueprints/weltgewebe-os-masterplan.md"
           ],
           "issues": [],
@@ -3009,7 +3009,7 @@
         "title": "Observability Spine über Runtime, Ereignisse und Receipts verbinden",
         "updated_at": "2026-07-15"
       },
-      "source_task_sha256": "e370bd9273d03f8f3ddd47c838fc6605c615bbd56f1867e804b5c1109491b4cc",
+      "source_task_sha256": "49025fda9bf2a5639810a7b248a6712f4543b55d4cabc9ca907aa9edad7a9a94",
       "status": "blocked",
       "title": "Observability Spine über Runtime, Ereignisse und Receipts verbinden",
       "updated_at": "2026-07-15"
@@ -3176,8 +3176,8 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "b6db3c149a2135dfcc47c115fcad1055a2dec612cb1c8b314eab818f5479d3a6",
-  "ref": "d2e3317dc207037a2d00f2e55ac64a0b17f27725",
+  "index_sha256": "f331e72197d632b828c51451c57c6a32a88763bc87a462f6f409c8bc43551cc3",
+  "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
   "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",

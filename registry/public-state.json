@@ -1,35 +1,35 @@
 {
   "counts": {
     "tasks_by_state": {
-      "blocked": 18,
+      "blocked": 17,
       "cancelled": 20,
       "inbox": 5,
       "planned": 262,
-      "ready": 448,
-      "superseded": 44,
-      "verified": 774
+      "ready": 449,
+      "superseded": 45,
+      "verified": 775
     },
-    "tasks_total": 1571
+    "tasks_total": 1573
   },
   "event_checkpoint": {
-    "id": 17348
+    "id": 17491
   },
   "frontier": {
-    "blocked": 1556,
-    "eligible": 15,
+    "blocked": 1559,
+    "eligible": 14,
     "tasks_by_effective_state": {
-      "blocked": 18,
+      "blocked": 17,
       "cancelled": 20,
       "inbox": 5,
       "planned": 262,
       "ready": 215,
       "stale": 0,
-      "superseded": 44,
-      "verified": 1007
+      "superseded": 45,
+      "verified": 1009
     },
-    "tasks_total": 1571
+    "tasks_total": 1573
   },
-  "generated_at": "2026-09-24T08:31:14.235770Z",
+  "generated_at": "2026-09-25T02:52:13.552847Z",
   "kind": "bureau_public_state_snapshot",
   "redaction": {
     "fail_closed": true,
@@ -45,20 +45,20 @@
     "schema_version": 1
   },
   "release": {
-    "commit": "c3da90deb6a39e41385bdbd975dd9d9ca6c0eee6",
+    "commit": "c23dbb5843f931ee92610bf562a5a3e30cf2491a",
     "schema_version": 1
   },
   "repository": "heimgewebe/bureau",
   "roots": {
     "public_receipt_identities": {
-      "count": 312,
-      "merkle_sha256": "d247de91c298f3d9a2ed1134c947e92e193f0c2a748f2972f28a9b9117641a47"
+      "count": 313,
+      "merkle_sha256": "57a27bca9cfd80ca4e97a30183204033fa61c150665318502cdd340805507516"
     },
     "public_task_identities": {
-      "count": 1571,
-      "merkle_sha256": "0eee4f15d0643c01a1abdb068e72d3746bd17906c9f13029ebb09ba4bd7d2702"
+      "count": 1573,
+      "merkle_sha256": "ed28ab0434a17a2a8adf336a728c710dbf653757bff2fa64f27f87b3ed19628f"
     }
   },
   "schema_version": 1,
-  "snapshot_sha256": "9a10d9590e52bd92df64a6a66503911d47e0e798456b952eee9cb8c3852da09f"
+  "snapshot_sha256": "b0cf23065f10b6dc52579b1448dfeb740b6f53cf51a013d0a32260d5adb045ea"
 }

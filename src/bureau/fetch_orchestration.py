@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import Any
 
 from .approval import ApprovalEvidence, require_approval
+from .commonthing_source import source_sync
 from .legacy import Registry, StateError, ValidationError, sha256_json
 from .repo_scan import _git_env, _git_read, _normalized_github_slug, scan_repository_registry
 from .v2 import StateStore, _runtime_execution_truth, runtime_drift_check
-from .weltgewebe_source import source_sync
 
 _REMOTE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _HEX_RE = re.compile(r"^[0-9a-f]+$")
@@ -606,7 +606,7 @@ def source_import_plan(
     state_root: Path | None = None,
     runtime_identity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Return a read-only, provenance-rich plan for Weltgewebe source import."""
+    """Return a read-only, provenance-rich plan for commonThing source import."""
     preview = source_sync(root, repository, ref, apply=False)
     runtime = _runtime_gate(
         root,
@@ -616,14 +616,14 @@ def source_import_plan(
     )
     conflicts: list[dict[str, Any]] = []
     source = {
-        "name": "weltgewebe",
+        "name": "commonthing",
         "repository": str(Path(repository).expanduser().resolve()),
         "ref": ref,
         "commit_sha": preview["commit_sha"],
         "index_sha256": preview["index_sha256"],
         "schema_sha256": preview["schema_sha256"],
     }
-    repo = {"resource_id": "source.weltgewebe", "path": source["repository"]}
+    repo = {"resource_id": "source.commonthing", "path": source["repository"]}
     if runtime.get("execution_blocked"):
         conflicts.append(
             _conflict(

@@ -82,20 +82,20 @@ bureau --root . --grabowski-source ~/repos/grabowski/src \
   checkout-next --worker durable-1 --capability repository --capability shell --dispatch
 ```
 
-Weltgewebe can be observed through a commit-bound source inbox without creating executable Bureau tasks:
+commonThing can be observed through a commit-bound source inbox without creating executable Bureau tasks:
 
 ```bash
-bureau --root . --json source-check weltgewebe \
-  --repo ~/repos/weltgewebe --ref origin/main
-bureau --root . --json source-sync weltgewebe \
-  --repo ~/repos/weltgewebe --ref origin/main
-bureau --root . --json source-sync weltgewebe \
-  --repo ~/repos/weltgewebe --ref origin/main --apply
+bureau --root . --json source-check commonthing \
+  --repo ~/repos/commonthing --ref origin/main
+bureau --root . --json source-sync commonthing \
+  --repo ~/repos/commonthing --ref origin/main
+bureau --root . --json source-sync commonthing \
+  --repo ~/repos/commonthing --ref origin/main --apply
 ```
 
 `source-check` and preview-only `source-sync` are strictly read-only and do not initialise the
 operational state store. `--apply` atomically updates only
-`registry/sources/weltgewebe.json`. It does not create tasks, readiness, claims or execution
+`registry/sources/commonthing.json`. It does not create tasks, readiness, claims or execution
 permission; promotion into Bureau commitments is a separate explicit operation.
 
 Operational state is outside Git at `~/.local/state/bureau`. The database, envelopes and receipts
@@ -134,7 +134,7 @@ always derive from the same state root. Override it with `BUREAU_STATE_DIR`, `--
 Plan a single source-task promotion without writing Registry tasks:
 
 ```bash
-bureau --root . --json source-promote-plan weltgewebe --task-id DEPLOY-DNS-001
+bureau --root . --json source-promote-plan commonthing --task-id DEPLOY-DNS-001
 ```
 
 The command returns the would-be Bureau ID, the source commit and task hash, unresolved manual

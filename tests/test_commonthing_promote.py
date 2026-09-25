@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
+from bureau.commonthing_source import source_promote_plan, source_sync
 from bureau.core import Registry, ValidationError
-from bureau.weltgewebe_source import source_promote_plan, source_sync
 
-HELPERS = Path(__file__).with_name("test_weltgewebe_source.py")
-SPEC = importlib.util.spec_from_file_location("weltgewebe_source_test_helpers", HELPERS)
+HELPERS = Path(__file__).with_name("test_commonthing_source.py")
+SPEC = importlib.util.spec_from_file_location("commonthing_source_test_helpers", HELPERS)
 assert SPEC is not None and SPEC.loader is not None
 HELPER_MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(HELPER_MODULE)
@@ -23,7 +23,7 @@ write_source = HELPER_MODULE.write_source
 def test_source_promote_plan_is_read_only_candidate(
     registry_factory, tmp_path, monkeypatch, capsys
 ):
-    source = tmp_path / "weltgewebe"
+    source = tmp_path / "commonthing"
     source.mkdir()
     import subprocess
 
@@ -40,7 +40,7 @@ def test_source_promote_plan_is_read_only_candidate(
             str(root),
             "--json",
             "source-promote-plan",
-            "weltgewebe",
+            "commonthing",
             "--task-id",
             "TASK-ONE-001",
         ]
@@ -59,7 +59,7 @@ def test_source_promote_plan_is_read_only_candidate(
 
 
 def test_source_promote_plan_blocks_terminal_source_task(registry_factory, tmp_path):
-    source = tmp_path / "weltgewebe"
+    source = tmp_path / "commonthing"
     source.mkdir()
     import subprocess
 
@@ -69,7 +69,7 @@ def test_source_promote_plan_blocks_terminal_source_task(registry_factory, tmp_p
     root = registry_factory(1)
     source_sync(root, source, "HEAD", apply=True)
     registry = Registry.load(root)
-    report = source_promote_plan(root, registry, "weltgewebe", "TASK-TWO-002")
+    report = source_promote_plan(root, registry, "commonthing", "TASK-TWO-002")
     assert report["bureau_task_id"] == "WG-TASK-TWO-002"
     assert report["projected_state"] == "superseded"
     assert report["materialization_allowed"] is False
@@ -77,7 +77,7 @@ def test_source_promote_plan_blocks_terminal_source_task(registry_factory, tmp_p
 
 
 def test_source_promote_plan_rejects_unknown_task(registry_factory, tmp_path):
-    source = tmp_path / "weltgewebe"
+    source = tmp_path / "commonthing"
     source.mkdir()
     import subprocess
 
@@ -87,5 +87,5 @@ def test_source_promote_plan_rejects_unknown_task(registry_factory, tmp_path):
     root = registry_factory(1)
     source_sync(root, source, "HEAD", apply=True)
     registry = Registry.load(root)
-    with pytest.raises(ValidationError, match="unknown Weltgewebe source task id"):
-        source_promote_plan(root, registry, "weltgewebe", "TASK-NOPE-999")
+    with pytest.raises(ValidationError, match="unknown commonThing source task id"):
+        source_promote_plan(root, registry, "commonthing", "TASK-NOPE-999")

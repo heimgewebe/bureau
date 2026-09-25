@@ -7,10 +7,10 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
-from bureau import fetch_orchestration, weltgewebe_source
+from bureau import commonthing_source, fetch_orchestration
 from bureau.approval import ApprovalRequired, explicit_operator_approval, reviewed_receipt_approval
+from bureau.commonthing_source import source_check, source_sync
 from bureau.core import Registry, ValidationError
-from bureau.weltgewebe_source import source_check, source_sync
 
 SOURCE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -142,7 +142,7 @@ def commit_source(repository: Path, message: str = "source") -> str:
 
 @pytest.fixture
 def source_repo(tmp_path: Path) -> Path:
-    repository = tmp_path / "weltgewebe"
+    repository = tmp_path / "commonthing"
     repository.mkdir()
     subprocess.run(["git", "init", "-q", repository], check=True)
     write_source(
@@ -165,7 +165,7 @@ def test_source_check_is_commit_bound_and_read_only(
             str(root),
             "--json",
             "source-check",
-            "weltgewebe",
+            "commonthing",
             "--repo",
             str(source_repo),
             "--ref",
@@ -185,7 +185,7 @@ def test_source_check_is_commit_bound_and_read_only(
     assert report["status_counts"]["open"] == 1
     assert report["status_counts"]["done"] == 1
     assert not state.exists()
-    assert not (root / "registry/sources/weltgewebe.json").exists()
+    assert not (root / "registry/sources/commonthing.json").exists()
 
 
 def test_source_sync_preview_is_read_only(
@@ -200,7 +200,7 @@ def test_source_sync_preview_is_read_only(
             str(root),
             "--json",
             "source-sync",
-            "weltgewebe",
+            "commonthing",
             "--repo",
             str(source_repo),
             "--ref",
@@ -212,13 +212,13 @@ def test_source_sync_preview_is_read_only(
     assert report["changed"] is True
     assert report["applied"] is False
     assert not state.exists()
-    assert not (root / "registry/sources/weltgewebe.json").exists()
+    assert not (root / "registry/sources/commonthing.json").exists()
 
 
 def test_source_sync_apply_is_valid_and_idempotent(registry_factory, source_repo):
     root = registry_factory(1)
     first = source_sync(root, source_repo, "HEAD", apply=True)
-    target = root / "registry/sources/weltgewebe.json"
+    target = root / "registry/sources/commonthing.json"
     assert first["applied"] is True
     assert target.is_file()
     Registry.load(root)
@@ -237,7 +237,7 @@ def test_source_sync_apply_is_valid_and_idempotent(registry_factory, source_repo
     assert target.stat().st_mtime_ns == before
     snapshot = json.loads(target.read_text(encoding="utf-8"))
     assert snapshot["active_task_ids"] == ["TASK-ONE-001"]
-    assert snapshot["repository"] == "heimgewebe/weltgewebe"
+    assert snapshot["repository"] == "heimgewebe/commonthing"
     assert str(source_repo) not in target.read_text(encoding="utf-8")
     assert snapshot["entries"][0]["source_task"]["id"] == "TASK-ONE-001"
     assert "bureau_task_materialization" in snapshot["does_not_establish"]
@@ -277,7 +277,7 @@ def test_ref_injection_and_duplicate_ids_fail_closed(source_repo):
         source_check(source_repo, "--help")
     write_source(source_repo, [task("TASK-DUPE-001"), task("TASK-DUPE-001")])
     commit_source(source_repo, "duplicates")
-    with pytest.raises(ValidationError, match="duplicate Weltgewebe task ids"):
+    with pytest.raises(ValidationError, match="duplicate commonThing task ids"):
         source_check(source_repo, "HEAD")
 
 
@@ -303,7 +303,7 @@ def test_external_schema_reference_is_rejected(source_repo):
 
 
 def test_git_source_reader_disables_replacement_objects():
-    assert weltgewebe_source._git_environment()["GIT_NO_REPLACE_OBJECTS"] == "1"
+    assert commonthing_source._git_environment()["GIT_NO_REPLACE_OBJECTS"] == "1"
 
 
 def test_invalid_source_schema_is_reported_as_validation_error(source_repo):
@@ -312,14 +312,14 @@ def test_invalid_source_schema_is_reported_as_validation_error(source_repo):
     schema["properties"]["tasks"]["type"] = 7
     schema_path.write_text(json.dumps(schema), encoding="utf-8")
     commit_source(source_repo, "invalid schema")
-    with pytest.raises(ValidationError, match="invalid Weltgewebe source schema"):
+    with pytest.raises(ValidationError, match="invalid commonThing source schema"):
         source_check(source_repo, "HEAD")
 
 
 def test_registry_rejects_source_task_hash_drift(registry_factory, source_repo):
     root = registry_factory(1)
     source_sync(root, source_repo, "HEAD", apply=True)
-    target = root / "registry/sources/weltgewebe.json"
+    target = root / "registry/sources/commonthing.json"
     snapshot = json.loads(target.read_text(encoding="utf-8"))
     snapshot["entries"][0]["source_task"]["title"] = "tampered"
     target.write_text(json.dumps(snapshot), encoding="utf-8")
@@ -330,7 +330,7 @@ def test_registry_rejects_source_task_hash_drift(registry_factory, source_repo):
 def test_registry_rejects_unknown_source_property(registry_factory, source_repo):
     root = registry_factory(1)
     source_sync(root, source_repo, "HEAD", apply=True)
-    target = root / "registry/sources/weltgewebe.json"
+    target = root / "registry/sources/commonthing.json"
     snapshot = json.loads(target.read_text(encoding="utf-8"))
     snapshot["unexpected"] = True
     target.write_text(json.dumps(snapshot), encoding="utf-8")
@@ -353,7 +353,7 @@ def test_source_sync_expected_commit_fails_before_write(registry_factory, source
 
     with pytest.raises(ValidationError, match="source ref moved after preview"):
         source_sync(root, source_repo, "HEAD", apply=True, expected_commit_sha=original)
-    assert not (root / "registry/sources/weltgewebe.json").exists()
+    assert not (root / "registry/sources/commonthing.json").exists()
 
 
 def test_source_import_is_plan_bound_and_requires_reviewed_receipt(
@@ -385,7 +385,7 @@ def test_source_import_is_plan_bound_and_requires_reviewed_receipt(
         capture_output=True,
         text=True,
     ).stdout.strip()
-    assert not (root / "registry/sources/weltgewebe.json").exists()
+    assert not (root / "registry/sources/commonthing.json").exists()
 
     operator = explicit_operator_approval(
         source="test",
@@ -402,7 +402,7 @@ def test_source_import_is_plan_bound_and_requires_reviewed_receipt(
             approval=operator,
             task_id="BUR-TEST-001-T006",
         )
-    assert not (root / "registry/sources/weltgewebe.json").exists()
+    assert not (root / "registry/sources/commonthing.json").exists()
 
     reviewed = reviewed_receipt_approval(
         reviewer="reviewer",
@@ -421,7 +421,7 @@ def test_source_import_is_plan_bound_and_requires_reviewed_receipt(
     assert receipt["document_sha256"] == plan["document_sha256"]
     assert receipt["source"]["commit_sha"] == plan["source"]["commit_sha"]
     assert receipt["receipt_sha256"]
-    assert (root / "registry/sources/weltgewebe.json").is_file()
+    assert (root / "registry/sources/commonthing.json").is_file()
 
 def test_source_import_rejects_destination_drift_after_replan(
     registry_factory, source_repo, monkeypatch
@@ -444,7 +444,7 @@ def test_source_import_rejects_destination_drift_after_replan(
         reference=plan["plan_sha256"],
         task_id="BUR-TEST-001-T006",
     )
-    target = root / "registry/sources/weltgewebe.json"
+    target = root / "registry/sources/commonthing.json"
     real_source_sync = fetch_orchestration.source_sync
     calls = 0
 
@@ -475,8 +475,8 @@ def test_source_sync_rechecks_target_after_tempfile_before_replace(
 ) -> None:
     root = registry_factory(1)
     preview = source_sync(root, source_repo, "HEAD")
-    target = root / "registry/sources/weltgewebe.json"
-    real_mkstemp = weltgewebe_source.tempfile.mkstemp
+    target = root / "registry/sources/commonthing.json"
+    real_mkstemp = commonthing_source.tempfile.mkstemp
 
     def racing_mkstemp(*args, **kwargs):
         descriptor, name = real_mkstemp(*args, **kwargs)
@@ -484,7 +484,7 @@ def test_source_sync_rechecks_target_after_tempfile_before_replace(
         target.write_text('{"manual": true}\n', encoding="utf-8")
         return descriptor, name
 
-    monkeypatch.setattr(weltgewebe_source.tempfile, "mkstemp", racing_mkstemp)
+    monkeypatch.setattr(commonthing_source.tempfile, "mkstemp", racing_mkstemp)
 
     with pytest.raises(ValidationError, match="source target changed after preview"):
         source_sync(

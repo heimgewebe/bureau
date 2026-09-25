@@ -281,16 +281,16 @@ def parser() -> argparse.ArgumentParser:
     lifecycle_reconcile_apply.add_argument("--evidence-ref")
     lifecycle_reconcile_apply.add_argument("--expected-preview-sha256")
     source_check = sub.add_parser("source-check")
-    source_check.add_argument("source", choices=["weltgewebe"])
+    source_check.add_argument("source", choices=["commonthing"])
     source_check.add_argument("--repo", required=True)
     source_check.add_argument("--ref", default="origin/main")
     source_sync = sub.add_parser("source-sync")
-    source_sync.add_argument("source", choices=["weltgewebe"])
+    source_sync.add_argument("source", choices=["commonthing"])
     source_sync.add_argument("--repo", required=True)
     source_sync.add_argument("--ref", default="origin/main")
     source_sync.add_argument("--apply", action="store_true")
     source_import = sub.add_parser("source-import")
-    source_import.add_argument("source", choices=["weltgewebe"])
+    source_import.add_argument("source", choices=["commonthing"])
     source_import.add_argument("--repo", required=True)
     source_import.add_argument("--ref", default="origin/main")
     source_import.add_argument("--task-id")
@@ -298,7 +298,7 @@ def parser() -> argparse.ArgumentParser:
     source_import.add_argument("--reviewed-receipt", action="store_true")
     source_import.add_argument("--reviewer")
     promote = sub.add_parser("source-promote-plan")
-    promote.add_argument("source", choices=["weltgewebe"])
+    promote.add_argument("source", choices=["commonthing"])
     promote.add_argument("--task-id", required=True)
     sub.add_parser("close-ready")
 
@@ -1666,7 +1666,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1 if args.strict and value["blockers"] else 0
 
         if args.command in {"source-check", "source-sync", "source-promote-plan"}:
-            from .weltgewebe_source import source_check, source_promote_plan, source_sync
+            from .commonthing_source import source_check, source_promote_plan, source_sync
 
             if args.command == "source-check":
                 value = source_check(args.repo, args.ref)

@@ -261,27 +261,27 @@ bureau --root . workspace-cleanup <run-id>
 Cleanup requires a terminal run. Dirty or unmerged workspaces are preserved unless `--force` is
 explicitly supplied.
 
-## Weltgewebe source inbox
+## commonThing source inbox
 
 Validate the locally available source ref without changing Bureau state:
 
 ```bash
-bureau --root . --json source-check weltgewebe \
-  --repo ~/repos/weltgewebe --ref origin/main
+bureau --root . --json source-check commonthing \
+  --repo ~/repos/commonthing --ref origin/main
 ```
 
 Preview drift against the currently materialised source snapshot:
 
 ```bash
-bureau --root . --json source-sync weltgewebe \
-  --repo ~/repos/weltgewebe --ref origin/main
+bureau --root . --json source-sync commonthing \
+  --repo ~/repos/commonthing --ref origin/main
 ```
 
 Apply the validated snapshot atomically:
 
 ```bash
-bureau --root . --json source-sync weltgewebe \
-  --repo ~/repos/weltgewebe --ref origin/main --apply
+bureau --root . --json source-sync commonthing \
+  --repo ~/repos/commonthing --ref origin/main --apply
 ```
 
 The adapter performs no fetch and makes no network request. It ignores repository pager, hook and
@@ -291,16 +291,16 @@ bounds preview ID lists. Repeating `--apply` for unchanged source bytes performs
 Scheduling may run `source-check`, preview sync or reconciliation. It must not imply promotion,
 readiness or approval to execute any source task.
 
-## Scheduled Weltgewebe synchronization
+## Scheduled commonThing synchronization
 
-The `sync-weltgewebe-source` GitHub workflow runs at minute 0 and 30 of every hour and can also be
-started manually. It checks out the current public Weltgewebe `main`, materialises the candidate
+The `sync-commonthing-source` GitHub workflow runs at minute 0 and 30 of every hour and can also be
+started manually. It checks out the current public commonThing `main`, materialises the candidate
 snapshot in an ephemeral Bureau checkout, and runs the full validation suite when the snapshot
 changes.
 
-A changed snapshot is pushed only to the bot-owned `automation/weltgewebe-source-sync` branch using
+A changed snapshot is pushed only to the bot-owned `automation/commonthing-source-sync` branch using
 an explicit force-with-lease precondition. The workflow never pushes to `main`, merges a pull
-request or promotes a source task. Only `registry/sources/weltgewebe.json` may change; any additional
+request or promotes a source task. Only `registry/sources/commonthing.json` may change; any additional
 changed path fails the run.
 
 The Heimgewebe organisation deliberately prevents `GITHUB_TOKEN` from creating pull requests. The
@@ -365,10 +365,10 @@ reactivate queue writers or hand-edit `registry/queue.json`.
 
 ## Source promotion preview
 
-Plan one Weltgewebe task candidate without materialising it:
+Plan one commonThing task candidate without materialising it:
 
 ```bash
-bureau --root . --json source-promote-plan weltgewebe --task-id DEPLOY-DNS-001
+bureau --root . --json source-promote-plan commonthing --task-id DEPLOY-DNS-001
 ```
 
 The result is read-only. It exposes the projected Bureau task ID, source binding, unresolved claims,

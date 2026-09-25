@@ -2497,7 +2497,7 @@ class Registry(legacy.Registry):
         except DocumentSchemaError as exc:
             raise legacy.ValidationError(str(exc)) from exc
         if kind == "source":
-            from .weltgewebe_source import validate_source_document
+            from .commonthing_source import validate_source_document
 
             validate_source_document(raw)
 

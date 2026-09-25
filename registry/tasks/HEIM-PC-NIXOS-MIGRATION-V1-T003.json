@@ -50,6 +50,11 @@
       "resource": "host.heimberry",
       "mode": "read",
       "isolation": "none"
+    },
+    {
+      "resource": "component.heim-pc.nixos-managed-activation",
+      "mode": "read",
+      "isolation": "none"
     }
   ],
   "required_capabilities": [
@@ -277,6 +282,44 @@
     "final_closure_build_task": "HEIM-PC-NIXOS-MIGRATION-V1-T011",
     "final_runtime_order": "T003 proves disposable storage topology, boots and reads back a distinct T010-bound prior/recovery runtime on it, then activates/read-backs/rolls back the exact T011 receipt-bound final closure",
     "final_activation_receipt_owner": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
-    "historical_t010_activation_label_disposition": "T010 remains immutable source-seal authority; its pre-repair T011 activation-reproof wording is provenance only and does not override T003's target-bound Activation authority."
+    "historical_t010_activation_label_disposition": "T010 remains immutable source-seal authority; its pre-repair T011 activation-reproof wording is provenance only and does not override T003's target-bound Activation authority.",
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-aac64c56c7cf2dba43ef30e6",
+      "candidate_id": "candidate-fa9cd3efd0f2f84b4b905a84",
+      "content_fingerprint": "fa9cd3efd0f2f84b4b905a8481e85b748098229111c8b6134037f012a903dc1c",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-09-24T19:35:16.368526Z",
+      "event_id": 17482,
+      "request_sha256": "43c901731ffc239c1b414a343d5783820b3311dbdf7c51a5bb01cb16758500ab",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "f98739362c87a9aa7478bad8a3f7f651f2618aca6671e02cbbfa8739fd123b5e",
+        "freshness": "digest-bound",
+        "kind": "git_merge_commit",
+        "locator": "heimgewebe/bureau@c23dbb5843f931ee92610bf562a5a3e30cf2491a:registry/tasks/HEIM-PC-NIXOS-MIGRATION-V1-T003.json",
+        "observed_at": "2026-09-24T19:35:15.943683Z",
+        "sha256": "d0f90534c6eaa7cea5d6c6e51cf6e826b2405f206e9d6a21b52e822abc95ef40"
+      },
+      "source_fingerprint": "f98739362c87a9aa7478bad8a3f7f651f2618aca6671e02cbbfa8739fd123b5e",
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "f98739362c87a9aa7478bad8a3f7f651f2618aca6671e02cbbfa8739fd123b5e",
+          "freshness": "digest-bound",
+          "kind": "git_merge_commit",
+          "locator": "heimgewebe/bureau@c23dbb5843f931ee92610bf562a5a3e30cf2491a:registry/tasks/HEIM-PC-NIXOS-MIGRATION-V1-T003.json",
+          "observed_at": "2026-09-24T19:35:15.943683Z",
+          "sha256": "d0f90534c6eaa7cea5d6c6e51cf6e826b2405f206e9d6a21b52e822abc95ef40"
+        }
+      ]
+    }
   }
 }

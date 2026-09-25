@@ -84,7 +84,7 @@
       "general repository, merge, deployment-other-components or foreign-work mutation authority"
     ],
     "main_at_registration": "148a300c7e97bf96e69c4f95bee8094df406f9ab",
-    "observation_sha256_at_registration": "75724e4f9d6636c4a1c7d57f0922557531c20f156f1d636fd76d663d75cf2a6d",
+    "observation_sha256_at_registration": "58ade493637fc048a58922fa17b15a024ca6cc540c4003b51528dbe61f96896a",
     "post_publication_activation": {
       "activation_state": "ready",
       "does_not_establish": [
@@ -143,36 +143,36 @@
       "github_main": "148a300c7e97bf96e69c4f95bee8094df406f9ab",
       "kind": "bureau_runtime_refresh_registration_observation",
       "lag_commits": 2,
-      "observation_sha256": "75724e4f9d6636c4a1c7d57f0922557531c20f156f1d636fd76d663d75cf2a6d",
+      "observation_sha256": "58ade493637fc048a58922fa17b15a024ca6cc540c4003b51528dbe61f96896a",
       "observed_at": "2026-09-25T05:02:25.171519Z",
       "repository": "heimgewebe/bureau",
       "required_checks_on_current_main": {
         "registry-registration-preflight/freshness": {
-          "check_run_id": 107929156688,
+          "check_run_id": 107932811430,
           "status": "completed",
           "conclusion": "success",
-          "head_sha": "ce1e84e63ecc9fc1c424495ff6724e659e00e864",
-          "started_at": "2026-09-25T03:16:08Z",
-          "completed_at": "2026-09-25T03:16:20Z",
-          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/36089664721/job/107929156688"
+          "head_sha": "148a300c7e97bf96e69c4f95bee8094df406f9ab",
+          "started_at": "2026-09-25T03:33:53Z",
+          "completed_at": "2026-09-25T03:34:07Z",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/36090864339/job/107932811430"
         },
         "validate (3.10)": {
-          "check_run_id": 107929219206,
+          "check_run_id": 107932811765,
           "status": "completed",
           "conclusion": "success",
-          "head_sha": "ce1e84e63ecc9fc1c424495ff6724e659e00e864",
-          "started_at": "2026-09-25T03:16:26Z",
-          "completed_at": "2026-09-25T03:31:42Z",
-          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/36089666957/job/107929219206"
+          "head_sha": "148a300c7e97bf96e69c4f95bee8094df406f9ab",
+          "started_at": "2026-09-25T03:33:52Z",
+          "completed_at": "2026-09-25T03:53:01Z",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/36090864303/job/107932811765"
         },
         "validate (3.12)": {
-          "check_run_id": 107929219430,
+          "check_run_id": 107932811436,
           "status": "completed",
           "conclusion": "success",
-          "head_sha": "ce1e84e63ecc9fc1c424495ff6724e659e00e864",
-          "started_at": "2026-09-25T03:16:46Z",
-          "completed_at": "2026-09-25T03:33:28Z",
-          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/36089666957/job/107929219430"
+          "head_sha": "148a300c7e97bf96e69c4f95bee8094df406f9ab",
+          "started_at": "2026-09-25T03:33:52Z",
+          "completed_at": "2026-09-25T03:50:08Z",
+          "details_url": "https://github.com/heimgewebe/bureau/actions/runs/36090864303/job/107932811436"
         }
       },
       "runtime_refresh_observation_sha256": "d0002f60c1a0ccc6bb3d394790a373ab33f41c649c8e452adb0b0faf2a075d49",
@@ -317,7 +317,7 @@
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256"
     },
-    "source": "Typed registration observation 75724e4f9d6636c4a1c7d57f0922557531c20f156f1d636fd76d663d75cf2a6d at 2026-09-25T05:02:25.171519Z binds raw runtime-refresh observation d0002f60c1a0ccc6bb3d394790a373ab33f41c649c8e452adb0b0faf2a075d49, deployment manifest and canonical Registry at c23dbb5843f931ee92610bf562a5a3e30cf2491a, verified github-compare ancestry to protected main 148a300c7e97bf96e69c4f95bee8094df406f9ab with 2 commits of forward lag, successful required checks on triggering PR #2328 head ce1e84e63ecc9fc1c424495ff6724e659e00e864, and runtime target 520f89a590c11bc7f0d8c54d12ad74d337ce326068b837812650c791bf08e420. The T003 managed-activation read-claim repair remains blocked solely by Bureau release/Registry identity mismatch; the prior Heim-PC refresh authority is terminal and consumed and is not presented as current authority.",
+    "source": "Typed registration observation 58ade493637fc048a58922fa17b15a024ca6cc540c4003b51528dbe61f96896a at 2026-09-25T05:02:25.171519Z binds raw runtime-refresh observation d0002f60c1a0ccc6bb3d394790a373ab33f41c649c8e452adb0b0faf2a075d49, deployment manifest and canonical Registry at c23dbb5843f931ee92610bf562a5a3e30cf2491a, verified github-compare ancestry to protected main 148a300c7e97bf96e69c4f95bee8094df406f9ab with 2 commits of forward lag, successful required merge-group checks on exact queued protected-main tree 148a300c7e97bf96e69c4f95bee8094df406f9ab, and runtime target 520f89a590c11bc7f0d8c54d12ad74d337ce326068b837812650c791bf08e420. The T003 managed-activation read-claim repair remains blocked solely by Bureau release/Registry identity mismatch; the prior Heim-PC refresh authority is terminal and consumed and is not presented as current authority.",
     "runtime_refresh_observation_sha256_at_registration": "d0002f60c1a0ccc6bb3d394790a373ab33f41c649c8e452adb0b0faf2a075d49"
   },
   "priority": {

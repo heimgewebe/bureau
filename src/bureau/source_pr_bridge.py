@@ -15,7 +15,7 @@ from .now_refill import NowRefillPolicy
 
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
 DEFAULT_BASE = "main"
-DEFAULT_BRANCH = "automation/weltgewebe-source-sync"
+DEFAULT_BRANCH = "automation/commonthing-source-sync"
 NOW_REFILL_BRANCH = "automation/now-lane-refill"
 STATE_SNAPSHOT_BRANCH = state_snapshot.PUBLIC_BRANCH
 NOW_REFILL_COMMIT_MESSAGE = "chore(queue): refill Bureau Now lane"
@@ -256,7 +256,7 @@ def _pull_request_title(kind: str) -> str:
         return "chore(queue): refill Bureau Now lane"
     if kind == "state-snapshot":
         return "chore(snapshot): publish redacted Bureau state"
-    return "chore: sync Weltgewebe source snapshot"
+    return "chore: sync commonThing source snapshot"
 
 
 def _pull_request_body(branch: str, head_sha: str, *, kind: str) -> str:
@@ -293,10 +293,10 @@ def _pull_request_body(branch: str, head_sha: str, *, kind: str) -> str:
         )
     return (
         "## Automated source observation\n\n"
-        "Bureau observed a changed, commit-bound Weltgewebe task snapshot.\n\n"
+        "Bureau observed a changed, commit-bound commonThing task snapshot.\n\n"
         f"- snapshot branch: `{branch}`\n"
         f"- snapshot commit: `{head_sha}`\n"
-        "- generated path: `registry/sources/weltgewebe.json`\n\n"
+        "- generated path: `registry/sources/commonthing.json`\n\n"
         "This proposal updates observation data only. It does not materialize executable "
         "Bureau tasks, establish readiness, infer dependencies or resource claims, or grant "
         "autonomous execution.\n"

@@ -29,10 +29,10 @@
       "const": 1
     },
     "source": {
-      "const": "weltgewebe"
+      "const": "commonthing"
     },
     "source_system": {
-      "const": "weltgewebe-task-control"
+      "const": "commonthing-task-control"
     },
     "ref": {
       "type": "string",
@@ -133,7 +133,7 @@
       }
     },
     "repository": {
-      "const": "heimgewebe/weltgewebe"
+      "const": "heimgewebe/commonthing"
     }
   },
   "$defs": {

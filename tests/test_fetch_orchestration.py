@@ -422,12 +422,12 @@ def test_repo_fetch_cli_is_read_only_until_exact_plan_is_applied() -> None:
 
 def test_source_import_cli_is_read_only_until_exact_plan_is_applied() -> None:
     preview = bureau_cli.parser().parse_args(
-        ["source-import", "weltgewebe", "--repo", "/tmp/source", "--task-id", TASK_ID]
+        ["source-import", "commonthing", "--repo", "/tmp/source", "--task-id", TASK_ID]
     )
     apply = bureau_cli.parser().parse_args(
         [
             "source-import",
-            "weltgewebe",
+            "commonthing",
             "--repo",
             "/tmp/source",
             "--task-id",

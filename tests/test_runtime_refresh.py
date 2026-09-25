@@ -11832,6 +11832,7 @@ def clean_installer_source(tmp_path: Path) -> Path:
         ignore=shutil.ignore_patterns(
             ".git",
             ".review-audits",
+            ".adler",
             ".pytest_cache",
             ".ruff_cache",
             "__pycache__",
@@ -12651,6 +12652,7 @@ def test_real_non_systemd_installer_supports_custom_layout(tmp_path: Path) -> No
         ignore=shutil.ignore_patterns(
             ".git",
             ".review-audits",
+            ".adler",
             ".pytest_cache",
             ".ruff_cache",
             "__pycache__",

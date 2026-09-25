@@ -1,4 +1,4 @@
-name: sync-weltgewebe-source
+name: sync-commonthing-source
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: sync-weltgewebe-source
+  group: sync-commonthing-source
   cancel-in-progress: false
 
 jobs:
@@ -24,12 +24,12 @@ jobs:
       - name: Keep source checkout outside Bureau changes
         run: echo '/.source/' >> .git/info/exclude
 
-      - name: Check out Weltgewebe
+      - name: Check out commonThing
         uses: actions/checkout@v7
         with:
-          repository: heimgewebe/weltgewebe
+          repository: heimgewebe/commonthing
           ref: main
-          path: .source/weltgewebe
+          path: .source/commonthing
           fetch-depth: 1
           persist-credentials: false
 
@@ -46,12 +46,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          report="$RUNNER_TEMP/weltgewebe-source-sync.json"
+          report="$RUNNER_TEMP/commonthing-source-sync.json"
           python -m bureau.cli \
             --root . \
             --json \
-            source-sync weltgewebe \
-            --repo .source/weltgewebe \
+            source-sync commonthing \
+            --repo .source/commonthing \
             --ref HEAD \
             --apply > "$report"
           cat "$report"
@@ -63,7 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t changed_paths < <(git diff --name-only)
-          if [[ ${#changed_paths[@]} -ne 1 || "${changed_paths[0]}" != "registry/sources/weltgewebe.json" ]]; then
+          if [[ ${#changed_paths[@]} -ne 1 || "${changed_paths[0]}" != "registry/sources/commonthing.json" ]]; then
             printf 'Unexpected changed paths:\n'
             printf '  %s\n' "${changed_paths[@]}"
             exit 1
@@ -78,14 +78,14 @@ jobs:
           DOCUMENT_SHA256: ${{ steps.sync.outputs.document_sha256 }}
         run: |
           set -euo pipefail
-          branch='automation/weltgewebe-source-sync'
+          branch='automation/commonthing-source-sync'
           remote_ref="refs/heads/$branch"
           tracking_ref="refs/remotes/origin/$branch"
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add registry/sources/weltgewebe.json
-          git commit -m "chore: sync Weltgewebe source at ${SOURCE_COMMIT:0:12}"
+          git add registry/sources/commonthing.json
+          git commit -m "chore: sync commonThing source at ${SOURCE_COMMIT:0:12}"
 
           if git ls-remote --exit-code --heads origin "$remote_ref" >/dev/null 2>&1; then
             git fetch origin "$remote_ref:$tracking_ref"
@@ -98,7 +98,7 @@ jobs:
           fi
 
           {
-            echo '## Weltgewebe source snapshot published'
+            echo '## commonThing source snapshot published'
             echo
             echo "- source commit: \`$SOURCE_COMMIT\`"
             echo "- snapshot SHA-256: \`$DOCUMENT_SHA256\`"

@@ -17,9 +17,9 @@ from jsonschema.exceptions import SchemaError
 from .legacy import ValidationError, canonical_json, read_json, sha256_json
 from .schema_validation import DocumentSchemaError, SchemaSet
 
-SOURCE_NAME = "weltgewebe"
-SOURCE_SYSTEM = "weltgewebe-task-control"
-SOURCE_REPOSITORY = "heimgewebe/weltgewebe"
+SOURCE_NAME = "commonthing"
+SOURCE_SYSTEM = "commonthing-task-control"
+SOURCE_REPOSITORY = "heimgewebe/commonthing"
 INDEX_PATH = "docs/tasks/index.json"
 SCHEMA_PATH = "docs/tasks/schema.json"
 MAX_SOURCE_BYTES = 8 * 1024 * 1024
@@ -167,7 +167,7 @@ def _reject_external_refs(value: Any) -> None:
     if isinstance(value, dict):
         reference = value.get("$ref")
         if isinstance(reference, str) and not reference.startswith("#"):
-            raise ValidationError("Weltgewebe source schema may not resolve external references")
+            raise ValidationError("commonThing source schema may not resolve external references")
         for child in value.values():
             _reject_external_refs(child)
     elif isinstance(value, list):
@@ -177,12 +177,12 @@ def _reject_external_refs(value: Any) -> None:
 
 def _validate_index(document: dict[str, Any], schema: dict[str, Any]) -> None:
     if schema.get("$schema") != "http://json-schema.org/draft-07/schema#":
-        raise ValidationError("Weltgewebe source schema must declare JSON Schema Draft-07")
+        raise ValidationError("commonThing source schema must declare JSON Schema Draft-07")
     _reject_external_refs(schema)
     try:
         Draft7Validator.check_schema(schema)
     except SchemaError as exc:
-        raise ValidationError(f"invalid Weltgewebe source schema: {exc.message}") from exc
+        raise ValidationError(f"invalid commonThing source schema: {exc.message}") from exc
     errors = sorted(
         Draft7Validator(schema, format_checker=FormatChecker()).iter_errors(document),
         key=lambda error: tuple(str(part) for part in error.absolute_path),
@@ -192,19 +192,19 @@ def _validate_index(document: dict[str, Any], schema: dict[str, Any]) -> None:
         for error in errors:
             location = ".".join(str(part) for part in error.absolute_path) or "$"
             rendered.append(f"{location}: {error.message}")
-        raise ValidationError("invalid Weltgewebe task index:\n" + "\n".join(rendered))
+        raise ValidationError("invalid commonThing task index:\n" + "\n".join(rendered))
     identifiers = [str(task["id"]) for task in document.get("tasks", [])]
     duplicates = sorted(
         identifier for identifier, count in Counter(identifiers).items() if count > 1
     )
     if duplicates:
-        raise ValidationError(f"duplicate Weltgewebe task ids: {', '.join(duplicates)}")
+        raise ValidationError(f"duplicate commonThing task ids: {', '.join(duplicates)}")
 
 
 def load_snapshot(repository: str | Path, ref: str = "origin/main") -> SourceSnapshot:
     repo = Path(repository).expanduser().resolve()
     if not repo.is_dir():
-        raise ValidationError(f"Weltgewebe repository does not exist: {repo}")
+        raise ValidationError(f"commonThing repository does not exist: {repo}")
     commit = _resolve_commit(repo, ref)
     index_raw = _read_commit_file(repo, commit, INDEX_PATH)
     schema_raw = _read_commit_file(repo, commit, SCHEMA_PATH)
@@ -333,9 +333,12 @@ def validate_source_document(value: dict[str, Any]) -> None:
         raise ValidationError("source snapshot active_task_ids do not match entries")
 
 
+# The WG- Bureau namespace is intentionally retained for identity continuity.
+# At least WG-DOCMETA-FRESHNESS-001 is already materialized; changing the
+# prefix would split one upstream source task into two Bureau identities.
 def bureau_task_id(source_task_id: str) -> str:
     if not _SOURCE_ID_RE.fullmatch(source_task_id):
-        raise ValidationError(f"unsupported Weltgewebe source task id {source_task_id!r}")
+        raise ValidationError(f"unsupported commonThing source task id {source_task_id!r}")
     return f"WG-{source_task_id}"
 
 
@@ -346,15 +349,15 @@ def _projected_state(source_status: str) -> str:
         return "blocked"
     if source_status in {"done", "obsolete", "contradicted"}:
         return "superseded"
-    raise ValidationError(f"unsupported Weltgewebe source status {source_status!r}")
+    raise ValidationError(f"unsupported commonThing source status {source_status!r}")
 
 
 def _load_materialized_source(root: Path, source: str) -> dict[str, Any]:
     if source != SOURCE_NAME:
         raise ValidationError(f"unsupported source {source!r}")
-    target = root.resolve() / "registry" / "sources" / "weltgewebe.json"
+    target = root.resolve() / "registry" / "sources" / "commonthing.json"
     if not target.is_file():
-        raise ValidationError("Weltgewebe source snapshot has not been materialized")
+        raise ValidationError("commonThing source snapshot has not been materialized")
     snapshot = read_json(target)
     try:
         SchemaSet(root.resolve() / "schemas").validate("source", snapshot, target)
@@ -368,7 +371,7 @@ def _source_entry(snapshot: dict[str, Any], source_task_id: str) -> dict[str, An
     for entry in snapshot["entries"]:
         if entry["id"] == source_task_id:
             return entry
-    raise ValidationError(f"unknown Weltgewebe source task id {source_task_id!r}")
+    raise ValidationError(f"unknown commonThing source task id {source_task_id!r}")
 
 
 def source_promote_plan(root: Path, registry: Any, source: str, task_id: str) -> dict[str, Any]:
@@ -386,14 +389,17 @@ def source_promote_plan(root: Path, registry: Any, source: str, task_id: str) ->
     if not source_task.get("acceptance"):
         blockers.append("source-task-has-no-acceptance")
     else:
-        # The Weltgewebe source contract currently carries prose strings only.
+        # The commonThing source contract currently carries prose strings only.
         # They are useful planning input but cannot be promoted into executable
         # Bureau acceptance without an explicit verifier/config decision.
         blockers.append("source-task-acceptance-contract-untyped")
     manual_decisions = [
         {
             "field": "initiative",
-            "reason": "WG-WELTGEWEBE is only a candidate namespace until explicitly registered",
+            "reason": (
+                "WG-WELTGEWEBE is a terminal historical initiative; "
+                "select a current initiative explicitly"
+            ),
         },
         {
             "field": "claims",
@@ -573,7 +579,7 @@ def source_sync(
         )
     candidate = build_source_document(snapshot)
     validate_source_document(candidate)
-    target = root.resolve() / "registry" / "sources" / "weltgewebe.json"
+    target = root.resolve() / "registry" / "sources" / "commonthing.json"
     target_preimage = _target_preimage(target)
     if expected_target_preimage is not None:
         expected_preimage = _validate_target_preimage(expected_target_preimage)

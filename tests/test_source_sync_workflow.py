@@ -1,6 +1,6 @@
 from pathlib import Path
 
-WORKFLOW = Path(__file__).parents[1] / ".github/workflows/sync-weltgewebe-source.yml"
+WORKFLOW = Path(__file__).parents[1] / ".github/workflows/sync-commonthing-source.yml"
 
 
 def test_source_sync_workflow_contract():
@@ -9,10 +9,10 @@ def test_source_sync_workflow_contract():
         'cron: "0,30 * * * *"',
         "workflow_dispatch:",
         "cancel-in-progress: false",
-        "source-sync weltgewebe",
+        "source-sync commonthing",
         "--apply",
         'python -m bureau.source_sync_output "$report"',
-        "registry/sources/weltgewebe.json",
+        "registry/sources/commonthing.json",
         "make validate",
         "Unexpected changed paths",
         "contents: write",

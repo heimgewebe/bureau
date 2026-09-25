@@ -27,7 +27,7 @@ DEFAULT_FRONTIER_LIMIT = 8
 DEFAULT_REJECT_LIMIT = 50
 DEFAULT_BINDING_LIMIT = 8
 SUPPLY_REGENERATION_DIRNAME = "task-supply-regeneration"
-DEFAULT_FOCUS_REPOSITORIES = ("weltgewebe", "lenskit", "grabowski")
+DEFAULT_FOCUS_REPOSITORIES = ("commonthing", "lenskit", "grabowski")
 CANONICAL_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 SOURCE_MARKERS = (
     "roadmap",
@@ -287,7 +287,10 @@ def suggested_worker_profile(project: str, source_path: str, kind: str, status: 
         return "chatgpt-context-review"
     if any(marker in low for marker in ("grabowski", "bureau", "infra", "systemd", "ops/")):
         return "grabowski-local-readonly"
-    if any(marker in low for marker in ("weltgewebe", "lenskit", "repo", "src/", "tests/")):
+    if any(
+        marker in low
+        for marker in ("commonthing", "weltgewebe", "lenskit", "repo", "src/", "tests/")
+    ):
         return "codex-readonly-scout"
     return "chatgpt-curation"
 

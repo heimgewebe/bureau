@@ -4,7 +4,7 @@
   "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
   "title": "Prove one-disk cutover readiness",
   "state": "planned",
-  "goal": "After T001/T002, ancestry-preserving source integration, the T004 activation-mechanism proof, storage-harness implementation, final source integration/publication/seal and the final T011 published-source closure build proof are terminal and reviewed, prove one-disk NixOS cutover readiness on an exclusively reserved disposable non-production target using only the leased immutable T010 published-source artifact and the exact T011 final closure/build receipt: first create and independently read back the canonical GPT+EFI+recovery+LUKS2+Btrfs topology, then boot a distinct receipt-bound prior/recovery runtime derived only from T010 on that topology, then derive and review a target-bound Activation receipt from the exact T011 Build receipt and the proven disposable target/prior-runtime identity, activate exactly the T011 closure through that Activation receipt without source reevaluation, independently read back the live closure and prove rollback to that prior/recovery runtime, restore independently sourced off-host backup material, prove offline recovery, and finish with a reviewed evidence-complete cutover plan whose actual production device remains deliberately unbound for a later separately authorized destructive order.",
+  "goal": "After T001/T002, ancestry-preserving source integration, the T004 activation-mechanism proof, storage-harness implementation, final source integration/publication/seal and the final T011 published-source closure build proof are terminal and reviewed, prove one-disk NixOS cutover readiness on an exclusively reserved disposable non-production target using only the leased immutable T010 published-source artifact and the exact T011 final closure/build receipt: first create and independently read back the canonical GPT+EFI+recovery+LUKS2+Btrfs topology, then boot a distinct receipt-bound prior/recovery runtime derived only from T010 on that topology, then derive and review a target-bound Activation receipt from the exact T011 Build receipt and the proven disposable target/prior-runtime identity, activate exactly the T011 closure through that Activation receipt without source reevaluation, independently read back the live closure and prove rollback to that prior/recovery runtime, restore the user-accepted existing UUID-bound HEIM_BACKUP Restic backup material (or an equivalent stronger source) with same-host attachment explicitly accepted for this data-backup/restore gate, prove the remaining offline recovery path, and finish with a reviewed evidence-complete cutover plan whose actual production device remains deliberately unbound for a later separately authorized destructive order.",
   "priority": {
     "lane": "next",
     "rank": 11
@@ -193,7 +193,7 @@
     },
     {
       "id": "data-classification",
-      "assertion": "Fresh read-only inventory classifies every migration-relevant non-reproducible data class separately from caches and rebuildable state; current scoped backup success is not treated as proof of complete cutover coverage.",
+      "assertion": "Fresh read-only inventory classifies migration-relevant non-reproducible data separately from caches and rebuildable state. For this task revision, the user explicitly accepts the existing daily HEIM_BACKUP Restic backup scope (repos, artifacts/merges, schauwerk/fundus and its backup sentinel) as sufficient migration data coverage; additional Home/data classes may be recorded as uncovered but are non-blocking for T003 unless another unchanged gate specifically requires them.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -202,7 +202,7 @@
     },
     {
       "id": "independent-offhost-restore",
-      "assertion": "Every critical migration data class is covered by sufficient physically/logically independent off-host storage and a staged realistic restore into the disposable rehearsal sandbox proves representative usable content; a capacity-constrained, production-disk-backed or non-independently-restorable backup target cannot satisfy this gate.",
+      "assertion": "Compatibility acceptance ID retained. The existing daily Restic repository /mnt/backup/restic/heim-pc on the UUID-bound HEIM_BACKUP disk is explicitly accepted as sufficient backup and restore evidence even though that disk is physically attached to the Heim-PC. Fresh repository/disk identity readback plus a staged realistic restore into the disposable rehearsal sandbox must prove representative usable content from an exact successful snapshot. A production-system-SSD-backed repository, unreadable repository, failed restore or identity mismatch still fails this gate; a genuinely off-host source remains acceptable but is no longer required.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -211,7 +211,7 @@
     },
     {
       "id": "fresh-system-reconstruction",
-      "assertion": "A fresh disposable system is reconstructed exclusively from the verified T010 content-addressed published-source artifact plus independently restored non-reproducible data, demonstrating that neither Git object-store access, mutable checkout state, hidden production-host state nor the original system disk is required for recovery. After topology proof and receipt-bound activation, boot/live readback binds the reconstructed running system to the exact T011 final closure and its T010/T009 source identity.",
+      "assertion": "A fresh disposable system is reconstructed exclusively from the verified T010 content-addressed published-source artifact plus data restored from the user-accepted HEIM_BACKUP backup scope, demonstrating that Git object-store access, mutable checkout state and the original production system SSD are not required for the reconstruction path. After topology proof and receipt-bound activation, boot/live readback binds the reconstructed running system to the exact T011 final closure and its T010/T009 source identity.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -319,6 +319,46 @@
           "observed_at": "2026-09-24T19:35:15.943683Z",
           "sha256": "d0f90534c6eaa7cea5d6c6e51cf6e826b2405f206e9d6a21b52e822abc95ef40"
         }
+      ]
+    },
+    "backup_restore_policy_override": {
+      "schema_version": 1,
+      "decided_at": "2026-09-26",
+      "authority": "direct-user-order",
+      "accepted_source": {
+        "kind": "attached-backup-disk",
+        "label": "HEIM_BACKUP",
+        "mountpoint": "/mnt/backup",
+        "repository": "/mnt/backup/restic/heim-pc",
+        "same_host_attachment_accepted": true,
+        "declared_backup_scope": [
+          "repos",
+          "artifacts/merges",
+          "schauwerk/fundus",
+          "backup-sentinel"
+        ]
+      },
+      "scope": [
+        "data-classification",
+        "backup-coverage",
+        "restore-usability",
+        "independent-offhost-restore",
+        "fresh-system-reconstruction"
+      ],
+      "preserves": [
+        "bootable-recovery-media",
+        "offline-source-lock-trust",
+        "luks-recovery-material",
+        "production-system-ssd-independence",
+        "break-glass-runtime-authority",
+        "production-destructive-boundary"
+      ],
+      "does_not_establish": [
+        "HEIM_BACKUP is off-host",
+        "complete backup of every Home path",
+        "bootable recovery media",
+        "LUKS recovery material",
+        "production cutover authority"
       ]
     }
   }

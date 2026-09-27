@@ -12,7 +12,7 @@
     "WELTGEWEBE-OS-009",
     "WELTGEWEBE-OS-010"
   ],
-  "commit_sha": "85ebdd71846f8d6a2de1076745de20725ebcb48a",
+  "commit_sha": "1f4897c0e7d132eb259c7fd393645d212bfd5098",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -2316,7 +2316,7 @@
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 0,
+      "missing_evidence_count": 1,
       "owner": "unknown",
       "priority": "medium",
       "risk": "low",
@@ -2350,7 +2350,9 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [],
+        "missing_evidence": [
+          "scripts/guard_api_alias.sh wurde 2026-09-23 entfernt: kein Runner rief ihn auf, und seine Textsuche traf auch den Image-Namen weltgewebe-api. Die Alias-Invariante prüft seither scripts/guard/compose-image-guard.sh."
+        ],
         "owner": "unknown",
         "priority": "medium",
         "risk": "low",
@@ -2358,7 +2360,7 @@
         "title": "Repo-Komplettaudit 2026-07-02 abgeschlossen",
         "updated_at": "2026-07-02"
       },
-      "source_task_sha256": "6370507a58de9e7fa74ac21e08c2753b90eb9fc7704f9ed8b628e4d78b3b4a58",
+      "source_task_sha256": "dfe7eae83c2c8a1d240760f3f2916edd14f38186f7970774000a633229540161",
       "status": "done",
       "title": "Repo-Komplettaudit 2026-07-02 abgeschlossen",
       "updated_at": "2026-07-02"
@@ -3176,7 +3178,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "f331e72197d632b828c51451c57c6a32a88763bc87a462f6f409c8bc43551cc3",
+  "index_sha256": "96c0a0a1b2b0b131c54eca7c3dbbe17d2aa2cf81aba6cb9633f50c3f118b140c",
   "ref": "HEAD",
   "repository": "heimgewebe/commonthing",
   "schema_path": "docs/tasks/schema.json",

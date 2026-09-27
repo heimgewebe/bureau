@@ -58,6 +58,25 @@ def test_first_task_onboarding_binds_create_only_repository_authority() -> None:
     }
 
 
+def test_first_task_onboarding_binds_create_only_read_only_repository_authority() -> None:
+    authority = _validate(
+        proposed_claims=[
+            {
+                "resource": "repo.commonthing",
+                "mode": "read",
+                "isolation": "none",
+            }
+        ]
+    )
+
+    assert authority["required_claim"] == {
+        "resource": "repo.commonthing",
+        "mode": "read",
+        "isolation": "none",
+    }
+    assert authority["create_only"] is True
+
+
 def test_first_task_onboarding_authority_is_not_reusable_freshness_evidence() -> None:
     authority = _validate()
 
@@ -91,10 +110,11 @@ def test_first_task_onboarding_is_strictly_create_only() -> None:
     [
         {"resource": "repo.commonthing", "mode": "read", "isolation": "worktree"},
         {"resource": "repo.commonthing", "mode": "write", "isolation": "shared"},
+        {"resource": "repo.commonthing", "mode": "read", "isolation": "shared"},
         {"resource": "repo.other", "mode": "write", "isolation": "worktree"},
     ],
 )
-def test_first_task_onboarding_requires_exact_write_worktree_claim(claim: dict) -> None:
+def test_first_task_onboarding_requires_supported_repository_claim(claim: dict) -> None:
     with pytest.raises(FirstTaskOnboardingError) as exc_info:
         _validate(proposed_claims=[claim])
 

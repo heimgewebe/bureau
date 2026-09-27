@@ -5243,6 +5243,39 @@ def test_first_task_publication_creates_once_and_supplies_ordinary_publisher(
     assert store.task_spec(second_task["id"])["revision"] == 1
 
 
+def test_first_task_read_only_observation_can_onboard_without_write_authority(
+    registry_factory, tmp_path,
+):
+    registry, store, recorded, task = _first_task_context(registry_factory, tmp_path)
+    task["claims"] = [
+        {"resource": "repo.fresh", "mode": "read", "isolation": "none"}
+    ]
+    path = tmp_path / "first-read-only-task.json"
+
+    task_propose(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        task_json=task,
+        publishing_task_id=task["id"],
+        path=path,
+    )
+    plan = json.loads(path.read_text())
+    assert plan["first_task_onboarding"]["required_claim"] == {
+        "resource": "repo.fresh",
+        "mode": "read",
+        "isolation": "none",
+    }
+
+    _, db = _review_first_task(registry, store, path, tmp_path)
+    published = _first_task_publish(registry, store, path, db, tmp_path)
+
+    assert published["status"] == "published"
+    assert store.task_spec(plan["task_id"])["spec"]["claims"] == [
+        {"resource": "repo.fresh", "mode": "read", "isolation": "none"}
+    ]
+
+
 @pytest.mark.parametrize("claim_resource", ["root", "repo.fresh", "repo.fresh.component"])
 @pytest.mark.parametrize("mode,state", [("read", "verified"), ("write", "planned")])
 def test_first_task_rejects_every_authoritative_overlap(
@@ -5268,7 +5301,7 @@ def test_first_task_rejects_every_authoritative_overlap(
     ("missing-claim", "first-task-onboarding-claim-invalid"),
     ("duplicate-claim", "task-schema-invalid"),
     ("extra-claim", "first-task-onboarding-claim-invalid"),
-    ("read-claim", "first-task-onboarding-claim-invalid"),
+    ("read-worktree-claim", "first-task-onboarding-claim-invalid"),
     ("shared-claim", "task-schema-invalid"),
 ])
 def test_first_task_proposal_rejects_invalid_authority(registry_factory, tmp_path, fault, code):
@@ -5286,7 +5319,7 @@ def test_first_task_proposal_rejects_invalid_authority(registry_factory, tmp_pat
         task["claims"].append(dict(task["claims"][0]))
     elif fault == "extra-claim":
         task["claims"].append({"resource": "repo.alpha", "mode": "write", "isolation": "worktree"})
-    elif fault == "read-claim":
+    elif fault == "read-worktree-claim":
         task["claims"][0]["mode"] = "read"
     elif fault == "shared-claim":
         task["claims"][0]["isolation"] = "shared"

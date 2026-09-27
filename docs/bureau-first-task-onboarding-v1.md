@@ -17,8 +17,9 @@ First-task onboarding may be derived only when all of the following are freshly 
 1. the target Registry resource exists and has type `git-repository`;
 2. the proposed TaskSpec does not already exist in StateStore;
 3. no authoritative TaskSpec currently claims or overlaps the target repository resource;
-4. the proposed TaskSpec contains only one claim, for that repository with
-   `mode=write` and `isolation=worktree`; additional resources require ordinary publication;
+4. the proposed TaskSpec contains only one claim for that repository, either
+   `mode=write` with `isolation=worktree` or the strictly observational
+   `mode=read` with `isolation=none`; additional resources require ordinary publication;
 5. the normal operator-intake candidate, Registry snapshot, proposal digest and
    `reviewed_plan` approval are still exact and current;
 6. publication holds the exact live StateStore-path lease whose metadata is bound to the

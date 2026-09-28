@@ -36,9 +36,9 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski",
     "approval": {
-      "action_class": "repository_mutation",
+      "action_class": "task_creation_from_external_evidence",
       "required_level": "operator",
-      "note": "Follow-up aus dem revisionsgebundenen Closeout von heimgewebe/repoground#1331. Änderungen bleiben auf Grabowski-/Operatorverträge begrenzt. Falls der kanonische Source-of-Truth des Renovate-Refresh-Skripts außerhalb repo.grabowski liegt, muss vor jeder Fremdrepo-Mutation ein enger Nachfolgetask mit korrektem Claim publiziert werden."
+      "note": "Der Nutzer hat am 28. September 2026 die Umsetzung dieses aus dem Closeout von heimgewebe/repoground#1331 abgeleiteten Bureau-Folgetasks ausdrücklich mit @grabowski beauftragt. Diese Freigabe autorisiert ausschließlich die Registrierung von T087 aus der belegten externen Evidenz; sie erteilt keine Implementierungs-, Merge-, Deployment- oder Fremdrepo-Mutationsautorität. Falls der kanonische Source-of-Truth des Renovate-Refresh-Skripts außerhalb repo.grabowski liegt, muss vor jeder Fremdrepo-Mutation ein enger Nachfolgetask mit korrektem Claim publiziert werden."
     },
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski"

@@ -5,10 +5,10 @@ from typing import Any
 
 FIRST_TASK_ONBOARDING_SCHEMA_VERSION = 1
 FIRST_TASK_ONBOARDING_KIND = "bureau_first_task_onboarding_authority"
-_REQUIRED_REPOSITORY_CLAIM = {
-    "mode": "write",
-    "isolation": "worktree",
-}
+_ALLOWED_REPOSITORY_CLAIMS = (
+    {"mode": "write", "isolation": "worktree"},
+    {"mode": "read", "isolation": "none"},
+)
 
 
 class FirstTaskOnboardingError(ValueError):
@@ -40,8 +40,8 @@ def validate_first_task_onboarding(
     mutate StateStore.  It only proves the part that normal task publication
     cannot prove for the first TaskSpec: the target is a registered repository,
     the proposed task does not already exist, no authoritative TaskSpec already
-    claims the repository, and the proposal itself asks for the ordinary
-    write/worktree repository claim.
+    claims the repository, and the proposal itself asks for either the ordinary
+    write/worktree repository claim or the strictly read-only read/none claim.
 
     The caller must separately bind this result to the exact candidate,
     Registry snapshot, proposal digest, reviewed-plan approval, and live
@@ -109,14 +109,14 @@ def validate_first_task_onboarding(
         )
 
     target_claim = matching_claims[0]
-    claim_matches = all(
-        target_claim.get(key) == expected
-        for key, expected in _REQUIRED_REPOSITORY_CLAIM.items()
+    claim_matches = any(
+        all(target_claim.get(key) == expected for key, expected in allowed.items())
+        for allowed in _ALLOWED_REPOSITORY_CLAIMS
     )
     if not claim_matches:
         raise FirstTaskOnboardingError(
             "first-task-onboarding-claim-invalid",
-            "the target repository claim must use mode=write and isolation=worktree",
+            "the target repository claim must use write/worktree or read/none",
         )
 
     if not isinstance(conflicting_task_ids, Sequence) or isinstance(
@@ -152,7 +152,8 @@ def validate_first_task_onboarding(
         "create_only": True,
         "required_claim": {
             "resource": resource_id,
-            **_REQUIRED_REPOSITORY_CLAIM,
+            "mode": target_claim["mode"],
+            "isolation": target_claim["isolation"],
         },
         "conflicting_task_ids": [],
         "does_not_establish": [

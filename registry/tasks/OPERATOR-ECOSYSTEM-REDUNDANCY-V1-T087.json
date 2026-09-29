@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T087",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "PR-Delivery-Konvergenz: Merge-Provenienz, Renovate-Artefakte und Worktree-Cleanup schließen",
+  "state": "planned",
+  "goal": "Die beim Closeout von heimgewebe/repoground#1331 sichtbar gewordenen Lücken im PR-Lieferpfad schließen: Merge-/Captain-Provenienz muss für einen exakten PR-Head und Merge-Commit maschinenlesbar auffindbar sein oder ausdrücklich als unbelegt/external markiert werden; der Renovate-Artefaktpfad muss workflow-control-plane-Artefakte ohne manuelle Reparatur reproduzierbar aktualisieren; und terminale managed Worktrees müssen aus completed_retained über einen einzigen konsistenten recovery-first Hygiene-Pfad bis Archiv/Cleanup konvergieren. Keine rückwirkende Evidenzfabrikation für PR #1331.",
+  "depends_on": [],
+  "priority": {
+    "lane": "next",
+    "rank": 87
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "grabowski",
+    "bureau",
+    "github",
+    "audit"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "action_class": "task_creation_from_external_evidence",
+      "required_level": "operator",
+      "note": "Der Nutzer hat am 28. September 2026 die Umsetzung dieses aus dem Closeout von heimgewebe/repoground#1331 abgeleiteten Bureau-Folgetasks ausdrücklich mit @grabowski beauftragt. Diese Freigabe autorisiert ausschließlich die Registrierung von T087 aus der belegten externen Evidenz; sie erteilt keine Implementierungs-, Merge-, Deployment- oder Fremdrepo-Mutationsautorität. Falls der kanonische Source-of-Truth des Renovate-Refresh-Skripts außerhalb repo.grabowski liegt, muss vor jeder Fremdrepo-Mutation ein enger Nachfolgetask mit korrektem Claim publiziert werden."
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "oer-v1-t087-merge-provenance",
+      "assertion": "Für einen kontrollierten PR-Merge ist revisionsgebunden und maschinenlesbar feststellbar, ob Captain pr-merge den Effekt ausgeführt hat. Die Evidenz bindet mindestens Repository, PR-Nummer, exakten Pre-Merge-Head und beobachteten Merge-Commit. Ein Merge ohne auffindbare Captain-Evidenz wird ausdrücklich als unproven/external klassifiziert statt aus GitHub actor/state abgeleitet.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator:pr-delivery:merge-provenance"
+      }
+    },
+    {
+      "id": "oer-v1-t087-no-retroactive-proof",
+      "assertion": "Der historische Fall heimgewebe/repoground#1331 bleibt evidenztreu dokumentiert: Head d9abacc08731025951af35398b8740c9c0c7643a wurde als Squash 297848899f2f94ac91aae2e027cc0e9271a7b839 gemergt und alle aktuellen Head-Checks waren grün, aber der exakte Merge-SHA ist im geprüften Grabowski write-audit nicht auffindbar. Daraus wird keine rückwirkende Captain-Provenienz konstruiert.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator:pr1331:forensic-nonclaim"
+      }
+    },
+    {
+      "id": "oer-v1-t087-completed-retained-convergence",
+      "assertion": "Checkout-Inventar und worktree-hygiene-reconcile besitzen für terminale managed Worktrees einen konsistenten Vertrag. Der Zustand completed_retained kann nach exakter Merge- und Sauberkeitsprüfung über den empfohlenen recovery-first Pfad archiviert werden, oder das Inventar empfiehlt einen tatsächlich unterstützten alternativen Pfad. Ein Regressionstest reproduziert den in PR #1331 beobachteten heutigen Skip state_not_archive_candidate.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator:worktree-hygiene:completed-retained"
+      }
+    },
+    {
+      "id": "oer-v1-t087-recovery-first-cleanup",
+      "assertion": "Worktree-Cleanup bleibt fail-closed: dirty oder koordinierte/foreign Checkouts werden nie automatisch gelöscht; vor Löschung existiert ein passendes Recovery-Archiv, Retention/Grace ist abgelaufen und ein frischer hashgebundener Dry-Run erklärt safe_to_apply.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator:worktree-hygiene:recovery-first"
+      }
+    },
+    {
+      "id": "oer-v1-t087-renovate-artifact-refresh",
+      "assertion": "Der kanonische Source-of-Truth von repoground-workflow-refresh.sh ist belegt und der bei PR #1331 beobachtete Fehler 'missing config key GIT_CONFIG_KEY_0 / fatal: unable to parse command-line config' ist reproduziert und an der richtigen Schicht behoben. Ein CodeQL-Digest-Update aktualisiert danach config/workflow-control-plane.v1.json automatisch und der renovate/artifacts-Status wird ohne manuelle Einzeilenreparatur grün.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator:renovate:repoground-artifact-refresh"
+      }
+    },
+    {
+      "id": "oer-v1-t087-source-ownership-boundary",
+      "assertion": "Falls der Renovate-Refresh-Source-of-Truth außerhalb repo.grabowski liegt, führt T087 dort keine Mutation unter falschem Claim aus, sondern publiziert vor der Änderung einen engen Nachfolgetask mit korrekter Repository-/Ressourcenbindung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator:renovate:source-ownership"
+      }
+    },
+    {
+      "id": "oer-v1-t087-tests-liveproof",
+      "assertion": "Fokussierte Regressionstests plus relevante Grabowski-Suiten und Lint/Format sind auf exaktem finalem Head grün. Ein revisionsgebundener Liveproof zeigt anschließend sowohl auffindbare Merge-Provenienz beziehungsweise explizite Unproven-Klassifikation als auch die terminale Worktree-Konvergenz ohne direkte Shell-Umgehung.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator:pr-delivery:liveproof"
+      }
+    }
+  ],
+  "rollback": {
+    "strategy": "Bei Regressionen die neuen Provenienz-/Hygiene-Automationen deaktivieren und auf die bestehenden fail-closed Zustände zurückfallen. Keine historischen Auditrecords umschreiben, keine fremden Worktrees löschen und keine Merge-Evidenz synthetisieren."
+  },
+  "metadata": {
+    "source": "post-merge closeout of heimgewebe/repoground#1331",
+    "source_candidate": "candidate-50c0578628a24057f6149c91",
+    "source_event_id": 18025,
+    "observed_pr": "heimgewebe/repoground#1331",
+    "observed_pr_head": "d9abacc08731025951af35398b8740c9c0c7643a",
+    "observed_merge_sha": "297848899f2f94ac91aae2e027cc0e9271a7b839",
+    "observed_diff_sha256": "9bba29a22f377106fdb55d262d4285e63418cbd1190a0d2bea5f55d053591405",
+    "observed_cleanup_receipt_sha256": "0d364fad919f1a5ddb3347281483e6892fc09f15e8693e6347005984971cfc0a",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-50c0578628a24057f6149c91",
+      "event_id": 18025,
+      "candidate_event_id": "candidate-event-9070ef8a53c1d82836bd3466",
+      "content_fingerprint": "50c0578628a24057f6149c91a920cd421fa2ea49167935ecd0c03fe8caff8753",
+      "source_fingerprint": "506ed39064da4371cfa9ce3c6eed93a149bdb40640645482ebb6c39439ed07bb",
+      "request_sha256": "1aefc4794ab27d043f8dcf8cb8943f682eca0f94286b6d68ee3e64fd0beb80e0",
+      "source": {
+        "kind": "conversation",
+        "locator": "github-pr://heimgewebe/repoground/1331#post-merge-closeout",
+        "observed_at": "2026-09-28T04:17:31Z",
+        "sha256": null,
+        "freshness": "fingerprint-bound",
+        "fingerprint": "506ed39064da4371cfa9ce3c6eed93a149bdb40640645482ebb6c39439ed07bb",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ]
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Typed Bureau task promotion failed closed with release-registry-identity-mismatch while remote registry main was freshly verified; publish exactly one task file through protected PR.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI"
+      ]
+    },
+    "does_not_establish": [
+      "Captain executed the historical PR #1331 merge",
+      "direct merge bypass occurred",
+      "Renovate source ownership before discovery",
+      "permission to delete the retained #1331 checkout before lifecycle convergence"
+    ]
+  }
+}

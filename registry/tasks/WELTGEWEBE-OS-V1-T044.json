@@ -13,10 +13,22 @@
       "verifier": "versioned cutover contract receipt"
     },
     {
+      "assertion": "Für den exakten geplanten Cutover-Commit ist eine vom lokalen T084-kind-Referenzcluster und dem Produktions-Green getrennte reale, gegebenenfalls temporäre Kubernetes-/GitOps-Staging-Runtime anhand von laufenden Workloads, Flux-/Manifest-Revisionen, Image-Digests, externer Secretbereitstellung, Auth-/Event-/Suchfähigkeiten, produktionsnahen T048-Grenzen sowie Backup-/Restore-/Recovery- und Teardown-Receipts revisionsgebunden qualifiziert. Historische T085-Pässe ersetzen den neuen Zielproof nicht.",
+      "evidence_type": "object",
+      "id": "staging-gitops-runtime",
+      "verifier": "exact-release staging GitOps runtime, workload, promotion, load, recovery and teardown receipt"
+    },
+    {
       "assertion": "Funktion, Sicherheit, Datenpersistenz, Backups, Recovery, Latenz und Ressourcenverbrauch werden für Compose/Caddy und Kubernetes unter denselben kanonischen T048-Szenarien gemessen und revisionsgebunden verglichen.",
       "evidence_type": "object",
       "id": "t048-platform-parity",
       "verifier": "cross-platform T048 parity evidence"
+    },
+    {
+      "assertion": "Semantic Search bleibt beim Blue-zu-Green-Cutover revisions- und datengebunden erhalten: Ollama-Embeddingprovider einschließlich Modell-Digest und Dimension, Search-Worker, PostgreSQL-Suchprojektionen und aktive Indexgeneration, Sichtbarkeit und autorisierte Suche sind funktional gleichwertig. Ein kontrollierter Write→Outbox→JetStream→Projection→Search→Readback-Beleg und Restore-/Index-Recovery beweisen keine verlorene oder verdoppelte Fachmutation; fehlende Komponenten blockieren statt still zu degradieren.",
+      "evidence_type": "object",
+      "id": "semantic-search-continuity",
+      "verifier": "exact-release Blue/Green semantic search end-to-end, visibility and recovery continuity receipt"
     },
     {
       "assertion": "Datenbank-, JetStream-, Objekt- und Dateizustände werden mit Freeze-, Replikations- oder Dual-Run-Vertrag ohne verlorene bestätigte Fachmutation übertragen und vollständig verglichen.",

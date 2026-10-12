@@ -16,7 +16,10 @@
       "assertion": "Die tatsächliche, vom lokalen T084-kind sowie von Blue und produktivem Green getrennte, gegebenenfalls temporäre Kubernetes-/GitOps-Staging-Runtime läuft auf der gewünschten Cutover-Revision mit gebundenen Flux-/Manifestrevisionen und API-/Web-Image-Digests. Secrets, Identitäten, Daten, Peers und Traffic sind nachweislich nicht produktiv. Vor jeder Staging-Mutation liegt eine exklusive, an die konkrete Zielidentität gebundene und live geprüfte Bureau-/Grabowski-Cluster-/Runtime-Ressourcenreservierung vor; ein reiner Repository-Claim genügt nicht. Nur nachgewiesen eigene Ressourcen dürfen nach terminalem Proof abgebaut werden. Historische T085-Pässe gelten nicht als aktueller Beleg.",
       "evidence_type": "object",
       "id": "staging-gitops-runtime",
-      "verifier": "exact-release isolated staging GitOps runtime, digest, target-bound exclusive claim and ownership/teardown receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:staging-gitops-runtime"
+      }
     },
     {
       "assertion": "Funktion, Sicherheit, Datenpersistenz, Backups, Recovery, Latenz und Ressourcenverbrauch werden für Compose/Caddy und Kubernetes unter denselben kanonischen T048-Szenarien gemessen und revisionsgebunden verglichen.",
@@ -28,7 +31,10 @@
       "assertion": "Für dieselbe revisions- und datenstandgebundene Blue-/Green-Suchfunktion sind Embedding-Modell/Digest und Dimension, aktive Indexgeneration und Suchprojektionen nachweislich kompatibel; autorisierte Sichtbarkeit und semantische Suchergebnisse bleiben gleichwertig. Ein technisch isolierter Write→Outbox→JetStream→Projection→Search→Readback-Beleg weist den Suchnachzug nach. Ungeklärte Abweichungen blockieren ausschließlich die Cutover-Freigabe, ohne produktive Suchrouten oder Degradationssemantik zu verändern.",
       "evidence_type": "object",
       "id": "semantic-search-continuity",
-      "verifier": "exact-release Blue/Green embedding-space, search-visibility and isolated projection-readback continuity receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:semantic-search-continuity"
+      }
     },
     {
       "assertion": "Datenbank-, JetStream-, Objekt- und Dateizustände werden mit Freeze-, Replikations- oder Dual-Run-Vertrag ohne verlorene bestätigte Fachmutation übertragen und vollständig verglichen.",

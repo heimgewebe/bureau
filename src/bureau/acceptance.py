@@ -84,7 +84,10 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "domain": "runtime",
         "authorities": ("grabowski", "target-runtime"),
         "max_age_seconds": 900,
-        "config_fields": ("observation_scope", "required_probes"),
+        "config_fields": (
+            "observation_scope", "required_probes",
+            "expected_runtime_revision", "expected_target_identity",
+        ),
         "revision_binding": (
             "task_sha256", "plan_sha256", "observation_scope",
             "runtime_revision", "target_identity",
@@ -274,6 +277,20 @@ def _criterion_verifier_config(
     if verifier == "runtime_proof_bundle":
         scope = nonempty("observation_scope")
         probes = raw.get("required_probes")
+        release = raw.get("expected_runtime_revision")
+        target = raw.get("expected_target_identity")
+        # T044 has no selected production Green revision yet. Both null values
+        # make the Registry structurally valid but evaluation fail closed until
+        # a separately authorized TaskSpec revision freezes both identifiers.
+        if (release is None) != (target is None):
+            return None
+        if release is not None and (
+            not isinstance(release, str)
+            or re.fullmatch(r"[0-9a-f]{40}", release) is None
+            or not isinstance(target, str)
+            or re.fullmatch(r"[A-Za-z][A-Za-z0-9_.:-]{2,159}", target) is None
+        ):
+            return None
         if (
             scope is None
             or re.fullmatch(r"weltgewebe:t044:[a-z][a-z0-9-]{1,63}", scope) is None
@@ -287,7 +304,12 @@ def _criterion_verifier_config(
             or len(set(probes)) != len(probes)
         ):
             return None
-        return {"observation_scope": scope, "required_probes": list(probes)}
+        return {
+            "observation_scope": scope,
+            "required_probes": list(probes),
+            "expected_runtime_revision": release,
+            "expected_target_identity": target,
+        }
 
     if verifier == "manual_observation":
         scope = nonempty("observation_scope")
@@ -823,13 +845,21 @@ def _revision_valid(
     revision = evidence.get("revision")
     if not isinstance(revision, Mapping):
         return False, "revision-binding-missing"
-    if contract.get("verifier") == "runtime_proof_bundle" and (
-        plan_sha256 is None
-        or not _sha(revision.get("runtime_revision"))
-        or not isinstance(revision.get("target_identity"), str)
-        or not revision["target_identity"].strip()
-    ):
-        return False, "runtime-proof-revision-or-plan-missing"
+    if contract.get("verifier") == "runtime_proof_bundle":
+        expected = contract.get("verifier_config")
+        if not isinstance(expected, Mapping):
+            return False, "runtime-proof-config-missing"
+        expected_release = expected.get("expected_runtime_revision")
+        expected_target = expected.get("expected_target_identity")
+        if expected_release is None or expected_target is None:
+            return False, "runtime-proof-target-not-frozen"
+        if plan_sha256 is None or not _sha(revision.get("runtime_revision")):
+            return False, "runtime-proof-revision-or-plan-missing"
+        if (
+            revision.get("runtime_revision") != expected_release
+            or revision.get("target_identity") != expected_target
+        ):
+            return False, "runtime-proof-frozen-target-mismatch"
     if revision.get("task_sha256") != task_sha256 or not _sha256(task_sha256):
         return False, "task-revision-mismatch"
     if plan_sha256 is not None and (

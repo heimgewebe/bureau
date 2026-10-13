@@ -549,7 +549,7 @@ def validate_manual_acceptance_authentication_payload(
         raise StateEventError(
             "manual acceptance authentication reviewer and observer mismatch"
         )
-    if payload.get("verifier") not in {"manual_observation", "runtime_proof_bundle"}:
+    if payload.get("verifier") != "manual_observation":
         raise StateEventError("manual acceptance authentication verifier is invalid")
     if payload.get("authority") != "manual":
         raise StateEventError("manual acceptance authentication authority is invalid")

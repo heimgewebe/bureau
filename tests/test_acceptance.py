@@ -76,6 +76,8 @@ def criterion(
         "runtime_proof_bundle": {
             "observation_scope": "weltgewebe:t044:test",
             "required_probes": ["cluster-identity", "writer-fencing"],
+            "expected_runtime_revision": RUNTIME_SHA,
+            "expected_target_identity": "green-t044",
         },
         "manual_observation": {"observation_scope": "manual:test"},
         "duration_soak_completed": {
@@ -1154,6 +1156,9 @@ def test_t044_runtime_proof_rejects_cross_criterion_release_divergence() -> None
         "second", "runtime_proof_bundle",
         {"observation_scope": "weltgewebe:t044:second"},
     )
+    # Both criteria are individually bound to their own frozen target commit;
+    # the shared T044 cutover boundary still rejects contradictory releases.
+    second["verifier_config"]["expected_runtime_revision"] = HEAD_SHA
     receipts = {}
     for identity, revision in (("first", RUNTIME_SHA), ("second", HEAD_SHA)):
         evidence = _t044_probe_evidence()
@@ -1173,3 +1178,38 @@ def test_t044_runtime_proof_rejects_cross_criterion_release_divergence() -> None
     assert result["state"] == UNKNOWN
     assert result["automatic_terminalization"] is False
     assert result["cross_criterion_revision"]["conflicts"]
+
+def test_t044_runtime_proof_contract_freezes_selected_green_target() -> None:
+    target = criterion("proof", "runtime_proof_bundle")
+    target["verifier_config"]["expected_runtime_revision"] = RUNTIME_SHA
+    target["verifier_config"]["expected_target_identity"] = "green-t044"
+    validate_acceptance_contract({"id": "T044-FROZEN", "acceptance": [target]})
+    evidence = _t044_probe_evidence()
+    # Internally consistent attacker-submitted target/revision must not override
+    # the frozen TaskSpec target even if every claimed probe says PASS.
+    evidence["revision"]["runtime_revision"] = HEAD_SHA
+    evidence["revision"]["target_identity"] = "other-cluster"
+    evidence["facts"]["runtime_revision"] = HEAD_SHA
+    evidence["facts"]["target_identity"] = "other-cluster"
+    for probe in evidence["facts"]["probes"]:
+        probe["runtime_revision"] = HEAD_SHA
+        probe["target_identity"] = "other-cluster"
+    result = _evaluate_criterion(
+        target, evidence, task_sha256=TASK_SHA, plan_sha256=PLAN_SHA,
+        now=NOW, source_authenticated=True,
+    )
+    assert result["state"] != PASSED
+
+
+def test_t044_unselected_green_target_blocks_even_authenticated_probes() -> None:
+    target = criterion("proof", "runtime_proof_bundle")
+    target["verifier_config"]["expected_runtime_revision"] = None
+    target["verifier_config"]["expected_target_identity"] = None
+    validate_acceptance_contract({"id": "T044-UNBOUND", "acceptance": [target]})
+    result = _evaluate_criterion(
+        target, _t044_probe_evidence(),
+        task_sha256=TASK_SHA, plan_sha256=PLAN_SHA, now=NOW,
+        source_authenticated=True,
+    )
+    assert result["state"] == UNKNOWN
+    assert result["reason"] == "runtime-proof-target-not-frozen"

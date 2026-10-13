@@ -16,7 +16,9 @@
           "secrets",
           "identities",
           "failure-domains"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -33,7 +35,9 @@
           "traffic-sequence",
           "automatic-stop",
           "rollback-contract"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -60,7 +64,9 @@
           "recovery",
           "latency",
           "resource-budgets"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -85,7 +91,9 @@
           "object-file-continuity",
           "event-reconciliation",
           "writer-fencing"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -102,7 +110,9 @@
           "mutation-integrity",
           "automatic-stop",
           "rollback-verification"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -118,7 +128,9 @@
           "secret-key-recovery",
           "blue-rollback",
           "rto-rpo-evidence"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -134,7 +146,9 @@
           "operator-projections",
           "deployment-revision",
           "action-authority"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -150,7 +164,9 @@
           "rollback-window",
           "sole-writer",
           "cleanup-inventory"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     },
     {
@@ -166,7 +182,9 @@
           "workload-digests",
           "data-continuity",
           "writer-authority"
-        ]
+        ],
+        "expected_runtime_revision": null,
+        "expected_target_identity": null
       }
     }
   ],

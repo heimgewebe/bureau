@@ -567,6 +567,14 @@
                 "pattern": "^[0-9a-f]{40,64}$",
                 "type": "string"
               },
+              "expected_runtime_revision": {
+                "type": ["string", "null"],
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "expected_target_identity": {
+                "type": ["string", "null"],
+                "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{2,159}$"
+              },
               "observation_scope": {
                 "minLength": 1,
                 "type": "string"

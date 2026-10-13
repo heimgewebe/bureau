@@ -2660,7 +2660,11 @@ def _runtime_proof_production_fixture(registry_factory, tmp_path: Path, monkeypa
         "assertion": "authenticated runtime and writer boundaries",
         "evidence_type": "object",
         "verifier": "runtime_proof_bundle",
-        "verifier_config": {"observation_scope": scope, "required_probes": names},
+        "verifier_config": {
+            "observation_scope": scope, "required_probes": names,
+            "expected_runtime_revision": "e" * 40,
+            "expected_target_identity": "isolated-green",
+        },
     }]
     task_path.write_text(json.dumps(task), encoding="utf-8")
     state_root = tmp_path / "proof-state"
@@ -2710,7 +2714,29 @@ def _runtime_proof_production_fixture(registry_factory, tmp_path: Path, monkeypa
     return registry, store, run, bundle, bundle_path
 
 
-def test_runtime_proof_bundle_requires_independent_journal_attestation(
+def _primary_runtime_observation(
+    run: dict[str, object], proof: dict[str, object]
+) -> dict[str, object]:
+    facts = proof["facts"]
+    assert isinstance(facts, dict)
+    return {
+        "schema_version": 1,
+        "kind": "bureau.runtime_proof_observation",
+        "run_id": run["run_id"],
+        "task_sha256": run["task_sha256"],
+        "plan_sha256": run["plan_sha256"],
+        "criterion_id": proof["criterion_id"],
+        "observation_scope": facts["observation_scope"],
+        "runtime_revision": facts["runtime_revision"],
+        "target_identity": facts["target_identity"],
+        "source": copy.deepcopy(proof["source"]),
+        "observed_at": proof["observed_at"],
+        "observer": facts["observer"],
+        "probes": copy.deepcopy(facts["probes"]),
+    }
+
+
+def test_runtime_proof_bundle_requires_authoritative_primary_runtime_readback(
     registry_factory, tmp_path: Path, monkeypatch
 ) -> None:
     registry, store, run, bundle, _ = _runtime_proof_production_fixture(
@@ -2718,22 +2744,33 @@ def test_runtime_proof_bundle_requires_independent_journal_attestation(
     )
     untrusted = reconcile_state_evidence(registry, store)
     assert untrusted["terminalized_count"] == 0
-    assert untrusted["observations"][0]["reason"] == "evidence-authentication-unavailable"
+    assert untrusted["observations"][0]["reason"] == "evidence-adapter-unavailable"
     assert untrusted["observations"][0]["adapter"]["adapter"] == (
-        "StateStore.events:manual-acceptance-source-authenticated"
+        "missing:runtime_proof_bundle"
     )
-    proof_sha = legacy.sha256_json(bundle["evidence"]["runtime-proof"])
-    attestation = record_manual_acceptance_authentication(
-        store, run["run_id"], "runtime-proof",
-        expected_evidence_sha256=proof_sha,
-        reviewer="independent-security-reviewer",
+    proof = bundle["evidence"]["runtime-proof"]
+    with pytest.raises(StateError, match="verifier mismatch"):
+        record_manual_acceptance_authentication(
+            store, run["run_id"], "runtime-proof",
+            expected_evidence_sha256=legacy.sha256_json(proof),
+            reviewer="independent-security-reviewer",
+        )
+
+    def authorized_reader(request: Mapping[str, Any]) -> Mapping[str, Any]:
+        assert request["task_sha256"] == run["task_sha256"]
+        assert request["plan_sha256"] == run["plan_sha256"]
+        assert request["target_identity"] == "isolated-green"
+        assert request["runtime_revision"] == "e" * 40
+        assert request["required_probes"] == ["cluster-identity", "writer-fencing"]
+        return _primary_runtime_observation(run, proof)
+
+    settled = reconcile_state_evidence(
+        registry, store, runtime_proof_reader=authorized_reader
     )
-    assert attestation["authentication"]["verifier"] == "runtime_proof_bundle"
-    assert attestation["authentication"]["evidence_sha256"] == proof_sha
-    assert attestation["authentication"]["reviewer"] == "independent-security-reviewer"
-    settled = reconcile_state_evidence(registry, store)
     assert settled["terminalized_count"] == 1
     assert store.run(run["run_id"])["state"] == "succeeded"
+
+
 
 
 @pytest.mark.parametrize(
@@ -2751,6 +2788,7 @@ def test_runtime_proof_authentication_rejects_incomplete_or_self_verified_data(
         registry_factory, tmp_path, monkeypatch
     )
     proof = bundle["evidence"]["runtime-proof"]
+    real_primary_observation = _primary_runtime_observation(run, proof)
     if problem == "missing-probe":
         proof["facts"]["probes"].pop()
     elif problem == "missing-digest":
@@ -2778,6 +2816,33 @@ def test_runtime_proof_authentication_rejects_incomplete_or_self_verified_data(
             expected_evidence_sha256=legacy.sha256_json(proof),
             reviewer=reviewer,
         )
-    observed = reconcile_state_evidence(registry, store)
+    # A truthful primary reader cannot authenticate tampered bundle content;
+    # a missing reader cannot be replaced with even a valid reviewer journal.
+    if problem.startswith("reviewer-"):
+        observed = reconcile_state_evidence(registry, store)
+    else:
+        observed = reconcile_state_evidence(
+            registry, store,
+            runtime_proof_reader=lambda _: real_primary_observation,
+        )
     assert observed["terminalized_count"] == 0
     assert observed["open_count"] == 1
+
+
+def test_t044_runtime_manual_attestation_cannot_substitute_for_source_proof(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, _ = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    # A reviewer acknowledgement is not proof that the target runtime produced
+    # the declared probe receipts.
+    with pytest.raises(StateError, match="verifier mismatch"):
+        record_manual_acceptance_authentication(
+            store, run["run_id"], "runtime-proof",
+            expected_evidence_sha256=legacy.sha256_json(bundle["evidence"]["runtime-proof"]),
+            reviewer="independent-security-reviewer",
+        )
+    result = reconcile_state_evidence(registry, store)
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1

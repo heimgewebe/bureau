@@ -617,8 +617,76 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                 )
             )
 
+    # A T044 TaskSpec can contain nine individually valid runtime criteria
+    # while referring to different clusters or releases. Reject that before
+    # dispatch, not only after evidence has been produced at closeout. Both
+    # expected identifiers may remain None while Green is not authorized.
+    t044_target: tuple[str | None, str | None] | None = None
+    for index, item in enumerate(criteria):
+        if not isinstance(item, Mapping) or item.get("verifier") != "runtime_proof_bundle":
+            continue
+        contract = criterion_contract(item)
+        if contract is None:
+            continue  # The individual malformed contract is diagnosed above.
+        config = contract["verifier_config"]
+        if not config["observation_scope"].startswith("weltgewebe:t044:"):
+            continue
+        pair = (
+            config["expected_runtime_revision"],
+            config["expected_target_identity"],
+        )
+        if t044_target is None:
+            t044_target = pair
+        elif pair != t044_target:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=str(item["id"]),
+                    path=f"$.acceptance[{index}].verifier_config",
+                    code="t044-target-inconsistent",
+                    message=(
+                        "t044-target-inconsistent: all T044 runtime proof bundles "
+                        "must freeze one identical release and Green target"
+                    ),
+                    invalid_fields=(
+                        "verifier_config.expected_runtime_revision",
+                        "verifier_config.expected_target_identity",
+                    ),
+                )
+            )
+
     if diagnostics:
         raise AcceptanceContractError(diagnostics)
+
+
+def t044_claim_admission_reasons(
+    task: Mapping[str, Any], *, runtime_reader_registered: bool = False
+) -> list[str]:
+    """Block T044 claims before *any* workload starts unless its target and source exist.
+
+    Structural TaskSpec readability deliberately permits nine null target
+    placeholders. Claiming/executing a production cutover does not.
+    A true registration flag is supplied only by trusted operator code,
+    never by task evidence or the worker.
+    """
+    if task.get("id") != "WELTGEWEBE-OS-V1-T044":
+        return []
+    try:
+        validate_acceptance_contract(task)
+    except AcceptanceContractError as exc:
+        return [f"T044 acceptance contract invalid: {str(exc).partition(chr(10))[0]}"]
+    criteria = task["acceptance"]
+    proofs = [c for c in criteria if c["verifier"] == "runtime_proof_bundle"]
+    manual = [c for c in criteria if c["verifier"] == "manual_observation"]
+    if len(criteria) != 11 or len(proofs) != 9 or len(manual) != 2:
+        return ["T044 claim blocked: missing or changed eleven-criterion proof contract"]
+    config = proofs[0]["verifier_config"]
+    if config["expected_runtime_revision"] is None or config["expected_target_identity"] is None:
+        return ["T044 claim blocked: authorized Green target and runtime revision not frozen"]
+    # Contract validation above enforces one target/release for all nine.
+    if not runtime_reader_registered:
+        return ["T044 claim blocked: trusted primary runtime proof reader not registered"]
+    return []
 
 
 def typed_criterion_contracts(criteria: Sequence[Mapping[str, Any]]) -> dict[str, Any]:

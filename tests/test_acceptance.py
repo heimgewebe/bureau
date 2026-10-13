@@ -1213,3 +1213,51 @@ def test_t044_unselected_green_target_blocks_even_authenticated_probes() -> None
     )
     assert result["state"] == UNKNOWN
     assert result["reason"] == "runtime-proof-target-not-frozen"
+
+@pytest.mark.parametrize(
+    ("field", "other"),
+    [
+        ("expected_runtime_revision", "b" * 40),
+        ("expected_target_identity", "unauthorized-other-cluster"),
+    ],
+)
+def test_t044_contract_rejects_divergent_frozen_target_before_claim(
+    field: str, other: str | None,
+) -> None:
+    """Structural admission must reject mixed/contradictory nine-probe targets."""
+    import copy
+
+    task = {
+        "id": "WELTGEWEBE-OS-V1-T044",
+        "acceptance": [
+            criterion("first", "runtime_proof_bundle"),
+            criterion("second", "runtime_proof_bundle"),
+        ],
+    }
+    for item in task["acceptance"]:
+        config = item["verifier_config"]
+        config["expected_runtime_revision"] = "a" * 40
+        config["expected_target_identity"] = "green-authorized"
+    variant = copy.deepcopy(task)
+    variant["acceptance"][1]["verifier_config"][field] = other
+    with pytest.raises(AcceptanceContractError, match="t044-target-inconsistent"):
+        validate_acceptance_contract(variant)
+    validate_acceptance_contract(task)
+
+def test_t044_contract_rejects_mixed_frozen_and_unselected_targets() -> None:
+    """A nine-bundle task cannot combine an unselected and a frozen target."""
+    task = {
+        "id": "WELTGEWEBE-OS-V1-T044",
+        "acceptance": [
+            criterion("unselected", "runtime_proof_bundle", {
+                "expected_runtime_revision": None,
+                "expected_target_identity": None,
+            }),
+            criterion("frozen", "runtime_proof_bundle", {
+                "expected_runtime_revision": "a" * 40,
+                "expected_target_identity": "green-authorized",
+            }),
+        ],
+    }
+    with pytest.raises(AcceptanceContractError, match="t044-target-inconsistent"):
+        validate_acceptance_contract(task)

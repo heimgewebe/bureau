@@ -27,7 +27,11 @@ from . import (
     state_events,
     task_specs,
 )
-from .acceptance import AcceptanceContractError, validate_acceptance_contract
+from .acceptance import (
+    AcceptanceContractError,
+    t044_claim_admission_reasons,
+    validate_acceptance_contract,
+)
 from .adapters import AdapterRegistry
 from .approval import (
     ApprovalEvidence,
@@ -4606,6 +4610,7 @@ class Dispatcher(legacy.Dispatcher):
         open_pr_reservations_provider: Callable[[Registry], list[legacy.Reservation]] | None = None,
         enforce_runtime_gate: bool = False,
         runtime_identity: dict[str, Any] | None = None,
+        runtime_proof_reader: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ):
         operational_registry, task_authority, task_revisions = authoritative_task_registry(
             registry, store
@@ -4622,6 +4627,7 @@ class Dispatcher(legacy.Dispatcher):
         )
         self.enforce_runtime_gate = enforce_runtime_gate
         self.runtime_identity = runtime_identity
+        self.runtime_proof_reader = runtime_proof_reader
 
     def _runtime_execution_truth(self) -> dict[str, Any]:
         report = runtime_drift_check(
@@ -4810,6 +4816,13 @@ class Dispatcher(legacy.Dispatcher):
                     f"invalid acceptance contract: {first_diagnostic}; "
                     "repair the TaskSpec acceptance contract before claim"
                 )
+        if state not in TERMINAL_TASK_STATES:
+            result.extend(
+                t044_claim_admission_reasons(
+                    task.raw,
+                    runtime_reader_registered=self.runtime_proof_reader is not None,
+                )
+            )
         if state != "ready" and not closure_bridge and not reverification_candidate:
             result.append(f"state is {state}")
         parent_child = self.registry.parent_child_projection(task, overlays)
@@ -5913,6 +5926,15 @@ class Dispatcher(legacy.Dispatcher):
             return claimed
         run = claimed["run"]
         task = self.registry.tasks[run["task_id"]]
+        startup_reasons = t044_claim_admission_reasons(
+            task.raw,
+            runtime_reader_registered=self.runtime_proof_reader is not None,
+        )
+        if startup_reasons:
+            raise legacy.StateError(
+                "T044 startup blocked before workspace or dispatch: "
+                + "; ".join(startup_reasons)
+            )
         brief_gate: dict[str, Any] | None = None
         if _requires_agent_brief(task, worker_id, kind, dispatch=dispatch):
             try:

@@ -19,6 +19,7 @@ from bureau.acceptance import (
     AcceptanceContractError,
     criterion_contract,
     evaluate_acceptance,
+    evaluate_criterion,
     validate_acceptance_contract,
 )
 from bureau.v2 import (
@@ -1432,6 +1433,7 @@ def _manual_authentication_payload(
     observation_scope: str,
     evidence_sha256: str,
     reviewer: str,
+    verifier: str,
 ) -> dict[str, Any]:
     return {
         "schema_version": state_events.EVENT_SCHEMA_VERSION,
@@ -1442,7 +1444,7 @@ def _manual_authentication_payload(
         "plan_sha256": str(run["plan_sha256"]),
         "envelope_sha256": str(run["envelope_sha256"]),
         "criterion_id": criterion_id,
-        "verifier": "manual_observation",
+        "verifier": verifier,
         "observation_scope": observation_scope,
         "evidence_sha256": evidence_sha256,
         "authority": "manual",
@@ -1453,7 +1455,7 @@ def _manual_authentication_payload(
 
 def _manual_criterion(
     task: Mapping[str, Any], criterion_id: str
-) -> tuple[Mapping[str, Any], str]:
+) -> tuple[Mapping[str, Any], str, str]:
     try:
         validate_acceptance_contract(task)
     except AcceptanceContractError as exc:
@@ -1477,16 +1479,16 @@ def _manual_criterion(
     contract = criterion_contract(criterion)
     assert contract is not None
     verifier = contract["verifier"]
-    if verifier != "manual_observation":
+    if verifier not in {"manual_observation", "runtime_proof_bundle"}:
         raise legacy.StateError(
             f"acceptance criterion {criterion_id!r} verifier mismatch: "
-            f"expected 'manual_observation', observed {verifier!r}"
+            f"independent attestation does not support {verifier!r}"
         )
     config = contract["verifier_config"]
     assert isinstance(config, Mapping)
     observation_scope = config["observation_scope"]
     assert isinstance(observation_scope, str)
-    return criterion, observation_scope
+    return criterion, observation_scope, verifier
 
 
 def _validate_manual_evidence_item(
@@ -1495,6 +1497,7 @@ def _validate_manual_evidence_item(
     run: Mapping[str, Any],
     criterion_id: str,
     observation_scope: str,
+    verifier: str,
 ) -> None:
     if item.get("schema_version") != 1 or item.get("kind") != EVIDENCE_KIND:
         raise legacy.StateError(
@@ -1504,12 +1507,16 @@ def _validate_manual_evidence_item(
         raise legacy.StateError(
             f"manual evidence item {criterion_id!r} criterion binding mismatch"
         )
-    if item.get("evidence_type") != "manual_observation":
+    if item.get("evidence_type") != verifier:
         raise legacy.StateError(
             f"manual evidence item {criterion_id!r} verifier binding mismatch"
         )
     source = item.get("source")
-    if not isinstance(source, Mapping) or source.get("authority") != "manual":
+    allowed_authorities = (
+        {"manual"} if verifier == "manual_observation"
+        else {"grabowski", "target-runtime"}
+    )
+    if not isinstance(source, Mapping) or source.get("authority") not in allowed_authorities:
         raise legacy.StateError(
             f"manual evidence item {criterion_id!r} source authority mismatch"
         )
@@ -1587,7 +1594,7 @@ def record_manual_acceptance_authentication(
         task = envelope.get("task")
         if not isinstance(task, Mapping):
             raise legacy.StateError(f"run {run_id} envelope task is invalid")
-        _, observation_scope = _manual_criterion(task, criterion_id)
+        criterion, observation_scope, verifier = _manual_criterion(task, criterion_id)
         try:
             evidence = load_state_evidence_bundle(store, run, envelope)
         except ValueError as exc:
@@ -1608,9 +1615,24 @@ def record_manual_acceptance_authentication(
             run=run,
             criterion_id=criterion_id,
             observation_scope=observation_scope,
+            verifier=verifier,
         )
         facts = item["facts"]
         assert isinstance(facts, Mapping)
+        if verifier == "runtime_proof_bundle":
+            result = evaluate_criterion(
+                criterion,
+                item,
+                task_sha256=str(run["task_sha256"]),
+                plan_sha256=run.get("plan_sha256"),
+                source_authenticated=True,
+            )
+            if result["state"] != PASSED:
+                raise legacy.StateError(
+                    "runtime proof bundle requires complete fresh typed probe receipts"
+                )
+            if not isinstance(facts.get("observer"), str) or not facts["observer"].strip():
+                raise legacy.StateError("runtime proof bundle producer identity missing")
         if reviewer in {facts.get("observer"), run.get("worker_id")}:
             raise legacy.StateError(
                 "manual acceptance reviewer must differ from the evidence producer "
@@ -1622,6 +1644,7 @@ def record_manual_acceptance_authentication(
             observation_scope=observation_scope,
             evidence_sha256=evidence_sha256,
             reviewer=reviewer,
+            verifier=verifier,
         )
         canonical_payload = legacy.canonical_json(payload)
         identical = connection.execute(
@@ -1805,7 +1828,7 @@ def authenticate_state_evidence(
         claimed = evidence.get(criterion_id)
         if not isinstance(config, Mapping) or not isinstance(claimed, Mapping):
             continue
-        if verifier == "manual_observation":
+        if verifier in {"manual_observation", "runtime_proof_bundle"}:
             evidence_sha256 = legacy.sha256_json(claimed)
             observation_scope = config.get("observation_scope")
             expected_payload = {
@@ -1815,7 +1838,7 @@ def authenticate_state_evidence(
                 "plan_sha256": run.get("plan_sha256"),
                 "envelope_sha256": run.get("envelope_sha256"),
                 "criterion_id": criterion_id,
-                "verifier": "manual_observation",
+                "verifier": verifier,
                 "observation_scope": observation_scope,
                 "evidence_sha256": evidence_sha256,
                 "authority": "manual",

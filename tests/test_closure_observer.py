@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -2646,3 +2647,137 @@ def test_retargeted_github_pr_stays_open(
         "evidence-source-unauthenticated"
     )
     assert store.run(run["run_id"])["state"] == "assigned"
+
+
+def _runtime_proof_production_fixture(registry_factory, tmp_path: Path, monkeypatch):
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    scope = "weltgewebe:t044:runtime-proof"
+    names = ["cluster-identity", "writer-fencing"]
+    task["acceptance"] = [{
+        "id": "runtime-proof",
+        "assertion": "authenticated runtime and writer boundaries",
+        "evidence_type": "object",
+        "verifier": "runtime_proof_bundle",
+        "verifier_config": {"observation_scope": scope, "required_probes": names},
+    }]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    state_root = tmp_path / "proof-state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]
+    release, target = "e" * 40, "isolated-green"
+    facts = {
+        "observer": "runtime-producer",
+        "observation_scope": scope,
+        "runtime_revision": release,
+        "target_identity": target,
+        "probes": [{
+            "id": name,
+            "result": "passed",
+            "receipt_sha256": "f" * 64,
+            "receipt_ref": f"target-runtime:receipts:{name}",
+            "runtime_revision": release,
+            "target_identity": target,
+        } for name in names],
+    }
+    proof = {
+        "schema_version": 1, "kind": EVIDENCE_KIND,
+        "criterion_id": "runtime-proof", "evidence_type": "runtime_proof_bundle",
+        "source": {"authority": "target-runtime", "reference": "target-runtime:isolated-green"},
+        "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "revision": {
+            "task_sha256": run["task_sha256"],
+            "plan_sha256": run["plan_sha256"],
+            "observation_scope": scope,
+            "runtime_revision": release,
+            "target_identity": target,
+        },
+        "facts": facts,
+    }
+    bundle = {
+        "schema_version": 1, "kind": EVIDENCE_BUNDLE_KIND,
+        "run_id": run["run_id"], "task_id": run["task_id"],
+        "task_sha256": run["task_sha256"], "plan_sha256": run["plan_sha256"],
+        "evidence": {"runtime-proof": proof},
+    }
+    evidence_dir = state_root / "acceptance-evidence"
+    evidence_dir.mkdir()
+    bundle_path = evidence_dir / f"{run['run_id']}.json"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    return registry, store, run, bundle, bundle_path
+
+
+def test_runtime_proof_bundle_requires_independent_journal_attestation(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, _ = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    untrusted = reconcile_state_evidence(registry, store)
+    assert untrusted["terminalized_count"] == 0
+    assert untrusted["observations"][0]["reason"] == "evidence-authentication-unavailable"
+    assert untrusted["observations"][0]["adapter"]["adapter"] == (
+        "StateStore.events:manual-acceptance-source-authenticated"
+    )
+    proof_sha = legacy.sha256_json(bundle["evidence"]["runtime-proof"])
+    attestation = record_manual_acceptance_authentication(
+        store, run["run_id"], "runtime-proof",
+        expected_evidence_sha256=proof_sha,
+        reviewer="independent-security-reviewer",
+    )
+    assert attestation["authentication"]["verifier"] == "runtime_proof_bundle"
+    assert attestation["authentication"]["evidence_sha256"] == proof_sha
+    assert attestation["authentication"]["reviewer"] == "independent-security-reviewer"
+    settled = reconcile_state_evidence(registry, store)
+    assert settled["terminalized_count"] == 1
+    assert store.run(run["run_id"])["state"] == "succeeded"
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "missing-probe", "missing-digest", "fake-pass", "wrong-runtime",
+        "wrong-target", "wrong-source", "stale", "reviewer-worker",
+        "reviewer-producer",
+    ],
+)
+def test_runtime_proof_authentication_rejects_incomplete_or_self_verified_data(
+    registry_factory, tmp_path: Path, monkeypatch, problem: str
+) -> None:
+    registry, store, run, bundle, path = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    if problem == "missing-probe":
+        proof["facts"]["probes"].pop()
+    elif problem == "missing-digest":
+        del proof["facts"]["probes"][0]["receipt_sha256"]
+    elif problem == "fake-pass":
+        proof["facts"]["probes"] = []
+        proof["status"] = "passed"
+    elif problem == "wrong-runtime":
+        proof["facts"]["probes"][0]["runtime_revision"] = "a" * 40
+    elif problem == "wrong-target":
+        proof["facts"]["probes"][0]["target_identity"] = "blue"
+    elif problem == "wrong-source":
+        proof["source"]["authority"] = "manual"
+    elif problem == "stale":
+        proof["observed_at"] = "2026-08-01T00:00:00Z"
+    reviewer = (
+        "worker" if problem == "reviewer-worker"
+        else "runtime-producer" if problem == "reviewer-producer"
+        else "independent-security-reviewer"
+    )
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    with pytest.raises(StateError):
+        record_manual_acceptance_authentication(
+            store, run["run_id"], "runtime-proof",
+            expected_evidence_sha256=legacy.sha256_json(proof),
+            reviewer=reviewer,
+        )
+    observed = reconcile_state_evidence(registry, store)
+    assert observed["terminalized_count"] == 0
+    assert observed["open_count"] == 1

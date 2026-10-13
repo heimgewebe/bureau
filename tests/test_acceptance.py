@@ -73,6 +73,10 @@ def criterion(
             "required_commit": HEAD_SHA,
         },
         "live_probe_passed": {"runtime_revision": RUNTIME_SHA, "probe_id": "health"},
+        "runtime_proof_bundle": {
+            "observation_scope": "weltgewebe:t044:test",
+            "required_probes": ["cluster-identity", "writer-fencing"],
+        },
         "manual_observation": {"observation_scope": "manual:test"},
         "duration_soak_completed": {
             "required_seconds": 60,
@@ -107,6 +111,12 @@ def revision_for(verifier: str) -> dict[str, str]:
         value.update(required_commit=HEAD_SHA, observed_commit=RUNTIME_SHA)
     elif verifier == "live_probe_passed":
         value.update(runtime_revision=RUNTIME_SHA, probe_id="health")
+    elif verifier == "runtime_proof_bundle":
+        value.update(
+            observation_scope="weltgewebe:t044:test",
+            runtime_revision=RUNTIME_SHA,
+            target_identity="green-t044",
+        )
     elif verifier == "manual_observation":
         value.update(observation_scope="manual:test")
     elif verifier == "duration_soak_completed":
@@ -144,6 +154,11 @@ def primary_evidence(
         "live_probe_passed": (
             ("runtime_revision", "runtime_revision"),
             ("probe_id", "probe_id"),
+        ),
+        "runtime_proof_bundle": (
+            ("observation_scope", "observation_scope"),
+            ("runtime_revision", "runtime_revision"),
+            ("target_identity", "target_identity"),
         ),
         "manual_observation": (("observation_scope", "observation_scope"),),
         "duration_soak_completed": (("observation_scope", "observation_scope"),),
@@ -192,6 +207,21 @@ PASS_CASES = [
         {"contains_required_commit": True},
     ),
     ("live_probe_passed", "target-runtime", {"result": "passed"}),
+    (
+        "runtime_proof_bundle",
+        "target-runtime",
+        {
+            "observer": "runtime-producer",
+            "probes": [
+                {
+                    "id": name, "result": "passed", "receipt_sha256": ARTIFACT_SHA,
+                    "receipt_ref": f"grabowski:receipt:{name}",
+                    "runtime_revision": RUNTIME_SHA, "target_identity": "green-t044",
+                }
+                for name in ("cluster-identity", "writer-fencing")
+            ],
+        },
+    ),
     (
         "manual_observation",
         "manual",
@@ -1005,3 +1035,141 @@ def test_review_steward_requests_supported_merged_at_field(monkeypatch) -> None:
     assert "mergedAt" in fields
     assert "merged" not in fields
     assert review_steward.normalize_pr_status(raw_status)["merged"] is True
+
+
+def _t044_probe_evidence() -> dict[str, object]:
+    return primary_evidence(
+        "proof",
+        "runtime_proof_bundle",
+        authority="target-runtime",
+        facts={
+            "observer": "runtime-producer",
+            "probes": [
+                {
+                    "id": name,
+                    "result": "passed",
+                    "receipt_sha256": ARTIFACT_SHA,
+                    "receipt_ref": f"grabowski:receipt:{name}",
+                    "runtime_revision": RUNTIME_SHA,
+                    "target_identity": "green-t044",
+                }
+                for name in ("cluster-identity", "writer-fencing")
+            ]
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing-probes",
+        "missing-observer",
+        "missing-receipt",
+        "wrong-target",
+        "wrong-release",
+        "wrong-source",
+        "unauthenticated",
+        "future",
+        "stale",
+        "duplicate-probe",
+        "unknown-probe",
+        "skipped-probe",
+        "failed-probe",
+        "status-only",
+        "missing-plan",
+    ],
+)
+def test_t044_runtime_proof_requires_all_authenticated_bound_receipts(case: str) -> None:
+    evidence = _t044_probe_evidence()
+    plan = PLAN_SHA
+    auth = True
+    facts = evidence["facts"]
+    assert isinstance(facts, dict)
+    probes = facts["probes"]
+    assert isinstance(probes, list)
+    revision = evidence["revision"]
+    assert isinstance(revision, dict)
+    if case == "missing-probes":
+        facts["probes"] = []
+    elif case == "missing-observer":
+        del facts["observer"]
+    elif case == "missing-receipt":
+        del probes[0]["receipt_sha256"]
+    elif case == "wrong-target":
+        probes[0]["target_identity"] = "blue"
+    elif case == "wrong-release":
+        revision["runtime_revision"] = HEAD_SHA
+    elif case == "wrong-source":
+        evidence["source"] = {"authority": "manual", "reference": "fake"}
+    elif case == "unauthenticated":
+        auth = False
+    elif case == "future":
+        evidence["observed_at"] = "2026-08-10T20:00:01Z"
+    elif case == "stale":
+        evidence["observed_at"] = "2026-08-10T19:40:00Z"
+    elif case == "duplicate-probe":
+        probes[1]["id"] = probes[0]["id"]
+    elif case == "unknown-probe":
+        probes[1]["id"] = "unconfigured-check"
+    elif case == "skipped-probe":
+        probes[0]["result"] = "skipped"
+    elif case == "failed-probe":
+        probes[0]["result"] = "failed"
+    elif case == "status-only":
+        del facts["probes"]
+        evidence["status"] = "passed"
+    elif case == "missing-plan":
+        plan = None
+    result = _evaluate_criterion(
+        criterion("proof", "runtime_proof_bundle"),
+        evidence,
+        task_sha256=TASK_SHA,
+        plan_sha256=plan,
+        now=NOW,
+        source_authenticated=auth,
+    )
+    assert result["state"] != PASSED, case
+
+
+@pytest.mark.parametrize(
+    "required",
+    [[], ["cluster-identity", "cluster-identity"], ["UPPER"], ["ok", 17]],
+)
+def test_t044_runtime_proof_contract_rejects_unbound_probe_sets(required: object) -> None:
+    invalid = criterion(
+        "proof",
+        "runtime_proof_bundle",
+        {"required_probes": required},
+    )
+    with pytest.raises(AcceptanceContractError):
+        validate_acceptance_contract({"id": "T044-CONTRACT", "acceptance": [invalid]})
+
+
+def test_t044_runtime_proof_rejects_cross_criterion_release_divergence() -> None:
+    first = criterion(
+        "first", "runtime_proof_bundle",
+        {"observation_scope": "weltgewebe:t044:first"},
+    )
+    second = criterion(
+        "second", "runtime_proof_bundle",
+        {"observation_scope": "weltgewebe:t044:second"},
+    )
+    receipts = {}
+    for identity, revision in (("first", RUNTIME_SHA), ("second", HEAD_SHA)):
+        evidence = _t044_probe_evidence()
+        evidence["criterion_id"] = identity
+        evidence["revision"]["observation_scope"] = f"weltgewebe:t044:{identity}"
+        evidence["facts"]["observation_scope"] = f"weltgewebe:t044:{identity}"
+        evidence["revision"]["runtime_revision"] = revision
+        evidence["facts"]["runtime_revision"] = revision
+        for item in evidence["facts"]["probes"]:
+            item["runtime_revision"] = revision
+        receipts[identity] = evidence
+    result = evaluate_acceptance(
+        [first, second], receipts,
+        task_id="T044", run_id="run-t044",
+        task_sha256=TASK_SHA, plan_sha256=PLAN_SHA, now=NOW,
+    )
+    assert result["state"] == UNKNOWN
+    assert result["automatic_terminalization"] is False
+    assert result["cross_criterion_revision"]["conflicts"]

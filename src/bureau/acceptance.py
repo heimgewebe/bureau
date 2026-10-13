@@ -80,6 +80,16 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
             "probe_id",
         ),
     },
+    "runtime_proof_bundle": {
+        "domain": "runtime",
+        "authorities": ("grabowski", "target-runtime"),
+        "max_age_seconds": 900,
+        "config_fields": ("observation_scope", "required_probes"),
+        "revision_binding": (
+            "task_sha256", "plan_sha256", "observation_scope",
+            "runtime_revision", "target_identity",
+        ),
+    },
     "manual_observation": {
         "domain": "observation",
         "authorities": ("manual",),
@@ -121,6 +131,7 @@ _EXECUTABLE_VERIFIERS = frozenset(
         "runtime_commit_contains",
         "live_probe_passed",
         "manual_observation",
+        "runtime_proof_bundle",
         "duration_soak_completed",
         "no_effect_verified",
         "artifact_hash_matches",
@@ -259,6 +270,24 @@ def _criterion_verifier_config(
         if runtime_revision is None or probe_id is None:
             return None
         return {"runtime_revision": runtime_revision, "probe_id": probe_id}
+
+    if verifier == "runtime_proof_bundle":
+        scope = nonempty("observation_scope")
+        probes = raw.get("required_probes")
+        if (
+            scope is None
+            or re.fullmatch(r"weltgewebe:t044:[a-z][a-z0-9-]{1,63}", scope) is None
+            or not isinstance(probes, list)
+            or not 2 <= len(probes) <= 24
+            or any(
+                not isinstance(probe, str)
+                or re.fullmatch(r"[a-z][a-z0-9-]{1,63}", probe) is None
+                for probe in probes
+            )
+            or len(set(probes)) != len(probes)
+        ):
+            return None
+        return {"observation_scope": scope, "required_probes": list(probes)}
 
     if verifier == "manual_observation":
         scope = nonempty("observation_scope")
@@ -683,6 +712,52 @@ def _fact_state(
                 return FAILED, "live-probe-failed"
         return UNKNOWN, "live-probe-unknown"
 
+    if verifier == "runtime_proof_bundle":
+        required = verifier_config.get("required_probes")
+        probes = facts.get("probes")
+        if (
+            not isinstance(required, list)
+            or not isinstance(probes, list)
+            or len(probes) != len(required)
+            or not isinstance(facts.get("runtime_revision"), str)
+            or not isinstance(facts.get("target_identity"), str)
+            or not isinstance(facts.get("observer"), str)
+            or not facts["observer"].strip()
+        ):
+            return UNKNOWN, "runtime-probes-incomplete"
+        observed: set[str] = set()
+        failed = False
+        expected_fields = {
+            "id", "result", "receipt_sha256", "receipt_ref",
+            "runtime_revision", "target_identity",
+        }
+        for probe in probes:
+            if not isinstance(probe, Mapping) or set(probe) != expected_fields:
+                return UNKNOWN, "runtime-probe-row-invalid"
+            name = probe.get("id")
+            if (
+                not isinstance(name, str)
+                or name not in required
+                or name in observed
+                or not _sha256(probe.get("receipt_sha256"))
+                or not isinstance(probe.get("receipt_ref"), str)
+                or not probe["receipt_ref"].strip()
+                or len(probe["receipt_ref"]) > 256
+                or probe.get("runtime_revision") != facts["runtime_revision"]
+                or probe.get("target_identity") != facts["target_identity"]
+            ):
+                return UNKNOWN, "runtime-probe-binding-invalid"
+            observed.add(name)
+            outcome = probe.get("result")
+            if not isinstance(outcome, str) or outcome not in {"passed", "failed"}:
+                return UNKNOWN, "runtime-probe-result-invalid"
+            failed |= outcome == "failed"
+        if observed != set(required):
+            return UNKNOWN, "runtime-probes-missing"
+        return (FAILED, "runtime-probe-failed") if failed else (
+            PASSED, "all-bound-runtime-probes-passed"
+        )
+
     if verifier == "manual_observation":
         accepted = facts.get("accepted")
         observer = facts.get("observer")
@@ -748,6 +823,13 @@ def _revision_valid(
     revision = evidence.get("revision")
     if not isinstance(revision, Mapping):
         return False, "revision-binding-missing"
+    if contract.get("verifier") == "runtime_proof_bundle" and (
+        plan_sha256 is None
+        or not _sha(revision.get("runtime_revision"))
+        or not isinstance(revision.get("target_identity"), str)
+        or not revision["target_identity"].strip()
+    ):
+        return False, "runtime-proof-revision-or-plan-missing"
     if revision.get("task_sha256") != task_sha256 or not _sha256(task_sha256):
         return False, "task-revision-mismatch"
     if plan_sha256 is not None and (
@@ -789,6 +871,7 @@ def _revision_valid(
             ("probe_id", "probe_id"),
         ),
         "manual_observation": (("observation_scope", "observation_scope"),),
+        "runtime_proof_bundle": (("observation_scope", "observation_scope"),),
         "duration_soak_completed": (("observation_scope", "observation_scope"),),
         "no_effect_verified": (("scope_sha256", "scope_sha256"),),
         "artifact_hash_matches": (("artifact_sha256", "artifact_sha256"),),
@@ -819,6 +902,11 @@ def _facts_match_revision(
             ("probe_id", "probe_id"),
         ),
         "manual_observation": (("observation_scope", "observation_scope"),),
+        "runtime_proof_bundle": (
+            ("observation_scope", "observation_scope"),
+            ("runtime_revision", "runtime_revision"),
+            ("target_identity", "target_identity"),
+        ),
         "duration_soak_completed": (("observation_scope", "observation_scope"),),
         "no_effect_verified": (("scope_sha256", "scope_sha256"),),
         "artifact_hash_matches": (("expected_sha256", "artifact_sha256"),),
@@ -912,11 +1000,18 @@ def evaluate_criterion(
     }
 
 
-_SHARED_REVISION_FIELDS = frozenset({"head_sha"})
+_SHARED_REVISION_FIELDS = frozenset({"head_sha", "runtime_revision", "target_identity"})
 
 
 def _shared_revision_scope(contract: Mapping[str, Any], field: str) -> str | None:
     """Return the target identity within which a revision field must agree."""
+    if contract.get("verifier") == "runtime_proof_bundle" and field in {
+        "runtime_revision", "target_identity",
+    }:
+        config = contract.get("verifier_config")
+        scope = config.get("observation_scope") if isinstance(config, Mapping) else None
+        if isinstance(scope, str) and scope.startswith("weltgewebe:t044:"):
+            return "weltgewebe:t044"
     if field != "head_sha":
         return None
     verifier = contract.get("verifier")

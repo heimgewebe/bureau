@@ -592,6 +592,16 @@
                 "type": "array",
                 "uniqueItems": true
               },
+              "required_probes": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 24,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{1,63}$"
+                }
+              },
               "required_commit": {
                 "pattern": "^[0-9a-f]{40,64}$",
                 "type": "string"

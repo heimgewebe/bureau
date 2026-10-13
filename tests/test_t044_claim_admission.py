@@ -10,7 +10,11 @@ from pathlib import Path
 import pytest
 
 from bureau import legacy, v2
-from bureau.acceptance import t044_claim_admission_reasons, validate_acceptance_contract
+from bureau.acceptance import (
+    AcceptanceContractError,
+    t044_claim_admission_reasons,
+    validate_acceptance_contract,
+)
 from bureau.core import Dispatcher, Registry, StateStore
 from bureau.legacy import Claim, Resource
 
@@ -20,6 +24,43 @@ def t044_task() -> dict:
     return json.loads(
         (root / "registry/tasks/WELTGEWEBE-OS-V1-T044.json").read_text(encoding="utf-8")
     )
+
+
+@pytest.mark.parametrize(
+    "tampering",
+    [
+        "swap-runtime-manual",
+        "changed-criterion-id",
+        "changed-runtime-scope",
+        "removed-required-probe",
+        "changed-manual-scope",
+    ],
+)
+def test_t044_normative_eleven_criterion_contract_rejects_mutation(tampering: str) -> None:
+    task = copy.deepcopy(t044_task())
+    by_id = {criterion["id"]: criterion for criterion in task["acceptance"]}
+    runtime = by_id["production-topology"]
+    manual = by_id["staging-gitops-runtime"]
+    if tampering == "swap-runtime-manual":
+        runtime_config = runtime["verifier_config"]
+        runtime["verifier"] = "manual_observation"
+        runtime["verifier_config"] = {"observation_scope": runtime_config["observation_scope"]}
+        manual["verifier"] = "runtime_proof_bundle"
+        manual["verifier_config"] = {
+            **runtime_config,
+            "observation_scope": manual["verifier_config"]["observation_scope"],
+        }
+    elif tampering == "changed-criterion-id":
+        runtime["id"] = "invented-production-topology"
+    elif tampering == "changed-runtime-scope":
+        runtime["verifier_config"]["observation_scope"] = "weltgewebe:t044:altered-topology"
+    elif tampering == "removed-required-probe":
+        runtime["verifier_config"]["required_probes"].pop()
+    elif tampering == "changed-manual-scope":
+        manual["verifier_config"]["observation_scope"] = "weltgewebe:t044:altered-staging"
+
+    with pytest.raises(AcceptanceContractError, match="t044-proof-contract"):
+        validate_acceptance_contract(task)
 
 
 def test_t044_unselected_green_remains_readable_but_not_claimable() -> None:
@@ -57,6 +98,79 @@ def test_dispatcher_blocks_t044_before_claim_for_missing_green(tmp_path: Path) -
     reasons = dispatcher.reasons(task, set(task.capabilities), [], [], {})
     assert any("T044 claim blocked: authorized Green target" in reason for reason in reasons)
     assert store.list_runs() == []
+
+
+@pytest.mark.parametrize("terminal_state", sorted(v2.TERMINAL_TASK_STATES))
+def test_t044_terminal_or_reverified_tasks_cannot_skip_early_claim_admission(
+    tmp_path: Path, terminal_state: str
+) -> None:
+    """Terminal/closure bridges must not reserve Blue before T044 admission."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    dispatcher = Dispatcher(registry, store, open_pr_reservations_provider=lambda _registry: [])
+    task = registry.tasks["WELTGEWEBE-OS-V1-T044"]
+
+    reasons = dispatcher.reasons(
+        task,
+        set(task.capabilities),
+        [],
+        [],
+        {task.id: terminal_state},
+    )
+
+    assert any("T044 claim blocked: authorized Green target" in reason for reason in reasons), (
+        terminal_state,
+        reasons,
+    )
+    assert store.list_runs() == []
+
+
+def test_t044_standalone_handoff_rejects_historic_assignment_without_blue_green(
+    tmp_path: Path,
+) -> None:
+    """Direct handoff must enforce the same frozen-run checks as checkout_next."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    task = registry.tasks["WELTGEWEBE-OS-V1-T044"]
+    run_id = "BUR-RUN-20261013T000000Z-1234567891"
+    worker_id = "historic-t044-worker"
+    plan_digest = v2.plan_sha256(registry, task.initiative)
+    envelope = {
+        "run_id": run_id,
+        "task_id": task.id,
+        "worker_id": worker_id,
+        "task_sha256": task.sha256,
+        "plan_sha256": plan_digest,
+        "task": task.raw,
+        "claims": [claim.as_dict() for claim in task.claims],
+    }
+    now = legacy.utc_now()
+    store.register_worker(worker_id, "interactive-agent", tuple(task.capabilities))
+    with store.immediate() as connection:
+        connection.execute(
+            """
+            INSERT INTO runs(
+                run_id,task_id,worker_id,attempt,state,task_sha256,plan_sha256,
+                envelope_json,envelope_sha256,created_at,updated_at,heartbeat_at
+            ) VALUES(?,?,?,1,'assigned',?,?,?,?,?,?,?)
+            """,
+            (
+                run_id,
+                task.id,
+                worker_id,
+                task.sha256,
+                plan_digest,
+                legacy.canonical_json(envelope),
+                legacy.sha256_json(envelope),
+                now,
+                now,
+                now,
+            ),
+        )
+        # No historical Blue/Green reservation exists for this run.
+
+    with pytest.raises(legacy.StateError, match="T044"):
+        v2.grabowski_handoff(registry, store, run_id)
 
 
 def test_t044_frozen_target_and_reader_still_block_without_exclusive_runtime_claim() -> None:
@@ -162,6 +276,55 @@ def test_t044_exclusive_resource_admission_requires_exact_registered_green_and_b
     assert t044_claim_admission_reasons(
         task, runtime_reader_registered=True, registered_resources=duplicate_green
     )
+
+
+
+def test_t044_reasons_use_fresh_registered_runtime_resources(tmp_path: Path) -> None:
+    """Admission must use resources reloaded at the claim boundary, not cached resources."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    task_id = "WELTGEWEBE-OS-V1-T044"
+    original = registry.tasks[task_id]
+    frozen = copy.deepcopy(original.raw)
+    release, green_identity = "a" * 40, "verified-green-test"
+    for criterion in frozen["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=release,
+                expected_target_identity=green_identity,
+            )
+    frozen["claims"].extend([
+        {"resource": "runtime.commonserver", "mode": "exclusive"},
+        {"resource": "runtime.green-isolated", "mode": "exclusive"},
+    ])
+    task = replace(
+        original,
+        raw=frozen,
+        sha256=legacy.sha256_json(frozen),
+        claims=tuple(Claim.from_raw(item) for item in frozen["claims"]),
+        acceptance=tuple(frozen["acceptance"]),
+    )
+    registry.tasks[task_id] = task
+    dispatcher = Dispatcher(
+        registry, store, runtime_proof_reader=lambda _request: {},
+        open_pr_reservations_provider=lambda _registry: [],
+    )
+    fresh_resources = dict(registry.resources)
+    fresh_resources["runtime.green-isolated"] = _resource(
+        "runtime.green-isolated", "host:isolated-green",
+        metadata={
+            "t044_role": "green",
+            "target_identity": green_identity,
+            "expected_runtime_revision": release,
+        },
+    )
+    stale_reasons = dispatcher.reasons(task, set(task.capabilities), [], [], {})
+    assert any("T044 claim blocked:" in value for value in stale_reasons)
+    fresh_reasons = dispatcher.reasons(
+        task, set(task.capabilities), [], [], {},
+        registered_resources=fresh_resources,
+    )
+    assert not any("T044 claim blocked:" in value for value in fresh_reasons), fresh_reasons
 
 
 def test_t044_green_runtime_cannot_be_production_blue_alias_or_child() -> None:

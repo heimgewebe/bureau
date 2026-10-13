@@ -2846,3 +2846,23 @@ def test_t044_runtime_manual_attestation_cannot_substitute_for_source_proof(
     result = reconcile_state_evidence(registry, store)
     assert result["terminalized_count"] == 0
     assert result["open_count"] == 1
+
+
+def test_runtime_proof_rejects_run_worker_as_primary_observer(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    """The executing worker cannot authenticate its own high-critical proof."""
+    registry, store, run, bundle, path = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    proof["facts"]["observer"] = run["worker_id"]
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+
+    observed = reconcile_state_evidence(
+        registry,
+        store,
+        runtime_proof_reader=lambda _request: _primary_runtime_observation(run, proof),
+    )
+    assert observed["terminalized_count"] == 0
+    assert store.run(run["run_id"])["state"] == "assigned"

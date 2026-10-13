@@ -1877,6 +1877,8 @@ def authenticate_state_evidence(
                 and isinstance(live.get("observed_at"), str)
                 and isinstance(live.get("observer"), str)
                 and bool(live["observer"].strip())
+                # The run worker must never self-certify a target runtime.
+                and live["observer"].strip() != run.get("worker_id")
                 and isinstance(live.get("probes"), list)
                 and isinstance(facts, Mapping)
                 and set(facts) == {

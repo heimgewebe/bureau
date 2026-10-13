@@ -4,6 +4,7 @@ import math
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
+from types import MappingProxyType
 from typing import Any
 
 SCHEMA_VERSION = 1
@@ -14,6 +15,129 @@ FAILED = "failed"
 UNKNOWN = "unknown"
 STATES = {PASSED, FAILED, UNKNOWN}
 MAX_SOAK_SECONDS = 315_576_000
+
+# Frozen T044 authority contract. This code constant is independent of the mutable
+# TaskSpec: substituting a manual observation for a production proof must fail.
+T044_REQUIRED_ACCEPTANCE = MappingProxyType(
+    {
+        "production-topology": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:production-topology",
+            (
+                "cluster-identity",
+                "gitops-revision",
+                "public-dns",
+                "load-balancer",
+                "tls",
+                "secrets",
+                "identities",
+                "failure-domains",
+            ),
+        ),
+        "cutover-contract": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:cutover-contract",
+            (
+                "signed-plan",
+                "responsible-operators",
+                "data-sequence",
+                "traffic-sequence",
+                "automatic-stop",
+                "rollback-contract",
+            ),
+        ),
+        "staging-gitops-runtime": (
+            "manual_observation",
+            "weltgewebe:t044:staging-gitops-runtime",
+            (),
+        ),
+        "t048-platform-parity": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:t048-platform-parity",
+            (
+                "functional-parity",
+                "security-parity",
+                "data-persistence",
+                "backup-restore",
+                "recovery",
+                "latency",
+                "resource-budgets",
+            ),
+        ),
+        "semantic-search-continuity": (
+            "manual_observation",
+            "weltgewebe:t044:semantic-search-continuity",
+            (),
+        ),
+        "data-transition": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:data-transition",
+            (
+                "postgres-continuity",
+                "jetstream-continuity",
+                "object-file-continuity",
+                "event-reconciliation",
+                "writer-fencing",
+            ),
+        ),
+        "progressive-traffic": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:progressive-traffic",
+            (
+                "traffic-stages",
+                "slo-observation",
+                "error-budget",
+                "mutation-integrity",
+                "automatic-stop",
+                "rollback-verification",
+            ),
+        ),
+        "production-recovery": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:production-recovery",
+            (
+                "pitr",
+                "blank-cluster-restore",
+                "secret-key-recovery",
+                "blue-rollback",
+                "rto-rpo-evidence",
+            ),
+        ),
+        "operator-readiness": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:operator-readiness",
+            (
+                "slo-evidence",
+                "rto-rpo-metrics",
+                "operator-projections",
+                "deployment-revision",
+                "action-authority",
+            ),
+        ),
+        "legacy-retirement": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:legacy-retirement",
+            (
+                "observation-window",
+                "owner-approval",
+                "rollback-window",
+                "sole-writer",
+                "cleanup-inventory",
+            ),
+        ),
+        "live-readback": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:live-readback",
+            (
+                "web-api-commit",
+                "gitops-revision",
+                "workload-digests",
+                "data-continuity",
+                "writer-authority",
+            ),
+        ),
+    }
+)
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -85,12 +209,17 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
         "authorities": ("grabowski", "target-runtime"),
         "max_age_seconds": 900,
         "config_fields": (
-            "observation_scope", "required_probes",
-            "expected_runtime_revision", "expected_target_identity",
+            "observation_scope",
+            "required_probes",
+            "expected_runtime_revision",
+            "expected_target_identity",
         ),
         "revision_binding": (
-            "task_sha256", "plan_sha256", "observation_scope",
-            "runtime_revision", "target_identity",
+            "task_sha256",
+            "plan_sha256",
+            "observation_scope",
+            "runtime_revision",
+            "target_identity",
         ),
     },
     "manual_observation": {
@@ -297,8 +426,7 @@ def _criterion_verifier_config(
             or not isinstance(probes, list)
             or not 2 <= len(probes) <= 24
             or any(
-                not isinstance(probe, str)
-                or re.fullmatch(r"[a-z][a-z0-9-]{1,63}", probe) is None
+                not isinstance(probe, str) or re.fullmatch(r"[a-z][a-z0-9-]{1,63}", probe) is None
                 for probe in probes
             )
             or len(set(probes)) != len(probes)
@@ -472,9 +600,7 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                         criterion_id=criterion_id,
                         path=f"{criterion_path}.id",
                         code="duplicate-criterion-id",
-                        message=(
-                            f"criterion id duplicates $.acceptance[{first_index}].id"
-                        ),
+                        message=(f"criterion id duplicates $.acceptance[{first_index}].id"),
                         invalid_fields=("id",),
                     )
                 )
@@ -573,9 +699,7 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
             criterion_has_error = True
         elif isinstance(verifier, str) and verifier in VERIFIER_CONTRACTS:
             if _criterion_verifier_config(verifier, raw_criterion) is None:
-                expected_fields = frozenset(
-                    VERIFIER_CONTRACTS[verifier]["config_fields"]
-                )
+                expected_fields = frozenset(VERIFIER_CONTRACTS[verifier]["config_fields"])
                 observed_fields = {str(field) for field in verifier_config}
                 missing_config_fields = tuple(
                     f"verifier_config.{field}"
@@ -596,9 +720,7 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                         criterion_id=criterion_id,
                         path=f"{criterion_path}.verifier_config",
                         code="verifier-config-mismatch",
-                        message=(
-                            f"verifier_config does not exactly match verifier {verifier!r}"
-                        ),
+                        message=(f"verifier_config does not exactly match verifier {verifier!r}"),
                         missing_fields=missing_config_fields,
                         invalid_fields=invalid_config_fields or ("verifier_config",),
                     )
@@ -616,6 +738,62 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                     invalid_fields=("evidence_type", "verifier", "verifier_config"),
                 )
             )
+
+    # Pin criterion identities, verifier classes, scopes and exact probe names
+    # before either claim admission or eventual evidence reconciliation.
+    if task_id == "WELTGEWEBE-OS-V1-T044":
+        observed_ids = {
+            item.get("id")
+            for item in criteria
+            if isinstance(item, Mapping) and isinstance(item.get("id"), str)
+        }
+        if len(criteria) != len(T044_REQUIRED_ACCEPTANCE) or observed_ids != set(
+            T044_REQUIRED_ACCEPTANCE
+        ):
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id="<acceptance>",
+                    path="$.acceptance",
+                    code="t044-proof-contract-identity-mismatch",
+                    message="t044-proof-contract: exact eleven criterion ids are mandatory",
+                    invalid_fields=("acceptance",),
+                )
+            )
+        for index, item in enumerate(criteria):
+            if not isinstance(item, Mapping):
+                continue
+            identity = item.get("id")
+            expected = T044_REQUIRED_ACCEPTANCE.get(identity) if isinstance(identity, str) else None
+            config = item.get("verifier_config")
+            if expected is None or not isinstance(config, Mapping):
+                continue
+            verifier, scope, probes = expected
+            actual_probes = (
+                tuple(config["required_probes"])
+                if isinstance(config.get("required_probes"), list)
+                else ()
+                if "required_probes" not in config
+                else None
+            )
+            if (
+                item.get("verifier") != verifier
+                or config.get("observation_scope") != scope
+                or actual_probes != probes
+            ):
+                diagnostics.append(
+                    _acceptance_diagnostic(
+                        task_id=task_id,
+                        criterion_id=identity,
+                        path=f"$.acceptance[{index}]",
+                        code="t044-proof-contract-unpinned",
+                        message=(
+                            "t044-proof-contract: verifier, observation scope and required "
+                            "probes must match the immutable T044 acceptance contract"
+                        ),
+                        invalid_fields=("verifier", "verifier_config"),
+                    )
+                )
 
     # A T044 TaskSpec can contain nine individually valid runtime criteria
     # while referring to different clusters or releases. Reject that before
@@ -704,9 +882,12 @@ def t044_claim_admission_reasons(
 
     blue_id = "runtime.commonserver"
     blue = registered_resources.get(blue_id)
-    if blue is None or attr(blue, "type") != "service" or not isinstance(
-        attr(blue, "grabowski_key"), str
-    ) or not attr(blue, "grabowski_key"):
+    if (
+        blue is None
+        or attr(blue, "type") != "service"
+        or not isinstance(attr(blue, "grabowski_key"), str)
+        or not attr(blue, "grabowski_key")
+    ):
         return ["T044 claim blocked: canonical Blue runtime resource unavailable"]
 
     green_matches: list[str] = []
@@ -752,13 +933,18 @@ def t044_claim_admission_reasons(
         return ["T044 claim blocked: Green is an alias or overlapping resource of production Blue"]
 
     raw_claims = task.get("claims")
-    exclusive = {
-        claim.get("resource")
-        for claim in raw_claims if isinstance(claim, Mapping)
-        and claim.get("mode") == "exclusive"
-        and claim.get("amount", 1) == 1
-        and claim.get("isolation", "none") == "none"
-    } if isinstance(raw_claims, list) else set()
+    exclusive = (
+        {
+            claim.get("resource")
+            for claim in raw_claims
+            if isinstance(claim, Mapping)
+            and claim.get("mode") == "exclusive"
+            and claim.get("amount", 1) == 1
+            and claim.get("isolation", "none") == "none"
+        }
+        if isinstance(raw_claims, list)
+        else set()
+    )
     missing_claims = sorted({blue_id, green_id} - exclusive)
     if missing_claims:
         return [
@@ -824,10 +1010,7 @@ def _fact_state(
         if facts.get("complete") is not True:
             return UNKNOWN, "required-check-observation-incomplete"
         reported_required_checks = facts.get("required_checks")
-        if (
-            reported_required_checks is not None
-            and reported_required_checks != required_checks
-        ):
+        if reported_required_checks is not None and reported_required_checks != required_checks:
             return UNKNOWN, "required-check-set-mismatch"
         if not isinstance(checks, list) or not checks:
             return UNKNOWN, "required-checks-unavailable"
@@ -897,8 +1080,12 @@ def _fact_state(
         observed: set[str] = set()
         failed = False
         expected_fields = {
-            "id", "result", "receipt_sha256", "receipt_ref",
-            "runtime_revision", "target_identity",
+            "id",
+            "result",
+            "receipt_sha256",
+            "receipt_ref",
+            "runtime_revision",
+            "target_identity",
         }
         for probe in probes:
             if not isinstance(probe, Mapping) or set(probe) != expected_fields:
@@ -923,8 +1110,10 @@ def _fact_state(
             failed |= outcome == "failed"
         if observed != set(required):
             return UNKNOWN, "runtime-probes-missing"
-        return (FAILED, "runtime-probe-failed") if failed else (
-            PASSED, "all-bound-runtime-probes-passed"
+        return (
+            (FAILED, "runtime-probe-failed")
+            if failed
+            else (PASSED, "all-bound-runtime-probes-passed")
         )
 
     if verifier == "manual_observation":
@@ -1183,7 +1372,8 @@ _SHARED_REVISION_FIELDS = frozenset({"head_sha", "runtime_revision", "target_ide
 def _shared_revision_scope(contract: Mapping[str, Any], field: str) -> str | None:
     """Return the target identity within which a revision field must agree."""
     if contract.get("verifier") == "runtime_proof_bundle" and field in {
-        "runtime_revision", "target_identity",
+        "runtime_revision",
+        "target_identity",
     }:
         config = contract.get("verifier_config")
         scope = config.get("observation_scope") if isinstance(config, Mapping) else None
@@ -1207,11 +1397,7 @@ def _cross_criterion_revision_consistency(
     evidence: Mapping[str, Any],
     results: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    passed_ids = {
-        str(item.get("criterion_id"))
-        for item in results
-        if item.get("state") == PASSED
-    }
+    passed_ids = {str(item.get("criterion_id")) for item in results if item.get("state") == PASSED}
     observed: dict[str, dict[str, str]] = {}
     comparison_groups: dict[tuple[str, str], dict[str, str]] = {}
     for criterion in criteria:

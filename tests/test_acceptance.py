@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -1224,40 +1225,40 @@ def test_t044_unselected_green_target_blocks_even_authenticated_probes() -> None
 def test_t044_contract_rejects_divergent_frozen_target_before_claim(
     field: str, other: str | None,
 ) -> None:
-    """Structural admission must reject mixed/contradictory nine-probe targets."""
+    """Even a valid complete eleven-criterion T044 contract cannot mix targets."""
     import copy
 
-    task = {
-        "id": "WELTGEWEBE-OS-V1-T044",
-        "acceptance": [
-            criterion("first", "runtime_proof_bundle"),
-            criterion("second", "runtime_proof_bundle"),
-        ],
-    }
+    root = Path(__file__).resolve().parents[1]
+    task = json.loads(
+        (root / "registry/tasks/WELTGEWEBE-OS-V1-T044.json").read_text(encoding="utf-8")
+    )
     for item in task["acceptance"]:
-        config = item["verifier_config"]
-        config["expected_runtime_revision"] = "a" * 40
-        config["expected_target_identity"] = "green-authorized"
+        if item["verifier"] == "runtime_proof_bundle":
+            config = item["verifier_config"]
+            config["expected_runtime_revision"] = "a" * 40
+            config["expected_target_identity"] = "green-authorized"
     variant = copy.deepcopy(task)
-    variant["acceptance"][1]["verifier_config"][field] = other
+    by_id = {item["id"]: item for item in variant["acceptance"]}
+    by_id["live-readback"]["verifier_config"][field] = other
     with pytest.raises(AcceptanceContractError, match="t044-target-inconsistent"):
         validate_acceptance_contract(variant)
     validate_acceptance_contract(task)
 
+
 def test_t044_contract_rejects_mixed_frozen_and_unselected_targets() -> None:
-    """A nine-bundle task cannot combine an unselected and a frozen target."""
-    task = {
-        "id": "WELTGEWEBE-OS-V1-T044",
-        "acceptance": [
-            criterion("unselected", "runtime_proof_bundle", {
-                "expected_runtime_revision": None,
-                "expected_target_identity": None,
-            }),
-            criterion("frozen", "runtime_proof_bundle", {
-                "expected_runtime_revision": "a" * 40,
-                "expected_target_identity": "green-authorized",
-            }),
-        ],
-    }
+    """Runtime proofs must share one frozen Green revision and target."""
+    root = Path(__file__).resolve().parents[1]
+    task = json.loads(
+        (root / "registry/tasks/WELTGEWEBE-OS-V1-T044.json").read_text(encoding="utf-8")
+    )
+    for item in task["acceptance"]:
+        if item["verifier"] == "runtime_proof_bundle":
+            item["verifier_config"]["expected_runtime_revision"] = "a" * 40
+            item["verifier_config"]["expected_target_identity"] = "green-authorized"
+    unfrozen = next(
+        item for item in task["acceptance"] if item["id"] == "production-topology"
+    )["verifier_config"]
+    unfrozen["expected_runtime_revision"] = None
+    unfrozen["expected_target_identity"] = None
     with pytest.raises(AcceptanceContractError, match="t044-target-inconsistent"):
         validate_acceptance_contract(task)

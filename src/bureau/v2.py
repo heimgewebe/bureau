@@ -4796,10 +4796,15 @@ class Dispatcher(legacy.Dispatcher):
         *,
         projection_resource: str | None = None,
         initiative_registry: Registry | None = None,
+        registered_resources: dict[str, legacy.Resource] | None = None,
     ) -> list[str]:
         result: list[str] = []
         initiative_source = initiative_registry or self.registry
         initiative = initiative_source.initiatives[task.initiative]
+        if task.id == "WELTGEWEBE-OS-V1-T044":
+            current = initiative_source.tasks.get(task.id)
+            if current is None or current.sha256 != task.sha256:
+                result.append("T044 claim blocked: TaskSpec differs from current Registry")
         state = overlays.get(task.id, task.state)
         # registry/queue.json is a compatibility projection only. Claim
         # admission is derived from task state, priority and the live gates below.
@@ -4807,7 +4812,7 @@ class Dispatcher(legacy.Dispatcher):
         reverification_candidate = self._task_reverification_candidate(
             task, state, initiative_registry=initiative_source
         )
-        if state not in TERMINAL_TASK_STATES:
+        if state not in TERMINAL_TASK_STATES or task.id == "WELTGEWEBE-OS-V1-T044":
             try:
                 validate_acceptance_contract(task.raw)
             except AcceptanceContractError as exc:
@@ -4816,12 +4821,16 @@ class Dispatcher(legacy.Dispatcher):
                     f"invalid acceptance contract: {first_diagnostic}; "
                     "repair the TaskSpec acceptance contract before claim"
                 )
-        if state not in TERMINAL_TASK_STATES:
+        if state not in TERMINAL_TASK_STATES or task.id == "WELTGEWEBE-OS-V1-T044":
             result.extend(
                 t044_claim_admission_reasons(
                     task.raw,
                     runtime_reader_registered=self.runtime_proof_reader is not None,
-                    registered_resources=self.registry.resources,
+                    registered_resources=(
+                        registered_resources
+                        if registered_resources is not None
+                        else self.registry.resources
+                    ),
                 )
             )
         if state != "ready" and not closure_bridge and not reverification_candidate:
@@ -5725,7 +5734,10 @@ class Dispatcher(legacy.Dispatcher):
         return {
             **claimed,
             "run": run,
-            "handoff": grabowski_handoff(self.registry, self.store, run_id),
+            "handoff": grabowski_handoff(
+                self.registry, self.store, run_id,
+                runtime_proof_reader=self.runtime_proof_reader,
+            ),
         }
 
     def _validate_t044_existing_assignment(
@@ -5865,6 +5877,7 @@ class Dispatcher(legacy.Dispatcher):
                     reservations,
                     overlays,
                     initiative_registry=fresh_initiative_registry,
+                    registered_resources=fresh_source_registry.resources,
                 )
                 if not reasons:
                     selected = task
@@ -6041,7 +6054,10 @@ class Dispatcher(legacy.Dispatcher):
                 task_id=run["task_id"],
             )
             run = create_workspace(self.registry, self.store, run["run_id"], base_dir)
-        handoff = grabowski_handoff(self.registry, self.store, run["run_id"])
+        handoff = grabowski_handoff(
+            self.registry, self.store, run["run_id"],
+            runtime_proof_reader=self.runtime_proof_reader,
+        )
         result = {**claimed, "run": run, "handoff": handoff, "reconciliation": reconciliation}
         if repository_approval is not None:
             result["approval"] = {"repository_mutation": repository_approval}
@@ -9471,7 +9487,13 @@ def runtime_closeout(
         raise legacy.StateError("runtime closeout ended without a result")
     return success_payload
 
-def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dict[str, Any]:
+def grabowski_handoff(
+    registry: Registry,
+    store: StateStore,
+    run_id: str,
+    *,
+    runtime_proof_reader: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     run = store.run(run_id)
     envelope = _claim_bound_envelope(store, run_id, run["envelope_sha256"])
     task_raw = envelope.get("task")
@@ -9482,6 +9504,20 @@ def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dic
         raise legacy.StateError(f"run {run_id} claim-bound task id mismatch")
     if task.sha256 != run["task_sha256"]:
         raise legacy.StateError(f"run {run_id} claim-bound task revision mismatch")
+    if task.id == "WELTGEWEBE-OS-V1-T044":
+        # The public CLI calls this function directly. Reuse the same frozen
+        # run/lease admission as checkout, even for historical assignments.
+        # No trusted primary reader passed by CLI means fail closed.
+        with store.immediate() as connection:
+            row = connection.execute(
+                "SELECT * FROM runs WHERE run_id=?", (run_id,)
+            ).fetchone()
+            if row is None:
+                raise legacy.StateError(f"T044 handoff blocked: unknown run {run_id}")
+            dispatcher = Dispatcher(
+                registry, store, runtime_proof_reader=runtime_proof_reader
+            )
+            dispatcher._validate_t044_existing_assignment(connection, row, envelope)
     missing_claim_resources = sorted(
         {claim.resource for claim in task.claims if claim.resource not in registry.resources}
     )

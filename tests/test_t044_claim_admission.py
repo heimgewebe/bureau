@@ -236,6 +236,7 @@ def test_t044_exclusive_resource_admission_requires_exact_registered_green_and_b
             {"resource": "runtime.green-test", "mode": "exclusive"},
         ]
     )
+    _freeze_t044_runtime_identity(task, resources, "runtime.green-test")
     assert (
         t044_claim_admission_reasons(
             task, runtime_reader_registered=True, registered_resources=resources
@@ -297,6 +298,16 @@ def test_t044_reasons_use_fresh_registered_runtime_resources(tmp_path: Path) -> 
         {"resource": "runtime.commonserver", "mode": "exclusive"},
         {"resource": "runtime.green-isolated", "mode": "exclusive"},
     ])
+    fresh_resources = dict(registry.resources)
+    fresh_resources["runtime.green-isolated"] = _resource(
+        "runtime.green-isolated", "host:isolated-green",
+        metadata={
+            "t044_role": "green",
+            "target_identity": green_identity,
+            "expected_runtime_revision": release,
+        },
+    )
+    _freeze_t044_runtime_identity(frozen, fresh_resources, "runtime.green-isolated")
     task = replace(
         original,
         raw=frozen,
@@ -308,15 +319,6 @@ def test_t044_reasons_use_fresh_registered_runtime_resources(tmp_path: Path) -> 
     dispatcher = Dispatcher(
         registry, store, runtime_proof_reader=lambda _request: {},
         open_pr_reservations_provider=lambda _registry: [],
-    )
-    fresh_resources = dict(registry.resources)
-    fresh_resources["runtime.green-isolated"] = _resource(
-        "runtime.green-isolated", "host:isolated-green",
-        metadata={
-            "t044_role": "green",
-            "target_identity": green_identity,
-            "expected_runtime_revision": release,
-        },
     )
     stale_reasons = dispatcher.reasons(task, set(task.capabilities), [], [], {})
     assert any("T044 claim blocked:" in value for value in stale_reasons)
@@ -401,6 +403,7 @@ def test_t044_existing_assignment_rechecks_exact_frozen_run(
             "expected_runtime_revision": revision,
         },
     )
+    _freeze_t044_runtime_identity(frozen, registry.resources, "runtime.green-test")
     frozen_task = replace(
         original,
         raw=frozen,
@@ -518,6 +521,7 @@ def test_t044_closeout_rejects_missing_exclusive_reservations(
             "expected_runtime_revision": release,
         },
     )
+    _freeze_t044_runtime_identity(frozen, registry.resources, "runtime.green-test")
     frozen_task = replace(
         original,
         raw=frozen,
@@ -578,3 +582,190 @@ def test_t044_closeout_rejects_missing_exclusive_reservations(
         with pytest.raises(v2.RunStateConflict, match=r"T044.*reservations"):
             v2._require_t044_closeout_reservations(connection, registry, row, envelope)
     assert store.run(run_id)["state"] == "assigned"
+
+def test_t044_existing_assignment_uses_authoritative_state_store_taskspec(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Git compatibility need not be republished, but the frozen Run must match StateStore."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    task_id = "WELTGEWEBE-OS-V1-T044"
+    git_task = registry.tasks[task_id]
+    frozen = copy.deepcopy(git_task.raw)
+    frozen["depends_on"] = []
+    frozen["state"] = "ready"
+    revision = "a" * 40
+    identity = "isolated-green-state-only"
+    for criterion in frozen["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=revision,
+                expected_target_identity=identity,
+            )
+    frozen["claims"].extend(
+        [
+            {"resource": "runtime.commonserver", "mode": "exclusive"},
+            {"resource": "runtime.green-state-only", "mode": "exclusive"},
+        ]
+    )
+    registry.resources["runtime.green-state-only"] = _resource(
+        "runtime.green-state-only",
+        "host:isolated-green-state-only",
+        metadata={
+            "t044_role": "green",
+            "target_identity": identity,
+            "expected_runtime_revision": revision,
+        },
+    )
+    _freeze_t044_runtime_identity(frozen, registry.resources, "runtime.green-state-only")
+    assert t044_claim_admission_reasons(
+        frozen, runtime_reader_registered=True, registered_resources=registry.resources
+    ) == []
+
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    first = store.put_task_spec(
+        frozen,
+        idempotency_key="t044-state-only-original",
+        expected_revision=None,
+        source="test",
+    )
+    # A real StateStore TaskSpec is authoritative while the original Git task stays old.
+    assert registry.tasks[task_id].raw["acceptance"][0]["verifier_config"][
+        "expected_runtime_revision"
+    ] is None
+    monkeypatch.setattr(
+        v2.Registry, "load", classmethod(lambda cls, _root: registry)
+    )
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        runtime_proof_reader=lambda _request: {},
+        open_pr_reservations_provider=lambda _registry: [],
+    )
+    assert dispatcher.task_authority["kind"] == "bureau-state-store-task-specs"
+    task = dispatcher.registry.tasks[task_id]
+    assert task.sha256 != git_task.sha256
+    plan_digest = v2.plan_sha256(dispatcher.registry, task.initiative)
+    run_id = "BUR-RUN-20261013T000000Z-1234567893"
+    worker = "t044-state-only-worker"
+    envelope = {
+        "run_id": run_id,
+        "task_id": task_id,
+        "worker_id": worker,
+        "task_sha256": task.sha256,
+        "plan_sha256": plan_digest,
+        "task": task.raw,
+        "claims": [claim.as_dict() for claim in task.claims],
+    }
+    now = legacy.utc_now()
+    store.register_worker(worker, "interactive-agent", tuple(task.capabilities))
+    with store.immediate() as connection:
+        connection.execute(
+            """
+            INSERT INTO runs(
+                run_id,task_id,worker_id,attempt,state,task_sha256,plan_sha256,
+                envelope_json,envelope_sha256,created_at,updated_at,heartbeat_at
+            ) VALUES(?,?,?,1,'assigned',?,?,?,?,?,?,?)
+            """,
+            (
+                run_id, task_id, worker, task.sha256, plan_digest,
+                legacy.canonical_json(envelope), legacy.sha256_json(envelope),
+                now, now, now,
+            ),
+        )
+        for claim in task.claims:
+            connection.execute(
+                "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+                "VALUES(?,?,?,?,?)",
+                (run_id, claim.resource, claim.mode, claim.amount, now),
+            )
+        row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+        dispatcher._validate_t044_existing_assignment(connection, row, envelope)
+
+    # A *new* StateStore revision, unlike the old Git projection, must now block.
+    modified = copy.deepcopy(frozen)
+    modified["title"] = "T044 newer StateStore revision"
+    store.put_task_spec(
+        modified,
+        idempotency_key="t044-state-only-changed",
+        expected_revision=first["revision"],
+        source="test",
+    )
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+        with pytest.raises(legacy.StateError, match="snapshot drift"):
+            dispatcher._validate_t044_existing_assignment(connection, row, envelope)
+
+def _freeze_t044_runtime_identity(
+    task: dict, resources: dict[str, Resource], green_id: str
+) -> None:
+    """Operator-owned TaskSpec identity; must match independently registered resources."""
+    runtime = next(
+        item["verifier_config"]
+        for item in task["acceptance"]
+        if item["verifier"] == "runtime_proof_bundle"
+    )
+    task.setdefault("metadata", {})["t044_runtime_identity"] = {
+        "schema_version": 1,
+        "blue_resource_id": "runtime.commonserver",
+        "blue_grabowski_key": resources["runtime.commonserver"].grabowski_key,
+        "green_resource_id": green_id,
+        "green_grabowski_key": resources[green_id].grabowski_key,
+        "runtime_revision": runtime["expected_runtime_revision"],
+        "target_identity": runtime["expected_target_identity"],
+    }
+
+
+@pytest.mark.parametrize("drift", ["blue-key", "green-key"])
+def test_t044_frozen_runtime_resource_keys_reject_retarget(drift: str) -> None:
+    """Changing a Grabowski host alias after freezing a cutover must block admission."""
+    task = copy.deepcopy(t044_task())
+    revision, target = "a" * 40, "isolated-green-key-fixture"
+    for criterion in task["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=revision,
+                expected_target_identity=target,
+            )
+    green_id = "runtime.green-key-fixture"
+    task["claims"].extend(
+        [
+            {"resource": "runtime.commonserver", "mode": "exclusive"},
+            {"resource": green_id, "mode": "exclusive"},
+        ]
+    )
+    resources = {
+        "runtime.commonserver": _resource("runtime.commonserver", "host:commonserver"),
+        green_id: _resource(
+            green_id,
+            "host:isolated-green-key-fixture",
+            metadata={
+                "t044_role": "green",
+                "target_identity": target,
+                "expected_runtime_revision": revision,
+            },
+        ),
+    }
+    _freeze_t044_runtime_identity(task, resources, green_id)
+    assert t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=resources
+    ) == []
+    changed = dict(resources)
+    if drift == "blue-key":
+        changed["runtime.commonserver"] = _resource(
+            "runtime.commonserver", "host:retargeted-production-blue"
+        )
+    else:
+        changed[green_id] = _resource(
+            green_id, "host:retargeted-green",
+            metadata=resources[green_id].metadata,
+        )
+    assert any(
+        "frozen runtime resource identity" in reason
+        for reason in t044_claim_admission_reasons(
+            task, runtime_reader_registered=True, registered_resources=changed
+        )
+    )

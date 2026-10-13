@@ -5220,6 +5220,7 @@ class Dispatcher(legacy.Dispatcher):
                     reservations,
                     overlays,
                     initiative_registry=fresh_initiative_registry,
+                registered_resources=fresh_source_registry.resources,
                 )
                 review_reason = f"execution is {task.mode}/{task.policy}"
                 if (
@@ -5294,7 +5295,7 @@ class Dispatcher(legacy.Dispatcher):
         )
         required_keys = sorted(
             _coordinated_grabowski_resource_keys(
-                self.registry.resources, selected, open_pr_scope
+                fresh_source_registry.resources, selected, open_pr_scope
             )
         )
         revision = self.task_revisions.get(selected.id)
@@ -5422,9 +5423,10 @@ class Dispatcher(legacy.Dispatcher):
         fresh_open_pr_scope = _task_open_pr_scope_assessment(
             task, fresh_open_pr_reservations, self.registry, fresh_overlays
         )
+        initial_resource_registry = Registry.load(self.source_registry.root)
         required_keys = sorted(
             _coordinated_grabowski_resource_keys(
-                self.registry.resources, task, fresh_open_pr_scope
+                initial_resource_registry.resources, task, fresh_open_pr_scope
             )
         )
         if required_keys != intent["required_resource_keys"]:
@@ -5479,6 +5481,18 @@ class Dispatcher(legacy.Dispatcher):
             fresh_initiative_registry, _ = _state_store_initiative_registry(
                 fresh_source_registry, self.store, connection=connection
             )
+            # Re-evaluate the lease-key identity inside the final SQLite claim
+            # transaction. A resource file may change after intent issuance or
+            # even after the earlier preflight reader returned.
+            live_required_keys = sorted(
+                _coordinated_grabowski_resource_keys(
+                    fresh_source_registry.resources, task, fresh_open_pr_scope
+                )
+            )
+            if live_required_keys != required_keys:
+                raise legacy.StateError(
+                    "coordinated claim live resource keys changed during commit"
+                )
             current_plan_sha = plan_sha256(fresh_initiative_registry, task.initiative)
             if current_plan_sha != intent["plan_sha256"]:
                 raise legacy.StateError("coordinated claim plan changed after intent")
@@ -5554,6 +5568,7 @@ class Dispatcher(legacy.Dispatcher):
                 reservations,
                 overlays,
                 initiative_registry=fresh_initiative_registry,
+            registered_resources=fresh_source_registry.resources,
             )
             review_reason = f"execution is {task.mode}/{task.policy}"
             reasons = [reason for reason in reasons if reason != review_reason]
@@ -5750,7 +5765,10 @@ class Dispatcher(legacy.Dispatcher):
         task_id = "WELTGEWEBE-OS-V1-T044"
         if row["task_id"] != task_id:
             return
-        live_registry = Registry.load(self.source_registry.root)
+        live_source_registry = Registry.load(self.source_registry.root)
+        live_registry, _, _ = _authoritative_task_registry_from_connection(
+            live_source_registry, connection
+        )
         task = live_registry.tasks.get(task_id)
         cached = self.registry.tasks.get(task_id)
         if task is None or cached is None or task.sha256 != cached.sha256:

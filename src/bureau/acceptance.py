@@ -951,6 +951,30 @@ def t044_claim_admission_reasons(
             "T044 claim blocked: exclusive Blue and Green runtime resource claims required: "
             + ", ".join(missing_claims)
         ]
+
+    # This operator-owned identity is part of the immutable TaskSpec snapshot
+    # carried by each run envelope. A matching logical Green name alone cannot
+    # authorize a changed host, Grabowski lease key or resource id.
+    metadata = task.get("metadata")
+    frozen_binding = (
+        metadata.get("t044_runtime_identity")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    expected_binding = {
+        "schema_version": 1,
+        "blue_resource_id": blue_id,
+        "blue_grabowski_key": attr(blue, "grabowski_key"),
+        "green_resource_id": green_id,
+        "green_grabowski_key": attr(green, "grabowski_key"),
+        "runtime_revision": config["expected_runtime_revision"],
+        "target_identity": config["expected_target_identity"],
+    }
+    if not isinstance(frozen_binding, Mapping) or dict(frozen_binding) != expected_binding:
+        return [
+            "T044 claim blocked: frozen runtime resource identity differs from "
+            "current Blue/Green ids, Grabowski keys, revision or target"
+        ]
     return []
 
 

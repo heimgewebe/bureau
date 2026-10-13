@@ -6607,6 +6607,66 @@ def test_coordinated_claim_commit_binds_live_lease_and_terminal_release(
     assert "resources" not in released["lease"]
 
 
+@pytest.mark.parametrize("phase", ("intent", "commit"))
+def test_coordinated_claim_admission_reads_fresh_registry_resources(
+    registry_factory, tmp_path, monkeypatch, phase
+):
+    """Both coordinated boundaries must forward real, freshly loaded resource files."""
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+
+    if phase == "commit":
+        intent = dispatcher.claim_intent(
+            "operator", ("repository",), task_id=task_id, approved=True
+        )["intent"]
+        binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    # Mutate the source Registry file after constructing the dispatcher.
+    resource_path = root / "registry/resources/4.json"
+    fresh_resource = json.loads(resource_path.read_text())
+    assert fresh_resource["id"] == "cpu"
+    fresh_resource["capacity"] = 31
+    resource_path.write_text(json.dumps(fresh_resource))
+    assert dispatcher.registry.resources["cpu"].capacity == 30
+    assert Registry.load(root).resources["cpu"].capacity == 31
+
+    observed = []
+    original_reasons = dispatcher.reasons
+
+    def observe_reasons(task, *args, **kwargs):
+        current = kwargs.get("registered_resources")
+        assert current is not None, "coordinated admission fell back to cached resources"
+        assert current["cpu"].capacity == 31, "coordinated admission used stale Registry"
+        observed.append(task.id)
+        return original_reasons(task, *args, **kwargs)
+
+    key_calls = []
+    original_keys = bureau_v2._coordinated_grabowski_resource_keys
+
+    def observe_resource_keys(resources, task, scope):
+        if task.id == task_id:
+            assert resources["cpu"].capacity == 31, "lease scope used stale Registry"
+            key_calls.append(resources["cpu"].capacity)
+        return original_keys(resources, task, scope)
+
+    monkeypatch.setattr(bureau_v2, "_coordinated_grabowski_resource_keys", observe_resource_keys)
+    monkeypatch.setattr(dispatcher, "reasons", observe_reasons)
+    if phase == "intent":
+        assert dispatcher.claim_intent(
+            "operator", ("repository",), task_id=task_id, approved=True
+        )["intent"]["task_id"] == task_id
+    else:
+        assert dispatcher.commit_claim_intent(
+            intent, binding, resource_db=database
+        )["status"] == "claimed"
+    assert observed == [task_id]
+    assert key_calls
+    if phase == "intent":
+        assert store.list_runs() == []
+
+
 def test_coordinated_claim_missing_lease_never_creates_run(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1, mode="write")
     task_id = prepare_coordinated_registry(root)

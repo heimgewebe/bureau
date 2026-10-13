@@ -5728,6 +5728,66 @@ class Dispatcher(legacy.Dispatcher):
             "handoff": grabowski_handoff(self.registry, self.store, run_id),
         }
 
+    def _validate_t044_existing_assignment(
+        self,
+        connection: sqlite3.Connection,
+        row: sqlite3.Row,
+        envelope: dict[str, Any],
+    ) -> None:
+        """Recheck the frozen T044 task and actual leases, never the revised spec alone."""
+        task_id = "WELTGEWEBE-OS-V1-T044"
+        if row["task_id"] != task_id:
+            return
+        live_registry = Registry.load(self.source_registry.root)
+        task = live_registry.tasks.get(task_id)
+        cached = self.registry.tasks.get(task_id)
+        if task is None or cached is None or task.sha256 != cached.sha256:
+            raise legacy.StateError("T044 existing assignment snapshot drift: TaskSpec changed")
+        if not isinstance(envelope, dict):
+            raise legacy.StateError(
+                "T044 existing assignment snapshot drift: missing frozen envelope"
+            )
+        snapshot_valid = (
+            row["state"] in {"assigned", "running", "verifying"}
+            and row["task_sha256"] == task.sha256
+            and envelope.get("task_sha256") == task.sha256
+            and envelope.get("task_id") == task_id
+            and envelope.get("run_id") == row["run_id"]
+            and envelope.get("worker_id") == row["worker_id"]
+            and envelope.get("task") == task.raw
+            and envelope.get("claims") == [claim.as_dict() for claim in task.claims]
+            and envelope.get("plan_sha256") == row["plan_sha256"]
+            and row["plan_sha256"] == plan_sha256(live_registry, task.initiative)
+            and legacy.sha256_json(envelope) == row["envelope_sha256"]
+        )
+        if not snapshot_valid:
+            raise legacy.StateError(
+                "T044 existing assignment snapshot drift: frozen task, plan or envelope"
+            )
+        reasons = t044_claim_admission_reasons(
+            task.raw,
+            runtime_reader_registered=self.runtime_proof_reader is not None,
+            registered_resources=live_registry.resources,
+        )
+        if reasons:
+            raise legacy.StateError(
+                "T044 existing assignment claim blocked: " + "; ".join(reasons)
+            )
+        expected = sorted(
+            (claim.resource, claim.mode, claim.amount) for claim in task.claims
+        )
+        actual = sorted(
+            (claim["resource_id"], claim["mode"], claim["amount"])
+            for claim in connection.execute(
+                "SELECT resource_id,mode,amount FROM reservations WHERE run_id=?",
+                (row["run_id"],),
+            )
+        )
+        if actual != expected:
+            raise legacy.StateError(
+                "T044 existing assignment missing exact runtime reservations"
+            )
+
     def claim_next(
         self,
         worker_id: str,
@@ -5760,12 +5820,21 @@ class Dispatcher(legacy.Dispatcher):
             ).fetchall()
             for current in current_rows:
                 if resource is None or self._run_matches_resource(current, resource):
+                    try:
+                        existing_envelope = json.loads(current["envelope_json"])
+                    except (TypeError, json.JSONDecodeError) as exc:
+                        raise legacy.StateError(
+                            "existing assignment has an invalid frozen envelope"
+                        ) from exc
+                    self._validate_t044_existing_assignment(
+                        connection, current, existing_envelope
+                    )
                     return {
                         "status": "existing-assignment",
                         "resource": resource,
                         "runtime_truth": runtime_truth,
                         "run": self.store.public_run(current),
-                        "envelope": json.loads(current["envelope_json"]),
+                        "envelope": existing_envelope,
                     }
             if current_rows and resource is not None:
                 raise legacy.StateError(
@@ -5927,6 +5996,18 @@ class Dispatcher(legacy.Dispatcher):
             return claimed
         run = claimed["run"]
         task = self.registry.tasks[run["task_id"]]
+        if task.id == "WELTGEWEBE-OS-V1-T044" and claimed.get("status") == "existing-assignment":
+            with self.store.connect() as connection:
+                actual_run = connection.execute(
+                    "SELECT * FROM runs WHERE run_id=?", (run["run_id"],)
+                ).fetchone()
+                if actual_run is None:
+                    raise legacy.StateError(
+                        "T044 existing assignment snapshot drift: run no longer exists"
+                    )
+                self._validate_t044_existing_assignment(
+                    connection, actual_run, claimed.get("envelope")
+                )
         startup_reasons = t044_claim_admission_reasons(
             task.raw,
             runtime_reader_registered=self.runtime_proof_reader is not None,

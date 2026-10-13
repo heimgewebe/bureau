@@ -4821,6 +4821,7 @@ class Dispatcher(legacy.Dispatcher):
                 t044_claim_admission_reasons(
                     task.raw,
                     runtime_reader_registered=self.runtime_proof_reader is not None,
+                    registered_resources=self.registry.resources,
                 )
             )
         if state != "ready" and not closure_bridge and not reverification_candidate:
@@ -5929,6 +5930,7 @@ class Dispatcher(legacy.Dispatcher):
         startup_reasons = t044_claim_admission_reasons(
             task.raw,
             runtime_reader_registered=self.runtime_proof_reader is not None,
+            registered_resources=self.registry.resources,
         )
         if startup_reasons:
             raise legacy.StateError(

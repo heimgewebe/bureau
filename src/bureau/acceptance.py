@@ -660,7 +660,10 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
 
 
 def t044_claim_admission_reasons(
-    task: Mapping[str, Any], *, runtime_reader_registered: bool = False
+    task: Mapping[str, Any],
+    *,
+    runtime_reader_registered: bool = False,
+    registered_resources: Mapping[str, Any] | None = None,
 ) -> list[str]:
     """Block T044 claims before *any* workload starts unless its target and source exist.
 
@@ -686,6 +689,82 @@ def t044_claim_admission_reasons(
     # Contract validation above enforces one target/release for all nine.
     if not runtime_reader_registered:
         return ["T044 claim blocked: trusted primary runtime proof reader not registered"]
+
+    # Reader availability alone does not own the two runtimes. A TaskSpec is
+    # allowed to name only the Green identity; the separately reviewed Bureau
+    # resource registry resolves that identity to one specific exclusive
+    # runtime scope, rather than trusting a producer-supplied claim.
+    if registered_resources is None:
+        return ["T044 claim blocked: runtime resource registry unavailable"]
+
+    def attr(resource: Any, field: str) -> Any:
+        if isinstance(resource, Mapping):
+            return resource.get(field)
+        return getattr(resource, field, None)
+
+    blue_id = "runtime.commonserver"
+    blue = registered_resources.get(blue_id)
+    if blue is None or attr(blue, "type") != "service" or not isinstance(
+        attr(blue, "grabowski_key"), str
+    ) or not attr(blue, "grabowski_key"):
+        return ["T044 claim blocked: canonical Blue runtime resource unavailable"]
+
+    green_matches: list[str] = []
+    for resource_id, resource in registered_resources.items():
+        if not isinstance(resource_id, str) or not resource_id.startswith("runtime."):
+            continue
+        metadata = attr(resource, "metadata")
+        if (
+            attr(resource, "id") == resource_id
+            and attr(resource, "type") == "service"
+            and isinstance(attr(resource, "grabowski_key"), str)
+            and bool(attr(resource, "grabowski_key"))
+            and isinstance(metadata, Mapping)
+            and metadata.get("t044_role") == "green"
+            and metadata.get("target_identity") == config["expected_target_identity"]
+            and metadata.get("expected_runtime_revision") == config["expected_runtime_revision"]
+        ):
+            green_matches.append(resource_id)
+    if len(green_matches) != 1:
+        return [
+            "T044 claim blocked: Green target must match exactly one registered runtime resource"
+        ]
+    green_id = green_matches[0]
+    green = registered_resources[green_id]
+
+    def ancestors(resource_id: str) -> set[str]:
+        chain: set[str] = set()
+        current = resource_id
+        while current in registered_resources:
+            parent = attr(registered_resources[current], "parent")
+            if not isinstance(parent, str) or parent in chain or parent == current:
+                break
+            chain.add(parent)
+            current = parent
+        return chain
+
+    if (
+        green_id == blue_id
+        or blue_id in ancestors(green_id)
+        or green_id in ancestors(blue_id)
+        or attr(green, "grabowski_key") == attr(blue, "grabowski_key")
+    ):
+        return ["T044 claim blocked: Green is an alias or overlapping resource of production Blue"]
+
+    raw_claims = task.get("claims")
+    exclusive = {
+        claim.get("resource")
+        for claim in raw_claims if isinstance(claim, Mapping)
+        and claim.get("mode") == "exclusive"
+        and claim.get("amount", 1) == 1
+        and claim.get("isolation", "none") == "none"
+    } if isinstance(raw_claims, list) else set()
+    missing_claims = sorted({blue_id, green_id} - exclusive)
+    if missing_claims:
+        return [
+            "T044 claim blocked: exclusive Blue and Green runtime resource claims required: "
+            + ", ".join(missing_claims)
+        ]
     return []
 
 

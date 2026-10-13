@@ -489,3 +489,92 @@ def test_t044_existing_assignment_rechecks_exact_frozen_run(
     )
     with pytest.raises(legacy.StateError, match=expected_reason):
         dispatcher.checkout_next(worker, tuple(frozen_task.capabilities))
+
+@pytest.mark.parametrize("missing_runtime", ["runtime.commonserver", "runtime.green-test"])
+def test_t044_closeout_rejects_missing_exclusive_reservations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, missing_runtime: str
+) -> None:
+    """The last terminal CAS must re-read both live Blue/Green reservations."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    task_id = "WELTGEWEBE-OS-V1-T044"
+    original = registry.tasks[task_id]
+    frozen = copy.deepcopy(original.raw)
+    release, identity = "a" * 40, "isolated-green-closeout-test"
+    for criterion in frozen["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=release,
+                expected_target_identity=identity,
+            )
+    frozen["claims"].extend([
+        {"resource": "runtime.commonserver", "mode": "exclusive"},
+        {"resource": "runtime.green-test", "mode": "exclusive"},
+    ])
+    registry.resources["runtime.green-test"] = _resource(
+        "runtime.green-test", "host:isolated-green-closeout-test",
+        metadata={
+            "t044_role": "green",
+            "target_identity": identity,
+            "expected_runtime_revision": release,
+        },
+    )
+    frozen_task = replace(
+        original,
+        raw=frozen,
+        sha256=legacy.sha256_json(frozen),
+        claims=tuple(Claim.from_raw(item) for item in frozen["claims"]),
+        acceptance=tuple(frozen["acceptance"]),
+    )
+    registry.tasks[task_id] = frozen_task
+    assert t044_claim_admission_reasons(
+        frozen, runtime_reader_registered=True, registered_resources=registry.resources
+    ) == []
+    monkeypatch.setattr(
+        v2.Registry, "load", classmethod(lambda cls, _root: registry)
+    )
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    worker_id = "t044-closeout-test-worker"
+    run_id = "BUR-RUN-20261013T000000Z-1234567892"
+    plan = v2.plan_sha256(registry, frozen_task.initiative)
+    envelope = {
+        "run_id": run_id,
+        "task_id": task_id,
+        "worker_id": worker_id,
+        "task_sha256": frozen_task.sha256,
+        "plan_sha256": plan,
+        "task": frozen,
+        "claims": [claim.as_dict() for claim in frozen_task.claims],
+    }
+    now = legacy.utc_now()
+    store.register_worker(worker_id, "interactive-agent", tuple(frozen_task.capabilities))
+    with store.immediate() as connection:
+        connection.execute(
+            """
+            INSERT INTO runs(
+                run_id,task_id,worker_id,attempt,state,task_sha256,plan_sha256,
+                envelope_json,envelope_sha256,created_at,updated_at,heartbeat_at
+            ) VALUES(?,?,?,1,'assigned',?,?,?,?,?,?,?)
+            """,
+            (
+                run_id, task_id, worker_id, frozen_task.sha256, plan,
+                legacy.canonical_json(envelope), legacy.sha256_json(envelope),
+                now, now, now,
+            ),
+        )
+        for claim in frozen_task.claims:
+            connection.execute(
+                "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+                "VALUES(?,?,?,?,?)",
+                (run_id, claim.resource, claim.mode, claim.amount, now),
+            )
+        row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+        v2._require_t044_closeout_reservations(connection, registry, row, envelope)
+        connection.execute(
+            "DELETE FROM reservations WHERE run_id=? AND resource_id=?",
+            (run_id, missing_runtime),
+        )
+        with pytest.raises(v2.RunStateConflict, match=r"T044.*reservations"):
+            v2._require_t044_closeout_reservations(connection, registry, row, envelope)
+    assert store.run(run_id)["state"] == "assigned"

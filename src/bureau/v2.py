@@ -8183,6 +8183,86 @@ def _receipt_binds_current_revision(registry: Registry, receipt: dict[str, Any])
     return revision.digests == (receipt.get("task_sha256"), receipt.get("plan_sha256"))
 
 
+def _require_t044_closeout_reservations(
+    connection: sqlite3.Connection,
+    registry: Registry,
+    run_row: sqlite3.Row,
+    envelope: dict[str, Any],
+) -> None:
+    """Reject T044 closeout if the exact frozen Blue/Green reservations drifted.
+
+    This runs in the final StateStore BEGIN IMMEDIATE transaction, before any
+    terminal receipt, task-status update or reservation release. It deliberately
+    leaves an unsafe run active and its remaining leases held for reconciliation.
+    """
+    task_id = "WELTGEWEBE-OS-V1-T044"
+    if run_row["task_id"] != task_id:
+        return
+    frozen = envelope.get("task")
+    raw_claims = frozen.get("claims") if isinstance(frozen, dict) else None
+    if (
+        not isinstance(frozen, dict)
+        or not isinstance(raw_claims, list)
+        or frozen.get("id") != task_id
+        or legacy.sha256_json(frozen) != run_row["task_sha256"]
+        or legacy.sha256_json(envelope) != run_row["envelope_sha256"]
+        or envelope.get("task_id") != task_id
+        or envelope.get("run_id") != run_row["run_id"]
+        or envelope.get("worker_id") != run_row["worker_id"]
+        or envelope.get("plan_sha256") != run_row["plan_sha256"]
+    ):
+        raise RunStateConflict(
+            "t044-closeout-envelope-drift",
+            "T044 closeout blocked: frozen run or envelope identity drift",
+            run_id=run_row["run_id"],
+        )
+    try:
+        frozen_claims = [legacy.Claim.from_raw(item) for item in raw_claims]
+        live_resources = Registry.load(registry.root).resources
+        # Source authentication must have succeeded before this terminal
+        # function is reached. This flag checks only the non-reader admission
+        # conditions; it is not itself evidence of a registered primary reader.
+        reasons = t044_claim_admission_reasons(
+            frozen,
+            runtime_reader_registered=True,
+            registered_resources=live_resources,
+        )
+    except (ValueError, TypeError, legacy.StateError, legacy.ValidationError) as exc:
+        raise RunStateConflict(
+            "t044-closeout-registry-unavailable",
+            "T044 closeout blocked: current runtime Registry or claims invalid: "
+            + type(exc).__name__,
+            run_id=run_row["run_id"],
+        ) from exc
+    if reasons:
+        raise RunStateConflict(
+            "t044-closeout-authority-drift",
+            "T044 closeout blocked: " + "; ".join(reasons),
+            run_id=run_row["run_id"],
+        )
+    expected = sorted((item.resource, item.mode, item.amount) for item in frozen_claims)
+    claim_snapshot = envelope.get("claims")
+    if claim_snapshot != [item.as_dict() for item in frozen_claims]:
+        raise RunStateConflict(
+            "t044-closeout-claim-snapshot-drift",
+            "T044 closeout blocked: frozen claim snapshot drift",
+            run_id=run_row["run_id"],
+        )
+    actual = sorted(
+        (item["resource_id"], item["mode"], item["amount"])
+        for item in connection.execute(
+            "SELECT resource_id,mode,amount FROM reservations WHERE run_id=?",
+            (run_row["run_id"],),
+        )
+    )
+    if actual != expected:
+        raise RunStateConflict(
+            "t044-closeout-runtime-reservations-drift",
+            "T044 closeout blocked: missing or altered exclusive runtime reservations",
+            run_id=run_row["run_id"],
+        )
+
+
 def _complete_run_after_typed_evaluation(
     registry: Registry,
     store: StateStore,
@@ -8258,6 +8338,7 @@ def _complete_run_after_typed_evaluation(
                 )
             run = store.public_run(run_row)
             envelope = json.loads(run_row["envelope_json"])
+            _require_t044_closeout_reservations(connection, registry, run_row, envelope)
             criteria = [
                 item if isinstance(item, dict) else {"id": f"criterion-{index}"}
                 for index, item in enumerate(envelope["task"]["acceptance"], 1)

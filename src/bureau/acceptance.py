@@ -941,29 +941,34 @@ def t044_claim_admission_reasons(
     ):
         return ["T044 claim blocked: Green is an alias or overlapping resource of production Blue"]
 
-    # Two differently named sibling services can still use one physical host
-    # or registered fault domain. Such logical exclusivity is not isolation.
-    # Only physical registered ancestor types count; shared generic repo/root
-    # grouping alone must not classify physically separate runtimes as aliases.
-    def physical_ancestor_identities(ancestor_ids: set[str]) -> set[tuple[str, str]]:
-        identities: set[tuple[str, str]] = set()
-        for ancestor_id in ancestor_ids:
-            resource = registered_resources.get(ancestor_id)
-            if resource is None or attr(resource, "type") not in {"host", "failure-domain"}:
-                continue
-            identities.add(("resource", ancestor_id))
-            lease_key = attr(resource, "grabowski_key")
-            if isinstance(lease_key, str) and lease_key:
-                # Two registry ids may name the same physical operator resource.
-                identities.add(("grabowski-key", lease_key))
-        return identities
+    # Two differently named sibling services can still use one host or fault
+    # domain. Resource types alone cannot authenticate physical identity.
+    # Compare operator keys across *all* ancestors and the runtimes themselves:
+    # renaming an alias to "service", "group" or "Host" must not hide overlap.
+    def operator_key_owners(resource_ids: set[str]) -> dict[str, set[str]]:
+        owners: dict[str, set[str]] = {}
+        for resource_id in resource_ids:
+            resource = registered_resources.get(resource_id)
+            key = attr(resource, "grabowski_key") if resource is not None else None
+            if isinstance(key, str) and key:
+                owners.setdefault(key, set()).add(resource_id)
+        return owners
 
-    shared_physical_domains = sorted(
-        f"{identity_kind}:{identity_value}"
-        for identity_kind, identity_value in (
-            physical_ancestor_identities(blue_ancestors)
-            & physical_ancestor_identities(green_ancestors)
+    blue_key_owners = operator_key_owners(blue_ancestors | {blue_id})
+    green_key_owners = operator_key_owners(green_ancestors | {green_id})
+    alias_keys = {
+        key for key in blue_key_owners.keys() & green_key_owners.keys()
+        if any(
+            blue_resource != green_resource
+            for blue_resource in blue_key_owners[key]
+            for green_resource in green_key_owners[key]
         )
+    }
+    shared_physical_domains = sorted(
+        {f"resource:{ancestor_id}" for ancestor_id in blue_ancestors & green_ancestors
+         if ancestor_id in registered_resources
+         and attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}}
+        | {f"grabowski-key:{key}" for key in alias_keys}
     )
     if shared_physical_domains:
         return [

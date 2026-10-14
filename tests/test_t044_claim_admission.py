@@ -460,6 +460,46 @@ def test_t044_separate_host_ancestors_allow_common_organizational_root(domain_ty
     )
     assert any("shared registered physical failure-domain" in r for r in reasons), reasons
 
+    # Operator keys remain the same physical identity even under renamed types.
+    for disguised_type in ("service", "group", "Host"):
+        disguised = dict(same_physical_host)
+        disguised["host.green-physical"] = replace(
+            same_physical_host["host.green-physical"], type=disguised_type,
+        )
+        disguised_reasons = t044_claim_admission_reasons(
+            task, runtime_reader_registered=True, registered_resources=disguised,
+        )
+        assert any(
+            "shared registered physical failure-domain" in r for r in disguised_reasons
+        ), (disguised_type, disguised_reasons)
+
+    # A Green ancestor may also alias Blue's own frozen runtime lease key.
+    cross_level_alias = dict(resources)
+    cross_level_alias["host.green-physical"] = replace(
+        resources["host.green-physical"],
+        grabowski_key=resources["runtime.commonserver"].grabowski_key,
+    )
+    cross_reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=cross_level_alias,
+    )
+    assert any(
+        "shared registered physical failure-domain" in r for r in cross_reasons
+    ), cross_reasons
+
+    # A shared logical parent group is not automatically a shared physical host.
+    logical_group_id = "group.common-organizational-parent"
+    grouped = dict(resources)
+    grouped[logical_group_id] = Resource(
+        id=logical_group_id, type="group", parent="root", capacity=None,
+        path=None, github_slug=None, grabowski_key="repo:organizational-group",
+        metadata={},
+    )
+    for host_id in ("host.blue-physical", "host.green-physical"):
+        grouped[host_id] = replace(resources[host_id], parent=logical_group_id)
+    assert t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=grouped,
+    ) == []
+
 
 def test_t044_green_runtime_cannot_be_production_blue_alias_or_child() -> None:
     task = copy.deepcopy(t044_task())

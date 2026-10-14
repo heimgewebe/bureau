@@ -886,7 +886,7 @@ def t044_claim_admission_reasons(
         blue is None
         or attr(blue, "type") != "service"
         or not isinstance(attr(blue, "grabowski_key"), str)
-        or not attr(blue, "grabowski_key")
+        or not attr(blue, "grabowski_key").strip()
     ):
         return ["T044 claim blocked: canonical Blue runtime resource unavailable"]
 
@@ -899,7 +899,7 @@ def t044_claim_admission_reasons(
             attr(resource, "id") == resource_id
             and attr(resource, "type") == "service"
             and isinstance(attr(resource, "grabowski_key"), str)
-            and bool(attr(resource, "grabowski_key"))
+            and bool(attr(resource, "grabowski_key").strip())
             and isinstance(metadata, Mapping)
             and metadata.get("t044_role") == "green"
             and metadata.get("target_identity") == config["expected_target_identity"]

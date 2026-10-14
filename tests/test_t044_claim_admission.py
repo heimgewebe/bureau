@@ -758,6 +758,25 @@ def test_t044_existing_assignment_rechecks_exact_frozen_run(
     with pytest.raises(legacy.StateError, match=expected_reason):
         dispatcher.checkout_next(worker, tuple(frozen_task.capabilities))
 
+    # Isolated unit test of the *next* authority seam: when a future trusted
+    # physical attestation admits this run, missing leases must still reject.
+    # The temporary test mock cannot grant real production authority.
+    if not historical_snapshot:
+        with store.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM runs WHERE run_id=?", (run_id,)
+            ).fetchone()
+            with monkeypatch.context() as structural_only:
+                structural_only.setattr(
+                    v2, "t044_claim_admission_reasons", lambda *_args, **_kwargs: [],
+                )
+                with pytest.raises(
+                    legacy.StateError,
+                    match="T044 existing assignment missing exact runtime reservations",
+                ):
+                    dispatcher._validate_t044_existing_assignment(connection, row, envelope)
+
+
 @pytest.mark.parametrize("missing_runtime", ["runtime.commonserver", "runtime.green-test"])
 def test_t044_closeout_rejects_unattested_runtime_despite_reservations(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, missing_runtime: str
@@ -852,6 +871,14 @@ def test_t044_closeout_rejects_unattested_runtime_despite_reservations(
             v2.RunStateConflict, match="physical failure-domain provenance not attested",
         ):
             v2._require_t044_closeout_reservations(connection, registry, row, envelope)
+        # Isolate the post-attestation reservation guard in a unit test only;
+        # a real runtime can never bypass the physical provenance gate.
+        with monkeypatch.context() as structural_only:
+            structural_only.setattr(
+                v2, "t044_claim_admission_reasons", lambda *_args, **_kwargs: [],
+            )
+            with pytest.raises(v2.RunStateConflict, match=r"T044.*reservations"):
+                v2._require_t044_closeout_reservations(connection, registry, row, envelope)
     assert store.run(run_id)["state"] == "assigned"
 
 def test_t044_existing_assignment_uses_authoritative_state_store_taskspec(
@@ -1105,6 +1132,28 @@ def test_t044_operator_key_case_or_whitespace_alias_is_not_distinct(alias_varian
     )
     assert any("shared registered physical failure-domain" in r for r in reasons), (
         alias_variant, reasons,
+    )
+
+
+@pytest.mark.parametrize("runtime_id", ["runtime.commonserver", "runtime.green-unattested"])
+@pytest.mark.parametrize("malformed_key", [None, "", " ", "\t"])
+def test_t044_malformed_runtime_keys_fail_closed_without_crash(
+    runtime_id: str, malformed_key: str | None,
+) -> None:
+    """Missing and whitespace-only Blue/Green lease keys must fail before admission."""
+    task, resources = _t044_independent_registered_hosts_fixture()
+    changed = dict(resources)
+    changed[runtime_id] = replace(resources[runtime_id], grabowski_key=malformed_key)
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=changed,
+    )
+    expected = (
+        "canonical Blue runtime resource unavailable"
+        if runtime_id == "runtime.commonserver"
+        else "Green target must match exactly one registered runtime resource"
+    )
+    assert any(expected in reason for reason in reasons), (
+        runtime_id, repr(malformed_key), reasons,
     )
 
 

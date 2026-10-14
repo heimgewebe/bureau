@@ -6039,10 +6039,18 @@ class Dispatcher(legacy.Dispatcher):
                 self._validate_t044_existing_assignment(
                     connection, actual_run, claimed.get("envelope")
                 )
+        # The resource registry can be retargeted between claim_next and
+        # workspace creation. Never use the dispatcher's cached resources for
+        # the T044 pre-workspace admission (other tasks are unaffected).
+        startup_resources = (
+            Registry.load(self.source_registry.root).resources
+            if task.id == "WELTGEWEBE-OS-V1-T044"
+            else self.registry.resources
+        )
         startup_reasons = t044_claim_admission_reasons(
             task.raw,
             runtime_reader_registered=self.runtime_proof_reader is not None,
-            registered_resources=self.registry.resources,
+            registered_resources=startup_resources,
         )
         if startup_reasons:
             raise legacy.StateError(

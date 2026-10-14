@@ -8975,3 +8975,43 @@ def test_runtime_closeout_cli_contract_parses_exact_runtime_options():
                 "/tmp/fake-resources.sqlite3",
             ]
         )
+
+
+def test_t044_checkout_next_reads_live_registry_before_workspace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A resource retarget after claim must be seen before any T044 workspace."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [],
+    )
+    task_id = "WELTGEWEBE-OS-V1-T044"
+    marker = "runtime.t044-fresh-resource-only"
+    original_load = Registry.load
+
+    def load_fresh(root):
+        current = original_load(root)
+        current.resources[marker] = object()
+        return current
+
+    monkeypatch.setattr(bureau_v2.Registry, "load", staticmethod(load_fresh))
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kwargs: None)
+    monkeypatch.setattr(dispatcher, "reconcile", lambda: {})
+    monkeypatch.setattr(
+        dispatcher,
+        "claim_next",
+        lambda *_args, **_kwargs: {
+            "status": "claimed",
+            "run": {"run_id": "synthetic-no-effect", "task_id": task_id},
+        },
+    )
+
+    def examine_startup(_task, *, runtime_reader_registered, registered_resources):
+        assert marker in registered_resources, "T044 startup used cached resources"
+        return ["fresh-runtime-resource-stop"]
+
+    monkeypatch.setattr(bureau_v2, "t044_claim_admission_reasons", examine_startup)
+    with pytest.raises(legacy.StateError, match="T044 startup blocked before workspace"):
+        dispatcher.checkout_next("synthetic-worker", tuple(registry.tasks[task_id].capabilities))

@@ -400,6 +400,18 @@ def test_t044_green_sibling_runtime_rejects_shared_physical_domain(
         "shared non-group runtime ancestor" in r for r in disguised_reasons
     ), disguised_reasons
 
+    # Generic resource types cannot hide one shared physical parent unless
+    # independent registered hosts appear below the shared grouping node.
+    for disguised_type in ("group", "git-repository"):
+        shared_group = dict(resources)
+        shared_group[shared_id] = replace(resources[shared_id], type=disguised_type)
+        grouped_reasons = t044_claim_admission_reasons(
+            task, runtime_reader_registered=True, registered_resources=shared_group,
+        )
+        assert any(
+            "shared group without distinct registered hosts" in r for r in grouped_reasons
+        ), (disguised_type, grouped_reasons)
+
 
 @pytest.mark.parametrize("domain_type", ["host", "failure-domain"])
 def test_t044_separate_host_ancestors_allow_common_organizational_root(domain_type: str) -> None:

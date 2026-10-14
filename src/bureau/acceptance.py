@@ -989,6 +989,32 @@ def t044_claim_admission_reasons(
             + ", ".join(shared_non_group)
         ]
 
+    # A shared logical grouping is harmless only if both sides have their own
+    # registered physical ancestor below it. A directly shared "group" must
+    # not become a host merely by changing its registry type string.
+    shared_groups = sorted(
+        ancestor_id for ancestor_id in blue_ancestors & green_ancestors
+        if ancestor_id != "root"
+        and attr(registered_resources[ancestor_id], "type") in {"group", "git-repository"}
+    )
+    if shared_groups:
+        def has_distinct_registered_host(ancestor_ids: set[str]) -> bool:
+            return any(
+                attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}
+                and isinstance(attr(registered_resources[ancestor_id], "grabowski_key"), str)
+                and bool(attr(registered_resources[ancestor_id], "grabowski_key"))
+                for ancestor_id in ancestor_ids
+            )
+
+        if not (
+            has_distinct_registered_host(blue_ancestors - green_ancestors)
+            and has_distinct_registered_host(green_ancestors - blue_ancestors)
+        ):
+            return [
+                "T044 claim blocked: shared group without distinct registered hosts: "
+                + ", ".join(shared_groups)
+            ]
+
     raw_claims = task.get("claims")
     exclusive = (
         {

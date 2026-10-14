@@ -6039,24 +6039,69 @@ class Dispatcher(legacy.Dispatcher):
                 self._validate_t044_existing_assignment(
                     connection, actual_run, claimed.get("envelope")
                 )
-        # The resource registry can be retargeted between claim_next and
-        # workspace creation. Never use the dispatcher's cached resources for
-        # the T044 pre-workspace admission (other tasks are unaffected).
-        startup_resources = (
-            Registry.load(self.source_registry.root).resources
-            if task.id == "WELTGEWEBE-OS-V1-T044"
-            else self.registry.resources
-        )
-        startup_reasons = t044_claim_admission_reasons(
-            task.raw,
-            runtime_reader_registered=self.runtime_proof_reader is not None,
-            registered_resources=startup_resources,
-        )
-        if startup_reasons:
+        if task.id == "WELTGEWEBE-OS-V1-T044":
+            # Claim selection already persisted the run and its reservations.
+            # Recheck the *entire* live TaskSpec, plan, frozen envelope and
+            # registered Blue/Green resources before any workspace is created.
+            try:
+                with self.store.connect() as connection:
+                    actual_run = connection.execute(
+                        "SELECT * FROM runs WHERE run_id=?", (run["run_id"],)
+                    ).fetchone()
+                    if actual_run is None:
+                        raise legacy.StateError(
+                            "T044 startup blocked: claimed run is missing"
+                        )
+                    self._validate_t044_existing_assignment(
+                        connection, actual_run, claimed.get("envelope")
+                    )
+            except Exception:
+                if claimed.get("status") == "claimed":
+                    # Only our newly claimed run is safe to terminalize here;
+                    # never revoke a pre-existing worker's active assignment.
+                    try:
+                        fail_run(
+                            self.store,
+                            run["run_id"],
+                            "T044 startup admission rejected before workspace or dispatch",
+                        )
+                    except Exception as cleanup_exc:
+                        raise legacy.StateError(
+                            "T044 startup blocked: claim cleanup could not be verified"
+                        ) from cleanup_exc
+                raise
+
+            # Registry Git files lack an all-writer lock at the legacy
+            # checkout boundary. Another reload cannot close the
+            # post-read / pre-workspace race. T044 must use the coordinated
+            # claim-intent / claim-commit --workspace path with externally
+            # validated Blue/Green leases, never checkout-next.
+            if claimed.get("status") == "claimed":
+                try:
+                    fail_run(
+                        self.store,
+                        run["run_id"],
+                        "T044 uncoordinated checkout denied before workspace or dispatch",
+                    )
+                except Exception as cleanup_exc:
+                    raise legacy.StateError(
+                        "T044 uncoordinated checkout blocked: claim cleanup could not be verified"
+                    ) from cleanup_exc
             raise legacy.StateError(
-                "T044 startup blocked before workspace or dispatch: "
-                + "; ".join(startup_reasons)
+                "T044 uncoordinated checkout blocked: "
+                "use claim-intent and claim-commit --workspace with live external leases"
             )
+        else:
+            startup_reasons = t044_claim_admission_reasons(
+                task.raw,
+                runtime_reader_registered=self.runtime_proof_reader is not None,
+                registered_resources=self.registry.resources,
+            )
+            if startup_reasons:
+                raise legacy.StateError(
+                    "T044 startup blocked before workspace or dispatch: "
+                    + "; ".join(startup_reasons)
+                )
         brief_gate: dict[str, Any] | None = None
         if _requires_agent_brief(task, worker_id, kind, dispatch=dispatch):
             try:

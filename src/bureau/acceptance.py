@@ -997,23 +997,27 @@ def t044_claim_admission_reasons(
         if ancestor_id != "root"
         and attr(registered_resources[ancestor_id], "type") in {"group", "git-repository"}
     )
-    if shared_groups:
-        def has_distinct_registered_host(ancestor_ids: set[str]) -> bool:
-            return any(
-                attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}
-                and isinstance(attr(registered_resources[ancestor_id], "grabowski_key"), str)
-                and bool(attr(registered_resources[ancestor_id], "grabowski_key"))
-                for ancestor_id in ancestor_ids
-            )
+    # A bare registry root is also only a grouping sentinel: never treat two
+    # host-less services or disjoint host-less group chains as physical isolation.
+    # This is a registry prerequisite, NOT provider/physical identity attestation.
+    def has_distinct_registered_host(ancestor_ids: set[str]) -> bool:
+        return any(
+            attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}
+            and isinstance(attr(registered_resources[ancestor_id], "grabowski_key"), str)
+            and bool(attr(registered_resources[ancestor_id], "grabowski_key"))
+            for ancestor_id in ancestor_ids
+        )
 
-        if not (
-            has_distinct_registered_host(blue_ancestors - green_ancestors)
-            and has_distinct_registered_host(green_ancestors - blue_ancestors)
-        ):
-            return [
-                "T044 claim blocked: shared group without distinct registered hosts: "
-                + ", ".join(shared_groups)
-            ]
+    if not (
+        has_distinct_registered_host(blue_ancestors - green_ancestors)
+        and has_distinct_registered_host(green_ancestors - blue_ancestors)
+    ):
+        return [
+            "T044 claim blocked: shared group without distinct registered hosts: "
+            + ", ".join(shared_groups)
+            if shared_groups
+            else "T044 claim blocked: distinct registered hosts required for Blue and Green"
+        ]
 
     raw_claims = task.get("claims")
     exclusive = (

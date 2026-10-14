@@ -203,6 +203,21 @@ def _resource(
     )
 
 
+def _attach_distinct_runtime_test_hosts(
+    resources: dict[str, Resource], green_id: str,
+) -> None:
+    """Model registered host ancestry in *positive* fixtures; not physical proof."""
+    for runtime_id, label in (("runtime.commonserver", "blue"), (green_id, "green")):
+        host_id = f"host.test-t044-{label}"
+        assert host_id not in resources
+        resources[host_id] = Resource(
+            id=host_id, type="host", parent="root", capacity=None,
+            path=None, github_slug=None, grabowski_key=f"host:t044-fixture-{label}",
+            metadata={"synthetic_fixture_only": True},
+        )
+        resources[runtime_id] = replace(resources[runtime_id], parent=host_id)
+
+
 def test_t044_exclusive_resource_admission_requires_exact_registered_green_and_blue() -> None:
     task = copy.deepcopy(t044_task())
     release = "a" * 40
@@ -223,6 +238,7 @@ def test_t044_exclusive_resource_admission_requires_exact_registered_green_and_b
             },
         ),
     }
+    _attach_distinct_runtime_test_hosts(resources, "runtime.green-test")
     validate_acceptance_contract(task)
     assert any(
         "exclusive" in reason
@@ -307,6 +323,7 @@ def test_t044_reasons_use_fresh_registered_runtime_resources(tmp_path: Path) -> 
             "expected_runtime_revision": release,
         },
     )
+    _attach_distinct_runtime_test_hosts(fresh_resources, "runtime.green-isolated")
     _freeze_t044_runtime_identity(frozen, fresh_resources, "runtime.green-isolated")
     task = replace(
         original,
@@ -411,6 +428,58 @@ def test_t044_green_sibling_runtime_rejects_shared_physical_domain(
         assert any(
             "shared group without distinct registered hosts" in r for r in grouped_reasons
         ), (disguised_type, grouped_reasons)
+
+
+
+@pytest.mark.parametrize("layout", ["direct-root", "blue-host-only", "hostless-groups"])
+def test_t044_root_only_siblings_require_distinct_registered_hosts(layout: str) -> None:
+    """Root and registry group IDs cannot prove Blue/Green fault-domain separation."""
+    task = copy.deepcopy(t044_task())
+    revision, target = "a" * 40, "root-only-green"
+    for criterion in task["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=revision,
+                expected_target_identity=target,
+            )
+    green_id = "runtime.green-root"
+    task["claims"].extend([
+        {"resource": "runtime.commonserver", "mode": "exclusive"},
+        {"resource": green_id, "mode": "exclusive"},
+    ])
+    resources = {
+        "runtime.commonserver": _resource("runtime.commonserver", "service:blue"),
+        green_id: _resource(
+            green_id, "service:green",
+            metadata={
+                "t044_role": "green",
+                "target_identity": target,
+                "expected_runtime_revision": revision,
+            },
+        ),
+    }
+    if layout == "blue-host-only":
+        resources["host.only-blue"] = Resource(
+            id="host.only-blue", type="host", parent="root", capacity=None,
+            path=None, github_slug=None, grabowski_key="host:only-blue", metadata={},
+        )
+        resources["runtime.commonserver"] = replace(
+            resources["runtime.commonserver"], parent="host.only-blue",
+        )
+    elif layout == "hostless-groups":
+        for side, resource_id in (("blue", "runtime.commonserver"), ("green", green_id)):
+            group_id = f"group.only-{side}"
+            resources[group_id] = Resource(
+                id=group_id, type="group", parent="root", capacity=None,
+                path=None, github_slug=None, grabowski_key=f"group:only-{side}",
+                metadata={},
+            )
+            resources[resource_id] = replace(resources[resource_id], parent=group_id)
+    _freeze_t044_runtime_identity(task, resources, green_id)
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=resources,
+    )
+    assert any("distinct registered hosts" in r for r in reasons), (layout, reasons)
 
 
 @pytest.mark.parametrize("domain_type", ["host", "failure-domain"])
@@ -587,6 +656,7 @@ def test_t044_existing_assignment_rechecks_exact_frozen_run(
             "expected_runtime_revision": revision,
         },
     )
+    _attach_distinct_runtime_test_hosts(registry.resources, "runtime.green-test")
     _freeze_t044_runtime_identity(frozen, registry.resources, "runtime.green-test")
     frozen_task = replace(
         original,
@@ -705,6 +775,7 @@ def test_t044_closeout_rejects_missing_exclusive_reservations(
             "expected_runtime_revision": release,
         },
     )
+    _attach_distinct_runtime_test_hosts(registry.resources, "runtime.green-test")
     _freeze_t044_runtime_identity(frozen, registry.resources, "runtime.green-test")
     frozen_task = replace(
         original,
@@ -800,6 +871,7 @@ def test_t044_existing_assignment_uses_authoritative_state_store_taskspec(
             "expected_runtime_revision": revision,
         },
     )
+    _attach_distinct_runtime_test_hosts(registry.resources, "runtime.green-state-only")
     _freeze_t044_runtime_identity(frozen, registry.resources, "runtime.green-state-only")
     assert t044_claim_admission_reasons(
         frozen, runtime_reader_registered=True, registered_resources=registry.resources
@@ -933,19 +1005,19 @@ def test_t044_frozen_runtime_resource_keys_reject_retarget(drift: str) -> None:
             },
         ),
     }
+    _attach_distinct_runtime_test_hosts(resources, green_id)
     _freeze_t044_runtime_identity(task, resources, green_id)
     assert t044_claim_admission_reasons(
         task, runtime_reader_registered=True, registered_resources=resources
     ) == []
     changed = dict(resources)
     if drift == "blue-key":
-        changed["runtime.commonserver"] = _resource(
-            "runtime.commonserver", "host:retargeted-production-blue"
+        changed["runtime.commonserver"] = replace(
+            resources["runtime.commonserver"], grabowski_key="host:retargeted-production-blue",
         )
     else:
-        changed[green_id] = _resource(
-            green_id, "host:retargeted-green",
-            metadata=resources[green_id].metadata,
+        changed[green_id] = replace(
+            resources[green_id], grabowski_key="host:retargeted-green",
         )
     assert any(
         "frozen runtime resource identity" in reason

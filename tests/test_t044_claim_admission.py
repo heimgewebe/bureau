@@ -218,6 +218,17 @@ def _attach_distinct_runtime_test_hosts(
         resources[runtime_id] = replace(resources[runtime_id], parent=host_id)
 
 
+def _assert_unattested_t044_registry_hosts(task: dict, resources: dict[str, Resource]) -> None:
+    """Registry prerequisites may pass; only independently attested physical proof admits."""
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=resources,
+    )
+    assert reasons == [
+        "T044 claim blocked: physical failure-domain provenance not attested "
+        "by an independent trusted source"
+    ], reasons
+
+
 def test_t044_exclusive_resource_admission_requires_exact_registered_green_and_blue() -> None:
     task = copy.deepcopy(t044_task())
     release = "a" * 40
@@ -253,12 +264,7 @@ def test_t044_exclusive_resource_admission_requires_exact_registered_green_and_b
         ]
     )
     _freeze_t044_runtime_identity(task, resources, "runtime.green-test")
-    assert (
-        t044_claim_admission_reasons(
-            task, runtime_reader_registered=True, registered_resources=resources
-        )
-        == []
-    )
+    _assert_unattested_t044_registry_hosts(task, resources)
     # Every independent prerequisite is required, even when the two claims exist.
     assert t044_claim_admission_reasons(
         task, runtime_reader_registered=False, registered_resources=resources
@@ -343,7 +349,11 @@ def test_t044_reasons_use_fresh_registered_runtime_resources(tmp_path: Path) -> 
         task, set(task.capabilities), [], [], {},
         registered_resources=fresh_resources,
     )
-    assert not any("T044 claim blocked:" in value for value in fresh_reasons), fresh_reasons
+    assert any(
+        "physical failure-domain provenance not attested" in value
+        for value in fresh_reasons
+    ), fresh_reasons
+    assert not any("runtime resource registry unavailable" in value for value in fresh_reasons)
 
 
 @pytest.mark.parametrize("domain_type", ["host", "failure-domain"])
@@ -525,9 +535,7 @@ def test_t044_separate_host_ancestors_allow_common_organizational_root(domain_ty
         },
     )
     _freeze_t044_runtime_identity(task, resources, "runtime.green-independent")
-    assert t044_claim_admission_reasons(
-        task, runtime_reader_registered=True, registered_resources=resources,
-    ) == []
+    _assert_unattested_t044_registry_hosts(task, resources)
 
     # A single physical host can be registered twice under different ids.
     # Identical operator lease keys must never pass as independent ancestors.
@@ -577,9 +585,17 @@ def test_t044_separate_host_ancestors_allow_common_organizational_root(domain_ty
     )
     for host_id in ("host.blue-physical", "host.green-physical"):
         grouped[host_id] = replace(resources[host_id], parent=logical_group_id)
-    assert t044_claim_admission_reasons(
+    # Reusing the old frozen TaskSpec cannot silently adopt the new grouping.
+    drift_reasons = t044_claim_admission_reasons(
         task, runtime_reader_registered=True, registered_resources=grouped,
-    ) == []
+    )
+    assert any("frozen runtime resource identity" in reason for reason in drift_reasons)
+
+    # A separately frozen grouped registry is structurally valid but not real
+    # physical failure-domain provenance.
+    grouped_task = copy.deepcopy(task)
+    _freeze_t044_runtime_identity(grouped_task, grouped, "runtime.green-independent")
+    _assert_unattested_t044_registry_hosts(grouped_task, grouped)
 
 
 def test_t044_green_runtime_cannot_be_production_blue_alias_or_child() -> None:
@@ -619,7 +635,7 @@ def test_t044_green_runtime_cannot_be_production_blue_alias_or_child() -> None:
     ("historical_snapshot", "expected_reason"),
     [
         (True, "T044 existing assignment snapshot drift"),
-        (False, "T044 existing assignment missing exact runtime reservations"),
+        (False, "physical failure-domain provenance not attested"),
     ],
 )
 def test_t044_existing_assignment_rechecks_exact_frozen_run(
@@ -666,12 +682,7 @@ def test_t044_existing_assignment_rechecks_exact_frozen_run(
         acceptance=tuple(frozen["acceptance"]),
     )
     registry.tasks[task_id] = frozen_task
-    assert (
-        t044_claim_admission_reasons(
-            frozen, runtime_reader_registered=True, registered_resources=registry.resources
-        )
-        == []
-    )
+    _assert_unattested_t044_registry_hosts(frozen, registry.resources)
 
     dispatcher = Dispatcher(
         registry,
@@ -748,7 +759,7 @@ def test_t044_existing_assignment_rechecks_exact_frozen_run(
         dispatcher.checkout_next(worker, tuple(frozen_task.capabilities))
 
 @pytest.mark.parametrize("missing_runtime", ["runtime.commonserver", "runtime.green-test"])
-def test_t044_closeout_rejects_missing_exclusive_reservations(
+def test_t044_closeout_rejects_unattested_runtime_despite_reservations(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, missing_runtime: str
 ) -> None:
     """The last terminal CAS must re-read both live Blue/Green reservations."""
@@ -785,9 +796,7 @@ def test_t044_closeout_rejects_missing_exclusive_reservations(
         acceptance=tuple(frozen["acceptance"]),
     )
     registry.tasks[task_id] = frozen_task
-    assert t044_claim_admission_reasons(
-        frozen, runtime_reader_registered=True, registered_resources=registry.resources
-    ) == []
+    _assert_unattested_t044_registry_hosts(frozen, registry.resources)
     monkeypatch.setattr(
         v2.Registry, "load", classmethod(lambda cls, _root: registry)
     )
@@ -829,12 +838,19 @@ def test_t044_closeout_rejects_missing_exclusive_reservations(
         row = connection.execute(
             "SELECT * FROM runs WHERE run_id=?", (run_id,)
         ).fetchone()
-        v2._require_t044_closeout_reservations(connection, registry, row, envelope)
+        # Before a real external host-provenance attestation exists, closeout
+        # must fail closed even if both reserved resources still exist.
+        with pytest.raises(
+            v2.RunStateConflict, match="physical failure-domain provenance not attested",
+        ):
+            v2._require_t044_closeout_reservations(connection, registry, row, envelope)
         connection.execute(
             "DELETE FROM reservations WHERE run_id=? AND resource_id=?",
             (run_id, missing_runtime),
         )
-        with pytest.raises(v2.RunStateConflict, match=r"T044.*reservations"):
+        with pytest.raises(
+            v2.RunStateConflict, match="physical failure-domain provenance not attested",
+        ):
             v2._require_t044_closeout_reservations(connection, registry, row, envelope)
     assert store.run(run_id)["state"] == "assigned"
 
@@ -873,9 +889,7 @@ def test_t044_existing_assignment_uses_authoritative_state_store_taskspec(
     )
     _attach_distinct_runtime_test_hosts(registry.resources, "runtime.green-state-only")
     _freeze_t044_runtime_identity(frozen, registry.resources, "runtime.green-state-only")
-    assert t044_claim_admission_reasons(
-        frozen, runtime_reader_registered=True, registered_resources=registry.resources
-    ) == []
+    _assert_unattested_t044_registry_hosts(frozen, registry.resources)
 
     store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
     first = store.put_task_spec(
@@ -937,7 +951,12 @@ def test_t044_existing_assignment_uses_authoritative_state_store_taskspec(
         row = connection.execute(
             "SELECT * FROM runs WHERE run_id=?", (run_id,)
         ).fetchone()
-        dispatcher._validate_t044_existing_assignment(connection, row, envelope)
+        # Even a genuinely authoritative StateStore snapshot cannot bypass
+        # independent physical-host provenance when the source reader is absent.
+        with pytest.raises(
+            legacy.StateError, match="physical failure-domain provenance not attested",
+        ):
+            dispatcher._validate_t044_existing_assignment(connection, row, envelope)
 
     # A *new* StateStore revision, unlike the old Git projection, must now block.
     modified = copy.deepcopy(frozen)
@@ -964,15 +983,129 @@ def _freeze_t044_runtime_identity(
         for item in task["acceptance"]
         if item["verifier"] == "runtime_proof_bundle"
     )
+    def registered_ancestor_identity(runtime_id: str) -> list[dict]:
+        lineage: list[dict] = []
+        seen = {runtime_id}
+        current = runtime_id
+        while True:
+            parent = resources[current].parent
+            if parent == "root":
+                break
+            assert parent and parent in resources and parent not in seen
+            seen.add(parent)
+            entry = resources[parent]
+            lineage.append({
+                "resource_id": parent,
+                "type": entry.type,
+                "parent": entry.parent,
+                "grabowski_key": entry.grabowski_key,
+            })
+            current = parent
+        return sorted(lineage, key=lambda entry: entry["resource_id"])
+
     task.setdefault("metadata", {})["t044_runtime_identity"] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "blue_resource_id": "runtime.commonserver",
         "blue_grabowski_key": resources["runtime.commonserver"].grabowski_key,
+        "blue_ancestors": registered_ancestor_identity("runtime.commonserver"),
         "green_resource_id": green_id,
         "green_grabowski_key": resources[green_id].grabowski_key,
+        "green_ancestors": registered_ancestor_identity(green_id),
         "runtime_revision": runtime["expected_runtime_revision"],
         "target_identity": runtime["expected_target_identity"],
     }
+
+
+
+def _t044_independent_registered_hosts_fixture() -> tuple[dict, dict[str, Resource]]:
+    """Two independent *registry* host records, not independently verified servers."""
+    task = copy.deepcopy(t044_task())
+    revision, target = "a" * 40, "unattested-green"
+    for criterion in task["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=revision, expected_target_identity=target,
+            )
+    green_id = "runtime.green-unattested"
+    task["claims"].extend([
+        {"resource": "runtime.commonserver", "mode": "exclusive"},
+        {"resource": green_id, "mode": "exclusive"},
+    ])
+    resources = {
+        "runtime.commonserver": _resource("runtime.commonserver", "service:blue"),
+        green_id: _resource(
+            green_id, "service:green",
+            metadata={
+                "t044_role": "green",
+                "target_identity": target,
+                "expected_runtime_revision": revision,
+            },
+        ),
+    }
+    _attach_distinct_runtime_test_hosts(resources, green_id)
+    _freeze_t044_runtime_identity(task, resources, green_id)
+    return task, resources
+
+
+def test_t044_separate_registry_hosts_without_physical_provenance_do_not_admit() -> None:
+    task, resources = _t044_independent_registered_hosts_fixture()
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=resources,
+    )
+    assert any("physical failure-domain provenance not attested" in r for r in reasons), reasons
+
+
+@pytest.mark.parametrize(
+    "drift",
+    ["blue-parent", "green-parent", "blue-host-key", "green-host-type", "blue-host-parent"],
+)
+def test_t044_frozen_host_ancestor_identity_rejects_drift(drift: str) -> None:
+    task, resources = _t044_independent_registered_hosts_fixture()
+    changed = dict(resources)
+    if drift in {"blue-parent", "green-parent"}:
+        label = drift.split("-")[0]
+        runtime_id = "runtime.commonserver" if label == "blue" else "runtime.green-unattested"
+        host_id = f"host.changed-{label}"
+        changed[host_id] = replace(resources[f"host.test-t044-{label}"], id=host_id)
+        changed[runtime_id] = replace(resources[runtime_id], parent=host_id)
+    elif drift == "blue-host-key":
+        changed["host.test-t044-blue"] = replace(
+            resources["host.test-t044-blue"], grabowski_key="host:reassigned-blue",
+        )
+    elif drift == "green-host-type":
+        changed["host.test-t044-green"] = replace(
+            resources["host.test-t044-green"], type="failure-domain",
+        )
+    elif drift == "blue-host-parent":
+        changed["group.extra-blue"] = Resource(
+            id="group.extra-blue", type="group", parent="root", capacity=None,
+            path=None, github_slug=None, grabowski_key="group:extra-blue", metadata={},
+        )
+        changed["host.test-t044-blue"] = replace(
+            resources["host.test-t044-blue"], parent="group.extra-blue",
+        )
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=changed,
+    )
+    assert any("frozen runtime resource identity" in r for r in reasons), (drift, reasons)
+
+
+@pytest.mark.parametrize("alias_variant", ["upper", "trailing-space"])
+def test_t044_operator_key_case_or_whitespace_alias_is_not_distinct(alias_variant: str) -> None:
+    task, resources = _t044_independent_registered_hosts_fixture()
+    key = resources["host.test-t044-blue"].grabowski_key
+    assert isinstance(key, str)
+    disguised_key = key.upper() if alias_variant == "upper" else key + " "
+    changed = dict(resources)
+    changed["host.test-t044-green"] = replace(
+        resources["host.test-t044-green"], grabowski_key=disguised_key,
+    )
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=changed,
+    )
+    assert any("shared registered physical failure-domain" in r for r in reasons), (
+        alias_variant, reasons,
+    )
 
 
 @pytest.mark.parametrize("drift", ["blue-key", "green-key"])
@@ -1007,9 +1140,7 @@ def test_t044_frozen_runtime_resource_keys_reject_retarget(drift: str) -> None:
     }
     _attach_distinct_runtime_test_hosts(resources, green_id)
     _freeze_t044_runtime_identity(task, resources, green_id)
-    assert t044_claim_admission_reasons(
-        task, runtime_reader_registered=True, registered_resources=resources
-    ) == []
+    _assert_unattested_t044_registry_hosts(task, resources)
     changed = dict(resources)
     if drift == "blue-key":
         changed["runtime.commonserver"] = replace(

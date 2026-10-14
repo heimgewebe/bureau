@@ -929,6 +929,19 @@ def t044_claim_admission_reasons(
             current = parent
         return chain, False
 
+    def ancestor_identity(ancestor_ids: set[str]) -> list[dict[str, Any]]:
+        # Freeze complete registered chain, not only leaf service names/keys.
+        # The generic root sentinel is never a physical host.
+        return [
+            {
+                "resource_id": ancestor_id,
+                "type": attr(registered_resources[ancestor_id], "type"),
+                "parent": attr(registered_resources[ancestor_id], "parent"),
+                "grabowski_key": attr(registered_resources[ancestor_id], "grabowski_key"),
+            }
+            for ancestor_id in sorted(ancestor_ids - {"root"})
+        ]
+
     blue_ancestors, blue_chain_complete = ancestors(blue_id)
     green_ancestors, green_chain_complete = ancestors(green_id)
     if not (blue_chain_complete and green_chain_complete):
@@ -937,7 +950,8 @@ def t044_claim_admission_reasons(
         green_id == blue_id
         or blue_id in green_ancestors
         or green_id in blue_ancestors
-        or attr(green, "grabowski_key") == attr(blue, "grabowski_key")
+        or attr(green, "grabowski_key").strip().casefold()
+        == attr(blue, "grabowski_key").strip().casefold()
     ):
         return ["T044 claim blocked: Green is an alias or overlapping resource of production Blue"]
 
@@ -951,7 +965,9 @@ def t044_claim_admission_reasons(
             resource = registered_resources.get(resource_id)
             key = attr(resource, "grabowski_key") if resource is not None else None
             if isinstance(key, str) and key:
-                owners.setdefault(key, set()).add(resource_id)
+                # Conservative alias collision: case/edge whitespace cannot
+                # establish an independently owned physical lease identity.
+                owners.setdefault(key.strip().casefold(), set()).add(resource_id)
         return owners
 
     blue_key_owners = operator_key_owners(blue_ancestors | {blue_id})
@@ -1004,7 +1020,7 @@ def t044_claim_admission_reasons(
         return any(
             attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}
             and isinstance(attr(registered_resources[ancestor_id], "grabowski_key"), str)
-            and bool(attr(registered_resources[ancestor_id], "grabowski_key"))
+            and bool(attr(registered_resources[ancestor_id], "grabowski_key").strip())
             for ancestor_id in ancestor_ids
         )
 
@@ -1049,11 +1065,13 @@ def t044_claim_admission_reasons(
         else None
     )
     expected_binding = {
-        "schema_version": 1,
+        "schema_version": 2,
         "blue_resource_id": blue_id,
         "blue_grabowski_key": attr(blue, "grabowski_key"),
+        "blue_ancestors": ancestor_identity(blue_ancestors),
         "green_resource_id": green_id,
         "green_grabowski_key": attr(green, "grabowski_key"),
+        "green_ancestors": ancestor_identity(green_ancestors),
         "runtime_revision": config["expected_runtime_revision"],
         "target_identity": config["expected_target_identity"],
     }
@@ -1062,7 +1080,14 @@ def t044_claim_admission_reasons(
             "T044 claim blocked: frozen runtime resource identity differs from "
             "current Blue/Green ids, Grabowski keys, revision or target"
         ]
-    return []
+    # A registry writer can invent two hosts and distinct lease keys on one
+    # machine. Registry ancestry alone NEVER grants a production T044 claim.
+    # A future independently authenticated physical/provider identity proof
+    # must be integrated into this gate and rechecked at every authority seam.
+    return [
+        "T044 claim blocked: physical failure-domain provenance not attested "
+        "by an independent trusted source"
+    ]
 
 
 def typed_criterion_contracts(criteria: Sequence[Mapping[str, Any]]) -> dict[str, Any]:

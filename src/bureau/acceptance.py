@@ -924,13 +924,30 @@ def t044_claim_admission_reasons(
             current = parent
         return chain
 
+    blue_ancestors = ancestors(blue_id)
+    green_ancestors = ancestors(green_id)
     if (
         green_id == blue_id
-        or blue_id in ancestors(green_id)
-        or green_id in ancestors(blue_id)
+        or blue_id in green_ancestors
+        or green_id in blue_ancestors
         or attr(green, "grabowski_key") == attr(blue, "grabowski_key")
     ):
         return ["T044 claim blocked: Green is an alias or overlapping resource of production Blue"]
+
+    # Two differently named sibling services can still use one physical host
+    # or registered fault domain. Such logical exclusivity is not isolation.
+    # Only physical registered ancestor types count; shared generic repo/root
+    # grouping alone must not classify physically separate runtimes as aliases.
+    shared_physical_domains = sorted(
+        key for key in blue_ancestors & green_ancestors
+        if key in registered_resources
+        and attr(registered_resources[key], "type") in {"host", "failure-domain"}
+    )
+    if shared_physical_domains:
+        return [
+            "T044 claim blocked: shared registered physical failure-domain: "
+            + ", ".join(shared_physical_domains)
+        ]
 
     raw_claims = task.get("claims")
     exclusive = (

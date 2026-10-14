@@ -329,6 +329,108 @@ def test_t044_reasons_use_fresh_registered_runtime_resources(tmp_path: Path) -> 
     assert not any("T044 claim blocked:" in value for value in fresh_reasons), fresh_reasons
 
 
+@pytest.mark.parametrize("domain_type", ["host", "failure-domain"])
+def test_t044_green_sibling_runtime_rejects_shared_physical_domain(
+    domain_type: str,
+) -> None:
+    """Two logically distinct leases must not share a registered physical fault domain."""
+    task = copy.deepcopy(t044_task())
+    release = "a" * 40
+    target = "shared-physical-domain-green"
+    for criterion in task["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=release,
+                expected_target_identity=target,
+            )
+    task["claims"].extend(
+        [
+            {"resource": "runtime.commonserver", "mode": "exclusive"},
+            {"resource": "runtime.green-sibling", "mode": "exclusive"},
+        ]
+    )
+    shared_id = "host.shared-physical" if domain_type == "host" else "fault.shared-physical"
+    resources = {
+        shared_id: Resource(
+            id=shared_id,
+            type=domain_type,
+            parent="root",
+            capacity=1 if domain_type == "failure-domain" else None,
+            criticality="essential" if domain_type == "failure-domain" else None,
+            path=None,
+            github_slug=None,
+            grabowski_key="host:shared-physical",
+            metadata={"physical": True},
+        ),
+        "runtime.commonserver": _resource(
+            "runtime.commonserver", "service:blue-sibling",
+            parent=shared_id,
+        ),
+        "runtime.green-sibling": _resource(
+            "runtime.green-sibling", "service:green-sibling",
+            parent=shared_id,
+            metadata={
+                "t044_role": "green",
+                "target_identity": target,
+                "expected_runtime_revision": release,
+            },
+        ),
+    }
+    _freeze_t044_runtime_identity(task, resources, "runtime.green-sibling")
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=resources
+    )
+    assert any("shared registered physical failure-domain" in r for r in reasons), reasons
+
+
+
+def test_t044_separate_host_ancestors_allow_common_organizational_root() -> None:
+    """A common generic registry root is not evidence of one physical host."""
+    task = copy.deepcopy(t044_task())
+    release = "a" * 40
+    target = "separate-host-green"
+    for criterion in task["acceptance"]:
+        if criterion["verifier"] == "runtime_proof_bundle":
+            criterion["verifier_config"].update(
+                expected_runtime_revision=release,
+                expected_target_identity=target,
+            )
+    task["claims"].extend(
+        [
+            {"resource": "runtime.commonserver", "mode": "exclusive"},
+            {"resource": "runtime.green-independent", "mode": "exclusive"},
+        ]
+    )
+    resources = {
+        host_id: Resource(
+            id=host_id,
+            type="host",
+            parent="root",
+            capacity=None,
+            path=None,
+            github_slug=None,
+            grabowski_key=f"host:{host_id}",
+            metadata={},
+        )
+        for host_id in ("host.blue-physical", "host.green-physical")
+    }
+    resources["runtime.commonserver"] = _resource(
+        "runtime.commonserver", "service:blue", parent="host.blue-physical",
+    )
+    resources["runtime.green-independent"] = _resource(
+        "runtime.green-independent", "service:green", parent="host.green-physical",
+        metadata={
+            "t044_role": "green",
+            "target_identity": target,
+            "expected_runtime_revision": release,
+        },
+    )
+    _freeze_t044_runtime_identity(task, resources, "runtime.green-independent")
+    assert t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=resources,
+    ) == []
+
+
 def test_t044_green_runtime_cannot_be_production_blue_alias_or_child() -> None:
     task = copy.deepcopy(t044_task())
     for criterion in task["acceptance"]:

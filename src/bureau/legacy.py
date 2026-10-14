@@ -1463,6 +1463,13 @@ def fail_run(store: StateStore, run_id: str, error: str, state: str = "failed") 
 
 def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dict[str, Any]:
     run = store.run(run_id)
+    if run["task_id"] == "WELTGEWEBE-OS-V1-T044":
+        # Compatibility callers may bypass v2. The protection belongs before
+        # producing any externally executable task request.
+        raise StateError(
+            "T044 legacy handoff blocked: no authorized external lease and "
+            "runtime-proof barrier exists at the effect boundary"
+        )
     task = registry.tasks[run["task_id"]]
     keys = set(task.execution.get("grabowski_resources", []))
     for claim in task.claims:
@@ -1500,6 +1507,13 @@ def create_workspace(
     base_dir: Path | None = None,
 ) -> dict[str, Any]:
     run = store.run(run_id)
+    if run["task_id"] == "WELTGEWEBE-OS-V1-T044":
+        # Reject even a historical pre-existing workspace before the early
+        # return, filesystem mutations, and Git subprocess invocation.
+        raise StateError(
+            "T044 legacy workspace blocked: external lease-fenced workspace "
+            "authority has not been established"
+        )
     task = registry.tasks[run["task_id"]]
     repository = task.execution.get("working_repository")
     if not repository:

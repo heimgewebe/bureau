@@ -5368,7 +5368,16 @@ class Dispatcher(legacy.Dispatcher):
                 "SELECT * FROM runs WHERE run_id=?", (intent["run_id"],)
             ).fetchone()
         if existing is not None:
+            # Exact replay of a pre-existing run is not new admission.
             return _existing_coordinated_claim_result(existing, intent, resource_db=resource_db)
+        if intent["task_id"] == "WELTGEWEBE-OS-V1-T044":
+            # This publicly callable primitive must stop before any new run
+            # or reservation, independently of the checkout/workspace wrapper.
+            raise legacy.StateError(
+                "T044 coordinated claim commit blocked: no new T044 reservation "
+                "is authorized until external lease-effect fencing and trusted "
+                "runtime-proof authority are established"
+            )
         if intent["expires_at_unix"] <= int(datetime.now(timezone.utc).timestamp()):
             raise legacy.StateError("coordinated claim intent expired")
         issuance = self.store.claim_intent_issuance(intent["run_id"])
@@ -6099,11 +6108,9 @@ class Dispatcher(legacy.Dispatcher):
                         ) from cleanup_exc
                 raise
 
-            # Registry Git files lack an all-writer lock at the legacy
-            # checkout boundary. Another reload cannot close the
-            # post-read / pre-workspace race. T044 must use the coordinated
-            # claim-intent / claim-commit --workspace path with externally
-            # validated Blue/Green leases, never checkout-next.
+            # A Registry reload cannot close the post-read / pre-workspace
+            # race. The coordinated commit/workspace routes are also blocked:
+            # no new T044 execution route is currently approved.
             if claimed.get("status") == "claimed":
                 try:
                     fail_run(
@@ -6116,8 +6123,12 @@ class Dispatcher(legacy.Dispatcher):
                         "T044 uncoordinated checkout blocked: claim cleanup could not be verified"
                     ) from cleanup_exc
             raise legacy.StateError(
-                "T044 uncoordinated checkout blocked: "
-                "use claim-intent and claim-commit --workspace with live external leases"
+                "T044 uncoordinated checkout blocked: no new T044 run has an "
+                "authorized execution or workspace route until a trusted "
+                "external lease-effect barrier and runtime-proof reader exist; "
+                "an existing assignment requires owner-authorized exact-run "
+                "disposition. The positive path must be separately implemented, "
+                "reviewed and authorized."
             )
         else:
             startup_reasons = t044_claim_admission_reasons(

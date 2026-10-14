@@ -913,19 +913,26 @@ def t044_claim_admission_reasons(
     green_id = green_matches[0]
     green = registered_resources[green_id]
 
-    def ancestors(resource_id: str) -> set[str]:
+    def ancestors(resource_id: str) -> tuple[set[str], bool]:
         chain: set[str] = set()
         current = resource_id
         while current in registered_resources:
             parent = attr(registered_resources[current], "parent")
-            if not isinstance(parent, str) or parent in chain or parent == current:
-                break
+            if not isinstance(parent, str) or not parent or parent in chain or parent == current:
+                return chain, False
             chain.add(parent)
+            # The generic registry root is a grouping sentinel, never a host proof.
+            if parent == "root":
+                return chain, True
+            if parent not in registered_resources:
+                return chain, False
             current = parent
-        return chain
+        return chain, False
 
-    blue_ancestors = ancestors(blue_id)
-    green_ancestors = ancestors(green_id)
+    blue_ancestors, blue_chain_complete = ancestors(blue_id)
+    green_ancestors, green_chain_complete = ancestors(green_id)
+    if not (blue_chain_complete and green_chain_complete):
+        return ["T044 claim blocked: runtime ancestor missing or cyclic in resource registry"]
     if (
         green_id == blue_id
         or blue_id in green_ancestors
@@ -938,15 +945,43 @@ def t044_claim_admission_reasons(
     # or registered fault domain. Such logical exclusivity is not isolation.
     # Only physical registered ancestor types count; shared generic repo/root
     # grouping alone must not classify physically separate runtimes as aliases.
+    def physical_ancestor_identities(ancestor_ids: set[str]) -> set[tuple[str, str]]:
+        identities: set[tuple[str, str]] = set()
+        for ancestor_id in ancestor_ids:
+            resource = registered_resources.get(ancestor_id)
+            if resource is None or attr(resource, "type") not in {"host", "failure-domain"}:
+                continue
+            identities.add(("resource", ancestor_id))
+            lease_key = attr(resource, "grabowski_key")
+            if isinstance(lease_key, str) and lease_key:
+                # Two registry ids may name the same physical operator resource.
+                identities.add(("grabowski-key", lease_key))
+        return identities
+
     shared_physical_domains = sorted(
-        key for key in blue_ancestors & green_ancestors
-        if key in registered_resources
-        and attr(registered_resources[key], "type") in {"host", "failure-domain"}
+        f"{identity_kind}:{identity_value}"
+        for identity_kind, identity_value in (
+            physical_ancestor_identities(blue_ancestors)
+            & physical_ancestor_identities(green_ancestors)
+        )
     )
     if shared_physical_domains:
         return [
             "T044 claim blocked: shared registered physical failure-domain: "
             + ", ".join(shared_physical_domains)
+        ]
+
+    # Unknown/non-group shared ancestors can conceal one physical resource even
+    # when the registry marks it as a service instead of a host or fault domain.
+    shared_non_group = sorted(
+        ancestor_id for ancestor_id in blue_ancestors & green_ancestors
+        if ancestor_id != "root"
+        and attr(registered_resources[ancestor_id], "type") not in {"group", "git-repository"}
+    )
+    if shared_non_group:
+        return [
+            "T044 claim blocked: shared non-group runtime ancestor: "
+            + ", ".join(shared_non_group)
         ]
 
     raw_claims = task.get("claims")

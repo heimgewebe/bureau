@@ -382,9 +382,27 @@ def test_t044_green_sibling_runtime_rejects_shared_physical_domain(
     )
     assert any("shared registered physical failure-domain" in r for r in reasons), reasons
 
+    # A shared runtime parent removed from the registry is not proof of isolation.
+    missing_parent = dict(resources)
+    del missing_parent[shared_id]
+    missing_reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=missing_parent,
+    )
+    assert any("runtime ancestor missing" in r for r in missing_reasons), missing_reasons
+
+    # A shared physical parent cannot evade the gate by changing its type to service.
+    disguised_parent = dict(resources)
+    disguised_parent[shared_id] = replace(resources[shared_id], type="service")
+    disguised_reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=disguised_parent,
+    )
+    assert any(
+        "shared non-group runtime ancestor" in r for r in disguised_reasons
+    ), disguised_reasons
 
 
-def test_t044_separate_host_ancestors_allow_common_organizational_root() -> None:
+@pytest.mark.parametrize("domain_type", ["host", "failure-domain"])
+def test_t044_separate_host_ancestors_allow_common_organizational_root(domain_type: str) -> None:
     """A common generic registry root is not evidence of one physical host."""
     task = copy.deepcopy(t044_task())
     release = "a" * 40
@@ -404,7 +422,7 @@ def test_t044_separate_host_ancestors_allow_common_organizational_root() -> None
     resources = {
         host_id: Resource(
             id=host_id,
-            type="host",
+            type=domain_type,
             parent="root",
             capacity=None,
             path=None,
@@ -429,6 +447,18 @@ def test_t044_separate_host_ancestors_allow_common_organizational_root() -> None
     assert t044_claim_admission_reasons(
         task, runtime_reader_registered=True, registered_resources=resources,
     ) == []
+
+    # A single physical host can be registered twice under different ids.
+    # Identical operator lease keys must never pass as independent ancestors.
+    same_physical_host = dict(resources)
+    same_physical_host["host.green-physical"] = replace(
+        resources["host.green-physical"],
+        grabowski_key=resources["host.blue-physical"].grabowski_key,
+    )
+    reasons = t044_claim_admission_reasons(
+        task, runtime_reader_registered=True, registered_resources=same_physical_host,
+    )
+    assert any("shared registered physical failure-domain" in r for r in reasons), reasons
 
 
 def test_t044_green_runtime_cannot_be_production_blue_alias_or_child() -> None:

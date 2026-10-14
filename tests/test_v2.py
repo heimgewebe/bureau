@@ -9169,3 +9169,91 @@ def test_t044_uncoordinated_checkout_cannot_cross_workspace_boundary(
         assert connection.execute(
             "SELECT COUNT(*) FROM reservations WHERE run_id=?", (run_id,)
         ).fetchone()[0] == 0
+
+
+
+def test_t044_legacy_claim_next_denied_before_run_or_reservation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A legacy claim must never reserve the Blue/Green writer resources."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    task = registry.tasks["WELTGEWEBE-OS-V1-T044"]
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [],
+    )
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
+    monkeypatch.setattr(dispatcher, "_ordered_tasks", lambda: [task])
+    monkeypatch.setattr(dispatcher, "reasons", lambda *_a, **_kw: [])
+    with pytest.raises(NoEligibleTask, match="T044 legacy claim-next blocked"):
+        dispatcher.claim_next(
+            "t044-preclaim-worker", tuple(task.capabilities), reconcile_first=False
+        )
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM reservations").fetchone()[0] == 0
+
+
+def test_t044_coordinated_workspace_denied_before_claim_or_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without a lease-fenced workspace boundary, refuse T044 before committing."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [],
+    )
+
+    def forbidden_effect(*_args, **_kwargs):
+        raise AssertionError("T044 workspace must not commit a run or create a worktree")
+
+    monkeypatch.setattr(dispatcher, "commit_claim_intent", forbidden_effect)
+    monkeypatch.setattr(bureau_v2, "create_workspace", forbidden_effect)
+    monkeypatch.setattr(bureau_v2, "grabowski_handoff", forbidden_effect)
+    with pytest.raises(StateError, match="T044 coordinated workspace blocked"):
+        dispatcher.checkout_claim_intent(
+            {"task_id": "WELTGEWEBE-OS-V1-T044"},
+            None,
+            resource_db=tmp_path / "unavailable-leases.sqlite3",
+        )
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM reservations").fetchone()[0] == 0
+
+
+def test_t044_direct_workspace_denies_unfenced_filesystem_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Even a direct call may not create a T044 worktree without a lease fence."""
+    registry, store, _dispatcher, _worker, run_id, _envelope = _new_claimed_t044_run(
+        tmp_path
+    )
+    monkeypatch.setattr(bureau_v2, "_task_uses_worktree_workspace", lambda _task: True)
+
+    def forbid_git(*_args, **_kwargs):
+        raise AssertionError("unfenced T044 git worktree effect was attempted")
+
+    monkeypatch.setattr(bureau_v2, "_git", forbid_git)
+    with pytest.raises(StateError, match="T044 direct workspace blocked"):
+        bureau_v2.create_workspace(
+            registry, store, run_id, base_dir=tmp_path / "test-worktrees"
+        )
+    assert store.run(run_id)["workspace_path"] is None
+
+
+def test_t044_direct_handoff_denies_missing_external_lease_barrier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A self-supplied reader cannot turn an unleased T044 run into a handoff."""
+    registry, store, _dispatcher, _worker, run_id, _envelope = _new_claimed_t044_run(
+        tmp_path
+    )
+    monkeypatch.setattr(
+        bureau_v2.Dispatcher, "_validate_t044_existing_assignment",
+        lambda *_args, **_kwargs: None,
+    )
+    with pytest.raises(StateError, match="T044 direct handoff blocked"):
+        bureau_v2.grabowski_handoff(
+            registry, store, run_id, runtime_proof_reader=lambda _request: {},
+        )

@@ -322,3 +322,60 @@ def test_t044_existing_coordinated_commit_never_reasserts_legacy_run(
     assert after["envelope_sha256"] == initial["envelope_sha256"]
     assert after["reservations"] == initial["reservations"]
     assert _reserve_count(store) == len(task.claims)
+
+def test_retained_legacy_completion_must_not_verify_t044_from_untyped_proofs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Even historic assigned T044 runs must require authenticated runtime proof."""
+    registry, store, _dispatcher, task, _worker, run_id, _envelope = _assigned_t044(
+        tmp_path
+    )
+    receipt_root = tmp_path / "legacy-receipt-attempt"
+    monkeypatch.setattr(legacy, "default_state_dir", lambda: receipt_root)
+    before = store.run(run_id)
+    assert before["state"] == "assigned"
+    assert _reserve_count(store) == len(task.claims)
+    fake = {
+        str(criterion["id"]): {"self_declared": True, "status": "passed"}
+        for criterion in task.raw["acceptance"]
+    }
+    assert len(fake) == 11
+    with pytest.raises(StateError, match="T044 legacy completion blocked"):
+        legacy.complete_run(registry, store, run_id, fake)
+    after = store.run(run_id)
+    assert after["state"] == "assigned"
+    assert after["envelope_sha256"] == before["envelope_sha256"]
+    assert after["reservations"] == before["reservations"]
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM receipts WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == 0
+        assert connection.execute(
+            "SELECT COUNT(*) FROM task_status WHERE task_id=?", (T044,)
+        ).fetchone()[0] == 0
+    assert not list(receipt_root.rglob("*.json"))
+
+
+def test_retained_legacy_completion_still_works_for_non_t044(
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The T044-specific proof fence must not break historical ordinary tasks."""
+    root = registry_factory(1, mode="write")
+    registry = legacy.Registry.load(root)
+    store = StateStore(tmp_path / "ordinary-close.sqlite3", state_root=tmp_path)
+    monkeypatch.setattr(
+        legacy, "default_state_dir", lambda: tmp_path / "ordinary-close-receipts"
+    )
+    selected = legacy.Dispatcher(registry, store).claim_next(
+        "legacy-close-other", ("repository",)
+    )
+    run_id = selected["run"]["run_id"]
+    result = legacy.complete_run(
+        registry, store, run_id, {"proof": {"result": "passed"}}
+    )
+    assert result["receipt"]["task_id"] != T044
+    assert store.run(run_id)["state"] == "succeeded"
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM receipts WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == 1

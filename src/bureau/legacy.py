@@ -1379,6 +1379,14 @@ def complete_run(
     evidence: dict[str, Any],
 ) -> dict[str, Any]:
     run = store.run(run_id)
+    if run["task_id"] == "WELTGEWEBE-OS-V1-T044":
+        # The retained v0.1 compatibility API only checks that evidence keys
+        # exist. It must never create a T044 verification receipt or stamp
+        # without the authenticated typed runtime-proof reconciliation path.
+        raise StateError(
+            "T044 legacy completion blocked: authenticated typed runtime "
+            "proofs are required through the canonical closure observer"
+        )
     if run["state"] not in ACTIVE_STATES:
         raise StateError(f"run {run_id} is not active")
     with store.connect() as connection:

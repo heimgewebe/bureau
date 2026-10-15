@@ -5363,6 +5363,14 @@ class Dispatcher(legacy.Dispatcher):
     ) -> dict[str, Any]:
         """Commit one exact intent after live Grabowski lease validation."""
         _validate_coordinated_claim_intent(intent)
+        if intent["task_id"] == "WELTGEWEBE-OS-V1-T044":
+            # Stop before either an existing-run replay or a new claim commit.
+            # A replay response must never reassert T044 execution authority.
+            raise legacy.StateError(
+                "T044 coordinated claim commit blocked: no new T044 reservation "
+                "is authorized until external lease-effect fencing and trusted "
+                "runtime-proof authority are established"
+            )
         with self.store.connect() as recovery_connection:
             existing = recovery_connection.execute(
                 "SELECT * FROM runs WHERE run_id=?", (intent["run_id"],)
@@ -5370,14 +5378,6 @@ class Dispatcher(legacy.Dispatcher):
         if existing is not None:
             # Exact replay of a pre-existing run is not new admission.
             return _existing_coordinated_claim_result(existing, intent, resource_db=resource_db)
-        if intent["task_id"] == "WELTGEWEBE-OS-V1-T044":
-            # This publicly callable primitive must stop before any new run
-            # or reservation, independently of the checkout/workspace wrapper.
-            raise legacy.StateError(
-                "T044 coordinated claim commit blocked: no new T044 reservation "
-                "is authorized until external lease-effect fencing and trusted "
-                "runtime-proof authority are established"
-            )
         if intent["expires_at_unix"] <= int(datetime.now(timezone.utc).timestamp()):
             raise legacy.StateError("coordinated claim intent expired")
         issuance = self.store.claim_intent_issuance(intent["run_id"])

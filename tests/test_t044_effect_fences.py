@@ -251,3 +251,74 @@ def test_direct_legacy_dispatcher_still_claims_non_t044(
     with store.connect() as db:
         assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 1
         assert db.execute("SELECT COUNT(*) FROM reservations").fetchone()[0] == 2
+
+
+def test_t044_existing_coordinated_commit_never_reasserts_legacy_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Existing T044 run and reservations must remain read-only, not claimed."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    task = registry.tasks[T044]
+    store = StateStore(tmp_path / "historical.sqlite3", state_root=tmp_path)
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [],
+    )
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
+    monkeypatch.setattr(dispatcher, "_ordered_tasks", lambda: [task])
+    monkeypatch.setattr(dispatcher, "reasons", lambda *_a, **_kw: [])
+    # The historical commit-only route does not require a local Git worktree.
+    monkeypatch.setattr(v2, "_planned_workspace", lambda *_a, **_kw: None)
+    intent = dispatcher.claim_intent(
+        "t044-existing-coordinated-worker", tuple(task.capabilities),
+        task_id=T044, approved=True,
+    )["intent"]
+    assert store.claim_intent_issuance(intent["run_id"]) is not None
+    now = legacy.utc_now()
+    envelope = {
+        "run_id": intent["run_id"],
+        "task_id": T044,
+        "worker_id": intent["worker_id"],
+        "task_sha256": task.sha256,
+        "plan_sha256": intent["plan_sha256"],
+        "task": task.raw,
+        "claims": [claim.as_dict() for claim in task.claims],
+        "claim_intent": intent,
+    }
+    store.register_worker(
+        intent["worker_id"], "interactive-agent", tuple(task.capabilities),
+    )
+    with store.immediate() as db:
+        db.execute(
+            "INSERT INTO runs (run_id,task_id,worker_id,attempt,state,task_sha256,"
+            "plan_sha256,envelope_json,envelope_sha256,created_at,updated_at,heartbeat_at)"
+            " VALUES (?,?,?,1,'assigned',?,?,?,?,?,?,?)",
+            (
+                intent["run_id"], T044, intent["worker_id"], task.sha256,
+                intent["plan_sha256"], legacy.canonical_json(envelope),
+                legacy.sha256_json(envelope), now, now, now,
+            ),
+        )
+        for claim in task.claims:
+            db.execute(
+                "INSERT INTO reservations (run_id,resource_id,mode,amount,created_at)"
+                " VALUES (?,?,?,?,?)",
+                (
+                    intent["run_id"], claim.resource, claim.mode,
+                    claim.amount, now,
+                ),
+            )
+    lease_binding, lease_db = _lease_database(tmp_path, intent)
+    initial = store.run(intent["run_id"])
+    assert initial["state"] == "assigned"
+    assert _reserve_count(store) == len(task.claims)
+    with pytest.raises(StateError, match="T044 coordinated claim commit blocked"):
+        dispatcher.commit_claim_intent(
+            intent, lease_binding if intent["required_resource_keys"] else None,
+            resource_db=lease_db,
+        )
+    after = store.run(intent["run_id"])
+    assert after["state"] == "assigned"
+    assert after["envelope_sha256"] == initial["envelope_sha256"]
+    assert after["reservations"] == initial["reservations"]
+    assert _reserve_count(store) == len(task.claims)

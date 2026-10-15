@@ -8986,8 +8986,10 @@ def test_t044_checkout_next_reads_live_registry_before_workspace(
     )
     marker = "runtime.t044-fresh-resource-only"
     original_load = Registry.load
+    registry_reads = []
 
     def load_fresh(root):
+        registry_reads.append(root)
         current = original_load(root)
         current.resources[marker] = object()
         return current
@@ -9002,16 +9004,26 @@ def test_t044_checkout_next_reads_live_registry_before_workspace(
             "status": "claimed", "run": store.run(run_id), "envelope": envelope
         },
     )
+    admission_reads = []
+
     def examine_startup(_task, *, runtime_reader_registered, registered_resources):
+        admission_reads.append(registered_resources)
         assert marker in registered_resources, "T044 startup used cached resources"
         return ["fresh-runtime-resource-stop"]
 
     monkeypatch.setattr(bureau_v2, "t044_claim_admission_reasons", examine_startup)
-    with pytest.raises(legacy.StateError, match="T044"):
+    with pytest.raises(legacy.StateError, match="fresh-runtime-resource-stop"):
         dispatcher.checkout_next(
             worker, tuple(registry.tasks["WELTGEWEBE-OS-V1-T044"].capabilities)
         )
+    assert registry_reads, "T044 checkout did not reload the source Registry"
+    assert admission_reads, "T044 snapshot admission verifier was not invoked"
+    assert all(marker in resources for resources in admission_reads)
     assert store.run(run_id)["state"] == "failed"
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM reservations WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == 0
 
 
 def _new_claimed_t044_run(
@@ -9095,10 +9107,10 @@ def test_t044_new_claim_failed_startup_releases_actual_reservations(
         ).fetchone()[0] == 0
 
 
-def test_t044_new_claim_rechecks_live_plan_even_if_resource_gate_passes(
+def test_t044_new_claim_rejects_stale_plan_before_resource_admission(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A claimed stale plan cannot cross into workspace creation on a new run."""
+    """A frozen stale plan must fail before runtime admission or workspace."""
     registry, store, dispatcher, worker, run_id, envelope = _new_claimed_t044_run(
         tmp_path, plan_sha_override="f" * 64
     )
@@ -9112,10 +9124,12 @@ def test_t044_new_claim_rechecks_live_plan_even_if_resource_gate_passes(
             "status": "claimed", "run": store.run(run_id), "envelope": envelope
         },
     )
-    # Simulate a separate successful T044 target-resource admission; the
-    # full TaskSpec/plan match must be checked independently.
+    # A stale frozen plan must fail before evaluating runtime resources.
+    def forbidden_admission(*_a, **_kw):
+        raise AssertionError("stale T044 plan reached runtime resource admission")
+
     monkeypatch.setattr(
-        bureau_v2, "t044_claim_admission_reasons", lambda *_a, **_kw: []
+        bureau_v2, "t044_claim_admission_reasons", forbidden_admission
     )
     def forbidden_effect(*_a, **_kw):
         raise AssertionError("stale run may not cross workspace/dispatch boundary")

@@ -1850,12 +1850,14 @@ def authenticate_state_evidence(
                     detail=f"trusted runtime reader unavailable: {type(exc).__name__}",
                 ) from exc
 
-            # The observer is trusted by its caller, not by a field in the
-            # producer's bundle. Match the complete independently read receipt
-            # set, run/plan, frozen target, origin, time and producer exactly.
+            # A trusted runtime adapter must derive both actor identities
+            # independently from immutable primary receipt provenance. Neither
+            # the submitted evidence nor a worker-supplied claim proves that
+            # the observer is different from the receipt producer.
+            # Fail closed on legacy readers that lack a producer identity.
             required_live_keys = (
                 set(request) - {"required_probes"}
-                | {"source", "observed_at", "observer", "probes"}
+                | {"source", "observed_at", "observer", "producer", "probes"}
             )
             immutable_keys = (
                 "schema_version", "run_id", "task_sha256", "plan_sha256",
@@ -1877,8 +1879,16 @@ def authenticate_state_evidence(
                 and isinstance(live.get("observed_at"), str)
                 and isinstance(live.get("observer"), str)
                 and bool(live["observer"].strip())
-                # The run worker must never self-certify a target runtime.
-                and live["observer"].strip() != run.get("worker_id")
+                and isinstance(live.get("producer"), str)
+                and bool(live["producer"].strip())
+                and len(live["producer"]) <= 200
+                and len(live["observer"]) <= 200
+                # The independent adapter must attest an observer distinct
+                # from the run worker AND the actual receipt producer.
+                and live["observer"].strip().casefold()
+                != str(run.get("worker_id") or "").strip().casefold()
+                and live["observer"].strip().casefold()
+                != live["producer"].strip().casefold()
                 and isinstance(live.get("probes"), list)
                 and isinstance(facts, Mapping)
                 and set(facts) == {

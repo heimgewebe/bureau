@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from bureau import legacy
+from bureau import legacy, v2
 from bureau.core import Dispatcher, Registry, StateError, StateStore
 from bureau.v2 import plan_sha256
 
@@ -191,6 +191,10 @@ def test_direct_commit_rejects_new_t044_before_run_and_reservation(
     monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
     monkeypatch.setattr(dispatcher, "_ordered_tasks", lambda: [task])
     monkeypatch.setattr(dispatcher, "reasons", lambda *_a, **_kw: [])
+    # Exercise the public non-workspace claim-commit path on real StateStore.
+    # T044's declared working_repository names a local host and is absent
+    # on GitHub runners; workspace planning is irrelevant to this path.
+    monkeypatch.setattr(v2, "_planned_workspace", lambda *_a, **_kw: None)
     intent = dispatcher.claim_intent(
         "t044-programmatic-worker", tuple(task.capabilities),
         task_id=T044, approved=True,

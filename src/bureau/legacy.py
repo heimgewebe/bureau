@@ -1224,6 +1224,20 @@ class Dispatcher:
             rejected: list[dict[str, Any]] = []
             selected: Task | None = None
             for task in self.registry.ordered_tasks():
+                if task.id == "WELTGEWEBE-OS-V1-T044":
+                    # Retained compatibility Dispatcher bypasses the v2 guard.
+                    # Stop before inserting a run or Blue/Green reservations,
+                    # even if the caller makes T044 otherwise eligible.
+                    rejected.append({
+                        "task_id": task.id,
+                        "reasons": [
+                            "T044 legacy claim-next blocked before run or reservation: "
+                            "no approved external lease-fenced execution path"
+                        ],
+                    })
+                    if self.registry.queue_policy == "strict" and task.state == "ready":
+                        break
+                    continue
                 reasons = self.reasons(task, worker_capabilities, runs, reservations, overlays)
                 if not reasons:
                     selected = task
@@ -1365,6 +1379,14 @@ def complete_run(
     evidence: dict[str, Any],
 ) -> dict[str, Any]:
     run = store.run(run_id)
+    if run["task_id"] == "WELTGEWEBE-OS-V1-T044":
+        # The retained v0.1 compatibility API only checks that evidence keys
+        # exist. It must never create a T044 verification receipt or stamp
+        # without the authenticated typed runtime-proof reconciliation path.
+        raise StateError(
+            "T044 legacy completion blocked: authenticated typed runtime "
+            "proofs are required through the canonical closure observer"
+        )
     if run["state"] not in ACTIVE_STATES:
         raise StateError(f"run {run_id} is not active")
     with store.connect() as connection:
@@ -1463,6 +1485,13 @@ def fail_run(store: StateStore, run_id: str, error: str, state: str = "failed") 
 
 def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dict[str, Any]:
     run = store.run(run_id)
+    if run["task_id"] == "WELTGEWEBE-OS-V1-T044":
+        # Compatibility callers may bypass v2. The protection belongs before
+        # producing any externally executable task request.
+        raise StateError(
+            "T044 legacy handoff blocked: no authorized external lease and "
+            "runtime-proof barrier exists at the effect boundary"
+        )
     task = registry.tasks[run["task_id"]]
     keys = set(task.execution.get("grabowski_resources", []))
     for claim in task.claims:
@@ -1500,6 +1529,13 @@ def create_workspace(
     base_dir: Path | None = None,
 ) -> dict[str, Any]:
     run = store.run(run_id)
+    if run["task_id"] == "WELTGEWEBE-OS-V1-T044":
+        # Reject even a historical pre-existing workspace before the early
+        # return, filesystem mutations, and Git subprocess invocation.
+        raise StateError(
+            "T044 legacy workspace blocked: external lease-fenced workspace "
+            "authority has not been established"
+        )
     task = registry.tasks[run["task_id"]]
     repository = task.execution.get("working_repository")
     if not repository:

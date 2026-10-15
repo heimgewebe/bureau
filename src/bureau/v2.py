@@ -5363,11 +5363,20 @@ class Dispatcher(legacy.Dispatcher):
     ) -> dict[str, Any]:
         """Commit one exact intent after live Grabowski lease validation."""
         _validate_coordinated_claim_intent(intent)
+        if intent["task_id"] == "WELTGEWEBE-OS-V1-T044":
+            # Stop before either an existing-run replay or a new claim commit.
+            # A replay response must never reassert T044 execution authority.
+            raise legacy.StateError(
+                "T044 coordinated claim commit blocked: no new T044 reservation "
+                "is authorized until external lease-effect fencing and trusted "
+                "runtime-proof authority are established"
+            )
         with self.store.connect() as recovery_connection:
             existing = recovery_connection.execute(
                 "SELECT * FROM runs WHERE run_id=?", (intent["run_id"],)
             ).fetchone()
         if existing is not None:
+            # Exact replay of a pre-existing run is not new admission.
             return _existing_coordinated_claim_result(existing, intent, resource_db=resource_db)
         if intent["expires_at_unix"] <= int(datetime.now(timezone.utc).timestamp()):
             raise legacy.StateError("coordinated claim intent expired")
@@ -5724,6 +5733,19 @@ class Dispatcher(legacy.Dispatcher):
         *,
         resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
     ) -> dict[str, Any]:
+        if intent.get("task_id") == "WELTGEWEBE-OS-V1-T044":
+            # A positive lease observation during commit is not an atomic
+            # lease barrier covering workspace creation and subsequent handoff.
+            # Until an authenticated primary runtime-proof reader and a
+            # separately reviewed workspace-effect lease fence exist, fail
+            # before committing any T044 run or creating a workspace.
+            raise legacy.StateError(
+                "T044 coordinated workspace blocked: no live external lease "
+                "barrier covers commit, workspace creation and handoff; "
+                "trusted production runtime-proof reader is not registered. "
+                "Keep T044 blocked and use owner-authorized exact-run "
+                "terminalization for any pre-existing assignment."
+            )
         claimed = self.commit_claim_intent(intent, lease_binding, resource_db=resource_db)
         if claimed.get("status") != "claimed":
             return claimed
@@ -5888,6 +5910,21 @@ class Dispatcher(legacy.Dispatcher):
             for task in self._ordered_tasks():
                 if not self._task_matches_resource(task, resource):
                     continue
+                if task.id == "WELTGEWEBE-OS-V1-T044":
+                    # claim-next has no external Blue/Green lease barrier.
+                    # Never persist a T044 run/reservation that checkout-next
+                    # will then reject and strand in existing-assignment.
+                    rejected.append({
+                        "task_id": task.id,
+                        "reasons": [
+                            "T044 legacy claim-next blocked before reservations: "
+                            "only an independently reviewed coordinated "
+                            "lease-bound route may issue a T044 claim"
+                        ],
+                    })
+                    if self.registry.queue_policy == "strict" and task.state == "ready":
+                        break
+                    continue
                 reasons = self.reasons(
                     task,
                     worker_capabilities,
@@ -6039,16 +6076,71 @@ class Dispatcher(legacy.Dispatcher):
                 self._validate_t044_existing_assignment(
                     connection, actual_run, claimed.get("envelope")
                 )
-        startup_reasons = t044_claim_admission_reasons(
-            task.raw,
-            runtime_reader_registered=self.runtime_proof_reader is not None,
-            registered_resources=self.registry.resources,
-        )
-        if startup_reasons:
+        if task.id == "WELTGEWEBE-OS-V1-T044":
+            # Claim selection already persisted the run and its reservations.
+            # Recheck the *entire* live TaskSpec, plan, frozen envelope and
+            # registered Blue/Green resources before any workspace is created.
+            try:
+                with self.store.connect() as connection:
+                    actual_run = connection.execute(
+                        "SELECT * FROM runs WHERE run_id=?", (run["run_id"],)
+                    ).fetchone()
+                    if actual_run is None:
+                        raise legacy.StateError(
+                            "T044 startup blocked: claimed run is missing"
+                        )
+                    self._validate_t044_existing_assignment(
+                        connection, actual_run, claimed.get("envelope")
+                    )
+            except Exception:
+                if claimed.get("status") == "claimed":
+                    # Only our newly claimed run is safe to terminalize here;
+                    # never revoke a pre-existing worker's active assignment.
+                    try:
+                        fail_run(
+                            self.store,
+                            run["run_id"],
+                            "T044 startup admission rejected before workspace or dispatch",
+                        )
+                    except Exception as cleanup_exc:
+                        raise legacy.StateError(
+                            "T044 startup blocked: claim cleanup could not be verified"
+                        ) from cleanup_exc
+                raise
+
+            # A Registry reload cannot close the post-read / pre-workspace
+            # race. The coordinated commit/workspace routes are also blocked:
+            # no new T044 execution route is currently approved.
+            if claimed.get("status") == "claimed":
+                try:
+                    fail_run(
+                        self.store,
+                        run["run_id"],
+                        "T044 uncoordinated checkout denied before workspace or dispatch",
+                    )
+                except Exception as cleanup_exc:
+                    raise legacy.StateError(
+                        "T044 uncoordinated checkout blocked: claim cleanup could not be verified"
+                    ) from cleanup_exc
             raise legacy.StateError(
-                "T044 startup blocked before workspace or dispatch: "
-                + "; ".join(startup_reasons)
+                "T044 uncoordinated checkout blocked: no new T044 run has an "
+                "authorized execution or workspace route until a trusted "
+                "external lease-effect barrier and runtime-proof reader exist; "
+                "an existing assignment requires owner-authorized exact-run "
+                "disposition. The positive path must be separately implemented, "
+                "reviewed and authorized."
             )
+        else:
+            startup_reasons = t044_claim_admission_reasons(
+                task.raw,
+                runtime_reader_registered=self.runtime_proof_reader is not None,
+                registered_resources=self.registry.resources,
+            )
+            if startup_reasons:
+                raise legacy.StateError(
+                    "T044 startup blocked before workspace or dispatch: "
+                    + "; ".join(startup_reasons)
+                )
         brief_gate: dict[str, Any] | None = None
         if _requires_agent_brief(task, worker_id, kind, dispatch=dispatch):
             try:
@@ -9604,19 +9696,13 @@ def grabowski_handoff(
     if task.sha256 != run["task_sha256"]:
         raise legacy.StateError(f"run {run_id} claim-bound task revision mismatch")
     if task.id == "WELTGEWEBE-OS-V1-T044":
-        # The public CLI calls this function directly. Reuse the same frozen
-        # run/lease admission as checkout, even for historical assignments.
-        # No trusted primary reader passed by CLI means fail closed.
-        with store.immediate() as connection:
-            row = connection.execute(
-                "SELECT * FROM runs WHERE run_id=?", (run_id,)
-            ).fetchone()
-            if row is None:
-                raise legacy.StateError(f"T044 handoff blocked: unknown run {run_id}")
-            dispatcher = Dispatcher(
-                registry, store, runtime_proof_reader=runtime_proof_reader
-            )
-            dispatcher._validate_t044_existing_assignment(connection, row, envelope)
+        # A supplied primary reader is not a cross-store lease barrier.
+        # Refuse direct, programmatic or CLI T044 handoff until the
+        # external-lease and runtime-authority gates are verified.
+        raise legacy.StateError(
+            "T044 direct handoff blocked: live external Blue/Green lease "
+            "barrier and trusted runtime-proof reader are not established"
+        )
     missing_claim_resources = sorted(
         {claim.resource for claim in task.claims if claim.resource not in registry.resources}
     )
@@ -9711,6 +9797,13 @@ def create_workspace(
 ) -> dict[str, Any]:
     run = store.run(run_id)
     task = registry.tasks[run["task_id"]]
+    if task.id == "WELTGEWEBE-OS-V1-T044":
+        # Worktree creation cannot bypass the coordinated lease barrier.
+        # Abort before Git probes or any filesystem/StateStore side effects.
+        raise legacy.StateError(
+            "T044 direct workspace blocked: live external Blue/Green lease "
+            "barrier does not span claim, worktree creation and handoff"
+        )
     repository = task.execution.get("working_repository")
     if not repository:
         raise legacy.StateError(f"task {task.id} has no working_repository")

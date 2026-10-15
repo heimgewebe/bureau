@@ -8975,3 +8975,299 @@ def test_runtime_closeout_cli_contract_parses_exact_runtime_options():
                 "/tmp/fake-resources.sqlite3",
             ]
         )
+
+
+def test_t044_checkout_next_reads_live_registry_before_workspace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Post-claim T044 admission must consume a fresh registry resource map."""
+    registry, store, dispatcher, worker, run_id, envelope = _new_claimed_t044_run(
+        tmp_path
+    )
+    marker = "runtime.t044-fresh-resource-only"
+    original_load = Registry.load
+    registry_reads = []
+
+    def load_fresh(root):
+        registry_reads.append(root)
+        current = original_load(root)
+        current.resources[marker] = object()
+        return current
+
+    monkeypatch.setattr(bureau_v2.Registry, "load", staticmethod(load_fresh))
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
+    monkeypatch.setattr(dispatcher, "reconcile", lambda: {})
+    monkeypatch.setattr(
+        dispatcher, "claim_next",
+        lambda *_args, **_kw: {
+            "status": "claimed", "run": store.run(run_id), "envelope": envelope
+        },
+    )
+    admission_reads = []
+
+    def examine_startup(_task, *, runtime_reader_registered, registered_resources):
+        admission_reads.append(registered_resources)
+        assert marker in registered_resources, "T044 startup used cached resources"
+        return ["fresh-runtime-resource-stop"]
+
+    monkeypatch.setattr(bureau_v2, "t044_claim_admission_reasons", examine_startup)
+    with pytest.raises(legacy.StateError, match="fresh-runtime-resource-stop"):
+        dispatcher.checkout_next(
+            worker, tuple(registry.tasks["WELTGEWEBE-OS-V1-T044"].capabilities)
+        )
+    assert registry_reads, "T044 checkout did not reload the source Registry"
+    assert admission_reads, "T044 snapshot admission verifier was not invoked"
+    assert all(marker in resources for resources in admission_reads)
+    assert store.run(run_id)["state"] == "failed"
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM reservations WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == 0
+
+
+def _new_claimed_t044_run(
+    tmp_path: Path, *, plan_sha_override: str | None = None,
+) -> tuple[Registry, StateStore, Dispatcher, str, str, dict]:
+    """Store a real assigned T044 run and reservation; substitute only claim selection."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    task = registry.tasks["WELTGEWEBE-OS-V1-T044"]
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    worker = "t044-post-claim-stop-worker"
+    run_id = "BUR-RUN-20261014T150000Z-0123456789"
+    observed_plan = plan_sha256(registry, task.initiative)
+    bound_plan = plan_sha_override or observed_plan
+    envelope = {
+        "run_id": run_id,
+        "task_id": task.id,
+        "worker_id": worker,
+        "task_sha256": task.sha256,
+        "plan_sha256": bound_plan,
+        "task": task.raw,
+        "claims": [claim.as_dict() for claim in task.claims],
+    }
+    now = legacy.utc_now()
+    store.register_worker(worker, "interactive-agent", tuple(task.capabilities))
+    with store.immediate() as connection:
+        connection.execute(
+            "INSERT INTO runs (run_id,task_id,worker_id,attempt,state,task_sha256,"
+            "plan_sha256,envelope_json,envelope_sha256,created_at,updated_at,heartbeat_at)"
+            " VALUES (?,?,?,1,'assigned',?,?,?,?,?,?,?)",
+            (
+                run_id, task.id, worker, task.sha256, bound_plan,
+                legacy.canonical_json(envelope), legacy.sha256_json(envelope),
+                now, now, now,
+            ),
+        )
+        for claim in task.claims:
+            connection.execute(
+                "INSERT INTO reservations (run_id,resource_id,mode,amount,created_at)"
+                " VALUES (?,?,?,?,?)",
+                (run_id, claim.resource, claim.mode, claim.amount, now),
+            )
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [],
+    )
+    return registry, store, dispatcher, worker, run_id, envelope
+
+
+def test_t044_new_claim_failed_startup_releases_actual_reservations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Admission rejection after a real persisted claim must never strand reservations."""
+    registry, store, dispatcher, worker, run_id, envelope = _new_claimed_t044_run(
+        tmp_path
+    )
+    monkeypatch.setattr(dispatcher, "reconcile", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
+    monkeypatch.setattr(
+        dispatcher,
+        "claim_next",
+        lambda *_a, **_kw: {
+            "status": "claimed", "run": store.run(run_id), "envelope": envelope
+        },
+    )
+    def forbidden_effect(*_a, **_kw):
+        raise AssertionError("T044 startup must not create workspace or handoff")
+    monkeypatch.setattr(bureau_v2, "create_workspace", forbidden_effect)
+    monkeypatch.setattr(bureau_v2, "grabowski_handoff", forbidden_effect)
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM reservations WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == len(registry.tasks["WELTGEWEBE-OS-V1-T044"].claims)
+    with pytest.raises(legacy.StateError, match="T044"):
+        dispatcher.checkout_next(
+            worker, tuple(registry.tasks["WELTGEWEBE-OS-V1-T044"].capabilities)
+        )
+    assert store.run(run_id)["state"] == "failed"
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM reservations WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == 0
+
+
+def test_t044_new_claim_rejects_stale_plan_before_resource_admission(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A frozen stale plan must fail before runtime admission or workspace."""
+    registry, store, dispatcher, worker, run_id, envelope = _new_claimed_t044_run(
+        tmp_path, plan_sha_override="f" * 64
+    )
+    monkeypatch.setattr(dispatcher, "reconcile", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
+    monkeypatch.setattr(
+        dispatcher,
+        "claim_next",
+        lambda *_a, **_kw: {
+            "status": "claimed", "run": store.run(run_id), "envelope": envelope
+        },
+    )
+    # A stale frozen plan must fail before evaluating runtime resources.
+    def forbidden_admission(*_a, **_kw):
+        raise AssertionError("stale T044 plan reached runtime resource admission")
+
+    monkeypatch.setattr(
+        bureau_v2, "t044_claim_admission_reasons", forbidden_admission
+    )
+    def forbidden_effect(*_a, **_kw):
+        raise AssertionError("stale run may not cross workspace/dispatch boundary")
+    monkeypatch.setattr(bureau_v2, "create_workspace", forbidden_effect)
+    monkeypatch.setattr(bureau_v2, "grabowski_handoff", forbidden_effect)
+    with pytest.raises(legacy.StateError, match="snapshot drift"):
+        dispatcher.checkout_next(
+            worker, tuple(registry.tasks["WELTGEWEBE-OS-V1-T044"].capabilities)
+        )
+    assert store.run(run_id)["state"] == "failed"
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM reservations WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == 0
+
+
+def test_t044_uncoordinated_checkout_cannot_cross_workspace_boundary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Even a passing local admission cannot replace a coordinated external lease."""
+    registry, store, dispatcher, worker, run_id, envelope = _new_claimed_t044_run(
+        tmp_path
+    )
+    monkeypatch.setattr(dispatcher, "reconcile", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
+    monkeypatch.setattr(
+        dispatcher, "claim_next",
+        lambda *_a, **_kw: {
+            "status": "claimed", "run": store.run(run_id), "envelope": envelope
+        },
+    )
+    # Model an otherwise valid frozen T044 target; uncoordinated checkout
+    # still lacks the externally authenticated Blue/Green resource leases.
+    monkeypatch.setattr(
+        dispatcher, "_validate_t044_existing_assignment", lambda *_a, **_kw: None
+    )
+    monkeypatch.setattr(
+        bureau_v2, "_requires_agent_brief", lambda *_a, **_kw: False
+    )
+    def forbidden_effect(*_a, **_kw):
+        raise AssertionError("unsafe uncoordinated T044 effect")
+    monkeypatch.setattr(bureau_v2, "create_workspace", forbidden_effect)
+    monkeypatch.setattr(bureau_v2, "grabowski_handoff", forbidden_effect)
+    with pytest.raises(legacy.StateError, match="coordinated"):
+        dispatcher.checkout_next(
+            worker, tuple(registry.tasks["WELTGEWEBE-OS-V1-T044"].capabilities)
+        )
+    assert store.run(run_id)["state"] == "failed"
+    with store.connect() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM reservations WHERE run_id=?", (run_id,)
+        ).fetchone()[0] == 0
+
+
+
+def test_t044_legacy_claim_next_denied_before_run_or_reservation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A legacy claim must never reserve the Blue/Green writer resources."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    task = registry.tasks["WELTGEWEBE-OS-V1-T044"]
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [],
+    )
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: {})
+    monkeypatch.setattr(dispatcher, "_runtime_execution_stop", lambda **_kw: None)
+    monkeypatch.setattr(dispatcher, "_ordered_tasks", lambda: [task])
+    monkeypatch.setattr(dispatcher, "reasons", lambda *_a, **_kw: [])
+    with pytest.raises(NoEligibleTask, match="T044 legacy claim-next blocked"):
+        dispatcher.claim_next(
+            "t044-preclaim-worker", tuple(task.capabilities), reconcile_first=False
+        )
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM reservations").fetchone()[0] == 0
+
+
+def test_t044_coordinated_workspace_denied_before_claim_or_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without a lease-fenced workspace boundary, refuse T044 before committing."""
+    registry = Registry.load(Path(__file__).resolve().parents[1])
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [],
+    )
+
+    def forbidden_effect(*_args, **_kwargs):
+        raise AssertionError("T044 workspace must not commit a run or create a worktree")
+
+    monkeypatch.setattr(dispatcher, "commit_claim_intent", forbidden_effect)
+    monkeypatch.setattr(bureau_v2, "create_workspace", forbidden_effect)
+    monkeypatch.setattr(bureau_v2, "grabowski_handoff", forbidden_effect)
+    with pytest.raises(StateError, match="T044 coordinated workspace blocked"):
+        dispatcher.checkout_claim_intent(
+            {"task_id": "WELTGEWEBE-OS-V1-T044"},
+            None,
+            resource_db=tmp_path / "unavailable-leases.sqlite3",
+        )
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM reservations").fetchone()[0] == 0
+
+
+def test_t044_direct_workspace_denies_unfenced_filesystem_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Even a direct call may not create a T044 worktree without a lease fence."""
+    registry, store, _dispatcher, _worker, run_id, _envelope = _new_claimed_t044_run(
+        tmp_path
+    )
+    monkeypatch.setattr(bureau_v2, "_task_uses_worktree_workspace", lambda _task: True)
+
+    def forbid_git(*_args, **_kwargs):
+        raise AssertionError("unfenced T044 git worktree effect was attempted")
+
+    monkeypatch.setattr(bureau_v2, "_git", forbid_git)
+    with pytest.raises(StateError, match="T044 direct workspace blocked"):
+        bureau_v2.create_workspace(
+            registry, store, run_id, base_dir=tmp_path / "test-worktrees"
+        )
+    assert store.run(run_id)["workspace_path"] is None
+
+
+def test_t044_direct_handoff_denies_missing_external_lease_barrier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A self-supplied reader cannot turn an unleased T044 run into a handoff."""
+    registry, store, _dispatcher, _worker, run_id, _envelope = _new_claimed_t044_run(
+        tmp_path
+    )
+    monkeypatch.setattr(
+        bureau_v2.Dispatcher, "_validate_t044_existing_assignment",
+        lambda *_args, **_kwargs: None,
+    )
+    with pytest.raises(StateError, match="T044 direct handoff blocked"):
+        bureau_v2.grabowski_handoff(
+            registry, store, run_id, runtime_proof_reader=lambda _request: {},
+        )

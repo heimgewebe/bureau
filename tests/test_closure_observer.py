@@ -2674,7 +2674,7 @@ def _runtime_proof_production_fixture(registry_factory, tmp_path: Path, monkeypa
     run = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]
     release, target = "e" * 40, "isolated-green"
     facts = {
-        "observer": "runtime-producer",
+        "observer": "independent-runtime-observer",
         "observation_scope": scope,
         "runtime_revision": release,
         "target_identity": target,
@@ -2732,6 +2732,9 @@ def _primary_runtime_observation(
         "source": copy.deepcopy(proof["source"]),
         "observed_at": proof["observed_at"],
         "observer": facts["observer"],
+        # In a real adapter this identity must come from the authenticated
+        # receipt origin, never from the producer-submitted evidence bundle.
+        "producer": "runtime-producer",
         "probes": copy.deepcopy(facts["probes"]),
     }
 
@@ -2846,6 +2849,50 @@ def test_t044_runtime_manual_attestation_cannot_substitute_for_source_proof(
     result = reconcile_state_evidence(registry, store)
     assert result["terminalized_count"] == 0
     assert result["open_count"] == 1
+
+
+def test_runtime_proof_rejects_same_source_producer_as_primary_observer(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    """The receipt producer cannot be the authority for its own proof."""
+    registry, store, run, bundle, path = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    proof["facts"]["observer"] = "runtime-producer"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    observed = reconcile_state_evidence(
+        registry,
+        store,
+        runtime_proof_reader=lambda _request: _primary_runtime_observation(run, proof),
+    )
+    assert observed["terminalized_count"] == 0
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
+@pytest.mark.parametrize(
+    "producer",
+    [None, "", 7, "INDEPENDENT-RUNTIME-OBSERVER",
+     "  independent-runtime-observer  "],
+)
+def test_runtime_proof_rejects_missing_or_spoofed_primary_producer_identity(
+    registry_factory, tmp_path: Path, monkeypatch, producer
+) -> None:
+    """Missing provenance, non-string identities and actor aliases never PASS."""
+    registry, store, run, bundle, _ = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    primary = _primary_runtime_observation(run, proof)
+    if producer is None:
+        del primary["producer"]
+    else:
+        primary["producer"] = producer
+    observed = reconcile_state_evidence(
+        registry, store, runtime_proof_reader=lambda _request: primary
+    )
+    assert observed["terminalized_count"] == 0
+    assert store.run(run["run_id"])["state"] == "assigned"
 
 
 def test_runtime_proof_rejects_run_worker_as_primary_observer(

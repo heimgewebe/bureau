@@ -886,7 +886,7 @@ def t044_claim_admission_reasons(
         blue is None
         or attr(blue, "type") != "service"
         or not isinstance(attr(blue, "grabowski_key"), str)
-        or not attr(blue, "grabowski_key")
+        or not attr(blue, "grabowski_key").strip()
     ):
         return ["T044 claim blocked: canonical Blue runtime resource unavailable"]
 
@@ -899,7 +899,7 @@ def t044_claim_admission_reasons(
             attr(resource, "id") == resource_id
             and attr(resource, "type") == "service"
             and isinstance(attr(resource, "grabowski_key"), str)
-            and bool(attr(resource, "grabowski_key"))
+            and bool(attr(resource, "grabowski_key").strip())
             and isinstance(metadata, Mapping)
             and metadata.get("t044_role") == "green"
             and metadata.get("target_identity") == config["expected_target_identity"]
@@ -913,24 +913,127 @@ def t044_claim_admission_reasons(
     green_id = green_matches[0]
     green = registered_resources[green_id]
 
-    def ancestors(resource_id: str) -> set[str]:
+    def ancestors(resource_id: str) -> tuple[set[str], bool]:
         chain: set[str] = set()
         current = resource_id
         while current in registered_resources:
             parent = attr(registered_resources[current], "parent")
-            if not isinstance(parent, str) or parent in chain or parent == current:
-                break
+            if not isinstance(parent, str) or not parent or parent in chain or parent == current:
+                return chain, False
             chain.add(parent)
+            # The generic registry root is a grouping sentinel, never a host proof.
+            if parent == "root":
+                return chain, True
+            if parent not in registered_resources:
+                return chain, False
             current = parent
-        return chain
+        return chain, False
 
+    def ancestor_identity(ancestor_ids: set[str]) -> list[dict[str, Any]]:
+        # Freeze complete registered chain, not only leaf service names/keys.
+        # The generic root sentinel is never a physical host.
+        return [
+            {
+                "resource_id": ancestor_id,
+                "type": attr(registered_resources[ancestor_id], "type"),
+                "parent": attr(registered_resources[ancestor_id], "parent"),
+                "grabowski_key": attr(registered_resources[ancestor_id], "grabowski_key"),
+            }
+            for ancestor_id in sorted(ancestor_ids - {"root"})
+        ]
+
+    blue_ancestors, blue_chain_complete = ancestors(blue_id)
+    green_ancestors, green_chain_complete = ancestors(green_id)
+    if not (blue_chain_complete and green_chain_complete):
+        return ["T044 claim blocked: runtime ancestor missing or cyclic in resource registry"]
     if (
         green_id == blue_id
-        or blue_id in ancestors(green_id)
-        or green_id in ancestors(blue_id)
-        or attr(green, "grabowski_key") == attr(blue, "grabowski_key")
+        or blue_id in green_ancestors
+        or green_id in blue_ancestors
+        or attr(green, "grabowski_key").strip().casefold()
+        == attr(blue, "grabowski_key").strip().casefold()
     ):
         return ["T044 claim blocked: Green is an alias or overlapping resource of production Blue"]
+
+    # Two differently named sibling services can still use one host or fault
+    # domain. Resource types alone cannot authenticate physical identity.
+    # Compare operator keys across *all* ancestors and the runtimes themselves:
+    # renaming an alias to "service", "group" or "Host" must not hide overlap.
+    def operator_key_owners(resource_ids: set[str]) -> dict[str, set[str]]:
+        owners: dict[str, set[str]] = {}
+        for resource_id in resource_ids:
+            resource = registered_resources.get(resource_id)
+            key = attr(resource, "grabowski_key") if resource is not None else None
+            if isinstance(key, str) and key:
+                # Conservative alias collision: case/edge whitespace cannot
+                # establish an independently owned physical lease identity.
+                owners.setdefault(key.strip().casefold(), set()).add(resource_id)
+        return owners
+
+    blue_key_owners = operator_key_owners(blue_ancestors | {blue_id})
+    green_key_owners = operator_key_owners(green_ancestors | {green_id})
+    alias_keys = {
+        key for key in blue_key_owners.keys() & green_key_owners.keys()
+        if any(
+            blue_resource != green_resource
+            for blue_resource in blue_key_owners[key]
+            for green_resource in green_key_owners[key]
+        )
+    }
+    shared_physical_domains = sorted(
+        {f"resource:{ancestor_id}" for ancestor_id in blue_ancestors & green_ancestors
+         if ancestor_id in registered_resources
+         and attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}}
+        | {f"grabowski-key:{key}" for key in alias_keys}
+    )
+    if shared_physical_domains:
+        return [
+            "T044 claim blocked: shared registered physical failure-domain: "
+            + ", ".join(shared_physical_domains)
+        ]
+
+    # Unknown/non-group shared ancestors can conceal one physical resource even
+    # when the registry marks it as a service instead of a host or fault domain.
+    shared_non_group = sorted(
+        ancestor_id for ancestor_id in blue_ancestors & green_ancestors
+        if ancestor_id != "root"
+        and attr(registered_resources[ancestor_id], "type") not in {"group", "git-repository"}
+    )
+    if shared_non_group:
+        return [
+            "T044 claim blocked: shared non-group runtime ancestor: "
+            + ", ".join(shared_non_group)
+        ]
+
+    # A shared logical grouping is harmless only if both sides have their own
+    # registered physical ancestor below it. A directly shared "group" must
+    # not become a host merely by changing its registry type string.
+    shared_groups = sorted(
+        ancestor_id for ancestor_id in blue_ancestors & green_ancestors
+        if ancestor_id != "root"
+        and attr(registered_resources[ancestor_id], "type") in {"group", "git-repository"}
+    )
+    # A bare registry root is also only a grouping sentinel: never treat two
+    # host-less services or disjoint host-less group chains as physical isolation.
+    # This is a registry prerequisite, NOT provider/physical identity attestation.
+    def has_distinct_registered_host(ancestor_ids: set[str]) -> bool:
+        return any(
+            attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}
+            and isinstance(attr(registered_resources[ancestor_id], "grabowski_key"), str)
+            and bool(attr(registered_resources[ancestor_id], "grabowski_key").strip())
+            for ancestor_id in ancestor_ids
+        )
+
+    if not (
+        has_distinct_registered_host(blue_ancestors - green_ancestors)
+        and has_distinct_registered_host(green_ancestors - blue_ancestors)
+    ):
+        return [
+            "T044 claim blocked: shared group without distinct registered hosts: "
+            + ", ".join(shared_groups)
+            if shared_groups
+            else "T044 claim blocked: distinct registered hosts required for Blue and Green"
+        ]
 
     raw_claims = task.get("claims")
     exclusive = (
@@ -962,11 +1065,13 @@ def t044_claim_admission_reasons(
         else None
     )
     expected_binding = {
-        "schema_version": 1,
+        "schema_version": 2,
         "blue_resource_id": blue_id,
         "blue_grabowski_key": attr(blue, "grabowski_key"),
+        "blue_ancestors": ancestor_identity(blue_ancestors),
         "green_resource_id": green_id,
         "green_grabowski_key": attr(green, "grabowski_key"),
+        "green_ancestors": ancestor_identity(green_ancestors),
         "runtime_revision": config["expected_runtime_revision"],
         "target_identity": config["expected_target_identity"],
     }
@@ -975,7 +1080,14 @@ def t044_claim_admission_reasons(
             "T044 claim blocked: frozen runtime resource identity differs from "
             "current Blue/Green ids, Grabowski keys, revision or target"
         ]
-    return []
+    # A registry writer can invent two hosts and distinct lease keys on one
+    # machine. Registry ancestry alone NEVER grants a production T044 claim.
+    # A future independently authenticated physical/provider identity proof
+    # must be integrated into this gate and rechecked at every authority seam.
+    return [
+        "T044 claim blocked: physical failure-domain provenance not attested "
+        "by an independent trusted source"
+    ]
 
 
 def typed_criterion_contracts(criteria: Sequence[Mapping[str, Any]]) -> dict[str, Any]:

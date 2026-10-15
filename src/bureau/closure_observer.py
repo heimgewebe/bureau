@@ -47,6 +47,9 @@ AuthenticationProvider = Callable[
     [dict[str, Any], dict[str, Any], Mapping[str, Any]], AuthenticationRecords
 ]
 GitHubReader = Callable[[list[str]], Any]
+# Supplied exclusively by the trusted runtime reconciliation caller. The
+# untrusted evidence bundle cannot inject this reader or its observations.
+RuntimeProofReader = Callable[[Mapping[str, Any]], Mapping[str, Any]]
 PRODUCTION_AUTHENTICATION_ADAPTERS = {
     "code_merged": "runtime_refresh.gh_json",
     "required_ci_green": "runtime_refresh.gh_json",
@@ -1776,6 +1779,7 @@ def authenticate_state_evidence(
     github: GitHubReader = runtime_refresh.gh_json,
     store: StateStore | None = None,
     authentication_unavailable: list[dict[str, Any]] | None = None,
+    runtime_proof_reader: RuntimeProofReader | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Authenticate bundle claims against primary observers.
 
@@ -1783,9 +1787,11 @@ def authenticate_state_evidence(
     authenticated by a fresh locally authenticated ``gh`` readback against the
     criterion-frozen repository, PR and head. Manual observations are
     authenticated only by an exact digest- and revision-bound StateStore journal
-    attestation. A claimed criterion whose declared verifier has no production
-    authentication adapter is reported explicitly as adapter-unavailable; it is
-    never silently treated as rejected evidence.
+    attestation. Runtime proof bundles instead require an independent live
+    runtime/Grabowski observer bound to the frozen TaskSpec target and all
+    probe receipts. Without that trusted reader they fail closed, irrespective
+    of any manual journal record or producer-submitted PASS. Other missing
+    production adapters remain unavailable, never silently accepted.
     """
     task = envelope.get("task")
     criteria = task.get("acceptance") if isinstance(task, Mapping) else None
@@ -1804,6 +1810,123 @@ def authenticate_state_evidence(
         config = contract.get("verifier_config")
         claimed = evidence.get(criterion_id)
         if not isinstance(config, Mapping) or not isinstance(claimed, Mapping):
+            continue
+        if verifier == "runtime_proof_bundle":
+            expected_release = config.get("expected_runtime_revision")
+            expected_target = config.get("expected_target_identity")
+            request = {
+                "schema_version": 1,
+                "kind": "bureau.runtime_proof_request",
+                "run_id": run.get("run_id"),
+                "task_sha256": run.get("task_sha256"),
+                "plan_sha256": run.get("plan_sha256"),
+                "criterion_id": criterion_id,
+                "observation_scope": config.get("observation_scope"),
+                "runtime_revision": expected_release,
+                "target_identity": expected_target,
+                "required_probes": list(config.get("required_probes", [])),
+            }
+            if expected_release is None or expected_target is None:
+                raise EvidenceAdapterUnavailable(
+                    authority="target-runtime",
+                    adapter="runtime-proof-target-not-frozen",
+                    target=request,
+                    detail="T044 has no authorized frozen Green runtime revision and target",
+                )
+            if runtime_proof_reader is None:
+                raise EvidenceAdapterUnavailable(
+                    authority="target-runtime",
+                    adapter="missing:runtime_proof_bundle",
+                    target=request,
+                    detail="no trusted primary runtime receipt reader is registered",
+                )
+            try:
+                live = runtime_proof_reader(request)
+            except Exception as exc:
+                raise EvidenceAdapterUnavailable(
+                    authority="target-runtime",
+                    adapter="runtime_proof_reader",
+                    target=request,
+                    detail=f"trusted runtime reader unavailable: {type(exc).__name__}",
+                ) from exc
+
+            # A trusted runtime adapter must derive both actor identities
+            # independently from immutable primary receipt provenance. Neither
+            # the submitted evidence nor a worker-supplied claim proves that
+            # the observer is different from the receipt producer.
+            # Fail closed on legacy readers that lack a producer identity.
+            required_live_keys = (
+                set(request) - {"required_probes"}
+                | {"source", "observed_at", "observer", "producer", "probes"}
+            )
+            immutable_keys = (
+                "schema_version", "run_id", "task_sha256", "plan_sha256",
+                "criterion_id", "observation_scope", "runtime_revision",
+                "target_identity",
+            )
+            facts = claimed.get("facts")
+            source = live.get("source") if isinstance(live, Mapping) else None
+            valid = (
+                isinstance(live, Mapping)
+                and set(live) == required_live_keys
+                and live.get("kind") == "bureau.runtime_proof_observation"
+                and all(live.get(key) == request[key] for key in immutable_keys)
+                and isinstance(source, Mapping)
+                and set(source) == {"authority", "reference"}
+                and source.get("authority") in {"grabowski", "target-runtime"}
+                and isinstance(source.get("reference"), str)
+                and bool(source["reference"].strip())
+                and isinstance(live.get("observed_at"), str)
+                and isinstance(live.get("observer"), str)
+                and bool(live["observer"].strip())
+                and isinstance(live.get("producer"), str)
+                and bool(live["producer"].strip())
+                and len(live["producer"]) <= 200
+                and len(live["observer"]) <= 200
+                # The independent adapter must attest an observer distinct
+                # from the run worker AND the actual receipt producer.
+                and live["observer"].strip().casefold()
+                != str(run.get("worker_id") or "").strip().casefold()
+                and live["observer"].strip().casefold()
+                != live["producer"].strip().casefold()
+                and isinstance(live.get("probes"), list)
+                and isinstance(facts, Mapping)
+                and set(facts) == {
+                    "observer", "observation_scope", "runtime_revision",
+                    "target_identity", "probes",
+                }
+                and claimed.get("source") == source
+                and claimed.get("observed_at") == live.get("observed_at")
+                and all(
+                    facts.get(key) == live.get(key)
+                    for key in (
+                        "observer", "observation_scope", "runtime_revision",
+                        "target_identity", "probes",
+                    )
+                )
+            )
+            if not valid:
+                raise EvidenceAdapterUnavailable(
+                    authority="target-runtime",
+                    adapter="runtime_proof_reader",
+                    target=request,
+                    detail="primary runtime observation does not match the exact bound evidence",
+                )
+            authenticated[criterion_id] = {
+                "schema_version": 1,
+                "kind": "bureau.acceptance_source_authentication",
+                "criterion_id": criterion_id,
+                "authority": source["authority"],
+                "observer": "trusted-runtime-proof-reader",
+                "source_reference": source["reference"],
+                "target": {
+                    "runtime_revision": expected_release,
+                    "target_identity": expected_target,
+                    "observation_scope": request["observation_scope"],
+                },
+                "live_observation_sha256": legacy.sha256_json(dict(live)),
+                "evidence_sha256": legacy.sha256_json(dict(claimed)),
+            }
             continue
         if verifier == "manual_observation":
             evidence_sha256 = legacy.sha256_json(claimed)
@@ -1976,6 +2099,7 @@ def reconcile_state_evidence(
     now: str | None = None,
     completion: Completion = _complete_run_after_typed_evaluation,
     github: GitHubReader = runtime_refresh.gh_json,
+    runtime_proof_reader: RuntimeProofReader | None = None,
 ) -> dict[str, Any]:
     """Consume typed bundles from the canonical StateStore root.
 
@@ -2002,6 +2126,7 @@ def reconcile_state_evidence(
             github=github,
             store=store,
             authentication_unavailable=unavailable,
+            runtime_proof_reader=runtime_proof_reader,
         )
         if unavailable:
             unavailable_by_run[str(run["run_id"])] = unavailable

@@ -1224,6 +1224,20 @@ class Dispatcher:
             rejected: list[dict[str, Any]] = []
             selected: Task | None = None
             for task in self.registry.ordered_tasks():
+                if task.id == "WELTGEWEBE-OS-V1-T044":
+                    # Retained compatibility Dispatcher bypasses the v2 guard.
+                    # Stop before inserting a run or Blue/Green reservations,
+                    # even if the caller makes T044 otherwise eligible.
+                    rejected.append({
+                        "task_id": task.id,
+                        "reasons": [
+                            "T044 legacy claim-next blocked before run or reservation: "
+                            "no approved external lease-fenced execution path"
+                        ],
+                    })
+                    if self.registry.queue_policy == "strict" and task.state == "ready":
+                        break
+                    continue
                 reasons = self.reasons(task, worker_capabilities, runs, reservations, overlays)
                 if not reasons:
                     selected = task

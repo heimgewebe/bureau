@@ -206,3 +206,44 @@ def test_direct_commit_rejects_new_t044_before_run_and_reservation(
         )
     assert store.list_runs() == []
     assert _reserve_count(store) == 0
+
+def test_direct_legacy_dispatcher_refuses_t044_before_run_or_reservation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Legacy compatibility selection must not persist a T044 assignment."""
+    registry = legacy.Registry.load(Path(__file__).resolve().parents[1])
+    task = registry.tasks[T044]
+    store = StateStore(tmp_path / "claim-state.sqlite3", state_root=tmp_path)
+    dispatcher = legacy.Dispatcher(registry, store)
+    # Force T044 to be the sole otherwise-eligible candidate. Exercise the
+    # original real claim transaction, not a mocked StateStore.
+    monkeypatch.setattr(registry, "ordered_tasks", lambda: [task])
+    monkeypatch.setattr(dispatcher, "reasons", lambda *_a: [])
+    monkeypatch.setattr(legacy, "default_state_dir", lambda: tmp_path / "envelopes")
+    with pytest.raises(legacy.NoEligibleTask, match="T044 legacy claim-next blocked"):
+        dispatcher.claim_next("legacy-t044-direct-worker", tuple(task.capabilities))
+    assert store.list_runs() == []
+    with store.connect() as db:
+        assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+        assert db.execute("SELECT COUNT(*) FROM reservations").fetchone()[0] == 0
+    assert not list((tmp_path / "envelopes").glob("*.json"))
+
+
+def test_direct_legacy_dispatcher_still_claims_non_t044(
+    registry_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A targeted T044 fence must preserve ordinary legacy compatibility."""
+    root = registry_factory(1, mode="write")
+    registry = legacy.Registry.load(root)
+    store = StateStore(
+        tmp_path / "ordinary" / "ordinary-state.sqlite3",
+        state_root=tmp_path / "ordinary",
+    )
+    dispatcher = legacy.Dispatcher(registry, store)
+    monkeypatch.setattr(legacy, "default_state_dir", lambda: tmp_path / "ordinary")
+    result = dispatcher.claim_next("legacy-ordinary-worker", ("repository",))
+    assert result["status"] == "claimed"
+    assert result["run"]["task_id"] != T044
+    with store.connect() as db:
+        assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 1
+        assert db.execute("SELECT COUNT(*) FROM reservations").fetchone()[0] == 2

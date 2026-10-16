@@ -11,6 +11,7 @@ from typing import Any
 from .adapters import AdapterRegistry
 from .approval import ApprovalRequired
 from .closure_observer import (
+    RuntimeProofReader,
     reconcile_state_evidence,
     record_manual_acceptance_authentication,
 )
@@ -996,9 +997,18 @@ def _parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     return parser().parse_args(raw)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(
+    argv: list[str] | None = None,
+    *,
+    runtime_proof_reader: RuntimeProofReader | None = None,
+) -> int:
     global _CLI_JSON_ENVELOPE, _CLI_RUNTIME_IDENTITY
     args = _parse_arguments(argv)
+    # Only trusted in-process controllers can supply a primary reader.
+    # CLI argv and environment must never manufacture source authority.
+    reader_kwargs = (
+        {"runtime_proof_reader": runtime_proof_reader} if runtime_proof_reader is not None else {}
+    )
     args.json = bool(args.json or args.json_envelope)
     try:
         root, registry_selection = resolve_registry_root(args.root)
@@ -1825,6 +1835,7 @@ def main(argv: list[str] | None = None) -> int:
             adapter_registry,
             enforce_runtime_gate=True,
             runtime_identity=_CLI_RUNTIME_IDENTITY,
+            **reader_kwargs,
         )
         if args.command == "status":
             value = {
@@ -2222,7 +2233,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.reason,
             )
         elif args.command == "reconcile":
-            acceptance_closeout = reconcile_state_evidence(registry, store)
+            acceptance_closeout = reconcile_state_evidence(registry, store, **reader_kwargs)
             runtime_reconcile = dispatcher.reconcile(args.stale_after)
             value = {**runtime_reconcile, "acceptance_closeout": acceptance_closeout}
         elif args.command == "acceptance-authenticate":
@@ -2241,6 +2252,7 @@ def main(argv: list[str] | None = None) -> int:
                     store,
                     args.run_id,
                     Path(args.evidence),
+                    **reader_kwargs,
                 )
             else:
                 evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
@@ -2248,7 +2260,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "fail":
             value = fail_run(store, args.run_id, args.error)
         elif args.command == "handoff":
-            value = grabowski_handoff(registry, store, args.run_id)
+            value = grabowski_handoff(registry, store, args.run_id, **reader_kwargs)
         elif args.command == "workspace-create":
             base = Path(args.base_dir).expanduser() if args.base_dir else None
             value = create_workspace(registry, store, args.run_id, base)

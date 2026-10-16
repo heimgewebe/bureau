@@ -9020,6 +9020,7 @@ def runtime_closeout(
     evidence_path: Path,
     *,
     resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
+    runtime_proof_reader: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Close one active run through the deployed runtime's typed closure authority.
 
@@ -9390,6 +9391,7 @@ def runtime_closeout(
                 evidence,
                 store=store,
                 authentication_unavailable=unavailable,
+                runtime_proof_reader=runtime_proof_reader,
             )
         except closure_observer.EvidenceAdapterUnavailable as exc:
             raise RunStateConflict(

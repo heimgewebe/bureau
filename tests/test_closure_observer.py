@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -2645,4 +2646,270 @@ def test_retargeted_github_pr_stays_open(
     assert result["observations"][0]["evaluation"]["criteria"][0]["reason"] == (
         "evidence-source-unauthenticated"
     )
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
+def _runtime_proof_production_fixture(registry_factory, tmp_path: Path, monkeypatch):
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    scope = "weltgewebe:t044:runtime-proof"
+    names = ["cluster-identity", "writer-fencing"]
+    task["acceptance"] = [{
+        "id": "runtime-proof",
+        "assertion": "authenticated runtime and writer boundaries",
+        "evidence_type": "object",
+        "verifier": "runtime_proof_bundle",
+        "verifier_config": {
+            "observation_scope": scope, "required_probes": names,
+            "expected_runtime_revision": "e" * 40,
+            "expected_target_identity": "isolated-green",
+        },
+    }]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    state_root = tmp_path / "proof-state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]
+    release, target = "e" * 40, "isolated-green"
+    facts = {
+        "observer": "independent-runtime-observer",
+        "observation_scope": scope,
+        "runtime_revision": release,
+        "target_identity": target,
+        "probes": [{
+            "id": name,
+            "result": "passed",
+            "receipt_sha256": "f" * 64,
+            "receipt_ref": f"target-runtime:receipts:{name}",
+            "runtime_revision": release,
+            "target_identity": target,
+        } for name in names],
+    }
+    proof = {
+        "schema_version": 1, "kind": EVIDENCE_KIND,
+        "criterion_id": "runtime-proof", "evidence_type": "runtime_proof_bundle",
+        "source": {"authority": "target-runtime", "reference": "target-runtime:isolated-green"},
+        "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "revision": {
+            "task_sha256": run["task_sha256"],
+            "plan_sha256": run["plan_sha256"],
+            "observation_scope": scope,
+            "runtime_revision": release,
+            "target_identity": target,
+        },
+        "facts": facts,
+    }
+    bundle = {
+        "schema_version": 1, "kind": EVIDENCE_BUNDLE_KIND,
+        "run_id": run["run_id"], "task_id": run["task_id"],
+        "task_sha256": run["task_sha256"], "plan_sha256": run["plan_sha256"],
+        "evidence": {"runtime-proof": proof},
+    }
+    evidence_dir = state_root / "acceptance-evidence"
+    evidence_dir.mkdir()
+    bundle_path = evidence_dir / f"{run['run_id']}.json"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    return registry, store, run, bundle, bundle_path
+
+
+def _primary_runtime_observation(
+    run: dict[str, object], proof: dict[str, object]
+) -> dict[str, object]:
+    facts = proof["facts"]
+    assert isinstance(facts, dict)
+    return {
+        "schema_version": 1,
+        "kind": "bureau.runtime_proof_observation",
+        "run_id": run["run_id"],
+        "task_sha256": run["task_sha256"],
+        "plan_sha256": run["plan_sha256"],
+        "criterion_id": proof["criterion_id"],
+        "observation_scope": facts["observation_scope"],
+        "runtime_revision": facts["runtime_revision"],
+        "target_identity": facts["target_identity"],
+        "source": copy.deepcopy(proof["source"]),
+        "observed_at": proof["observed_at"],
+        "observer": facts["observer"],
+        # In a real adapter this identity must come from the authenticated
+        # receipt origin, never from the producer-submitted evidence bundle.
+        "producer": "runtime-producer",
+        "probes": copy.deepcopy(facts["probes"]),
+    }
+
+
+def test_runtime_proof_bundle_requires_authoritative_primary_runtime_readback(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, _ = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    untrusted = reconcile_state_evidence(registry, store)
+    assert untrusted["terminalized_count"] == 0
+    assert untrusted["observations"][0]["reason"] == "evidence-adapter-unavailable"
+    assert untrusted["observations"][0]["adapter"]["adapter"] == (
+        "missing:runtime_proof_bundle"
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    with pytest.raises(StateError, match="verifier mismatch"):
+        record_manual_acceptance_authentication(
+            store, run["run_id"], "runtime-proof",
+            expected_evidence_sha256=legacy.sha256_json(proof),
+            reviewer="independent-security-reviewer",
+        )
+
+    def authorized_reader(request: Mapping[str, Any]) -> Mapping[str, Any]:
+        assert request["task_sha256"] == run["task_sha256"]
+        assert request["plan_sha256"] == run["plan_sha256"]
+        assert request["target_identity"] == "isolated-green"
+        assert request["runtime_revision"] == "e" * 40
+        assert request["required_probes"] == ["cluster-identity", "writer-fencing"]
+        return _primary_runtime_observation(run, proof)
+
+    settled = reconcile_state_evidence(
+        registry, store, runtime_proof_reader=authorized_reader
+    )
+    assert settled["terminalized_count"] == 1
+    assert store.run(run["run_id"])["state"] == "succeeded"
+
+
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "missing-probe", "missing-digest", "fake-pass", "wrong-runtime",
+        "wrong-target", "wrong-source", "stale", "reviewer-worker",
+        "reviewer-producer",
+    ],
+)
+def test_runtime_proof_authentication_rejects_incomplete_or_self_verified_data(
+    registry_factory, tmp_path: Path, monkeypatch, problem: str
+) -> None:
+    registry, store, run, bundle, path = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    real_primary_observation = _primary_runtime_observation(run, proof)
+    if problem == "missing-probe":
+        proof["facts"]["probes"].pop()
+    elif problem == "missing-digest":
+        del proof["facts"]["probes"][0]["receipt_sha256"]
+    elif problem == "fake-pass":
+        proof["facts"]["probes"] = []
+        proof["status"] = "passed"
+    elif problem == "wrong-runtime":
+        proof["facts"]["probes"][0]["runtime_revision"] = "a" * 40
+    elif problem == "wrong-target":
+        proof["facts"]["probes"][0]["target_identity"] = "blue"
+    elif problem == "wrong-source":
+        proof["source"]["authority"] = "manual"
+    elif problem == "stale":
+        proof["observed_at"] = "2026-08-01T00:00:00Z"
+    reviewer = (
+        "worker" if problem == "reviewer-worker"
+        else "runtime-producer" if problem == "reviewer-producer"
+        else "independent-security-reviewer"
+    )
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    with pytest.raises(StateError):
+        record_manual_acceptance_authentication(
+            store, run["run_id"], "runtime-proof",
+            expected_evidence_sha256=legacy.sha256_json(proof),
+            reviewer=reviewer,
+        )
+    # A truthful primary reader cannot authenticate tampered bundle content;
+    # a missing reader cannot be replaced with even a valid reviewer journal.
+    if problem.startswith("reviewer-"):
+        observed = reconcile_state_evidence(registry, store)
+    else:
+        observed = reconcile_state_evidence(
+            registry, store,
+            runtime_proof_reader=lambda _: real_primary_observation,
+        )
+    assert observed["terminalized_count"] == 0
+    assert observed["open_count"] == 1
+
+
+def test_t044_runtime_manual_attestation_cannot_substitute_for_source_proof(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    registry, store, run, bundle, _ = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    # A reviewer acknowledgement is not proof that the target runtime produced
+    # the declared probe receipts.
+    with pytest.raises(StateError, match="verifier mismatch"):
+        record_manual_acceptance_authentication(
+            store, run["run_id"], "runtime-proof",
+            expected_evidence_sha256=legacy.sha256_json(bundle["evidence"]["runtime-proof"]),
+            reviewer="independent-security-reviewer",
+        )
+    result = reconcile_state_evidence(registry, store)
+    assert result["terminalized_count"] == 0
+    assert result["open_count"] == 1
+
+
+def test_runtime_proof_rejects_same_source_producer_as_primary_observer(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    """The receipt producer cannot be the authority for its own proof."""
+    registry, store, run, bundle, path = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    proof["facts"]["observer"] = "runtime-producer"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    observed = reconcile_state_evidence(
+        registry,
+        store,
+        runtime_proof_reader=lambda _request: _primary_runtime_observation(run, proof),
+    )
+    assert observed["terminalized_count"] == 0
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
+@pytest.mark.parametrize(
+    "producer",
+    [None, "", 7, "INDEPENDENT-RUNTIME-OBSERVER",
+     "  independent-runtime-observer  "],
+)
+def test_runtime_proof_rejects_missing_or_spoofed_primary_producer_identity(
+    registry_factory, tmp_path: Path, monkeypatch, producer
+) -> None:
+    """Missing provenance, non-string identities and actor aliases never PASS."""
+    registry, store, run, bundle, _ = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    primary = _primary_runtime_observation(run, proof)
+    if producer is None:
+        del primary["producer"]
+    else:
+        primary["producer"] = producer
+    observed = reconcile_state_evidence(
+        registry, store, runtime_proof_reader=lambda _request: primary
+    )
+    assert observed["terminalized_count"] == 0
+    assert store.run(run["run_id"])["state"] == "assigned"
+
+
+def test_runtime_proof_rejects_run_worker_as_primary_observer(
+    registry_factory, tmp_path: Path, monkeypatch
+) -> None:
+    """The executing worker cannot authenticate its own high-critical proof."""
+    registry, store, run, bundle, path = _runtime_proof_production_fixture(
+        registry_factory, tmp_path, monkeypatch
+    )
+    proof = bundle["evidence"]["runtime-proof"]
+    proof["facts"]["observer"] = run["worker_id"]
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+
+    observed = reconcile_state_evidence(
+        registry,
+        store,
+        runtime_proof_reader=lambda _request: _primary_runtime_observation(run, proof),
+    )
+    assert observed["terminalized_count"] == 0
     assert store.run(run["run_id"])["state"] == "assigned"

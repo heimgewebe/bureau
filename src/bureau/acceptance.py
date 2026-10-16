@@ -4,6 +4,7 @@ import math
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
+from types import MappingProxyType
 from typing import Any
 
 SCHEMA_VERSION = 1
@@ -14,6 +15,129 @@ FAILED = "failed"
 UNKNOWN = "unknown"
 STATES = {PASSED, FAILED, UNKNOWN}
 MAX_SOAK_SECONDS = 315_576_000
+
+# Frozen T044 authority contract. This code constant is independent of the mutable
+# TaskSpec: substituting a manual observation for a production proof must fail.
+T044_REQUIRED_ACCEPTANCE = MappingProxyType(
+    {
+        "production-topology": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:production-topology",
+            (
+                "cluster-identity",
+                "gitops-revision",
+                "public-dns",
+                "load-balancer",
+                "tls",
+                "secrets",
+                "identities",
+                "failure-domains",
+            ),
+        ),
+        "cutover-contract": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:cutover-contract",
+            (
+                "signed-plan",
+                "responsible-operators",
+                "data-sequence",
+                "traffic-sequence",
+                "automatic-stop",
+                "rollback-contract",
+            ),
+        ),
+        "staging-gitops-runtime": (
+            "manual_observation",
+            "weltgewebe:t044:staging-gitops-runtime",
+            (),
+        ),
+        "t048-platform-parity": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:t048-platform-parity",
+            (
+                "functional-parity",
+                "security-parity",
+                "data-persistence",
+                "backup-restore",
+                "recovery",
+                "latency",
+                "resource-budgets",
+            ),
+        ),
+        "semantic-search-continuity": (
+            "manual_observation",
+            "weltgewebe:t044:semantic-search-continuity",
+            (),
+        ),
+        "data-transition": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:data-transition",
+            (
+                "postgres-continuity",
+                "jetstream-continuity",
+                "object-file-continuity",
+                "event-reconciliation",
+                "writer-fencing",
+            ),
+        ),
+        "progressive-traffic": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:progressive-traffic",
+            (
+                "traffic-stages",
+                "slo-observation",
+                "error-budget",
+                "mutation-integrity",
+                "automatic-stop",
+                "rollback-verification",
+            ),
+        ),
+        "production-recovery": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:production-recovery",
+            (
+                "pitr",
+                "blank-cluster-restore",
+                "secret-key-recovery",
+                "blue-rollback",
+                "rto-rpo-evidence",
+            ),
+        ),
+        "operator-readiness": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:operator-readiness",
+            (
+                "slo-evidence",
+                "rto-rpo-metrics",
+                "operator-projections",
+                "deployment-revision",
+                "action-authority",
+            ),
+        ),
+        "legacy-retirement": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:legacy-retirement",
+            (
+                "observation-window",
+                "owner-approval",
+                "rollback-window",
+                "sole-writer",
+                "cleanup-inventory",
+            ),
+        ),
+        "live-readback": (
+            "runtime_proof_bundle",
+            "weltgewebe:t044:live-readback",
+            (
+                "web-api-commit",
+                "gitops-revision",
+                "workload-digests",
+                "data-continuity",
+                "writer-authority",
+            ),
+        ),
+    }
+)
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -80,6 +204,24 @@ VERIFIER_CONTRACTS: dict[str, dict[str, Any]] = {
             "probe_id",
         ),
     },
+    "runtime_proof_bundle": {
+        "domain": "runtime",
+        "authorities": ("grabowski", "target-runtime"),
+        "max_age_seconds": 900,
+        "config_fields": (
+            "observation_scope",
+            "required_probes",
+            "expected_runtime_revision",
+            "expected_target_identity",
+        ),
+        "revision_binding": (
+            "task_sha256",
+            "plan_sha256",
+            "observation_scope",
+            "runtime_revision",
+            "target_identity",
+        ),
+    },
     "manual_observation": {
         "domain": "observation",
         "authorities": ("manual",),
@@ -121,6 +263,7 @@ _EXECUTABLE_VERIFIERS = frozenset(
         "runtime_commit_contains",
         "live_probe_passed",
         "manual_observation",
+        "runtime_proof_bundle",
         "duration_soak_completed",
         "no_effect_verified",
         "artifact_hash_matches",
@@ -259,6 +402,42 @@ def _criterion_verifier_config(
         if runtime_revision is None or probe_id is None:
             return None
         return {"runtime_revision": runtime_revision, "probe_id": probe_id}
+
+    if verifier == "runtime_proof_bundle":
+        scope = nonempty("observation_scope")
+        probes = raw.get("required_probes")
+        release = raw.get("expected_runtime_revision")
+        target = raw.get("expected_target_identity")
+        # T044 has no selected production Green revision yet. Both null values
+        # make the Registry structurally valid but evaluation fail closed until
+        # a separately authorized TaskSpec revision freezes both identifiers.
+        if (release is None) != (target is None):
+            return None
+        if release is not None and (
+            not isinstance(release, str)
+            or re.fullmatch(r"[0-9a-f]{40}", release) is None
+            or not isinstance(target, str)
+            or re.fullmatch(r"[A-Za-z][A-Za-z0-9_.:-]{2,159}", target) is None
+        ):
+            return None
+        if (
+            scope is None
+            or re.fullmatch(r"weltgewebe:t044:[a-z][a-z0-9-]{1,63}", scope) is None
+            or not isinstance(probes, list)
+            or not 2 <= len(probes) <= 24
+            or any(
+                not isinstance(probe, str) or re.fullmatch(r"[a-z][a-z0-9-]{1,63}", probe) is None
+                for probe in probes
+            )
+            or len(set(probes)) != len(probes)
+        ):
+            return None
+        return {
+            "observation_scope": scope,
+            "required_probes": list(probes),
+            "expected_runtime_revision": release,
+            "expected_target_identity": target,
+        }
 
     if verifier == "manual_observation":
         scope = nonempty("observation_scope")
@@ -421,9 +600,7 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                         criterion_id=criterion_id,
                         path=f"{criterion_path}.id",
                         code="duplicate-criterion-id",
-                        message=(
-                            f"criterion id duplicates $.acceptance[{first_index}].id"
-                        ),
+                        message=(f"criterion id duplicates $.acceptance[{first_index}].id"),
                         invalid_fields=("id",),
                     )
                 )
@@ -522,9 +699,7 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
             criterion_has_error = True
         elif isinstance(verifier, str) and verifier in VERIFIER_CONTRACTS:
             if _criterion_verifier_config(verifier, raw_criterion) is None:
-                expected_fields = frozenset(
-                    VERIFIER_CONTRACTS[verifier]["config_fields"]
-                )
+                expected_fields = frozenset(VERIFIER_CONTRACTS[verifier]["config_fields"])
                 observed_fields = {str(field) for field in verifier_config}
                 missing_config_fields = tuple(
                     f"verifier_config.{field}"
@@ -545,9 +720,7 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                         criterion_id=criterion_id,
                         path=f"{criterion_path}.verifier_config",
                         code="verifier-config-mismatch",
-                        message=(
-                            f"verifier_config does not exactly match verifier {verifier!r}"
-                        ),
+                        message=(f"verifier_config does not exactly match verifier {verifier!r}"),
                         missing_fields=missing_config_fields,
                         invalid_fields=invalid_config_fields or ("verifier_config",),
                     )
@@ -566,8 +739,355 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                 )
             )
 
+    # Pin criterion identities, verifier classes, scopes and exact probe names
+    # before either claim admission or eventual evidence reconciliation.
+    if task_id == "WELTGEWEBE-OS-V1-T044":
+        observed_ids = {
+            item.get("id")
+            for item in criteria
+            if isinstance(item, Mapping) and isinstance(item.get("id"), str)
+        }
+        if len(criteria) != len(T044_REQUIRED_ACCEPTANCE) or observed_ids != set(
+            T044_REQUIRED_ACCEPTANCE
+        ):
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id="<acceptance>",
+                    path="$.acceptance",
+                    code="t044-proof-contract-identity-mismatch",
+                    message="t044-proof-contract: exact eleven criterion ids are mandatory",
+                    invalid_fields=("acceptance",),
+                )
+            )
+        for index, item in enumerate(criteria):
+            if not isinstance(item, Mapping):
+                continue
+            identity = item.get("id")
+            expected = T044_REQUIRED_ACCEPTANCE.get(identity) if isinstance(identity, str) else None
+            config = item.get("verifier_config")
+            if expected is None or not isinstance(config, Mapping):
+                continue
+            verifier, scope, probes = expected
+            actual_probes = (
+                tuple(config["required_probes"])
+                if isinstance(config.get("required_probes"), list)
+                else ()
+                if "required_probes" not in config
+                else None
+            )
+            if (
+                item.get("verifier") != verifier
+                or config.get("observation_scope") != scope
+                or actual_probes != probes
+            ):
+                diagnostics.append(
+                    _acceptance_diagnostic(
+                        task_id=task_id,
+                        criterion_id=identity,
+                        path=f"$.acceptance[{index}]",
+                        code="t044-proof-contract-unpinned",
+                        message=(
+                            "t044-proof-contract: verifier, observation scope and required "
+                            "probes must match the immutable T044 acceptance contract"
+                        ),
+                        invalid_fields=("verifier", "verifier_config"),
+                    )
+                )
+
+    # A T044 TaskSpec can contain nine individually valid runtime criteria
+    # while referring to different clusters or releases. Reject that before
+    # dispatch, not only after evidence has been produced at closeout. Both
+    # expected identifiers may remain None while Green is not authorized.
+    t044_target: tuple[str | None, str | None] | None = None
+    for index, item in enumerate(criteria):
+        if not isinstance(item, Mapping) or item.get("verifier") != "runtime_proof_bundle":
+            continue
+        contract = criterion_contract(item)
+        if contract is None:
+            continue  # The individual malformed contract is diagnosed above.
+        config = contract["verifier_config"]
+        if not config["observation_scope"].startswith("weltgewebe:t044:"):
+            continue
+        pair = (
+            config["expected_runtime_revision"],
+            config["expected_target_identity"],
+        )
+        if t044_target is None:
+            t044_target = pair
+        elif pair != t044_target:
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=str(item["id"]),
+                    path=f"$.acceptance[{index}].verifier_config",
+                    code="t044-target-inconsistent",
+                    message=(
+                        "t044-target-inconsistent: all T044 runtime proof bundles "
+                        "must freeze one identical release and Green target"
+                    ),
+                    invalid_fields=(
+                        "verifier_config.expected_runtime_revision",
+                        "verifier_config.expected_target_identity",
+                    ),
+                )
+            )
+
     if diagnostics:
         raise AcceptanceContractError(diagnostics)
+
+
+def t044_claim_admission_reasons(
+    task: Mapping[str, Any],
+    *,
+    runtime_reader_registered: bool = False,
+    registered_resources: Mapping[str, Any] | None = None,
+) -> list[str]:
+    """Block T044 claims before *any* workload starts unless its target and source exist.
+
+    Structural TaskSpec readability deliberately permits nine null target
+    placeholders. Claiming/executing a production cutover does not.
+    A true registration flag is supplied only by trusted operator code,
+    never by task evidence or the worker.
+    """
+    if task.get("id") != "WELTGEWEBE-OS-V1-T044":
+        return []
+    try:
+        validate_acceptance_contract(task)
+    except AcceptanceContractError as exc:
+        return [f"T044 acceptance contract invalid: {str(exc).partition(chr(10))[0]}"]
+    criteria = task["acceptance"]
+    proofs = [c for c in criteria if c["verifier"] == "runtime_proof_bundle"]
+    manual = [c for c in criteria if c["verifier"] == "manual_observation"]
+    if len(criteria) != 11 or len(proofs) != 9 or len(manual) != 2:
+        return ["T044 claim blocked: missing or changed eleven-criterion proof contract"]
+    config = proofs[0]["verifier_config"]
+    if config["expected_runtime_revision"] is None or config["expected_target_identity"] is None:
+        return ["T044 claim blocked: authorized Green target and runtime revision not frozen"]
+    # Contract validation above enforces one target/release for all nine.
+    if not runtime_reader_registered:
+        return ["T044 claim blocked: trusted primary runtime proof reader not registered"]
+
+    # Reader availability alone does not own the two runtimes. A TaskSpec is
+    # allowed to name only the Green identity; the separately reviewed Bureau
+    # resource registry resolves that identity to one specific exclusive
+    # runtime scope, rather than trusting a producer-supplied claim.
+    if registered_resources is None:
+        return ["T044 claim blocked: runtime resource registry unavailable"]
+
+    def attr(resource: Any, field: str) -> Any:
+        if isinstance(resource, Mapping):
+            return resource.get(field)
+        return getattr(resource, field, None)
+
+    blue_id = "runtime.commonserver"
+    blue = registered_resources.get(blue_id)
+    if (
+        blue is None
+        or attr(blue, "type") != "service"
+        or not isinstance(attr(blue, "grabowski_key"), str)
+        or not attr(blue, "grabowski_key").strip()
+    ):
+        return ["T044 claim blocked: canonical Blue runtime resource unavailable"]
+
+    green_matches: list[str] = []
+    for resource_id, resource in registered_resources.items():
+        if not isinstance(resource_id, str) or not resource_id.startswith("runtime."):
+            continue
+        metadata = attr(resource, "metadata")
+        if (
+            attr(resource, "id") == resource_id
+            and attr(resource, "type") == "service"
+            and isinstance(attr(resource, "grabowski_key"), str)
+            and bool(attr(resource, "grabowski_key").strip())
+            and isinstance(metadata, Mapping)
+            and metadata.get("t044_role") == "green"
+            and metadata.get("target_identity") == config["expected_target_identity"]
+            and metadata.get("expected_runtime_revision") == config["expected_runtime_revision"]
+        ):
+            green_matches.append(resource_id)
+    if len(green_matches) != 1:
+        return [
+            "T044 claim blocked: Green target must match exactly one registered runtime resource"
+        ]
+    green_id = green_matches[0]
+    green = registered_resources[green_id]
+
+    def ancestors(resource_id: str) -> tuple[set[str], bool]:
+        chain: set[str] = set()
+        current = resource_id
+        while current in registered_resources:
+            parent = attr(registered_resources[current], "parent")
+            if not isinstance(parent, str) or not parent or parent in chain or parent == current:
+                return chain, False
+            chain.add(parent)
+            # The generic registry root is a grouping sentinel, never a host proof.
+            if parent == "root":
+                return chain, True
+            if parent not in registered_resources:
+                return chain, False
+            current = parent
+        return chain, False
+
+    def ancestor_identity(ancestor_ids: set[str]) -> list[dict[str, Any]]:
+        # Freeze complete registered chain, not only leaf service names/keys.
+        # The generic root sentinel is never a physical host.
+        return [
+            {
+                "resource_id": ancestor_id,
+                "type": attr(registered_resources[ancestor_id], "type"),
+                "parent": attr(registered_resources[ancestor_id], "parent"),
+                "grabowski_key": attr(registered_resources[ancestor_id], "grabowski_key"),
+            }
+            for ancestor_id in sorted(ancestor_ids - {"root"})
+        ]
+
+    blue_ancestors, blue_chain_complete = ancestors(blue_id)
+    green_ancestors, green_chain_complete = ancestors(green_id)
+    if not (blue_chain_complete and green_chain_complete):
+        return ["T044 claim blocked: runtime ancestor missing or cyclic in resource registry"]
+    if (
+        green_id == blue_id
+        or blue_id in green_ancestors
+        or green_id in blue_ancestors
+        or attr(green, "grabowski_key").strip().casefold()
+        == attr(blue, "grabowski_key").strip().casefold()
+    ):
+        return ["T044 claim blocked: Green is an alias or overlapping resource of production Blue"]
+
+    # Two differently named sibling services can still use one host or fault
+    # domain. Resource types alone cannot authenticate physical identity.
+    # Compare operator keys across *all* ancestors and the runtimes themselves:
+    # renaming an alias to "service", "group" or "Host" must not hide overlap.
+    def operator_key_owners(resource_ids: set[str]) -> dict[str, set[str]]:
+        owners: dict[str, set[str]] = {}
+        for resource_id in resource_ids:
+            resource = registered_resources.get(resource_id)
+            key = attr(resource, "grabowski_key") if resource is not None else None
+            if isinstance(key, str) and key:
+                # Conservative alias collision: case/edge whitespace cannot
+                # establish an independently owned physical lease identity.
+                owners.setdefault(key.strip().casefold(), set()).add(resource_id)
+        return owners
+
+    blue_key_owners = operator_key_owners(blue_ancestors | {blue_id})
+    green_key_owners = operator_key_owners(green_ancestors | {green_id})
+    alias_keys = {
+        key for key in blue_key_owners.keys() & green_key_owners.keys()
+        if any(
+            blue_resource != green_resource
+            for blue_resource in blue_key_owners[key]
+            for green_resource in green_key_owners[key]
+        )
+    }
+    shared_physical_domains = sorted(
+        {f"resource:{ancestor_id}" for ancestor_id in blue_ancestors & green_ancestors
+         if ancestor_id in registered_resources
+         and attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}}
+        | {f"grabowski-key:{key}" for key in alias_keys}
+    )
+    if shared_physical_domains:
+        return [
+            "T044 claim blocked: shared registered physical failure-domain: "
+            + ", ".join(shared_physical_domains)
+        ]
+
+    # Unknown/non-group shared ancestors can conceal one physical resource even
+    # when the registry marks it as a service instead of a host or fault domain.
+    shared_non_group = sorted(
+        ancestor_id for ancestor_id in blue_ancestors & green_ancestors
+        if ancestor_id != "root"
+        and attr(registered_resources[ancestor_id], "type") not in {"group", "git-repository"}
+    )
+    if shared_non_group:
+        return [
+            "T044 claim blocked: shared non-group runtime ancestor: "
+            + ", ".join(shared_non_group)
+        ]
+
+    # A shared logical grouping is harmless only if both sides have their own
+    # registered physical ancestor below it. A directly shared "group" must
+    # not become a host merely by changing its registry type string.
+    shared_groups = sorted(
+        ancestor_id for ancestor_id in blue_ancestors & green_ancestors
+        if ancestor_id != "root"
+        and attr(registered_resources[ancestor_id], "type") in {"group", "git-repository"}
+    )
+    # A bare registry root is also only a grouping sentinel: never treat two
+    # host-less services or disjoint host-less group chains as physical isolation.
+    # This is a registry prerequisite, NOT provider/physical identity attestation.
+    def has_distinct_registered_host(ancestor_ids: set[str]) -> bool:
+        return any(
+            attr(registered_resources[ancestor_id], "type") in {"host", "failure-domain"}
+            and isinstance(attr(registered_resources[ancestor_id], "grabowski_key"), str)
+            and bool(attr(registered_resources[ancestor_id], "grabowski_key").strip())
+            for ancestor_id in ancestor_ids
+        )
+
+    if not (
+        has_distinct_registered_host(blue_ancestors - green_ancestors)
+        and has_distinct_registered_host(green_ancestors - blue_ancestors)
+    ):
+        return [
+            "T044 claim blocked: shared group without distinct registered hosts: "
+            + ", ".join(shared_groups)
+            if shared_groups
+            else "T044 claim blocked: distinct registered hosts required for Blue and Green"
+        ]
+
+    raw_claims = task.get("claims")
+    exclusive = (
+        {
+            claim.get("resource")
+            for claim in raw_claims
+            if isinstance(claim, Mapping)
+            and claim.get("mode") == "exclusive"
+            and claim.get("amount", 1) == 1
+            and claim.get("isolation", "none") == "none"
+        }
+        if isinstance(raw_claims, list)
+        else set()
+    )
+    missing_claims = sorted({blue_id, green_id} - exclusive)
+    if missing_claims:
+        return [
+            "T044 claim blocked: exclusive Blue and Green runtime resource claims required: "
+            + ", ".join(missing_claims)
+        ]
+
+    # This operator-owned identity is part of the immutable TaskSpec snapshot
+    # carried by each run envelope. A matching logical Green name alone cannot
+    # authorize a changed host, Grabowski lease key or resource id.
+    metadata = task.get("metadata")
+    frozen_binding = (
+        metadata.get("t044_runtime_identity")
+        if isinstance(metadata, Mapping)
+        else None
+    )
+    expected_binding = {
+        "schema_version": 2,
+        "blue_resource_id": blue_id,
+        "blue_grabowski_key": attr(blue, "grabowski_key"),
+        "blue_ancestors": ancestor_identity(blue_ancestors),
+        "green_resource_id": green_id,
+        "green_grabowski_key": attr(green, "grabowski_key"),
+        "green_ancestors": ancestor_identity(green_ancestors),
+        "runtime_revision": config["expected_runtime_revision"],
+        "target_identity": config["expected_target_identity"],
+    }
+    if not isinstance(frozen_binding, Mapping) or dict(frozen_binding) != expected_binding:
+        return [
+            "T044 claim blocked: frozen runtime resource identity differs from "
+            "current Blue/Green ids, Grabowski keys, revision or target"
+        ]
+    # A registry writer can invent two hosts and distinct lease keys on one
+    # machine. Registry ancestry alone NEVER grants a production T044 claim.
+    # A future independently authenticated physical/provider identity proof
+    # must be integrated into this gate and rechecked at every authority seam.
+    return [
+        "T044 claim blocked: physical failure-domain provenance not attested "
+        "by an independent trusted source"
+    ]
 
 
 def typed_criterion_contracts(criteria: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -626,10 +1146,7 @@ def _fact_state(
         if facts.get("complete") is not True:
             return UNKNOWN, "required-check-observation-incomplete"
         reported_required_checks = facts.get("required_checks")
-        if (
-            reported_required_checks is not None
-            and reported_required_checks != required_checks
-        ):
+        if reported_required_checks is not None and reported_required_checks != required_checks:
             return UNKNOWN, "required-check-set-mismatch"
         if not isinstance(checks, list) or not checks:
             return UNKNOWN, "required-checks-unavailable"
@@ -682,6 +1199,58 @@ def _fact_state(
             if lowered in {"fail", "failed", "failure", "error"}:
                 return FAILED, "live-probe-failed"
         return UNKNOWN, "live-probe-unknown"
+
+    if verifier == "runtime_proof_bundle":
+        required = verifier_config.get("required_probes")
+        probes = facts.get("probes")
+        if (
+            not isinstance(required, list)
+            or not isinstance(probes, list)
+            or len(probes) != len(required)
+            or not isinstance(facts.get("runtime_revision"), str)
+            or not isinstance(facts.get("target_identity"), str)
+            or not isinstance(facts.get("observer"), str)
+            or not facts["observer"].strip()
+        ):
+            return UNKNOWN, "runtime-probes-incomplete"
+        observed: set[str] = set()
+        failed = False
+        expected_fields = {
+            "id",
+            "result",
+            "receipt_sha256",
+            "receipt_ref",
+            "runtime_revision",
+            "target_identity",
+        }
+        for probe in probes:
+            if not isinstance(probe, Mapping) or set(probe) != expected_fields:
+                return UNKNOWN, "runtime-probe-row-invalid"
+            name = probe.get("id")
+            if (
+                not isinstance(name, str)
+                or name not in required
+                or name in observed
+                or not _sha256(probe.get("receipt_sha256"))
+                or not isinstance(probe.get("receipt_ref"), str)
+                or not probe["receipt_ref"].strip()
+                or len(probe["receipt_ref"]) > 256
+                or probe.get("runtime_revision") != facts["runtime_revision"]
+                or probe.get("target_identity") != facts["target_identity"]
+            ):
+                return UNKNOWN, "runtime-probe-binding-invalid"
+            observed.add(name)
+            outcome = probe.get("result")
+            if not isinstance(outcome, str) or outcome not in {"passed", "failed"}:
+                return UNKNOWN, "runtime-probe-result-invalid"
+            failed |= outcome == "failed"
+        if observed != set(required):
+            return UNKNOWN, "runtime-probes-missing"
+        return (
+            (FAILED, "runtime-probe-failed")
+            if failed
+            else (PASSED, "all-bound-runtime-probes-passed")
+        )
 
     if verifier == "manual_observation":
         accepted = facts.get("accepted")
@@ -748,6 +1317,21 @@ def _revision_valid(
     revision = evidence.get("revision")
     if not isinstance(revision, Mapping):
         return False, "revision-binding-missing"
+    if contract.get("verifier") == "runtime_proof_bundle":
+        expected = contract.get("verifier_config")
+        if not isinstance(expected, Mapping):
+            return False, "runtime-proof-config-missing"
+        expected_release = expected.get("expected_runtime_revision")
+        expected_target = expected.get("expected_target_identity")
+        if expected_release is None or expected_target is None:
+            return False, "runtime-proof-target-not-frozen"
+        if plan_sha256 is None or not _sha(revision.get("runtime_revision")):
+            return False, "runtime-proof-revision-or-plan-missing"
+        if (
+            revision.get("runtime_revision") != expected_release
+            or revision.get("target_identity") != expected_target
+        ):
+            return False, "runtime-proof-frozen-target-mismatch"
     if revision.get("task_sha256") != task_sha256 or not _sha256(task_sha256):
         return False, "task-revision-mismatch"
     if plan_sha256 is not None and (
@@ -789,6 +1373,7 @@ def _revision_valid(
             ("probe_id", "probe_id"),
         ),
         "manual_observation": (("observation_scope", "observation_scope"),),
+        "runtime_proof_bundle": (("observation_scope", "observation_scope"),),
         "duration_soak_completed": (("observation_scope", "observation_scope"),),
         "no_effect_verified": (("scope_sha256", "scope_sha256"),),
         "artifact_hash_matches": (("artifact_sha256", "artifact_sha256"),),
@@ -819,6 +1404,11 @@ def _facts_match_revision(
             ("probe_id", "probe_id"),
         ),
         "manual_observation": (("observation_scope", "observation_scope"),),
+        "runtime_proof_bundle": (
+            ("observation_scope", "observation_scope"),
+            ("runtime_revision", "runtime_revision"),
+            ("target_identity", "target_identity"),
+        ),
         "duration_soak_completed": (("observation_scope", "observation_scope"),),
         "no_effect_verified": (("scope_sha256", "scope_sha256"),),
         "artifact_hash_matches": (("expected_sha256", "artifact_sha256"),),
@@ -912,11 +1502,19 @@ def evaluate_criterion(
     }
 
 
-_SHARED_REVISION_FIELDS = frozenset({"head_sha"})
+_SHARED_REVISION_FIELDS = frozenset({"head_sha", "runtime_revision", "target_identity"})
 
 
 def _shared_revision_scope(contract: Mapping[str, Any], field: str) -> str | None:
     """Return the target identity within which a revision field must agree."""
+    if contract.get("verifier") == "runtime_proof_bundle" and field in {
+        "runtime_revision",
+        "target_identity",
+    }:
+        config = contract.get("verifier_config")
+        scope = config.get("observation_scope") if isinstance(config, Mapping) else None
+        if isinstance(scope, str) and scope.startswith("weltgewebe:t044:"):
+            return "weltgewebe:t044"
     if field != "head_sha":
         return None
     verifier = contract.get("verifier")
@@ -935,11 +1533,7 @@ def _cross_criterion_revision_consistency(
     evidence: Mapping[str, Any],
     results: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    passed_ids = {
-        str(item.get("criterion_id"))
-        for item in results
-        if item.get("state") == PASSED
-    }
+    passed_ids = {str(item.get("criterion_id")) for item in results if item.get("state") == PASSED}
     observed: dict[str, dict[str, str]] = {}
     comparison_groups: dict[tuple[str, str], dict[str, str]] = {}
     for criterion in criteria:

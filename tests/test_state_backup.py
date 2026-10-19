@@ -276,6 +276,35 @@ def test_latest_bundle_skips_invalid_newer_directory(registry_factory, tmp_path:
     assert state_backup.latest_bundle(backup_root) == Path(result["bundle"])
 
 
+def test_observe_backup_verifies_each_candidate_once_and_keeps_fail_closed_fallback(
+    registry_factory, tmp_path: Path, monkeypatch
+):
+    _root, state_root, _registry, _store, dispatcher = _setup(registry_factory, tmp_path)
+    _claim(dispatcher)
+    backup_root = tmp_path / "artifacts/merges/bureau-state-backups"
+    result = state_backup.create_backup(state_root=state_root, backup_root=backup_root)
+    bundle = Path(result["bundle"])
+    invalid = backup_root / "zzzz-invalid"
+    invalid.mkdir()
+    (invalid / "manifest.json").write_text("{}\n", encoding="utf-8")
+    calls = []
+    original = state_backup.verify_backup
+
+    def counted_verify(candidate):
+        calls.append(Path(candidate).name)
+        return original(candidate)
+
+    monkeypatch.setattr(state_backup, "verify_backup", counted_verify)
+    observation = doctor.observe_backup(backup_root)
+
+    assert calls == [invalid.name, bundle.name]
+    assert observation["status"] == "verified"
+    assert observation["binding"]["bundle_id"] == bundle.name
+    assert observation["freshness"]["created_at"] == json.loads(
+        (bundle / "manifest.json").read_text(encoding="utf-8")
+    )["created_at"]
+
+
 def test_verify_backup_normalizes_semantically_malformed_database(
     registry_factory, tmp_path: Path
 ):

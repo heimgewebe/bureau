@@ -502,6 +502,7 @@ def _verify_backup_impl(bundle: Path) -> dict[str, Any]:
         "status": "verified",
         "bundle": str(bundle),
         "bundle_id": manifest.get("bundle_id"),
+        "created_at": manifest.get("created_at"),
         "manifest_sha256": expected_manifest,
         "authoritative_root_sha256": projection["authoritative_root_sha256"],
         "event_count": projection["event_count"],
@@ -520,7 +521,10 @@ def verify_backup(bundle: Path) -> dict[str, Any]:
         raise StateBackupError("backup verification failed") from exc
 
 
-def latest_bundle(backup_root: Path = DEFAULT_BACKUP_ROOT) -> Path:
+def latest_verified_bundle(
+    backup_root: Path = DEFAULT_BACKUP_ROOT,
+) -> tuple[Path, dict[str, Any]]:
+    """Return the latest fully verified backup and its bound verification."""
     backup_root = backup_root.expanduser().resolve()
     if backup_root.is_symlink() or not backup_root.is_dir():
         raise StateBackupError(f"backup root does not exist: {backup_root}")
@@ -531,11 +535,17 @@ def latest_bundle(backup_root: Path = DEFAULT_BACKUP_ROOT) -> Path:
     )
     for candidate in reversed(candidates):
         try:
-            verify_backup(candidate)
+            verification = verify_backup(candidate)
         except StateBackupError:
             continue
-        return candidate
+        return candidate, verification
     raise StateBackupError("no verified Bureau state backup exists")
+
+
+def latest_bundle(backup_root: Path = DEFAULT_BACKUP_ROOT) -> Path:
+    """Preserve the path-only selection API for existing consumers."""
+    bundle, _verification = latest_verified_bundle(backup_root)
+    return bundle
 
 
 def _runtime_registry_root(

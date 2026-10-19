@@ -280,6 +280,7 @@ class Dispatcher(_BaseDispatcher):
         *,
         projection_resource: str | None = None,
         initiative_registry: legacy.Registry | None = None,
+        registered_resources: dict[str, legacy.Resource] | None = None,
     ) -> list[str]:
         reasons = super().reasons(
             task,
@@ -289,10 +290,11 @@ class Dispatcher(_BaseDispatcher):
             overlays,
             projection_resource=projection_resource,
             initiative_registry=initiative_registry,
+            registered_resources=registered_resources,
         )
         assessment = _broad_scope_assessment(
             task,
-            self.registry.resources,
+            registered_resources if registered_resources is not None else self.registry.resources,
         )
         if (
             assessment["broad_scope_requested"]

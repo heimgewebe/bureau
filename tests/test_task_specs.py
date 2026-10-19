@@ -8,8 +8,33 @@ from types import SimpleNamespace
 import pytest
 
 from bureau import task_specs
+from bureau.acceptance import AcceptanceContractError, validate_acceptance_contract
 from bureau.legacy import StateError
 from bureau.v2 import StateStore
+
+
+def test_t044_all_eleven_acceptance_criteria_have_executable_bound_verifiers() -> None:
+    root = Path(__file__).resolve().parents[1]
+    task = json.loads(
+        (root / "registry/tasks/WELTGEWEBE-OS-V1-T044.json").read_text(encoding="utf-8")
+    )
+    criteria = task["acceptance"]
+    assert len(criteria) == 11
+    assert len({criterion["id"] for criterion in criteria}) == 11
+    runtime_proofs = [c for c in criteria if c["verifier"] == "runtime_proof_bundle"]
+    manual_proofs = [c for c in criteria if c["verifier"] == "manual_observation"]
+    assert len(runtime_proofs) == 9
+    assert {c["id"] for c in manual_proofs} == {
+        "staging-gitops-runtime", "semantic-search-continuity"
+    }
+    assert all(len(c["verifier_config"]["required_probes"]) >= 2 for c in runtime_proofs)
+    assert task["state"] == "planned"
+    validate_acceptance_contract(task)
+    # A prose-only verifier or unbound observation never becomes claimable.
+    unbound = json.loads(json.dumps(task))
+    unbound["acceptance"][0]["verifier_config"] = {}
+    with pytest.raises(AcceptanceContractError):
+        validate_acceptance_contract(unbound)
 
 
 def _spec(task_id: str = "TEST-T001", *, title: str = "first", marker: str = "a") -> dict:

@@ -20,8 +20,7 @@ from .state_backup import (
     DEFAULT_BACKUP_ROOT,
     DEFAULT_RESTORE_RECEIPT_ROOT,
     StateBackupError,
-    latest_bundle,
-    verify_backup,
+    latest_verified_bundle,
 )
 from .status_projection import (
     DEFAULT_GITHUB_MAX_AGE_SECONDS,
@@ -92,11 +91,10 @@ def observe_backup(
     """Read and verify the newest coherent Bureau backup without creating one."""
     current = now or _utc_now()
     try:
-        bundle = latest_bundle(backup_root)
-        verification = verify_backup(bundle)
-        manifest_path = bundle / "manifest.json"
-        raw = json.loads(manifest_path.read_text(encoding="utf-8"))
-        created_at = raw.get("created_at") if isinstance(raw, dict) else None
+        # Reuse the full integrity verification from bundle selection.
+        # A second full StateStore replay adds no authority and can time out.
+        _bundle, verification = latest_verified_bundle(backup_root)
+        created_at = verification.get("created_at")
         return {
             "observed": True,
             "status": "verified",

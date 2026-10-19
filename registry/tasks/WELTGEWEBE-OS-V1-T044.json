@@ -104,22 +104,14 @@
   "id": "WELTGEWEBE-OS-V1-T044",
   "initiative": "WELTGEWEBE-OS-V1",
   "metadata": {
+    "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
+    "deduplication": "Bureau-PR #1048 wurde nach Codex-P1 geschlossen: Der vorgeschlagene T056 duplizierte T044 und hätte dessen runtime_mutation-Grenze unterlaufen. F-007 wird deshalb in T044 absorbiert.",
     "does_not_establish": [
       "permission for immediate production mutation",
       "current production topology",
       "a safe cutover without fresh backups and rollback proof"
     ],
-    "reason": "Der bestehende Production-Live-Contract beweist erreichbare Endpunkte und Commitidentität, aber nicht, dass die reale Produktion bereits auf Kubernetes läuft.",
-    "registered_at": "2026-07-24T17:55:00Z",
-    "source_context": "Kubernetes-Restplan nach Referenzplattform-, HA- und Proof-Lifecycle-Ausbau",
-    "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
-    "deduplication": "Bureau-PR #1048 wurde nach Codex-P1 geschlossen: Der vorgeschlagene T056 duplizierte T044 und hätte dessen runtime_mutation-Grenze unterlaufen. F-007 wird deshalb in T044 absorbiert.",
     "event_id": 1240,
-    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
-    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
-    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
-    "source_finding": "F-007",
-    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
@@ -138,6 +130,41 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "reason": "Der bestehende Production-Live-Contract beweist erreichbare Endpunkte und Commitidentität, aber nicht, dass die reale Produktion bereits auf Kubernetes läuft.",
+    "registered_at": "2026-07-24T17:55:00Z",
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_context": "Kubernetes-Restplan nach Referenzplattform-, HA- und Proof-Lifecycle-Ausbau",
+    "source_finding": "F-007",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "strategic_pause": {
+      "bureau_issue": "https://github.com/heimgewebe/bureau/issues/2349",
+      "decision": "indefinite_strategic_pause",
+      "decision_date": "2026-10-17",
+      "decision_issue": "https://github.com/heimgewebe/commonthing/issues/1961",
+      "historical_gates_preserved": true,
+      "nonclaims": [
+        "B5-PASS",
+        "R5-PASS",
+        "R6-R9 approval",
+        "Kubernetes production",
+        "Git TaskSpec state does not independently prove Bureau StateStore revision 6"
+      ],
+      "production_platform": "Docker Compose on commonserver",
+      "reason": "No proven operational need presently justifies additional Kubernetes complexity.",
+      "resumption_requires": [
+        "new explicit priority decision",
+        "demonstrated multi-host/multi-operator or HA requirement, or measured Compose bottleneck",
+        "alternatives and operating cost comparison",
+        "fresh security, recovery, review and all original R5-B5-to-R9/Cutover gates"
+      ],
+      "schema_version": 1,
+      "scope": [
+        "T044/B5 Kubernetes production cutover",
+        "T084 Kind/Cilium migration-only work"
       ]
     }
   },
@@ -161,6 +188,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "blocked",
   "title": "Weltgewebe revisionsgebunden auf die produktive Kubernetes-Plattform umschalten"
 }

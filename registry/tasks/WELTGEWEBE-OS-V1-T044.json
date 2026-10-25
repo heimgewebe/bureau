@@ -4,80 +4,107 @@
       "assertion": "Produktiver Cluster, GitOps-Quelle, DNS, Load Balancer, TLS, Secretbereitstellung, Identitäten und Fehlerdomänen sind explizit inventarisiert und revisionsgebunden.",
       "evidence_type": "object",
       "id": "production-topology",
-      "verifier": "production topology and ownership receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:production-topology"
+      }
     },
     {
       "assertion": "Ein versionierter Cutover-Vertrag definiert Eintrittskriterien, Verantwortlichkeiten, Daten- und Traffic-Sequenz, Beobachtungsfenster, automatische Stopbedingungen, Rollback und Abschlusskriterien.",
       "evidence_type": "object",
       "id": "cutover-contract",
-      "verifier": "versioned cutover contract receipt"
-    },
-    {
-      "assertion": "Die tatsächliche, vom lokalen T084-kind sowie von Blue und produktivem Green getrennte, gegebenenfalls temporäre Kubernetes-/GitOps-Staging-Runtime läuft auf der gewünschten Cutover-Revision mit gebundenen Flux-/Manifestrevisionen und API-/Web-Image-Digests. Secrets, Identitäten, Daten, Peers und Traffic sind nachweislich nicht produktiv. Vor jeder Staging-Mutation liegt eine exklusive, an die konkrete Zielidentität gebundene und live geprüfte Bureau-/Grabowski-Cluster-/Runtime-Ressourcenreservierung vor; ein reiner Repository-Claim genügt nicht. Nur nachgewiesen eigene Ressourcen dürfen nach terminalem Proof abgebaut werden. Historische T085-Pässe gelten nicht als aktueller Beleg.",
-      "evidence_type": "object",
-      "id": "staging-gitops-runtime",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "weltgewebe:t044:staging-gitops-runtime"
+        "observation_scope": "weltgewebe:t044:cutover-contract"
       }
     },
     {
       "assertion": "Funktion, Sicherheit, Datenpersistenz, Backups, Recovery, Latenz und Ressourcenverbrauch werden für Compose/Caddy und Kubernetes unter denselben kanonischen T048-Szenarien gemessen und revisionsgebunden verglichen.",
       "evidence_type": "object",
       "id": "t048-platform-parity",
-      "verifier": "cross-platform T048 parity evidence"
-    },
-    {
-      "assertion": "Für dieselbe revisions- und datenstandgebundene Blue-/Green-Suchfunktion sind Embedding-Modell/Digest und Dimension, aktive Indexgeneration und Suchprojektionen nachweislich kompatibel; autorisierte Sichtbarkeit und semantische Suchergebnisse bleiben gleichwertig. Ein technisch isolierter Write→Outbox→JetStream→Projection→Search→Readback-Beleg weist den Suchnachzug nach. Ungeklärte Abweichungen blockieren ausschließlich die Cutover-Freigabe, ohne produktive Suchrouten oder Degradationssemantik zu verändern.",
-      "evidence_type": "object",
-      "id": "semantic-search-continuity",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "weltgewebe:t044:semantic-search-continuity"
+        "observation_scope": "weltgewebe:t044:t048-platform-parity"
+      }
+    },
+    {
+      "assertion": "Die heutige Produktionsfähigkeit für den lokalen Ollama-Embedding-Runtimepfad und den persistenten search-worker ist vor dem Cutover explizit klassifiziert und revisionsgebunden erhalten, bewusst extern weiterbetrieben oder mit eigener Evidenz retired; ein Kubernetes-Cutover darf diese Fähigkeiten nicht stillschweigend verlieren.",
+      "evidence_type": "object",
+      "id": "semantic-search-capability-continuity",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonthing:t044:semantic-search-capability-continuity"
+      }
+    },
+    {
+      "assertion": "Der produktionsnahe Staging-Beweis bindet die tatsächlich angewendete Runtime-Semantik an eine deklarative Git-Quelle oder an einen explizit versionierten und äquivalenzgeprüften Transform mit Retirement-Gate. Nachträgliche semantische Umschreibungen von Namen, Selektoren, NetworkPolicies oder Runtime-Konfiguration durch staging_cell.py dürfen beim Cutover keine unbegrenzte zweite Plattformwahrheit bilden.",
+      "evidence_type": "object",
+      "id": "declarative-staging-runtime-truth",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "commonthing:t044:declarative-staging-runtime-truth"
       }
     },
     {
       "assertion": "Datenbank-, JetStream-, Objekt- und Dateizustände werden mit Freeze-, Replikations- oder Dual-Run-Vertrag ohne verlorene bestätigte Fachmutation übertragen und vollständig verglichen.",
       "evidence_type": "object",
       "id": "data-transition",
-      "verifier": "migration and reconciliation receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:data-transition"
+      }
     },
     {
       "assertion": "Verkehr wird gestuft mit SLO-, Fehlerbudget- und Fachmutationsbeobachtung umgeschaltet; jede Stufe besitzt automatische Stop- und überprüfte Rückfallkriterien.",
       "evidence_type": "object",
       "id": "progressive-traffic",
-      "verifier": "traffic shift and rollback receipts"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:progressive-traffic"
+      }
     },
     {
       "assertion": "PITR, Blank-Cluster-Restore, Secret-/Schlüsselwiederherstellung und ein vollständiger Rückfall auf den alten Produktionspfad werden im produktionsnahen oder produktiven Kontext gemessen.",
       "evidence_type": "object",
       "id": "production-recovery",
-      "verifier": "disaster recovery exercise"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:production-recovery"
+      }
     },
     {
       "assertion": "Grabowski-, Chronik- und Leitstandprojektionen zeigen commitgenau SLO, RTO/RPO, Deployments, offene Verpflichtungen und erlaubte Handlungen, ohne eine zweite Fachwahrheit zu erzeugen.",
       "evidence_type": "object",
       "id": "operator-readiness",
-      "verifier": "operator projection proof"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:operator-readiness"
+      }
     },
     {
       "assertion": "Der alte Produktionspfad wird erst nach definierter Beobachtungsfrist, bestätigtem Rollbackfenster und Eigentümerfreigabe deaktiviert; Doppelwahrheit und verwaiste Ressourcen bleiben ausgeschlossen.",
       "evidence_type": "object",
       "id": "legacy-retirement",
-      "verifier": "retirement and cleanup receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:legacy-retirement"
+      }
     },
     {
       "assertion": "Nach dem Cutover belegen öffentliche Frontend-/API-Endpunkte, GitOps-Revision, laufende Workloads und Datenkontinuität denselben finalen Commit.",
       "evidence_type": "object",
       "id": "live-readback",
-      "verifier": "merge-to-live and production cluster receipt"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t044:live-readback"
+      }
     }
   ],
   "claims": [
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.weltgewebe"
+      "resource": "repo.commonthing"
     }
   ],
   "depends_on": [
@@ -98,7 +125,7 @@
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/commonthing"
   },
   "goal": "Die heute nur als Referenz- und Abnahmeplattform belegte Kubernetes-/GitOps-Architektur kontrolliert zur realen Produktionsplattform machen und den bisherigen Produktionspfad erst nach gemessener Daten-, Verkehrs-, Recovery- und Rollback-Evidenz ablösen.",
   "id": "WELTGEWEBE-OS-V1-T044",
@@ -113,23 +140,45 @@
     ],
     "event_id": 1240,
     "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
-      "event_id": 1240,
-      "event_created_at": "2026-07-26T18:03:14.121240Z",
-      "request_sha256": "be80410bc538eb28cd06d7d439d29c81cc69b9f0fa45532862cdbfb0aa5cce14",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "operator_audit_finding",
-        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-007@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
-        "observed_at": "2026-07-26T18:03:14.110862Z",
-        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
-      },
+      "candidate_event_id": "candidate-event-43576b399248a99a3b75731e",
+      "candidate_id": "candidate-30e34b5eb861f22cb90751f2",
+      "content_fingerprint": "30e34b5eb861f22cb90751f282c631cdffb19aa36742e5075ad164cd22af4281",
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
-        "claim_or_dispatch_authority"
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-10-17T16:11:35.367563Z",
+      "event_id": 18565,
+      "request_sha256": "584e4982df6e999666914995d902d3cd94f9b153da8ab92b938b524a3f408b83",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "1097eeb5dfd24e6f42bfbc39e4e5e981ce5116f34aab0c5ff2baa170a778f0a8",
+        "freshness": "fingerprint-bound",
+        "kind": "github_issue",
+        "locator": "https://github.com/heimgewebe/commonthing/issues/1961#issuecomment-6227993405",
+        "observed_at": "2026-10-17T16:11:34.922354Z",
+        "sha256": null
+      },
+      "source_fingerprint": "1097eeb5dfd24e6f42bfbc39e4e5e981ce5116f34aab0c5ff2baa170a778f0a8",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "1097eeb5dfd24e6f42bfbc39e4e5e981ce5116f34aab0c5ff2baa170a778f0a8",
+          "freshness": "fingerprint-bound",
+          "kind": "github_issue",
+          "locator": "https://github.com/heimgewebe/commonthing/issues/1961#issuecomment-6227993405",
+          "observed_at": "2026-10-17T16:11:34.922354Z",
+          "sha256": null
+        }
       ]
     },
     "reason": "Der bestehende Production-Live-Contract beweist erreichbare Endpunkte und Commitidentität, aber nicht, dass die reale Produktion bereits auf Kubernetes läuft.",
@@ -150,8 +199,7 @@
         "B5-PASS",
         "R5-PASS",
         "R6-R9 approval",
-        "Kubernetes production",
-        "Git TaskSpec state does not independently prove Bureau StateStore revision 6"
+        "Kubernetes production"
       ],
       "production_platform": "Docker Compose on commonserver",
       "reason": "No proven operational need presently justifies additional Kubernetes complexity.",

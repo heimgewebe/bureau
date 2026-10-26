@@ -229,6 +229,11 @@ def _contract(path: Path, *, stage: str, kind: str, name: str) -> dict[str, Any]
                 path,
             )
         read_write_paths = tuple(f"%h/.local/state/{item}" for item in directories)
+        # Even read-only SQLite WAL queries need a writable -shm mapping.
+        # Grabowski owns that TaskDB directory; Bureau never creates it.
+        # On first boot, ignore its absence so a degraded receipt is possible.
+        if stage == "verifier":
+            read_write_paths += ("-%h/.local/state/grabowski",)
         expected_read_write = "ReadWritePaths=" + " ".join(read_write_paths)
         read_write_lines = [
             line for line in text.splitlines() if line.startswith("ReadWritePaths=")

@@ -151,6 +151,8 @@ def test_fresh_profile_state_contract_is_private_and_exact(tmp_path: Path) -> No
     for stage_result, (stage, name, _module) in zip(result["stages"], STAGES, strict=True):
         directories = STATE_DIRECTORIES[stage]
         read_write_paths = [f"%h/.local/state/{item}" for item in directories]
+        if stage == "verifier":
+            read_write_paths.append("-%h/.local/state/grabowski")
         assert stage_result["state_contract"] == {
             "directories": list(directories),
             "mode": "0700",
@@ -165,6 +167,41 @@ def test_fresh_profile_state_contract_is_private_and_exact(tmp_path: Path) -> No
         assert lines.count("ReadWritePaths=" + " ".join(read_write_paths)) == 1
         assert "ProtectHome=read-only" in lines
         assert "NoNewPrivileges=yes" in lines
+
+
+def test_verifier_wal_directory_is_exact_not_broad(tmp_path: Path) -> None:
+    fixture = _fixture(tmp_path)
+    service = fixture["release"] / "ops" / "systemd" / "bureau-verifier-control.service"
+    text = service.read_text(encoding="utf-8")
+    expected = (
+        "ReadWritePaths=%h/.local/state/bureau-verifier "
+        "%h/.local/state/bureau-cycle -%h/.local/state/grabowski"
+    )
+    assert text.splitlines().count(expected) == 1
+
+    service.write_text(
+        text.replace(expected, expected.replace("-%h/.local/state/grabowski", "%h/.local/state")),
+        encoding="utf-8",
+    )
+    with pytest.raises(CycleDeploymentError) as caught:
+        _audit(fixture)
+    assert caught.value.code == "canonical-unit-state-paths"
+
+
+def test_verifier_missing_grabowski_directory_must_be_optional(tmp_path: Path) -> None:
+    fixture = _fixture(tmp_path)
+    service = fixture["release"] / "ops" / "systemd" / "bureau-verifier-control.service"
+    text = service.read_text(encoding="utf-8")
+    assert " -%h/.local/state/grabowski" in text
+
+    # A fresh NixOS profile may have no Grabowski TaskDB yet.
+    service.write_text(
+        text.replace(" -%h/.local/state/grabowski", " %h/.local/state/grabowski"),
+        encoding="utf-8",
+    )
+    with pytest.raises(CycleDeploymentError) as caught:
+        _audit(fixture)
+    assert caught.value.code == "canonical-unit-state-paths"
 
 
 def test_missing_state_directory_contract_fails_closed(tmp_path: Path) -> None:

@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import sqlite3
 import subprocess
 import sys
@@ -53,7 +52,7 @@ def _system_binary(
         candidate = root / name
         if candidate.is_file() and os.access(candidate, os.X_OK):
             return str(candidate)
-    return shutil.which(name) or name
+    raise FileNotFoundError(f"trusted system binary unavailable: {name}")
 
 
 def utc_now() -> str:

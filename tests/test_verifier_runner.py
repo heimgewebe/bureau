@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from bureau_cycle import verifier_runner
 
 
@@ -48,3 +50,24 @@ def test_system_binary_falls_back_to_standard_linux(tmp_path: Path) -> None:
     program.chmod(0o755)
 
     assert verifier_runner._system_binary("git", roots=(nixos, legacy)) == str(program)
+
+
+@pytest.mark.parametrize("name", ["git", "systemctl"])
+def test_system_binary_never_uses_untrusted_process_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str,
+) -> None:
+    poison = tmp_path / "poisoned-path"
+    poison.mkdir()
+    dummy = poison / name
+    marker = tmp_path / "untrusted-executed"
+    dummy.write_text(
+        f"#!/bin/sh\nprintf executed > {marker}\n",
+        encoding="utf-8",
+    )
+    dummy.chmod(0o755)
+    monkeypatch.setenv("PATH", str(poison))
+
+    with pytest.raises(FileNotFoundError, match=f"trusted system binary unavailable: {name}"):
+        verifier_runner._system_binary(name, roots=(tmp_path / "absent-system-bin",))
+
+    assert not marker.exists()

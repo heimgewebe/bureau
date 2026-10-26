@@ -29,7 +29,7 @@
     },
     {
       "id": "immutable-runtime-readback",
-      "assertion": "After the effect, the immutable Bureau source release, installed package tree, manifest, launcher integrity, canonical Registry snapshot, and user-systemd scheduler attest the same protected source commit; Bureau doctor and task-supply read back actual runtime health and normal task claimability.",
+      "assertion": "After the one reserved executor effect, independently re-read immutable Bureau release source, installed package tree, manifest, launcher integrity and canonical Registry snapshot against exactly the protected source commit; doctor and task-supply must demonstrate healthy installed runtime and NORMAL task claimability, not merely fallback scouts. Explicitly prove reboot-persistent user-systemd installation: all managed service/timer fragments are regular exact-SHA files under the intent-bound persistent user_unit_dir (not only /run/user or runtime_user_unit_dir), the required bureau-task-supply.timer has a persistent timers.target.wants symlink to that file, systemctl --user show reports FragmentPath under persistent user_unit_dir, UnitFileState=enabled, ActiveState=active, SubState=waiting and successful bureau-task-supply.service; loginctl show-user alex -p Linger must report yes. Record those on-disk file/target hashes, enablement paths, systemctl and loginctl facts in the EXISTING immutable-readback evidence object before single-use finalization. A current-boot runtime-unit-only artifact or successful transient timer alone never satisfies this criterion. A reboot was not performed and must not be claimed as tested from this evidence.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -320,7 +320,93 @@
       "authority to modify historical or foreign task/PR paths",
       "authority to change NixOS, storage or Pop!_OS",
       "automatic privilege for Bureau normal queue or task publication"
-    ]
+    ],
+    "registration_observation_digest_contract": {
+      "schema_version": 1,
+      "algorithm": "sha256",
+      "canonicalization": "UTF-8 JSON with sort_keys=true, separators=(',', ':'), ensure_ascii=false, plus one trailing LF; omit only the top-level observation_sha256 field before hashing",
+      "original_artifact_sha256": "8f5d62b8bb4c30a9bb149c95ce567d5857f90c832b44040ffd0d1f06d2daf745",
+      "source": "original immutable Bureau runtime-refresh observation captured 2026-10-26T11:54:12.311371Z",
+      "verification_requirement": "Recompute from metadata.registration_observation_full before trusting original_artifact_sha256. metadata.registration_observation is a compact projection and is NOT the preimage of observation_sha256."
+    },
+    "registration_observation_full": {
+      "age_seconds": 577179,
+      "check_summary": {
+        "registry-registration-preflight/freshness": {
+          "observed_states": [
+            "success"
+          ],
+          "state": "success"
+        },
+        "validate (3.10)": {
+          "observed_states": [
+            "success"
+          ],
+          "state": "success"
+        },
+        "validate (3.12)": {
+          "observed_states": [
+            "success"
+          ],
+          "state": "success"
+        }
+      },
+      "deployed_manifest_sha256": "45582feefc7ebbafe044e6bd74e4de99b1937af5c306fc05302d887c3291a699",
+      "deployed_source_commit": "4dbd918736489a9faa892bafc8c7bb77c3f0c5c7",
+      "does_not_establish": [
+        "deployment_authority",
+        "external_lease_liveness",
+        "future_main_stability",
+        "runtime_semantic_correctness"
+      ],
+      "kind": "bureau_runtime_refresh_observation",
+      "lag_commits": 9,
+      "main_commit": "a513f55e7a5b92f7f06529dd3de1299669db4ddc",
+      "merged_at": "2026-10-19T19:34:33Z",
+      "observation_sha256": "8f5d62b8bb4c30a9bb149c95ce567d5857f90c832b44040ffd0d1f06d2daf745",
+      "observed_at": "2026-10-26T11:54:12.311371Z",
+      "pull_request": {
+        "head_commit": "818a6d87c0f17076e8b8a564d6485de3beaf4bf0",
+        "merge_commit": "a513f55e7a5b92f7f06529dd3de1299669db4ddc",
+        "number": 2359,
+        "url": "https://github.com/heimgewebe/bureau/pull/2359"
+      },
+      "reason_codes": [],
+      "recovery_action": {
+        "action": "prepare-intent",
+        "eligible": true,
+        "requires_authorization": false
+      },
+      "repository": "heimgewebe/bureau",
+      "required_checks": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness"
+      ],
+      "runtime_source_identity": {
+        "deployed_source_commit": "4dbd918736489a9faa892bafc8c7bb77c3f0c5c7",
+        "registry_reasons": [],
+        "registry_source_commit": "4dbd918736489a9faa892bafc8c7bb77c3f0c5c7",
+        "schema_version": 1,
+        "status": "proven"
+      },
+      "scheduler_target_state": "source-not-current",
+      "schema_version": 1,
+      "slo_seconds": 5400,
+      "source_ancestry": {
+        "ahead_by": 9,
+        "behind_by": 0,
+        "compare_status": "ahead",
+        "deployed_source_commit": "4dbd918736489a9faa892bafc8c7bb77c3f0c5c7",
+        "main_commit": "a513f55e7a5b92f7f06529dd3de1299669db4ddc",
+        "merge_base_commit": "4dbd918736489a9faa892bafc8c7bb77c3f0c5c7",
+        "method": "github-compare",
+        "schema_version": 1,
+        "status": "proven"
+      },
+      "status": "alert",
+      "target_sha256": "ce869877bcfeb3a5ef734d7427d9beab1fea02b398c6ef5c380003cd1ab177ca"
+    }
   },
   "priority": {
     "lane": "now",
@@ -336,7 +422,7 @@
     "rollback"
   ],
   "rollback": {
-    "strategy": "Keep the existing integrity-valid installed Bureau release 4dbd918736489a9faa892bafc8c7bb77c3f0c5c7 and backup/recovery intact until the one reserved-executor attempt proves an exact immutable release, manifest, Registry, launchers and service readback. On any uncertain effect or drift, retain prior release, logs and exact provenance, reconcile first, do not blindly repeat or modify unrelated tasks."
+    "strategy": "Retain the verified pre-effect Bureau release 4dbd918736489a9faa892bafc8c7bb77c3f0c5c7, manifest, canonical Registry snapshot, launchers, six persistent user-unit service/timer fragments and wants-link preimage as an independently readable rollback generation before switching any live pointer. On an in-process error, use the installed runtime_refresh.converge_user_scheduler atomic exception path (_restore_scheduler_preimage / _restore_scheduler_files and _restore_scheduler_enablement_links plus rollback_effect for installed release) and record both the attempted effect and a fresh readback proving prior manifest/Registry/launchers, on-disk unit hashes, timer enablement and doctor agree again at the prior exact source. If an attempt is interrupted by process crash or host reboot after started.json and before a validated result, resume_policy=never: NEVER retry apply and NEVER consume/finalize the single-use authority on an unproven outcome. Reconcile immutable manifest, Registry, units and durable rollback preimage and started/intent evidence first; if partially switched, initiate independently authorized incident recovery from the recorded exact preimages (outside this exhausted Bureau authority), prove the restored known-good 4dbd918 source by immutable readback, and retain the incident and restore receipts. If that separate recovery route cannot yet perform a verified restore, remain blocked with prior artifacts intact; do not assert success or automatically finalize. No modification of Pop!_OS, other repositories, tasks or foreign leases."
   },
   "schema_version": 1,
   "state": "planned",

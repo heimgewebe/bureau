@@ -23,6 +23,7 @@ def test_helper_runs_with_sanitized_environment(tmp_path: Path, monkeypatch) -> 
     assert result["json"]["trigger"] == "pytest"
     assert result["json"]["lifecycle_state"] == "running"
 
+
 def test_system_binary_prefers_nixos_profile_without_store_hash(tmp_path: Path) -> None:
     nixos = tmp_path / "nix-profile"
     legacy = tmp_path / "usr-bin"

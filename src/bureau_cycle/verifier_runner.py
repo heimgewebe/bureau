@@ -38,6 +38,23 @@ SCHEMA_VERSION = 2
 TERMINAL_RESULTS = {"completed", "partial", "blocked", "idle", "failed"}
 TRANSIENT_UNIT_RE = re.compile(r"^(grabowski-(?:task|job|browser-worker|gui-worker)-).+\.service$")
 
+def _system_binary(
+    name: str,
+    *,
+    roots: tuple[Path, ...] = (
+        Path("/run/current-system/sw/bin"),
+        Path("/usr/bin"),
+        Path("/bin"),
+    ),
+) -> str:
+    """Resolve stable NixOS or standard Linux binaries without pinning a store hash."""
+    for root in roots:
+        candidate = root / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    raise FileNotFoundError(f"trusted system binary unavailable: {name}")
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -387,7 +404,7 @@ def systemctl_lines(args: list[str]) -> list[str]:
     env.update({"HOME": str(HOME), "PATH": "/usr/bin:/bin", "LC_ALL": "C.UTF-8"})
     env.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
     proc = subprocess.run(
-        ["/usr/bin/systemctl", "--user", *args],
+        [_system_binary("systemctl"), "--user", *args],
         cwd=str(HOME),
         env=env,
         text=True,
@@ -490,7 +507,7 @@ def workspace_inventory(receipt: dict[str, Any]) -> None:
                 continue
             repo_count += 1
             proc = subprocess.run(
-                ["/usr/bin/git", "-C", str(repo), "worktree", "list", "--porcelain"],
+                [_system_binary("git"), "-C", str(repo), "worktree", "list", "--porcelain"],
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

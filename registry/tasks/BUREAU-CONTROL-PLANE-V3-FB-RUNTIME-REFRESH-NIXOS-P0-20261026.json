@@ -11,7 +11,7 @@
     },
     {
       "id": "source-ancestry-precondition",
-      "assertion": "Before prepare-intent and apply, the immutable installed Bureau source and canonical Registry source are identical and equal to 4dbd918736489a9faa892bafc8c7bb77c3f0c5c7 or a proven Git descendant of it and ancestor of the chosen protected main. Reject stale or divergent source, mismatched manifest/Registry, or unverified ancestor. ADDITIONAL HARD PRE-EFFECT NixOS host-persistence gate (MUST be proven before BOTH prepare-intent and apply, then reobserved immediately before effect): in the actual user-systemd host mount namespace, not the Grabowski system service ProtectHome read-only namespace, require `loginctl show-user alex -p Linger` to be `yes`; `findmnt` and statvfs for the exact intent-bound user_unit_dir and timers.target.wants must show durable Btrfs/non-tmpfs storage outside /run, owned/writable/searchable for the executor. Snapshot all manifest-bound managed service/timer fragment paths and SHA/modes and the persistent required timers.target.wants link, and record every managed timer's existing UnitFileState and ActiveState/SubState (do not silently enable optional timers). Record every managed unit's DropInPaths and each approved persistent drop-in digest; on this host the only observed nonempty drop-in is bureau-verifier-control.service.d/20-grabowski-sqlite-wal.conf with SHA256 e4caecbcc882c9fb62b5bb696d4dee784cae6fa923b0569f3b5908b1274f9934 and must be retained. Any untrusted /run/user or runtime_user_unit_dir drop-in, mask, unexpected fragment, unit set drift, unapproved drop-in, non-persistent link or Linger mismatch fails CLOSED before the first effect. Bind the resulting first- and second-observation facts into the EXISTING approval-intent and source-precondition evidence classes, with no new invented no-run class.",
+      "assertion": "Before prepare-intent and immediately before apply, in addition to exact protected-main CI, deployed-source/Registry/manifest ancestry and reserved-executor predicates, collect two FRESH independent user-systemd HOST-namespaced manual observations; the first is appended to approval-intent before prepare, the second to source-precondition before apply. Verify Linger=yes via loginctl show-user alex -p Linger, and verify with findmnt/statvfs that the configured persistent user_unit_dir (/home/alex/.config/systemd/user), its timers.target.wants, and trusted drop-in directories are actual non-tmpfs durable RW Btrfs paths outside /run. After prepare, require intent.user_unit_dir to equal /home/alex/.config/systemd/user byte-for-path; otherwise refuse apply. The source and installed runtime must agree on the ENTIRE set of managed scheduler units: exactly both .service and .timer for bureau-halfhour-operator, bureau-curator, bureau-operator-control, bureau-verifier-control, bureau-closure-planner, and bureau-task-supply. If target adds or removes a managed name, FAIL CLOSED before any effect; this authority does not approve set migration. Snapshot for every managed path its present/absent state, SHA-256, mode, FragmentPath, UnitFileState, ActiveState/SubState and service Result/ExecMainStatus. Snapshot the persistent timers.target.wants enablement paths and link targets, including proof they are not masks or runtime-only overlays. Require bureau-task-supply.timer already enabled/active/waiting and bureau-task-supply.service Result=success and ExecMainStatus=0 BEFORE any effect; snapshot the other five timer intents and require their enabled/active state to be preserved (do not enable optional timers). For ALL twelve units, query DropInPaths before both checkpoints, including empty sets. Require exact pre-approved persistent drop-in paths and content SHA-256 and reject any runtime-only (/run/user), unexpected, masked or mutable drop-in. On this host the expected nonempty set is exactly bureau-verifier-control.service.d/20-grabowski-sqlite-wal.conf at /home/alex/.config/systemd/user/bureau-verifier-control.service.d/20-grabowski-sqlite-wal.conf with SHA-256 e4caecbcc882c9fb62b5bb696d4dee784cae6fa923b0569f3b5908b1274f9934; every other managed unit must have EMPTY DropInPaths. Persist the complete pre-effect inventory as manual-observation content in the EXISTING approval-intent and source-precondition evidence classes, explicitly validate immediately before each action, and stop before a single-use effect if any predicate is unproven. No unsupported evidence class, invented automatic validator or reboot test is claimed.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -29,7 +29,7 @@
     },
     {
       "id": "immutable-runtime-readback",
-      "assertion": "After the one reserved executor effect, independently re-read immutable Bureau release source, installed package tree, manifest, launcher integrity and canonical Registry snapshot against exactly the protected source commit; doctor and task-supply must demonstrate healthy installed runtime and NORMAL task claimability, not merely fallback scouts. Explicitly prove reboot-persistent user-systemd installation: all managed service/timer fragments are regular exact-SHA files under the intent-bound persistent user_unit_dir (not only /run/user or runtime_user_unit_dir), the required bureau-task-supply.timer has a persistent timers.target.wants symlink to that file, systemctl --user show reports FragmentPath under persistent user_unit_dir, UnitFileState=enabled, ActiveState=active, SubState=waiting and successful bureau-task-supply.service; loginctl show-user alex -p Linger must report yes. Record those on-disk file/target hashes, enablement paths, systemctl and loginctl facts in the EXISTING immutable-readback evidence object before single-use finalization. A current-boot runtime-unit-only artifact or successful transient timer alone never satisfies this criterion. A reboot was not performed and must not be claimed as tested from this evidence. For every managed service and timer (the full intent-bound set, not a fixed count of six files), systemctl --user show must prove the exact persistent FragmentPath and each managed timer's UnitFileState/ActiveState/SubState equal its pre-effect recorded intent; bureau-task-supply.timer must be enabled/active/waiting and its bureau-task-supply.service must report Result=success and ExecMainStatus=0. Record all DropInPaths; each must equal the exact approved PERSISTENT pre-effect path and SHA (including the known WAL drop-in) or be empty, and none may resolve to /run/user or a runtime-only overlay/mask. The immutable-readback evidence class must include pre- and post-effect proof, including the persistent wants symlink and Linger=yes. A verified effect RESULT alone, without this second independent readback, does not authorize consuming/finalizing or lease release.",
+      "assertion": "After the reserved one-shot effect and BEFORE any single-use finalization or lease release, independently verify one protected main commit across immutable installed release, package tree, canonical Registry, manifest, launcher, and ALL twelve user-systemd fragments under exactly the intent-bound PERSISTENT /home/alex/.config/systemd/user, with per-file content SHA and mode. The entire managed set must still be exactly the six names established before effect, with no added/removed units, file masks, tmpfs fragments or /run/user-only substitutes. Readback includes durable Btrfs findmnt/statvfs, persistent timers.target.wants symlink targets and Linger=yes. For each managed unit, DropInPaths POST set MUST equal EXACTLY the unit's recorded PRE set, including each absolute path and SHA256. Empty POST is permitted only when that unit's PRE set was empty. Specifically bureau-verifier-control.service MUST retain /home/alex/.config/systemd/user/bureau-verifier-control.service.d/20-grabowski-sqlite-wal.conf with SHA256 e4caecbcc882c9fb62b5bb696d4dee784cae6fa923b0569f3b5908b1274f9934; any lost or new drop-in fails readback. Every timer must retain its recorded PRE UnitFileState and ActiveState/SubState; bureau-task-supply.timer must still be enabled/active/waiting and its persistent wants link valid. For every managed service, require Result=success and ExecMainStatus=0, explicitly including bureau-task-supply.service. Bureau doctor and task-supply must prove healthy runtime plus NORMAL claimable task routing, not fallback scouts alone; if persistent unit and store convergence is correct but other independent queue-policy blockers remain, record those separately rather than fabricate normal-claimability success. Existing allowed immutable-readback and state-store-integrity evidence must include both manual host observations, post-effect snapshot, release/Registry diff, and incident/rollback result if any. A successful effect result is NOT proof of independent readback, normal claimability, reboot survival or successful closeout.",
       "evidence_type": "object",
       "verifier": "manual_observation",
       "verifier_config": {
@@ -409,32 +409,58 @@
     },
     "runtime_host_persistence_preflight": {
       "schema_version": 1,
-      "when": [
-        "before prepare-intent",
-        "immediately before apply"
+      "expected_user_unit_dir": "/home/alex/.config/systemd/user",
+      "require_intent_user_unit_dir_exact_match": true,
+      "observed_in": "transient user-systemd host namespace rather than Grabowski ProtectHome=read-only system service",
+      "checkpoint_policy": [
+        {
+          "before": "prepare-intent",
+          "bind_existing_evidence_class": "approval-intent",
+          "properties": "complete initial persistent host/fragment/drop-in snapshot"
+        },
+        {
+          "before": "apply",
+          "bind_existing_evidence_class": "source-precondition",
+          "properties": "fresh second snapshot and exact equality with first, and intent.user_unit_dir equality"
+        },
+        {
+          "after": "effect",
+          "bind_existing_evidence_class": "immutable-readback",
+          "properties": "full post-effect and rollback-if-failed readback, no unsupported no-run class"
+        }
       ],
-      "context": "user-systemd host mount namespace, not Grabowski system unit ProtectHome=read-only",
-      "user_unit_dir": "/home/alex/.config/systemd/user",
-      "require_nonvolatile_user_unit_dir": true,
-      "required_user_linger": "yes",
-      "required_fragment_set": "intent-bound full managed service/timer set, same before and after",
-      "required_timer_intent": "preserve each managed timer UnitFileState and active/substate; bureau-task-supply.timer enabled/active/waiting",
-      "disallow_runtime_only_dropins": true,
-      "approved_persistent_dropins": [
+      "full_managed_unit_names": [
+        "bureau-halfhour-operator",
+        "bureau-curator",
+        "bureau-operator-control",
+        "bureau-verifier-control",
+        "bureau-closure-planner",
+        "bureau-task-supply"
+      ],
+      "unit_set_migration_permitted": false,
+      "preeffect_required_supply_timer_state": "enabled/active/waiting",
+      "preeffect_required_supply_service_state": "Result=success, ExecMainStatus=0",
+      "optional_timer_state_policy": "record and preserve exact UnitFileState/ActiveState/SubState",
+      "approved_dropins": [
         {
           "unit": "bureau-verifier-control.service",
           "path": "/home/alex/.config/systemd/user/bureau-verifier-control.service.d/20-grabowski-sqlite-wal.conf",
           "sha256": "e4caecbcc882c9fb62b5bb696d4dee784cae6fa923b0569f3b5908b1274f9934"
         }
       ],
-      "required_existing_evidence_classes": [
+      "all_other_managed_dropin_sets": "empty before and after",
+      "post_dropin_set_policy": "exact-set-equality-per-unit; empty only if pre set empty",
+      "rollback_preimage_policy": "all twelve fragments and all enablement/drop-in paths, SHA/mode or recorded absence, service/timer state and linger/mount",
+      "no_run_evidence_classes": [
         "approval-intent",
         "source-precondition",
         "immutable-readback"
       ],
-      "recorded_from_live_read_only_checks": true,
-      "no_reboot_claim": true,
-      "fail_closed_on_drift": true
+      "hard_gate_outcome": "manual observation fail-closed before apply; not installed automatic enforcement",
+      "record_unsupported_claims": [
+        "never claim actual reboot from live timer readback",
+        "never claim runtime rollback completed if an incident exists"
+      ]
     }
   },
   "priority": {
@@ -451,7 +477,7 @@
     "rollback"
   ],
   "rollback": {
-    "strategy": "Retain the verified pre-effect Bureau release 4dbd918736489a9faa892bafc8c7bb77c3f0c5c7, manifest, canonical Registry snapshot, launchers, six persistent user-unit service/timer fragments and wants-link preimage as an independently readable rollback generation before switching any live pointer. On an in-process error, use the installed runtime_refresh.converge_user_scheduler atomic exception path (_restore_scheduler_preimage / _restore_scheduler_files and _restore_scheduler_enablement_links plus rollback_effect for installed release) and record both the attempted effect and a fresh readback proving prior manifest/Registry/launchers, on-disk unit hashes, timer enablement and doctor agree again at the prior exact source. If an attempt is interrupted by process crash or host reboot after started.json and before a validated result, resume_policy=never: NEVER retry apply and NEVER consume/finalize the single-use authority on an unproven outcome. Reconcile immutable manifest, Registry, units and durable rollback preimage and started/intent evidence first; if partially switched, initiate independently authorized incident recovery from the recorded exact preimages (outside this exhausted Bureau authority), prove the restored known-good 4dbd918 source by immutable readback, and retain the incident and restore receipts. If that separate recovery route cannot yet perform a verified restore, remain blocked with prior artifacts intact; do not assert success or automatically finalize. No modification of Pop!_OS, other repositories, tasks or foreign leases. THIRD CASE: If apply returns a validated deployed/already_current result but subsequent independent immutable-runtime-readback fails ANY condition (fragment, DropInPaths, managed timer intent, service Result/ExecMainStatus, doctor/frontier or Linger), treat even a FULLY switched new runtime as an UNPROVEN failed outcome. Do NOT finalize/closeout or release the claim/leases as successful. Preserve the exact result, started.json, previous release 4dbd918, manifest, Registry and entire per-path scheduler preimage (including recorded absent state for any target-introduced artifact). Raise a persistent incident and use only separately authorized out-of-band incident recovery (never replay the one-shot executor) to atomically restore old manifest/Registry/launchers and all intent-bound unit fragments, trusted persistent DropInPaths and wants-links; delete only artifacts whose preimage was conclusively absent and only within the original exact lease/scope. Require a new independent old-source immutable readback with source SHA, file hashes, timer states, service Result/ExecMainStatus, Linger and doctor before any recovery closeout; otherwise retain blocked incident and do not claim success. Do not declare a synthetic reboot proof, and do not acquire a second Bureau authority for the same failed effect."
+    "strategy": "Maintain an intact integrity-verified pre-effect Bureau source release 4dbd918736489a9faa892bafc8c7bb77c3f0c5c7, manifest, Registry snapshot, launchers and entire INTENT-BOUND per-path scheduler preimage before any apply. The complete snapshot includes twelve managed service/timer fragment files and every persistent wants-link and active-state intent, each exact present/absent state, per-path SHA/mode, and ALL approved persistent DropInPaths including the verifier WAL override hash; it also records absence for any candidate-introduced path and the pre-effect Linger+mount facts. Never hard-code a count of six files. CASE A: For in-process apply failure, the installed converge_user_scheduler exception path and rollback_effect can restore its native tracked scheduler fragments, enablement links and release pointers. Those helpers do NOT by themselves establish restoration of arbitrary service drop-ins or every service runtime property. Reobserve every recorded preimage item; any uncovered mutation/drop-in/drift requires separately authorized incident recovery and blocks authority finalization. CASE B: For process crash, host reboot or started.json with no authoritative validated result, resume_policy=never. Do not repeat the one-shot executor, auto-consume authority, infer success from absent output, or discard rollback artifacts. Reconcile actual manifest, Registry, launchers, fragment and DropInPath inventories first, then restore exact previous preimage through a SEPARATELY authorized recovery route if any mismatch is observed. The exhausted TaskSpec never grants itself incident-recovery powers. CASE C: If apply reports deployed/already_current but the subsequent independent source, persistency, DropInPaths, service health, Linger, doctor or NORMAL routing readback fails, treat the FULLY or partly switched release alike as an UNPROVEN failed outcome: do NOT finalize the authority or release leases as success. Retain the exact successful result and started/intent receipts; invoke separately authorized out-of-band incident recovery to re-activate the retained previous release/manifest/Registry/launchers and all original unit+drop-in files and links, delete only exact target-introduced paths whose preimage provably recorded absence within the approved scope, then reobserve. ALL cases share the SAME required ROLLBACK READBACK before recovery closure: old source 4dbd918736489a9faa892bafc8c7bb77c3f0c5c7 package and Registry/manifest/launcher SHA, ALL per-path fragment modes/hashes, exact pre-effect DropInPaths sets and SHA, persistent wants-link targets, every timer UnitFileState and ActiveState/SubState, service Result=success/ExecMainStatus=0, Linger=yes, durable Btrfs mount and Bureau doctor. If recovery is unavailable or any check fails, preserve blocked incident, old artifacts, logs and leases under applicable policy without asserting success. This authority NEVER changes NixOS, Pop!_OS, other repositories, any foreign task/lease, or bypasses Captain."
   },
   "schema_version": 1,
   "state": "planned",

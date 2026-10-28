@@ -539,7 +539,11 @@ def main() -> int:
         project = str(item.get("name") or source_id)
         try:
             if not (root / ".git").exists():
-                if not root.exists() and not root.is_symlink() and not previously_observed(source_id):
+                if (
+                    not root.exists()
+                    and not root.is_symlink()
+                    and not previously_observed(source_id)
+                ):
                     unavailable_sources.append({
                         "source_id": source_id,
                         "source_path": str(root),
@@ -559,7 +563,11 @@ def main() -> int:
             )
 
     vault_root = Path(str(registry.get("vault_root", ""))).expanduser()
-    if not vault_root.exists() and not vault_root.is_symlink() and not previously_observed("vault:gewebe"):
+    if (
+        not vault_root.exists()
+        and not vault_root.is_symlink()
+        and not previously_observed("vault:gewebe")
+    ):
         unavailable_sources.append({
             "source_id": "vault:gewebe",
             "source_path": str(vault_root),
@@ -582,7 +590,11 @@ def main() -> int:
                 process_document("vault:gewebe", vault_commit, vault_root, path, ",".join(projects))
         except Exception as exc:
             scanner_errors.append(
-                {"source_id": "vault:gewebe", "source_path": str(vault_root), "error": str(exc)[:1000]}
+                {
+                    "source_id": "vault:gewebe",
+                    "source_path": str(vault_root),
+                    "error": str(exc)[:1000],
+                }
             )
     if not source_revisions:
         scanner_errors.append({

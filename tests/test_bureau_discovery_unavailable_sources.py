@@ -1,13 +1,13 @@
 """Unavailable never-seen sources must not stall unrelated Bureau discovery."""
 from __future__ import annotations
 
-from contextlib import redirect_stdout
 import io
 import json
-from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
 from unittest.mock import patch
 
 from bureau_cycle import discovery
@@ -40,7 +40,11 @@ class UnavailableDiscoverySourcesTests(unittest.TestCase):
         self._write_previous()
 
     def _git(self, repo: Path, *args: str) -> None:
-        subprocess.run(["git", "-C", str(repo), *args], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(
+            ["git", "-C", str(repo), *args],
+            check=True,
+            capture_output=True,
+        )
 
     def _make_repo(self, repo: Path) -> None:
         repo.mkdir()
@@ -106,7 +110,10 @@ class UnavailableDiscoverySourcesTests(unittest.TestCase):
         self.assertFalse(report["promotion_allowed"])
         self.assertEqual("partial", report["result"])
         self.assertEqual(["repo:missing"], [e["source_id"] for e in report["scanner_errors"]])
-        self.assertIn("repo:missing:plan.md", json.loads(discovery.SOURCE_STATE.read_text())["documents"])
+        self.assertIn(
+            "repo:missing:plan.md",
+            json.loads(discovery.SOURCE_STATE.read_text())["documents"],
+        )
 
     def test_previously_seen_missing_vault_still_blocks_promotion(self) -> None:
         self._write_previous({

@@ -457,14 +457,36 @@ def main() -> int:
     if not isinstance(prior_revisions, list):
         raise RuntimeError(f"invalid source revisions: {SOURCE_STATE}")
 
+    # Observation history is durable even when a failed scan publishes no
+    # current revision. Without it, an empty previously scanned repository
+    # becomes incorrectly "never seen" on the second consecutive failure.
+    prior_observed = previous.get("observed_source_ids", [])
+    if (
+        not isinstance(prior_observed, list)
+        or any(not isinstance(value, str) or not value.strip() for value in prior_observed)
+    ):
+        raise RuntimeError(f"invalid observed source ids: {SOURCE_STATE}")
+    observed_source_ids = set(prior_observed)
+    observed_source_ids.update(
+        item["source_id"]
+        for item in prior_revisions
+        if isinstance(item, dict)
+        and isinstance(item.get("source_id"), str)
+        and item["source_id"]
+    )
+    observed_source_ids.update(
+        item["source_id"]
+        for item in previous_documents.values()
+        if isinstance(item, dict)
+        and isinstance(item.get("source_id"), str)
+        and item["source_id"]
+    )
+
     def previously_observed(source_id: str) -> bool:
-        return any(
-            key.startswith(source_id + ":")
-            or (isinstance(doc, dict) and doc.get("source_id") == source_id)
-            for key, doc in previous_documents.items()
-        ) or any(
-            isinstance(item, dict) and item.get("source_id") == source_id
-            for item in prior_revisions
+        # Support legacy state where a document only had its source in the key.
+        return source_id in observed_source_ids or any(
+            isinstance(key, str) and key.startswith(source_id + ":")
+            for key in previous_documents
         )
 
     # Missing repositories with no prior scanned documents are not scanner
@@ -536,6 +558,8 @@ def main() -> int:
     for item in enabled_repositories:
         root = Path(str(item.get("root", ""))).expanduser()
         source_id = str(item.get("source_id") or f"repo:{item.get('name')}")
+        if previously_observed(source_id):
+            observed_source_ids.add(source_id)
         project = str(item.get("name") or source_id)
         try:
             if not (root / ".git").exists():
@@ -563,6 +587,8 @@ def main() -> int:
             )
 
     vault_root = Path(str(registry.get("vault_root", ""))).expanduser()
+    if previously_observed("vault:gewebe"):
+        observed_source_ids.add("vault:gewebe")
     if (
         not vault_root.exists()
         and not vault_root.is_symlink()
@@ -596,6 +622,7 @@ def main() -> int:
                     "error": str(exc)[:1000],
                 }
             )
+    observed_source_ids.update(item["source_id"] for item in source_revisions)
     if not source_revisions:
         scanner_errors.append({
             "source_id": "source-registry",
@@ -704,6 +731,7 @@ def main() -> int:
             "contract_version": CONTRACT_VERSION,
             "updated_at": finished_at,
             "source_revisions": source_revisions,
+            "observed_source_ids": sorted(observed_source_ids),
             "documents": current_documents,
             "candidate_fingerprints": sorted(current_fingerprints),
         },

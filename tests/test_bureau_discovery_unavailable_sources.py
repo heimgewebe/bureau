@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import json
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -78,15 +79,20 @@ class UnavailableDiscoverySourcesTests(unittest.TestCase):
         return json.loads((self.state / "latest.json").read_text())
 
     def test_never_seen_missing_sources_do_not_block_other_checked_out_repo(self) -> None:
-        report = self._scan()
-        self.assertTrue(report["promotion_allowed"])
-        self.assertFalse(report["degraded"])
-        self.assertEqual([], report["scanner_errors"])
-        self.assertEqual(["repo:healthy"], [s["source_id"] for s in report["source_revisions"]])
-        self.assertEqual(
-            {"repo:missing", "vault:gewebe"},
-            {s["source_id"] for s in report["unavailable_sources"]},
-        )
+        for _ in range(2):
+            report = self._scan()
+            self.assertTrue(report["promotion_allowed"])
+            self.assertFalse(report["degraded"])
+            self.assertEqual([], report["scanner_errors"])
+            self.assertEqual(["repo:healthy"], [s["source_id"] for s in report["source_revisions"]])
+            self.assertEqual(
+                {"repo:missing", "vault:gewebe"},
+                {s["source_id"] for s in report["unavailable_sources"]},
+            )
+            self.assertEqual(
+                ["repo:healthy"],
+                json.loads(discovery.SOURCE_STATE.read_text())["observed_source_ids"],
+            )
 
     def test_previously_seen_empty_repository_still_blocks_promotion(self) -> None:
         previous = json.loads(discovery.SOURCE_STATE.read_text())
@@ -95,9 +101,14 @@ class UnavailableDiscoverySourcesTests(unittest.TestCase):
             "ref": "HEAD", "revision": "a" * 40,
         }]
         discovery.SOURCE_STATE.write_text(json.dumps(previous))
-        report = self._scan()
-        self.assertFalse(report["promotion_allowed"])
-        self.assertEqual(["repo:missing"], [e["source_id"] for e in report["scanner_errors"]])
+        for _ in range(3):
+            report = self._scan()
+            self.assertFalse(report["promotion_allowed"])
+            self.assertEqual(["repo:missing"], [e["source_id"] for e in report["scanner_errors"]])
+            self.assertIn(
+                "repo:missing",
+                json.loads(discovery.SOURCE_STATE.read_text())["observed_source_ids"],
+            )
 
     def test_previously_seen_missing_repository_still_blocks_promotion(self) -> None:
         self._write_previous({
@@ -125,6 +136,55 @@ class UnavailableDiscoverySourcesTests(unittest.TestCase):
         report = self._scan()
         self.assertFalse(report["promotion_allowed"])
         self.assertEqual(["vault:gewebe"], [e["source_id"] for e in report["scanner_errors"]])
+
+    def test_successfully_observed_empty_source_remains_required_after_disappearance(self) -> None:
+        registry = json.loads(discovery.REGISTRY.read_text())
+        registry["repositories"][1]["planning_files"] = []
+        discovery.REGISTRY.write_text(json.dumps(registry))
+        self._make_repo(self.missing)
+        initial = self._scan()
+        self.assertTrue(initial["promotion_allowed"])
+        self.assertIn("repo:missing", {
+            item["source_id"] for item in initial["source_revisions"]
+        })
+        # No documents were ever stored for this source.
+        self.assertFalse(any(
+            item.get("source_id") == "repo:missing"
+            for item in json.loads(discovery.SOURCE_STATE.read_text())["documents"].values()
+        ))
+        shutil.rmtree(self.missing)
+        for _ in range(3):
+            report = self._scan()
+            self.assertFalse(report["promotion_allowed"])
+            self.assertEqual(["repo:missing"], [e["source_id"] for e in report["scanner_errors"]])
+            saved = json.loads(discovery.SOURCE_STATE.read_text())
+            self.assertNotIn("repo:missing", {
+                item["source_id"] for item in saved["source_revisions"]
+            })
+            self.assertIn("repo:missing", saved["observed_source_ids"])
+
+    def test_previously_observed_vault_without_documents_stays_required(self) -> None:
+        previous = json.loads(discovery.SOURCE_STATE.read_text())
+        previous["source_revisions"] = [{
+            "source_id": "vault:gewebe", "root": str(self.vault),
+            "ref": "HEAD", "revision": "b" * 40,
+        }]
+        discovery.SOURCE_STATE.write_text(json.dumps(previous))
+        for _ in range(3):
+            report = self._scan()
+            self.assertFalse(report["promotion_allowed"])
+            self.assertEqual(["vault:gewebe"], [e["source_id"] for e in report["scanner_errors"]])
+            self.assertIn(
+                "vault:gewebe",
+                json.loads(discovery.SOURCE_STATE.read_text())["observed_source_ids"],
+            )
+
+    def test_invalid_persisted_observation_ids_fail_before_promotion(self) -> None:
+        previous = json.loads(discovery.SOURCE_STATE.read_text())
+        previous["observed_source_ids"] = ["repo:healthy", None]
+        discovery.SOURCE_STATE.write_text(json.dumps(previous))
+        with self.assertRaisesRegex(RuntimeError, "invalid observed source ids"):
+            self._scan()
 
     def test_existing_broken_checkout_not_mistaken_for_optional_absence(self) -> None:
         self.missing.mkdir()

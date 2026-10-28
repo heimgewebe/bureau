@@ -450,6 +450,26 @@ def main() -> int:
         if not isinstance(previous, dict):
             raise RuntimeError(f"invalid source state: {SOURCE_STATE}")
     previous_documents = previous.get("documents", {}) if isinstance(previous, dict) else {}
+    if not isinstance(previous_documents, dict):
+        raise RuntimeError(f"invalid source documents: {SOURCE_STATE}")
+
+    prior_revisions = previous.get("source_revisions", []) if isinstance(previous, dict) else []
+    if not isinstance(prior_revisions, list):
+        raise RuntimeError(f"invalid source revisions: {SOURCE_STATE}")
+
+    def previously_observed(source_id: str) -> bool:
+        return any(
+            key.startswith(source_id + ":")
+            or (isinstance(doc, dict) and doc.get("source_id") == source_id)
+            for key, doc in previous_documents.items()
+        ) or any(
+            isinstance(item, dict) and item.get("source_id") == source_id
+            for item in prior_revisions
+        )
+
+    # Missing repositories with no prior scanned documents are not scanner
+    # failures: no data can be lost or falsely declared current for that source.
+    unavailable_sources: list[dict[str, str]] = []
     current_documents: dict[str, Any] = {}
     source_revisions: list[dict[str, Any]] = []
     changed_documents: list[dict[str, Any]] = []
@@ -519,6 +539,13 @@ def main() -> int:
         project = str(item.get("name") or source_id)
         try:
             if not (root / ".git").exists():
+                if not root.exists() and not root.is_symlink() and not previously_observed(source_id):
+                    unavailable_sources.append({
+                        "source_id": source_id,
+                        "source_path": str(root),
+                        "reason": "checkout_missing_never_observed",
+                    })
+                    continue
                 raise RuntimeError("canonical repository checkout is missing")
             ref, commit = resolve_commit(root, str(item.get("ref") or "origin/main"))
             source_revisions.append(
@@ -532,24 +559,37 @@ def main() -> int:
             )
 
     vault_root = Path(str(registry.get("vault_root", ""))).expanduser()
-    try:
-        vault_ref, vault_commit = resolve_commit(
-            vault_root, str(registry.get("vault_ref") or "origin/main")
-        )
-        source_revisions.append(
-            {
-                "source_id": "vault:gewebe",
-                "root": str(vault_root),
-                "ref": vault_ref,
-                "revision": vault_commit,
-            }
-        )
-        for path, projects in vault_paths(registry, vault_root, vault_commit):
-            process_document("vault:gewebe", vault_commit, vault_root, path, ",".join(projects))
-    except Exception as exc:
-        scanner_errors.append(
-            {"source_id": "vault:gewebe", "source_path": str(vault_root), "error": str(exc)[:1000]}
-        )
+    if not vault_root.exists() and not vault_root.is_symlink() and not previously_observed("vault:gewebe"):
+        unavailable_sources.append({
+            "source_id": "vault:gewebe",
+            "source_path": str(vault_root),
+            "reason": "checkout_missing_never_observed",
+        })
+    else:
+        try:
+            vault_ref, vault_commit = resolve_commit(
+                vault_root, str(registry.get("vault_ref") or "origin/main")
+            )
+            source_revisions.append(
+                {
+                    "source_id": "vault:gewebe",
+                    "root": str(vault_root),
+                    "ref": vault_ref,
+                    "revision": vault_commit,
+                }
+            )
+            for path, projects in vault_paths(registry, vault_root, vault_commit):
+                process_document("vault:gewebe", vault_commit, vault_root, path, ",".join(projects))
+        except Exception as exc:
+            scanner_errors.append(
+                {"source_id": "vault:gewebe", "source_path": str(vault_root), "error": str(exc)[:1000]}
+            )
+    if not source_revisions:
+        scanner_errors.append({
+            "source_id": "source-registry",
+            "source_path": str(REGISTRY),
+            "error": "no eligible source revision is available",
+        })
 
     for key, prior in previous_documents.items():
         if key not in current_documents and not any(
@@ -611,6 +651,7 @@ def main() -> int:
         "unchanged_candidate_count": len(current_fingerprints & previous_fingerprints),
         "resolved_candidate_fingerprints": resolved_fingerprints[:200],
         "scanner_errors": errors_truncated,
+        "unavailable_sources": unavailable_sources,
         "overflow_candidate_count": overflow,
         "metrics": {
             "enabled_repository_count": len(enabled_repositories),
@@ -621,6 +662,7 @@ def main() -> int:
             "new_candidate_count": len(new_fingerprints),
             "resolved_candidate_count": len(resolved_fingerprints),
             "scanner_error_count": len(scanner_errors),
+            "unavailable_source_count": len(unavailable_sources),
         },
         "receipt_path": str(report_path),
         "evidence": [

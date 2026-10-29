@@ -8432,6 +8432,12 @@ def _validate_no_run_acceptance_replay_binding(
     authority: dict[str, Any],
     closeout: dict[str, Any],
 ) -> None:
+    if (_required_post_refresh_verifier_contract(spec)
+            and closeout.get("live_verifier_evidence") is None):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-evidence-missing",
+            "opted-in live verifier closeout cannot replay without typed evidence",
+        )
     acceptance_evidence = closeout.get("acceptance_evidence")
     if acceptance_evidence is None:
         try:
@@ -8618,6 +8624,231 @@ def _validate_no_run_acceptance_replay_binding(
         )
 
 
+
+POST_REFRESH_LIVE_VERIFIER_CONTRACT = {
+    "schema_version": 1,
+    "kind": "bureau_runtime_refresh_live_verifier_closeout",
+    "service": "bureau-verifier-control.service",
+    "require_post_install_execution": True,
+}
+
+
+def _required_post_refresh_verifier_contract(spec: dict[str, Any]) -> bool:
+    """Opt-in proof contract: old bootstrap runtimes may read the planned TaskSpec."""
+    metadata = spec.get("metadata")
+    raw = metadata.get("post_refresh_live_verifier") if isinstance(metadata, dict) else None
+    if raw is None:
+        return False
+    if raw != POST_REFRESH_LIVE_VERIFIER_CONTRACT:
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-contract-invalid",
+            "post-refresh verifier contract is not the supported exact service proof",
+        )
+    return True
+
+
+def _live_verifier_closeout_evidence(
+    *,
+    intent: dict[str, Any],
+    result: dict[str, Any],
+    live_readback: Callable[..., dict[str, Any]] = readback_install,
+    status_runner: Callable[[list[str]], subprocess.CompletedProcess[str]] | None = None,
+    latest_path: Path | None = None,
+    observed_unix: float | None = None,
+    observed_monotonic_usec: int | None = None,
+) -> dict[str, Any]:
+    """Prove current target installation AND one real post-install verifier unit run.
+
+    This runs before the terminal StateStore CAS. Historical install backups alone
+    cannot satisfy the opted-in verifier criterion.
+    """
+    install_receipt = result.get("install_receipt")
+    persisted_readback = result.get("readback")
+    if (
+        result.get("status") != "deployed"
+        or result.get("effect_started") is not True
+        or not isinstance(install_receipt, dict)
+        or not isinstance(persisted_readback, dict)
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-result-required",
+            "live verifier closeout requires a real deployed runtime result",
+        )
+    installed_at = parse_time(str(install_receipt.get("installed_at", "")))
+    prefix = Path(intent["prefix"]).expanduser().resolve()
+    bin_dir = Path(intent["bin_dir"]).expanduser().resolve()
+    current_readback = live_readback(
+        expected_commit=intent["main_commit"],
+        prefix=prefix,
+        bin_dir=bin_dir,
+        install_receipt=install_receipt,
+    )
+    if not _install_closeout_readbacks_match(
+        persisted_readback, current_readback, install_receipt
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-runtime-drift",
+            "current installation, Registry or scheduler differs from the target result",
+        )
+
+    receipt_path = latest_path or Path(
+        "~/.local/state/bureau-verifier/latest.json"
+    ).expanduser()
+    if receipt_path.is_symlink() or not receipt_path.is_file():
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-missing",
+            "a real current verifier receipt is required",
+        )
+    receipt = read_json(receipt_path)
+    from bureau_cycle.cycle_contract import validate_receipt
+
+    validation_errors = validate_receipt(receipt, expected_stage="verifier")
+    if validation_errors:
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-invalid",
+            "the verifier receipt failed its native typed contract",
+            details={"errors": validation_errors[:8]},
+        )
+    run_path = Path(str(receipt.get("receipt_path", "")))
+    if (
+        run_path.parent != receipt_path.parent / "runs"
+        or run_path.is_symlink()
+        or not run_path.is_file()
+        or read_json(run_path) != receipt
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-run-unbound",
+            "latest verifier receipt is not identical to its durable run artifact",
+        )
+    started_at = parse_time(receipt["started_at"])
+    finished_at = parse_time(receipt["finished_at"])
+    if (
+        started_at < installed_at
+        or finished_at < started_at
+        or receipt.get("result") not in ("completed", "partial")
+        or receipt.get("critical") is True
+        or (
+            isinstance(receipt.get("circuit_breaker"), dict)
+            and receipt["circuit_breaker"].get("active") is True
+        )
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-unhealthy",
+            "the verifier has no noncritical, terminal execution after target installation",
+        )
+
+    argv = [
+        "systemctl", "--user", "show", "bureau-verifier-control.service",
+        "--no-pager", "--property=LoadState", "--property=ActiveState",
+        "--property=Result", "--property=ExecMainCode",
+        "--property=ExecMainStatus", "--property=ExecMainStartTimestampMonotonic",
+    ]
+    process = (status_runner or (lambda command: _run(command, timeout=30)))(argv)
+    if process.returncode != 0:
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-systemd-failed",
+            "current user systemd verifier state is unavailable",
+        )
+    props = dict(
+        line.split("=", 1)
+        for line in process.stdout.splitlines()
+        if "=" in line
+    )
+    if any(props.get(key) != value for key, value in {
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "Result": "success",
+        "ExecMainCode": "1",
+        "ExecMainStatus": "0",
+    }.items()):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-systemd-unhealthy",
+            "the verifier service did not exit successfully from a loaded unit",
+            details={"service_state": props},
+        )
+    try:
+        start_monotonic_usec = int(props["ExecMainStartTimestampMonotonic"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-systemd-time-invalid",
+            "verifier service has no reliable execution start timestamp",
+        ) from exc
+    monotonic_usec = (
+        time.monotonic_ns() // 1000
+        if observed_monotonic_usec is None
+        else observed_monotonic_usec
+    )
+    unix_now = time.time() if observed_unix is None else observed_unix
+    if not 0 < start_monotonic_usec <= monotonic_usec:
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-systemd-time-invalid",
+            "systemd verifier start is not in the current boot",
+        )
+    service_started_unix = unix_now - (
+        monotonic_usec - start_monotonic_usec
+    ) / 1_000_000
+    if (
+        service_started_unix < installed_at.timestamp() - 2
+        or abs(service_started_unix - started_at.timestamp()) > 120
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-systemd-stale",
+            "successful systemd execution does not match the post-install verifier receipt",
+        )
+    evidence = {
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_live_verifier_closeout_evidence",
+        "source_commit": intent["main_commit"],
+        "manifest_sha256": install_receipt["manifest_sha256"],
+        "verifier_run_id": receipt["run_id"],
+        "verifier_result": receipt["result"],
+        "verifier_degraded": receipt["degraded"],
+        "verifier_started_at": receipt["started_at"],
+        "verifier_finished_at": receipt["finished_at"],
+        "verifier_receipt_sha256": sha256_bytes(receipt_path.read_bytes()),
+        "service_unit": "bureau-verifier-control.service",
+        "service_start_monotonic_usec": start_monotonic_usec,
+        "observed_at": isoformat(utc_now()),
+    }
+    return bind_digest(evidence, "evidence_sha256")
+
+
+def _validate_live_verifier_closeout_evidence(
+    evidence: Any, *, source_commit: str, manifest_sha256: str
+) -> None:
+    fields = {
+        "schema_version", "kind", "source_commit", "manifest_sha256",
+        "verifier_run_id", "verifier_result", "verifier_degraded",
+        "verifier_started_at", "verifier_finished_at", "verifier_receipt_sha256",
+        "service_unit", "service_start_monotonic_usec", "observed_at",
+        "evidence_sha256",
+    }
+    if (
+        not isinstance(evidence, dict)
+        or set(evidence) != fields
+        or evidence.get("schema_version") != 1
+        or evidence.get("kind") != "bureau_runtime_refresh_live_verifier_closeout_evidence"
+        or evidence.get("source_commit") != source_commit
+        or evidence.get("manifest_sha256") != manifest_sha256
+        or not _is_sha256(evidence.get("verifier_receipt_sha256"))
+        or not isinstance(evidence.get("verifier_run_id"), str)
+        or not evidence["verifier_run_id"]
+        or evidence.get("verifier_result") not in ("completed", "partial")
+        or not isinstance(evidence.get("verifier_degraded"), bool)
+        or evidence.get("service_unit") != "bureau-verifier-control.service"
+        or not isinstance(evidence.get("service_start_monotonic_usec"), int)
+        or evidence["service_start_monotonic_usec"] <= 0
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-evidence-invalid",
+            "recorded live verifier closeout evidence has an invalid typed binding",
+        )
+    for name in ("verifier_started_at", "verifier_finished_at", "observed_at"):
+        parse_time(evidence[name])
+    verify_digest(evidence, "evidence_sha256")
+
+
+
 def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
     fields = {
         "schema_version",
@@ -8640,7 +8871,7 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
     if (
         not isinstance(value, dict)
         or not fields <= set(value)
-        or set(value) - fields - {"acceptance_evidence"}
+        or set(value) - fields - {"acceptance_evidence", "live_verifier_evidence"}
     ):
         raise RuntimeRefreshError(
             "authority-closeout-record-invalid",
@@ -8676,6 +8907,12 @@ def _validated_runtime_closeout(value: Any) -> dict[str, Any]:
             "runtime authority closeout record values are invalid",
         )
     parse_time(value["closed_at"])
+    if "live_verifier_evidence" in value:
+        _validate_live_verifier_closeout_evidence(
+            value["live_verifier_evidence"],
+            source_commit=value["source_commit"],
+            manifest_sha256=value["manifest_sha256"],
+        )
     if "acceptance_evidence" in value:
         acceptance_evidence = _validated_no_run_acceptance_evidence(
             value["acceptance_evidence"]
@@ -11027,6 +11264,11 @@ def _closeout_runtime_refresh_authority(
         expected_consumption=expected_consumption,
         target_main_commit=intent["main_commit"],
     )
+    live_verifier_evidence = (
+        _live_verifier_closeout_evidence(intent=intent, result=result)
+        if not historical_multi_use_incident and _required_post_refresh_verifier_contract(spec)
+        else None
+    )
     if historical_multi_use_incident:
         _, provenance_receipts_sha256 = _runtime_incident_provenance_receipts(authority)
         closeout = {
@@ -11158,6 +11400,8 @@ def _closeout_runtime_refresh_authority(
                 "future_runtime_health",
             ],
         }
+        if live_verifier_evidence is not None:
+            closeout["live_verifier_evidence"] = live_verifier_evidence
     mutated = json.loads(json.dumps(spec))
     mutated_metadata = mutated["metadata"]
     mutated_authority = mutated_metadata["runtime_refresh_authority"]

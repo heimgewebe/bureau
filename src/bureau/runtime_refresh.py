@@ -2428,7 +2428,7 @@ def _scheduler_readback(
                 "managed scheduler unit is not loaded from its converged fragment",
                 details={"name": name, "timer": timer, "service": service},
             )
-        if name == REQUIRED_RUNTIME_TIMER:
+        if name == REQUIRED_RUNTIME_TIMER and timer_intent[name] != "disabled":
             if (
                 timer["UnitFileState"] != "enabled"
                 or timer["ActiveState"] != "active"
@@ -2604,19 +2604,19 @@ def converge_user_scheduler(
             )
         except (OSError, RuntimeError):
             link_matches = False
-        if not link_matches:
-            # Mark the leased exact path before replace/fsync so rollback also
-            # covers an ambiguous failure after the namespace mutation.
+        if intents[REQUIRED_RUNTIME_TIMER] != "disabled" and not link_matches:
+            # Preserve an explicit opt-out instead of reviving automatic task supply.
             mutated_enablement_paths.add(str(persistent_link))
             _replace_with_symlink(
                 persistent_link, f"../{REQUIRED_RUNTIME_TIMER}.timer"
             )
         systemd_mutated = True
         _run_scheduler_command(["daemon-reload"], command_runner=runner)
-        _run_scheduler_command(
-            ["start", f"{REQUIRED_RUNTIME_TIMER}.timer"],
-            command_runner=runner,
-        )
+        if intents[REQUIRED_RUNTIME_TIMER] != "disabled":
+            _run_scheduler_command(
+                ["start", f"{REQUIRED_RUNTIME_TIMER}.timer"],
+                command_runner=runner,
+            )
         readback = _scheduler_readback(
             source_commit=source_commit,
             release_id=release_id,

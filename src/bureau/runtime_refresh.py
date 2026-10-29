@@ -8699,7 +8699,14 @@ def _live_verifier_closeout_evidence(
             "authority-closeout-live-verifier-missing",
             "a real current verifier receipt is required",
         )
-    receipt = read_json(receipt_path)
+    try:
+        latest_bytes = receipt_path.read_bytes()
+        receipt = json.loads(latest_bytes)
+    except (OSError, ValueError) as exc:
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-invalid",
+            "live verifier receipt is unreadable or malformed",
+        ) from exc
     from bureau_cycle.cycle_contract import validate_receipt
 
     validation_errors = validate_receipt(receipt, expected_stage="verifier")
@@ -8709,12 +8716,26 @@ def _live_verifier_closeout_evidence(
             "the verifier receipt failed its native typed contract",
             details={"errors": validation_errors[:8]},
         )
+    launch_identity = receipt.get("runtime_launch_identity")
+    if (
+        not isinstance(launch_identity, dict)
+        or launch_identity != {
+            "schema_version": 1,
+            "kind": "bureau_runtime_launch_identity_at_verifier_entry",
+            "source_commit": intent["main_commit"],
+            "manifest_sha256": install_receipt["manifest_sha256"],
+        }
+    ):
+        raise RuntimeRefreshError(
+            "authority-closeout-live-verifier-source-unbound",
+            "verifier invocation was not launched from the installed target source",
+        )
     run_path = Path(str(receipt.get("receipt_path", "")))
     if (
         run_path.parent != receipt_path.parent / "runs"
         or run_path.is_symlink()
         or not run_path.is_file()
-        or read_json(run_path) != receipt
+        or run_path.read_bytes() != latest_bytes
     ):
         raise RuntimeRefreshError(
             "authority-closeout-live-verifier-run-unbound",
@@ -8805,7 +8826,7 @@ def _live_verifier_closeout_evidence(
         "verifier_degraded": receipt["degraded"],
         "verifier_started_at": receipt["started_at"],
         "verifier_finished_at": receipt["finished_at"],
-        "verifier_receipt_sha256": sha256_bytes(receipt_path.read_bytes()),
+        "verifier_receipt_sha256": sha256_bytes(latest_bytes),
         "service_unit": "bureau-verifier-control.service",
         "service_start_monotonic_usec": start_monotonic_usec,
         "observed_at": isoformat(utc_now()),

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -11,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from bureau import runtime_refresh as refresh
+from bureau_cycle import verifier_runner
 
 MAIN = "9" * 40
 MANIFEST = "a" * 64
@@ -31,6 +33,12 @@ def _proof_fixture(tmp_path: Path):
         "contract_version": 2,
         "cycle_id": "2026-10-29T20",
         "stage": "verifier",
+        "runtime_launch_identity": {
+            "schema_version": 1,
+            "kind": "bureau_runtime_launch_identity_at_verifier_entry",
+            "source_commit": MAIN,
+            "manifest_sha256": MANIFEST,
+        },
         "run_id": "verifier-test-post-install",
         "trigger": "manual-regression",
         "started_at": refresh.isoformat(STARTED),
@@ -100,7 +108,10 @@ def test_post_install_verifier_current_source_produces_typed_evidence(tmp_path: 
 
 @pytest.mark.parametrize(
     "kind",
-    ["old-run", "failed-run", "critical-run", "stale-service", "failed-service", "successor"],
+    [
+        "old-run", "failed-run", "critical-run", "stale-service",
+        "failed-service", "successor", "old-runtime-verifier", "no-runtime-identity",
+    ],
 )
 def test_post_install_proof_rejects_noncurrent_or_unhealthy_execution(
     tmp_path: Path, kind: str,
@@ -122,6 +133,12 @@ def test_post_install_proof_rejects_noncurrent_or_unhealthy_execution(
         state["status"] = "failed"
     elif kind == "successor":
         state["readback"]["source_commit"] = "b" * 40
+    elif kind == "old-runtime-verifier":
+        receipt["runtime_launch_identity"]["source_commit"] = "b" * 40
+        save()
+    elif kind == "no-runtime-identity":
+        receipt.pop("runtime_launch_identity")
+        save()
     with pytest.raises(refresh.RuntimeRefreshError) as error:
         prove()
     assert error.value.code.startswith("authority-closeout-live-")
@@ -153,3 +170,34 @@ def test_closeout_cas_path_calls_live_verifier_before_terminal_write() -> None:
         "_put_authority_task("
     )
     assert "closeout[\"live_verifier_evidence\"] = live_verifier_evidence" in source
+
+
+def test_verifier_captures_launch_manifest_source_before_cutover(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "deployment-manifest.json"
+    path.write_text(json.dumps({
+        "kind": "bureau_runtime_deployment", "source_commit": MAIN,
+    }), encoding="utf-8")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST", str(path))
+    monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST_SHA256", digest)
+    assert verifier_runner._runtime_launch_identity() == {
+        "schema_version": 1,
+        "kind": "bureau_runtime_launch_identity_at_verifier_entry",
+        "source_commit": MAIN,
+        "manifest_sha256": digest,
+    }
+    path.write_text(json.dumps({
+        "kind": "bureau_runtime_deployment", "source_commit": "b" * 40,
+    }), encoding="utf-8")
+    assert verifier_runner._runtime_launch_identity() is None
+    monkeypatch.delenv("BUREAU_RUNTIME_MANIFEST_SHA256")
+    assert verifier_runner._runtime_launch_identity() is None
+
+def test_verifier_run_copy_must_match_exact_latest_bytes(tmp_path: Path) -> None:
+    prove, receipt, _, _, _ = _proof_fixture(tmp_path)
+    run_path = Path(receipt["receipt_path"])
+    run_path.write_text(json.dumps(receipt, indent=1), encoding="utf-8")
+    with pytest.raises(refresh.RuntimeRefreshError, match="durable run artifact"):
+        prove()

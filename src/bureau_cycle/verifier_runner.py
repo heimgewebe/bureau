@@ -55,6 +55,40 @@ def _system_binary(
     raise FileNotFoundError(f"trusted system binary unavailable: {name}")
 
 
+def _runtime_launch_identity() -> dict[str, Any] | None:
+    """Capture the verified launcher manifest at verifier entry, not at closeout.
+
+    A timer firing mid-cutover must never be mistaken for a new-source verifier.
+    The managed Bureau launcher provides the immutable manifest digest in env.
+    """
+    manifest_path = os.environ.get("BUREAU_RUNTIME_MANIFEST")
+    expected_sha256 = os.environ.get("BUREAU_RUNTIME_MANIFEST_SHA256")
+    if not manifest_path or not expected_sha256:
+        return None
+    try:
+        raw = Path(manifest_path).read_bytes()
+        observed_sha256 = hashlib.sha256(raw).hexdigest()
+        if observed_sha256 != expected_sha256:
+            return None
+        manifest = json.loads(raw)
+        source_commit = manifest.get("source_commit")
+        if (
+            manifest.get("kind") != "bureau_runtime_deployment"
+            or not isinstance(source_commit, str)
+            or len(source_commit) != 40
+            or any(c not in "0123456789abcdef" for c in source_commit)
+        ):
+            return None
+    except (OSError, ValueError, TypeError, AttributeError):
+        return None
+    return {
+        "schema_version": 1,
+        "kind": "bureau_runtime_launch_identity_at_verifier_entry",
+        "source_commit": source_commit,
+        "manifest_sha256": observed_sha256,
+    }
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -545,9 +579,11 @@ def final_result(receipt: dict[str, Any]) -> None:
 
 
 def run() -> int:
+    launch_identity = _runtime_launch_identity()
     for directory in (STATE, RUNS, LEASES, HEALTH_PATH.parent):
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     receipt = begin_receipt()
+    receipt["runtime_launch_identity"] = launch_identity
     receipt.setdefault("input_receipts", [])
     receipt.setdefault("findings", [])
     receipt.setdefault("metrics", {})

@@ -6166,6 +6166,7 @@ def test_scheduler_convergence_preserves_existing_timer_intent(tmp_path: Path) -
             "bureau-curator": ("enabled", "active"),
             "bureau-verifier-control": ("enabled-runtime", "inactive"),
             "bureau-operator-control": ("disabled", "inactive"),
+            "bureau-task-supply": ("disabled", "inactive"),
         },
     )
     rollback = tmp_path / "rollback"
@@ -6192,7 +6193,9 @@ def test_scheduler_convergence_preserves_existing_timer_intent(tmp_path: Path) -
     assert result["timers"]["bureau-operator-control"]["UnitFileState"] == "disabled"
     assert result["prior_timer_intent"]["bureau-curator"] == "enabled"
     assert result["prior_timer_intent"]["bureau-verifier-control"] == "enabled-runtime"
-    assert result["timers"]["bureau-task-supply"]["UnitFileState"] == "enabled"
+    assert result["timers"]["bureau-task-supply"]["UnitFileState"] == "disabled"
+    assert result["timers"]["bureau-task-supply"]["ActiveState"] == "inactive"
+    assert ("start", "bureau-task-supply.timer") not in systemd.commands
     assert not any(command[0] in {"enable", "disable"} for command in systemd.commands)
 
 
@@ -6416,6 +6419,7 @@ def test_partial_systemd_failure_restores_exact_fragment_and_state_preimage(
     configured = {
         "bureau-curator": ("enabled", "active"),
         "bureau-operator-control": ("disabled", "inactive"),
+        "bureau-task-supply": ("enabled", "inactive"),
     }
     systemd = FakeUserSystemd(
         unit_root,
@@ -6471,7 +6475,9 @@ def test_failed_required_service_readback_is_rolled_back_without_blind_retry(
         executable = libexec_root / name
         executable.write_text(f"previous {name}\n", encoding="utf-8")
         executable.chmod(0o755)
-    systemd = FakeUserSystemd(unit_root)
+    systemd = FakeUserSystemd(
+        unit_root, timer_states={"bureau-task-supply": ("enabled", "inactive")}
+    )
     state_before = json.loads(json.dumps(systemd.states))
     injected = False
 

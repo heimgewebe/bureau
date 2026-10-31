@@ -5888,7 +5888,7 @@ def test_prepare_rejects_non_authorizing_tasks_before_intent_effect(
     assert not (tmp_path / "state/intents").exists()
 
 
-def test_prepare_intent_omits_stable_launchers_and_requires_only_drift(tmp_path: Path) -> None:
+def test_prepare_intent_reserves_all_managed_launchers_even_when_stable(tmp_path: Path) -> None:
     observed, manifest_path = candidate(tmp_path)
     prefix = (tmp_path / "prefix").resolve()
     bin_dir = (tmp_path / "bin").resolve()
@@ -5917,7 +5917,8 @@ def test_prepare_intent_omits_stable_launchers_and_requires_only_drift(tmp_path:
         authority_store=stable_authority,
     )
     launcher_keys = {f"path:{bin_dir / name}" for name, _ in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS}
-    assert launcher_keys.isdisjoint(intent["required_resource_keys"])
+    assert refresh.launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir) == []
+    assert launcher_keys.issubset(intent["required_resource_keys"])
 
     status_capsule = bin_dir / "bureau-status-capsule"
     status_capsule.write_text("corrupt\n", encoding="utf-8")
@@ -5939,14 +5940,17 @@ def test_prepare_intent_omits_stable_launchers_and_requires_only_drift(tmp_path:
         now=NOW,
         authority_store=repair_authority,
     )
-    assert f"path:{status_capsule}" in drift_intent["required_resource_keys"]
-    assert f"path:{bin_dir / 'bureau'}" not in drift_intent["required_resource_keys"]
-    assert (
-        f"path:{bin_dir / 'bureau-runtime-refresh'}" not in drift_intent["required_resource_keys"]
-    )
+    assert refresh.launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir) == [
+        f"path:{status_capsule}"
+    ]
+    assert launcher_keys.issubset(drift_intent["required_resource_keys"])
 
 
-def test_apply_blocks_launcher_drift_absent_from_intent_before_observer(tmp_path: Path) -> None:
+def test_prepare_intent_leases_launchers_changed_by_target_renderer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Reproduce the production failure: the old installed renderer sees stable
+    # launchers, but the new target release renders different launcher bytes.
     observed, manifest_path = candidate(tmp_path)
     prefix = (tmp_path / "prefix").resolve()
     bin_dir = (tmp_path / "bin").resolve()
@@ -5955,37 +5959,36 @@ def test_apply_blocks_launcher_drift_absent_from_intent_before_observer(tmp_path
         path = bin_dir / name
         path.write_bytes(refresh.stable_launcher_bytes(manifest_path, entrypoint))
         path.chmod(0o755)
-    state_root = (tmp_path / "state").resolve()
-    authority_store = seed_authority_store(tmp_path / "bureau-state", "BUR-STABLE-LAUNCHER-DRIFT")
-    intent, intent_path = refresh.prepare_intent(
+    store = seed_authority_store(
+        tmp_path / "bureau-state", "BUR-LAUNCHER-CROSS-VERSION"
+    )
+    intent, _intent_path = refresh.prepare_intent(
         candidate=observed,
-        state_root=state_root,
+        state_root=(tmp_path / "state").resolve(),
         prefix=prefix,
         bin_dir=bin_dir,
         remote_url="file:///tmp/bureau.git",
-        authorized_by="chatgpt",
-        authorization="Explicit drift-gate approval.",
-        break_glass=True,
-        approval_reference=observed["target_sha256"],
-        approval_task_id="BUR-STABLE-LAUNCHER-DRIFT",
+        approval_task_id="BUR-LAUNCHER-CROSS-VERSION",
         now=NOW,
-        authority_store=authority_store,
+        authority_store=store,
     )
-    status_capsule = bin_dir / "bureau-status-capsule"
-    status_capsule.write_text("drifted\n", encoding="utf-8")
-    binding, resource_db = lease_for(tmp_path / "drift-leases", intent)
-    with pytest.raises(refresh.RuntimeRefreshError) as error:
-        refresh.apply_runtime_refresh(
-            intent_path=intent_path,
-            lease_binding=binding,
-            manifest_path=manifest_path,
-            state_root=state_root,
-            resource_db=resource_db,
-            now=NOW,
-            observer=lambda **_: pytest.fail("observer must not run after launcher drift"),
-        )
-    assert error.value.code == "launcher-drift-after-intent"
-    assert error.value.details["resource_keys"] == [f"path:{status_capsule}"]
+    launcher_keys = {
+        f"path:{bin_dir / name}" for name, _ in refresh.RUNTIME_LAUNCHER_ENTRYPOINTS
+    }
+    assert refresh.launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir) == []
+    assert launcher_keys.issubset(intent["required_resource_keys"])
+
+    old_renderer = refresh.stable_launcher_bytes
+
+    def target_renderer(path: Path, entrypoint: str = "bureau.cli") -> bytes:
+        return old_renderer(path, entrypoint) + b"# target release changes renderer\n"
+
+    monkeypatch.setattr(refresh, "stable_launcher_bytes", target_renderer)
+    observed_new_mutations = set(
+        refresh.launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir)
+    )
+    assert observed_new_mutations == launcher_keys
+    assert observed_new_mutations.issubset(intent["required_resource_keys"])
 
 
 def test_scheduler_resources_are_required_by_live_lease_validation(tmp_path: Path) -> None:

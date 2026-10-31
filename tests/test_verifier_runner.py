@@ -71,3 +71,40 @@ def test_system_binary_never_uses_untrusted_process_path(
         verifier_runner._system_binary(name, roots=(tmp_path / "absent-system-bin",))
 
     assert not marker.exists()
+
+
+def test_service_hygiene_exempts_drkonqi_reporter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reporter = "drkonqi-coredump-launcher@365-4120-56721_56722-0.service"
+    failed = [
+        f"{reporter} loaded failed failed Launch DrKonqi for coredump",
+        "grabowski-task-42-a1.service loaded failed failed One-off Grabowski job",
+    ]
+    monkeypatch.setattr(verifier_runner, "systemctl_lines", lambda args: failed)
+    receipt: dict = {}
+    verifier_runner.service_hygiene(receipt)
+    assert receipt["metrics"]["systemd_failed_transient_unit_count"] == 2
+    assert receipt["metrics"]["systemd_failed_non_transient_unit_count"] == 0
+    assert receipt.get("findings", []) == []
+    assert receipt["evidence"][0]["kind"] == "systemd_failed_units"
+    assert receipt["evidence"][0]["non_transient_units"] == []
+
+
+def test_service_hygiene_still_degrades_on_bureau_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reporter = "drkonqi-coredump-launcher@366-73739-68265_68266-0.service"
+    failed = [
+        f"{reporter} loaded failed failed Crashed-app reporter",
+        "bureau-halfhour-operator.service loaded failed failed Productive scanner",
+    ]
+    monkeypatch.setattr(verifier_runner, "systemctl_lines", lambda args: failed)
+    receipt: dict = {}
+    verifier_runner.service_hygiene(receipt)
+    assert receipt["metrics"]["systemd_failed_transient_unit_count"] == 1
+    assert receipt["metrics"]["systemd_failed_non_transient_unit_count"] == 1
+    findings = receipt.get("findings", [])
+    assert len(findings) == 1
+    assert findings[0]["kind"] == "non_transient_failed_units"
+    assert findings[0]["units"] == ["bureau-halfhour-operator.service"]

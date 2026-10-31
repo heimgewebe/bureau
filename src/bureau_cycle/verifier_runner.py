@@ -36,7 +36,12 @@ HELPER_ENV = {
 CONTRACT_VERSION = 2
 SCHEMA_VERSION = 2
 TERMINAL_RESULTS = {"completed", "partial", "blocked", "idle", "failed"}
-TRANSIENT_UNIT_RE = re.compile(r"^(grabowski-(?:task|job|browser-worker|gui-worker)-).+\.service$")
+# A crashed app can create a distinct, bounded DrKonqi reporter unit which
+# may time out without affecting Bureau. Keep it in failed-unit evidence,
+# but do not classify that one-off reporter as a persistent service outage.
+TRANSIENT_UNIT_RE = re.compile(
+    r"^(?:grabowski-(?:task|job|browser-worker|gui-worker)-.+|drkonqi-coredump-launcher@.+)\.service$"
+)
 
 def _system_binary(
     name: str,
@@ -473,7 +478,7 @@ def service_hygiene(receipt: dict[str, Any]) -> None:
             "kind": "systemd_failed_units",
             "transient_count": len(transient),
             "non_transient_units": non_transient[:20],
-            "interpretation": "transient grabowski task/job/worker failures are not current attention without task/outcome evidence",
+            "interpretation": "transient Grabowski tasks/workers and one-off DrKonqi reporters do not establish current service outages",
         }
     )
     if non_transient:

@@ -279,9 +279,10 @@ def stable_launcher_bytes(
     in launcher bytes and therefore does not force a launcher rewrite for every
     ordinary deployment.
     """
-    # Use Bureau's own Python ABI and ignore inherited PYTHONPATH from Grabowski.
+    # Prefer the isolated Bureau runtime; keep fresh non-venv installs executable.
     runtime_python = manifest_path.parent / "venv" / "bin" / "python"
-    return f"""#!{runtime_python} -I
+    interpreter = runtime_python if runtime_python.is_file() else Path(sys.executable)
+    return f"""#!{interpreter} -I
 {RUNTIME_LAUNCHER_MANAGED_MARKER}
 import hashlib
 import importlib

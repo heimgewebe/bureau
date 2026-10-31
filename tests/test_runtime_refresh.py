@@ -6149,6 +6149,57 @@ def test_release_task_supply_absent_live_is_converged_enabled_and_waiting(
     assert drift.value.code == "scheduler-readback-fragment-mismatch"
 
 
+def test_scheduler_readback_accepts_timer_firing_phase_but_rejects_activity_drift(
+    tmp_path: Path,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        for suffix in ("service", "timer"):
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"previous {name}.{suffix}\n", encoding="utf-8"
+            )
+        executable = libexec_root / name
+        executable.write_text("previous\n", encoding="utf-8")
+        executable.chmod(0o755)
+    systemd = FakeUserSystemd(
+        unit_root,
+        timer_states={"bureau-verifier-control": ("enabled", "active")},
+    )
+    # Capture a real transitional systemd state at the start of convergence.
+    systemd.states["bureau-verifier-control.timer"]["SubState"] = "running"
+    result = refresh.converge_user_scheduler(
+        source_commit=source_commit,
+        release_id=release_id,
+        release=release,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=systemd.runtime_unit_root,
+        rollback_directory=tmp_path / "rollback",
+        manifest_path=tmp_path / "manifest.json",
+        command_runner=systemd,
+        validation_runner=successful_systemd_analyze,
+        cycle_validator=successful_cycle_validation,
+    )
+    assert result["pre_convergence_timers"]["bureau-verifier-control"]["SubState"] == "running"
+    systemd.states["bureau-verifier-control.timer"]["SubState"] = "waiting"
+    post = refresh.readback_user_scheduler(
+        result, expected_commit=source_commit, command_runner=systemd
+    )
+    assert post["timers"]["bureau-verifier-control"]["SubState"] == "waiting"
+
+    # A real change to the timer's ActiveState remains a hard failure.
+    systemd.states["bureau-verifier-control.timer"]["ActiveState"] = "inactive"
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.readback_user_scheduler(
+            result, expected_commit=source_commit, command_runner=systemd
+        )
+    assert caught.value.code == "scheduler-timer-intent-drift"
+
+
 def test_scheduler_convergence_preserves_existing_timer_intent(tmp_path: Path) -> None:
     release, release_id, source_commit = scheduler_release(tmp_path)
     unit_root = tmp_path / "systemd/user"

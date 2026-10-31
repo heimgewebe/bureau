@@ -2456,10 +2456,11 @@ def _scheduler_readback(
         prior = prior_timers[name]
         intent = timer_intent[name]
         expected_unit_file_state = "disabled" if intent == "absent" else intent
+        # An active timer legitimately cycles running → waiting after firing.
+        # Keep activation and enablement invariant, not transient SubState.
         if (
             timer["UnitFileState"] != expected_unit_file_state
             or timer["ActiveState"] != prior["ActiveState"]
-            or timer["SubState"] != prior["SubState"]
         ):
             raise RuntimeRefreshError(
                 "scheduler-timer-intent-drift",

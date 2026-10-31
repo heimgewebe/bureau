@@ -19,6 +19,7 @@ import functools
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import sqlite3
 import stat
@@ -282,7 +283,7 @@ def stable_launcher_bytes(
     # Prefer the isolated Bureau runtime; keep fresh non-venv installs executable.
     runtime_python = manifest_path.parent / "venv" / "bin" / "python"
     interpreter = runtime_python if runtime_python.is_file() else Path(sys.executable)
-    return f"""#!{interpreter} -I
+    return f"""#!/usr/bin/env -S {shlex.quote(str(interpreter))} -I
 {RUNTIME_LAUNCHER_MANAGED_MARKER}
 import hashlib
 import importlib

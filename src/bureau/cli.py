@@ -601,11 +601,14 @@ def adapters(args: argparse.Namespace) -> AdapterRegistry:
     registry = AdapterRegistry()
     source = args.grabowski_source or os.environ.get("BUREAU_GRABOWSKI_SRC")
     candidate = Path(source).expanduser() if source else default_grabowski_source()
-    if candidate is not None:
+    if candidate is not None or not source:
         try:
             from .grabowski_adapter import GrabowskiTaskAdapter
 
-            registry.add(GrabowskiTaskAdapter(candidate))
+            if source:
+                registry.add(GrabowskiTaskAdapter(candidate))
+            else:
+                registry.add(GrabowskiTaskAdapter(candidate, prefer_live_operator=True))
         except Exception as exc:
             registry.mark_unavailable("grabowski-task", exc)
     return registry

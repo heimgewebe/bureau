@@ -141,3 +141,106 @@ def test_cli_keeps_explicit_source_override(monkeypatch, tmp_path):
         "grabowski-task"
     ] == {"available": True}
     assert calls[-1] == (source, {"prefer_live_operator": True})
+
+
+
+def test_native_dispatch_identity_survives_ack_loss(monkeypatch, tmp_path):
+    import json
+
+    manifest = tmp_path / "deployment-manifest.json"
+    head = "c" * 40
+    manifest.write_text(json.dumps({"source_commit": head}), encoding="utf-8")
+    monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST", str(manifest))
+    runtime_python = Path("/nix/store/native-operator/bin/python3")
+    monkeypatch.setattr(
+        grabowski_adapter, "_active_grabowski_python", lambda: runtime_python
+    )
+    operations = []
+    commands = []
+
+    def fake_run(argv, **kwargs):
+        commands.append(argv)
+        payload = json.loads(kwargs["input"])
+        operations.append(payload)
+        if payload["method"] == "_probe":
+            result = {"python": [3, 12]}
+        elif payload["method"] == "grabowski_task_start":
+            result = {"task": {"task_id": "durable-native-task"}}
+        elif payload["method"] == "grabowski_task_find_by_request_id":
+            result = {"task_id": "durable-native-task"}
+        else:
+            raise AssertionError(payload["method"])
+        return SimpleNamespace(
+            returncode=0, stdout=json.dumps({"result": result}), stderr=""
+        )
+
+    monkeypatch.setattr(grabowski_adapter.subprocess, "run", fake_run)
+    adapter = grabowski_adapter.GrabowskiTaskAdapter(prefer_live_operator=True)
+    run_id = "BUR-RUN-20261031T085200Z-0123456789"
+    rid = run_id + ":dispatch-1"
+    request = {
+        "host": "heim-pc",
+        "cwd": "/home/alex",
+        "argv": ["echo", "test-only"],
+        "resource_keys": ["repo:/home/alex/repos/example"],
+        "request_id": rid,
+        "origin_ref": "bureau:" + run_id,
+        "task_sha256": "1" * 64,
+        "plan_sha256": "2" * 64,
+        "envelope_sha256": "3" * 64,
+        "coordination_scope_sha256": "4" * 64,
+    }
+    assert adapter.dispatch(request) == "durable-native-task"
+    assert adapter.recover(rid) == "durable-native-task"
+    start = operations[1]
+    assert start["method"] == "grabowski_task_start"
+    identity = start["kwargs"]["operation_identity"]
+    assert identity["repository_head"] == head
+    assert identity["scope_sha256"] == "4" * 64
+    assert identity["purpose"] == "bureau-dispatch:" + rid
+    assert len(identity["source_fingerprint_sha256"]) == 64
+    assert operations[2]["args"] == [rid]
+    for command in commands:
+        assert rid not in " ".join(command)
+        assert command[:3] == [str(runtime_python), "-I", "-B"]
+
+
+def test_native_dispatch_rejects_mismatched_bureau_origin_before_launch(
+    monkeypatch, tmp_path
+):
+    import json
+
+    manifest = tmp_path / "deployment-manifest.json"
+    manifest.write_text(
+        json.dumps({"source_commit": "c" * 40}), encoding="utf-8"
+    )
+    monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST", str(manifest))
+    python = Path("/nix/store/native/bin/python3")
+    monkeypatch.setattr(grabowski_adapter, "_active_grabowski_python", lambda: python)
+    executed = []
+
+    def fake_run(argv, **kwargs):
+        payload = json.loads(kwargs["input"])
+        executed.append(payload["method"])
+        if payload["method"] != "_probe":
+            raise AssertionError("malformed identity reached native task API")
+        return SimpleNamespace(
+            returncode=0,
+            stdout='{"result":{"python":[3,12]}}',
+            stderr="",
+        )
+
+    monkeypatch.setattr(grabowski_adapter.subprocess, "run", fake_run)
+    adapter = grabowski_adapter.GrabowskiTaskAdapter(prefer_live_operator=True)
+    try:
+        adapter.dispatch({
+            "host": "heim-pc",
+            "argv": ["true"],
+            "request_id": "BUR-RUN-20261031T085200Z-0123456789:dispatch-1",
+            "origin_ref": "bureau:unrelated",
+        })
+    except ValueError as exc:
+        assert "request/origin" in str(exc)
+    else:
+        raise AssertionError("mismatched Bureau run identity was dispatched")
+    assert executed == ["_probe"]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib
 import inspect
 import json
@@ -38,14 +39,34 @@ with contextlib.redirect_stdout(io.StringIO()):
     import grabowski_tasks
     if method == "_probe":
         result = {"python": list(sys.version_info[:2])}
+    elif method == "grabowski_task_find_by_request_id":
+        # The active Grabowski API does not export a request-id finder.
+        # Recover against its existing signed operation identity, read-only.
+        request_id = request["args"][0]
+        purpose = "bureau-dispatch:" + request_id
+        with grabowski_tasks._task_readonly_snapshot() as connection:
+            rows = connection.execute(
+                "SELECT * FROM tasks WHERE launcher_json IS NOT NULL "
+                "AND json_valid(launcher_json) "
+                "AND json_extract(launcher_json, '$.operation_identity.purpose')=? "
+                "ORDER BY created_at_unix DESC, rowid DESC LIMIT 2",
+                (purpose,),
+            ).fetchall()
+        if len(rows) > 1:
+            raise RuntimeError("ambiguous Bureau request identity; manual reconcile")
+        if not rows:
+            result = None
+        else:
+            record = dict(rows[0])
+            identity = grabowski_tasks._persisted_task_operation_identity(record)
+            if identity is None or identity["purpose"] != purpose:
+                raise RuntimeError("Bureau request operation identity is inconsistent")
+            result = {"task_id": record["task_id"]}
     else:
         function = getattr(grabowski_tasks, method, None)
-        if function is None and method == "grabowski_task_find_by_request_id":
-            result = None
-        elif function is None:
+        if function is None:
             raise RuntimeError("Grabowski task method unavailable")
-        else:
-            result = function(*request["args"], **request["kwargs"])
+        result = function(*request["args"], **request["kwargs"])
 print(json.dumps({"result": result}, ensure_ascii=False, allow_nan=False))
 '''
 
@@ -72,6 +93,67 @@ def _active_grabowski_python() -> Path | None:
         return None
     interpreter = Path(match.group(1)).with_name("python3")
     return interpreter if interpreter.is_file() else None
+
+
+def _bureau_operation_identity(request: dict[str, Any]) -> dict[str, str]:
+    # Every coordinated Bureau dispatch has a durable, unique request ID.
+    # Bind the native Grabowski operation identity to its real Bureau source.
+    request_id = request.get("request_id")
+    origin_ref = request.get("origin_ref")
+    if (
+        not isinstance(request_id, str)
+        or re.fullmatch(r"[A-Za-z0-9._:-]{1,200}", request_id) is None
+        or not request_id.endswith(":dispatch-1")
+        or origin_ref != "bureau:" + request_id.removesuffix(":dispatch-1")
+    ):
+        raise ValueError("Bureau dispatch request/origin identity is invalid")
+    manifest = Path(
+        os.environ.get(
+            "BUREAU_RUNTIME_MANIFEST",
+            str(Path.home() / ".local/share/bureau/deployment-manifest.json"),
+        )
+    )
+    try:
+        deployed = json.loads(manifest.read_text(encoding="utf-8"))
+        head = deployed["source_commit"]
+    except (OSError, KeyError, ValueError, TypeError) as exc:
+        raise RuntimeError("Bureau deployment source identity unavailable") from exc
+    if not isinstance(head, str) or re.fullmatch(r"[0-9a-f]{40}", head) is None:
+        raise RuntimeError("Bureau deployment source commit is invalid")
+    for key in ("task_sha256", "plan_sha256", "envelope_sha256"):
+        if not isinstance(request.get(key), str) or re.fullmatch(
+            r"[0-9a-f]{64}", request[key]
+        ) is None:
+            raise ValueError(f"Bureau dispatch {key} is invalid")
+    source_material = {
+        "task_sha256": request["task_sha256"],
+        "plan_sha256": request["plan_sha256"],
+        "envelope_sha256": request["envelope_sha256"],
+        "origin_ref": origin_ref,
+    }
+    source_fingerprint = hashlib.sha256(
+        json.dumps(source_material, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    scope = request.get("coordination_scope_sha256")
+    if scope is None:
+        scope = hashlib.sha256(
+            json.dumps(
+                {
+                    "cwd": request.get("cwd"),
+                    "resource_keys": sorted(request.get("resource_keys", [])),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+    if not isinstance(scope, str) or re.fullmatch(r"[0-9a-f]{64}", scope) is None:
+        raise ValueError("Bureau coordination scope identity is invalid")
+    return {
+        "repository_head": head,
+        "source_fingerprint_sha256": source_fingerprint,
+        "scope_sha256": scope,
+        "purpose": "bureau-dispatch:" + request_id,
+    }
 
 
 class _NixTasksBridge:
@@ -177,9 +259,13 @@ class GrabowskiTaskAdapter:
             "resource_keys": list(request.get("resource_keys", [])),
         }
         parameters = inspect.signature(start).parameters
-        for key in ("origin_ref", "request_id"):
-            if key in parameters and key in request:
-                kwargs[key] = request[key]
+        if isinstance(self.tasks, _NixTasksBridge):
+            if request.get("request_id") is not None or request.get("origin_ref") is not None:
+                kwargs["operation_identity"] = _bureau_operation_identity(request)
+        else:
+            for key in ("origin_ref", "request_id"):
+                if key in parameters and key in request:
+                    kwargs[key] = request[key]
         result = self._record(start(**kwargs))
         task_id = result.get("task_id") or result.get("id")
         if not isinstance(task_id, str) or not task_id:

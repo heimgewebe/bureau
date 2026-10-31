@@ -1787,7 +1787,10 @@ def required_resource_keys(
     )
     return sorted(
         {
-            *launcher_mutation_resource_keys(prefix=prefix, bin_dir=bin_dir),
+            # The currently installed renderer may differ from target main.
+            # Reserve all three exact launcher paths; the installer still writes
+            # only changed files and rejects any mutation outside these leases.
+            *(f"path:{bin_dir / name}" for name, _ in RUNTIME_LAUNCHER_ENTRYPOINTS),
             *scheduler_resource_keys(
                 user_unit_dir=user_unit_dir,
                 libexec_dir=libexec_dir,

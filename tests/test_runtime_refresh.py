@@ -12432,7 +12432,7 @@ def test_launcher_directory_fsync_failure_after_replace_restores_exact_preimage(
     assert manifest_path.stat().st_mode & 0o777 == 0o640
 
 
-def test_scheduler_rollback_does_not_restore_unmutated_leased_launchers(
+def test_scheduler_rollback_does_not_restore_unmutated_unleased_launchers(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -12476,7 +12476,7 @@ def test_scheduler_rollback_does_not_restore_unmutated_leased_launchers(
     approval = json.loads(approval_path.read_text(encoding="utf-8"))
     assert {
         f"path:{path}" for path in launcher_paths.values()
-    }.issubset(approval["required_resource_keys"])
+    }.isdisjoint(approval["required_resource_keys"])
     systemd = FakeUserSystemd(unit_root, runtime_unit_root=runtime_unit_root)
     state_before = json.loads(json.dumps(systemd.states))
 

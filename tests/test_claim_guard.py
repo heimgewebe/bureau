@@ -469,8 +469,11 @@ def test_open_pr_guard_worker_count_is_bounded(monkeypatch):
     monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "1000")
     assert bureau_v2._open_pr_claim_guard_workers(100) == 32
 
+    monkeypatch.delenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", raising=False)
+    assert bureau_v2._open_pr_claim_guard_workers(100) == 16
+
     monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "invalid")
-    assert bureau_v2._open_pr_claim_guard_workers(100) == 8
+    assert bureau_v2._open_pr_claim_guard_workers(100) == 16
 
     monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "0")
     assert bureau_v2._open_pr_claim_guard_workers(3) == 3

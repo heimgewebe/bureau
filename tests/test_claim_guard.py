@@ -390,6 +390,63 @@ def test_github_open_pull_requests_requests_label_metadata_and_configured_limit(
     assert captured["argv"][captured["argv"].index("--limit") + 1] == "321"
 
 
+def test_github_open_pull_requests_inspects_multiple_prs_concurrently_in_order(monkeypatch):
+    # File reads for separate PRs overlap while the result order stays stable.
+    barrier = threading.Barrier(2)
+
+    class Completed:
+        returncode = 0
+        stderr = ""
+
+        def __init__(self, stdout):
+            self.stdout = stdout
+
+    def fake_run(argv, **_kwargs):
+        if argv[1] == "pr":
+            return Completed(
+                json.dumps(
+                    [
+                        {
+                            "number": number,
+                            "title": str(number),
+                            "headRefName": f"fix/{number}",
+                            "headRefOid": "b" * 40,
+                            "baseRefName": "main",
+                            "baseRefOid": "a" * 40,
+                            "changedFiles": 1,
+                            "url": f"https://github.example/pull/{number}",
+                            "body": "",
+                            "labels": [],
+                        }
+                        for number in (17, 18)
+                    ]
+                )
+            )
+        if argv[-1].endswith("/files?per_page=100"):
+            number = int(argv[-1].split("/pulls/")[1].split("/")[0])
+            barrier.wait(timeout=5)
+            return Completed(json.dumps([[{"filename": f"src/{number}.py", "status": "modified"}]]))
+        return Completed(
+            json.dumps(
+                {
+                    "state": "open",
+                    "base": {"sha": "a" * 40},
+                    "head": {"sha": "b" * 40},
+                    "changed_files": 1,
+                }
+            )
+        )
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    observed = bureau_v2._github_open_pull_requests("heimgewebe/example")
+
+    assert [item["number"] for item in observed] == [17, 18]
+    assert [item["fileScope"]["changed_paths"] for item in observed] == [
+        ["src/17.py"],
+        ["src/18.py"],
+    ]
+
+
 def test_github_open_pull_requests_cap_reached_fails_closed(monkeypatch):
     class Completed:
         returncode = 0

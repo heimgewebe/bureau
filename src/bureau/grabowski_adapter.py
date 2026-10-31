@@ -12,7 +12,6 @@ from typing import Any
 
 from .adapters import Observation
 
-
 _OPERATOR_EXECUTABLE = re.compile(
     r"(?:^|\s)path=(/nix/store/[a-z0-9]{32}-[^ ;\r\n]+/bin/grabowski-operator)(?=\s|;)"
 )

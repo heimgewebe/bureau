@@ -1083,8 +1083,8 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             "open PR observation reached BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT "
             f"({_open_pr_claim_guard_limit()}); coverage is bounded and fails closed"
         )
-    observed: list[dict[str, Any]] = []
-    for index, item in enumerate(value):
+    def observe_one(indexed: tuple[int, Any]) -> dict[str, Any]:
+        index, item = indexed
         if not isinstance(item, dict):
             raise OpenPullRequestObservationError(
                 f"open PR observation item {index} for {repository} is not an object"
@@ -1130,8 +1130,16 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             raise OpenPullRequestObservationError(
                 f"open PR {repository}#{number} identity changed during file observation"
             )
-        observed.append({**item, "fileScope": file_scope})
-    return observed
+        return {**item, "fileScope": file_scope}
+
+    if len(value) < 2:
+        return [observe_one(pair) for pair in enumerate(value)]
+    # Inspect independent PRs concurrently and retain input ordering.
+    # Each worker still validates file scope and re-reads identity.
+    with ThreadPoolExecutor(
+        max_workers=min(4, len(value)), thread_name_prefix="bureau-pr-detail"
+    ) as pool:
+        return list(pool.map(observe_one, enumerate(value)))
 
 
 def _observe_open_pull_requests(

@@ -2361,6 +2361,16 @@ def _restore_scheduler_preimage(
     return failures
 
 
+def _timer_substate_matches(previous: dict[str, str], current: dict[str, str]) -> bool:
+    """Ignore only the normal running/waiting tick of an active timer."""
+    if previous.get("SubState") == current.get("SubState"):
+        return True
+    return (
+        previous.get("ActiveState") == current.get("ActiveState") == "active"
+        and {previous.get("SubState"), current.get("SubState")} == {"running", "waiting"}
+    )
+
+
 def _scheduler_readback(
     *,
     source_commit: str,
@@ -2459,7 +2469,7 @@ def _scheduler_readback(
         if (
             timer["UnitFileState"] != expected_unit_file_state
             or timer["ActiveState"] != prior["ActiveState"]
-            or timer["SubState"] != prior["SubState"]
+            or not _timer_substate_matches(prior, timer)
         ):
             raise RuntimeRefreshError(
                 "scheduler-timer-intent-drift",
@@ -2742,11 +2752,38 @@ def _scheduler_closeout_readbacks_match(
         "artifacts",
         "prior_timer_intent",
         "pre_convergence_timers",
-        "timers",
         "authoritative",
     )
     if any(current.get(field) != persisted.get(field) for field in stable_fields):
         return False
+    previous_timers = persisted.get("timers")
+    current_timers = current.get("timers")
+    if previous_timers is None and current_timers is None:
+        # Historical already-current/no-effect receipts have services but no timer snapshot.
+        previous_timers = current_timers = {}
+        expected_names: set[str] = set()
+    else:
+        expected_names = set(RUNTIME_SCHEDULER_NAMES)
+    if (
+        not isinstance(previous_timers, dict)
+        or not isinstance(current_timers, dict)
+        or set(previous_timers) != expected_names
+        or set(current_timers) != expected_names
+    ):
+        return False
+    for name in expected_names:
+        previous = previous_timers[name]
+        observed = current_timers[name]
+        if (
+            not isinstance(previous, dict)
+            or not isinstance(observed, dict)
+            or any(
+                previous.get(key) != observed.get(key)
+                for key in ("LoadState", "UnitFileState", "ActiveState", "FragmentPath")
+            )
+            or not _timer_substate_matches(previous, observed)
+        ):
+            return False
     persisted_services = persisted.get("services")
     current_services = current.get("services")
     expected_names = set(RUNTIME_SCHEDULER_NAMES)

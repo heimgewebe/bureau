@@ -6149,6 +6149,74 @@ def test_release_task_supply_absent_live_is_converged_enabled_and_waiting(
     assert drift.value.code == "scheduler-readback-fragment-mismatch"
 
 
+@pytest.mark.parametrize(
+    ("prior_substate", "observed_substate"),
+    [("running", "waiting"), ("waiting", "running")],
+)
+def test_scheduler_convergence_accepts_active_timer_tick_but_rejects_real_drift(
+    tmp_path: Path, prior_substate: str, observed_substate: str,
+) -> None:
+    release, release_id, source_commit = scheduler_release(tmp_path)
+    unit_root = tmp_path / "systemd/user"
+    libexec_root = tmp_path / "libexec"
+    unit_root.mkdir(parents=True)
+    libexec_root.mkdir()
+    for name in refresh.RUNTIME_SCHEDULER_NAMES:
+        for suffix in ("service", "timer"):
+            (unit_root / f"{name}.{suffix}").write_text(
+                f"prior {name}.{suffix}\n", encoding="utf-8"
+            )
+        executable = libexec_root / name
+        executable.write_text(f"prior {name}\n", encoding="utf-8")
+        executable.chmod(0o755)
+    systemd = FakeUserSystemd(
+        unit_root, timer_states={"bureau-verifier-control": ("enabled", "active")}
+    )
+    timer = systemd.states["bureau-verifier-control.timer"]
+    timer["SubState"] = prior_substate
+
+    result = refresh.converge_user_scheduler(
+        source_commit=source_commit,
+        release_id=release_id,
+        release=release,
+        user_unit_dir=unit_root,
+        libexec_dir=libexec_root,
+        runtime_user_unit_dir=systemd.runtime_unit_root,
+        rollback_directory=tmp_path / "rollback",
+        manifest_path=tmp_path / "candidate-manifest.json",
+        command_runner=systemd,
+        validation_runner=successful_systemd_analyze,
+        cycle_validator=successful_cycle_validation,
+        before_validation=lambda: timer.update(SubState=observed_substate),
+    )
+    assert result["prior_timer_intent"]["bureau-verifier-control"] == "enabled"
+    assert result["timers"]["bureau-verifier-control"]["SubState"] == observed_substate
+    assert result["timers"]["bureau-verifier-control"]["ActiveState"] == "active"
+
+    timer["SubState"] = prior_substate
+    later = refresh.readback_user_scheduler(
+        result, expected_commit=source_commit, command_runner=systemd
+    )
+    assert refresh._scheduler_closeout_readbacks_match(result, later)
+    # The legacy no-effect exemption must never hide one missing live timer inventory.
+    missing_current = {key: value for key, value in later.items() if key != "timers"}
+    missing_persisted = {key: value for key, value in result.items() if key != "timers"}
+    assert not refresh._scheduler_closeout_readbacks_match(result, missing_current)
+    assert not refresh._scheduler_closeout_readbacks_match(missing_persisted, later)
+
+    timer["SubState"] = "dead"
+    with pytest.raises(refresh.RuntimeRefreshError) as drift:
+        refresh.readback_user_scheduler(
+            result, expected_commit=source_commit, command_runner=systemd
+        )
+    assert drift.value.code == "scheduler-timer-intent-drift"
+    assert not refresh._scheduler_closeout_readbacks_match(
+        result, {**result, "timers": {**result["timers"], "bureau-verifier-control": {
+            **result["timers"]["bureau-verifier-control"], "SubState": "dead"
+        }}}
+    )
+
+
 def test_scheduler_convergence_preserves_existing_timer_intent(tmp_path: Path) -> None:
     release, release_id, source_commit = scheduler_release(tmp_path)
     unit_root = tmp_path / "systemd/user"

@@ -4550,6 +4550,8 @@ def _compact_what_now_task_card(
         "eligible",
         "claim_eligible",
         "claim_eligible_with_approval",
+        "advisory_only",
+        "advisory_uncertainty",
         "resource_eligible",
         "soft_reasons",
         "blocker_reasons",
@@ -4598,6 +4600,13 @@ def _compact_what_now_result(
     compact["ranked_eligible"] = [
         _compact_what_now_task_card(card)
         for card in result["ranked_eligible"]
+    ]
+    compact["selected_advisory"] = _compact_what_now_task_card(
+        result.get("selected_advisory")
+    )
+    compact["advisory_candidates"] = [
+        _compact_what_now_task_card(card)
+        for card in result.get("advisory_candidates", [])
     ]
     blocked = result["blocked"]
     compact["blocked"] = [
@@ -6708,6 +6717,36 @@ class Dispatcher(legacy.Dispatcher):
         ]
         ranked_eligible = [item for item in cards if item["eligible"]]
         blocked = [item for item in cards if not item["eligible"]]
+        # A quick advisory may suggest work, but never verifies PR scope,
+        # execution health or claim eligibility. Preserve the hard blockers
+        # and all claim flags on these explicitly provisional candidates.
+        advisory_candidates: list[dict[str, Any]] = []
+        if bounded_advisory:
+            for card in blocked:
+                if card["effective_state"] not in {"ready", "planned"}:
+                    continue
+                reasons = card["blocker_reasons"]
+                unobserved_pr = [
+                    reason for reason in reasons
+                    if reason.startswith("repo write blocked by open PR guard failure: ")
+                    and "open PR state unobserved in bounded advisory" in reason
+                ]
+                if not unobserved_pr or any(
+                    reason not in unobserved_pr
+                    and not reason.startswith("missing capabilities: ")
+                    for reason in reasons
+                ):
+                    continue
+                advisory_candidates.append({
+                    **card,
+                    "advisory_only": True,
+                    "advisory_uncertainty": [
+                        "open_pr_scope", "lifecycle", "runtime_execution",
+                    ],
+                    "eligible": False,
+                    "claim_eligible": False,
+                    "claim_eligible_with_approval": False,
+                })
         blocker_counts: dict[str, int] = {}
         for item in blocked:
             for reason in item["blocker_reasons"]:
@@ -6726,6 +6765,15 @@ class Dispatcher(legacy.Dispatcher):
                 "does_not_establish": ["live PR nonconflict", "claim authority"],
             },
             "selected": selected,
+            "selected_advisory": advisory_candidates[0] if advisory_candidates else None,
+            "advisory_candidates": advisory_candidates[: max(limit, 0)],
+            "advisory_candidate_count": len(advisory_candidates),
+            "advisory_contract": {
+                "status": "provisional" if bounded_advisory else "not_applicable",
+                "does_not_establish": [
+                    "PR nonconflict", "claim eligibility", "runtime health",
+                ],
+            },
             "ranked_eligible": ranked_eligible[: max(limit, 0)],
             "blocked": blocked[: max(limit, 0)],
             "live_register": live_context,

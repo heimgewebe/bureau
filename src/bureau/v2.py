@@ -4550,6 +4550,8 @@ def _compact_what_now_task_card(
         "eligible",
         "claim_eligible",
         "claim_eligible_with_approval",
+        "advisory_only",
+        "advisory_uncertainty",
         "resource_eligible",
         "soft_reasons",
         "blocker_reasons",
@@ -4579,7 +4581,10 @@ def _compact_what_now_runtime_truth(
     compact["repair_details_omitted"] = bool(
         runtime_truth.get("repair_recommendations")
         or runtime_truth.get("repair_task_candidates")
+        or runtime_truth.get("lifecycle_observed") is False
     )
+    if runtime_truth.get("lifecycle_observed") is False:
+        compact["lifecycle_observed"] = False
     return compact
 
 
@@ -4595,6 +4600,13 @@ def _compact_what_now_result(
     compact["ranked_eligible"] = [
         _compact_what_now_task_card(card)
         for card in result["ranked_eligible"]
+    ]
+    compact["selected_advisory"] = _compact_what_now_task_card(
+        result.get("selected_advisory")
+    )
+    compact["advisory_candidates"] = [
+        _compact_what_now_task_card(card)
+        for card in result.get("advisory_candidates", [])
     ]
     blocked = result["blocked"]
     compact["blocked"] = [
@@ -4617,20 +4629,29 @@ def _compact_what_now_result(
     }
 
     lifecycle = result["lifecycle"]
-    inconsistent = [
-        {
-            "initiative_id": item["initiative_id"],
-            "declared_state": item["declared_state"],
-            "recommended_state": item["recommended_state"],
+    if lifecycle is None:
+        compact["lifecycle"] = {
+            "status": "unobserved",
+            "total": None,
+            "inconsistent_count": None,
+            "inconsistent": [],
+            "does_not_establish": ["current lifecycle consistency"],
         }
-        for item in lifecycle
-        if not item["consistent"]
-    ]
-    compact["lifecycle"] = {
-        "total": len(lifecycle),
-        "inconsistent_count": len(inconsistent),
-        "inconsistent": inconsistent,
-    }
+    else:
+        inconsistent = [
+            {
+                "initiative_id": item["initiative_id"],
+                "declared_state": item["declared_state"],
+                "recommended_state": item["recommended_state"],
+            }
+            for item in lifecycle
+            if not item["consistent"]
+        ]
+        compact["lifecycle"] = {
+            "total": len(lifecycle),
+            "inconsistent_count": len(inconsistent),
+            "inconsistent": inconsistent,
+        }
 
     live_context = result["live_register"]
     live_summary = live_context.get("summary", {})
@@ -4744,10 +4765,25 @@ class Dispatcher(legacy.Dispatcher):
             and row["plan_sha256"] == current_plan
         )
 
-    def _open_pr_reservations(self, *, strict: bool) -> list[legacy.Reservation]:
-        # Retain strict for call-site compatibility. Observation failures are
-        # represented as fail-closed reservations so frontier and claim_next
-        # report the same structured blocker instead of diverging on errors.
+    def _advisory_open_pr_unknown(self) -> bool:
+        # Advice must never wait for all GitHub repositories. Unknown PR scope
+        # blocks repository writes, while claim-time observations remain live.
+        return (
+            self.open_pr_reservations_provider is open_pull_request_reservations
+            and os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+            not in {"0", "false", "False"}
+        )
+
+    def _open_pr_reservations(
+        self, *, strict: bool, advisory: bool = False
+    ) -> list[legacy.Reservation]:
+        if advisory and self._advisory_open_pr_unknown():
+            return _repo_write_guard_failure_reservations(
+                self.registry, "open PR state unobserved in bounded advisory; "
+                "live PR guard required before claiming repository writes",
+            )
+        # Claim/commit paths still require fresh PR observation; test-injected
+        # providers remain authoritative for their own explicit observations.
         _ = strict
         try:
             return list(self.open_pr_reservations_provider(self.registry))
@@ -4991,6 +5027,7 @@ class Dispatcher(legacy.Dispatcher):
         reservations: list[legacy.Reservation],
         overlays: dict[str, str],
         claim_reasons_by_task: dict[str, list[str]] | None = None,
+        advisory: bool = False,
     ) -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
         for task in self._ordered_tasks():
@@ -5026,15 +5063,20 @@ class Dispatcher(legacy.Dispatcher):
                 blocking_child_task_ids=parent_child.blocking_child_task_ids,
             )
             item["claim_reasons"] = claim_reasons
-            item["open_pr_scope"] = _task_open_pr_scope_assessment(
-                task,
-                [
-                    reservation
-                    for reservation in reservations
-                    if isinstance(reservation, OpenPullRequestReservation)
-                ],
-                self.registry,
-                overlays,
+            # Advisory cannot claim; don't recompute the second PR-scope proof.
+            item["open_pr_scope"] = (
+                None
+                if advisory
+                else _task_open_pr_scope_assessment(
+                    task,
+                    [
+                        reservation
+                        for reservation in reservations
+                        if isinstance(reservation, OpenPullRequestReservation)
+                    ],
+                    self.registry,
+                    overlays,
+                )
             )
             projected_reasons = set(reasons)
             item["cross_repository_reasons"] = [
@@ -5045,10 +5087,13 @@ class Dispatcher(legacy.Dispatcher):
         return result
 
     def frontier(
-        self, capabilities: set[str], resource: str | None = None
+        self, capabilities: set[str], resource: str | None = None,
+        *, advisory: bool = False,
     ) -> list[dict[str, Any]]:
         self._validate_resource_filter(resource)
-        open_pr_reservations = self._open_pr_reservations(strict=False)
+        open_pr_reservations = self._open_pr_reservations(
+            strict=False, advisory=advisory,
+        )
         with self.store.connect() as connection:
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
@@ -5059,6 +5104,7 @@ class Dispatcher(legacy.Dispatcher):
                 runs=runs,
                 reservations=reservations,
                 overlays=overlays,
+                advisory=advisory,
             )
 
     def _coordinated_claim_approval_extensions(
@@ -6632,13 +6678,32 @@ class Dispatcher(legacy.Dispatcher):
         memory or informal plans.
         """
         self._validate_resource_filter(resource)
-        frontier = self.frontier(capabilities, resource=resource)
-        lifecycle = lifecycle_diagnostics(self.source_registry, self.store)
-        runtime_truth = frontier_runtime_truth(frontier, lifecycle)
-        runtime_execution_truth = (
-            self._runtime_execution_truth() if self.enforce_runtime_gate else None
+        open_pr_unobserved = self._advisory_open_pr_unknown()
+        bounded_advisory = compact and open_pr_unobserved
+        frontier = self.frontier(
+            capabilities, resource=resource, advisory=open_pr_unobserved,
         )
-        runtime_execution_blocked = bool(
+        # Advisory never authorizes a claim, so expensive live lifecycle and
+        # runtime drift checks can remain UNKNOWN. Claim paths still check them.
+        lifecycle = (
+            None if bounded_advisory
+            else lifecycle_diagnostics(self.source_registry, self.store)
+        )
+        runtime_truth = frontier_runtime_truth(frontier, lifecycle or [])
+        if bounded_advisory:
+            runtime_truth["lifecycle_mismatch"] = None
+            runtime_truth["health_blocks_normal_claim"] = None
+            runtime_truth["repair_task_required"] = None
+            runtime_truth["repair_task_candidate_count"] = None
+            runtime_truth["repair_task_candidates"] = None
+            runtime_truth["repair_recommendations"] = None
+            runtime_truth["lifecycle_observed"] = False
+        runtime_execution_truth = (
+            self._runtime_execution_truth()
+            if self.enforce_runtime_gate and not bounded_advisory
+            else None
+        )
+        runtime_execution_blocked = bounded_advisory or bool(
             runtime_execution_truth is not None
             and runtime_execution_truth.get("execution_blocked") is True
         )
@@ -6652,6 +6717,36 @@ class Dispatcher(legacy.Dispatcher):
         ]
         ranked_eligible = [item for item in cards if item["eligible"]]
         blocked = [item for item in cards if not item["eligible"]]
+        # A quick advisory may suggest work, but never verifies PR scope,
+        # execution health or claim eligibility. Preserve the hard blockers
+        # and all claim flags on these explicitly provisional candidates.
+        advisory_candidates: list[dict[str, Any]] = []
+        if bounded_advisory:
+            for card in blocked:
+                if card["effective_state"] not in {"ready", "planned"}:
+                    continue
+                reasons = card["blocker_reasons"]
+                unobserved_pr = [
+                    reason for reason in reasons
+                    if reason.startswith("repo write blocked by open PR guard failure: ")
+                    and "open PR state unobserved in bounded advisory" in reason
+                ]
+                if not unobserved_pr or any(
+                    reason not in unobserved_pr
+                    and not reason.startswith("missing capabilities: ")
+                    for reason in reasons
+                ):
+                    continue
+                advisory_candidates.append({
+                    **card,
+                    "advisory_only": True,
+                    "advisory_uncertainty": [
+                        "open_pr_scope", "lifecycle", "runtime_execution",
+                    ],
+                    "eligible": False,
+                    "claim_eligible": False,
+                    "claim_eligible_with_approval": False,
+                })
         blocker_counts: dict[str, int] = {}
         for item in blocked:
             for reason in item["blocker_reasons"]:
@@ -6664,7 +6759,21 @@ class Dispatcher(legacy.Dispatcher):
             "schema_version": 1,
             "resource": resource,
             "capabilities": sorted(capabilities),
+            "open_pr_observation": {
+                "status": "unobserved" if open_pr_unobserved else "provider_consulted",
+                "mode": "offline_fail_closed" if open_pr_unobserved else "provider",
+                "does_not_establish": ["live PR nonconflict", "claim authority"],
+            },
             "selected": selected,
+            "selected_advisory": advisory_candidates[0] if advisory_candidates else None,
+            "advisory_candidates": advisory_candidates[: max(limit, 0)],
+            "advisory_candidate_count": len(advisory_candidates),
+            "advisory_contract": {
+                "status": "provisional" if bounded_advisory else "not_applicable",
+                "does_not_establish": [
+                    "PR nonconflict", "claim eligibility", "runtime health",
+                ],
+            },
             "ranked_eligible": ranked_eligible[: max(limit, 0)],
             "blocked": blocked[: max(limit, 0)],
             "live_register": live_context,

@@ -39,6 +39,86 @@ def _add_task(root, source_task_id: str, task_id: str, *, rank: int = 1):
     queue_path.write_text(json.dumps(queue))
 
 
+
+def test_what_now_bounded_advisory_never_waits_for_blocking_github_observer(
+    registry_factory, tmp_path, monkeypatch
+):
+    from time import monotonic
+
+    root = registry_factory(1, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    monkeypatch.setattr(
+        bureau_v2, "_github_repository_for_path", lambda _path: "heimgewebe/example",
+    )
+    called = []
+
+    def blocked_observer(repository):
+        called.append(repository)
+        threading.Event().wait(4.0)
+        raise bureau_v2.OpenPullRequestObservationError("observer unavailable")
+
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", blocked_observer)
+    dispatcher = Dispatcher(registry, store)
+    started = monotonic()
+    advisory = dispatcher.what_now({"repository"}, compact=True, limit=3)
+    elapsed = monotonic() - started
+
+    assert elapsed < 2.0
+    assert called == []
+    assert advisory["open_pr_observation"]["status"] == "unobserved"
+    assert advisory["open_pr_observation"]["mode"] == "offline_fail_closed"
+    assert advisory["lifecycle"]["status"] == "unobserved"
+    assert advisory["lifecycle"]["total"] is None
+    assert advisory["runtime_truth"]["lifecycle_mismatch"] is None
+    assert advisory["runtime_truth"]["repair_task_candidate_count"] is None
+    assert advisory["runtime_truth"]["repair_details_omitted"] is True
+    assert advisory["runtime_truth"]["lifecycle_observed"] is False
+    assert advisory["ranked_eligible"] == []
+    assert advisory["selected"] is None
+    assert advisory["blocked"]
+    assert all(card["claim_eligible"] is False for card in advisory["blocked"])
+    assert "open PR guard failure" in " ".join(
+        advisory["blocked"][0]["blocker_reasons"]
+    )
+
+    def live_fail_closed(repository):
+        called.append(repository)
+        raise bureau_v2.OpenPullRequestObservationError("live observer unavailable")
+
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", live_fail_closed)
+    with pytest.raises(NoEligibleTask):
+        dispatcher.claim_next("worker", ("repository",))
+    assert called == ["heimgewebe/example"]
+
+
+def test_what_now_bounded_advisory_keeps_injected_pr_provider_authoritative(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    called = []
+
+    def injected_provider(_registry):
+        called.append(True)
+        return [
+            bureau_v2.legacy.Reservation(
+                "open-pr:example#42", "repo", "write-blocker", 1,
+            )
+        ]
+
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=injected_provider,
+    )
+    result = dispatcher.what_now({"repository"}, compact=True)
+    assert called == [True]
+    assert result["open_pr_observation"]["status"] == "provider_consulted"
+    assert result["selected"] is None
+    assert "open-pr:example#42" in " ".join(result["blocked"][0]["blocker_reasons"])
+
 def test_open_pull_request_reservation_blocks_repo_write_claim(registry_factory, tmp_path):
     root = registry_factory(1, mode="write")
     registry = Registry.load(root)

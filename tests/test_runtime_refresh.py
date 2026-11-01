@@ -6198,6 +6198,11 @@ def test_scheduler_convergence_accepts_active_timer_tick_but_rejects_real_drift(
         result, expected_commit=source_commit, command_runner=systemd
     )
     assert refresh._scheduler_closeout_readbacks_match(result, later)
+    # The legacy no-effect exemption must never hide one missing live timer inventory.
+    missing_current = {key: value for key, value in later.items() if key != "timers"}
+    missing_persisted = {key: value for key, value in result.items() if key != "timers"}
+    assert not refresh._scheduler_closeout_readbacks_match(result, missing_current)
+    assert not refresh._scheduler_closeout_readbacks_match(missing_persisted, later)
 
     timer["SubState"] = "dead"
     with pytest.raises(refresh.RuntimeRefreshError) as drift:

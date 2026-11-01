@@ -2758,7 +2758,12 @@ def _scheduler_closeout_readbacks_match(
         return False
     previous_timers = persisted.get("timers")
     current_timers = current.get("timers")
-    expected_names = set(RUNTIME_SCHEDULER_NAMES)
+    if previous_timers is None and current_timers is None:
+        # Historical already-current/no-effect receipts have services but no timer snapshot.
+        previous_timers = current_timers = {}
+        expected_names: set[str] = set()
+    else:
+        expected_names = set(RUNTIME_SCHEDULER_NAMES)
     if (
         not isinstance(previous_timers, dict)
         or not isinstance(current_timers, dict)
@@ -2766,7 +2771,7 @@ def _scheduler_closeout_readbacks_match(
         or set(current_timers) != expected_names
     ):
         return False
-    for name in RUNTIME_SCHEDULER_NAMES:
+    for name in expected_names:
         previous = previous_timers[name]
         observed = current_timers[name]
         if (

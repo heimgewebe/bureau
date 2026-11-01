@@ -4,9 +4,10 @@ Task: `BUREAU-TRUTH-MODEL-V2-T002`
 
 ## Purpose
 
-The status capsule is Bureau's narrow independent read path. The collector reads the local
-`origin/main` Registry archive and a consistent read-only SQLite backup, then atomically publishes
-one bounded JSON file. The reader needs only that file. It does not open Git, SQLite, GitHub,
+The status capsule is Bureau's narrow independent read path. The collector observes
+the protected GitHub `main` through an ephemeral exact fetch when available (otherwise
+labels the local ref honestly), reads a consistent read-only SQLite backup and atomically
+publishes one bounded JSON file. The reader needs only that file. It does not open Git, SQLite, GitHub,
 Grabowski or a shell.
 
 This provides time-bound truth when the full Grabowski operator session is unavailable. It does not
@@ -42,9 +43,9 @@ Reader exit codes:
 The sealed snapshot contains:
 
 - creation time and freshness threshold;
-- local observed ref (`origin/main` in canonical mode), its head, Registry tree and deterministic Registry JSON hash;
+- observed source-ref head, its provenance, Registry tree and deterministic Registry JSON hash;
 - running collector package version and SHA-256 of the loaded `bureau.status_capsule` module;
-- explicit `remote_freshness: not-observed` rather than any claim that the local ref matches GitHub;
+- explicit remote-freshness evidence; a local-only observation never claims GitHub-main freshness;
 - SQLite integrity, foreign-key result and schema version;
 - bounded recent and active runs;
 - active reservations represented as leases;
@@ -79,9 +80,16 @@ checkout, Registry, queue, database, runs, reservations, receipts or workspaces.
 
 ## Reference timer
 
-`ops/systemd/bureau-status-capsule.{service,timer}` refreshes the capsule every five minutes. The
-unit has no network address family, reads the Bureau repository and state root read-only, and may
-write only `~/.local/state/bureau-readonly`.
+`ops/systemd/bureau-status-capsule.{service,timer}` refreshes the capsule every five minutes.
+The default unit isolates filesystem writes to `~/.local/state/bureau-readonly` and permits
+AF_UNIX, AF_INET and AF_INET6 for read-only GitHub-main observation.
+
+On NixOS, a root-owned SSH configuration under `/nix/store` may appear as UID 65534 inside a
+systemd --user mount namespace. OpenSSH then rejects its ownership. The proven, NixOS-only
+`ops/systemd/bureau-status-capsule-nixos-ssh-owner.conf` override disables the five
+filesystem namespace controls that cause that failure. It retains the original unit's
+process protections and the collector's read-only behavior; filesystem access then follows
+the ordinary permissions of the user account.
 
 ```bash
 release="$(git -C ~/repos/bureau rev-parse origin/main)"
@@ -99,13 +107,17 @@ install -Dm644 ops/systemd/bureau-status-capsule.service \
   ~/.config/systemd/user/bureau-status-capsule.service
 install -Dm644 ops/systemd/bureau-status-capsule.timer \
   ~/.config/systemd/user/bureau-status-capsule.timer
+if test -e /etc/NIXOS; then
+  install -Dm644 ops/systemd/bureau-status-capsule-nixos-ssh-owner.conf \
+    ~/.config/systemd/user/bureau-status-capsule.service.d/20-nixos-ssh-owner.conf
+fi
 systemctl --user daemon-reload
 systemctl --user enable --now bureau-status-capsule.timer
 ```
 
-A missing or stale local `origin/main` is visible as the head in the snapshot; the collector performs
-no network fetch and labels the source scope `local-origin-main-without-fetch`. Repository
-synchronization remains an external Git/Grabowski responsibility.
+The snapshot records whether GitHub `main` was confirmed through a read-only ephemeral
+exact fetch or whether the collector observed only a local ref. It never calls a local-only
+observation remote-fresh. Updating the canonical checkout remains a separate Git/Grabowski operation.
 
 ## Boundaries
 

@@ -851,14 +851,7 @@ def _canonical_repo_relative_path(value: Any, *, label: str) -> str:
     return canonical
 
 
-def _github_pull_request_file_scope(
-    repository: str,
-    number: int,
-    *,
-    base_oid: str,
-    head_oid: str,
-    expected_changed_files: int,
-) -> dict[str, Any]:
+def _github_pull_request_rest_raw_files(repository: str, number: int) -> list[Any]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
     try:
         result = subprocess.run(
@@ -895,6 +888,43 @@ def _github_pull_request_file_scope(
             f"gh api pull request files returned invalid pagination for {repository}#{number}"
         )
     raw_files = [item for page in pages for item in page]
+    return raw_files
+
+
+def _github_pull_request_file_scope(
+    repository: str,
+    number: int,
+    *,
+    base_oid: str,
+    head_oid: str,
+    expected_changed_files: int,
+    graphql_files: Any = None,
+) -> dict[str, Any]:
+    # gh pr list can include the complete changed-file list in its single
+    # GraphQL observation. Only reuse it when coverage and change types are
+    # provable; renames need REST's previous_filename and use the old route.
+    graphql_statuses = {
+        "ADDED": "added",
+        "DELETED": "removed",
+        "MODIFIED": "modified",
+        "COPIED": "copied",
+        "CHANGED": "changed",
+        "UNCHANGED": "unchanged",
+    }
+    if (
+        isinstance(graphql_files, list)
+        and len(graphql_files) == expected_changed_files
+        and all(
+            isinstance(item, dict) and item.get("changeType") in graphql_statuses
+            for item in graphql_files
+        )
+    ):
+        raw_files = [
+            {"filename": item.get("path"), "status": graphql_statuses[item["changeType"]]}
+            for item in graphql_files
+        ]
+    else:
+        raw_files = _github_pull_request_rest_raw_files(repository, number)
     if (
         not isinstance(expected_changed_files, int)
         or isinstance(expected_changed_files, bool)
@@ -1054,7 +1084,8 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
                 "--limit",
                 limit,
                 "--json",
-                "number,title,headRefName,headRefOid,baseRefName,baseRefOid,changedFiles,url,body,labels",
+                "number,title,headRefName,headRefOid,baseRefName,baseRefOid,"
+                "changedFiles,url,body,labels,files",
             ],
             text=True,
             capture_output=True,
@@ -1083,6 +1114,22 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             "open PR observation reached BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT "
             f"({_open_pr_claim_guard_limit()}); coverage is bounded and fails closed"
         )
+    # One PR beyond the file observation cap makes this entire repository
+    # fail closed. Do not spend dozens of REST pages observing its siblings.
+    for item in value:
+        if isinstance(item, dict):
+            count = item.get("changedFiles")
+            if (
+                isinstance(count, int)
+                and not isinstance(count, bool)
+                and count >= _open_pr_file_limit()
+            ):
+                raise OpenPullRequestObservationError(
+                    "open PR file observation reached BUREAU_OPEN_PR_CLAIM_GUARD_FILE_LIMIT "
+                    f"({_open_pr_file_limit()}) for {repository}#{item.get('number')}; "
+                    "coverage is bounded and fails closed"
+                )
+
     def observe_one(indexed: tuple[int, Any]) -> dict[str, Any]:
         index, item = indexed
         if not isinstance(item, dict):
@@ -1119,6 +1166,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             base_oid=base_oid,
             head_oid=head_oid,
             expected_changed_files=changed_files,
+            graphql_files=item.get("files"),
         )
         identity = _github_pull_request_identity(repository, number)
         expected_identity = {

@@ -2569,3 +2569,182 @@ def test_pull_requests_contradicting_the_observed_identity_block(registry_factor
     ]
     assert len(failures) == 1
     assert "conflicting" in failures[0].diagnostic
+
+
+def test_open_pr_graphql_files_complete_skips_rest_but_rechecks_identity(monkeypatch):
+    calls = []
+
+    class Completed:
+        returncode = 0
+        stderr = ""
+
+        def __init__(self, stdout):
+            self.stdout = json.dumps(stdout)
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        if argv[1] == "pr":
+            assert "files" in argv[argv.index("--json") + 1].split(",")
+            return Completed(
+                [
+                    {
+                        "number": 22,
+                        "baseRefOid": "a" * 40,
+                        "headRefOid": "b" * 40,
+                        "changedFiles": 2,
+                        "files": [
+                            {"path": "src/added.py", "changeType": "ADDED"},
+                            {"path": "tests/deleted.py", "changeType": "DELETED"},
+                        ],
+                    }
+                ]
+            )
+        assert argv[1] == "api" and argv[-1].endswith("/pulls/22")
+        return Completed(
+            {
+                "state": "open",
+                "base": {"sha": "a" * 40},
+                "head": {"sha": "b" * 40},
+                "changed_files": 2,
+            }
+        )
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    observed = bureau_v2._github_open_pull_requests("heimgewebe/example")
+    assert len(calls) == 2
+    assert observed[0]["fileScope"]["files"] == [
+        {"path": "src/added.py", "status": "added"},
+        {"path": "tests/deleted.py", "status": "removed"},
+    ]
+    assert observed[0]["fileScope"]["changed_paths"] == [
+        "src/added.py", "tests/deleted.py",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("graphql_files", "rest_files", "expected_paths"),
+    [
+        (
+            [{"path": "src/new.py", "changeType": "RENAMED"}],
+            [
+                {
+                    "filename": "src/new.py",
+                    "previous_filename": "src/old.py",
+                    "status": "renamed",
+                }
+            ],
+            ["src/new.py", "src/old.py"],
+        ),
+        (
+            [],
+            [{"filename": "src/file.py", "status": "modified"}],
+            ["src/file.py"],
+        ),
+    ],
+)
+def test_open_pr_graphql_files_rename_or_incomplete_falls_back_to_rest(
+    monkeypatch, graphql_files, rest_files, expected_paths
+):
+    calls = []
+
+    class Completed:
+        returncode = 0
+        stderr = ""
+
+        def __init__(self, stdout):
+            self.stdout = json.dumps(stdout)
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        if argv[1] == "pr":
+            return Completed(
+                [
+                    {
+                        "number": 24,
+                        "baseRefOid": "a" * 40,
+                        "headRefOid": "b" * 40,
+                        "changedFiles": 1,
+                        "files": graphql_files,
+                    }
+                ]
+            )
+        if argv[-1].endswith("/files?per_page=100"):
+            return Completed([rest_files])
+        return Completed(
+            {
+                "state": "open",
+                "base": {"sha": "a" * 40},
+                "head": {"sha": "b" * 40},
+                "changed_files": 1,
+            }
+        )
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    observed = bureau_v2._github_open_pull_requests("heimgewebe/example")
+    assert len(calls) == 3
+    assert observed[0]["fileScope"]["changed_paths"] == expected_paths
+
+
+def test_open_pr_graphql_files_unsafe_path_still_fails_closed(monkeypatch):
+    class Completed:
+        returncode = 0
+        stderr = ""
+
+        def __init__(self, stdout):
+            self.stdout = json.dumps(stdout)
+
+    def fake_run(argv, **_kwargs):
+        assert argv[1] == "pr"
+        return Completed(
+            [
+                {
+                    "number": 25,
+                    "baseRefOid": "a" * 40,
+                    "headRefOid": "b" * 40,
+                    "changedFiles": 1,
+                    "files": [{"path": "../outside", "changeType": "MODIFIED"}],
+                }
+            ]
+        )
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError, match="safe repository"):
+        bureau_v2._github_open_pull_requests("heimgewebe/example")
+
+
+def test_open_pr_oversize_file_cap_fails_without_sibling_rest_calls(monkeypatch):
+    calls = []
+
+    class Completed:
+        returncode = 0
+        stderr = ""
+
+        def __init__(self, stdout):
+            self.stdout = json.dumps(stdout)
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        assert argv[1] == "pr", "oversize PR must stop before any file/identity REST call"
+        return Completed(
+            [
+                {
+                    "number": 238,
+                    "baseRefOid": "a" * 40,
+                    "headRefOid": "b" * 40,
+                    "changedFiles": 1,
+                    "files": [{"path": "src/normal.py", "changeType": "MODIFIED"}],
+                },
+                {
+                    "number": 237,
+                    "baseRefOid": "a" * 40,
+                    "headRefOid": "b" * 40,
+                    "changedFiles": 4104,
+                    "files": [{"path": "src/first.py", "changeType": "MODIFIED"}],
+                },
+            ]
+        )
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError, match="FILE_LIMIT"):
+        bureau_v2._github_open_pull_requests("heimgewebe/commonworld")
+    assert len(calls) == 1

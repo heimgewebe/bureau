@@ -69,14 +69,18 @@ successful snapshot as `stale`, even while its age remains below the normal thre
 No valid snapshot yields `unavailable`. Hash manipulation also yields `unavailable`; the reader does
 not partially trust a damaged document.
 
-The deployment archive is built from the exact local `origin/main` object, not from working-tree files, and the runtime venv is switched through an atomic symlink. The output path must be outside both Registry and state roots. The reference unit requires the
-output directory to exist before activation, so systemd can expose only that narrow path as writable
-under `ProtectHome=read-only`. A snapshot is capped at 1,000,000
-pretty-printed UTF-8 bytes; oversized refreshes preserve the previous snapshot and emit failure
-evidence. Source collection uses a hook-free, fsmonitor-free `git archive` from the locally present
-`origin/main` object and a SQLite `mode=ro` backup. Global and system Git configuration, pagers,
-external diff helpers and replace objects are disabled. Collection neither fetches nor changes the
-checkout, Registry, queue, database, runs, reservations, receipts or workspaces.
+The reference installation below builds the deployment archive from the exact local
+`origin/main` object, not from working-tree files, and switches the runtime venv through an
+atomic symlink. The output path must be outside Registry and state roots. The default unit requires
+the output directory before activation, so it can expose only that narrow path as writable
+under `ProtectHome=read-only`. A snapshot is capped at 1,000,000 pretty-printed UTF-8 bytes;
+oversized refreshes preserve the previous snapshot and emit failure evidence.
+
+Source collection uses a hook-free, fsmonitor-free `git archive` from the exact observed commit
+and a SQLite `mode=ro` backup. If GitHub `main` differs from local `origin/main`, the collector
+fetches only that exact commit into an isolated temporary bare repository. It never advances or
+writes the canonical checkout, Registry, queue, state database, runs, reservations or receipts.
+Global and system Git configuration, pagers, external diff helpers and replace objects are disabled.
 
 ## Reference timer
 

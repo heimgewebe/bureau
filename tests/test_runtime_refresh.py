@@ -4871,6 +4871,7 @@ def historical_runtime_artifacts(
     *,
     scheduler: dict[str, Any] | None = None,
     runtime_scheduler_names: tuple[str, ...] | None = None,
+    runtime_approval_override: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Path]]:
     prefix = Path(intent["prefix"])
     bin_dir = Path(intent["bin_dir"])
@@ -4977,7 +4978,7 @@ def historical_runtime_artifacts(
         "runtime_refresh_launcher": None,
         "status_capsule_launcher": None,
     }
-    runtime_approval = {
+    runtime_approval = runtime_approval_override or {
         "schema_version": 1,
         "allowed": True,
         "reference": intent["target_sha256"],
@@ -13996,3 +13997,142 @@ def test_registry_special_acceptance_criteria_require_dedicated_proof_classes() 
     assert "registry-resource-intake" in hall_mapping["hall-of-memory-resource-visible"][
         "required_evidence"
     ]
+
+
+def after_effect_unclear_fixture(
+    tmp_path: Path,
+) -> tuple[dict[str, Any], dict[str, Any], StateStore, Path, dict[str, Path]]:
+    """Create an isolated original effect, *not* a successful result or a replay."""
+    task_id = "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2360-NIXOS-20261028"
+    _observed, _manifest_path, intent, _intent_path = prepare_candidate_intent(
+        tmp_path, task_id=task_id
+    )
+    store = authority_store_for_intent(intent)
+    bound = refresh.bind_runtime_refresh_authority(store=store, intent=intent, now=NOW)
+    original_lease, resource_db = lease_for(tmp_path / "unclear-lease", intent)
+    lease = refresh.validate_live_lease_binding(
+        intent, original_lease, resource_db=resource_db, now=NOW
+    )
+    attempt = Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    started = refresh.bind_digest({
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_refresh_attempt_start",
+        "intent_sha256": intent["intent_sha256"],
+        "target_sha256": intent["target_sha256"],
+        "main_commit": intent["main_commit"],
+        "authority_task_spec": bound,
+        "lease_binding": lease,
+        "started_at": refresh.isoformat(NOW),
+        "effect_started": False,
+    }, "start_sha256")
+    refresh.create_only(attempt / "started.json", refresh.canonical_bytes(started))
+    result = refresh._write_attempt_result(attempt / "result.json", {
+        "schema_version": refresh.SCHEMA_VERSION,
+        "kind": "bureau_runtime_refresh_result",
+        "status": "unclear",
+        "intent_sha256": intent["intent_sha256"],
+        "target_sha256": intent["target_sha256"],
+        "main_commit": intent["main_commit"],
+        "authority_task_spec": bound,
+        "lease_binding": lease,
+        "finished_at": refresh.isoformat(NOW + timedelta(seconds=1)),
+        "effect_started": True,
+        "error": {"code": "command-failed", "message": "jsonschema unavailable after install"},
+        "does_not_establish": ["safe_retry", "deployment_outcome"],
+    })
+    _receipt, _readback, artifacts = historical_runtime_artifacts(
+        tmp_path, intent, runtime_approval_override=intent
+    )
+    from bureau.read_only_state import ReadOnlyStateStore
+
+    original_store = ReadOnlyStateStore(store.path, store.state_root)
+    options: dict[str, Any] = {
+        "state_root": Path(intent["state_root"]),
+        "approval_task_id": task_id,
+        "expected_revision": bound["revision"],
+        "expected_spec_sha256": bound["spec_sha256"],
+        "intent_sha256": intent["intent_sha256"],
+        "result_sha256": result["result_sha256"],
+        "source_repository": tmp_path / "source-repository",
+        "authority_store": original_store,
+    }
+    return options, intent, store, attempt / "result.json", artifacts
+
+
+def test_after_effect_unclear_create_only_proves_actual_install_without_closeout(
+    tmp_path: Path,
+) -> None:
+    options, _intent, store, result_path, artifacts = after_effect_unclear_fixture(tmp_path)
+    original_result = result_path.read_bytes()
+    original_task = store.task_spec(options["approval_task_id"])
+    # The exact original bureau launcher was replaced after installation.
+    (artifacts["backup"] / "bureau").write_text("#!/bin/sh\nlater hotfix\n")
+    preview = refresh.reconcile_after_effect_unclear_runtime_refresh_authority(**options)
+    record = preview["reconciliation"]
+    assert record["status"] == "historical_effect_authenticated"
+    assert record["original_bureau_launcher_archived_matches"] is False
+    assert "original_TaskSpec_terminal_closeout" in record["does_not_establish"]
+    assert preview["persisted"] is False
+    assert not Path(preview["path"]).exists()
+
+    created = refresh.reconcile_after_effect_unclear_runtime_refresh_authority(
+        **options, create_record=True
+    )
+    assert created["persisted"] is True
+    saved = refresh.read_json(Path(created["path"]))
+    refresh.verify_digest(saved, "reconciliation_sha256")
+    assert saved["original_result_sha256"] == options["result_sha256"]
+    replay = refresh.reconcile_after_effect_unclear_runtime_refresh_authority(
+        **options, create_record=True
+    )
+    assert replay["idempotent_replay"] is True
+    assert replay["reconciliation"] == saved
+    assert result_path.read_bytes() == original_result
+    assert store.task_spec(options["approval_task_id"]) == original_task
+
+
+@pytest.mark.parametrize(
+    ("damage", "expected_code"),
+    [
+        ("original_spec_drift", "after-effect-unclear-taskspec-drift"),
+        ("wrong_result_digest", "after-effect-unclear-result-invalid"),
+        ("receipt_removed", "after-effect-unclear-receipt-ambiguous"),
+        ("archived_manifest_missing", "after-effect-unclear-original-manifest-missing"),
+        ("control_launcher_tampered", "after-effect-unclear-launcher-drift"),
+        ("wrong_store_adapter", "after-effect-unclear-store-not-readonly"),
+        ("wrong_original_receipt", "after-effect-unclear-receipt-ambiguous"),
+    ],
+)
+def test_after_effect_unclear_reconciliation_fails_closed_without_effect(
+    tmp_path: Path, damage: str, expected_code: str,
+) -> None:
+    options, _intent, store, result_path, artifacts = after_effect_unclear_fixture(tmp_path)
+    original_result = result_path.read_bytes()
+    if damage == "original_spec_drift":
+        revise_authority(
+            store, options["approval_task_id"],
+            lambda spec: spec.__setitem__("title", "drifted"),
+            key="after-effect:concurrent-task-change",
+        )
+    elif damage == "wrong_result_digest":
+        options["result_sha256"] = "f" * 64
+    elif damage == "receipt_removed":
+        artifacts["receipt"].unlink()
+    elif damage == "archived_manifest_missing":
+        (artifacts["backup"] / "deployment-manifest.json").unlink()
+    elif damage == "control_launcher_tampered":
+        (artifacts["backup"] / "bureau-runtime-refresh").write_text("tampered\n")
+    elif damage == "wrong_store_adapter":
+        options["authority_store"] = store
+    elif damage == "wrong_original_receipt":
+        value = refresh.read_json(artifacts["receipt"])
+        value["runtime_approval"]["intent_sha256"] = "f" * 64
+        artifacts["receipt"].write_bytes(refresh.canonical_bytes(value))
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.reconcile_after_effect_unclear_runtime_refresh_authority(
+            **options, create_record=True
+        )
+    assert caught.value.code == expected_code
+    assert result_path.read_bytes() == original_result
+    root = options["state_root"] / "after-effect-unclear-reconciliations"
+    assert not root.exists()

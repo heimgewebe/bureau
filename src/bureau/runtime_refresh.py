@@ -11522,6 +11522,369 @@ def _closeout_runtime_refresh_authority(
     }
 
 
+
+def reconcile_after_effect_unclear_runtime_refresh_authority(
+    *,
+    state_root: Path,
+    approval_task_id: str,
+    expected_revision: int,
+    expected_spec_sha256: str,
+    intent_sha256: str,
+    result_sha256: str,
+    source_repository: Path,
+    authority_store: Any | None = None,
+    create_record: bool = False,
+) -> dict[str, Any]:
+    """Authenticate one original unclear/effect-started install, without replay.
+
+    A dedicated CREATE-ONLY evidence record is not a terminal TaskSpec closeout.
+    The original live-verifier acceptance contract still governs verified closeout.
+    """
+    if (
+        not isinstance(expected_revision, int)
+        or isinstance(expected_revision, bool)
+        or expected_revision < 1
+        or not all(_is_sha256(x) for x in (
+            expected_spec_sha256, intent_sha256, result_sha256
+        ))
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-binding-invalid",
+            "exact original TaskSpec revision, intent and result digests are required",
+        )
+    root = state_root.expanduser().resolve()
+    intent_path = root / "intents" / f"{intent_sha256}.json"
+    intent = read_json(intent_path)
+    verify_digest(intent, "intent_sha256")
+    if (
+        intent.get("intent_sha256") != intent_sha256
+        or intent.get("approval_task_id") != approval_task_id
+        or Path(str(intent.get("state_root", ""))).expanduser().resolve() != root
+        or not _is_sha256(intent.get("target_sha256"))
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-intent-mismatch",
+            "the immutable intent is not bound to this original TaskSpec",
+        )
+    validate_runtime_refresh_intent(intent_path, now=parse_time(intent["created_at"]))
+    target = intent["target_sha256"]
+    started_path = root / "attempts" / target / "started.json"
+    result_path = root / "attempts" / target / "result.json"
+    result = _validate_result_for_intent(read_json(result_path), intent)
+    if (
+        result.get("result_sha256") != result_sha256
+        or result.get("status") != "unclear"
+        or result.get("effect_started") is not True
+        or not isinstance(result.get("error"), dict)
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-result-invalid",
+            "only the matching original unclear/effect-started result qualifies",
+        )
+    started = read_json(started_path)
+    verify_digest(started, "start_sha256")
+    if (
+        started.get("intent_sha256") != intent_sha256
+        or started.get("target_sha256") != target
+        or started.get("effect_started") is not False
+        or started.get("lease_binding") != result.get("lease_binding")
+        or parse_time(started["started_at"]) > parse_time(result["finished_at"])
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-start-mismatch",
+            "original start journal is not bound to the failed installer attempt",
+        )
+    lease = result.get("lease_binding")
+    if not isinstance(lease, dict):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-lease-binding-invalid", "historical lease binding is absent",
+        )
+    material = {k: v for k, v in lease.items() if k != "lease_binding_sha256"}
+    if (
+        lease.get("lease_binding_sha256") != sha256_bytes(canonical_bytes(material))
+        or lease.get("resource_keys") != intent.get("required_resource_keys")
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-lease-binding-invalid", "historical lease digest drift",
+        )
+    store = authority_store or _default_read_only_authority_store()
+    if getattr(store, "read_only", False) is not True:
+        raise RuntimeRefreshError(
+            "after-effect-unclear-store-not-readonly",
+            "reconciliation must read the original StateStore without mutation",
+        )
+    if _authority_store_binding(store) != intent.get("authority_state_store"):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-store-mismatch", "original intent StateStore binding drift",
+        )
+    current = _read_authority_task(store, approval_task_id)
+    if (
+        current["revision"] != expected_revision
+        or current["spec_sha256"] != expected_spec_sha256
+        or current["spec"]["state"] != "ready"
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-taskspec-drift", "original ready TaskSpec changed",
+        )
+    metadata, authority = _runtime_authority_metadata(current["spec"])
+    _validate_runtime_refresh_authority_contract(
+        spec=current["spec"], approval_task_id=approval_task_id, allow_planned=False
+    )
+    if any(value is not None for value in (
+        authority.get("consumption"), metadata.get("runtime_closeout"),
+        metadata.get("runtime_incident_closeout"),
+        metadata.get("runtime_unused_authority_closeout"),
+    )):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-already-terminal",
+            "used or terminal authority cannot be reclassified as a fresh unclear effect",
+        )
+    baseline = intent.get("authority_task_spec")
+    if not isinstance(baseline, dict):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-intent-authority-missing",
+            "the historical intent lacks its original TaskSpec CAS binding",
+        )
+    historic = _read_authority_task_revision(store, approval_task_id, baseline["revision"])
+    binding = _validated_authority_target_binding(authority.get("target_binding_receipt"))
+    if (
+        historic["spec_sha256"] != baseline.get("spec_sha256")
+        or binding.get("task_id") != approval_task_id
+        or binding.get("authority_revision") != historic["revision"]
+        or binding.get("authority_spec_sha256") != historic["spec_sha256"]
+        or binding.get("target_sha256") != target
+        or binding.get("intent_sha256") != intent_sha256
+        or result.get("authority_task_spec", {}).get("spec_sha256")
+        != expected_spec_sha256
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-authority-drift",
+            "the original target binding, pre-effect TaskSpec, and result disagree",
+        )
+    history = _runtime_authority_effect_history(root, approval_task_id)
+    if history != [{
+        "intent_sha256": intent_sha256,
+        "target_sha256": target,
+        "result_sha256": result_sha256,
+        "status": "unclear",
+        "main_commit": intent["main_commit"],
+    }]:
+        raise RuntimeRefreshError(
+            "after-effect-unclear-multiple-effects",
+            "exactly one result-bound historical effect must be authenticated",
+            details={"effect_count": len(history)},
+        )
+    prefix = Path(intent["prefix"]).expanduser().resolve()
+    receipts_root = prefix / "receipts"
+    if receipts_root.is_symlink() or not receipts_root.is_dir():
+        raise RuntimeRefreshError(
+            "after-effect-unclear-receipt-root-invalid", "receipt root is not a real directory",
+        )
+    candidates = sorted(receipts_root.glob(f"{intent['main_commit'][:12]}-src*-*.json"))
+    if len(candidates) > MAX_RUNTIME_BACKUP_ARTIFACT_DIRS or any(
+        path.is_symlink() or not path.is_file() for path in candidates
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-receipt-scan-invalid", "receipt scan is unsafe or unbounded",
+        )
+    matching = [(path, read_json(path)) for path in candidates]
+    matching = [
+        (path, receipt) for path, receipt in matching
+        if receipt.get("runtime_approval") == intent
+    ]
+    if len(matching) != 1:
+        raise RuntimeRefreshError(
+            "after-effect-unclear-receipt-ambiguous",
+            "exactly one independently persisted installer receipt must bind the original intent",
+            details={"count": len(matching)},
+        )
+    receipt_path, receipt = matching[0]
+    if (
+        receipt_path.read_bytes() != canonical_bytes(receipt)
+        or receipt.get("kind") != "bureau_runtime_install_receipt"
+        or receipt.get("release_id", "").split("-src")[0] != intent["main_commit"][:12]
+        or not _is_sha256(receipt.get("manifest_sha256"))
+        or not (
+            parse_time(started["started_at"])
+            <= parse_time(receipt["installed_at"])
+            <= parse_time(result["finished_at"])
+        )
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-receipt-invalid",
+            "the intent-bound historical install receipt is not canonical or temporally valid",
+        )
+    backups_root = prefix / "backups"
+    if backups_root.is_symlink() or not backups_root.is_dir():
+        raise RuntimeRefreshError(
+            "after-effect-unclear-backup-root-invalid", "historical backup root is unsafe",
+        )
+    backups = sorted(backups_root.iterdir())
+    if len(backups) > MAX_RUNTIME_BACKUP_ARTIFACT_DIRS or any(
+        item.is_symlink() for item in backups
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-backup-scan-invalid", "historical backup scan is unsafe",
+        )
+    originals = [
+        path for path in [prefix] + [p for p in backups if p.is_dir()]
+        if (path / "deployment-manifest.json").is_file()
+        and not (path / "deployment-manifest.json").is_symlink()
+        and sha256_bytes((path / "deployment-manifest.json").read_bytes())
+        == receipt["manifest_sha256"]
+    ]
+    if not originals:
+        raise RuntimeRefreshError(
+            "after-effect-unclear-original-manifest-missing",
+            "the original installer manifest is not retained",
+        )
+    snapshot = originals[0]
+    manifest, manifest_sha256 = load_manifest(snapshot / "deployment-manifest.json")
+    if manifest.get("source_commit") != intent["main_commit"] or any(
+        manifest.get(field) != receipt.get(field)
+        for field in (
+            "release_id", "package_tree_sha256", "canonical_registry_root",
+            "canonical_registry_tree_sha256", "runtime_approval",
+            "installed_at", "rollback", "scheduler",
+        )
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-manifest-drift",
+            "historical manifest and its original installer receipt do not agree",
+        )
+    release = _historical_nonsymlink_path(
+        Path(manifest["immutable_release_path"]), label="historical immutable release",
+    )
+    if (
+        release != prefix / "releases" / receipt["release_id"]
+        or not release.is_dir()
+        or _historical_package_tree_sha256(release) != receipt["package_tree_sha256"]
+        or _historical_artifact_sha256(
+            Path(manifest["module_path"]), label="historical runtime module"
+        ) != manifest.get("module_sha256")
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-package-drift",
+            "historical immutable release or runtime module differs from installer receipt",
+        )
+    registry = registry_snapshot.canonical_registry_identity(manifest)
+    if (
+        registry.get("valid") is not True
+        or registry.get("source_commit") != intent["main_commit"]
+        or registry.get("tree_sha256") != receipt["canonical_registry_tree_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-registry-drift",
+            "historical Registry snapshot does not authenticate the installed release",
+        )
+    archived = Path(intent["bin_dir"]) if snapshot == prefix else snapshot
+    launchers = (
+        ("bureau", "launcher_sha256"),
+        ("bureau-runtime-refresh", "runtime_refresh_launcher_sha256"),
+        ("bureau-status-capsule", "status_capsule_launcher_sha256"),
+    )
+    hashes = {
+        name: _historical_artifact_sha256(archived / name, label=name)
+        for name, _field in launchers
+    }
+    if any(hashes[name] != receipt[field] for name, field in launchers[1:]):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-launcher-drift",
+            "both retained historical control launchers must match the installer receipt",
+        )
+    current_runtime = _current_runtime_continuity(
+        prefix=prefix,
+        intended_main_commit=intent["main_commit"],
+        source_repository=source_repository,
+    )
+    health = _validate_state_store_health(store)
+    record = bind_digest({
+        "schema_version": 1,
+        "kind": "bureau_runtime_refresh_after_effect_unclear_reconciliation",
+        "status": "historical_effect_authenticated",
+        "task_id": approval_task_id,
+        "original_taskspec_revision": expected_revision,
+        "original_taskspec_sha256": expected_spec_sha256,
+        "original_intent_sha256": intent_sha256,
+        "original_result_sha256": result_sha256,
+        "original_started_sha256": started["start_sha256"],
+        "effect_history_sha256": sha256_bytes(canonical_bytes(history)),
+        "installer_receipt_file_sha256": sha256_bytes(receipt_path.read_bytes()),
+        "installer_receipt_path": str(receipt_path),
+        "installed_at": receipt["installed_at"],
+        "historical_source_commit": intent["main_commit"],
+        "historical_release_id": receipt["release_id"],
+        "historical_manifest_sha256": manifest_sha256,
+        "historical_package_tree_sha256": receipt["package_tree_sha256"],
+        "historical_registry_tree_sha256": registry["tree_sha256"],
+        "original_bureau_launcher_expected_sha256": receipt["launcher_sha256"],
+        "original_bureau_launcher_archived_sha256": hashes["bureau"],
+        "original_bureau_launcher_archived_matches": (
+            hashes["bureau"] == receipt["launcher_sha256"]
+        ),
+        "current_source_commit": current_runtime["source_commit"],
+        "current_manifest_sha256": current_runtime["manifest_sha256"],
+        "current_registry_tree_sha256": current_runtime["registry_tree_sha256"],
+        "state_store_root_sha256": health["authoritative_root_sha256"],
+        "observed_at": isoformat(utc_now()),
+        "does_not_establish": [
+            "original_unclear_result_is_success",
+            "original_TaskSpec_terminal_closeout",
+            "retained_historical_bureau_launcher_matches_installer",
+            "original_lease_release",
+            "live_verifier_degraded_false",
+            "safe_effect_retry",
+            "new_target_runtime_authority",
+            "future_runtime_health",
+        ],
+    }, "reconciliation_sha256")
+    path = (
+        root / "after-effect-unclear-reconciliations"
+        / f"{intent_sha256}-{result_sha256}.json"
+    )
+    if not create_record:
+        return {"reconciliation": record, "path": str(path), "persisted": False}
+    if path.exists():
+        old = read_json(path)
+        verify_digest(old, "reconciliation_sha256")
+        for field in (
+            "task_id", "original_taskspec_revision", "original_taskspec_sha256",
+            "original_intent_sha256", "original_result_sha256",
+            "original_started_sha256", "effect_history_sha256",
+            "installer_receipt_file_sha256", "historical_manifest_sha256",
+        ):
+            if old.get(field) != record[field]:
+                raise RuntimeRefreshError(
+                    "after-effect-unclear-create-only-conflict",
+                    "immutable reconciliation is bound to different original evidence",
+                )
+        return {"reconciliation": old, "path": str(path), "persisted": True,
+                "idempotent_replay": True, "fresh_current_runtime": current_runtime}
+    # Revalidate preimage before atomic O_EXCL creation. No historical file changes.
+    refreshed = _read_authority_task(store, approval_task_id)
+    _, fresh_sha = load_manifest(prefix / "deployment-manifest.json")
+    if (
+        refreshed["revision"] != expected_revision
+        or refreshed["spec_sha256"] != expected_spec_sha256
+        or fresh_sha != current_runtime["manifest_sha256"]
+        or sha256_bytes(receipt_path.read_bytes()) != record["installer_receipt_file_sha256"]
+        or read_json(result_path) != result
+    ):
+        raise RuntimeRefreshError(
+            "after-effect-unclear-final-drift",
+            "the original authority, result, installer or current manifest changed before CAS",
+        )
+    create_only(path, canonical_bytes(record))
+    persisted = read_json(path)
+    verify_digest(persisted, "reconciliation_sha256")
+    if persisted != record:
+        raise RuntimeRefreshError(
+            "after-effect-unclear-readback-invalid",
+            "the immutable reconciliation differs after CREATE-ONLY write",
+        )
+    return {"reconciliation": persisted, "path": str(path), "persisted": True}
+
+
 def closeout_runtime_refresh_authority(
     *,
     state_root: Path,
@@ -12158,6 +12521,15 @@ def parser() -> argparse.ArgumentParser:
     incident_closeout.add_argument("--intent-sha256", required=True)
     incident_closeout.add_argument("--result-sha256", required=True)
 
+    reconcile = sub.add_parser("reconcile-after-effect-unclear")
+    reconcile.add_argument("--approval-task-id", required=True)
+    reconcile.add_argument("--expected-revision", required=True, type=int)
+    reconcile.add_argument("--expected-spec-sha256", required=True)
+    reconcile.add_argument("--intent-sha256", required=True)
+    reconcile.add_argument("--result-sha256", required=True)
+    reconcile.add_argument("--source-repository", required=True, type=Path)
+    reconcile.add_argument("--create-only", action="store_true")
+
     sub.add_parser("status")
     return value
 
@@ -12255,6 +12627,19 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(json.dumps(result, sort_keys=True))
             return 0 if result.get("status") in {"deployed", "already_current"} else 2
+        if args.command == "reconcile-after-effect-unclear":
+            out = reconcile_after_effect_unclear_runtime_refresh_authority(
+                state_root=state_root,
+                approval_task_id=args.approval_task_id,
+                expected_revision=args.expected_revision,
+                expected_spec_sha256=args.expected_spec_sha256,
+                intent_sha256=args.intent_sha256,
+                result_sha256=args.result_sha256,
+                source_repository=_resolved(args.source_repository),
+                create_record=args.create_only,
+            )
+            print(json.dumps(out, sort_keys=True))
+            return 0
         if args.command == "closeout-authority":
             result = closeout_runtime_refresh_authority(
                 state_root=state_root,

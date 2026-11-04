@@ -268,7 +268,9 @@ def preview(
         )),
         "original-binding-invalid",
     )
-    store = store or refresh._default_authority_store()
+    # Preview must never initialize or migrate the operational database.
+    # apply() deliberately supplies its writable StateStore to this reader.
+    store = store if store is not None else refresh._default_read_only_authority_store()
     refresh._authority_store_binding(store)
     current = refresh._read_authority_task(store, original_task_id)
     original_state = current["spec"].get("state")

@@ -120,6 +120,66 @@ def test_preview_authenticates_original_and_never_mutates_state(
     assert result_path.read_bytes() == result_bytes
 
 
+def test_preview_default_store_is_read_only_and_leaves_existing_db_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from bureau.read_only_state import ReadOnlyStateStore
+
+    kwargs, store, result_path = _setup(tmp_path, monkeypatch)
+    before_db = store.path.read_bytes()
+    before_result = result_path.read_bytes()
+    original = store.task_spec(kwargs["original_task_id"])
+    kwargs.pop("store")
+    monkeypatch.setattr(
+        refresh, "_default_read_only_authority_store",
+        lambda: ReadOnlyStateStore(store.path, store.state_root),
+    )
+    def forbidden_migrating_store():
+        raise AssertionError("preview must not initialize migrating StateStore")
+    monkeypatch.setattr(
+        refresh, "_default_authority_store", forbidden_migrating_store
+    )
+    preview = closeout.preview(**kwargs)
+    assert preview["status"] == "ready_for_exact_cas"
+    assert store.task_spec(kwargs["original_task_id"]) == original
+    assert store.path.read_bytes() == before_db
+    assert result_path.read_bytes() == before_result
+
+
+def test_preview_absent_database_stays_absent_even_when_validation_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from bureau.read_only_state import ReadOnlyStateStore
+
+    missing_root = tmp_path / "must-not-create-db-directory"
+    missing_db = missing_root / "bureau.sqlite3"
+    monkeypatch.setattr(
+        refresh, "_default_read_only_authority_store",
+        lambda: ReadOnlyStateStore(missing_db, missing_root),
+    )
+    def forbidden_migrating_store():
+        raise AssertionError("preview must not call writable authority-store")
+    monkeypatch.setattr(
+        refresh, "_default_authority_store", forbidden_migrating_store
+    )
+    with pytest.raises(refresh.RuntimeRefreshError, match="approval_task_id is absent"):
+        closeout.preview(
+            state_root=tmp_path / "historical-state",
+            source_repository=tmp_path,
+            original_task_id="BUREAU-MISSING-TEST",
+            original_revision=1,
+            original_spec_sha256="a" * 64,
+            original_intent_sha256="b" * 64,
+            original_result_sha256="c" * 64,
+            reconciliation_sha256="d" * 64,
+            successor_task_id=SUCCESSOR,
+            healthy_verifier_receipt=tmp_path / "unused.json",
+            healthy_verifier_sha256="e" * 64,
+        )
+    assert not missing_root.exists()
+    assert not missing_db.exists()
+
+
 def test_apply_supersedes_in_new_revision_without_rewriting_original_history(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

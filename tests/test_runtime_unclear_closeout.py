@@ -305,3 +305,105 @@ def test_retained_native_verifier_accepts_exact_completed_non_degraded_receipt(
     assert actual["verifier_degraded"] is False
     assert actual["verifier_result"] == "completed"
     assert actual["verifier_receipt_sha256"] == digest
+
+
+@pytest.mark.parametrize(
+    "damage", ("launcher_drift", "package_drift", "persisted_readback_mismatch")
+)
+def test_successor_live_artifact_drift_fails_before_retained_verifier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, damage: str,
+) -> None:
+    """A healthy historical verifier cannot authorize changed current artifacts."""
+    manifest_sha = "a" * 64
+    target_sha = "b" * 64
+    result_sha = "c" * 64
+    closeout_record = {
+        "task_id": SUCCESSOR,
+        "intent_sha256": "d" * 64,
+        "source_commit": NEW_SOURCE,
+        "target_sha256": target_sha,
+        "runtime_result_sha256": result_sha,
+        "manifest_sha256": manifest_sha,
+        "live_verifier_evidence": {"source_bound": True},
+    }
+    successor = {
+        "revision": 4, "spec_sha256": "e" * 64,
+        "spec": {"state": "verified", "metadata": {"runtime_closeout": {}}},
+    }
+    intent = {
+        "approval_task_id": SUCCESSOR,
+        "main_commit": NEW_SOURCE,
+        "target_sha256": target_sha,
+        "prefix": str(tmp_path / "runtime"),
+        "bin_dir": str(tmp_path / "bin"),
+    }
+    installed_receipt = {"manifest_sha256": manifest_sha}
+    deployed = {
+        "result_sha256": result_sha, "status": "deployed",
+        "effect_started": True, "install_receipt": installed_receipt,
+        "readback": {"source_commit": NEW_SOURCE},
+    }
+    monkeypatch.setattr(refresh, "_read_authority_task", lambda *_: successor)
+    monkeypatch.setattr(
+        refresh, "_validated_runtime_closeout", lambda *_: closeout_record
+    )
+    monkeypatch.setattr(
+        refresh, "read_json",
+        lambda path: intent if "intents" in Path(path).parts else deployed,
+    )
+    monkeypatch.setattr(refresh, "verify_digest", lambda *_: None)
+    monkeypatch.setattr(
+        refresh, "_validate_result_for_intent", lambda result, _: result
+    )
+    monkeypatch.setattr(
+        refresh, "_current_runtime_continuity",
+        lambda **_: {"source_commit": NEW_SOURCE, "manifest_sha256": manifest_sha},
+    )
+    observations: list[dict] = []
+
+    def installed_readback(**kwargs):
+        observations.append(kwargs)
+        if damage != "persisted_readback_mismatch":
+            code = ("readback-launcher-mismatch" if damage == "launcher_drift"
+                    else "readback-package-mismatch")
+            raise refresh.RuntimeRefreshError(code, "live installed artifact changed")
+        return {"source_commit": NEW_SOURCE, "tampered": True}
+
+    monkeypatch.setattr(refresh, "readback_install", installed_readback)
+    monkeypatch.setattr(
+        refresh, "_install_closeout_readbacks_match",
+        lambda *_: False,
+    )
+
+    def forbidden_retained_verifier(**kwargs):
+        raise AssertionError("historical verifier cannot excuse live artifact drift")
+
+    monkeypatch.setattr(
+        closeout, "_healthy_retained_verifier", forbidden_retained_verifier
+    )
+    expected_error = (
+        "successor-installed-runtime-drift"
+        if damage == "persisted_readback_mismatch"
+        else ("readback-launcher-mismatch" if damage == "launcher_drift"
+              else "readback-package-mismatch")
+    )
+    with pytest.raises((refresh.RuntimeRefreshError,
+                        closeout.HistoricalUnclearCloseoutError)) as raised:
+        closeout._verified_successor(
+            store=object(), root=tmp_path, successor_task_id=SUCCESSOR,
+            source_repository=tmp_path,
+            healthy_verifier_receipt=tmp_path / "unused-retained.json",
+            healthy_verifier_sha256="f" * 64, live_verifier=None,
+        )
+    if damage == "persisted_readback_mismatch":
+        assert str(raised.value) == expected_error
+    else:
+        assert isinstance(raised.value, refresh.RuntimeRefreshError)
+        assert raised.value.code == expected_error
+    assert len(observations) == 1
+    assert observations[0] == {
+        "expected_commit": NEW_SOURCE,
+        "prefix": Path(intent["prefix"]),
+        "bin_dir": Path(intent["bin_dir"]),
+        "install_receipt": installed_receipt,
+    }

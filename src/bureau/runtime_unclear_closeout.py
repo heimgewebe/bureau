@@ -132,6 +132,24 @@ def _verified_successor(
         and continuity["manifest_sha256"] == closeout["manifest_sha256"],
         "successor-no-longer-serving",
     )
+    # The retained verifier proves an earlier installation. Revalidate the
+    # actual serving package/module, all three launchers and scheduler now,
+    # against the same authenticated installer/result readback. Both preview
+    # and apply (including candidate reconstruction) execute this guard.
+    persisted_readback = result.get("readback")
+    _require(isinstance(persisted_readback, dict), "successor-readback-missing")
+    current_readback = refresh.readback_install(
+        expected_commit=closeout["source_commit"],
+        prefix=Path(intent["prefix"]),
+        bin_dir=Path(intent["bin_dir"]),
+        install_receipt=receipt,
+    )
+    _require(
+        refresh._install_closeout_readbacks_match(
+            persisted_readback, current_readback, receipt
+        ),
+        "successor-installed-runtime-drift",
+    )
     live = (
         live_verifier(intent=intent, result=result)
         if live_verifier is not None else _healthy_retained_verifier(

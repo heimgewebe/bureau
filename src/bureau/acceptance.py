@@ -520,39 +520,42 @@ def validate_acceptance_contract(task: Mapping[str, Any]) -> None:
                 )
             )
             criterion_has_error = True
-        elif isinstance(verifier, str) and verifier in VERIFIER_CONTRACTS:
-            if _criterion_verifier_config(verifier, raw_criterion) is None:
-                expected_fields = frozenset(
-                    VERIFIER_CONTRACTS[verifier]["config_fields"]
+        elif (
+            isinstance(verifier, str)
+            and verifier in VERIFIER_CONTRACTS
+            and _criterion_verifier_config(verifier, raw_criterion) is None
+        ):
+            expected_fields = frozenset(
+                VERIFIER_CONTRACTS[verifier]["config_fields"]
+            )
+            observed_fields = {str(field) for field in verifier_config}
+            missing_config_fields = tuple(
+                f"verifier_config.{field}"
+                for field in sorted(expected_fields - observed_fields)
+            )
+            unexpected_config_fields = tuple(
+                f"verifier_config.{field}"
+                for field in sorted(observed_fields - expected_fields)
+            )
+            invalid_config_fields = unexpected_config_fields
+            if not missing_config_fields and not invalid_config_fields:
+                invalid_config_fields = tuple(
+                    f"verifier_config.{field}" for field in sorted(expected_fields)
                 )
-                observed_fields = {str(field) for field in verifier_config}
-                missing_config_fields = tuple(
-                    f"verifier_config.{field}"
-                    for field in sorted(expected_fields - observed_fields)
+            diagnostics.append(
+                _acceptance_diagnostic(
+                    task_id=task_id,
+                    criterion_id=criterion_id,
+                    path=f"{criterion_path}.verifier_config",
+                    code="verifier-config-mismatch",
+                    message=(
+                        f"verifier_config does not exactly match verifier {verifier!r}"
+                    ),
+                    missing_fields=missing_config_fields,
+                    invalid_fields=invalid_config_fields or ("verifier_config",),
                 )
-                unexpected_config_fields = tuple(
-                    f"verifier_config.{field}"
-                    for field in sorted(observed_fields - expected_fields)
-                )
-                invalid_config_fields = unexpected_config_fields
-                if not missing_config_fields and not invalid_config_fields:
-                    invalid_config_fields = tuple(
-                        f"verifier_config.{field}" for field in sorted(expected_fields)
-                    )
-                diagnostics.append(
-                    _acceptance_diagnostic(
-                        task_id=task_id,
-                        criterion_id=criterion_id,
-                        path=f"{criterion_path}.verifier_config",
-                        code="verifier-config-mismatch",
-                        message=(
-                            f"verifier_config does not exactly match verifier {verifier!r}"
-                        ),
-                        missing_fields=missing_config_fields,
-                        invalid_fields=invalid_config_fields or ("verifier_config",),
-                    )
-                )
-                criterion_has_error = True
+            )
+            criterion_has_error = True
 
         if not criterion_has_error and criterion_contract(raw_criterion) is None:
             diagnostics.append(

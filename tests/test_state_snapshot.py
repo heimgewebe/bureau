@@ -366,6 +366,93 @@ def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
     assert _run_git(checkout, "status", "--porcelain") == ""
 
 
+def test_snapshot_publisher_skips_identical_branch_until_main_changes(
+    tmp_path: Path, registry_factory, monkeypatch
+) -> None:
+    registry = registry_factory(task_count=2)
+    state_root, _store = _state_store(tmp_path, registry)
+    manifest = _runtime_manifest(tmp_path, registry)
+    snapshot = tmp_path / "public-state.json"
+    state_snapshot.export_public_snapshot(
+        output=snapshot,
+        state_root=state_root,
+        runtime_manifest=manifest,
+    )
+    expected = snapshot.read_bytes()
+    origin, checkout = _git_checkout(tmp_path, registry)
+    branch = source_pr_bridge.STATE_SNAPSHOT_BRANCH
+    repo = source_pr_bridge.DEFAULT_REPOSITORY
+    ref_args = ["api", f"repos/{repo}/git/ref/heads/{branch}"]
+
+    def branch_absent(args, *, allow_not_found=False):
+        assert args == ref_args and allow_not_found is True
+        return None
+
+    monkeypatch.setattr(source_pr_bridge, "_json", branch_absent)
+    first = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert first["status"] == "published"
+    old_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    first_base = _run_git(origin, "rev-parse", "refs/heads/main")
+    old_content = subprocess.run(
+        ["git", "-C", str(origin), "show", f"{old_head}:{state_snapshot.PUBLIC_SNAPSHOT_PATH}"],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    ).stdout
+    assert old_content == expected
+    calls: list[list[str]] = []
+
+    def remote_branch(args, *, allow_not_found=False):
+        calls.append(args)
+        if args == ref_args:
+            assert allow_not_found is True
+            return {"object": {"sha": old_head}}
+        if args == ["api", f"repos/{repo}/commits/{old_head}"]:
+            return {"parents": [{"sha": first_base}]}
+        if args == [
+            "api",
+            f"repos/{repo}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH}",
+            "--method",
+            "GET",
+            "-f",
+            f"ref={branch}",
+        ]:
+            return {"encoding": "base64", "content": base64.b64encode(expected).decode()}
+        raise AssertionError(f"unexpected GitHub access: {args!r}")
+
+    monkeypatch.setattr(source_pr_bridge, "_json", remote_branch)
+    same = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert same["status"] == "not-applied"
+    assert same["reason"] == "snapshot-already-current"
+    assert same["head_sha"] == old_head
+    assert same["snapshot_sha256"] == first["snapshot_sha256"]
+    assert _run_git(origin, "rev-parse", f"refs/heads/{branch}") == old_head
+    assert calls.count(ref_args) == 2  # preimage and unchanged-head readback
+    assert len(calls) == 4  # plus exact commit parent and public bytes
+    assert _run_git(checkout, "status", "--porcelain") == ""
+
+    # Identical redacted bytes are not an excuse to leave the review branch
+    # based on an obsolete main revision after a protected release.
+    _run_git(checkout, "config", "user.name", "Bureau Snapshot Test")
+    _run_git(checkout, "config", "user.email", "snapshot-test@example.invalid")
+    (checkout / "new-main.txt").write_text("new base revision\n", encoding="utf-8")
+    _run_git(checkout, "add", "--", "new-main.txt")
+    _run_git(checkout, "commit", "-m", "new protected main for snapshot test")
+    _run_git(checkout, "push", "origin", "main")
+    new_base = _run_git(origin, "rev-parse", "refs/heads/main")
+    assert new_base != first_base
+    calls.clear()
+    refreshed = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert refreshed["status"] == "published"
+    assert refreshed["base_sha"] == new_base
+    new_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    assert new_head != old_head
+    assert _run_git(origin, "rev-parse", f"{new_head}^") == new_base
+    assert snapshot.read_bytes() == expected
+    assert calls == [ref_args, ["api", f"repos/{repo}/commits/{old_head}"]]
+    assert _run_git(checkout, "status", "--porcelain") == ""
+
+
 def test_state_snapshot_reconcile_verifies_remote_bytes(
     tmp_path: Path, registry_factory, monkeypatch
 ) -> None:

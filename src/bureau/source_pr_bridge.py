@@ -128,6 +128,7 @@ def publish_now_refill(
         ],
     }
 
+
 def publish_state_snapshot(
     root: Path,
     *,
@@ -142,6 +143,36 @@ def publish_state_snapshot(
     upstream_push_origin = _git(root, "remote", "get-url", "--push", "origin")
     _git(root, "fetch", "origin", base)
     remote_head = _git(root, "rev-parse", f"origin/{base}")
+    # The public projection is deterministic for one StateStore checkpoint.
+    # Do not force-update the review branch on every timer tick when both its
+    # bytes and the main commit from which it was published are still current.
+    branch_ref_arguments = ["api", f"repos/{repository}/git/ref/heads/{branch}"]
+    existing_ref = _json(branch_ref_arguments, allow_not_found=True)
+    if existing_ref is not None:
+        expected_remote = str(existing_ref["object"]["sha"])
+        remote_commit = _json(["api", f"repos/{repository}/commits/{expected_remote}"])
+        parents = remote_commit.get("parents") if isinstance(remote_commit, dict) else None
+        if (
+            isinstance(parents, list)
+            and len(parents) == 1
+            and isinstance(parents[0], dict)
+            and parents[0].get("sha") == remote_head
+            and _remote_state_snapshot_matches(repository, branch, snapshot_bytes)
+        ):
+            current_ref = _json(branch_ref_arguments, allow_not_found=True)
+            if (
+                not isinstance(current_ref, dict)
+                or current_ref.get("object", {}).get("sha") != expected_remote
+            ):
+                raise StateSnapshotTransportError("snapshot branch changed during no-op readback")
+            return {
+                "status": "not-applied",
+                "reason": "snapshot-already-current",
+                "base": base,
+                "base_sha": remote_head,
+                "head_sha": expected_remote,
+                "snapshot_sha256": snapshot_payload["snapshot_sha256"],
+            }
     with tempfile.TemporaryDirectory(prefix="bureau-state-snapshot-") as raw_tmp:
         worktree = Path(raw_tmp) / "checkout"
         _clone_shared_transport(root, worktree)
@@ -181,10 +212,6 @@ def publish_state_snapshot(
             STATE_SNAPSHOT_COMMIT_MESSAGE,
         )
         head_sha = _git(worktree, "rev-parse", "HEAD")
-        existing_ref = _json(
-            ["api", f"repos/{repository}/git/ref/heads/{branch}"],
-            allow_not_found=True,
-        )
         if existing_ref is None:
             _git(worktree, "push", "origin", f"HEAD:refs/heads/{branch}")
         else:
@@ -222,11 +249,11 @@ def _verified_snapshot_bytes(path: Path) -> tuple[bytes, dict[str, Any]]:
     return raw, payload
 
 
-def _verified_remote_state_snapshot(
+def _remote_state_snapshot_matches(
     repository: str,
     branch: str,
     expected_bytes: bytes,
-) -> None:
+) -> bool:
     response = _json(
         [
             "api",
@@ -247,7 +274,15 @@ def _verified_remote_state_snapshot(
     except (ValueError, binascii.Error) as exc:
         raise StateSnapshotTransportError("remote state snapshot base64 is invalid") from exc
     state_snapshot.decode_public_snapshot(observed)
-    if observed != expected_bytes:
+    return observed == expected_bytes
+
+
+def _verified_remote_state_snapshot(
+    repository: str,
+    branch: str,
+    expected_bytes: bytes,
+) -> None:
+    if not _remote_state_snapshot_matches(repository, branch, expected_bytes):
         raise StateSnapshotTransportError("remote state snapshot differs from local bytes")
 
 

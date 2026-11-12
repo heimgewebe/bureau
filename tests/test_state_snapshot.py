@@ -471,7 +471,9 @@ def test_snapshot_publisher_rebuilds_branch_with_extra_file_even_if_bytes_match(
     manifest = _runtime_manifest(tmp_path, registry)
     snapshot = tmp_path / "public-state.json"
     state_snapshot.export_public_snapshot(
-        output=snapshot, state_root=state_root, runtime_manifest=manifest,
+        output=snapshot,
+        state_root=state_root,
+        runtime_manifest=manifest,
     )
     expected = snapshot.read_bytes()
     origin, checkout = _git_checkout(tmp_path, registry)
@@ -494,7 +496,9 @@ def test_snapshot_publisher_rebuilds_branch_with_extra_file_even_if_bytes_match(
     tampered = tmp_path / "tampered"
     subprocess.run(
         ["git", "clone", "--shared", str(origin), str(tampered)],
-        check=True, capture_output=True, timeout=30,
+        check=True,
+        capture_output=True,
+        timeout=30,
     )
     _run_git(tampered, "config", "user.name", "Bureau Adversarial Test")
     _run_git(tampered, "config", "user.email", "branch-tamper@example.invalid")
@@ -504,8 +508,11 @@ def test_snapshot_publisher_rebuilds_branch_with_extra_file_even_if_bytes_match(
     public.write_bytes(expected)
     (tampered / "unexpected.txt").write_text("not part of public state\n", encoding="utf-8")
     _run_git(
-        tampered, "add", "--",
-        state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(), "unexpected.txt",
+        tampered,
+        "add",
+        "--",
+        state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(),
+        "unexpected.txt",
     )
     _run_git(tampered, "commit", "-m", "adversarial snapshot plus extra file")
     adversarial_head = _run_git(tampered, "rev-parse", "HEAD")
@@ -523,13 +530,20 @@ def test_snapshot_publisher_rebuilds_branch_with_extra_file_even_if_bytes_match(
                 "sha": adversarial_head,
                 "parents": [{"sha": base_sha}],
                 "files": [
-                    {"filename": state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(), "status": "modified"},
+                    {
+                        "filename": state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(),
+                        "status": "modified",
+                    },
                     {"filename": "unexpected.txt", "status": "added"},
                 ],
             }
         if args == [
-            "api", f"repos/{repo}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH}",
-            "--method", "GET", "-f", f"ref={branch}",
+            "api",
+            f"repos/{repo}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH}",
+            "--method",
+            "GET",
+            "-f",
+            f"ref={branch}",
         ]:
             return {"encoding": "base64", "content": base64.b64encode(expected).decode()}
         raise AssertionError(f"unexpected GitHub access: {args!r}")
@@ -540,8 +554,9 @@ def test_snapshot_publisher_rebuilds_branch_with_extra_file_even_if_bytes_match(
     fixed_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
     assert fixed_head != adversarial_head
     assert _run_git(origin, "rev-parse", f"{fixed_head}^") == base_sha
-    changed_paths = _run_git(origin, "diff-tree", "--no-commit-id",
-                             "--name-only", "-r", fixed_head).splitlines()
+    changed_paths = _run_git(
+        origin, "diff-tree", "--no-commit-id", "--name-only", "-r", fixed_head
+    ).splitlines()
     assert changed_paths == [state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()]
     assert _run_git(checkout, "status", "--porcelain") == ""
 
@@ -630,10 +645,20 @@ def test_state_snapshot_already_current_reconciles_instead_of_closing_review_pr(
     monkeypatch.setattr(source_pr_bridge, "publish_state_snapshot", fake_publish)
     monkeypatch.setattr(source_pr_bridge, "reconcile", fake_reconcile)
     monkeypatch.setattr(source_pr_bridge, "withdraw_open_proposal", forbidden_withdraw)
-    assert source_pr_bridge.main([
-        "--kind", "state-snapshot", "--publish", "--root", str(tmp_path),
-        "--snapshot", str(snapshot),
-    ]) == 0
+    assert (
+        source_pr_bridge.main(
+            [
+                "--kind",
+                "state-snapshot",
+                "--publish",
+                "--root",
+                str(tmp_path),
+                "--snapshot",
+                str(snapshot),
+            ]
+        )
+        == 0
+    )
     result = json.loads(capsys.readouterr().out)
     assert result["status"] == "no_change"
     assert result["pull_request"] == 2388
@@ -661,9 +686,18 @@ def test_now_refill_not_applied_still_withdraws_stale_proposal(
     monkeypatch.setattr(source_pr_bridge, "publish_now_refill", fake_now_refill)
     monkeypatch.setattr(source_pr_bridge, "withdraw_open_proposal", fake_withdraw)
     monkeypatch.setattr(source_pr_bridge, "reconcile", forbidden_reconcile)
-    assert source_pr_bridge.main([
-        "--kind", "now-refill", "--publish", "--root", str(tmp_path),
-    ]) == 0
+    assert (
+        source_pr_bridge.main(
+            [
+                "--kind",
+                "now-refill",
+                "--publish",
+                "--root",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
     result = json.loads(capsys.readouterr().out)
     assert result["status"] == "withdrawn"
     assert calls == ["publish", "withdraw"]

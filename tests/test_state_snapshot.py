@@ -766,8 +766,9 @@ def test_snapshot_systemd_units_are_local_readonly_and_fifteen_minute() -> None:
     assert "--runtime-manifest %h/.local/share/bureau/deployment-manifest.json" in service
     assert "bureau-state-snapshot export" not in service
     assert "--snapshot " not in service
-    assert "ReadOnlyPaths=%h/.local/state/bureau %h/.local/share/bureau" in service
-    assert "ReadWritePaths=%h/repos/bureau" in service
+    assert "ReadOnlyPaths=%h/.local/share/bureau" in service
+    assert "ReadWritePaths=%h/repos/bureau %h/.local/state/bureau" in service
+    assert "ReadOnlyPaths=%h/.local/state/bureau" not in service
     assert "ProtectHome=read-only" in service
     assert "StateDirectory=bureau-state-snapshot" not in service
     assert "OnCalendar=*-*-* *:0/15:00" in timer

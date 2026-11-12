@@ -21,8 +21,9 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadOnlyPaths=%h/.local/state/bureau %h/.local/share/bureau
-ReadWritePaths=%h/repos/bureau
+# SQLite WAL read-only readers need to create -shm sidecars when absent.
+ReadOnlyPaths=%h/.local/share/bureau
+ReadWritePaths=%h/repos/bureau %h/.local/state/bureau
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 LockPersonality=true
 MemoryDenyWriteExecute=true

@@ -620,7 +620,17 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "branch": branch,
                 "mutation_performed": False,
             }
-        elif publish_result is not None and publish_result["status"] != "published":
+        elif (
+            publish_result is not None
+            and publish_result["status"] != "published"
+            and not (
+                arguments.kind == "state-snapshot"
+                and publish_result["status"] == "not-applied"
+                and publish_result.get("reason") == "snapshot-already-current"
+            )
+        ):
+            # An unchanged verified snapshot still has a valid open review PR.
+            # Only nonpublication reasons such as no Now-refill demand withdraw.
             result = withdraw_open_proposal(arguments.repo, arguments.base, branch)
         else:
             result = reconcile(

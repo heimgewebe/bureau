@@ -508,6 +508,74 @@ def test_checked_in_public_snapshot_is_valid_if_present() -> None:
     )
 
 
+def test_state_snapshot_already_current_reconciles_instead_of_closing_review_pr(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """An idempotent publisher must not withdraw an open redacted-state PR."""
+    snapshot = tmp_path / "public-state.json"
+    snapshot.write_text("publisher mock holds snapshot bytes", encoding="utf-8")
+    calls: list[str] = []
+
+    def fake_publish(root, *, snapshot, repository, base, branch):
+        assert root == tmp_path.resolve()
+        calls.append("publish")
+        return {
+            "status": "not-applied",
+            "reason": "snapshot-already-current",
+            "head_sha": "a" * 40,
+        }
+
+    def fake_reconcile(repository, base, branch, *, kind, auto_merge, snapshot):
+        assert kind == "state-snapshot"
+        assert snapshot == tmp_path / "public-state.json"
+        calls.append("reconcile")
+        return {"status": "no_change", "pull_request": 2388, "branch": branch}
+
+    def forbidden_withdraw(*args, **kwargs):
+        pytest.fail("identical snapshot must never close its existing review PR")
+
+    monkeypatch.setattr(source_pr_bridge, "publish_state_snapshot", fake_publish)
+    monkeypatch.setattr(source_pr_bridge, "reconcile", fake_reconcile)
+    monkeypatch.setattr(source_pr_bridge, "withdraw_open_proposal", forbidden_withdraw)
+    assert source_pr_bridge.main([
+        "--kind", "state-snapshot", "--publish", "--root", str(tmp_path),
+        "--snapshot", str(snapshot),
+    ]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "no_change"
+    assert result["pull_request"] == 2388
+    assert result["publish"]["reason"] == "snapshot-already-current"
+    assert calls == ["publish", "reconcile"]
+
+
+def test_now_refill_not_applied_still_withdraws_stale_proposal(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """The existing Now-refill no-demand withdrawal contract must remain intact."""
+    calls: list[str] = []
+
+    def fake_now_refill(*args, **kwargs):
+        calls.append("publish")
+        return {"status": "not-applied", "reason": "no-refill-needed"}
+
+    def fake_withdraw(repository, base, branch):
+        calls.append("withdraw")
+        return {"status": "withdrawn", "pull_request": 1234}
+
+    def forbidden_reconcile(*args, **kwargs):
+        pytest.fail("now-refill no-demand must still withdraw its stale proposal")
+
+    monkeypatch.setattr(source_pr_bridge, "publish_now_refill", fake_now_refill)
+    monkeypatch.setattr(source_pr_bridge, "withdraw_open_proposal", fake_withdraw)
+    monkeypatch.setattr(source_pr_bridge, "reconcile", forbidden_reconcile)
+    assert source_pr_bridge.main([
+        "--kind", "now-refill", "--publish", "--root", str(tmp_path),
+    ]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "withdrawn"
+    assert calls == ["publish", "withdraw"]
+
+
 def test_state_snapshot_main_generates_locally_before_transport(
     tmp_path: Path, registry_factory, monkeypatch, capsys
 ) -> None:

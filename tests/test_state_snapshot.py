@@ -366,6 +366,201 @@ def test_source_pr_bridge_transports_prebuilt_snapshot_bytes_unchanged(
     assert _run_git(checkout, "status", "--porcelain") == ""
 
 
+def test_snapshot_publisher_skips_identical_branch_until_main_changes(
+    tmp_path: Path, registry_factory, monkeypatch
+) -> None:
+    registry = registry_factory(task_count=2)
+    state_root, _store = _state_store(tmp_path, registry)
+    manifest = _runtime_manifest(tmp_path, registry)
+    snapshot = tmp_path / "public-state.json"
+    state_snapshot.export_public_snapshot(
+        output=snapshot,
+        state_root=state_root,
+        runtime_manifest=manifest,
+    )
+    expected = snapshot.read_bytes()
+    origin, checkout = _git_checkout(tmp_path, registry)
+    branch = source_pr_bridge.STATE_SNAPSHOT_BRANCH
+    repo = source_pr_bridge.DEFAULT_REPOSITORY
+    ref_args = ["api", f"repos/{repo}/git/ref/heads/{branch}"]
+
+    def branch_absent(args, *, allow_not_found=False):
+        assert args == ref_args and allow_not_found is True
+        return None
+
+    monkeypatch.setattr(source_pr_bridge, "_json", branch_absent)
+    first = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert first["status"] == "published"
+    old_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    first_base = _run_git(origin, "rev-parse", "refs/heads/main")
+    old_content = subprocess.run(
+        ["git", "-C", str(origin), "show", f"{old_head}:{state_snapshot.PUBLIC_SNAPSHOT_PATH}"],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    ).stdout
+    assert old_content == expected
+    calls: list[list[str]] = []
+
+    def remote_branch(args, *, allow_not_found=False):
+        calls.append(args)
+        if args == ref_args:
+            assert allow_not_found is True
+            return {"object": {"sha": old_head}}
+        if args == ["api", f"repos/{repo}/commits/{old_head}"]:
+            return {
+                "sha": old_head,
+                "parents": [{"sha": first_base}],
+                "files": [
+                    {
+                        "filename": state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(),
+                        "status": "modified",
+                    },
+                ],
+            }
+        if args == [
+            "api",
+            f"repos/{repo}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH}",
+            "--method",
+            "GET",
+            "-f",
+            f"ref={branch}",
+        ]:
+            return {"encoding": "base64", "content": base64.b64encode(expected).decode()}
+        raise AssertionError(f"unexpected GitHub access: {args!r}")
+
+    monkeypatch.setattr(source_pr_bridge, "_json", remote_branch)
+    same = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert same["status"] == "not-applied"
+    assert same["reason"] == "snapshot-already-current"
+    assert same["head_sha"] == old_head
+    assert same["snapshot_sha256"] == first["snapshot_sha256"]
+    assert _run_git(origin, "rev-parse", f"refs/heads/{branch}") == old_head
+    assert calls.count(ref_args) == 2  # preimage and unchanged-head readback
+    assert len(calls) == 4  # plus exact commit parent and public bytes
+    assert _run_git(checkout, "status", "--porcelain") == ""
+
+    # Identical redacted bytes are not an excuse to leave the review branch
+    # based on an obsolete main revision after a protected release.
+    _run_git(checkout, "config", "user.name", "Bureau Snapshot Test")
+    _run_git(checkout, "config", "user.email", "snapshot-test@example.invalid")
+    (checkout / "new-main.txt").write_text("new base revision\n", encoding="utf-8")
+    _run_git(checkout, "add", "--", "new-main.txt")
+    _run_git(checkout, "commit", "-m", "new protected main for snapshot test")
+    _run_git(checkout, "push", "origin", "main")
+    new_base = _run_git(origin, "rev-parse", "refs/heads/main")
+    assert new_base != first_base
+    calls.clear()
+    refreshed = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert refreshed["status"] == "published"
+    assert refreshed["base_sha"] == new_base
+    new_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    assert new_head != old_head
+    assert _run_git(origin, "rev-parse", f"{new_head}^") == new_base
+    assert snapshot.read_bytes() == expected
+    assert calls == [ref_args, ["api", f"repos/{repo}/commits/{old_head}"]]
+    assert _run_git(checkout, "status", "--porcelain") == ""
+
+
+def test_snapshot_publisher_rebuilds_branch_with_extra_file_even_if_bytes_match(
+    tmp_path: Path, registry_factory, monkeypatch
+) -> None:
+    """No-op requires the COMPLETE remote commit diff to contain only the snapshot."""
+    registry = registry_factory(task_count=2)
+    state_root, _store = _state_store(tmp_path, registry)
+    manifest = _runtime_manifest(tmp_path, registry)
+    snapshot = tmp_path / "public-state.json"
+    state_snapshot.export_public_snapshot(
+        output=snapshot,
+        state_root=state_root,
+        runtime_manifest=manifest,
+    )
+    expected = snapshot.read_bytes()
+    origin, checkout = _git_checkout(tmp_path, registry)
+    branch = source_pr_bridge.STATE_SNAPSHOT_BRANCH
+    repo = source_pr_bridge.DEFAULT_REPOSITORY
+    ref_args = ["api", f"repos/{repo}/git/ref/heads/{branch}"]
+
+    def no_remote_branch(args, *, allow_not_found=False):
+        assert args == ref_args and allow_not_found is True
+        return None
+
+    monkeypatch.setattr(source_pr_bridge, "_json", no_remote_branch)
+    initial = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert initial["status"] == "published"
+    old_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    base_sha = _run_git(origin, "rev-parse", "refs/heads/main")
+
+    # Build a real adversarial branch commit with the SAME public snapshot
+    # and one forbidden extra file, directly parented to the current main.
+    tampered = tmp_path / "tampered"
+    subprocess.run(
+        ["git", "clone", "--shared", str(origin), str(tampered)],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    )
+    _run_git(tampered, "config", "user.name", "Bureau Adversarial Test")
+    _run_git(tampered, "config", "user.email", "branch-tamper@example.invalid")
+    _run_git(tampered, "checkout", "-B", "tampered", base_sha)
+    public = tampered / state_snapshot.PUBLIC_SNAPSHOT_PATH
+    public.parent.mkdir(parents=True, exist_ok=True)
+    public.write_bytes(expected)
+    (tampered / "unexpected.txt").write_text("not part of public state\n", encoding="utf-8")
+    _run_git(
+        tampered,
+        "add",
+        "--",
+        state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(),
+        "unexpected.txt",
+    )
+    _run_git(tampered, "commit", "-m", "adversarial snapshot plus extra file")
+    adversarial_head = _run_git(tampered, "rev-parse", "HEAD")
+    assert _run_git(tampered, "rev-parse", "HEAD^") == base_sha
+    # A bare Git origin cannot update a ref to an object it has not received.
+    _run_git(origin, "fetch", str(tampered), adversarial_head)
+    _run_git(origin, "update-ref", f"refs/heads/{branch}", adversarial_head, old_head)
+
+    def actual_remote(args, *, allow_not_found=False):
+        if args == ref_args:
+            assert allow_not_found is True
+            return {"object": {"sha": adversarial_head}}
+        if args == ["api", f"repos/{repo}/commits/{adversarial_head}"]:
+            return {
+                "sha": adversarial_head,
+                "parents": [{"sha": base_sha}],
+                "files": [
+                    {
+                        "filename": state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(),
+                        "status": "modified",
+                    },
+                    {"filename": "unexpected.txt", "status": "added"},
+                ],
+            }
+        if args == [
+            "api",
+            f"repos/{repo}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH}",
+            "--method",
+            "GET",
+            "-f",
+            f"ref={branch}",
+        ]:
+            return {"encoding": "base64", "content": base64.b64encode(expected).decode()}
+        raise AssertionError(f"unexpected GitHub access: {args!r}")
+
+    monkeypatch.setattr(source_pr_bridge, "_json", actual_remote)
+    rebuilt = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert rebuilt["status"] == "published"
+    fixed_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    assert fixed_head != adversarial_head
+    assert _run_git(origin, "rev-parse", f"{fixed_head}^") == base_sha
+    changed_paths = _run_git(
+        origin, "diff-tree", "--no-commit-id", "--name-only", "-r", fixed_head
+    ).splitlines()
+    assert changed_paths == [state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()]
+    assert _run_git(checkout, "status", "--porcelain") == ""
+
+
 def test_state_snapshot_reconcile_verifies_remote_bytes(
     tmp_path: Path, registry_factory, monkeypatch
 ) -> None:
@@ -419,6 +614,93 @@ def test_checked_in_public_snapshot_is_valid_if_present() -> None:
         state_snapshot.validate_public_snapshot(state_snapshot.read_public_snapshot(path))["status"]
         == "valid"
     )
+
+
+def test_state_snapshot_already_current_reconciles_instead_of_closing_review_pr(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """An idempotent publisher must not withdraw an open redacted-state PR."""
+    snapshot = tmp_path / "public-state.json"
+    snapshot.write_text("publisher mock holds snapshot bytes", encoding="utf-8")
+    calls: list[str] = []
+
+    def fake_publish(root, *, snapshot, repository, base, branch):
+        assert root == tmp_path.resolve()
+        calls.append("publish")
+        return {
+            "status": "not-applied",
+            "reason": "snapshot-already-current",
+            "head_sha": "a" * 40,
+        }
+
+    def fake_reconcile(repository, base, branch, *, kind, auto_merge, snapshot):
+        assert kind == "state-snapshot"
+        assert snapshot == tmp_path / "public-state.json"
+        calls.append("reconcile")
+        return {"status": "no_change", "pull_request": 2388, "branch": branch}
+
+    def forbidden_withdraw(*args, **kwargs):
+        pytest.fail("identical snapshot must never close its existing review PR")
+
+    monkeypatch.setattr(source_pr_bridge, "publish_state_snapshot", fake_publish)
+    monkeypatch.setattr(source_pr_bridge, "reconcile", fake_reconcile)
+    monkeypatch.setattr(source_pr_bridge, "withdraw_open_proposal", forbidden_withdraw)
+    assert (
+        source_pr_bridge.main(
+            [
+                "--kind",
+                "state-snapshot",
+                "--publish",
+                "--root",
+                str(tmp_path),
+                "--snapshot",
+                str(snapshot),
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "no_change"
+    assert result["pull_request"] == 2388
+    assert result["publish"]["reason"] == "snapshot-already-current"
+    assert calls == ["publish", "reconcile"]
+
+
+def test_now_refill_not_applied_still_withdraws_stale_proposal(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """The existing Now-refill no-demand withdrawal contract must remain intact."""
+    calls: list[str] = []
+
+    def fake_now_refill(*args, **kwargs):
+        calls.append("publish")
+        return {"status": "not-applied", "reason": "no-refill-needed"}
+
+    def fake_withdraw(repository, base, branch):
+        calls.append("withdraw")
+        return {"status": "withdrawn", "pull_request": 1234}
+
+    def forbidden_reconcile(*args, **kwargs):
+        pytest.fail("now-refill no-demand must still withdraw its stale proposal")
+
+    monkeypatch.setattr(source_pr_bridge, "publish_now_refill", fake_now_refill)
+    monkeypatch.setattr(source_pr_bridge, "withdraw_open_proposal", fake_withdraw)
+    monkeypatch.setattr(source_pr_bridge, "reconcile", forbidden_reconcile)
+    assert (
+        source_pr_bridge.main(
+            [
+                "--kind",
+                "now-refill",
+                "--publish",
+                "--root",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "withdrawn"
+    assert calls == ["publish", "withdraw"]
 
 
 def test_state_snapshot_main_generates_locally_before_transport(

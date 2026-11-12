@@ -128,6 +128,7 @@ def publish_now_refill(
         ],
     }
 
+
 def publish_state_snapshot(
     root: Path,
     *,
@@ -142,6 +143,50 @@ def publish_state_snapshot(
     upstream_push_origin = _git(root, "remote", "get-url", "--push", "origin")
     _git(root, "fetch", "origin", base)
     remote_head = _git(root, "rev-parse", f"origin/{base}")
+    # The public projection is deterministic for one StateStore checkpoint.
+    # Do not force-update the review branch on every timer tick when both its
+    # bytes and the main commit from which it was published are still current.
+    branch_ref_arguments = ["api", f"repos/{repository}/git/ref/heads/{branch}"]
+    existing_ref = _json(branch_ref_arguments, allow_not_found=True)
+    if existing_ref is not None:
+        expected_remote = str(existing_ref["object"]["sha"])
+        remote_commit = _json(["api", f"repos/{repository}/commits/{expected_remote}"])
+        parents = remote_commit.get("parents") if isinstance(remote_commit, dict) else None
+        changed = remote_commit.get("files") if isinstance(remote_commit, dict) else None
+        # A byte-identical public snapshot is insufficient if the remote review
+        # commit also changed any unrelated path. The verified no-op must bind
+        # the full GitHub commit diff to exactly the permitted snapshot file.
+        snapshot_only_commit = (
+            isinstance(changed, list)
+            and len(changed) == 1
+            and isinstance(changed[0], dict)
+            and changed[0].get("filename") == state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()
+            and changed[0].get("status") in {"added", "modified"}
+        )
+        if (
+            isinstance(remote_commit, dict)
+            and remote_commit.get("sha") == expected_remote
+            and isinstance(parents, list)
+            and len(parents) == 1
+            and isinstance(parents[0], dict)
+            and parents[0].get("sha") == remote_head
+            and snapshot_only_commit
+            and _remote_state_snapshot_matches(repository, branch, snapshot_bytes)
+        ):
+            current_ref = _json(branch_ref_arguments, allow_not_found=True)
+            if (
+                not isinstance(current_ref, dict)
+                or current_ref.get("object", {}).get("sha") != expected_remote
+            ):
+                raise StateSnapshotTransportError("snapshot branch changed during no-op readback")
+            return {
+                "status": "not-applied",
+                "reason": "snapshot-already-current",
+                "base": base,
+                "base_sha": remote_head,
+                "head_sha": expected_remote,
+                "snapshot_sha256": snapshot_payload["snapshot_sha256"],
+            }
     with tempfile.TemporaryDirectory(prefix="bureau-state-snapshot-") as raw_tmp:
         worktree = Path(raw_tmp) / "checkout"
         _clone_shared_transport(root, worktree)
@@ -181,10 +226,6 @@ def publish_state_snapshot(
             STATE_SNAPSHOT_COMMIT_MESSAGE,
         )
         head_sha = _git(worktree, "rev-parse", "HEAD")
-        existing_ref = _json(
-            ["api", f"repos/{repository}/git/ref/heads/{branch}"],
-            allow_not_found=True,
-        )
         if existing_ref is None:
             _git(worktree, "push", "origin", f"HEAD:refs/heads/{branch}")
         else:
@@ -222,11 +263,11 @@ def _verified_snapshot_bytes(path: Path) -> tuple[bytes, dict[str, Any]]:
     return raw, payload
 
 
-def _verified_remote_state_snapshot(
+def _remote_state_snapshot_matches(
     repository: str,
     branch: str,
     expected_bytes: bytes,
-) -> None:
+) -> bool:
     response = _json(
         [
             "api",
@@ -247,7 +288,15 @@ def _verified_remote_state_snapshot(
     except (ValueError, binascii.Error) as exc:
         raise StateSnapshotTransportError("remote state snapshot base64 is invalid") from exc
     state_snapshot.decode_public_snapshot(observed)
-    if observed != expected_bytes:
+    return observed == expected_bytes
+
+
+def _verified_remote_state_snapshot(
+    repository: str,
+    branch: str,
+    expected_bytes: bytes,
+) -> None:
+    if not _remote_state_snapshot_matches(repository, branch, expected_bytes):
         raise StateSnapshotTransportError("remote state snapshot differs from local bytes")
 
 
@@ -585,7 +634,17 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "branch": branch,
                 "mutation_performed": False,
             }
-        elif publish_result is not None and publish_result["status"] != "published":
+        elif (
+            publish_result is not None
+            and publish_result["status"] != "published"
+            and not (
+                arguments.kind == "state-snapshot"
+                and publish_result["status"] == "not-applied"
+                and publish_result.get("reason") == "snapshot-already-current"
+            )
+        ):
+            # An unchanged verified snapshot still has a valid open review PR.
+            # Only nonpublication reasons such as no Now-refill demand withdraw.
             result = withdraw_open_proposal(arguments.repo, arguments.base, branch)
         else:
             result = reconcile(

@@ -152,11 +152,25 @@ def publish_state_snapshot(
         expected_remote = str(existing_ref["object"]["sha"])
         remote_commit = _json(["api", f"repos/{repository}/commits/{expected_remote}"])
         parents = remote_commit.get("parents") if isinstance(remote_commit, dict) else None
+        changed = remote_commit.get("files") if isinstance(remote_commit, dict) else None
+        # A byte-identical public snapshot is insufficient if the remote review
+        # commit also changed any unrelated path. The verified no-op must bind
+        # the full GitHub commit diff to exactly the permitted snapshot file.
+        snapshot_only_commit = (
+            isinstance(changed, list)
+            and len(changed) == 1
+            and isinstance(changed[0], dict)
+            and changed[0].get("filename") == state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()
+            and changed[0].get("status") in {"added", "modified"}
+        )
         if (
-            isinstance(parents, list)
+            isinstance(remote_commit, dict)
+            and remote_commit.get("sha") == expected_remote
+            and isinstance(parents, list)
             and len(parents) == 1
             and isinstance(parents[0], dict)
             and parents[0].get("sha") == remote_head
+            and snapshot_only_commit
             and _remote_state_snapshot_matches(repository, branch, snapshot_bytes)
         ):
             current_ref = _json(branch_ref_arguments, allow_not_found=True)

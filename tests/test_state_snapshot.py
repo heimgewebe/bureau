@@ -408,7 +408,16 @@ def test_snapshot_publisher_skips_identical_branch_until_main_changes(
             assert allow_not_found is True
             return {"object": {"sha": old_head}}
         if args == ["api", f"repos/{repo}/commits/{old_head}"]:
-            return {"parents": [{"sha": first_base}]}
+            return {
+                "sha": old_head,
+                "parents": [{"sha": first_base}],
+                "files": [
+                    {
+                        "filename": state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(),
+                        "status": "modified",
+                    },
+                ],
+            }
         if args == [
             "api",
             f"repos/{repo}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH}",
@@ -450,6 +459,90 @@ def test_snapshot_publisher_skips_identical_branch_until_main_changes(
     assert _run_git(origin, "rev-parse", f"{new_head}^") == new_base
     assert snapshot.read_bytes() == expected
     assert calls == [ref_args, ["api", f"repos/{repo}/commits/{old_head}"]]
+    assert _run_git(checkout, "status", "--porcelain") == ""
+
+
+def test_snapshot_publisher_rebuilds_branch_with_extra_file_even_if_bytes_match(
+    tmp_path: Path, registry_factory, monkeypatch
+) -> None:
+    """No-op requires the COMPLETE remote commit diff to contain only the snapshot."""
+    registry = registry_factory(task_count=2)
+    state_root, _store = _state_store(tmp_path, registry)
+    manifest = _runtime_manifest(tmp_path, registry)
+    snapshot = tmp_path / "public-state.json"
+    state_snapshot.export_public_snapshot(
+        output=snapshot, state_root=state_root, runtime_manifest=manifest,
+    )
+    expected = snapshot.read_bytes()
+    origin, checkout = _git_checkout(tmp_path, registry)
+    branch = source_pr_bridge.STATE_SNAPSHOT_BRANCH
+    repo = source_pr_bridge.DEFAULT_REPOSITORY
+    ref_args = ["api", f"repos/{repo}/git/ref/heads/{branch}"]
+
+    def no_remote_branch(args, *, allow_not_found=False):
+        assert args == ref_args and allow_not_found is True
+        return None
+
+    monkeypatch.setattr(source_pr_bridge, "_json", no_remote_branch)
+    initial = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert initial["status"] == "published"
+    old_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    base_sha = _run_git(origin, "rev-parse", "refs/heads/main")
+
+    # Build a real adversarial branch commit with the SAME public snapshot
+    # and one forbidden extra file, directly parented to the current main.
+    tampered = tmp_path / "tampered"
+    subprocess.run(
+        ["git", "clone", "--shared", str(origin), str(tampered)],
+        check=True, capture_output=True, timeout=30,
+    )
+    _run_git(tampered, "config", "user.name", "Bureau Adversarial Test")
+    _run_git(tampered, "config", "user.email", "branch-tamper@example.invalid")
+    _run_git(tampered, "checkout", "-B", "tampered", base_sha)
+    public = tampered / state_snapshot.PUBLIC_SNAPSHOT_PATH
+    public.parent.mkdir(parents=True, exist_ok=True)
+    public.write_bytes(expected)
+    (tampered / "unexpected.txt").write_text("not part of public state\n", encoding="utf-8")
+    _run_git(
+        tampered, "add", "--",
+        state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(), "unexpected.txt",
+    )
+    _run_git(tampered, "commit", "-m", "adversarial snapshot plus extra file")
+    adversarial_head = _run_git(tampered, "rev-parse", "HEAD")
+    assert _run_git(tampered, "rev-parse", "HEAD^") == base_sha
+    # A bare Git origin cannot update a ref to an object it has not received.
+    _run_git(origin, "fetch", str(tampered), adversarial_head)
+    _run_git(origin, "update-ref", f"refs/heads/{branch}", adversarial_head, old_head)
+
+    def actual_remote(args, *, allow_not_found=False):
+        if args == ref_args:
+            assert allow_not_found is True
+            return {"object": {"sha": adversarial_head}}
+        if args == ["api", f"repos/{repo}/commits/{adversarial_head}"]:
+            return {
+                "sha": adversarial_head,
+                "parents": [{"sha": base_sha}],
+                "files": [
+                    {"filename": state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(), "status": "modified"},
+                    {"filename": "unexpected.txt", "status": "added"},
+                ],
+            }
+        if args == [
+            "api", f"repos/{repo}/contents/{state_snapshot.PUBLIC_SNAPSHOT_PATH}",
+            "--method", "GET", "-f", f"ref={branch}",
+        ]:
+            return {"encoding": "base64", "content": base64.b64encode(expected).decode()}
+        raise AssertionError(f"unexpected GitHub access: {args!r}")
+
+    monkeypatch.setattr(source_pr_bridge, "_json", actual_remote)
+    rebuilt = source_pr_bridge.publish_state_snapshot(checkout, snapshot=snapshot)
+    assert rebuilt["status"] == "published"
+    fixed_head = _run_git(origin, "rev-parse", f"refs/heads/{branch}")
+    assert fixed_head != adversarial_head
+    assert _run_git(origin, "rev-parse", f"{fixed_head}^") == base_sha
+    changed_paths = _run_git(origin, "diff-tree", "--no-commit-id",
+                             "--name-only", "-r", fixed_head).splitlines()
+    assert changed_paths == [state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()]
     assert _run_git(checkout, "status", "--porcelain") == ""
 
 

@@ -242,31 +242,42 @@ claiming another task.
 
 ## Complete
 
-Evidence is a JSON object keyed by acceptance criterion ID and must satisfy the
-TaskSpec's typed verifier and exact source/revision binding. A bare `accepted: true`
-does not authenticate a manual observation.
+For an active Bureau run, `complete` is **receipt replay only**, not a way to
+mark work successful. The authoritative closure path is typed acceptance
+evidence followed by `reconcile` (see `src/bureau/closure_observer.py`).
 
-The installed immutable Bureau launcher uses a read-only canonical Registry. Bind
-the actual coordination StateStore explicitly for run mutations; `--root .`
+Stage a bounded JSON file at
+`$HOME/.local/state/bureau/acceptance-evidence/<run-id>.json` with
+`schema_version: 1`, `kind: bureau.acceptance_evidence_bundle`, the exact
+`run_id`, `task_id`, `task_sha256`, `plan_sha256` from the live run, and
+`evidence` keyed by acceptance criterion ID. Each evidence object must match
+its TaskSpec verifier and source/revision binding. For `manual_observation`,
+an independent reviewer (not the observer or run worker) authenticates the
+existing criterion item's canonical JSON SHA-256. A bare `accepted: true`
+or self-declared `_source_authentication` does not authenticate the evidence.
+
+The immutable Bureau launcher selects a read-only canonical Registry. Supply
+the actual coordination StateStore explicitly for mutating commands; `--root .`
 selects a checkout, not the StateStore:
 
 ```bash
 bureau --state-root "$HOME/.local/state/bureau" --json \
   acceptance-authenticate <run-id> <criterion-id> \
-  --expected-evidence-sha256 <sha256> --reviewer <reviewer>
-bureau --state-root "$HOME/.local/state/bureau" --json \
-  complete <run-id> --evidence evidence.json
+  --expected-evidence-sha256 <criterion-item-canonical-json-sha256> \
+  --reviewer <independent-reviewer>
+bureau --state-root "$HOME/.local/state/bureau" --json reconcile
 bureau --state-root "$HOME/.local/state/bureau" --json \
   verification-stamp <task-id>
 ```
 
-Use `acceptance-authenticate` only for `manual_observation` criteria and their
-exact evidence digest. Other verifiers retain their own source authorities.
-Completion is idempotent: the receipt file materialises StateStore truth but
-cannot replace it. Read back the terminal run and task status; release only that
-run's Grabowski leases after a proven terminal `succeeded` or `failed` state.
-Missing evidence is not `verified`: use `fail` with the same `--state-root` and
-preserve the actual blocker. See [Bureau runtime identity](bureau-runtime-identity-v1.md).
+Only authenticate genuine `manual_observation` evidence; other verifiers
+require their own sources. Reconcile must report the actual terminal result,
+and `verification-stamp` must confirm the current TaskSpec revision.
+`complete <run-id> --evidence evidence.json` may safely replay an **existing**
+terminal receipt but rejects a still-active run. On missing or failed evidence,
+record the actual blocker; `fail` with the same `--state-root` is the honest
+terminal failure path. Release only that run's bound Grabowski leases after a
+fresh terminal StateStore readback. See [Bureau runtime identity](bureau-runtime-identity-v1.md).
 
 ## Workspaces
 

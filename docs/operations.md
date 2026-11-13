@@ -242,13 +242,42 @@ claiming another task.
 
 ## Complete
 
-Evidence is a JSON object keyed by acceptance criterion ID:
+For an active Bureau run, `complete` is **receipt replay only**, not a way to
+mark work successful. The authoritative closure path is typed acceptance
+evidence followed by `reconcile` (see `src/bureau/closure_observer.py`).
+
+Stage a bounded JSON file at
+`$HOME/.local/state/bureau/acceptance-evidence/<run-id>.json` with
+`schema_version: 1`, `kind: bureau.acceptance_evidence_bundle`, the exact
+`run_id`, `task_id`, `task_sha256`, `plan_sha256` from the live run, and
+`evidence` keyed by acceptance criterion ID. Each evidence object must match
+its TaskSpec verifier and source/revision binding. For `manual_observation`,
+an independent reviewer (not the observer or run worker) authenticates the
+existing criterion item's canonical JSON SHA-256. A bare `accepted: true`
+or self-declared `_source_authentication` does not authenticate the evidence.
+
+The immutable Bureau launcher selects a read-only canonical Registry. Supply
+the actual coordination StateStore explicitly for mutating commands; `--root .`
+selects a checkout, not the StateStore:
 
 ```bash
-bureau --root . complete <run-id> --evidence evidence.json --json
+bureau --state-root "$HOME/.local/state/bureau" --json \
+  acceptance-authenticate <run-id> <criterion-id> \
+  --expected-evidence-sha256 <criterion-item-canonical-json-sha256> \
+  --reviewer <independent-reviewer>
+bureau --state-root "$HOME/.local/state/bureau" --json reconcile
+bureau --state-root "$HOME/.local/state/bureau" --json \
+  verification-stamp <task-id>
 ```
 
-Completion is idempotent. SQLite is canonical; the receipt file is a deterministic materialisation.
+Only authenticate genuine `manual_observation` evidence; other verifiers
+require their own sources. Reconcile must report the actual terminal result,
+and `verification-stamp` must confirm the current TaskSpec revision.
+`complete <run-id> --evidence evidence.json` may safely replay an **existing**
+terminal receipt but rejects a still-active run. On missing or failed evidence,
+record the actual blocker; `fail` with the same `--state-root` is the honest
+terminal failure path. Release only that run's bound Grabowski leases after a
+fresh terminal StateStore readback. See [Bureau runtime identity](bureau-runtime-identity-v1.md).
 
 ## Workspaces
 

@@ -242,13 +242,31 @@ claiming another task.
 
 ## Complete
 
-Evidence is a JSON object keyed by acceptance criterion ID:
+Evidence is a JSON object keyed by acceptance criterion ID and must satisfy the
+TaskSpec's typed verifier and exact source/revision binding. A bare `accepted: true`
+does not authenticate a manual observation.
+
+The installed immutable Bureau launcher uses a read-only canonical Registry. Bind
+the actual coordination StateStore explicitly for run mutations; `--root .`
+selects a checkout, not the StateStore:
 
 ```bash
-bureau --root . complete <run-id> --evidence evidence.json --json
+bureau --state-root "$HOME/.local/state/bureau" --json \
+  acceptance-authenticate <run-id> <criterion-id> \
+  --expected-evidence-sha256 <sha256> --reviewer <reviewer>
+bureau --state-root "$HOME/.local/state/bureau" --json \
+  complete <run-id> --evidence evidence.json
+bureau --state-root "$HOME/.local/state/bureau" --json \
+  verification-stamp <task-id>
 ```
 
-Completion is idempotent. SQLite is canonical; the receipt file is a deterministic materialisation.
+Use `acceptance-authenticate` only for `manual_observation` criteria and their
+exact evidence digest. Other verifiers retain their own source authorities.
+Completion is idempotent: the receipt file materialises StateStore truth but
+cannot replace it. Read back the terminal run and task status; release only that
+run's Grabowski leases after a proven terminal `succeeded` or `failed` state.
+Missing evidence is not `verified`: use `fail` with the same `--state-root` and
+preserve the actual blocker. See [Bureau runtime identity](bureau-runtime-identity-v1.md).
 
 ## Workspaces
 

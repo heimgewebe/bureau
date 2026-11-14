@@ -2,23 +2,48 @@
   "acceptance": [
     {
       "assertion": "Ein aktiver Merge-Guard für heimgewebe/grabowski blockiert keine vollständig disjunkten Bureau-Ressourcen; Metadatenintegrität wird fail-closed geprüft, nachdem die Repository-Relevanz aus autoritativ gebundenen Guard-Ressourcen bestimmt wurde, sofern keine globale Effektressource tatsächlich überlappt.",
-      "id": "repository-bound-guard"
+      "id": "repository-bound-guard",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:operator-surface:t105:repository-bound-guard"
+      }
     },
     {
       "assertion": "grabowski_resource_nonconflict_assess liefert für gate-, path- und andere nicht unterstützte Blockertypen einen typisierten deny-Receipt ohne KeyError oder Zugriff auf ein nicht vorhandenes proof-Feld.",
-      "id": "typed-nonrepo-deny"
+      "id": "typed-nonrepo-deny",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:operator-surface:t105:typed-nonrepo-deny"
+      }
     },
     {
       "assertion": "Gleiches Repository, überlappende Pfade, Branches, Effektressourcen oder unvollständige Scope-Attestierungen bleiben fail-closed; fremde Leases werden weder verändert noch freigegeben.",
-      "id": "atomic-safety"
+      "id": "atomic-safety",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:operator-surface:t105:atomic-safety"
+      }
     },
     {
       "assertion": "Fokussierte Tests decken Grabowski-Merge-Guard gegen disjunkte Bureau-Akquisition, nicht-repository Blocker, malformed Guard-Metadaten im selben Repository sowie echte Pfad- und Effektüberschneidungen ab.",
-      "id": "regression-tests"
+      "id": "regression-tests",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:operator-surface:t105:regression-tests"
+      }
     },
     {
       "assertion": "Der finale Head ist vollständig validiert, als PR revisionsgebunden gemergt und ausgerollt; ein Live-Readback belegt eine erfolgreiche Bureau-Lease-Akquisition parallel zu einem disjunkten Grabowski-Merge-Guard.",
-      "id": "live-proof"
+      "id": "live-proof",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:operator-surface:t105:live-proof"
+      }
     }
   ],
   "claims": [

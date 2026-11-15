@@ -779,6 +779,95 @@ def test_local_retention_apply_removes_only_exact_planned_candidates(
     assert replayed["replayed"] is True
 
 
+
+def test_scheduled_retention_prunes_only_exact_native_candidates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fixture = _retention_fixture(tmp_path)
+    monkeypatch.setattr(
+        state_backup,
+        "_retention_recovery_gate",
+        lambda *_args, **_kwargs: {"status": "verified", "test": True},
+    )
+    options = {
+        "backup_root": fixture["backup_root"],
+        "runtime_prefix": fixture["runtime_prefix"],
+        "closure_root": fixture["closure_root"],
+        "policy": _retention_test_policy(),
+        "now_unix": fixture["now"],
+    }
+    result = state_backup.run_scheduled_retention(**options)
+    assert result["status"] == "complete"
+    assert result["removed_count"] == 3
+    assert result["recovery_status"] == "verified"
+    receipt = Path(result["receipt_path"])
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    assert stored["state"] == "complete"
+    assert stored["receipt_sha256"] == state_backup._retention_digest(
+        stored, "receipt_sha256"
+    )
+    assert not fixture["backup_middle"].exists()
+    assert not fixture["snapshot_old"].exists()
+    assert not fixture["review_old"].exists()
+    for protected in (
+        fixture["backup_old"], fixture["backup_new"],
+        fixture["snapshot_middle"], fixture["snapshot_new"],
+        fixture["review_middle"], fixture["review_new"],
+    ):
+        assert protected.exists()
+
+    replay = state_backup.run_scheduled_retention(**options)
+    assert replay["status"] == "no_candidates"
+    assert replay["removed_count"] == 0
+    assert receipt.exists()
+
+
+def test_scheduled_retention_stops_on_unfinished_receipt(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    root = fixture["backup_root"] / "restore-tests" / "retention-receipts"
+    root.mkdir()
+    partial = {
+        "schema_version": 1,
+        "kind": "bureau_local_retention_apply_receipt",
+        "state": "partial",
+    }
+    partial["receipt_sha256"] = state_backup._retention_digest(
+        partial, "receipt_sha256"
+    )
+    (root / "retention-previous.json").write_text(
+        json.dumps(partial) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(
+        state_backup.StateBackupError, match="unfinished scheduled retention"
+    ):
+        state_backup.run_scheduled_retention(
+            backup_root=fixture["backup_root"],
+            runtime_prefix=fixture["runtime_prefix"],
+            closure_root=fixture["closure_root"],
+            policy=_retention_test_policy(),
+            now_unix=fixture["now"],
+        )
+    assert fixture["backup_middle"].exists()
+    assert fixture["snapshot_old"].exists()
+
+
+def test_scheduled_retention_rejects_symlinked_receipt_directory(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    link = fixture["backup_root"] / "restore-tests" / "retention-receipts"
+    external = tmp_path / "other-receipts"
+    external.mkdir()
+    link.symlink_to(external, target_is_directory=True)
+    with pytest.raises(state_backup.StateBackupError, match="symlink"):
+        state_backup.run_scheduled_retention(
+            backup_root=fixture["backup_root"],
+            runtime_prefix=fixture["runtime_prefix"],
+            closure_root=fixture["closure_root"],
+            policy=_retention_test_policy(),
+            now_unix=fixture["now"],
+        )
+    assert fixture["backup_middle"].exists()
+
+
 def test_local_retention_apply_fails_closed_after_candidate_tamper(tmp_path: Path):
     fixture = _retention_fixture(tmp_path)
     plan = state_backup.build_local_retention_plan(

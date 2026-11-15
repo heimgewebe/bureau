@@ -2068,6 +2068,101 @@ def apply_local_retention_plan(
 
 
 
+def run_scheduled_retention(
+    *,
+    backup_root: Path = DEFAULT_BACKUP_ROOT,
+    runtime_prefix: Path = DEFAULT_RUNTIME_PREFIX,
+    closure_root: Path = DEFAULT_CLOSURE_ROOT,
+    policy: dict[str, Any] | None = None,
+    now_unix: int | None = None,
+) -> dict[str, Any]:
+    """Explicit periodic maintenance using the unchanged native retention gates.
+
+    The plan alone grants no deletion authority. An unfinished prior receipt
+    blocks a new run until its exact filesystem outcome is reconciled.
+    """
+    root = _retention_root(backup_root, label="backup root")
+    history = root / "restore-tests"
+    receipts = history / "retention-receipts"
+    if history.is_symlink() or receipts.is_symlink():
+        raise StateBackupError("scheduled retention receipt root is a symlink")
+    if receipts.exists() and not receipts.is_dir():
+        raise StateBackupError("scheduled retention receipt root is not a directory")
+    receipts.mkdir(parents=True, exist_ok=True, mode=0o700)
+
+    for path in sorted(receipts.iterdir()):
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or not path.name.startswith("retention-")
+            or path.suffix != ".json"
+        ):
+            raise StateBackupError(f"unexpected scheduled retention receipt: {path}")
+        previous, _raw = _load_json_file(path, label="scheduled retention receipt")
+        if (
+            previous.get("kind") != "bureau_local_retention_apply_receipt"
+            or previous.get("receipt_sha256") != _retention_digest(
+                previous, "receipt_sha256"
+            )
+            or previous.get("state") != "complete"
+        ):
+            raise StateBackupError(
+                f"unfinished scheduled retention needs reconciliation: {path}"
+            )
+
+    plan = build_local_retention_plan(
+        backup_root=root,
+        runtime_prefix=runtime_prefix,
+        closure_root=closure_root,
+        policy=policy,
+        now_unix=now_unix,
+    )
+    if plan["safe_to_apply"] is not True:
+        raise StateBackupError("scheduled retention plan is blocked")
+    summary = plan["summary"]
+    if summary["candidate_count"] == 0:
+        return {
+            "schema_version": 1,
+            "kind": "bureau_scheduled_retention_result",
+            "status": "no_candidates",
+            "plan_sha256": plan["plan_sha256"],
+            "retained_count": summary["retained_count"],
+            "removed_count": 0,
+        }
+
+    digest = plan["plan_sha256"]
+    destination = receipts / f"retention-{digest}.json"
+    if destination.exists() or destination.is_symlink():
+        raise StateBackupError(
+            "scheduled retention plan receipt already exists with remaining candidates"
+        )
+    result = apply_local_retention_plan(
+        plan,
+        expected_plan_sha256=digest,
+        confirmation=f"APPLY:{digest}",
+        receipt_path=destination,
+        now_unix=now_unix,
+    )
+    if (
+        result.get("state") != "complete"
+        or len(result.get("results", [])) != summary["candidate_count"]
+        or any(item.get("removed") is not True for item in result["results"])
+    ):
+        raise StateBackupError("scheduled retention receipt is not fully complete")
+    return {
+        "schema_version": 1,
+        "kind": "bureau_scheduled_retention_result",
+        "status": "complete",
+        "plan_sha256": digest,
+        "receipt_path": str(destination),
+        "receipt_sha256": result["receipt_sha256"],
+        "retained_count": summary["retained_count"],
+        "removed_count": result["candidate_count"],
+        "freed_allocated_bytes_claim": result["freed_allocated_bytes_claim"],
+        "recovery_status": result["recovery_gate"]["status"],
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Bureau coherent StateStore backup and restore proof"

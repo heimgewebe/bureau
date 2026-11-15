@@ -698,7 +698,7 @@ def test_bound_jointly_feasible_frontier_publishes_only_compatible_refill(
         "scout-chronik",
         "scout-lenskit",
         "scout-systemkatalog",
-        "scout-semantah",
+        "scout-audio",
         "scout-wgx",
         "scout-labor",
     ]

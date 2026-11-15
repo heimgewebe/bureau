@@ -183,9 +183,11 @@ _SCOUT_REPOSITORIES: tuple[tuple[str, str], ...] = (
     ("lenskit", "repo.lenskit"),
     ("systemkatalog", "repo.systemkatalog"),
     ("grabowski", "repo.grabowski"),
+    ("audio", "repo.audio"),
     ("wgx", "repo.wgx"),
     ("labor", "repo.labor"),
     ("steuerboard", "repo.steuerboard"),
+    ("commonthing", "repo.commonthing"),
     ("reposkop", "repo.reposkop"),
 )
 

@@ -5,31 +5,31 @@
       "cancelled": 401,
       "inbox": 1,
       "planned": 57,
-      "ready": 290,
+      "ready": 291,
       "superseded": 81,
-      "verified": 789
+      "verified": 790
     },
-    "tasks_total": 1622
+    "tasks_total": 1624
   },
   "event_checkpoint": {
-    "id": 19229
+    "id": 19238
   },
   "frontier": {
-    "blocked": 1622,
+    "blocked": 1624,
     "eligible": 0,
     "tasks_by_effective_state": {
       "blocked": 3,
       "cancelled": 401,
       "inbox": 1,
       "planned": 57,
-      "ready": 53,
+      "ready": 54,
       "stale": 0,
       "superseded": 81,
-      "verified": 1026
+      "verified": 1027
     },
-    "tasks_total": 1622
+    "tasks_total": 1624
   },
-  "generated_at": "2026-11-14T20:21:43.513070Z",
+  "generated_at": "2026-11-15T13:56:22.416953Z",
   "kind": "bureau_public_state_snapshot",
   "redaction": {
     "fail_closed": true,
@@ -45,7 +45,7 @@
     "schema_version": 1
   },
   "release": {
-    "commit": "4954dcfaa5126fbf43f5457e6aec558ec413a091",
+    "commit": "12b2405e98a9e0b666d3b8be76ada3d9b779fba1",
     "schema_version": 1
   },
   "repository": "heimgewebe/bureau",
@@ -55,10 +55,10 @@
       "merkle_sha256": "947de105dcd5c25c9d3c85ca28c734b16f100265a23a9484b631fe5dc56d142c"
     },
     "public_task_identities": {
-      "count": 1622,
-      "merkle_sha256": "1495a7583c5427944533b646aaa516f9cf321b029a7391adf7b45d8e04d51663"
+      "count": 1624,
+      "merkle_sha256": "e46eb20a548d827197007769d09d756de3c0e5101fb8dddc004d2603e20a51a9"
     }
   },
   "schema_version": 1,
-  "snapshot_sha256": "7b15188958a1b77c9256753f9e0f6955c66db6649a949447f31f5ea9ffaecb8c"
+  "snapshot_sha256": "6868302b107dc36ce2c7d7dfbf8a1683ce3002c27a62933df272926c2ebd12d9"
 }

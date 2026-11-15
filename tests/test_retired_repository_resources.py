@@ -12,7 +12,14 @@ if str(SRC) not in sys.path:
 
 task_supply = importlib.import_module("bureau.task_supply")
 legacy = importlib.import_module("bureau.legacy")
-ARCHIVED_2026_11_15 = {"semantah", "plexer", "leitstand", "obsidian-bridge", "alpha-lab", "capacity-marketplace"}
+ARCHIVED_2026_11_15 = {
+    "semantah",
+    "plexer",
+    "leitstand",
+    "obsidian-bridge",
+    "alpha-lab",
+    "capacity-marketplace",
+}
 RETIRED = {
     "vault-gewebe",
     "vault-privat",
@@ -40,7 +47,8 @@ def test_retired_and_archived_repository_resources_are_coordination_only() -> No
         assert metadata["lifecycle"] == "retired"
         assert metadata["coordination_only"] is True
         assert metadata["mutation_claims_allowed"] is False
-        assert metadata["retired_on"] == ("2026-11-15" if name in ARCHIVED_2026_11_15 else "2026-09-18")
+        expected_date = "2026-11-15" if name in ARCHIVED_2026_11_15 else "2026-09-18"
+        assert metadata["retired_on"] == expected_date
         claims = set(metadata["does_not_establish"])
         assert {
             "remote_repository_exists",
@@ -55,7 +63,8 @@ def test_retired_and_archived_repository_resources_are_coordination_only() -> No
 
 def test_six_archived_repositories_keep_github_and_fleet_evidence() -> None:
     for name in ARCHIVED_2026_11_15:
-        data = json.loads((ROOT / "registry/resources" / f"{name}.json").read_text(encoding="utf-8"))
+        path = ROOT / "registry" / "resources" / f"{name}.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
         metadata = data["metadata"]
         assert metadata["lifecycle"] == "retired"
         refs = metadata["lifecycle_evidence_refs"]
@@ -65,7 +74,8 @@ def test_six_archived_repositories_keep_github_and_fleet_evidence() -> None:
 
 
 def test_retired_legacy_leitstand_task_has_no_active_write_route() -> None:
-    task = json.loads((ROOT / "registry/tasks/WELTGEWEBE-OS-V1-T008.json").read_text(encoding="utf-8"))
+    path = ROOT / "registry" / "tasks" / "WELTGEWEBE-OS-V1-T008.json"
+    task = json.loads(path.read_text(encoding="utf-8"))
     assert task["state"] == "superseded"
     assert task["metadata"]["bureau_cleanup"]["retired_resources"] == ["repo.leitstand"]
 

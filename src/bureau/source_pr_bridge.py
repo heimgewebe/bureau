@@ -379,10 +379,6 @@ def reconcile(
         raise ValueError(f"unsupported bridge kind: {kind}")
     expected_snapshot: bytes | None = None
     if kind == "state-snapshot":
-        if auto_merge:
-            raise StateSnapshotTransportError(
-                "public state-snapshot review PRs must not auto-merge into main"
-            )
         if snapshot is None:
             raise StateSnapshotTransportError("state-snapshot reconcile requires --snapshot")
         expected_snapshot, _payload = _verified_snapshot_bytes(snapshot)
@@ -423,14 +419,12 @@ def reconcile(
             "--limit",
             "1",
             "--json",
-            "number,url,isDraft",
+            "number,url",
         ]
     )
     body = _pull_request_body(branch, head_sha, kind=kind)
     if pull_requests:
         number = int(pull_requests[0]["number"])
-        if kind == "state-snapshot" and pull_requests[0].get("isDraft") is not True:
-            _run(["pr", "ready", str(number), "--repo", repository, "--undo"])
         _run(["pr", "edit", str(number), "--repo", repository, "--body", body])
         if auto_merge:
             _enable_auto_merge(repository, number)
@@ -460,7 +454,6 @@ def reconcile(
             _pull_request_title(kind),
             "--body",
             body,
-            *(["--draft"] if kind == "state-snapshot" else []),
         ]
     )
     if url is None:

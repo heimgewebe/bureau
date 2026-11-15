@@ -583,6 +583,78 @@ def _retention_fixture(tmp_path: Path, *, now: int = 2_000_000_000) -> dict:
     }
 
 
+@pytest.mark.parametrize("remove_review_root", [False, True])
+def test_local_retention_plan_allows_never_used_review_history(
+    tmp_path: Path, remove_review_root: bool
+):
+    fixture = _retention_fixture(tmp_path)
+    review_root = fixture["closure_root"] / "review-receipts"
+    (fixture["closure_root"] / "review-latest.json").unlink()
+    (fixture["closure_root"] / "lanes.json").write_text(
+        '{"lanes": []}\n', encoding="utf-8"
+    )
+    for receipt in review_root.iterdir():
+        receipt.unlink()
+    if remove_review_root:
+        review_root.rmdir()
+
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+
+    assert plan["safe_to_apply"] is True
+    assert plan["summary"]["error_count"] == 0
+    assert plan["stores"]["review_receipts"]["candidate_count"] == 0
+    assert plan["stores"]["state_backups"]["candidate_count"] == 1
+    assert fixture["backup_old"].exists()
+    assert fixture["backup_new"].exists()
+
+
+def test_local_retention_plan_blocks_missing_review_history_with_live_lane_reference(
+    tmp_path: Path,
+):
+    fixture = _retention_fixture(tmp_path)
+    review_root = fixture["closure_root"] / "review-receipts"
+    (fixture["closure_root"] / "review-latest.json").unlink()
+    for receipt in review_root.iterdir():
+        receipt.unlink()
+    review_root.rmdir()
+    # The original lanes.json still references the now-missing review_middle.
+    plan = state_backup.build_local_retention_plan(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+    assert plan["safe_to_apply"] is False
+    assert any(
+        error.get("store") == "review_receipts"
+        and error.get("reason") == "protected-reference-target-missing"
+        for error in plan["errors"]
+    )
+
+
+def test_local_retention_plan_rejects_symlinked_optional_review_root(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    review_root = fixture["closure_root"] / "review-receipts"
+    moved = tmp_path / "external-reviews"
+    review_root.rename(moved)
+    review_root.symlink_to(moved, target_is_directory=True)
+    with pytest.raises(state_backup.StateBackupError, match="symlink"):
+        state_backup.build_local_retention_plan(
+            backup_root=fixture["backup_root"],
+            runtime_prefix=fixture["runtime_prefix"],
+            closure_root=fixture["closure_root"],
+            policy=_retention_test_policy(),
+            now_unix=fixture["now"],
+        )
+
+
 def test_local_retention_plan_protects_restore_runtime_rollback_and_lane_references(
     tmp_path: Path,
 ):

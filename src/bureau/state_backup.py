@@ -2068,6 +2068,84 @@ def apply_local_retention_plan(
 
 
 
+def _prepare_scheduled_historical_restore(
+    plan: dict[str, Any],
+    *,
+    backup_root: Path,
+    runtime_prefix: Path,
+    closure_root: Path,
+) -> dict[str, Any] | None:
+    """Restore an older retained bundle after the daily newest-bundle restore.
+
+    OnSuccess fires immediately after restore-tests/latest.json was written
+    for the newest bundle. It is not evidence of a distinct historical point.
+    Prove a different retained bundle using the existing isolated restore.
+    """
+    state_backups = plan["stores"]["state_backups"]
+    if not state_backups["candidates"]:
+        return None
+    # The daily receipt points at the newest bundle. Its predecessor may be
+    # a *candidate* until a successful independent restore protects it.
+    available = [*state_backups["retained"], *state_backups["candidates"]]
+    retained = sorted(
+        available,
+        key=lambda item: (int(item["created_at_unix"]), str(item["path"])),
+        reverse=True,
+    )
+    if len(retained) < 2:
+        raise StateBackupError("scheduled pruning requires two retained backups")
+    newest = _retention_reference(
+        retained[0]["path"], root=backup_root, label="newest retained backup"
+    )
+    historical = _retention_reference(
+        retained[1]["path"], root=backup_root, label="historical retained backup"
+    )
+    if historical == newest:
+        raise StateBackupError("historical restore point must differ from newest retained backup")
+    receipt_path = backup_root / "restore-tests" / "latest.json"
+    if receipt_path.is_symlink():
+        raise StateBackupError("historical restore receipt path must not be a symlink")
+    registry_root = _runtime_registry_root(
+        _retention_root(runtime_prefix, label="runtime prefix") / "deployment-manifest.json"
+    )
+    proof = restore_test(
+        bundle=historical,
+        backup_root=backup_root,
+        registry_root=registry_root,
+        receipt_path=receipt_path,
+    )
+    if proof.get("status") != "verified":
+        raise StateBackupError("scheduled historical restore did not verify")
+    # The newly proven historical backup was previously a deletion candidate.
+    # Only a fresh plan may promote it into the retained set; never apply the
+    # pre-restore plan with stale candidate/reference classifications.
+    replanned = build_local_retention_plan(
+        backup_root=backup_root,
+        runtime_prefix=runtime_prefix,
+        closure_root=closure_root,
+        policy=plan["policy"],
+        now_unix=int(plan["generated_at_unix"]),
+    )
+    if replanned["safe_to_apply"] is not True:
+        raise StateBackupError("historical restore replanning is blocked")
+    final_retained = replanned["stores"]["state_backups"]["retained"]
+    final_paths = {
+        str(Path(item["path"]).resolve(strict=False)) for item in final_retained
+    }
+    if str(historical) not in final_paths or str(newest) not in final_paths:
+        raise StateBackupError("replanned retention dropped a verified recovery point")
+    _validated_historical_restore_evidence(
+        backup_root=backup_root,
+        retained_paths=final_paths,
+        newest_path=newest,
+        max_age_seconds=plan["policy"]["stores"]["state_backups"][
+            "restore_receipt_max_age_seconds"
+        ],
+        now_unix=int(plan["generated_at_unix"]),
+    )
+    return replanned
+
+
 def run_scheduled_retention(
     *,
     backup_root: Path = DEFAULT_BACKUP_ROOT,
@@ -2119,6 +2197,15 @@ def run_scheduled_retention(
     )
     if plan["safe_to_apply"] is not True:
         raise StateBackupError("scheduled retention plan is blocked")
+    # The daily newest-bundle receipt is not a historical recovery point.
+    # An older *candidate* must first be restored and then retained by a
+    # rebuilt plan; the original plan must never delete that candidate.
+    updated_plan = _prepare_scheduled_historical_restore(
+        plan, backup_root=root, runtime_prefix=runtime_prefix,
+        closure_root=closure_root,
+    )
+    if updated_plan is not None:
+        plan = updated_plan
     summary = plan["summary"]
     if summary["candidate_count"] == 0:
         return {

@@ -198,6 +198,73 @@ def test_queue_only_forward_drift_preserves_release_compatibility(
     ]
 
 
+def test_public_snapshot_only_modifications_preserve_runtime_compatibility(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _old_release, _queue, _task = release_drift_case(tmp_path, monkeypatch)
+    snapshot = root / "registry/public-state.json"
+    snapshot.write_text('{"version":1}\n', encoding="utf-8")
+    deployed_commit = commit_current_main(root, snapshot, message="establish snapshot baseline")
+    monkeypatch.setattr(
+        runtime_identity_module,
+        "_manifest_identity",
+        lambda _module: {
+            "available": True,
+            "valid": True,
+            "source_commit": deployed_commit,
+            "canonical_registry": {},
+        },
+    )
+    for revision in (2, 3):
+        snapshot.write_text(json.dumps({"version": revision}) + "\n", encoding="utf-8")
+        commit_current_main(root, snapshot, message=f"refresh public snapshot {revision}")
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"] == {
+        "status": "compatible",
+        "mutation_allowed": True,
+        "reason_codes": [],
+    }
+    assert identity["claim_root"]["status"] == "local-preflight-clear"
+    assert identity["claim_root"]["reason_codes"] == ["external-github-main-not-observed"]
+
+
+def test_added_public_snapshot_only_preserves_runtime_compatibility(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, _task = release_drift_case(tmp_path, monkeypatch)
+    snapshot = root / "registry/public-state.json"
+    snapshot.write_text('{"version":1}\n', encoding="utf-8")
+    commit_current_main(root, snapshot, message="publish public snapshot")
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"]["mutation_allowed"] is True
+    assert identity["claim_root"]["status"] == "local-preflight-clear"
+
+
+def test_public_snapshot_plus_taskspec_drift_remains_blocked(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root, module, _deployed_commit, _queue, task = release_drift_case(
+        tmp_path, monkeypatch
+    )
+    snapshot = root / "registry/public-state.json"
+    snapshot.write_text('{"version":1}\n', encoding="utf-8")
+    task.write_text(
+        '{"schema_version":1,"id":"BUR-TEST-T001","title":"changed"}\n',
+        encoding="utf-8",
+    )
+    commit_current_main(root, snapshot, task, message="mix public snapshot and task spec")
+
+    identity = bureau_runtime_identity(root, module_path=module)
+
+    assert identity["compatibility"]["mutation_allowed"] is False
+    assert identity["claim_root"]["status"] == "blocked"
+    assert "registry-head-differs-deployed-source" in identity["claim_root"]["reason_codes"]
+
+
 def test_added_queue_projection_preserves_legacy_release_compatibility(
     tmp_path: Path, monkeypatch
 ) -> None:

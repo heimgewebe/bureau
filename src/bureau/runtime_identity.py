@@ -46,6 +46,7 @@ SCHEDULER_NAMES = (
 
 CANONICAL_GITHUB_REPOSITORY = "heimgewebe/bureau"
 LEGACY_QUEUE_PROJECTION_PATH = "registry/queue.json"
+PUBLIC_SNAPSHOT_PROJECTION_PATH = "registry/public-state.json"
 TASK_PROJECTION_PREFIX = "registry/tasks/"
 
 
@@ -310,12 +311,14 @@ def _release_registry_drift_classification(
     if (
         len(entries) == 1
         and entries[0][0] in {"A", "M"}
-        and entries[0][1] == LEGACY_QUEUE_PROJECTION_PATH
+        and entries[0][1] in {LEGACY_QUEUE_PROJECTION_PATH, PUBLIC_SNAPSHOT_PROJECTION_PATH}
     ):
-        queue_path = registry_root / LEGACY_QUEUE_PROJECTION_PATH
-        if queue_path.is_symlink() or not queue_path.is_file():
+        projection_path = registry_root / entries[0][1]
+        if projection_path.is_symlink() or not projection_path.is_file():
             return "blocked"
-        return "legacy-queue-only"
+        if entries[0][1] == LEGACY_QUEUE_PROJECTION_PATH:
+            return "legacy-queue-only"
+        return "public-snapshot-only"
     if (
         entries
         and all(
@@ -548,7 +551,12 @@ def bureau_runtime_identity(
     elif manifest.get("valid") is True:
         source_kind = "immutable-release"
         if (
-            release_registry_drift in {"exact", "legacy-queue-only", "state-store-task-overlay"}
+            release_registry_drift in {
+                "exact",
+                "legacy-queue-only",
+                "public-snapshot-only",
+                "state-store-task-overlay",
+            }
             and registry.get("dirty") is False
         ):
             status = "compatible"
@@ -578,7 +586,11 @@ def bureau_runtime_identity(
             claim_root_reasons.append("registry-checkout-dirty")
         if (
             registry.get("head") != manifest.get("source_commit")
-            and release_registry_drift not in {"legacy-queue-only", "state-store-task-overlay"}
+            and release_registry_drift not in {
+                "legacy-queue-only",
+                "public-snapshot-only",
+                "state-store-task-overlay",
+            }
         ):
             claim_root_reasons.append("registry-head-differs-deployed-source")
         if registry.get("origin_main") != registry.get("head"):

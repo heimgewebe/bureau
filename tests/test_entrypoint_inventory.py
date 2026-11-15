@@ -30,7 +30,7 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     assert snapshot_service.is_file() is snapshot_timer.is_file()
     expected_unit_count = 16 if snapshot_service.is_file() else 15
 
-    assert inventory["summary"]["systemd_services"] == expected_unit_count
+    assert inventory["summary"]["systemd_services"] == expected_unit_count + 1
     assert inventory["summary"]["systemd_timers"] == expected_unit_count
     if snapshot_service.is_file():
         assert (
@@ -68,6 +68,15 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     assert (
         units["ops/systemd/bureau-state-restore-test.service"]["matched_console_script"] == "bureau"
     )
+    assert (
+        units["ops/systemd/bureau-state-retention.service"]["matched_console_script"] == "bureau"
+    )
+    assert "OnSuccess=bureau-state-retention.service" in (
+        ROOT / "ops/systemd/bureau-state-restore-test.service"
+    ).read_text(encoding="utf-8")
+    assert "-%h/.local/state/bureau-closure/review-receipts" in (
+        ROOT / "ops/systemd/bureau-state-retention.service"
+    ).read_text(encoding="utf-8")
 
 
 def test_inventory_records_hidden_or_module_entrypoints_without_promoting_them() -> None:
@@ -122,4 +131,5 @@ def test_retired_system_catalog_candidate_commands_are_absent() -> None:
         "live-register",
         "state-backup",
         "state-restore-test",
+        "state-retention",
     } <= command_choices

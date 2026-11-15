@@ -779,6 +779,191 @@ def test_local_retention_apply_removes_only_exact_planned_candidates(
     assert replayed["replayed"] is True
 
 
+
+def test_scheduled_retention_prunes_only_exact_native_candidates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fixture = _retention_fixture(tmp_path)
+    # This test covers pruning mechanics; the separate OnSuccess test below
+    # exercises the mandatory fresh historical restore.
+    monkeypatch.setattr(
+        state_backup, "_prepare_scheduled_historical_restore",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        state_backup,
+        "_retention_recovery_gate",
+        lambda *_args, **_kwargs: {"status": "verified", "test": True},
+    )
+    options = {
+        "backup_root": fixture["backup_root"],
+        "runtime_prefix": fixture["runtime_prefix"],
+        "closure_root": fixture["closure_root"],
+        "policy": _retention_test_policy(),
+        "now_unix": fixture["now"],
+    }
+    result = state_backup.run_scheduled_retention(**options)
+    assert result["status"] == "complete"
+    assert result["removed_count"] == 3
+    assert result["recovery_status"] == "verified"
+    receipt = Path(result["receipt_path"])
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    assert stored["state"] == "complete"
+    assert stored["receipt_sha256"] == state_backup._retention_digest(
+        stored, "receipt_sha256"
+    )
+    assert not fixture["backup_middle"].exists()
+    assert not fixture["snapshot_old"].exists()
+    assert not fixture["review_old"].exists()
+    for protected in (
+        fixture["backup_old"], fixture["backup_new"],
+        fixture["snapshot_middle"], fixture["snapshot_new"],
+        fixture["review_middle"], fixture["review_new"],
+    ):
+        assert protected.exists()
+
+    replay = state_backup.run_scheduled_retention(**options)
+    assert replay["status"] == "no_candidates"
+    assert replay["removed_count"] == 0
+    assert receipt.exists()
+
+
+def test_scheduled_retention_restores_distinct_older_backup_after_daily_latest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fixture = _retention_fixture(tmp_path)
+    # This is the exact normal OnSuccess preimage: the daily restore just
+    # wrote latest.json for the newest retained backup; no new backup arrives.
+    _write_restore_gate_receipt(fixture, bundle=fixture["backup_new"])
+    calls: list[Path] = []
+
+    def fake_restore_test(*, bundle: Path, receipt_path: Path | None = None, **_kwargs):
+        bundle = Path(bundle)
+        calls.append(bundle)
+        if receipt_path is not None:
+            assert receipt_path == fixture["backup_root"] / "restore-tests" / "latest.json"
+            # A real isolated restore completes later than plan generation.
+            return _write_restore_gate_receipt(
+                fixture, bundle=bundle, tested_at_unix=fixture["now"] + 120
+            )
+        manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
+        return {
+            "status": "verified", "tested_at": _iso_at(fixture["now"]),
+            "manifest_sha256": manifest["manifest_sha256"],
+            "authoritative_root_sha256": "a" * 64,
+            "receipt_sha256": "e" * 64,
+        }
+
+    def fake_verify(bundle: Path):
+        manifest = json.loads((Path(bundle) / "manifest.json").read_text(encoding="utf-8"))
+        return {
+            "status": "verified", "manifest_sha256": manifest["manifest_sha256"],
+            "authoritative_root_sha256": "a" * 64, "event_count": 17,
+            "envelope_root_sha256": "b" * 64,
+            "receipt_root_sha256": "c" * 64,
+        }
+
+    monkeypatch.setattr(state_backup, "restore_test", fake_restore_test)
+    monkeypatch.setattr(state_backup, "verify_backup", fake_verify)
+    monkeypatch.setattr(
+        state_backup, "_utc_now",
+        lambda: datetime.fromtimestamp(fixture["now"] + 120, tz=timezone.utc),
+    )
+    result = state_backup.run_scheduled_retention(
+        backup_root=fixture["backup_root"],
+        runtime_prefix=fixture["runtime_prefix"],
+        closure_root=fixture["closure_root"],
+        policy=_retention_test_policy(),
+        now_unix=fixture["now"],
+    )
+
+    assert result["status"] == "complete"
+    assert result["recovery_status"] == "verified"
+    assert calls[0] == fixture["backup_middle"]
+    assert fixture["backup_new"] in calls[1:]
+    assert fixture["backup_middle"].exists() and fixture["backup_new"].exists()
+    assert not fixture["backup_old"].exists()
+    stored = json.loads(
+        (fixture["backup_root"] / "restore-tests" / "latest.json").read_text(encoding="utf-8")
+    )
+    assert stored["bundle"] == str(fixture["backup_middle"])
+
+
+def test_scheduled_retention_failed_historical_restore_never_deletes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fixture = _retention_fixture(tmp_path)
+    daily = _write_restore_gate_receipt(fixture, bundle=fixture["backup_new"])
+
+    def fail_real_restore(**_kwargs):
+        raise state_backup.StateBackupError("historical restore failed")
+
+    monkeypatch.setattr(state_backup, "restore_test", fail_real_restore)
+    with pytest.raises(state_backup.StateBackupError, match="historical restore failed"):
+        state_backup.run_scheduled_retention(
+            backup_root=fixture["backup_root"],
+            runtime_prefix=fixture["runtime_prefix"],
+            closure_root=fixture["closure_root"],
+            policy=_retention_test_policy(),
+            now_unix=fixture["now"],
+        )
+    assert fixture["backup_middle"].exists()
+    assert fixture["backup_old"].exists() and fixture["backup_new"].exists()
+    latest = json.loads(
+        (fixture["backup_root"] / "restore-tests" / "latest.json").read_text(encoding="utf-8")
+    )
+    assert latest["receipt_sha256"] == daily["receipt_sha256"]
+    assert not list(
+        (fixture["backup_root"] / "restore-tests" / "retention-receipts").glob("retention-*.json")
+    )
+
+
+def test_scheduled_retention_stops_on_unfinished_receipt(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    root = fixture["backup_root"] / "restore-tests" / "retention-receipts"
+    root.mkdir()
+    partial = {
+        "schema_version": 1,
+        "kind": "bureau_local_retention_apply_receipt",
+        "state": "partial",
+    }
+    partial["receipt_sha256"] = state_backup._retention_digest(
+        partial, "receipt_sha256"
+    )
+    (root / "retention-previous.json").write_text(
+        json.dumps(partial) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(
+        state_backup.StateBackupError, match="unfinished scheduled retention"
+    ):
+        state_backup.run_scheduled_retention(
+            backup_root=fixture["backup_root"],
+            runtime_prefix=fixture["runtime_prefix"],
+            closure_root=fixture["closure_root"],
+            policy=_retention_test_policy(),
+            now_unix=fixture["now"],
+        )
+    assert fixture["backup_middle"].exists()
+    assert fixture["snapshot_old"].exists()
+
+
+def test_scheduled_retention_rejects_symlinked_receipt_directory(tmp_path: Path):
+    fixture = _retention_fixture(tmp_path)
+    link = fixture["backup_root"] / "restore-tests" / "retention-receipts"
+    external = tmp_path / "other-receipts"
+    external.mkdir()
+    link.symlink_to(external, target_is_directory=True)
+    with pytest.raises(state_backup.StateBackupError, match="symlink"):
+        state_backup.run_scheduled_retention(
+            backup_root=fixture["backup_root"],
+            runtime_prefix=fixture["runtime_prefix"],
+            closure_root=fixture["closure_root"],
+            policy=_retention_test_policy(),
+            now_unix=fixture["now"],
+        )
+    assert fixture["backup_middle"].exists()
+
+
 def test_local_retention_apply_fails_closed_after_candidate_tamper(tmp_path: Path):
     fixture = _retention_fixture(tmp_path)
     plan = state_backup.build_local_retention_plan(

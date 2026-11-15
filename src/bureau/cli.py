@@ -192,6 +192,8 @@ def parser() -> argparse.ArgumentParser:
     state_restore_test.add_argument("--backup-root", type=Path)
     state_restore_test.add_argument("--scratch-root", type=Path)
     state_restore_test.add_argument("--receipt", type=Path)
+    state_retention = sub.add_parser("state-retention")
+    state_retention.add_argument("--backup-root", type=Path)
     source_pr_bridge = sub.add_parser("source-pr-bridge")
     source_pr_bridge.add_argument("bridge_args", nargs=argparse.REMAINDER)
     task_supply_run = sub.add_parser("task-supply-run")
@@ -1045,7 +1047,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             emit(value, args.json)
             return 0 if value["complete"] else 2
-        if args.command in {"state-backup", "state-restore-test"}:
+        if args.command in {"state-backup", "state-restore-test", "state-retention"}:
             module_value = _CLI_RUNTIME_IDENTITY.get("module")
             manifest_value = _CLI_RUNTIME_IDENTITY.get("manifest")
             registry_value = _CLI_RUNTIME_IDENTITY.get("registry")
@@ -1090,7 +1092,7 @@ def main(argv: list[str] | None = None) -> int:
                         state_root=effective_state_root,
                         backup_root=effective_backup_root,
                     )
-                else:
+                elif args.command == "state-restore-test":
                     effective_backup_root = (
                         args.backup_root
                         if args.backup_root is not None
@@ -1106,6 +1108,15 @@ def main(argv: list[str] | None = None) -> int:
                         scratch_root=args.scratch_root,
                         receipt_path=effective_receipt,
                         registry_root=root,
+                    )
+                else:
+                    effective_backup_root = (
+                        args.backup_root
+                        if args.backup_root is not None
+                        else state_backup_module.DEFAULT_BACKUP_ROOT
+                    )
+                    value = state_backup_module.run_scheduled_retention(
+                        backup_root=effective_backup_root,
                     )
             except state_backup_module.StateBackupError as exc:
                 raise StateError(str(exc)) from exc

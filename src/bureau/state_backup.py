@@ -1787,6 +1787,9 @@ def _retention_recovery_gate(
     *,
     now_unix: int,
 ) -> dict[str, Any]:
+    # Fresh restore evidence may be newer than plan generation; the entire
+    # apply-time recovery gate must use a post-restore observation clock.
+    now_unix = max(now_unix, int(_utc_now().timestamp()))
     state_store = plan.get("stores", {}).get("state_backups")
     if not isinstance(state_store, dict):
         raise StateBackupError("retention plan lacks StateStore backup projection")
@@ -2066,6 +2069,190 @@ def apply_local_retention_plan(
             f"retention reference mutation boundary unavailable: {exc}"
         ) from exc
 
+
+
+def _prepare_scheduled_historical_restore(
+    plan: dict[str, Any],
+    *,
+    backup_root: Path,
+    runtime_prefix: Path,
+    closure_root: Path,
+) -> dict[str, Any] | None:
+    """Restore an older retained bundle after the daily newest-bundle restore.
+
+    OnSuccess fires immediately after restore-tests/latest.json was written
+    for the newest bundle. It is not evidence of a distinct historical point.
+    Prove a different retained bundle using the existing isolated restore.
+    """
+    state_backups = plan["stores"]["state_backups"]
+    if not state_backups["candidates"]:
+        return None
+    # The daily receipt points at the newest bundle. Its predecessor may be
+    # a *candidate* until a successful independent restore protects it.
+    available = [*state_backups["retained"], *state_backups["candidates"]]
+    retained = sorted(
+        available,
+        key=lambda item: (int(item["created_at_unix"]), str(item["path"])),
+        reverse=True,
+    )
+    if len(retained) < 2:
+        raise StateBackupError("scheduled pruning requires two retained backups")
+    newest = _retention_reference(
+        retained[0]["path"], root=backup_root, label="newest retained backup"
+    )
+    historical = _retention_reference(
+        retained[1]["path"], root=backup_root, label="historical retained backup"
+    )
+    if historical == newest:
+        raise StateBackupError("historical restore point must differ from newest retained backup")
+    receipt_path = backup_root / "restore-tests" / "latest.json"
+    if receipt_path.is_symlink():
+        raise StateBackupError("historical restore receipt path must not be a symlink")
+    registry_root = _runtime_registry_root(
+        _retention_root(runtime_prefix, label="runtime prefix") / "deployment-manifest.json"
+    )
+    proof = restore_test(
+        bundle=historical,
+        backup_root=backup_root,
+        registry_root=registry_root,
+        receipt_path=receipt_path,
+    )
+    if proof.get("status") != "verified":
+        raise StateBackupError("scheduled historical restore did not verify")
+    # The newly proven historical backup was previously a deletion candidate.
+    # Only a fresh plan may promote it into the retained set; never apply the
+    # pre-restore plan with stale candidate/reference classifications.
+    replanned = build_local_retention_plan(
+        backup_root=backup_root,
+        runtime_prefix=runtime_prefix,
+        closure_root=closure_root,
+        policy=plan["policy"],
+        now_unix=int(plan["generated_at_unix"]),
+    )
+    if replanned["safe_to_apply"] is not True:
+        raise StateBackupError("historical restore replanning is blocked")
+    final_retained = replanned["stores"]["state_backups"]["retained"]
+    final_paths = {
+        str(Path(item["path"]).resolve(strict=False)) for item in final_retained
+    }
+    if str(historical) not in final_paths or str(newest) not in final_paths:
+        raise StateBackupError("replanned retention dropped a verified recovery point")
+    _validated_historical_restore_evidence(
+        backup_root=backup_root,
+        retained_paths=final_paths,
+        newest_path=newest,
+        max_age_seconds=plan["policy"]["stores"]["state_backups"][
+            "restore_receipt_max_age_seconds"
+        ],
+        # A real restore can finish seconds after the original plan was made.
+        # Validate against fresh post-restore wall time, never a stale plan clock.
+        now_unix=max(int(plan["generated_at_unix"]), int(_utc_now().timestamp())),
+    )
+    return replanned
+
+
+def run_scheduled_retention(
+    *,
+    backup_root: Path = DEFAULT_BACKUP_ROOT,
+    runtime_prefix: Path = DEFAULT_RUNTIME_PREFIX,
+    closure_root: Path = DEFAULT_CLOSURE_ROOT,
+    policy: dict[str, Any] | None = None,
+    now_unix: int | None = None,
+) -> dict[str, Any]:
+    """Explicit periodic maintenance using the unchanged native retention gates.
+
+    The plan alone grants no deletion authority. An unfinished prior receipt
+    blocks a new run until its exact filesystem outcome is reconciled.
+    """
+    root = _retention_root(backup_root, label="backup root")
+    history = root / "restore-tests"
+    receipts = history / "retention-receipts"
+    if history.is_symlink() or receipts.is_symlink():
+        raise StateBackupError("scheduled retention receipt root is a symlink")
+    if receipts.exists() and not receipts.is_dir():
+        raise StateBackupError("scheduled retention receipt root is not a directory")
+    receipts.mkdir(parents=True, exist_ok=True, mode=0o700)
+
+    for path in sorted(receipts.iterdir()):
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or not path.name.startswith("retention-")
+            or path.suffix != ".json"
+        ):
+            raise StateBackupError(f"unexpected scheduled retention receipt: {path}")
+        previous, _raw = _load_json_file(path, label="scheduled retention receipt")
+        if (
+            previous.get("kind") != "bureau_local_retention_apply_receipt"
+            or previous.get("receipt_sha256") != _retention_digest(
+                previous, "receipt_sha256"
+            )
+            or previous.get("state") != "complete"
+        ):
+            raise StateBackupError(
+                f"unfinished scheduled retention needs reconciliation: {path}"
+            )
+
+    plan = build_local_retention_plan(
+        backup_root=root,
+        runtime_prefix=runtime_prefix,
+        closure_root=closure_root,
+        policy=policy,
+        now_unix=now_unix,
+    )
+    if plan["safe_to_apply"] is not True:
+        raise StateBackupError("scheduled retention plan is blocked")
+    # The daily newest-bundle receipt is not a historical recovery point.
+    # An older *candidate* must first be restored and then retained by a
+    # rebuilt plan; the original plan must never delete that candidate.
+    updated_plan = _prepare_scheduled_historical_restore(
+        plan, backup_root=root, runtime_prefix=runtime_prefix,
+        closure_root=closure_root,
+    )
+    if updated_plan is not None:
+        plan = updated_plan
+    summary = plan["summary"]
+    if summary["candidate_count"] == 0:
+        return {
+            "schema_version": 1,
+            "kind": "bureau_scheduled_retention_result",
+            "status": "no_candidates",
+            "plan_sha256": plan["plan_sha256"],
+            "retained_count": summary["retained_count"],
+            "removed_count": 0,
+        }
+
+    digest = plan["plan_sha256"]
+    destination = receipts / f"retention-{digest}.json"
+    if destination.exists() or destination.is_symlink():
+        raise StateBackupError(
+            "scheduled retention plan receipt already exists with remaining candidates"
+        )
+    result = apply_local_retention_plan(
+        plan,
+        expected_plan_sha256=digest,
+        confirmation=f"APPLY:{digest}",
+        receipt_path=destination,
+        now_unix=now_unix,
+    )
+    if (
+        result.get("state") != "complete"
+        or len(result.get("results", [])) != summary["candidate_count"]
+        or any(item.get("removed") is not True for item in result["results"])
+    ):
+        raise StateBackupError("scheduled retention receipt is not fully complete")
+    return {
+        "schema_version": 1,
+        "kind": "bureau_scheduled_retention_result",
+        "status": "complete",
+        "plan_sha256": digest,
+        "receipt_path": str(destination),
+        "receipt_sha256": result["receipt_sha256"],
+        "retained_count": summary["retained_count"],
+        "removed_count": result["candidate_count"],
+        "freed_allocated_bytes_claim": result["freed_allocated_bytes_claim"],
+        "recovery_status": result["recovery_gate"]["status"],
+    }
 
 
 def _parser() -> argparse.ArgumentParser:

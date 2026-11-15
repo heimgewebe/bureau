@@ -10,6 +10,27 @@
     "role": "canonical local checkout mapping for heimgewebe/obsidian-bridge",
     "mapping_verified_at": "2026-08-30",
     "mapping_evidence": "T120 fresh local checkout and origin readback",
-    "boundaries": ["mapping_only_does_not_establish_captain_eligibility", "github_settings_unchanged"]
+    "boundaries": [
+      "mapping_only_does_not_establish_captain_eligibility",
+      "github_settings_unchanged"
+    ],
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "mutation_claims_allowed": false,
+    "retired_on": "2026-11-15",
+    "purpose": "Historical coordination and provenance for an archived GitHub repository. No new repository mutations or active task-supply authority.",
+    "lifecycle_evidence_refs": [
+      "https://github.com/heimgewebe/obsidian-bridge",
+      "https://github.com/heimgewebe/metarepo/pull/756",
+      "https://github.com/heimgewebe/systemkatalog/pull/187"
+    ],
+    "does_not_establish": [
+      "remote_repository_exists",
+      "active_checkout",
+      "fleet_membership",
+      "task_supply_target",
+      "runtime_role",
+      "execution_authority"
+    ]
   }
 }

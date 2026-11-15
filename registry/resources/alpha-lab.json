@@ -15,6 +15,24 @@
       "real_capital_requires_separate_explicit_approval_after_evidence_gate"
     ],
     "mapping_verified_at": "2026-08-30",
-    "mapping_evidence": "T120 fresh local checkout and origin readback"
+    "mapping_evidence": "T120 fresh local checkout and origin readback",
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "mutation_claims_allowed": false,
+    "retired_on": "2026-11-15",
+    "purpose": "Historical coordination and provenance for an archived GitHub repository. No new repository mutations or active task-supply authority.",
+    "lifecycle_evidence_refs": [
+      "https://github.com/heimgewebe/alpha-lab",
+      "https://github.com/heimgewebe/metarepo/pull/756",
+      "https://github.com/heimgewebe/systemkatalog/pull/187"
+    ],
+    "does_not_establish": [
+      "remote_repository_exists",
+      "active_checkout",
+      "fleet_membership",
+      "task_supply_target",
+      "runtime_role",
+      "execution_authority"
+    ]
   }
 }

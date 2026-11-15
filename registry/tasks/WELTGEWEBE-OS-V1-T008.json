@@ -122,6 +122,18 @@
         "merge_authority",
         "deployment_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "reason": "repository-retired-coordination-only",
+      "retired_on": "2026-11-15",
+      "retired_resources": [
+        "repo.leitstand"
+      ],
+      "source_pull_requests": [
+        "heimgewebe/metarepo#756",
+        "heimgewebe/systemkatalog#187"
+      ],
+      "note": "The Leitstand repository is GitHub-archived. The original write-target operational projection is no longer executable; no claim is made that the proposed SLO/cell UI was implemented or replaced."
     }
   },
   "priority": {
@@ -136,6 +148,6 @@
     "kubernetes"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Leitstand auf SLO-, Zell- und Föderationsbetrieb ausrichten"
 }

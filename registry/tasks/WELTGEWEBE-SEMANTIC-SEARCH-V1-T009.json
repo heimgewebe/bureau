@@ -28,8 +28,8 @@
   "claims": [
     {
       "resource": "repo.semantah",
-      "mode": "write",
-      "isolation": "worktree"
+      "mode": "read",
+      "isolation": "none"
     },
     {
       "resource": "component.bureau.registry",
@@ -134,6 +134,16 @@
         "task readiness",
         "permission to alter terminal history"
       ]
+    },
+    "archived_repository_reconciliation": {
+      "status": "archived_repository_read_only",
+      "date": "2026-11-15",
+      "repository": "heimgewebe/semantAH",
+      "evidence_refs": [
+        "heimgewebe/metarepo#756",
+        "heimgewebe/systemkatalog#187"
+      ],
+      "note": "Repository was archived earlier; retain work on Registry, consumer and runtime inventory only. Historical semantAH is read-only. Planned task remains open; T008 live proof is not inferred."
     }
   }
 }

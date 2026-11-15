@@ -1,7 +1,7 @@
 {
   "acceptance": [
     {
-      "assertion": "Before effect protected main contains merged snapshot-only PRs #2388/#2401 and the separate protected publication of this exact new authority; require current fresh validate 3.10, 3.12, registry freshness checks PASS on exact target.",
+      "assertion": "Before effect protected main contains merged snapshot-only PRs #2388/#2401/#2402 and the separate protected publication of this exact new authority; require current fresh validate 3.10, 3.12, registry freshness checks PASS on exact target.",
       "evidence_type": "object",
       "id": "fresh-current-main",
       "verifier": "manual_observation",
@@ -67,7 +67,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau"
   },
-  "goal": "Single bounded immutable Bureau runtime convergence after public status-only PRs #2388/#2401 changed GitHub main and blocked coordination writes. Publish exact successor authority as protected TaskSpec; missing-only adoption and activation from fresh current main; exactly one reserved Grabowski effect, live readback and verified native service. The public snapshot PR #2402 must remain unmerged.",
+  "goal": "Single bounded immutable Bureau runtime convergence after public status-only PRs #2388/#2401 changed GitHub main and blocked coordination writes. Publish exact successor authority as protected TaskSpec; missing-only adoption and activation from fresh current main; exactly one reserved Grabowski effect, live readback and verified native service. Snapshot PR #2402 was already merged on 2026-11-15T07:47:27Z; its transport content is historical, not runtime authority. Never merge future automation/bureau-state-snapshot PRs containing only registry/public-state.json.",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-SNAPSHOT-20261115",
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "metadata": {
@@ -131,7 +131,7 @@
       ],
       "initial_state": "planned",
       "kind": "normal-protected-pull-request",
-      "reason": "New source-bound, single-use authority for immutable runtime convergence after status-only PRs #2388/#2401; old PR2399 authority already consumed.",
+      "reason": "New source-bound, single-use authority for immutable runtime convergence after status-only PRs #2388/#2401/#2402; old PR2399 authority already consumed.",
       "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-SNAPSHOT-20261115.json",
       "state_store_transition": "seed-missing-preserve-state-store"
     },

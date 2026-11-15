@@ -12,6 +12,14 @@ if str(SRC) not in sys.path:
 
 task_supply = importlib.import_module("bureau.task_supply")
 legacy = importlib.import_module("bureau.legacy")
+ARCHIVED_2026_11_15 = {
+    "semantah",
+    "plexer",
+    "leitstand",
+    "obsidian-bridge",
+    "alpha-lab",
+    "capacity-marketplace",
+}
 RETIRED = {
     "vault-gewebe",
     "vault-privat",
@@ -25,10 +33,10 @@ RETIRED = {
     "heimgeist",
     "agent-control-surface",
     "demo-repository",
-}
+} | ARCHIVED_2026_11_15
 
 
-def test_deleted_repository_resources_are_coordination_only() -> None:
+def test_retired_and_archived_repository_resources_are_coordination_only() -> None:
     for name in RETIRED:
         data = json.loads(
             (ROOT / "registry" / "resources" / f"{name}.json").read_text(
@@ -39,7 +47,8 @@ def test_deleted_repository_resources_are_coordination_only() -> None:
         assert metadata["lifecycle"] == "retired"
         assert metadata["coordination_only"] is True
         assert metadata["mutation_claims_allowed"] is False
-        assert metadata["retired_on"] == "2026-09-18"
+        expected_date = "2026-11-15" if name in ARCHIVED_2026_11_15 else "2026-09-18"
+        assert metadata["retired_on"] == expected_date
         claims = set(metadata["does_not_establish"])
         assert {
             "remote_repository_exists",
@@ -48,6 +57,34 @@ def test_deleted_repository_resources_are_coordination_only() -> None:
             "runtime_role",
             "execution_authority",
         } <= claims
+
+
+
+
+def test_six_archived_repositories_keep_github_and_fleet_evidence() -> None:
+    for name in ARCHIVED_2026_11_15:
+        path = ROOT / "registry" / "resources" / f"{name}.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        metadata = data["metadata"]
+        assert metadata["lifecycle"] == "retired"
+        refs = metadata["lifecycle_evidence_refs"]
+        assert "https://github.com/" + data["github_slug"] in refs
+        assert "https://github.com/heimgewebe/metarepo/pull/756" in refs
+        assert "https://github.com/heimgewebe/systemkatalog/pull/187" in refs
+
+
+def test_retired_legacy_leitstand_task_has_no_active_write_route() -> None:
+    path = ROOT / "registry" / "tasks" / "WELTGEWEBE-OS-V1-T008.json"
+    task = json.loads(path.read_text(encoding="utf-8"))
+    assert task["state"] == "ready"  # Historical source, StateStore is terminal verified
+    assert task["claims"] == [
+        {"resource": "repo.leitstand", "mode": "read", "isolation": "none"}
+    ]
+    cleanup = task["metadata"]["bureau_cleanup"]
+    assert cleanup["retired_resources"] == ["repo.leitstand"]
+    assert cleanup["task_status_receipt_sha256"] == (
+        "5ccdb94defc8bb6f456fee69171fd236754d9a3f5ac0b1efdaaaabf7c2c40739"
+    )
 
 
 def test_deleted_repositories_are_not_scout_supply_targets() -> None:

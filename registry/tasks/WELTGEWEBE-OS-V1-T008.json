@@ -39,8 +39,8 @@
   ],
   "claims": [
     {
-      "isolation": "worktree",
-      "mode": "write",
+      "isolation": "none",
+      "mode": "read",
       "resource": "repo.leitstand"
     }
   ],
@@ -122,6 +122,21 @@
         "merge_authority",
         "deployment_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "reason": "archived_repository_read_only_claim",
+      "retired_on": "2026-11-15",
+      "retired_resources": [
+        "repo.leitstand"
+      ],
+      "authoritative_task_status": "verified",
+      "authoritative_verified_at": "2026-08-18T15:41:15.128027Z",
+      "task_status_receipt_sha256": "5ccdb94defc8bb6f456fee69171fd236754d9a3f5ac0b1efdaaaabf7c2c40739",
+      "source_pull_requests": [
+        "heimgewebe/metarepo#756",
+        "heimgewebe/systemkatalog#187"
+      ],
+      "note": "Source Registry state remains historical ready while authoritative StateStore task_status is terminal verified. The old GitHub-archived target is read-only; do not infer a currently serving Leitstand deployment."
     }
   },
   "priority": {

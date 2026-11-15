@@ -3,6 +3,8 @@ Description=Bureau StateStore restore proof in an empty temporary root
 Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/operations.md
 ConditionPathIsDirectory=%h/artifacts/merges/bureau-state-backups
 ConditionPathExists=%h/.local/bin/bureau
+# Only a successful empty-root restore proof may trigger retention.
+OnSuccess=bureau-state-retention.service
 
 [Service]
 Type=oneshot

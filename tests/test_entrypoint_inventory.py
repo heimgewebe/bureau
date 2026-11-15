@@ -74,6 +74,9 @@ def test_inventory_covers_systemd_exec_start_commands() -> None:
     assert "OnSuccess=bureau-state-retention.service" in (
         ROOT / "ops/systemd/bureau-state-restore-test.service"
     ).read_text(encoding="utf-8")
+    assert "-%h/.local/state/bureau-closure/review-receipts" in (
+        ROOT / "ops/systemd/bureau-state-retention.service"
+    ).read_text(encoding="utf-8")
 
 
 def test_inventory_records_hidden_or_module_entrypoints_without_promoting_them() -> None:

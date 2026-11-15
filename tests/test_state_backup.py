@@ -842,7 +842,10 @@ def test_scheduled_retention_restores_distinct_older_backup_after_daily_latest(
         calls.append(bundle)
         if receipt_path is not None:
             assert receipt_path == fixture["backup_root"] / "restore-tests" / "latest.json"
-            return _write_restore_gate_receipt(fixture, bundle=bundle)
+            # A real isolated restore completes later than plan generation.
+            return _write_restore_gate_receipt(
+                fixture, bundle=bundle, tested_at_unix=fixture["now"] + 120
+            )
         manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
         return {
             "status": "verified", "tested_at": _iso_at(fixture["now"]),
@@ -862,6 +865,10 @@ def test_scheduled_retention_restores_distinct_older_backup_after_daily_latest(
 
     monkeypatch.setattr(state_backup, "restore_test", fake_restore_test)
     monkeypatch.setattr(state_backup, "verify_backup", fake_verify)
+    monkeypatch.setattr(
+        state_backup, "_utc_now",
+        lambda: datetime.fromtimestamp(fixture["now"] + 120, tz=timezone.utc),
+    )
     result = state_backup.run_scheduled_retention(
         backup_root=fixture["backup_root"],
         runtime_prefix=fixture["runtime_prefix"],

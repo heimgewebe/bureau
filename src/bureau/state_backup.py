@@ -1787,6 +1787,9 @@ def _retention_recovery_gate(
     *,
     now_unix: int,
 ) -> dict[str, Any]:
+    # Fresh restore evidence may be newer than plan generation; the entire
+    # apply-time recovery gate must use a post-restore observation clock.
+    now_unix = max(now_unix, int(_utc_now().timestamp()))
     state_store = plan.get("stores", {}).get("state_backups")
     if not isinstance(state_store, dict):
         raise StateBackupError("retention plan lacks StateStore backup projection")
@@ -2141,7 +2144,9 @@ def _prepare_scheduled_historical_restore(
         max_age_seconds=plan["policy"]["stores"]["state_backups"][
             "restore_receipt_max_age_seconds"
         ],
-        now_unix=int(plan["generated_at_unix"]),
+        # A real restore can finish seconds after the original plan was made.
+        # Validate against fresh post-restore wall time, never a stale plan clock.
+        now_unix=max(int(plan["generated_at_unix"]), int(_utc_now().timestamp())),
     )
     return replanned
 

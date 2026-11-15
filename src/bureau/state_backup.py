@@ -865,6 +865,16 @@ def _retention_root(path: Path, *, label: str) -> Path:
     return raw.resolve()
 
 
+def _optional_retention_root(path: Path, *, label: str) -> Path:
+    """Allow a never-created optional directory without following a symlink."""
+    raw = path.expanduser()
+    if raw.is_symlink():
+        raise StateBackupError(f"{label} must not be a symlink: {raw}")
+    if raw.exists():
+        return _retention_root(raw, label=label)
+    return raw.resolve(strict=False)
+
+
 def _retention_reference(
     raw: Any,
     *,
@@ -1234,6 +1244,8 @@ def _review_receipt_entries(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     entries: list[dict[str, Any]] = []
     errors: list[dict[str, Any]] = []
+    if not review_root.exists():
+        return entries, errors
     for path in sorted(review_root.iterdir()):
         if path.name.startswith("."):
             if path.name.startswith(".retention-delete-"):
@@ -1282,8 +1294,18 @@ def _review_explicit_references(
         path = _retention_reference(value, root=review_root, label=reason)
         references.setdefault(str(path), set()).add(reason)
 
+    review_history_present = review_root.is_dir() and any(review_root.iterdir())
     for name in ("review-latest.json", "lanes.json"):
         path = closure_root / name
+        # The review steward creates both files on its first real review.
+        # Missing history is not a failed reference; lane bindings still are.
+        if (
+            name == "review-latest.json"
+            and not review_history_present
+            and not path.exists()
+            and not path.is_symlink()
+        ):
+            continue
         try:
             payload, _raw = _load_json_file(path, label=f"closure {name}")
             if name == "review-latest.json":
@@ -1379,7 +1401,7 @@ def build_local_retention_plan(
         runtime_prefix / "registry-snapshots", label="registry snapshot root"
     )
     closure_root = _retention_root(closure_root, label="closure root")
-    review_root = _retention_root(
+    review_root = _optional_retention_root(
         closure_root / "review-receipts", label="review receipt root"
     )
 

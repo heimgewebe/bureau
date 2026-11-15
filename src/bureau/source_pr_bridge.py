@@ -379,9 +379,11 @@ def reconcile(
         raise ValueError(f"unsupported bridge kind: {kind}")
     expected_snapshot: bytes | None = None
     if kind == "state-snapshot":
+        if auto_merge:
+            raise ValueError("state-snapshot publication is branch-only; auto-merge is unsupported")
         if snapshot is None:
             raise StateSnapshotTransportError("state-snapshot reconcile requires --snapshot")
-        expected_snapshot, _payload = _verified_snapshot_bytes(snapshot)
+        expected_snapshot, snapshot_payload = _verified_snapshot_bytes(snapshot)
     ref = _json(
         ["api", f"repos/{repository}/git/ref/heads/{branch}"],
         allow_not_found=True,
@@ -392,6 +394,21 @@ def reconcile(
     head_sha = str(ref["object"]["sha"])
     if expected_snapshot is not None:
         _verified_remote_state_snapshot(repository, branch, expected_snapshot)
+        # Public transparency lives on this dedicated branch, not in a recurring
+        # review PR. Never merge operational status bytes into immutable-runtime main.
+        return {
+            "status": "published",
+            "repository": repository,
+            "base": base,
+            "branch": branch,
+            "head_sha": head_sha,
+            "path": state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix(),
+            "snapshot_sha256": snapshot_payload["snapshot_sha256"],
+            "url": (
+                f"https://github.com/{repository}/blob/{branch}/"
+                f"{state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()}"
+            ),
+        }
     comparison = _json(["api", f"repos/{repository}/compare/{base}...{branch}"])
     ahead_by = int(comparison.get("ahead_by", 0))
     if ahead_by <= 0:
@@ -568,6 +585,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
+    if arguments.kind == "state-snapshot" and arguments.auto_merge:
+        raise SystemExit("state-snapshot publication is branch-only; auto-merge is unsupported")
     generated_snapshot_tmp = None
     branch = arguments.branch or (
         NOW_REFILL_BRANCH
@@ -640,12 +659,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             and not (
                 arguments.kind == "state-snapshot"
                 and publish_result["status"] == "not-applied"
-                and publish_result.get("reason") == "snapshot-already-current"
+                and publish_result.get("reason")
+                in {"snapshot-already-current", "snapshot-unchanged"}
             )
         ):
-            # An unchanged verified snapshot still has a valid open review PR.
-            # Only nonpublication reasons such as no Now-refill demand withdraw.
-            result = withdraw_open_proposal(arguments.repo, arguments.base, branch)
+            # Snapshot nonpublication is transport status, not a queue proposal:
+            # it must never create or close a GitHub review PR.
+            result = (
+                {
+                    "status": "not-applied",
+                    "repository": arguments.repo,
+                    "branch": branch,
+                    "reason": publish_result.get("reason"),
+                }
+                if arguments.kind == "state-snapshot"
+                else withdraw_open_proposal(arguments.repo, arguments.base, branch)
+            )
         else:
             result = reconcile(
                 arguments.repo,

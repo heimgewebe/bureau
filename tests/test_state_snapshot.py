@@ -578,13 +578,13 @@ def test_state_snapshot_reconcile_verifies_remote_bytes(
                 "encoding": "base64",
                 "content": base64.b64encode(snapshot_path.read_bytes()).decode("ascii"),
             },
-            {"ahead_by": 0},
         ]
     )
     observed_calls: list[list[str]] = []
 
     def fake_json(arguments, *, allow_not_found=False):
         observed_calls.append(arguments)
+        assert arguments[0] == "api", "snapshot transport must not open review PRs"
         return next(responses)
 
     monkeypatch.setattr(source_pr_bridge, "_json", fake_json)
@@ -594,16 +594,88 @@ def test_state_snapshot_reconcile_verifies_remote_bytes(
         kind="state-snapshot",
         snapshot=snapshot_path,
     )
-    assert result["status"] == "no_change"
-    assert observed_calls[1] == [
-        "api",
-        f"repos/{source_pr_bridge.DEFAULT_REPOSITORY}/contents/"
-        f"{state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()}",
-        "--method",
-        "GET",
-        "-f",
-        f"ref={source_pr_bridge.STATE_SNAPSHOT_BRANCH}",
+    assert result["status"] == "published"
+    assert (
+        result["snapshot_sha256"]
+        == state_snapshot.read_public_snapshot(snapshot_path)["snapshot_sha256"]
+    )
+    assert "pull_request" not in result
+    assert result["url"].endswith(
+        f"/blob/{source_pr_bridge.STATE_SNAPSHOT_BRANCH}/registry/public-state.json"
+    )
+    assert observed_calls == [
+        [
+            "api",
+            f"repos/{source_pr_bridge.DEFAULT_REPOSITORY}/git/ref/heads/"
+            f"{source_pr_bridge.STATE_SNAPSHOT_BRANCH}",
+        ],
+        [
+            "api",
+            f"repos/{source_pr_bridge.DEFAULT_REPOSITORY}/contents/"
+            f"{state_snapshot.PUBLIC_SNAPSHOT_PATH.as_posix()}",
+            "--method", "GET", "-f", f"ref={source_pr_bridge.STATE_SNAPSHOT_BRANCH}",
+        ],
     ]
+
+
+def test_state_snapshot_reconcile_rejects_auto_merge_before_remote_actions(
+    tmp_path: Path, monkeypatch
+) -> None:
+    snapshot = tmp_path / "public-state.json"
+    snapshot.write_text("{}\n", encoding="utf-8")
+
+    def forbidden_remote(*_args, **_kwargs):
+        pytest.fail("snapshot auto-merge must fail before any GitHub action")
+
+    monkeypatch.setattr(source_pr_bridge, "_json", forbidden_remote)
+    with pytest.raises(ValueError, match="branch-only"):
+        source_pr_bridge.reconcile(
+            kind="state-snapshot",
+            snapshot=snapshot,
+            auto_merge=True,
+        )
+
+
+def test_state_snapshot_reconcile_rejects_invalid_remote_bytes_without_pr(
+    tmp_path: Path, registry_factory, monkeypatch
+) -> None:
+    state_root, manifest, _store = _fixture(tmp_path, registry_factory)
+    snapshot = tmp_path / "public-state.json"
+    state_snapshot.export_public_snapshot(
+        output=snapshot, state_root=state_root, runtime_manifest=manifest
+    )
+    responses = iter([
+        {"object": {"sha": "b" * 40}},
+        {"encoding": "base64", "content": base64.b64encode(b"{}").decode("ascii")},
+    ])
+
+    def fake_remote(arguments, *, allow_not_found=False):
+        assert arguments[0] == "api"
+        return next(responses)
+
+    def forbidden_pr(*_args, **_kwargs):
+        pytest.fail("unverified remote bytes must not touch GitHub PRs")
+
+    monkeypatch.setattr(source_pr_bridge, "_json", fake_remote)
+    monkeypatch.setattr(source_pr_bridge, "_run", forbidden_pr)
+    with pytest.raises(state_snapshot.StateSnapshotError):
+        source_pr_bridge.reconcile(
+            kind="state-snapshot",
+            branch=source_pr_bridge.STATE_SNAPSHOT_BRANCH,
+            snapshot=snapshot,
+        )
+
+
+def test_snapshot_cli_rejects_auto_merge_before_publication(monkeypatch, tmp_path):
+    def forbidden_publication(*_args, **_kwargs):
+        pytest.fail("invalid auto-merge must not publish snapshot bytes")
+
+    monkeypatch.setattr(source_pr_bridge, "publish_state_snapshot", forbidden_publication)
+    with pytest.raises(SystemExit, match="branch-only"):
+        source_pr_bridge.main([
+            "--kind", "state-snapshot", "--publish", "--auto-merge",
+            "--root", str(tmp_path),
+        ])
 
 
 def test_checked_in_public_snapshot_is_valid_if_present() -> None:
@@ -616,10 +688,10 @@ def test_checked_in_public_snapshot_is_valid_if_present() -> None:
     )
 
 
-def test_state_snapshot_already_current_reconciles_instead_of_closing_review_pr(
+def test_state_snapshot_already_current_verifies_branch_without_review_pr(
     tmp_path: Path, monkeypatch, capsys
 ) -> None:
-    """An idempotent publisher must not withdraw an open redacted-state PR."""
+    """Idempotent public publication keeps its branch and never touches PRs."""
     snapshot = tmp_path / "public-state.json"
     snapshot.write_text("publisher mock holds snapshot bytes", encoding="utf-8")
     calls: list[str] = []
@@ -637,7 +709,7 @@ def test_state_snapshot_already_current_reconciles_instead_of_closing_review_pr(
         assert kind == "state-snapshot"
         assert snapshot == tmp_path / "public-state.json"
         calls.append("reconcile")
-        return {"status": "no_change", "pull_request": 2388, "branch": branch}
+        return {"status": "published", "branch": branch, "head_sha": "a" * 40}
 
     def forbidden_withdraw(*args, **kwargs):
         pytest.fail("identical snapshot must never close its existing review PR")
@@ -660,8 +732,8 @@ def test_state_snapshot_already_current_reconciles_instead_of_closing_review_pr(
         == 0
     )
     result = json.loads(capsys.readouterr().out)
-    assert result["status"] == "no_change"
-    assert result["pull_request"] == 2388
+    assert result["status"] == "published"
+    assert "pull_request" not in result
     assert result["publish"]["reason"] == "snapshot-already-current"
     assert calls == ["publish", "reconcile"]
 

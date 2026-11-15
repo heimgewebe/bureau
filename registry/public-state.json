@@ -5,14 +5,14 @@
       "cancelled": 401,
       "inbox": 1,
       "planned": 57,
-      "ready": 291,
-      "superseded": 80,
+      "ready": 290,
+      "superseded": 81,
       "verified": 789
     },
     "tasks_total": 1622
   },
   "event_checkpoint": {
-    "id": 19228
+    "id": 19229
   },
   "frontier": {
     "blocked": 1622,
@@ -22,14 +22,14 @@
       "cancelled": 401,
       "inbox": 1,
       "planned": 57,
-      "ready": 54,
+      "ready": 53,
       "stale": 0,
-      "superseded": 80,
+      "superseded": 81,
       "verified": 1026
     },
     "tasks_total": 1622
   },
-  "generated_at": "2026-11-14T11:11:59.219759Z",
+  "generated_at": "2026-11-14T20:21:43.513070Z",
   "kind": "bureau_public_state_snapshot",
   "redaction": {
     "fail_closed": true,
@@ -56,9 +56,9 @@
     },
     "public_task_identities": {
       "count": 1622,
-      "merkle_sha256": "5dbec7e5e9fc9b05686c31b4dcf6cf574b799944110c3c67ca110345da605878"
+      "merkle_sha256": "1495a7583c5427944533b646aaa516f9cf321b029a7391adf7b45d8e04d51663"
     }
   },
   "schema_version": 1,
-  "snapshot_sha256": "ae5bdf06c504510b2e83d324d2cffc7f81da9b3f3f41e50c91465b99d29fac50"
+  "snapshot_sha256": "7b15188958a1b77c9256753f9e0f6955c66db6649a949447f31f5ea9ffaecb8c"
 }

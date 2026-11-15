@@ -303,7 +303,7 @@ def test_feasible_fallback_selection_is_bounded_and_pairwise_compatible(
         "scout-lenskit",
         "scout-systemkatalog",
         "scout-grabowski",
-        "scout-semantah",
+        "scout-audio",
         "scout-wgx",
     ]
     assert len(actions) <= result["policy"]["max_new_per_cycle"]
@@ -345,7 +345,7 @@ def test_base_worker_profile_reaches_floor_through_bounded_read_only_scout_reser
         "scout-lenskit",
         "scout-systemkatalog",
         "scout-grabowski",
-        "scout-semantah",
+        "scout-audio",
         "scout-wgx",
     ]
     assert len(actions) == result["policy"]["max_new_per_cycle"]

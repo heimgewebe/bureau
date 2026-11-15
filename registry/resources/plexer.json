@@ -12,6 +12,24 @@
       "no_merge_without_reproducible_pnpm_artifacts",
       "no_reuse_of_closed_pr_checks",
       "no_cross_repository_write_scope"
+    ],
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "mutation_claims_allowed": false,
+    "retired_on": "2026-11-15",
+    "purpose": "Historical coordination and provenance for an archived GitHub repository. No new repository mutations or active task-supply authority.",
+    "lifecycle_evidence_refs": [
+      "https://github.com/heimgewebe/plexer",
+      "https://github.com/heimgewebe/metarepo/pull/756",
+      "https://github.com/heimgewebe/systemkatalog/pull/187"
+    ],
+    "does_not_establish": [
+      "remote_repository_exists",
+      "active_checkout",
+      "fleet_membership",
+      "task_supply_target",
+      "runtime_role",
+      "execution_authority"
     ]
   }
 }

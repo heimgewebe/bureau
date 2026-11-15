@@ -76,8 +76,16 @@ def test_six_archived_repositories_keep_github_and_fleet_evidence() -> None:
 def test_retired_legacy_leitstand_task_has_no_active_write_route() -> None:
     path = ROOT / "registry" / "tasks" / "WELTGEWEBE-OS-V1-T008.json"
     task = json.loads(path.read_text(encoding="utf-8"))
-    assert task["state"] == "superseded"
-    assert task["metadata"]["bureau_cleanup"]["retired_resources"] == ["repo.leitstand"]
+    assert task["state"] == "ready"  # Historical source, StateStore is terminal verified
+    assert task["claims"] == [
+        {"resource": "repo.leitstand", "mode": "read", "isolation": "none"}
+    ]
+    cleanup = task["metadata"]["bureau_cleanup"]
+    assert cleanup["retired_resources"] == ["repo.leitstand"]
+    assert cleanup["task_status_receipt_sha256"] == (
+        "5ccdb94defc8bb6f456fee69171fd236754d9a3f5ac0b1efdaaaabf7c2c40739"
+    )
+
 
 def test_deleted_repositories_are_not_scout_supply_targets() -> None:
     resources = {resource for _name, resource in task_supply._SCOUT_REPOSITORIES}

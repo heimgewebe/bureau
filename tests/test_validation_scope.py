@@ -113,83 +113,48 @@ def test_git_diff_queue_only_result_uses_unfiltered_statuses(monkeypatch):
     }
 
 
-def test_git_diff_source_precondition_authority_addition_forces_full(monkeypatch):
+@pytest.mark.parametrize(
+    ("status", "path"),
+    [
+        ("A", "registry/tasks/AUTH.json"),
+        ("M", "registry/tasks/AUTH.json"),
+        ("A", "registry/tasks/ORDINARY.json"),
+    ],
+)
+def test_git_diff_task_only_uses_path_scope_and_registry_validation(
+    monkeypatch, status, path
+):
     base = "a" * 40
     head = "b" * 40
-    path = "registry/tasks/AUTH.json"
 
     def fake_run(argv, **kwargs):
-        if argv[:3] == ["git", "diff", "--name-status"]:
-            return subprocess.CompletedProcess(
-                args=argv, returncode=0, stdout=f"A\t{path}\n", stderr=""
-            )
-        assert argv == ["git", "show", f"{head}:{path}"]
+        # Changed TaskSpec contents, including source-precondition metadata,
+        # are validated by the existing Registry check and registration preflight.
+        # The classifier must not duplicate their payload inspection or run
+        # unrelated code tests for a document-only PR.
+        assert argv == ["git", "diff", "--name-status", f"{base}...{head}"]
         return subprocess.CompletedProcess(
-            args=argv,
-            returncode=0,
-            stdout='{"metadata":{"runtime_refresh_authority":{"source_precondition":{}}}}',
-            stderr="",
-        )
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    assert classify_git_diff(base, head) == FULL
-
-
-def test_git_diff_source_precondition_authority_removal_forces_full(monkeypatch):
-    base = "a" * 40
-    head = "b" * 40
-    path = "registry/tasks/AUTH.json"
-    responses = {
-        f"{base}:{path}": '{"metadata":{"runtime_refresh_authority":{"source_precondition":{}}}}',
-        f"{head}:{path}": '{"metadata":{}}',
-    }
-
-    def fake_run(argv, **kwargs):
-        if argv[:3] == ["git", "diff", "--name-status"]:
-            return subprocess.CompletedProcess(
-                args=argv, returncode=0, stdout=f"M\t{path}\n", stderr=""
-            )
-        assert argv[:2] == ["git", "show"]
-        return subprocess.CompletedProcess(
-            args=argv, returncode=0, stdout=responses[argv[2]], stderr=""
-        )
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    assert classify_git_diff(base, head) == FULL
-
-
-def test_git_diff_ordinary_task_addition_stays_task_only(monkeypatch):
-    base = "a" * 40
-    head = "b" * 40
-    path = "registry/tasks/ORDINARY.json"
-
-    def fake_run(argv, **kwargs):
-        if argv[:3] == ["git", "diff", "--name-status"]:
-            return subprocess.CompletedProcess(
-                args=argv, returncode=0, stdout=f"A\t{path}\n", stderr=""
-            )
-        assert argv == ["git", "show", f"{head}:{path}"]
-        return subprocess.CompletedProcess(
-            args=argv, returncode=0, stdout='{"metadata":{}}', stderr=""
+            args=argv, returncode=0, stdout=f"{status}\t{path}\n", stderr=""
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     assert classify_git_diff(base, head) == TASK_ONLY
 
 
-def test_git_diff_unreadable_task_spec_fails_closed_to_full(monkeypatch):
+def test_task_content_is_checked_by_registry_not_by_scope_classifier(monkeypatch):
     base = "a" * 40
     head = "b" * 40
-    path = "registry/tasks/BROKEN.json"
 
     def fake_run(argv, **kwargs):
-        if argv[:3] == ["git", "diff", "--name-status"]:
-            return subprocess.CompletedProcess(
-                args=argv, returncode=0, stdout=f"A\t{path}\n", stderr=""
-            )
+        assert argv == ["git", "diff", "--name-status", f"{base}...{head}"]
         return subprocess.CompletedProcess(
-            args=argv, returncode=128, stdout="", stderr="missing"
+            args=argv,
+            returncode=0,
+            stdout="A\tregistry/tasks/BROKEN.json\n",
+            stderr="",
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    assert classify_git_diff(base, head) == FULL
+    # Invalid contents are rejected by the fast-path Registry validation,
+    # not through a redundant Git-show classifier probe.
+    assert classify_git_diff(base, head) == TASK_ONLY

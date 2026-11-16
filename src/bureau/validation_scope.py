@@ -3,8 +3,8 @@
 
 Only two narrow Registry changes may bypass the full code suite:
 
-* task-only: added/modified canonical task documents that do not touch a
-  runtime-refresh source-precondition authority;
+* task-only: new canonical task documents (including a new runtime-refresh
+  authority), or edits to documents without source-precondition authority;
 * queue-only: exactly one modification of ``registry/queue.json``.
 
 Every malformed, mixed, renamed, copied, deleted or unknown change falls back to
@@ -103,7 +103,13 @@ def task_changes_require_full_validation(
         revisions = (head_sha,) if status == "A" else (base_sha, head_sha)
         for revision in revisions:
             spec = _task_spec_at_revision(revision, path)
-            if spec is None or _has_source_precondition_authority(spec):
+            if spec is None:
+                return True
+            # A newly declared authority is data, not a runtime implementation
+            # change. The task-only Bureau check and the independent Registry
+            # preflight validate its contract. Keep full tests when an existing
+            # source-bound authority is modified or stripped.
+            if status == "M" and _has_source_precondition_authority(spec):
                 return True
     return False
 

@@ -113,7 +113,7 @@ def test_git_diff_queue_only_result_uses_unfiltered_statuses(monkeypatch):
     }
 
 
-def test_git_diff_source_precondition_authority_addition_forces_full(monkeypatch):
+def test_git_diff_new_source_precondition_authority_uses_task_only(monkeypatch):
     base = "a" * 40
     head = "b" * 40
     path = "registry/tasks/AUTH.json"
@@ -132,7 +132,7 @@ def test_git_diff_source_precondition_authority_addition_forces_full(monkeypatch
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    assert classify_git_diff(base, head) == FULL
+    assert classify_git_diff(base, head) == TASK_ONLY
 
 
 def test_git_diff_source_precondition_authority_removal_forces_full(monkeypatch):

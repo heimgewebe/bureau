@@ -6,7 +6,7 @@
       "id": "fresh-current-main",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-after-queue-pr2414:fresh-current-main"
+        "observation_scope": "bureau:runtime-retention-pr2413-activation-pr2416:fresh-current-main"
       }
     },
     {
@@ -15,7 +15,7 @@
       "id": "source-ancestry-precondition",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-after-queue-pr2414:source-ancestry-precondition"
+        "observation_scope": "bureau:runtime-retention-pr2413-activation-pr2416:source-ancestry-precondition"
       }
     },
     {
@@ -24,7 +24,7 @@
       "id": "single-runtime-effect",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-after-queue-pr2414:single-runtime-effect"
+        "observation_scope": "bureau:runtime-retention-pr2413-activation-pr2416:single-runtime-effect"
       }
     },
     {
@@ -33,7 +33,7 @@
       "id": "immutable-runtime-readback",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-after-queue-pr2414:immutable-runtime-readback"
+        "observation_scope": "bureau:runtime-retention-pr2413-activation-pr2416:immutable-runtime-readback"
       }
     },
     {
@@ -42,7 +42,7 @@
       "id": "runtime-only-scope",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-after-queue-pr2414:runtime-only-scope"
+        "observation_scope": "bureau:runtime-retention-pr2413-activation-pr2416:runtime-only-scope"
       }
     }
   ],

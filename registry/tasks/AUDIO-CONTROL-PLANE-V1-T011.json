@@ -7,8 +7,7 @@
   "goal": "hausKI-audio und frühere EasyEffects-/Audio-Pläne vollständig inventarisieren und jeden Eintrag deterministisch übernehmen, verwerfen oder offen binden.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T026",
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041",
-    "WGX-JUSTFILE-INTEGRITY-V1-T005"
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041"
   ],
   "priority": {
     "lane": "later",
@@ -54,7 +53,7 @@
     },
     {
       "id": "predecessor-terminal",
-      "assertion": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041 und WGX-JUSTFILE-INTEGRITY-V1-T005 sind terminal abgeschlossen; T041 besitzt einen expliziten later-Queuepfad und beide Läufe werden unter dem repo.hauski-audio-Claim seriell koordiniert.",
+      "assertion": "Audio-Vorgänger OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041 ist verified. Die eigenständige Metrics-Fleet-Aufgabe WGX-JUSTFILE-INTEGRITY-V1-T005 ist superseded und kein Ausführungsvorgänger; ihre historische Disposition bleibt dokumentiert, ohne einen nicht erfolgten T005-Migrationslauf oder ein Delta zu behaupten.",
       "evidence_type": "object"
     },
     {
@@ -108,8 +107,26 @@
     "predecessor_queue_path": {
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041": "later",
       "WGX-JUSTFILE-INTEGRITY-V1-T005": "later",
-      "coordination": "repo.hauski-audio write claims serialize execution; T011 starts only after both terminal heads and complete deltas are bound"
+      "coordination": "T011 startet erst, wenn T026 und T041 verified sind; die superseded Metrics-Aufgabe T005 ist historische Evidenz statt eines Audio-Laufzeitgates."
     },
-    "dependency_reconciled_at": "2026-08-02T08:04:00+02:00"
+    "dependency_reconciled_at": "2026-08-02T08:04:00+02:00",
+    "retired_dependency_reconciliation": {
+      "schema_version": 1,
+      "observed_at": "2026-11-17",
+      "dependency": "WGX-JUSTFILE-INTEGRITY-V1-T005",
+      "state": "superseded",
+      "finding": "heimgewebe/bureau#2423 review thread PRRT_kwDOTG2jCs64kUKk",
+      "reason": "Die Metrics-Schema-Migration ist bereits in aktiven Workflows wirksam; T011 ist Audio-Inventur und braucht keinen T005-Migrationslauf.",
+      "evidence": [
+        "T005 on reviewed PR head 9db519a48ba38093aa67db6464ab6fdd25266f9a marked superseded",
+        "T041 verified; T026 planned and remains dependency",
+        "Bureau readiness requires verified dependencies; superseded predecessor removed from depends_on"
+      ],
+      "does_not_establish": [
+        "T011 completed",
+        "T005 original acceptance",
+        "audio runtime deployed"
+      ]
+    }
   }
 }

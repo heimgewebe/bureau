@@ -74,6 +74,19 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "legacy_disposition": {
+      "schema_version": 1,
+      "observed_at": "2026-11-17",
+      "disposition": "retired_legacy_bulk_workflow_refactor",
+      "rationale": "The July 2026 mandate to add generic reusable CI families would impose substantial recurring architecture. The actual stale GitHub Actions problem was 86 registered, active workflows whose YAML had already been deleted; those registrations were disabled by the authorized operator. Preserve the remaining 53 live YAML workflows and six GitHub-native dynamic workflows rather than construct a second generic CI control plane.",
+      "evidence": [
+        "heimgewebe/commonthing main 6eea410c63da6b39d329d99535b249b251330b24 lists exactly 53 tracked GitHub Actions workflow YAML files",
+        "Before repair GitHub Actions registry reported 145 active entries. Grabowski task e0809eefdadd4f72909d3353 and per-ID readbacks leave 59 active (53 tracked YAML + 6 dynamic) and zero active orphan registrations",
+        "The open PR #2166 has passed CI including Required merge gate; 86 workflow entries were only disabled, historical runs and active workflow YAML remain untouched",
+        "Canonical Chronik event sha256:f8ab65c248e09492a489f726642d6f98c3f921153af6242b1b1f97e6c7f9acfe has a verified import receipt and readback"
+      ],
+      "caveat": "Not marked verified: the broad historical acceptance requiring consolidation and reduced average CI runtime was not implemented. Any specific measured duplicate active workflow may be fixed independently, without imposing a reusable-family governance system."
     }
   },
   "priority": {
@@ -92,6 +105,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "GitHub-Workflowbestand in wiederverwendbare Prüffamilien konsolidieren"
 }

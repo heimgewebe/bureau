@@ -3,7 +3,7 @@
   "id": "WGX-JUSTFILE-INTEGRITY-V1-T005",
   "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
   "title": "Reconcile fleet metrics schema URLs to immutable canonical snapshot contracts",
-  "state": "planned",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 95
@@ -125,6 +125,19 @@
         "heimgewebe/systemkatalog#187"
       ],
       "note": "SemantAH and Sichter are not targets for workflow mutation. Keep original discovery evidence while limiting task execution to currently active repository claims."
+    },
+    "legacy_disposition": {
+      "schema_version": 1,
+      "observed_at": "2026-11-17",
+      "disposition": "retired_stale_url_fleet_migration",
+      "rationale": "The July 2026 broken 404 METRICS_SCHEMA_URL references no longer occur in the currently observed active default-branch workflows. The two explicitly active target repositories use valid immutable, commit-pinned metrics snapshot schemas with enforced exact SHA-256 and AJV draft2020 local-file validation; retired repositories must not be edited to satisfy a legacy fleet checklist.",
+      "evidence": [
+        "GitHub code search in heimgewebe for both stale metarepo/contracts-v1/contracts/wgx/metrics.json and metarepo/main/contracts/wgx/metrics.json returned no current hits",
+        "chronik main .github/workflows/metrics.yml pins metarepo ad1200c7c76692440d6c279a581b15419d02f3d8 and SHA-256 1b1de44ea326ce8de36da6fc6d8f2da0abe279df8c47ab10e58ddc2cf604b914; live download HTTP 200 and matching hash",
+        "contracts-mirror main .github/workflows/metrics.yml pins metarepo 4a2ff7660558d5a0f3c4b77ddf3ed757b7659826 and SHA-256 ef04687073175e48fc2058bd1439470c4cd19f27b59336a454f1261c40d9e5f2; live download HTTP 200 and matching hash",
+        "Both live workflows fetch a local .ci/metrics.schema.json file and verify expected checksum before ajv-cli@5.0.0 validate --spec=draft2020 --strict=log"
+      ],
+      "caveat": "Not marked verified: a new full-fleet migration or every historical acceptance test was not executed. GitHub code search is an observation, not a guarantee against future newly introduced bad URLs."
     }
   }
 }

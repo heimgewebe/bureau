@@ -8,8 +8,6 @@ from pathlib import Path
 from bureau import codex_bridge
 
 ROOT = Path(__file__).parents[1]
-SERVICE = ROOT / "ops/systemd/bureau-codex-bridge.service"
-TIMER = ROOT / "ops/systemd/bureau-codex-bridge.timer"
 
 
 class FakeRunner:
@@ -462,20 +460,10 @@ def test_post_check_failure_rolls_back_binding_task(tmp_path):
     assert sorted((root / "registry/tasks").glob("*.json")) == []
 
 
-def test_codex_bridge_service_is_read_only_except_bridge_state():
-    text = SERVICE.read_text(encoding="utf-8")
-    assert "ProtectSystem=strict" in text
-    assert "ProtectHome=read-only" in text
-    assert "ReadWritePaths=%h/.local/state/bureau-codex-bridge" in text
-    assert "NoNewPrivileges=true" in text
-    assert "RestrictAddressFamilies=AF_UNIX" in text
-    assert "bureau-codex-bridge" in text
-
-
-def test_codex_bridge_timer_runs_at_57():
-    text = TIMER.read_text(encoding="utf-8")
-    assert "OnCalendar=*-*-* *:57:00" in text
-    assert "Unit=bureau-codex-bridge.service" in text
+def test_codex_bridge_scheduled_lane_is_retired():
+    # Manual CLI remains tested; the obsolete recurring systemd lane must not return.
+    assert not (ROOT / "ops/systemd/bureau-codex-bridge.service").exists()
+    assert not (ROOT / "ops/systemd/bureau-codex-bridge.timer").exists()
 
 
 def test_bridge_runs_codex_backend_in_run_directory(tmp_path):

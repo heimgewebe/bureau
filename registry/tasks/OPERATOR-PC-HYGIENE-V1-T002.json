@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T002",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Make Grabowski operator watchdog non-disruptive",
-  "state": "planned",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 202
@@ -70,6 +70,18 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "legacy_disposition": {
+      "schema_version": 1,
+      "observed_at": "2026-11-17",
+      "disposition": "retired_absent_semantic_watchdog",
+      "rationale": "The July 2026 user-level semantic MCP restart watchdog is no longer installed. NixOS system and user service/timer inventories both show grabowski-operator-watchdog and grabowski-watchdog as LoadState=not-found and inactive. Recreating the old watchdog solely to fix its obsolete restart behavior would reintroduce an unnecessary failure path.",
+      "evidence": [
+        "Live systemctl --system and --user show grabowski-operator-watchdog.{service,timer}: LoadState=not-found, ActiveState=inactive",
+        "Live systemctl --system and --user show grabowski-watchdog.{service,timer}: LoadState=not-found, ActiveState=inactive",
+        "NixOS generation 106 active; Grabowski bffcce9bded540cba6bcfb1dd84ea82c46c619ee service healthy, all 207 MCP tools available, no failed system units"
+      ],
+      "caveat": "Not marked verified: the original watchdog behavior was not repaired or acceptance-tested. Hardware watchdog and currently used recovery mechanisms are separate and are not modified."
     }
   },
   "depends_on": []

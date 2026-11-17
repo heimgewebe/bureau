@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "state": "planned",
+  "state": "superseded",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -100,6 +100,18 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "legacy_disposition": {
+      "schema_version": 1,
+      "disposition": "retire_absent_scheduled_lane",
+      "observed_at": "2026-11-17",
+      "rationale": "The July 2026 scheduler follow-up presupposed an installed hourly unit. Current Heim-PC systemd reports both the Codex bridge and GPT connector probe service/timer units as not-found and inactive. There is no active scheduled lane to normalize or disable. Retire the obsolete codex unit source; retain manual Codex bridge CLI and historical receipts.",
+      "evidence": [
+        "live systemctl --user show bureau-codex-bridge.{service,timer}: LoadState=not-found, ActiveState=inactive",
+        "live systemctl --user show bureau-gpt-connector-probe.{service,timer}: LoadState=not-found, ActiveState=inactive",
+        "live systemctl --user list-timers --all: neither timer present"
+      ],
+      "caveat": "Not a claim that the original task acceptance was executed or that every possible external probe consumer was inventoried. The installed Bureau release and StateStore may need separate source-bound adoption."
     }
   }
 }

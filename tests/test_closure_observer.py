@@ -1332,8 +1332,12 @@ def test_canonical_pr1907_registry_task_matches_corrected_contract() -> None:
         / f"{PR1907_TASK_ID}.json"
     )
     canonical = json.loads(task_path.read_text(encoding="utf-8"))
+    expected = corrected_pr1907_task()
+    # PR1907 predates the retirement of T161. Preserve its historical fixture;
+    # compare the independent follow-up's current dependency separately.
+    expected["depends_on"] = []
 
-    assert canonical == corrected_pr1907_task()
+    assert canonical == expected
 
 
 def test_pr1907_real_production_reconcile_requires_four_manual_attestations(

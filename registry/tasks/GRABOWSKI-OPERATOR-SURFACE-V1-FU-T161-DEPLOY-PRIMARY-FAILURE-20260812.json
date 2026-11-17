@@ -28,9 +28,7 @@
       "resource": "repo.grabowski"
     }
   ],
-  "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T161"
-  ],
+  "depends_on": [],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",

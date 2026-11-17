@@ -796,15 +796,9 @@ def _binding_hard_findings(
         binding = observation.get("binding")
         task_id = observation.get("task_id")
         if binding == BINDING_UNMATCHED:
-            findings.append(
-                {
-                    "severity": "blocker",
-                    "code": "missing-github-task-binding",
-                    "message": "open PR has no valid Bureau task binding",
-                    "number": number,
-                    "task_id": None,
-                }
-            )
+            # Independent/manual PRs need no Bureau task. Preserve the
+            # unmatched observation without disabling explicit invalid,
+            # conflicting or unresolved Bureau bindings below.
             continue
         if binding == BINDING_AMBIGUOUS:
             findings.append(

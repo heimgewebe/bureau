@@ -139,6 +139,18 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "legacy_disposition": {
+      "schema_version": 1,
+      "disposition": "delivered_by_existing_grabowski_runtime",
+      "observed_at": "2026-11-16",
+      "rationale": "The direct-source work-lane feature and model-neutral controller/scoped_writer/reviewer/observer authority were already implemented and deployed. A fresh direct-source lane and terminal no-change closeout succeeded. The historical Bureau runs remain unchanged; no duplicate implementation is justified.",
+      "observed_runtime_head": "6404f7c40247b1160c1750bff939f6f2a7d507ef",
+      "live_proof_lane_id": "56d064150c2a25e3c5c663f89959c5fb",
+      "live_proof_terminal_receipt_sha256": "db525eef322ded8072aadf63a72d5a31526320a7e860467dc45e732659057210",
+      "live_proof_terminal_state": "no_change_proven",
+      "live_proof_decision": "ISOLATE_AND_EXECUTE",
+      "caveat": "Historical run acceptance and all regression checks are not retrospectively authenticated; the already-delivered task is superseded, not marked verified."
     }
   },
   "priority": {
@@ -159,6 +171,6 @@
     "strategy": "Die lanegebundene Direktquellen-Evidenz und Rollenpolicy per normalem Revert zurücknehmen. Bestehende Work-Lane-, Checkout-, Audit- und Bureau-Historien nicht löschen oder umdeuten; bereits erzeugte direkte Lanes bleiben bis zu ihrem normalen Closeout fail-closed erhalten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Direkte Nutzeraufträge als evidence-fähige Work-Lanes ausführen"
 }

@@ -15,9 +15,7 @@
     "next": [
       "WELTGEWEBE-OS-V1-T055"
     ],
-    "now": [
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T161"
-    ]
+    "now": []
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

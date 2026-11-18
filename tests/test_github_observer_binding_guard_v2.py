@@ -76,12 +76,21 @@ def finding_codes(result: dict[str, object]) -> set[str]:
     return {str(item["code"]) for item in result["hard_findings"]}
 
 
-def test_open_pr_without_task_binding_is_merge_blocking(tmp_path: Path) -> None:
+def test_open_pr_without_task_binding_is_not_a_control_plane_blocker(tmp_path: Path) -> None:
     result = observe([pull_request(body="No Bureau task marker.")], tmp_path)
 
     assert result["healthy"] is True
-    assert result["binding_healthy"] is False
+    assert result["binding_healthy"] is True
     assert result["pull_requests"][0]["binding"] == BINDING_UNMATCHED
+    assert result["pull_requests"][0]["task_id"] is None
+    assert result["hard_findings"] == []
+
+
+def test_explicit_unknown_run_marker_still_blocks(tmp_path: Path) -> None:
+    result = observe([pull_request(body="Bureau-Run: BUR-RUN-404")], tmp_path)
+
+    assert result["healthy"] is True
+    assert result["binding_healthy"] is False
     assert finding_codes(result) == {"missing-github-task-binding"}
 
 

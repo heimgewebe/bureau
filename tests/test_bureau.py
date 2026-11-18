@@ -83,6 +83,75 @@ def test_claim_expansion_conflict(registry_factory, tmp_path, monkeypatch):
         dispatcher.expand_claim(second["run"]["run_id"], Claim("repo.alpha", "write"), "scope")
 
 
+def test_claim_expansion_projects_run_and_reservations_atomically(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, store, dispatcher = setup(registry_factory(1, "read"), tmp_path, monkeypatch)
+    run_id = dispatcher.claim_next("a", ("repository",))["run"]["run_id"]
+    assert store.replay_projection()["matches_current"] is True
+    with store.connect() as connection:
+        prior_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='state-projection-v1'"
+        ).fetchone()[0]
+
+    updated = dispatcher.expand_claim(run_id, Claim("repo.beta", "read"), "needed")
+    replay = store.replay_projection()
+    assert replay["matches_current"] is True
+    assert replay["projection"]["runs"][run_id]["error"] == "claim expanded: needed"
+    assert updated["error"] == "claim expanded: needed"
+    assert {claim["resource_id"] for claim in replay["projection"]["claims"][run_id]} == {
+        "repo.alpha", "repo.beta", "cpu"
+    }
+    with store.connect() as connection:
+        events = connection.execute(
+            "SELECT payload_json FROM events WHERE event_type='state-projection-v1'"
+            " ORDER BY event_id DESC LIMIT 1"
+        ).fetchone()
+        count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='state-projection-v1'"
+        ).fetchone()[0]
+    assert count == prior_count + 1
+    assert json.loads(events["payload_json"])["trigger"] == "claim-expand"
+
+
+def test_claim_expansion_conflict_emits_no_false_projection(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, store, dispatcher = setup(registry_factory(2, "read"), tmp_path, monkeypatch)
+    dispatcher.claim_next("a", ("repository",))
+    run_id = dispatcher.claim_next("b", ("repository",))["run"]["run_id"]
+    with store.connect() as connection:
+        prior_count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='state-projection-v1'"
+        ).fetchone()[0]
+    with pytest.raises(ConflictError):
+        dispatcher.expand_claim(run_id, Claim("repo.alpha", "write"), "conflict")
+    with store.connect() as connection:
+        count = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type='state-projection-v1'"
+        ).fetchone()[0]
+    assert count == prior_count
+    assert store.replay_projection()["matches_current"] is True
+
+
+def test_claim_expansion_rolls_back_if_projection_write_fails(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, store, dispatcher = setup(registry_factory(1, "read"), tmp_path, monkeypatch)
+    run_id = dispatcher.claim_next("a", ("repository",))["run"]["run_id"]
+    before = store.run(run_id)
+
+    def reject_projection(*args, **kwargs):
+        raise StateError("synthetic projection failure")
+
+    monkeypatch.setattr(store, "_append_projection_snapshot", reject_projection)
+    with pytest.raises(StateError, match="synthetic projection failure"):
+        dispatcher.expand_claim(run_id, Claim("repo.beta", "read"), "rollback")
+
+    assert store.run(run_id) == before
+    assert store.replay_projection()["matches_current"] is True
+
+
 def test_completion_requires_evidence(registry_factory, tmp_path, monkeypatch):
     registry, store, dispatcher = setup(registry_factory(1), tmp_path, monkeypatch)
     run = dispatcher.claim_next("a", ("repository",))["run"]

@@ -1315,6 +1315,11 @@ class Dispatcher:
                 "UPDATE runs SET error=?,updated_at=? WHERE run_id=?",
                 (f"claim expanded: {reason}", utc_now(), run_id),
             )
+            # Keep the v2 run/claim projection in the same transaction.
+            # A projection error must roll back both the run and reservation.
+            append_projection = getattr(self.store, "_append_projection_snapshot", None)
+            if append_projection is not None:
+                append_projection(connection, trigger="claim-expand", run_id=run_id)
         return self.store.run(run_id)
 
     def reconcile(self, stale_after: int = 900) -> dict[str, Any]:

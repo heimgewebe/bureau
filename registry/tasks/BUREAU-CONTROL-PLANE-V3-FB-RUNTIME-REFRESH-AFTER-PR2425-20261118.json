@@ -1,12 +1,12 @@
 {
   "acceptance": [
     {
-      "assertion": "Protected main includes merged PR #2422 and this single-file publication; exact latest head and required checks are green before effect.",
+      "assertion": "Protected main includes merged PRs #2423 and #2425 and this single-file publication; exact latest head and required checks are green before effect.",
       "evidence_type": "object",
       "id": "fresh-current-main",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-pr2422:fresh-current-main"
+        "observation_scope": "bureau:runtime-refresh-pr2425:fresh-current-main"
       }
     },
     {
@@ -15,7 +15,7 @@
       "id": "source-ancestry-precondition",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-pr2422:source-ancestry-precondition"
+        "observation_scope": "bureau:runtime-refresh-pr2425:source-ancestry-precondition"
       }
     },
     {
@@ -24,7 +24,7 @@
       "id": "single-runtime-effect",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-pr2422:single-runtime-effect"
+        "observation_scope": "bureau:runtime-refresh-pr2425:single-runtime-effect"
       }
     },
     {
@@ -33,7 +33,7 @@
       "id": "immutable-runtime-readback",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-pr2422:immutable-runtime-readback"
+        "observation_scope": "bureau:runtime-refresh-pr2425:immutable-runtime-readback"
       }
     },
     {
@@ -42,7 +42,7 @@
       "id": "runtime-only-scope",
       "verifier": "manual_observation",
       "verifier_config": {
-        "observation_scope": "bureau:runtime-refresh-pr2422:runtime-only-scope"
+        "observation_scope": "bureau:runtime-refresh-pr2425:runtime-only-scope"
       }
     }
   ],

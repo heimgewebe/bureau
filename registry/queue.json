@@ -10,7 +10,9 @@
     "next": [
       "WELTGEWEBE-OS-V1-T014"
     ],
-    "now": []
+    "now": [
+      "MACHTVERFLECHTUNGEN-NETWORK-COVERAGE-V1-T001"
+    ]
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

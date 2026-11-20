@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "repo.machtverflechtungen",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/machtverflechtungen",
+  "github_slug": "alexdermohr/machtverflechtungen",
+  "grabowski_key": "repo:/home/alex/repos/machtverflechtungen",
+  "metadata": {
+    "mapping_verified_at": "2026-11-20",
+    "mapping_evidence": "Live Git origin SSH equals github.com/alexdermohr/machtverflechtungen; GitHub main 63bba6f3b43afec67fbf7b9955684f310c7f02f4",
+    "boundaries": [
+      "external_research_repository",
+      "repository_mapping_is_not_operator_approval",
+      "no_runtime_or_production_success_inferred"
+    ]
+  }
+}

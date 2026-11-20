@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "MACHTVERFLECHTUNGEN-NETWORK-COVERAGE-V1",
+  "title": "Quellengebundene Netzwerkintegration älterer Forschungsstudien",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Die 121 am 19.11.2026 im publizierten Forschungsregister als noch nicht netzwerkgeprüft markierten Altstudien anhand vorhandener Originalbelege und Gegenbeweise einzeln bewerten, valide Beziehungen in die kanonischen Daten und daraus in alle öffentlichen Übersichten übernehmen.",
+  "completion": [
+    "Alle derzeit 121 unverändert unklassifizierten Altstudien haben eine eigene revisionsgebundene Integrationsentscheidung oder sind durch neuere geprüfte Fassungen ersetzt; Restzahl im Forschungsregister ist null.",
+    "Quellenbelegte neue Akteure, Beziehungen und gegebenenfalls Fallverknüpfungen erscheinen in Graph, Relationstabelle, Akteursregister und Quellenkatalog; keine ungeprüften Kanten werden durch Textnennungen abgeleitet.",
+    "CI-Validator, Integrationscheck, Tests und MkDocs strict werden bei jedem Merge erfüllt; am aktuellen öffentlichen Pages-Commit wird der Nutzerweg stichprobenartig per HTML/HTTP geprüft.",
+    "Offene Beweislücken und mögliche Fehlschlüsse sind in den Forschungsdossiers und den Integrationsentscheidungen nachvollziehbar."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "source_repository": "alexdermohr/machtverflechtungen",
+    "source_pr": "https://github.com/alexdermohr/machtverflechtungen/pull/218",
+    "source_bureau_candidate_id": "candidate-8162f1d785cf0997a2a9ebbc",
+    "baseline_main_commit": "63bba6f3b43afec67fbf7b9955684f310c7f02f4",
+    "legacy_study_count_at_baseline": 121,
+    "verified_website": "https://alexdermohr.github.io/machtverflechtungen/research/",
+    "scope_note": "Inhaltliche Erschließung in kleinen verifizierbaren Forschungs-PRs; keine bloße Statusmarkierung als erledigt."
+  }
+}

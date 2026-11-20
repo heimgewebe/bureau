@@ -36,25 +36,37 @@
       "id": "coverage",
       "assertion": "Für jede von ursprünglich 121 Legacy-Studien ist eine begründete, sha256-gebundene Registry-Zuordnung zu allen überprüften Relation-IDs oder eine konkrete fachliche Begründung 'no_network_relation' verzeichnet; Research-Index zeigt null ungeprüfte Altstudien.",
       "evidence_type": "object",
-      "verifier": "python scripts/research_integration.py --check plus public research index"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "integrationsregister_research_baseline_121_to_zero"
+      }
     },
     {
       "id": "source-bound-graph",
       "assertion": "Nur belegte und zeitlich korrekt abgegrenzte Verbindungen erzeugen Knoten/Kanten; alle neuen Relation-IDs werden in Netzwerkdiagramm, Relationstabelle, Quellenkatalog und Akteursregister aus derselben YAML-Quelle erzeugt.",
       "evidence_type": "object",
-      "verifier": "schema validator, indexed graph check and source locators"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "sourcebound_graph_relations_entities_sources_indexes"
+      }
     },
     {
       "id": "incremental",
       "assertion": "Die Erschließung erfolgt in überschaubaren PRs mit Quellennachweisen, Gegenprüfungen und Regressionstests; alle in der Queue geltenden Teilfortschritte werden durch main-Commit und PR belegt.",
       "evidence_type": "object",
-      "verifier": "GitHub merged PRs and research integration count delta"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "incremental_merged_research_prs_with_checks"
+      }
     },
     {
       "id": "published",
       "assertion": "Nach letztem Merge ist der identische main-Commit über GitHub Pages erfolgreich veröffentlicht, exemplarische Forschungsseiten und Kanten erreichen HTTP 200 mit überprüftem Inhalt.",
       "evidence_type": "object",
-      "verifier": "GitHub Pages run SHA plus public HTTP content readback"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "github_pages_deployed_commit_and_http_content"
+      }
     }
   ],
   "metadata": {

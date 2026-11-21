@@ -3,9 +3,12 @@ from __future__ import annotations
 import fcntl
 import hashlib
 import json
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from bureau.runtime_refresh import RuntimeRefreshError, verify_digest
 
 from .cycle_contract import (
     CONTRACT_VERSION,
@@ -26,6 +29,48 @@ TASK_DB = Path.home() / ".local/state/grabowski/tasks.sqlite3"
 RUNS = STATE / "runs"
 LOCKS = STATE / "locks"
 LOCK = LOCKS / "operator.lock"
+REFRESH_LAUNCHER = Path.home() / ".local/bin/bureau-runtime-refresh"
+
+
+def observe_runtime(receipt: dict[str, Any]) -> None:
+    """Observe through the immutable launcher; never create an intent or install."""
+    try:
+        result = subprocess.run(
+            [str(REFRESH_LAUNCHER), "--state-root", str(STATE / "runtime-refresh"), "observe"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=60,
+        )
+        observation = json.loads(result.stdout)
+        if not isinstance(observation, dict):
+            raise ValueError("observation must be an object")
+        observation.pop("observation_path", None)
+        verify_digest(observation, "observation_sha256")
+        status = observation.get("status")
+        if (
+            observation.get("kind") != "bureau_runtime_refresh_observation"
+            or not isinstance(status, str)
+            or status not in {"already_current", "candidate", "alert", "blocked"}
+        ):
+            raise ValueError("unsupported runtime observation")
+        receipt["evidence"].append({"kind": "runtime_refresh", "value": observation})
+    except (OSError, subprocess.SubprocessError, ValueError, RuntimeRefreshError) as exc:
+        # No stale latest-observation fallback, and no subprocess output in receipts.
+        status = "unavailable"
+        receipt["evidence"].append({
+            "kind": "runtime_refresh_unavailable",
+            "error_type": type(exc).__name__,
+        })
+    receipt["actions"].append({"kind": "runtime_refresh", "decision": f"read_only_{status}"})
+    if status in {"alert", "blocked", "unavailable"}:
+        receipt["degraded"] = True
+    if status != "already_current" and receipt["result"] == "idle":
+        receipt["result"] = "partial"
+        receipt["next_action"] = (
+            "review runtime refresh observation; installation requires the existing "
+            "target-bound authority, intent and Grabowski executor"
+        )
 
 
 def sha256_file(path: Path) -> str:
@@ -137,6 +182,8 @@ def main() -> int:
         receipt["actions"].append({"kind": "attention", "decision": "current_attention_observed_read_only", "count": current_attention})
     else:
         receipt["actions"].append({"kind": "attention", "decision": "no_current_attention"})
+
+    observe_runtime(receipt)
 
     if receipt["result"] == "idle":
         receipt["actions"].append({"kind": "reconciliation", "decision": "no_fachliche_work", "reason": "local control operator is non-mutating"})

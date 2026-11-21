@@ -481,3 +481,24 @@ Der Livebeweis muss nach Merge auf einem exakten neuen Bureau-`main`-Commit erfo
 Kandidat wird beobachtet, ein Intent erzeugt, reale Grabowski-Leases werden erworben und
 genau ein Apply-Lauf deployt den Commit. Der zweite Lauf muss ohne Installerwirkung das
 vorhandene Ergebnis beziehungsweise `already_current` zurückgeben.
+
+## Automatische Beobachtung im bestehenden Operator-Zyklus
+
+Der stündliche `bureau-operator-control` ruft den manifestgebundenen
+`bureau-runtime-refresh observe` mit einem Zeitlimit von 60 Sekunden auf.
+Die hashgebundene Beobachtung wird unter
+`~/.local/state/bureau-operator/runtime-refresh` archiviert und in das terminale
+Operator-Receipt übernommen. Es gibt keinen zusätzlichen Timer. Bei laufendem
+Zyklus wird Drift spätestens beim nächsten stündlichen Aufruf beobachtet;
+`alert` (bestehendes 5.400-Sekunden-SLO), `blocked` und fehlgeschlagene Beobachtungen
+markieren das Receipt als degradiert. Ein fehlgeschlagener Aufruf verwendet keine
+alte Beobachtung als aktuelle Evidenz. Ein bereits kritisches Health-Gate bleibt erhalten.
+
+Dies ist eine Teilimplementierung: Sie automatisiert die Erkennung, nicht die
+Installation. Die Unit erhält nur Netzwerkzugriff und schreibt weiterhin ausschließlich
+ihre eigenen Receipts. Sie erzeugt keine TaskSpec, keinen Intent und keine Leases.
+Die bisherige Single-Use-Authority mit CAS, Grabowski-Executor, dedupliziertem Effekt,
+Rollback und Readback bleibt der einzige Installationspfad. Eine wiederverwendbare,
+widerrufbare und begrenzte Authority sowie deren Anbindung an den vorhandenen Executor
+sind offen; ebenso die reale E2E-Abnahme. CI-grünes protected main allein ersetzt
+diesen Vertrag nicht. Das Deployment-SLO wird dadurch noch nicht erfüllt.

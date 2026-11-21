@@ -2844,6 +2844,65 @@ def test_completed_lifecycle_still_reopens_for_open_task(
     assert lifecycle["consistent"] is False
 
 
+def test_doctor_reports_git_queue_task_missing_from_state_store(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    existing_task_id, missing_task_id = sorted(registry.tasks)
+    store.put_task_spec(
+        registry.tasks[existing_task_id].raw,
+        idempotency_key="doctor-partial-state-store-task-import",
+        expected_revision=None,
+        source="test",
+    )
+    assert store.task_spec(missing_task_id) is None
+
+    for repair in (False, True):
+        doctor = Dispatcher(registry, store).doctor(repair=repair)
+        assert doctor["healthy"] is False
+        assert doctor["queue_findings"] == [
+            {
+                "task_id": missing_task_id,
+                "lane": "now",
+                "effective_state": "missing",
+                "issue": "queue-task-missing-from-state-store",
+            }
+        ]
+        assert store.task_spec(missing_task_id) is None
+    assert store.integrity()["integrity"] == "ok"
+
+
+def test_status_capsule_reports_git_queue_task_missing_from_state_store(
+    registry_factory, tmp_path, monkeypatch
+):
+    from bureau.status_capsule import build_capsule
+
+    root = registry_factory(2)
+    init_clean_origin_main(root)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    existing_task_id, missing_task_id = sorted(registry.tasks)
+    store.put_task_spec(
+        registry.tasks[existing_task_id].raw,
+        idempotency_key="capsule-partial-state-store-task-import",
+        expected_revision=None,
+        source="test",
+    )
+
+    capsule = build_capsule(root, state_db=store.path, state_root=store.state_root)
+    assert capsule["read_only"] is True
+    assert capsule["doctor"]["healthy"] is False
+    assert capsule["doctor"]["queue_findings"]["items"] == [
+        {
+            "task_id": missing_task_id,
+            "lane": "now",
+            "effective_state": "missing",
+            "issue": "queue-task-missing-from-state-store",
+        }
+    ]
+    assert store.task_spec(missing_task_id) is None
+
+
 def test_doctor_reports_stale_task(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     _, store, _, _ = claim_and_complete(root, tmp_path, monkeypatch)

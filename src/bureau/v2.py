@@ -7029,7 +7029,17 @@ class Dispatcher(legacy.Dispatcher):
             allowed_backlog_states = {"planned", "ready"}
             for lane, task_ids in self.registry.queue.items():
                 for task_id in task_ids:
-                    task = self.registry.tasks[task_id]
+                    task = self.registry.tasks.get(task_id)
+                    if task is None:
+                        queue_findings.append(
+                            {
+                                "task_id": task_id,
+                                "lane": lane,
+                                "effective_state": "missing",
+                                "issue": "queue-task-missing-from-state-store",
+                            }
+                        )
+                        continue
                     effective = overlays.get(task_id, task.state)
                     if effective in terminal_queue_states:
                         queue_findings.append(

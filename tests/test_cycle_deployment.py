@@ -297,9 +297,10 @@ def test_missing_canonical_service_hardening_fails_closed(tmp_path: Path) -> Non
     assert caught.value.code == "canonical-unit-hardening"
 
 
-def test_closure_service_preserves_github_observation_network(tmp_path: Path) -> None:
+@pytest.mark.parametrize("unit", ["bureau-closure-planner", "bureau-operator-control"])
+def test_service_preserves_github_observation_network(tmp_path: Path, unit: str) -> None:
     fixture = _fixture(tmp_path)
-    closure = fixture["release"] / "ops" / "systemd" / "bureau-closure-planner.service"
+    closure = fixture["release"] / "ops" / "systemd" / f"{unit}.service"
     text = closure.read_text(encoding="utf-8")
 
     assert "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6" in text.splitlines()

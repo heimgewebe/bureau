@@ -246,7 +246,7 @@ def _contract(path: Path, *, stage: str, kind: str, name: str) -> dict[str, Any]
             )
         required_address_families = (
             "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6"
-            if stage == "closure"
+            if stage in {"closure", "operator"}
             else "RestrictAddressFamilies=AF_UNIX"
         )
         required_hardening = {

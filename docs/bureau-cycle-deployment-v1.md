@@ -95,7 +95,7 @@ select a release.
 
 The verifier stage consumes the same audit. It no longer carries a second source-path policy that
 requires and then rejects the old `~/.local/libexec` deployment.
-The closure planner alone permits `AF_INET` and `AF_INET6`, because its existing contract observes GitHub pull requests through `gh`; discovery, curator, operator and verifier remain restricted to `AF_UNIX`.
+The closure planner and read-only operator permit `AF_INET` and `AF_INET6` to observe GitHub through `gh`; discovery, curator and verifier remain restricted to `AF_UNIX`. The operator write boundary remains its own receipt directory.
 
 ## Compatibility and rollback
 

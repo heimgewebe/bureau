@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T026",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "App-Shell, Packaging und Produkthärtung liefern",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Die gemeinsame Frontendbasis nach einem messbaren Spike in eine begrenzte Desktop-Shell integrieren und Packaging, sichere Updates, Recovery, Tastatur, Touch, Barrierefreiheit und lokalen Diagnoseexport produktreif machen.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T022",

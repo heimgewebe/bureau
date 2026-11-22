@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T027",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audiozentrale v1 physisch abnehmen und gestuft ausrollen",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Die kommerzielle Version 1 auf dem Heim-PC mit echter Hardware revisionsgebunden abnehmen und ausrollen: Stimme, Roland/Wal, interne Modulation und Gitarre einschließlich Pegel-, Latenz-, XRun-, Geräteverlust-, Recovery- und Updateprüfungen.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T001",

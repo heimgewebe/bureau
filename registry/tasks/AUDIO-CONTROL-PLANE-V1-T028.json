@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T028",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Deterministische Ableitung und Bibliothek nach v1 liefern",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Nach bestandener kommerzieller v1 Aufnahmen nichtdestruktiv segmentieren, loopen, samplen, als Modulationsdaten verwenden und als Audio oder internes Instrument einfrieren; Herkunft und Reproduzierbarkeit bleiben vollständig sichtbar.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T027"

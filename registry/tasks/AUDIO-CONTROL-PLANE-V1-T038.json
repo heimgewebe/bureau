@@ -113,6 +113,6 @@
     "strategy": "Taskeigene Recorder-/Voice-/Observer-Testläufe beenden. Falls T038 den Default-Source-Test bereits begonnen hat, ausschließlich den vorher exakt gebundenen Default-Source-Preimage wiederherstellen und anschließend Prozess-, PipeWire-, Default-, XRun- und Geräte-Zustände frisch zurücklesen. T038 verändert keine Repositorydateien, Unit-Dateien, Mergezustände oder Deployments; fremde Streams und Leases bleiben unangetastet."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Aktiven Pegelobserver mit Recorder und Voice unter Last verifizieren"
 }

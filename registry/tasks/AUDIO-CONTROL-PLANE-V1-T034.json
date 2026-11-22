@@ -106,6 +106,6 @@
     "rollback"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Make Audiozentrale self-deploy bootstrap-safe across deploy-contract changes"
 }

@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T011",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audio-Altquellen deterministisch reconciliieren",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "hausKI-audio und frühere EasyEffects-/Audio-Pläne vollständig inventarisieren und jeden Eintrag deterministisch übernehmen, verwerfen oder offen binden.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T026",

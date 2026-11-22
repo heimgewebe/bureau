@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T007",
   "initiative": "BUR-2026-005",
   "title": "Add automation operations runbook",
-  "state": "planned",
+  "state": "cancelled",
   "depends_on": [
     "BUR-2026-005-T002",
     "BUR-2026-005-T003",

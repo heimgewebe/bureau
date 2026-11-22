@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T024",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Typisierte interne Module und Verknüpfungen liefern",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Einen kleinen internen DSP- und Modulationskern mit linearen typgeprüften Modulketten, stabilen Parametern, LFO, Hüllkurve, Envelope Follower, MIDI und Schrittfolge sowie sichtbarer Einflusszerlegung implementieren.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T022",

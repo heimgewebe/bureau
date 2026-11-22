@@ -97,6 +97,6 @@
     "rollback"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Repair legacy Audiozentrale release retention evidence and bounded cleanup"
 }

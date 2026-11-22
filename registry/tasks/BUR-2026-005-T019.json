@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T019",
   "initiative": "BUR-2026-005",
   "title": "Digest-bind reviewed plan approval artifacts",
-  "state": "planned",
+  "state": "cancelled",
   "depends_on": [
     "BUR-2026-005-T015"
   ],

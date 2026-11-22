@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T006",
   "initiative": "BUR-2026-005",
   "title": "Assess opt-in dispatcher policy",
-  "state": "planned",
+  "state": "cancelled",
   "depends_on": [
     "BUR-2026-005-T001",
     "BUR-2026-005-T002",

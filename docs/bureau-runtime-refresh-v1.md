@@ -295,6 +295,38 @@ Identity-Evidenz tatsächlich gebunden haben. Fehlt das im historischen Runnerve
 blockiert der Closeout als `authority-closeout-source-precondition-unproven`; die später
 beobachtete physische Runtime-Konvergenz wird nicht rückwirkend zur Gate-Evidenz erklärt.
 
+### Automatischer Standby-Nachfolger nach verifiziertem Closeout
+
+Der CLI-Befehl `closeout-authority` registriert nach einem erfolgreichen, verifizierten
+Closeout genau **einen** Standby-Nachfolger (`create_successor_standby=True`; die
+Python-Funktion ist standardmäßig opt-in, historische Aufrufer bleiben unverändert). Das
+ersetzt den bisherigen One-File-Protected-Git-PR samt manueller Intake-/Adoption-/Aktivierung
+pro Release; die Single-Use-Zielbindung bleibt unverändert erhalten.
+
+- Nur für Authorities mit `source_precondition`, nur nach `verified`-Closeout derselben
+  Result-/Lease-Bindung, erneutem Readback und Lease-Release. Fehlgeschlagene, unklare,
+  unverbrauchte oder nicht passende Ergebnisse erzeugen keinen Nachfolger; Incident-Closeouts
+  ebenfalls nicht.
+- Der frisch gelesene Deployment-Manifest-Digest, `source_commit` und die kanonische
+  Registry-Identität müssen exakt zum Closeout passen
+  (`authority-successor-identity-mismatch`).
+- Der Nachfolger ist `ready`, ungebunden und unverbraucht, trägt eine deterministische ID
+  `BUREAU-RUNTIME-REFRESH-STANDBY-<deployed-commit[:12]>`, die frische
+  Source-Precondition (Commit, Manifest-Digest, Registry-Commit), den unveränderten
+  No-Run-Acceptance-Vertrag und den reservierten Executor-Vertrag. Weder `operator_intake`
+  noch frühere `runtime_closeout`-/Consumption-/Binding-Evidenz werden kopiert; die
+  Metadaten enthalten nur den Authority-Vertrag und eine knappe Provenienz.
+- Registrierung über `StateStore.put_task_spec()` (CAS `expected_revision=None`,
+  Idempotenzschlüssel pro Nachfolger-ID) mit Readback. Ein Replay des bereits verifizierten
+  Vorgängers stellt einen fehlenden Nachfolger (Crash zwischen Closeout und Registrierung)
+  idempotent wieder her. Existiert der Nachfolger, muss seine Revision 1 exakt dem
+  deterministischen Spec entsprechen (sonst `authority-successor-drift`); spätere legitime
+  Fortschreibung ist kein Drift.
+- Keine neue Runtime-Wirkung, kein Timer, keine Queue, kein Daemon. Beobachtung, Intent
+  und Executor bleiben beim bestehenden Grabowski-/ChatGPT-Operator; der lokale read-only
+  systemd-Operator erhält keine Effektautorität. Ein erzeugter Standby beweist keinen
+  vollständig unbeaufsichtigten End-to-End-Betrieb.
+
 Die Acceptance-Klassen `protected-publication-adoption` und `registry-resource-intake` werden nicht pauschal aus erfolgreichem Runtime-Readback abgeleitet. Erstere revalidiert den exakten historischen Protected-PR-Merge und den unverwechselbaren `legacy-seed-exact`-Receipt der Missing-only-Adoption. Letztere liest den resultgebundenen kanonischen Registry-Snapshot, bindet die erwartete Repository-Resource feldgenau und fuehrt die typisierte Candidate-Intake-Klassifikation gegen genau diesen Snapshot aus.
 
 Nur dann setzt ein einziger `StateStore.put_task_spec()`-CAS den Zustand auf `verified` und
@@ -522,12 +554,24 @@ Der Bureau-Operator-Zyklus kann die Installation nicht selbst auslösen:
    (`_require_operator_mutation("durable_job", …)`) im Grabowski-Prozess. Der Bureau-
    Operator-Lauf (systemd-Unit, nur Netzwerk, schreibt nur eigene Receipts) besitzt sie nicht.
 2. `prepare-intent` verlangt weiterhin eine exakt benannte, ungebundene Single-Use-
-   TaskSpec. Genau diese pro-`main`-Autorität (Publikation, Adoption, Aktivierung) ist der
-   verbleibende manuelle Engpass. Eine wiederverwendbare, widerrufbare, auf geschütztes
-   `main` + exakte CI + Source-Bindung begrenzte Authority-Generation (neuer
-   `contract_mode`, Einmaligkeit weiter pro `target_sha256`) ist offen; sie ändert die
-   Sicherheitssemantik von Intent-Bindung, Consumption und Closeout und braucht eine
-   eigene reviewte Änderung samt Grabowski-Executor-Anpassung.
+   TaskSpec. Nach einem verifizierten Closeout entsteht diese pro Release jetzt automatisch
+   (siehe „Automatischer Standby-Nachfolger“); der manuelle pro-`main`-Publikationsengpass
+   entfällt damit für Folge-Releases, eine wiederverwendbare Authority-Generation ist nicht
+   nötig. Die verbleibende fehlende Grenze ist der tatsächliche operatorseitige,
+   unbeaufsichtigte Auslöser (Beobachtung, `prepare-intent`, reservierter Start); der
+   lokale read-only systemd-Zyklus kann nicht mutieren.
+
+   Einmaliger Übergang/Bootstrap: Der aktuell verifizierte Vorgänger (0cc8454) wurde ohne
+   dieses Feature geschlossen. Das Feature muss auf dem nächsten gemergten Source deployed
+   werden; für das dann aktuelle Release muss einmalig ein bereiter Nachfolger über den
+   exakt reviewten StateStore-Pfad bereitgestellt werden. Erst die danach erfolgreich
+   geschlossenen Refreshs erzeugen automatisch den jeweils nächsten Standby.
+
+   Historische Einmal-Verträge mit No-Run-Acceptance auf nicht erzeugbare Evidenzklassen
+   (`protected-publication-adoption`, `registry-resource-intake`) schließen weiterhin
+   erfolgreich und dauerhaft mit `successor_standby={status: not_applicable, reason:
+   unsupported-evidence-classes}` ohne Nachfolger. Echte Manifest-/Source-/Lease-/Result-
+   Konflikte bleiben harte Fehler.
 3. Die reale E2E-Abnahme auf einem neuen `main`-Commit steht aus.
 
 Bis dahin darf weder eine Beobachtung noch ein Queue-Marker als automatische

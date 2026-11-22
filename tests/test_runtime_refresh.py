@@ -14136,3 +14136,239 @@ def test_after_effect_unclear_reconciliation_fails_closed_without_effect(
     assert result_path.read_bytes() == original_result
     root = options["state_root"] / "after-effect-unclear-reconciliations"
     assert not root.exists()
+
+
+def standby_fixture(
+    tmp_path: Path, *, task_id: str = "BUREAU-STANDBY-PREDECESSOR"
+) -> dict[str, Any]:
+    observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(
+        tmp_path, task_id=task_id
+    )
+    store = authority_store_for_intent(intent)
+    binding, resource_db = lease_for(tmp_path / "standby-leases", intent)
+
+    def source_preparer(**kwargs: Any) -> dict[str, Any]:
+        kwargs["workspace"].mkdir(parents=True)
+        return {"head": MAIN, "root": str(kwargs["workspace"]), "dirty": False, "detached": True}
+
+    result = refresh.apply_runtime_refresh(
+        intent_path=intent_path,
+        lease_binding=binding,
+        manifest_path=manifest_path,
+        state_root=Path(intent["state_root"]),
+        resource_db=resource_db,
+        now=NOW,
+        observer=lambda **_: observed,
+        source_preparer=source_preparer,
+        installer=lambda **_: {"manifest_sha256": "a" * 64, "rollback": {"directory": "/rollback"}},
+        readback=lambda **_: {
+            "source_commit": MAIN,
+            "manifest_sha256": "a" * 64,
+            "check_valid": True,
+            "runtime_identity_valid": True,
+        },
+    )
+    assert result["status"] == "deployed"
+    deployed_manifest = tmp_path / "deployed/deployment-manifest.json"
+    manifest = write_registry_bound_manifest(deployed_manifest, source_commit=MAIN)
+
+    def kwargs(**overrides: Any) -> dict[str, Any]:
+        values: dict[str, Any] = {
+            "state_root": Path(intent["state_root"]),
+            "approval_task_id": task_id,
+            "target_sha256": intent["target_sha256"],
+            "intent_sha256": intent["intent_sha256"],
+            "result_sha256": result["result_sha256"],
+            "resource_db": resource_db,
+            "now": NOW + timedelta(minutes=20),
+            "authority_store": store,
+            "readback": lambda **_: result["readback"],
+            "create_successor_standby": True,
+            "successor_manifest_loader": lambda _path: (manifest, "a" * 64),
+        }
+        values.update(overrides)
+        return values
+
+    return {"store": store, "kwargs": kwargs, "resource_db": resource_db, "manifest": manifest}
+
+
+def standby_id() -> str:
+    return f"{refresh.RUNTIME_AUTHORITY_STANDBY_ID_PREFIX}{MAIN[:12].upper()}"
+
+
+def test_closeout_creates_single_unbound_standby_successor(tmp_path: Path) -> None:
+    fx = standby_fixture(tmp_path)
+    store = fx["store"]
+    release_test_leases(fx["resource_db"])
+    closed = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    successor = closed["successor_standby"]
+    assert successor["status"] == "created"
+    assert successor["task_id"] == standby_id()
+    stored = store.task_spec(standby_id())
+    spec = stored["spec"]
+    assert stored["revision"] == 1 and spec["state"] == "ready"
+    assert set(spec["metadata"]) == {"runtime_refresh_authority", "runtime_standby_successor"}
+    authority = spec["metadata"]["runtime_refresh_authority"]
+    for stale in ("target_binding_receipt", "consumption", "operator_intake", "runtime_closeout"):
+        assert stale not in authority and stale not in spec["metadata"]
+    precondition = authority["source_precondition"]
+    assert precondition["registered_deployed_source_commit"] == MAIN
+    assert precondition["registered_registry_source_commit"] == MAIN
+    assert precondition["registered_manifest_sha256"] == "a" * 64
+    predecessor = store.task_spec("BUREAU-STANDBY-PREDECESSOR")
+    assert predecessor["spec"]["state"] == "verified"
+    assert (
+        authority["no_run_closeout_acceptance"]
+        == predecessor["spec"]["metadata"]["runtime_refresh_authority"][
+            "no_run_closeout_acceptance"
+        ]
+    )
+    assert "BUREAU-STANDBY-PREDECESSOR" not in json.dumps(spec["acceptance"])
+    assert store.list_runs() == []
+    # The standby is a valid authority for the next target (preflight only).
+    assert refresh.validate_authoritative_runtime_refresh_task(
+        store=store, approval_task_id=standby_id(), target_sha256="b" * 64
+    )["state"] == "ready"
+
+
+def test_closeout_standby_is_idempotent_and_recovers_after_crash(tmp_path: Path) -> None:
+    fx = standby_fixture(tmp_path)
+    store = fx["store"]
+    release_test_leases(fx["resource_db"])
+    refresh.closeout_runtime_refresh_authority(**fx["kwargs"](create_successor_standby=False))
+    assert store.task_spec(standby_id()) is None
+    recovered = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert recovered["idempotent_replay"] is True
+    assert recovered["successor_standby"]["status"] == "created"
+    again = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert again["successor_standby"]["status"] == "already_present"
+    assert store.task_spec(standby_id())["revision"] == 1
+    # Legitimate later progression of the standby is not drift.
+    revise_authority(store, standby_id(), lambda spec: spec.update(state="blocked"), key="progress")
+    later = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert later["successor_standby"]["status"] == "already_present"
+    assert later["successor_standby"]["state"] == "blocked"
+
+
+def test_closeout_standby_rejects_existing_successor_drift(tmp_path: Path) -> None:
+    fx = standby_fixture(tmp_path)
+    store = fx["store"]
+    release_test_leases(fx["resource_db"])
+    refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    spec = json.loads(json.dumps(store.task_spec(standby_id())["spec"]))
+    # Rewrite genesis history is impossible; simulate a foreign pre-existing successor instead.
+    other = tmp_path / "other"
+    other_fx = standby_fixture(other)
+    other_store = other_fx["store"]
+    spec["goal"] = "foreign pre-existing standby"
+    other_store.put_task_spec(
+        spec, idempotency_key="foreign", expected_revision=None, source="test"
+    )
+    release_test_leases(other_fx["resource_db"])
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(**other_fx["kwargs"]())
+    assert caught.value.code == "authority-successor-drift"
+    assert other_store.task_spec("BUREAU-STANDBY-PREDECESSOR")["spec"]["state"] == "verified"
+
+
+@pytest.mark.parametrize(
+    ("mutate", "code"),
+    [
+        (lambda manifest: ("b" * 64, manifest), "authority-successor-identity-mismatch"),
+        (
+            lambda manifest: ("a" * 64, {**manifest, "source_commit": DEPLOYED}),
+            "authority-successor-identity-mismatch",
+        ),
+        (
+            lambda manifest: (
+                "a" * 64,
+                {**manifest, "canonical_registry_tree_sha256": "c" * 64},
+            ),
+            "authority-successor-identity-mismatch",
+        ),
+    ],
+)
+def test_closeout_standby_rejects_wrong_manifest_or_registry(
+    tmp_path: Path, mutate: Any, code: str
+) -> None:
+    fx = standby_fixture(tmp_path)
+    store = fx["store"]
+    release_test_leases(fx["resource_db"])
+    digest, manifest = mutate(fx["manifest"])
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            **fx["kwargs"](successor_manifest_loader=lambda _path: (manifest, digest))
+        )
+    assert caught.value.code == code
+    assert store.task_spec(standby_id()) is None
+    assert store.list_runs() == []
+
+
+def test_closeout_standby_requires_released_lease(tmp_path: Path) -> None:
+    fx = standby_fixture(tmp_path)
+    store = fx["store"]
+    with pytest.raises(refresh.RuntimeRefreshError):
+        refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert store.task_spec(standby_id()) is None
+    assert store.task_spec("BUREAU-STANDBY-PREDECESSOR")["spec"]["state"] == "ready"
+
+
+def test_closeout_without_opt_in_or_source_precondition_creates_no_successor(
+    tmp_path: Path,
+) -> None:
+    fx = standby_fixture(tmp_path)
+    release_test_leases(fx["resource_db"])
+    closed = refresh.closeout_runtime_refresh_authority(
+        **fx["kwargs"](create_successor_standby=False)
+    )
+    assert "successor_standby" not in closed
+    assert fx["store"].task_spec(standby_id()) is None
+
+    legacy_tmp = tmp_path / "legacy"
+    intent, store, result, resource_db = historical_no_run_success(
+        legacy_tmp, task_id="BUREAU-STANDBY-LEGACY"
+    )
+    release_test_leases(resource_db)
+    legacy_closed = refresh.closeout_runtime_refresh_authority(
+        state_root=Path(intent["state_root"]),
+        approval_task_id="BUREAU-STANDBY-LEGACY",
+        target_sha256=intent["target_sha256"],
+        intent_sha256=intent["intent_sha256"],
+        result_sha256=result["result_sha256"],
+        resource_db=resource_db,
+        now=NOW + timedelta(minutes=20),
+        authority_store=store,
+        readback=lambda **_: result["readback"],
+        create_successor_standby=True,
+    )
+    assert legacy_closed["successor_standby"]["status"] == "not_applicable"
+    assert store.task_spec(standby_id()) is None
+
+
+def test_closeout_standby_unsupported_historical_evidence_is_not_a_hard_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Simulates a one-off contract demanding classes the standby cannot produce
+    # (protected-publication-adoption / registry-resource-intake).
+    monkeypatch.setattr(
+        refresh, "RUNTIME_AUTHORITY_STANDBY_EVIDENCE_CLASSES", frozenset({"approval-intent"})
+    )
+    fx = standby_fixture(tmp_path)
+    store = fx["store"]
+    release_test_leases(fx["resource_db"])
+    # Genuine identity conflicts still fail hard, even for such contracts.
+    with pytest.raises(refresh.RuntimeRefreshError) as caught:
+        refresh.closeout_runtime_refresh_authority(
+            **fx["kwargs"](successor_manifest_loader=lambda _path: (fx["manifest"], "b" * 64))
+        )
+    assert caught.value.code == "authority-successor-identity-mismatch"
+    closed = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert closed["successor_standby"] == {
+        "status": "not_applicable",
+        "reason": "unsupported-evidence-classes",
+    }
+    assert store.task_spec(standby_id()) is None
+    assert store.task_spec("BUREAU-STANDBY-PREDECESSOR")["spec"]["state"] == "verified"
+    replay = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert replay["idempotent_replay"] is True
+    assert replay["successor_standby"]["reason"] == "unsupported-evidence-classes"

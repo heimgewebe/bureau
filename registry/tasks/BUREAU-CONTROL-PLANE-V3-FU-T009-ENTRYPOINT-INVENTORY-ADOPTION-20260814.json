@@ -110,6 +110,6 @@
     "strategy": "Falls der T009-Snapshot-Service vor Merge des Follow-ups entfällt oder umbenannt wird, diesen Ein-Datei-Testpatch nicht mergen. Nach Merge spätere Entry-Point-Änderungen nur durch eine neue revisionsgebundene Korrektur nachziehen; keine Test-Gates abschwächen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "T009 Snapshot-Unit im Entry-Point-Inventar nachziehen"
 }

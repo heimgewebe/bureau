@@ -120,6 +120,10 @@
     }
   ],
   "metadata": {
+    "verification": {
+      "task_sha256": "37837ec507718fbe8bda3be9685f3248d977dcb1491c0a380b10c2515adb2bfb",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06"
+    },
     "source": "GRIP-ROADMAP-V1-T014 closeout and live Bureau runtime reconciliation",
     "observed_at": "2026-07-14T07:16:00+02:00",
     "observation": "The canonical Bureau Registry already marked T014 verified at origin/main 7a07635de3e6, while the active immutable snapshot still pointed to 6f17c5a44143 and reported T014 planned. Manual atomic deployment restored consistency; existing drift and scheduler tasks explicitly exclude automatic repair.",

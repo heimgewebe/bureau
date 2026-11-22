@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T016",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Automate gated Bureau runtime snapshot refresh",
-  "state": "planned",
+  "state": "verified",
   "goal": "Automatically refresh the immutable Bureau runtime and canonical read-only Registry snapshot after a verified main change, without touching the conventional dirty checkout, weakening deployment gates, or creating duplicate deployments.",
   "priority": {
     "lane": "later",

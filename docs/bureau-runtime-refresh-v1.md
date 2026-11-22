@@ -315,7 +315,12 @@ pro Release; die Single-Use-Zielbindung bleibt unverändert erhalten.
   Source-Precondition (Commit, Manifest-Digest, Registry-Commit), den unveränderten
   No-Run-Acceptance-Vertrag und den reservierten Executor-Vertrag. Weder `operator_intake`
   noch frühere `runtime_closeout`-/Consumption-/Binding-Evidenz werden kopiert; die
-  Metadaten enthalten nur den Authority-Vertrag und eine knappe Provenienz.
+  Metadaten enthalten nur den Authority-Vertrag, den Executor-Kontext und eine knappe
+  Provenienz. `metadata.runtime_execution_context` wird exakt und unverändert vom Vorgänger
+  übernommen, nie erzeugt oder umgeschrieben; fehlt er (oder ist er kein nichtleeres Objekt),
+  wird kein Standby angelegt (`successor_standby={status: not_applicable, reason:
+  missing-execution-context}`, verifizierter Closeout bleibt bestehen), da ein solcher
+  Nachfolger vom reservierten Grabowski-Start abgelehnt würde und keine Nutzbarkeit zusichern darf.
 - Registrierung über `StateStore.put_task_spec()` (CAS `expected_revision=None`,
   Idempotenzschlüssel pro Nachfolger-ID) mit Readback. Ein Replay des bereits verifizierten
   Vorgängers stellt einen fehlenden Nachfolger (Crash zwischen Closeout und Registrierung)

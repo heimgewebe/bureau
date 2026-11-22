@@ -882,8 +882,20 @@ def source_precondition_contract() -> dict[str, Any]:
     }
 
 
+TEST_RUNTIME_EXECUTION_CONTEXT = {
+    "kind": "synthetic-test-execution-context",
+    "executor": "synthetic-distinct-mock",
+    "nested": {"values": [1, 2, 3]},
+}
+
+
 def seed_authority_store(
-    root: Path, task_id: str, *, state: str = "ready", source_precondition: bool = False
+    root: Path,
+    task_id: str,
+    *,
+    state: str = "ready",
+    source_precondition: bool = False,
+    execution_context: bool = True,
 ) -> StateStore:
     state_root = root.resolve()
     store = StateStore(state_root / "bureau.sqlite3", state_root)
@@ -898,6 +910,10 @@ def seed_authority_store(
         spec["metadata"]["runtime_refresh_authority"]["source_precondition"] = (
             source_precondition_contract()
         )
+        if execution_context:
+            spec["metadata"]["runtime_execution_context"] = json.loads(
+                json.dumps(TEST_RUNTIME_EXECUTION_CONTEXT)
+            )
     store.put_task_spec(
         spec,
         idempotency_key=f"seed:{task_id}:{state}",
@@ -3974,6 +3990,7 @@ def prepare_source_precondition_intent(
     tmp_path: Path,
     *,
     task_id: str = "BUREAU-SOURCE-PRECONDITION-TEST",
+    execution_context: bool = True,
 ) -> tuple[dict[str, Any], Path, dict[str, Any], Path]:
     manifest_path = tmp_path / "prefix/deployment-manifest.json"
     write_registry_bound_manifest(manifest_path)
@@ -3986,7 +4003,10 @@ def prepare_source_precondition_intent(
     )
     state_root = (tmp_path / "state").resolve()
     authority_store = seed_authority_store(
-        tmp_path / "bureau-state", task_id, source_precondition=True
+        tmp_path / "bureau-state",
+        task_id,
+        source_precondition=True,
+        execution_context=execution_context,
     )
     intent, intent_path = refresh.prepare_intent(
         candidate=observed,
@@ -14139,10 +14159,13 @@ def test_after_effect_unclear_reconciliation_fails_closed_without_effect(
 
 
 def standby_fixture(
-    tmp_path: Path, *, task_id: str = "BUREAU-STANDBY-PREDECESSOR"
+    tmp_path: Path,
+    *,
+    task_id: str = "BUREAU-STANDBY-PREDECESSOR",
+    execution_context: bool = True,
 ) -> dict[str, Any]:
     observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(
-        tmp_path, task_id=task_id
+        tmp_path, task_id=task_id, execution_context=execution_context
     )
     store = authority_store_for_intent(intent)
     binding, resource_db = lease_for(tmp_path / "standby-leases", intent)
@@ -14207,7 +14230,16 @@ def test_closeout_creates_single_unbound_standby_successor(tmp_path: Path) -> No
     stored = store.task_spec(standby_id())
     spec = stored["spec"]
     assert stored["revision"] == 1 and spec["state"] == "ready"
-    assert set(spec["metadata"]) == {"runtime_refresh_authority", "runtime_standby_successor"}
+    assert set(spec["metadata"]) == {
+        "runtime_refresh_authority",
+        "runtime_execution_context",
+        "runtime_standby_successor",
+    }
+    predecessor_context = store.task_spec("BUREAU-STANDBY-PREDECESSOR")["spec"]["metadata"][
+        "runtime_execution_context"
+    ]
+    assert predecessor_context == TEST_RUNTIME_EXECUTION_CONTEXT
+    assert spec["metadata"]["runtime_execution_context"] == predecessor_context
     authority = spec["metadata"]["runtime_refresh_authority"]
     for stale in ("target_binding_receipt", "consumption", "operator_intake", "runtime_closeout"):
         assert stale not in authority and stale not in spec["metadata"]
@@ -14229,6 +14261,22 @@ def test_closeout_creates_single_unbound_standby_successor(tmp_path: Path) -> No
     assert refresh.validate_authoritative_runtime_refresh_task(
         store=store, approval_task_id=standby_id(), target_sha256="b" * 64
     )["state"] == "ready"
+
+
+def test_closeout_standby_without_execution_context_is_not_applicable(tmp_path: Path) -> None:
+    fx = standby_fixture(tmp_path, execution_context=False)
+    store = fx["store"]
+    release_test_leases(fx["resource_db"])
+    closed = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert closed["successor_standby"] == {
+        "status": "not_applicable",
+        "reason": "missing-execution-context",
+    }
+    assert store.task_spec(standby_id()) is None
+    assert store.task_spec("BUREAU-STANDBY-PREDECESSOR")["spec"]["state"] == "verified"
+    replay = refresh.closeout_runtime_refresh_authority(**fx["kwargs"]())
+    assert replay["successor_standby"]["reason"] == "missing-execution-context"
+    assert store.task_spec(standby_id()) is None
 
 
 def test_closeout_standby_is_idempotent_and_recovers_after_crash(tmp_path: Path) -> None:

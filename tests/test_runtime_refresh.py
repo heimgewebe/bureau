@@ -14138,7 +14138,9 @@ def test_after_effect_unclear_reconciliation_fails_closed_without_effect(
     assert not root.exists()
 
 
-def standby_fixture(tmp_path: Path, *, task_id: str = "BUREAU-STANDBY-PREDECESSOR") -> dict[str, Any]:
+def standby_fixture(
+    tmp_path: Path, *, task_id: str = "BUREAU-STANDBY-PREDECESSOR"
+) -> dict[str, Any]:
     observed, manifest_path, intent, intent_path = prepare_source_precondition_intent(
         tmp_path, task_id=task_id
     )

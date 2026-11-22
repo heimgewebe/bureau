@@ -214,6 +214,37 @@ RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_EVIDENCE_KIND = (
     "bureau_runtime_refresh_no_run_acceptance_evidence"
 )
 RUNTIME_AUTHORITY_NO_RUN_ACCEPTANCE_VERIFIER = "runtime-refresh-no-run-evidence-v1"
+RUNTIME_AUTHORITY_STANDBY_ID_PREFIX = "BUREAU-RUNTIME-REFRESH-STANDBY-"
+RUNTIME_AUTHORITY_STANDBY_KIND = "bureau_runtime_refresh_standby_successor"
+RUNTIME_AUTHORITY_STANDBY_SOURCE = "runtime-refresh-standby-successor"
+RUNTIME_AUTHORITY_STANDBY_IDEMPOTENCY_PREFIX = "runtime-refresh-standby-successor:"
+RUNTIME_AUTHORITY_STANDBY_EVIDENCE_CLASSES = frozenset(
+    {
+        "approval-intent",
+        "runtime-result",
+        "single-use-history",
+        "immutable-readback",
+        "state-store-integrity",
+        "lease-release",
+        "run-lifecycle",
+        "source-precondition",
+    }
+)
+RUNTIME_AUTHORITY_STANDBY_AUTHORITY_FIELDS = (
+    "schema_version",
+    "mode",
+    "single_use",
+    "required_action_class",
+    "required_approval_level",
+    "required_claim_resource",
+    "required_task_state",
+    "target_binding",
+    "forbid_foreign_task_substitution",
+    "forbid_historical_target_reuse",
+    "successor_task_required_after_terminal",
+    "source_precondition",
+    "no_run_closeout_acceptance",
+)
 RUNTIME_AUTHORITY_NO_RUN_EVIDENCE_CLASSES = frozenset(
     {
         "approval-intent",
@@ -10817,6 +10848,225 @@ def _validated_terminal_authority_run(
     }
 
 
+def _replace_task_id(value: Any, old: str, new: str) -> Any:
+    if isinstance(value, str):
+        return value.replace(old, new)
+    if isinstance(value, list):
+        return [_replace_task_id(item, old, new) for item in value]
+    if isinstance(value, dict):
+        return {key: _replace_task_id(item, old, new) for key, item in value.items()}
+    return value
+
+
+def _standby_acceptance_supported(authority: dict[str, Any]) -> bool:
+    """Whether every no-run acceptance criterion needs only producible evidence."""
+    acceptance_contract = authority.get("no_run_closeout_acceptance")
+    criteria = (
+        acceptance_contract.get("criteria") if isinstance(acceptance_contract, dict) else None
+    )
+    return (
+        isinstance(criteria, dict)
+        and bool(criteria)
+        and all(
+            isinstance(item, dict)
+            and set(item.get("required_evidence", ()))
+            <= RUNTIME_AUTHORITY_STANDBY_EVIDENCE_CLASSES
+            for item in criteria.values()
+        )
+    )
+
+
+def _standby_successor_spec(
+    *,
+    predecessor: dict[str, Any],
+    authority: dict[str, Any],
+    closeout: dict[str, Any],
+    manifest_sha256: str,
+    registry_tree_sha256: str,
+) -> dict[str, Any]:
+    """Build the deterministic, unbound, unconsumed next-release standby TaskSpec."""
+    source_commit = closeout["source_commit"]
+    successor_id = f"{RUNTIME_AUTHORITY_STANDBY_ID_PREFIX}{source_commit[:12].upper()}"
+    if successor_id == predecessor["id"]:
+        raise RuntimeRefreshError(
+            "authority-successor-identity-invalid",
+            "standby successor must not reuse the predecessor TaskSpec id",
+        )
+    successor_authority = {
+        key: json.loads(json.dumps(authority[key]))
+        for key in RUNTIME_AUTHORITY_STANDBY_AUTHORITY_FIELDS
+        if key in authority
+    }
+    precondition = successor_authority["source_precondition"]
+    precondition["registered_deployed_source_commit"] = source_commit
+    precondition["registered_registry_source_commit"] = source_commit
+    precondition["registered_manifest_sha256"] = manifest_sha256
+    _validated_runtime_source_precondition(precondition)
+    if not _standby_acceptance_supported(successor_authority):
+        raise RuntimeRefreshError(
+            "authority-successor-acceptance-unsupported",
+            "standby successor can only retain evidence classes it can itself produce",
+        )
+    spec = {
+        key: _replace_task_id(
+            json.loads(json.dumps(predecessor[key])), predecessor["id"], successor_id
+        )
+        for key in (
+            "schema_version",
+            "initiative",
+            "priority",
+            "depends_on",
+            "required_capabilities",
+            "claims",
+            "execution",
+            "acceptance",
+            "rollback",
+        )
+        if key in predecessor
+    }
+    spec["id"] = successor_id
+    spec["state"] = "ready"
+    spec["title"] = f"Single-use Bureau runtime refresh standby after {source_commit[:12]}"
+    spec["goal"] = (
+        "Authorize exactly one target-bound Bureau runtime refresh from the deployed "
+        f"source {source_commit} to the next CI-green protected main descendant. "
+        "Grants no queue, claim, dispatch or foreign-work authority."
+    )
+    spec["metadata"] = {
+        "runtime_refresh_authority": successor_authority,
+        "runtime_standby_successor": {
+            "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
+            "kind": RUNTIME_AUTHORITY_STANDBY_KIND,
+            "predecessor_task_id": predecessor["id"],
+            "predecessor_target_sha256": closeout["target_sha256"],
+            "predecessor_intent_sha256": closeout["intent_sha256"],
+            "predecessor_result_sha256": closeout["runtime_result_sha256"],
+            "source_commit": source_commit,
+            "manifest_sha256": manifest_sha256,
+            "registry_tree_sha256": registry_tree_sha256,
+            "does_not_establish": [
+                "runtime effect or deployment of any later target",
+                "permission to bypass observation, intent, lease or readback gates",
+                "unattended end-to-end operation",
+            ],
+        },
+    }
+    return spec
+
+
+def _ensure_standby_successor(
+    *,
+    store: Any,
+    predecessor: dict[str, Any],
+    closeout: dict[str, Any],
+    intent: dict[str, Any],
+    result: dict[str, Any],
+    manifest_loader: Callable[[Path], tuple[dict[str, Any], str]],
+) -> dict[str, Any]:
+    """Idempotently register the single next standby after a verified closeout.
+
+    Only called after closeout, lease release and readback were validated on
+    this very invocation (fresh close or replay of a verified predecessor).
+    """
+    from . import task_specs
+
+    _, authority = _runtime_authority_metadata(predecessor)
+    if (
+        authority.get("mode") != RUNTIME_AUTHORITY_MODE_SOURCE_PRECONDITION
+        or authority.get("source_precondition") is None
+    ):
+        return {"status": "not_applicable", "reason": "predecessor-not-source-precondition"}
+    if (
+        closeout.get("kind") != RUNTIME_AUTHORITY_CLOSEOUT_KIND
+        or closeout.get("status") != "verified"
+        or predecessor.get("state") != "verified"
+        or closeout.get("task_id") != predecessor.get("id")
+        or closeout.get("source_commit") != intent.get("main_commit")
+        or closeout.get("runtime_result_sha256") != result.get("result_sha256")
+        or closeout.get("lease_binding_sha256")
+        != result["lease_binding"]["lease_binding_sha256"]
+    ):
+        raise RuntimeRefreshError(
+            "authority-successor-closeout-mismatch",
+            "standby successor requires a verified closeout bound to this result and lease",
+        )
+    manifest, manifest_sha256 = manifest_loader(
+        Path(intent["prefix"]).expanduser().resolve() / "deployment-manifest.json"
+    )
+    registry = registry_snapshot.canonical_registry_identity(manifest)
+    if (
+        manifest_sha256 != closeout["manifest_sha256"]
+        or manifest.get("source_commit") != closeout["source_commit"]
+        or registry.get("valid") is not True
+        or registry.get("source_commit") != closeout["source_commit"]
+        or not _is_sha256(registry.get("tree_sha256"))
+    ):
+        raise RuntimeRefreshError(
+            "authority-successor-identity-mismatch",
+            "deployed manifest or canonical Registry does not match the verified closeout",
+        )
+    if not _standby_acceptance_supported(authority):
+        # One-off historical contract: verified closeout stays durable and valid.
+        return {"status": "not_applicable", "reason": "unsupported-evidence-classes"}
+    spec = _standby_successor_spec(
+        predecessor=predecessor,
+        authority=authority,
+        closeout=closeout,
+        manifest_sha256=manifest_sha256,
+        registry_tree_sha256=registry["tree_sha256"],
+    )
+    successor_id = spec["id"]
+    expected_sha256 = task_specs.task_spec_digest(spec)
+    try:
+        existing = store.task_spec(successor_id)
+    except (legacy.StateError, OSError, sqlite3.Error) as exc:
+        raise RuntimeRefreshError(
+            "authority-state-store-invalid",
+            "authoritative StateStore TaskSpec read failed",
+            details={"task_id": successor_id, "error": str(exc)},
+        ) from exc
+    if existing is not None:
+        # Later progression (bound, consumed, closed) is legitimate; only the
+        # genesis revision must be exactly the deterministic standby.
+        genesis = _read_authority_task_revision(store, successor_id, 1)
+        if genesis.get("spec_sha256") != expected_sha256:
+            raise RuntimeRefreshError(
+                "authority-successor-drift",
+                "existing standby successor differs from the deterministic genesis spec",
+                details={"task_id": successor_id},
+            )
+        return {
+            "status": "already_present",
+            "task_id": successor_id,
+            "revision": existing["revision"],
+            "spec_sha256": existing["spec_sha256"],
+            "state": existing["spec"].get("state"),
+        }
+    changed = _put_authority_task(
+        store,
+        spec,
+        idempotency_key=f"{RUNTIME_AUTHORITY_STANDBY_IDEMPOTENCY_PREFIX}{successor_id}",
+        expected_revision=None,
+        source=RUNTIME_AUTHORITY_STANDBY_SOURCE,
+    )
+    readback = _read_authority_task(store, successor_id)
+    if (
+        readback.get("spec_sha256") != expected_sha256
+        or readback.get("revision") != changed.get("revision")
+    ):
+        raise RuntimeRefreshError(
+            "authority-successor-readback-failed",
+            "standby successor readback differs from the CAS result",
+        )
+    return {
+        "status": "created",
+        "task_id": successor_id,
+        "revision": readback["revision"],
+        "spec_sha256": readback["spec_sha256"],
+        "state": "ready",
+    }
+
+
 def _closeout_runtime_refresh_authority(
     *,
     historical_multi_use_incident: bool,
@@ -10830,6 +11080,8 @@ def _closeout_runtime_refresh_authority(
     authority_store: Any | None = None,
     readback: Callable[..., dict[str, Any]] = readback_historical_install,
     scheduler_readback: Callable[..., dict[str, Any]] = readback_user_scheduler,
+    create_successor_standby: bool = False,
+    successor_manifest_loader: Callable[[Path], tuple[dict[str, Any], str]] = load_manifest,
 ) -> dict[str, Any]:
     """CAS-close a successful single-use authority that intentionally has no run."""
     current_time = now or utc_now()
@@ -11247,13 +11499,23 @@ def _closeout_runtime_refresh_authority(
                 "authority-closeout-state-conflict",
                 "closeout evidence exists on a non-verified TaskSpec",
             )
-        return {
+        replayed = {
             "task_id": approval_task_id,
             "revision": current["revision"],
             "spec_sha256": current["spec_sha256"],
             "closeout": existing_closeout,
             "idempotent_replay": True,
         }
+        if create_successor_standby:
+            replayed["successor_standby"] = _ensure_standby_successor(
+                store=store,
+                predecessor=spec,
+                closeout=existing_closeout,
+                intent=intent,
+                result=result,
+                manifest_loader=successor_manifest_loader,
+            )
+        return replayed
     if spec.get("state") in legacy.TERMINAL_TASK_STATES:
         raise RuntimeRefreshError(
             "authority-task-terminal",
@@ -11513,13 +11775,24 @@ def _closeout_runtime_refresh_authority(
             "terminal TaskSpec readback differs from the closeout CAS result",
         )
     _validate_state_store_health(store)
-    return {
+    closed = {
         "task_id": approval_task_id,
         "revision": readback_task["revision"],
         "spec_sha256": readback_task["spec_sha256"],
         "closeout": observed_closeout,
         "idempotent_replay": False,
     }
+    if create_successor_standby and not historical_multi_use_incident:
+        # The closeout above is durable; a failure here is recovered by replaying it.
+        closed["successor_standby"] = _ensure_standby_successor(
+            store=store,
+            predecessor=readback_task["spec"],
+            closeout=observed_closeout,
+            intent=intent,
+            result=result,
+            manifest_loader=successor_manifest_loader,
+        )
+    return closed
 
 
 
@@ -11897,8 +12170,12 @@ def closeout_runtime_refresh_authority(
     authority_store: Any | None = None,
     readback: Callable[..., dict[str, Any]] = readback_historical_install,
     scheduler_readback: Callable[..., dict[str, Any]] = readback_user_scheduler,
+    create_successor_standby: bool = False,
+    successor_manifest_loader: Callable[[Path], tuple[dict[str, Any], str]] = load_manifest,
 ) -> dict[str, Any]:
     return _closeout_runtime_refresh_authority(
+        create_successor_standby=create_successor_standby,
+        successor_manifest_loader=successor_manifest_loader,
         historical_multi_use_incident=False,
         state_root=state_root,
         approval_task_id=approval_task_id,
@@ -12647,6 +12924,7 @@ def main(argv: list[str] | None = None) -> int:
                 target_sha256=args.target_sha256,
                 intent_sha256=args.intent_sha256,
                 result_sha256=args.result_sha256,
+                create_successor_standby=True,
             )
             print(json.dumps(result, sort_keys=True))
             return 0

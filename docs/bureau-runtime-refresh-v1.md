@@ -498,7 +498,37 @@ Dies ist eine Teilimplementierung: Sie automatisiert die Erkennung, nicht die
 Installation. Die Unit erhält nur Netzwerkzugriff und schreibt weiterhin ausschließlich
 ihre eigenen Receipts. Sie erzeugt keine TaskSpec, keinen Intent und keine Leases.
 Die bisherige Single-Use-Authority mit CAS, Grabowski-Executor, dedupliziertem Effekt,
-Rollback und Readback bleibt der einzige Installationspfad. Eine wiederverwendbare,
-widerrufbare und begrenzte Authority sowie deren Anbindung an den vorhandenen Executor
-sind offen; ebenso die reale E2E-Abnahme. CI-grünes protected main allein ersetzt
-diesen Vertrag nicht. Das Deployment-SLO wird dadurch noch nicht erfüllt.
+Rollback und Readback bleibt der einzige Installationspfad. CI-grünes protected main
+allein ersetzt diesen Vertrag nicht. Das Deployment-SLO wird dadurch noch nicht erfüllt.
+
+### Dispatch-Schnittstelle zum reservierten Grabowski-Executor
+
+Der `GrabowskiTaskAdapter` kann den reservierten Befehl
+`grabowski-bureau-runtime-refresh-apply` jetzt in der Form absetzen, die Grabowskis
+`grabowski_task_start` akzeptiert: ohne `resource_keys` (auch nicht als leere Liste) und
+ohne `operation_identity`, mit Standard-`resume_policy=never`. Beides leitet der Executor
+serverseitig aus dem hashgebundenen Intent ab und lehnt Aufrufer-Werte ab; vorher scheiterte
+jeder Bureau-seitige Dispatch dieses Befehls daran. Aufrufer-`resource_keys` für den
+reservierten Befehl werden vor dem Grabowski-Aufruf abgewiesen. Ein explizit anderes
+`resume_policy` wird unverändert durchgereicht und von Grabowski abgelehnt; es gibt keine
+stille Korrektur. Das ist ausschließlich die Transportform; es erzeugt weder Intent noch
+Autorität und startet nichts von selbst.
+
+### Offene externe Verbindung (nicht implementiert)
+
+Der Bureau-Operator-Zyklus kann die Installation nicht selbst auslösen:
+
+1. Der reservierte Start verlangt Grabowski-Operator-Mutationsautorität
+   (`_require_operator_mutation("durable_job", …)`) im Grabowski-Prozess. Der Bureau-
+   Operator-Lauf (systemd-Unit, nur Netzwerk, schreibt nur eigene Receipts) besitzt sie nicht.
+2. `prepare-intent` verlangt weiterhin eine exakt benannte, ungebundene Single-Use-
+   TaskSpec. Genau diese pro-`main`-Autorität (Publikation, Adoption, Aktivierung) ist der
+   verbleibende manuelle Engpass. Eine wiederverwendbare, widerrufbare, auf geschütztes
+   `main` + exakte CI + Source-Bindung begrenzte Authority-Generation (neuer
+   `contract_mode`, Einmaligkeit weiter pro `target_sha256`) ist offen; sie ändert die
+   Sicherheitssemantik von Intent-Bindung, Consumption und Closeout und braucht eine
+   eigene reviewte Änderung samt Grabowski-Executor-Anpassung.
+3. Die reale E2E-Abnahme auf einem neuen `main`-Commit steht aus.
+
+Bis dahin darf weder eine Beobachtung noch ein Queue-Marker als automatische
+Installation dargestellt werden.

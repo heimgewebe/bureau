@@ -13,6 +13,11 @@ from typing import Any
 
 from .adapters import Observation
 
+# Reserved Grabowski durable-executor command for the immutable Bureau runtime
+# refresh.  Grabowski owns its resource leases, operation identity and no-retry
+# policy server-side and rejects caller-supplied values for them.
+RUNTIME_REFRESH_EXECUTOR_COMMAND = "grabowski-bureau-runtime-refresh-apply"
+
 _OPERATOR_EXECUTABLE = re.compile(
     r"(?:^|\s)path=(/nix/store/[a-z0-9]{32}-[^ ;\r\n]+/bin/grabowski-operator)(?=\s|;)"
 )
@@ -247,20 +252,33 @@ class GrabowskiTaskAdapter:
 
     def dispatch(self, request: dict[str, Any]) -> str:
         start = self.tasks.grabowski_task_start
+        argv = list(request["argv"])
+        reserved = bool(argv) and argv[0] == RUNTIME_REFRESH_EXECUTOR_COMMAND
         kwargs: dict[str, Any] = {
             "host": request["host"],
-            "argv": list(request["argv"]),
+            "argv": argv,
             "cwd": request.get("cwd"),
             "runtime_seconds": int(request.get("runtime_seconds", 7200)),
-            "resume_policy": request.get("resume_policy", "verify-then-retry"),
+            "resume_policy": request.get(
+                "resume_policy", "never" if reserved else "verify-then-retry"
+            ),
             "cpu_weight": int(request.get("cpu_weight", 100)),
             "io_weight": int(request.get("io_weight", 100)),
             "memory_max_bytes": request.get("memory_max_bytes"),
-            "resource_keys": list(request.get("resource_keys", [])),
         }
+        if reserved:
+            # Never synthesize resource_keys or operation_identity: the reserved
+            # executor derives both from the hash-bound intent and rejects callers
+            # that supply them, even as an empty list.
+            if request.get("resource_keys"):
+                raise ValueError("runtime-refresh executor resource_keys are server-owned")
+        else:
+            kwargs["resource_keys"] = list(request.get("resource_keys", []))
         parameters = inspect.signature(start).parameters
         if isinstance(self.tasks, _NixTasksBridge):
-            if request.get("request_id") is not None or request.get("origin_ref") is not None:
+            if not reserved and (
+                request.get("request_id") is not None or request.get("origin_ref") is not None
+            ):
                 kwargs["operation_identity"] = _bureau_operation_identity(request)
         else:
             for key in ("origin_ref", "request_id"):

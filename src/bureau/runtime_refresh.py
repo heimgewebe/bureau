@@ -10934,6 +10934,9 @@ def _standby_successor_spec(
     )
     spec["metadata"] = {
         "runtime_refresh_authority": successor_authority,
+        "runtime_execution_context": json.loads(
+            json.dumps(predecessor["metadata"]["runtime_execution_context"])
+        ),
         "runtime_standby_successor": {
             "schema_version": RUNTIME_AUTHORITY_SCHEMA_VERSION,
             "kind": RUNTIME_AUTHORITY_STANDBY_KIND,
@@ -11008,6 +11011,10 @@ def _ensure_standby_successor(
     if not _standby_acceptance_supported(authority):
         # One-off historical contract: verified closeout stays durable and valid.
         return {"status": "not_applicable", "reason": "unsupported-evidence-classes"}
+    execution_context = (predecessor.get("metadata") or {}).get("runtime_execution_context")
+    if not isinstance(execution_context, dict) or not execution_context:
+        # Never fabricate executor authority: without it the standby is unusable.
+        return {"status": "not_applicable", "reason": "missing-execution-context"}
     spec = _standby_successor_spec(
         predecessor=predecessor,
         authority=authority,

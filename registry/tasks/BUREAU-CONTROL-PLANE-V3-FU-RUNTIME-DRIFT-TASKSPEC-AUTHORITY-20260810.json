@@ -109,6 +109,6 @@
     "strategy": "Revertiere ausschließlich die Authority-Bindung von runtime-drift-check/_receipt_drift und die zugehörigen Tests; bestehende StateStore-, Claim-, Plan-Drift- und Bootstrap-Gates bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "runtime-drift-check an autoritative TaskSpec-Wahrheit binden"
 }

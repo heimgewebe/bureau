@@ -114,6 +114,6 @@
     "strategy": "Entferne ausschließlich complete aus der Coordination-State-Allowlist und die neuen complete-Regressionsfälle; bestehende Complete-Validierung, StateStore-CAS und alle übrigen Effektklassifikationen bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "complete als kanonische Coordination-State-Mutation freigeben"
 }

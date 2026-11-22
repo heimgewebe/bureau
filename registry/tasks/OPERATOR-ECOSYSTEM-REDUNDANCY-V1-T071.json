@@ -96,6 +96,6 @@
     "strategy": "Revertiere ausschließlich den revisionsgebundenen Initialisierungs- und Testcommit sowie gegebenenfalls den zugehörigen Grabowski-Deploy. Bestehende Merge-Delivery-Records werden niemals gelöscht oder umgeschrieben; bei unklarer Ablage- oder Auditintegrität stoppt der Rollback fail-closed."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Grabowski Merge-Delivery-Ablage sicher initialisieren"
 }

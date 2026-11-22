@@ -136,6 +136,6 @@
     "strategy": "Revertiere ausschließlich die kanonische Aliasauflösung, Registry-Ressourcenklassifikation und zugehörigen Tests. Historische Belege und der lokale Lenskit-Checkout bleiben unangetastet; bei unklarer Provideridentität wird wieder fail-closed blockiert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "GitHub-Repository-Redirects kanonisch deduplizieren"
 }

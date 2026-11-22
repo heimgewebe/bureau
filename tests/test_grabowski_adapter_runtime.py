@@ -244,3 +244,91 @@ def test_native_dispatch_rejects_mismatched_bureau_origin_before_launch(
     else:
         raise AssertionError("mismatched Bureau run identity was dispatched")
     assert executed == ["_probe"]
+
+
+def _reserved_request(**extra):
+    return {
+        "host": "heim-pc",
+        "cwd": "/home/alex",
+        "argv": [
+            grabowski_adapter.RUNTIME_REFRESH_EXECUTOR_COMMAND,
+            "--intent", "/home/alex/.local/state/bureau/runtime-refresh/intents/i.json",
+            "--expected-intent-sha256", "a" * 64,
+            "--lease-owner", "owner",
+            "--lease-task-id", "b" * 24,
+        ],
+        **extra,
+    }
+
+
+def test_reserved_runtime_refresh_dispatch_omits_server_owned_fields(monkeypatch):
+    import json
+
+    monkeypatch.setattr(
+        grabowski_adapter, "_active_grabowski_python",
+        lambda: Path("/nix/store/native-operator/bin/python3"),
+    )
+    operations = []
+
+    def fake_run(argv, **kwargs):
+        payload = json.loads(kwargs["input"])
+        operations.append(payload)
+        result = {"python": [3, 12]} if payload["method"] == "_probe" else {
+            "task": {"task_id": "reserved-task"}
+        }
+        return SimpleNamespace(returncode=0, stdout=json.dumps({"result": result}), stderr="")
+
+    monkeypatch.setattr(grabowski_adapter.subprocess, "run", fake_run)
+    adapter = grabowski_adapter.GrabowskiTaskAdapter(prefer_live_operator=True)
+    run_id = "BUR-RUN-20261031T085200Z-0123456789"
+    assert adapter.dispatch(_reserved_request(
+        request_id=run_id + ":dispatch-1", origin_ref="bureau:" + run_id,
+    )) == "reserved-task"
+    kwargs = operations[1]["kwargs"]
+    # Grabowski rejects both keys even when empty, so they must be absent.
+    assert "resource_keys" not in kwargs
+    assert "operation_identity" not in kwargs
+    assert kwargs["resume_policy"] == "never"
+    assert kwargs["cwd"] == "/home/alex"
+
+
+def test_reserved_runtime_refresh_dispatch_rejects_caller_resources_before_start(monkeypatch):
+    import json
+
+    monkeypatch.setattr(
+        grabowski_adapter, "_active_grabowski_python",
+        lambda: Path("/nix/store/native-operator/bin/python3"),
+    )
+    methods = []
+
+    def fake_run(argv, **kwargs):
+        methods.append(json.loads(kwargs["input"])["method"])
+        return SimpleNamespace(returncode=0, stdout='{"result":{"python":[3,12]}}', stderr="")
+
+    monkeypatch.setattr(grabowski_adapter.subprocess, "run", fake_run)
+    adapter = grabowski_adapter.GrabowskiTaskAdapter(prefer_live_operator=True)
+    try:
+        adapter.dispatch(_reserved_request(resource_keys=["path:/home/alex/.local/bin/bureau"]))
+    except ValueError as exc:
+        assert "server-owned" in str(exc)
+    else:
+        raise AssertionError("caller resource_keys reached the reserved executor")
+    assert methods == ["_probe"]
+
+
+def test_reserved_runtime_refresh_dispatch_keeps_explicit_resume_policy_for_grabowski_to_reject(
+    monkeypatch,
+):
+    captured = {}
+
+    def start(**kwargs):
+        captured.update(kwargs)
+        return {"task_id": "t"}
+
+    adapter = grabowski_adapter.GrabowskiTaskAdapter.__new__(
+        grabowski_adapter.GrabowskiTaskAdapter
+    )
+    adapter.tasks = SimpleNamespace(grabowski_task_start=start)
+    assert adapter.dispatch(_reserved_request(resume_policy="verify-then-retry")) == "t"
+    assert captured["resume_policy"] == "verify-then-retry"
+    assert "resource_keys" not in captured and "operation_identity" not in captured

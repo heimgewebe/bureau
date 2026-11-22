@@ -339,8 +339,10 @@ def registry_truth_diagnostics(
 
     This deliberately separates hard evidence/state contradictions from stale
     metadata warnings. A dead baseline on planned work is actionable context; a
-    dead baseline on verified work is a hard freshness contradiction because the
-    stored completion evidence can no longer be replayed from the declared base.
+    missing commit in an available repository is a hard freshness contradiction
+    for verified work. A missing local working directory leaves baseline
+    availability unknown: report the unresolved provenance gap as a warning,
+    not as evidence that an active source or commit is corrupt.
     """
 
     root_path = Path(root)
@@ -398,9 +400,12 @@ def registry_truth_diagnostics(
                 if status != "present":
                     findings.append(
                         {
-                            "severity": "error"
-                            if state in COMPLETION_STATES
-                            else "warning",
+                            "severity": (
+                                "error"
+                                if state in COMPLETION_STATES
+                                and reason != "working_repository_missing"
+                                else "warning"
+                            ),
                             "issue": "baseline_commit_not_present",
                             "task_id": task_id,
                             "state": state,

@@ -251,6 +251,65 @@ def test_missing_baseline_commit_is_reported_without_completion_claim(tmp_path: 
     assert "runtime_correctness" in result["does_not_establish"]
 
 
+def test_missing_verified_working_repository_is_historical_warning(tmp_path: Path) -> None:
+    missing_repository = tmp_path / "archived-repo"
+    _write_task(
+        tmp_path,
+        "RBV1-T004",
+        state="verified",
+        metadata=_machine_metadata(task_id="RBV1-T004"),
+        execution={
+            "mode": "interactive-agent",
+            "policy": "review-before-effect",
+            "working_repository": str(missing_repository),
+            "baseline_commit": "1" * 40,
+        },
+    )
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path)
+
+    assert result["healthy"] is True
+    assert result["errors"] == []
+    assert any(
+        finding["issue"] == "baseline_commit_not_present"
+        and finding["severity"] == "warning"
+        and finding["baseline_status"] == "unknown"
+        and finding["reason"] == "working_repository_missing"
+        and finding["task_id"] == "RBV1-T004"
+        for finding in result["warnings"]
+    )
+
+
+def test_verified_baseline_repository_path_is_file_remains_error(tmp_path: Path) -> None:
+    invalid_repository = tmp_path / "not-a-repository-directory"
+    invalid_repository.write_text("legacy metadata is not a checkout")
+    _write_task(
+        tmp_path,
+        "RBV1-T004",
+        state="verified",
+        metadata=_machine_metadata(task_id="RBV1-T004"),
+        execution={
+            "mode": "interactive-agent",
+            "policy": "review-before-effect",
+            "working_repository": str(invalid_repository),
+            "baseline_commit": "1" * 40,
+        },
+    )
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path)
+
+    assert result["healthy"] is False
+    assert any(
+        finding["issue"] == "baseline_commit_not_present"
+        and finding["severity"] == "error"
+        and finding["baseline_status"] == "unknown"
+        and finding["reason"] == "working_repository_not_directory"
+        for finding in result["errors"]
+    )
+
+
 def test_missing_verified_baseline_commit_is_hard_freshness_error(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()

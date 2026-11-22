@@ -5701,7 +5701,7 @@ def test_scheduler_resource_keys_lease_exact_persistent_and_runtime_wants_links(
         f"path:{user_unit_dir / 'timers.target.wants'}",
         f"path:{runtime_user_unit_dir / 'timers.target.wants'}",
     }.isdisjoint(keys)
-    assert len([key for key in keys if key.startswith("path:")]) == 49
+    assert len([key for key in keys if key.startswith("path:")]) == 57
 
 
 def test_scheduler_staging_paths_fail_closed_without_deleting_foreign_entries(

@@ -1,0 +1,16 @@
+[Unit]
+Description=Bureau runtime auto-update after a green main merge
+Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/runtime-auto-update.md
+ConditionPathExists=%h/.local/share/bureau/deployment-manifest.json
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/libexec/bureau-runtime-autoupdate
+TimeoutStartSec=15min
+UMask=0077
+Nice=5
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=yes
+PrivateTmp=yes

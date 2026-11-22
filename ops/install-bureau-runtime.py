@@ -90,6 +90,7 @@ SCHEDULER_NAMES = (
     "bureau-verifier-control",
     "bureau-closure-planner",
     "bureau-task-supply",
+    "bureau-runtime-autoupdate",
 )
 
 
@@ -292,6 +293,10 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--runtime-user-unit-dir")
     value.add_argument("--converge-user-systemd", action="store_true")
     value.add_argument("--approval-intent")
+    value.add_argument(
+        "--standing-auto-update",
+        help="fresh green-main observation written by bureau-runtime-refresh auto-update",
+    )
     value.add_argument(
         "--runtime-refresh-state-root",
         default=os.environ.get(
@@ -641,7 +646,11 @@ def main(argv: list[str] | None = None) -> int:
         validate_runtime_install_authority,
         validate_runtime_user_unit_dir,
         validate_scheduler_runtime_layout,
+        validate_standing_auto_update_approval,
     )
+
+    if args.approval_intent and args.standing_auto_update:
+        raise SystemExit("--approval-intent and --standing-auto-update are exclusive")
 
     runtime_user_unit_dir = configured_runtime_user_unit_dir
 
@@ -666,7 +675,13 @@ def main(argv: list[str] | None = None) -> int:
 
     manifest_path = prefix / "deployment-manifest.json"
     try:
-        if args.approval_intent:
+        if args.standing_auto_update:
+            runtime_approval = validate_standing_auto_update_approval(
+                Path(args.standing_auto_update).expanduser().resolve(),
+                expected_source_commit=head,
+                manifest_path=manifest_path,
+            )
+        elif args.approval_intent:
             runtime_approval = validate_runtime_install_authority(
                 Path(args.approval_intent).expanduser().resolve(),
                 expected_source_commit=head,
@@ -687,7 +702,7 @@ def main(argv: list[str] | None = None) -> int:
             )
     except RuntimeRefreshError as exc:
         raise SystemExit(f"runtime approval denied: {exc.code}: {exc.message}") from exc
-    if args.converge_user_systemd:
+    if args.converge_user_systemd and not args.standing_auto_update:
         if not args.approval_intent:
             raise SystemExit("scheduler convergence requires a typed runtime-refresh intent")
         approval_intent = read_json(Path(args.approval_intent).expanduser().resolve())

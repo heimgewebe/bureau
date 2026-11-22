@@ -1,0 +1,12 @@
+[Unit]
+Description=Converge the Bureau runtime to green main every ten minutes
+
+[Timer]
+OnCalendar=*-*-* *:07/10:00
+AccuracySec=30s
+RandomizedDelaySec=0
+Persistent=false
+Unit=bureau-runtime-autoupdate.service
+
+[Install]
+WantedBy=timers.target

@@ -79,6 +79,7 @@ RUNTIME_SCHEDULER_NAMES = (
     "bureau-verifier-control",
     "bureau-closure-planner",
     "bureau-task-supply",
+    "bureau-runtime-autoupdate",
 )
 REQUIRED_RUNTIME_TIMER = "bureau-task-supply"
 DEFAULT_USER_SYSTEMD_UNIT_ROOT = Path("~/.config/systemd/user").expanduser()
@@ -6396,6 +6397,101 @@ def validate_runtime_install_authority(
     return intent
 
 
+STANDING_AUTO_UPDATE_KIND = "bureau_runtime_standing_auto_update"
+STANDING_AUTO_UPDATE_MAX_AGE_SECONDS = 1800
+
+
+def validate_standing_auto_update_approval(
+    observation_path: Path,
+    *,
+    expected_source_commit: str,
+    manifest_path: Path,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Accept one fresh green-main observation as standing runtime approval.
+
+    The standing authority is the enabled ``bureau-runtime-autoupdate`` timer
+    (disable it to stop automatic rollouts). This check only binds the install
+    to a fresh observation that proves: GitHub main equals the source being
+    installed, the merged PR's required checks are green, main descends from
+    the installed runtime, and the installed manifest has not changed since.
+    """
+    current = now or utc_now()
+    observation = read_json(observation_path)
+    verify_digest(observation, "observation_sha256")
+    if observation.get("kind") != "bureau_runtime_refresh_observation":
+        raise RuntimeRefreshError(
+            "auto-update-observation-invalid", "observation kind is invalid"
+        )
+    if observation.get("main_commit") != expected_source_commit:
+        raise RuntimeRefreshError(
+            "auto-update-source-mismatch",
+            "installer source differs from the observed GitHub main",
+            details={
+                "observed_main": observation.get("main_commit"),
+                "source": expected_source_commit,
+            },
+        )
+    if observation.get("status") not in {"candidate", "alert"} or not (
+        isinstance(observation.get("recovery_action"), dict)
+        and observation["recovery_action"].get("eligible") is True
+    ):
+        raise RuntimeRefreshError(
+            "auto-update-not-eligible",
+            "observation does not mark the runtime as refreshable",
+            details={
+                "status": observation.get("status"),
+                "reason_codes": observation.get("reason_codes"),
+            },
+        )
+    age = (current - parse_time(str(observation.get("observed_at")))).total_seconds()
+    if age < -60 or age > STANDING_AUTO_UPDATE_MAX_AGE_SECONDS:
+        raise RuntimeRefreshError(
+            "auto-update-observation-stale",
+            "observation is too old for a standing auto-update",
+            details={"age_seconds": int(age)},
+        )
+    deployed = observation.get("deployed_source_commit")
+    if deployed != expected_source_commit:
+        checks = observation.get("check_summary")
+        if (
+            not isinstance(checks, dict)
+            or not checks
+            or any(
+                not isinstance(item, dict) or item.get("state") != "success"
+                for item in checks.values()
+            )
+        ):
+            raise RuntimeRefreshError(
+                "auto-update-checks-not-green", "required checks are not all green"
+            )
+        ancestry = observation.get("source_ancestry")
+        if not isinstance(ancestry, dict) or ancestry.get("status") != "proven":
+            raise RuntimeRefreshError(
+                "auto-update-ancestry-unproven",
+                "GitHub main is not a proven descendant of the installed runtime",
+            )
+    if manifest_path.exists():
+        _manifest, manifest_sha = load_manifest(manifest_path)
+        if manifest_sha != observation.get("deployed_manifest_sha256"):
+            raise RuntimeRefreshError(
+                "auto-update-manifest-drift",
+                "installed manifest changed after the observation",
+            )
+    return {
+        "schema_version": 1,
+        "kind": STANDING_AUTO_UPDATE_KIND,
+        "authority": "enabled bureau-runtime-autoupdate.timer",
+        "policy": "green-protected-main-descendant",
+        "observation_sha256": observation["observation_sha256"],
+        "main_commit": expected_source_commit,
+        "previous_source_commit": deployed,
+        "pull_request": observation.get("pull_request"),
+        "check_summary": observation.get("check_summary"),
+        "validated_at": isoformat(current),
+    }
+
+
 def _validate_binding_identity(binding: dict[str, Any]) -> tuple[str, str]:
     owner = binding.get("owner_id")
     task_id = binding.get("task_id")
@@ -7029,10 +7125,16 @@ def run_installer(
     user_unit_dir: Path,
     libexec_dir: Path,
     runtime_user_unit_dir: Path,
-    approval_intent: Path,
+    approval_intent: Path | None = None,
     allowed_launcher_paths: Iterable[Path] = (),
     timeout: float = 300,
+    standing_auto_update: Path | None = None,
 ) -> dict[str, Any]:
+    if (approval_intent is None) == (standing_auto_update is None):
+        raise RuntimeRefreshError(
+            "installer-approval-invalid",
+            "installer needs exactly one of approval_intent or standing_auto_update",
+        )
     validate_scheduler_runtime_layout(prefix=prefix, bin_dir=bin_dir)
     validate_runtime_user_unit_dir(runtime_user_unit_dir)
     argv = [
@@ -7050,14 +7152,15 @@ def run_installer(
         str(libexec_dir),
         "--runtime-user-unit-dir",
         str(runtime_user_unit_dir),
-        "--approval-intent",
-        str(approval_intent),
         "--replace-existing",
-        "--enforce-launcher-allowlist",
         "--converge-user-systemd",
     ]
-    for path in sorted({str(item) for item in allowed_launcher_paths}):
-        argv.extend(["--allowed-launcher-path", path])
+    if standing_auto_update is not None:
+        argv.extend(["--standing-auto-update", str(standing_auto_update)])
+    else:
+        argv.extend(["--approval-intent", str(approval_intent), "--enforce-launcher-allowlist"])
+        for path in sorted({str(item) for item in allowed_launcher_paths}):
+            argv.extend(["--allowed-launcher-path", path])
     result = _run(argv, cwd=source, timeout=timeout)
     if result.returncode:
         try:
@@ -12814,6 +12917,18 @@ def parser() -> argparse.ArgumentParser:
     reconcile.add_argument("--source-repository", required=True, type=Path)
     reconcile.add_argument("--create-only", action="store_true")
 
+    auto = sub.add_parser("auto-update")
+    auto.add_argument("--repository", default=DEFAULT_REPOSITORY)
+    auto.add_argument(
+        "--remote-url", default=f"https://github.com/{DEFAULT_REPOSITORY}.git"
+    )
+    auto.add_argument("--prefix", default="~/.local/share/bureau", type=Path)
+    auto.add_argument("--bin-dir", default="~/.local/bin", type=Path)
+    auto.add_argument("--user-unit-dir", default=DEFAULT_USER_SYSTEMD_UNIT_ROOT, type=Path)
+    auto.add_argument("--libexec-dir", default=DEFAULT_RUNTIME_LIBEXEC_ROOT, type=Path)
+    auto.add_argument("--runtime-user-unit-dir", type=Path)
+    auto.add_argument("--resource-db", default=DEFAULT_GRABOWSKI_RESOURCE_DB, type=Path)
+
     sub.add_parser("status")
     return value
 
@@ -12945,6 +13060,27 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(json.dumps(result, sort_keys=True))
             return 0
+        if args.command == "auto-update":
+            from .runtime_autoupdate import exit_code, run_auto_update
+
+            result = run_auto_update(
+                state_root=state_root,
+                manifest_path=manifest_path,
+                repository=args.repository,
+                remote_url=args.remote_url,
+                prefix=_resolved(args.prefix),
+                bin_dir=_resolved(args.bin_dir),
+                user_unit_dir=_resolved(args.user_unit_dir),
+                libexec_dir=_resolved(args.libexec_dir),
+                runtime_user_unit_dir=(
+                    _resolved(args.runtime_user_unit_dir)
+                    if args.runtime_user_unit_dir is not None
+                    else default_runtime_user_unit_dir()
+                ),
+                resource_db=args.resource_db.expanduser(),
+            )
+            print(json.dumps(result, sort_keys=True))
+            return exit_code(result)
         if args.command == "status":
             print(json.dumps(status_report(state_root, manifest_path), sort_keys=True))
             return 0

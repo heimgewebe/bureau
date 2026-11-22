@@ -82,7 +82,7 @@ def test_task_supply_is_part_of_runtime_identity_and_refresh_contract() -> None:
         assert f"path:{runtime_refresh._scheduler_staging_path(target)}" in scheduler_keys
     assert "service:bureau-task-supply.service" in scheduler_keys
     assert "service:bureau-task-supply.timer" in scheduler_keys
-    assert len([key for key in scheduler_keys if key.startswith("path:")]) == 36
+    assert len([key for key in scheduler_keys if key.startswith("path:")]) == 42
     assert runtime_refresh.RUNTIME_LAUNCHER_ENTRYPOINTS == (
         ("bureau", "bureau.cli"),
         ("bureau-runtime-refresh", "bureau.runtime_refresh"),

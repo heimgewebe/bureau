@@ -41,6 +41,7 @@ SCHEDULER_NAMES = (
     "bureau-verifier-control",
     "bureau-closure-planner",
     "bureau-task-supply",
+    "bureau-runtime-autoupdate",
 )
 
 

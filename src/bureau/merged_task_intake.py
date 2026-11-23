@@ -15,6 +15,8 @@ never overwrites an existing revision). Properties:
 * references first: a task is imported only once its ``depends_on`` and
   ``metadata.parent_task`` exist in the StateStore (or are imported in the same
   pass), so the authoritative overlay never sees a dangling reference;
+  mutually referencing tasks (a parent depending on its child) are imported
+  together in one transaction;
 * lifecycle unchanged: the TaskSpec keeps its own ``state``; ``ready`` becomes
   claimable through the normal gates, ``planned`` stays planned.
 
@@ -116,14 +118,34 @@ def intake_merged_task_specs(registry: Any, store: Any) -> dict[str, Any]:
                 available.add(task_id)
             del pending[task_id]
             progress = True
-    for task_id in sorted(pending):
-        conflicts.append(
-            {
-                "task_id": task_id,
-                "code": "reference-cycle",
-                "detail": "depends_on/parent_task cycle among unimported TaskSpecs",
-            }
-        )
+    if pending:
+        # Only mutually referencing tasks remain (e.g. a parent that depends on
+        # its own child). Every reference points into the group or into the
+        # StateStore, so import the group in one transaction.
+        group = sorted(pending)
+        try:
+            with store.immediate() as connection:
+                results = [
+                    task_specs.seed_missing_registry_task(connection, registry, task_id)
+                    for task_id in group
+                ]
+        except (legacy.StateError, task_specs.TaskSpecError) as exc:
+            conflicts.extend(
+                {"task_id": task_id, "code": "seed-refused", "detail": str(exc)}
+                for task_id in group
+            )
+        else:
+            for task_id, result in zip(group, results, strict=True):
+                imported.append(
+                    {
+                        "task_id": task_id,
+                        "state": pending[task_id].state,
+                        "revision": result.get("revision"),
+                        "spec_sha256": result.get("spec_sha256"),
+                        "changed": bool(result.get("changed")),
+                        "atomic_group": group,
+                    }
+                )
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": "bureau_merged_task_intake",

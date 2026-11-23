@@ -187,3 +187,43 @@ def test_repository_baseline_lists_only_existing_tasks() -> None:
     baseline = json.loads((root / "registry/intake-baseline.json").read_text())
     for task_id in baseline["task_ids"]:
         assert (root / f"registry/tasks/{task_id}.json").is_file(), task_id
+
+
+def test_mutually_referencing_parent_and_child_import_atomically(tmp_path) -> None:
+    from types import SimpleNamespace
+
+    def spec(task_id: str, depends_on=(), **metadata) -> dict:
+        value = {
+            "schema_version": 1,
+            "id": task_id,
+            "initiative": "TEST-V1",
+            "title": task_id,
+            "state": "planned",
+            "priority": {"lane": "later", "rank": 1},
+            "depends_on": list(depends_on),
+            "execution": {"mode": "manual", "policy": "review-before-effect"},
+            "claims": [],
+            "required_capabilities": [],
+            "acceptance": [{"id": "legacy", "assertion": "legacy prose"}],
+        }
+        if metadata:
+            value["metadata"] = metadata
+        return value
+
+    def task(raw: dict):
+        return SimpleNamespace(raw=raw, state=raw["state"], depends_on=raw["depends_on"])
+
+    store = StateStore(tmp_path / "bureau.sqlite3", state_root=tmp_path)
+    old = task(spec("OLD"))
+    store.import_registry_task_specs(SimpleNamespace(root=tmp_path, tasks={"OLD": old}))
+    tasks = {
+        "OLD": old,
+        "P": task(spec("P", depends_on=["C"])),
+        "C": task(spec("C", parent_task="P")),
+    }
+
+    result = intake_merged_task_specs(SimpleNamespace(root=tmp_path, tasks=tasks), store)
+
+    assert result["conflicts"] == []
+    assert sorted(item["task_id"] for item in result["imported"]) == ["C", "P"]
+    assert store.task_spec("P") is not None and store.task_spec("C") is not None

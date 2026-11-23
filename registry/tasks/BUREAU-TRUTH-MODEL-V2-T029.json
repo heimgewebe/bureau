@@ -4,7 +4,7 @@
   "initiative": "BUREAU-TRUTH-MODEL-V2",
   "title": "Bureau-Runtime einmalig nach TaskSpec-Seed-Fix konvergieren",
   "goal": "Diese Task autorisiert genau einen kontrollierten Runtime-Refresh: nach dem Merge ihrer Git-Projektion soll die installierte immutable Bureau-Runtime einmalig auf den dann aktuellen reviewten Bureau-main-Stand konvergieren. Die konkrete Ausführung wird frisch an den exakten beobachteten main-Commit, den zugehörigen gemergten PR, erfolgreiche Pflichtchecks, den daraus berechneten target_sha256, eine exakt auf diese Task-ID und dieses Target gebundene Break-Glass-Freigabe sowie die vom Runtime-Refresh-Vertrag geforderten Live-Leases gebunden. Nach erfolgreichem Closeout wird T029 terminal und darf nie für einen späteren Drift wiederverwendet werden; jeder weitere Runtime-Refresh benötigt einen neuen Nachfolgetask mit eigener Autorität.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "next",
     "rank": 2

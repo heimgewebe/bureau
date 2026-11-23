@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "MACHTVERFLECHTUNGEN-NETWORK-COVERAGE-V1-T005",
+  "initiative": "MACHTVERFLECHTUNGEN-NETWORK-COVERAGE-V1",
+  "title": "Altstudien-Paket 4/8: die nächsten bis zu 10 ungeprüften Altstudien netzwerkseitig erschließen",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 4
+  },
+  "goal": "Die im Forschungsregister als nicht netzwerkgeprüft geführten Altstudien (Reihenfolge des Research-Index, höchstens 10) einzeln quellenkritisch bewerten: belegte Beziehungen aus der kanonischen YAML-Quelle in Graph, Relationstabelle, Quellenkatalog und Akteursregister übernehmen oder eine konkrete Begründung no_network_relation erfassen. Ein PR, ein Paket.",
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "working_repository": "/home/alex/repos/machtverflechtungen",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/machtverflechtungen"
+    ],
+    "preferred_host": "heim-pc"
+  },
+  "claims": [
+    {
+      "resource": "repo.machtverflechtungen",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github"
+  ],
+  "acceptance": [
+    {
+      "id": "package-reviewed",
+      "assertion": "Bis zu 10 zuvor ungeprüfte Altstudien haben je eine sha256-gebundene Integrationsentscheidung (Relation-IDs oder begründet no_network_relation); die im Research-Index ausgewiesene Restzahl sinkt um genau diese Anzahl (bei weniger als 10 Reststudien auf null).",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "machtverflechtungen_legacy_package_4_reviewed"
+      }
+    },
+    {
+      "id": "source-bound",
+      "assertion": "Neue Knoten/Kanten nur mit Quellenbeleg und zeitlicher Abgrenzung, alle Übersichten aus derselben YAML-Quelle erzeugt; keine aus bloßen Textnennungen abgeleiteten Kanten.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "machtverflechtungen_legacy_package_4_sourcebound"
+      }
+    },
+    {
+      "id": "merged-green",
+      "assertion": "Genau ein an diesen Task gebundener PR ist mit grüner CI (Validator, Integrationscheck, Tests, MkDocs strict) in main gemergt.",
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "machtverflechtungen_legacy_package_4_merged_pr"
+      }
+    }
+  ],
+  "metadata": {
+    "parent_task": "MACHTVERFLECHTUNGEN-NETWORK-COVERAGE-V1-T001",
+    "registered_at": "2026-11-23",
+    "package_index": 4,
+    "package_count": 8,
+    "package_size_max": 10,
+    "operating_instruction": "Kleines Paket, ein PR. Funktionalität und Quellenlage vor Formalstatus; keine erfundenen Relationen; ausschließlich Grabowski als Writer. Sind keine ungeprüften Altstudien mehr übrig, Task begründet als superseded schließen.",
+    "source": "Aufteilung von T001 auf Entscheidung von Alex am 23.11.2026 (P0-C-Durchlaufnachweis)",
+    "does_not_establish": [
+      "unreviewed_studies_have_no_network_relations",
+      "CI_success_is_publication_success"
+    ]
+  }
+}

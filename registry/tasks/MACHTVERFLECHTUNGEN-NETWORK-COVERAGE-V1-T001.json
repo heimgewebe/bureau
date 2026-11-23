@@ -74,12 +74,14 @@
     "source_pr": "https://github.com/alexdermohr/machtverflechtungen/pull/218",
     "initial_legacy_count": 121,
     "registered_at": "2026-11-20",
-    "independently_executable": true,
+    "independently_executable": false,
     "operating_instruction": "Funktionalität und Quellenlage vor Formalstatus; keine erfundenen Relationen; vor Git-Effekt main/PR/Leases prüfen; ausschließlich Grabowski als Writer.",
     "does_not_establish": [
       "unreviewed_studies_have_no_network_relations",
       "all_studies_can_be_fully_reviewed_automatically",
       "CI_success_is_publication_success"
-    ]
+    ],
+    "split_into_packages_at": "2026-11-23",
+    "split_reason": "Ein Lauf über alle Altstudien kann nicht terminal abschließen (Runs 17:46 und 20:39 UTC am 22.11. endeten partial/failed). T001 bleibt Sammel- und Abschlussaufgabe; die Arbeit läuft in Paketen T002–T009."
   }
 }

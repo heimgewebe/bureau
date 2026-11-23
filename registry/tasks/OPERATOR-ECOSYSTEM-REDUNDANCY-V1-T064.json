@@ -42,37 +42,56 @@
     {
       "id": "clean-current-registry-source",
       "assertion": "The claim adapter uses a clean, current, explicitly revision-bound Registry source and does not require or mutate a foreign dirty Bureau main checkout.",
-      "evidence_type": "object"
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:claim-path:clean-current-registry-source"
+      }
     },
     {
       "id": "complete-capability-propagation",
       "assertion": "All task-required capabilities are preserved through candidate selection, claim intent and coordinated execution; missing capabilities produce an exact structured rejection.",
-      "evidence_type": "object"
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:claim-path:complete-capability-propagation"
+      }
     },
     {
       "id": "current-repository-base-binding",
       "assertion": "A new implementation workspace is bound to an explicitly approved current remote repository commit and fails closed when the local source head is stale or ambiguous.",
-      "evidence_type": "object"
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:claim-path:current-repository-base-binding"
+      }
     },
     {
       "id": "scoped-receipt-drift",
       "assertion": "Receipt drift reports the exact blocking task, receipt and revision mismatch; unrelated task drift does not silently collapse into claim-intent-not-ready without a documented global-policy reason.",
-      "evidence_type": "object"
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:claim-path:scoped-receipt-drift"
+      }
     },
     {
       "id": "lease-contract-health",
       "assertion": "Required Registry, repository and workspace leases can be acquired and released through a healthy typed contract without bypassing foreign ownership.",
-      "evidence_type": "object"
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:claim-path:lease-contract-health"
+      }
     },
     {
       "id": "regression-coverage",
       "assertion": "Regression tests cover dirty shared Registry checkout, canonical read-only snapshot, stale repository base, missing capabilities, foreign receipt drift, healthy claim creation and zero-effect rejection readback.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "t004-replay",
-      "assertion": "After the repair, an identical dry-run or bounded claim attempt for REPOGROUND-LEGACY-RECONCILIATION-V1-T004 either creates an owner-bound run on the current RepoGround head or returns one precise remaining blocker with no partial effects.",
-      "evidence_type": "object"
+      "evidence_type": "object",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:claim-path:regression-coverage"
+      }
     }
   ],
   "metadata": {
@@ -123,6 +142,19 @@
         "task readiness",
         "permission to mutate Bureau Registry sources",
         "permission to alter terminal history"
+      ]
+    },
+    "bureau_cleanup": {
+      "decision": "remove-obsolete-replay",
+      "reviewed_at": "2026-11-23T21:05:46Z",
+      "reason": "Die Pflicht zum erneuten Claim/Replay von REPOGROUND-LEGACY-RECONCILIATION-V1-T004 entfällt ersatzlos, weil dieser Zielauftrag cancelled ist. Die sechs verbliebenen fachlichen Kriterien behalten ihre Assertions und werden mit dem bereits existierenden manual_observation-Verifier schemafähig; keine neue Freigabe oder Prüfung hinzugefügt.",
+      "removed_acceptance_ids": [
+        "t004-replay"
+      ],
+      "evidence_refs": [
+        "bureau-task:REPOGROUND-LEGACY-RECONCILIATION-V1-T004:cancelled",
+        "grabowski-task:8c8ac966896b42bc919a5cdb",
+        "github:heimgewebe/bureau:main:cd598500e05e8135cfb3739684d1b146550c6cab"
       ]
     }
   }

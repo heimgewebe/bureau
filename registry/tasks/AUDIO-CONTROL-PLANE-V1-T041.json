@@ -147,6 +147,6 @@
     "strategy": "Änderung bleibt additiv und fail-closed. Wenn reale Parakeet-Inferenz keine verlässlichen Zeitstempel liefert oder Regressionen auftreten, keine Zeitstempel erfinden, Adapterverhalten auf den bisherigen text-only-Parakeet-Pfad zurückführen und nur Policy/Dokumentation an die belegte Fähigkeit angleichen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Parakeet-Zeitstempel im lokalen ASR-Adapter verifizieren und anbinden"
 }

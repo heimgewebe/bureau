@@ -118,6 +118,6 @@
     "strategy": "Before mutation, bind the current installed deploy executable, immutable release, service states and generated backup/rollback material. On a clear failed validation, use only the reviewed T034 rollback path and then read back runtime head and all four service states. On an unclear effect, stop and preserve evidence; do not retry."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Validate cross-generation Audiozentrale self-deploy on the live Heim-PC"
 }

@@ -146,6 +146,6 @@
     "strategy": "Die Arbeit bleibt additiv und fail-closed. Bei unklaren Rechten, instabiler Quellidentität, nicht reproduzierbarer Annotation oder Evidenzdrift wird die betroffene Quelle beziehungsweise Auswertung nicht übernommen; die gemergte Phrase-/Song-Korpus-Evaluation und alle Live-Defaults bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Buckelwal-Unit-Zeitannotation revisionsgebunden erschließen"
 }

@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T025",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "E-Gitarren-Setup mit interner Kette liefern",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "E-Gitarre über den MOTU-Hi-Z-Eingang mit Onboarding, Tuner, Gate, Kompressor, Verzerrung, Amp/Cab-ähnlicher interner Verarbeitung, Delay, Hall, Szenen und Controllersteuerung als verifiziertes Setup ergänzen.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T024"

@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T005",
   "initiative": "BUR-2026-005",
   "title": "Define webhook event inbox",
-  "state": "planned",
+  "state": "cancelled",
   "depends_on": [
     "BUR-2026-005-T001",
     "BUR-2026-005-T003"

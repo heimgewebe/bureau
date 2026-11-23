@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T012",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "hausKI-audio Altaktivierungen kontrolliert schließen",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Nach vollständiger Reconciliation nur veraltete hausKI-audio-Laufzeit- und Aktivierungspfade schließen, ohne Repository oder Worktrees zu entfernen.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T027",

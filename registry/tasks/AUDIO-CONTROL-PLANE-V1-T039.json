@@ -121,6 +121,6 @@
     "strategy": "Keine irreversible Löschung. Vor jeder Quarantäne Current-Link, Runtime-Head, Health, Keep-Set und Releaseidentitäten exakt erfassen; nur eindeutig freigegebene Alt-Releases in einen taskgebundenen Quarantänepfad verschieben. Bei Abweichung Wirkung stoppen, bereits verschobene taskeigene Releases anhand des gebundenen Preimages zurückführen und anschließend Deployment-/Retention-Status frisch lesen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Post-T036 Audio-Release-Hygiene reversibel ausführen"
 }

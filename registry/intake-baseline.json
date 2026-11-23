@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "kind": "bureau_merged_task_intake_baseline",
+  "description": "Git-only TaskSpecs that existed before automatic merged-main intake (live StateStore readback 2026-11-23 05:35 UTC, runtime b18932f7d758). They were never published and are skipped by the intake; remove an id to import it on the next reconcile.",
+  "task_ids": [
+    "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2304-NIXOS-T003-CLOSEOUT-20260916",
+    "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T169-20260831",
+    "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-METAREPO-T087-20260902",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-FU-COMPLETED-RETAINED-DESCENDANT-HEAD-RECONCILE-20260829",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T067",
+    "WELTGEWEBE-OS-V1-T081",
+    "WELTGEWEBE-OS-V1-T082",
+    "WELTGEWEBE-OS-V1-T083"
+  ]
+}
